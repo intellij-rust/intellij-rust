@@ -28,6 +28,7 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         NotPostfixTemplate(this),
         RefPostfixTemplate(this),
         RefmPostfixTemplate(this),
+        DerefPostfixTemplate(this),
         LetPostfixTemplate(this),
         IterPostfixTemplate("iter", this),
         IterPostfixTemplate("for", this),

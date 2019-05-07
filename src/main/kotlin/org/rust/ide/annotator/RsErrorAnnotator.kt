@@ -22,6 +22,7 @@ import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.inference
@@ -113,6 +114,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
         val path = (o.expr as? RsPathExpr)?.path ?: return
+        checkNotCallingDrop(o, holder)
         val deepResolve = path.reference.deepResolve()
         val owner = deepResolve as? RsFieldsOwner ?: return
         if (owner.tupleFields == null) {
@@ -130,10 +132,35 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
         val field = o.fieldLookup ?: o.methodCall ?: return
         checkReferenceIsPublic(field, o, holder)
+        if (field is RsMethodCall) {
+            checkNotCallingDrop(field, holder)
+        }
     }
 
     private fun checkYieldExpr(holder: AnnotationHolder, o: RsYieldExpr) {
         GENERATORS.check(holder, o.yield, "`yield` syntax")
+    }
+
+    // E0040: Explicit destructor call (call to Drop::drop() method on an instance explicitly)
+    private fun checkNotCallingDrop(call: RsElement, holder: AnnotationHolder) {
+        val (ref, identifier) = when (call) {
+            is RsCallExpr -> (call.expr as? RsPathExpr)?.path?.reference?.resolve() to call.expr
+            is RsMethodCall -> call.reference.resolve() to call.identifier
+            else -> null to null
+        }
+        if ((ref as? RsFunction)?.name != "drop") return
+
+        val trait = when (val owner = ref.owner) {
+            // core::ops::drop::Drop::drop(x)
+            is RsAbstractableOwner.Trait -> owner.trait
+            // Foo::drop(x), x.drop()
+            is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
+            else -> null
+        } ?: return
+
+        if (trait == trait.knownItems.Drop) {
+            RsDiagnostic.ExplicitCallToDrop(identifier ?: call).addToHolder(holder)
+        }
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
