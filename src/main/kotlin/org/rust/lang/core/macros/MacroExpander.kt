@@ -338,8 +338,13 @@ private class MacroPattern private constructor(
                 break
             }
 
+            val lastOffset = macroCallBody.currentOffset
             val result = pattern.matchPartial(macroCallBody)
             if (result != null) {
+                if (macroCallBody.currentOffset == lastOffset) {
+                    MacroExpansionMarks.groupMatchedEmptyTT.hit()
+                    return null
+                }
                 groups += result
             } else {
                 MacroExpansionMarks.groupInputEnd2.hit()
@@ -500,4 +505,5 @@ object MacroExpansionMarks {
     val groupInputEnd1 = Testmark("groupInputEnd1")
     val groupInputEnd2 = Testmark("groupInputEnd2")
     val groupInputEnd3 = Testmark("groupInputEnd3")
+    val groupMatchedEmptyTT = Testmark("groupMatchedEmptyTT")
 }
