@@ -42,6 +42,9 @@ interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
     val outerAttrList: List<RsOuterAttr>
 }
 
+fun RsOuterAttributeOwner.hasOuterAttr(name: String): Boolean =
+    outerAttrList.any { it.metaItem.name == name }
+
 /**
  * Find the first outer attribute with the given identifier.
  */
@@ -49,14 +52,28 @@ fun RsOuterAttributeOwner.findOuterAttr(name: String): RsOuterAttr? =
     outerAttrList.find { it.metaItem.name == name }
 
 
-fun RsOuterAttributeOwner.addOuterAttribute(attribute: Attribute, anchor: PsiElement): RsOuterAttr {
-    val attr = RsPsiFactory(project).createOuterAttr(attribute.text)
-    return addBefore(attr, anchor) as RsOuterAttr
+fun RsOuterAttributeOwner.addOuterAttribute(attribute: Attribute, anchor: PsiElement? = null): RsOuterAttr {
+    val factory = RsPsiFactory(project)
+    val attr = factory.createOuterAttr(attribute.text)
+    return if (anchor != null) {
+        addBefore(attr, anchor)
+    } else {
+        addBefore(attr, firstChild).also {
+            addAfter(factory.createNewline(), firstChild)
+        }
+    } as RsOuterAttr
 }
 
-fun RsInnerAttributeOwner.addInnerAttribute(attribute: Attribute, anchor: PsiElement): RsInnerAttr {
-    val attr = RsPsiFactory(project).createInnerAttr(attribute.text)
-    return addBefore(attr, anchor) as RsInnerAttr
+fun RsInnerAttributeOwner.addInnerAttribute(attribute: Attribute, anchor: PsiElement? = null): RsInnerAttr {
+    val factory = RsPsiFactory(project)
+    val attr = factory.createInnerAttr(attribute.text)
+    return if (anchor != null) {
+        addBefore(attr, anchor)
+    } else {
+        addBefore(attr, firstChild).also {
+            addAfter(factory.createNewline(), firstChild)
+        }
+    } as RsInnerAttr
 }
 
 data class Attribute(val name: String, val argText: String? = null) {

@@ -8,10 +8,7 @@ package org.rust.lang.core.stubs
 import com.intellij.psi.stubs.IndexSink
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.resolve.indexes.RsImplIndex
-import org.rust.lang.core.resolve.indexes.RsLangItemIndex
-import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
-import org.rust.lang.core.resolve.indexes.RsMacroIndex
+import org.rust.lang.core.resolve.indexes.*
 import org.rust.lang.core.stubs.index.*
 
 fun IndexSink.indexExternCrate(stub: RsExternCrateItemStub) {
@@ -54,6 +51,7 @@ fun IndexSink.indexImplItem(stub: RsImplItemStub) {
 
 fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
+    RsDeriveIndex.index(stub.psi, this)
 }
 
 fun IndexSink.indexConstant(stub: RsConstantStub) {

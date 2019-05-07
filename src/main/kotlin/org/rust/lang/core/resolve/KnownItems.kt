@@ -67,6 +67,7 @@ class KnownItems(
     val Arguments: RsStructOrEnumItemElement? get() = findItem("core::fmt::Arguments")
     val Option: RsStructOrEnumItemElement? get() = findItem("core::option::Option")
     val Result: RsStructOrEnumItemElement? get() = findItem("core::result::Result")
+    val TokenStream: RsStructOrEnumItemElement? get() = findItem("proc_macro::TokenStream")
 
     val Iterator: RsTraitItem? get() = findItem("core::iter::Iterator")
     val IntoIterator: RsTraitItem? get() = findItem("core::iter::IntoIterator")

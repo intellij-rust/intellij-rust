@@ -123,4 +123,22 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         #[derive(Ser/*caret*/)]
         struct S;
     """)
+
+
+    // TODO add more tests
+    fun `test custom completion`() = doSingleCompletion("""
+        trait Foo {}
+        #[proc_macro_derive(Foo)]
+        pub fn foo_deriver(input: u32 /* todo fix, see RsDeriveIndex:~100 */) { }
+
+        #[derive(Fo/*caret*/)]
+        struct Bar;
+    """, """
+        trait Foo {}
+        #[proc_macro_derive(Foo)]
+        pub fn foo_deriver(input: u32 /* todo fix, see RsDeriveIndex:~100 */) { }
+
+        #[derive(Foo/*caret*/)]
+        struct Bar;
+    """)
 }

@@ -506,15 +506,16 @@ fun ImportCandidate.import(context: RsElement) {
     insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
 }
 
-private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String) {
+fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: String): RsExternCrateItem {
     val externCrateItem = psiFactory.createExternCrateItem(crateName)
     val lastExternCrateItem = childrenOfType<RsExternCrateItem>().lastElement
-    if (lastExternCrateItem != null) {
+    return if (lastExternCrateItem != null) {
         addAfter(externCrateItem, lastExternCrateItem)
     } else {
-        addBefore(externCrateItem, firstItem)
-        addAfter(psiFactory.createNewline(), firstItem)
-    }
+        addBefore(externCrateItem, firstItem).also {
+            addAfter(psiFactory.createNewline(), firstItem)
+        }
+    } as RsExternCrateItem
 }
 
 private fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
