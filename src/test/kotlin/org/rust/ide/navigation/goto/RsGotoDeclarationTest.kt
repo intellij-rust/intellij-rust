@@ -110,6 +110,22 @@ class RsGotoDeclarationTest : RsTestBase() {
         fn main() { S == S; }
     """)
 
+    fun `test self parameter`() = doTest("""
+        struct S;
+        impl S {
+            fn foo(&mut self) {
+                /*caret*/self;
+            }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(&mut /*caret*/self) {
+                self;
+            }
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
         myFixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
     }
