@@ -49,6 +49,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -318,11 +319,19 @@ data class CargoProjectImpl(
             )
         }
         return refreshRustcInfo()
-            .thenCompose { it.refreshStdlib() }
             .thenCompose { it.refreshWorkspace() }
+            .thenCompose { it.refreshStdlib() }
     }
 
     private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
+        if (doesProjectLooksLikeRustc()) {
+            // rust-lang/rust contains stdlib inside the project
+            val std = StandardLibrary.fromPath(manifest.parent.toString())
+            if (std != null) {
+                return CompletableFuture.completedFuture(withStdlib(TaskResult.Ok(std)))
+            }
+        }
+
         val rustup = toolchain?.rustup(projectDirectory)
         if (rustup == null) {
             val explicitPath = project.rustSettings.explicitPathToStdlib
@@ -334,7 +343,16 @@ data class CargoProjectImpl(
             }
             return CompletableFuture.completedFuture(withStdlib(result))
         }
+
         return fetchStdlib(project, projectService.taskQueue, rustup).thenApply(this::withStdlib)
+    }
+
+    // Checks that the project is https://github.com/rust-lang/rust
+    private fun doesProjectLooksLikeRustc(): Boolean {
+        val workspace = workspace
+        return workspace?.findPackage(AutoInjectedCrates.STD) != null &&
+            workspace.findPackage(AutoInjectedCrates.CORE) != null &&
+            workspace.findPackage("rustc") != null
     }
 
     private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
