@@ -736,4 +736,14 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         fn foo() {}
     """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
+
+    fun `test incorrect "vis" group does not cause OOM`() = doTest("""
+        // error: repetition matches empty token tree
+        macro_rules! foo {
+            ($($ p:vis)*) => {}
+        }
+        foo!(a);
+    """, """
+        foo!(a);
+    """ to MacroExpansionMarks.groupMatchedEmptyTT)
 }
