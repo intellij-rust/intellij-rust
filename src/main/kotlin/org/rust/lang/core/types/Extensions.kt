@@ -6,7 +6,6 @@
 package org.rust.lang.core.types
 
 import com.intellij.injected.editor.VirtualFileWindow
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
@@ -24,7 +23,6 @@ import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.openapiext.recursionGuard
 
 
 private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
@@ -46,8 +44,7 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
 }
 
 val RsTypeReference.type: Ty
-    get() = recursionGuard(this, Computable { inferTypeReferenceType(this) })
-        ?: TyUnknown
+    get() = inferTypeReferenceType(this)
 
 val RsTypeElement.lifetimeElidable: Boolean
     get() {

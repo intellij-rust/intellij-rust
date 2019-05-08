@@ -19,8 +19,7 @@ import org.rust.lang.core.types.type
 
 // Keep in sync with TyFingerprint-create
 fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
-    val type = ref.typeElement
-    return when (type) {
+    return when (val type = ref.typeElement) {
         is RsTupleType -> TyTuple(type.typeReferenceList.map { inferTypeReferenceType(it) })
 
         is RsBaseType -> when (val kind = type.kind) {
@@ -37,7 +36,13 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
                 when {
                     target is RsTraitOrImpl && path.hasCself -> {
                         if (target is RsImplItem) {
-                            target.typeReference?.type ?: TyUnknown
+                            val typeReference = target.typeReference
+                            if (typeReference == null || typeReference.isAncestorOf(path)) {
+                                // `impl {}` or `impl Self {}`
+                                TyUnknown
+                            } else {
+                                inferTypeReferenceType(typeReference)
+                            }
                         } else {
                             TyTypeParameter.self(target)
                         }
