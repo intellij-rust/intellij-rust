@@ -18,6 +18,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.reference.SoftReference
+import com.intellij.util.indexing.FileBasedIndexScanRunnableCollector
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
@@ -298,6 +299,18 @@ class SourceFile(
     fun rebind(calls: List<RsMacroCall>? = null) {
         checkReadAccessAllowed() // Needed to access PSI
         checkIsSmartMode(project)
+
+        val isIndexedFile = FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) ||
+            project.macroExpansionManager.isExpansionFile(file)
+        if (!isIndexedFile) {
+            // The file is now outside of the project, so we should not access it.
+            // All infos of this file should be invalidated
+            for (info in infos) {
+                info.cachedMacroCall = null
+                info.stubIndex = -1
+            }
+            return
+        }
 
         if (isBoundToPsi()) {
             check(!fresh)
