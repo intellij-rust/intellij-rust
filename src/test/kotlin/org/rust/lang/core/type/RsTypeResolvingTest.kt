@@ -343,6 +343,48 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                             //^ &Struct<'_, Struct<'_, &'a str>>
     """, renderLifetimes = true)
 
+    fun `test no infinite recursion on "impl Self 1"`() = testType("""
+        impl Self {}
+           //^ <unknown>
+    """)
+
+    fun `test no infinite recursion on "impl Self 2"`() = testType("""
+        struct S<T>(T);
+        impl S<Self> {}
+           //^ S<<unknown>>
+    """)
+
+    fun `test no infinite recursion on cyclic type`() = testType("""
+        type A = B;
+        type B = A;
+               //^ <unknown>
+    """)
+
+    fun `test no infinite recursion on cyclic type array`() = testType("""
+        type A = [B; 2];
+        type B = A;
+               //^ [<unknown>; 2]
+    """)
+
+    fun `test no infinite recursion on cyclic type tuple`() = testType("""
+        type A = (B, B);
+        type B = A;
+               //^ (<unknown>, <unknown>)
+    """)
+
+    fun `test no infinite recursion on cyclic type fn pointer`() = testType("""
+        type A = fn(B);
+        type B = A;
+               //^ fn(<unknown>)
+    """)
+
+    fun `test no infinite recursion on cyclic type with type argument`() = testType("""
+        struct S<T>(T);
+        type A = S<B>;
+        type B = A;
+               //^ S<<unknown>>
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
