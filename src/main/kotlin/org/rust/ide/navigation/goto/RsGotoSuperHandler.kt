@@ -5,6 +5,7 @@
 
 package org.rust.ide.navigation.goto
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -13,10 +14,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.RsAbstractable
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.superItem
+import org.rust.lang.core.psi.ext.*
+import org.rust.openapiext.toPsiFile
 
 class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     override fun startInWriteAction() = false
@@ -30,24 +29,30 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
     }
 }
 
-// public for testing
+@VisibleForTesting
 fun gotoSuperTarget(source: PsiElement): NavigatablePsiElement? {
-    val modOrAbstractable = PsiTreeUtil.getNonStrictParentOfType(
+    val item = PsiTreeUtil.getNonStrictParentOfType(
         source,
         RsAbstractable::class.java,
         RsMod::class.java
-    ) ?: return null
+    )
+    if (item is RsAbstractable) return when {
+        item.owner.isTraitImpl -> item.superItem
+        else -> gotoSuperTarget(item.parent)
+    }
 
-    if (modOrAbstractable is RsAbstractable) {
-        return if (modOrAbstractable.owner.isTraitImpl) {
-            modOrAbstractable.superItem
+    if (item is RsMod) {
+        return if (item is RsFile) {
+            if (item.isCrateRoot) {
+                val manifestPath = item.containingCargoPackage?.rootDirectory?.resolve("Cargo.toml") ?: return null
+                item.virtualFile?.fileSystem?.findFileByPath(manifestPath.toString())?.toPsiFile(item.project)
+            } else {
+                item.declaration
+            }
         } else {
-            gotoSuperTarget(modOrAbstractable.parent)
+            item.`super`
         }
     }
 
-    return when (val mod = modOrAbstractable as RsMod) {
-        is RsFile -> mod.declaration
-        else -> mod.`super`
-    }
+    return null
 }
