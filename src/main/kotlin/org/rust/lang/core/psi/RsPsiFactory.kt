@@ -27,7 +27,11 @@ import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.type
 
-class RsPsiFactory(private val project: Project, private val markGenerated: Boolean = true) {
+class RsPsiFactory(
+    private val project: Project,
+    private val markGenerated: Boolean = true,
+    private val eventSystemEnabled: Boolean = false
+) {
     fun createFile(text: CharSequence): RsFile =
         PsiFileFactory.getInstance(project)
             .createFileFromText(
@@ -35,7 +39,7 @@ class RsPsiFactory(private val project: Project, private val markGenerated: Bool
                 RsFileType,
                 text,
                 /*modificationStamp =*/ LocalTimeCounter.currentTime(), // default value
-                /*eventSystemEnabled =*/ false, // default value
+                /*eventSystemEnabled =*/ eventSystemEnabled, // `false` by default
                 /*markAsCopy =*/ markGenerated // `true` by default
             ) as RsFile
 
