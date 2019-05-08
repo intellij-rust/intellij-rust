@@ -1637,4 +1637,97 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             XFactory {}.create_x(123).drop();
         }
     """)
+
+    fun `test impl Drop for Trait E0120`() = checkErrors("""
+        trait Trait {}
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self);
+        }
+        impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for Trait {
+            fn drop(&mut self) {}
+        }
+    """)
+
+    fun `test impl Drop for primitive E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self);
+        }
+        impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for u32 {
+            fn drop(&mut self) {}
+        }
+    """)
+
+    fun `test impl Drop for reference E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self);
+        }
+        impl<'a> <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for &'a str {
+            fn drop(&mut self) {}
+        }
+    """)
+
+    fun `test impl Drop for array E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self);
+        }
+        impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for [u32; 1] {
+            fn drop(&mut self) {}
+        }
+    """)
+
+    fun `test impl Drop for pointer E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self);
+        }
+        impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for *u32 {
+            fn drop(&mut self) {}
+        }
+    """)
+
+    fun `test impl for blank E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        // E0120 should not be triggered
+        impl Drop for<error descr="'..' or <type reference> expected, got '{'"> </error>{}
+    """)
+
+    fun `test impl for struct E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        struct Foo; // E0120 should not get triggered
+        impl Drop for Foo {}
+    """)
+
+    fun `test impl for enum E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        enum Foo {} // E0120 should not get triggered
+        impl Drop for Foo {}
+    """)
+
+    fun `test impl for union E0120`() = checkErrors("""
+        #[lang = "drop"]
+        trait Drop {
+            fn drop(&mut self) {}
+        }
+        union Foo { x: u32 } // E0120 should not get triggered
+        impl Drop for Foo {}
+    """)
+
+    fun `test impl FakeDrop for Trait E0120`() = checkErrors("""
+        trait Drop {}
+        trait Trait {}
+        impl Drop for Trait {}
+    """)
 }
