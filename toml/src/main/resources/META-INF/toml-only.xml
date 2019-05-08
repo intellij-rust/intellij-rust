@@ -6,5 +6,6 @@
                                 implementationClass="org.rust.toml.CargoTomlCompletionContributor"/>
         <codeInsight.lineMarkerProvider language="TOML"
                                         implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
+        <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
     </extensions>
 </idea-plugin>

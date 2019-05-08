@@ -139,6 +139,19 @@ class RsGotoSuperHandlerTest : RsTestBase() {
             mod bar;
     """)
 
+    // Tried to mock Cargo this way but it didn't work (it does work when running IntellJ). Any tips?
+    fun `-test go to cargo toml`() = checkNavigationInFiles("""
+        //- src/main.rs
+        /*caret*/fn main() {}
+
+        //- Cargo.toml
+        [package]
+        name = "example"
+    """, """
+        [package]
+        name = "example"
+    """)
+
     private fun checkNavigationInFiles(@Language("Rust") fileTreeText: String, expected: String) {
         fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
         val target = gotoSuperTarget(myFixture.file)
