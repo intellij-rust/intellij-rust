@@ -103,7 +103,8 @@ private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Bo
 
     return parseExpandedTextWithContext(
         macroToExpand.expansionContext,
-        RsPsiFactory(macroToExpand.project),
+        // Without `eventSystemEnabled` file reformatting (that will be performed later) is too slow
+        RsPsiFactory(macroToExpand.project, markGenerated = false, eventSystemEnabled = true),
         expansionText
     )
 }
@@ -114,7 +115,8 @@ private fun reformatMacroExpansion(
 ): MacroExpansion {
     val file = expansion.file
         .takeIf { it.virtualFile == null }
-        ?: RsPsiFactory(expansion.file.project).createFile(expansion.file.text)
+        // Without `eventSystemEnabled` file reformatting is too slow
+        ?: RsPsiFactory(expansion.file.project, eventSystemEnabled = true).createFile(expansion.file.text)
     runWriteAction { formatPsiFile(file) }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)

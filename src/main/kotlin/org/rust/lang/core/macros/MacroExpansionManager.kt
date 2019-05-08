@@ -429,7 +429,7 @@ private class MacroExpansionServiceImplInner(
             if (!isExpansionModeNew) return
             val file = event.file as? RsFile ?: return
             val virtualFile = file.virtualFile ?: return
-            if (isExpansionFile(virtualFile)) return
+            if (virtualFile !is VirtualFileWithId || isExpansionFile(virtualFile)) return
 
             val element = when (event) {
                 is ChildAddition.After -> event.child
