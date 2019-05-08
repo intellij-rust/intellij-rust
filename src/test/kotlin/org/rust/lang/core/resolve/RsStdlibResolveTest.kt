@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.macros.MacroExpansionScope
@@ -18,6 +15,10 @@ import org.rust.lang.core.types.infer.TypeInferenceMarks
 class RsStdlibResolveTest : RsResolveTestBase() {
 
     override fun runTest() {
+        if (javaClass.getMethod(name).getAnnotation(MockEdition::class.java) != null) {
+            return super.runTest()
+        }
+
         for (edition in CargoWorkspace.Edition.values()) {
             project.cargoProjects.setEdition(edition)
             super.runTest()
@@ -40,6 +41,15 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn main() {}
     """)
+
+    // TODO handle 2018 edition in std itself
+    fun `test BTreeMap`() = expect<IllegalStateException> {
+    stubOnlyResolve("""
+    //- main.rs
+        use std::collections::BTreeMap;
+                                //^ lib.rs
+    """)
+    }
 
     fun `test resolve core`() = stubOnlyResolve("""
     //- main.rs
@@ -631,5 +641,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let a = f64::INFINITY;
         }              //^ ...num/f64.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extern crate std is not injected on 2018 edition`() = stubOnlyResolve("""
+    //- main.rs
+        use crate::std::mem;
+                 //^ unresolved
     """)
 }
