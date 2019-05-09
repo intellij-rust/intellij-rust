@@ -8,11 +8,8 @@ package org.rust.ide.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
-import org.rust.lang.core.psi.RS_EDITION_2018_KEYWORDS
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
-import org.rust.lang.core.psi.RsMacro
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.ext.*
 
 class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
@@ -36,7 +33,8 @@ class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
 
         fun isEdition2018Keyword(element: PsiElement): Boolean =
             (element.elementType == IDENTIFIER && element.text in EDITION_2018_RESERVED_NAMES &&
-                element.parent !is RsMacro && element.parent?.parent !is RsMacroCall ||
+                element.parent !is RsMacro && element.parent?.parent !is RsMacroCall &&
+                element.parent !is RsFieldLookup ||
                 element.elementType in RS_EDITION_2018_KEYWORDS) &&
                 element.ancestorStrict<RsUseItem>() == null
 
