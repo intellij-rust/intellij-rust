@@ -1320,6 +1320,10 @@ class RsFnInferenceContext(
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
+        if (fieldLookup.identifier?.text == "await" && fieldLookup.isEdition2018) {
+            return lookupFutureOutputTy(receiver)
+        }
+
         val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
         ctx.writeResolvedField(fieldLookup, variants.map { it.element })
         val field = variants.firstOrNull()
