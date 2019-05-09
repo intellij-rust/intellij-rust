@@ -242,8 +242,8 @@ class CargoTestEventsConverter(
                 .addAttribute("details", failedMessage)
             val (left, right) = extractDiffResult(failedMessage) ?: return builder
             return builder
-                .addAttribute("expected", left)
-                .addAttribute("actual", right)
+                .addAttribute("left", left)
+                .addAttribute("right", right)
         }
 
         private fun createTestFinishedMessage(test: NodeId, duration: String): ServiceMessageBuilder =
