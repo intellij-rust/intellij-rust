@@ -1765,4 +1765,24 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for Foo<T> {}
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo<T> {}
 """)
+
+    fun `test impl unknown E0118`() = checkErrors("""
+        impl Foo {} // Should not report errors for unresolved types
+    """)
+
+    fun `test impl u8 E0118`() = checkErrors("""
+        impl u8 {}
+    """)
+
+    fun `test impl tuple E0118`() = checkErrors("""
+        impl (u8, u8) {}
+    """)
+
+    fun `test impl array E0118`() = checkErrors("""
+        impl [u8; 1] {}
+    """)
+
+    fun `test impl pointer E0118`() = checkErrors("""
+        impl *const u8 {}
+    """)
 }

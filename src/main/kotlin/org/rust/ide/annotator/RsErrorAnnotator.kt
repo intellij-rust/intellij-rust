@@ -327,6 +327,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
+        checkImplForNonAdtError(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait ?: return
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
@@ -353,6 +354,18 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                 RsDiagnostic.TraitMissingUnsafeImplAttributeError(traitRef, attrRequiringUnsafeImpl).addToHolder(holder)
         }
     }
+
+    // E0118: Can impl only `struct`s, `enum`s and `union`s (when not implementing a trait)
+    private fun checkImplForNonAdtError(holder: AnnotationHolder, impl: RsImplItem) {
+        if (impl.`for` != null) {
+            val typeRef = impl.typeReference ?: return
+            val type = typeRef.type
+            if (type !is TyAdt && type != TyUnknown) {
+                RsDiagnostic.ImplForNonAdtError(typeRef).addToHolder(holder)
+            }
+        }
+    }
+
 
     // E0120: Drop can be only implemented by structs and enums
     private fun checkImplDropForNonAdtError(holder: AnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
