@@ -117,4 +117,9 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
     fun `test cfg on file inner`() = checkContainsCompletion("cfg", """
         #![cf/*caret*/]
     """)
+
+    fun `test deprecated`() = @Suppress("DEPRECATION") checkSingleCompletion("deprecated", """
+        #[dep/*caret*/]
+        mod foo {}
+    """)
 }

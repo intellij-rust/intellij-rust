@@ -60,7 +60,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         onTrait to "rustc_on_unimplemented",
         onMacro to "macro_export",
         onStatic to "export_name link_section",
-        onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny()",
+        onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny() deprecated",
         onTupleStruct to "simd",
         onDropFn to "unsafe_destructor_blind_to_params"
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
