@@ -490,6 +490,43 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
+        checkStartAttribute(holder, attr)
+    }
+
+    // E0132: Invalid `start` attribute
+    private fun checkStartAttribute(holder: AnnotationHolder, attr: RsAttr) {
+        if (attr.metaItem.name != "start") return
+
+        START.check(holder, attr.metaItem, "#[start] function")
+
+        when (val owner = attr.owner) {
+            is RsFunction -> {
+                // Check if signature matches `fn(isize, *const *const u8) -> isize`
+                val params = owner.valueParameters
+                if (owner.returnType != TyInteger.ISize) {
+                    RsDiagnostic.InvalidStartAttrError.ReturnMismatch(owner.retType?.typeReference ?: owner.identifier)
+                        .addToHolder(holder)
+                }
+                if (params.size != 2) {
+                    RsDiagnostic.InvalidStartAttrError.InvalidParam(owner.identifier)
+                        .addToHolder(holder)
+                    // Don't check specific param types if param count is invalid to avoid overloading the user
+                    // with errors
+                    return
+                }
+                if (params[0].typeReference?.type != TyInteger.ISize) {
+                    RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
+                        .addToHolder(holder)
+                }
+                if (params[1].typeReference?.type != TyPointer(TyPointer(TyInteger.U8, Mutability.IMMUTABLE), Mutability.IMMUTABLE)) {
+                    RsDiagnostic.InvalidStartAttrError.InvalidParam(params[1].typeReference ?: params[1], 1)
+                        .addToHolder(holder)
+                }
+            }
+            else ->
+                RsDiagnostic.InvalidStartAttrError.InvalidOwner(attr.metaItem.identifier ?: attr.metaItem)
+                    .addToHolder(holder)
+        }
     }
 
     // E0084: Enum with no variants can't have `repr` attribute

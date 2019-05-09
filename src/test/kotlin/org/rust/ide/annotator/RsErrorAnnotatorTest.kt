@@ -466,7 +466,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     @MockRustcVersion("1.34.0-nightly")
     fun `test name duplication in generic params E0403`() = checkErrors("""
         #![feature(const_generics)]
-        
+
         fn f1<T1, T2>() {}
         fn f2<T1, const T2: i32>() {}
         fn f3<const T1: i32, const T2: i32>() {}
@@ -2020,4 +2020,79 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait T<const C: i32> {}
         enum E<const C: i32> {}
     """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test stable attr on invalid owner E0132`() = checkErrors("""
+        #![feature(start)]
+        #[<error descr="Start attribute can be placed only on functions [E0132]">start</error>]
+        struct Foo;
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test stable attr on fn with return mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn test_name(_argc: isize, _argv: *const *const u8) -> <error descr="Functions with a `start` attribute must return `isize` [E0132]">u32</error> { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test stable attr on fn without return E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn <error descr="Functions with a `start` attribute must return `isize` [E0132]">test_name</error>(_argc: isize, _argv: *const *const u8) { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test inner stable attr on fn with return mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        fn test_name(_argc: isize, _argv: *const *const u8) -> <error descr="Functions with a `start` attribute must return `isize` [E0132]">u32</error> {
+            #![start]
+            0
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test param count mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn <error descr="Functions with a `start` attribute must have the following signature: `fn(isize, *const *const u8) -> isize` [E0132]">test_name</error>(_argc: isize, _argv: *const *const u8, foo: bool) -> isize {
+            0
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test 1st param mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn lets_go(_argc: <error descr="Functions with a `start` attribute must have `isize` as first parameter [E0132]">usize</error>, _argv: *const *const u8) -> isize { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test 2nd param mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn lets_go(_argc: isize, _argv: <error descr="Functions with a `start` attribute must have `*const *const u8` as second parameter [E0132]">*const *const bool</error>) -> isize { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test all params mismatch E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn lets_go(_argc: <error descr="Functions with a `start` attribute must have `isize` as first parameter [E0132]">usize</error>, _argv: <error descr="Functions with a `start` attribute must have `*const *const u8` as second parameter [E0132]">*const *const bool</error>) -> isize { 0 }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test valid E0132`() = checkErrors("""
+        #![feature(start)]
+        #[start]
+        fn valid(_argc: isize, _argv: *const *const u8) -> isize { 0 }
+    """)
+
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test missing feature E0132`() = checkErrors("""
+        #[<error descr="#[start] function is experimental [E0658]">start</error>]
+        fn valid(_argc: isize, _argv: *const *const u8) -> isize { 0 }
+    """)
+
 }
