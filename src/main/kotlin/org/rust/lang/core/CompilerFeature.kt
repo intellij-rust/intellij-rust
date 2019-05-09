@@ -52,13 +52,16 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
         val diagnostic = when (availability(startElement)) {
             NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
             CAN_BE_ADDED -> {
-                val fix = AddFeatureAttributeFix(name, startElement)
+                val fix = addFeatureFix(startElement)
                 RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
             }
             else -> return
         }
         diagnostic.addToHolder(holder)
     }
+
+    fun addFeatureFix(element: PsiElement) =
+        AddFeatureAttributeFix(name, element)
 }
 
 enum class FeatureState {
