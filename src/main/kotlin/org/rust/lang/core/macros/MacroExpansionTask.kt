@@ -338,7 +338,7 @@ object ExpansionPipeline {
                 if (expansionText == oldExpansionText) {
                     val oldRanges = oldExpansionFile.loadRangeMap()
                     return if (ranges != oldRanges) {
-                        Stage2OkRangesOnly(call, info, callHash, defHash, oldExpansionFile, ranges)
+                        Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges)
                     } else {
                         EmptyPipeline
                     }
@@ -349,7 +349,7 @@ object ExpansionPipeline {
         }
 
         private fun nextStageFail(callHash: HashCode?, defHash: HashCode?): Pipeline.Stage2WriteToFs =
-            Stage2Fail(call, info, callHash, defHash)
+            Stage2Fail(info, callHash, defHash)
 
         private fun nextStageOk(
             callHash: HashCode?,
@@ -357,14 +357,13 @@ object ExpansionPipeline {
             expansionText: String,
             ranges: RangeMap
         ): Pipeline.Stage2WriteToFs =
-            Stage2Ok(call, info, callHash, defHash, expansionText, ranges)
+            Stage2Ok(info, callHash, defHash, expansionText, ranges)
 
         override fun toString(): String =
             "ExpansionPipeline.Stage1(call=${call.path.referenceName}!(${call.macroBody}))"
     }
 
     class Stage2Ok(
-        private val call: RsMacroCall,
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
@@ -381,12 +380,11 @@ object ExpansionPipeline {
             } else {
                 fs.createFileWithContent(expansionText)
             }
-            return Stage3(call, info, callHash, defHash, file, ranges)
+            return Stage3(info, callHash, defHash, file, ranges)
         }
     }
 
     class Stage2OkRangesOnly(
-        private val call: RsMacroCall,
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
@@ -395,12 +393,11 @@ object ExpansionPipeline {
     ) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
             val file = fs.resolve(oldExpansionFile)
-            return Stage3(call, info, callHash, defHash, file, ranges)
+            return Stage3(info, callHash, defHash, file, ranges)
         }
     }
 
     class Stage2Fail(
-        private val call: RsMacroCall,
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?
@@ -410,12 +407,11 @@ object ExpansionPipeline {
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 fs.deleteFile(fs.resolve(oldExpansionFile))
             }
-            return Stage3(call, info, callHash, defHash, null, null)
+            return Stage3(info, callHash, defHash, null, null)
         }
     }
 
     class Stage3(
-        private val call: RsMacroCall,
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
@@ -425,7 +421,7 @@ object ExpansionPipeline {
         override fun save(storage: ExpandedMacroStorage) {
             checkWriteAccessAllowed()
             val virtualFile = expansionFile?.toVirtualFile()
-            storage.addExpandedMacro(call, info, callHash, defHash, virtualFile, ranges)
+            storage.addExpandedMacro(info, callHash, defHash, virtualFile, ranges)
             // If a document exists for expansion file (e.g. when AST tree is loaded), the changes in
             // a virtual file will not be committed to the PSI immediately. We have to commit it manually
             // to see the changes (or somehow wait for DocumentCommitThread, but it isn't possible for now)

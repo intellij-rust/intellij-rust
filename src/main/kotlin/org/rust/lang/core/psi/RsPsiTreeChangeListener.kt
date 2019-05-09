@@ -103,7 +103,7 @@ sealed class RsPsiTreeChangeEvent {
         val parent: PsiElement,
         /**
          * "generic change" event means that "something changed inside an element" and
-         * sends after all events for concrete PSI changes in the element.
+         * sends before/after all events for concrete PSI changes in the element.
          */
         val isGenericChange: Boolean
     ) : RsPsiTreeChangeEvent() {
