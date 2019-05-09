@@ -10,11 +10,9 @@ import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.rust.lang.core.psi.RsLabel
-import org.rust.lang.core.psi.RsLabelDecl
-import org.rust.lang.core.psi.RsLifetime
-import org.rust.lang.core.psi.RsLifetimeParameter
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.impl.RsModItemImpl
 
 class RsRenameProcessor : RenamePsiElementProcessor() {
 
@@ -35,6 +33,23 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         renameCallback.pass(substituteElementToRename(element, editor))
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
+        /*if (element is RsFile && element.name == "mod.rs" && element.parent != null)
+        {
+            super.prepareRenaming(element.parent!!, newName, allRenames)
+            return
+        }*/
+
+        // If a mod without a reference is renamed, try to rename a directory with the same name
+        if (element is RsModItemImpl)
+        {
+            val modDirectory = element.mod.containingFile.containingDirectory
+            element.name?.let {
+                modDirectory.findSubdirectory(it)?.let { dir ->
+                    allRenames.put(dir, newName)
+                }
+            }
+        }
+
         super.prepareRenaming(element, newName, allRenames)
         if (element !is RsAbstractable) return
         val trait = (element.owner as? RsAbstractableOwner.Trait)?.trait ?: return

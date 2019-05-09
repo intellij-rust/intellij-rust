@@ -9,6 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.impl.RsModItemImpl
 
 class RenameTest : RsTestBase() {
     fun `test function`() = doTest("spam", """
@@ -147,6 +148,55 @@ class RenameTest : RsTestBase() {
         check(mod.name == "foo")
         val file = mod.reference.resolve()!!
         myFixture.renameElement(file, "bar")
+    }
+
+    fun `test rename containing mod declaration`() = checkByDirectory("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use bar::Spam;
+        mod bar;
+
+        fn main() { let _ = Spam::Quux; }
+    //- bar/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
+        val mod = myFixture.configureFromTempProjectFile("main.rs").descendantsOfType<RsModDeclItem>().single()
+        check(mod.name == "foo")
+        val file = mod.reference.resolve()!!
+        myFixture.renameElement(file, "bar")
+    }
+
+    fun `test rename nested mod declaration`() = checkByDirectory("""
+    //- main.rs
+        use foo::bar::Spam;
+        mod foo {
+            mod bar;
+        }
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo/bar.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use foo2::bar::Spam;
+        mod foo2 {
+            mod bar;
+        }
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo2/bar.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
+        val mod = myFixture.configureFromTempProjectFile("main.rs").descendantsOfType<RsModItemImpl>().single()
+        check(mod.name == "foo")
+        myFixture.renameElement(mod, "foo2")
     }
 
     fun `test rename file to mod_rs`() = checkByDirectory("""
