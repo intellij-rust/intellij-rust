@@ -112,6 +112,7 @@
         <lang.findUsagesProvider language="Rust" implementationClass="org.rust.ide.search.RsFindUsagesProvider"/>
         <findUsagesHandlerFactory implementation="org.rust.ide.search.RsFindUsagesHandlerFactory"/>
         <usageTypeProvider implementation="org.rust.ide.search.RsUsageTypeProvider"/>
+        <readWriteAccessDetector implementation="org.rust.ide.search.RsReadWriteAccessDetector" id="rust"/>
 
         <!-- Todos -->
 
