@@ -91,4 +91,12 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
             foo!(async)
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test await postfix syntax`() = checkErrors("""
+        fn main() {
+            let x = f().await;
+            let y = f().<error descr="`await` is reserved keyword in Edition 2018">await</error>();
+        }
+    """)
 }
