@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
@@ -21,7 +22,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.StubbedSpine
-import com.intellij.reference.SoftReference
 import com.intellij.util.indexing.FileBasedIndexScanRunnableCollector
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -44,13 +44,15 @@ import java.io.FileNotFoundException
 import java.lang.ref.WeakReference
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.locks.ReentrantLock
 import java.util.zip.DeflaterOutputStream
 import java.util.zip.InflaterInputStream
+import kotlin.concurrent.withLock
 
 class ExpandedMacroStorage(val project: Project) {
     // Data structures are guarded by the platform RWLock
     private val sourceFiles: TIntObjectHashMap<SourceFile> = TIntObjectHashMap()
-    private val expandedFileToInfo: TIntObjectHashMap<ExpandedMacroInfo> = TIntObjectHashMap()
+    private val expandedFileToInfo: TIntObjectHashMap<ExpandedMacroInfoImpl> = TIntObjectHashMap()
     private val stepped: Array<MutableList<SourceFile>?> = arrayOfNulls(DEFAULT_RECURSION_LIMIT)
 
     val isEmpty: Boolean get() = sourceFiles.isEmpty
@@ -59,7 +61,7 @@ class ExpandedMacroStorage(val project: Project) {
         for (sf in sfs) {
             sourceFiles.put(sf.fileId, sf)
             getOrPutStagedList(sf).add(sf)
-            sf.forEachInfo { if (it.fileId > 0) expandedFileToInfo.put(it.fileId, it) }
+            sf.forEachInfoNotSync { if (it.fileId > 0) expandedFileToInfo.put(it.fileId, it) }
         }
     }
 
@@ -85,25 +87,31 @@ class ExpandedMacroStorage(val project: Project) {
     }
 
     fun makeExpansionTask(map: Map<VirtualFile, List<RsMacroCall>>): Sequence<List<Extractable>> {
-        val v2 = WriteAction.computeAndWait<List<Pair<SourceFile, List<RsMacroCall>>>, Throwable> {
-            map.entries.mapNotNull { (file, calls) ->
-                getOrCreateSourceFile(file)?.let { it to calls }
+        val v2 = WriteAction.computeAndWait<MutableMap<SourceFile, List<RsMacroCall>>, Throwable> {
+            map.mapKeysTo(HashMap<SourceFile, List<RsMacroCall>>()) { (file, _) ->
+                getOrCreateSourceFile(file) ?: error("Non-root source files are not supported")
             }
         }
         return runReadActionInSmartMode(project) {
-            v2.forEach { (file, calls) -> file.rebind(calls) }
-            makeValidationTask()
+            makeValidationTask(false, v2)
         }
     }
 
-    fun makeValidationTask(workspaceOnly: Boolean = false): Sequence<List<Extractable>> {
+    fun makeValidationTask(
+        workspaceOnly: Boolean,
+        map: MutableMap<SourceFile, List<RsMacroCall>> = mutableMapOf()
+    ): Sequence<List<Extractable>> {
         checkReadAccessAllowed()
 
-        return stepped.asSequence().map { step ->
+        return stepped.asSequence().withIndex().map { (i, step) ->
+            // Release memory. [map] contains prefetched calls only for the first step, so clear it on the second step
+            if (i == 1) map.clear()
+
             step?.map { sf ->
                 object : Extractable {
                     override fun extract(): List<Pipeline.Stage1ResolveAndExpand> {
-                        return sf.extract(workspaceOnly)
+                        val calls = if (sf.depth == 0) map[sf] else null
+                        return sf.extract(workspaceOnly, calls)
                     }
                 }
             } ?: emptyList()
@@ -111,25 +119,25 @@ class ExpandedMacroStorage(val project: Project) {
     }
 
     fun addExpandedMacro(
-        call: RsMacroCall,
         oldInfo: ExpandedMacroInfo,
         callHash: HashCode?,
         defHash: HashCode?,
         expansionFile: VirtualFile?,
         ranges: RangeMap?
-    ): ExpandedMacroInfo {
+    ): ExpandedMacroInfoImpl {
         checkWriteAccessAllowed()
+        @Suppress("NAME_SHADOWING")
+        val oldInfo = oldInfo as ExpandedMacroInfoImpl
 
         val sourceFile = oldInfo.sourceFile
-        val newInfo = ExpandedMacroInfo(
+        val newInfo = ExpandedMacroInfoImpl(
             sourceFile,
             expansionFile,
             defHash,
             callHash,
-            oldInfo.stubIndex
+            oldInfo.macroCallStubIndex,
+            oldInfo.macroCallStrongRef
         )
-
-        newInfo.bindTo(call)
 
         sourceFile.replaceInfo(oldInfo, newInfo)
 
@@ -151,6 +159,8 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun removeInvalidInfo(oldInfo: ExpandedMacroInfo, clean: Boolean) {
         checkWriteAccessAllowed()
+        @Suppress("NAME_SHADOWING")
+        val oldInfo = oldInfo as ExpandedMacroInfoImpl
 
         expandedFileToInfo.remove(oldInfo.fileId)
         val sf = oldInfo.sourceFile
@@ -191,11 +201,6 @@ class ExpandedMacroStorage(val project: Project) {
         val sf = getSourceFile(file) ?: return null
 
         return sf.getInfoForCall(call)
-    }
-
-    fun unbindPsi() {
-        checkReadAccessAllowed()
-        sourceFiles.forEachValue { it.unbindPsi(); true }
     }
 
     companion object {
@@ -245,21 +250,66 @@ class ExpandedMacroStorage(val project: Project) {
     }
 }
 
+/**
+ * A [SourceFile] object is associated to any Rust file that contains macro calls. The main purpose
+ * of [SourceFile] is to map between macro calls and expansions ([RsMacroCall] <-> [ExpandedMacroInfoImpl]).
+ *
+ * There are 3 basic mechanisms to keep mapping between macro call and expansion:
+ * - **Via stub ids**. Each stub has an index (aka *id*, incremental integer given in DFS order; see
+ *   [calcStubIndex]). A PSI element can be retrieved by such index if the PSI file has not been changed
+ *   since receipt of the stub index. We check that PSI file is not changed by the modification stamp,
+ *   see [getActualModStamp]
+ * - **Via strong PSI refs**. Before any PSI modification, a strong ref to each known [RsMacroCall] in
+ *   the file is stored (see [ExpandedMacroInfoImpl.macroCallStrongRef]). Then, after the end of PSI
+ *   modification, stub indices are restored from the stored refs. See [switchToStrongRefsTemporary]
+ * - **Hash-based recover**. If the refs are lost, they can be recovered. Each [ExpandedMacroInfoImpl] stores
+ *   hashes of a macro call and a macro definition. They are mostly used to check whether a macro should be
+ *   re-expanded (if the hash of the body/definition is changed) but can be also used to recover
+ *   links to a PSI. See [recoverRefs]. References may be lost when modifying stub-based PSI.
+ *
+ * # Threading notes:
+ * There are some mutable fields:
+ * - [modificationStamp]
+ * - [infos] (list content)
+ * - [ExpandedMacroInfoImpl.macroCallStubIndex]
+ * - [ExpandedMacroInfoImpl.macroCallStrongRef]
+ *
+ * They:
+ * - can be accessed (read or mutated) in the write action without any additional synchronization
+ * - can be accessed (read or mutated) in the read action under the [lock]
+ * - cannot be accessed outside of read/write action
+ *
+ * These invariants are checked by [assertSync] method.
+ */
 class SourceFile(
     val storage: ExpandedMacroStorage,
     val file: VirtualFile,
     val depth: Int,
-    private var fresh: Boolean = true,
-    private var modificationStamp: Long = -1,
-    private val infos: MutableList<ExpandedMacroInfo> = mutableListOf()
+    private var _modificationStamp: Long = FRESH_FLAG,
+    private val _infos: MutableList<ExpandedMacroInfoImpl> = mutableListOf()
 ) {
-    private var cachedPsi: SoftReference<RsFile>? = null
+    private val lock = ReentrantLock()
 
     private val fileUrl: String get() = file.url
     val fileId: Int get() = file.fileId
+    val project: Project get() = storage.project
 
-    val project: Project
-        get() = storage.project
+    private var modificationStamp: Long
+        get() {
+            assertSync()
+            return _modificationStamp
+        }
+        set(value) {
+            assertSync()
+            _modificationStamp = value
+        }
+
+    private val infos: MutableList<ExpandedMacroInfoImpl>
+        get() {
+            // We really should check access to [_infos] contents instead of [_infos] itself
+            assertSync()
+            return _infos
+        }
 
     private val rootSourceFile: SourceFile by lazy(LazyThreadSafetyMode.PUBLICATION) {
         findRootSourceFile()
@@ -269,196 +319,353 @@ class SourceFile(
     private val isBelongToWorkspace: Boolean
         get() = rootSourceFile.loadPsi()?.containingCargoTarget?.pkg?.origin == PackageOrigin.WORKSPACE
 
-    @Synchronized
-    fun forEachInfo(action: (ExpandedMacroInfo) -> Unit) {
-        infos.forEach(action)
+    /**
+     * Checks that [modificationStamp], [infos] content, [ExpandedMacroInfoImpl.macroCallStrongRef] or
+     * [ExpandedMacroInfoImpl.macroCallStubIndex] can be accessed. See docs for [SourceFile] for more info
+     */
+    private fun assertSync() {
+        val app = ApplicationManager.getApplication()
+        check(app.isWriteAccessAllowed || lock.isHeldByCurrentThread && app.isReadAccessAllowed)
     }
 
-    @Synchronized
-    fun replaceInfo(oldInfo: ExpandedMacroInfo, newInfo: ExpandedMacroInfo) {
-        check(!fresh)
+    private inline fun <T> sync(action: () -> T): T =
+        lock.withLock(action)
+
+    private inline fun switchToStubRefsInReadAction(
+        kind: RefKind,
+        action: (MutableList<ExpandedMacroInfoImpl>) -> Unit
+    ) {
+        checkReadAccessAllowed()
+        sync {
+            if (getRefKind() != kind) return
+            action(infos)
+            modificationStamp = getActualModStamp()
+        }
+    }
+
+    private inline fun switchRefsInWriteAction(action: (MutableList<ExpandedMacroInfoImpl>) -> Long) {
+        // No synchronization needed in the write action
+        checkWriteAccessAllowed()
+        modificationStamp = action(infos)
+    }
+
+    private inline fun <T> syncAndMapInfos(mapper: (ExpandedMacroInfoImpl) -> T): List<T> = sync {
+        checkReadAccessAllowed()
+        return infos.map(mapper)
+    }
+
+    // Used only during deserialization
+    fun forEachInfoNotSync(action: (ExpandedMacroInfoImpl) -> Unit) {
+        _infos.forEach(action)
+    }
+
+    fun isEmpty(): Boolean = sync {
+        infos.isEmpty()
+    }
+
+    private enum class RefKind {
+        /** The [file] is not valid (e.g. is deleted) */
+        INVALID,
+        /** No refs created yet */
+        FRESH,
+        /** Uses [ExpandedMacroInfoImpl.macroCallStrongRef] */
+        STRONG,
+        /** Uses [ExpandedMacroInfoImpl.macroCallStubIndex] */
+        STUB,
+        /** Refs was lost and should be recovered with [recoverRefs] */
+        LOST
+    }
+
+    private fun getRefKind(): RefKind {
+        assertSync()
+        if (!file.isValid || project.isDisposed) return RefKind.INVALID
+
+        return when (modificationStamp) {
+            STRONG_REFS_FLAG -> RefKind.STRONG
+            FORCE_RELINK_FLAG -> RefKind.LOST
+            FRESH_FLAG -> RefKind.FRESH
+            getActualModStamp() -> RefKind.STUB
+            else -> if (infos.isEmpty()) RefKind.FRESH else RefKind.LOST
+        }
+    }
+
+    private interface RefMatcher<T> {
+        val allowFreshRebind: Boolean get() = false
+        fun none(): T
+        fun strong(infos: List<ExpandedMacroInfoImpl>): T
+        fun stub(psi: RsFile, infos: List<ExpandedMacroInfoImpl>): T
+    }
+
+    private fun <T> matchRefs(
+        matcher: RefMatcher<T>,
+        prefetchedCalls: List<RsMacroCall>? = null
+    ): T {
+        checkReadAccessAllowed()
+        val psi = loadPsi() ?: return matcher.none()
+        val kind = sync {
+            val kind = getRefKind()
+            // `STRONG -> STUB` transition is allowed in the read action, so this must
+            // be called in the same `sync` section where `getRefKind` called
+            if (kind == RefKind.STRONG) return matcher.strong(infos)
+            kind
+        }
+        return when (kind) {
+            RefKind.INVALID -> matcher.none()
+            RefKind.FRESH -> {
+                if (!matcher.allowFreshRebind) return matcher.none()
+                // Only `FRESH -> STUB` transition is allowed in the read action, so synchronization
+                // isn't needed - multiple concurrent invocations will result to the same values
+                freshExtractMacros(prefetchedCalls)
+                matcher.stub(psi, _infos)
+            }
+            RefKind.STRONG -> error("unreachable") // handled above
+            RefKind.STUB -> {
+                Testmarks.stubBasedRefMatch.hit()
+                // Transition to any state from `STUB` is forbidden in the read action
+                matcher.stub(psi, _infos)
+            }
+            RefKind.LOST -> {
+                // Only `LOST -> STUB` transition allowed in the read action, so synchronization
+                // isn't needed - multiple concurrent invocations will result to the same values
+                recoverRefs(prefetchedCalls)
+                matcher.stub(psi, _infos)
+            }
+        }
+    }
+
+    fun replaceInfo(oldInfo: ExpandedMacroInfoImpl, newInfo: ExpandedMacroInfoImpl) {
+        checkWriteAccessAllowed()
+        val infos = infos // No synchronization needed in the write action
         val oldInfoIndex = infos.indexOf(oldInfo)
         if (oldInfoIndex != -1) {
             infos[oldInfoIndex] = newInfo
         } else {
             infos.add(newInfo)
         }
-        detectDuplicates()
     }
 
-    @Synchronized
-    fun removeInfo(info: ExpandedMacroInfo) {
-        check(!fresh)
-        infos.remove(info)
+    fun removeInfo(info: ExpandedMacroInfoImpl) {
+        checkWriteAccessAllowed()
+        infos.remove(info) // No synchronization needed in the write action
     }
 
-    fun isEmpty(): Boolean =
-        infos.isEmpty()
-
-    fun extract(workspaceOnly: Boolean): List<Pipeline.Stage1ResolveAndExpand> {
+    fun extract(workspaceOnly: Boolean, calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand> {
         if (workspaceOnly && !isBelongToWorkspace) {
             // very hot path; the condition should be as fast as possible
             return emptyList()
         }
 
-        synchronized(this) {
-            rebind()
-            return infos.map { info ->
-                info.makePipeline()
-            }
-        }
+        return extract(calls)
     }
 
-    @Synchronized
-    fun rebind(calls: List<RsMacroCall>? = null) {
+    private fun extract(calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand> {
         checkReadAccessAllowed() // Needed to access PSI
         checkIsSmartMode(project)
 
-        val isIndexedFile = FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) ||
-            project.macroExpansionManager.isExpansionFile(file)
+        val isIndexedFile = file.isValid && (
+            FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) ||
+                project.macroExpansionManager.isExpansionFile(file))
+
         if (!isIndexedFile) {
             // The file is now outside of the project, so we should not access it.
             // All infos of this file should be invalidated
-            for (info in infos) {
-                info.cachedMacroCall = null
-                info.stubIndex = -1
+            return syncAndMapInfos { info ->
+                info.markInvalid()
+                info.makeInvalidationPipeline()
             }
-            return
         }
 
-        if (isBoundToPsi()) {
-            check(!fresh)
-            return // up to date
-        }
-
-        if (!file.isValid) return
-
-        detectDuplicates()
-        ProgressManager.getInstance().executeNonCancelableSection {
-            when {
-                fresh -> {
-                    if (infos.isNotEmpty()) error("impossible")
-                    freshRebind(calls)
-                }
-                areStubIndicesActual() && infos.all { it.stubIndex != -1 } -> {
-                    stubBasedRebind()
-                    detectDuplicates()
-                }
-                else -> {
-                    hashBasedRebind(calls)
-                    detectDuplicates()
-                }
-            }
-
-            fresh = false
-        }
+        return matchRefs(MakePipeline(), calls)
     }
 
-    private fun stubBasedRebind() {
-        Testmarks.stubBasedRebind.hit()
-        val psi = recoverPsi() ?: return
-        for (info in infos) {
-            val stubIndex = info.stubIndex
-            if (stubIndex != -1) {
-                val call = psi.stubbedSpine.getMacroCall(stubIndex) ?: return
-                info.bindTo(call)
+    private inner class MakePipeline : RefMatcher<List<Pipeline.Stage1ResolveAndExpand>> {
+        override val allowFreshRebind: Boolean get() = true
+
+        override fun none(): List<Pipeline.Stage1ResolveAndExpand> =
+            syncAndMapInfos { it.makeInvalidationPipeline() }
+
+        override fun strong(infos: List<ExpandedMacroInfoImpl>): List<Pipeline.Stage1ResolveAndExpand> =
+            infos.map { it.makePipeline(it.derefMacroCall()) }
+
+        override fun stub(psi: RsFile, infos: List<ExpandedMacroInfoImpl>): List<Pipeline.Stage1ResolveAndExpand> {
+            return infos.map { info ->
+                val stubIndex = info.macroCallStubIndex
+                val call = if (stubIndex != -1) {
+                    psi.stubbedSpine.getMacroCall(stubIndex) ?: return emptyList()
+                } else {
+                    null
+                }
+                info.makePipeline(call)
             }
         }
     }
 
-    private fun freshRebind(prefetchedCalls: List<RsMacroCall>?) {
-        val psi = recoverPsi() ?: return
+    private fun freshExtractMacros(prefetchedCalls: List<RsMacroCall>?) {
+        val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
-        for (call in calls) {
-            val info1 = ExpandedMacroInfo(this, null, null, call.bodyHash)
-            info1.bindAndUpdateStubIndex(call)
-            this.infos.add(info1)
+        val newInfos = calls.map { call ->
+            ExpandedMacroInfoImpl(this, null, null, call.bodyHash, call.calcStubIndex())
         }
-
-        modificationStamp = getActualModStamp()
+        switchToStubRefsInReadAction(RefKind.FRESH) { infos ->
+            check(infos.isEmpty())
+            infos.addAll(newInfos)
+        }
     }
 
-    private fun hashBasedRebind(prefetchedCalls: List<RsMacroCall>?) {
-        Testmarks.hashBasedRebind.hit()
+    /**
+     * Threading notes:
+     * We don't want to execute the entire method in synchronized section because it performs macro name
+     * resolution (heavy stuff). All changes are published in the last [switchToStubRefsInReadAction] call
+     */
+    private fun recoverRefs(prefetchedCalls: List<RsMacroCall>?) {
+        checkReadAccessAllowed()
+        Testmarks.refsRecover.hit()
 
-        val psi = recoverPsi() ?: return
+        val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
-        val unboundInfos = infos.toMutableList()
-        unboundInfos.forEach {
-            it.cachedMacroCall = null
-            it.stubIndex = -1
-        }
+        val unboundInfos = sync { infos.toMutableList() }
         val orphans = mutableListOf<RsMacroCall>()
+        val bindList = mutableListOf<Pair<ExpandedMacroInfoImpl, Int>>()
         for (call in calls) {
             val info = unboundInfos.find { it.isUpToDate(call, call.resolveToMacro()) }
             if (info != null) {
-                Testmarks.hashBasedRebindExactHit.hit()
+                Testmarks.refsRecoverExactHit.hit()
                 unboundInfos.remove(info)
-                info.bindAndUpdateStubIndex(call)
+                bindList += Pair(info, call.calcStubIndex())
             } else {
                 orphans += call
             }
         }
 
+        val infosToAdd = mutableListOf<ExpandedMacroInfoImpl>()
+
         for (call in orphans) {
             val info = unboundInfos.find { it.callHash == call.bodyHash }
             if (info != null) {
-                Testmarks.hashBasedRebindCallHit.hit()
+                Testmarks.refsRecoverCallHit.hit()
                 unboundInfos.remove(info)
-                info.bindAndUpdateStubIndex(call)
+                bindList += Pair(info, call.calcStubIndex())
             } else {
-                Testmarks.hashBasedRebindNotHit.hit()
-                val info1 = ExpandedMacroInfo(this, null, null, call.bodyHash)
-                info1.bindAndUpdateStubIndex(call)
-                this.infos.add(info1)
+                Testmarks.refsRecoverNotHit.hit()
+                infosToAdd += ExpandedMacroInfoImpl(this, null, null, call.bodyHash, call.calcStubIndex())
             }
         }
 
-        modificationStamp = getActualModStamp()
-    }
-
-    private fun detectDuplicates() {
-        if (!isUnitTestMode) return
-        val set = mutableSetOf<RsMacroCall>()
-        for (info in infos) {
-            val element = info.getMacroCall() ?: continue
-            if (!set.add(element)) {
-                error("Duplicate ${element.text}")
+        switchToStubRefsInReadAction(RefKind.LOST) { infos ->
+            for ((info, callStubIndex) in bindList) {
+                info.macroCallStrongRef = null
+                info.macroCallStubIndex = callStubIndex
             }
+            unboundInfos.forEach {
+                it.markInvalid()
+            }
+            infos.addAll(infosToAdd)
         }
     }
 
-    private fun isBoundToPsi() =
-        derefPsi() != null && (infos.isEmpty() || infos.any { it.cachedMacroCall?.get()?.isValid == true })
-
-    private fun derefPsi(): RsFile? = cachedPsi?.get()
-
-    private fun areStubIndicesActual() =
-        file.isValid && modificationStamp != -1L && modificationStamp == getActualModStamp()
+    private fun areStubIndicesActual(): Boolean {
+        val modificationStamp = modificationStamp
+        return modificationStamp >= 0 && modificationStamp == getActualModStamp()
+    }
 
     private fun getActualModStamp(): Long =
-        loadPsi()?.viewProvider?.modificationStamp ?: file.modificationStamp
-
-    private fun recoverPsi(): RsFile? {
-        val psi = loadPsi() ?: return null
-        cachedPsi = SoftReference(psi)
-        return psi
-    }
+        loadPsi()?.viewProvider?.modificationStamp ?: FORCE_RELINK_FLAG
 
     private fun loadPsi(): RsFile? =
         file.takeIf { it.isValid }?.toPsiFile(project) as? RsFile
 
-    // TODO yep, it's O(n)
-    @Synchronized
-    fun getInfoForCall(call: RsMacroCall): ExpandedMacroInfo? {
-        rebind()
-        return infos.find { it.getMacroCall() == call }
+    fun getInfoForCall(seekingCall: RsMacroCall): ExpandedMacroInfo? {
+        testAssert { seekingCall.containingFile.virtualFile == file }
+
+        return matchRefs(object : RefMatcher<ExpandedMacroInfoImpl?> {
+            override fun none(): ExpandedMacroInfoImpl? = null
+
+            override fun strong(infos: List<ExpandedMacroInfoImpl>): ExpandedMacroInfoImpl? =
+                infos.find { it.macroCallStrongRef == seekingCall }
+
+            override fun stub(psi: RsFile, infos: List<ExpandedMacroInfoImpl>): ExpandedMacroInfoImpl? {
+                Testmarks.stubBasedLookup.hit()
+                val seekingStubIndex = seekingCall.calcStubIndex()
+                return infos.find { it.macroCallStubIndex == seekingStubIndex }
+            }
+        })
     }
 
-    fun invalidateStubIndices() {
+    fun getCallForInfo(info: ExpandedMacroInfoImpl): RsMacroCall? {
+        check(info.sourceFile == this)
+
+        return matchRefs(object : RefMatcher<RsMacroCall?> {
+            override fun none(): RsMacroCall? = null
+
+            override fun strong(infos: List<ExpandedMacroInfoImpl>): RsMacroCall? =
+                info.derefMacroCall()
+
+            override fun stub(psi: RsFile, infos: List<ExpandedMacroInfoImpl>): RsMacroCall? {
+                val stubIndex = info.macroCallStubIndex
+                if (stubIndex == -1) return null
+                return psi.stubbedSpine.getMacroCall(stubIndex)
+            }
+        })
+    }
+
+    fun newMacroCallsAdded(newMacroCalls: Collection<RsMacroCall>) {
         checkWriteAccessAllowed()
-        cachedPsi = null
-        modificationStamp = -1
+        val refKind = getRefKind()
+        if (refKind == RefKind.STRONG) {
+            val infos = infos // No synchronization needed in the write action
+            for (call in newMacroCalls) {
+                if (call.isTopLevelExpansion && infos.none { it.derefMacroCall() == call }) {
+                    infos += ExpandedMacroInfoImpl(this, null, null, null, macroCallStrongRef = call)
+                }
+            }
+        } else if (refKind != RefKind.FRESH) {
+            switchRefsInWriteAction { FORCE_RELINK_FLAG }
+        }
+    }
+
+    fun switchToStrongRefsTemporary() {
+        if (switchToStrongRefs()) {
+            PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted {
+                releaseStrongRefs()
+            }
+        }
+    }
+
+    private fun switchToStrongRefs(): Boolean {
+        checkWriteAccessAllowed()
+        if (getRefKind() == RefKind.STUB) {
+            val psi = loadPsi() ?: return false
+            // Used insted of `psi.stubbedSpine` to avoid switching to spine refs during PSI event processing
+            // which is forbidden (see `PsiFileImpl.subtreeChanged`)
+            val spine = psi.greenStubTree?.spine
+                ?: psi.treeElement?.stubbedSpine
+                ?: return false
+
+            switchRefsInWriteAction { infos ->
+                for (info in infos) {
+                    val stubIndex = info.macroCallStubIndex
+                    if (stubIndex != -1) {
+                        info.macroCallStrongRef = spine.getMacroCall(stubIndex)
+                            ?: return@switchRefsInWriteAction FORCE_RELINK_FLAG
+                    }
+                }
+                STRONG_REFS_FLAG
+            }
+            return true
+        }
+        return false
+    }
+
+    private fun releaseStrongRefs() {
+        switchToStubRefsInReadAction(RefKind.STRONG) { infos ->
+            val areStubIndicesActual = areStubIndicesActual()
+            for (info in infos) {
+                if (!areStubIndicesActual) {
+                    info.macroCallStubIndex = info.derefMacroCall()?.calcStubIndex() ?: -1
+                }
+                info.macroCallStrongRef = null
+            }
+        }
     }
 
     private fun StubbedSpine.getMacroCall(stubIndex: Int): RsMacroCall? {
@@ -488,33 +695,26 @@ class SourceFile(
         }
     }
 
-    private fun markForRebind() {
-        unbindPsi()
-        modificationStamp = -1
+    private fun markForRebind() = sync {
+        if (modificationStamp != FRESH_FLAG) modificationStamp = FORCE_RELINK_FLAG
     }
 
-    @Synchronized
-    fun unbindPsi() {
-        cachedPsi = null
-        for (info in infos) {
-            info.cachedMacroCall = null
-        }
+    private fun ExpandedMacroInfoImpl.derefMacroCall(): RsMacroCall? {
+        assertSync()
+        return macroCallStrongRef?.takeIf { it.isValid }
     }
 
-    @Synchronized
-    fun updateStubIndices() {
-        for (info in infos) {
-            info.getMacroCall()?.let { info.stubIndex = calcStubIndex(it) }
-        }
-        modificationStamp = getActualModStamp()
+    private fun ExpandedMacroInfoImpl.markInvalid() {
+        assertSync()
+        macroCallStrongRef = null
+        macroCallStubIndex = -1
     }
 
-    @Synchronized
-    fun writeTo(data: DataOutputStream) {
+    fun writeTo(data: DataOutputStream): Unit = sync {
         data.apply {
             writeUTF(fileUrl)
             writeInt(depth)
-            writeBoolean(fresh)
+            writeBoolean(false) // TODO remove
             writeLong(modificationStamp)
             writeInt(infos.size)
             infos.forEach { it.writeTo(data) }
@@ -522,10 +722,13 @@ class SourceFile(
     }
 }
 
+private const val FORCE_RELINK_FLAG: Long = -1L
+private const val STRONG_REFS_FLAG: Long = -2L
+private const val FRESH_FLAG: Long = -3L
+
 private data class SerializedSourceFile(
     val fileUrl: String,
     val depth: Int,
-    private var fresh: Boolean,
     private var modificationStamp: Long,
     private val serInfos: List<SerializedExpandedMacroInfo>
 ) {
@@ -533,12 +736,11 @@ private data class SerializedSourceFile(
         checkReadAccessAllowed() // Needed to access VFS
 
         val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: return null
-        val infos = ArrayList<ExpandedMacroInfo>(serInfos.size)
+        val infos = ArrayList<ExpandedMacroInfoImpl>(serInfos.size)
         val sf = SourceFile(
             storage,
             file,
             depth,
-            fresh,
             modificationStamp,
             infos
         )
@@ -559,8 +761,7 @@ private data class SerializedSourceFile(
             return SerializedSourceFile(
                 fileUrl,
                 depth,
-                fresh,
-                modificationStamp,
+                if (fresh) FRESH_FLAG else modificationStamp,
                 serInfos
             )
         }
@@ -573,37 +774,32 @@ private tailrec fun SourceFile.findRootSourceFile(): SourceFile {
     return parentSF.findRootSourceFile()
 }
 
-class ExpandedMacroInfo(
-    val sourceFile: SourceFile,
-    val expansionFile: VirtualFile?,
+interface ExpandedMacroInfo {
+    val sourceFile: SourceFile
+    val expansionFile: VirtualFile?
+    fun getMacroCall(): RsMacroCall?
+    fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean
+    fun getExpansion(): MacroExpansion?
+}
+
+class ExpandedMacroInfoImpl(
+    override val sourceFile: SourceFile,
+    override val expansionFile: VirtualFile?,
     private val defHash: HashCode?,
     val callHash: HashCode?,
-    var stubIndex: Int = -1
-) {
+    var macroCallStubIndex: Int = -1,
+    var macroCallStrongRef: RsMacroCall? = null
+) : ExpandedMacroInfo {
     private val expansionFileUrl: String? get() = expansionFile?.url
     val fileId: Int get() = expansionFile?.fileId ?: -1
 
-    @Volatile
-    var cachedMacroCall: SoftReference<RsMacroCall>? = null
+    override fun getMacroCall(): RsMacroCall? =
+        sourceFile.getCallForInfo(this)
 
-    fun getMacroCall(): RsMacroCall? {
-        val ref = cachedMacroCall?.get()
-        return ref?.takeIf { it.isValid }
-    }
-
-    fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean =
+    override fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean =
         callHash == call.bodyHash && def?.bodyHash == defHash
 
-    fun bindAndUpdateStubIndex(call: RsMacroCall) {
-        cachedMacroCall = SoftReference(call)
-        stubIndex = calcStubIndex(call)
-    }
-
-    fun bindTo(call: RsMacroCall) {
-        cachedMacroCall = SoftReference(call)
-    }
-
-    fun getExpansion(): MacroExpansion? {
+    override fun getExpansion(): MacroExpansion? {
         checkReadAccessAllowed()
         val psi = getExpansionPsi() ?: return null // expanded erroneous
         return getExpansionFromExpandedFile(MacroExpansionContext.ITEM, psi)
@@ -615,17 +811,19 @@ class ExpandedMacroInfo(
         return PsiManager.getInstance(sourceFile.project).findFile(expansionFile) as? RsFile
     }
 
-    fun makePipeline(): Pipeline.Stage1ResolveAndExpand {
-        val call = getMacroCall()
+    fun makePipeline(call: RsMacroCall?): Pipeline.Stage1ResolveAndExpand {
         return if (call != null) ExpansionPipeline.Stage1(call, this) else InvalidationPipeline.Stage1(this)
     }
+
+    fun makeInvalidationPipeline(): Pipeline.Stage1ResolveAndExpand =
+        makePipeline(null)
 
     fun writeTo(data: DataOutputStream) {
         data.apply {
             writeUTFNullable(expansionFileUrl)
             writeHashCodeNullable(defHash)
             writeHashCodeNullable(callHash)
-            writeInt(stubIndex)
+            writeInt(macroCallStubIndex)
         }
     }
 }
@@ -636,9 +834,9 @@ private data class SerializedExpandedMacroInfo(
     val defHash: HashCode?,
     val stubIndex: Int
 ) {
-    fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfo? {
+    fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfoImpl? {
         val file = expansionFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
-        return ExpandedMacroInfo(
+        return ExpandedMacroInfoImpl(
             sourceFile,
             file,
             callHash,
@@ -702,10 +900,12 @@ private fun DataInputStream.readHashCodeNullable(): HashCode? {
     }
 }
 
-private fun calcStubIndex(psi: StubBasedPsiElement<*>): Int {
-    val index = PsiAnchor.calcStubIndex(psi)
+private fun StubBasedPsiElement<*>.calcStubIndex(): Int {
+    ProgressManager.checkCanceled()
+    val index = PsiAnchor.calcStubIndex(this)
     if (index == -1) {
-        error("Failed to calc stub index for element: $psi")
+        val shouldCreateStub = elementType.shouldCreateStub(node)
+        error("Failed to calc stub index for the element: ${this}, shouldCreateStub: $shouldCreateStub")
     }
     return index
 }
