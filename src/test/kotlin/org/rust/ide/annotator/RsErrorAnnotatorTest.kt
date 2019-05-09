@@ -1781,4 +1781,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Copy</error> for Foo<T> {}
         impl<T> <error descr="Cannot implement both Copy and Drop [E0184]">Drop</error> for Foo<T> {}
 """)
+
+    fun `test empty enum with repr E0084`() = checkErrors("""
+        #[<error descr="Enum with no variants can't have `repr` attribute [E0084]">repr</error>(u8)]
+        enum Test {}
+    """)
+
+    fun `test enum without body with repr E0084`() = checkErrors("""
+        #[repr(u8)] // There should not be a `repr` error when enum doesn't have a body
+        enum Test<EOLError descr="<, where or '{' expected"></EOLError>
+    """)
+
 }

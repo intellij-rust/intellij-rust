@@ -456,6 +456,17 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkAttr(holder: AnnotationHolder, attr: RsAttr) {
         checkImplBothCopyAndDrop(holder, attr)
+        checkReprForEmptyEnum(holder, attr)
+    }
+
+    // E0084: Enum with no variants can't have `repr` attribute
+    private fun checkReprForEmptyEnum(holder: AnnotationHolder, attr: RsAttr) {
+        if (attr.metaItem.name != "repr") return
+        val enum = attr.owner as? RsEnumItem ?: return
+        // Not using `enum.variants` to avoid false positive for enum without body
+        if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
+            RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
+        }
     }
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
