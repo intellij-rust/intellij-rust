@@ -23,7 +23,9 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.isNotRustFile
+import org.rust.openapiext.toPsiFile
 
 /**
  * Warn user if rust toolchain or standard library is not properly configured.
@@ -73,6 +75,11 @@ class MissingToolchainNotificationProvider(
             //TODO: more precise check here
             return createNoCargoProjectForFilePanel()
 
+        val psiFile = file.toPsiFile(project) as RsElement
+        if (psiFile.crateRoot == null) {
+            return createFileNotIncludedInModulesPanel()
+        }
+
         val workspace = cargoProject.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it
@@ -83,6 +90,11 @@ class MissingToolchainNotificationProvider(
 
         return null
     }
+
+    private fun createFileNotIncludedInModulesPanel(): EditorNotificationPanel =
+        EditorNotificationPanel().apply {
+            setText("File is not included in module tree, analysis is not available")
+        }
 
     private fun createBadToolchainPanel(): EditorNotificationPanel =
         EditorNotificationPanel().apply {
