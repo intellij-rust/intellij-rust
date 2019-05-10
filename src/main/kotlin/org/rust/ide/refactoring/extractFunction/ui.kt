@@ -8,14 +8,20 @@ package org.rust.ide.refactoring.extractFunction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
+import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.dialog
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
+import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
 import org.rust.openapiext.isUnitTestMode
+import javax.swing.JComponent
+import javax.swing.event.DocumentEvent
+import javax.swing.event.DocumentListener
 
 private var MOCK: ExtractFunctionUi? = null
 
@@ -52,7 +58,8 @@ private class DialogExtractFunctionUi(
 ) : ExtractFunctionUi {
 
     override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
-        val functionNameField = NameSuggestionsField(project)
+        val functionNameField = NameSuggestionsField(emptyArray(), project, RsFileType)
+        functionNameField.minimumSize = JBUI.size(300, 30)
 
         val visibilityBox = ComboBox<String>()
         with(visibilityBox) {
@@ -78,6 +85,13 @@ private class DialogExtractFunctionUi(
             row("Signature:") { signatureComponent() }
         }
 
+        fun checkValidationErrors(): List<ValidationInfo> {
+            val name = functionNameField.enteredName
+            return if (!isValidRustVariableIdentifier(name)) {
+                listOf(ValidationInfo("Invalid function name", functionNameField))
+            } else emptyList()
+        }
+
         dialog(
             "Extract Function",
             panel,
@@ -89,9 +103,14 @@ private class DialogExtractFunctionUi(
             errorText = null,
             modality = DialogWrapper.IdeModalityType.IDE
         ) {
-            updateConfig(config, functionNameField, visibilityBox)
-            callback()
-            emptyList()
+            val errors = checkValidationErrors()
+            if (errors.isNotEmpty()) {
+                errors
+            } else {
+                updateConfig(config, functionNameField, visibilityBox)
+                callback()
+                emptyList()
+            }
         }.show()
     }
 
