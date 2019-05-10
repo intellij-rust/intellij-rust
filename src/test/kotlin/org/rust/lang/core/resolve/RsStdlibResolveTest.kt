@@ -5,26 +5,17 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.*
-import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
+import org.rust.stdext.BothEditions
 
+@BothEditions
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTest : RsResolveTestBase() {
-
-    override fun runTest() {
-        if (javaClass.getMethod(name).getAnnotation(MockEdition::class.java) != null) {
-            return super.runTest()
-        }
-
-        for (edition in CargoWorkspace.Edition.values()) {
-            project.cargoProjects.setEdition(edition)
-            super.runTest()
-        }
-    }
-
     fun `test resolve fs`() = stubOnlyResolve("""
     //- main.rs
         use std::fs::File;
@@ -642,21 +633,4 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             let a = f64::INFINITY;
         }              //^ ...num/f64.rs
     """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test extern crate std is not injected on 2018 edition`() = stubOnlyResolve("""
-    //- main.rs
-        use crate::std::mem;
-                 //^ unresolved
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test extra use of prelude item`() = stubOnlyResolve("""
-    //- main.rs
-        use Vec;
-
-        fn main() {
-            let a = Vec::<i32>::new();
-        }         //^ .../vec.rs
-    """, ItemResolutionTestmarks.extraAtomUse)
 }

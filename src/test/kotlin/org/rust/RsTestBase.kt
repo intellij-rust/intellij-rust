@@ -31,6 +31,7 @@ import org.rust.cargo.toolchain.RustcVersion
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.saveAllDocuments
+import org.rust.stdext.BothEditions
 
 abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {
 
@@ -99,6 +100,26 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             System.err.println("SKIP $name: $reason")
             return
         }
+
+        if (findAnnotationInstance<BothEditions>() != null) {
+            if (findAnnotationInstance<MockEdition>() != null) {
+                error("Can't mix `BothEditions` and `MockEdition` annotations")
+            }
+            // These functions exist to simplify stacktrace analyzing
+            runTestEdition2015()
+            runTestEdition2018()
+        } else {
+            super.runTest()
+        }
+    }
+
+    private fun runTestEdition2015() {
+        project.cargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015)
+        super.runTest()
+    }
+
+    private fun runTestEdition2018() {
+        project.cargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018)
         super.runTest()
     }
 
