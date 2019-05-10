@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLabel
+import org.rust.lang.core.psi.RsLabelDecl
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processLabelResolveVariants
@@ -22,4 +23,7 @@ class RsLabelReferenceImpl(
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processLabelResolveVariants(element, it) }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsLabelDecl && super.isReferenceTo(element)
 }
