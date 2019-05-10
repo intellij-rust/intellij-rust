@@ -609,7 +609,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
     }
 
     val el = pkg.targets.asSequence()
-        .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath("::${parts[1]}", it) }
+        .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(parts[1], it) }
         .mapNotNull { it.reference.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
