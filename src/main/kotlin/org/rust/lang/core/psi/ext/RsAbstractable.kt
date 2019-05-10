@@ -5,11 +5,10 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.psi.PsiNameIdentifierOwner
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 
-interface RsAbstractable : RsNamedElement, PsiNameIdentifierOwner, RsExpandedElement {
+interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement {
     val isAbstract: Boolean
 }
 
@@ -26,8 +25,7 @@ sealed class RsAbstractableOwner {
 
 val RsAbstractable.owner: RsAbstractableOwner
     get() {
-        val context = context
-        return when (context) {
+        return when (val context = context) {
             is RsForeignModItem -> RsAbstractableOwner.Foreign
             is RsMembers -> {
                 val traitOrImpl = context.context
