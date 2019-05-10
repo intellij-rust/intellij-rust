@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsMacroBinding
 import org.rust.lang.core.psi.RsMacroReference
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
@@ -20,4 +21,7 @@ class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacr
 
     override fun resolveInner(): List<RsElement>
         = collectResolveVariants(element.referenceName) { processMacroReferenceVariants(element, it) }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsMacroBinding && super.isReferenceTo(element)
 }

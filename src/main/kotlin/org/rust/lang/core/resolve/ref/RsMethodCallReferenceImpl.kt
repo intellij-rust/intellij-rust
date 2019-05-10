@@ -10,6 +10,9 @@ import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsFieldDecl
+import org.rust.lang.core.psi.ext.isAssocFn
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
@@ -24,6 +27,9 @@ class RsMethodCallReferenceImpl(
 
     override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedMethod(element)?.map { it.element } ?: emptyList()
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsFunction && element.owner.isImplOrTrait && !element.isAssocFn && super.isReferenceTo(element)
 }
 
 class RsFieldLookupReferenceImpl(
@@ -41,6 +47,9 @@ class RsFieldLookupReferenceImpl(
         if (ident != null) doRename(ident, newName)
         return element
     }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsFieldDecl && super.isReferenceTo(element)
 }
 
 fun resolveMethodCallReferenceWithReceiverType(

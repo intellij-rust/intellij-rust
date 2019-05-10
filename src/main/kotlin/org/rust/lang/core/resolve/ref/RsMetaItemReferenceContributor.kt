@@ -9,6 +9,7 @@ import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.resolve.collectResolveVariants
@@ -45,6 +46,9 @@ private class RsDeriveTraitReferenceImpl(
         val traitName = element.name ?: return emptyList()
         return collectResolveVariants(traitName) { processDeriveTraitResolveVariants(element, traitName, it) }
     }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsTraitItem && super.isReferenceTo(element)
 
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         cachedMultiResolve().toTypedArray()

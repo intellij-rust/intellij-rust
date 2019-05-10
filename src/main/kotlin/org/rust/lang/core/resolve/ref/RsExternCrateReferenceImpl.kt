@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExternCrateItem
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processExternCrateResolveVariants
@@ -20,4 +21,7 @@ class RsExternCrateReferenceImpl(
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processExternCrateResolveVariants(element, false, it) }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsFile && super.isReferenceTo(element)
 }

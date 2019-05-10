@@ -30,6 +30,7 @@ class RsPathReferenceImpl(
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
     override fun isReferenceTo(element: PsiElement): Boolean {
+        if (element is RsFieldDecl) return false
         val target = resolve()
         return element.manager.areElementsEquivalent(target, element)
     }

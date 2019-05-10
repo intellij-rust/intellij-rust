@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
@@ -20,4 +21,7 @@ class RsModReferenceImpl(
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }
+
+    override fun isReferenceTo(element: PsiElement): Boolean =
+        element is RsFile && super.isReferenceTo(element)
 }
