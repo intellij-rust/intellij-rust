@@ -13,8 +13,8 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 class RenameTest : RsTestBase() {
     fun `test function`() = doTest("spam", """
         mod a {
-            mod b {
-                fn /*caret*/foo() {}
+            pub mod b {
+                pub fn /*caret*/foo() {}
 
                 fn bar() {
                     foo()
@@ -35,8 +35,8 @@ class RenameTest : RsTestBase() {
         }
     """, """
         mod a {
-            mod b {
-                fn spam() {}
+            pub mod b {
+                pub fn spam() {}
 
                 fn bar() {
                     spam()

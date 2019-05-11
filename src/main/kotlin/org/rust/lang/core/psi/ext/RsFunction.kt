@@ -8,6 +8,7 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
@@ -144,4 +145,6 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
         if (shouldInc) modificationTracker.incModificationCount()
         return shouldInc
     }
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
