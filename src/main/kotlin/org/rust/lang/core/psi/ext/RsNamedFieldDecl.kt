@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsNamedFieldDecl
@@ -23,4 +24,6 @@ abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFiel
 
     // temporary solution.
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }

@@ -6,10 +6,12 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsEnumVariant
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsEnumVariantStub
 import javax.swing.Icon
 
@@ -27,5 +29,7 @@ abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantS
         val variantName = name ?: return null
         return parentEnum.crateRelativePath?.let { "$it::$variantName" }
     }
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
 
