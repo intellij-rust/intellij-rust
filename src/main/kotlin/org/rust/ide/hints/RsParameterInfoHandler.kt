@@ -7,6 +7,7 @@ package org.rust.ide.hints
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.CallInfo
@@ -15,6 +16,7 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsValueArgumentList
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.buildList
 
 /**
@@ -50,13 +52,22 @@ class RsParameterInfoHandler : ParameterInfoHandler<PsiElement, RsArgumentsDescr
 
     override fun showParameterInfo(element: PsiElement, context: CreateParameterInfoContext) {
         if (element !is RsValueArgumentList) return
-        val argsDescr = RsArgumentsDescription.findDescription(element) ?: return
+        val argsDescr = element.project.computeWithCancelableProgress("Preparing parameter info...") {
+            runReadAction {
+                RsArgumentsDescription.findDescription(element)
+            }
+        } ?: return
+
         context.itemsToShow = arrayOf(argsDescr)
         context.showHint(element, element.startOffset, this)
     }
 
     override fun updateParameterInfo(place: PsiElement, context: UpdateParameterInfoContext) {
-        val argIndex = findArgumentIndex(place)
+        val argIndex = place.project.computeWithCancelableProgress("Preparing parameter info...") {
+            runReadAction {
+                findArgumentIndex(place)
+            }
+        }
         if (argIndex == INVALID_INDEX) {
             context.removeHint()
             return

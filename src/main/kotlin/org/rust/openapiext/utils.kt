@@ -206,8 +206,12 @@ inline fun testAssert(action: () -> Boolean, lazyMessage: () -> Any) {
 fun <T> runWithCheckCanceled(callable: () -> T): T =
     ApplicationUtil.runWithCheckCanceled(callable, ProgressManager.getInstance().progressIndicator)
 
-fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T =
-    ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
+fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T): T {
+    if (isUnitTestMode) {
+        return supplier()
+    }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
+}
 
 inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =
     getUserData(key)?.get() ?: run {
