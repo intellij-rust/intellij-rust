@@ -18,16 +18,16 @@ import org.rust.lang.core.resolve.ref.deriveReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
 val RsMetaItem.name: String? get() {
-    val stub = stub
+    val stub = greenStub
     return if (stub != null) stub.name else identifier?.unescapedText
 }
 
 val RsMetaItem.value: String? get() {
-    val stub = stub
+    val stub = greenStub
     return if (stub != null) stub.value else litExpr?.stringLiteralValue
 }
 
-val RsMetaItem.hasEq: Boolean get() = stub?.hasEq ?: (eq != null)
+val RsMetaItem.hasEq: Boolean get() = greenStub?.hasEq ?: (eq != null)
 
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
     deriveReference?.resolve() as? RsTraitItem

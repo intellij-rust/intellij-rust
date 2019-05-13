@@ -30,7 +30,7 @@ enum class UnaryOperator {
 
 val RsUnaryExpr.operatorType: UnaryOperator
     get() {
-        val stub = stub as? RsUnaryExprStub
+        val stub = greenStub as? RsUnaryExprStub
         if (stub != null) return stub.operatorType
         return when {
             mut != null -> UnaryOperator.REF_MUT

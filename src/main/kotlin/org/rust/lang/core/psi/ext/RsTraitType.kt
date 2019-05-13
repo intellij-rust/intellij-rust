@@ -7,4 +7,4 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsTraitType
 
-val RsTraitType.isImpl: Boolean get() = (stub?.isImpl) ?: (impl != null)
+val RsTraitType.isImpl: Boolean get() = (greenStub?.isImpl) ?: (impl != null)

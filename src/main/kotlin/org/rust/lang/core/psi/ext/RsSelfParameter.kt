@@ -15,9 +15,9 @@ import org.rust.lang.core.stubs.RsSelfParameterStub
 import org.rust.lang.core.types.ty.Mutability
 
 
-val RsSelfParameter.mutability: Mutability get() = Mutability.valueOf(stub?.isMut ?: (mut != null))
-val RsSelfParameter.isRef: Boolean get() = stub?.isRef ?: (and != null)
-val RsSelfParameter.isExplicitType get() = stub?.isExplicitType ?: (colon != null)
+val RsSelfParameter.mutability: Mutability get() = Mutability.valueOf(greenStub?.isMut ?: (mut != null))
+val RsSelfParameter.isRef: Boolean get() = greenStub?.isRef ?: (and != null)
+val RsSelfParameter.isExplicitType get() = greenStub?.isExplicitType ?: (colon != null)
 val RsSelfParameter.parentFunction: RsFunction get() = ancestorStrict()!!
 
 abstract class RsSelfParameterImplMixin : RsStubbedElementImpl<RsSelfParameterStub>, RsSelfParameter {

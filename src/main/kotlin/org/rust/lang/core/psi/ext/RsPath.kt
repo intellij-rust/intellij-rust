@@ -20,10 +20,10 @@ import org.rust.lang.core.stubs.RsPathStub
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
 
-val RsPath.hasColonColon: Boolean get() = stub?.hasColonColon ?: (coloncolon != null)
+val RsPath.hasColonColon: Boolean get() = greenStub?.hasColonColon ?: (coloncolon != null)
 val RsPath.hasCself: Boolean get() = kind == PathKind.CSELF
 val RsPath.kind: PathKind get() {
-    val stub = stub
+    val stub = greenStub
     if (stub != null) return stub.kind
     val child = node.findChildByType(RS_PATH_KINDS)
     return when (child?.elementType) {
@@ -66,7 +66,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
         }
 
-    override val referenceName: String get() = stub?.referenceName ?: super.referenceName
+    override val referenceName: String get() = greenStub?.referenceName ?: super.referenceName
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 

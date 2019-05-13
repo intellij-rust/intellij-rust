@@ -28,7 +28,7 @@ enum class RsStructKind {
 }
 
 val RsStructItem.kind: RsStructKind get() {
-    val hasUnion = stub?.isUnion ?: (union != null)
+    val hasUnion = greenStub?.isUnion ?: (union != null)
     return if (hasUnion) RsStructKind.UNION else RsStructKind.STRUCT
 }
 

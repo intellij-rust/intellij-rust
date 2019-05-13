@@ -27,7 +27,7 @@ abstract class RsLifetimeImplMixin : RsStubbedNamedElementImpl<RsLifetimeStub>, 
 
     override val referenceNameElement: PsiElement get() = quoteIdentifier
 
-    override val referenceName: String get() = stub?.name ?: referenceNameElement.text
+    override val referenceName: String get() = greenStub?.name ?: referenceNameElement.text
 }
 
 sealed class LifetimeName {

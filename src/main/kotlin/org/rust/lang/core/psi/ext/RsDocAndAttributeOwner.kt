@@ -86,7 +86,7 @@ class QueryAttributes(
     // #[cfg(test)], #[cfg(target_has_atomic = "ptr")], #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
     fun hasCfgAttr(): Boolean {
         if (psi is RsFunction) {
-            val stub = psi.stub
+            val stub = psi.greenStub
             if (stub != null) return stub.isCfg
         }
         return hasAttribute("cfg")

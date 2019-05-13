@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +37,7 @@ val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
 val PsiElement.stubParent: PsiElement
     get() {
         if (this is StubBasedPsiElement<*>) {
-            val stub = this.stub
+            val stub = this.greenStub
             if (stub != null) return stub.parentStub.psi
         }
         return parent
@@ -128,8 +129,8 @@ fun <T : PsiElement> getStubDescendantsOfType(
     aClass: Class<T>
 ): Collection<T> {
     if (element == null) return emptyList()
-    val stub = (element as? PsiFileImpl)?.stub
-        ?: (element as? StubBasedPsiElement<*>)?.stub
+    val stub = (element as? PsiFileImpl)?.greenStub
+        ?: (element as? StubBasedPsiElement<*>)?.greenStub
         ?: return PsiTreeUtil.findChildrenOfAnyType<T>(element, strict, aClass)
 
     val result = SmartList<T>()
@@ -161,8 +162,8 @@ fun <T : PsiElement> getStubDescendantOfType(
     aClass: Class<T>
 ): T? {
     if (element == null) return null
-    val stub = (element as? PsiFileImpl)?.stub
-        ?: (element as? StubBasedPsiElement<*>)?.stub
+    val stub = (element as? PsiFileImpl)?.greenStub
+        ?: (element as? StubBasedPsiElement<*>)?.greenStub
         ?: return PsiTreeUtil.findChildOfType<T>(element, aClass, strict)
 
     fun go(childrenStubs: List<StubElement<PsiElement>>): T? {
@@ -240,3 +241,7 @@ private fun PsiElement.getLineCount(): Int {
 }
 
 fun PsiWhiteSpace.isMultiLine(): Boolean = getLineCount() > 1
+
+@Suppress("UNCHECKED_CAST")
+inline val <T: StubElement<*>> StubBasedPsiElement<T>.greenStub: T?
+    get() = (this as? StubBasedPsiElementBase<T>)?.greenStub

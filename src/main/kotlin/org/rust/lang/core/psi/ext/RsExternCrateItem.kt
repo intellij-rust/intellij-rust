@@ -33,7 +33,7 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
         "Extern crate must contain identifier: $this $text at ${containingFile.virtualFile.path}"
     }
 
-    override val referenceName: String get() = stub?.name ?: super.referenceName
+    override val referenceName: String get() = greenStub?.name ?: super.referenceName
 
     override fun getIcon(flags: Int) = RsIcons.CRATE
 
