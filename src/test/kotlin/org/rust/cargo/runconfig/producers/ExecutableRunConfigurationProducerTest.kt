@@ -53,6 +53,7 @@ class ExecutableRunConfigurationProducerTest : RunConfigurationProducerTestBase(
 
         modifyTemplateConfiguration {
             channel = RustChannel.NIGHTLY
+            targetTriple = "wasm32-unknown-unknown"
             allFeatures = true
             nocapture = true
             backtrace = BacktraceMode.FULL

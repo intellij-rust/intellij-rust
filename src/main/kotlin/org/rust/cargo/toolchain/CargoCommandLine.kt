@@ -26,6 +26,7 @@ data class CargoCommandLine(
     val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
+    val targetTriple: String = RustToolchain.DEFAULT_TARGET_TRIPLE,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val allFeatures: Boolean = false,
     val nocapture: Boolean = false
@@ -99,12 +100,14 @@ data class CargoCommandLine(
             cargoProject: CargoProject,
             command: String,
             additionalArguments: List<String> = emptyList(),
-            channel: RustChannel = RustChannel.DEFAULT
+            channel: RustChannel = RustChannel.DEFAULT,
+            targetTriple: String = RustToolchain.DEFAULT_TARGET_TRIPLE
         ): CargoCommandLine = CargoCommandLine(
             command,
             workingDirectory = cargoProject.workingDirectory,
             additionalArguments = additionalArguments,
-            channel = channel
+            channel = channel,
+            targetTriple = targetTriple
         )
 
         fun forPackage(

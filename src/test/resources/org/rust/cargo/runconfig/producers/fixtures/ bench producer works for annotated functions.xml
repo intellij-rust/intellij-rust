@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Bench bench_foo" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
+    <option name="targetTriple" value="[default]" />
     <option name="command" value="bench --package test-package --lib bench_foo -- --exact" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />

@@ -26,6 +26,7 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): Cargo
     copy(
         backtraceMode = default.backtrace,
         channel = default.channel,
+        targetTriple = default.targetTriple,
         environmentVariables = default.env,
         allFeatures = default.allFeatures,
         nocapture = default.nocapture

@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Run hello" class="CargoCommandConfiguration">
     <option name="channel" value="NIGHTLY" />
+    <option name="targetTriple" value="wasm32-unknown-unknown" />
     <option name="command" value="run --package test-package --bin hello" />
     <option name="allFeatures" value="true" />
     <option name="nocapture" value="true" />

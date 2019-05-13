@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Test test_foo" class="CargoCommandConfiguration">
     <option name="channel" value="NIGHTLY" />
+    <option name="targetTriple" value="wasm32-unknown-unknown" />
     <option name="command" value="test --package test-package --lib test_foo -- --exact" />
     <option name="allFeatures" value="true" />
     <option name="nocapture" value="true" />

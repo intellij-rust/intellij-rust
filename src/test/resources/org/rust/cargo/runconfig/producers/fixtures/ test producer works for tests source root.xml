@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Tests in 'tests'" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
+    <option name="targetTriple" value="[default]" />
     <option name="command" value="test --package test-package --test foo &quot;&quot;" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />

@@ -182,6 +182,9 @@ class Cargo(private val cargoExecutable: Path) {
                     add("+$channel")
                 }
                 add(command)
+                if (targetTriple != RustToolchain.DEFAULT_TARGET_TRIPLE) {
+                    add("--target=$targetTriple")
+                }
                 addAll(additionalArguments)
             }
             createGeneralCommandLine(

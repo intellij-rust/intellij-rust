@@ -25,6 +25,13 @@ data class RustToolchain(val location: Path) {
         return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
     }
 
+    fun queryTargetTriplets(): List<String>? {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
+        return scrapeTargetsList(pathToExecutable(RUSTC))
+    }
+
     fun getSysroot(projectDirectory: Path): String? {
         val timeoutMs = 10000
         val output = GeneralCommandLine(pathToExecutable(RUSTC))
@@ -78,6 +85,8 @@ data class RustToolchain(val location: Path) {
         const val CARGO_LOCK = "Cargo.lock"
         const val XARGO_TOML = "Xargo.toml"
 
+        const val DEFAULT_TARGET_TRIPLE = "[default]"
+
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
             val candidate = RustToolchain(it.toPath().toAbsolutePath())
             if (candidate.looksLikeValidToolchain()) candidate else null
@@ -130,6 +139,12 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     }
     return RustcVersion(semVer, hostText, channel, commitHash)
 }
+
+private fun scrapeTargetsList(rustc: Path): List<String>? =
+    GeneralCommandLine(rustc)
+        .withParameters("--print", "target-list")
+        .execute()
+        ?.stdoutLines
 
 private object Suggestions {
     fun all() = sequenceOf(

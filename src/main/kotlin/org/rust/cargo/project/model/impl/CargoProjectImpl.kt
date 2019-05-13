@@ -279,9 +279,11 @@ data class CargoProjectImpl(
     private val rawWorkspace: CargoWorkspace? = null,
     private val stdlib: StandardLibrary? = null,
     override val rustcInfo: RustcInfo? = null,
-    override val workspaceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
-    override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
-    override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
+    override val targetTriplets: List<String>? = null,
+    override val workspaceStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val stdlibStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val targetTripletsStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
 
     private val projectDirectory get() = manifest.parent
@@ -320,6 +322,7 @@ data class CargoProjectImpl(
         return refreshRustcInfo()
             .thenCompose { it.refreshStdlib() }
             .thenCompose { it.refreshWorkspace() }
+            .thenCompose { it.refreshTargetTriplets() }
     }
 
     private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
@@ -343,11 +346,10 @@ data class CargoProjectImpl(
     }
 
     private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
-        val toolchain = toolchain ?:
-            return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
+        val toolchain = toolchain
+            ?: return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
                 "Can't update Cargo project, no Rust toolchain"
             )))
-
         return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, projectDirectory)
             .thenApply(this::withWorkspace)
     }
@@ -362,7 +364,6 @@ data class CargoProjectImpl(
             ?: return CompletableFuture.completedFuture(copy(rustcInfoStatus = UpdateStatus.UpdateFailed(
                 "Can't get rustc info, no Rust toolchain"
             )))
-
         return fetchRustcInfo(project, projectService.taskQueue, toolchain, projectDirectory)
             .thenApply(this::withRustcInfo)
     }
@@ -370,6 +371,21 @@ data class CargoProjectImpl(
     private fun withRustcInfo(result: TaskResult<RustcInfo>): CargoProjectImpl = when (result) {
         is TaskResult.Ok -> copy(rustcInfo = result.value, rustcInfoStatus = UpdateStatus.UpToDate)
         is TaskResult.Err -> copy(rustcInfoStatus = UpdateStatus.UpdateFailed(result.reason))
+    }
+
+    private fun refreshTargetTriplets(): CompletableFuture<CargoProjectImpl> {
+        val toolchain = toolchain
+            ?: return CompletableFuture.completedFuture(copy(rustcInfoStatus = UpdateStatus.UpdateFailed(
+                "Can't get target triplets list, no Rust toolchain"
+            )))
+
+        return fetchTargetTriplets(project, projectService.taskQueue, toolchain)
+            .thenApply(this::withTargetTriplets)
+    }
+
+    private fun withTargetTriplets(result: TaskResult<List<String>>): CargoProjectImpl = when (result) {
+        is TaskResult.Ok -> copy(targetTriplets = result.value, targetTripletsStatus = UpdateStatus.UpToDate)
+        is TaskResult.Err -> copy(targetTripletsStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
     override fun toString(): String =
@@ -449,8 +465,7 @@ private fun fetchStdlib(
 ): CompletableFuture<TaskResult<StandardLibrary>> {
     return runAsyncTask(project, queue, "Getting Rust stdlib") {
         progress.isIndeterminate = true
-        val download = rustup.downloadStdlib()
-        when (download) {
+        when (val download = rustup.downloadStdlib()) {
             is DownloadResult.Ok -> {
                 val lib = StandardLibrary.fromFile(download.value)
                 if (lib == null) {
@@ -517,5 +532,25 @@ private fun fetchRustcInfo(
         val versions = toolchain.queryVersions()
 
         ok(RustcInfo(sysroot, versions.rustc))
+    }
+}
+
+private fun fetchTargetTriplets(
+    project: Project,
+    queue: BackgroundTaskQueue,
+    toolchain: RustToolchain
+): CompletableFuture<TaskResult<List<String>>> {
+    return runAsyncTask(project, queue, "Getting target triplets list") {
+        progress.isIndeterminate = true
+        if (!toolchain.looksLikeValidToolchain()) {
+            return@runAsyncTask err(
+                "invalid Rust toolchain ${toolchain.presentableLocation}"
+            )
+        }
+
+        val targetTriplets = toolchain.queryTargetTriplets()
+            ?: return@runAsyncTask err("failed to get target triplets list")
+
+        ok(targetTriplets)
     }
 }

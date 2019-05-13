@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Run hello" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
+    <option name="targetTriple" value="[default]" />
     <option name="command" value="run --package test-package --bin hello" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />

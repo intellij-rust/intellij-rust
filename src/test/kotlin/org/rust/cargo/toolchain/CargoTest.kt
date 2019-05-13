@@ -78,6 +78,15 @@ class CargoTest : RsTestBase() {
         env: RUST_BACKTRACE=short, TERM=ansi
     """)
 
+    fun `test adds target triple`() = checkCommandLine(
+        cargo.toColoredCommandLine(CargoCommandLine("run", wd, listOf("--release", "--", "foo"), targetTriple = "wasm32-unknown-unknow")), """
+        cmd: /usr/bin/cargo run --target=wasm32-unknown-unknow --color=always --release -- foo
+        env: RUST_BACKTRACE=short, TERM=ansi
+        """, """
+        cmd: C:/usr/bin/cargo.exe run --target=wasm32-unknown-unknow --color=always --release -- foo
+        env: RUST_BACKTRACE=short, TERM=ansi
+    """)
+
     private fun checkCommandLine(cmd: GeneralCommandLine, expected: String, expectedWin: String) {
         val cleaned = (if (SystemInfo.isWindows) expectedWin else expected).trimIndent()
         val actual = cmd.debug().trim()

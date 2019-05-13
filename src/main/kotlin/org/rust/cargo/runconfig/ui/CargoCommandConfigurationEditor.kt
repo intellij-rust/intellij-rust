@@ -31,6 +31,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.RustToolchain.Companion.DEFAULT_TARGET_TRIPLE
 import org.rust.cargo.util.CargoCommandLineEditor
 import java.awt.Dimension
 import java.nio.file.Path
@@ -54,7 +55,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
-    private val channelLabel = Label("C&hannel:")
+
     private val channel = ComboBox<RustChannel>().apply {
         RustChannel.values()
             .sortedBy { it.index }
@@ -81,17 +82,20 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
 
         addItemListener {
             setWorkingDirectoryFromSelectedProject()
+            setTargetsListFromSelectedProject()
         }
     }
 
     private fun setWorkingDirectoryFromSelectedProject() {
-        val selectedProject = run {
-            val idx = cargoProject.selectedIndex
-            if (idx == -1) return
-            cargoProject.getItemAt(idx)
-        }
+        val selectedProject = selectedProject ?: return
         workingDirectory.component.text = selectedProject.workingDirectory.toString()
     }
+
+    private val selectedProject: CargoProject?
+        get() {
+            val idx = cargoProject.selectedIndex
+            return if (idx != -1) cargoProject.getItemAt(idx) else null
+        }
 
     private val environmentVariables = EnvironmentVariablesComponent()
     private val allFeatures = CheckBox("Use all features in tests", false)
@@ -99,6 +103,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index
+        targetTriple.selectedItem = configuration.targetTriple
         command.text = configuration.command
         allFeatures.isSelected = configuration.allFeatures
         nocapture.isSelected = configuration.nocapture
@@ -114,11 +119,26 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
     }
 
+    private val targetTripleLabel = Label("&Target:")
+    private val targetTriple = ComboBox<String>().apply {
+        addItem(DEFAULT_TARGET_TRIPLE)
+        selectedProject?.targetTriplets?.forEach { addItem(it) }
+    }
+
+    private fun setTargetsListFromSelectedProject() {
+        targetTriple.removeAllItems()
+        targetTriple.addItem(DEFAULT_TARGET_TRIPLE)
+        val selectedProject = selectedProject ?: return
+        selectedProject.targetTriplets?.forEach { targetTriple.addItem(it) }
+    }
+
     @Throws(ConfigurationException::class)
     override fun applyEditorTo(configuration: CargoCommandConfiguration) {
         val configChannel = RustChannel.fromIndex(channel.selectedIndex)
+        val configTargetTriple = targetTriple.selectedItem as? String ?: DEFAULT_TARGET_TRIPLE
 
         configuration.channel = configChannel
+        configuration.targetTriple = configTargetTriple
         configuration.command = command.text
         configuration.allFeatures = allFeatures.isSelected
         configuration.nocapture = nocapture.isSelected
@@ -134,11 +154,12 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     }
 
     override fun createEditor(): JComponent = panel {
-        labeledRow("&Command:", command) {
-            command(CCFlags.pushX, CCFlags.growX)
-            channelLabel.labelFor = channel
-            channelLabel()
-            channel()
+        labeledRow("&Command:", command) { command(CCFlags.pushX, CCFlags.growX) }
+        labeledRow("&Channel:", channel) {
+            channel(CCFlags.pushX, CCFlags.growX)
+            targetTripleLabel.labelFor = targetTriple
+            targetTripleLabel()
+            targetTriple()
         }
 
         row { allFeatures() }

@@ -1,6 +1,7 @@
 <configurations>
   <configuration name="Test bar" class="CargoCommandConfiguration">
     <option name="channel" value="DEFAULT" />
+    <option name="targetTriple" value="[default]" />
     <option name="command" value="test --package test-package --lib foo::bar" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />

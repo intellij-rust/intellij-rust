@@ -42,6 +42,7 @@ class CargoCommandConfiguration(
     RunConfigurationWithSuppressedDefaultDebugAction {
 
     var channel: RustChannel = RustChannel.DEFAULT
+    var targetTriple: String = RustToolchain.DEFAULT_TARGET_TRIPLE
     var command: String = "run"
     var allFeatures: Boolean = false
     var nocapture: Boolean = false
@@ -52,6 +53,7 @@ class CargoCommandConfiguration(
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         element.writeEnum("channel", channel)
+        element.writeString("targetTriple", targetTriple)
         element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("nocapture", nocapture)
@@ -67,6 +69,7 @@ class CargoCommandConfiguration(
     override fun readExternal(element: Element) {
         super.readExternal(element)
         element.readEnum<RustChannel>("channel")?.let { channel = it }
+        element.readString("targetTriple")?.let { targetTriple = it }
         element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("nocapture")?.let { nocapture = it }
@@ -77,6 +80,7 @@ class CargoCommandConfiguration(
 
     fun setFromCmd(cmd: CargoCommandLine) {
         channel = cmd.channel
+        targetTriple = cmd.targetTriple
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         allFeatures = cmd.allFeatures
         nocapture = cmd.nocapture
@@ -138,6 +142,7 @@ class CargoCommandConfiguration(
                 args.drop(1),
                 backtrace,
                 channel,
+                targetTriple,
                 env,
                 allFeatures,
                 nocapture
