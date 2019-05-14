@@ -49,7 +49,7 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
     override fun getNameIdentifier(): PsiElement? = findChildByType(IDENTIFIER)
 
     override fun getName(): String? {
-        val stub = stub
+        val stub = greenStub
         return if (stub != null) stub.name else nameIdentifier?.unescapedText
     }
 
