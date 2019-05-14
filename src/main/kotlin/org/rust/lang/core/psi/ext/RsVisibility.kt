@@ -68,6 +68,18 @@ sealed class RsVisibility {
     data class Restricted(val inMod: RsMod) : RsVisibility()
 }
 
+fun RsVisibility.intersect(other: RsVisibility): RsVisibility = when (this) {
+    RsVisibility.Private -> this
+    RsVisibility.Public -> other
+    is RsVisibility.Restricted -> when (other) {
+        RsVisibility.Private -> other
+        RsVisibility.Public -> this
+        is RsVisibility.Restricted -> {
+            RsVisibility.Restricted(if (inMod.superMods.contains(other.inMod)) inMod else other.inMod)
+        }
+    }
+}
+
 val RsVis.visibility: RsVisibility
     get() = when (stubKind) {
         RsVisStubKind.PUB -> RsVisibility.Public

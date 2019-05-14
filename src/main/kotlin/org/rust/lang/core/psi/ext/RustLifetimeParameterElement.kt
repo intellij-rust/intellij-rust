@@ -7,9 +7,11 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsLifetimeParameterStub
 
 abstract class RsLifetimeParameterImplMixin: RsStubbedNamedElementImpl<RsLifetimeParameterStub>, RsLifetimeParameter {
@@ -22,4 +24,6 @@ abstract class RsLifetimeParameterImplMixin: RsStubbedNamedElementImpl<RsLifetim
         nameIdentifier.replace(RsPsiFactory(project).createQuoteIdentifier(name))
         return this
     }
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getParameterUseScope(this) ?: super.getUseScope()
 }

@@ -6,7 +6,9 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
@@ -19,4 +21,6 @@ abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getName(): String? = position?.toString()
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }

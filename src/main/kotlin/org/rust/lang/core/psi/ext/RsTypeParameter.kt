@@ -6,9 +6,11 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsPolybound
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.stubs.RsTypeParameterStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
@@ -50,4 +52,6 @@ abstract class RsTypeParameterImplMixin : RsStubbedNamedElementImpl<RsTypeParame
     constructor(stub: RsTypeParameterStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override val declaredType: Ty get() = RsPsiTypeImplUtil.declaredType(this)
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getParameterUseScope(this) ?: super.getUseScope()
 }
