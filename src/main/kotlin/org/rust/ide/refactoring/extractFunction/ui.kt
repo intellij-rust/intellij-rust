@@ -74,10 +74,6 @@ private class DialogExtractFunctionUi(
             updateConfig(config, functionNameField, visibilityBox)
             signatureComponent.setSignature(config.signature)
         }
-        functionNameField.addDataChangedListener {
-            updateConfig(config, functionNameField, visibilityBox)
-            signatureComponent.setSignature(config.signature)
-        }
 
         val panel = panel {
             row("Name:") { functionNameField() }
@@ -85,33 +81,29 @@ private class DialogExtractFunctionUi(
             row("Signature:") { signatureComponent() }
         }
 
-        fun checkValidationErrors(): List<ValidationInfo> {
-            val name = functionNameField.enteredName
-            return if (!isValidRustVariableIdentifier(name)) {
-                listOf(ValidationInfo("Invalid function name", functionNameField))
-            } else emptyList()
-        }
-
-        dialog(
+        val extractDialog = dialog(
             "Extract Function",
             panel,
             resizable = false,
             focusedComponent = functionNameField,
-            okActionEnabled = true,
+            okActionEnabled = false,
             project = project,
             parent = null,
             errorText = null,
             modality = DialogWrapper.IdeModalityType.IDE
         ) {
-            val errors = checkValidationErrors()
-            if (errors.isNotEmpty()) {
-                errors
-            } else {
-                updateConfig(config, functionNameField, visibilityBox)
-                callback()
-                emptyList()
-            }
-        }.show()
+            updateConfig(config, functionNameField, visibilityBox)
+            callback()
+            emptyList()
+        }
+
+        functionNameField.addDataChangedListener {
+            updateConfig(config, functionNameField, visibilityBox)
+            signatureComponent.setSignature(config.signature)
+            extractDialog.isOKActionEnabled = isValidRustVariableIdentifier(config.name)
+        }
+
+        extractDialog.show()
     }
 
     private fun updateConfig(
