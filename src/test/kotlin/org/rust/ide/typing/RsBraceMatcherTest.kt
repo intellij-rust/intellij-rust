@@ -30,6 +30,18 @@ class RsBraceMatcherTest : RsTestBase() {
         "fn foo(<caret>){}"
     )
 
+    fun `test pair parenthesis deletion simple`() = doTest(
+        "fn foo(){(<caret>)}",
+        '\b',
+        "fn foo(){<caret>}"
+    )
+
+    fun `test pair parenthesis deletion after bracket`() = doTest(
+        "fn foo(){[];(<caret>)}",
+        '\b',
+        "fn foo(){[];<caret>}"
+    )
+
     fun `test pair parenthesis before bracket`() = doTest(
         "fn main() { let _ = &[foo<caret>]; }",
         '(',
