@@ -91,14 +91,22 @@ fun processItemDeclarations(
         }
     }
 
+    val isEdition2018 = scope.isEdition2018
     for (speck in itemImports) {
         check(speck.useGroup == null)
         val path = speck.path ?: continue
         val name = speck.nameInScope ?: continue
+
+        if (isEdition2018 && speck.alias == null && path.isAtom) {
+            // Use items like `use foo;` or `use foo::{self}` are meaningless on 2018 edition.
+            // We should ignore it or it breaks resolve of such `foo` in other places.
+            ItemResolutionTestmarks.extraAtomUse.hit()
+            continue
+        }
         if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
     }
 
-    if (withPrivateImports && Namespace.Types in ns && scope is RsFile && scope.isCrateRoot && !scope.isEdition2018) {
+    if (withPrivateImports && Namespace.Types in ns && scope is RsFile && !isEdition2018 && scope.isCrateRoot) {
         // Rust injects implicit `extern crate std` in every crate root module unless it is
         // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
         // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
@@ -235,6 +243,14 @@ private val CACHED_ITEM_DECLS: Key<CachedValue<List<ScopeEntry>>> =
 private val CACHED_ITEM_DECLS_WITH_PRIVATE_IMPORTS: Key<CachedValue<List<ScopeEntry>>> =
     Key.create("CACHED_ITEM_DECLS_WITH_PRIVATE_IMPORTS")
 
+private val RsPath.isAtom: Boolean
+    get() = when (kind) {
+        PathKind.IDENTIFIER -> qualifier == null
+        PathKind.SELF -> qualifier?.isAtom == true
+        else -> false
+    }
+
 object ItemResolutionTestmarks {
     val externCrateSelfWithoutAlias = Testmark("externCrateSelfWithoutAlias")
+    val extraAtomUse = Testmark("extraAtomUse")
 }

@@ -642,4 +642,35 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
             }
         """)
     }
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3846
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extra use of crate name 1`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        use dep_lib_target;
+        use dep_lib_target::Foo;
+                          //^ dep-lib/lib.rs
+    """, ItemResolutionTestmarks.extraAtomUse)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test "extra use of crate name 1" with alias`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        use dep_lib_target as dep;
+        use dep::Foo;
+                 //^ dep-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extra use of crate name 2`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        use dep_lib_target::{self};
+        use dep_lib_target::Foo;
+                          //^ dep-lib/lib.rs
+    """, ItemResolutionTestmarks.extraAtomUse)
 }

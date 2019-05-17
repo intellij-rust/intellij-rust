@@ -308,16 +308,6 @@ private fun findDependencyCrateByName(context: RsElement, name: String): RsFile?
     return found
 }
 
-private val RsPath.qualifier: RsPath?
-    get() {
-        path?.let { return it }
-        var ctx = context
-        while (ctx is RsPath) {
-            ctx = ctx.context
-        }
-        return (ctx as? RsUseSpeck)?.qualifier
-    }
-
 fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val parent = path.context
     if (parent is RsMacroCall) {
