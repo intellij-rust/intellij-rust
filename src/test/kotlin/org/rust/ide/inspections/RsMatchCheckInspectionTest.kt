@@ -817,15 +817,49 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/3776
-    fun `test issue 3776`() = checkByText("""
-        enum Marisa { Ora, Muda, Dura }
+    fun `test tuple with multiple types exhaustiveness`() = checkByText("""
+        enum E { A }
+
         fn main() {
-            let _ = match (Marisa::Dura, Some(1_919_810)) {
-                (Marisa::Ora, None) | (Marisa::Dura, Some(_)) => 23,
-                (Marisa::Muda, None) | (Marisa::Muda, Some(_)) => 233,
-                (Marisa::Ora, Some(b)) => b,
-                (Marisa::Dura, None) => 233,
-            };
+            match (E::A, true) {
+                (E::A, true) => {}
+                (E::A, false) => {}
+            }
         }
-    """)
+        """)
+
+    fun `test struct with multiple types exhaustiveness`() = checkByText("""
+        enum E { A }
+        struct S { e: E, x: bool }
+
+        fn main() {
+            match (S { e: E::A, x: true }) {
+                S { e: E::A, x: true } => {}
+                S { e: E::A, x: false } => {}
+            }
+        }
+        """)
+
+    fun `test tuple with different types remaining`() = checkFixByText("Add remaining patterns", """
+        enum E { A, B }
+
+        fn main() {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> (E::A, true) {
+                (E::A, true) => {}
+                (E::A, false) => {}
+                (E::B, true) => {}
+            }
+        }
+        """, """
+        enum E { A, B }
+
+        fn main() {
+            match (E::A, true) {
+                (E::A, true) => {}
+                (E::A, false) => {}
+                (E::B, true) => {}
+                (E::B, false) => {}
+            }
+        }
+        """)
 }
