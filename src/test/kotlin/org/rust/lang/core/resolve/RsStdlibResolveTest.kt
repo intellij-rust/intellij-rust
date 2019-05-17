@@ -649,4 +649,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         use crate::std::mem;
                  //^ unresolved
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extra use of prelude item`() = stubOnlyResolve("""
+    //- main.rs
+        use Vec;
+
+        fn main() {
+            let a = Vec::<i32>::new();
+        }         //^ .../vec.rs
+    """, ItemResolutionTestmarks.extraAtomUse)
 }
