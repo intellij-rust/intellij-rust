@@ -25,26 +25,29 @@ import org.rust.lang.core.psi.impl.RsExprImpl
 import org.rust.lang.core.psi.kind
 import org.rust.lang.core.stubs.RsLitExprStub
 import org.rust.lang.core.stubs.RsPlaceholderStub
-import org.rust.lang.core.stubs.RsStubLiteralType
+import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 
-val RsLitExpr.stubType: RsStubLiteralType? get() {
-    val stub = (greenStub as? RsLitExprStub)
-    if (stub != null) return stub.type
-    val kind = kind
-    return when (kind) {
-        is RsLiteralKind.Boolean ->  RsStubLiteralType.Boolean
-        is RsLiteralKind.Char -> RsStubLiteralType.Char(kind.isByte)
-        is RsLiteralKind.String -> RsStubLiteralType.String(kind.value?.length?.toLong(), kind.isByte)
-        is RsLiteralKind.Integer -> RsStubLiteralType.Integer(TyInteger.fromSuffixedLiteral(integerLiteral!!))
-        is RsLiteralKind.Float -> RsStubLiteralType.Float(TyFloat.fromSuffixedLiteral(floatLiteral!!))
-        else -> null
+val RsLitExpr.stubKind: RsStubLiteralKind?
+    get() {
+        val stub = (greenStub as? RsLitExprStub)
+        if (stub != null) return stub.kind
+        return when (val kind = kind) {
+            is RsLiteralKind.Boolean -> RsStubLiteralKind.Boolean(kind.value)
+            is RsLiteralKind.Char -> RsStubLiteralKind.Char(kind.value, kind.isByte)
+            is RsLiteralKind.String -> RsStubLiteralKind.String(kind.value, kind.isByte)
+            is RsLiteralKind.Integer -> RsStubLiteralKind.Integer(kind.value, TyInteger.fromSuffixedLiteral(integerLiteral!!))
+            is RsLiteralKind.Float -> RsStubLiteralKind.Float(kind.value, TyFloat.fromSuffixedLiteral(floatLiteral!!))
+            else -> null
+        }
     }
-}
 
-val RsLitExpr.integerLiteralValue: String? get() =
-    (greenStub as? RsLitExprStub)?.integerLiteralValue ?: integerLiteral?.text
+val RsLitExpr.booleanValue: Boolean? get() = (stubKind as? RsStubLiteralKind.Boolean)?.value
+val RsLitExpr.integerValue: Long? get() = (stubKind as? RsStubLiteralKind.Integer)?.value
+val RsLitExpr.floatValue: Double? get() = (stubKind as? RsStubLiteralKind.Float)?.value
+val RsLitExpr.charValue: String? get() = (stubKind as? RsStubLiteralKind.Char)?.value
+val RsLitExpr.stringValue: String? get() = (stubKind as? RsStubLiteralKind.String)?.value
 
 abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
 

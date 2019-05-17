@@ -25,15 +25,4 @@ sealed class ExprValue {
     data class Char(val value: String) : ExprValue() {
         override fun toString(): String = value
     }
-
-    operator fun compareTo(other: ExprValue): Int {
-        return when {
-            this is Bool && other is Bool -> value.compareTo(other.value)
-            this is Integer && other is Integer -> value.compareTo(other.value)
-            this is Float && other is Float -> value.compareTo(other.value)
-            this is Str && other is Str -> value.compareTo(other.value)
-            this is Char && other is Char -> value.compareTo(other.value)
-            else -> -1
-        }
-    }
 }

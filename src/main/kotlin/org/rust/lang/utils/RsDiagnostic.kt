@@ -531,7 +531,7 @@ sealed class RsDiagnostic(
 
     class DuplicateEnumDiscriminant(
         element: PsiElement,
-        private val id: Int
+        private val id: Long
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,

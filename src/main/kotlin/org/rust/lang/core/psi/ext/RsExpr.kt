@@ -14,11 +14,6 @@ import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.stubs.RsPlaceholderStub
 import org.rust.lang.core.stubs.RsUnaryExprStub
 
-/**
- * Extracts [RsLitExpr] raw value
- */
-val RsLitExpr.stringLiteralValue: String? get() = (kind as? RsTextLiteral)?.value
-
 enum class UnaryOperator {
     REF, // `&a`
     REF_MUT, // `&mut a`
