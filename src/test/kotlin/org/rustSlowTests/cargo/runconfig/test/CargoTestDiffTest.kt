@@ -40,8 +40,8 @@ class CargoTestDiffTest : CargoTestRunnerTestBase() {
 
     private fun doAvailableTest(@Language("Rust") testFnText: String, expected: String, actual: String) {
         val diff = getDiff(testFnText) ?: error("Diff should be not null")
-        assertEquals("Some text", expected, diff.left)
-        assertEquals(actual, diff.right)
+        assertEquals(actual, diff.left)
+        assertEquals(expected, diff.right)
     }
 
     private fun doUnavailableTest(@Language("Rust") testFnText: String) {
