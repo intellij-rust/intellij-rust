@@ -5,24 +5,20 @@
 
 package org.rust.lang.core.macros
 
-import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.PsiBuilder
-import com.intellij.lang.PsiBuilderFactory
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.impl.source.DummyHolderFactory
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
+import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
@@ -117,7 +113,7 @@ class MacroExpander(val project: Project) {
         def: RsMacro,
         call: RsMacroCall
     ): Pair<RsMacroCase, MacroSubstitution>? {
-        val macroCallBody = createPsiBuilder(call, call.macroBody ?: return null)
+        val macroCallBody = project.createRustPsiBuilder(call.macroBody ?: return null)
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
 
@@ -132,14 +128,6 @@ class MacroExpander(val project: Project) {
         }
 
         return null
-    }
-
-    private fun createPsiBuilder(context: PsiElement, text: String): PsiBuilder {
-        val holder = DummyHolderFactory.createHolder(PsiManager.getInstance(project), context).treeElement
-        val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(RsLanguage)
-            ?: error("No parser definition for language $RsLanguage")
-        val lexer = parserDefinition.createLexer(project)
-        return PsiBuilderFactory.getInstance().createBuilder(project, holder, lexer, RsLanguage, text)
     }
 
     private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? =
