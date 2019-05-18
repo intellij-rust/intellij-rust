@@ -106,7 +106,7 @@ class RustProjectSettingsPanel(
 
                 pathToStdlibField.isEditable = !hasRustup
                 pathToStdlibField.button.isEnabled = !hasRustup
-                if (hasRustup) {
+                if (stdlibLocation != null) {
                     pathToStdlibField.text = stdlibLocation ?: ""
                 }
 
