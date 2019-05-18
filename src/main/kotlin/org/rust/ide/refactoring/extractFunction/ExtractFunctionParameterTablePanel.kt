@@ -9,20 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.refactoring.util.AbstractParameterTablePanel
 import com.intellij.refactoring.util.AbstractVariableData
 import com.intellij.util.ui.ColumnInfo
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.ty.walk
-import org.rust.lang.core.types.type
 
 class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : AbstractVariableData() {
     fun changeName(name: String) {
         parameter.name = name
-        onChange()
-    }
-
-    fun changeType(type: Ty) {
-        parameter.type = type
         onChange()
     }
 }
@@ -46,18 +36,6 @@ class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<Pa
 class TypeColumn(val project: Project) : ColumnInfo<ParameterDataHolder, String>("Type") {
     override fun valueOf(item: ParameterDataHolder): String {
         return item.parameter.type?.toString() ?: "_"
-    }
-
-    // TODO: support for types in scope
-    override fun setValue(item: ParameterDataHolder, value: String) {
-        val type = RsPsiFactory(project).tryCreateType(value)?.type ?: return
-        if (type.walk().asSequence().all { it !is TyUnknown }) {
-            item.changeType(type)
-        }
-    }
-
-    override fun isCellEditable(item: ParameterDataHolder): Boolean {
-        return true
     }
 }
 

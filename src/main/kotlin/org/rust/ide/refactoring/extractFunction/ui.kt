@@ -5,18 +5,18 @@
 
 package org.rust.ide.refactoring.extractFunction
 
-import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
+import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
-import org.rust.lang.RsLanguage
 import org.rust.openapiext.isUnitTestMode
 
 private var MOCK: ExtractFunctionUi? = null
@@ -71,21 +71,15 @@ private class DialogExtractFunctionUi(
             signatureComponent.setSignature(config.signature)
         }
 
-        val validator = LanguageNamesValidation.INSTANCE.forLanguage(RsLanguage)
-        fun validateName(name: String): Boolean
-        {
-            return validator.isIdentifier(name, project) && !name.startsWith("'")
-        }
-
-        val parameterPanel = ExtractFunctionParameterTablePanel(::validateName, project, config) {
+        val parameterPanel = ExtractFunctionParameterTablePanel(::isValidRustVariableIdentifier, project, config) {
             signatureComponent.setSignature(config.signature)
         }
 
         val panel = panel {
-            row("Name:") { functionNameField() }
+            row("Name:") { functionNameField(CCFlags.grow) }
             row("Visibility:") { visibilityBox() }
-            row("Parameters: ") { parameterPanel() }
-            row("Signature:") { signatureComponent() }
+            row("Parameters:") { parameterPanel() }
+            row("Signature:") { signatureComponent(CCFlags.grow) }
         }
 
         val extractDialog = dialog(
@@ -107,7 +101,7 @@ private class DialogExtractFunctionUi(
         functionNameField.addDataChangedListener {
             updateConfig(config, functionNameField, visibilityBox)
             signatureComponent.setSignature(config.signature)
-            extractDialog.isOKActionEnabled = validateName(config.name)
+            extractDialog.isOKActionEnabled = isValidRustVariableIdentifier(config.name)
         }
 
         extractDialog.show()
