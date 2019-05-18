@@ -6,6 +6,7 @@
 package org.rust.ide.injected
 
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.lang.PsiBuilder
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.project.Project
@@ -18,8 +19,11 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.lang.core.parser.probe
 import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.core.psi.RsDocCommentImpl
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocKind
@@ -56,7 +60,8 @@ class RsDoctestLanguageInjector : MultiHostInjector {
     override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
         if (context !is RsDocCommentImpl) return
         if (!context.isValidHost || context.elementType !in RS_DOC_COMMENTS) return
-        if (!context.project.rustSettings.doctestInjectionEnabled) return
+        val project = context.project
+        if (!project.rustSettings.doctestInjectionEnabled) return
 
         val rsElement = context.ancestorStrict<RsElement>() ?: return
         val cargoTarget = rsElement.containingCargoTarget ?: return
@@ -91,6 +96,31 @@ class RsDoctestLanguageInjector : MultiHostInjector {
         }.forEach { ranges ->
             val inj = registrar.startInjecting(RsLanguage)
 
+            val fullInjectionText = buildString {
+                ranges.forEach {
+                    append(text, it.startOffset, it.endOffset)
+                }
+            }
+
+            // Rustdoc doesn't wrap doctest with `main` function and `extern crate` declaration
+            // if they are present. Rustdoc uses rust parser to determine existence of them.
+            // See https://github.com/rust-lang/rust/blob/5182cc1ca/src/librustdoc/test.rs#L438
+            //
+            // We use a lexer instead of parser here to reduce CPU usage. It is less strict,
+            // i.e. sometimes we can think that main function exists when it's not. But such
+            // code is very ray, so I think this implementation in reasonable.
+            val (alreadyHasMain, alreadyHasExternCrate) = if (fullInjectionText.contains("main")) {
+                val lexer = project.createRustPsiBuilder(fullInjectionText)
+                val alreadyHasMain = lexer.probe {
+                    lexer.findTokenSequence(RsElementTypes.FN, "main", RsElementTypes.LPAREN)
+                }
+                val alreadyHasExternCrate =
+                    lexer.findTokenSequence(RsElementTypes.EXTERN, RsElementTypes.CRATE, crateName)
+                alreadyHasMain to alreadyHasExternCrate
+            } else {
+                false to false
+            }
+
             ranges.forEachIndexed { index, range ->
                 val isFirstIteration = index == 0
                 val isLastIteration = index == ranges.size - 1
@@ -100,17 +130,17 @@ class RsDoctestLanguageInjector : MultiHostInjector {
                         // Yes, we want to skip the only "std" crate. Not core/alloc/etc, the "std" only
                         val isStdCrate = crateName == AutoInjectedCrates.STD &&
                             cargoTarget.pkg.origin == PackageOrigin.STDLIB
-                        if (!isStdCrate) {
+                        if (!isStdCrate && !alreadyHasExternCrate) {
                             append("extern crate ")
                             append(crateName)
                             append("; ")
                         }
-                        append("fn main() {")
+                        if (!alreadyHasMain) append("fn main() {")
                     }
                 } else {
                     null
                 }
-                val suffix = if (isLastIteration) "}" else null
+                val suffix = if (isLastIteration && !alreadyHasMain) "}" else null
 
                 inj.addPlace(prefix, suffix, context, range)
             }
@@ -168,6 +198,33 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
 
 private fun String.indicesOf(s: String): Sequence<Int> =
     generateSequence(indexOf(s)) { indexOf(s, it + s.length) }.takeWhile { it != -1 }
+
+private fun PsiBuilder.findTokenSequence(vararg seq: Any): Boolean {
+    fun isTokenEq(t: Any): Boolean {
+        return if (t is IElementType) {
+            tokenType == t
+        } else {
+            tokenType == RsElementTypes.IDENTIFIER && tokenText == t
+        }
+    }
+
+    while (!eof()) {
+        if (isTokenEq(seq[0])) {
+            val found = probe {
+                for (i in 1 until seq.size) {
+                    advanceLexer()
+                    if (!isTokenEq(seq[i])) {
+                        return@probe false
+                    }
+                }
+                true
+            }
+            if (found) return true
+        }
+        advanceLexer()
+    }
+    return false
+}
 
 fun VirtualFile.isDoctestInjection(project: Project): Boolean {
     val virtualFileWindow = this as? VirtualFileWindow ?: return false
