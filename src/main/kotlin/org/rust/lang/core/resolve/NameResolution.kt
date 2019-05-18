@@ -1284,7 +1284,7 @@ private inline fun processWithShadowing(
 private fun findPrelude(element: RsElement): RsFile? {
     val crateRoot = element.crateRoot as? RsFile ?: return null
     val cargoPackage = crateRoot.containingCargoPackage
-    val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB
+    val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB && !element.isDoctestInjection
     val packageName = cargoPackage?.normName
 
     // `std` and `core` crates explicitly add their prelude
