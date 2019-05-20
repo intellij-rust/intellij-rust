@@ -61,12 +61,13 @@ data class CargoCommandLine(
 
             val targetArgs = targets.distinctBy { it.name }.flatMap { target ->
                 when (target.kind) {
-                    CargoWorkspace.TargetKind.BIN -> listOf("--bin", target.name)
-                    CargoWorkspace.TargetKind.TEST -> listOf("--test", target.name)
-                    CargoWorkspace.TargetKind.EXAMPLE -> listOf("--example", target.name)
-                    CargoWorkspace.TargetKind.BENCH -> listOf("--bench", target.name)
-                    CargoWorkspace.TargetKind.LIB -> listOf("--lib")
-                    CargoWorkspace.TargetKind.UNKNOWN -> emptyList()
+                    CargoWorkspace.TargetKind.Bin -> listOf("--bin", target.name)
+                    CargoWorkspace.TargetKind.Test -> listOf("--test", target.name)
+                    CargoWorkspace.TargetKind.ExampleBin, is CargoWorkspace.TargetKind.ExampleLib ->
+                        listOf("--example", target.name)
+                    CargoWorkspace.TargetKind.Bench -> listOf("--bench", target.name)
+                    is CargoWorkspace.TargetKind.Lib -> listOf("--lib")
+                    CargoWorkspace.TargetKind.Unknown -> emptyList()
                 }
             }
 
@@ -121,12 +122,12 @@ data class CargoCommandLine(
 
 fun CargoWorkspace.Target.launchCommand(): String? {
     return when (kind) {
-        CargoWorkspace.TargetKind.BIN -> "run"
-        CargoWorkspace.TargetKind.LIB -> "build"
-        CargoWorkspace.TargetKind.TEST -> "test"
-        CargoWorkspace.TargetKind.BENCH -> "bench"
-        CargoWorkspace.TargetKind.EXAMPLE ->
-            if (crateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN) "run" else "build"
+        CargoWorkspace.TargetKind.Bin -> "run"
+        is CargoWorkspace.TargetKind.Lib -> "build"
+        CargoWorkspace.TargetKind.Test -> "test"
+        CargoWorkspace.TargetKind.Bench -> "bench"
+        CargoWorkspace.TargetKind.ExampleBin -> "run"
+        is CargoWorkspace.TargetKind.ExampleLib -> "build"
         else -> null
     }
 }

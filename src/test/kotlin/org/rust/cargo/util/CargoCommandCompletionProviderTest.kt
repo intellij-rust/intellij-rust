@@ -99,13 +99,11 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         fun target(
             name: String,
             kind: TargetKind,
-            crateType: CrateType,
             edition: Edition = Edition.EDITION_2015
         ): CargoWorkspaceData.Target = CargoWorkspaceData.Target(
             crateRootUrl = "/tmp/lib/rs",
             name = name,
             kind = kind,
-            crateTypes = listOf(crateType),
             edition = edition
         )
 
@@ -127,11 +125,11 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
         val pkgs = listOf(
             pkg("foo", true, listOf(
-                target("foo", TargetKind.LIB, CrateType.LIB),
-                target("bar", TargetKind.BIN, CrateType.BIN),
-                target("baz", TargetKind.BIN, CrateType.BIN)
+                target("foo", TargetKind.Lib(LibKind.LIB)),
+                target("bar", TargetKind.Bin),
+                target("baz", TargetKind.Bin)
             )),
-            pkg("quux", false, listOf(target("quux", TargetKind.LIB, CrateType.LIB)))
+            pkg("quux", false, listOf(target("quux", TargetKind.Lib(LibKind.LIB))))
         )
         CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()))
     }

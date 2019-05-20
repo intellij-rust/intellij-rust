@@ -10,12 +10,15 @@ import com.google.gson.JsonObject
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.workspace.CargoWorkspace.*
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
+import java.util.*
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -159,6 +162,20 @@ object CargoMetadata {
             }
     }
 
+    enum class TargetKind {
+        LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
+    }
+
+    /**
+     * Represents possible variants of generated artifact binary
+     * corresponded to `--crate-type` compiler attribute
+     *
+     * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
+     */
+    enum class CrateType {
+        BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
+    }
+
     /**
      * A rooted graph of dependencies, represented as adjacency list
      */
@@ -255,8 +272,43 @@ object CargoMetadata {
     private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
         val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
         return mainFile?.let {
-            CargoWorkspaceData.Target(it.url, name, cleanKind, cleanCrateTypes, edition.cleanEdition())
+            CargoWorkspaceData.Target(
+                it.url,
+                name,
+                makeTargetKind(cleanKind, cleanCrateTypes),
+                edition.cleanEdition()
+            )
         }
+    }
+
+    private fun makeTargetKind(target: TargetKind, crateTypes: List<CrateType>): CargoWorkspace.TargetKind {
+        return when (target) {
+            TargetKind.LIB -> CargoWorkspace.TargetKind.Lib(crateTypes.toLibKinds())
+            TargetKind.BIN -> CargoWorkspace.TargetKind.Bin
+            TargetKind.TEST -> CargoWorkspace.TargetKind.Test
+            TargetKind.EXAMPLE -> if (crateTypes.contains(CrateType.BIN)) {
+                CargoWorkspace.TargetKind.ExampleBin
+            } else {
+                CargoWorkspace.TargetKind.ExampleLib(crateTypes.toLibKinds())
+            }
+            TargetKind.BENCH -> CargoWorkspace.TargetKind.Bench
+            TargetKind.UNKNOWN -> CargoWorkspace.TargetKind.Unknown
+        }
+    }
+
+    private fun List<CrateType>.toLibKinds(): EnumSet<LibKind> {
+        return EnumSet.copyOf(map {
+            when (it) {
+                CrateType.LIB -> LibKind.LIB
+                CargoMetadata.CrateType.DYLIB -> LibKind.DYLIB
+                CargoMetadata.CrateType.STATICLIB -> LibKind.STATICLIB
+                CargoMetadata.CrateType.CDYLIB -> LibKind.CDYLIB
+                CargoMetadata.CrateType.RLIB -> LibKind.RLIB
+                CargoMetadata.CrateType.PROC_MACRO -> LibKind.PROC_MACRO
+                CargoMetadata.CrateType.BIN -> LibKind.UNKNOWN
+                CargoMetadata.CrateType.UNKNOWN -> LibKind.UNKNOWN
+            }
+        })
     }
 
     private fun String?.cleanEdition(): Edition = when (this) {

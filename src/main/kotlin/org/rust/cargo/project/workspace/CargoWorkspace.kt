@@ -70,12 +70,15 @@ interface CargoWorkspace {
         val normName: String get() = name.replace('-', '_')
 
         val kind: TargetKind
-        val crateTypes: List<CrateType>
 
-        val isLib: Boolean get() = kind == TargetKind.LIB
-        val isBin: Boolean get() = kind == TargetKind.BIN
-        val isExample: Boolean get() = kind == TargetKind.EXAMPLE
-        val isProcMacro: Boolean get() = CrateType.PROC_MACRO in crateTypes
+        val isLib: Boolean get() = kind is TargetKind.Lib
+        val isBin: Boolean get() = kind == TargetKind.Bin
+        val isExampleBin: Boolean get() = kind == TargetKind.ExampleBin
+        val isProcMacro: Boolean
+            get() {
+                val kind = kind
+                return kind is TargetKind.Lib && kind.kinds.contains(LibKind.PROC_MACRO)
+            }
 
         val crateRoot: VirtualFile?
 
@@ -89,18 +92,21 @@ interface CargoWorkspace {
         val name: String
     }
 
-    enum class TargetKind {
-        LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
+    sealed class TargetKind(val name: String) {
+        class Lib(val kinds: EnumSet<LibKind>) : TargetKind("lib") {
+            constructor(vararg kinds: LibKind) : this(EnumSet.copyOf(kinds.asList()))
+        }
+
+        object Bin : TargetKind("bin")
+        object Test : TargetKind("test")
+        object ExampleBin : TargetKind("example")
+        class ExampleLib(val kinds: EnumSet<LibKind>) : TargetKind("example")
+        object Bench : TargetKind("bench")
+        object Unknown : TargetKind("unknown")
     }
 
-    /**
-     * Represents possible variants of generated artifact binary
-     * corresponded to `--crate-type` compiler attribute
-     *
-     * See [linkage](https://doc.rust-lang.org/reference/linkage.html)
-     */
-    enum class CrateType {
-        BIN, LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
+    enum class LibKind {
+        LIB, DYLIB, STATICLIB, CDYLIB, RLIB, PROC_MACRO, UNKNOWN
     }
 
     enum class Edition {
@@ -261,7 +267,6 @@ private class PackageImpl(
             crateRootUrl = it.crateRootUrl,
             name = it.name,
             kind = it.kind,
-            crateTypes = it.crateTypes,
             edition = it.edition
         )
     }
@@ -273,8 +278,7 @@ private class PackageImpl(
 
     override val dependencies: MutableList<DependencyImpl> = ArrayList()
 
-    override fun toString()
-        = "Package(name='$name', contentRootUrl='$contentRootUrl')"
+    override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl')"
 }
 
 
@@ -283,14 +287,12 @@ private class TargetImpl(
     val crateRootUrl: String,
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
-    override val crateTypes: List<CargoWorkspace.CrateType>,
     override val edition: CargoWorkspace.Edition
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
 
-    override fun toString(): String
-        = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
+    override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
 
 private class DependencyImpl(override val pkg: PackageImpl, name: String? = null) : CargoWorkspace.Dependency {
@@ -311,7 +313,6 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
                 crateRootUrl = it.crateRootUrl,
                 name = it.name,
                 kind = it.kind,
-                crateTypes = it.crateTypes,
                 edition = edition ?: it.edition
             )
         },
@@ -330,8 +331,7 @@ private val StandardLibrary.StdCrate.asPackageData
             targets = listOf(CargoWorkspaceData.Target(
                 crateRootUrl = crateRootUrl,
                 name = name,
-                kind = CargoWorkspace.TargetKind.LIB,
-                crateTypes = listOf(CargoWorkspace.CrateType.LIB),
+                kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
                 edition = CargoWorkspace.Edition.EDITION_2015
             )),
             source = null,
