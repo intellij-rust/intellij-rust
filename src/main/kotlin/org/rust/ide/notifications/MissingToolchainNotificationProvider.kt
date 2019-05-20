@@ -139,7 +139,7 @@ class MissingToolchainNotificationProvider(
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
-                if (StandardLibrary.fromFile(stdlib) != null) {
+                if (StandardLibrary.fromFile(project, stdlib) != null) {
                     project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
                 } else {
                     project.showBalloon(

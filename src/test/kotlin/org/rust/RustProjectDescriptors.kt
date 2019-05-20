@@ -8,11 +8,14 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -96,7 +99,12 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val stdlib = StandardLibrary.fromFile(stdlib!!)!!
+        val project = module.project
+        if (toolchain != null) {
+            project.rustSettings.modify { it.toolchain = toolchain }
+        }
+
+        val stdlib = StandardLibrary.fromFile(project, stdlib!!)!!
         return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib)
     }
 
@@ -110,9 +118,11 @@ open class WithCustomStdlibRustProjectDescriptor(
     private val explicitStdlibPath: () -> String?
 ) : RustProjectDescriptorBase() {
 
-    private val stdlib: StandardLibrary? by lazy {
+    private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+
+    private val stdlib: VirtualFile? by lazy {
         val path = explicitStdlibPath() ?: return@lazy null
-        StandardLibrary.fromPath(path)
+        LocalFileSystem.getInstance().findFileByPath(path)
     }
 
     override val skipTestReason: String? get() {
@@ -120,8 +130,15 @@ open class WithCustomStdlibRustProjectDescriptor(
         return delegate.skipTestReason
     }
 
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace =
-        delegate.testCargoProject(module, contentRoot).withStdlib(stdlib!!)
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        val project = module.project
+        if (toolchain != null) {
+            project.rustSettings.modify { it.toolchain = toolchain }
+        }
+
+        val stdlib = StandardLibrary.fromFile(module.project, stdlib!!)!!
+        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib)
+    }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)

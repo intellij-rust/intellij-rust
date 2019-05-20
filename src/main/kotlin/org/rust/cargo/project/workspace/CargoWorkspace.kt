@@ -11,6 +11,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import org.rust.stdext.applyWithSymlink
+import org.rust.stdext.mapToSet
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -150,32 +151,32 @@ private class WorkspaceImpl(
         // so we have to rebuild the whole workspace from scratch instead of
         // *just* adding in the stdlib.
 
-        val stdAll = stdlib.crates.map { it.id }.toSet()
-        val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
-        val stdRoots = stdlib.crates.filter { it.type == StdLibType.ROOT }.map { it.id }.toSet()
+        val stdAll = stdlib.crates.mapToSet { it.id }
+        val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.mapToSet { it.id }
+        val stdRoots = stdlib.crates.filter { it.type == StdLibType.ROOT }.mapToSet { it.id }
 
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData() } +
-                stdlib.crates.map { it.asPackageData }
+            packages.map { it.asPackageData() } + stdlib.crates.map { it.pkg }
         )
 
-        run {
-            val oldIdToPackage = packages.associateBy { it.id }
-            val newIdToPackage = result.packages.associateBy { it.id }
-            val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }.map { DependencyImpl(it) }
-            newIdToPackage.forEach { (id, pkg) ->
-                if (id !in stdAll) {
-                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
-                        val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
-                        DependencyImpl(dependencyPackage, name)
-                    })
-                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdRoots })
-                    val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
-                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdGated && it.pkg.id !in explicitDeps })
-                } else {
-                    pkg.dependencies.addAll(stdlibDependencies)
+        val oldIdToPackage = packages.associateBy { it.id }
+        val newIdToPackage = result.packages.associateBy { it.id }
+        val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }.map { DependencyImpl(it) }
+        newIdToPackage.forEach { (id, pkg) ->
+            if (id !in stdAll) {
+                pkg.dependencies += oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+                    val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
+                    DependencyImpl(dependencyPackage, name)
+                }
+                pkg.dependencies += stdlibDependencies.filter { it.pkg.id in stdRoots }
+                val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
+                pkg.dependencies += stdlibDependencies.filter { it.pkg.id in stdGated && it.pkg.id !in explicitDeps }
+            } else {
+                pkg.dependencies += stdlib.crates.firstOrNull { it.id == id }?.dependencies.orEmpty().mapNotNull { (id, name) ->
+                    val dependencyPackage = newIdToPackage[id] ?: return@mapNotNull null
+                    DependencyImpl(dependencyPackage, name)
                 }
             }
         }
@@ -189,7 +190,6 @@ private class WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { pkg ->
-                // Currently, stdlib doesn't use 2018 edition
                 val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
                 pkg.asPackageData(packageEdition)
             }
@@ -320,21 +320,3 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         origin = origin,
         edition = edition ?: this.edition
     )
-
-private val StandardLibrary.StdCrate.asPackageData
-    get() =
-        CargoWorkspaceData.Package(
-            id = id,
-            contentRootUrl = packageRootUrl,
-            name = name,
-            version = "",
-            targets = listOf(CargoWorkspaceData.Target(
-                crateRootUrl = crateRootUrl,
-                name = name,
-                kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
-                edition = CargoWorkspace.Edition.EDITION_2015
-            )),
-            source = null,
-            origin = PackageOrigin.STDLIB,
-            edition = CargoWorkspace.Edition.EDITION_2015
-        )

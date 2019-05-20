@@ -26,6 +26,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -97,7 +98,14 @@ class Cargo(private val cargoExecutable: Path) {
         projectDirectory: Path,
         listener: ProcessListener? = null
     ): CargoWorkspace {
-        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
+        val projectDescriptionData = projectWorkspaceData(owner, projectDirectory, listener)
+        val manifestPath = projectDirectory.resolve("Cargo.toml")
+        return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
+    }
+
+    @Throws(ExecutionException::class)
+    fun projectWorkspaceData(owner: Project, projectDirectory: Path, listener: ProcessListener? = null): CargoWorkspaceData {
+        val additionalArgs = mutableListOf("--verbose", "--format-version", "1")
         if (owner.rustSettings.useOffline) {
             additionalArgs += "-Zoffline"
         }
@@ -111,9 +119,7 @@ class Cargo(private val cargoExecutable: Path) {
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
-        val projectDescriptionData = CargoMetadata.clean(rawData)
-        val manifestPath = projectDirectory.resolve("Cargo.toml")
-        return CargoWorkspace.deserialize(manifestPath, projectDescriptionData)
+        return CargoMetadata.clean(rawData)
     }
 
     @Throws(ExecutionException::class)

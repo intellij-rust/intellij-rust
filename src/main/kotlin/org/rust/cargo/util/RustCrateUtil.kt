@@ -27,11 +27,10 @@ enum class StdLibType {
     DEPENDENCY
 }
 
-data class StdLibInfo (
+data class StdLibInfo(
     val name: String,
     val type: StdLibType,
-    val srcDir: String = "lib" + name,
-    val dependencies: List<String> = emptyList()
+    val srcDir: String = "lib$name"
 )
 
 object AutoInjectedCrates {
@@ -39,35 +38,24 @@ object AutoInjectedCrates {
     const val CORE: String = "core"
     val stdlibCrates = listOf(
         // Roots
-        StdLibInfo(STD, StdLibType.ROOT, dependencies = listOf("alloc_jemalloc", "alloc_system", "panic_abort", "rand",
-            "compiler_builtins", "unwind", "rustc_asan", "rustc_lsan", "rustc_msan", "rustc_tsan",
-            "build_helper")),
+        StdLibInfo(STD, StdLibType.ROOT),
         StdLibInfo(CORE, StdLibType.ROOT),
         StdLibInfo("alloc", StdLibType.ROOT),
-        StdLibInfo("collections", StdLibType.ROOT),
-        StdLibInfo("libc", StdLibType.ROOT, srcDir = "liblibc/src"),
-        StdLibInfo("panic_unwind", type = StdLibType.ROOT),
-        StdLibInfo("proc_macro", type = StdLibType.ROOT),
-        StdLibInfo("rustc_unicode", type = StdLibType.ROOT),
-        StdLibInfo("std_unicode", type = StdLibType.ROOT),
-        StdLibInfo("test", dependencies = listOf("getopts", "term"), type = StdLibType.ROOT),
+        StdLibInfo("proc_macro", StdLibType.ROOT),
+        StdLibInfo("test", StdLibType.ROOT),
         // Feature gated
-        StdLibInfo("alloc_jemalloc", StdLibType.FEATURE_GATED),
-        StdLibInfo("alloc_system", StdLibType.FEATURE_GATED),
-        StdLibInfo("compiler_builtins", StdLibType.FEATURE_GATED),
-        StdLibInfo("getopts", StdLibType.FEATURE_GATED),
         StdLibInfo("panic_unwind", StdLibType.FEATURE_GATED),
         StdLibInfo("panic_abort", StdLibType.FEATURE_GATED),
-        StdLibInfo("rand", StdLibType.FEATURE_GATED),
-        StdLibInfo("term", StdLibType.FEATURE_GATED),
         StdLibInfo("unwind", StdLibType.FEATURE_GATED),
+        StdLibInfo("syntax", StdLibType.FEATURE_GATED),
+        StdLibInfo("rustc", StdLibType.FEATURE_GATED),
+        StdLibInfo("rustc_plugin", StdLibType.FEATURE_GATED),
         // Dependencies
         StdLibInfo("build_helper", StdLibType.DEPENDENCY, srcDir = "build_helper"),
         StdLibInfo("rustc_asan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_lsan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_msan", StdLibType.DEPENDENCY),
-        StdLibInfo("rustc_tsan", StdLibType.DEPENDENCY),
-        StdLibInfo("syntax", StdLibType.DEPENDENCY)
+        StdLibInfo("rustc_tsan", StdLibType.DEPENDENCY)
     )
 }
 

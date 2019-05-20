@@ -326,7 +326,7 @@ data class CargoProjectImpl(
     private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
         if (doesProjectLooksLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
-            val std = StandardLibrary.fromPath(manifest.parent.toString())
+            val std = StandardLibrary.fromPath(project, manifest.parent.toString())
             if (std != null) {
                 return CompletableFuture.completedFuture(withStdlib(TaskResult.Ok(std)))
             }
@@ -335,7 +335,7 @@ data class CargoProjectImpl(
         val rustup = toolchain?.rustup(projectDirectory)
         if (rustup == null) {
             val explicitPath = project.rustSettings.explicitPathToStdlib
-            val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
+            val lib = explicitPath?.let { StandardLibrary.fromPath(project, it) }
             val result = when {
                 explicitPath == null -> TaskResult.Err<StandardLibrary>("no explicit stdlib or rustup found")
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
@@ -470,7 +470,7 @@ private fun fetchStdlib(
         val download = rustup.downloadStdlib()
         when (download) {
             is DownloadResult.Ok -> {
-                val lib = StandardLibrary.fromFile(download.value)
+                val lib = StandardLibrary.fromFile(project, download.value)
                 if (lib == null) {
                     err("" +
                         "corrupted standard library: ${download.value.presentableUrl}"
