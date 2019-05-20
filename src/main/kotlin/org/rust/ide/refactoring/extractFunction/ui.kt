@@ -11,9 +11,11 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
+import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
+import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
 import org.rust.openapiext.isUnitTestMode
 
@@ -52,7 +54,8 @@ private class DialogExtractFunctionUi(
 ) : ExtractFunctionUi {
 
     override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
-        val functionNameField = NameSuggestionsField(project)
+        val functionNameField = NameSuggestionsField(emptyArray(), project, RsFileType)
+        functionNameField.minimumSize = JBUI.size(300, 30)
 
         val visibilityBox = ComboBox<String>()
         with(visibilityBox) {
@@ -67,23 +70,24 @@ private class DialogExtractFunctionUi(
             updateConfig(config, functionNameField, visibilityBox)
             signatureComponent.setSignature(config.signature)
         }
-        functionNameField.addDataChangedListener {
-            updateConfig(config, functionNameField, visibilityBox)
+
+        val parameterPanel = ExtractFunctionParameterTablePanel(::isValidRustVariableIdentifier, project, config) {
             signatureComponent.setSignature(config.signature)
         }
 
         val panel = panel {
-            row("Name:") { functionNameField() }
+            row("Name:") { functionNameField(CCFlags.grow) }
             row("Visibility:") { visibilityBox() }
-            row("Signature:") { signatureComponent() }
+            row("Parameters:") { parameterPanel() }
+            row("Signature:") { signatureComponent(CCFlags.grow) }
         }
 
-        dialog(
+        val extractDialog = dialog(
             "Extract Function",
             panel,
-            resizable = false,
+            resizable = true,
             focusedComponent = functionNameField,
-            okActionEnabled = true,
+            okActionEnabled = false,
             project = project,
             parent = null,
             errorText = null,
@@ -92,7 +96,15 @@ private class DialogExtractFunctionUi(
             updateConfig(config, functionNameField, visibilityBox)
             callback()
             emptyList()
-        }.show()
+        }
+
+        functionNameField.addDataChangedListener {
+            updateConfig(config, functionNameField, visibilityBox)
+            signatureComponent.setSignature(config.signature)
+            extractDialog.isOKActionEnabled = isValidRustVariableIdentifier(config.name)
+        }
+
+        extractDialog.show()
     }
 
     private fun updateConfig(

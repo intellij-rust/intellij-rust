@@ -39,8 +39,8 @@ class ReturnValue(val expression: String?, val type: Ty) {
 }
 
 class Parameter(
-    val name: String,
-    val type: Ty? = null,
+    var name: String,
+    var type: Ty? = null,
     val reference: Reference = Reference.NONE,
     isMutableValue: Boolean = false
 ) {
@@ -68,7 +68,7 @@ class Parameter(
     private val mut = if (isMutableValue) "mut " else ""
 
     val parameterText: String
-        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
+        get() = if (type != null) "$mut$name: ${reference.text}${type!!.insertionSafeText}" else name
 
     val argumentText: String
         get() = "${reference.text}$name"
@@ -80,14 +80,14 @@ class RsExtractFunctionConfig private constructor(
     val returnValue: ReturnValue? = null,
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
-    val parameters: List<Parameter>
+    var parameters: List<Parameter>
 ) {
 
     private val parametersText: String
-        get() = parameters.joinToString(",") { it.parameterText }
+        get() = parameters.joinToString(", ") { it.parameterText }
 
     val argumentsText: String
-        get() = parameters.filter { it.type != null }.joinToString(",") { it.argumentText }
+        get() = parameters.filter { it.type != null }.joinToString(", ") { it.argumentText }
 
     val signature: String
         get() = buildString {
