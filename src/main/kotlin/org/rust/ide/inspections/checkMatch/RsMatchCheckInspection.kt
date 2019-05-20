@@ -111,7 +111,7 @@ private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boole
         return Useless
     }
 
-    val type = matrix.type
+    val type = matrix.firstColumnType
     val constructors = patterns.first().constructors
     if (constructors != null) {
         return expandConstructors(constructors, type)

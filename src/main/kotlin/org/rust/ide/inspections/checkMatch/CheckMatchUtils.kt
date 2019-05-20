@@ -27,6 +27,16 @@ val Matrix.type: Ty
         .distinct().singleOrNull()
         ?: TyUnknown
 
+/**
+ * Returns the type of the first column of the matrix
+ *
+ * @returns [TyUnknown] if there is more than one distinct known type in first column
+ */
+val Matrix.firstColumnType: Ty
+    get() = map { it[0].ty }.filter { it !is TyUnknown }
+        .distinct().singleOrNull()
+        ?: TyUnknown
+
 @Throws(CheckMatchException::class)
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
