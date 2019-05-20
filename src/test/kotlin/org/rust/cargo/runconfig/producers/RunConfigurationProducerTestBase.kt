@@ -138,7 +138,6 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
             val name: String,
             val file: File,
             val kind: CargoWorkspace.TargetKind,
-            val crateTypes: List<CargoWorkspace.CrateType>,
             val edition: CargoWorkspace.Edition
         )
 
@@ -151,27 +150,27 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
         private val hello = """pub fn hello() -> String { return "Hello, World!".to_string(); }"""
 
         fun bin(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
-            addTarget(name, TargetKind.BIN, CrateType.BIN, Edition.EDITION_2015, path, code)
+            addTarget(name, TargetKind.Bin, Edition.EDITION_2015, path, code)
             return this
         }
 
         fun example(name: String, path: String, @Language("Rust") code: String = helloWorld): TestProjectBuilder {
-            addTarget(name, TargetKind.EXAMPLE, CrateType.BIN, Edition.EDITION_2015, path, code)
+            addTarget(name, TargetKind.ExampleBin, Edition.EDITION_2015, path, code)
             return this
         }
 
         fun test(name: String, path: String, @Language("Rust") code: String = simpleTest): TestProjectBuilder {
-            addTarget(name, TargetKind.TEST, CrateType.BIN, Edition.EDITION_2015, path, code)
+            addTarget(name, TargetKind.Test, Edition.EDITION_2015, path, code)
             return this
         }
 
         fun bench(name: String, path: String, @Language("Rust") code: String = simpleBench): TestProjectBuilder {
-            addTarget(name, TargetKind.BENCH, CrateType.BIN, Edition.EDITION_2015, path, code)
+            addTarget(name, TargetKind.Bench, Edition.EDITION_2015, path, code)
             return this
         }
 
         fun lib(name: String, path: String, @Language("Rust") code: String = hello): TestProjectBuilder {
-            addTarget(name, TargetKind.LIB, CrateType.LIB, Edition.EDITION_2015, path, code)
+            addTarget(name, TargetKind.Lib(LibKind.LIB), Edition.EDITION_2015, path, code)
             return this
         }
 
@@ -214,7 +213,6 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                                     myFixture.tempDirFixture.getFile(it.file.path)!!.url,
                                     it.name,
                                     it.kind,
-                                    it.crateTypes,
                                     it.edition
                                 )
                             },
@@ -233,13 +231,12 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
         private fun addTarget(
             name: String,
             kind: CargoWorkspace.TargetKind,
-            crateType: CargoWorkspace.CrateType,
             edition: CargoWorkspace.Edition,
             path: String,
             code: String
         ) {
             val file = addFile(path, code)
-            targets.add(Target(name, file, kind, listOf(crateType), edition))
+            targets.add(Target(name, file, kind, edition))
         }
 
         private fun addFile(path: String, code: String): File {

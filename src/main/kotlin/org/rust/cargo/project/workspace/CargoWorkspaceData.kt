@@ -34,7 +34,6 @@ data class CargoWorkspaceData(
         val crateRootUrl: String,
         val name: String,
         val kind: CargoWorkspace.TargetKind,
-        val crateTypes: List<CargoWorkspace.CrateType>,
         val edition: CargoWorkspace.Edition
     )
 
