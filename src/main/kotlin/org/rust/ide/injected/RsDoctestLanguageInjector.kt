@@ -15,6 +15,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
+import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.RsLanguage
@@ -60,7 +63,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
 
         val rsElement = context.ancestorStrict<RsElement>() ?: return
         val cargoTarget = rsElement.containingCargoTarget ?: return
-        if (!cargoTarget.isLib) return // only library targets can have doctests
+        if (!cargoTarget.isDoctestable) return // only library targets can have doctests
         val crateName = cargoTarget.normName
         val text = context.text
 
@@ -165,6 +168,16 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
         ranges
     }
 }
+
+// See https://github.com/rust-lang/cargo/blob/5a0c31d81/src/cargo/core/manifest.rs#L775
+val CargoWorkspace.Target.isDoctestable: Boolean
+    get() {
+        val kind = kind
+        return kind is TargetKind.Lib &&
+            (LibKind.LIB in kind.kinds ||
+                LibKind.RLIB in kind.kinds ||
+                LibKind.PROC_MACRO in kind.kinds)
+    }
 
 private fun String.indicesOf(s: String): Sequence<Int> =
     generateSequence(indexOf(s)) { indexOf(s, it + s.length) }.takeWhile { it != -1 }
