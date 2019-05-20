@@ -137,7 +137,7 @@ class RsInferenceContext(
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
-    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
+    private val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
@@ -207,7 +207,7 @@ class RsInferenceContext(
         expectedPathExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         expectedDotExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
-        diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it}
+        diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it }
 
         performPathsRefinement(lookup)
 
@@ -1515,7 +1515,8 @@ class RsFnInferenceContext(
                 if (op is OverloadableBinaryOperator) {
                     val rhsTypeVar = TyInfer.TyVar()
                     enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
-                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar)
+                        ?: TyUnknown)
 
                     val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
                     ctx.addAdjustment(expr.left, lhsAdjustment)
