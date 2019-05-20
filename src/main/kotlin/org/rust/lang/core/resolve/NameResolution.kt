@@ -494,7 +494,7 @@ private fun processUnqualifiedPathResolveVariants(
     // inside "visibility restriction" or if it starts with `::`
     // ```rust, edition2015
     // use foo::bar; // `foo` is crate-relative
-    // let a = foo::bar; // `foo` is also crate-relative
+    // let a = ::foo::bar; // `foo` is also crate-relative
     // pub(in foo::bar) fn baz() {}
     //       //^ crate-relative path too
     // ```
