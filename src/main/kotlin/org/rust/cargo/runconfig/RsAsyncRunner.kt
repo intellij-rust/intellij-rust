@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -202,13 +201,13 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                                 }
                                 .filter { (target, profile) ->
                                     val isSuitableTarget = when (target.cleanKind) {
-                                        CargoWorkspace.TargetKind.BIN -> true
-                                        CargoWorkspace.TargetKind.EXAMPLE -> {
+                                        CargoMetadata.TargetKind.BIN -> true
+                                        CargoMetadata.TargetKind.EXAMPLE -> {
                                             // TODO: support cases when crate types list contains not only binary
-                                            target.cleanCrateTypes.singleOrNull() == CargoWorkspace.CrateType.BIN
+                                            target.cleanCrateTypes.singleOrNull() == CargoMetadata.CrateType.BIN
                                         }
-                                        CargoWorkspace.TargetKind.TEST -> true
-                                        CargoWorkspace.TargetKind.LIB -> profile.test
+                                        CargoMetadata.TargetKind.TEST -> true
+                                        CargoMetadata.TargetKind.LIB -> profile.test
                                         else -> false
                                     }
                                     isSuitableTarget && (!testsOnly || profile.test)

@@ -153,11 +153,11 @@ private class OptBuilder(
             .map { it.lookupElement }
     }
 
-    fun targetBin() = opt("bin", targetCompleter(CargoWorkspace.TargetKind.BIN))
+    fun targetBin() = opt("bin", targetCompleter(CargoWorkspace.TargetKind.Bin))
 
-    fun targetExample() = opt("example", targetCompleter(CargoWorkspace.TargetKind.EXAMPLE))
-    fun targetTest() = opt("test", targetCompleter(CargoWorkspace.TargetKind.TEST))
-    fun targetBench() = opt("bench", targetCompleter(CargoWorkspace.TargetKind.BENCH))
+    fun targetExample() = opt("example", targetCompleter(CargoWorkspace.TargetKind.ExampleBin))
+    fun targetTest() = opt("test", targetCompleter(CargoWorkspace.TargetKind.Test))
+    fun targetBench() = opt("bench", targetCompleter(CargoWorkspace.TargetKind.Bench))
 
     fun targetAll() {
         flag("lib")

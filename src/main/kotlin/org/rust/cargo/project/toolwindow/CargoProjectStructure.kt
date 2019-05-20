@@ -86,12 +86,12 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
         }
 
         private val CargoWorkspace.Target.icon: Icon? get() = when (kind) {
-            LIB -> CargoIcons.LIB_TARGET
-            BIN -> CargoIcons.BIN_TARGET
-            TEST -> CargoIcons.TEST_TARGET
-            BENCH -> CargoIcons.BENCH_TARGET
-            EXAMPLE -> CargoIcons.EXAMPLE_TARGET
-            UNKNOWN -> null
+            is Lib -> CargoIcons.LIB_TARGET
+            Bin -> CargoIcons.BIN_TARGET
+            Test -> CargoIcons.TEST_TARGET
+            Bench -> CargoIcons.BENCH_TARGET
+            ExampleBin, is ExampleLib -> CargoIcons.EXAMPLE_TARGET
+            Unknown -> null
         }
     }
 }

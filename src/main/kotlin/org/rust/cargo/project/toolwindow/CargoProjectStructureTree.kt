@@ -64,8 +64,8 @@ class CargoProjectTreeRenderer : ColoredTreeCellRenderer() {
             is CargoProjectStructure.Node.Target -> {
                 append(node.name)
                 val targetKind = node.target.kind
-                if (targetKind != CargoWorkspace.TargetKind.UNKNOWN) {
-                    toolTipText = "${StringUtil.capitalize(targetKind.name.toLowerCase())} target `${node.name}`"
+                if (targetKind != CargoWorkspace.TargetKind.Unknown) {
+                    toolTipText = "${StringUtil.capitalize(targetKind.name)} target `${node.name}`"
                 }
             }
             else -> append(node.name)
