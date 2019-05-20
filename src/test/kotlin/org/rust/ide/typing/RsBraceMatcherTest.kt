@@ -61,6 +61,7 @@ class RsBraceMatcherTest : RsTestBase() {
             fn bar<T: IntoFuture<Item=Result<(), ()>>>() {
                 let x = xs.map().collect::<self::foo::Vec<_>>();
                 let x = xs.map().collect::<::Vec<super::Result<&mut String, * const i32>>>();
+                let x:Punctuated<Ident,Token![|]>;
             }
         """)
 
