@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.RsVis
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.ref.RsPathReference
@@ -52,6 +53,16 @@ enum class PathKind {
     CSELF,
     CRATE
 }
+
+val RsPath.qualifier: RsPath?
+    get() {
+        path?.let { return it }
+        var ctx = context
+        while (ctx is RsPath) {
+            ctx = ctx.context
+        }
+        return (ctx as? RsUseSpeck)?.qualifier
+    }
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {
