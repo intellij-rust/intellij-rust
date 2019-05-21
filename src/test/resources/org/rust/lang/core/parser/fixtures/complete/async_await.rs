@@ -22,4 +22,5 @@ fn main() {
     async { () };
     async || { () };
     async move || { () };
+    static move || { () };
 }
