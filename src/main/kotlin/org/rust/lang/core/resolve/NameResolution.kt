@@ -1244,6 +1244,22 @@ fun processNestedScopesUpwards(
     if (processor(ScopeEvent.STAR_IMPORTS)) return false
 
     if (Namespace.Types in ns) {
+        if (scopeStart.isEdition2018 && !scopeStart.containingMod.isCrateRoot) {
+            val crateRoot = scopeStart.crateRoot
+            if (crateRoot != null) {
+                val result = processWithShadowing(prevScope, processor) { shadowingProcessor ->
+                    crateRoot.processExpandedItemsExceptImpls { item ->
+                        if (item is RsExternCrateItem) {
+                            processExternCrateItem(item, shadowingProcessor, true)
+                        } else {
+                            false
+                        }
+                    }
+                }
+                if (result) return true
+            }
+        }
+
         // "extern_prelude" feature. Extern crate names can be resolved as if they were in the prelude.
         // See https://blog.rust-lang.org/2018/10/25/Rust-1.30.0.html#module-system-improvements
         // See https://github.com/rust-lang/rust/pull/54404/

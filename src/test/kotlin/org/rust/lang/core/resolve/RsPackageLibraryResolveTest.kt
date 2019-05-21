@@ -566,4 +566,80 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         example_proc_macro!();
         //^ dep-proc-macro/lib.rs
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extern crate alias`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        extern crate dep_lib_target as dep_lib;
+
+        mod foo {
+            use dep_lib::Foo;
+                       //^ dep-lib/lib.rs
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extern crate alias shadows implicit extern crate names`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- dep-lib-2/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        extern crate dep_lib_target as dep_lib_target_2;
+
+        mod foo {
+            use dep_lib_target_2::Foo;
+                                 //^ dep-lib/lib.rs
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test local item shadows extern crate alias`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub struct Foo;
+    //- lib.rs
+        extern crate dep_lib_target as dep_lib;
+
+        mod bar {
+            mod dep_lib {
+                pub struct Foo;
+            }
+            use dep_lib::Foo;
+                       //^ lib.rs
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test ambiguity of extern crate alias and other item with the same name`() {
+        stubOnlyResolve("""
+        //- dep-lib/lib.rs
+            pub struct Foo;
+        //- lib.rs
+            extern crate dep_lib_target as dep_lib;
+
+            mod dep_lib {
+                pub struct Foo;
+            }
+            use dep_lib::Foo;
+                       //^ unresolved
+        """)
+    }
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test ambiguity of extern crate alias and prelude item`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- dep-lib/lib.rs
+            pub struct Ok;
+        //- lib.rs
+            extern crate dep_lib_target as Result;
+
+            mod foo {
+                use Result::Ok;
+                           //^ unresolved
+            }
+        """)
+    }
 }
