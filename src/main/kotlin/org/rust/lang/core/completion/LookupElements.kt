@@ -19,12 +19,17 @@ import org.rust.ide.presentation.stubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.infer.TypeFolder
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyNever
+import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-const val KEYWORD_PRIORITY = 20.0
+const val KEYWORD_PRIORITY = 40.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
-private const val LOCAL_PRIORITY = 10.0
 private const val VARIABLE_PRIORITY = 5.0
 private const val ENUM_VARIANT_PRIORITY = 4.0
 private const val FIELD_DECL_PRIORITY = 3.0
@@ -33,11 +38,15 @@ private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
 private const val DEPRECATED_PRIORITY = -1.0
 
+private const val EXPECTED_TYPE_PRIORITY_OFFSET = 20.0
+private const val LOCAL_PRIORITY_OFFSET = 10.0
+
 fun createLookupElement(
     element: RsElement,
     scopeName: String,
-    forSimplePath: Boolean,
     locationString: String? = null,
+    forSimplePath: Boolean = false,
+    expectedTy: Ty? = null,
     insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
 ): LookupElement {
     val base = element.getLookupElementBuilder(scopeName)
@@ -56,11 +65,26 @@ fun createLookupElement(
 
     if (forSimplePath && !element.canBeExported) {
         // It's visible and can't be exported = it's local
-        priority += LOCAL_PRIORITY
+        priority += LOCAL_PRIORITY_OFFSET
+    }
+
+    if (isCompatibleTypes(ImplLookup(element.project, element.knownItems), element.asTy, expectedTy)) {
+        priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 
     return base.withPriority(priority)
 }
+
+private val RsElement.asTy: Ty?
+    get() = when (this) {
+        is RsConstant -> typeReference?.type
+        is RsFieldDecl -> typeReference?.type
+        is RsFunction -> retType?.typeReference?.type
+        is RsStructItem -> declaredType
+        is RsEnumVariant -> parentEnum.declaredType
+        is RsPatBinding -> type
+        else -> null
+    }
 
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
@@ -79,7 +103,8 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
 
         is RsConstant -> base
             .withTypeText(typeReference?.stubOnlyText)
-        is RsFieldDecl -> base.withTypeText(typeReference?.stubOnlyText)
+        is RsFieldDecl -> base
+            .withTypeText(typeReference?.stubOnlyText)
         is RsTraitItem -> base
 
         is RsFunction -> base
@@ -243,3 +268,22 @@ private val RsElement.canBeExported: Boolean
         val context = PsiTreeUtil.getContextOfType(this, true, RsItemElement::class.java, RsFile::class.java)
         return context == null || context is RsMod
     }
+
+private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?): Boolean {
+    if (
+        actualTy == null || expectedTy == null ||
+        actualTy is TyUnknown || expectedTy is TyUnknown ||
+        actualTy is TyTypeParameter || expectedTy is TyTypeParameter
+    ) return false
+
+    // Replace `TyUnknown` and `TyTypeParameter` with `TyNever` to ignore them when combining types
+    val folder = object : TypeFolder {
+        override fun foldTy(ty: Ty): Ty = when (ty) {
+            is TyUnknown -> TyNever
+            is TyTypeParameter -> TyNever
+            else -> ty.superFoldWith(this)
+        }
+    }
+
+    return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder))
+}
