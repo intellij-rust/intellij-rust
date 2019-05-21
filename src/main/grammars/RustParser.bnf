@@ -929,7 +929,8 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe | yield | "async" | "try"
+  | '-' | '*' | '!' | '&' | static | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
+  | yield | "async" | "try"
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
 NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
@@ -1016,7 +1017,7 @@ UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LambdaExpr ::= OuterAttr* asyncBlock? move? LambdaParameters RetType? AnyExpr {
+LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? AnyExpr {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
