@@ -285,6 +285,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             let _ = || return;
             return 10
         }
+        fn ok4() -> u32 {
+            let _ = async { return; };
+            return 10
+        }
 
         fn err1() -> bool {
             <error descr="`return;` in a function whose return type is not `()` [E0069]">return</error>;
