@@ -86,15 +86,7 @@ fun processItemDeclarations(
             }
 
             is RsExternCrateItem -> {
-                if (item.isPublic || withPrivateImports) {
-                    val mod = item.reference.resolve() ?: continue@loop
-                    val nameWithAlias = item.nameWithAlias
-                    if (nameWithAlias != "self") {
-                        if (processor(nameWithAlias, mod)) return true
-                    } else {
-                        ItemResolutionTestmarks.externCrateSelfWithoutAlias.hit()
-                    }
-                }
+                if (processExternCrateItem(item, processor, withPrivateImports)) return true
             }
         }
     }
@@ -150,6 +142,19 @@ fun processItemDeclarations(
         if (found == true) return true
     }
 
+    return false
+}
+
+fun processExternCrateItem(item: RsExternCrateItem, processor: RsResolveProcessor, withPrivateImports: Boolean): Boolean {
+    if (item.isPublic || withPrivateImports) {
+        val mod = item.reference.resolve() ?: return false
+        val nameWithAlias = item.nameWithAlias
+        if (nameWithAlias != "self") {
+            if (processor(nameWithAlias, mod)) return true
+        } else {
+            ItemResolutionTestmarks.externCrateSelfWithoutAlias.hit()
+        }
+    }
     return false
 }
 
