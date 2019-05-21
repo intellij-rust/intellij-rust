@@ -455,7 +455,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
-        val fn = ret.ancestors.find { it is RsFunction || it is RsLambdaExpr } as? RsFunction ?: return
+        val fn = ret.ancestors.find {
+            it is RsFunction || it is RsLambdaExpr || it is RsBlockExpr && it.isAsync
+        } as? RsFunction ?: return
         val retType = fn.retType?.typeReference?.type ?: return
         if (retType is TyUnit) return
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
