@@ -10,7 +10,7 @@ jdk: oraclejdk8
 
 env:
   global:
-    - OLD_RUST_VERSION=1.28.0
+    - OLD_RUST_VERSION=1.30.0
     - CURRENT_RUST_VERSION=1.34.0
     - NIGHLY_RUST_VERSION=nightly-2019-04-23
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
@@ -36,7 +36,7 @@ before_script:
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustup component add rust-src
-  - if [ $RUST_VERSION != $OLD_RUST_VERSION ]; then rustup component add clippy-preview; fi # BACKCOMPAT: Rust 1.28.0
+  - rustup component add clippy-preview
   - rustup component add rustfmt-preview
   - ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
   - ./check-license.sh
