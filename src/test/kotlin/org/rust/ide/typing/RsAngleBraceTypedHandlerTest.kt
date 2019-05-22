@@ -12,6 +12,7 @@ class RsAngleBraceTypedHandlerTest : RsTypingTestBase() {
     fun `test pair angle brace in implementation block`() = doComplexTest("impl<caret>")
     fun `test pair angle brace in generic function declaration`() = doComplexTest("fn foo<caret>")
     fun `test pair angle brace in generic struct declaration`() = doComplexTest("struct Foo<caret>")
+    fun `test pair angle brace in before brace`() = doComplexTest("struct Foo<caret>{}")
     fun `test pair angle brace in generic enum declaration`() = doComplexTest("enum Foo<caret>")
     fun `test pair angle brace in generic trait declaration`() = doComplexTest("trait Foo<caret>")
     fun `test pair angle brace in generic type alias declaration`() = doComplexTest("type Foo<caret>")

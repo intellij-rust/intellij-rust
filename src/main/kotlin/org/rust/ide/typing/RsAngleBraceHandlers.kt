@@ -52,7 +52,7 @@ object AngleBraceHandler : BraceHandler {
     }
 
     override fun calculateBalance(editor: Editor): Int {
-        val offset = editor.caretModel.offset
+        val offset = editor.caretModel.offset - 1
         val iterator = (editor as EditorEx).highlighter.createIterator(offset)
         while (iterator.start > 0 && iterator.tokenType !in INVALID_INSIDE_TOKENS) {
             iterator.retreat()
