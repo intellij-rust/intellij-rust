@@ -65,7 +65,12 @@ class RsBraceMatcher : PairedBraceMatcherAdapter(RsBaseBraceMatcher(), RsLanguag
                     prevIsAnd = current == AND
                     continue
                 }
-                val co = coBrace(current) ?: return false
+                // bail out only on first nest level because
+                // deeper nesting can be related to macro call
+                val co =
+                    coBrace(current) ?: if (braceStack.size == 1) return false
+                    else continue
+
 
                 if (current in OPEN_BRACES) {
                     braceStack.addLast(current)
@@ -116,7 +121,8 @@ class RsBraceMatcher : PairedBraceMatcherAdapter(RsBaseBraceMatcher(), RsLanguag
                 COLON, EQ,
                 COLONCOLON,
                 INTEGER_LITERAL,
-                AND, MUT, CONST, MUL
+                AND, MUT, CONST, MUL,
+                EXCL
             )
         )
     }
