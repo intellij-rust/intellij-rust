@@ -72,8 +72,8 @@ interface RsInferenceData {
  * from expressions to their types.
  */
 class RsInferenceResult(
-    private val bindings: Map<RsPatBinding, Ty>,
-    private val exprTypes: Map<RsExpr, Ty>,
+    val bindings: Map<RsPatBinding, Ty>,
+    val exprTypes: Map<RsExpr, Ty>,
     private val expectedPathExprTypes: Map<RsPathExpr, Ty>,
     private val expectedDotExprTypes: Map<RsDotExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
@@ -180,6 +180,13 @@ class RsInferenceContext(
                         ?: TyInteger.ISize
 
                     reprType to element.expr
+                }
+                is RsExpressionCodeFragment -> {
+                    element.context?.inference?.let {
+                        bindings.putAll(it.bindings)
+                        exprTypes.putAll(it.exprTypes)
+                    }
+                    null to element.expr
                 }
                 else -> error("Type inference is not implemented for PSI element of type " +
                     "`${element.javaClass}` that implement `RsInferenceContextOwner`")
