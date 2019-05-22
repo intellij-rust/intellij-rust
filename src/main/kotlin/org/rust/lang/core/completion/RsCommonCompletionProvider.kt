@@ -167,8 +167,8 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 item: LookupElement
                             ) {
                                 super.handleInsert(element, scopeName, context, item)
-                                context.commitDocument()
                                 if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
+                                    context.commitDocument()
                                     context.getElementOfType<RsElement>()?.let { candidate.import(it) }
                                 }
                             }
@@ -272,7 +272,7 @@ private fun filterMethodCompletionVariantsByTraitBounds(
 }
 
 private fun methodAndFieldCompletionProcessor(
-    element: RsMethodOrField,
+    methodOrField: RsMethodOrField,
     result: CompletionResultSet,
     forSimplePath: Boolean = false,
     expectedTy: Ty? = null
@@ -286,7 +286,6 @@ private fun methodAndFieldCompletionProcessor(
         ))
         is MethodResolveVariant -> {
             if (e.element.isTest) return false
-            val traitImportCandidate = findTraitImportCandidate(element, e)
 
             result.addElement(createLookupElement(
                 element = e.element,
@@ -300,9 +299,11 @@ private fun methodAndFieldCompletionProcessor(
                         context: InsertionContext,
                         item: LookupElement
                     ) {
+                        val traitImportCandidate = findTraitImportCandidate(methodOrField, e)
                         super.handleInsert(element, scopeName, context, item)
-                        context.commitDocument()
+
                         if (traitImportCandidate != null) {
+                            context.commitDocument()
                             context.getElementOfType<RsElement>()?.let { traitImportCandidate.import(it) }
                         }
                     }
