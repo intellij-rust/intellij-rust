@@ -5,10 +5,9 @@
 
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.RsTypeReference
 
-val RsFieldDecl.parentStruct: RsStructItem? get() = stubAncestorStrict()
+val RsFieldDecl.parentStruct: RsFieldsOwner? get() = stubAncestorStrict()
 
 interface RsFieldDecl : RsOuterAttributeOwner, RsVisibilityOwner {
     val typeReference: RsTypeReference?

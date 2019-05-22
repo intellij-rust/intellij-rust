@@ -128,6 +128,10 @@ class RsPsiFactory(
             .blockFields!!
     }
 
+    fun createEnum(text: String): RsEnumItem =
+        createFromText(text)
+            ?: error("Failed to create enum from text: `$text`")
+
     fun createStruct(text: String): RsStructItem =
         createFromText(text)
             ?: error("Failed to create struct from text: `$text`")
