@@ -27,7 +27,7 @@ interface CargoWorkspace {
     val workspaceRootPath: Path?
 
     val packages: Collection<Package>
-    fun findPackage(name: String): Package? = packages.find { it.name == name }
+    fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null

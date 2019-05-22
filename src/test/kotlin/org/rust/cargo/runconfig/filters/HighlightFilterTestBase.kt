@@ -10,6 +10,7 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
+import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import java.util.*
 
@@ -36,6 +37,17 @@ abstract class HighlightFilterTestBase : RsTestBase() {
         }
     }
 
+    protected fun checkHighlights(
+        filter: Filter,
+        @Language("Rust") code: String,
+        before: String,
+        after: String,
+        lineIndex: Int = 0
+    ) {
+        configureByFileTree(code)
+        checkHighlights(filter, before, after, lineIndex)
+    }
+
     protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
         val line = before.splitLinesKeepSeparators()[lineIndex]
         val result = checkNotNull(filter.applyFilter(line, before.length)) {
@@ -53,7 +65,7 @@ abstract class HighlightFilterTestBase : RsTestBase() {
             checkText = checkText.replaceRange(range, "[$itemText]")
         }
         checkText = checkText.splitLinesKeepSeparators()[lineIndex]
-        check(checkText == after)
+        assertEquals(after, checkText)
     }
 
     private fun String.splitLinesKeepSeparators() = split("(?<=\n)".toRegex())

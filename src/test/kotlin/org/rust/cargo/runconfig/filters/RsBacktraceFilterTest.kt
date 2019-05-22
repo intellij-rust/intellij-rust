@@ -7,12 +7,15 @@ package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
 import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.stdext.BothEditions
 
 /**
  * Tests for RustBacktraceFilter
  */
+@BothEditions
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
     private val filter: RsBacktraceFilter
@@ -24,7 +27,7 @@ class RsBacktraceFilterTest : HighlightFilterTestBase() {
             "          at src/main.rs:24",
             "          at [src/main.rs -> main.rs]:24")
 
-    fun `test rustc source code link wIth absolute path`() {
+    fun `test rustc source code link with absolute path`() {
         // Windows does not handle abs paths on the tmpfs
         if (SystemInfo.isWindows) return
         val absPath = "${projectDir.canonicalPath}/src/main.rs"
@@ -83,5 +86,13 @@ stack backtrace:
                         at src/main.rs:22""",
             "                        at [src/main.rs -> main.rs]:22", 14)
 
-
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test crate with "-" in name`() =
+        checkHighlights(filter,
+            """
+                //- dep-lib/lib.rs
+                fn foo() {}/*caret*/
+            """,
+            "  6: dep_lib::foo",
+            "  6: [dep_lib::foo -> lib.rs]")
 }

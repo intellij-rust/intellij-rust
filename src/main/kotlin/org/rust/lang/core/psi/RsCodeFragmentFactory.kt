@@ -20,7 +20,7 @@ class RsCodeFragmentFactory(val project: Project) {
     private val psiFactory = RsPsiFactory(project, markGenerated = false)
 
     fun createCrateRelativePath(pathText: String, target: CargoWorkspace.Target): RsPath? {
-        check(pathText.startsWith("::"))
+        check(!pathText.startsWith("::"))
         val vFile = target.crateRoot ?: return null
         val crateRoot = vFile.toPsiFile(project) as? RsFile ?: return null
         return psiFactory.tryCreatePath(pathText)
