@@ -862,4 +862,14 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
             }
         }
         """)
+
+    fun `test struct with unknown type parameter`() = checkByText("""
+        struct S<T> { x: T }
+
+        fn foo(s: S<MyBool>) {
+            match s {
+                S { x: true } => {}
+            }
+        }
+    """)
 }

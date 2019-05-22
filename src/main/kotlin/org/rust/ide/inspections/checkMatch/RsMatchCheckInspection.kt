@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
@@ -30,7 +31,8 @@ class RsMatchCheckInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMatchExpr(matchExpr: RsMatchExpr) {
-            if (matchExpr.expr?.type is TyUnknown?) return
+            val exprType = matchExpr.expr?.type ?: return
+            if (exprType.containsTyOfClass(TyUnknown::class.java)) return
             try {
                 checkUselessArm(matchExpr, holder)
                 checkExhaustive(matchExpr, holder)
