@@ -61,6 +61,7 @@ private fun <T> requestCratesIo(context: PsiElement, path: String, cls: Class<T>
     return try {
         runWithCheckCanceled {
             val response = HttpRequests.request("https://crates.io/api/v1/$path")
+                .userAgent("IntelliJ Rust Plugin (https://github.com/intellij-rust/intellij-rust)")
                 .readString(ProgressManager.getInstance().progressIndicator)
             Gson().fromJson(response, cls)
         }
