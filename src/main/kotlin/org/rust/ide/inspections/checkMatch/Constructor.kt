@@ -52,8 +52,8 @@ sealed class Constructor {
         is TyTuple -> type.types.size
 
         is TySlice, is TyArray -> when (this) {
-            is Constructor.Slice -> size
-            is Constructor.ConstantValue -> 0
+            is Slice -> size
+            is ConstantValue -> 0
             else -> throw CheckMatchException("Incompatible constructor")
         }
 

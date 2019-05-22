@@ -68,5 +68,5 @@ sealed class Usefulness {
     object Useful : Usefulness()
     object Useless : Usefulness()
 
-    val isUseful: Boolean get() = this !== Usefulness.Useless
+    val isUseful: Boolean get() = this !== Useless
 }

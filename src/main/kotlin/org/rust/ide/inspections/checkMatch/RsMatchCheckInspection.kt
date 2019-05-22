@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
@@ -30,7 +31,8 @@ class RsMatchCheckInspection : RsLocalInspectionTool() {
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMatchExpr(matchExpr: RsMatchExpr) {
-            if (matchExpr.expr?.type is TyUnknown?) return
+            val exprType = matchExpr.expr?.type ?: return
+            if (exprType.containsTyOfClass(TyUnknown::class.java)) return
             try {
                 checkUselessArm(matchExpr, holder)
                 checkExhaustive(matchExpr, holder)
@@ -140,8 +142,8 @@ private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boole
             null
         }
     }
-
-    val res = isUseful(newMatrix, patterns.subList(1, patterns.size), withWitness)
+    val newPatterns = patterns.subList(1, patterns.size)
+    val res = isUseful(newMatrix, newPatterns, withWitness)
 
     if (res is UsefulWithWitness) {
         val newWitness = if (isNonExhaustive || usedConstructors.isEmpty()) {
@@ -169,20 +171,18 @@ private fun isUsefulSpecialized(
 ): Usefulness {
     val newPatterns = specializeRow(patterns, constructor, type) ?: return Useless
     val newMatrix = matrix.mapNotNull { specializeRow(it, constructor, type) }
-    val useful = isUseful(newMatrix, newPatterns, withWitness)
 
-    return when (useful) {
+    return when (val useful = isUseful(newMatrix, newPatterns, withWitness)) {
         is UsefulWithWitness -> UsefulWithWitness(useful.witnesses.map { it.applyConstructor(constructor, type) })
         else -> useful
     }
 }
 
 private fun specializeRow(row: List<Pattern>, constructor: Constructor, type: Ty): List<Pattern>? {
-    if (row.isEmpty()) return emptyList()
+    val pat = row.firstOrNull() ?: return emptyList()
     val wildPatterns = MutableList(constructor.arity(type)) { Pattern.Wild }
-    val pat = row[0]
-    val kind = pat.kind
-    val head: List<Pattern>? = when (kind) {
+
+    val head: List<Pattern>? = when (val kind = pat.kind) {
         is PatternKind.Variant -> {
             if (constructor == pat.constructors?.first()) {
                 wildPatterns.apply { fillWithSubPatterns(kind.subPatterns) }
