@@ -7,6 +7,7 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction
 
 class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
 

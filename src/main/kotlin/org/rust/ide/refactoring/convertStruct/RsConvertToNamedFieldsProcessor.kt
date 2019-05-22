@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring
+package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -16,7 +16,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 
@@ -61,12 +61,12 @@ class RsConvertToNamedFieldsProcessor(
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         loop@ for (usage in usages) {
-            val usageParent = usage.element!!.parent
-            when (usageParent) {
+            val element = usage.element ?: continue
+            when (val usageParent = element.parent) {
                 is RsDotExpr,
                 is RsStructLiteralBody,
                 is RsPatField -> {
-                    val nameElement = (usage.element!! as RsWeakReferenceElement).referenceNameElement!!
+                    val nameElement = (element as RsReferenceElement).referenceNameElement
                     nameElement.replace(rsPsiFactory.createIdentifier((usage as MyUsageInfo).fieldName!!))
                 }
                 is RsPatTupleStruct -> {
