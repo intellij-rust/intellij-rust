@@ -33,7 +33,8 @@ val Matrix.type: Ty
  * @returns [TyUnknown] if there is more than one distinct known type in first column
  */
 val Matrix.firstColumnType: Ty
-    get() = map { it[0].ty }.filter { it !is TyUnknown }
+    get() = mapNotNull { it.firstOrNull()?.ty }
+        .filter { it !is TyUnknown }
         .distinct().singleOrNull()
         ?: TyUnknown
 
@@ -77,7 +78,8 @@ private val RsPat.kind: PatternKind
             when (val resolved = patBinding.reference.resolve()) {
                 is RsEnumVariant -> PatternKind.Variant(resolved.parentEnum, resolved, emptyList())
                 is RsConstant -> {
-                    val value = resolved.expr?.value ?: throw CheckMatchException("Can't evaluate constant ${resolved.text}")
+                    val value = resolved.expr?.value
+                        ?: throw CheckMatchException("Can't evaluate constant ${resolved.text}")
                     PatternKind.Const(value)
                 }
                 else -> PatternKind.Binding(patBinding.type, patBinding.name.orEmpty())
