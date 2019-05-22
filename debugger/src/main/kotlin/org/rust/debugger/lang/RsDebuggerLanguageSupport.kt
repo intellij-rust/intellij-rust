@@ -18,7 +18,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 class RsDebuggerLanguageSupport : CidrDebuggerLanguageSupport() {
     override fun getSupportedDebuggerLanguages() = setOf(RUST)
 
-    override fun createEditor(profile: RunProfile): XDebuggerEditorsProvider? {
+    override fun createEditor(profile: RunProfile?): XDebuggerEditorsProvider? {
         if (profile !is CargoCommandConfiguration) return null
         return createEditorProvider()
     }

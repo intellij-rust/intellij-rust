@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <focusModeProvider language="Rust" implementationClass="org.rust.ide.focusMode.RsFocusModeProvider"/>
+    </extensions>
+</idea-plugin>

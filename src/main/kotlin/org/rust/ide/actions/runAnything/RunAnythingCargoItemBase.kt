@@ -13,10 +13,10 @@ import com.intellij.util.execution.ParametersListUtil
 import java.awt.Component
 import javax.swing.Icon
 
-class RunAnythingCargoItem(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
-    override fun createComponent(isSelected: Boolean): Component {
-        val component = super.createComponent(isSelected)
-        if (component !is SimpleColoredComponent) return component
+abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
+
+    protected fun customizeComponent(component: Component) {
+        if (component !is SimpleColoredComponent) return
 
         val params = ParametersListUtil.parse(StringUtil.trimStart(command, "cargo"))
         val description = when (params.size) {
@@ -33,8 +33,6 @@ class RunAnythingCargoItem(command: String, icon: Icon) : RunAnythingItemBase(co
                 SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
             )
         }
-
-        return component
     }
 
     companion object {
