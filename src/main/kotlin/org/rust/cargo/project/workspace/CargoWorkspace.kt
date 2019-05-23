@@ -7,7 +7,11 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import org.rust.stdext.applyWithSymlink
@@ -32,7 +36,7 @@ interface CargoWorkspace {
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(stdlib: StandardLibrary): CargoWorkspace
+    fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo? = null): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
@@ -144,7 +148,7 @@ private class WorkspaceImpl(
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? =
         root.applyWithSymlink { targetByCrateRootUrl[it.url] }
 
-    override fun withStdlib(stdlib: StandardLibrary): CargoWorkspace {
+    override fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo?): CargoWorkspace {
         // This is a bit trickier than it seems required.
         // The problem is that workspace packages and targets have backlinks
         // so we have to rebuild the whole workspace from scratch instead of
@@ -158,7 +162,7 @@ private class WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { it.asPackageData() } +
-                stdlib.crates.map { it.asPackageData }
+                stdlib.crates.map { it.asPackageData(rustcInfo) }
         )
 
         run {
@@ -321,20 +325,37 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         edition = edition ?: this.edition
     )
 
-private val StandardLibrary.StdCrate.asPackageData
-    get() =
-        CargoWorkspaceData.Package(
-            id = id,
-            contentRootUrl = packageRootUrl,
+private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
+    val firstVersionWithEdition2018 = when (name) {
+        CORE -> RUST_1_36
+        STD -> RUST_1_35
+        else -> RUST_1_34
+    }
+
+    val currentRustcVersion = rustcInfo?.version?.semver
+    val edition = if (currentRustcVersion == null || currentRustcVersion < firstVersionWithEdition2018) {
+        CargoWorkspace.Edition.EDITION_2015
+    } else {
+        CargoWorkspace.Edition.EDITION_2018
+    }
+
+    return CargoWorkspaceData.Package(
+        id = id,
+        contentRootUrl = packageRootUrl,
+        name = name,
+        version = "",
+        targets = listOf(CargoWorkspaceData.Target(
+            crateRootUrl = crateRootUrl,
             name = name,
-            version = "",
-            targets = listOf(CargoWorkspaceData.Target(
-                crateRootUrl = crateRootUrl,
-                name = name,
-                kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
-                edition = CargoWorkspace.Edition.EDITION_2015
-            )),
-            source = null,
-            origin = PackageOrigin.STDLIB,
-            edition = CargoWorkspace.Edition.EDITION_2015
-        )
+            kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
+            edition = edition
+        )),
+        source = null,
+        origin = PackageOrigin.STDLIB,
+        edition = edition
+    )
+}
+
+private val RUST_1_34: SemVer = SemVer.parseFromText("1.34.0")!!
+private val RUST_1_35: SemVer = SemVer.parseFromText("1.35.0")!!
+private val RUST_1_36: SemVer = SemVer.parseFromText("1.36.0")!!

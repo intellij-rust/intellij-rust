@@ -97,7 +97,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib)
+        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, rustcInfo)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
