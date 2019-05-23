@@ -12,11 +12,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiParserFacade
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsPsiFactory
+import com.intellij.usageView.UsageInfo
+import org.rust.ide.refactoring.RsRenameProcessor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.valueParameters
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -38,18 +42,18 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     private fun extractFunction(project: Project, file: PsiFile, config: RsExtractFunctionConfig) {
         WriteCommandAction.writeCommandAction(file).run<Throwable> {
             val psiFactory = RsPsiFactory(project)
-            if (addExtractedFunction(project, config, psiFactory)) {
-                replaceOldStatementsWithCallExpr(config, psiFactory)
-            }
+            val extractedFunction = addExtractedFunction(project, config, psiFactory) ?: return@run
+            replaceOldStatementsWithCallExpr(config, psiFactory)
+            renameFunctionParameters(extractedFunction, config.valueParameters.map { it.name })
         }
     }
 
-    private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): Boolean {
+    private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): RsFunction? {
         val owner = config.containingFunction.owner
 
         val function = psiFactory.createFunction(config.functionText)
         val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
-        when {
+        return when {
             owner is RsAbstractableOwner.Impl && !owner.isInherent -> {
                 val beforeNewline = psiParserFacade.createWhiteSpaceFromText("\n")
                 val afterNewline = psiParserFacade.createWhiteSpaceFromText("\n")
@@ -57,17 +61,35 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 val parent = owner.impl.parent
                 //FIXME: Don't create new impl if a other impl exists
                 val impl = psiFactory.createImpl(type.text, listOf(function))
-                parent.addAfter(afterNewline,
-                    parent.addAfter(impl,
-                        parent.addAfter(beforeNewline, owner.impl)))
+                val newImpl = parent.addAfter(impl, parent.addAfter(beforeNewline, owner.impl)) as? RsImplItem
+                parent.addAfter(afterNewline, newImpl)
+                newImpl?.members?.functionList?.singleOrNull()
             }
             else -> {
                 val newline = psiParserFacade.createWhiteSpaceFromText("\n\n")
-                val end = config.containingFunction.block?.rbrace ?: return false
-                config.containingFunction.addAfter(function, config.containingFunction.addAfter(newline, end))
+                val end = config.containingFunction.block?.rbrace ?: return null
+                config.containingFunction.addAfter(function, config.containingFunction.addAfter(newline, end)) as? RsFunction
             }
         }
-        return true
+    }
+
+    /**
+     * Original function signature and body are inserted at first.
+     * Then it is necessary to change the names of original parameters to the real (renamed) parameters' names.
+     */
+    private fun renameFunctionParameters(function: RsFunction, newNames: List<String>) {
+        val parameters = function.valueParameters
+            .map { it.pat }
+            .filterIsInstance(RsPatIdent::class.java)
+            .map { it.patBinding }
+
+        for ((parameter, newName) in parameters.zip(newNames)) {
+            if (newName != parameter.name) {
+                val parameterUsages = ReferencesSearch.search(parameter, LocalSearchScope(function)).findAll()
+                val usageInfo = parameterUsages.map { UsageInfo(it) }.toTypedArray()
+                RsRenameProcessor().renameElement(parameter, newName, usageInfo, null)
+            }
+        }
     }
 
     private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, psiFactory: RsPsiFactory) {
@@ -76,7 +98,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             stmt += "let ${config.returnValue.expression} = "
         }
         val firstParameter = config.parameters.firstOrNull()
-        stmt += if (firstParameter != null && firstParameter.name.endsWith("self") && firstParameter.type == null) {
+        stmt += if (firstParameter != null && firstParameter.isSelf) {
             "self.${config.name}(${config.argumentsText})"
         } else {
             val owner = config.containingFunction.owner
@@ -91,7 +113,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
         }
-        val element = if (config.returnValue == null || config.returnValue.expression != null ) {
+        val element = if (config.returnValue == null || config.returnValue.expression != null) {
             stmt += ";"
             psiFactory.createStatement(stmt)
         } else {

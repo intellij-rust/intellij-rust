@@ -38,16 +38,32 @@ class ReturnValue(val expression: String?, val type: Ty) {
     }
 }
 
-class Parameter(
+class Parameter private constructor(
     var name: String,
-    var type: Ty? = null,
+    val type: Ty? = null,
     val reference: Reference = Reference.NONE,
     isMutableValue: Boolean = false
 ) {
+    /** Original name of the parameter (parameter renaming does not affect it) */
+    private val originalName = name
 
     enum class Reference(val text: String) {
         MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
     }
+
+    private val mut = if (isMutableValue) "mut " else ""
+
+    val originalParameterText: String
+        get() = if (type != null) "$mut$originalName: ${reference.text}${type.insertionSafeText}" else originalName
+
+    val parameterText: String
+        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
+
+    val argumentText: String
+        get() = "${reference.text}$originalName"
+
+    val isSelf: Boolean
+        get() = type == null
 
     companion object {
         fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
@@ -64,14 +80,6 @@ class Parameter(
             return Parameter(value)
         }
     }
-
-    private val mut = if (isMutableValue) "mut " else ""
-
-    val parameterText: String
-        get() = if (type != null) "$mut$name: ${reference.text}${type!!.insertionSafeText}" else name
-
-    val argumentText: String
-        get() = "${reference.text}$name"
 }
 
 class RsExtractFunctionConfig private constructor(
@@ -82,28 +90,39 @@ class RsExtractFunctionConfig private constructor(
     var visibilityLevelPublic: Boolean = false,
     var parameters: List<Parameter>
 ) {
+    val valueParameters: List<Parameter>
+        get() = parameters.filter { !it.isSelf }
 
     private val parametersText: String
         get() = parameters.joinToString(", ") { it.parameterText }
 
+    private val originalParametersText: String
+        get() = parameters.joinToString(", ") { it.originalParameterText }
+
     val argumentsText: String
-        get() = parameters.filter { it.type != null }.joinToString(", ") { it.argumentText }
+        get() = valueParameters.joinToString(", ") { it.argumentText }
 
     val signature: String
-        get() = buildString {
-            if (visibilityLevelPublic) {
-                append("pub ")
-            }
-            append("fn $name$typeParametersText($parametersText)")
-            if (returnValue != null) {
-                append(" -> ${returnValue.type.insertionSafeText}")
-            }
-            append(whereClausesText)
+        get() = signature(false)
+
+    /**
+     * - Original signature is used when the extracted function is inserting to the source code
+     * - Real signature is used when the signature is rendering inside [DialogExtractFunctionUi]
+     */
+    private fun signature(isOriginal: Boolean): String = buildString {
+        if (visibilityLevelPublic) {
+            append("pub ")
         }
+        append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
+        if (returnValue != null) {
+            append(" -> ${returnValue.type.insertionSafeText}")
+        }
+        append(whereClausesText)
+    }
 
     val functionText: String
         get() = buildString {
-            append(signature)
+            append(signature(true))
             val single = elements.singleOrNull()
             val body = if (single is RsBlockExpr) {
                 single.block.text
