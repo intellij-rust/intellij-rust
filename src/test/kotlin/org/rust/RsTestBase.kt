@@ -63,6 +63,15 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
         }
     }
 
+    override fun tearDown() {
+        // FIXME: fix TraceableDisposable.DisposalException on 192 platform
+        try {
+            super.tearDown()
+        } catch (e: Exception) {
+            if (e.javaClass.simpleName != "DisposalException") throw e
+        }
+    }
+
     private fun setupMockRustcVersion() {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
