@@ -107,7 +107,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
 
             // Rustdoc doesn't wrap doctest with `main` function and `extern crate` declaration
             // if they are present. Rustdoc uses rust parser to determine existence of them.
-            // See https://github.com/rust-lang/rust/blob/5182cc1ca/src/librustdoc/test.rs#L438
+            // See https://github.com/rust-lang/rust/blob/f688ba608/src/librustdoc/test.rs#L427
             //
             // We use a lexer instead of parser here to reduce CPU usage. It is less strict,
             // i.e. sometimes we can think that main function exists when it's not. But such
@@ -124,28 +124,33 @@ class RsDoctestLanguageInjector : MultiHostInjector {
                 false to false
             }
 
+            // Crate attributes like `#![no_std]` should always be at the start of the file
+            val (attrsEndIndex, cratesEndIndex) = partitionSource(text, ranges)
+
             ranges.forEachIndexed { index, range ->
-                val isFirstIteration = index == 0
                 val isLastIteration = index == ranges.size - 1
 
-                val prefix = if (isFirstIteration) {
-                    buildString {
-                        // Yes, we want to skip the only "std" crate. Not core/alloc/etc, the "std" only
-                        val isStdCrate = crateName == AutoInjectedCrates.STD &&
-                            cargoTarget.pkg.origin == PackageOrigin.STDLIB
-                        if (!isStdCrate && !alreadyHasExternCrate) {
+                var prefix: StringBuilder? = null
+                if (index == attrsEndIndex && !alreadyHasExternCrate) {
+                    // Yes, we want to skip the only "std" crate. Not core/alloc/etc, the "std" only
+                    val isStdCrate = crateName == AutoInjectedCrates.STD &&
+                        cargoTarget.pkg.origin == PackageOrigin.STDLIB
+                    if (!isStdCrate) {
+                        prefix = StringBuilder().apply {
                             append("extern crate ")
                             append(crateName)
                             append("; ")
                         }
-                        if (!alreadyHasMain) append("fn main() {")
                     }
-                } else {
-                    null
                 }
+                if (index == cratesEndIndex && !alreadyHasMain) {
+                    if (prefix == null) prefix = StringBuilder()
+                    prefix.append("fn main() {")
+                }
+
                 val suffix = if (isLastIteration && !alreadyHasMain) "}" else null
 
-                inj.addPlace(prefix, suffix, context, range)
+                inj.addPlace(prefix?.toString(), suffix, context, range)
             }
 
             inj.doneInjecting()
@@ -237,6 +242,66 @@ private fun PsiBuilder.findTokenSequence(vararg seq: Any): Boolean {
         advanceLexer()
     }
     return false
+}
+
+private enum class PartitionState {
+    Attrs,
+    Crates,
+    Other,
+}
+
+// See https://github.com/rust-lang/rust/blob/f688ba608/src/librustdoc/test.rs#L518
+private fun partitionSource(text: String, ranges: List<TextRange>): Pair<Int, Int> {
+    var state = PartitionState.Attrs
+
+    var attrsEndIndex = 0
+    var cratesEndIndex = 0
+
+    fun stateTransition(index: Int, newState: PartitionState) {
+        when (state) {
+            PartitionState.Attrs -> {
+                attrsEndIndex = index
+                cratesEndIndex = index
+            }
+            PartitionState.Crates -> cratesEndIndex = index
+            PartitionState.Other -> error("unreachable")
+        }
+        state = newState
+    }
+
+    run {
+        ranges.forEachIndexed { i, range ->
+            val trimmedLine = text.substring(range.startOffset, range.endOffset).trim()
+
+            when (state) {
+                PartitionState.Attrs -> {
+                    val isCrateAttr = trimmedLine.startsWith("#![") || trimmedLine.isBlank() ||
+                        (trimmedLine.startsWith("//") && !trimmedLine.startsWith("///"))
+                    if (!isCrateAttr) {
+                        if (trimmedLine.startsWith("extern crate") || trimmedLine.startsWith("#[macro_use] extern crate")) {
+                            stateTransition(i, PartitionState.Crates)
+                        } else {
+                            stateTransition(i, PartitionState.Other)
+                            return@run
+                        }
+                    }
+                }
+                PartitionState.Crates -> {
+                    val isCrate = trimmedLine.startsWith("extern crate") ||
+                        trimmedLine.startsWith("#[macro_use] extern crate") ||
+                        trimmedLine.isBlank() ||
+                        (trimmedLine.startsWith("//") && !trimmedLine.startsWith("///"))
+                    if (!isCrate) {
+                        stateTransition(i, PartitionState.Other)
+                        return@run
+                    }
+                }
+                PartitionState.Other -> error("unreachable")
+            }
+        }
+    }
+
+    return attrsEndIndex to cratesEndIndex
 }
 
 fun VirtualFile.isDoctestInjection(project: Project): Boolean {
