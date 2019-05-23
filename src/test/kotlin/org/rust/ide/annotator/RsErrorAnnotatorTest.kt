@@ -1326,6 +1326,18 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    @MockRustcVersion("1.21.0-nightly")
+    fun `test yield syntax feature E0658 3`() = checkErrors("""
+        #![feature(generators, box_syntax)]
+
+        fn main() {
+            let mut generator = || {
+                yield 1;
+                return "foo"
+            };
+        }
+    """)
+
     @MockRustcVersion("1.0.0")
     fun `test box expression feature E0658 1`() = checkErrors("""
         struct S;

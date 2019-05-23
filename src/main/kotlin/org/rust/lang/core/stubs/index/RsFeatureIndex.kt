@@ -28,8 +28,11 @@ class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
         fun index(stub: RsInnerAttrStub, sink: IndexSink) {
             val metaItem = stub.psi.metaItem
             if (metaItem.name == "feature") {
-                val featureName = metaItem.metaItemArgs?.metaItemList?.singleOrNull()?.name ?: return
-                sink.occurrence(KEY, featureName)
+                val features = metaItem.metaItemArgs?.metaItemList.orEmpty()
+                for (feature in features) {
+                    val featureName = feature.name ?: continue
+                    sink.occurrence(KEY, featureName)
+                }
             }
         }
 
