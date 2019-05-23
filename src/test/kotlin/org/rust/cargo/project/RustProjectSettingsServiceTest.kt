@@ -5,7 +5,6 @@
 
 package org.rust.cargo.project
 
-import com.intellij.configurationStore.deserialize
 import com.intellij.testFramework.LightPlatformTestCase
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
@@ -41,7 +40,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="version" value="2" />
             </RustProjectSettings>
         """.trimIndent()
-        service.loadState(elementFromXmlString(text).deserialize())
+        service.loadState(elementFromXmlString(text))
 
         val actual = service.state.toXmlString()
         assertEquals(text, actual)
@@ -74,7 +73,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="expandMacros" value="false" />
             </RustProjectSettings>
         """.trimIndent()
-        service.loadState(elementFromXmlString(text).deserialize())
+        service.loadState(elementFromXmlString(text))
 
         @Language("XML")
         val expected = """

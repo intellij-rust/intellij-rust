@@ -12,7 +12,6 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.ResolveResult
@@ -47,7 +46,7 @@ class RsResolveCache(messageBus: MessageBus) {
     private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
     private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
-    private val guard = RecursionManager.createGuard("RsResolveCache")
+    private val guard = RecursionGuardWrapper.createGuard("RsResolveCache")
 
     private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?>
         get() = _rustStructureDependentCache.get()

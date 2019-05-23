@@ -25,7 +25,7 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 
     override fun resolveProperty(value: CidrMemberValue, dynamicTypeName: String?): XSourcePosition? = null
 
-    override fun resolveToDeclaration(position: XSourcePosition, `var`: LLValue): PsiElement? {
+    override fun resolveToDeclaration(position: XSourcePosition?, `var`: LLValue): PsiElement? {
         val context = getContextElement(position)
         return resolveToDeclaration(context, `var`.name)
     }

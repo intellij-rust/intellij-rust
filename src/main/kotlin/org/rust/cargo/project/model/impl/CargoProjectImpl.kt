@@ -291,7 +291,7 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy rawWorkspace
-        rawWorkspace.withStdlib(stdlib)
+        rawWorkspace.withStdlib(stdlib, rustcInfo)
     }
 
     override val presentableName: String

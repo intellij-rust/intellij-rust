@@ -33,14 +33,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {}
     """)
 
-    // TODO handle 2018 edition in std itself
-    fun `test BTreeMap`() = expect<IllegalStateException> {
-    stubOnlyResolve("""
+    // BACKCOMPAT: Rust 1.28.0
+    fun `test BTreeMap`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::BTreeMap;
-                                //^ lib.rs
+                                //^ ...liballoc/btree/map.rs|...liballoc/collections/btree/map.rs
     """)
-    }
 
     fun `test resolve core`() = stubOnlyResolve("""
     //- main.rs
