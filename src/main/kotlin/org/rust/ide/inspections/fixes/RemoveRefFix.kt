@@ -17,23 +17,30 @@ import org.rust.lang.core.psi.ext.operatorType
 
 /**
  * Fix that converts the given reference to owned value.
- * @param argEl An element, that represents a reference from which the first
+ * @param expr An element, that represents a reference from which the first
  * symbol '&' must be removed.
- * @param fixName A name to use for the fix instead of the default one to better fit the inspection.
  */
-class RemoveRefFix(
-    argEl: RsExpr,
-    val fixName: String = "Change reference to owned value"
-) : LocalQuickFixOnPsiElement(argEl) {
-    override fun getText() = fixName
-    override fun getFamilyName() = "Change reference to owned value"
+class RemoveRefFix private constructor(
+    expr: RsUnaryExpr
+) : LocalQuickFixOnPsiElement(expr) {
+    override fun getText() = when ((startElement as RsUnaryExpr).operatorType) {
+        UnaryOperator.REF -> "Remove &"
+        UnaryOperator.REF_MUT -> "Remove &mut"
+        else -> error("unreachable")
+    }
+    override fun getFamilyName() = "Remove reference"
 
-    override fun invoke(project: Project, file: PsiFile, argEl: PsiElement, endElement: PsiElement) {
-        // If the reference is a mut one (&mut X) we want to remove the `mut` part too as `mut X` is either:
-        // - not valid Rust code (e.g.: `std::mem::drop(mut x)`)
-        // - or redundant (e.g.: `fn foo(mut self) {}` is exactly the same as `fn foo(self) {}`)
-        if (argEl is RsUnaryExpr && argEl.operatorType in listOf(UnaryOperator.REF, UnaryOperator.REF_MUT)) {
-            argEl.expr?.let { argEl.replace(it) }
+    override fun invoke(project: Project, file: PsiFile, expr: PsiElement, endElement: PsiElement) {
+        (expr as RsUnaryExpr).expr?.let { expr.replace(it) }
+    }
+
+    companion object {
+        fun createIfCompatible(expr: RsExpr): RemoveRefFix? {
+            return if(expr is RsUnaryExpr && expr.operatorType in listOf(UnaryOperator.REF, UnaryOperator.REF_MUT)) {
+                RemoveRefFix(expr)
+            } else {
+                null
+            }
         }
     }
 }

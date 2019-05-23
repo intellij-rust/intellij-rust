@@ -73,7 +73,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
-    fun testDropRefFix() = checkFixByText("Call with owned value", """
+    fun testDropRefFix() = checkFixByText("Remove &", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&va<caret>l1)</warning>;
@@ -85,7 +85,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
-    fun testDropRefFix2() = checkFixByText("Call with owned value", """
+    fun testDropRefFix2() = checkFixByText("Remove &", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&   va<caret>l1)</warning>;
@@ -97,7 +97,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
-    fun testRefMutDropFix() = checkFixByText("Call with owned value", """
+    fun testRefMutDropFix() = checkFixByText("Remove &mut", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&mut<caret> val1)</warning>;
@@ -109,7 +109,7 @@ class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
         }
     """)
 
-    fun testRefMutDropFix2() = checkFixByText("Call with owned value", """
+    fun testRefMutDropFix2() = checkFixByText("Remove &mut", """
         fn main() {
             let val1 = Box::new(40);
             <warning descr="Call to std::mem::drop with a reference argument. Dropping a reference does nothing">drop(&  mut<caret>  val1)</warning>;

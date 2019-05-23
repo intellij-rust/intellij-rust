@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -114,6 +115,8 @@ class KnownItems(
     val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
     val Debug: RsTraitItem? get() = findLangItem("debug_trait")
     val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
+
+    val drop: RsFunction? get() = findItem("core::mem::drop")
 }
 
 interface KnownItemsLookup {

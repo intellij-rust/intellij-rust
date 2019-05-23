@@ -5,15 +5,13 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.qualifiedName
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
@@ -32,17 +30,14 @@ class RsDropRefInspection : RsLocalInspectionTool() {
     fun inspectExpr(expr: RsCallExpr, holder: ProblemsHolder) {
         val pathExpr = expr.expr as? RsPathExpr ?: return
 
-        val resEl = pathExpr.path.reference.resolve()
-        if (resEl !is RsFunction ||
-            resEl.qualifiedName != "core::mem::drop" ||
-            resEl.owner != RsAbstractableOwner.Free) return
+        val fn = pathExpr.path.reference.resolve()
+        if (fn != expr.knownItems.drop) return
 
         val args = expr.valueArgumentList.exprList
-        if (args.size != 1) return
+        val arg = args.singleOrNull() ?: return
 
-        val arg = args[0]
         if (arg.type is TyReference) {
-            val fixes = if (arg.text[0] == '&') arrayOf(RemoveRefFix(arg, "Call with owned value")) else emptyArray()
+            val fixes = RemoveRefFix.createIfCompatible(arg)?.let { arrayOf(it) } ?: LocalQuickFix.EMPTY_ARRAY
             holder.registerProblem(
                 expr,
                 "Call to std::mem::drop with a reference argument. Dropping a reference does nothing",
