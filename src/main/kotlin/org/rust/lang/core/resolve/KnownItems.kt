@@ -12,6 +12,7 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
@@ -67,6 +68,12 @@ class KnownItems(
     val Arguments: RsStructOrEnumItemElement? get() = findItem("core::fmt::Arguments")
     val Option: RsStructOrEnumItemElement? get() = findItem("core::option::Option")
     val Result: RsStructOrEnumItemElement? get() = findItem("core::result::Result")
+    val Rc: RsStructOrEnumItemElement? get() = findItem("alloc::rc::Rc")
+    val Arc: RsStructOrEnumItemElement? get() = findItem("alloc::sync::Arc") ?: findItem("alloc::arc::Arc")
+    val Cell: RsStructOrEnumItemElement? get() = findItem("core::cell::Cell")
+    val RefCell: RsStructOrEnumItemElement? get() = findItem("core::cell::RefCell")
+    val UnsafeCell: RsStructOrEnumItemElement? get() = findItem("core::cell::UnsafeCell")
+    val Mutex: RsStructOrEnumItemElement? get() = findItem("std::sync::mutex::Mutex")
 
     val Iterator: RsTraitItem? get() = findItem("core::iter::Iterator")
     val IntoIterator: RsTraitItem? get() = findItem("core::iter::IntoIterator")
@@ -108,12 +115,8 @@ class KnownItems(
     val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
     val Debug: RsTraitItem? get() = findLangItem("debug_trait")
     val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
-    val Rc: RsStructOrEnumItemElement? get() = findItem("alloc::rc::Rc")
-    val Arc: RsStructOrEnumItemElement? get() = findItem("alloc::sync::Arc") ?: findItem("alloc::arc::Arc")
-    val Cell: RsStructOrEnumItemElement? get() = findItem("core::cell::Cell")
-    val RefCell: RsStructOrEnumItemElement? get() = findItem("core::cell::RefCell")
-    val UnsafeCell: RsStructOrEnumItemElement? get() = findItem("core::cell::UnsafeCell")
-    val Mutex: RsStructOrEnumItemElement? get() = findItem("std::sync::mutex::Mutex")
+
+    val drop: RsFunction? get() = findItem("core::mem::drop")
 }
 
 interface KnownItemsLookup {
