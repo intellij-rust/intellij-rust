@@ -10,27 +10,31 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
 import org.rust.lang.core.cfg.ExitPoint
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.Q
 import org.rust.lang.core.psi.RsElementTypes.RETURN
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsLambdaExpr
-import org.rust.lang.core.psi.RsTryExpr
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.isAsync
+import org.rust.lang.core.psi.ext.isTry
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         if (file !is RsFile) return null
 
-        val elementType = target.elementType
-        if (elementType == RETURN || elementType == Q) {
-            return RsHighlightExitPointsHandler(editor, file, target)
+        val createHandler: (PsiElement) -> RsHighlightExitPointsHandler? = { element ->
+            val elementType = element.elementType
+            if (elementType == RETURN || (elementType == Q && element.parent is RsTryExpr)) {
+                RsHighlightExitPointsHandler(editor, file, element)
+            } else null
         }
-        return null
+        val prevToken = PsiTreeUtil.prevLeaf(target) ?: return null
+        return createHandler(target) ?: createHandler(prevToken)
     }
+
 }
 
 private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var target: PsiElement) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
@@ -51,11 +55,19 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
             }
         }
 
-        val fnOrLambda = target.ancestors.firstOrNull { it is RsFunction || it is RsLambdaExpr }
-        when (fnOrLambda) {
-            is RsFunction -> ExitPoint.process(fnOrLambda, sink)
-            is RsLambdaExpr -> ExitPoint.process(fnOrLambda, sink)
+        for (ancestor in target.ancestors) {
+            if (ancestor is RsBlockExpr && ancestor.isTry && target.elementType == Q) {
+                break
+            } else if (ancestor is RsBlockExpr && ancestor.isAsync) {
+                ExitPoint.process(ancestor.block, sink)
+                break
+            } else if (ancestor is RsFunction) {
+                ExitPoint.process(ancestor.block, sink)
+                break
+            } else if (ancestor is RsLambdaExpr) {
+                ExitPoint.process(ancestor.expr, sink)
+                break
+            }
         }
     }
 }
-

@@ -7,7 +7,9 @@ package org.rust.ide.highlight
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
 import org.rust.RsTestBase
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
 
@@ -46,6 +48,15 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
                 Err(())?
             }
             return/*caret*/ 0;
+        }
+    """, "?", "return 0")
+
+    fun `test highlight ? operator as return with caret at ?`() = doTest("""
+        fn main() {
+            if true {
+                Err(())?/*caret*/
+            }
+            return 0;
         }
     """, "?", "return 0")
 
@@ -195,6 +206,65 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
             }
         }
     """, "return 1", "2", "3", "4", "5")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test no highlight for ? in try `() = doTest("""
+        fn main(){
+            let a = try {
+                Err(())?;
+                return 0;
+            }
+            /*caret*/return 1;
+        }
+    """, "return 0", "return 1")
+
+    fun `test highlight nothing on ? in try `() = doTest("""
+        fn main(){
+            let a = try {
+                Err(())?/*caret*/;
+                return 0;
+            }
+            return 1;
+        }
+    """)
+
+    fun `test nested try`() = doTest("""
+        fn foo() -> i32 {
+            let a: Result<i32, ()> = try {
+                let tmp: Result<i32, ()> = try { Err(())? };
+                tmp? + Ok(42)? // wrong highlighting currently
+            };
+            return/*caret*/ 1;
+        }
+    """, "return 1")
+
+    fun `test async block outside`() = doTest("""
+        fn main(){
+            let a = async {
+                Err(())?;
+                return 0;
+            }
+            return/*caret*/ 1;
+        }
+    """, "return 1")
+
+    fun `test async block inside`() = doTest("""
+        fn main(){
+            let a = async {
+                Err(())?;
+                return/*caret*/ 0;
+            }
+            return 1;
+        }
+    """, "?", "return 0")
+
+
+    fun `test ? in macro`() = doTest("""
+        fn main(){
+            macrocall![ ?/*caret*/ ];
+            return 0;
+        }
+    """)
 
     fun `test return in macro`() = doTest("""
         macro_rules! foo {

@@ -7,10 +7,7 @@ package org.rust.lang.core.cfg
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.macroName
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Edge
@@ -134,12 +131,8 @@ sealed class ExitPoint {
     class TailStatement(val stmt: RsExprStmt) : ExitPoint()
 
     companion object {
-        fun process(fn: RsFunction, sink: (ExitPoint) -> Unit) {
-            fn.block?.acceptChildren(ExitPointVisitor(sink))
-        }
-
-        fun process(fn: RsLambdaExpr, sink: (ExitPoint) -> Unit) {
-            fn.expr?.acceptChildren(ExitPointVisitor(sink))
+        fun process(fn: PsiElement?, sink: (ExitPoint) -> Unit) {
+            fn?.acceptChildren(ExitPointVisitor(sink))
         }
     }
 }
@@ -147,21 +140,36 @@ sealed class ExitPoint {
 private class ExitPointVisitor(
     private val sink: (ExitPoint) -> Unit
 ) : RsVisitor() {
+    var inTry = 0
+
     override fun visitElement(element: RsElement) = element.acceptChildren(this)
 
     override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) = Unit
     override fun visitFunction(function: RsFunction) = Unit
+    override fun visitBlockExpr(blockExpr: RsBlockExpr) {
+        when {
+            blockExpr.isTry -> {
+                inTry += 1
+                super.visitBlockExpr(blockExpr)
+                inTry -= 1
+            }
+            !blockExpr.isAsync -> super.visitBlockExpr(blockExpr)
+        }
+    }
 
     override fun visitRetExpr(retExpr: RsRetExpr) = sink(ExitPoint.Return(retExpr))
 
     override fun visitTryExpr(tryExpr: RsTryExpr) {
         tryExpr.expr.acceptChildren(this)
-        sink(ExitPoint.TryExpr(tryExpr))
+        if (inTry == 0) sink(ExitPoint.TryExpr(tryExpr))
     }
 
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
         val macroCall = macroExpr.macroCall
-        if (macroCall.macroName == "try" && macroCall.exprMacroArgument != null) sink(ExitPoint.TryExpr(macroExpr))
+        if (macroCall.macroName == "try"
+            && macroCall.exprMacroArgument != null
+            && inTry == 0) sink(ExitPoint.TryExpr(macroExpr))
+
         if (macroExpr.type == TyNever) sink(ExitPoint.DivergingExpr(macroExpr))
     }
 
