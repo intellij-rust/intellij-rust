@@ -49,8 +49,7 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
         message: String,
         vararg fixes: LocalQuickFix
     ) {
-        val availability = availability(startElement)
-        val diagnostic = when (availability) {
+        val diagnostic = when (availability(startElement)) {
             NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
             CAN_BE_ADDED -> {
                 val fix = AddFeatureAttributeFix(name, startElement)

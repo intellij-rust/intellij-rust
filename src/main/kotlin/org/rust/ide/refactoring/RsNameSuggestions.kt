@@ -51,8 +51,7 @@ fun RsExpr.suggestedNames(): SuggestedNames {
     }
 
     val names = LinkedHashSet<String>()
-    val type = type
-    when (type) {
+    when (val type = type) {
         is TyInteger -> names.addName("i")
         is TyTypeParameter -> names.addName(type.name)
         is TyAdt -> names.addName(type.item.name)

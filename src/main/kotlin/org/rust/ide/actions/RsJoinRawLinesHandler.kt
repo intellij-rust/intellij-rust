@@ -39,8 +39,7 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         }
 
         val psiFactory = RsPsiFactory(file.project)
-        val parent = block.parent
-        when (parent) {
+        when (val parent = block.parent) {
             is RsBlockExpr -> {
                 return when {
                     parent.isUnsafe || parent.isAsync || parent.isTry -> CANNOT_JOIN

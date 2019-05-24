@@ -28,8 +28,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
 
         val key = parameters.position.parent as? TomlKey ?: return
         val table = key.topLevelTable ?: return
-        val parent = key.parent
-        val variants = when (parent) {
+        val variants = when (val parent = key.parent) {
             is TomlTableHeader -> {
                 if (key != parent.names.firstOrNull()) return
                 val isArray = when (table) {
@@ -40,7 +39,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
                 schema.topLevelKeys(isArray)
             }
             is TomlKeyValue -> {
-                table as? TomlHeaderOwner ?: return
+                if (table !is TomlHeaderOwner) return
                 if (table.header.isDependencyListHeader) return
                 schema.keysForTable(table.name ?: return)
             }

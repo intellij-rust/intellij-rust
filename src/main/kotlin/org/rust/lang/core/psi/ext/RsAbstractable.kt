@@ -28,8 +28,7 @@ val RsAbstractable.owner: RsAbstractableOwner
         return when (val context = context) {
             is RsForeignModItem -> RsAbstractableOwner.Foreign
             is RsMembers -> {
-                val traitOrImpl = context.context
-                when (traitOrImpl) {
+                when (val traitOrImpl = context.context) {
                     is RsImplItem -> RsAbstractableOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
                     is RsTraitItem -> RsAbstractableOwner.Trait(traitOrImpl)
                     else -> error("unreachable")

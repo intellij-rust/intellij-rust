@@ -55,8 +55,7 @@ private fun renderTypeReference(ref: RsTypeReference): String =
     buildString { appendTypeReference(ref) }
 
 private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
-    val type = ref.typeElement
-    when (type) {
+    when (val type = ref.typeElement) {
         is RsTupleType -> type.typeReferenceList.joinToWithBuffer(this, ", ", "(", ")") { it.appendTypeReference(this) }
 
         is RsBaseType -> when (val kind = type.kind) {

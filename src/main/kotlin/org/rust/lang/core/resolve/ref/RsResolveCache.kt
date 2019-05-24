@@ -86,8 +86,7 @@ class RsResolveCache(messageBus: MessageBus) {
     @Suppress("UNCHECKED_CAST")
     fun <K : PsiElement, V> resolveWithCaching(key: K, dep: ResolveCacheDependency, resolver: (K) -> V): V? {
         ProgressManager.checkCanceled()
-        val virtualFile = key.containingFile.virtualFile
-        val refinedDep = when (virtualFile) {
+        val refinedDep = when (key.containingFile.virtualFile) {
             // If virtualFile is null then event system is not enabled for this PSI file (see
             // PsiFileImpl.getVirtualFile) and we can't track PSI modifications, so depend on
             // any change. This is a case of completion, for example

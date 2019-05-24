@@ -54,8 +54,7 @@ val LifetimeName.isStatic: Boolean get() = this == LifetimeName.Static
 
 val RsLifetime?.name: LifetimeName
     get() {
-        val text = this?.referenceName
-        return when (text) {
+        return when (val text = this?.referenceName) {
             null -> LifetimeName.Implicit
             "'_" -> LifetimeName.Underscore
             "'static" -> LifetimeName.Static

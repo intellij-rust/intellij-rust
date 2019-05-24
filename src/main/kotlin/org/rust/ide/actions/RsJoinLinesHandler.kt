@@ -35,9 +35,8 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
         if (tryJoinCommaList != CANNOT_JOIN) return tryJoinCommaList
 
         if (leftPsi != rightPsi) return CANNOT_JOIN
-        val elementType = leftPsi.elementType
 
-        return when (elementType) {
+        return when (leftPsi.elementType) {
             in RS_STRING_LITERALS ->
                 joinStringLiteral(document, offsetNear, end)
 

@@ -45,8 +45,7 @@ class CargoProjectTreeRenderer : ColoredTreeCellRenderer() {
             is CargoProjectStructure.Node.Project -> {
                 val cargoProject = node.cargoProject
                 var attrs = SimpleTextAttributes.REGULAR_ATTRIBUTES
-                val status = cargoProject.mergedStatus
-                when (status) {
+                when (val status = cargoProject.mergedStatus) {
                     is CargoProject.UpdateStatus.UpdateFailed -> {
                         attrs = attrs.derive(SimpleTextAttributes.STYLE_WAVED, null, null, JBColor.RED)
                         toolTipText = status.reason

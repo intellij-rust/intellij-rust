@@ -101,8 +101,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         stmt += if (firstParameter != null && firstParameter.isSelf) {
             "self.${config.name}(${config.argumentsText})"
         } else {
-            val owner = config.containingFunction.owner
-            val type = when (owner) {
+            val type = when (val owner = config.containingFunction.owner) {
                 is RsAbstractableOwner.Impl -> {
                     owner.impl.typeReference?.text?.let {
                         if (owner.impl.typeParameterList == null) it else "<$it>"

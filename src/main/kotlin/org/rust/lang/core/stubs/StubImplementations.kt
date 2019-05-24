@@ -1187,8 +1187,7 @@ sealed class RsStubLiteralKind(val kindOrdinal: Int) {
     companion object {
         fun deserialize(dataStream: StubInputStream): RsStubLiteralKind? {
             with(dataStream) {
-                val ordinal = readByte().toInt()
-                return when (ordinal) {
+                return when (readByte().toInt()) {
                     0 -> Boolean(readBoolean())
                     1 -> Char(readUTFFastAsNullable(), readBoolean())
                     2 -> String(readUTFFastAsNullable(), readBoolean())

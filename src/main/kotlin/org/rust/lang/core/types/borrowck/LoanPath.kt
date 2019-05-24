@@ -42,8 +42,7 @@ data class LoanPath(val kind: LoanPathKind, val ty: Ty, val element: RsElement) 
         fun computeFor(cmt: Cmt): LoanPath? {
             fun loanPath(kind: LoanPathKind): LoanPath = LoanPath(kind, cmt.ty, cmt.element)
 
-            val category = cmt.category
-            return when (category) {
+            return when (val category = cmt.category) {
                 is Categorization.Rvalue, Categorization.StaticItem -> null
 
                 is Categorization.Local -> loanPath(Var(category.declaration))

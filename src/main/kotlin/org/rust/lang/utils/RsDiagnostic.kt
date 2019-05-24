@@ -829,9 +829,8 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val elementType = element.elementType
             // TODO: support other cases
-            return when (elementType) {
+            return when (val elementType = element.elementType) {
                 RsElementTypes.CRATE -> "`crate` in paths can only be used in start position"
                 else -> error("Unexpected element type: `$elementType`")
             }

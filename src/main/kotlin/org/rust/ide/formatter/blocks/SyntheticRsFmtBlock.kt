@@ -55,8 +55,7 @@ class SyntheticRsFmtBlock(
     }
 
     private fun findFirstNonSyntheticChild(): ASTNode? {
-        val child = subBlocks.first()
-        return when (child) {
+        return when (val child = subBlocks.first()) {
             is SyntheticRsFmtBlock -> child.findFirstNonSyntheticChild()
             is ASTBlock -> child.node
             else -> null

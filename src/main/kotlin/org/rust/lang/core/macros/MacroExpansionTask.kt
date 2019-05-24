@@ -192,8 +192,7 @@ abstract class MacroExpansionTaskBase(
                     runNextStep()
                 }
             } else {
-                val e = (t as? CompletionException)?.cause ?: t
-                when (e) {
+                when (val e = (t as? CompletionException)?.cause ?: t) {
                     null -> error("unreachable")
                     is ProcessCanceledException -> Unit // Task canceled
                     else -> {

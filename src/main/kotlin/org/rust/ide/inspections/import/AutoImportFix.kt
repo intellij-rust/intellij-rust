@@ -193,8 +193,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             resolveResults: List<MethodResolveVariant>
         ): List<RsTraitItem>? {
             val traits = resolveResults.mapNotNull { variant ->
-                val source = variant.source
-                val trait = when (source) {
+                val trait = when (val source = variant.source) {
                     is TraitImplSource.ExplicitImpl -> {
                         val impl = source.value
                         if (impl.traitRef == null) return null
