@@ -999,7 +999,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
         val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, source) ->
-            element is RsFunction && !element.isAssocFn && processor(MethodResolveVariant(name, element, ty, i, source))
+            element is RsFunction && element.isMethod && processor(MethodResolveVariant(name, element, ty, i, source))
         }
         processAssociatedItems(lookup, ty, VALUES, methodProcessor)
     }
