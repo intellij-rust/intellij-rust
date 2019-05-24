@@ -309,8 +309,8 @@ class RsInferenceContext(
         expectedDotExprTypes[psi] = ty
     }
 
-    fun writePath(path: RsPathExpr, resolved: List<BoundElement<RsElement>>) {
-        resolvedPaths[path] = resolved.map { it.element }
+    fun writePath(path: RsPathExpr, resolved: List<RsElement>) {
+        resolvedPaths[path] = resolved
     }
 
     fun writeResolvedMethod(call: RsMethodCall, resolvedTo: List<MethodResolveVariant>) {

@@ -11,9 +11,7 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.KnownItems
-import org.rust.lang.core.resolve.TraitImplSource
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.*
@@ -286,19 +284,40 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferPathExprType(expr: RsPathExpr): Ty {
-        val variants = resolvePath(expr.path, lookup).mapNotNull { it.downcast<RsNamedElement>() }
-        ctx.writePath(expr, variants)
-        val fnVariants = variants.mapNotNull { it.downcast<RsFunction>() }
-        val qualifier = expr.path.path
-        if (variants.size > 1 && fnVariants.size == variants.size && qualifier != null) {
-            val resolved = collapseToTrait(fnVariants.map { it.element })
-            if (resolved != null) {
-                val subst = collapseSubst(resolved, fnVariants)
-                return instantiatePath(BoundElement(resolved, subst), expr, tryRefinePath = true)
+        val path = expr.path
+        val resolveVariants = resolvePathRaw(path, lookup)
+        val assocVariants = resolveVariants.filterIsInstance<AssocItemScopeEntry>()
+
+        val filteredVariants = if (resolveVariants.size == assocVariants.size) {
+            val variants = filterAssocItems(assocVariants, expr)
+            val fnVariants = variants.mapNotNull { it.element as? RsFunction }
+            if (variants.size > 1 && fnVariants.size == variants.size && path.path != null) {
+                val resolved = collapseToTrait(fnVariants)
+                if (resolved != null) {
+                    ctx.writePath(expr, variants.map { it.element })
+                    val subst = collapseSubst(
+                        resolved,
+                        variants.mapNotNull { e ->
+                            (e.element as? RsGenericDeclaration)?.let { BoundElement(it, e.subst) }
+                        }
+                    )
+                    val scopeEntry = variants.first().copy(
+                        element = resolved,
+                        subst = subst,
+                        source = TraitImplSource.Collapsed((resolved.owner as RsAbstractableOwner.Trait).trait)
+                    )
+                    return instantiatePath(resolved, scopeEntry, expr)
+                }
             }
+            variants
+        } else {
+            resolveVariants
         }
-        val first = variants.singleOrNull() ?: return TyUnknown
-        return instantiatePath(first, expr, tryRefinePath = variants.size == 1)
+
+        ctx.writePath(expr, filteredVariants.mapNotNull { it.element })
+
+        val first = filteredVariants.singleOrNull() ?: return TyUnknown
+        return instantiatePath(first.element as RsNamedElement, first, expr)
     }
 
     /** This works for `String::from` where multiple impls of `From` trait found for `String` */
@@ -323,7 +342,7 @@ class RsTypeInferenceWalker(
     }
 
     /** See test `test type arguments remap on collapse to trait` */
-    private fun collapseSubst(parentFn: RsFunction, variants: List<BoundElement<RsFunction>>): Substitution {
+    private fun collapseSubst(parentFn: RsFunction, variants: List<BoundElement<RsGenericDeclaration>>): Substitution {
         //TODO remap lifetimes
         val collapsed = mutableMapOf<TyTypeParameter, Ty>()
         val generics = parentFn.generics
@@ -340,11 +359,11 @@ class RsTypeInferenceWalker(
     }
 
     private fun instantiatePath(
-        boundElement: BoundElement<RsNamedElement>,
-        pathExpr: RsPathExpr? = null,
-        tryRefinePath: Boolean = false
+        element: RsNamedElement,
+        scopeEntry: ScopeEntry,
+        pathExpr: RsPathExpr
     ): Ty {
-        val (element, subst) = boundElement
+        val subst = instantiatePathGenerics(pathExpr.path, BoundElement(element, scopeEntry.subst), lookup).subst
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
@@ -355,10 +374,10 @@ class RsTypeInferenceWalker(
             else -> return TyUnknown
         }
 
-        val typeParameters = when (element) {
-            is RsFunction -> {
+        val typeParameters = when {
+            scopeEntry is AssocItemScopeEntry && element is RsAbstractable -> {
                 val owner = element.owner
-                var (typeParameters, selfTy) = when (owner) {
+                val (typeParameters, selfTy) = when (owner) {
                     is RsAbstractableOwner.Impl -> {
                         val typeParameters = instantiateBounds(owner.impl)
                         val selfTy = owner.impl.typeReference?.type?.substitute(typeParameters) ?: TyUnknown
@@ -374,17 +393,24 @@ class RsTypeInferenceWalker(
                             .substitute(typeParameters)
                         val traitRef = TraitRef(selfTy, boundTrait)
                         fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
-                        if (pathExpr != null && tryRefinePath) ctx.registerPathRefinement(pathExpr, traitRef)
+                        when (scopeEntry.source) {
+                            is TraitImplSource.Object, is TraitImplSource.Collapsed -> {
+                                ctx.registerPathRefinement(pathExpr, traitRef)
+                            }
+                        }
                         typeParameters to selfTy
                     }
                     else -> emptySubstitution to null
                 }
 
-                typeParameters = instantiateBounds(element, selfTy, typeParameters)
-                typeParameters
+                if (element is RsGenericDeclaration) {
+                    instantiateBounds(element, selfTy, typeParameters)
+                } else {
+                    typeParameters
+                }
             }
-            is RsEnumVariant -> instantiateBounds(element.parentEnum)
-            is RsGenericDeclaration -> instantiateBounds(element)
+            element is RsEnumVariant -> instantiateBounds(element.parentEnum)
+            element is RsGenericDeclaration -> instantiateBounds(element)
             else -> emptySubstitution
         }
 
@@ -610,12 +636,12 @@ class RsTypeInferenceWalker(
         return methodType.retType
     }
 
-    private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodResolveVariant? {
-        val filtered = variants.singleOrLet { list ->
+    private fun <T: AssocItemScopeEntryBase<E>, E> filterAssocItems(variants: List<T>, context: RsElement): List<T> {
+        return variants.singleOrLet { list ->
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
-            val traitToCallee = hashMapOf<RsTraitItem, MutableList<MethodResolveVariant>>()
-            val filtered = mutableListOf<MethodResolveVariant>()
+            val traitToCallee = hashMapOf<RsTraitItem, MutableList<T>>()
+            val filtered = mutableListOf<T>()
             for (callee in list) {
                 val trait = callee.source.impl?.traitRef?.resolveToTrait()
                 if (trait != null) {
@@ -624,7 +650,7 @@ class RsTypeInferenceWalker(
                     filtered.add(callee) // inherent impl
                 }
             }
-            traitToCallee.keys.filterInScope(methodCall).forEach {
+            traitToCallee.keys.filterInScope(context).forEach {
                 filtered += traitToCallee.getValue(it)
             }
             if (filtered.isNotEmpty()) {
@@ -638,7 +664,11 @@ class RsTypeInferenceWalker(
             TypeInferenceMarks.methodPickCheckBounds.hit()
             val impl = callee.source.impl ?: return@singleOrFilter true
             ctx.canEvaluateBounds(impl, callee.selfTy)
-        }.singleOrLet { list ->
+        }
+    }
+
+    private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodResolveVariant? {
+        val filtered = filterAssocItems(variants, methodCall).singleOrLet { list ->
             // 3. Pick results matching receiver type
             TypeInferenceMarks.methodPickDerefOrder.hit()
 

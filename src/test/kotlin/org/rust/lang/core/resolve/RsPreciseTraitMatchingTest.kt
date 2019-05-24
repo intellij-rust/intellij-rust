@@ -362,4 +362,88 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
                //^
         }
     """, TypeInferenceMarks.methodPickTraitsOutOfScope)
+
+    fun `test filter associated functions by trait visibility`() = checkByCode("""
+        struct S;
+
+        mod foo {
+            pub trait Foo {
+                fn new() {}
+            }    //X
+            impl Foo for super::S {}
+        }
+        mod bar {
+            pub trait Bar {
+                fn new() {}
+            }
+            impl Bar for super::S {}
+        }
+        use foo::Foo;
+
+        fn main () {
+            S::new();
+        }    //^
+    """)
+
+    fun `test filter associated constants by trait visibility`() = checkByCode("""
+        struct S;
+
+        mod foo {
+            pub trait Foo {
+                const C: i32 = 0;
+            }       //X
+            impl Foo for super::S {}
+        }
+        mod bar {
+            pub trait Bar {
+                const C: i32 = 0;
+            }
+            impl Bar for super::S {}
+        }
+        use foo::Foo;
+
+        fn main () {
+            let a = S::C;
+        }            //^
+    """)
+
+    fun `test filter associated functions by trait bounds`() = checkByCode("""
+        struct S;
+        trait Bound1 {}
+        trait Bound2 {}
+        impl Bound1 for S {}
+
+        pub trait Foo {
+            fn new() {}
+        }    //X
+        pub trait Bar {
+            fn new() {}
+        }
+        impl<T: Bound1> Foo for T {}
+        impl<T: Bound2> Bar for T {}
+
+        fn main () {
+            S::new();
+        }    //^
+    """)
+
+    fun `test filter associated constants by trait bounds`() = checkByCode("""
+        struct S;
+        trait Bound1 {}
+        trait Bound2 {}
+        impl Bound1 for S {}
+
+        pub trait Foo {
+            const C: i32 = 0;
+        }       //X
+        pub trait Bar {
+            const C: i32 = 0;
+        }
+        impl<T: Bound1> Foo for T {}
+        impl<T: Bound2> Bar for T {}
+
+        fn main () {
+            let a = S::C;
+        }            //^
+    """)
 }

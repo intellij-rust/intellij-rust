@@ -56,7 +56,7 @@ fun resolveMethodCallReferenceWithReceiverType(
     receiverType: Ty,
     methodCall: RsMethodCall
 ): List<MethodResolveVariant> {
-    return collectResolveVariants(methodCall.referenceName) {
+    return collectResolveVariantsAsScopeEntries(methodCall.referenceName) {
         processMethodCallExprResolveVariants(lookup, receiverType, it)
     }
 }
@@ -66,7 +66,7 @@ fun resolveFieldLookupReferenceWithReceiverType(
     receiverType: Ty,
     expr: RsFieldLookup
 ): List<FieldResolveVariant> {
-    return collectResolveVariants(expr.referenceName) {
+    return collectResolveVariantsAsScopeEntries(expr.referenceName) {
         processFieldExprResolveVariants(lookup, receiverType, it)
     }
 }
@@ -95,16 +95,5 @@ data class MethodResolveVariant(
      * trait definition, this contains the impl of the actual trait for the receiver type.
      * Otherwise it's just a trait the method defined in
      */
-    val source: TraitImplSource
-) : DotExprResolveVariant
-
-private fun <T : ScopeEntry> collectResolveVariants(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
-    val result = mutableListOf<T>()
-    f { e ->
-        if (e.name == referenceName) {
-            result += e
-        }
-        false
-    }
-    return result
-}
+    override val source: TraitImplSource
+) : DotExprResolveVariant, AssocItemScopeEntryBase<RsFunction>

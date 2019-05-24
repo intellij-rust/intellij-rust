@@ -1559,4 +1559,20 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             let _: Box<[&Bar; 1]> = (Box::new([&Foo]));
         }                         //^ Box<[&Bar; 1]>
     """)
+
+    fun `test associated constant with complex type`() = testExpr("""
+        trait Tr<A> { const C: A; }
+        struct S<T>(T);
+        impl<T: Tr<T>> Tr<T> for S<T> {
+            const C: T = T::C;
+        }
+        struct X;
+        impl Tr<X> for X {
+            const C: X = X;
+        }
+        fn main() {
+            let a = S::<X>::C;
+            a;
+        } //^ X
+    """)
 }

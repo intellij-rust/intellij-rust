@@ -81,6 +81,23 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
     return result
 }
 
+fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
+    val result = mutableListOf<T>()
+    f { e ->
+        if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
+            return@f true
+        }
+
+        if (e.name == referenceName) {
+            // de-lazying. See `RsResolveProcessor.lazy`
+            e.element ?: return@f false
+            result += e
+        }
+        false
+    }
+    return result
+}
+
 fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Unit): RsElement? {
     var result: RsElement? = null
     f { e ->
@@ -118,12 +135,19 @@ private data class SimpleScopeEntry(
     override val subst: Substitution = emptySubstitution
 ) : ScopeEntry
 
+interface AssocItemScopeEntryBase<out T: RsAbstractable> : ScopeEntry {
+    override val element: T
+    val selfTy: Ty
+    val source: TraitImplSource
+}
+
 data class AssocItemScopeEntry(
     override val name: String,
-    override val element: RsElement,
+    override val element: RsAbstractable,
     override val subst: Substitution = emptySubstitution,
-    val source: TraitImplSource
-) : ScopeEntry
+    override val selfTy: Ty,
+    override val source: TraitImplSource
+) : AssocItemScopeEntryBase<RsAbstractable>
 
 private class LazyScopeEntry(
     override val name: String,
