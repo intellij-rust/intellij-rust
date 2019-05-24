@@ -23,6 +23,7 @@ import org.rust.lang.core.types.type
 import javax.swing.Icon
 
 val RsFunction.isAssocFn: Boolean get() = selfParameter == null && owner.isImplOrTrait
+val RsFunction.isMethod: Boolean get() = selfParameter != null && owner.isImplOrTrait
 
 val RsFunction.isTest: Boolean get() {
     val stub = greenStub
