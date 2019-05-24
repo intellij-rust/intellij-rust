@@ -6,6 +6,8 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
@@ -513,6 +515,40 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         fn main() {
             let /*caret*/
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test postfix await 2015`() = checkCompletion("await", """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn foo() -> impl Future<Output=i32> { unimplemented!() }
+        fn main() {
+            foo()./*caret*/;
+        }
+    """, """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn foo() -> impl Future<Output=i32> { unimplemented!() }
+        fn main() {
+            foo()./*caret*/;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test postfix await 2018`() = checkCompletion("await", """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn foo() -> impl Future<Output=i32> { unimplemented!() }
+        fn main() {
+            foo()./*caret*/;
+        }
+    """, """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn foo() -> impl Future<Output=i32> { unimplemented!() }
+        fn main() {
+            foo().await/*caret*/;
         }
     """)
 

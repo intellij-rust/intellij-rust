@@ -9,6 +9,7 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
@@ -19,7 +20,14 @@ import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isEdition2018
+import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.psiElement
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.infer.lookupFutureOutputTy
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.type
 import org.rust.lang.core.withPrevSiblingSkipping
 import org.rust.lang.core.withSuperParent
 
@@ -73,6 +81,21 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                 for (keyword in CONDITION_KEYWORDS) {
                     result.addElement(conditionLookupElement(keyword).withPriority(KEYWORD_PRIORITY))
                 }
+            }
+        })
+
+        extend(CompletionType.BASIC, postfixAwaitPattern(), object : CompletionProvider<CompletionParameters>() {
+            override fun addCompletions(
+                parameters: CompletionParameters,
+                context: ProcessingContext,
+                result: CompletionResultSet
+            ) {
+                val awaitTy = context.get(AWAIT_TY) ?: return
+                val awaitBuilder = LookupElementBuilder
+                    .create("await")
+                    .bold()
+                    .withTypeText(awaitTy.toString())
+                result.addElement(awaitBuilder.withPriority(KEYWORD_PRIORITY * 1.0001))
             }
         })
     }
@@ -176,7 +199,26 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             .inside(psiElement<RsFunction>())
     }
 
+    private fun postfixAwaitPattern(): PsiElementPattern.Capture<PsiElement> {
+        val parent = psiElement<RsFieldLookup>()
+            .with(object : PatternCondition<RsFieldLookup>("RsPostfixAwait") {
+                override fun accepts(t: RsFieldLookup, context: ProcessingContext?): Boolean {
+                    if (context == null || !t.isEdition2018) return false
+                    val receiver = t.receiver.safeGetOriginalOrSelf()
+                    val lookup = ImplLookup.relativeTo(receiver)
+                    val awaitTy = receiver.type.lookupFutureOutputTy(lookup)
+                    if (awaitTy is TyUnknown) return false
+                    context.put(AWAIT_TY, awaitTy)
+                    return true
+                }
+            })
+
+        return psiElement(IDENTIFIER).withParent(parent)
+    }
+
     companion object {
-        val CONDITION_KEYWORDS = listOf("if", "match")
+        @JvmField
+        val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
+        private val AWAIT_TY: Key<Ty> = Key.create("AWAIT_TY")
     }
 }

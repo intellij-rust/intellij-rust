@@ -159,7 +159,7 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
 
 class ImplLookup(
     private val project: Project,
-    private val items: KnownItems,
+    val items: KnownItems,
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads

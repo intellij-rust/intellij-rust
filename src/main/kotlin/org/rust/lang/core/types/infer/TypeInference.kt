@@ -724,17 +724,6 @@ class RsFnInferenceContext(
         return items.makeFuture(outputTy)
     }
 
-    private fun lookupFutureOutputTy(ty: Ty?): Ty {
-        if (ty !is TyAnon) return TyUnknown
-        val futureTrait = items.Future ?: return TyUnknown
-        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-        return lookup.lookupAssocTypeInBounds(
-            ty.getTraitBoundsTransitively().asSequence(),
-            futureTrait,
-            outputType
-        ) ?: TyUnknown
-    }
-
     fun inferFnBody(block: RsBlock): Ty =
         block.inferTypeCoercableTo(returnTy)
 
@@ -1374,7 +1363,7 @@ class RsFnInferenceContext(
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
         if (fieldLookup.identifier?.text == "await" && fieldLookup.isEdition2018) {
-            return lookupFutureOutputTy(receiver)
+            return receiver.lookupFutureOutputTy(lookup)
         }
 
         val variants = resolveFieldLookupReferenceWithReceiverType(lookup, receiver, fieldLookup)
@@ -1715,7 +1704,7 @@ class RsFnInferenceContext(
             return when (name) {
                 "try" -> inferTryMacroArgumentType(expr)
                 "dbg" -> expr.inferType()
-                "await" -> lookupFutureOutputTy(expr.inferType())
+                "await" -> expr.inferType().lookupFutureOutputTy(lookup)
                 else -> {
                     expr.inferType()
                     TyUnknown
@@ -2049,6 +2038,17 @@ private fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val futureTrait = Future ?: return TyUnknown
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
     return TyAnon(null, listOf(boundFuture))
+}
+
+fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
+    if (this !is TyAnon) return TyUnknown
+    val futureTrait = lookup.items.Future ?: return TyUnknown
+    val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
+    return lookup.lookupAssocTypeInBounds(
+        getTraitBoundsTransitively().asSequence(),
+        futureTrait,
+        outputType
+    ) ?: TyUnknown
 }
 
 object TypeInferenceMarks {
