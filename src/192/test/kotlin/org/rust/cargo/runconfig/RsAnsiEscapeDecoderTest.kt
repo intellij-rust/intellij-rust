@@ -7,8 +7,6 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestCase
@@ -17,14 +15,6 @@ import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.ANSI_8_BIT_COLOR_F
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.CSI
 
 class RsAnsiEscapeDecoderTest : PlatformTestCase() {
-
-    override fun runTest() {
-        // FIXME: fix these test on 192 platform
-        val build = ApplicationInfo.getInstance().build
-        if (build < BUILD_192) {
-            super.runTest()
-        }
-    }
 
     fun `test standard 24-bit colors foreground`() = check(
         ColoredText(
@@ -37,14 +27,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make24BitColorCtrlSeq(0, 129, 129, isForeground = true) + "CYAN" +
                 make24BitColorCtrlSeq(193, 193, 193, isForeground = true) + "WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(30))
-            .addExpected("RED", makeSimpleCtrlSeq(31))
-            .addExpected("GREEN", makeSimpleCtrlSeq(32))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(33))
-            .addExpected("BLUE", makeSimpleCtrlSeq(34))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(35))
-            .addExpected("CYAN", makeSimpleCtrlSeq(36))
-            .addExpected("WHITE", makeSimpleCtrlSeq(37))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = true))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = true))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = true))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = true))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = true))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = true))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = true))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = true))
     )
 
     fun `test standard 24-bit colors background`() = check(
@@ -58,14 +48,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make24BitColorCtrlSeq(0, 129, 129, isForeground = false) + "CYAN" +
                 make24BitColorCtrlSeq(193, 193, 193, isForeground = false) + "WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(40))
-            .addExpected("RED", makeSimpleCtrlSeq(41))
-            .addExpected("GREEN", makeSimpleCtrlSeq(42))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(43))
-            .addExpected("BLUE", makeSimpleCtrlSeq(44))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(45))
-            .addExpected("CYAN", makeSimpleCtrlSeq(46))
-            .addExpected("WHITE", makeSimpleCtrlSeq(47))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = false))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = false))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = false))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = false))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = false))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = false))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = false))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = false))
     )
 
     fun `test bright 24-bit colors foreground`() = check(
@@ -79,14 +69,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make24BitColorCtrlSeq(0, 254, 254, isForeground = true) + "BRIGHT CYAN" +
                 make24BitColorCtrlSeq(254, 254, 254, isForeground = true) + "BRIGHT WHITE"
         )
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(90))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(91))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(92))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(93))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(94))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(95))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(96))
-            .addExpected("BRIGHT WHITE", if (SystemInfo.isWindows) makeSimpleCtrlSeq(30) else makeSimpleCtrlSeq(97))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = true))
+            .addExpected("BRIGHT RED", make8BitColorCtrlSeq(9, isForeground = true))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = true))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = true))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = true))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = true))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = true))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(if (SystemInfo.isWindows) 0 else 15, isForeground = true))
     )
 
     fun `test bright 24-bit colors background`() = check(
@@ -100,14 +90,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make24BitColorCtrlSeq(0, 254, 254, isForeground = false) + "BRIGHT CYAN" +
                 make24BitColorCtrlSeq(254, 254, 254, isForeground = false) + "BRIGHT WHITE"
         )
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(100))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(101))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(102))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(103))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(104))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(105))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(106))
-            .addExpected("BRIGHT WHITE", makeSimpleCtrlSeq(107))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = false))
+            .addExpected("BRIGHT RED", make8BitColorCtrlSeq(9, isForeground = false))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = false))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = false))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = false))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = false))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = false))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(15, isForeground = false))
     )
 
     fun `test standard 8-bit colors foreground`() = check(
@@ -121,14 +111,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(6, isForeground = true) + "CYAN" +
                 make8BitColorCtrlSeq(7, isForeground = true) + "WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(30))
-            .addExpected("RED", makeSimpleCtrlSeq(31))
-            .addExpected("GREEN", makeSimpleCtrlSeq(32))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(33))
-            .addExpected("BLUE", makeSimpleCtrlSeq(34))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(35))
-            .addExpected("CYAN", makeSimpleCtrlSeq(36))
-            .addExpected("WHITE", makeSimpleCtrlSeq(37))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = true))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = true))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = true))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = true))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = true))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = true))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = true))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = true))
     )
 
     fun `test standard 8-bit colors background`() = check(
@@ -142,14 +132,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(6, isForeground = false) + "CYAN" +
                 make8BitColorCtrlSeq(7, isForeground = false) + "WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(40))
-            .addExpected("RED", makeSimpleCtrlSeq(41))
-            .addExpected("GREEN", makeSimpleCtrlSeq(42))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(43))
-            .addExpected("BLUE", makeSimpleCtrlSeq(44))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(45))
-            .addExpected("CYAN", makeSimpleCtrlSeq(46))
-            .addExpected("WHITE", makeSimpleCtrlSeq(47))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = false))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = false))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = false))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = false))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = false))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = false))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = false))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = false))
     )
 
     fun `test bright 8-bit colors foreground`() = check(
@@ -163,14 +153,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(14, isForeground = true) + "BRIGHT CYAN" +
                 make8BitColorCtrlSeq(15, isForeground = true) + "BRIGHT WHITE"
         )
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(90))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(91))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(92))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(93))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(94))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(95))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(96))
-            .addExpected("BRIGHT WHITE", if (SystemInfo.isWindows) makeSimpleCtrlSeq(30) else makeSimpleCtrlSeq(97))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = true))
+            .addExpected("BRIGHT RED",make8BitColorCtrlSeq(9, isForeground = true))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = true))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = true))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = true))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = true))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = true))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(if (SystemInfo.isWindows) 0 else 15, isForeground = true))
     )
 
     fun `test bright 8-bit colors background`() = check(
@@ -184,14 +174,14 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(14, isForeground = false) + "BRIGHT CYAN" +
                 make8BitColorCtrlSeq(15, isForeground = false) + "BRIGHT WHITE"
         )
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(100))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(101))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(102))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(103))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(104))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(105))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(106))
-            .addExpected("BRIGHT WHITE", makeSimpleCtrlSeq(107))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = false))
+            .addExpected("BRIGHT RED", make8BitColorCtrlSeq(9, isForeground = false))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = false))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = false))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = false))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = false))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = false))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(15, isForeground = false))
     )
 
     fun `test rgb 8-bit colors foreground`() = check(
@@ -213,22 +203,22 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(51, isForeground = true) + "BRIGHT CYAN" +
                 make8BitColorCtrlSeq(255, isForeground = true) + "BRIGHT WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(30))
-            .addExpected("RED", makeSimpleCtrlSeq(31))
-            .addExpected("GREEN", makeSimpleCtrlSeq(32))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(33))
-            .addExpected("BLUE", makeSimpleCtrlSeq(34))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(35))
-            .addExpected("CYAN", makeSimpleCtrlSeq(36))
-            .addExpected("WHITE", makeSimpleCtrlSeq(37))
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(90))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(91))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(92))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(93))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(94))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(95))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(96))
-            .addExpected("BRIGHT WHITE", if (SystemInfo.isWindows) makeSimpleCtrlSeq(30) else makeSimpleCtrlSeq(97))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = true))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = true))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = true))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = true))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = true))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = true))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = true))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = true))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = true))
+            .addExpected("BRIGHT RED", make8BitColorCtrlSeq(9, isForeground = true))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = true))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = true))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = true))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = true))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = true))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(if (SystemInfo.isWindows) 0 else 15, isForeground = true))
     )
 
     fun `test rgb 8-bit colors background`() = check(
@@ -250,36 +240,27 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
                 make8BitColorCtrlSeq(51, isForeground = false) + "BRIGHT CYAN" +
                 make8BitColorCtrlSeq(255, isForeground = false) + "BRIGHT WHITE"
         )
-            .addExpected("BLACK", makeSimpleCtrlSeq(40))
-            .addExpected("RED", makeSimpleCtrlSeq(41))
-            .addExpected("GREEN", makeSimpleCtrlSeq(42))
-            .addExpected("YELLOW", makeSimpleCtrlSeq(43))
-            .addExpected("BLUE", makeSimpleCtrlSeq(44))
-            .addExpected("MAGENTA", makeSimpleCtrlSeq(45))
-            .addExpected("CYAN", makeSimpleCtrlSeq(46))
-            .addExpected("WHITE", makeSimpleCtrlSeq(47))
-            .addExpected("BRIGHT BLACK", makeSimpleCtrlSeq(100))
-            .addExpected("BRIGHT RED", makeSimpleCtrlSeq(101))
-            .addExpected("BRIGHT GREEN", makeSimpleCtrlSeq(102))
-            .addExpected("BRIGHT YELLOW", makeSimpleCtrlSeq(103))
-            .addExpected("BRIGHT BLUE", makeSimpleCtrlSeq(104))
-            .addExpected("BRIGHT MAGENTA", makeSimpleCtrlSeq(105))
-            .addExpected("BRIGHT CYAN", makeSimpleCtrlSeq(106))
-            .addExpected("BRIGHT WHITE", makeSimpleCtrlSeq(107))
+            .addExpected("BLACK", make8BitColorCtrlSeq(0, isForeground = false))
+            .addExpected("RED", make8BitColorCtrlSeq(1, isForeground = false))
+            .addExpected("GREEN", make8BitColorCtrlSeq(2, isForeground = false))
+            .addExpected("YELLOW", make8BitColorCtrlSeq(3, isForeground = false))
+            .addExpected("BLUE", make8BitColorCtrlSeq(4, isForeground = false))
+            .addExpected("MAGENTA", make8BitColorCtrlSeq(5, isForeground = false))
+            .addExpected("CYAN", make8BitColorCtrlSeq(6, isForeground = false))
+            .addExpected("WHITE", make8BitColorCtrlSeq(7, isForeground = false))
+            .addExpected("BRIGHT BLACK", make8BitColorCtrlSeq(8, isForeground = false))
+            .addExpected("BRIGHT RED", make8BitColorCtrlSeq(9, isForeground = false))
+            .addExpected("BRIGHT GREEN", make8BitColorCtrlSeq(10, isForeground = false))
+            .addExpected("BRIGHT YELLOW", make8BitColorCtrlSeq(11, isForeground = false))
+            .addExpected("BRIGHT BLUE", make8BitColorCtrlSeq(12, isForeground = false))
+            .addExpected("BRIGHT MAGENTA", make8BitColorCtrlSeq(13, isForeground = false))
+            .addExpected("BRIGHT CYAN", make8BitColorCtrlSeq(14, isForeground = false))
+            .addExpected("BRIGHT WHITE", make8BitColorCtrlSeq(15, isForeground = false))
     )
 
-    fun `test multiple attributes 1`() = check(
-        ColoredText(
-            makeSimpleCtrlSeq(0) +
-                make24BitColorCtrlSeq(0, 0, 0, isForeground = false) +
-                make8BitColorCtrlSeq(255, isForeground = true) +
-                "TEXT"
-        ).addExpected("TEXT", "${CSI}0;40;${if (SystemInfo.isWindows) 30 else 97}m")
-    )
-
-    fun `test multiple attributes 2`() = check(
+    fun `test multiple attributes`() = check(
         ColoredText("${CSI}0m${CSI}48;$ANSI_24_BIT_COLOR_FORMAT;0;0;0m${CSI}38;$ANSI_8_BIT_COLOR_FORMAT;255mTEXT")
-            .addExpected("TEXT", "${CSI}0;40;${if (SystemInfo.isWindows) 30 else 97}m")
+            .addExpected("TEXT", "${CSI}0;48;$ANSI_8_BIT_COLOR_FORMAT;0;38;$ANSI_8_BIT_COLOR_FORMAT;${if (SystemInfo.isWindows) 0 else 15}m")
     )
 
     private class ColoredText(val rawText: String, val outputType: Key<*> = ProcessOutputTypes.STDOUT) {
@@ -292,9 +273,6 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
     }
 
     companion object {
-
-        private val BUILD_192 = BuildNumber.fromString("192")
-
         private fun check(text: ColoredText) {
             val decoder = RsAnsiEscapeDecoder()
             val actualColoredChunks = mutableListOf<Pair<String, String>>()
@@ -307,12 +285,10 @@ class RsAnsiEscapeDecoderTest : PlatformTestCase() {
             assertEquals(expectedColoredChunks, actualColoredChunks)
         }
 
-        private fun makeSimpleCtrlSeq(n: Int): String = "$CSI${n}m"
-
         private fun make24BitColorCtrlSeq(r: Int, g: Int, b: Int, isForeground: Boolean): String =
-            "$CSI${if (isForeground) "38;" else "48;"}$ANSI_24_BIT_COLOR_FORMAT;$r;$g;${b}m"
+            "${CSI}0;${if (isForeground) "38;" else "48;"}$ANSI_24_BIT_COLOR_FORMAT;$r;$g;${b}m"
 
         private fun make8BitColorCtrlSeq(n: Int, isForeground: Boolean): String =
-            "$CSI${if (isForeground) "38;" else "48;"}$ANSI_8_BIT_COLOR_FORMAT;${n}m"
+            "${CSI}0;${if (isForeground) "38;" else "48;"}$ANSI_8_BIT_COLOR_FORMAT;${n}m"
     }
 }
