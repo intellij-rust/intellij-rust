@@ -716,8 +716,7 @@ private class MacroExpansionTaskQueue(val project: Project) {
 
         @Synchronized
         fun cancel() {
-            val state = state
-            when (state) {
+            when (val state = state) {
                 State.Pending -> this.state = State.Canceled
                 is State.Running -> state.indicator.cancel()
                 State.Canceled -> Unit

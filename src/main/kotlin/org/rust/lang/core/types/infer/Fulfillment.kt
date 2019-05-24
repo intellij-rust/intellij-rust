@@ -116,8 +116,7 @@ class ObligationForest {
             val node = nodes[index]
             if (node.state != NodeState.Pending) continue
 
-            val result = processor(node.obligation)
-            when (result) {
+            when (val result = processor(node.obligation)) {
                 is ProcessPredicateResult.NoChanges -> {}
                 is ProcessPredicateResult.Ok -> {
                     stalled = false
@@ -182,13 +181,12 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
         }
 
         obligation.predicate = ctx.resolveTypeVarsIfPossible(obligation.predicate)
-        val predicate = obligation.predicate
 
-        when (predicate) {
+        when (val predicate = obligation.predicate) {
             is Predicate.Trait -> {
                 if (predicate.trait.selfTy is TyInfer.TyVar) return ProcessPredicateResult.NoChanges
-                val impl = lookup.select(predicate.trait, obligation.recursionDepth)
-                return when (impl) {
+
+                return when (val impl = lookup.select(predicate.trait, obligation.recursionDepth)) {
                     is SelectionResult.Err -> ProcessPredicateResult.Err
                     is SelectionResult.Ambiguous -> {
                         pendingObligation.stalledOn = traitRefTypeVars(predicate.trait)

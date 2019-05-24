@@ -65,8 +65,7 @@ private val TomlKey.bareKey get() = firstChild
 private val TomlKeyValue.name get() = key.text
 private val TomlKeyValue.crateName: String
     get() {
-        val rootValue = value
-        return when (rootValue) {
+        return when (val rootValue = value) {
             is TomlInlineTable -> (rootValue.entries.find { it.name == "package" }?.value?.text?.unquotedText)
                 ?: key.text
             else -> key.text
@@ -74,8 +73,7 @@ private val TomlKeyValue.crateName: String
     }
 private val TomlKeyValue.version: String?
     get() {
-        val value = value
-        return when (value) {
+        return when (val value = value) {
             is TomlLiteral -> value.text?.unquotedText
             is TomlInlineTable -> value.entries.find { it.name == "version" }?.value?.text?.unquotedText
             else -> null

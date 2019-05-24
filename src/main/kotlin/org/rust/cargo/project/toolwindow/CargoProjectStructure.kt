@@ -25,8 +25,7 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
     }
 
     override fun getChildren(parent: Any): List<DefaultMutableTreeNode>? {
-        val userObject = (parent as? DefaultMutableTreeNode)?.userObject
-        val childrenObjects = when (userObject) {
+        val childrenObjects = when (val userObject = (parent as? DefaultMutableTreeNode)?.userObject) {
             is Root -> cargoProjects.map(::Project)
             is Project -> {
                 val cargoProject = userObject.cargoProject

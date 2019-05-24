@@ -25,8 +25,7 @@ sealed class RsBindingModeKind {
 
 val RsPatBinding.mutability: Mutability
     get() {
-        val kind = kind
-        return when (kind) {
+        return when (val kind = kind) {
             is RsBindingModeKind.BindByValue -> kind.mutability
             is RsBindingModeKind.BindByReference -> Mutability.IMMUTABLE
         }

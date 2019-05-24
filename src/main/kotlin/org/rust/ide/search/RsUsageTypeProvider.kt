@@ -54,8 +54,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             }
         }
         if (parent is RsPathExpr) {
-            val context = parent.goUp<RsPathExpr>()
-            return when (context) {
+            return when (parent.goUp<RsPathExpr>()) {
                 is RsDotExpr -> DOT_EXPR
                 is RsCallExpr -> FUNCTION_CALL
                 is RsValueArgumentList -> ARGUMENT

@@ -24,8 +24,8 @@ class RemoveParenthesesFromExprIntention : RsElementBaseIntentionAction<RsParenE
                 RsMatchExpr::class.java,
                 RsForExpr::class.java
             ) == null) return true
-        val child = expr?.children?.singleOrNull()
-        return when (child) {
+
+        return when (val child = expr?.children?.singleOrNull()) {
             is RsStructLiteral -> false
             is RsBinaryExpr -> child.exprList.all { it !is RsStructLiteral }
             else -> true

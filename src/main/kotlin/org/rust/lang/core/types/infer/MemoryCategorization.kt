@@ -211,8 +211,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     }
 
     private fun processExprAdjustedWith(expr: RsExpr, adjustments: Iterator<Adjustment>): Cmt {
-        val adjustment = adjustments.nextOrNull()
-        return when (adjustment) {
+        return when (val adjustment = adjustments.nextOrNull()) {
             is Adjustment.Deref -> {
                 // TODO: overloaded deref
                 processDeref(expr, processExprAdjustedWith(expr, adjustments))

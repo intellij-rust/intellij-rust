@@ -467,8 +467,7 @@ private fun fetchStdlib(
 ): CompletableFuture<TaskResult<StandardLibrary>> {
     return runAsyncTask(project, queue, "Getting Rust stdlib") {
         progress.isIndeterminate = true
-        val download = rustup.downloadStdlib()
-        when (download) {
+        when (val download = rustup.downloadStdlib()) {
             is DownloadResult.Ok -> {
                 val lib = StandardLibrary.fromFile(download.value)
                 if (lib == null) {

@@ -216,8 +216,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsBinaryExpr -> {
                 val left = expr.left
                 val right = expr.right ?: return
-                val operator = expr.binaryOp.operatorType
-                when (operator) {
+                when (expr.binaryOp.operatorType) {
                     is AssignmentOp -> mutateExpr(expr, left, MutateMode.JustWrite)
                     is ArithmeticAssignmentOp -> mutateExpr(expr, left, MutateMode.WriteAndRead)
                     else -> consumeExpr(left)

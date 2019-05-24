@@ -254,8 +254,7 @@ data class RsQualifiedName private constructor(
         private fun parentItem(element: RsQualifiedNamedElement): Item? {
             val parentItem: RsQualifiedNamedElement? = when (element) {
                 is RsAbstractable -> {
-                    val owner = element.owner
-                    when (owner) {
+                    when (val owner = element.owner) {
                         is RsAbstractableOwner.Trait -> owner.trait
                         is RsAbstractableOwner.Impl -> {
                             return owner.impl.typeReference?.toParentItem()
@@ -271,8 +270,7 @@ data class RsQualifiedName private constructor(
         }
 
         private fun RsTypeReference.toParentItem(): Item? {
-            val type = typeElement
-            return when (type) {
+            return when (val type = typeElement) {
                 is RsTupleType -> Item("tuple", PRIMITIVE)
                 is RsFnPointerType -> Item("fn", PRIMITIVE)
                 is RsArrayType -> Item(if (type.isSlice) "slice" else "array", PRIMITIVE)

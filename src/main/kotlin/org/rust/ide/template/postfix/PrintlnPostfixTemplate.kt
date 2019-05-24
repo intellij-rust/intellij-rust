@@ -72,8 +72,7 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         val psiFactory = RsPsiFactory(expression.project)
         val macroCreator = MacroCreator(editor, psiFactory, macroName, Fmt.fromExpr(expression))
 
-        val parent = expression.parent
-        when (parent) {
+        when (val parent = expression.parent) {
             is RsLetDecl -> {
                 val expressionText = parent.pat?.text ?: return
                 addMacroNextToElement(macroCreator.createMacro(expressionText), parent, psiFactory, editor)

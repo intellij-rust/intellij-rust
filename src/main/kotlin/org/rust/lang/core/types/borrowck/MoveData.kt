@@ -130,8 +130,7 @@ class MoveData(
     private fun movePathOf(loanPath: LoanPath): MovePath {
         pathMap[loanPath]?.let { return it }
 
-        val kind = loanPath.kind
-        val oldSize = when (kind) {
+        val oldSize = when (val kind = loanPath.kind) {
             is Var -> {
                 val index = paths.size
                 paths.add(MovePath(loanPath))

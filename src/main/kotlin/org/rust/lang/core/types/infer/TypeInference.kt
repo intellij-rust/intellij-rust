@@ -537,8 +537,7 @@ class RsInferenceContext(
     private fun optNormalizeProjectionTypeResolved(projectionTy: TyProjection, recursionDepth: Int): TyWithObligations<Ty>? {
         if (projectionTy.type is TyInfer.TyVar) return null
 
-        val cacheResult = projectionCache.tryStart(projectionTy)
-        return when (cacheResult) {
+        return when (val cacheResult = projectionCache.tryStart(projectionTy)) {
             ProjectionCacheEntry.Ambiguous -> {
                 // If we found ambiguity the last time, that generally
                 // means we will continue to do so until some type in the
@@ -576,8 +575,7 @@ class RsInferenceContext(
                 ty
             }
             null -> {
-                val selResult = lookup.selectProjection(projectionTy, recursionDepth)
-                when (selResult) {
+                when (val selResult = lookup.selectProjection(projectionTy, recursionDepth)) {
                     is SelectionResult.Ok -> {
                         val result = selResult.result ?: TyWithObligations(projectionTy)
                         projectionCache.putTy(projectionTy, pruneCacheValueObligations(result))
@@ -962,8 +960,7 @@ class RsFnInferenceContext(
         if (elements.size <= 1) return null
 
         val traits = elements.mapNotNull {
-            val owner = it.owner
-            when (owner) {
+            when (val owner = it.owner) {
                 is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
                 is RsAbstractableOwner.Trait -> owner.trait
                 else -> null
@@ -1196,8 +1193,7 @@ class RsFnInferenceContext(
             return methodType.retType
         }
 
-        val source = callee.source
-        var typeParameters = when (source) {
+        var typeParameters = when (val source = callee.source) {
             is TraitImplSource.ExplicitImpl -> {
                 val impl = source.value
                 val typeParameters = instantiateBounds(impl)
@@ -1932,8 +1928,7 @@ class RsFnInferenceContext(
 
 private val RsSelfParameter.typeOfValue: Ty
     get() {
-        val owner = parentFunction.owner
-        val selfType = when (owner) {
+        val selfType = when (val owner = parentFunction.owner) {
             is RsAbstractableOwner.Impl -> owner.impl.selfType
             is RsAbstractableOwner.Trait -> owner.trait.selfType
             else -> return TyUnknown

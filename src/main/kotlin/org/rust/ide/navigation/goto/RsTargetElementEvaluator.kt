@@ -42,8 +42,7 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
     private fun tryResolveToDeriveMetaItem(ref: PsiReference): PsiElement? {
         val target = ref.resolve() as? RsAbstractable ?: return null
         val trait = (target.owner as? RsAbstractableOwner.Trait)?.trait ?: return null
-        val element = ref.element
-        val item = when (element) {
+        val item = when (val element = ref.element) {
             is RsPath -> element.path?.reference?.deepResolve() as? RsStructOrEnumItemElement
             else -> {
                 val receiver = when (element) {

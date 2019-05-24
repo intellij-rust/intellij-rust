@@ -62,8 +62,7 @@ class GatherMoveContext(private val bccx: BorrowCheckContext, private val moveDa
     }
 
     private fun getIllegalMoveOrigin(cmt: Cmt): Cmt? {
-        val category = cmt.category
-        return when (category) {
+        return when (val category = cmt.category) {
             is Rvalue, is Local -> null
 
             is Deref -> if (category.cmt.ty.isBox) null else cmt

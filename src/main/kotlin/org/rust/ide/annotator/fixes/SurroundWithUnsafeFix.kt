@@ -19,8 +19,7 @@ class SurroundWithUnsafeFix(expr: RsExpr) : LocalQuickFixAndIntentionActionOnPsi
     override fun getText() = "Surround with unsafe block"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, expr: PsiElement, endElement: PsiElement) {
-        val parent = expr.parent
-        when (parent) {
+        when (expr.parent) {
             is RsExprStmt -> {
                 val unsafe = RsPsiFactory(project).createUnsafeBlockExpr(expr.parent.text)
                 expr.parent.replace(unsafe)
