@@ -42,6 +42,7 @@ class RsHighlightingAnnotator : RsAnnotatorBase() {
         val color = when {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
             element.parent is RsMacroCall -> RsColor.MACRO
+            element is RsFieldLookup && element.identifier?.text == "await" && element.isEdition2018 -> RsColor.KEYWORD
             else -> {
                 val ref = element.reference.resolve() ?: return null
                 // Highlight the element dependent on what it's referencing.

@@ -5,8 +5,10 @@
 
 package org.rust.ide.annotator
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 
 class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class.java) {
@@ -150,6 +152,20 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         fn main() {
             <CONST>FOO</CONST>;
             <CONST>BAR</CONST>;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test postfix await 2015`() = checkHighlighting("""
+        fn main() {
+            dummy.await;
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test postfix await 2018`() = checkHighlighting("""
+        fn main() {
+            dummy.<KEYWORD>await</KEYWORD>;
         }
     """)
 }
