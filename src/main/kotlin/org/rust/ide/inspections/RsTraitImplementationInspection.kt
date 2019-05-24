@@ -22,7 +22,7 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val traitRef = impl.traitRef ?: return
-            val trait = traitRef.resolveToTrait ?: return
+            val trait = traitRef.resolveToTrait() ?: return
             val traitName = trait.name ?: return
 
             val implInfo = TraitImplementationInfo.create(trait, impl) ?: return

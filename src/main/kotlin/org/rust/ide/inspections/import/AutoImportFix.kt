@@ -197,7 +197,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                     is TraitImplSource.ExplicitImpl -> {
                         val impl = source.value
                         if (impl.traitRef == null) return null
-                        impl.traitRef?.resolveToTrait ?: return@mapNotNull null
+                        impl.traitRef?.resolveToTrait() ?: return@mapNotNull null
                     }
                     is TraitImplSource.Derived -> source.value
                     is TraitImplSource.Collapsed -> source.value

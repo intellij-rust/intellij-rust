@@ -65,7 +65,7 @@ class RsPsiStructureTest : RsTestBase() {
             fn spam() {}
         }
     """) { impl ->
-        val trait = impl.traitRef!!.resolveToTrait!!
+        val trait = impl.traitRef!!.resolveToTrait()!!
         val implInfo = TraitImplementationInfo.create(trait, impl)!!
         check(implInfo.declared.map { it.name } == listOf(
             "optional_fn", "required_fn", "another_required_fn", "RequiredType", "same_name", "same_name"

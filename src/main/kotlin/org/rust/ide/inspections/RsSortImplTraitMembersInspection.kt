@@ -11,14 +11,15 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsImplItem
+import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
-            val trait = impl.traitRef?.resolveToTrait ?: return
+            val trait = impl.traitRef?.resolveToTrait() ?: return
             val typeRef = impl.typeReference ?: return
             if (sortedImplItems(impl.items(), trait.items()) == null) return
             val textRange = TextRange(
@@ -51,7 +52,7 @@ class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val impl = descriptor.psiElement as? RsImplItem ?: return
-            val trait = impl.traitRef?.resolveToTrait ?: return
+            val trait = impl.traitRef?.resolveToTrait() ?: return
             val implItems = impl.items()
             val traitItems = trait.items()
 

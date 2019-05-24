@@ -36,7 +36,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override fun getPresentation(): ItemPresentation = getPresentation(this)
 
     override val implementedTrait: BoundElement<RsTraitItem>? get() {
-        val (trait, subst) = traitRef?.resolveToBoundTrait ?: return null
+        val (trait, subst) = traitRef?.resolveToBoundTrait() ?: return null
         return BoundElement(trait, subst)
     }
 

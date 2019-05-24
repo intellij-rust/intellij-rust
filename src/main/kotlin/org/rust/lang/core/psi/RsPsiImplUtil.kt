@@ -73,7 +73,7 @@ object RsPsiImplUtil {
             is RsImplItem -> {
                 // Members of `impl Trait for ...` inherit visibility from the implemented trait
                 val traitRef = owner.traitRef
-                if (traitRef != null) return getDeclarationUseScope(traitRef.resolveToTrait ?: return null)
+                if (traitRef != null) return getDeclarationUseScope(traitRef.resolveToTrait() ?: return null)
 
                 // Inherent impl members
                 getTopLevelDeclarationUseScope(element, owner.containingMod, restrictedVis)

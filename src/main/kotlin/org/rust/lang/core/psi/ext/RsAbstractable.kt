@@ -42,7 +42,7 @@ val RsAbstractable.owner: RsAbstractableOwner
 val RsAbstractable.superItem: RsAbstractable?
     get() {
         val rustImplItem = ancestorStrict<RsImplItem>() ?: return null
-        val superTrait = rustImplItem.traitRef?.resolveToTrait ?: return null
+        val superTrait = rustImplItem.traitRef?.resolveToTrait() ?: return null
         return superTrait.findCorrespondingElement(this)
     }
 

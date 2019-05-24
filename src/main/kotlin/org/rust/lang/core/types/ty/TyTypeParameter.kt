@@ -84,7 +84,7 @@ class TyTypeParameter private constructor(
 
 private fun traitBounds(parameter: RsTypeParameter): List<BoundElement<RsTraitItem>> =
     parameter.bounds.mapNotNull {
-        val trait = it.bound.traitRef?.resolveToBoundTrait ?: return@mapNotNull null
+        val trait = it.bound.traitRef?.resolveToBoundTrait() ?: return@mapNotNull null
         // if `T: ?Sized` then T doesn't have `Sized` bound
         if (!trait.element.isSizedTrait || parameter.isSized) trait else null
     }

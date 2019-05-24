@@ -9,9 +9,9 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.types.BoundElement
 
-val RsTraitRef.resolveToTrait: RsTraitItem?
-    get() = path.reference.resolve() as? RsTraitItem
+fun RsTraitRef.resolveToTrait(): RsTraitItem? =
+    path.reference.resolve() as? RsTraitItem
 
-val RsTraitRef.resolveToBoundTrait: BoundElement<RsTraitItem>?
-    get() = path.reference.advancedResolve()?.downcast<RsTraitItem>()
+fun RsTraitRef.resolveToBoundTrait(): BoundElement<RsTraitItem>? =
+    path.reference.advancedResolve()?.downcast()
 
