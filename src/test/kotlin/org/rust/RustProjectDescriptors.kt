@@ -166,6 +166,8 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
         val packages = listOf(
             testCargoPackage(contentRoot),
             externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target"),
+            externalPackage("$contentRoot/dep-lib-same-workspace", "lib.rs",
+                "dep-lib-same-workspace", "dep-lib-same-workspace-target", origin = PackageOrigin.WORKSPACE),
             externalPackage("", null, "nosrc-lib", "nosrc-lib-target"),
             externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib",
                 origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
