@@ -86,7 +86,7 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
         }
 
         is RsTraitType -> {
-            val traitBounds = type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+            val traitBounds = type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
             val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
             if (type.isImpl) {
                 TyAnon(type, traitBounds)

@@ -153,7 +153,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             // core::ops::drop::Drop::drop(x)
             is RsAbstractableOwner.Trait -> owner.trait
             // Foo::drop(x), x.drop()
-            is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
+            is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait()
             else -> null
         } ?: return
 
@@ -328,7 +328,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
         val traitRef = impl.traitRef ?: return
-        val trait = traitRef.resolveToTrait ?: return
+        val trait = traitRef.resolveToTrait() ?: return
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
         checkImplBothCopyAndDrop(holder, impl, trait)
         val traitName = trait.name ?: return

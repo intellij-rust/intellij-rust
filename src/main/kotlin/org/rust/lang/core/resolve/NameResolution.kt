@@ -427,7 +427,7 @@ private fun processExplicitTypeQualifiedPathResolveVariants(
     typeQual: RsTypeQual,
     processor: RsResolveProcessor
 ): Boolean {
-    val trait = typeQual.traitRef?.resolveToBoundTrait
+    val trait = typeQual.traitRef?.resolveToBoundTrait()
         // TODO this is a hack to fix completion test `test associated type in explicit UFCS form`.
         // Looks like we should use getOriginalOrSelf during resolve
         ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
@@ -1128,7 +1128,7 @@ private fun processLexicalDeclarations(
             if (scope is RsImplItem) {
                 scope.traitRef?.let { traitRef ->
                     // really should be unnamed, but "_" is not a valid name in rust, so I think it's ok
-                    if (processor.lazy("_") { traitRef.resolveToTrait }) return true
+                    if (processor.lazy("_") { traitRef.resolveToTrait() }) return true
                 }
             }
         }

@@ -961,7 +961,7 @@ class RsFnInferenceContext(
 
         val traits = elements.mapNotNull {
             when (val owner = it.owner) {
-                is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait
+                is RsAbstractableOwner.Impl -> owner.impl.traitRef?.resolveToTrait()
                 is RsAbstractableOwner.Trait -> owner.trait
                 else -> null
             }
@@ -1199,7 +1199,7 @@ class RsFnInferenceContext(
                 val typeParameters = instantiateBounds(impl)
                 impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
                 if (callee.element.owner is RsAbstractableOwner.Trait) {
-                    impl.traitRef?.resolveToBoundTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
+                    impl.traitRef?.resolveToBoundTrait()?.substitute(typeParameters)?.subst ?: emptySubstitution
                 } else {
                     typeParameters
                 }
@@ -1271,7 +1271,7 @@ class RsFnInferenceContext(
             val traitToCallee = hashMapOf<RsTraitItem, MutableList<MethodResolveVariant>>()
             val filtered = mutableListOf<MethodResolveVariant>()
             for (callee in list) {
-                val trait = callee.source.impl?.traitRef?.resolveToTrait
+                val trait = callee.source.impl?.traitRef?.resolveToTrait()
                 if (trait != null) {
                     traitToCallee.getOrPut(trait) { mutableListOf() }.add(callee)
                 } else {
@@ -1989,7 +1989,7 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
     .filter { !it.hasQ } // ignore `?Sized`
-    .mapNotNull { it.bound.traitRef?.resolveToBoundTrait }
+    .mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
     .map { TraitRef(selfTy, it) }
 
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =

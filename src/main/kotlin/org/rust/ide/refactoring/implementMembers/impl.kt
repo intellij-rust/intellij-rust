@@ -38,7 +38,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
 private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationInfo, BoundElement<RsTraitItem>>? {
     checkReadAccessAllowed()
 
-    val trait = impl.traitRef?.resolveToBoundTrait ?: return null
+    val trait = impl.traitRef?.resolveToBoundTrait() ?: return null
     val implInfo = TraitImplementationInfo.create(trait.element, impl) ?: return null
     if (implInfo.declared.isEmpty()) return null
     return implInfo to trait
