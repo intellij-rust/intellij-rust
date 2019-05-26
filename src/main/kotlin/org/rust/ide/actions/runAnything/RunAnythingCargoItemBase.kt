@@ -10,13 +10,20 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.execution.ParametersListUtil
+import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.Icon
+import javax.swing.JPanel
 
 abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
 
     protected fun customizeComponent(component: Component) {
-        if (component !is SimpleColoredComponent) return
+        val descriptionComponent = when (component) {
+            is JPanel -> SimpleColoredComponent()
+            // BACKCOMPAT: 2018.3
+            is SimpleColoredComponent -> component
+            else -> return
+        }
 
         val params = ParametersListUtil.parse(StringUtil.trimStart(command, "cargo"))
         val description = when (params.size) {
@@ -26,13 +33,12 @@ abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythi
                 val optionsDescriptions = getOptionsDescriptionsForCommand(params.first())
                 optionsDescriptions?.get(params.last())
             }
-        }
-        if (description != null) {
-            component.append(
-                StringUtil.shortenTextWithEllipsis(" $description.", 200, 0),
-                SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
-            )
-        }
+        } ?: return
+        descriptionComponent.append(
+            StringUtil.shortenTextWithEllipsis(" $description.", 200, 0),
+            SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+        )
+        (component as? JPanel)?.add(descriptionComponent, BorderLayout.EAST)
     }
 
     companion object {
@@ -79,9 +85,9 @@ abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythi
         private val target: Pair<String, String> = "--target" to "Build for the target triple"
         private val targetDir: Pair<String, String> = "--target-dir" to "Directory for all generated artifacts"
         private val manifestPath: Pair<String, String> = "--manifest-path" to "Path to Cargo.toml"
-        private val messageFormat: Pair<String, String> = 
+        private val messageFormat: Pair<String, String> =
             "--message-format" to "Error format [default: human]  [possible values: human, json, short]"
-        
+
         private val common: Map<String, String> =
             hashMapOf(
                 "--verbose" to "Use verbose output (-vv very verbose/build.rs output)",
