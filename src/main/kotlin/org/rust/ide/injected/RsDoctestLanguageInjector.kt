@@ -129,6 +129,7 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
     if (tripleBacktickIndices.size < 2) return emptySequence() // no code blocks in the comment
 
     val infix = RsDocKind.of(elementType).infix
+    val isBlockInfixUsed = text.count { it == '\n' } == "\\n[\\s]*\\*".toRegex().findAll(text).count()
 
     return tripleBacktickIndices.asSequence().chunked(2).mapNotNull { idx ->
         // Contains code lines inside backticks including `///` at the start and `\n` at the end.
@@ -137,7 +138,7 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
             val codeBlockStart = idx[0] + 3 // skip ```
             val codeBlockEnd = idx.getOrNull(1) ?: return@mapNotNull null
             generateSequence(codeBlockStart) { text.indexOf("\n", it) + 1 }
-                .takeWhile { it != 0 && it < codeBlockEnd }
+                .takeWhile { it != 0 && it <= codeBlockEnd }
                 .zipWithNext()
                 .iterator()
         }
@@ -149,6 +150,11 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
             val parts = lang.split(LANG_SPLIT_REGEX).filter { it.isNotBlank() }
             if (parts.any { it !in RUST_LANG_ALIASES }) return@mapNotNull null
         }
+
+        if (!isBlockInfixUsed && RsDocKind.of(elementType).isBlock)
+            return@mapNotNull lines.asSequence()
+                .map { TextRange(it.first, it.second) }
+                .toList()
 
         // skip doc comment infix (`///`, `//!` or ` * `)
         val ranges = lines.asSequence().mapNotNull { (lineStart, lineEnd) ->

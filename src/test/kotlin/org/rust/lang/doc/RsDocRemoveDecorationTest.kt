@@ -133,6 +133,13 @@ code {
                     *  bar */""",
                 "foo\nbar"),
 
+            arrayOf(OuterBlock,
+                //language=Rust
+                """/** foo
+                   |bar * bar
+                   |*/""".trimMargin(),
+                "foo\nbar * bar"),
+
             arrayOf(Attr, "foo\nbar", "foo\nbar")
         )
     }

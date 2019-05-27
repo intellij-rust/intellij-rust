@@ -78,11 +78,17 @@ enum class RsDocKind {
     }
 
     protected fun removeBlockDecoration(lines: Sequence<String>): Sequence<String> {
-        // Doing some patches we can "convert" block comment into eol one
         val ll = lines.toMutableList()
-        ll[0] = ll[0].replaceFirst(prefix, " $infix ")
-        ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
-        return removeEolDecoration(ll.asSequence(), infix)
+        return if (lines.drop(1).all { it.trimStart(' ', '\t').startsWith("*") }) {
+            // Doing some patches we can "convert" block comment into eol one
+            ll[0] = ll[0].replaceFirst(prefix, " $infix ")
+            ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
+            removeEolDecoration(ll.asSequence(), infix)
+        } else {
+            ll[0] = ll[0].removePrefix(prefix)
+            ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
+            ll.asSequence()
+        }
     }
 
     companion object {
