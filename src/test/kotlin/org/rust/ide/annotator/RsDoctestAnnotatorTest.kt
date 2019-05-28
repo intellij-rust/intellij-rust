@@ -87,6 +87,23 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class.jav
         |fn foo() {}
         |""")
 
+    fun `test no infix in block comment`() = doTest("""
+        |/** ```
+        |<info> <inject>let a = 0;
+        |</inject></info> ```*/
+        |fn foo() {}
+        |""")
+
+    fun `test no infix in block comment multiline`() = doTest("""
+        |/** ```
+        |<info> <inject>let a = 0;
+        |</inject></info><info> <inject>let b = 0;
+        |</inject></info>```
+        |*/
+        |fn foo() {}
+        |""")
+
+
     fun `test no injection in non-lib target`() = checkByText("""
         /// ```
         /// let a = 0;
