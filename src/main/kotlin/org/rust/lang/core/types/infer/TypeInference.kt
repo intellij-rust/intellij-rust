@@ -64,6 +64,7 @@ interface RsInferenceData {
     fun getBindingType(binding: RsPatBinding): Ty
     fun getExpectedPathExprType(expr: RsPathExpr): Ty
     fun getExpectedDotExprType(expr: RsDotExpr): Ty
+    fun getPatType(pat: RsPat): Ty
     fun getResolvedPaths(expr: RsPathExpr): List<RsElement>
 }
 
@@ -72,15 +73,16 @@ interface RsInferenceData {
  * from expressions to their types.
  */
 class RsInferenceResult(
-    val bindings: Map<RsPatBinding, Ty>,
     val exprTypes: Map<RsExpr, Ty>,
+    val patTypes: MutableMap<RsPat, Ty>,
+    val patFieldTypes: MutableMap<RsPatField, Ty>,
     private val expectedPathExprTypes: Map<RsPathExpr, Ty>,
     private val expectedDotExprTypes: Map<RsDotExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<RsElement>>,
     private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
-    val diagnostics: List<RsDiagnostic>,
-    val adjustments: Map<RsExpr, List<Adjustment>>
+    private val adjustments: Map<RsExpr, List<Adjustment>>,
+    val diagnostics: List<RsDiagnostic>
 ) : RsInferenceData {
     private val timestamp: Long = System.nanoTime()
 
@@ -91,7 +93,14 @@ class RsInferenceResult(
         exprTypes[expr] ?: TyUnknown
 
     override fun getBindingType(binding: RsPatBinding): Ty =
-        bindings[binding] ?: TyUnknown
+        when (val parent = binding.parent) {
+            is RsPat -> patTypes[parent]
+            is RsPatField -> patFieldTypes[parent]
+            else -> TyUnknown // impossible
+        } ?: TyUnknown
+
+    override fun getPatType(pat: RsPat): Ty =
+        patTypes[pat] ?: TyUnknown
 
     override fun getExpectedPathExprType(expr: RsPathExpr): Ty =
         expectedPathExprTypes[expr] ?: TyUnknown
@@ -107,9 +116,6 @@ class RsInferenceResult(
 
     fun getResolvedField(call: RsFieldLookup): List<RsElement> =
         resolvedFields[call] ?: emptyList()
-
-    override fun toString(): String =
-        "RsInferenceResult(bindings=$bindings, exprTypes=$exprTypes)"
 
     @TestOnly
     fun isExprTypeInferred(expr: RsExpr): Boolean =
@@ -127,8 +133,9 @@ class RsInferenceContext(
     val items: KnownItems
 ) : RsInferenceData {
     val fulfill: FulfillmentContext = FulfillmentContext(this, lookup)
-    private val bindings: MutableMap<RsPatBinding, Ty> = hashMapOf()
     private val exprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
+    private val patTypes: MutableMap<RsPat, Ty> = hashMapOf()
+    private val patFieldTypes: MutableMap<RsPatField, Ty> = hashMapOf()
     private val expectedPathExprTypes: MutableMap<RsPathExpr, Ty> = hashMapOf()
     private val expectedDotExprTypes: MutableMap<RsDotExpr, Ty> = hashMapOf()
     private val resolvedPaths: MutableMap<RsPathExpr, List<RsElement>> = hashMapOf()
@@ -136,8 +143,8 @@ class RsInferenceContext(
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
+    private val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
-    val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
@@ -183,7 +190,8 @@ class RsInferenceContext(
                 }
                 is RsExpressionCodeFragment -> {
                     element.context?.inference?.let {
-                        bindings.putAll(it.bindings)
+                        patTypes.putAll(it.patTypes)
+                        patFieldTypes.putAll(it.patFieldTypes)
                         exprTypes.putAll(it.exprTypes)
                     }
                     null to element.expr
@@ -203,29 +211,31 @@ class RsInferenceContext(
         fulfill.selectWherePossible()
 
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
-        bindings.replaceAll { _, ty -> fullyResolve(ty) }
         expectedPathExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         expectedDotExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        patTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
-        diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it}
+        diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it }
 
         performPathsRefinement(lookup)
 
         return RsInferenceResult(
-            bindings,
             exprTypes,
+            patTypes,
+            patFieldTypes,
             expectedPathExprTypes,
             expectedDotExprTypes,
             resolvedPaths,
             resolvedMethods,
             resolvedFields,
-            diagnostics,
-            adjustments
+            adjustments,
+            diagnostics
         )
     }
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {
-        for (ty in exprTypes.values.asSequence() + bindings.values.asSequence()) {
+        for (ty in exprTypes.values.asSequence() + patTypes.values.asSequence() + patFieldTypes.values.asSequence()) {
             ty.visitInferTys { tyInfer ->
                 val rty = shallowResolve(tyInfer)
                 if (rty is TyInfer) {
@@ -267,8 +277,15 @@ class RsInferenceContext(
         return exprTypes[expr] ?: TyUnknown
     }
 
-    override fun getBindingType(binding: RsPatBinding): Ty {
-        return bindings[binding] ?: TyUnknown
+    override fun getBindingType(binding: RsPatBinding): Ty =
+        when (val parent = binding.parent) {
+            is RsPat -> patTypes[parent]
+            is RsPatField -> patFieldTypes[parent]
+            else -> TyUnknown // impossible
+        } ?: TyUnknown
+
+    override fun getPatType(pat: RsPat): Ty {
+        return patTypes[pat] ?: TyUnknown
     }
 
     override fun getExpectedPathExprType(expr: RsPathExpr): Ty {
@@ -291,8 +308,12 @@ class RsInferenceContext(
         exprTypes[psi] = ty
     }
 
-    fun writeBindingTy(psi: RsPatBinding, ty: Ty) {
-        bindings[psi] = ty
+    fun writePatTy(psi: RsPat, ty: Ty) {
+        patTypes[psi] = ty
+    }
+
+    fun writePatFieldTy(psi: RsPatField, ty: Ty) {
+        patFieldTypes[psi] = ty
     }
 
     fun writeExpectedPathExprTy(psi: RsPathExpr, ty: Ty) {
@@ -662,10 +683,6 @@ class RsInferenceContext(
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
             ff.selectUntilError()
         }
-    }
-
-    override fun toString(): String {
-        return "RsInferenceContext(bindings=$bindings, exprTypes=$exprTypes)"
     }
 }
 
@@ -1515,7 +1532,8 @@ class RsFnInferenceContext(
                 if (op is OverloadableBinaryOperator) {
                     val rhsTypeVar = TyInfer.TyVar()
                     enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
-                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
+                    val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar)
+                        ?: TyUnknown)
 
                     val lhsAdjustment = BorrowReference(TyReference(lhsType, IMMUTABLE))
                     ctx.addAdjustment(expr.left, lhsAdjustment)
@@ -1911,8 +1929,11 @@ class RsFnInferenceContext(
         patList.forEach { it.extractBindings(ty) }
     }
 
-    fun writeBindingTy(psi: RsPatBinding, ty: Ty): Unit =
-        ctx.writeBindingTy(psi, ty)
+    fun writePatTy(psi: RsPat, ty: Ty): Unit =
+        ctx.writePatTy(psi, ty)
+
+    fun writePatFieldTy(psi: RsPatField, ty: Ty): Unit =
+        ctx.writePatFieldTy(psi, ty)
 }
 
 private val RsSelfParameter.typeOfValue: Ty

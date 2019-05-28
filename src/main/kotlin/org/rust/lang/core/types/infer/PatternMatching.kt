@@ -19,37 +19,47 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, defBm: RsBindingM
         is RsPatWild -> {}
         is RsPatConst -> {
             val expr = expr
-            val expectedTy = when {
+            val expected = when {
                 expr is RsLitExpr && expr.kind is RsLiteralKind.String -> type
-                expr is RsPathExpr && resolvePath(expr.path).singleOrNull()?.element is RsConstant-> type
+                expr is RsPathExpr && resolvePath(expr.path).singleOrNull()?.element is RsConstant -> type
                 else -> type.stripReferences(defBm).first
             }
-            fcx.inferTypeCoercableTo(expr, expectedTy)
+            fcx.writePatTy(this, expected)
+            fcx.inferTypeCoercableTo(expr, expected)
         }
         is RsPatRef -> {
             pat.extractBindings(fcx, (type as? TyReference)?.referenced ?: TyUnknown)
+            fcx.writePatTy(this, type)
         }
         is RsPatRange -> {
-            val (derefTy, _) = type.stripReferences(defBm)
-            patConstList.forEach { fcx.inferTypeCoercableTo(it.expr, derefTy) }
+            val (expected, _) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
+            patConstList.forEach { fcx.inferTypeCoercableTo(it.expr, expected) }
         }
         is RsPatIdent -> {
             val patBinding = patBinding
-            val bindingType = patBinding.inferType(type, defBm)
-            fcx.writeBindingTy(patBinding, bindingType)
+            val resolved = patBinding.reference.resolve()
+            val bindingType = if (resolved is RsEnumVariant) {
+                type.stripReferences(defBm).first
+            } else {
+                patBinding.inferType(type, defBm)
+            }
+            fcx.writePatTy(this, bindingType)
             pat?.extractBindings(fcx, type)
         }
         is RsPatTup -> {
-            val (derefTy, mb) = type.stripReferences(defBm)
-            val types = (derefTy as? TyTuple)?.types.orEmpty()
+            val (expected, mb) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
+            val types = (expected as? TyTuple)?.types.orEmpty()
             for ((idx, p) in patList.withIndex()) {
                 p.extractBindings(fcx, types.getOrElse(idx) { TyUnknown }, mb)
             }
         }
         is RsPatTupleStruct -> {
-            val (derefTy, bm) = type.stripReferences(defBm)
+            val (expected, bm) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
             val item = path.reference.resolve() as? RsFieldsOwner
-                ?: ((derefTy as? TyAdt)?.item as? RsStructItem)
+                ?: ((expected as? TyAdt)?.item as? RsStructItem)
                 ?: return
 
             val tupleFields = item.positionalFields
@@ -58,15 +68,16 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, defBm: RsBindingM
                     .getOrNull(idx)
                     ?.typeReference
                     ?.type
-                    ?.substituteOrUnknown(derefTy.typeParameterValues)
+                    ?.substituteOrUnknown(expected.typeParameterValues)
                     ?: TyUnknown
                 p.extractBindings(fcx, fieldType, bm)
             }
         }
         is RsPatStruct -> {
-            val (derefTy, mut) = type.stripReferences(defBm)
+            val (expected, mut) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
             val item = path.reference.resolve() as? RsFieldsOwner
-                ?: ((derefTy as? TyAdt)?.item as? RsStructItem)
+                ?: ((expected as? TyAdt)?.item as? RsStructItem)
                 ?: return
 
             val structFields = item.fields.associateBy { it.name }
@@ -75,7 +86,7 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, defBm: RsBindingM
                 val fieldType = structFields[kind.fieldName]
                     ?.typeReference
                     ?.type
-                    ?.substituteOrUnknown(derefTy.typeParameterValues)
+                    ?.substituteOrUnknown(expected.typeParameterValues)
                     ?: TyUnknown
 
                 when (kind) {
@@ -83,27 +94,29 @@ fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, defBm: RsBindingM
                     is RsPatFieldKind.Shorthand -> {
                         val bindingType = if (fieldType is TyAdt && kind.isBox) {
                             fieldType.typeArguments.singleOrNull() ?: return
-                        }  else {
+                        } else {
                             fieldType
                         }
-                        fcx.writeBindingTy(kind.binding, kind.binding.inferType(bindingType, mut))
+                        fcx.writePatFieldTy(patField, kind.binding.inferType(bindingType, mut))
                     }
                 }
             }
         }
         is RsPatSlice -> {
-            val (derefTy, bm) = type.stripReferences(defBm)
-            val elementType = when (derefTy) {
-                is TyArray -> derefTy.base
-                is TySlice -> derefTy.elementType
+            val (expected, bm) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
+            val elementType = when (expected) {
+                is TyArray -> expected.base
+                is TySlice -> expected.elementType
                 else -> TyUnknown
             }
             patList.forEach { it.extractBindings(fcx, elementType, bm) }
         }
         is RsPatBox -> {
-            val (derefTy, bm) = type.stripReferences(defBm)
-            if (derefTy is TyAdt && derefTy.isBox) {
-                val boxed = derefTy.typeArguments.singleOrNull() ?: return
+            val (expected, bm) = type.stripReferences(defBm)
+            fcx.writePatTy(this, expected)
+            if (expected is TyAdt && expected.isBox) {
+                val boxed = expected.typeArguments.singleOrNull() ?: return
                 pat.extractBindings(fcx, boxed, bm)
             }
         }

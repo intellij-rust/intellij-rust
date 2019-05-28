@@ -872,4 +872,60 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection(
             }
         }
     """)
+
+    fun `test enum with type parameters`() = checkByText("""
+        enum E { A(F<i32>) }
+        enum F<T> { B(T), C }
+
+        fn foo(x: E) {
+            match x {
+                E::A(F::B(b)) => {}
+                E::A(F::C) => {}
+            }
+        }
+    """)
+
+    fun `test enum with type parameters exhaustive`() = checkFixByText("Add remaining patterns", """
+        enum E<T> { A(T), B }
+
+        fn bar(e: E<bool>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> e {
+                E::A(true) => {},
+                E::B => {},
+            }
+        }
+    """, """
+        enum E<T> { A(T), B }
+
+        fn bar(e: E<bool>) {
+            match e {
+                E::A(true) => {},
+                E::B => {},
+                E::A(false) => {}
+            }
+        }
+    """)
+
+    fun `test struct with type parameters exhaustive`() = checkFixByText("Add remaining patterns", """
+        enum E<T> { A(S<T>), B }
+        struct S<T> { x: T}
+
+        fn bar(e: E<bool>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> e {
+                E::A(S { x: true }) => {},
+                E::B => {},
+            }
+        }
+    """, """
+        enum E<T> { A(S<T>), B }
+        struct S<T> { x: T}
+
+        fn bar(e: E<bool>) {
+            match e {
+                E::A(S { x: true }) => {},
+                E::B => {},
+                E::A(S { x: false }) => {}
+            }
+        }
+    """)
 }

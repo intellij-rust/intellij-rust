@@ -74,6 +74,12 @@ val PsiElement.inference: RsInferenceResult?
 val RsPatBinding.type: Ty
     get() = inference?.getBindingType(this) ?: TyUnknown
 
+val RsPat.type: Ty
+    get() = inference?.getPatType(this) ?: TyUnknown
+
+val RsPatField.type: Ty
+    get() = patBinding?.let { inference?.getBindingType(it) } ?: TyUnknown
+
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 

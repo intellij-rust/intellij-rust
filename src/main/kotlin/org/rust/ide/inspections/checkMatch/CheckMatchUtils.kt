@@ -7,7 +7,9 @@ package org.rust.ide.inspections.checkMatch
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ExprValue
 import org.rust.lang.utils.evaluation.RsConstExprEvaluator
@@ -43,32 +45,6 @@ fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
 
 private val RsExpr.value: ExprValue? get() = RsConstExprEvaluator.evaluate(this)
-
-private val RsPat.type: Ty
-    get() = when (this) {
-        is RsPatConst -> expr.type
-        is RsPatStruct, is RsPatTupleStruct -> {
-            val path = (this as? RsPatTupleStruct)?.path ?: (this as RsPatStruct).path
-            when (val resolved = path.reference.resolve()) {
-                is RsEnumVariant -> TyAdt.valueOf(resolved.parentEnum)
-                is RsStructItem -> TyAdt.valueOf(resolved)
-                else -> TyUnknown
-            }
-        }
-        is RsPatWild -> TyUnknown
-        is RsPatIdent -> when (val resolved = patBinding.reference.resolve()) {
-            is RsEnumVariant -> TyAdt.valueOf(resolved.parentEnum)
-            is RsConstant -> patBinding.type
-            else -> patBinding.type
-        }
-        is RsPatTup -> TyTuple(patList.map { it.type })
-        is RsPatRange -> patConstList.firstOrNull()?.type ?: TyUnknown
-
-        is RsPatRef -> TyReference(pat.type, Mutability.valueOf(mut != null))
-        is RsPatMacro -> TODO()
-        is RsPatSlice -> TODO()
-        else -> TODO()
-    }
 
 // lower_pattern_unadjusted
 private val RsPat.kind: PatternKind
