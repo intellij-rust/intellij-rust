@@ -5,21 +5,17 @@
 
 package org.rust.ide.hints
 
-import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
-import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
-import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
-import junit.framework.AssertionFailedError
-import junit.framework.TestCase
-import org.rust.RsTestBase
+import org.rust.lang.core.psi.RsValueArgumentList
 
 /**
  * Tests for RustParameterInfoHandler
  */
-class RsParameterInfoHandlerTest : RsTestBase() {
+class RsParameterInfoHandlerTest
+    : RsParameterInfoHandlerTestBase<RsValueArgumentList, RsArgumentsDescription>(RsParameterInfoHandler()) {
     fun `test fn no args`() = checkByText("""
         fn foo() {}
         fn main() { foo(<caret>); }
-    """, "<no arguments>", -1)
+    """, "<no arguments>", 0)
 
     fun `test fn no args before args`() = checkByText("""
         fn foo() {}
@@ -84,7 +80,7 @@ class RsParameterInfoHandlerTest : RsTestBase() {
     fun `test fn arg too many args`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
         fn main() { foo(0, 32,<caret>); }
-    """, "a1: u32, a2: u32", -1)
+    """, "a1: u32, a2: u32", 2)
 
     fun `test fn closure`() = checkByText("""
         fn foo(fun: Fn(u32) -> u32) {}
@@ -167,30 +163,4 @@ class RsParameterInfoHandlerTest : RsTestBase() {
     fun `test not applied within declaration`() = checkByText("""
         fn foo(v<caret>: u32) {}
     """, "", -1)
-
-    private fun checkByText(code: String, hint: String, index: Int) {
-        myFixture.configureByText("main.rs", code)
-        val handler = RsParameterInfoHandler()
-        val createContext = MockCreateParameterInfoContext(myFixture.editor, myFixture.file)
-
-        // Check hint
-        val elt = handler.findElementForParameterInfo(createContext)
-        if (hint.isNotEmpty()) {
-            elt ?: throw AssertionFailedError("Hint not found")
-            handler.showParameterInfo(elt, createContext)
-            val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
-            if (items.isEmpty()) throw AssertionFailedError("Parameters are empty")
-            val context = MockParameterInfoUIContext(elt)
-            handler.updateUI(items[0] as RsArgumentsDescription, context)
-            TestCase.assertEquals(hint, handler.hintText)
-
-            // Check parameter index
-            val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file)
-            val element = handler.findElementForUpdatingParameterInfo(updateContext) ?: throw AssertionFailedError("Parameter not found")
-            handler.updateParameterInfo(element, updateContext)
-            TestCase.assertEquals(index, updateContext.currentParameter)
-        } else if (elt != null) {
-            throw AssertionFailedError("Unexpected hint found")
-        }
-    }
 }
