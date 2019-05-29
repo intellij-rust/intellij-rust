@@ -14,7 +14,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.type
 
-fun RsPat.extractBindings(fcx: RsFnInferenceContext, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
+fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {
         is RsPatWild -> {}
         is RsPatConst -> {
