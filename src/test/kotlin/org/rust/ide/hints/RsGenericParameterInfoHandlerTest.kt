@@ -5,18 +5,14 @@
 
 package org.rust.ide.hints
 
-import com.intellij.testFramework.utils.parameterInfo.MockCreateParameterInfoContext
-import com.intellij.testFramework.utils.parameterInfo.MockParameterInfoUIContext
-import com.intellij.testFramework.utils.parameterInfo.MockUpdateParameterInfoContext
-import junit.framework.AssertionFailedError
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
+import org.rust.lang.core.psi.RsTypeArgumentList
 
 /**
  * Tests for RsGenericParameterInfoHandler
  */
-class RsGenericParameterInfoHandlerTest : RsTestBase() {
+class RsGenericParameterInfoHandlerTest
+    : RsParameterInfoHandlerTestBase<RsTypeArgumentList, HintLine>(RsGenericParameterInfoHandler()) {
     fun `test fn no params`() = checkByText("""
         fn foo(x: T) {}
         fn main() { foo::</*caret*/>(); }
@@ -229,36 +225,14 @@ class RsGenericParameterInfoHandlerTest : RsTestBase() {
     """, "T", "", 0)
 
     private fun checkByText(@Language("Rust") code: String, hint: String, where: String, index: Int) {
-        myFixture.configureByText("main.rs", replaceCaretMarker(code))
-        val handler = RsGenericParameterInfoHandler()
-        val createContext = MockCreateParameterInfoContext(myFixture.editor, myFixture.file)
-
-        // Check hint
-        val elt = handler.findElementForParameterInfo(createContext)
-        if (hint.isNotEmpty()) {
-            elt ?: throw AssertionFailedError("Hint not found")
-            handler.showParameterInfo(elt, createContext)
-            val items = createContext.itemsToShow ?: throw AssertionFailedError("Parameters are not shown")
-            if (items.isEmpty()) throw AssertionFailedError("Parameters are empty")
-            val context = MockParameterInfoUIContext(elt)
-            handler.updateUI(items[0] as HintLine, context)
-            TestCase.assertEquals(hint, handler.hintText)
-
-            if (items.size > 1) {
-                handler.updateUI(items[1] as HintLine, context)
-                TestCase.assertEquals("Second line mismatched: ", where, handler.hintText)
-            } else {
-                TestCase.assertEquals("Expected second line: ", where, "")
-            }
-
-            // Check parameter index
-            val updateContext = MockUpdateParameterInfoContext(myFixture.editor, myFixture.file)
-            val element = handler.findElementForUpdatingParameterInfo(updateContext)
-                ?: throw AssertionFailedError("Parameter not found")
-            handler.updateParameterInfo(element, updateContext)
-            TestCase.assertEquals("Index mismatched: ", index, handler.curParam)
-        } else if (elt != null) {
-            throw AssertionFailedError("Unexpected hint found")
+        val hints = if (where.isEmpty()) {
+            arrayOf(hint to index)
+        } else {
+            arrayOf(
+                hint to index,
+                where to 0
+            )
         }
+        checkByText(code, *hints)
     }
 }
