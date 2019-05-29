@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
+import org.rust.FileTree
 import org.rust.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
@@ -16,6 +17,15 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
         myFixture.configureByText("lib.rs", source)
         myFixture.doHighlighting()
         val expected = markersFrom(source)
+        val actual = markersFrom(myFixture.editor, myFixture.project)
+        assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
+    }
+
+    protected fun doTestFromFile(filePath: String, fileTree: FileTree) {
+        fileTree.create()
+        myFixture.configureFromTempProjectFile(filePath)
+        myFixture.doHighlighting()
+        val expected = markersFrom(myFixture.editor.document.text)
         val actual = markersFrom(myFixture.editor, myFixture.project)
         assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
     }

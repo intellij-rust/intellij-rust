@@ -5,12 +5,15 @@
 
 package org.rustSlowTests.cargo.runconfig.test
 
+import com.intellij.execution.PsiLocation
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.psi.PsiElement
+import org.rust.openapiext.toPsiDirectory
 
 class CargoTestRunnerTest : CargoTestRunnerTestBase() {
 
     fun `test test statuses`() {
-        val testProject = buildProject {
+        buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "sandbox"
@@ -19,9 +22,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
-                    /*caret*/
-
+                rust("lib.rs", """
                     #[test]
                     fn test_should_pass() {}
 
@@ -36,7 +37,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                 """)
             }
         }
-        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
 
         checkTestTree("""
             [root](-)
@@ -44,7 +45,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             ..test_ignored(~)
             ..test_should_fail(-)
             ..test_should_pass(+)
-        """)
+        """, sourceElement)
     }
 
     fun `test not executed tests are not shown`() {
@@ -57,7 +58,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
+                rust("lib.rs", """
                     #[test]
                     fn test_should_pass() {}
 
@@ -83,7 +84,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
     }
 
     fun `test multiple failed tests`() {
-        val testProject = buildProject {
+        buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "sandbox"
@@ -92,9 +93,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             """)
 
             dir("src") {
-                rust("main.rs", """
-                    /*caret*/
-
+                rust("lib.rs", """
                     #[test]
                     fn test_should_fail_1() {
                         assert_eq!(1, 2)
@@ -107,14 +106,14 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                 """)
             }
         }
-        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
 
         checkTestTree("""
             [root](-)
             .sandbox(-)
             ..test_should_fail_1(-)
             ..test_should_fail_2(-)
-        """)
+        """, sourceElement)
     }
 
     fun `test tests in submodules`() {
@@ -129,9 +128,7 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             dir("src") {
                 rust("main.rs", """
                     #[cfg(test)]
-                    mod suite_should_fail {
-                        /*caret*/
-
+                    mod /*caret*/suite_should_fail {
                         #[test]
                         fn test_should_pass() {}
 
@@ -162,6 +159,37 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             ....test_should_pass(+)
             ...nested_suite_should_pass(+)
             ....test_should_pass(+)
+            ...test_should_pass(+)
+        """)
+    }
+
+    fun `test tests in mod decl`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    mod tests/*caret*/;
+                    #[test]
+                    fn test_should_pass() {}
+                """)
+                rust("tests.rs", """
+                    #[test]
+                    fn test_should_pass() {}
+                """)
+            }
+        }
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+
+        checkTestTree("""
+            [root](+)
+            .sandbox(+)
+            ..tests(+)
             ...test_should_pass(+)
         """)
     }
@@ -227,22 +255,16 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
     }
 
     fun `test test location`() {
-        val testProject = buildProject {
+        buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "sandbox"
                 version = "0.1.0"
                 authors = []
-
-                [[test]]
-                name = "tests"
-                path = "tests/tests.rs"
             """)
 
-            dir("tests") {
-                rust("tests.rs", """
-                    /*caret*/
-
+            dir("src") {
+                rust("lib.rs", """
                     #[cfg(test)]
                     mod test_mod {
                         #[test]
@@ -254,37 +276,32 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                 """)
             }
         }
-        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
-        val configuration = createTestRunConfigurationFromContext()
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+        val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
         val root = executeAndGetTestRoot(configuration)
 
-        val test = root.findTestByName("tests::test")
-        assertTrue("cargo:test://tests-[a-f0-9]{16}::test".toRegex().matches(test.locationUrl ?: ""))
+        val test = root.findTestByName("sandbox::test")
+        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test".toRegex().matches(test.locationUrl ?: ""))
 
-        val mod = root.findTestByName("tests::test_mod")
-        assertTrue("cargo:test://tests-[a-f0-9]{16}::test_mod".toRegex().matches(mod.locationUrl ?: ""))
+        val mod = root.findTestByName("sandbox::test_mod")
+        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test_mod".toRegex().matches(mod.locationUrl ?: ""))
 
-        val testInner = root.findTestByName("tests::test_mod::test")
-        assertTrue("cargo:test://tests-[a-f0-9]{16}::test_mod::test".toRegex().matches(testInner.locationUrl ?: ""))
+        val testInner = root.findTestByName("sandbox::test_mod::test")
+        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test_mod::test".toRegex().matches(testInner.locationUrl ?: ""))
     }
 
     fun `test test duration`() {
-        val testProject = buildProject {
+        buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "sandbox"
                 version = "0.1.0"
                 authors = []
-
-                [[test]]
-                name = "tests"
-                path = "tests/tests.rs"
             """)
 
-            dir("tests") {
-                rust("tests.rs", """
+            dir("src") {
+                rust("lib.rs", """
                     use std::thread;
-                    /*caret*/
 
                     #[test]
                     fn test1() {
@@ -296,24 +313,24 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                 """)
             }
         }
-        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
-        val configuration = createTestRunConfigurationFromContext()
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+        val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
         val root = executeAndGetTestRoot(configuration)
 
-        val test1 = root.findTestByName("tests::test1")
+        val test1 = root.findTestByName("sandbox::test1")
         check(test1.duration!! > 1000) { "The `test1` duration too short" }
 
-        val test2 = root.findTestByName("tests::test2")
+        val test2 = root.findTestByName("sandbox::test2")
         check(test2.duration!! < 100) { "The `test2` duration too long" }
 
-        val mod = root.findTestByName("tests")
+        val mod = root.findTestByName("sandbox")
         check(mod.duration!! == test1.duration!! + test2.duration!!) {
-            "The `tests` mod duration is not the sum of durations of containing tests"
+            "The `sandbox` mod duration is not the sum of durations of containing tests"
         }
     }
 
-    private fun checkTestTree(expectedFormattedTestTree: String) {
-        val configuration = createTestRunConfigurationFromContext()
+    private fun checkTestTree(expectedFormattedTestTree: String, sourceElement: PsiElement? = null) {
+        val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
         val root = executeAndGetTestRoot(configuration)
         assertEquals(expectedFormattedTestTree.trimIndent(), getFormattedTestTree(root))
     }

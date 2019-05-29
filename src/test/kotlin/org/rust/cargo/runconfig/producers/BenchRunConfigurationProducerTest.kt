@@ -12,6 +12,7 @@ import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.RsMod
 
 class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
@@ -98,6 +99,19 @@ class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             """).open()
         }
         checkOnTopLevel<RsMod>()
+    }
+
+    fun `test bench producer works for module declarations`() {
+        testProject {
+            file("src/tests.rs", """
+                #[bench]
+                fn bench() {}
+            """)
+            lib("foo", "src/lib.rs", """
+                mod tests/*caret*/;
+            """).open()
+        }
+        checkOnTopLevel<RsModDeclItem>()
     }
 
     fun `test bench producer works for nested modules 1`() {

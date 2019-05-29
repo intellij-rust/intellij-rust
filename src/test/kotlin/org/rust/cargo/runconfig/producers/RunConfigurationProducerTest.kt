@@ -103,6 +103,20 @@ class RunConfigurationProducerTest : RunConfigurationProducerTestBase() {
         checkOnLeaf()
     }
 
+    fun `test test mod decl is more specific than main mod`() {
+        testProject {
+            file("src/tests.rs", """
+                #[test]
+                fn test() {}
+            """)
+            bin("foo", "src/main.rs", """
+                mod tests/*caret*/;
+                fn main() {}
+            """).open()
+        }
+        checkOnLeaf()
+    }
+
     fun `test hyphen in name works`() {
         testProject {
             example("hello-world", "example/hello.rs").open()

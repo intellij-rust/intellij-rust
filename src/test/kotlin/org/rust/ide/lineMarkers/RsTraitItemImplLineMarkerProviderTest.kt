@@ -5,8 +5,6 @@
 
 package org.rust.ide.lineMarkers
 
-import org.rust.ide.lineMarkers.RsLineMarkerProviderTestBase
-
 /**
  * Tests for Trait member (const, fn, type) Implementation Line Marker
  */
