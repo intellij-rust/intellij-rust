@@ -185,7 +185,6 @@ class CargoCommandConfiguration(
 
 val CargoProject.workingDirectory: Path get() = manifest.parent
 
-
 private fun Element.writeString(name: String, value: String) {
     val opt = org.jdom.Element("option")
     opt.setAttribute("name", name)

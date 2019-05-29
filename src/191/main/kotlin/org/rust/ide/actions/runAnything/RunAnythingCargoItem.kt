@@ -9,7 +9,7 @@ import java.awt.Component
 import javax.swing.Icon
 
 class RunAnythingCargoItem(command: String, icon: Icon) : RunAnythingCargoItemBase(command, icon) {
-    override fun createComponent(isSelected: Boolean): Component {
-        return super.createComponent(isSelected).also(this@RunAnythingCargoItem::customizeComponent)
+    override fun createComponent(pattern: String?, isSelected: Boolean, hasFocus: Boolean): Component {
+        return super.createComponent(pattern, isSelected, hasFocus).also(this@RunAnythingCargoItem::customizeComponent)
     }
 }

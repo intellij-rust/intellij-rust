@@ -61,9 +61,13 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
 
     override fun getHelpCommandPlaceholder(): String = "cargo <subcommand> <args...>"
 
-    override fun getHelpCommand() = "cargo"
+    override fun getHelpCommand(): String = HELP_COMMAND
 
     override fun getHelpIcon(): Icon = CargoIcons.ICON
 
     override fun getHelpDescription(): String = "Runs Cargo command"
+
+    companion object {
+        const val HELP_COMMAND = "cargo"
+    }
 }

@@ -12,6 +12,7 @@ import org.rust.cargo.project.toolwindow.CargoProjectStructure.Node.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.TargetKind.*
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.runconfig.command.workingDirectory
 import javax.swing.Icon
 import javax.swing.tree.DefaultMutableTreeNode
 
@@ -33,7 +34,7 @@ class CargoProjectStructure(private var cargoProjects: List<CargoProject> = empt
                     ?.packages
                     ?.filter { it.origin == PackageOrigin.WORKSPACE }
                     .orEmpty()
-                    .partition { it.rootDirectory == cargoProject.manifest.parent }
+                    .partition { it.rootDirectory == cargoProject.workingDirectory }
                 val childrenNodes = mutableListOf<Node>()
                 ourPackage.mapTo(childrenNodes) { Targets(it.targets) }
                 workspaceMembers.mapTo(childrenNodes, ::WorkspaceMember)

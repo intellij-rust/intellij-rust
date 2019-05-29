@@ -879,10 +879,18 @@
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
-        <action id="Rust.CargoFmtFile"
+        <action id="Rust.RustfmtFile"
                 class="org.rust.ide.actions.RustfmtFileAction"
                 text="Reformat File with Rustfmt"
                 description="Reformat current file with rustfmt"
+                icon="AllIcons.Actions.RealIntentionBulb">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+
+        <action id="Rust.RustfmtCargoProject"
+                class="org.rust.ide.actions.RustfmtCargoProjectAction"
+                text="Reformat Cargo Project with Rustfmt"
+                description="Reformat cargo project with rustfmt"
                 icon="AllIcons.Actions.RealIntentionBulb">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
@@ -935,7 +943,7 @@
         <group id="Rust.Cargo">
             <reference id="Rust.RefreshCargoProject"/>
             <reference id="Rust.CargoCommand"/>
-            <reference id="Rust.CargoFmtFile"/>
+            <reference id="Rust.RustfmtCargoProject"/>
             <reference id="Rust.RunExternalLinter"/>
             <separator/>
             <reference id="Rust.AttachCargoProject"/>
