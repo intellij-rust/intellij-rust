@@ -5,48 +5,51 @@
 
 package org.rust.ide.hints
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.parameterInfo.*
-import com.intellij.lang.parameterInfo.ParameterInfoUtils.getCurrentParameterIndex
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiFile
 import com.intellij.util.containers.nullize
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 private const val WHERE_PREFIX = "where "
 
-class RsGenericParameterInfoHandler : ParameterInfoHandler<RsTypeArgumentList, HintLine> {
+class RsGenericParameterInfoHandler : RsAsyncParameterInfoHandler<RsTypeArgumentList, HintLine>() {
+    override fun findTargetElement(file: PsiFile, offset: Int): RsTypeArgumentList? =
+        findExceptColonColon(file, offset)
 
-    @VisibleForTesting
-    var curParam = -1
-        private set
-    @VisibleForTesting
-    var hintText = ""
-        private set
+    override fun calculateParameterInfo(element: RsTypeArgumentList): Array<HintLine>? {
+        val parent = element.parent
+        val genericDeclaration = if (parent is RsMethodCall || parent is RsPath) {
+            parent.reference?.resolve() as? RsGenericDeclaration ?: return null
+        } else {
+            return null
+        }
+        val typesWithBounds = genericDeclaration.typeParameters.nullize() ?: return null
+        return listOfNotNull(firstLine(typesWithBounds), secondLine(typesWithBounds)).toTypedArray()
+    }
 
     override fun showParameterInfo(element: RsTypeArgumentList, context: CreateParameterInfoContext) {
         context.highlightedElement = null
-        context.showHint(element, element.startOffset, this)
+        super.showParameterInfo(element, context)
     }
 
-    // TODO: don't disappear in nested generic types
     override fun updateParameterInfo(parameterOwner: RsTypeArgumentList, context: UpdateParameterInfoContext) {
-        curParam = getCurrentParameterIndex(parameterOwner.node, context.offset, RsElementTypes.COMMA)
-        when {
-            context.parameterOwner == null -> context.parameterOwner = parameterOwner
-
-            // occurs e.g. in case of up-down cursor moving
-            context.parameterOwner != parameterOwner -> context.removeHint()
+        if (context.parameterOwner != parameterOwner) {
+            context.removeHint()
+            return
         }
+        val curParam =
+            ParameterInfoUtils.getCurrentParameterIndex(parameterOwner.node, context.offset, RsElementTypes.COMMA)
+        context.setCurrentParameter(curParam)
     }
 
     override fun updateUI(p: HintLine, context: ParameterInfoUIContext) {
-        hintText = p.presentText
         context.setupUIComponentPresentation(
-            hintText,
-            p.getRange(curParam).startOffset,
-            p.getRange(curParam).endOffset,
+            p.presentText,
+            p.getRange(context.currentParameterIndex).startOffset,
+            p.getRange(context.currentParameterIndex).endOffset,
             false, // define whole hint line grayed
             false,
             false, // define grayed part of args before highlight
@@ -58,25 +61,9 @@ class RsGenericParameterInfoHandler : ParameterInfoHandler<RsTypeArgumentList, H
 
     override fun couldShowInLookup() = false
 
-    override fun findElementForUpdatingParameterInfo(context: UpdateParameterInfoContext): RsTypeArgumentList? =
-        findExceptColonColon(context)
-
-    override fun findElementForParameterInfo(context: CreateParameterInfoContext): RsTypeArgumentList? {
-        val parameterList = findExceptColonColon(context) ?: return null
-        val parent = parameterList.parent
-        val genericDeclaration = if (parent is RsMethodCall || parent is RsPath) {
-            parent.reference?.resolve()  as? RsGenericDeclaration ?: return null
-        } else {
-            return null
-        }
-        val typesWithBounds = genericDeclaration.typeParameters.nullize() ?: return null
-        context.itemsToShow = listOfNotNull(firstLine(typesWithBounds), secondLine(typesWithBounds)).toTypedArray()
-        return parameterList
-    }
-
     // to avoid hint on :: before <>
-    private fun findExceptColonColon(context: ParameterInfoContext?): RsTypeArgumentList? {
-        val element = context?.file?.findElementAt(context.editor.caretModel.offset) ?: return null
+    private fun findExceptColonColon(file: PsiFile, offset: Int): RsTypeArgumentList? {
+        val element = file.findElementAt(offset) ?: return null
         if (element.elementType == RsElementTypes.COLONCOLON) return null
         return element.ancestorStrict()
     }
@@ -87,9 +74,9 @@ class RsGenericParameterInfoHandler : ParameterInfoHandler<RsTypeArgumentList, H
  */
 class HintLine(
     val presentText: String,
-    val ranges: List<TextRange>
+    private val ranges: List<TextRange>
 ) {
-    fun getRange(index: Int) = if (index !in 0 until ranges.size) TextRange.EMPTY_RANGE else ranges[index]
+    fun getRange(index: Int): TextRange = if (index !in 0 until ranges.size) TextRange.EMPTY_RANGE else ranges[index]
 }
 
 /**

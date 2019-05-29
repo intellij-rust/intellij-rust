@@ -6,10 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.LiteralTextEscaper
-import com.intellij.psi.PsiLanguageInjectionHost
-import com.intellij.psi.PsiReference
-import com.intellij.psi.PsiReferenceService
+import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.stubs.IStubElementType
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider
@@ -93,3 +90,6 @@ abstract class RsLitExprMixin : RsExprImpl, RsLitExpr, RegExpLanguageHost {
     override fun getKnownCharacterClasses(): Array<Array<String>> =
         DefaultRegExpPropertiesProvider.getInstance().knownCharacterClasses
 }
+
+fun RsLitExpr.containsOffset(offset: Int): Boolean =
+    ElementManipulators.getValueTextRange(this).shiftRight(textOffset).containsOffset(offset)

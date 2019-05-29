@@ -47,6 +47,10 @@ class RsPsiFactory(
         "macro_rules! m $text"
     )
 
+    fun createMacroCall(macroName: String, vararg arguments: String): RsMacroCall =
+        createFromText("fn foo() { $macroName!(${arguments.joinToString(", ")}) }")
+            ?: error("Failed to create macro call")
+
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
