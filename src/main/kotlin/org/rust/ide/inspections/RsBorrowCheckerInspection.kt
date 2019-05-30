@@ -12,7 +12,7 @@ import org.rust.ide.inspections.fixes.InitializeWithDefaultValueFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.borrowCheckResult
-import org.rust.lang.core.types.isMutable
+import org.rust.lang.core.types.isImmutable
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
 
@@ -29,8 +29,9 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
             }
 
             override fun visitUnaryExpr(unaryExpr: RsUnaryExpr) {
-                val expr = unaryExpr.expr ?: return
-                if (unaryExpr.operatorType == UnaryOperator.REF_MUT && !expr.isMutable) {
+                val expr = unaryExpr.expr?.takeIf { it.isImmutable } ?: return
+
+                if (unaryExpr.operatorType == UnaryOperator.REF_MUT) {
                     registerProblem(holder, expr, expr)
                 }
             }
@@ -72,7 +73,7 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {
         val selfParameter = fn.selfParameter ?: return false
-        if (!receiver.isMutable && selfParameter.mutability.isMut && selfParameter.isRef) {
+        if (receiver.isImmutable && selfParameter.mutability.isMut && selfParameter.isRef) {
             val type = receiver.type
             return type !is TyReference || !type.mutability.isMut
         }

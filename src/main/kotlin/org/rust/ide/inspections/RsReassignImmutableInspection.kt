@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
 import org.rust.lang.core.types.declaration
-import org.rust.lang.core.types.isMutable
+import org.rust.lang.core.types.isImmutable
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
@@ -20,8 +20,9 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
-                val left = expr.left
-                if (expr.isAssignBinaryExpr && left is RsPathExpr && !left.isMutable) {
+                val left = expr.left.takeIf { it.isImmutable } ?: return
+
+                if (expr.isAssignBinaryExpr && left is RsPathExpr) {
                     // TODO: perform some kind of data-flow analysis
                     val letExpr = left.declaration?.ancestorStrict<RsLetDecl>()
                     if (letExpr == null) registerProblem(holder, expr, left)
