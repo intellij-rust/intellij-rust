@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.util.SmartList
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
@@ -53,7 +54,7 @@ fun collectPathResolveVariants(
     referenceName: String,
     f: (RsResolveProcessor) -> Unit
 ): List<BoundElement<RsElement>> {
-    val result = mutableListOf<BoundElement<RsElement>>()
+    val result = SmartList<BoundElement<RsElement>>()
     f { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
             return@f true
@@ -69,7 +70,7 @@ fun collectPathResolveVariants(
 }
 
 fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
-    val result = mutableListOf<RsElement>()
+    val result = SmartList<RsElement>()
     f { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 
