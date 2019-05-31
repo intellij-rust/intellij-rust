@@ -278,4 +278,11 @@ class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspe
             let c = &mut b[0];
         }
     """, checkWarn = false)
+
+    /** Issue [3914](https://github.com/intellij-rust/intellij-rust/issues/3914) */
+    fun `test closure borrow parameter of unknown type as mutable`() = checkByText("""
+        fn main() {
+            |x| &mut x;
+        }
+    """)
 }

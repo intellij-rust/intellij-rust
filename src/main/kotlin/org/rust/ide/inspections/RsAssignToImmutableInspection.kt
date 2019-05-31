@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.ext.containerExpr
 import org.rust.lang.core.psi.ext.isAssignBinaryExpr
 import org.rust.lang.core.psi.ext.isDereference
 import org.rust.lang.core.psi.ext.unwrapParenExprs
-import org.rust.lang.core.types.isMutable
+import org.rust.lang.core.types.isImmutable
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
@@ -29,8 +29,7 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
         }
 
     private fun checkAssignment(expr: RsBinaryExpr, holder: ProblemsHolder) {
-        val left = unwrapParenExprs(expr.left)
-        if (left.isMutable) return
+        val left = unwrapParenExprs(expr.left).takeIf { it.isImmutable } ?: return
 
         when (left) {
             is RsDotExpr -> registerProblem(holder, "field of immutable binding", expr, left.expr)
@@ -47,7 +46,7 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
     }
 
     private fun registerProblem(holder: ProblemsHolder, message: String, expr: RsExpr, assigneeExpr: RsExpr? = null) {
-         val fix = assigneeExpr?.let { AddMutableFix.createIfCompatible(it) }
+        val fix = assigneeExpr?.let { AddMutableFix.createIfCompatible(it) }
         RsDiagnostic.CannotAssignToImmutable(expr, message, fix).addToHolder(holder)
     }
 }

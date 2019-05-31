@@ -19,7 +19,6 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.borrowck.BorrowCheckContext
 import org.rust.lang.core.types.borrowck.BorrowCheckResult
 import org.rust.lang.core.types.infer.*
-import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
@@ -115,7 +114,10 @@ val RsExpr.cmt: Cmt?
     }
 
 val RsExpr.isMutable: Boolean
-    get() = cmt?.isMutable ?: Mutability.DEFAULT_MUTABILITY.isMut
+    get() = type !is TyUnknown && cmt?.isMutable == true
+
+val RsExpr.isImmutable: Boolean
+    get() = type !is TyUnknown && cmt?.isMutable == false
 
 private val BORROW_CHECKER_KEY: Key<CachedValue<BorrowCheckResult>> = Key.create("BORROW_CHECKER_KEY")
 

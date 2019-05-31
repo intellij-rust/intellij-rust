@@ -5,6 +5,9 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmutableInspection()) {
 
     fun `test E0594 assign to immutable borrowed content`() = checkByText("""
@@ -56,6 +59,7 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0594 assign to field of immutable binding while iterating`() = checkByText("""
         struct Foo { a: i32 }
         fn main() {
@@ -66,6 +70,7 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0594 assign to indexed content of immutable binding`() = checkByText("""
         fn main() {
             let a: [i32; 3] = [0; 3];
@@ -87,6 +92,12 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
         fn main() {
             let xs = &mut unknownType;
             xs[0] = 1;
+        }
+    """)
+
+    fun `test assign to field of expr of unknown type`() = checkByText("""
+        fn foo(x: &mut Unknown) {
+            x.a = 1;
         }
     """)
 }
