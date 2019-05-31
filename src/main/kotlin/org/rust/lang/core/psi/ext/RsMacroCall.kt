@@ -15,6 +15,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
@@ -53,6 +54,14 @@ val RsMacroCall.macroBody: String?
             ?: assertMacroArgument?.braceListBodyText()?.toString()
             ?: exprMacroArgument?.braceListBodyText()?.toString()
             ?: vecMacroArgument?.braceListBodyText()?.toString()
+    }
+
+val RsMacroCall.includingFilePath: String?
+    get() {
+        if (macroName != "include") return null
+        // TODO: support more cases
+        val expr = includeMacroArgument?.expr as? RsLitExpr ?: return null
+        return expr.stringValue ?: return null
     }
 
 val RsMacroCall.bodyHash: HashCode?

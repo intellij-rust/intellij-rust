@@ -139,6 +139,8 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "MACRO_2" -> RsMacro2Stub.Type
     "MACRO_CALL" -> RsMacroCallStub.Type
 
+    "INCLUDE_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("INCLUDE_MACRO_ARGUMENT", ::RsIncludeMacroArgumentImpl)
+
     "INNER_ATTR" -> RsInnerAttrStub.Type
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
 

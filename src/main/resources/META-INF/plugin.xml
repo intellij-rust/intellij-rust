@@ -750,6 +750,7 @@
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsGotoClassIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsReexportIndex"/>
         <stubIndex implementation="org.rust.lang.core.stubs.index.RsFeatureIndex"/>
+        <stubIndex implementation="org.rust.lang.core.stubs.index.RsIncludeMacroIndex"/>
 
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsImplIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsLangItemIndex"/>
