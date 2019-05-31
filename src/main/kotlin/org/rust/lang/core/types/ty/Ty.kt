@@ -154,6 +154,12 @@ fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
         else -> null
     }
 
+tailrec fun Ty.stripReferences(): Ty =
+    when {
+        this is TyReference -> referenced.stripReferences()
+        else -> this
+    }
+
 /**
  * TODO:
  * There are some problems with `Self` inference (e.g. https://github.com/intellij-rust/intellij-rust/issues/2530)

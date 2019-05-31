@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.ext.arms
 import org.rust.lang.core.psi.ext.isStdOptionOrResult
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.stripReferences
 import org.rust.lang.core.types.type
 
 class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntention.Context>() {
@@ -24,7 +25,7 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
         if (matchExpr.arms.isNotEmpty()) return null
-        val item = (matchExpr.expr?.type as? TyAdt)?.item as? RsEnumItem ?: return null
+        val item = (matchExpr.expr?.type?.stripReferences() as? TyAdt)?.item as? RsEnumItem ?: return null
         // TODO: check enum variants can be used without enum name qualifier
         val name = if (!item.isStdOptionOrResult) {
             item.name ?: return null

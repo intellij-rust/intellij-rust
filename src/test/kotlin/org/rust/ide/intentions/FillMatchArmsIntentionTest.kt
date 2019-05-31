@@ -200,4 +200,19 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
             }
         }
     """)
+
+    fun `test match ergonomics`() = doAvailableTest("""
+        enum E { A, B }
+        fn foo(x: &E) {
+            match x/*caret*/ {}
+        }
+    """, """
+        enum E { A, B }
+        fn foo(x: &E) {
+            match x {
+                E::A => {},
+                E::B => {},
+            }
+        }
+    """)
 }
