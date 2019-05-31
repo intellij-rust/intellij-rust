@@ -144,10 +144,17 @@ class MacroExpansionManagerImpl(
     override fun getExpansionFor(call: RsMacroCall): MacroExpansion? {
         val impl = inner
         return when {
+            call.macroName == "include" -> expandIncludeMacroCall(call)
             impl != null -> impl.getExpansionFor(call)
             isUnitTestMode -> expandMacroOld(call)
             else -> null
         }
+    }
+
+    private fun expandIncludeMacroCall(call: RsMacroCall): MacroExpansion? {
+        val includingFile = call.findIncludingFile() ?: return null
+        val items = includingFile.stubChildrenOfType<RsExpandedElement>()
+        return MacroExpansion.Items(includingFile, items)
     }
 
     override fun getExpandedFrom(element: RsExpandedElement): RsMacroCall? {
