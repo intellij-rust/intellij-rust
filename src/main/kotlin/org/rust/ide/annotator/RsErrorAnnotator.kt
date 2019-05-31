@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.AddModuleFileFix
+import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.lang.core.*
@@ -162,17 +163,19 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: PsiElement, holder: AnnotationHolder) {
+    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: AnnotationHolder) {
         val element = ref.reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
         if (element.isVisibleFrom(oMod)) return
-
+        val withinOneCrate = element.crateRoot == o.crateRoot
         val error = when {
             element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
-                RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName)
+                RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName,
+                    MakePublicFix.createIfCompatible(element, element.name, withinOneCrate))
             }
-            ref is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624, "Method")
+            ref is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624, "Method",
+                MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
             else -> {
                 val itemType = when (element) {
                     is RsMod -> "Module"
@@ -184,7 +187,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                     is RsTypeAlias -> "Type alias"
                     else -> "Item"
                 }
-                RsDiagnostic.AccessError(ref, RsErrorCode.E0603, itemType)
+
+                RsDiagnostic.AccessError(ref, RsErrorCode.E0603, itemType,
+                    MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
             }
         }
         error.addToHolder(holder)

@@ -303,6 +303,14 @@ class RsPsiFactory(
     private inline fun <reified T : RsElement> createFromText(code: String): T? =
         createFile(code).descendantOfTypeStrict()
 
+    fun createPub(): RsVis =
+        createFromText("pub fn f() {}")
+            ?: error("Failed to create `pub` element")
+
+    fun createPubCrateRestricted(): RsVis =
+        createFromText("pub(crate) fn f() {}")
+            ?: error("Failed to create `pub(crate)` element")
+
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
 
