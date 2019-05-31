@@ -215,4 +215,27 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
             }
         }
     """)
+
+    fun `test one variant is in scope`() = doAvailableTest("""
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            match x/*caret*/ {}
+        }
+    """, """
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            match x {
+                A => {},
+                E::B => {},
+            }
+        }
+    """)
 }
