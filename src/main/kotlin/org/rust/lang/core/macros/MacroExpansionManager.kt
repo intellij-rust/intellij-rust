@@ -113,7 +113,8 @@ class MacroExpansionManagerImpl(
         PersistentState(inner?.save())
 
     override fun loadState(state: PersistentState) {
-        check(!isUnitTestMode)
+        // initialized manually at setUnitTestExpansionModeAndDirectory
+        if (isUnitTestMode) return
         dirs = updateDirs(state.directoryName)
     }
 
