@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.arms
-import org.rust.lang.core.psi.ext.isStdOptionOrResult
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.stripReferences
 import org.rust.lang.core.types.type
 
 class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntention.Context>() {
@@ -24,17 +24,15 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
         if (matchExpr.arms.isNotEmpty()) return null
-        val item = (matchExpr.expr?.type as? TyAdt)?.item as? RsEnumItem ?: return null
+        val item = (matchExpr.expr?.type?.stripReferences() as? TyAdt)?.item as? RsEnumItem ?: return null
         // TODO: check enum variants can be used without enum name qualifier
-        val name = if (!item.isStdOptionOrResult) {
-            item.name ?: return null
-        } else null
+        val name = item.name ?: return null
         return Context(matchExpr, name, item.variants)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (expr, name, variants) = ctx
-        var body = RsPsiFactory(project).createMatchBody(name, variants)
+        var body = RsPsiFactory(project).createMatchBody(expr, name, variants)
         val matchBody = expr.matchBody
         if (matchBody != null) {
             val rbrace = matchBody.rbrace
@@ -53,7 +51,7 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
 
     data class Context(
         val matchExpr: RsMatchExpr,
-        val enumName: String?,
+        val enumName: String,
         val variants: List<RsEnumVariant>
     )
 }

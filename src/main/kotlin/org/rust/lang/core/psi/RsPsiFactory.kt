@@ -278,8 +278,9 @@ class RsPsiFactory(
         createFromText("#![$text]")
             ?: error("Failed to create an inner attribute from text: `$text`")
 
-    fun createMatchBody(enumName: String?, variants: List<RsEnumVariant>): RsMatchBody {
+    fun createMatchBody(context: RsElement, enumName: String, variants: List<RsEnumVariant>): RsMatchBody {
         val matchBodyText = variants.joinToString(",\n", postfix = ",") { variant ->
+            val variantName = variant.name ?: return@joinToString ""
             val tupleFields = variant.tupleFields?.tupleFieldDeclList
             val blockFields = variant.blockFields
             val suffix = when {
@@ -287,8 +288,8 @@ class RsPsiFactory(
                 blockFields != null -> " { .. }"
                 else -> ""
             }
-            val prefix = if (enumName != null) "$enumName::" else ""
-            "$prefix${variant.name}$suffix => {}"
+            val prefix = if (context.findInScope(variantName) != variant) "$enumName::" else ""
+            "$prefix$variantName$suffix => {}"
         }
         return createExpressionOfType<RsMatchExpr>("match x { $matchBodyText }").matchBody
             ?: error("Failed to create match body from text: `$matchBodyText`")
