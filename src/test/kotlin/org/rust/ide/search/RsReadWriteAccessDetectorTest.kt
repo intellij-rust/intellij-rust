@@ -74,6 +74,13 @@ class RsReadWriteAccessDetectorTest : RsTestBase() {
         }   //^ write
     """)
 
+    fun `test struct literal`() = doTest("""
+        struct S { field: i32 }
+        fn main() {
+            let s = S { field: 0 };
+        }             //^ write
+    """)
+
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code.trimIndent())
         val (element, data) = findElementAndDataInEditor<RsReferenceElement>()
