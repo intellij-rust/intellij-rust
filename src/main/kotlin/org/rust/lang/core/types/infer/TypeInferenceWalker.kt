@@ -214,6 +214,7 @@ class RsTypeInferenceWalker(
 
     private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
         return when {
+            inferred == TyNever -> true
             // Coerce array to slice
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {

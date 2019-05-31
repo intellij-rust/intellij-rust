@@ -239,4 +239,13 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             };
         }
     """)
+
+    fun `test ! unification`() = checkByText("""
+        fn unify<T>(_: T, _: T) {}
+
+        fn main() {
+            unify(0, panic!());
+            unify(panic!(), 0);
+        }
+    """)
 }
