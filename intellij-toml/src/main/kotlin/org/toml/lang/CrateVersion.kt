@@ -7,6 +7,28 @@ package org.toml.lang
 
 // Based on https://github.com/steveklabnik/semver/blob/master/src/version.rs
 sealed class Identifier : Comparable<Identifier> {
+    data class Numeric(val num: Int) : Identifier() {
+        override fun compareTo(other: Identifier): Int = when (other) {
+            is Numeric -> this.num.compareTo(other.num)
+            is AlphaNumeric -> this.num.toString().compareTo(other.string)
+        }
+
+        override fun toString() = "$num"
+    }
+
+    data class AlphaNumeric(val string: String) : Identifier() {
+        init {
+            require(string.isNotEmpty()) { "Identifier can't be empty" }
+        }
+
+        override fun compareTo(other: Identifier): Int = when (other) {
+            is AlphaNumeric -> this.string.compareTo(other.string)
+            is Numeric -> this.string.compareTo(other.num.toString())
+        }
+
+        override fun toString() = string
+    }
+
     companion object {
         fun parse(input: String): Identifier {
             // Strings such as 0851523 should be parsed as AlphaNumeric because Numeric would lose the 0 in front
@@ -18,83 +40,61 @@ sealed class Identifier : Comparable<Identifier> {
             }
         }
     }
+}
 
-    data class Numeric(val num: Int) : Identifier() {
-        override fun compareTo(other: Identifier): Int {
-            if (other is Numeric) {
-                return this.num.compareTo(other.num)
-            }
-
-            return 0
+data class PartialCrateVersion(
+    val major: Int?,
+    val minor: Int?,
+    val patch: Int?,
+    val pre: List<Identifier> = emptyList(),
+    val build: List<Identifier> = emptyList()
+) {
+    fun tryToCrateVersion(): CrateVersion? {
+        return if (major != null && minor != null && patch != null) {
+            CrateVersion(major, minor, patch, pre, build)
+        } else {
+            null
         }
-
-        override fun toString() = "$num"
     }
 
-    data class AlphaNumeric(val string: String) : Identifier() {
-        init {
-            require(string.isNotEmpty()) { "Identifier can't be empty" }
-        }
-
-        override fun compareTo(other: Identifier): Int {
-            if (other is AlphaNumeric) {
-                return this.string.compareTo(other.string)
-            }
-
-            return 0
-        }
-
-        override fun toString() = string
+    fun toCrateVersion(): CrateVersion {
+        require(major != null) { "Major can't be null" }
+        require(minor != null) { "Minor can't be null" }
+        require(patch != null) { "Patch can't be null" }
+        return CrateVersion(major, minor, patch, pre, build)
     }
 }
 
-data class IncompleteCrateVersion(val major: Int?, val minor: Int?, val patch: Int?, val pre: List<Identifier> = emptyList(), val build: List<Identifier> = emptyList()) {
-    companion object {
-        fun parse(string: String): IncompleteCrateVersion {
-            val input = string.trim()
-            val majorBound = input.indexOf('.').takeUnless { it == -1 }
-                ?: return IncompleteCrateVersion(input.toIntOrNull(), null, null)
-            val major = input.substring(0, majorBound).toIntOrNull() ?: return IncompleteCrateVersion(null, null, null)
+data class CrateVersion(
+    val major: Int,
+    val minor: Int,
+    val patch: Int,
+    val pre: List<Identifier> = emptyList(),
+    val build: List<Identifier> = emptyList()
+) : Comparable<CrateVersion> {
 
-            val minorBound = input.indexOf('.', majorBound + 1).takeUnless { it == -1 }
-                ?: return IncompleteCrateVersion(major, input.substring(majorBound + 1).toIntOrNull(), null)
-            val minor = input.substring(majorBound + 1, minorBound).toIntOrNull()
-                ?: return IncompleteCrateVersion(major, null, null)
-
-            val patchBound = input.indexOfAny(charArrayOf('-', '+'), minorBound + 1).takeUnless { it == -1 }
-                ?: return IncompleteCrateVersion(major, minor, input.substring(minorBound + 1).toIntOrNull())
-            val patch = input.substring(minorBound + 1, patchBound).toIntOrNull()
-                ?: return IncompleteCrateVersion(major, minor, null)
-
-            val preStartBound = if (input.getOrNull(patchBound) == '-') patchBound else -1
-            val preBound = input.indexOf('+', preStartBound + 1).takeUnless { it == -1 } ?: input.length
-            val pres = if (preStartBound != -1 && preStartBound != preBound) input.substring(preStartBound + 1, preBound).split('.').map { Identifier.parse(it) } else listOf()
-
-            val builds = if (preBound + 1 < input.length) input.substring(preBound + 1).split('.').map { Identifier.parse(it) } else listOf()
-
-            return IncompleteCrateVersion(major, minor, patch, pres, builds)
-        }
-    }
-}
-
-data class CrateVersion(val major: Int, val minor: Int, val patch: Int, val pre: List<Identifier> = emptyList(), val build: List<Identifier> = emptyList()) : Comparable<CrateVersion> {
     companion object {
         /**
          * Requires all 3 components (major, minor, patch) to be present.
          */
-        fun parse(string: String): CrateVersion {
+        fun parse(string: String): CrateVersion =
+            tryParse(string).toCrateVersion()
+
+        fun tryParse(string: String): PartialCrateVersion {
             val input = string.trim()
             val majorBound = input.indexOf('.').takeUnless { it == -1 }
-                ?: throw IllegalArgumentException("Major not provided")
-            val major = input.substring(0, majorBound).toInt()
+                ?: return PartialCrateVersion(input.toIntOrNull(), null, null)
+            val major = input.substring(0, majorBound).toIntOrNull() ?: return PartialCrateVersion(null, null, null)
 
             val minorBound = input.indexOf('.', majorBound + 1).takeUnless { it == -1 }
-                ?: throw IllegalArgumentException("Minor not provided")
-            val minor = input.substring(majorBound + 1, minorBound).toInt()
+                ?: return PartialCrateVersion(major, input.substring(majorBound + 1).toIntOrNull(), null)
+            val minor = input.substring(majorBound + 1, minorBound).toIntOrNull()
+                ?: return PartialCrateVersion(major, null, null)
 
             val patchBound = input.indexOfAny(charArrayOf('-', '+'), minorBound + 1).takeUnless { it == -1 }
-                ?: input.length
-            val patch = input.substring(minorBound + 1, patchBound).toInt()
+                ?: return PartialCrateVersion(major, minor, input.substring(minorBound + 1).toIntOrNull())
+            val patch = input.substring(minorBound + 1, patchBound).toIntOrNull()
+                ?: return PartialCrateVersion(major, minor, null)
 
             val preStartBound = if (input.getOrNull(patchBound) == '-') patchBound else -1
             val preBound = input.indexOf('+', preStartBound + 1).takeUnless { it == -1 } ?: input.length
@@ -102,13 +102,7 @@ data class CrateVersion(val major: Int, val minor: Int, val patch: Int, val pre:
 
             val builds = if (preBound + 1 < input.length) input.substring(preBound + 1).split('.').map { Identifier.parse(it) } else listOf()
 
-            return CrateVersion(major, minor, patch, pres, builds)
-        }
-
-        fun tryParse(string: String): CrateVersion? = try {
-            parse(string)
-        } catch (e: IllegalArgumentException) {
-            null
+            return PartialCrateVersion(major, minor, patch, pres, builds)
         }
     }
 
@@ -124,38 +118,62 @@ data class CrateVersion(val major: Int, val minor: Int, val patch: Int, val pre:
         val patchCmp = this.patch.compareTo(other.patch)
         if (patchCmp != 0) return patchCmp
 
-        val preCmp = this.pre.withIndex().firstOrNull { (i, own) -> other.pre.getOrNull(i)?.compareTo(own) != 0 }?.let {
-            val (preI, preOwn) = it
-            // 1. times(-1) because this expr compares the other way (other > this ? instead of this > other ?)
-            // 2. if other.pre[preI] == null, it means that this.pre.size > other.pre.size which means this > other
-            other.pre.getOrNull(preI)?.compareTo(preOwn)?.times(-1) ?: -1
-        } ?: if (this.pre.isEmpty()) {
-            if (other.pre.isEmpty()) 0
-            else 1
-        } else {
-            if (other.pre.isEmpty()) -1
-            else this.pre.size.compareTo(other.pre.size)
-        }
-        if (preCmp != 0) return preCmp
 
-
-        val buildCmp = this.build.withIndex().firstOrNull { (i, own) -> other.build.getOrNull(i)?.compareTo(own) != 0 }?.let {
-            val (buildI, buildOwn) = it
-            // 1. times(-1) because this expr compares the other way (other > this ? instead of this > other ?)
-            // 2. if other.build[buildI] == null, it means that this.build.size > other.build.size which means this > other
-            other.build.getOrNull(buildI)?.compareTo(buildOwn)?.times(-1) ?: -1
-        } ?: if (this.build.isEmpty()) {
-            if (other.build.isEmpty()) 0
-            else 1
-        } else {
-            if (other.build.isEmpty()) -1
-            else this.build.size.compareTo(other.build.size)
+        val pres = this.pre.zipAll(other.pre)
+        for ((thisPre, otherPre) in pres) {
+            if (thisPre != null && otherPre != null) {
+                val cmp = thisPre.compareTo(otherPre)
+                if (cmp != 0) return cmp
+            } else if (thisPre == null) {
+                if (otherPre == null) {
+                    break
+                } else {
+                    return 1
+                }
+            } else if (otherPre == null) {
+                // thisPre == null at this point
+                return -1
+            }
         }
-        return buildCmp
+
+        val builds = this.build.zipAll(other.build)
+        for ((thisBuild, otherBuild) in builds) {
+            if (thisBuild != null && otherBuild != null) {
+                val cmp = thisBuild.compareTo(otherBuild)
+                if (cmp != 0) return cmp
+            } else if (thisBuild == null) {
+                if (otherBuild == null) {
+                    break
+                } else {
+                    return 1
+                }
+            } else if (otherBuild == null) {
+                // thisBuild == null at this point
+                return -1
+            }
+        }
+
+        return 0
     }
 
     override fun toString() =
         "$major.$minor.$patch" +
             (if (pre.isNotEmpty()) pre.joinToString(".", prefix = "-") else "") +
             (if (build.isNotEmpty()) build.joinToString(".", prefix = "+") else "")
+}
+
+
+// Based on https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/common/src/generated/_Collections.kt#L2219
+// Zips all elements; doesn't stop when one of them is null
+private inline fun <T, R, V> List<T>.zipAll(other: List<R>, transform: (a: T?, b: R?) -> V): List<V> {
+    val arraySize = maxOf(this.size, other.size)
+    val list = ArrayList<V>(arraySize)
+    for (i in 0 until arraySize) {
+        list.add(transform(this.getOrNull(i), other.getOrNull(i)))
+    }
+    return list
+}
+
+private fun <T, R> List<T>.zipAll(other: List<R>): List<Pair<T?, R?>> {
+    return zipAll(other) { t1, t2 -> t1 to t2 }
 }

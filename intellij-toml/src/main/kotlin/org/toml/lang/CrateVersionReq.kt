@@ -40,7 +40,7 @@ class CrateVersionReq private constructor(private val predicates: List<Predicate
                     else -> null to 0
                 }
 
-                val (major, minor, patch, pre, _) = IncompleteCrateVersion.parse(req.substring(len))
+                val (major, minor, patch, pre, _) = CrateVersion.tryParse(req.substring(len))
                 predicates += Predicate(op ?: Op.Compatible, major, minor, patch, pre)
             }
 
