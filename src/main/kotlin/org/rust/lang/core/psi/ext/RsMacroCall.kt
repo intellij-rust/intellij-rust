@@ -49,6 +49,7 @@ val RsMacroCall.macroBody: String?
         if (stub != null) return stub.macroBody
         return macroArgument?.compactTT?.text
             ?: formatMacroArgument?.braceListBodyText()?.toString()
+            ?: includeMacroArgument?.braceListBodyText()?.toString()
             ?: logMacroArgument?.braceListBodyText()?.toString()
             ?: assertMacroArgument?.braceListBodyText()?.toString()
             ?: exprMacroArgument?.braceListBodyText()?.toString()
@@ -66,13 +67,14 @@ fun RsMacroCall.resolveToMacro(): RsMacro? =
     path.reference.resolve() as? RsMacro
 
 val RsMacroCall.expansion: MacroExpansion?
-    get() = CachedValuesManager.getCachedValue(this) {
-        val project = project
-        CachedValueProvider.Result.create(
-            project.macroExpansionManager.getExpansionFor(CompletionUtil.getOriginalOrSelf(this)),
-            rustStructureOrAnyPsiModificationTracker
-        )
-    }
+//    get() = CachedValuesManager.getCachedValue(this) {
+//        val project = project
+//        CachedValueProvider.Result.create(
+//            project.macroExpansionManager.getExpansionFor(CompletionUtil.getOriginalOrSelf(this)),
+//            rustStructureOrAnyPsiModificationTracker
+//        )
+//    }
+    get() = project.macroExpansionManager.getExpansionFor(CompletionUtil.getOriginalOrSelf(this))
 
 fun RsMacroCall.expandAllMacrosRecursively(): String =
     expandAllMacrosRecursively(0)

@@ -303,7 +303,7 @@ object ExpansionPipeline {
             if (info.isUpToDate(call, def)) {
                 return EmptyPipeline // old expansion is up-to-date
             }
-            val expansion = expander.expandMacroAsText(def, call)?.toString()
+            val expansion = expander.expandMacroAsText(def, call)
             if (expansion == null) {
                 MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName}!(${call.macroBody})`")
                 return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, defHash)

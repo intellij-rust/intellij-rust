@@ -584,7 +584,7 @@ private class MacroExpansionServiceImplInner(
             return expandMacroOld(call)
         }
 
-        if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem !is LocalFileSystem) {
+        if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem !is LocalFileSystem || true) {
             return expandMacroToMemoryFile(call)
         }
 
@@ -752,13 +752,13 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansion? {
 }
 
 private fun expandMacroToMemoryFile(call: RsMacroCall): MacroExpansion? {
-    val context = call.context as? RsElement ?: return null
     val def = call.resolveToMacro() ?: return null
     val project = call.project
     val result = MacroExpander(project).expandMacro(def, call, RsPsiFactory(project))
     result?.elements?.forEach {
-        it.setContext(context)
-        it.setExpandedFrom(call)
+        if (!it.setContextAndExpandedFrom(call)) {
+            return null
+        }
     }
 
     return result
@@ -768,6 +768,17 @@ private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.
 
 private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
+}
+
+fun RsExpandedElement.setContextAndExpandedFrom(call: RsMacroCall): Boolean {
+    val context = call.context
+    if (context is RsElement) {
+        setContext(context)
+    } else {
+        return false
+    }
+    setExpandedFrom(call)
+    return true
 }
 
 enum class MacroExpansionScope {

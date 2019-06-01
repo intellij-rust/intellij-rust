@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -91,8 +92,11 @@ private data class WithParent(
 }
 
 class MacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): CharSequence? {
-        val (case, subst) = findMatchingPattern(def, call) ?: return null
+    fun expandMacroAsText(def: RsMacro, call: RsMacroCall, wrap: Boolean = true): String? {
+        expandBuiltinMacroAsText(call)?.let {
+            return@expandMacroAsText it
+        }
+        val (case, subst) = findMatchingPattern(def, call, wrap = wrap) ?: return null
         val macroExpansion = case.macroExpansion ?: return null
 
         val substWithGlobalVars = WithParent(
@@ -109,16 +113,100 @@ class MacroExpander(val project: Project) {
         return substituteMacro(macroExpansion.macroExpansionContents, substWithGlobalVars)
     }
 
+    private fun expandBuiltinMacroAsText(call: RsMacroCall): String? {
+        return when (call.macroName) {
+            "env", "option_env" -> execOnArguments(call, wrap = false) { arguments ->
+                if (arguments.isEmpty()) {
+                    return@execOnArguments null
+                }
+                val value = System.getenv(arguments[0])
+                when (call.macroName) {
+                    "env" -> makeString(value ?: return@execOnArguments null)
+                    "option_env" -> when {
+                        value != null -> "Some(${makeString(value)})"
+                        else -> "None"
+                    }
+                    else -> return@execOnArguments null
+                }
+            }
+            "concat" -> execOnArguments(call, wrap = false) { arguments ->
+                makeString(arguments.joinToString(""))
+            }
+            "include" -> execOnArguments(call, wrap = false) { arguments ->
+                if (arguments.isEmpty()) {
+                    return@execOnArguments null
+                }
+                val context = call.context ?: return@execOnArguments null
+                val file = InjectedLanguageManager.getInstance(call.project).getTopLevelFile(context)
+                val parent = file?.originalFile?.virtualFile?.parent ?: return@execOnArguments null
+                val directory = file.manager.findDirectory(parent)
+                val targetFile = directory?.virtualFile?.findFileByRelativePath(arguments[0])
+                String(targetFile?.contentsToByteArray() ?: return@execOnArguments null)
+            }
+            else -> null
+        }
+    }
+
+    private fun execOnArguments(
+        call: RsMacroCall,
+        wrap: Boolean = true,
+        exec: (List<String>) -> String?
+    ): String? {
+        val macroBody = call.macroBody ?: return null
+        val file = RsPsiFactory(project).createFile("fn f() { ($macroBody,); }")
+        val tupleExpr = file.stubDescendantOfTypeOrStrict<RsExpr>() as? RsTupleExpr ?: return null
+        val exprList = tupleExpr.exprList
+        exprList.forEach { expr ->
+            if (!expr.setContextAndExpandedFrom(call)) {
+                return null
+            }
+        }
+        return when {
+            exprList.all { it is RsLitExpr } -> {
+                exec(exprList.map { expr ->
+                    val kind = (expr as RsLitExpr).kind
+                    when (kind) {
+                        is RsLiteralKind.Boolean -> kind.value.toString()
+                        is RsLiteralKind.Integer -> kind.value?.toString() ?: return null
+                        is RsLiteralKind.Float -> kind.value?.toString() ?: return null
+                        is RsLiteralKind.String -> kind.value ?: return null
+                        is RsLiteralKind.Char -> kind.value ?: return null
+                        null -> return null
+                    }
+                })
+            }
+            exprList.any { it is RsMacroExpr } -> {
+                exprList.map { expr ->
+                    when (expr) {
+                        is RsMacroExpr -> expandMacroAsText(
+                            expr.macroCall.resolveToMacro() ?: return null,
+                            expr.macroCall,
+                            wrap = wrap
+                        ) ?: return null
+                        else -> expr.text
+                    }
+                }.joinToString(
+                    prefix = "${call.macroName}!(",
+                    postfix = if (call.expansionContext == MacroExpansionContext.ITEM) ");" else ")"
+                )
+            }
+            else -> null
+        }
+    }
+
+    private fun makeString(s: String): String = "\"$s\""
+
     private fun findMatchingPattern(
         def: RsMacro,
-        call: RsMacroCall
+        call: RsMacroCall,
+        wrap: Boolean = true
     ): Pair<RsMacroCase, MacroSubstitution>? {
         val macroCallBody = project.createRustPsiBuilder(call.macroBody ?: return null)
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
 
         for (case in macroCaseList) {
-            val subst = case.pattern.match(macroCallBody)
+            val subst = case.pattern.match(macroCallBody, wrap = wrap)
             if (subst != null) {
                 return case to subst
             } else {
@@ -130,7 +218,7 @@ class MacroExpander(val project: Project) {
         return null
     }
 
-    private fun substituteMacro(root: PsiElement, subst: WithParent): CharSequence? =
+    private fun substituteMacro(root: PsiElement, subst: WithParent): String? =
         buildString { if (!substituteMacro(this, root, subst)) return null }
 
     private fun substituteMacro(sb: StringBuilder, root: PsiElement, subst: WithParent): Boolean {
@@ -225,8 +313,8 @@ const val MACRO_CRATE_IDENTIFIER_PREFIX: String = "IntellijRustDollarCrate_"
 private class MacroPattern private constructor(
     val pattern: Sequence<PsiElement>
 ) {
-    fun match(macroCallBody: PsiBuilder): MacroSubstitution? {
-        return matchPartial(macroCallBody)?.let { result ->
+    fun match(macroCallBody: PsiBuilder, wrap: Boolean = true): MacroSubstitution? {
+        return matchPartial(macroCallBody, wrap = wrap)?.let { result ->
             if (!macroCallBody.eof()) {
                 MacroExpansionMarks.failMatchPatternByExtraInput.hit()
                 null
@@ -238,7 +326,7 @@ private class MacroPattern private constructor(
 
     private fun isEmpty() = pattern.firstOrNull() == null
 
-    private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
+    private fun matchPartial(macroCallBody: PsiBuilder, wrap: Boolean = true): MacroSubstitution? {
         ProgressManager.checkCanceled()
         val map = HashMap<String, String>()
         val groups = mutableListOf<MacroGroup>()
@@ -258,7 +346,7 @@ private class MacroPattern private constructor(
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
 
                     // Wrap expressions in () to avoid problems related to operator precedence during expansion
-                    if (type == "expr")
+                    if (type == "expr" && wrap)
                         map[name] = "($text)"
                     else
                         map[name] = text
@@ -312,7 +400,7 @@ private class MacroPattern private constructor(
         }
     }
 
-    private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
+    private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder, wrap: Boolean = true): List<MacroSubstitution>? {
         val groups = mutableListOf<MacroSubstitution>()
         val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return null)
         if (pattern.isEmpty()) return null
@@ -327,7 +415,7 @@ private class MacroPattern private constructor(
             }
 
             val lastOffset = macroCallBody.currentOffset
-            val result = pattern.matchPartial(macroCallBody)
+            val result = pattern.matchPartial(macroCallBody, wrap = wrap)
             if (result != null) {
                 if (macroCallBody.currentOffset == lastOffset) {
                     MacroExpansionMarks.groupMatchedEmptyTT.hit()
@@ -477,7 +565,7 @@ private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<Stri
 
     groupDefinition.ancestors
         .drop(1)
-        .takeWhile { it !is RsMacroCase}
+        .takeWhile { it !is RsMacroCase }
         .forEach(::go)
 
     return vars.mapNotNullToSet { it.name }
