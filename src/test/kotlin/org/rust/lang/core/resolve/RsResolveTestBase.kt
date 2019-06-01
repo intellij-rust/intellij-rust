@@ -56,14 +56,22 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun checkByCode(@Language("Rust") code: String, mark: Testmark) =
         mark.checkHit { checkByCode(code) }
 
-    protected fun stubOnlyResolve(@Language("Rust") code: String) {
-        stubOnlyResolve<RsWeakReferenceElement>(fileTreeFromText(code))
-    }
+    protected fun stubOnlyResolve(
+        @Language("Rust") code: String,
+        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
+    ) = stubOnlyResolve<RsWeakReferenceElement>(fileTreeFromText(code), resolveFileProducer)
 
-    protected fun stubOnlyResolve(@Language("Rust") code: String, mark: Testmark) =
-        mark.checkHit { stubOnlyResolve(code) }
+    protected fun stubOnlyResolve(
+        @Language("Rust") code: String,
+        mark: Testmark,
+        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
+    ) = mark.checkHit { stubOnlyResolve(code, resolveFileProducer) }
 
-    protected inline fun <reified T : PsiElement> stubOnlyResolve(fileTree: FileTree, customCheck: (PsiElement) -> Unit = {}) {
+    protected inline fun <reified T : PsiElement> stubOnlyResolve(
+        fileTree: FileTree,
+        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile,
+        customCheck: (PsiElement) -> Unit = {}
+    ) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker()
 
         checkAstNotLoaded(VirtualFileFilter { file ->
@@ -85,11 +93,7 @@ abstract class RsResolveTestBase : RsTestBase() {
 
         val element = referenceElement.checkedResolve(offset)
         customCheck(element)
-        val actualResolveFile = if (element is PsiDirectory) {
-            element.virtualFile
-        } else {
-            element.contextualFile.virtualFile
-        }
+        val actualResolveFile = resolveFileProducer(element)
 
         val resolveFiles = resolveVariants.split("|")
         if (resolveFiles.size == 1) {
@@ -102,6 +106,10 @@ abstract class RsResolveTestBase : RsTestBase() {
                 error("Should resolve to any of $resolveFiles, was ${actualResolveFile.path} instead")
             }
         }
+    }
+
+    protected fun getActualResolveFile(element: PsiElement): VirtualFile {
+        return if (element is PsiDirectory) element.virtualFile else element.contextualFile.virtualFile
     }
 
     protected fun check(actualResolveFile: VirtualFile, expectedFilePath: String): ResolveResult {
