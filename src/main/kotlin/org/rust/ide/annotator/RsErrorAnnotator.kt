@@ -85,11 +85,49 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitSelfParameter(o: RsSelfParameter) = checkParamAttrs(holder, o)
             override fun visitValueParameter(o: RsValueParameter) = checkParamAttrs(holder, o)
             override fun visitVariadic(o: RsVariadic) = checkParamAttrs(holder, o)
+            override fun visitPatStruct(o: RsPatStruct) = checkRsPatStruct(holder, o)
+            override fun visitPatTupleStruct(o: RsPatTupleStruct) = checkRsPatTupleStruct(holder, o)
         }
 
         element.accept(visitor)
     }
 
+    private fun checkRsPatStruct(holder: AnnotationHolder, patStruct: RsPatStruct) {
+        val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
+        val declarationFieldNames = declaration.fields.map { it.name }
+        val bodyFields = patStruct.patFieldList
+        val extraFields = bodyFields.filter { it.kind.fieldName !in declarationFieldNames }
+        val bodyFieldNames = bodyFields.map { it.kind.fieldName }
+        val missingFields = declaration.fields.filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
+        extraFields.forEach {
+            RsDiagnostic.ExtraFieldInStructPattern(it).addToHolder(holder)
+        }
+        if (missingFields.isNotEmpty() && patStruct.dotdot == null) {
+            if (declaration.elementType == RsElementTypes.ENUM_VARIANT) {
+                RsDiagnostic.MissingFieldsInEnumVariantPattern(patStruct, declaration.text).addToHolder(holder)
+            } else {
+                RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration.text).addToHolder(holder)
+            }
+        }
+    }
+
+    private fun checkRsPatTupleStruct(holder: AnnotationHolder, patTupleStruct: RsPatTupleStruct) {
+        val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
+        val bodyFields = patTupleStruct.childrenOfType<RsPatIdent>()
+        if (bodyFields.size < declaration.fields.size && patTupleStruct.dotdot == null) {
+            if (declaration.elementType == RsElementTypes.ENUM_VARIANT) {
+                RsDiagnostic.MissingFieldsInEnumVariantTuplePattern(patTupleStruct, declaration.text).addToHolder(holder)
+            } else {
+                RsDiagnostic.MissingFieldsInTupleStructPattern(patTupleStruct, declaration.text).addToHolder(holder)
+            }
+        } else if (bodyFields.size > declaration.fields.size) {
+            RsDiagnostic.ExtraFieldInTupleStructPattern(
+                patTupleStruct,
+                bodyFields.size ,
+                declaration.fields.size
+            ).addToHolder(holder)
+        }
+    }
 
     private fun checkTraitType(holder: AnnotationHolder, traitType: RsTraitType) {
         if (!traitType.isImpl) return

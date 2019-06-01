@@ -690,6 +690,10 @@
             <className>org.rust.ide.intentions.ConvertToTupleIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.AddStructFieldsPatIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

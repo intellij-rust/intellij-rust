@@ -387,6 +387,14 @@ class RsPsiFactory(
             ?.firstChild as RsPatBinding?
             ?: error("Failed to create pat element")
 
+    fun createPatField(name: String): RsPatField =
+        createFromText("""
+            struct Foo { bar: i32 }
+            fn baz(foo: Foo) {
+                let Foo { $name } = foo;
+            }
+        """) ?: error("Failed to create pat field")
+
     fun createPatStruct(struct: RsStructItem): RsPatStruct {
         val structName = struct.name ?: error("Failed to create pat struct")
         val pad = if (struct.namedFields.isEmpty()) "" else " "
