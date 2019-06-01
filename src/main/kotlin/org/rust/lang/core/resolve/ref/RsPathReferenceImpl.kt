@@ -65,11 +65,25 @@ class RsPathReferenceImpl(
     }
 }
 
+fun resolvePathRaw(path: RsPath, lookup: ImplLookup): List<ScopeEntry> {
+    return collectResolveVariantsAsScopeEntries(path.referenceName) {
+        processPathResolveVariants(lookup, path, false, it)
+    }
+}
+
 fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)): List<BoundElement<RsElement>> {
     val result = collectPathResolveVariants(path.referenceName) {
         processPathResolveVariants(lookup, path, false, it)
     }
 
+    return instantiatePathGenerics(path, result, lookup)
+}
+
+private fun <T: RsElement> instantiatePathGenerics(
+    path: RsPath,
+    resolved: List<BoundElement<T>>,
+    lookup: ImplLookup
+): List<BoundElement<T>> {
     val typeArguments: List<Ty>? = run {
         val inAngles = path.typeArgumentList
         val fnSugar = path.valueParameterList
@@ -86,7 +100,7 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
 
     val outputArg = path.retType?.typeReference?.type
 
-    return result.map { boundElement ->
+    return resolved.map { boundElement ->
         val (element, subst) = boundElement.downcast<RsGenericDeclaration>() ?: return@map boundElement
 
         val assocTypes = run {
@@ -119,9 +133,15 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
         val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
         val newSubst = Substitution(typeSubst, regionSubst)
-        BoundElement(element, subst + newSubst, assocTypes)
+        BoundElement(boundElement.element, subst + newSubst, assocTypes)
     }
 }
+
+fun <T: RsElement> instantiatePathGenerics(
+    path: RsPath,
+    resolved: BoundElement<T>,
+    lookup: ImplLookup
+): BoundElement<T> = instantiatePathGenerics(path, listOf(resolved), lookup).single()
 
 private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
     collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }

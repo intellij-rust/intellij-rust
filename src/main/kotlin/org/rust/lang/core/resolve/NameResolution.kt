@@ -998,7 +998,7 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
-        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, source) ->
+        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, _, source) ->
             element is RsFunction && element.isMethod && processor(MethodResolveVariant(name, element, ty, i, source))
         }
         processAssociatedItems(lookup, ty, VALUES, methodProcessor)
@@ -1014,7 +1014,7 @@ private fun processAssociatedItems(
     val traitBounds = (type as? TyTypeParameter)?.let { lookup.getEnvBoundTransitivelyFor(it).toList() }
     val visitedInherent = mutableSetOf<String>()
     fun processTraitOrImpl(traitOrImpl: TraitImplSource, inherent: Boolean): Boolean {
-        fun inherentProcessor(entry: RsNamedElement): Boolean {
+        fun inherentProcessor(entry: RsAbstractable): Boolean {
             val name = entry.name ?: return false
             if (inherent) visitedInherent.add(name)
             if (!inherent && name in visitedInherent) return false
@@ -1028,14 +1028,14 @@ private fun processAssociatedItems(
             } else {
                 listOf(emptySubstitution)
             }
-            return subst.any { processor(AssocItemScopeEntry(name, entry, it, traitOrImpl)) }
+            return subst.any { processor(AssocItemScopeEntry(name, entry, it, type, traitOrImpl)) }
         }
 
         /**
          * For `impl T for Foo`, this'll walk impl members and trait `T` members,
          * which are not implemented.
          */
-        fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsNamedElement>): Boolean {
+        fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsAbstractable>): Boolean {
             val directlyImplemented = traitOrImpl.value.members?.let { accessor(it) }.orEmpty()
             if (directlyImplemented.any { inherentProcessor(it) }) return true
 
