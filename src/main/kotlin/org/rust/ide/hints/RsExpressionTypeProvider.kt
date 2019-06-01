@@ -9,7 +9,6 @@ import com.intellij.lang.ExpressionTypeProvider
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPat
-import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatField
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestors
@@ -23,7 +22,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
     override fun getExpressionsAt(pivot: PsiElement): List<PsiElement> =
         pivot.ancestors
             .takeWhile { it !is RsItemElement }
-            .filter { it is RsExpr || it is RsPatBinding || it is RsPat || it is RsPatField }
+            .filter { it is RsExpr || it is RsPat || it is RsPatField }
             .toList()
 
     override fun getInformationHint(element: PsiElement): String {
@@ -31,7 +30,6 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
             is RsExpr -> element.type
             is RsPat -> element.type
             is RsPatField -> element.type
-            is RsPatBinding -> element.type
             else -> error("Unexpected element type: $element")
         }
         return type.toString().escaped
