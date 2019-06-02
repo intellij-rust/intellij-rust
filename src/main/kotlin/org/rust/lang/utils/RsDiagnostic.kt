@@ -544,6 +544,18 @@ sealed class RsDiagnostic(
         )
     }
 
+    class ReprForEmptyEnumError(
+        val attr: RsAttr,
+        element: PsiElement = attr.metaItem.identifier ?: attr.metaItem
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0084,
+            "Enum with no variants can't have `repr` attribute",
+            fixes = listOf(RemoveAttrFix(attr))
+        )
+    }
+
     class DuplicateFieldError(
         element: PsiElement,
         private val fieldName: String
@@ -947,7 +959,7 @@ sealed class RsDiagnostic(
 }
 
 enum class RsErrorCode {
-    E0004, E0040, E0046, E0050, E0060, E0061, E0069, E0081,
+    E0004, E0040, E0046, E0050, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0120, E0121, E0124, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
