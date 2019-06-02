@@ -38,16 +38,16 @@ class RsPathReferenceImpl(
     override fun advancedResolve(): BoundElement<RsElement>? =
         advancedMultiResolve().singleOrNull()
 
-    override fun advancedMultiResolve(): List<BoundElement<RsElement>> =
-        (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPaths(it)?.map { BoundElement(it) } }
-            ?: advancedCachedMultiResolve()
-
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> {
         return advancedMultiResolve().toTypedArray()
     }
 
     override fun multiResolve(): List<RsNamedElement> =
         advancedMultiResolve().mapNotNull { it.element as? RsNamedElement }
+
+    private fun advancedMultiResolve(): List<BoundElement<RsElement>> =
+        (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPaths(it)?.map { BoundElement(it) } }
+            ?: advancedCachedMultiResolve()
 
     private fun advancedCachedMultiResolve(): List<BoundElement<RsElement>> {
         return RsResolveCache.getInstance(element.project)
@@ -76,14 +76,19 @@ fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)):
         processPathResolveVariants(lookup, path, false, it)
     }
 
-    return instantiatePathGenerics(path, result, lookup)
+    return when (result.size) {
+        0 -> emptyList()
+        1 -> listOf(instantiatePathGenerics(path, result.single(), lookup))
+        else -> result
+    }
 }
 
-private fun <T: RsElement> instantiatePathGenerics(
+fun <T: RsElement> instantiatePathGenerics(
     path: RsPath,
-    resolved: List<BoundElement<T>>,
+    resolved: BoundElement<T>,
     lookup: ImplLookup
-): List<BoundElement<T>> {
+): BoundElement<T> {
+    val (element, subst) = resolved.downcast<RsGenericDeclaration>() ?: return resolved
     val typeArguments: List<Ty>? = run {
         val inAngles = path.typeArgumentList
         val fnSugar = path.valueParameterList
@@ -95,53 +100,41 @@ private fun <T: RsElement> instantiatePathGenerics(
             else -> null
         }
     }
-
     val regionArguments: List<Region>? = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
-
     val outputArg = path.retType?.typeReference?.type
 
-    return resolved.map { boundElement ->
-        val (element, subst) = boundElement.downcast<RsGenericDeclaration>() ?: return@map boundElement
-
-        val assocTypes = run {
-            if (element is RsTraitItem) {
-                buildMap {
-                    // Iterator<Item=T>
-                    path.typeArgumentList?.assocTypeBindingList?.forEach { binding ->
-                        // We can't just use `binding.reference.resolve()` here because
-                        // resolving of an assoc type depends on a parent path resolve,
-                        // so we coming back here and entering the infinite recursion
-                        resolveAssocTypeBinding(element, binding)?.let { assoc ->
-                            binding.typeReference?.type?.let { put(assoc, it) }
-                        }
-
+    val assocTypes = run {
+        if (element is RsTraitItem) {
+            buildMap {
+                // Iterator<Item=T>
+                path.typeArgumentList?.assocTypeBindingList?.forEach { binding ->
+                    // We can't just use `binding.reference.resolve()` here because
+                    // resolving of an assoc type depends on a parent path resolve,
+                    // so we coming back here and entering the infinite recursion
+                    resolveAssocTypeBinding(element, binding)?.let { assoc ->
+                        binding.typeReference?.type?.let { put(assoc, it) }
                     }
 
-                    // Fn() -> T
-                    val outputParam = lookup.fnOnceOutput
-                    if (outputArg != null && outputParam != null) {
-                        put(outputParam, outputArg)
-                    }
                 }
-            } else {
-                emptyMap<RsTypeAlias, Ty>()
+
+                // Fn() -> T
+                val outputParam = lookup.fnOnceOutput
+                if (outputArg != null && outputParam != null) {
+                    put(outputParam, outputArg)
+                }
             }
+        } else {
+            emptyMap<RsTypeAlias, Ty>()
         }
-
-        val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
-        val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
-        val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
-        val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
-        val newSubst = Substitution(typeSubst, regionSubst)
-        BoundElement(boundElement.element, subst + newSubst, assocTypes)
     }
-}
 
-fun <T: RsElement> instantiatePathGenerics(
-    path: RsPath,
-    resolved: BoundElement<T>,
-    lookup: ImplLookup
-): BoundElement<T> = instantiatePathGenerics(path, listOf(resolved), lookup).single()
+    val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
+    val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
+    val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
+    val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
+    val newSubst = Substitution(typeSubst, regionSubst)
+    return BoundElement(resolved.element, subst + newSubst, assocTypes)
+}
 
 private fun resolveAssocTypeBinding(trait: RsTraitItem, binding: RsAssocTypeBinding): RsTypeAlias? =
     collectResolveVariants(binding.referenceName) { processAssocTypeVariants(trait, it) }
