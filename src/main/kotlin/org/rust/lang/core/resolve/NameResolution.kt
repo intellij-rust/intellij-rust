@@ -530,7 +530,15 @@ private fun processTypeQualifiedPathResolveVariants(
             return if (isAppropriateTrait) processor(e) else false
         }
     } else {
-        processor
+        fun(e: AssocItemScopeEntry): Boolean {
+            return if (e.element is RsTypeAlias && baseTy is TyTypeParameter &&
+                e.source is TraitImplSource.ExplicitImpl) {
+                NameResolutionTestmarks.skipAssocTypeFromImpl.hit()
+                false
+            } else {
+                processor(e)
+            }
+        }
     }
     val selfSubst = if (baseTy !is TyTraitObject) {
         mapOf(TyTypeParameter.self() to baseTy).toTypeSubst()
@@ -1362,6 +1370,7 @@ object NameResolutionTestmarks {
     val modDeclExplicitPathInInlineModule = Testmark("modDeclExplicitPathInInlineModule")
     val modDeclExplicitPathInNonInlineModule = Testmark("modDeclExplicitPathInNonInlineModule")
     val selfRelatedTypeSpecialCase = Testmark("selfRelatedTypeSpecialCase")
+    val skipAssocTypeFromImpl = Testmark("skipAssocTypeFromImpl")
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)

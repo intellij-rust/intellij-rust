@@ -1004,4 +1004,33 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             0.my_add(0).my_add(0);
         }             //^ unresolved
     """)
+
+    fun `test method in "impl for generic type" at type parameter with bound`() = checkByCode("""
+        trait Bound {}
+        trait Tr {
+            fn foo(&self) {}
+        }    //X
+        impl<A: Bound> Tr for A {}
+        fn foo<B: Bound>(b: B) {
+            b.foo();
+        }   //^
+    """)
+
+    fun `test "impl for generic type" is NOT used for associated type resolve`() = checkByCode("""
+        trait Bound {}
+        trait Tr { type Item; }
+        impl<A: Bound> Tr for A { type Item = (); }
+        fn foo<B: Bound>(b: B) {
+            let a: B::Item;
+        }           //^ unresolved
+    """, NameResolutionTestmarks.skipAssocTypeFromImpl)
+
+    fun `test "impl for generic type" is USED for associated type resolve UFCS`() = checkByCode("""
+        trait Bound {}
+        trait Tr { type Item; }
+        impl<A: Bound> Tr for A { type Item = (); }
+        fn foo<B: Bound>(b: B) {     //X
+            let a: <B as Tr>::Item;
+        }                   //^
+    """)
 }
