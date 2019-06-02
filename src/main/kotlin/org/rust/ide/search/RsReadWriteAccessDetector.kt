@@ -23,6 +23,7 @@ class RsReadWriteAccessDetector : ReadWriteAccessDetector() {
             is RsExpr -> element
             is RsPath -> element.parent as? RsPathExpr ?: return Access.Read
             is RsFieldLookup -> element.parentDotExpr
+            is RsStructLiteralField -> return Access.Write // Struct literal `S { f: 0 }`
             else -> return Access.Read
         }
 
