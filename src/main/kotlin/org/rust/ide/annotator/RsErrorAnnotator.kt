@@ -456,6 +456,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkAttr(holder: AnnotationHolder, attr: RsAttr) {
         checkImplBothCopyAndDrop(holder, attr)
+        checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
     }
 
@@ -468,6 +469,27 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
         }
     }
+
+    // E0518: Inline attribute is allowed only on functions
+    private fun checkInlineAttr(holder: AnnotationHolder, attr: RsAttr) {
+        val metaItem = attr.metaItem
+        if (metaItem.name == "inline") {
+            val parent = when (attr) {
+                // #[inline] fn foo() {}
+                is RsOuterAttr -> attr.parent
+                // Apparently you can place attr inside the function as well
+                // fn foo() { #![inline] }
+                is RsInnerAttr -> attr.parent?.parent
+                else -> null
+            } ?: return
+
+            if (parent !is RsFunction && parent !is RsLambdaExpr) {
+                RsDiagnostic.IncorrectlyPlacedInlineAttr(metaItem.identifier ?: metaItem, attr)
+                    .addToHolder(holder)
+            }
+        }
+    }
+
 
     private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
