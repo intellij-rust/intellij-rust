@@ -1665,7 +1665,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
-    fun `test impl Drop for primitive E0120`() = checkErrors("""
+    fun `test impl Drop for primitive E0120`() = checkByText("""
         #[lang = "drop"]
         trait Drop {
             fn drop(&mut self);
@@ -1673,7 +1673,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         impl <error descr="Drop can be only implemented by structs and enums [E0120]">Drop</error> for u32 {
             fn drop(&mut self) {}
         }
-    """)
+    """, ignoreExtraHighlighting = true /* impl X for u32 is also an error so we ignore it here */)
 
     fun `test impl Drop for reference E0120`() = checkErrors("""
         #[lang = "drop"]
@@ -1820,4 +1820,31 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         enum Test<EOLError descr="<, where or '{' expected"></EOLError>
     """)
 
+
+    fun `test impl unknown E0118`() = checkErrors("""
+        impl Foo {} // Should not report errors for unresolved types
+    """)
+
+    fun `test impl u8 E0118`() = checkErrors("""
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
+    """)
+
+    fun `test impl tuple E0118`() = checkErrors("""
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">(u8, u8)</error> {}
+    """)
+
+    fun `test impl array E0118`() = checkErrors("""
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">[u8; 1]</error> {}
+    """)
+
+    fun `test impl pointer E0118`() = checkErrors("""
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">*const u8</error> {}
+    """)
+
+    fun `test impl dyn Trait E0118`() = checkErrors("""
+        trait Bar {}
+        impl dyn Bar {
+            fn foo(&self) {}
+        }
+    """)
 }

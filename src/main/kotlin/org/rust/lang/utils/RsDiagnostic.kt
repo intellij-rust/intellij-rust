@@ -891,6 +891,16 @@ sealed class RsDiagnostic(
         }
     }
 
+    class ImplForNonAdtError(
+        element: PsiElement
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0118,
+            "Can impl only `struct`s, `enum`s, `union`s and trait objects"
+        )
+    }
+
     class CannotAssignToImmutable(
         element: PsiElement,
         private val message: String,
@@ -972,7 +982,7 @@ sealed class RsDiagnostic(
 
 enum class RsErrorCode {
     E0004, E0040, E0046, E0050, E0060, E0061, E0069, E0081, E0084,
-    E0106, E0107, E0120, E0121, E0124, E0133, E0184, E0185, E0186, E0198, E0199,
+    E0106, E0107, E0118, E0120, E0121, E0124, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0277,
     E0308, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
