@@ -7,16 +7,23 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction
 
 class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
 
     fun `test simple`() = doAvailableTest("""
-        struct Test(pub usize,/*caret*/ i32);
+        struct Test (pub usize,/*caret*/ i32);
     """, """
         struct Test {
             pub _0: usize,
             _1: i32
         }
+    """)
+
+    fun `test empty`() = doAvailableTest("""
+        struct Test (/*caret*/);
+    """, """
+        struct Test {}
     """)
 
     fun `test simple enum`() = doAvailableTest("""

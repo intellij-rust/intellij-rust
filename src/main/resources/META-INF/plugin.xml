@@ -878,9 +878,16 @@
         </action>
 
         <action id="Rust.RsConvertToNamedFields"
-                class="org.rust.ide.refactoring.RsConvertToNamedFieldsAction"
+                class="org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction"
                 text="Convert to named fields"
-                description="Move this module to a single file">
+                description="Converts tuple struct to named fields">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
+
+        <action id="Rust.RsConvertToTuple"
+                class="org.rust.ide.refactoring.convertStruct.RsConvertToTupleAction"
+                text="Convert to tuple"
+                description="Converts struct to tuple representation">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring
+package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -41,19 +41,19 @@ class RsConvertToNamedFieldsProcessor(
     override fun findUsages(): Array<UsageInfo> {
         if (!convertUsages) return arrayOf()
         var usages = ReferencesSearch
-            .search(element, element.useScope)
+            .search(element)
             .asSequence()
             .map { MyUsageInfo(it) }
 
         usages += types
             .mapIndexed { index, rsTupleFieldDecl ->
                 ProgressManager.checkCanceled()
-                ReferencesSearch.search(rsTupleFieldDecl, rsTupleFieldDecl.useScope)
+                ReferencesSearch.search(rsTupleFieldDecl)
                     .map { MyUsageInfo(it, newNames[index]) }
             }.flatten()
 
         return usages
-            .toCollection(ArrayList())
+            .toList()
             .toTypedArray()
     }
 
