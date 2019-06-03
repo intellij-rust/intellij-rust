@@ -12,6 +12,8 @@
         <list>
           <option value=":generateRustLexer" />
           <option value=":generateRustParser" />
+          <option value="intellij-toml:generateTomlLexer" />
+          <option value="intellij-toml:generateTomlParser" />
         </list>
       </option>
       <option name="vmOptions" value="" />
