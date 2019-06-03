@@ -1011,7 +1011,7 @@ sealed class RsDiagnostic(
             UNKNOWN_SYMBOL,
             E0583,
             "File not found for module `${modDecl.name}`",
-            fixes = listOf(AddModuleFileFix(modDecl, expandModuleFirst = false))
+            fixes = AddModuleFileFix.createFixes(modDecl, expandModuleFirst = false)
         )
     }
 
