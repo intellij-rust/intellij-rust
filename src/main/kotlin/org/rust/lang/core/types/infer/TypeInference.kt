@@ -8,7 +8,6 @@ package org.rust.lang.core.types.infer
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiModificationTracker
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -679,7 +678,7 @@ val RsGenericDeclaration.bounds: List<TraitRef>
     get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(
             doGetBounds(),
-            PsiModificationTracker.MODIFICATION_COUNT
+            rustStructureOrAnyPsiModificationTracker
         )
     }
 
