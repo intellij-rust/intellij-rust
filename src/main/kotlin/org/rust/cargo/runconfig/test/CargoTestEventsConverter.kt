@@ -55,7 +55,8 @@ class CargoTestEventsConverter(
         val targetName = text
             .trim()
             .substringAfterLast(File.separatorChar)
-            .substringBeforeLast('.')
+            .substringBefore(" ")
+            .substringBeforeLast(".")
         suitesStack.add(targetName)
         return true
     }
