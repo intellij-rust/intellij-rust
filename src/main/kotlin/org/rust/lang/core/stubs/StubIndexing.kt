@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.stubs
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IndexSink
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.getOwner
+import org.rust.lang.core.psi.ext.stubParent
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
@@ -62,7 +64,7 @@ fun IndexSink.indexConstant(stub: RsConstantStub) {
 
 fun IndexSink.indexTypeAlias(stub: RsTypeAliasStub) {
     indexNamedStub(stub)
-    if (stub.psi.owner !is RsAbstractableOwner.Impl) {
+    if (stub.psi.getOwner(PsiElement::stubParent) !is RsAbstractableOwner.Impl) {
         indexGotoClass(stub)
     }
 }
