@@ -37,18 +37,17 @@ class RsDebugRunner : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESS
         environment: ExecutionEnvironment,
         runCommand: GeneralCommandLine
     ): RunContentDescriptor? {
-        val sysroot = state.computeSysroot()
         val runParameters = RsDebugRunParameters(environment.project, runCommand)
         return XDebuggerManager.getInstance(environment.project)
             .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                 override fun start(session: XDebugSession): XDebugProcess =
-                    RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
+                    RsLocalDebugProcess(runParameters, session, state.consoleBuilder, state::computeSysroot).apply {
                         ProcessTerminatedListener.attach(processHandler, environment.project)
                         val settings = RsDebuggerSettings.getInstance()
-                        loadPrettyPrinters(sysroot, settings.lldbRenderers, settings.gdbRenderers)
+                        loadPrettyPrinters(settings.lldbRenderers, settings.gdbRenderers)
                         val commitHash = state.cargoProject?.rustcInfo?.version?.commitHash
-                        if (sysroot != null && commitHash != null) {
-                            loadRustcSources(sysroot, commitHash)
+                        if (commitHash != null) {
+                            loadRustcSources(commitHash)
                         }
                         start()
                     }
