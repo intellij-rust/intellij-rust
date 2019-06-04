@@ -1193,6 +1193,10 @@ class RsTypeInferenceWalker(
             }
             is TyTraitObject -> lookup.asTyFunction(expected.trait)
             is TyFunction -> expected
+            is TyAnon -> {
+                val trait = expected.traits.find { it.element in listOf(items.Fn, items.FnMut, items.FnOnce) }
+                trait?.let { lookup.asTyFunction(it) }
+            }
             else -> null
         }
     }
