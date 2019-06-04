@@ -151,6 +151,13 @@ class RsInferenceContext(
         }
     }
 
+    inline fun <T: Any> commitIfNotNull(action: () -> T?): T? {
+        val snapshot = startSnapshot()
+        val result = action()
+        if (result == null) snapshot.rollback() else snapshot.commit()
+        return result
+    }
+
     fun infer(element: RsInferenceContextOwner): RsInferenceResult {
         if (element is RsFunction) {
             val fctx = RsTypeInferenceWalker(this, element.returnType)
