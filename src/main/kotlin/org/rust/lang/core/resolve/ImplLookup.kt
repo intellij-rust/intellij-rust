@@ -499,12 +499,7 @@ class ImplLookup(
 
     private fun Sequence<RsImplItem>.assembleImplCandidates(ref: TraitRef): Sequence<SelectionCandidate> =
         mapNotNull { impl ->
-            val traitRef = impl.traitRef ?: return@mapNotNull null
-
-            // Optimization: traits can't be aliased, so we can weed out irrelevant traits without resolve
-            if (traitRef.path.referenceName != ref.trait.element.name) return@mapNotNull null
-
-            val formalTraitRef = traitRef.resolveToBoundTrait() ?: return@mapNotNull null
+            val formalTraitRef = impl.implementedTrait ?: return@mapNotNull null
             if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
             val formalSelfTy = impl.typeReference?.type ?: return@mapNotNull null
             val (_, implTraitRef) =
