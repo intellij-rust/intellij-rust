@@ -131,7 +131,9 @@ object CargoMetadata {
          * Can be "2015", "2018" or null. Null value can be got from old version of cargo
          * so it is the same as "2015"
          */
-        val edition: String?
+        val edition: String?,
+
+        val doctest: Boolean?
     ) {
         val cleanKind: TargetKind
             get() = when (kind.singleOrNull()) {
@@ -276,7 +278,8 @@ object CargoMetadata {
                 it.url,
                 name,
                 makeTargetKind(cleanKind, cleanCrateTypes),
-                edition.cleanEdition()
+                edition.cleanEdition(),
+                doctest = doctest ?: true
             )
         }
     }

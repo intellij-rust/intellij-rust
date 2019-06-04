@@ -12,8 +12,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.injected.RsDoctestLanguageInjector
+import org.rust.ide.injected.areDoctestsEnabled
 import org.rust.ide.injected.findDoctestInjectableRanges
-import org.rust.ide.injected.isDoctestable
 import org.rust.lang.core.psi.RsDocCommentImpl
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -31,7 +31,7 @@ class RsDoctestAnnotator : RsAnnotatorBase() {
         if (element !is RsDocCommentImpl) return
         if (!element.project.rustSettings.doctestInjectionEnabled) return
         // only library targets can have doctests
-        if (element.ancestorStrict<RsElement>()?.containingCargoTarget?.isDoctestable != true) return
+        if (element.ancestorStrict<RsElement>()?.containingCargoTarget?.areDoctestsEnabled != true) return
 
         val startOffset = element.startOffset
         findDoctestInjectableRanges(element).flatten().forEach {

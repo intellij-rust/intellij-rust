@@ -89,6 +89,8 @@ interface CargoWorkspace {
         val pkg: Package
 
         val edition: Edition
+
+        val doctest: Boolean
     }
 
     interface Dependency {
@@ -271,7 +273,8 @@ private class PackageImpl(
             crateRootUrl = it.crateRootUrl,
             name = it.name,
             kind = it.kind,
-            edition = it.edition
+            edition = it.edition,
+            doctest = it.doctest
         )
     }
 
@@ -291,7 +294,8 @@ private class TargetImpl(
     val crateRootUrl: String,
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
-    override val edition: CargoWorkspace.Edition
+    override val edition: CargoWorkspace.Edition,
+    override val doctest: Boolean
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
@@ -317,7 +321,8 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
                 crateRootUrl = it.crateRootUrl,
                 name = it.name,
                 kind = it.kind,
-                edition = edition ?: it.edition
+                edition = edition ?: it.edition,
+                doctest = it.doctest
             )
         },
         source = source,
@@ -348,7 +353,8 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
             crateRootUrl = crateRootUrl,
             name = name,
             kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
-            edition = edition
+            edition = edition,
+            doctest = true
         )),
         source = null,
         origin = PackageOrigin.STDLIB,
