@@ -242,7 +242,18 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     return false
 }
 
-fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processExternCrateResolveVariants(
+    element: RsElement,
+    isCompletion: Boolean,
+    processor: RsResolveProcessor
+): Boolean = processExternCrateResolveVariants(element, isCompletion, !isCompletion, processor)
+
+fun processExternCrateResolveVariants(
+    element: RsElement,
+    isCompletion: Boolean,
+    withSelf: Boolean,
+    processor: RsResolveProcessor
+): Boolean {
     val isDoctestInjection = element.isDoctestInjection
     val target = element.containingCargoTarget ?: return false
     val pkg = target.pkg
@@ -263,7 +274,7 @@ fun processExternCrateResolveVariants(element: RsElement, isCompletion: Boolean,
     }
 
     val crateRoot = element.crateRoot
-    if (crateRoot != null && !isCompletion) {
+    if (crateRoot != null && withSelf) {
         if (processor("self", crateRoot)) return true
     }
     if (processPackage(pkg)) return true
@@ -591,7 +602,7 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
 
 fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
-        processLexicalDeclarations(scope, cameFrom, VALUES) { v ->
+        processLexicalDeclarations(scope, cameFrom, VALUES, ItemProcessingMode.WITH_PRIVATE_IMPORTS) { v ->
             val el = v.element
             if (el is RsPatBinding) processor(el)
             false
@@ -1089,6 +1100,7 @@ private fun processLexicalDeclarations(
     scope: RsElement,
     cameFrom: PsiElement,
     ns: Set<Namespace>,
+    ipm: ItemProcessingMode,
     processor: RsResolveProcessor
 ): Boolean {
     check(cameFrom.context == scope)
@@ -1120,7 +1132,7 @@ private fun processLexicalDeclarations(
 
     when (scope) {
         is RsMod -> {
-            if (processItemDeclarationsWithCache(scope, ns, processor, withPrivateImports = true)) return true
+            if (processItemDeclarationsWithCache(scope, ns, processor, ipm = ipm)) return true
         }
 
         is RsTypeAlias -> {
@@ -1186,7 +1198,7 @@ private fun processLexicalDeclarations(
                 }
             }
 
-            return processItemDeclarations(scope, ns, processor, withPrivateImports = true)
+            return processItemDeclarations(scope, ns, processor, ItemProcessingMode.WITH_PRIVATE_IMPORTS)
         }
 
         is RsForExpr -> {
@@ -1232,7 +1244,12 @@ fun processNestedScopesUpwards(
     val prevScope = mutableSetOf<String>()
     if (walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         processWithShadowing(prevScope, processor) { shadowingProcessor ->
-            processLexicalDeclarations(scope, cameFrom, ns, shadowingProcessor)
+            val ipm = when {
+                scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
+                isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
+                else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
+            }
+            processLexicalDeclarations(scope, cameFrom, ns, ipm, shadowingProcessor)
         }
     }) {
         return true
@@ -1241,42 +1258,16 @@ fun processNestedScopesUpwards(
     // Prelude is injected via implicit star import `use std::prelude::v1::*;`
     if (processor(ScopeEvent.STAR_IMPORTS)) return false
 
-    if (Namespace.Types in ns) {
-        if (scopeStart.isEdition2018 && !scopeStart.containingMod.isCrateRoot) {
-            val crateRoot = scopeStart.crateRoot
-            if (crateRoot != null) {
-                val result = processWithShadowing(prevScope, processor) { shadowingProcessor ->
-                    crateRoot.processExpandedItemsExceptImpls { item ->
-                        if (item is RsExternCrateItem) {
-                            processExternCrateItem(item, shadowingProcessor, true)
-                        } else {
-                            false
-                        }
-                    }
-                }
-                if (result) return true
-            }
-        }
-
-        // "extern_prelude" feature. Extern crate names can be resolved as if they were in the prelude.
-        // See https://blog.rust-lang.org/2018/10/25/Rust-1.30.0.html#module-system-improvements
-        // See https://github.com/rust-lang/rust/pull/54404/
-        val result = processWithShadowing(prevScope, processor) { shadowingProcessor ->
-            processExternCrateResolveVariants(scopeStart, isCompletion, shadowingProcessor)
-        }
-        if (result) return true
-    }
-
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
         val preludeProcessor: (ScopeEntry) -> Boolean = { v -> v.name !in prevScope && processor(v) }
-        return processItemDeclarationsWithCache(prelude, ns, preludeProcessor, withPrivateImports = false)
+        return processItemDeclarationsWithCache(prelude, ns, preludeProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
     }
 
     return false
 }
 
-private inline fun processWithShadowing(
+inline fun processWithShadowing(
     prevScope: MutableSet<String>,
     crossinline processor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean

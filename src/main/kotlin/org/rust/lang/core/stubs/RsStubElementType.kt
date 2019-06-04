@@ -20,11 +20,11 @@ abstract class RsStubElementType<StubT : StubElement<*>, PsiT : RsElement>(
     final override fun getExternalId(): String = "rust.${super.toString()}"
 
     override fun indexStub(stub: StubT, sink: IndexSink) {}
+}
 
-    protected fun createStubIfParentIsStub(node: ASTNode): Boolean {
-        val parent = node.treeParent
-        val parentType = parent.elementType
-        return (parentType is IStubElementType<*, *> && parentType.shouldCreateStub(parent)) ||
-            parentType is IStubFileElementType<*>
-    }
+fun createStubIfParentIsStub(node: ASTNode): Boolean {
+    val parent = node.treeParent
+    val parentType = parent.elementType
+    return (parentType is IStubElementType<*, *> && parentType.shouldCreateStub(parent)) ||
+        parentType is IStubFileElementType<*>
 }
