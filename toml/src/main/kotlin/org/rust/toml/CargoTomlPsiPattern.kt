@@ -9,13 +9,11 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.parentOfType
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.with
-import org.toml.lang.psi.TomlKey
-import org.toml.lang.psi.TomlKeyValue
-import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.TomlTableHeader
+import org.toml.lang.psi.*
 
 object CargoTomlPsiPattern {
     private const val TOML_KEY_CONTEXT_NAME = "key"
@@ -50,6 +48,88 @@ object CargoTomlPsiPattern {
                 )
         )
     }
+
+    private val onWorkspaceTableHeader: PsiElementPattern.Capture<TomlTableHeader> =
+        cargoTomlPsiElement<TomlTableHeader>()
+            .with("workspaceCondition") { header ->
+                header.names.lastOrNull()?.text == "workspace"
+            }
+
+    private val onWorkspaceTable: PsiElementPattern.Capture<TomlTable> =
+        cargoTomlPsiElement<TomlTable>()
+            .withChild(onWorkspaceTableHeader)
+
+    val inWorkspaceKeyWithPathValue: PsiElementPattern.Capture<TomlValue> =
+        cargoTomlPsiElement<TomlValue>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .withParent(TomlArray::class.java)
+            .with("workspaceCondition") { tomlValue, context ->
+                onWorkspaceKeyWithPathValue.accepts(tomlValue.parentOfType<TomlKeyValue>()?.key)
+            }
+
+
+    private val onWorkspaceKeyWithPathValue: PsiElementPattern.Capture<TomlKey> =
+        cargoTomlPsiElement<TomlKey>()
+            .withSuperParent(
+                2,
+                onWorkspaceTable
+            )
+            .with("workspaceKeyNameWithPathValue") { key ->
+                key.text == "members" || key.text == "default-members" || key.text == "exclude"
+            }
+
+
+    private val onPackageTableHeader: PsiElementPattern.Capture<TomlTableHeader> =
+        cargoTomlPsiElement<TomlTableHeader>()
+            .with("packageCondition") { header ->
+                header.names.lastOrNull()?.text == "package"
+            }
+
+    private val onPackageTable: PsiElementPattern.Capture<TomlTable> =
+        cargoTomlPsiElement<TomlTable>()
+            .withChild(onPackageTableHeader)
+
+    val inLicenseFileKeyValue: PsiElementPattern.Capture<PsiElement> =
+        cargoTomlPsiElement<PsiElement>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .with("licenseFileKeyValueCondition") { _, context ->
+                val keyValue = context?.get(TOML_KEY_VALUE_CONTEXT_NAME) as? TomlKeyValue ?: return@with false
+                onLicenseFileKey.accepts(keyValue.key)
+            }
+
+    private val onLicenseFileKey: PsiElementPattern.Capture<TomlKey> =
+        cargoTomlPsiElement<TomlKey>()
+            .withSuperParent(2, onPackageTable)
+            .with("licenseFileCondition") { key ->
+                key.text == "license-file"
+            }
+
+    val inBuildKeyValue: PsiElementPattern.Capture<PsiElement> =
+        cargoTomlPsiElement<PsiElement>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .with("buildKeyValueCondition") { _, context ->
+                val keyValue = context?.get(TOML_KEY_VALUE_CONTEXT_NAME) as? TomlKeyValue ?: return@with false
+                inBuildKey.accepts(keyValue.key)
+            }
+
+    private val inBuildKey: PsiElementPattern.Capture<TomlKey> =
+        cargoTomlPsiElement<TomlKey>()
+            .withSuperParent(2, onPackageTable)
+            .with("buildKeyCondition") { key ->
+                key.text == "build"
+            }
+
+    val inWorkspaceKeyValue: PsiElementPattern.Capture<PsiElement> =
+        cargoTomlPsiElement<PsiElement>()
+            .inside(psiElement<TomlKeyValue>(TOML_KEY_VALUE_CONTEXT_NAME))
+            .with("workspaceKeyValueCondition") { _, context ->
+                val keyValue = context?.get(TOML_KEY_VALUE_CONTEXT_NAME) as? TomlKeyValue ?: return@with false
+                onWorkspaceKey.accepts(keyValue.key)
+            }
+
+    private val onWorkspaceKey: PsiElementPattern.Capture<TomlKey> =
+        cargoTomlPsiElement<TomlKey>()
+            .inside(onWorkspaceTable)
 
     private val onDependencyTableHeader: PsiElementPattern.Capture<TomlTableHeader> =
         cargoTomlPsiElement<TomlTableHeader>()

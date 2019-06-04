@@ -9,10 +9,14 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.toml.CargoTomlPsiPattern.inBuildKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inKey
+import org.rust.toml.CargoTomlPsiPattern.inLicenseFileKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
+import org.rust.toml.CargoTomlPsiPattern.inWorkspaceKeyValue
+import org.rust.toml.CargoTomlPsiPattern.inWorkspaceKeyWithPathValue
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 
@@ -125,6 +129,74 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         version = ""
         #^
     """)
+
+    fun `test inWorkspaceKeyWithPathValue 1`() = testPattern(inWorkspaceKeyWithPathValue, """
+        [workspace]
+        members = [" "]
+                   #^
+    """)
+
+    fun `test inWorkspaceKeyWithPathValue 2`() = testPattern(inWorkspaceKeyWithPathValue, """
+        [workspace]
+        default-members = [""]
+                          #^
+    """)
+
+    fun `test inWorkspaceKeyWithPathValue 3`() = testPattern(inWorkspaceKeyWithPathValue, """
+        [workspace]
+        exclude = [""]
+                  #^
+    """)
+
+    fun `test inWorkspaceKeyWithPathValue 4`() = testPatternNegative(inWorkspaceKeyWithPathValue, """
+        members = [""]
+                   #^
+    """)
+
+    fun `test inWorkspaceKeyWithPathValue 5`() = testPatternNegative(inWorkspaceKeyWithPathValue, """
+        default-members = [""]
+                          #^
+    """)
+
+    fun `test inWorkspaceKeyWithPathValue 6`() = testPatternNegative(inWorkspaceKeyWithPathValue, """
+        exclude = [""]
+                  #^
+    """)
+
+    fun `test inLicenseFileKey 1`() = testPattern(inLicenseFileKeyValue, """
+        [package]
+        license-file = ""
+                      #^
+    """)
+
+    fun `test inLicenseFileKey 2`() = testPatternNegative(inLicenseFileKeyValue, """
+        license-file = ""
+                      #^
+    """)
+
+
+    fun `test inBuildKey 1`() = testPattern(inBuildKeyValue, """
+        [package]
+        build = ""
+               #^
+    """)
+
+    fun `test inBuildKey 2`() = testPatternNegative(inBuildKeyValue, """
+        build = ""
+               #^
+    """)
+
+    fun `test inWorkspaceKey 1`() = testPattern(inWorkspaceKeyValue, """
+        [package]
+        workspace = ""
+                   #^
+    """)
+
+    fun `test inWorkspaceKey 2`() = testPatternNegative(inWorkspaceKeyValue, """
+        workspace = ""
+                   #^
+    """)
+
 
     private inline fun <reified T : PsiElement> testPattern(
         pattern: ElementPattern<T>,

@@ -14,8 +14,8 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED

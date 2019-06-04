@@ -30,11 +30,11 @@ import org.rust.lang.core.types.type
 
 const val KEYWORD_PRIORITY = 40.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
+const val DEFAULT_PRIORITY = 0.0
 private const val VARIABLE_PRIORITY = 5.0
 private const val ENUM_VARIANT_PRIORITY = 4.0
 private const val FIELD_DECL_PRIORITY = 3.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
-private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
 private const val DEPRECATED_PRIORITY = -1.0
 
