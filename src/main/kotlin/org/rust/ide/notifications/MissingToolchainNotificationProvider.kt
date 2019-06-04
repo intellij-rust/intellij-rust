@@ -12,8 +12,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotificationPanel
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -23,11 +21,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.lang.core.psi.RUST_STRUCTURE_CHANGE_TOPIC
-import org.rust.lang.core.psi.RustStructureChangeListener
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.isNotRustFile
-import org.rust.openapiext.toPsiFile
 
 /**
  * Warn user if rust toolchain or standard library is not properly configured.
@@ -50,11 +44,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
                 override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
-                    updateAllNotifications()
-                }
-            })
-            subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
-                override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) {
                     updateAllNotifications()
                 }
             })
@@ -81,11 +70,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             //TODO: more precise check here
             return createNoCargoProjectForFilePanel(file)
 
-        val psiFile = file.toPsiFile(project) as RsElement
-        if (psiFile.crateRoot == null) {
-            return createFileNotIncludedInModulesPanel()
-        }
-
         val workspace = cargoProject.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it
@@ -97,10 +81,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
         return null
     }
 
-    private fun createFileNotIncludedInModulesPanel(): EditorNotificationPanel =
-        EditorNotificationPanel().apply {
-            setText("File is not included in module tree, analysis is not available")
-        }
 
     private fun createBadToolchainPanel(file: VirtualFile): EditorNotificationPanel =
         EditorNotificationPanel().apply {

@@ -766,6 +766,7 @@
         <!-- Notification Providers -->
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
+        <editorNotificationProvider implementation="org.rust.ide.notifications.DetachedFileNotificationProvider"/>
 
         <!-- Editor Tab Title Providers -->
 
