@@ -5,7 +5,6 @@
 
 package org.rust.ide.notifications
 
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -16,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
@@ -37,9 +35,9 @@ import org.rust.openapiext.toPsiFile
  * Try to fix this automatically (toolchain from PATH, standard library from the last project)
  * and if not successful show the actual notification to the user.
  */
-class MissingToolchainNotificationProvider(
-    private val project: Project
-) : EditorNotifications.Provider<EditorNotificationPanel>() {
+class MissingToolchainNotificationProvider(project: Project) : RsNotificationProvider(project) {
+
+    override val VirtualFile.disablingKey: String get() = NOTIFICATION_STATUS_KEY
 
     init {
         project.messageBus.connect().apply {
@@ -66,22 +64,22 @@ class MissingToolchainNotificationProvider(
     override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
     override fun createNotificationPanel(file: VirtualFile, editor: FileEditor, project: Project): EditorNotificationPanel? {
-        if (file.isNotRustFile || isNotificationDisabled()) return null
+        if (file.isNotRustFile || isNotificationDisabled(file)) return null
         if (guessAndSetupRustProject(project)) return null
 
         val toolchain = project.toolchain
         if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
-            return createBadToolchainPanel()
+            return createBadToolchainPanel(file)
         }
 
         val cargoProjects = project.cargoProjects
         if (!cargoProjects.hasAtLeastOneValidProject) {
-            return createNoCargoProjectsPanel()
+            return createNoCargoProjectsPanel(file)
         }
 
         val cargoProject = cargoProjects.findProjectForFile(file) ?:
             //TODO: more precise check here
-            return createNoCargoProjectForFilePanel()
+            return createNoCargoProjectForFilePanel(file)
 
         val psiFile = file.toPsiFile(project) as RsElement
         if (psiFile.crateRoot == null) {
@@ -93,7 +91,7 @@ class MissingToolchainNotificationProvider(
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
-            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel()
+            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel(file)
         }
 
         return null
@@ -104,35 +102,35 @@ class MissingToolchainNotificationProvider(
             setText("File is not included in module tree, analysis is not available")
         }
 
-    private fun createBadToolchainPanel(): EditorNotificationPanel =
+    private fun createBadToolchainPanel(file: VirtualFile): EditorNotificationPanel =
         EditorNotificationPanel().apply {
             setText("No Rust toolchain configured")
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
             }
             createActionLabel("Do not show again") {
-                disableNotification()
+                disableNotification(file)
                 updateAllNotifications()
             }
         }
 
-    private fun createNoCargoProjectsPanel(): EditorNotificationPanel =
-        createAttachCargoProjectPanel("No Cargo projects found")
+    private fun createNoCargoProjectsPanel(file: VirtualFile): EditorNotificationPanel =
+        createAttachCargoProjectPanel(file, "No Cargo projects found")
 
-    private fun createNoCargoProjectForFilePanel(): EditorNotificationPanel =
-        createAttachCargoProjectPanel("File does not belong to any known Cargo project")
+    private fun createNoCargoProjectForFilePanel(file: VirtualFile): EditorNotificationPanel =
+        createAttachCargoProjectPanel(file, "File does not belong to any known Cargo project")
 
-    private fun createAttachCargoProjectPanel(message: String): EditorNotificationPanel =
+    private fun createAttachCargoProjectPanel(file: VirtualFile, message: String): EditorNotificationPanel =
         EditorNotificationPanel().apply {
             setText(message)
             createActionLabel("Attach", "Rust.AttachCargoProject")
             createActionLabel("Do not show again") {
-                disableNotification()
+                disableNotification(file)
                 updateAllNotifications()
             }
         }
 
-    private fun createLibraryAttachingPanel(): EditorNotificationPanel =
+    private fun createLibraryAttachingPanel(file: VirtualFile): EditorNotificationPanel =
         EditorNotificationPanel().apply {
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
@@ -150,21 +148,10 @@ class MissingToolchainNotificationProvider(
             }
 
             createActionLabel("Do not show again") {
-                disableNotification()
+                disableNotification(file)
                 updateAllNotifications()
             }
         }
-
-    private fun updateAllNotifications() {
-        EditorNotifications.getInstance(project).updateAllNotifications()
-    }
-
-    private fun disableNotification() {
-        PropertiesComponent.getInstance(project).setValue(NOTIFICATION_STATUS_KEY, true)
-    }
-
-    private fun isNotificationDisabled(): Boolean =
-        PropertiesComponent.getInstance(project).getBoolean(NOTIFICATION_STATUS_KEY)
 
     companion object {
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
