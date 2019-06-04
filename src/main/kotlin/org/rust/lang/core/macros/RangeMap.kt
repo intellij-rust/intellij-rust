@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.util.SmartList
 import org.rust.stdext.optimizeList
 import org.rust.stdext.readVarInt
@@ -32,6 +33,24 @@ data class RangeMap private constructor(private val ranges: List<MappedTextRange
         }.map { range ->
             range.dstOffset + (offset - range.srcOffset)
         }
+    }
+
+    private fun mapTextRangeFromExpansionToCallBody(toMap: TextRange): List<MappedTextRange> {
+        return ranges.mapNotNull { it.dstIntersection(toMap) }
+    }
+
+    private fun mapMappedTextRangeFromExpansionToCallBody(toMap: MappedTextRange): List<MappedTextRange> {
+        return mapTextRangeFromExpansionToCallBody(TextRange(toMap.srcOffset, toMap.srcEndOffset)).map { mapped ->
+            MappedTextRange(
+                mapped.srcOffset,
+                toMap.dstOffset + (mapped.dstOffset - toMap.srcOffset),
+                mapped.length
+            )
+        }
+    }
+
+    fun mapAll(other: RangeMap): RangeMap {
+        return RangeMap(other.ranges.flatMap(::mapMappedTextRangeFromExpansionToCallBody))
     }
 
     fun writeTo(data: DataOutputStream) {
@@ -80,5 +99,20 @@ data class MappedTextRange(
     }
 }
 
-private val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
-private val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
+val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
+val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
+
+private fun MappedTextRange.dstIntersection(range: TextRange): MappedTextRange? {
+    val newDstStart = Math.max(dstOffset, range.startOffset)
+    val newDstEnd = Math.min(dstEndOffset, range.endOffset)
+    return if (newDstStart < newDstEnd) {
+        val srcDelta = newDstStart - dstOffset
+        MappedTextRange(
+            srcOffset = srcOffset + srcDelta,
+            dstOffset = newDstStart,
+            length = newDstEnd - newDstStart
+        )
+    } else {
+        null
+    }
+}
