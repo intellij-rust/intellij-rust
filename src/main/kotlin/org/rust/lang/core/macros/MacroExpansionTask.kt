@@ -39,6 +39,7 @@ import kotlin.system.measureNanoTime
 abstract class MacroExpansionTaskBase(
     project: Project,
     private val storage: ExpandedMacroStorage,
+    private val pool: Executor,
     private val realFsExpansionContentRoot: Path
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false) {
     private val transactionExecutor = TransactionExecutor(project)
@@ -118,7 +119,7 @@ abstract class MacroExpansionTaskBase(
         estimateStages.set(extractableList.size)
         doneStages.set(0)
 
-        val pool = ForkJoinPool.commonPool()
+        // All subsequent parallelStream tasks are executed on the same [pool]
         supplyAsync(pool) {
             realTaskIndicator.text2 = "Expanding macros"
 
