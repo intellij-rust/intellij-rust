@@ -71,7 +71,10 @@ abstract class MacroExpansionTaskBase(
             val millis = measureNanoTime {
                 // 50ms - default progress bar update interval. See [ProgressDialog.UPDATE_INTERVAL]
                 while (!sync.await(50, TimeUnit.MILLISECONDS)) {
-                    indicator.fraction = (currentStep.get() - 1.0 + (doneStages.get().toDouble() / max(estimateStages.get(), 1))) / DEFAULT_RECURSION_LIMIT
+                    indicator.fraction = calcProgress(
+                        currentStep.get(),
+                        doneStages.get().toDouble() / max(estimateStages.get(), 1)
+                    )
 
                     // Type of [indicator] can be [BackgroundableProcessIndicator] which is thread sensitive
                     // and its `checkCanceled` method should be used only from a single thread.
@@ -95,6 +98,18 @@ abstract class MacroExpansionTaskBase(
         }
     }
 
+    private fun calcProgress(step: Int, progress: Double): Double =
+        (1 until step).map { stepProgress(it) }.sum() + stepProgress(step) * progress
+
+    // It's impossible to know total quantity of macros, so we guess these values
+    // (obtained empirically on some large projects)
+    private fun stepProgress(step: Int): Double = when (step) {
+        1 -> 0.3
+        2 -> 0.2
+        3 -> 0.1
+        else -> 0.4 / (DEFAULT_RECURSION_LIMIT - 3)
+    }
+
     private fun submitExpansionTask() {
         checkIsBackgroundThread()
         realTaskIndicator.text2 = "Waiting for index"
@@ -115,24 +130,25 @@ abstract class MacroExpansionTaskBase(
         }
 
         realTaskIndicator.text = "Expanding Rust macros. Step " + currentStep.get() + "/$DEFAULT_RECURSION_LIMIT"
-        estimateStages.set(extractableList.size)
+        estimateStages.set(0)
         doneStages.set(0)
 
         val pool = ForkJoinPool.commonPool()
         supplyAsync(pool) {
             realTaskIndicator.text2 = "Expanding macros"
 
-            val stages2 = extractableList.parallelStream().unordered().flatMap { extractable ->
+            val stages1 = extractableList.parallelStream().unordered().flatMap { extractable ->
                 executeUnderProgress(subTaskIndicator) {
                     // We need smart mode because rebind can be performed
                     runReadActionInSmartMode(project) {
                         val result = extractable.extract()
-                        doneStages.incrementAndGet()
                         estimateStages.addAndGet(result.size * Pipeline.STAGES)
                         result.stream()
                     }
                 }
-            }.map { stage1 ->
+            }.toList()
+
+            val stages2 = stages1.parallelStream().unordered().map { stage1 ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode to resolve macros
                     runReadActionInSmartMode(project) {
