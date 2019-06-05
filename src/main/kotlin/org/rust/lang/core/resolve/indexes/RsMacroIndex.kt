@@ -6,13 +6,16 @@
 package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.hasMacroExport
@@ -39,7 +42,8 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         }
 
         fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
-            return CachedValuesManager.getManager(project).getCachedValue(project) {
+            val cacheKey = if (project.macroExpansionManager.isResolvingMacro) EXPORTED_MACROS_KEY else EXPORTED_KEY
+            return CachedValuesManager.getManager(project).getCachedValue(project, cacheKey, {
                 val result = HashMap<RsMod, MutableList<RsMacro>>()
                 val keys = StubIndex.getInstance().getAllKeys(KEY, project)
                 for (key in keys) {
@@ -66,7 +70,10 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
                     macros.removeIf { it.name in duplicatedNames }
                 }
                 CachedValueProvider.Result.create(result, project.rustStructureModificationTracker)
-            }
+            }, false)
         }
+
+        private val EXPORTED_KEY: Key<CachedValue<Map<RsMod, List<RsMacro>>>> = Key.create("EXPORTED_KEY")
+        private val EXPORTED_MACROS_KEY: Key<CachedValue<Map<RsMod, List<RsMacro>>>> = Key.create("EXPORTED_MACROS_KEY")
     }
 }

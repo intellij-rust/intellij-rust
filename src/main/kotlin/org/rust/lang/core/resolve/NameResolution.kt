@@ -11,15 +11,13 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -870,11 +868,15 @@ private fun exportedMacros(scope: RsFile): List<RsNamedElement> {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
     }
-    return CachedValuesManager.getCachedValue(scope) {
+    val cacheKey = if (scope.project.macroExpansionManager.isResolvingMacro) EXPORTED_MACROS_KEY else EXPORTED_KEY
+    return CachedValuesManager.getCachedValue(scope, cacheKey) {
         val macros = exportedMacrosInternal(scope)
         CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
     }
 }
+
+private val EXPORTED_KEY: Key<CachedValue<List<RsNamedElement>>> = Key.create("EXPORTED_KEY")
+private val EXPORTED_MACROS_KEY: Key<CachedValue<List<RsNamedElement>>> = Key.create("EXPORTED_MACROS_KEY")
 
 private fun exportedMacrosInternal(scope: RsFile): List<RsNamedElement> {
     if (scope.containingCargoTarget?.isProcMacro == true) {
