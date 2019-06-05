@@ -712,7 +712,7 @@ class ImplLookup(
 
             val inputArgVar = TyInfer.TyVar()
             val ok = fnTraits.asSequence()
-                .mapNotNull { selectProjection(it to output, ty, inputArgVar).ok() }
+                .mapNotNull { ctx.commitIfNotNull { selectProjection(it to output, ty, inputArgVar).ok() } }
                 .firstOrNull() ?: return@run null
             TyWithObligations(
                 TyFunction((ctx.shallowResolve(inputArgVar) as? TyTuple)?.types.orEmpty(), ok.value),

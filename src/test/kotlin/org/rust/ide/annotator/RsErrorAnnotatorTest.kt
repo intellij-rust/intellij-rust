@@ -1171,6 +1171,27 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         use self::foo as bar;
     """)
 
+    fun `test no E0603 for trait with impl in a child mod`() = checkErrors("""
+        trait T { fn foo(&self); }
+        struct S;
+        mod a {
+            use super::*;
+            impl T for S { fn foo(&self) {} }
+        }
+        fn main() {
+            S.foo();
+        }
+    """)
+
+    fun `test E0603 when access member of trait with restricted visibility`() = checkErrors("""
+        mod foo {
+            pub(in foo) trait Bar { fn baz(&self); }
+        }
+        fn quux(a: &<error descr="Trait `foo::Bar` is private [E0603]">foo::Bar</error>) {
+            a.<error descr="Method `baz` is private [E0624]">baz</error>();
+        }
+    """)
+
     fun `test function args should implement Sized trait E0277`() = checkErrors("""
         fn foo1(bar: <error descr="the trait bound `[u8]: std::marker::Sized` is not satisfied [E0277]">[u8]</error>) {}
         fn foo2(bar: i32) {}
