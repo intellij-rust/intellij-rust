@@ -1575,4 +1575,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test select trait with use alias`() = testExpr("""
+        #[lang = "deref"]
+        trait Deref { type Target; }
+        mod foo { pub use super::Deref as DerefAlias; }
+        struct A; struct B;
+        impl foo::DerefAlias for A { type Target = B; }
+        fn main() {
+            let b = *A;
+            b;
+        } //^ B
+    """)
 }
