@@ -248,4 +248,19 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection())
             unify(panic!(), 0);
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test ? expression in closure with different error types`() = checkByText("""
+        struct ErrorTo;
+        struct ErrorFrom;
+        impl From<ErrorFrom> for ErrorTo {
+            fn from(_: ErrorFrom) -> Self { ErrorTo }
+        }
+        fn main() {
+            let a: Result<(), ErrorTo> = (|| {
+                Err(ErrorFrom)?;
+                Ok(())
+            })();
+        }
+    """)
 }

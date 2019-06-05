@@ -54,10 +54,7 @@ import org.rust.stdext.cleanDirectory
 import org.rust.stdext.waitForWithCheckCanceled
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Callable
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Future
+import java.util.concurrent.*
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
@@ -247,6 +244,18 @@ private class MacroExpansionServiceImplInner(
     }
 
     private val taskQueue = MacroExpansionTaskQueue(project)
+
+    /**
+     * We must use a separate pool because:
+     * 1. [ForkJoinPool.commonPool] is heavily used by the platform
+     * 2. [ForkJoinPool] can start execute a task when joining ([ForkJoinTask.get]) another task
+     * 3. the platform sometimes join ForkJoinTasks under read lock
+     * 4. for macro expansion it's critically important that tasks are executed without read lock.
+     *
+     * In short, use of [ForkJoinPool.commonPool] in this place leads to crashes.
+     * See [issue](https://github.com/intellij-rust/intellij-rust/issues/3966)
+     */
+    private val pool = Executors.newWorkStealingPool()
 
     private val dataFile: Path
         get() = dirs.dataFile
@@ -520,6 +529,7 @@ private class MacroExpansionServiceImplInner(
         class ProcessUnprocessedMacrosTask : MacroExpansionTaskBase(
             project,
             storage,
+            pool,
             dirs.expansionsDirVi.pathAsPath
         ) {
             override fun getMacrosToExpand(): Sequence<List<Extractable>> {
@@ -553,6 +563,7 @@ private class MacroExpansionServiceImplInner(
         class ProcessModifiedMacrosTask(private val workspaceOnly: Boolean) : MacroExpansionTaskBase(
             project,
             storage,
+            pool,
             dirs.expansionsDirVi.pathAsPath
         ) {
             override fun getMacrosToExpand(): Sequence<List<Extractable>> {

@@ -999,11 +999,7 @@ class RsTypeInferenceWalker(
         // TODO: make it work with generic `std::ops::Try` trait
         if (base.item != items.Result && base.item != items.Option) return TyUnknown
         TypeInferenceMarks.questionOperator.hit()
-        val okTy = base.typeArguments.getOrElse(0) { TyUnknown }
-        val errTy = base.typeArguments.getOrElse(1) { TyUnknown }
-        val resultTy = tryTy ?: return okTy
-        registerTryProjection(resultTy, "Error", errTy)
-        return okTy
+        return base.typeArguments.getOrElse(0) { TyUnknown }
     }
 
     private fun inferTryMacroArgumentType(expr: RsExpr): Ty {
