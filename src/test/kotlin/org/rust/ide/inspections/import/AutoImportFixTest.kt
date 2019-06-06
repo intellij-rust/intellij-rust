@@ -1534,6 +1534,23 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from root module (edition 2018)`() = checkAutoImportFixByText("""
+        struct Foo;
+
+        mod bar {
+            type T = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
+        }
+    """, """
+        struct Foo;
+
+        mod bar {
+            use crate::Foo;
+
+            type T = Foo;
+        }
+    """)
+
     fun `test import inside nested module`() = checkAutoImportFixByText("""
         mod b {
             pub struct S;
