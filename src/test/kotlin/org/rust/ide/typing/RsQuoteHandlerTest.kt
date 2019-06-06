@@ -110,4 +110,5 @@ class RsQuoteHandlerTest : RsTypingTestBase() {
     fun `test test next string is empty`() = checkUnclosedHeuristic("")
     fun `test test next string starts with space and word`() = checkUnclosedHeuristic("\nhello world\n")
     fun `test test next string starts with number`() = checkUnclosedHeuristic("92")
+    fun `test test next string starts with brace`() = checkUnclosedHeuristic("{")
 }
