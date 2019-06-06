@@ -19,7 +19,7 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
     /** Don't run it on Rustc! It's a kind of stress-test */
     fun `test analyze rustc`() = doTest(RUSTC)
 
-    fun `test analyze Cargo`() = doTest(CARGO, failOnFirstFileWithErrors = true)
+    fun `test analyze Cargo`() = doTest(CARGO)
     fun `test analyze mysql_async`() = doTest(MYSQL_ASYNC)
     fun `test analyze tokio`() = doTest(TOKIO)
 
