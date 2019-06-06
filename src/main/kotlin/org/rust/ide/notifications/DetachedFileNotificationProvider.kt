@@ -5,6 +5,7 @@
 
 package org.rust.ide.notifications
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -36,8 +37,12 @@ class DetachedFileNotificationProvider(project: Project) : RsNotificationProvide
 
     override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
-    override fun createNotificationPanel(file: VirtualFile, editor: FileEditor, project: Project): EditorNotificationPanel? {
-        if (isUnitTestMode) return null
+    override fun createNotificationPanel(
+        file: VirtualFile,
+        editor: FileEditor,
+        project: Project
+    ): RsEditorNotificationPanel? {
+        if (isUnitTestMode && !ApplicationManager.getApplication().isDispatchThread) return null
         if (file.isNotRustFile || isNotificationDisabled(file)) return null
 
         val cargoProjects = project.cargoProjects
@@ -51,8 +56,8 @@ class DetachedFileNotificationProvider(project: Project) : RsNotificationProvide
         return null
     }
 
-    private fun createFileNotIncludedInModulesPanel(file: VirtualFile): EditorNotificationPanel =
-        EditorNotificationPanel().apply {
+    private fun createFileNotIncludedInModulesPanel(file: VirtualFile): RsEditorNotificationPanel =
+        RsEditorNotificationPanel(DETACHED_FILE).apply {
             setText("File is not included in module tree, analysis is not available")
             createActionLabel("Do not show again") {
                 disableNotification(file)
@@ -62,6 +67,8 @@ class DetachedFileNotificationProvider(project: Project) : RsNotificationProvide
 
     companion object {
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideDetachedFileNotifications"
+
+        const val DETACHED_FILE = "DetachedFile"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Detached Rust file")
     }

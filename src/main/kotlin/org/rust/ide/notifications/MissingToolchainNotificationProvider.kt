@@ -52,7 +52,11 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
-    override fun createNotificationPanel(file: VirtualFile, editor: FileEditor, project: Project): EditorNotificationPanel? {
+    override fun createNotificationPanel(
+        file: VirtualFile,
+        editor: FileEditor,
+        project: Project
+    ): RsEditorNotificationPanel? {
         if (file.isNotRustFile || isNotificationDisabled(file)) return null
         if (guessAndSetupRustProject(project)) return null
 
@@ -81,9 +85,8 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
         return null
     }
 
-
-    private fun createBadToolchainPanel(file: VirtualFile): EditorNotificationPanel =
-        EditorNotificationPanel().apply {
+    private fun createBadToolchainPanel(file: VirtualFile): RsEditorNotificationPanel =
+        RsEditorNotificationPanel(NO_RUST_TOOLCHAIN).apply {
             setText("No Rust toolchain configured")
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
@@ -94,14 +97,14 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             }
         }
 
-    private fun createNoCargoProjectsPanel(file: VirtualFile): EditorNotificationPanel =
-        createAttachCargoProjectPanel(file, "No Cargo projects found")
+    private fun createNoCargoProjectsPanel(file: VirtualFile): RsEditorNotificationPanel =
+        createAttachCargoProjectPanel(NO_CARGO_PROJECTS, file, "No Cargo projects found")
 
-    private fun createNoCargoProjectForFilePanel(file: VirtualFile): EditorNotificationPanel =
-        createAttachCargoProjectPanel(file, "File does not belong to any known Cargo project")
+    private fun createNoCargoProjectForFilePanel(file: VirtualFile): RsEditorNotificationPanel =
+        createAttachCargoProjectPanel(FILE_NOT_IN_CARGO_PROJECT, file, "File does not belong to any known Cargo project")
 
-    private fun createAttachCargoProjectPanel(file: VirtualFile, message: String): EditorNotificationPanel =
-        EditorNotificationPanel().apply {
+    private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, message: String): RsEditorNotificationPanel =
+        RsEditorNotificationPanel(debugId).apply {
             setText(message)
             createActionLabel("Attach", "Rust.AttachCargoProject")
             createActionLabel("Do not show again") {
@@ -110,8 +113,8 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             }
         }
 
-    private fun createLibraryAttachingPanel(file: VirtualFile): EditorNotificationPanel =
-        EditorNotificationPanel().apply {
+    private fun createLibraryAttachingPanel(file: VirtualFile): RsEditorNotificationPanel =
+        RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
@@ -135,6 +138,10 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     companion object {
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
+        const val NO_RUST_TOOLCHAIN = "NoRustToolchain"
+        const val NO_CARGO_PROJECTS = "NoCargoProjects"
+        const val FILE_NOT_IN_CARGO_PROJECT = "FileNotInCargoProject"
+        const val NO_ATTACHED_STDLIB = "NoAttachedStdlib"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
     }

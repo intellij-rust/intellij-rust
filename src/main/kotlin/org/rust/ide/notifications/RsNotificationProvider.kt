@@ -6,6 +6,7 @@
 package org.rust.ide.notifications
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
@@ -16,6 +17,12 @@ abstract class RsNotificationProvider(
 ) : EditorNotifications.Provider<EditorNotificationPanel>() {
 
     protected abstract val VirtualFile.disablingKey: String
+
+    abstract override fun createNotificationPanel(
+        file: VirtualFile,
+        editor: FileEditor,
+        project: Project
+    ): RsEditorNotificationPanel?
 
     protected fun updateAllNotifications() {
         EditorNotifications.getInstance(project).updateAllNotifications()
@@ -28,3 +35,5 @@ abstract class RsNotificationProvider(
     protected fun isNotificationDisabled(file: VirtualFile): Boolean =
         PropertiesComponent.getInstance(project).getBoolean(file.disablingKey)
 }
+
+class RsEditorNotificationPanel(val debugId: String) : EditorNotificationPanel()
