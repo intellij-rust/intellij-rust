@@ -1868,4 +1868,52 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             fn foo(&self) {}
         }
     """)
+
+    fun `test impl sized for struct E0322`() = checkErrors("""
+        #[lang = "sized"]
+        trait Sized {}
+
+        struct Foo;
+        impl <error descr="Explicit impls for the `Sized` trait are not permitted [E0322]">Sized</error> for Foo {}
+    """)
+
+    fun `test impl sized for enum E0322`() = checkErrors("""
+        #[lang = "sized"]
+        trait Sized {}
+
+        enum Foo {}
+        impl <error descr="Explicit impls for the `Sized` trait are not permitted [E0322]">Sized</error> for Foo {}
+    """)
+
+    fun `test impl sized for trait E0322`() = checkErrors("""
+        #[lang = "sized"]
+        trait Sized {}
+
+        trait Foo {}
+        impl <error descr="Explicit impls for the `Sized` trait are not permitted [E0322]">Sized</error> for Foo {}
+    """)
+
+    fun `test impl unsize for struct E0328`() = checkErrors("""
+        #[lang = "unsize"]
+        trait Unsize {}
+
+        struct Foo;
+        impl <error descr="Explicit impls for the `Unsize` trait are not permitted [E0328]">Unsize</error> for Foo {}
+    """)
+
+    fun `test impl unsize for enum E0328`() = checkErrors("""
+        #[lang = "unsize"]
+        trait Unsize {}
+
+        enum Foo {}
+        impl <error descr="Explicit impls for the `Unsize` trait are not permitted [E0328]">Unsize</error> for Foo {}
+    """)
+
+    fun `test impl unsize for trait E0328`() = checkErrors("""
+        #[lang = "unsize"]
+        trait Unsize {}
+
+        trait Foo {}
+        impl <error descr="Explicit impls for the `Unsize` trait are not permitted [E0328]">Unsize</error> for Foo {}
+    """)
 }

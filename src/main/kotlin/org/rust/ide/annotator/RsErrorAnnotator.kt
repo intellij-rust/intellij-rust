@@ -14,8 +14,8 @@ import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
@@ -335,6 +335,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         checkImplForNonAdtError(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait() ?: return
+        checkForbiddenImpl(holder, traitRef, trait)
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
         checkImplBothCopyAndDrop(holder, impl, trait)
         val traitName = trait.name ?: return
@@ -374,6 +375,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+
+    // E0322: Explicit impls for the `Sized` trait are not permitted
+    // E0328: Explicit impls for the `Unsized` trait are not permitted
+    private fun checkForbiddenImpl(holder: AnnotationHolder, traitRef: RsTraitRef, trait: RsTraitItem) {
+        if (trait == trait.knownItems.Sized) RsDiagnostic.ImplSizedError(traitRef).addToHolder(holder)
+        if (trait == trait.knownItems.Unsize) RsDiagnostic.ImplUnsizeError(traitRef).addToHolder(holder)
+    }
 
     // E0120: Drop can be only implemented by structs and enums
     private fun checkImplDropForNonAdtError(holder: AnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
