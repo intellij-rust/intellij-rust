@@ -939,6 +939,17 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    // TODO
+    fun `test Self tuple struct init`() = testExpr("""
+        struct S();
+        impl S {
+            fn new() {
+                let a = Self();
+                a;
+            } //^ <unknown>
+        }
+    """)
+
     fun `test Self as struct field type`() = testExpr("""
         pub struct S<'a> {
             field: &'a Self
