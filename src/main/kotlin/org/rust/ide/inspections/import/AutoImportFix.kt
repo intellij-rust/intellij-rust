@@ -216,6 +216,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         // but in our case `mod` is always same and `mod` needs only to get set of its super mods
         // so we pass `superMods` instead of `mod` for optimization
         private fun QualifiedNamedItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
+            check(superMods.isNotEmpty())
             if (item !is RsVisible) return null
 
             val ourSuperMods = this.superMods ?: return null
@@ -249,10 +250,16 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                     needInsertExternCrateItem, depth, crateRelativePath)
                 ourSuperMods to importInfo
             } else {
+                val targetMod = superMods.first()
+                val relativePath = if (targetMod.isEdition2018) {
+                    "crate::$crateRelativePath"
+                } else {
+                    crateRelativePath
+                }
                 // if current item is direct child of some ancestor of `mod` then it can be not public
-                if (parentMod == lca) return ImportInfo.LocalImportInfo(crateRelativePath)
+                if (parentMod == lca) return ImportInfo.LocalImportInfo(relativePath)
                 if (!isPublic) return null
-                ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(crateRelativePath)
+                ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(relativePath)
             }
             return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
         }
@@ -486,7 +493,7 @@ fun ImportCandidate.import(context: RsElement) {
         }
     }
     val prefix = when (relativeDepth) {
-        null -> if (info is ImportInfo.LocalImportInfo && isEdition2018) "crate::" else ""
+        null -> ""
         0 -> "self::"
         else -> "super::".repeat(relativeDepth)
     }

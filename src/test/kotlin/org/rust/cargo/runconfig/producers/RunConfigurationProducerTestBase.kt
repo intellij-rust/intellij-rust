@@ -213,7 +213,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                                     myFixture.tempDirFixture.getFile(it.file.path)!!.url,
                                     it.name,
                                     it.kind,
-                                    it.edition
+                                    it.edition,
+                                    doctest = true
                                 )
                             },
                             source = null,

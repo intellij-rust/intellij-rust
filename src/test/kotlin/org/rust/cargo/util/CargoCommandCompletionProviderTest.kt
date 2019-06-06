@@ -104,7 +104,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             crateRootUrl = "/tmp/lib/rs",
             name = name,
             kind = kind,
-            edition = edition
+            edition = edition,
+            doctest = true
         )
 
         fun pkg(

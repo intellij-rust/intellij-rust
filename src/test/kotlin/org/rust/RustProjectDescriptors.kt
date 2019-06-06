@@ -65,8 +65,8 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         name = name,
         version = "0.0.1",
         targets = listOf(
-            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015),
-            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015)
+            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true),
+            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true)
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
@@ -147,7 +147,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
                 Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), Edition.EDITION_2015)
+                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true)
             ),
             source = source,
             origin = origin,

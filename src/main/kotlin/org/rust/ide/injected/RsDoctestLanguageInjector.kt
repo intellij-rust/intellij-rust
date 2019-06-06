@@ -68,7 +68,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
 
         val rsElement = context.ancestorStrict<RsElement>() ?: return
         val cargoTarget = rsElement.containingCargoTarget ?: return
-        if (!cargoTarget.isDoctestable) return // only library targets can have doctests
+        if (!cargoTarget.areDoctestsEnabled) return // only library targets can have doctests
         val crateName = cargoTarget.normName
         val text = context.text
 
@@ -210,8 +210,11 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
     }
 }
 
+val CargoWorkspace.Target.areDoctestsEnabled: Boolean
+    get() = doctest && isDoctestable
+
 // See https://github.com/rust-lang/cargo/blob/5a0c31d81/src/cargo/core/manifest.rs#L775
-val CargoWorkspace.Target.isDoctestable: Boolean
+private val CargoWorkspace.Target.isDoctestable: Boolean
     get() {
         val kind = kind
         return kind is TargetKind.Lib &&
