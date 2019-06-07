@@ -36,11 +36,8 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
-import org.rust.cargo.project.model.CargoProjectsService
-import org.rust.cargo.project.model.RustcInfo
-import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -50,7 +47,6 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -323,7 +319,7 @@ data class CargoProjectImpl(
     }
 
     private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
-        if (doesProjectLooksLikeRustc()) {
+        if (doesProjectLookLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
             val std = StandardLibrary.fromPath(manifest.parent.toString())
             if (std != null) {
@@ -344,14 +340,6 @@ data class CargoProjectImpl(
         }
 
         return fetchStdlib(project, projectService.taskQueue, rustup).thenApply(this::withStdlib)
-    }
-
-    // Checks that the project is https://github.com/rust-lang/rust
-    private fun doesProjectLooksLikeRustc(): Boolean {
-        val workspace = workspace
-        return workspace?.findPackage(AutoInjectedCrates.STD) != null &&
-            workspace.findPackage(AutoInjectedCrates.CORE) != null &&
-            workspace.findPackage("rustc") != null
     }
 
     private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
