@@ -115,6 +115,18 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, testmark = AutoImportFix.Testmarks.nameInScope)
 
+    fun `test do not highlight unresolved method of trait bound if multiple defs (invalid code)`() = checkByText("""
+        mod foo {
+            pub trait Trait {
+                fn foo(&self) {}
+                fn foo(&self) {}
+            }
+        }
+        fn bar<T: foo::Trait>(t: T) {
+            t.foo(a); // no error here
+        }
+    """)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
         try {
