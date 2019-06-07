@@ -28,6 +28,9 @@ data class RustToolchain(val location: Path) {
     }
 
     fun getSysroot(projectDirectory: Path): String? {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
         val timeoutMs = 10000
         val output = GeneralCommandLine(pathToExecutable(RUSTC))
             .withCharset(Charsets.UTF_8)

@@ -6,6 +6,7 @@
 package org.rust.debugger.runconfig
 
 import com.intellij.execution.filters.TextConsoleBuilder
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -16,25 +17,37 @@ import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException
 import com.jetbrains.cidr.execution.debugger.backend.gdb.GDBDriver
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
 import org.rust.debugger.*
+import org.rust.ide.notifications.showBalloon
 import java.nio.file.InvalidPathException
 
 class RsLocalDebugProcess(
     parameters: RunParameters,
     debugSession: XDebugSession,
-    consoleBuilder: TextConsoleBuilder
+    consoleBuilder: TextConsoleBuilder,
+    computeSysroot: () -> String?
 ) : CidrLocalDebugProcess(parameters, debugSession, consoleBuilder) {
 
-    fun loadPrettyPrinters(sysroot: String?, lldbRenderers: LLDBRenderers, gdbRenderers: GDBRenderers) {
+    private val sysroot: String? by lazy(computeSysroot)
+
+    private fun checkSysroot(sysroot: String?, message: String): String? {
+        if (sysroot == null) {
+            project.showBalloon(message, NotificationType.WARNING)
+        }
+        return sysroot
+    }
+
+    fun loadPrettyPrinters(lldbRenderers: LLDBRenderers, gdbRenderers: GDBRenderers) {
         postCommand { driver ->
             when (driver) {
-                is LLDBDriver -> driver.loadPrettyPrinters(currentThreadId, currentFrameIndex, sysroot, lldbRenderers)
-                is GDBDriver -> driver.loadPrettyPrinters(currentThreadId, currentFrameIndex, sysroot, gdbRenderers)
+                is LLDBDriver -> driver.loadPrettyPrinters(currentThreadId, currentFrameIndex, lldbRenderers)
+                is GDBDriver -> driver.loadPrettyPrinters(currentThreadId, currentFrameIndex, gdbRenderers)
             }
         }
     }
 
-    fun loadRustcSources(sysroot: String, commitHash: String) {
+    fun loadRustcSources(commitHash: String) {
         postCommand { driver ->
+            val sysroot = checkSysroot(sysroot, "Cannot load rustc sources") ?: return@postCommand
             val sourceMapCommand = when (driver) {
                 is LLDBDriver -> "settings set target.source-map"
                 is GDBDriver -> "set substitute-path"
@@ -47,10 +60,10 @@ class RsLocalDebugProcess(
         }
     }
 
-    private fun LLDBDriver.loadPrettyPrinters(threadId: Long, frameIndex: Int, sysroot: String?, renderers: LLDBRenderers) {
+    private fun LLDBDriver.loadPrettyPrinters(threadId: Long, frameIndex: Int, renderers: LLDBRenderers) {
         when (renderers) {
             LLDBRenderers.COMPILER -> {
-                if (sysroot == null) return
+                val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val path = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
                 try {
                     executeConsoleCommand(threadId, frameIndex, """command script import "$path" """)
@@ -82,9 +95,10 @@ class RsLocalDebugProcess(
         }
     }
 
-    private fun GDBDriver.loadPrettyPrinters(threadId: Long, frameIndex: Int, sysroot: String?, renderers: GDBRenderers) {
+    private fun GDBDriver.loadPrettyPrinters(threadId: Long, frameIndex: Int, renderers: GDBRenderers) {
         when (renderers) {
             GDBRenderers.COMPILER -> {
+                val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val path = "$sysroot/lib/rustlib/etc".systemDependentAndEscaped()
                 // Avoid multiline Python scripts due to https://youtrack.jetbrains.com/issue/CPP-9090
                 val command = """python """ +
