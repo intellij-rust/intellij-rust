@@ -336,7 +336,8 @@ class RsTypeInferenceWalker(
         if (traits.size == elements.size && traits.toSet().size == 1) {
             val fnName = elements.first().name
             val trait = traits.first()
-            return trait.members?.functionList?.find { it.name == fnName } ?: return null
+            val functionList = trait.members?.functionList ?: return null
+            return functionList.singleOrNull { it.name == fnName }
         }
 
         return null

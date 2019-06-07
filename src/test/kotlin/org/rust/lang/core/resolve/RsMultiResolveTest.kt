@@ -45,6 +45,18 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test other mod trait bound method`() = doTest("""
+        mod foo {
+            pub trait Trait {
+                fn foo(&self) {}
+                fn foo(&self) {}
+            }
+        }
+        fn bar<T: foo::Trait>(t: T) {
+            t.foo(a);
+        }   //^
+    """)
+
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val ref = findElementInEditor<RsReferenceElement>().reference
