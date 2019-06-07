@@ -50,12 +50,10 @@
 
         <!-- Code insight settings -->
 
-        <applicationService serviceInterface="org.rust.ide.settings.RsCodeInsightSettings"
-                            serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
+        <applicationService serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
         <editorActionHandler action="EditorEnter" implementationClass="org.rust.ide.actions.RsEnterHandler"/>
 
-        <applicationService serviceInterface="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"
-                            serviceImplementation="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"/>
+        <applicationService serviceImplementation="org.rust.cargo.runconfig.RsRunConfigurationExtensionManager"/>
 
         <!-- Selection Handler -->
 
@@ -143,6 +141,9 @@
         <targetElementEvaluator language="Rust"
                                 implementationClass="org.rust.ide.navigation.goto.RsTargetElementEvaluator"/>
         <generatedSourcesFilter implementation="org.rust.ide.navigation.goto.RsGeneratedSourcesFilter"/>
+
+        <!-- Focus mode -->
+        <focusModeProvider language="Rust" implementationClass="org.rust.ide.focusMode.RsFocusModeProvider"/>
 
         <!-- Hints -->
 

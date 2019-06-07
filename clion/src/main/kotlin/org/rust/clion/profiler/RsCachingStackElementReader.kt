@@ -12,7 +12,9 @@ import com.intellij.profiler.model.BaseCachingStackElementReader
 import com.intellij.profiler.model.CantBeParsedCall
 import org.rust.clion.profiler.dtrace.RsDTraceNavigatableNativeCall
 
+@Suppress("UnstableApiUsage")
 class RsCachingStackElementReader : BaseCachingStackElementReader() {
+
     fun parseStackElement(string: String): BaseCallStackElement {
         return intern(
             try {
