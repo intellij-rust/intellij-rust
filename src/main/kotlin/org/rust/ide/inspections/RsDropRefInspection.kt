@@ -30,7 +30,7 @@ class RsDropRefInspection : RsLocalInspectionTool() {
     fun inspectExpr(expr: RsCallExpr, holder: ProblemsHolder) {
         val pathExpr = expr.expr as? RsPathExpr ?: return
 
-        val fn = pathExpr.path.reference.resolve()
+        val fn = pathExpr.path.reference.resolve() ?: return
         if (fn != expr.knownItems.drop) return
 
         val args = expr.valueArgumentList.exprList

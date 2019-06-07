@@ -63,9 +63,20 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
     companion object {
         val RUSTC = RealProjectInfo(
             name = "rust",
-            path = "rust/src",
+            path = "rust",
             gitUrl = "https://github.com/rust-lang/rust",
-            exclude = listOf("llvm", "llvm-emscripten", "binaryen", "test", "ci", "rt", "compiler-rt", "jemalloc")
+            exclude = listOf(
+                "src/llvm",
+                "src/llvm-emscripten",
+                "src/binaryen",
+                "src/test",
+                "src/ci",
+                "src/rt",
+                "src/compiler-rt",
+                "src/jemalloc",
+                "build",
+                "tmp"
+            )
         )
         val CARGO = RealProjectInfo("cargo", "cargo", "https://github.com/rust-lang/cargo")
         val MYSQL_ASYNC = RealProjectInfo("mysql_async", "mysql_async", "https://github.com/blackbeam/mysql_async")

@@ -131,7 +131,7 @@ fun PsiElement.findReference(offset: Int): PsiReference? = findReferenceAt(offse
 
 fun PsiElement.checkedResolve(offset: Int): PsiElement {
     val reference = findReference(offset) ?: error("element doesn't have reference")
-    return reference.resolve() ?: run {
+    val resolved = reference.resolve() ?: run {
         val multiResolve = (reference as? RsReference)?.multiResolve().orEmpty()
         check(multiResolve.size != 1)
         if (multiResolve.isEmpty()) {
@@ -140,4 +140,10 @@ fun PsiElement.checkedResolve(offset: Int): PsiElement {
             error("Failed to resolve $text, multiple variants:\n${multiResolve.joinToString()}")
         }
     }
+
+    check(reference.isReferenceTo(resolved)) {
+        "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
+    }
+
+    return resolved
 }

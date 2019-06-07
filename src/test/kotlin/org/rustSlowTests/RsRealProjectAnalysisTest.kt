@@ -6,9 +6,12 @@
 package org.rustSlowTests
 
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
+import com.intellij.openapi.util.Disposer
 import org.junit.ComparisonFailure
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.MacroExpansionScope
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
@@ -19,11 +22,15 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
     /** Don't run it on Rustc! It's a kind of stress-test */
     fun `test analyze rustc`() = doTest(RUSTC)
 
-    fun `test analyze Cargo`() = doTest(CARGO, failOnFirstFileWithErrors = true)
+    fun `test analyze Cargo`() = doTest(CARGO)
     fun `test analyze mysql_async`() = doTest(MYSQL_ASYNC)
     fun `test analyze tokio`() = doTest(TOKIO)
 
     private fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
+        Disposer.register(
+            testRootDisposable,
+            project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
+        )
         val inspections = InspectionToolRegistrar.getInstance().createTools()
             .map { it.tool }
             .filter { it is RsLocalInspectionTool }
