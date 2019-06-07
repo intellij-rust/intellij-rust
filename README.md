@@ -40,7 +40,7 @@ If you are looking for the TOML plugin, see [intellij-toml] directory.
 
 ## Compatible IDEs
 
-The plugin is compatible with any IntelliJ based IDE starting from 2018.3. 
+The plugin is compatible with any IntelliJ based IDE starting from 2019.1. 
 If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/), it's free.
 If you want to use debugger, try [CLion](https://www.jetbrains.com/clion/).
 
