@@ -224,10 +224,6 @@ class ImplLookup(
                     .mapTo(implsAndTraits) { TraitImplSource.ExplicitImpl(it) }
             }
             is TyUnknown -> Unit
-            is TyTypeParameter -> {
-                RsImplIndex.findFreeImpls(project)
-                    .mapTo(implsAndTraits) { TraitImplSource.ExplicitImpl(it) }
-            }
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
                 implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
