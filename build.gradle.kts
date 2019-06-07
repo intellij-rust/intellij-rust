@@ -165,9 +165,7 @@ project(":") {
         if (baseIDE == "idea") {
             setPlugins(project(":intellij-toml"), "IntelliLang", "copyright")
         } else {
-            // BACKCOMPAT: 2018.3
-            // Add `IntelliLang` to plugin list because it is bundled in CLion since 191
-            setPlugins(project(":intellij-toml"))
+            setPlugins(project(":intellij-toml"), "IntelliLang")
         }
     }
 
@@ -301,9 +299,6 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        // BACKCOMPAT: 2018.3
-        // use `baseVersion` because `IntelliLang` is bundled in CLion since 191
-        version = ideaVersion
         setPlugins("IntelliLang")
     }
     dependencies {

@@ -5,7 +5,6 @@
 
 package org.rust.ide.lineMarkers
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -16,7 +15,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsMethodLineSeparatorProvider : LineMarkerProvider {
@@ -39,9 +38,7 @@ class RsMethodLineSeparatorProvider : LineMarkerProvider {
 
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
-        // BACKCOMPAT: 2018.3
-        @Suppress("DEPRECATION")
-        return LineMarkerInfo(anchor, anchor.textRange, null, Pass.LINE_MARKERS, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
+        return LineMarkerInfo(anchor, anchor.textRange, null, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
             separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
             separatorPlacement = SeparatorPlacement.TOP
         }

@@ -25,14 +25,8 @@ class RsBuildAction : AnAction() {
     }
 
     companion object {
-        private val BUILD_191 = BuildNumber.fromString("191")
-
         private fun isSuitablePlatform(): Boolean {
-            val buildNumber = ApplicationInfo.getInstance().build
-            // BACKCOMPAT: 2018.3
-            //  CLion supports project task api since 2019.1
-            return !(PlatformUtils.isIntelliJ() || PlatformUtils.isAppCode() ||
-                PlatformUtils.isCLion() && buildNumber >= BUILD_191)
+            return !(PlatformUtils.isIntelliJ() || PlatformUtils.isAppCode() || PlatformUtils.isCLion())
         }
     }
 }

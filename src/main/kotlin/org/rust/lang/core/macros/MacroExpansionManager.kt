@@ -479,14 +479,6 @@ private class MacroExpansionServiceImplInner(
         private fun scheduleChangedMacrosUpdate(workspaceOnly: Boolean) {
             shouldProcessChangedMacrosOnWriteActionFinish += if (workspaceOnly) ChangedMacrosScope.WORKSPACE else ChangedMacrosScope.ALL
         }
-
-        // BACKCOMPAT 2018.3
-
-        override fun applicationExiting() = Unit
-        override fun beforeWriteActionStart(action: Any) = Unit
-        override fun afterWriteActionFinished(action: Any) = Unit
-        override fun writeActionStarted(action: Any) = Unit
-        override fun canExitApplication(): Boolean = true
     }
 
     private inner class MyFileDocumentManagerListener : FileDocumentManagerListener {

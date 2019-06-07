@@ -5,7 +5,6 @@
 
 package org.rust.ide.lineMarkers
 
-import com.intellij.codeHighlighting.Pass
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -24,7 +23,7 @@ import java.util.*
  */
 class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
 
-    override fun getLineMarkerInfo(element: PsiElement) = null
+    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
     override fun collectSlowLineMarkers(elements: List<PsiElement>,
                                         result: MutableCollection<LineMarkerInfo<PsiElement>>) {
@@ -46,13 +45,10 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
             val lineNumber = doc.getLineNumber(el.textOffset)
             if (lineNumber !in lines) {
                 lines.add(lineNumber)
-                // BACKCOMPAT: 2018.3
-                @Suppress("DEPRECATION")
                 result.add(LineMarkerInfo(
                     el,
                     el.textRange,
                     RsIcons.RECURSIVE_CALL,
-                    Pass.LINE_MARKERS,
                     FunctionUtil.constant("Recursive call"),
                     null,
                     GutterIconRenderer.Alignment.RIGHT))

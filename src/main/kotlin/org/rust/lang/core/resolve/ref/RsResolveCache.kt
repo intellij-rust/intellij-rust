@@ -12,6 +12,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.ResolveResult
@@ -100,7 +101,7 @@ class RsResolveCache(messageBus: MessageBus) {
         }
         val map = getCacheFor(key, refinedDep)
         return map[key] as V? ?: run {
-            val stamp = guard.markStack()
+            val stamp = RecursionManager.markStack()
             val result = guard.doPreventingRecursion(key, true) { resolver(key) }
             ensureValidResult(result)
 
