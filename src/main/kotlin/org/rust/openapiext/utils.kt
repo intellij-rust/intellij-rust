@@ -225,10 +225,7 @@ const val PLUGIN_ID: String = "org.rust.lang"
 
 fun plugin(): IdeaPluginDescriptor = PluginManager.getPlugin(PluginId.getId(PLUGIN_ID))!!
 
-// BACKCOMPAT: 2018.3
-@Suppress("DEPRECATION")
-val String.escaped: String
-    get() = StringUtil.escapeXml(this)
+val String.escaped: String get() = StringUtil.escapeXmlEntities(this)
 
 fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
     ProgressManager.checkCanceled()

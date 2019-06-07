@@ -65,9 +65,7 @@ class MissingToolchainNotificationProvider(
 
     override fun getKey(): Key<EditorNotificationPanel> = PROVIDER_KEY
 
-    // BACKCOMPAT: 2018.3.
-    //  Use EditorNotifications.Provider.createNotificationPanel(VirtualFile, FileEditor, Project) instead
-    override fun createNotificationPanel(file: VirtualFile, editor: FileEditor): EditorNotificationPanel? {
+    override fun createNotificationPanel(file: VirtualFile, editor: FileEditor, project: Project): EditorNotificationPanel? {
         if (file.isNotRustFile || isNotificationDisabled()) return null
         if (guessAndSetupRustProject(project)) return null
 

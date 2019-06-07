@@ -28,6 +28,7 @@ import org.rust.clion.profiler.RsCachingStackElementReader
 import org.rust.lang.utils.RsDemangler
 
 
+@Suppress("UnstableApiUsage")
 class RsDTraceProfilerProcess private constructor(
     project: Project,
     targetProcess: AttachableTargetProcess,
@@ -75,7 +76,7 @@ class RsDTraceProfilerProcess private constructor(
             val settingsCopy = XmlSerializer.deserialize(element, SimpleProfilerSettingsState::class.java)
             settingsCopy.defaultCmdArgs.add("-xmangled")
 
-            return DTraceProfilerProcessBase.attachBase(
+            return attachBase(
                 targetProcess,
                 backgroundOption,
                 settingsCopy.cpuProfilerScript(),

@@ -11,9 +11,6 @@ import com.intellij.psi.PsiElement
 
 class RecursionGuardWrapper private constructor(private val guard: RecursionGuard<PsiElement>) {
 
-    // BACKCOMPAT 2018.3: use `RecursionManager#markStack()`
-    @Suppress("DEPRECATION")
-    fun markStack(): RecursionGuard.StackStamp = guard.markStack()
     fun <T> doPreventingRecursion(key: PsiElement, memoize: Boolean, computation: () -> T): T? {
         return guard.doPreventingRecursion(key, memoize, computation)
     }

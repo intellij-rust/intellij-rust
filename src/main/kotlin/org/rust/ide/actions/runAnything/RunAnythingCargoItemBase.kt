@@ -18,12 +18,7 @@ import javax.swing.JPanel
 abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
 
     protected fun customizeComponent(component: Component) {
-        val descriptionComponent = when (component) {
-            is JPanel -> SimpleColoredComponent()
-            // BACKCOMPAT: 2018.3
-            is SimpleColoredComponent -> component
-            else -> return
-        }
+        if (component !is JPanel) return
 
         val params = ParametersListUtil.parse(StringUtil.trimStart(command, "cargo"))
         val description = when (params.size) {
@@ -34,11 +29,12 @@ abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythi
                 optionsDescriptions?.get(params.last())
             }
         } ?: return
+        val descriptionComponent = SimpleColoredComponent()
         descriptionComponent.append(
             StringUtil.shortenTextWithEllipsis(" $description.", 200, 0),
             SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
         )
-        (component as? JPanel)?.add(descriptionComponent, BorderLayout.EAST)
+        component.add(descriptionComponent, BorderLayout.EAST)
     }
 
     companion object {
