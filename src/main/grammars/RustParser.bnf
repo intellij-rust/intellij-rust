@@ -203,6 +203,7 @@ ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgument
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
                                             <<list_element (!(identifier '=') TypeReference)>>*
+                                            <<list_element (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
 AssocTypeBinding ::= identifier '=' TypeReference {
   pin = 2
@@ -346,7 +347,7 @@ private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
 
 Variadic ::= [ Pat ':' ] '...'
 
-TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter)>>* '>' {
+TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter | ConstParameter)>>* '>' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -370,6 +371,15 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsTypeParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+ConstParameter ::= OuterAttr* const identifier TypeAscription {
+  pin = 2
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsConstParameterImplMixin"
+  stubClass = "org.rust.lang.core.stubs.RsConstParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
