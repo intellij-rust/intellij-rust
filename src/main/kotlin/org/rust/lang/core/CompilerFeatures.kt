@@ -325,6 +325,11 @@ val OPTIMIZE_ATTRIBUTE = CompilerFeature("optimize_attribute", ACTIVE, "1.34.0")
 val REPR_ALIGN_ENUM = CompilerFeature("repr_align_enum", ACTIVE, "1.34.0")
 // Allows using C-variadics.
 val C_VARIADIC = CompilerFeature("c_variadic", ACTIVE, "1.34.0")
+// Allows the user of associated type bounds.
+val ASSOCIATED_TYPE_BOUNDS = CompilerFeature("associated_type_bounds", ACTIVE, "1.34.0")
+// Allows calling constructor functions in `const fn`
+// FIXME Create issue
+val CONST_CONSTRUCTOR = CompilerFeature("const_constructor", ACTIVE, "1.37.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
