@@ -15,6 +15,7 @@ import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RecursionGuardWrapper
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
@@ -180,8 +181,19 @@ fun processItemDeclarations(
             //           ~~~                         ~~~
             path
         }
-        val mod = (if (basePath != null) basePath.reference.resolve() else speck.crateRoot)
-            ?: continue
+
+        val mod = if (basePath != null) {
+            // Issue https://github.com/intellij-rust/intellij-rust/issues/3989
+            // BACKCOMPAT 2019.1
+            val rootQualifier = generateSequence(basePath) { it.qualifier }.drop(1).lastOrNull()
+            if (rootQualifier != null) {
+                guard.doPreventingRecursion(rootQualifier, false) { basePath.reference.resolve() }
+            } else {
+                basePath.reference.resolve()
+            }
+        } else {
+            speck.crateRoot
+        } ?: continue
 
         val found = recursionGuard(mod, Computable {
             processItemOrEnumVariantDeclarations(mod, ns,
@@ -194,6 +206,8 @@ fun processItemDeclarations(
 
     return false
 }
+
+private val guard = RecursionGuardWrapper.createGuard("ItemResolution")
 
 fun processExternCrateItem(item: RsExternCrateItem, processor: RsResolveProcessor, withPrivateImports: Boolean): Boolean {
     if (item.isPublic || withPrivateImports) {

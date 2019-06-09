@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+import org.rust.stdext.BothEditions
 
 class RsUseResolveTest : RsResolveTestBase() {
 
@@ -662,5 +663,32 @@ class RsUseResolveTest : RsResolveTestBase() {
             }         //X
             use foo::bar;
         }          //^
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3989
+    @BothEditions
+    fun `test issue #3989 1`() = checkByCode("""
+        pub use crate::{bar::*, baz::*};
+        mod bar {}
+        mod baz { pub struct S; }
+                           //X
+        mod quux {
+            use crate::S;
+                     //^
+        }
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3989
+    @BothEditions
+    fun `test issue #3989 2`() = checkByCode("""
+        pub use foo::{bar::*, baz::*};
+        mod foo {
+            mod bar {}
+            mod baz { pub struct S; }
+        }                      //X
+        mod quux {
+            use crate::S;
+                     //^
+        }
     """)
 }
