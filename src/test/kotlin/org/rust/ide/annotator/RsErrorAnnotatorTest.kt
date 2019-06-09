@@ -463,18 +463,32 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait Tr<<error>'a</error>, 'b, <error>'a</error>> {}
     """)
 
+    @MockRustcVersion("1.34.0-nightly")
     fun `test name duplication in generic params E0403`() = checkErrors("""
-        fn sub<T, P>() {}
-        struct Str<T, P> { t: T, p: P }
-        impl<T, P> Str<T, P> {}
-        enum Direction<T, P> { LEFT(T), RIGHT(P) }
-        trait Trait<T, P> {}
+        #![feature(const_generics)]
+        
+        fn f1<T1, T2>() {}
+        fn f2<T1, const T2: i32>() {}
+        fn f3<const T1: i32, const T2: i32>() {}
+        fn f4<<error descr="The name `T1` is already used for a type parameter in this type parameter list [E0403]">T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32>() {}
 
-        fn add<<error descr="The name `T` is already used for a type parameter in this type parameter list [E0403]">T</error>, <error>T</error>, P>() {}
-        struct S< <error>T</error>, <error>T</error>, P> { t: T, p: P }
-        impl<     <error>T</error>, <error>T</error>, P> S<T, T, P> {}
-        enum En<  <error>T</error>, <error>T</error>, P> { LEFT(T), RIGHT(P) }
-        trait Tr< <error>T</error>, <error>T</error>, P> { fn foo(t: T) -> P; }
+        struct S1<T1, T2> { t1: T1, t2: T2 }
+        struct S2<T1, const T2: i32> { t1: T1 }
+        struct S3<const T1: i32, const T2: i32> {}
+        struct S4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> { t: T1, p: T2 }
+
+        impl<T1, T2> S1<T1, T2> {}
+        impl<<error>T1</error>, T2, T3, <error>T1</error>> S4<T1, T2, T3, T1, 0, 0, 0, 0> {}
+
+        enum E1<T1, T2> { L(T1), R(T2) }
+        enum E2<T1, const T2: i32> { L(T1) }
+        enum E3<const T1: i32, const T2: i32> {}
+        enum E4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> { L(T1), M(T2), R(T3) }
+
+        trait Tr1<T1, T2> {}
+        trait Tr2<T1, const T2: i32> {}
+        trait Tr3<const T1: i32, const T2: i32> {}
+        trait Tr4<<error>T1</error>, <error>T2</error>, T3, <error>T1</error>, const <error>T4</error>: i32, const T5: i32, const <error>T4</error>: i32, const <error>T2</error>: i32> {}
     """)
 
     fun `test no E0407 for method defined with a macro`() = checkErrors("""
@@ -1915,5 +1929,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
         trait Foo {}
         impl <error descr="Explicit impls for the `Unsize` trait are not permitted [E0328]">Unsize</error> for Foo {}
+    """)
+
+    @MockRustcVersion("1.34.0")
+    fun `test const generics E0658 1`() = checkErrors("""
+        fn f<<error descr="const generics is experimental [E0658]">const C: i32</error>>() {}
+        struct S<<error descr="const generics is experimental [E0658]">const C: i32</error>>(A);
+        trait T<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
+        enum E<<error descr="const generics is experimental [E0658]">const C: i32</error>> {}
+    """)
+
+    @MockRustcVersion("1.34.0-nightly")
+    fun `test const generics E0658 2`() = checkErrors("""
+        #![feature(const_generics)]
+        fn f<const C: i32>() {}
+        struct S<const C: i32>(A);
+        trait T<const C: i32> {}
+        enum E<const C: i32> {}
     """)
 }
