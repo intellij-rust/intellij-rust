@@ -3,6 +3,7 @@
         <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
         <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
         <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
+        <backendConsoleInjectionHelper implementation="org.rust.debugger.RsBackendConsoleInjectionHelper"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

@@ -9,27 +9,48 @@ import com.intellij.lang.ASTNode
 import com.intellij.lang.LanguageUtil
 import com.intellij.lang.ParserDefinition
 import com.intellij.lang.PsiParser
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.project.Project
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
+import org.rust.lang.RsDebugInjectionListener
 import org.rust.lang.core.lexer.RsLexer
-import org.rust.lang.core.psi.RS_COMMENTS
-import org.rust.lang.core.psi.RS_EOL_COMMENTS
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
-import org.rust.lang.core.psi.RsTokenType
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
 
 class RustParserDefinition : ParserDefinition {
 
-    override fun createFile(viewProvider: FileViewProvider): PsiFile? =
-        RsFile(viewProvider)
+    override fun createFile(viewProvider: FileViewProvider): PsiFile {
+        val default = { RsFile(viewProvider) }
+
+        if (viewProvider is InjectedFileViewProvider) {
+            val project = viewProvider.manager.project
+            val host = InjectedLanguageManager.getInstance(project).getInjectionHost(viewProvider)
+
+            // this class is contained in clion.jar, so it cannot be used inside `is` type check
+            if (host.javaClass.simpleName != "GDBExpressionPlaceholder") {
+                return default()
+            }
+
+            val injectionListener = project.messageBus.syncPublisher(RsDebugInjectionListener.INJECTION_TOPIC)
+            val contextResult = RsDebugInjectionListener.DebugContext()
+            injectionListener.evalDebugContext(host, contextResult)
+            val context = contextResult.element ?: return default()
+
+            val fragment = RsExpressionCodeFragment(viewProvider, context)
+            injectionListener.didInject(host)
+
+            return fragment
+        }
+        return default()
+    }
 
     override fun spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
         if (left.elementType in RS_EOL_COMMENTS) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK

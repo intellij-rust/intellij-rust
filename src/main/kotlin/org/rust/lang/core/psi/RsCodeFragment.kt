@@ -22,18 +22,24 @@ import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.RsMod
 
 abstract class RsCodeFragment(
-    project: Project,
-    text: CharSequence,
-    private val context: RsElement,
-    contentElementType: IElementType
-) : RsFileBase(
-    PsiManagerEx.getInstanceEx(project).fileManager.createFileViewProvider(
-        LightVirtualFile(
-            "fragment.rs",
-            RsLanguage,
-            text
-        ), true)
-), PsiCodeFragment {
+    fileViewProvider: FileViewProvider,
+    contentElementType: IElementType,
+    private val context: RsElement
+) : RsFileBase(fileViewProvider), PsiCodeFragment {
+
+    constructor(
+        project: Project,
+        text: CharSequence,
+        contentElementType: IElementType,
+        context: RsElement
+    ) : this(
+        PsiManagerEx.getInstanceEx(project).fileManager.createFileViewProvider(
+            LightVirtualFile("fragment.rs", RsLanguage, text), true
+        ),
+        contentElementType,
+        context
+    )
+
     override val containingMod: RsMod
         get() = context.containingMod
 
@@ -84,8 +90,12 @@ abstract class RsCodeFragment(
     }
 }
 
-class RsExpressionCodeFragment(project: Project, text: CharSequence, context: RsElement)
-    : RsCodeFragment(project, text, context, RsElementTypes.EXPR_CODE_FRAGMENT),
-      RsInferenceContextOwner {
+class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
+    constructor(fileViewProvider: FileViewProvider, context: RsElement)
+        : super(fileViewProvider, RsElementTypes.EXPR_CODE_FRAGMENT, context)
+
+    constructor(project: Project, text: CharSequence, context: RsElement)
+        : super(project, text, RsElementTypes.EXPR_CODE_FRAGMENT, context)
+
     val expr: RsExpr? get() = PsiTreeUtil.getChildOfType(this, RsExpr::class.java)
 }
