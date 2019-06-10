@@ -61,6 +61,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitTraitItem(o: RsTraitItem) = checkDuplicates(holder, o)
             override fun visitTypeAlias(o: RsTypeAlias) = checkTypeAlias(holder, o)
             override fun visitTypeParameter(o: RsTypeParameter) = checkDuplicates(holder, o)
+            override fun visitConstParameter(o: RsConstParameter) = checkConstParameter(holder, o)
             override fun visitLifetimeParameter(o: RsLifetimeParameter) = checkLifetimeParameter(holder, o)
             override fun visitVis(o: RsVis) = checkVis(holder, o)
             override fun visitVisRestriction(o: RsVisRestriction) = checkVisRestriction(holder, o)
@@ -251,6 +252,11 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
 
         checkReferenceIsPublic(path, path, holder)
+    }
+
+    private fun checkConstParameter(holder: AnnotationHolder, constParameter: RsConstParameter) {
+        CONST_GENERICS.check(holder, constParameter, "const generics")
+        checkDuplicates(holder, constParameter)
     }
 
     private fun checkLifetimeParameter(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
