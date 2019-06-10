@@ -338,6 +338,18 @@ project(":copyright") {
     }
 }
 
+project(":duplicates") {
+    intellij {
+        if (isAtLeast192 && baseIDE == "idea") {
+            setPlugins("java")
+        }
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
 project(":intellij-toml") {
     version = "0.2.0.${prop("buildNumber")}$channelSuffix"
 
