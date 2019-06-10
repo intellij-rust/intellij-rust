@@ -7,10 +7,12 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.stubParent
+import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
 /**
  *  [RsExpandedElement]s are those elements which exist in temporary,
@@ -25,7 +27,11 @@ interface RsExpandedElement : RsElement {
         fun getContextImpl(psi: RsExpandedElement): PsiElement? {
             psi.expandedFrom?.let { return it.context }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
-            return psi.stubParent
+            val parent = psi.stubParent
+            if (parent is RsFile) {
+                RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
+            }
+            return parent
         }
     }
 }

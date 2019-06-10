@@ -24,6 +24,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
 
 /**
@@ -62,7 +63,11 @@ class RsFile(
         return super.setName(nameWithExtension)
     }
 
-    override val `super`: RsMod? get() = declaration?.containingMod
+    override val `super`: RsMod?
+        get() {
+            val includingMod = RsIncludeMacroIndex.getIncludingMod(this) ?: return declaration?.containingMod
+            return includingMod.`super`
+        }
 
     // We can't just return file name here because
     // if mod declaration has `path` attribute file name differs from mod name
@@ -84,6 +89,9 @@ class RsFile(
             // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
             // we should be able to resolve it by absolute path
             if (originalFile.isDoctestInjection) return true
+
+            val includingMod = RsIncludeMacroIndex.getIncludingMod(this)
+            if (includingMod != null) return includingMod.isCrateRoot
 
             val file = originalFile.virtualFile ?: return false
             return cargoWorkspace?.isCrateRoot(file) ?: false

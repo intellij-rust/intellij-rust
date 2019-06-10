@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 
@@ -23,20 +24,21 @@ sealed class RsAbstractableOwner {
     val isImplOrTrait: Boolean get() = this is Impl || this is Trait
 }
 
-val RsAbstractable.owner: RsAbstractableOwner
-    get() {
-        return when (val context = context) {
-            is RsForeignModItem -> RsAbstractableOwner.Foreign
-            is RsMembers -> {
-                when (val traitOrImpl = context.context) {
-                    is RsImplItem -> RsAbstractableOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
-                    is RsTraitItem -> RsAbstractableOwner.Trait(traitOrImpl)
-                    else -> error("unreachable")
-                }
+val RsAbstractable.owner: RsAbstractableOwner get() = getOwner(PsiElement::getContext)
+
+inline fun RsAbstractable.getOwner(getAncestor: PsiElement.() -> PsiElement?): RsAbstractableOwner {
+    return when (val ancestor = getAncestor()) {
+        is RsForeignModItem -> RsAbstractableOwner.Foreign
+        is RsMembers -> {
+            when (val traitOrImpl = ancestor.getAncestor()) {
+                is RsImplItem -> RsAbstractableOwner.Impl(traitOrImpl, isInherent = traitOrImpl.traitRef == null)
+                is RsTraitItem -> RsAbstractableOwner.Trait(traitOrImpl)
+                else -> error("unreachable")
             }
-            else -> RsAbstractableOwner.Free
         }
+        else -> RsAbstractableOwner.Free
     }
+}
 
 // Resolve a const, fn or type in a impl block to the corresponding item in the trait block
 val RsAbstractable.superItem: RsAbstractable?

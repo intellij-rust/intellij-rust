@@ -15,11 +15,10 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.lang.core.psi.RsMacro
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsMacroCallStub
+import org.rust.openapiext.toPsiFile
 import org.rust.stdext.HashCode
 
 
@@ -54,6 +53,21 @@ val RsMacroCall.macroBody: String?
             ?: exprMacroArgument?.braceListBodyText()?.toString()
             ?: vecMacroArgument?.braceListBodyText()?.toString()
     }
+
+val RsMacroCall.includingFilePath: String?
+    get() {
+        if (macroName != "include") return null
+        // TODO: support more cases
+        val expr = includeMacroArgument?.expr as? RsLitExpr ?: return null
+        return expr.stringValue ?: return null
+    }
+
+fun RsMacroCall.findIncludingFile(): RsFile? {
+    val path = includingFilePath ?: return null
+    // TODO: it doesn't work if `include!()` macro call comes from other macro
+    val file = containingFile?.originalFile?.virtualFile ?: return null
+    return file.parent?.findFileByRelativePath(path)?.toPsiFile(project)?.rustFile
+}
 
 val RsMacroCall.bodyHash: HashCode?
     get() = CachedValuesManager.getCachedValue(this) {

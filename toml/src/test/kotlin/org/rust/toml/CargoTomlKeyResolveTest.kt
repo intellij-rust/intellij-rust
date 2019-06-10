@@ -50,6 +50,6 @@ class CargoTomlKeyResolveTest : RsResolveTestBase() {
 
     private fun checkResolve(@Language("TOML") code: String) {
         val fileTree = fileTree { toml("Cargo.toml", code) }
-        stubOnlyResolve<TomlKey>(fileTree)
+        stubOnlyResolve<TomlKey>(fileTree, resolveFileProducer = this::getActualResolveFile)
     }
 }

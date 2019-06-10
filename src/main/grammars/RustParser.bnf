@@ -1335,7 +1335,11 @@ LogMacroArgument ::=
 
 private IncludeMacro ::= &(("include" | "include_str" | "include_bytes") '!') PathWithoutTypes '!' IncludeMacroArgument
 
-IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>>
+IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 private meta any_braces ::=
   '(' <<param>> ')'
