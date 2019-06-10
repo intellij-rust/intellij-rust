@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 167
+        override fun getStubVersion(): Int = 168
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -122,6 +122,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "SELF_PARAMETER" -> RsSelfParameterStub.Type
     "TYPE_PARAMETER_LIST" -> RsPlaceholderStub.Type("TYPE_PARAMETER_LIST", ::RsTypeParameterListImpl)
     "TYPE_PARAMETER" -> RsTypeParameterStub.Type
+    "CONST_PARAMETER" -> RsConstParameterStub.Type
     "LIFETIME" -> RsLifetimeStub.Type
     "LIFETIME_PARAMETER" -> RsLifetimeParameterStub.Type
     "FOR_LIFETIMES" -> RsPlaceholderStub.Type("FOR_LIFETIMES", ::RsForLifetimesImpl)
@@ -734,6 +735,30 @@ class RsTypeParameterStub(
     }
 }
 
+class RsConstParameterStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>,
+    override val name: String?
+) : StubBase<RsTypeParameter>(parent, elementType),
+    RsNamedStub {
+
+    object Type : RsStubElementType<RsConstParameterStub, RsConstParameter>("CONST_PARAMETER") {
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
+            RsConstParameterStub(parentStub, this,
+                dataStream.readNameAsString()
+            )
+
+        override fun serialize(stub: RsConstParameterStub, dataStream: StubOutputStream) =
+            with(dataStream) {
+                writeName(stub.name)
+            }
+
+        override fun createPsi(stub: RsConstParameterStub): RsConstParameter =
+            RsConstParameterImpl(stub, this)
+
+        override fun createStub(psi: RsConstParameter, parentStub: StubElement<*>?) =
+            RsConstParameterStub(parentStub, this, psi.name)
+    }
+}
 
 class RsValueParameterStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
