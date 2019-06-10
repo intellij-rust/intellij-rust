@@ -44,6 +44,20 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
         }
     """)
 
+    fun `test binary expr order`() = doTest("""
+        fn foo(a: i32, b: i32) {
+            /*weak_warning*/while a >= b || b < 7 && a != 123 {
+                let c = 4 * a + b;
+                println!("{} {}", c, a == b);
+            }/*weak_warning**/
+
+            /*weak_warning*/while a >= b || b < 7 && a != 123 {
+                let c = b + a * 4;
+                println!("{} {}", c, a == b);
+            }/*weak_warning**/
+        }
+    """)
+
     fun `test anonymize literals`() = doTest("""
         fn main() {
             /*weak_warning*/for i in 1..10 {

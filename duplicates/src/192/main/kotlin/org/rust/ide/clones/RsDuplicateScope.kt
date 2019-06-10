@@ -13,6 +13,10 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
+import com.jetbrains.clones.core.LighterAstNodeHashCache
+import com.jetbrains.clones.core.NodeHash
+import com.jetbrains.clones.core.longHash
+import com.jetbrains.clones.core.nodeListHash
 import com.jetbrains.clones.languagescope.common.DuplicateScopeBase
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RS_LITERALS
@@ -47,6 +51,23 @@ class RsDuplicateScope : DuplicateScopeBase() {
             NodeType.METHOD_CALL,
             NodeType.FIELD -> indexConfiguration.anonymizeFunctions
             NodeType.OTHER -> false
+        }
+    }
+
+    /**
+     * @param children nodes and hashes of immediate children.
+     * @param cache file-scoped cache of nodes hash; values must be saved explicitly.
+     * @return normalized hash of supplied [node]. Equal nodes must have equal normalized hash.
+     */
+    override fun hashOf(
+        cache: LighterAstNodeHashCache,
+        ast: LighterAST,
+        node: LighterASTNode,
+        children: List<NodeHash>
+    ): Long {
+        return when (node.tokenType) {
+            BINARY_EXPR -> getNormalizedHashOfBinaryExpr(ast, children)
+            else -> super.hashOf(cache, ast, node, children)
         }
     }
 
@@ -101,6 +122,27 @@ class RsDuplicateScope : DuplicateScopeBase() {
                 }
             }
             else -> NodeType.OTHER
+        }
+    }
+
+    private fun getNormalizedHashOfBinaryExpr(ast: LighterAST, children: List<NodeHash>): Long {
+        if (children.size != 3) return nodeListHash(children)
+        val (left, op, right) = children
+        val opType = ast.getChildren(op.node).singleOrNull()?.tokenType
+
+        fun unorderedHash(): Long {
+            return listOfNotNull(left, op, right).map { it.hash }.sorted().longHash()
+        }
+        fun orderedHashOf(left: NodeHash?, right: NodeHash?, sign: String): Long {
+            return listOfNotNull(left?.hash, right?.hash, sign.hashCode().toLong()).longHash()
+        }
+        return when (opType) {
+            EQEQ, EXCLEQ, ANDAND, OROR, PLUS, MUL -> unorderedHash()
+            GT -> orderedHashOf(left, right, ">")
+            LT -> orderedHashOf(right, left, ">")
+            GTEQ -> orderedHashOf(left, right, ">=")
+            LTEQ -> orderedHashOf(right, left, ">=")
+            else -> nodeListHash(children)
         }
     }
 
