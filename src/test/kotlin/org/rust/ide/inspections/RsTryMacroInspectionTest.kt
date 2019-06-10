@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsTryMacroInspectionTest : RsInspectionsTestBase(RsTryMacroInspection()) {
+class RsTryMacroInspectionTest : RsInspectionsTestBase(RsTryMacroInspection::class) {
 
     fun testFix() = checkFixByText("Change try! to ?", """
         fn foo() -> Result<(), ()> {

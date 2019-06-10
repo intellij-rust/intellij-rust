@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection()) {
+class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection::class) {
 
     fun `test self in trait not in impl E0186`() = checkErrors("""
         trait T {

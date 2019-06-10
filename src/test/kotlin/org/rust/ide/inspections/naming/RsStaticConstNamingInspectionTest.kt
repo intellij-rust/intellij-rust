@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsStaticConstNamingInspection
 
-class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNamingInspection()) {
+class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNamingInspection::class) {
     fun `test statics`() = checkByText("""
         static STATIC_OK: u32 = 12;
         static <warning descr="Static constant `static_foo` should have an upper case name such as `STATIC_FOO`">static_foo</warning>: u32 = 12;

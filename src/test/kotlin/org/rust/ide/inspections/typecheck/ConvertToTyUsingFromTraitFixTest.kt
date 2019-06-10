@@ -11,7 +11,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test B from A when impl From A for B is available`() = checkFixByText("Convert to B using `From` trait", """
         struct A{}
         struct B{}

@@ -10,7 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsBorrowCheckerFixesTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
+class RsBorrowCheckerFixesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
 
     fun `test derive copy on struct`() = checkFixByText("Derive Copy trait", """
         struct S;

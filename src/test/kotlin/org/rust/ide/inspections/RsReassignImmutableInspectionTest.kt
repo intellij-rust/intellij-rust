@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmutableInspection()) {
+class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmutableInspection::class) {
 
     fun `test E0384 reassign immutable binding`() = checkByText("""
         fn main() {

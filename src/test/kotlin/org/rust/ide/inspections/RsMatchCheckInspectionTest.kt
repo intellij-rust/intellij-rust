@@ -7,7 +7,7 @@ package org.rust.ide.inspections
 
 import org.rust.ide.inspections.checkMatch.RsMatchCheckInspection
 
-class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection()) {
+class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection::class) {
 
     fun `test simple boolean useless`() = checkByText("""
         fn main() {

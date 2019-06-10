@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for lint level detection.
  */
-class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection()) {
+class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::class) {
 
     fun testDirrectAllow() = checkByText("""
         #[allow(non_camel_case_types)]
@@ -101,7 +101,7 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection()) 
     """)
 }
 
-class RsLintLevelFieldTest : RsInspectionsTestBase(RsFieldNamingInspection()) {
+class RsLintLevelFieldTest : RsInspectionsTestBase(RsFieldNamingInspection::class) {
 
     fun testParentAllow() = checkByText("""
         #[allow(non_snake_case)]

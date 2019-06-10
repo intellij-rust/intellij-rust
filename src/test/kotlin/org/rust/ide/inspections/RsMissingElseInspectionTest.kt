@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for Missing Else inspection.
  */
-class RsMissingElseInspectionTest : RsInspectionsTestBase(RsMissingElseInspection()) {
+class RsMissingElseInspectionTest : RsInspectionsTestBase(RsMissingElseInspection::class) {
 
     fun testSimple() = checkByText("""
         fn main() {

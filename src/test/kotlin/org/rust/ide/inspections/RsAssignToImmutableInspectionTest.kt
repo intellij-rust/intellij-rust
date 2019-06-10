@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmutableInspection()) {
+class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmutableInspection::class) {
 
     fun `test E0594 assign to immutable borrowed content`() = checkByText("""
         fn main() {

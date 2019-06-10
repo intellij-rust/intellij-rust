@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsFieldInitShorthandInspectionTest : RsInspectionsTestBase(RsFieldInitShorthandInspection()) {
+class RsFieldInitShorthandInspectionTest : RsInspectionsTestBase(RsFieldInitShorthandInspection::class) {
 
     fun `test not applicable`() = checkFixIsUnavailable("Use initialization shorthand", """
         fn main() {

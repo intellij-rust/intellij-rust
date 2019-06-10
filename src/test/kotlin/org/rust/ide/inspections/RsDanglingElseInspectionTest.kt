@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for Dangling Else inspection.
  */
-class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspection()) {
+class RsDanglingElseInspectionTest : RsInspectionsTestBase(RsDanglingElseInspection::class) {
 
     fun testSimple() = checkByText("""
         fn main() {

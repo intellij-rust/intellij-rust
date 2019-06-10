@@ -10,7 +10,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.openapiext.Testmark
 
-abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection()) {
+abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
     protected fun checkAutoImportFixIsUnavailable(@Language("Rust") text: String, testmark: Testmark? = null) =
         doTest { checkFixIsUnavailable(AutoImportFix.NAME, text, testmark = testmark) }
@@ -56,7 +56,8 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
     }
 
     private inline fun doTest(action: () -> Unit) {
-        val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
+        val inspection = inspection as RsUnresolvedReferenceInspection
+        val defaultValue = inspection.ignoreWithoutQuickFix
         try {
             inspection.ignoreWithoutQuickFix = false
             action()

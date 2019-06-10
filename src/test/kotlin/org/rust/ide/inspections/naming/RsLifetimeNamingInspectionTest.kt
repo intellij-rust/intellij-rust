@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsLifetimeNamingInspection
 
-class RsLifetimeNamingInspectionTest : RsInspectionsTestBase(RsLifetimeNamingInspection()) {
+class RsLifetimeNamingInspectionTest : RsInspectionsTestBase(RsLifetimeNamingInspection::class) {
     fun `test lifetimes`() = checkByText("""
         fn lifetimes<
             'lifetime_ok,

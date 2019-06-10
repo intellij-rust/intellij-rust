@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsMethodNamingInspection
 
-class RsMethodNamingInspectionTest : RsInspectionsTestBase(RsMethodNamingInspection()) {
+class RsMethodNamingInspectionTest : RsInspectionsTestBase(RsMethodNamingInspection::class) {
     fun `test methods`() = checkByText("""
         struct Foo {}
         impl Foo {

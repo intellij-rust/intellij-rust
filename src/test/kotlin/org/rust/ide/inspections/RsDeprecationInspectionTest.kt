@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for Deprecated Attribute inspection.
  */
-class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspection()) {
+class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspection::class) {
 
     fun `test deprecated function without params`() = checkByText("""
         #[deprecated()]

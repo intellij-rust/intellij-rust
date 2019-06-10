@@ -14,9 +14,9 @@ import org.rust.ide.inspections.RsMultipleInspectionsTestBase
 import org.rust.ide.inspections.RsReassignImmutableInspection
 
 class AddMutableFixTest : RsMultipleInspectionsTestBase(
-    RsBorrowCheckerInspection(),
-    RsAssignToImmutableInspection(),
-    RsReassignImmutableInspection()
+    RsBorrowCheckerInspection::class,
+    RsAssignToImmutableInspection::class,
+    RsReassignImmutableInspection::class
 ) {
     fun `test fix E0596 method call`() = checkFixByText("Make `self` mutable", """
         struct A {}

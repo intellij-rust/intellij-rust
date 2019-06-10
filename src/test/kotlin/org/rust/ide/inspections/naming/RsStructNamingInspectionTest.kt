@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsStructNamingInspection
 
-class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspection()) {
+class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspection::class) {
     fun `test structs`() = checkByText("""
         struct StructOk {}
         struct <warning descr="Type `struct_foo` should have a camel case name such as `StructFoo`">struct_foo</warning> {}

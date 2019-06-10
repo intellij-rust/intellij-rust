@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
-class AddAsTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class AddAsTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test numeric value cast`() = checkFixByText("Add safe cast to u8", """
         fn main () {
             let _: u8 = <error>42u16/*caret*/</error>;

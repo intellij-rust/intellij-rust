@@ -10,7 +10,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
+class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
     fun `test E0381 error no init`() = checkFixByText("Initialize with a default value", """
         fn main() {
             let x: i32;

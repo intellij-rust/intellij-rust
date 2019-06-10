@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTraitMembersInspection()) {
+class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTraitMembersInspection::class) {
 
     fun `test same order`() = checkFixIsUnavailable("Apply same member order", """
         struct Struct {

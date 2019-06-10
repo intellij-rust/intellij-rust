@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 /**
  * Tests for inspections suppression
  */
-class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
+class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
 
     fun testWithoutSuppression() = checkByText("""
         struct S;

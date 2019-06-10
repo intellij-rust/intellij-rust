@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongTypeParametersNumberInspection()) {
+class RsWrongTypeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongTypeParametersNumberInspection::class) {
 
     fun `test E0243 number of type parameters is less than expected`() = checkByText("""
         struct Foo1<T> { t: T }

@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsModuleNamingInspection
 
-class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspection()) {
+class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspection::class) {
     fun `test modules`() = checkByText("""
         mod module_ok {}
         mod <warning descr="Module `moduleA` should have a snake case name such as `module_a`">moduleA</warning> {}

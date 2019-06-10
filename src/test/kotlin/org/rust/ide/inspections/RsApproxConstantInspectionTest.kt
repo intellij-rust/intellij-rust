@@ -8,7 +8,7 @@ package org.rust.ide.inspections;
 /**
  * Tests for the Approximate Constant inspection
  */
-class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantInspection()) {
+class RsApproxConstantInspectionTest : RsInspectionsTestBase(RsApproxConstantInspection::class) {
 
     fun testConstants() = checkByText("""
         fn main() {

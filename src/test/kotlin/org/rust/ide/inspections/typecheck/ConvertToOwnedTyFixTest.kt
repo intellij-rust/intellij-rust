@@ -11,7 +11,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToOwnedTyFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test B is Owned type of A`() = checkFixByText("Convert to B using `ToOwned` trait","""
         use std::borrow::Borrow;
 

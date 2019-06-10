@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongLifetimeParametersNumberInspection()) {
+class RsWrongLifetimeParametersNumberInspectionTest : RsInspectionsTestBase(RsWrongLifetimeParametersNumberInspection::class) {
 
     fun `test E0106 missing lifetime in struct field`() = checkByText("""
         struct Foo<'a> {

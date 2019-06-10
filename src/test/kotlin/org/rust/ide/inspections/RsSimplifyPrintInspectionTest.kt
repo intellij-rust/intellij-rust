@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsSimplifyPrintInspectionTest : RsInspectionsTestBase(RsSimplifyPrintInspection()) {
+class RsSimplifyPrintInspectionTest : RsInspectionsTestBase(RsSimplifyPrintInspection::class) {
 
     fun testFix() = checkFixByText("Remove unnecessary argument", """
         fn main() {

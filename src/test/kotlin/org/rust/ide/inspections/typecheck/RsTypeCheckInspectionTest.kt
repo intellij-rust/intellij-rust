@@ -12,7 +12,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.lang.core.macros.MacroExpansionScope
 
-class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test type mismatch E0308 primitive`() = checkByText("""
         fn main () {
             let _: u8 = <error>1u16</error>;

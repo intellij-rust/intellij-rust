@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifetimesInspection()) {
+class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifetimesInspection::class) {
 
     fun `test no output lifetimes 1`() = doTest("""
         <weak_warning>fn <caret>foo<'a>(s: &'a str)</weak_warning> { unimplemented!() }
