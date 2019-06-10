@@ -1245,4 +1245,36 @@ class RsResolveTest : RsResolveTestBase() {
         use self::Foo;
                 //^
     """, ItemResolutionTestmarks.externCrateSelfWithoutAlias)
+
+    fun `test const generic in fn`() = checkByCode("""
+        fn f<const AAA: usize>() {
+                  //X
+            AAA;
+           //^
+        }
+    """)
+
+    fun `test const generic in struct`() = checkByCode("""
+        struct S<const AAA: usize> {
+                      //X
+            x: [usize; AAA]
+                      //^
+        }
+    """)
+
+    fun `test const generic in trait`() = checkByCode("""
+        trait T<const AAA: usize> {
+                     //X
+            const BBB: usize = AAA;
+                              //^
+        }
+    """)
+
+    fun `test const generic in enum`() = checkByCode("""
+        enum E<const AAA: usize> {
+                    //X
+            V([usize; AAA]),
+                     //^
+        }
+    """)
 }

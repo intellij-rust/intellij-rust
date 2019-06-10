@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
-import org.rust.lang.core.psi.RsLifetimeParameter
-import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.psi.RsTypeParameterList
-import org.rust.lang.core.psi.RsWhereClause
+import org.rust.lang.core.psi.*
 
 interface RsGenericDeclaration : RsElement {
     val typeParameterList: RsTypeParameterList?
@@ -18,6 +15,8 @@ interface RsGenericDeclaration : RsElement {
 val RsGenericDeclaration.typeParameters: List<RsTypeParameter>
     get() = typeParameterList?.typeParameterList.orEmpty()
 
+val RsGenericDeclaration.constParameters: List<RsConstParameter>
+    get() = typeParameterList?.constParameterList.orEmpty()
 
 val RsGenericDeclaration.lifetimeParameters: List<RsLifetimeParameter>
     get() = typeParameterList?.lifetimeParameterList.orEmpty()

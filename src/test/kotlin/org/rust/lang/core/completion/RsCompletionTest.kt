@@ -783,4 +783,16 @@ class RsCompletionTest : RsCompletionTestBase() {
             x.1.field/*caret*/
         }
     """)
+
+    fun `test const generics completion`() = doSingleCompletion("""
+        fn f<const AAA: usize>() { A/*caret*/; }
+        struct S<const AAA: usize>([usize; A/*caret*/]);
+        trait T<const AAA: usize> { const BBB: usize = A/*caret*/; }
+        enum E<const AAA: usize> { V([usize; A/*caret*/]) }
+    """, """
+        fn f<const AAA: usize>() { AAA/*caret*/; }
+        struct S<const AAA: usize>([usize; AAA/*caret*/]);
+        trait T<const AAA: usize> { const BBB: usize = AAA/*caret*/; }
+        enum E<const AAA: usize> { V([usize; AAA/*caret*/]) }
+    """)
 }

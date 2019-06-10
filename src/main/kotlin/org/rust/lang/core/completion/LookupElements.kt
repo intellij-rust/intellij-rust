@@ -78,6 +78,7 @@ fun createLookupElement(
 private val RsElement.asTy: Ty?
     get() = when (this) {
         is RsConstant -> typeReference?.type
+        is RsConstParameter -> typeReference?.type
         is RsFieldDecl -> typeReference?.type
         is RsFunction -> retType?.typeReference?.type
         is RsStructItem -> declaredType
@@ -102,6 +103,8 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
         }
 
         is RsConstant -> base
+            .withTypeText(typeReference?.stubOnlyText)
+        is RsConstParameter -> base
             .withTypeText(typeReference?.stubOnlyText)
         is RsFieldDecl -> base
             .withTypeText(typeReference?.stubOnlyText)
