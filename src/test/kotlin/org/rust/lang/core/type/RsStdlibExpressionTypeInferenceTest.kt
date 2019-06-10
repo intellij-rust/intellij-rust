@@ -476,6 +476,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test iter take`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let mut names = vec![0i32, 1]
+                .iter()
+                .take(3)
+                .next();
+            names;
+          //^ Option<&i32>
+        }
+    """)
+
     fun `test iterator collect`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::vec::Vec;

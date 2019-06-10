@@ -32,11 +32,12 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
          * @see TyFingerprint
          */
         fun findPotentialImpls(project: Project, target: Ty): Sequence<RsImplItem> {
-            val fingerprint = TyFingerprint.create(target)
-                ?: return emptySequence()
-
             project.macroExpansionManager.ensureUpToDate()
-            val impls = getElements(KEY, fingerprint, project, RsWithMacrosProjectScope(project))
+            val impls = run {
+                val fingerprint = TyFingerprint.create(target)
+                    ?: return@run emptyList<RsImplItem>()
+                getElements(KEY, fingerprint, project, RsWithMacrosProjectScope(project))
+            }
             val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
             return (impls.asSequence() + freeImpls.asSequence()).filter { it.crateRoot != null }
