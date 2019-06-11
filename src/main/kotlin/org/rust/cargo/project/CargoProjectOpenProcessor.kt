@@ -20,7 +20,7 @@ class CargoProjectOpenProcessor : ProjectOpenProcessor() {
     override fun getIcon(): Icon? = CargoIcons.ICON
     override fun getName(): String = "Cargo"
 
-    override fun canOpenProject(file: VirtualFile): Boolean = FileUtil.namesEqual(file?.name, CargoConstants.MANIFEST_FILE)
+    override fun canOpenProject(file: VirtualFile): Boolean = FileUtil.namesEqual(file.name, CargoConstants.MANIFEST_FILE)
 
     override fun doOpenProject(virtualFile: VirtualFile, projectToClose: Project?, forceNewFrame: Boolean): Project? {
         val basedir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
