@@ -215,6 +215,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test const parameters`() = testExpr("""
+        fn foo<const N: i32>() {
+            let bar = N;
+            bar;
+          //^ i32
+        }
+    """)
+
     fun `test if condition`() = testExpr("""
         fn main() {
             if true {};
