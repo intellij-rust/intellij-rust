@@ -13,17 +13,26 @@ import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewShortNameLocation
 import com.intellij.usageView.UsageViewTypeLocation
+import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 
 class RsDescriptionProvider : ElementDescriptionProvider {
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
         return when (location) {
-            is UsageViewNodeTextLocation -> (element as? RsNamedElement)?.name
-            is UsageViewShortNameLocation -> (element as? RsNamedElement)?.name
-            is UsageViewLongNameLocation -> (element as? RsNamedElement)?.name
+            is UsageViewNodeTextLocation,
+            is UsageViewShortNameLocation,
+            is UsageViewLongNameLocation,
+            is HighlightUsagesDescriptionLocation -> defaultDescription(element)
             is UsageViewTypeLocation -> (element as? RsNamedElement)?.presentationInfo?.type
-            is HighlightUsagesDescriptionLocation -> (element as? RsNamedElement)?.name
             else -> null
         }
     }
+
+    private fun defaultDescription(element: PsiElement): String? =
+        when (element) {
+            is RsMod -> element.modName
+            is RsNamedElement -> element.name
+            else -> null
+        }
+
 }

@@ -6,16 +6,27 @@
 package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
 import com.intellij.refactoring.listeners.RefactoringElementListener
+import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsRenameProcessor : RenamePsiElementProcessor() {
+
+    override fun createRenameDialog(project: Project, element: PsiElement, nameSuggestionContext: PsiElement?, editor: Editor?): RenameDialog {
+        return object : RenameDialog(project, element, nameSuggestionContext, editor) {
+            override fun getFullName(): String {
+                val mod = (element as? RsFile)?.modName ?: return super.getFullName()
+                return "module $mod"
+            }
+        }
+    }
 
     override fun canProcessElement(element: PsiElement): Boolean = element is RsNamedElement
 
@@ -44,11 +55,21 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>) {
         super.prepareRenaming(element, newName, allRenames)
-        if (element !is RsAbstractable) return
-        val trait = (element.owner as? RsAbstractableOwner.Trait)?.trait ?: return
-        trait.searchForImplementations()
-            .mapNotNull { it.findCorrespondingElement(element) }
-            .forEach { allRenames[it] = newName }
+        when (element) {
+            is RsAbstractable -> {
+                val trait = (element.owner as? RsAbstractableOwner.Trait)?.trait ?: return
+                trait.searchForImplementations()
+                    .mapNotNull { it.findCorrespondingElement(element) }
+                    .forEach { allRenames[it] = newName }
+            }
+            is RsMod -> {
+                if (element is RsFile && element.declaration == null) return
+
+                val ownedDir = element.getOwnedDirectory() ?: return
+                allRenames[ownedDir] = newName
+            }
+        }
+
     }
 
     private fun String.ensureQuote(): String = if (startsWith('\'')) this else "'$this"

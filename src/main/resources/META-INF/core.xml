@@ -176,7 +176,10 @@
 
         <!-- Rename Processor -->
 
-        <renamePsiElementProcessor implementation="org.rust.ide.refactoring.RsRenameProcessor"/>
+        <renamePsiElementProcessor implementation="org.rust.ide.refactoring.RsRenameProcessor" order="first"
+                                   id="rsRenameProcessor"/>
+        <renamePsiElementProcessor implementation="org.rust.ide.refactoring.RsDirectoryRenameProcessor"
+                                   order="first, before rsRenameProcessor"/>
 
         <!-- Implement methods -->
 

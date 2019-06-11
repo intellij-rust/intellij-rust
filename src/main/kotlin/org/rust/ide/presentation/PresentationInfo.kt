@@ -80,7 +80,7 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
         is RsFile -> {
             val mName = modName
             if (isCrateRoot) return PresentationInfo(this, "crate", "crate", DeclarationInfo())
-            else if (mName != null) return PresentationInfo(this, "mod", name.substringBeforeLast(".rs"), DeclarationInfo("mod "))
+            else if (mName != null) return PresentationInfo(this, "module ", mName, DeclarationInfo("mod "))
             else Pair("file", DeclarationInfo())
         }
         else -> Pair(javaClass.simpleName, createDeclarationInfo(this, (this as? RsNameIdentifierOwner)?.nameIdentifier, true))
