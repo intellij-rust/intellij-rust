@@ -137,7 +137,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         private fun convertToProblemDescriptors(annotations: List<Annotation>, file: PsiFile): List<ProblemDescriptor> {
             if (annotations.isEmpty()) return emptyList()
 
-            val problems = ContainerUtil.newArrayListWithCapacity<ProblemDescriptor>(annotations.size)
+            val problems = ArrayList<ProblemDescriptor>(annotations.size)
             val quickFixMappingCache = ContainerUtil.newIdentityHashMap<IntentionAction, LocalQuickFix>()
             for (annotation in annotations) {
                 if (annotation.severity === HighlightSeverity.INFORMATION ||

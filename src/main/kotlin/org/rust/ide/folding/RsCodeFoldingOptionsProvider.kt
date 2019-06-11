@@ -14,6 +14,8 @@ class RsCodeFoldingOptionsProvider :
 
     init {
         val settings = instance
+        // BACKCOMPAT: 2019.1
+        @Suppress("SENSELESS_COMPARISON")
         if (settings != null) {
             val getter: () -> Boolean = { settings.collapsibleOneLineMethods }
             val setter: (Boolean) -> Unit = { v -> settings.collapsibleOneLineMethods = v }

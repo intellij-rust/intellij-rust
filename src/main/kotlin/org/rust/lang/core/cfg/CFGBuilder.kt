@@ -93,7 +93,7 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     }
 
     private fun processSubPats(pat: RsPat, subPats: List<RsPat>): CFGNode {
-        val patsExit = subPats.fold(pred) { acc, pat -> process(pat, acc) }
+        val patsExit = subPats.fold(pred) { acc, subPat -> process(subPat, acc) }
         return addAstNode(pat, patsExit)
     }
 

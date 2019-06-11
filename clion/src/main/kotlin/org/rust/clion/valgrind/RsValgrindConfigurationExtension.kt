@@ -9,7 +9,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.CommandLineState
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.RunnerSettings
-import com.intellij.execution.configurations.SearchScopeProvider
 import com.intellij.execution.filters.TextConsoleBuilderImpl
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.StatusText
 import com.jetbrains.cidr.cpp.CPPBundle
@@ -92,11 +92,19 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
 
         val project = configuration.project
         val treeDataModel = MemoryProfileTreeDataModel("Valgrind", project)
-        val outputPanel = MemoryProfileOutputPanel(treeDataModel, ValgrindUtil.EDIT_SETTINGS_ACTION_ID, ValgrindUtil.TREE_POPUP_ID, project)
+        val outputPanel = MemoryProfileOutputPanel(
+            treeDataModel,
+            ValgrindUtil.EDIT_SETTINGS_ACTION_ID,
+            ValgrindUtil.TREE_POPUP_ID,
+            project
+        )
         putUserData(DATA_MODEL_KEY, treeDataModel, configuration, context)
         putUserData(OUTPUT_PANEL_KEY, outputPanel, configuration, context)
         val console = state.consoleBuilder.console
-        state.consoleBuilder = object : TextConsoleBuilderImpl(project, SearchScopeProvider.createSearchScope(environment.project, environment.runProfile)) {
+        state.consoleBuilder = object : TextConsoleBuilderImpl(
+            project,
+            GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
+        ) {
             override fun getConsole(): ConsoleView {
                 val icon = ValgrindExecutor.getExecutorInstance().icon
                 return MemoryProfileConsoleViewWrapper(ValgrindUtil.PROFILER_NAME, console, outputPanel, project, icon)

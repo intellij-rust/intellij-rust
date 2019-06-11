@@ -118,12 +118,9 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
 
 private fun partToHighlight(element: RsElement): TextRange? {
     if (element is RsMacro) {
-        var range = element.identifier?.textRange ?: return null
+        val range = element.identifier?.textRange ?: return null
         val excl = element.excl
-        if (excl != null) {
-            range = range.union(excl.textRange)
-        }
-        return range
+        return range.union(excl.textRange)
     }
 
     if (element is RsMacroCall) {
