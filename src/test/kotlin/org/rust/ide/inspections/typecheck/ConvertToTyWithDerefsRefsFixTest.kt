@@ -8,7 +8,7 @@ package org.rust.ide.inspections.typecheck
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
-class ConvertToTyWithDerefsRefsFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToTyWithDerefsRefsFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
 
     fun `test &T to T `() = checkFixByText("Convert to i32 using dereferences and/or references", """
         fn main () {

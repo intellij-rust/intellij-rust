@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeParameterNamingInspection
 
-class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParameterNamingInspection()) {
+class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParameterNamingInspection::class) {
     fun `test type parameters`() = checkByText("""
         fn type_params<
             SomeType: Clone,

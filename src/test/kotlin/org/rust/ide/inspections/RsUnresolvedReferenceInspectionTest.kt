@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 import org.intellij.lang.annotations.Language
 import org.rust.ide.inspections.import.AutoImportFix
 
-class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection()) {
+class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 
     fun `test unresolved reference with quick fix`() = checkByText("""
         mod foo {
@@ -128,7 +128,8 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
     """)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
-        val defaultValue = (inspection as RsUnresolvedReferenceInspection).ignoreWithoutQuickFix
+        val inspection = inspection as RsUnresolvedReferenceInspection
+        val defaultValue = inspection.ignoreWithoutQuickFix
         try {
             inspection.ignoreWithoutQuickFix = ignoreWithoutQuickFix
             checkByText(text)

@@ -10,7 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsVariableNamingInspection
 
-class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingInspection()) {
+class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingInspection::class) {
     fun `test variables`() = checkByText("""
         fn loc_var() {
             let var_ok = 12;

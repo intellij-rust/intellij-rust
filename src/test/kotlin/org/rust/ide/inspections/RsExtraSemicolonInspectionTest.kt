@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonInspection()) {
+class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonInspection::class) {
 
     fun `test not applicable without return type`() = checkByText("""
         fn foo() { 92; }

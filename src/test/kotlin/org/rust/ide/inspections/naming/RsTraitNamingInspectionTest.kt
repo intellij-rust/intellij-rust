@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTraitNamingInspection
 
-class RsTraitNamingInspectionTest : RsInspectionsTestBase(RsTraitNamingInspection()) {
+class RsTraitNamingInspectionTest : RsInspectionsTestBase(RsTraitNamingInspection::class) {
     fun `test traits`() = checkByText("""
         trait TraitOk {}
         trait <warning descr="Trait `trait_foo` should have a camel case name such as `TraitFoo`">trait_foo</warning> {}

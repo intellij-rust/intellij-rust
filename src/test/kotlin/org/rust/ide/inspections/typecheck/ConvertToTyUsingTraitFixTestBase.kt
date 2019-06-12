@@ -13,7 +13,7 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 abstract class ConvertToTyUsingTraitFixTestBase(
     isExpectedMut: Boolean, private val trait: String, private val method: String, protected val imports: String = ""
-) : RsInspectionsTestBase(RsTypeCheckInspection()) {
+) : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     private val ref = if (isExpectedMut) "&mut " else "&"
     private val fixName = "Convert to ${ref}A using `$trait` trait"
 

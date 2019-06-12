@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsFieldNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspection()) {
+class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspection::class) {
     fun `test enum variant fields`() = checkByText("""
         enum EnumVarFields {
             Variant {

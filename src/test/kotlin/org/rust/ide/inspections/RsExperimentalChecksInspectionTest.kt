@@ -5,7 +5,7 @@
 
 package org.rust.ide.inspections
 
-class RsExperimentalChecksInspectionTest : RsInspectionsTestBase(RsExperimentalChecksInspection()) {
+class RsExperimentalChecksInspectionTest : RsInspectionsTestBase(RsExperimentalChecksInspection::class) {
     fun `test E0614 type cannot be dereferenced`() = checkByText("""
         fn main() {
             let _ = <error>*0</error>;

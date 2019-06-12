@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeAliasNamingInspection
 
-class RsTypeAliasNamingInspectionTest : RsInspectionsTestBase(RsTypeAliasNamingInspection()) {
+class RsTypeAliasNamingInspectionTest : RsInspectionsTestBase(RsTypeAliasNamingInspection::class) {
     fun `test type aliases`() = checkByText("""
         type TypeOk = u32;
         type <warning descr="Type `type_foo` should have a camel case name such as `TypeFoo`">type_foo</warning> = u32;

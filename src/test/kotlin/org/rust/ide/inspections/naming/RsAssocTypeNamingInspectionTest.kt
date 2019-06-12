@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsAssocTypeNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingInspection()) {
+class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingInspection::class) {
     fun `test associated types`() = checkByText("""
         trait Foo {
             type AssocTypeOk;

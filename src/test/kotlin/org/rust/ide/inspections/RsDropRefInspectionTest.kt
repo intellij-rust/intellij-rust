@@ -12,7 +12,7 @@ import org.rust.WithStdlibRustProjectDescriptor
  * Tests for Drop Reference inspection.
  */
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection()) {
+class RsDropRefInspectionTest : RsInspectionsTestBase(RsDropRefInspection::class) {
 
     fun testDropRefSimple() = checkByText("""
         fn main() {

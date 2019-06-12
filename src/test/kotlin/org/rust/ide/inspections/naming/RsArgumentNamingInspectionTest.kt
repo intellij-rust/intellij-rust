@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsArgumentNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInspection()) {
+class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInspection::class) {
     fun `test function arguments`() = checkByText("""
         fn fn_par(
             par_ok: u32,

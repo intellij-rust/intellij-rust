@@ -5,14 +5,24 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.InspectionProfileEntry
+import com.intellij.testFramework.InspectionTestUtil
 import org.rust.TestProject
 import org.rust.ide.annotator.RsAnnotationTestBase
+import kotlin.reflect.KClass
 
 abstract class RsMultipleInspectionsTestBase(
-    vararg val inspections: RsLocalInspectionTool
+    private vararg val inspectionClasses: KClass<out InspectionProfileEntry>
 ) : RsAnnotationTestBase() {
 
-    private fun enableInspections() = myFixture.enableInspections(*inspections)
+    protected lateinit var inspections: List<InspectionProfileEntry>
+
+    override fun setUp() {
+        super.setUp()
+        inspections = InspectionTestUtil.instantiateTools(inspectionClasses.map { it.java })
+    }
+
+    private fun enableInspections() = myFixture.enableInspections(*inspections.toTypedArray())
 
     override fun configureByText(text: String) {
         super.configureByText(text)

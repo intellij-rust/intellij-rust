@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsFunctionNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingInspection()) {
+class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingInspection::class) {
     fun `test functions`() = checkByText("""
         fn fn_ok() {}
         fn <warning descr="Function `FN_BAR` should have a snake case name such as `fn_bar`">FN_BAR</warning>() {}

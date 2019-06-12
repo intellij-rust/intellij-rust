@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsEnumVariantNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsEnumVariantNamingInspectionTest : RsInspectionsTestBase(RsEnumVariantNamingInspection()) {
+class RsEnumVariantNamingInspectionTest : RsInspectionsTestBase(RsEnumVariantNamingInspection::class) {
     fun `test enum variants`() = checkByText("""
         enum EnumVars {
             VariantOk,

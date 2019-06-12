@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 /**
  * Tests for Self Convention inspection
  */
-class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection()) {
+class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
 
     fun testFrom() = checkByText("""
         struct Foo;

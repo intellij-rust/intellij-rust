@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsConstNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspection()) {
+class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspection::class) {
     fun `test constants`() = checkByText("""
         const CONST_OK: u32 = 12;
         const <warning descr="Constant `const_foo` should have an upper case name such as `CONST_FOO`">const_foo</warning>: u32 = 12;

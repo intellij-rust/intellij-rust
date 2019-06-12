@@ -12,7 +12,7 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class ConvertToTyUsingFromStrFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToTyUsingFromStrFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test A from &str when impl FromStr for A is available`() = simpleTestWithStr("\"HelloWorld!\"")
     fun `test A from &String when impl FromStr for A is available`() = simpleTestWithStr("&String::from(\"HelloWorld!\")", "(&String::from(\"HelloWorld!\"))")
     fun `test A from &mut Str when impl FromStr for A is available`() = simpleTestWithStr("String::from(\"HelloWorld!\").as_mut_str()")

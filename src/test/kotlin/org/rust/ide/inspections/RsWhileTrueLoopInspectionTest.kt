@@ -7,7 +7,7 @@ package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
 
-class RsWhileTrueLoopInspectionTest : RsInspectionsTestBase(RsWhileTrueLoopInspection()) {
+class RsWhileTrueLoopInspectionTest : RsInspectionsTestBase(RsWhileTrueLoopInspection::class) {
     fun `test simple`() = checkFix("""
         fn main() {
             <weak_warning descr="Denote infinite loops with `loop { ... }`">while/*caret*/ true</weak_warning> {

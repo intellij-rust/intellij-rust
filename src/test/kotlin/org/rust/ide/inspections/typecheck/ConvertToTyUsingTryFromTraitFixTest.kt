@@ -12,7 +12,7 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToTyUsingTryFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test B from A when impl TryFrom A for B is available`() = checkFixByText("Convert to Bb using `TryFrom` trait", """
         #![feature(try_from)]
         use std::convert::TryFrom;

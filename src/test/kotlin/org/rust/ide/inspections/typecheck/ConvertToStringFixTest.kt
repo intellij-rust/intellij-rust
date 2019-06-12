@@ -11,7 +11,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class ConvertToStringFixTest : RsInspectionsTestBase(RsTypeCheckInspection()) {
+class ConvertToStringFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test str to_string`() = checkFixByText("Convert to String using `ToString` trait", """
             fn main () {
                 let _: String = <error>"Hello World!"<caret></error>;

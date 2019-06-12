@@ -10,7 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
+class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
 
     fun `test move by call`() = checkByText("""
         struct S { data: i32 }

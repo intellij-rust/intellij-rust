@@ -8,7 +8,7 @@ package org.rust.ide.inspections.naming
 import org.rust.ide.inspections.RsEnumNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsEnumNamingInspectionTest : RsInspectionsTestBase(RsEnumNamingInspection()) {
+class RsEnumNamingInspectionTest : RsInspectionsTestBase(RsEnumNamingInspection::class) {
     fun `test enums`() = checkByText("""
         enum EnumOk {}
         enum <warning descr="Type `enum_foo` should have a camel case name such as `EnumFoo`">enum_foo</warning> {}

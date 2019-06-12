@@ -10,7 +10,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection()) {
+class RsBorrowCheckerInspectionTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
 
     fun `test mutable used at ref mutable method call (self)`() = checkByText("""
         struct S;
