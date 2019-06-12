@@ -11,10 +11,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsUseSpeck
 import org.rust.lang.core.psi.RsVis
 import org.rust.lang.core.psi.tokenSetOf
+import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
 import org.rust.lang.core.stubs.RsPathStub
@@ -70,7 +72,8 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsPathReference = RsPathReferenceImpl(this)
+    override fun getReference(): RsPathReference =
+        if (parent is RsMacroCall) RsMacroPathReferenceImpl(this) else RsPathReferenceImpl(this)
 
     override val referenceNameElement: PsiElement
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself ?: crate) {

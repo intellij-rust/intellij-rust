@@ -128,6 +128,23 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve macro in lexical order 3`() = checkByCode("""
+        macro_rules! foo { () => () }
+        #[macro_use]
+        mod a {
+            macro_rules! bar { () => () }
+            #[macro_use]
+            mod b {
+                macro_rules! foo { () => () }
+                //X
+                macro_rules! bar { () => () }
+            }
+        }
+        fn main() {
+            foo!();
+        } //^
+    """)
+
     fun `test resolve macro missing macro_use`() = checkByCode("""
         // Missing #[macro_use] here
         mod a {
