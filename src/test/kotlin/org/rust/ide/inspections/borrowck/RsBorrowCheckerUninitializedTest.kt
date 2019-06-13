@@ -216,4 +216,16 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             <error descr="Use of possibly uninitialized variable">x</error>;
         }
     """, checkWarn = false)
+
+    /** Issue [#4008](https://github.com/intellij-rust/intellij-rust/issues/4008) */
+    fun `test no E0381 never type`() = checkByText("""
+        fn foo(flag: bool) -> i32 {
+            let value: i32;
+            match flag {
+                true => { value = 1 }
+                false => panic!()
+            };
+            value
+        }
+    """, checkWarn = false)
 }
