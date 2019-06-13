@@ -372,6 +372,7 @@ class RsTypeInferenceWalker(
             is RsEnumVariant -> element.parentEnum.declaredType
             is RsFunction -> element.typeOfValue
             is RsConstant -> element.typeReference?.type ?: TyUnknown
+            is RsConstParameter -> element.typeReference?.type ?: TyUnknown
             is RsSelfParameter -> element.typeOfValue
             else -> return TyUnknown
         }
