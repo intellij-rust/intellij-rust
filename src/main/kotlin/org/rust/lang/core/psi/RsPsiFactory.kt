@@ -446,6 +446,10 @@ class RsPsiFactory(
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
 
+    fun createDynTraitType(pathText: String): RsTraitType =
+        createFromText("type T = &dyn $pathText;}")
+            ?: error("Failed to create trait type")
+
     enum class PathNamespace {
         TYPES,
         VALUES
