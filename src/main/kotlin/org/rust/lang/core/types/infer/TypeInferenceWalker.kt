@@ -770,7 +770,7 @@ class RsTypeInferenceWalker(
         val fieldElement = field.element
 
         val raw = (fieldElement as? RsFieldDecl)?.typeReference?.type ?: TyUnknown
-        return raw.substitute(field.selfTy.typeParameterValues)
+        return raw.substitute(field.selfTy.typeParameterValues).foldWith(associatedTypeNormalizer)
     }
 
     private fun inferDotExprType(expr: RsDotExpr, expected: Ty?): Ty {
