@@ -748,7 +748,7 @@ class ImplLookup(
         fun relativeTo(psi: RsElement): ImplLookup {
             val parentItem = psi.contextOrSelf<RsItemElement>()
             val paramEnv = if (parentItem is RsGenericDeclaration) {
-                if (psi.contextOrSelf<RsWherePred>() == null) {
+                if (psi.contextOrSelf<RsWherePred>() == null && psi.contextOrSelf<RsBound>() == null) {
                     ParamEnv.buildFor(parentItem)
                 } else {
                     // We should mock ParamEnv here. Otherwise we run into infinite recursion
