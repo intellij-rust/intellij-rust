@@ -1587,4 +1587,38 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ B
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/4026
+    fun `test struct field with associated type`() = testExpr("""
+        struct Foo<V: Trait> {
+            input: <V as Trait>::Item,
+        }
+        trait Trait { type Item; }
+        struct S; struct X;
+        impl Trait for S {
+            type Item = X;
+        }
+        fn main() {
+            let foo1 = Foo::<S> {
+                input: X,
+            };
+
+            foo1.input;
+        }      //^ X
+    """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/4026
+    fun `test tuple struct field with associated type`() = testExpr("""
+        struct Foo<V: Trait>(<V as Trait>::Item);
+        trait Trait { type Item; }
+        struct S; struct X;
+        impl Trait for S {
+            type Item = X;
+        }
+        fn main() {
+            let foo1 = Foo::<S>(X);
+
+            foo1.0;
+        }      //^ X
+    """)
 }
