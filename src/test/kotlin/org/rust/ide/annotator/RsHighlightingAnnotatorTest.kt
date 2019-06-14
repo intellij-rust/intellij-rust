@@ -72,6 +72,18 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
+    fun `test const parameters`() = checkHighlighting("""
+        struct MyStruct<const <CONST_PARAMETER>N</CONST_PARAMETER>: usize>;
+        trait MyTrait<const <CONST_PARAMETER>N</CONST_PARAMETER>: usize> {
+            fn foo<const <CONST_PARAMETER>M</CONST_PARAMETER>: usize>(a: [i32; <CONST_PARAMETER>M</CONST_PARAMETER>]);
+        }
+        impl MyTrait<0> for MyStruct<0> {
+            fn foo<const <CONST_PARAMETER>M</CONST_PARAMETER>: usize>(a: [i32; <CONST_PARAMETER>M</CONST_PARAMETER>]) {
+                let x = <CONST_PARAMETER>M</CONST_PARAMETER>;
+            }
+        }
+    """)
+
     fun `test function arguments`() = checkHighlighting("""
         struct <STRUCT>Foo</STRUCT> {}
         impl <STRUCT>Foo</STRUCT> {

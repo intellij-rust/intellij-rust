@@ -111,6 +111,7 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsTraitItem -> RsColor.TRAIT
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
+    is RsConstParameter -> RsColor.CONST_PARAMETER
     is RsMacroReference -> RsColor.FUNCTION
     is RsMacroBinding -> RsColor.FUNCTION
     else -> null
@@ -147,6 +148,7 @@ private fun partToHighlight(element: RsElement): TextRange? {
         is RsTraitItem -> element.identifier
         is RsTypeAlias -> element.identifier
         is RsTypeParameter -> element.identifier
+        is RsConstParameter -> element.identifier
         is RsMacroBinding -> element.metaVarIdentifier
         else -> null
     }
