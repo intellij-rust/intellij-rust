@@ -24,26 +24,4 @@ class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.j
 
         <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
     """)
-
-    fun `test impl u8 E0118`() = checkErrors("""
-        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
-    """)
-
-    fun `test impl feature lang u8 E0118`() = checkErrors("""
-        #![feature(lang_items)]
-        #[lang = "u8"]
-        impl u8 {}
-    """)
-
-    fun `test no core impl u8 E0118`() = checkErrors("""
-        #[no_core]
-        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
-    """)
-
-    fun `test feature no core impl u8 E0118`() = checkErrors("""
-        #![feature(no_core)]
-        #[no_core]
-        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
-    """)
-
 }

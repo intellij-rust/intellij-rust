@@ -373,8 +373,10 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val typeRef = impl.typeReference ?: return
         if (typeRef.traitType != null) return
         val type = typeRef.type
-        if (type is TyPrimitive && impl.queryAttributes.langAttribute == type.name) {
-            return // `#[lang = "u8"] impl u8 {}` is a valid impl
+        if (impl.queryAttributes.langAttribute != null) {
+            // There are some special rules for #[lang] items, see:
+            // https://doc.rust-lang.org/unstable-book/language-features/lang-items.html)
+            return
         }
         if (type !is TyAdt && type !is TyTraitObject && type != TyUnknown) {
             RsDiagnostic.ImplForNonAdtError(typeRef).addToHolder(holder)
