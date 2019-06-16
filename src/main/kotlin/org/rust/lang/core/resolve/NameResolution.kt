@@ -321,21 +321,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
     }
     val qualifier = path.qualifier
     val typeQual = path.typeQual
-    val ns = when (parent) {
-        is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
-        is RsUseSpeck -> when {
-            // use foo::bar::{self, baz};
-            //     ~~~~~~~~
-            // use foo::bar::*;
-            //     ~~~~~~~~
-            parent.useGroup != null || parent.isStarImport -> TYPES
-            // use foo::bar;
-            //     ~~~~~~~~
-            else -> TYPES_N_VALUES_N_MACROS
-        }
-        is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
-        else -> TYPES_N_VALUES
-    }
+    val ns = path.allowedNamespaces(isCompletion)
 
     // RsPathExpr can became a macro by adding a trailing `!`, so we add macros to completion
     if (isCompletion && parent is RsPathExpr && qualifier?.path == null) {

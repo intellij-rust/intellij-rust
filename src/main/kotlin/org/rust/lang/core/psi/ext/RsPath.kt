@@ -10,12 +10,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsUseSpeck
-import org.rust.lang.core.psi.RsVis
-import org.rust.lang.core.psi.tokenSetOf
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsPathReference
 import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
@@ -65,6 +62,22 @@ val RsPath.qualifier: RsPath?
         }
         return (ctx as? RsUseSpeck)?.qualifier
     }
+
+fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = context) {
+    is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
+    is RsUseSpeck -> when {
+        // use foo::bar::{self, baz};
+        //     ~~~~~~~~
+        // use foo::bar::*;
+        //     ~~~~~~~~
+        parent.useGroup != null || parent.isStarImport -> TYPES
+        // use foo::bar;
+        //     ~~~~~~~~
+        else -> TYPES_N_VALUES_N_MACROS
+    }
+    is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
+    else -> TYPES_N_VALUES
+}
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {

@@ -21,6 +21,7 @@ import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildMap
+import org.rust.stdext.intersects
 
 class RsPathReferenceImpl(
     element: RsPath
@@ -31,6 +32,14 @@ class RsPathReferenceImpl(
 
     override fun isReferenceTo(element: PsiElement): Boolean {
         if (element is RsFieldDecl) return false
+
+        val path = this.element
+        if (element is RsNamedElement && !path.allowedNamespaces().intersects(element.namespaces)) return false
+
+        val isMember = element is RsAbstractable && element.owner.isImplOrTrait
+        if (isMember && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
+            return false
+        }
         val target = resolve()
         return element.manager.areElementsEquivalent(target, element)
     }
