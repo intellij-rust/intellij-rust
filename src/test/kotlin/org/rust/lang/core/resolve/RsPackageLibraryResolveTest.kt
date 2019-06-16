@@ -568,6 +568,17 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve use item inside proc macro crate`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        mod foo { pub fn bar() {} }
+        use foo::bar;
+                //^ dep-proc-macro/lib.rs
+
+        #[proc_macro]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve bang proc macro from use item`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro]
@@ -577,6 +588,18 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
                             //^ dep-proc-macro/lib.rs
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test proc macro crate cannot export anything but proc macros`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro]
+            pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+            pub fn unseen_function() {}
+        //- lib.rs
+            use dep_proc_macro::unseen_function;
+                                    //^ dep-proc-macro/lib.rs
+        """)
+    }
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve bang proc macro from macro call`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
