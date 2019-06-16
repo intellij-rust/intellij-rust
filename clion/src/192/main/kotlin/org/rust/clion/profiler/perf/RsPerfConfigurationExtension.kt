@@ -73,7 +73,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         val project = configuration.project
         val profilerProcess = PerfProfilerProcess(
             handler,
-            outputFile.path,
+            outputFile,
             createAddressSymbolizer(),
             configuration.name,
             project,
