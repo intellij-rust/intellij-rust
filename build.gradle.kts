@@ -31,6 +31,8 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
+val isAtLeast192 = platformVersion.toInt() >= 192
+
 plugins {
     idea
     kotlin("jvm") version "1.3.30"
@@ -260,6 +262,9 @@ project(":") {
 project(":idea") {
     intellij {
         version = ideaVersion
+        if (isAtLeast192) {
+            setPlugins("java")
+        }
     }
     dependencies {
         compile(project(":"))
