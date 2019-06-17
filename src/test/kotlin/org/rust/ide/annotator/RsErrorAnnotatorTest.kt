@@ -1883,6 +1883,79 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    fun `test impl const ptr E0118`() = checkErrors("""
+        impl<T> <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">*const T</error> {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang const ptr E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "const_ptr"]
+        impl<T> *const T {}
+    """)
+
+    fun `test impl mut ptr E0118`() = checkErrors("""
+        impl<T> <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">*mut T</error> {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang mut ptr E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "mut_ptr"]
+        impl<T> *mut T {}
+    """)
+
+    fun `test impl slice E0118`() = checkErrors("""
+        impl<T> <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">[T]</error> {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang slice E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "slice"]
+        impl<T> [T] {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang slice alloc E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "slice_alloc"]
+        impl<T> [T] {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang slice u8 E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "slice_u8"]
+        impl [u8] {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang slice u8 alloc E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "slice_u8_alloc"]
+        impl [u8] {}
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test impl feature lang u8 E0118`() = checkErrors("""
+        #![feature(lang_items)]
+        #[lang = "u8"]
+        impl u8 {}
+    """)
+
+    fun `test no core impl u8 E0118`() = checkErrors("""
+        #![no_core]
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
+    """)
+
+    fun `test feature no core impl u8 E0118`() = checkErrors("""
+        #![feature(no_core)]
+        #![no_core]
+        impl <error descr="Can impl only `struct`s, `enum`s, `union`s and trait objects [E0118]">u8</error> {}
+    """)
+
+
     fun `test impl sized for struct E0322`() = checkErrors("""
         #[lang = "sized"]
         trait Sized {}
