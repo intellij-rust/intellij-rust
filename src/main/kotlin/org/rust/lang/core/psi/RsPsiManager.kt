@@ -8,6 +8,7 @@ package org.rust.lang.core.psi
 import com.intellij.ProjectTopics
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.components.ProjectComponent
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -120,7 +121,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         // about it because it is a rare case and implementing it differently
         // is much more difficult.
 
-        val owner = psi.findModificationTrackerOwner(!isChildrenChange)
+        val owner = if (DumbService.isDumb(project)) null else psi.findModificationTrackerOwner(!isChildrenChange)
         if (owner == null || !owner.incModificationCount(psi)) {
             incRustStructureModificationCount(file, psi)
         }
