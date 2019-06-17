@@ -1329,7 +1329,7 @@ private NonSpecialMacroCall ::= &(!SpecialExprContextMacroNames) MacroCall
 private SpecialExprContextMacroNames ::= "try" | "await" | "dbg" | "format" | "format_args" | "write" |
 "writeln" | "print" | "println" | "eprint" | "eprintln" | "panic" | "unimplemented" | "unreachable" |
 "assert" | "debug_assert" | "assert_eq" | "assert_ne" | "debug_assert_eq" | "debug_assert_ne" |
-"trace" | "log" | "warn" | "debug" | "error" | "info" | "include_str" | "include_bytes"
+"trace" | "log" | "warn" | "debug" | "error" | "info" | "include_str" | "include_bytes" | "concat"
 
 private MacroHead ::= AttrsAndVis &(PathWithoutTypes '!') (SpecialMacro | CommonMacro)
 
@@ -1351,11 +1351,11 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
 private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
-private SpecialMacro ::= ExprMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
+private SpecialMacro ::= ExprMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro | ConcatMacro
 
 private ExprMacro ::= &(("try" | "await" | "dbg") '!') PathWithoutTypes '!' ExprMacroArgument
 // Expression node is optional to avoid parsing error when expr is not typed yet (like `dbg!()`)
-ExprMacroArgument ::= <<any_braces AnyExpr?>>
+ExprMacroArgument ::= <<any_braces [ AnyExpr ','? ]>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=
@@ -1391,6 +1391,9 @@ IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private ConcatMacro ::= &("concat" '!') PathWithoutTypes '!' ConcatMacroArgument
+ConcatMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>?>>
 
 private meta any_braces ::=
   '(' <<param>> ')'
