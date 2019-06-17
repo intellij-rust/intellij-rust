@@ -39,6 +39,6 @@ class RsCreateFileAction : CreateFileFromTemplateAction(RsCreateFileAction.CAPTI
     }
 
     private companion object {
-        private const val CAPTION = "New Rust File"
+        private const val CAPTION = "Rust File"
     }
 }
