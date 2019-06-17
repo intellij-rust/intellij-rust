@@ -385,6 +385,12 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ S<<unknown>>
     """)
 
+    fun `test alias for T`() = testType("""
+        type S<T> = T;
+        type A = S<u8>;
+               //^ u8
+    """)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */

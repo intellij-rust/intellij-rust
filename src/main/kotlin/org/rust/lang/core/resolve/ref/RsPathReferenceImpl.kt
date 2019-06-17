@@ -171,6 +171,8 @@ private fun resolveThroughTypeAliases(boundElement: BoundElement<RsElement>): Bo
             ?.path?.reference?.advancedResolve()
             ?: break
         if (!visited.add(resolved.element)) return null
+        // Stop at `type S<T> = T;`
+        if (resolved.element is RsTypeParameter) break
         base = resolved.substitute(base.subst)
     }
     return base
