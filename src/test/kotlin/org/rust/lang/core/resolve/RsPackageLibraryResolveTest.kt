@@ -557,7 +557,51 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test resolve bang proc macro with use item`() = stubOnlyResolve("""
+    fun `test resolve bang proc definition in macro crate itself`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn example_proc_macro_1(item: TokenStream) -> TokenStream { item }
+
+        #[proc_macro]
+        pub fn example_proc_macro_2(item: TokenStream) -> TokenStream { example_proc_macro_1(item) }
+                                                                        //^ dep-proc-macro/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve use item inside proc macro crate`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        mod foo { pub fn bar() {} }
+        use foo::bar;
+                //^ dep-proc-macro/lib.rs
+
+        #[proc_macro]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve bang proc macro from use item`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        use dep_proc_macro::example_proc_macro;
+                            //^ dep-proc-macro/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test proc macro crate cannot export anything but proc macros`() = expect<IllegalStateException> {
+        stubOnlyResolve("""
+        //- dep-proc-macro/lib.rs
+            #[proc_macro]
+            pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+            pub fn unseen_function() {}
+        //- lib.rs
+            use dep_proc_macro::unseen_function;
+                                    //^ dep-proc-macro/lib.rs
+        """)
+    }
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve bang proc macro from macro call`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro]
         pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }

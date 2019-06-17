@@ -390,7 +390,16 @@ private fun processQualifiedPathResolveVariants(
             containingMod is RsFile && containingMod.isCrateRoot) {
             if (processAll(exportedMacros(base), processor)) return true
         }
+
+        // Proc macro crates are not allowed to export anything but procedural macros,
+        // and all possible macro exports are collected above. However, when resolve
+        // happens inside proc macro crate itself, all items are allowed
+        val resolveBetweenDifferentTargets = base.containingCargoTarget != path.containingCargoTarget
+        if (resolveBetweenDifferentTargets && base.containingCargoTarget?.isProcMacro == true) {
+            return false
+        }
     }
+
     if (parent is RsUseSpeck && path.path == null) {
         selfInGroup.hit()
         if (processor("self", base)) return true
