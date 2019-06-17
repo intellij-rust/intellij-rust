@@ -2721,4 +2721,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             };
         }
     """)
+
+    fun `test stable attribute on fn E0497`() = checkErrors("""
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable</error>]
+        fn test() {}
+    """)
+
+    fun `test stable attribute on struct E0497`() = checkErrors("""
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable</error>]
+        struct Test;
+    """)
+
+    fun `test stable attribute on enum E0497`() = checkErrors("""
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable</error>]
+        enum Test {}
+    """)
+
 }
