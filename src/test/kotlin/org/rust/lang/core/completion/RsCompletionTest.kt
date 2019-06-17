@@ -478,10 +478,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete macro`() = doSingleCompletion("""
+    fun `test complete macro 1`() = doSingleCompletion("""
         macro_rules! foo_bar { () => () }
         fn main() {
             fo/*caret*/
+        }
+    """, """
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            foo_bar!(/*caret*/)
+        }
+    """)
+
+    fun `test complete macro 2`() = doSingleCompletion("""
+        macro_rules! foo_bar { () => () }
+        fn main() {
+            fo/*caret*/!()
         }
     """, """
         macro_rules! foo_bar { () => () }
