@@ -63,7 +63,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 is RsPatBinding -> processPatBindingResolveVariants(element, true, it)
                 is RsStructLiteralField -> processStructLiteralFieldResolveVariants(element, true, it)
 
-                is RsPath -> {
+                is RsPath -> if (element.parent !is RsMacroCall) {
                     val lookup = ImplLookup.relativeTo(element)
                     processPathResolveVariants(
                         lookup,
@@ -80,6 +80,8 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                             )
                         )
                     )
+                } else {
+                    processMacroCallPathResolveVariants(element, true, it)
                 }
             }
         }

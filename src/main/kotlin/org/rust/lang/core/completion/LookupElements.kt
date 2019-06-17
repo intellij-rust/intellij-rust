@@ -214,11 +214,13 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
             is RsMacro -> {
                 if (curUseItem == null) {
-                    val parens = when (element.name) {
-                        "vec" -> "[]"
-                        else -> "()"
+                    if (!context.nextCharIs('!')) {
+                        val parens = when (element.name) {
+                            "vec" -> "[]"
+                            else -> "()"
+                        }
+                        context.document.insertString(context.selectionEndOffset, "!$parens")
                     }
-                    context.document.insertString(context.selectionEndOffset, "!$parens")
                     EditorModificationUtil.moveCaretRelatively(context.editor, 2)
                 } else {
                     appendSemicolon(context, curUseItem)
