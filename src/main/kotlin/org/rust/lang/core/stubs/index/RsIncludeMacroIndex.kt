@@ -13,12 +13,8 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.PathUtil
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.findIncludingFile
-import org.rust.lang.core.psi.ext.includingFilePath
-import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroCallStub
 
@@ -66,8 +62,26 @@ class RsIncludeMacroIndex : StringStubIndexExtension<RsMacroCall>() {
         }
 
         private fun key(call: RsMacroCall): String? {
-            val path = call.includingFilePath ?: return null
-            return PathUtil.getFileName(path)
+            return call.includeMacroArgument?.expr?.includingFileName()
+        }
+
+        private fun RsExpr.includingFileName(): String? {
+            return when (this) {
+                is RsLitExpr -> {
+                    val path = stringValue ?: return null
+                    PathUtil.getFileName(path)
+                }
+                is RsMacroExpr -> {
+                    val macroCall = macroCall
+                    if (macroCall.macroName == "concat") {
+                        // We need only last segment of path because we use file name as index key
+                        macroCall.concatMacroArgument?.exprList?.lastOrNull()?.includingFileName()
+                    } else {
+                        null
+                    }
+                }
+                else -> null
+            }
         }
     }
 }
