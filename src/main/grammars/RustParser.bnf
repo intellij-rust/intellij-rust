@@ -1393,7 +1393,11 @@ IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
 }
 
 private ConcatMacro ::= &("concat" '!') PathWithoutTypes '!' ConcatMacroArgument
-ConcatMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>?>>
+ConcatMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>?>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 private meta any_braces ::=
   '(' <<param>> ')'
