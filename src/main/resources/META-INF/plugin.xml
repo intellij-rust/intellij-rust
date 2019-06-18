@@ -812,6 +812,7 @@
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
 
+        <fileDocumentSynchronizationVetoer implementation="org.rust.cargo.RustfmtSavingVetoer"/>
     </extensions>
 
     <extensionPoints>

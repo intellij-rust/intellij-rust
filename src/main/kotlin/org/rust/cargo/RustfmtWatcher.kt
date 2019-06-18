@@ -16,8 +16,6 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.virtualFile
 
@@ -85,7 +83,6 @@ class RustfmtWatcher : BaseComponent {
             val project = cargoProject.project
             if (!project.rustSettings.runRustfmtOnSave) return
             val rustfmt = project.toolchain?.rustfmt() ?: return
-            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
             documents.forEach { rustfmt.reformatDocument(cargoProject, it) }
         }
     }
