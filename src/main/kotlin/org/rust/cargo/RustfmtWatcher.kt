@@ -9,6 +9,7 @@ import com.intellij.AppTopics
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.BaseComponent
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.util.containers.ContainerUtil
@@ -83,7 +84,13 @@ class RustfmtWatcher : BaseComponent {
             val project = cargoProject.project
             if (!project.rustSettings.runRustfmtOnSave) return
             val rustfmt = project.toolchain?.rustfmt() ?: return
-            documents.forEach { rustfmt.reformatDocument(cargoProject, it) }
+
+            ApplicationManager.getApplication().invokeLater {
+                for (document in documents) {
+                    rustfmt.reformatDocument(cargoProject, document)
+                    FileDocumentManager.getInstance().saveDocument(document)
+                }
+            }
         }
     }
 }
