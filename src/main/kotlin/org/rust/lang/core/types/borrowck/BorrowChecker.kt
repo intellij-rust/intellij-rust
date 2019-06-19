@@ -21,9 +21,9 @@ class BorrowCheckContext(
     val owner: RsInferenceContextOwner,
     val body: RsBlock,
     val implLookup: ImplLookup = ImplLookup.relativeTo(body),
-    private val usesOfMovedValue: MutableList<UseOfMovedValueError> = mutableListOf(),
-    private val usesOfUninitializedVariable: MutableList<UseOfUninitializedVariable> = mutableListOf(),
-    private val moveErrors: MutableList<MoveError> = mutableListOf()
+    private val usesOfMovedValue: MutableSet<UseOfMovedValueError> = hashSetOf(),
+    private val usesOfUninitializedVariable: MutableSet<UseOfUninitializedVariable> = hashSetOf(),
+    private val moveErrors: MutableSet<MoveError> = hashSetOf()
 ) {
     companion object {
         fun buildFor(owner: RsInferenceContextOwner): BorrowCheckContext? {
@@ -40,7 +40,12 @@ class BorrowCheckContext(
             val clcx = CheckLoanContext(this, data.moveData)
             clcx.checkLoans(body)
         }
-        return BorrowCheckResult(this.usesOfMovedValue, this.usesOfUninitializedVariable, this.moveErrors)
+
+        return BorrowCheckResult(
+            this.usesOfMovedValue.toList(),
+            this.usesOfUninitializedVariable.toList(),
+            this.moveErrors.toList()
+        )
     }
 
     private fun buildAnalysisData(bccx: BorrowCheckContext): AnalysisData? {
@@ -72,6 +77,6 @@ data class BorrowCheckResult(
     val moveErrors: List<MoveError>
 )
 
-class UseOfMovedValueError(val use: RsElement, val move: Move)
-class UseOfUninitializedVariable(val use: RsElement)
-class MoveError(val from: Cmt, val to: MovePlace?)
+data class UseOfMovedValueError(val use: RsElement, val move: Move)
+data class UseOfUninitializedVariable(val use: RsElement)
+data class MoveError(val from: Cmt, val to: MovePlace?)

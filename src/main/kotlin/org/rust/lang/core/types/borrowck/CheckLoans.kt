@@ -7,7 +7,9 @@ package org.rust.lang.core.types.borrowck
 
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsPat
+import org.rust.lang.core.psi.RsPatSlice
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.types.borrowck.LoanPathElement.Interior
 import org.rust.lang.core.types.borrowck.LoanPathKind.Downcast
 import org.rust.lang.core.types.borrowck.LoanPathKind.Extend
@@ -29,10 +31,19 @@ class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveDat
 
     private fun checkIfPathIsMoved(element: RsElement, loanPath: LoanPath) {
         moveData.eachMoveOf(element, loanPath) { move, _ ->
-            bccx.reportUseOfMovedValue(loanPath, move)
-            false
+            if (isInsideSliceDestructing(loanPath, move)) {
+                // It's permitted to move multiple times inside one slice destructing
+                // e.g. `let [a, b, c] = arr`
+                true
+            } else {
+                bccx.reportUseOfMovedValue(loanPath, move)
+                false
+            }
         }
     }
+
+    private fun isInsideSliceDestructing(loanPath: LoanPath, move: Move): Boolean =
+        loanPath.element is RsPatSlice && move.element.ancestorOrSelf<RsPatSlice>() == loanPath.element
 
     override fun declarationWithoutInit(element: RsElement) {}
 
