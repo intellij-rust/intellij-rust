@@ -449,6 +449,31 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait Tr2<<error>'_</error>> {}
     """)
 
+    @MockRustcVersion("1.23.0")
+    fun `test in-band lifetimes feature E0658 1`() = checkErrors("""
+        fn foo(x: &<error descr="in-band lifetimes is experimental [E0658]">'a</error> str) {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 2`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        fn foo<T: 'a>(x: &'b str) where 'c: 'd {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 3`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        fn foo<'b>(x: &<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error> str) {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 4`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        fn foo() {
+            let x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str = unimplemented!();
+        }
+    """)
+
     fun `test lifetime name duplication in generic params E0263`() = checkErrors("""
         fn foo<'a, 'b>(x: &'a str, y: &'b str) { }
         struct Str<'a, 'b> { a: &'a u32, b: &'b f64 }

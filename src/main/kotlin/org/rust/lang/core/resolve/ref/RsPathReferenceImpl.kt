@@ -137,9 +137,23 @@ fun <T: RsElement> instantiatePathGenerics(
         }
     }
 
-    val typeParameters = element.typeParameters.map { TyTypeParameter.named(it) }
+    val parent = path.parent
+    // Generic arguments are optional in expression context, e.g.
+    // `let a = Foo::<u8>::bar::<u16>();` can be written as `let a = Foo::bar();`
+    // if it is possible to infer `u8` and `u16` during type inference
+    val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
+    val typeSubst = element.typeParameters.withIndex().associate { (i, param) ->
+        val paramTy = TyTypeParameter.named(param)
+        val value = typeArguments?.getOrNull(i) ?: if (!areOptionalArgs) {
+            // Args aren't optional and aren't present, so use either default argument
+            // from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
+            param.typeReference?.type ?: TyUnknown
+        } else {
+            paramTy
+        }
+        paramTy to value
+    }
     val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
-    val typeSubst = typeParameters.zip(typeArguments ?: typeParameters).toMap()
     val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
     val newSubst = Substitution(typeSubst, regionSubst)
     return BoundElement(resolved.element, subst + newSubst, assocTypes)

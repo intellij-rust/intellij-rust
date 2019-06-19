@@ -1621,4 +1621,58 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             foo1.0;
         }      //^ X
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/3999
+    fun `test default type argument is not used in expression context 1`() = testExpr("""
+        struct S<T = X>(T);
+        struct X;
+        fn main() {
+            let a = S(1);
+            a;
+        } //^ S<i32>
+    """)
+
+    fun `test default type argument is not used in expression context 2`() = testExpr("""
+        struct S<T = X>(T);
+        struct X;
+        impl<T> S<T> {
+            fn new(t: T) -> S<T> { S(t) }
+        }
+        fn main() {
+            let a = S::new(1);
+            a;
+        } //^ S<i32>
+    """)
+
+    fun `test default type argument is not used in pat context`() = testExpr("""
+        struct S<T = X>(T);
+        struct X;
+        fn main() {
+            let S(a) = S(1);
+            a;
+        } //^ i32
+    """)
+
+    fun `test default type argument is used in type context 1`() = testExpr("""
+        struct S<T = X>(T);
+        struct X;
+        fn foo(s: S) {
+            s;
+        } //^ S<X>
+    """)
+
+    fun `test default type argument is used in type context 2`() = testExpr("""
+        struct S<T1 = X, T2 = Y>(T1, T2);
+        struct X; struct Y;
+        fn foo(s: S<u8>) {
+            s;
+        } //^ S<u8, Y>
+    """)
+
+    fun `test type argument is unknown if not passed`() = testExpr("""
+        struct S<T1, T2>(T1, T2);
+        fn foo(s: S<u8>) {
+            s;
+        } //^ S<u8, <unknown>>
+    """)
 }

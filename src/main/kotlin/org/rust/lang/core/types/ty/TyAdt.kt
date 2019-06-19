@@ -16,7 +16,6 @@ import org.rust.lang.core.types.mergeFlags
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
-import org.rust.lang.core.types.type
 
 /**
  * Represents struct/enum/union.
@@ -58,9 +57,7 @@ data class TyAdt private constructor(
 }
 
 private fun defaultTypeArguments(item: RsStructOrEnumItemElement): List<Ty> =
-    item.typeParameters.map { param ->
-        param.typeReference?.type ?: TyTypeParameter.named(param)
-    }
+    item.typeParameters.map { param -> TyTypeParameter.named(param) }
 
 private fun defaultRegionArguments(item: RsStructOrEnumItemElement): List<Region> =
     item.lifetimeParameters.map { param -> ReEarlyBound(param) }

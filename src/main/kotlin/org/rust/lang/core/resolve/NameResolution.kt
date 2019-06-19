@@ -24,6 +24,8 @@ import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
+import org.rust.lang.core.FeatureAvailability
+import org.rust.lang.core.IN_BAND_LIFETIMES
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
@@ -579,14 +581,37 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
     if (lifetime.isPredefined) return false
     loop@ for (scope in lifetime.ancestors) {
         val lifetimeParameters = when (scope) {
-            is RsGenericDeclaration -> scope.typeParameterList?.lifetimeParameterList
+            is RsGenericDeclaration -> scope.lifetimeParameters
             is RsWhereClause -> scope.wherePredList.mapNotNull { it.forLifetimes }.flatMap { it.lifetimeParameterList }
             is RsForInType -> scope.forLifetimes.lifetimeParameterList
-            is RsPolybound -> scope.forLifetimes?.lifetimeParameterList
+            is RsPolybound -> scope.forLifetimes?.lifetimeParameterList.orEmpty()
             else -> continue@loop
         }
-        if (processAll(lifetimeParameters.orEmpty(), processor)) return true
+        if (processAll(lifetimeParameters, processor)) return true
     }
+
+    val owner = lifetime.stubAncestorStrict<RsGenericDeclaration>() ?: return false
+    if (owner.lifetimeParameters.isEmpty() &&
+        IN_BAND_LIFETIMES.availability(lifetime) == FeatureAvailability.AVAILABLE) {
+        val lifetimes = mutableListOf<RsLifetime>()
+        val lifetimeNames = hashSetOf<String>()
+        val visitor = object : RsVisitor() {
+            override fun visitLifetime(lifetime: RsLifetime) {
+                val name = lifetime.referenceName
+                if (name.isNotEmpty() && lifetimeNames.add(name)) {
+                    lifetimes.add(lifetime)
+                }
+            }
+
+            override fun visitElement(element: RsElement) =
+                element.stubChildrenOfType<RsElement>().forEach { it.accept(this) }
+        }
+        owner.typeParameterList?.accept(visitor)
+        (owner as? RsFunction)?.valueParameterList?.accept(visitor)
+        owner.whereClause?.accept(visitor)
+        return processAll(lifetimes, processor)
+    }
+
     return false
 }
 
@@ -701,7 +726,7 @@ fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolvePro
     return processAll(exportedMacros(prelude), processor)
 }
 
-private class MacroResolver private constructor(private val processor: RsResolveProcessor): RsVisitor() {
+private class MacroResolver private constructor(private val processor: RsResolveProcessor) : RsVisitor() {
     private val visitor = MacroResolvingVisitor(reverse = true) { processor(it) }
 
     private fun processMacrosInLexicalOrderUpward(startElement: PsiElement): Boolean {
@@ -1254,7 +1279,7 @@ fun processNestedScopesUpwards(
     processor: RsResolveProcessor
 ): Boolean {
     val prevScope = mutableSetOf<String>()
-    if (walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
+    val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         processWithShadowing(prevScope, processor) { shadowingProcessor ->
             val ipm = when {
                 scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
@@ -1263,9 +1288,8 @@ fun processNestedScopesUpwards(
             }
             processLexicalDeclarations(scope, cameFrom, ns, ipm, shadowingProcessor)
         }
-    }) {
-        return true
     }
+    if (stop) return true
 
     // Prelude is injected via implicit star import `use std::prelude::v1::*;`
     if (processor(ScopeEvent.STAR_IMPORTS)) return false

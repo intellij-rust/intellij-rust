@@ -8,9 +8,7 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -269,11 +267,13 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     fun `test implement generic trait`() = doTest("""
-        trait T<A, B> {
+        trait T<A, B = i16, C = u32> {
             fn f1(_: A) -> A;
             const C1: A;
             fn f2(_: B) -> B;
             const C2: B;
+            fn f3(_: C) -> C;
+            const C3: C;
         }
         struct S;
         impl T<u8, u16> for S {/*caret*/}
@@ -281,13 +281,17 @@ class ImplementMembersHandlerTest : RsTestBase() {
         ImplementMemberSelection("f1(_: A) -> A", true),
         ImplementMemberSelection("C1: A", true),
         ImplementMemberSelection("f2(_: B) -> B", true),
-        ImplementMemberSelection("C2: B", true)
+        ImplementMemberSelection("C2: B", true),
+        ImplementMemberSelection("f3(_: C) -> C", true),
+        ImplementMemberSelection("C3: C", true)
     ), """
-        trait T<A, B> {
+        trait T<A, B = i16, C = u32> {
             fn f1(_: A) -> A;
             const C1: A;
             fn f2(_: B) -> B;
             const C2: B;
+            fn f3(_: C) -> C;
+            const C3: C;
         }
         struct S;
         impl T<u8, u16> for S {
@@ -302,6 +306,12 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             const C2: u16 = unimplemented!();
+
+            fn f3(_: u32) -> u32 {
+                unimplemented!()
+            }
+
+            const C3: u32 = unimplemented!();
         }
     """)
 

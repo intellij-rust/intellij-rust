@@ -25,5 +25,5 @@ class RsLifetimeReferenceImpl(
         collectResolveVariants(element.referenceName) { processLifetimeResolveVariants(element, it) }
 
     override fun isReferenceTo(element: PsiElement): Boolean =
-        element is RsLifetimeParameter && super.isReferenceTo(element)
+        (element is RsLifetimeParameter || element is RsLifetime) && super.isReferenceTo(element)
 }
