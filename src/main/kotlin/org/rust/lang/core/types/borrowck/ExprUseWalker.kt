@@ -270,6 +270,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkStructExpr(fields: List<RsStructLiteralField>, withExpr: RsExpr?) {
+        // TODO: consume shorthand literals with `it.expr == null`
         fields.mapNotNull { it.expr }.forEach { consumeExpr(it) }
         if (withExpr == null) return
 
@@ -310,12 +311,10 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     /** Identifies any bindings within [pat] whether the overall pattern/match structure is a move, copy, or borrow */
     private fun determinePatMoveMode(discriminantCmt: Cmt, pat: RsPat, mode: TrackMatchMode): TrackMatchMode {
         var newMode = mode
-        mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat ->
-            if (subPat is RsPatIdent && subPat.patBinding.reference.resolve()?.isConstantLike != true) {
-                newMode = when (subPat.patBinding.kind) {
-                    is BindByReference -> newMode.leastUpperBound(MatchMode.BorrowingMatch)
-                    is BindByValue -> newMode.leastUpperBound(copyOrMove(mc, subPatCmt, PatBindingMove).matchMode)
-                }
+        mc.walkPat(discriminantCmt, pat) { subPatCmt, _, binding ->
+            newMode = when (binding.kind) {
+                is BindByReference -> newMode.leastUpperBound(MatchMode.BorrowingMatch)
+                is BindByValue -> newMode.leastUpperBound(copyOrMove(mc, subPatCmt, PatBindingMove).matchMode)
             }
         }
 
@@ -327,19 +326,16 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
      * (see also [walkIrrefutablePat] for patterns that stand alone)
      */
     private fun walkPat(discriminantCmt: Cmt, pat: RsPat, @Suppress("UNUSED_PARAMETER") matchMode: MatchMode) {
-        mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat ->
-            if (subPat is RsPatIdent && subPat.patBinding.reference.resolve()?.isConstantLike != true) {
-                val binding = subPat.patBinding
-                val mutabilityCategory = MutabilityCategory.from(binding.mutability)
-                val bindingCmt = Cmt(binding, Categorization.Local(binding), mutabilityCategory, binding.type)
+        mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat, binding ->
+            val mutabilityCategory = MutabilityCategory.from(binding.mutability)
+            val bindingCmt = Cmt(binding, Categorization.Local(binding), mutabilityCategory, binding.type)
 
-                // Each match binding is effectively an assignment to the binding being produced.
-                delegate.mutate(subPat, bindingCmt, MutateMode.Init)
+            // Each match binding is effectively an assignment to the binding being produced.
+            delegate.mutate(subPat, bindingCmt, MutateMode.Init)
 
-                // It is also a borrow or copy/move of the value being matched.
-                if (binding.kind is BindByValue) {
-                    delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
-                }
+            // It is also a borrow or copy/move of the value being matched.
+            if (binding.kind is BindByValue) {
+                delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
             }
         }
     }

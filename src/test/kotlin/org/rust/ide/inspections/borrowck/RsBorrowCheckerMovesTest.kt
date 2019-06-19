@@ -11,7 +11,6 @@ import org.rust.ide.inspections.RsBorrowCheckerInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection::class) {
-
     fun `test move by call`() = checkByText("""
         struct S { data: i32 }
 
@@ -24,7 +23,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
                 if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
                 i += 1;
             }
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -34,7 +33,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S;
             let y = x;
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -45,7 +44,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let x = S;
             let mut y = 2;
             y = x;
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -57,7 +56,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let mut s = S { a: 1, ..Default::default() };
             s.b = 2;
             let s1 = s;
-            <error descr="Use of moved value">s<caret></error>;
+            <error descr="Use of moved value">s</error>;
         }
     """, checkWarn = false)
 
@@ -67,7 +66,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -78,7 +77,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -89,7 +88,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = E::One;
             let y = x;
-            <error descr="Use of moved value">x<caret></error>;
+            <error descr="Use of moved value">x</error>;
         }
     """, checkWarn = false)
 
@@ -100,7 +99,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let x = S { data: T };
             x.data;
-            <error descr="Use of moved value">x.data</error><caret>;
+            <error descr="Use of moved value">x.data</error>;
         }
     """, checkWarn = false)
 
@@ -142,7 +141,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         struct T { s1: S, s2: S }
         fn main() {
             let s = S;
-            let t = T { s1: s, s2: <error descr="Use of moved value">s<caret></error> };
+            let t = T { s1: s, s2: <error descr="Use of moved value">s</error> };
         }
     """, checkWarn = false)
 
@@ -396,6 +395,39 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let arr = [S, S, S];
             let [a, b, c] = arr;
             let <error descr="Use of moved value">[a1, b1, c1]</error> = arr;
+        }
+    """, checkWarn = false)
+
+    fun `test move into struct pat`() = checkByText("""
+        struct S;
+        struct T { x: S }
+
+        fn main() {
+            let t = T { x: S };
+            let T { x: x } = t;
+            <error descr="Use of moved value">t</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move into struct pat shorthand`() = checkByText("""
+        struct S;
+        struct T { x: S }
+
+        fn main() {
+            let t = T { x: S };
+            let T { x } = t;
+            <error descr="Use of moved value">t</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move inside struct pat`() = checkByText("""
+        struct S;
+        struct T { s: S }
+
+        fn main() {
+            let s = S;
+            let t1 = T { s: s };
+            let t2 = T { s: <error descr="Use of moved value">s</error> };
         }
     """, checkWarn = false)
 }
