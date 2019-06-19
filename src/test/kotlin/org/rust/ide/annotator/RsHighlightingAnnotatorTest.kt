@@ -49,6 +49,21 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
+    fun `test function and method calls`() = checkHighlighting("""
+        fn <FUNCTION>function</FUNCTION>() {}
+        struct Foo;
+        impl Foo {
+            fn <METHOD>method</METHOD>(&self) {}
+            fn <ASSOC_FUNCTION>assoc_function</ASSOC_FUNCTION>() {}
+        }
+        fn <FUNCTION>check</FUNCTION><T: FnOnce(i32)>(<PARAMETER>f</PARAMETER>: T) {
+            <FUNCTION_CALL>function</FUNCTION_CALL>();
+            <STRUCT>Foo</STRUCT>.<FUNCTION_CALL>method</FUNCTION_CALL>();
+            <STRUCT>Foo</STRUCT>::<ASSOC_FUNCTION>assoc_function</ASSOC_FUNCTION>();
+            <PARAMETER>f</PARAMETER>(123);
+        }
+    """)
+
     fun `test macro`() = checkHighlighting("""
         fn <FUNCTION>main</FUNCTION>() {
             <MACRO>println</MACRO><MACRO>!</MACRO>["Hello, World!"];
@@ -141,7 +156,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test crate`() = checkHighlighting("""
         extern crate <CRATE>dep_lib_target</CRATE>;
-        
+
         use <CRATE>std</CRATE>::<MODULE>io</MODULE>::<TRAIT>Read</TRAIT>;
     """)
 

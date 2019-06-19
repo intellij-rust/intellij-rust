@@ -14,6 +14,8 @@ pub enum <ENUM>Flag</ENUM> {
 
 const <CONSTANT>QUALITY</CONSTANT>: <ENUM>Flag</ENUM> = <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>;
 
+struct Table<const <CONST_PARAMETER>N</CONST_PARAMETER>: usize>([[i32; <CONST_PARAMETER>N</CONST_PARAMETER>]; <CONST_PARAMETER>N</CONST_PARAMETER>])
+
 pub trait <TRAIT>Write</TRAIT> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
 }
@@ -27,7 +29,7 @@ type <TYPE_ALIAS>RcObject</TYPE_ALIAS><<TYPE_PARAMETER>T</TYPE_PARAMETER>> = <ST
 
 impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> Write for <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize> {
-        let s = stuff::<FUNCTION>write_map</FUNCTION>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
+        let s = stuff::<FUNCTION_CALL>write_map</FUNCTION_CALL>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
         <MACRO>info!</MACRO>("{} byte(s) written", s);
         <ENUM_VARIANT>Ok</ENUM_VARIANT>(s)
     }
@@ -41,10 +43,10 @@ fn <FUNCTION>main</FUNCTION>() {
     <MODULE>stuff</MODULE>::<STRUCT>AppVersion</STRUCT>::<ASSOC_FUNCTION>print</ASSOC_FUNCTION>();
 
     let input = <ENUM>Option</ENUM>::<ENUM_VARIANT>None</ENUM_VARIANT>;
-    let program = input.<METHOD>unwrap_or_else</METHOD>(|| "+ + * - /");
+    let program = input.<FUNCTION_CALL>unwrap_or_else</FUNCTION_CALL>(|| "+ + * - /");
     let mut <MUT_BINDING>accumulator</MUT_BINDING> = 0;
 
-    for token in program.<METHOD>chars</METHOD>() {
+    for token in program.<FUNCTION_CALL>chars</FUNCTION_CALL>() {
         match token {
             '+' => <MUT_BINDING>accumulator</MUT_BINDING> += 1,
             '-' => <MUT_BINDING>accumulator</MUT_BINDING> -= 1,
