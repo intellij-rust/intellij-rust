@@ -87,6 +87,26 @@ class AddFmtStringArgumentIntentionTest : RsIntentionTestBase(AddFmtStringArgume
         }
     """)
 
+    fun `test write`() = doTest("""
+        fn main() {
+            write!(f, "x = /*caret*/");
+        }
+    """, """
+        fn main() {
+            write!(f, "x = {}", x);
+        }
+    """)
+
+    fun `test multiple args write`() = doTest("""
+        fn main() {
+            write!(f, "a = {}, x = /*caret*/, b = {}", a, b);
+        }
+    """, """
+        fn main() {
+            write!(f, "a = {}, x = {}, b = {}", a, x, b);
+        }
+    """)
+
     fun doTest(@Language("Rust") before: String, @Language("Rust") after: String, fragmentText: String = "x") {
         AddFmtStringArgumentIntention.CODE_FRAGMENT_TEXT = fragmentText
         doAvailableTest(before, after)
