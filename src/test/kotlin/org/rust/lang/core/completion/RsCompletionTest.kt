@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.completion
 
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -745,6 +742,12 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo<'aaaaaa>(x:&'a/*caret*/ str) {}
     """, """
         fn foo<'aaaaaa>(x:&'aaaaaa/*caret*/ str) {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test complete in-band lifetime`() = checkContainsCompletion("'aaaaaa", """
+        #![feature(in_band_lifetimes)]
+        fn foo(x:&'aaaaaa str, y:&'a/*caret*/ str) {}
     """)
 
     fun `test super completion`() = doSingleCompletion("""

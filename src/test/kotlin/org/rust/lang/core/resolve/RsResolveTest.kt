@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockRustcVersion
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
 class RsResolveTest : RsResolveTestBase() {
@@ -1006,6 +1007,58 @@ class RsResolveTest : RsResolveTestBase() {
     fun `test static lifetime unresolved`() = checkByCode("""
         fn foo(name: &'static str) {}
                       //^ unresolved
+    """)
+
+    @MockRustcVersion("1.23.0")
+    fun `test in-band lifetime unresolved`() = checkByCode("""
+        fn foo(
+            x: &'a str,
+            y: &'a str
+               //^ unresolved
+        ) {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetime resolve`() = checkByCode("""
+        #![feature(in_band_lifetimes)]
+        fn foo(
+            x: &'a str,
+               //X
+            y: &'a str
+               //^
+        ) {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetime single definition`() = checkByCode("""
+        #![feature(in_band_lifetimes)]
+        fn foo(
+            x: &'a str,
+               //X
+            y: &'a str
+        ) {
+            let z: &'a str = unimplemented!();
+                   //^
+        }
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetime no definition in body`() = checkByCode("""
+        #![feature(in_band_lifetimes)]
+        fn foo() {
+            let z: &'a str = unimplemented!();
+                   //^ unresolved
+        }
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band and explicit lifetimes`() = checkByCode("""
+        #![feature(in_band_lifetimes)]
+        fn foo<'b>(
+            x: &'a str,
+            y: &'a str
+               //^ unresolved
+        ) {}
     """)
 
     fun `test loop label`() = checkByCode("""
