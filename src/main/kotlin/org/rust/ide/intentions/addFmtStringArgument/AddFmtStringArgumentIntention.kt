@@ -85,15 +85,20 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         val newString = "\"$prefix$newPlaceholder$suffix\""
         val newArgument = codeFragment.expr?.text ?: return
 
-        val newMacroCall = if (arguments.size == 1) {
+        val newArgs = if (arguments.size == 1) {
             // e.g. `println!("x = <caret>")`
-            psiFactory.createMacroCall(ctx.macroCall.macroName, newString, newArgument)
+            listOf(newString, newArgument)
         } else {
-            // e.g. `println!("x = {}, y = <caret>", x)`
-            val argsAfterLiteral = arguments.drop(1).map { it.text }
-            val newArgs = argsAfterLiteral.take(placeholderNumber) + newArgument + argsAfterLiteral.drop(placeholderNumber)
-            psiFactory.createMacroCall(ctx.macroCall.macroName, newString, *newArgs.toTypedArray())
+            // e.g. `println!("x = {}, y = <caret>", x)` or `write!(f, "x = {}, y = <caret>", x)`
+            val literalPosition = arguments.indexOfFirst { it.expr == ctx.literal }.takeIf { it >= 0 } ?: return
+            val argsBeforeLiteral = arguments.take(literalPosition).map { it.text }
+            val argsAfterLiteral = arguments.drop(literalPosition + 1).map { it.text }
+            val newArgsAfterLiteral =
+                argsAfterLiteral.take(placeholderNumber) + newArgument + argsAfterLiteral.drop(placeholderNumber)
+
+            argsBeforeLiteral + newString + newArgsAfterLiteral
         }
+        val newMacroCall = psiFactory.createMacroCall(ctx.macroCall.macroName, *newArgs.toTypedArray())
 
         project.runWriteCommandAction {
             ctx.macroCall.replace(newMacroCall) as RsMacroCall
