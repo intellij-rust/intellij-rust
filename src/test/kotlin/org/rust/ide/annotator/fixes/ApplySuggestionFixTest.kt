@@ -31,12 +31,20 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
     """)
 
     fun `test rustc suggestion (maybe incorrect)`() = checkFixByText("""
-        fn main() {
-            if <error>1 <- 2</error> {}
+        struct Foo(i32);
+        
+        impl Foo {
+            fn foo(self) -> i32 {
+                <error>this</error>.0
+            }
         }
     """, """
-        fn main() {
-            if 1< -2 {}
+        struct Foo(i32);
+        
+        impl Foo {
+            fn foo(self) -> i32 {
+                self.0
+            }
         }
     """)
 
