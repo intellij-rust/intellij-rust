@@ -48,9 +48,8 @@ class CreateLifetimeParameterFromUsageFix(lifetime: RsLifetime) : LocalQuickFixA
     }
 
     companion object {
-        fun isAvailable(lifetime: RsLifetime): Boolean {
-            return gatherContext(lifetime) != null
-        }
+        fun tryCreate(lifetime: RsLifetime): CreateLifetimeParameterFromUsageFix? =
+            if (gatherContext(lifetime) != null) CreateLifetimeParameterFromUsageFix(lifetime) else null
     }
 }
 

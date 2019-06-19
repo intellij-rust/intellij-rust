@@ -7,9 +7,12 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.RsLifetime
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.ref.RsLifetimeReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsLifetimeStub
@@ -23,11 +26,20 @@ abstract class RsLifetimeImplMixin : RsStubbedNamedElementImpl<RsLifetimeStub>, 
 
     constructor(stub: RsLifetimeStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsReference = RsLifetimeReferenceImpl(this)
-
-    override val referenceNameElement: PsiElement get() = quoteIdentifier
+    override val referenceNameElement: PsiElement get() = nameIdentifier
 
     override val referenceName: String get() = greenStub?.name ?: referenceNameElement.text
+
+    override fun getReference(): RsReference = RsLifetimeReferenceImpl(this)
+
+    override fun getNameIdentifier(): PsiElement = quoteIdentifier
+
+    override fun setName(name: String): PsiElement? {
+        nameIdentifier.replace(RsPsiFactory(project).createQuoteIdentifier(name))
+        return this
+    }
+
+    override fun getUseScope(): SearchScope = RsPsiImplUtil.getParameterUseScope(this) ?: super.getUseScope()
 }
 
 sealed class LifetimeName {
@@ -52,7 +64,7 @@ val LifetimeName.isElided: Boolean
 
 val LifetimeName.isStatic: Boolean get() = this == LifetimeName.Static
 
-val RsLifetime?.name: LifetimeName
+val RsLifetime?.typedName: LifetimeName
     get() {
         return when (val text = this?.referenceName) {
             null -> LifetimeName.Implicit
@@ -62,6 +74,6 @@ val RsLifetime?.name: LifetimeName
         }
     }
 
-val RsLifetime?.isElided: Boolean get() = name.isElided
+val RsLifetime?.isElided: Boolean get() = typedName.isElided
 
-val RsLifetime?.isStatic: Boolean get() = name.isStatic
+val RsLifetime?.isStatic: Boolean get() = typedName.isStatic

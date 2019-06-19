@@ -826,11 +826,7 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0261,
                 errorText(),
-                fixes = if (CreateLifetimeParameterFromUsageFix.isAvailable(lifetime)) {
-                    listOf(CreateLifetimeParameterFromUsageFix(lifetime))
-                } else {
-                    emptyList()
-                }
+                fixes = listOfNotNull(CreateLifetimeParameterFromUsageFix.tryCreate(lifetime))
             )
         }
 
@@ -838,6 +834,21 @@ sealed class RsDiagnostic(
             val lifetimeText = escapeString(element.text)
             return "Use of undeclared lifetime name `$lifetimeText`"
         }
+    }
+
+    class InBandAndExplicitLifetimesError(
+        val lifetime: RsLifetime
+    ) : RsDiagnostic(lifetime) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0688,
+                errorText(),
+                fixes = listOfNotNull(CreateLifetimeParameterFromUsageFix.tryCreate(lifetime))
+            )
+        }
+
+        private fun errorText(): String = "Cannot mix in-band and explicit lifetime definitions"
     }
 
     class TraitItemsMissingImplError(
@@ -1042,7 +1053,7 @@ enum class RsErrorCode {
     E0308, E0322, E0328, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
     E0518, E0569, E0583, E0594,
-    E0603, E0614, E0616, E0618, E0624, E0658, E0695,
+    E0603, E0614, E0616, E0618, E0624, E0658, E0688, E0695,
     E0704;
 
     val code: String

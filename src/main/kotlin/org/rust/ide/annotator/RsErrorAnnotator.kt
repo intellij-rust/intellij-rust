@@ -15,6 +15,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.AddModuleFileFix
 import org.rust.ide.annotator.fixes.AddTurbofishFix
+import org.rust.ide.annotator.fixes.CreateLifetimeParameterFromUsageFix
 import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.lang.core.*
@@ -298,7 +299,25 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkLifetime(holder: AnnotationHolder, lifetime: RsLifetime) {
         if (lifetime.isPredefined || !hasResolve(lifetime)) return
-        RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
+
+        val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
+        val declarationParts = listOfNotNull(
+            owner.typeParameterList,
+            (owner as? RsFunction)?.valueParameterList,
+            owner.whereClause
+        )
+        val inDeclaration = lifetime.ancestors.takeWhile { it != owner }.any { it in declarationParts }
+
+        when {
+            inDeclaration && owner.lifetimeParameters.isEmpty() -> {
+                val fixes = listOfNotNull(CreateLifetimeParameterFromUsageFix.tryCreate(lifetime)).toTypedArray()
+                IN_BAND_LIFETIMES.check(holder, lifetime, "in-band lifetimes", *fixes)
+            }
+            inDeclaration && IN_BAND_LIFETIMES.availability(lifetime) == FeatureAvailability.AVAILABLE ->
+                RsDiagnostic.InBandAndExplicitLifetimesError(lifetime).addToHolder(holder)
+            else ->
+                RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
+        }
     }
 
     private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
