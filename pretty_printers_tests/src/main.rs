@@ -7,7 +7,7 @@ use std::fs;
 use std::fs::read_dir;
 use std::path::Path;
 
-use test_runner::Config;
+use test_runner::{Config, TestResult};
 use test_runner::create_test_runner;
 use test_runner::Debugger;
 use test_runner::GDBConfig;
@@ -90,14 +90,18 @@ fn test(debugger: Debugger, parameter: String) -> Result<(), ()> {
         let path_string = path.file_name().unwrap().to_str().unwrap();
 
         match result {
-            Ok(_) => {
+            TestResult::Ok => {
                 println!("{}: passed", path_string);
-            }
-            Err(e) => {
+            },
+            TestResult::Skipped(reason) => {
+                println!("{}: skipped", path_string);
+                println!("{}", reason);
+            },
+            TestResult::Err(reason) => {
                 println!("{}: failed", path_string);
-                println!("{}", e);
+                println!("{}", reason);
                 status = Err(());
-            }
+            },
         }
     }
 

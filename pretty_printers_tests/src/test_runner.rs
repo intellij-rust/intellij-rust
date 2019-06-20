@@ -1,4 +1,6 @@
 // Inspired by https://github.com/rust-lang/rust/blob/master/src/tools/compiletest/src/runtest.rs
+extern crate rustc_version_runtime;
+extern crate semver;
 extern crate toml;
 
 use std::ffi::{OsStr, OsString};
@@ -10,6 +12,8 @@ use std::path::Path;
 use std::process::Command;
 use std::process::ExitStatus;
 use std::process::Output;
+
+use semver::{SemVerError, Version};
 
 static ENABLE_RUST: &'static str = "type category enable Rust";
 static BINARY: &'static str = "testbinary";
@@ -42,14 +46,24 @@ pub struct GDBConfig {
 #[derive(Clone)]
 pub enum Config { LLDB(LLDBConfig), GDB(GDBConfig) }
 
-struct DebuggerCommands {
-    commands: Vec<String>,
-    check_lines: Vec<String>,
-    breakpoint_lines: Vec<usize>,
+enum DebuggerCommands {
+    Run {
+        commands: Vec<String>,
+        check_lines: Vec<String>,
+        breakpoint_lines: Vec<usize>,
+    },
+    Skip(String),
+    Err(String),
 }
 
 pub trait TestRunner<'test> {
-    fn run(&self) -> Result<(), String>;
+    fn run(&self) -> TestResult;
+}
+
+pub enum TestResult {
+    Ok,
+    Skipped(String),
+    Err(String)
 }
 
 pub fn create_test_runner<'test>(
@@ -104,10 +118,10 @@ impl<'test> GDBTestRunner<'test> {
 }
 
 impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> TestResult {
         let compile_result = compile_test(self.src_path);
         if !compile_result.status.success() {
-            return Err(String::from("Compilation failed!"));
+            return TestResult::Err(String::from("Compilation failed!"));
         }
 
         let prefixes = if self.config.native_rust {
@@ -119,12 +133,15 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
         };
 
         // Parse debugger commands etc from test files
-        let DebuggerCommands {
-            commands,
-            check_lines,
-            breakpoint_lines,
-            ..
-        } = parse_debugger_commands(self.src_path, prefixes)?;
+        let (commands, check_lines, breakpoint_lines) = match parse_debugger_commands(self.src_path, prefixes) {
+            DebuggerCommands::Run {
+                commands,
+                check_lines,
+                breakpoint_lines,
+            } => (commands, check_lines, breakpoint_lines),
+            DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
+            DebuggerCommands::Err(reason) => return TestResult::Err(reason),
+        };
 
         let exe_file = Path::new("./").join(BINARY);
 
@@ -176,7 +193,7 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
         let debugger_run_result = self.run_gdb(&exe_file, &debugger_opts);
 
         if !debugger_run_result.status.success() {
-            return Err(String::from(format!("Error while running GDB:\n{}", debugger_run_result.stderr)));
+            return TestResult::Err(String::from(format!("Error while running GDB:\n{}", debugger_run_result.stderr)));
         }
 
         check_debugger_output(&debugger_run_result, &check_lines, self.config.print_stdout)
@@ -204,10 +221,10 @@ impl<'test> LLDBTestRunner<'test> {
 }
 
 impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> TestResult {
         let compile_result = compile_test(self.src_path);
         if !compile_result.status.success() {
-            return Err(String::from("Compilation failed!"));
+            return TestResult::Err(String::from("Compilation failed!"));
         }
 
         let prefixes = if self.config.native_rust {
@@ -219,12 +236,15 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
         };
 
         // Parse debugger commands etc from test files
-        let DebuggerCommands {
-            commands,
-            check_lines,
-            breakpoint_lines,
-            ..
-        } = parse_debugger_commands(self.src_path, prefixes)?;
+        let (commands, check_lines, breakpoint_lines) = match parse_debugger_commands(self.src_path, prefixes) {
+            DebuggerCommands::Run {
+                commands,
+                check_lines,
+                breakpoint_lines,
+            } => (commands, check_lines, breakpoint_lines),
+            DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
+            DebuggerCommands::Err(reason) => return TestResult::Err(reason),
+        };
 
         // Write debugger script:
         // We don't want to hang when calling `quit` while the process is still running
@@ -263,18 +283,20 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
         let debugger_run_result = self.run_lldb(&exe_file, &debugger_script, &lldb_batchmode_path);
 
         if !debugger_run_result.status.success() {
-            return Err(String::from(format!("Error while running LLDB:\n{}", debugger_run_result.stderr)));
+            return TestResult::Err(String::from(format!("Error while running LLDB:\n{}", debugger_run_result.stderr)));
         }
 
         check_debugger_output(&debugger_run_result, &check_lines, self.config.print_stdout)
     }
 }
 
-fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Result<DebuggerCommands, String> {
+fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> DebuggerCommands {
     let directives = debugger_prefixes
         .iter()
         .map(|prefix| (format!("{}-command", prefix), format!("{}-check", prefix)))
         .collect::<Vec<_>>();
+
+    let rustc_version = rustc_version_runtime::version();
 
     let mut breakpoint_lines = vec![];
     let mut commands = vec![];
@@ -290,6 +312,34 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Resul
                     line.as_str()
                 };
 
+                match parse_rustc_version(line, "min-version:") {
+                    Ok(Some(min_version)) => {
+                        if rustc_version < min_version {
+                            return DebuggerCommands::Skip(
+                                format!("Current rustc version ({}) is less than minimum version ({}) required for test", rustc_version, min_version)
+                            )
+                        }
+                    },
+                    Err(e) => {
+                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e))
+                    },
+                    _ => {}
+                }
+
+                match parse_rustc_version(line, "max-version:") {
+                    Ok(Some(max_version)) => {
+                        if rustc_version > max_version {
+                            return DebuggerCommands::Skip(
+                                format!("Current rustc version ({}) is greater than maximum version ({}) required for test", rustc_version, max_version)
+                            )
+                        }
+                    },
+                    Err(e) => {
+                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e))
+                    },
+                    _ => {}
+                }
+
                 if line.contains("#break") {
                     breakpoint_lines.push(counter);
                 }
@@ -303,13 +353,22 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Resul
                 }
             }
             Err(e) => {
-                return Err(format!("Error while parsing debugger commands: {}", e));
+                return DebuggerCommands::Err(format!("Error while parsing debugger commands: {}", e));
             }
         }
         counter += 1;
     }
+    DebuggerCommands::Run { commands, check_lines, breakpoint_lines }
+}
 
-    Ok(DebuggerCommands { commands, check_lines, breakpoint_lines })
+fn parse_rustc_version(line: &str, prefix: &str) -> Result<Option<Version>, SemVerError> {
+    if line.starts_with(prefix) {
+        let min_version_str = &line[prefix.len()..].trim_left();
+        let version = Version::parse(min_version_str)?;
+        Ok(Some(version))
+    } else {
+        Ok(None)
+    }
 }
 
 pub fn parse_name_value_directive(line: &str, directive: &str) -> Option<String> {
@@ -347,7 +406,7 @@ fn check_debugger_output(
     debugger_result: &ProcessResult,
     check_lines: &[String],
     print_stdout: bool,
-) -> Result<(), String> {
+) -> TestResult {
     fn check_single_line(line: &str, check_line: &str) -> bool {
         // Allow check lines to leave parts unspecified (e.g., uninitialized
         // bits in the  wrong case of an enum) with the notation "[...]".
@@ -418,8 +477,8 @@ fn check_debugger_output(
             result.push_str(&output_lines.join("\n").trim());
             result.push_str("\n---------------------------------------------");
         }
-        Err(format!("{}\nNot found: {}", result, check_lines[check_line_index]))
+        TestResult::Err(format!("{}\nNot found: {}", result, check_lines[check_line_index]))
     } else {
-        Ok(())
+        TestResult::Ok
     }
 }
