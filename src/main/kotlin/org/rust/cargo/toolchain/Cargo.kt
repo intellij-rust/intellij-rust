@@ -32,7 +32,6 @@ import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
-import java.io.File
 import java.nio.file.Path
 
 
@@ -122,7 +121,7 @@ class Cargo(private val cargoExecutable: Path) {
         directory: VirtualFile,
         createBinary: Boolean,
         vcs: String? = null
-    ) {
+    ): GeneratedFilesHolder {
         val path = directory.pathAsPath
         val name = path.fileName.toString().replace(' ', '_')
         val crateType = if (createBinary) "--bin" else "--lib"
@@ -136,8 +135,12 @@ class Cargo(private val cargoExecutable: Path) {
         args.add(path.toString())
 
         CargoCommandLine("init", path, args).execute(owner)
-        check(File(directory.path, RustToolchain.CARGO_TOML).exists())
         fullyRefreshDirectory(directory)
+
+        val manifest = checkNotNull(directory.findChild(RustToolchain.CARGO_TOML)) { "Can't find the manifest file" }
+        val fileName = if (createBinary) "main.rs" else "lib.rs"
+        val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
+        return GeneratedFilesHolder(manifest, sourceFiles)
     }
 
     @Throws(ExecutionException::class)
@@ -215,6 +218,8 @@ class Cargo(private val cargoExecutable: Path) {
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
+
+        data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
 
         fun patchArgs(commandLine: CargoCommandLine, colors: Boolean): CargoCommandLine {
             val (pre, post) = commandLine.splitOnDoubleDash()
