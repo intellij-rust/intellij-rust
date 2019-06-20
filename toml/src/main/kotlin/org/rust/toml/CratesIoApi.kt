@@ -12,7 +12,10 @@ import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import com.intellij.util.Url
+import com.intellij.util.Urls
 import com.intellij.util.io.HttpRequests
+import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.isUnitTestMode
@@ -37,7 +40,13 @@ fun searchCrate(key: TomlKey): Collection<CrateDescription> {
     val name = key.escapedText ?: ""
     if (name.isEmpty()) return emptyList()
 
-    val response = requestCratesIo<SearchResult>(key, "crates?page=1&per_page=20&q=$name&sort=") ?: return emptyList()
+    val url = BASE_URL.addParameters(mapOf(
+        "page" to "1",
+        "per_page" to "20",
+        "sort" to "",
+        "q" to name
+    ))
+    val response = requestCratesIo<SearchResult>(key, url) ?: return emptyList()
     return response.crates
 }
 
@@ -59,7 +68,8 @@ fun getCrateFullDescription(crateName: TomlKey): CrateFullDescription? {
 fun getCrateFullDescription(context: PsiElement, name: String): CrateFullDescription? {
     if (isUnitTestMode) return MOCK2
 
-    val response = requestCratesIo<CratesIoApiResponse>(context, "crates/$name") ?: return null
+    val url = BASE_URL.resolve(URLUtil.encodeURIComponent(name))
+    val response = requestCratesIo<CratesIoApiResponse>(context, url) ?: return null
     return CrateFullDescription(response.crate.name, response.crate.maxVersion, response.versions)
 }
 
@@ -75,14 +85,16 @@ private val TomlKey.escapedText: String?
         return text
     }
 
-private inline fun <reified T> requestCratesIo(context: PsiElement, path: String): T? {
+private inline fun <reified T> requestCratesIo(context: PsiElement, path: Url): T? {
     return requestCratesIo(context, path, T::class.java)
 }
 
-private fun <T> requestCratesIo(context: PsiElement, path: String, cls: Class<T>): T? {
+private val BASE_URL = Urls.newUrl("https", "crates.io", "/api/v1/crates")
+
+private fun <T> requestCratesIo(context: PsiElement, url: Url, cls: Class<T>): T? {
     return try {
         runWithCheckCanceled {
-            val response = HttpRequests.request("https://crates.io/api/v1/$path")
+            val response = HttpRequests.request(url)
                 .userAgent("IntelliJ Rust Plugin (https://github.com/intellij-rust/intellij-rust)")
                 .readString(ProgressManager.getInstance().progressIndicator)
             Gson().fromJson(response, cls)
