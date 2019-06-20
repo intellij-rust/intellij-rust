@@ -595,7 +595,7 @@ private class MacroExpansionServiceImplInner(
         }
 
         if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem !is LocalFileSystem) {
-            return expandMacroToMemoryFile(call)
+            return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
         ensureUpToDate()
@@ -758,14 +758,23 @@ private fun expandMacroOld(call: RsMacroCall): MacroExpansion? {
     if (call.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB) {
         return null
     }
-    return expandMacroToMemoryFile(call)
+    return expandMacroToMemoryFile(
+        call,
+        // Old macros already consume too much memory, don't force them to consume more by range maps
+        storeRangeMap = isUnitTestMode // false
+    )
 }
 
-private fun expandMacroToMemoryFile(call: RsMacroCall): MacroExpansion? {
+private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): MacroExpansion? {
     val context = call.context as? RsElement ?: return null
     val def = call.resolveToMacro() ?: return null
     val project = call.project
-    val result = MacroExpander(project).expandMacro(def, call, RsPsiFactory(project))
+    val result = MacroExpander(project).expandMacro(
+        def,
+        call,
+        RsPsiFactory(project, markGenerated = false),
+        storeRangeMap
+    )
     result?.elements?.forEach {
         it.setContext(context)
         it.setExpandedFrom(call)

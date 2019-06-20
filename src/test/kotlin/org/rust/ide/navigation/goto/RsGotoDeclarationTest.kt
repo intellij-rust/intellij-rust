@@ -26,7 +26,7 @@ class RsGotoDeclarationTest : RsTestBase() {
         type T = /*caret*/S;
     """, """
         macro_rules! foo { ($ i:item) => { $ i } }
-        /*caret*/foo! { struct S; }
+        foo! { struct /*caret*/S; }
         type T = S;
     """)
 
@@ -38,7 +38,7 @@ class RsGotoDeclarationTest : RsTestBase() {
     """, """
         macro_rules! foo { ($ i:item) => { $ i } }
         /// docs
-        /*caret*/foo! { struct S; }
+        foo! { struct /*caret*/S; }
         type T = S;
     """)
 
@@ -48,7 +48,7 @@ class RsGotoDeclarationTest : RsTestBase() {
         type T = /*caret*/S;
     """, """
         macro_rules! foo { ($ i:item) => { $ i } }
-        /*caret*/foo! { foo! { struct S; } }
+        foo! { foo! { struct /*caret*/S; } }
         type T = S;
     """)
 
@@ -59,8 +59,18 @@ class RsGotoDeclarationTest : RsTestBase() {
         type T = /*caret*/S;
     """, """
         macro_rules! foo { ($ i:item) => { $ i } }
-        /*caret*/foo! { mod a { struct S; } }
+        foo! { mod a { struct /*caret*/S; } }
         use a::S;
+        type T = S;
+    """)
+
+    fun `test defined with a macro with struct inside macro definition`() = doTest("""
+        macro_rules! foo { () => { struct S; } }
+        foo!();
+        type T = /*caret*/S;
+    """, """
+        macro_rules! foo { () => { struct S; } }
+        /*caret*/foo!();
         type T = S;
     """)
 

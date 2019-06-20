@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.GeneratedSourcesFilter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.macros.findMacroCallExpandedFrom
+import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.macros.macroExpansionManager
 
 class RsGeneratedSourcesFilter : GeneratedSourcesFilter() {
@@ -18,7 +18,7 @@ class RsGeneratedSourcesFilter : GeneratedSourcesFilter() {
     }
 
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {
-        val macroCall = element.findMacroCallExpandedFrom() ?: return emptyList()
-        return listOf(macroCall.path)
+        val result = element.findNavigationTargetIfMacroExpansion() ?: return emptyList()
+        return listOf(result)
     }
 }

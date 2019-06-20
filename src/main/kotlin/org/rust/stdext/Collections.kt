@@ -5,6 +5,7 @@
 
 package org.rust.stdext
 
+import com.intellij.util.SmartList
 import java.util.*
 
 @Suppress("UNCHECKED_CAST")
@@ -48,7 +49,7 @@ inline fun <K, V> buildMap(builder: (MapBuilder<K, V>).() -> Unit): Map<K, V> {
         }
     }.builder()
 
-    return replaceTrivialMap(result)
+    return result.replaceTrivialMap()
 }
 
 interface MapBuilder<K, in V> {
@@ -56,13 +57,22 @@ interface MapBuilder<K, in V> {
     fun putAll(map: Map<K, V>)
 }
 
-fun <K, V> replaceTrivialMap(map: Map<K, V>): Map<K, V> = when (map.size) {
+fun <K, V> Map<K, V>.replaceTrivialMap(): Map<K, V> = when (size) {
     0 -> emptyMap()
     1 -> {
-        val entry = map.entries.single()
+        val entry = entries.single()
         Collections.singletonMap(entry.key, entry.value)
     }
-    else -> map
+    else -> this
+}
+
+fun <T> SmartList<T>.optimizeList(): List<T> = when (size) {
+    0 -> emptyList()
+    1 -> Collections.singletonList(single())
+    else -> {
+        trimToSize()
+        this
+    }
 }
 
 private const val INT_MAX_POWER_OF_TWO: Int = Int.MAX_VALUE / 2 + 1

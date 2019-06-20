@@ -1,0 +1,84 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.lang.core.macros
+
+import com.intellij.util.SmartList
+import org.rust.stdext.optimizeList
+import org.rust.stdext.readVarInt
+import org.rust.stdext.writeVarInt
+import java.io.DataInputStream
+import java.io.DataOutputStream
+
+/**
+ * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
+ */
+@Suppress("DataClassPrivateConstructor")
+data class RangeMap private constructor(private val ranges: List<MappedTextRange>) {
+
+    fun mapOffsetFromExpansionToCallBody(offset: Int): Int? {
+        return ranges.singleOrNull { range ->
+            offset >= range.dstOffset && offset < range.dstEndOffset
+        }?.let { range ->
+            range.srcOffset + (offset - range.dstOffset)
+        }
+    }
+
+    fun mapOffsetFromCallBodyToExpansion(offset: Int): List<Int> {
+        return ranges.filter { range ->
+            offset >= range.srcOffset && offset < range.srcEndOffset
+        }.map { range ->
+            range.dstOffset + (offset - range.srcOffset)
+        }
+    }
+
+    fun writeTo(data: DataOutputStream) {
+        data.writeInt(ranges.size)
+        ranges.forEach {
+            data.writeMappedTextRange(it)
+        }
+    }
+
+    companion object {
+        val EMPTY: RangeMap = RangeMap(emptyList())
+
+        fun readFrom(data: DataInputStream): RangeMap {
+            val size = data.readInt()
+            val ranges = (0 until size).map { data.readMappedTextRange() }
+            return RangeMap(ranges)
+        }
+
+        fun from(ranges: SmartList<MappedTextRange>): RangeMap {
+            return RangeMap(ranges.optimizeList())
+        }
+    }
+}
+
+private fun DataInputStream.readMappedTextRange(): MappedTextRange = MappedTextRange(
+    readVarInt(),
+    readVarInt(),
+    readVarInt()
+)
+
+private fun DataOutputStream.writeMappedTextRange(range: MappedTextRange) {
+    writeVarInt(range.srcOffset)
+    writeVarInt(range.dstOffset)
+    writeVarInt(range.length)
+}
+
+data class MappedTextRange(
+    val srcOffset: Int,
+    val dstOffset: Int,
+    val length: Int
+) {
+    init {
+        require(srcOffset >= 0) { "srcOffset should be >= 0; got: $srcOffset" }
+        require(dstOffset >= 0) { "dstOffset should be >= 0; got: $dstOffset" }
+        require(length > 0) { "length should be grater than 0; got: $length" }
+    }
+}
+
+private val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
+private val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
