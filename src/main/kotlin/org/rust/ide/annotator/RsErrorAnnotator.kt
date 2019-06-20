@@ -339,12 +339,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                 // associated with the current module. Without it we can't know for
                 // sure that a mod is not a directory owner.
                 if (modDecl.cargoWorkspace != null) {
-                    val addModule = AddModuleFileFix(modDecl, expandModuleFirst = true)
+                    val addModule = AddModuleFileFix.createFixes(modDecl, expandModuleFirst = true)
+                        .toTypedArray()
                     NON_MODRS_MODS.check(
                         holder,
                         modDecl,
                         "mod statements in non-mod.rs files",
-                        addModule
+                        *addModule
                     )
                 }
                 return

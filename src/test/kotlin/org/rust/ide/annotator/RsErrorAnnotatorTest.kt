@@ -35,7 +35,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- helper.rs
     """)
 
-    fun `test create file quick fix`() = checkFixByFileTree("Create module file", """
+    fun `test create file quick fix`() = checkFixByFileTree("Create module file `foo.rs`", """
     //- main.rs
         mod bar;
     //- bar/mod.rs
@@ -56,13 +56,45 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- bar/foo.rs
     """)
 
+    fun `test create file in subdirectory quick fix`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
+    //- main.rs
+        mod bar;
+    //- bar/mod.rs
+        mod <error descr="File not found for module `foo` [E0583]">/*caret*/foo</error>;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar/mod.rs
+        mod foo;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    //- bar/foo/mod.rs
+    """)
+
+    fun `test create file in existing subdirectory quick fix`() = checkFixByFileTree("Create module file `bar/mod.rs`", """
+    //- main.rs
+        mod <error descr="File not found for module `bar` [E0583]">/*caret*/bar</error>;
+    //- bar/some_random_file_to_create_a_directory.txt
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar/mod.rs
+    //- bar/some_random_file_to_create_a_directory.txt
+    """)
+
     fun `test no E0583 if no semicolon after module declaration`() = checkByText("""
         mod foo<error descr="';' or '{' expected"> </error>
         // often happens during typing `mod foo {}`
     """)
 
     @MockRustcVersion("1.29.0")
-    fun `test create file and expand module quick fix`() = checkFixByFileTree("Create module file", """
+    fun `test create file and expand module quick fix`() = checkFixByFileTree("Create module file `bar.rs`", """
     //- main.rs
         mod foo;
     //- foo.rs
@@ -73,6 +105,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- foo/mod.rs
         mod bar;
     //- foo/bar.rs
+    """)
+
+    @MockRustcVersion("1.29.0")
+    fun `test create file in subdirectory and expand module quick fix`() = checkFixByFileTree("Create module file `bar/mod.rs`", """
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        <error descr="mod statements in non-mod.rs files is experimental [E0658]">mod bar/*caret*/;</error>
+    """, """
+    //- main.rs
+        mod foo;
+    //- foo/mod.rs
+        mod bar;
+    //- foo/bar/mod.rs
     """)
 
     // TODO: check `Create module file` quick fix
