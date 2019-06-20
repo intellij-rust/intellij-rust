@@ -19,10 +19,9 @@ enum class RsColor(humanName: String, val default: TextAttributesKey? = null) {
     FIELD("Variables//Field", Default.INSTANCE_FIELD),
     CONSTANT("Variables//Constant", Default.CONSTANT),
 
-    FUNCTION("Functions//Function declaration", Default.FUNCTION_DECLARATION),
-    METHOD("Functions//Method declaration", Default.INSTANCE_METHOD),
-    ASSOC_FUNCTION("Functions//Associated function declaration", Default.STATIC_METHOD),
-    FUNCTION_CALL("Functions//Function and method call", Default.FUNCTION_CALL),
+    FUNCTION("Functions//Function", Default.FUNCTION_DECLARATION),
+    METHOD("Functions//Method", Default.INSTANCE_METHOD),
+    ASSOC_FUNCTION("Functions//Associated function", Default.STATIC_METHOD),
     MACRO("Functions//Macro", Default.IDENTIFIER),
 
     PARAMETER("Parameters//Parameter", Default.PARAMETER),
@@ -30,7 +29,7 @@ enum class RsColor(humanName: String, val default: TextAttributesKey? = null) {
     SELF_PARAMETER("Parameters//Self parameter", Default.KEYWORD),
     LIFETIME("Parameters//Lifetime", Default.IDENTIFIER),
     TYPE_PARAMETER("Parameters//Type parameter", Default.IDENTIFIER),
-    CONST_PARAMETER("Parameters//Const parameter", Default.CONSTANT),
+    CONST_PARAMETER("Parameters//Const parameter", CONSTANT.textAttributesKey),
 
     PRIMITIVE_TYPE("Types//Primitive", Default.KEYWORD),
     STRUCT("Types//Struct", Default.CLASS_NAME),
