@@ -46,7 +46,7 @@ private class RsLiteralFileReferenceSet(
             is RsIncludeMacroArgument -> parentDirectoryContext
             is RsMetaItem -> {
                 val item = parent.ancestorStrict<RsModDeclItem>() ?: parent.ancestorStrict<RsMod>()
-                listOfNotNull(item?.containingMod?.ownedDirectory)
+                listOfNotNull(item?.containingMod?.getOwnedDirectory())
             }
             else -> emptyList()
         }

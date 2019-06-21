@@ -24,7 +24,7 @@ import javax.swing.Icon
 fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
     val existing = reference.resolve()?.containingFile
     if (existing != null) return existing
-    return suggestChildFileName?.let { containingMod.ownedDirectory?.createFile(it) }
+    return suggestChildFileName?.let { containingMod.getOwnedDirectory(createIfNotExists = true)?.createFile(it) }
 }
 
 val RsModDeclItem.isLocal: Boolean

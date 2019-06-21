@@ -35,7 +35,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- helper.rs
     """)
 
-    fun `test create file quick fix`() = checkFixByFileTree("Create module file `foo.rs`", """
+    fun `test create file quick fix 1`() = checkFixByFileTree("Create module file `foo.rs`", """
     //- main.rs
         mod bar;
     //- bar/mod.rs
@@ -56,7 +56,29 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- bar/foo.rs
     """)
 
-    fun `test create file in subdirectory quick fix`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
+    @MockRustcVersion("1.30.0")
+    fun `test create file quick fix 2`() = checkFixByFileTree("Create module file `foo.rs`", """
+    //- main.rs
+        mod bar;
+    //- bar.rs
+        mod <error descr="File not found for module `foo` [E0583]">/*caret*/foo</error>;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar.rs
+        mod foo;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    //- bar/foo.rs
+    """)
+
+    fun `test create file in subdirectory quick fix 1`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
     //- main.rs
         mod bar;
     //- bar/mod.rs
@@ -69,6 +91,28 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- main.rs
         mod bar;
     //- bar/mod.rs
+        mod foo;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    //- bar/foo/mod.rs
+    """)
+
+    @MockRustcVersion("1.30.0")
+    fun `test create file in subdirectory quick fix 2`() = checkFixByFileTree("Create module file `foo/mod.rs`", """
+    //- main.rs
+        mod bar;
+    //- bar.rs
+        mod <error descr="File not found for module `foo` [E0583]">/*caret*/foo</error>;
+
+        fn main() {
+            println!("Hello, World!");
+        }
+    """, """
+    //- main.rs
+        mod bar;
+    //- bar.rs
         mod foo;
 
         fn main() {
@@ -119,15 +163,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     //- foo/mod.rs
         mod bar;
     //- foo/bar/mod.rs
-    """)
-
-    // TODO: check `Create module file` quick fix
-    @MockRustcVersion("1.31.0")
-    fun `test create module file`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-    //- foo.rs
-        mod <error descr="File not found for module `bar` [E0583]">/*caret*/bar</error>;
     """)
 
     fun `test paths`() = checkErrors("""

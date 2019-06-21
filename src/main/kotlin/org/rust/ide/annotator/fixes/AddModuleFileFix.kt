@@ -64,7 +64,7 @@ class AddModuleFileFix(
             return
         }
 
-        val dir = modDecl.containingMod.ownedDirectory ?: return
+        val dir = modDecl.containingMod.getOwnedDirectory(createIfNotExists = true) ?: return
         when (location) {
             Location.File -> dir.createFile("${modDecl.name}.rs")
             Location.Directory -> dir.getOrCreateSubdirectory("${modDecl.name}").createFile("mod.rs")

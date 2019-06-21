@@ -164,7 +164,7 @@ fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, p
 fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
     val containingMod = modDecl.containingMod
 
-    val ownedDirectory = containingMod.ownedDirectory
+    val ownedDirectory = containingMod.getOwnedDirectory()
     val inModRs = modDecl.contextualFile.name == RsConstants.MOD_RS_FILE
     val inCrateRoot = containingMod.isCrateRoot
 
