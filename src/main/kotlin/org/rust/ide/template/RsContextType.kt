@@ -95,6 +95,7 @@ sealed class RsContextType(
     companion object {
         private fun owner(element: PsiElement): PsiElement? = PsiTreeUtil.findFirstParent(element) {
             it is RsBlock || it is RsItemElement || it is RsAttr || it is PsiFile
+                || it is RsMacro || it is RsMacroCall
         }
     }
 }

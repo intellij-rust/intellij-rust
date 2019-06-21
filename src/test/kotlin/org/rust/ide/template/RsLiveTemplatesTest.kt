@@ -85,6 +85,30 @@ class RsLiveTemplatesTest : RsTestBase() {
         }
     """)
 
+    fun `test macro definition 1`() = noSnippet("""
+        macro_rules! foo {
+            (impl/*caret*/) => {};
+        }
+    """)
+
+    fun `test macro definition 2`() = noSnippet("""
+        macro_rules! foo {
+            () => { impl/*caret*/ };
+        }
+    """)
+
+    fun `test macro2 definition`() = noSnippet("""
+        macro foo() {
+            impl/*caret*/
+        }
+    """)
+
+    fun `test macro call`() = noSnippet("""
+        foo! {
+            impl/*caret*/
+        }
+    """)
+
     val indent = "    "
     fun `test module level context available in file`() = expandSnippet("""
         tfn/*caret*/
