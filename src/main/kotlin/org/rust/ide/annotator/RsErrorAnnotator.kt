@@ -80,6 +80,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitBreakExpr(o: RsBreakExpr) = checkBreakExpr(holder, o)
             override fun visitContExpr(o: RsContExpr) = checkContExpr(holder, o)
             override fun visitAttr(o: RsAttr) = checkAttr(holder, o)
+            override fun visitRangeExpr(o: RsRangeExpr) = checkRangeExpr(holder, o)
         }
 
         element.accept(visitor)
@@ -615,6 +616,15 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val label = expr.labelDecl
         if (label != null) {
             LABEL_BREAK_VALUE.check(holder, label, "label on block")
+        }
+    }
+
+    // E0586: inclusive range with no end
+    private fun checkRangeExpr(holder: AnnotationHolder, range: RsRangeExpr) {
+        val dotdoteq = range.dotdoteq ?: range.dotdotdot ?: return
+        val expr = range.exprList.singleOrNull() ?: return
+        if (expr.startOffsetInParent < dotdoteq.startOffsetInParent) {
+            RsDiagnostic.InclusiveRangeWithNoEndError(dotdoteq).addToHolder(holder)
         }
     }
 
