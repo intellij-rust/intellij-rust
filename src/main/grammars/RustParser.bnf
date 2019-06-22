@@ -1164,8 +1164,8 @@ fake RangeExpr ::= Expr? ('..' | '...' | '..=') Expr? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FullRangeExpr ::= Expr ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) | '..=' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
-OpenRangeExpr ::=      ( '..' (<<checkBraceAllowed>> Expr)? | '...' (<<checkBraceAllowed>> Expr) | '..=' (<<checkBraceAllowed>> Expr) ) { elementType = RangeExpr }
+FullRangeExpr ::= Expr ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> Expr)?) { elementType = RangeExpr }
+OpenRangeExpr ::=      ( ('..' | '...' | '..=')  (<<checkBraceAllowed>> Expr)?) { elementType = RangeExpr }
 
 IndexExpr ::= Expr IndexArg {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
