@@ -16,13 +16,8 @@ import org.rust.clion.profiler.dtrace.RsDTraceNavigatableNativeCall
 class RsCachingStackElementReader : BaseCachingStackElementReader() {
 
     fun parseStackElement(string: String): BaseCallStackElement {
-        return intern(
-            try {
-                RsDTraceNavigatableNativeCall.read(string, stringsInterner)
-            } catch (e: Exception) {
-                CantBeParsedCall(string)
-            }
-        )
+        val call = RsDTraceNavigatableNativeCall.read(string, stringsInterner) ?: CantBeParsedCall(string)
+        return intern(call)
     }
 
     companion object {
