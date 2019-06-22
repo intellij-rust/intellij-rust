@@ -622,6 +622,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     // E0586: inclusive range with no end
     private fun checkRangeExpr(holder: AnnotationHolder, range: RsRangeExpr) {
         val dotdoteq = range.dotdoteq ?: range.dotdotdot ?: return
+        if (dotdoteq == range.dotdotdot) {
+            // rustc doesn't have an error code for this ("error: unexpected token: `...`")
+            holder.createErrorAnnotation(dotdoteq,
+                "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range")
+            return
+        }
         val expr = range.exprList.singleOrNull() ?: return
         if (expr.startOffsetInParent < dotdoteq.startOffsetInParent) {
             RsDiagnostic.InclusiveRangeWithNoEndError(dotdoteq).addToHolder(holder)
