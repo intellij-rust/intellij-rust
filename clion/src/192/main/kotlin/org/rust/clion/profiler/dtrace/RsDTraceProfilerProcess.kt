@@ -32,6 +32,9 @@ class RsDTraceProfilerProcess private constructor(
     attachedTimestamp: Long,
     dtraceProcessHandler: SudoProcessHandler
 ) : DTraceProfilerProcessBase(project, targetProcess, attachedTimestamp, dtraceProcessHandler) {
+    // We can't use [com.intellij.profiler.clion.ProfilerUtilsKt.CPP_PROFILER_HELP_TOPIC] directly
+    // because it has `internal` modifier
+    override val helpId: String = "procedures.profiler"
 
     override fun createDumpParser(): FullDumpParser<ThreadInfo, BaseCallStackElement> {
         val cachingStackElementReader = RsCachingStackElementReader.getInstance(project)
