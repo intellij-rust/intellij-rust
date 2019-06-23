@@ -8,14 +8,15 @@ package org.rust.lang.core.psi.ext
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import org.rust.lang.core.macros.MacroExpansion
-import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.openapiext.toPsiFile
@@ -42,17 +43,29 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
 val RsMacroCall.macroName: String
     get() = path.referenceName
 
+val RsMacroCall.bracesKind: MacroBraces?
+    get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }
+
+val RsMacroCall.semicolon: PsiElement?
+    get() = node.findChildByType(RsElementTypes.SEMICOLON)?.psi
+
 val RsMacroCall.macroBody: String?
     get() {
         val stub = greenStub
         if (stub != null) return stub.macroBody
-        return macroArgument?.compactTT?.text
-            ?: formatMacroArgument?.braceListBodyText()?.toString()
-            ?: logMacroArgument?.braceListBodyText()?.toString()
-            ?: assertMacroArgument?.braceListBodyText()?.toString()
-            ?: exprMacroArgument?.braceListBodyText()?.toString()
-            ?: vecMacroArgument?.braceListBodyText()?.toString()
+        return bodyTextRange?.subSequence(containingFile.text)?.toString()
     }
+
+val RsMacroCall.bodyTextRange: TextRange?
+    get() = macroArgumentElement?.braceListBodyTextRange()
+
+private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
+    MACRO_ARGUMENT, FORMAT_MACRO_ARGUMENT, LOG_MACRO_ARGUMENT,
+    ASSERT_MACRO_ARGUMENT, EXPR_MACRO_ARGUMENT, VEC_MACRO_ARGUMENT
+)
+
+private val RsMacroCall.macroArgumentElement: RsElement?
+    get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
 
 val RsMacroCall.includingFilePath: String?
     get() {
@@ -97,7 +110,7 @@ private fun RsMacroCall.expandAllMacrosRecursively(depth: Int): String {
     fun toExpandedText(element: PsiElement): String =
         when (element) {
             is RsMacroCall -> element.expandAllMacrosRecursively(depth)
-            is RsElement -> element.directChildren.joinToString(" ") { toExpandedText(it) }
+            is RsElement -> element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
             else -> element.text
         }
 
@@ -119,16 +132,25 @@ private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) 
     }
 }
 
-private fun PsiElement.braceListBodyText(): CharSequence? =
-    textBetweenParens(firstChild, lastChild)
+private fun PsiElement.braceListBodyTextRange(): TextRange? =
+    textRangeBetweenParens(firstChild, lastChild)
 
-private fun PsiElement.textBetweenParens(bra: PsiElement?, ket: PsiElement?): CharSequence? {
+private fun textRangeBetweenParens(bra: PsiElement?, ket: PsiElement?): TextRange? {
     if (bra == null || ket == null || bra == ket) return null
-    return containingFile.text.subSequence(
+    return TextRange(
         bra.endOffset,
         ket.startOffset
     )
 }
 
-private val PsiElement.directChildren: Sequence<PsiElement>
-    get() = generateSequence(firstChild) { it.nextSibling }
+fun RsMacroCall.replaceWithExpr(expr: RsExpr): RsElement {
+    return when (val context = expansionContext) {
+        MacroExpansionContext.EXPR -> parent.replace(expr)
+        MacroExpansionContext.STMT -> {
+            val exprStmt = RsPsiFactory(project).createStatement("();") as RsExprStmt
+            exprStmt.expr.replace(expr)
+            replace(exprStmt)
+        }
+        else -> error("`replaceWithExpr` can only be used for expr or stmt context macros; got $context context")
+    } as RsElement
+}

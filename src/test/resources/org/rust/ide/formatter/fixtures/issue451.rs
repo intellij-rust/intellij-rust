@@ -4,5 +4,5 @@ magic_number);
 write![&mut self.destination, "{}",
 magic_number];
 write!{&mut self.destination, "{}",
-magic_number};
+magic_number}
 }

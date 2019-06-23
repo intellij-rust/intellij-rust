@@ -11,10 +11,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
-import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.macros.MacroExpansionContext
+import org.rust.lang.core.macros.MacroExpansionContext.*
+import org.rust.lang.core.macros.expansionContext
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.endOffset
@@ -112,6 +112,7 @@ private fun findStatementsInRangeUnchecked(element1: PsiElement, element2: PsiEl
     // Finally check if found elements meet requirements, and return result
     elements.forEachIndexed { idx, element ->
         if (!(element is RsStmt
+            || element is RsMacroCall && element.expansionContext == STMT
             || (idx == elements.size - 1 && element is RsExpr)
             || element is PsiComment
             )) return emptyArray()

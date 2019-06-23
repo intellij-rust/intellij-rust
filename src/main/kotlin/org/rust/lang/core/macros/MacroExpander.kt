@@ -121,6 +121,7 @@ class MacroExpander(val project: Project) {
         call: RsMacroCall
     ): Pair<RsMacroCase, MacroSubstitution>? {
         val macroCallBody = project.createRustPsiBuilder(call.macroBody ?: return null)
+        macroCallBody.eof() // skip whitespace
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
 

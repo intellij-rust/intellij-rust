@@ -16,14 +16,18 @@ enum class MacroExpansionContext {
 }
 
 val RsMacroCall.expansionContext: MacroExpansionContext
-    get() = when (val context = context) {
-        is RsMacroExpr -> when {
-            context.context is RsExprStmt -> MacroExpansionContext.STMT
-            else -> MacroExpansionContext.EXPR
-        }
+    get() = when (context) {
+        is RsMacroExpr -> MacroExpansionContext.EXPR
+        is RsBlock -> MacroExpansionContext.STMT
         is RsPatMacro -> MacroExpansionContext.PAT
         is RsMacroType -> MacroExpansionContext.TYPE
         else -> MacroExpansionContext.ITEM
+    }
+
+val RsMacroCall.isExprOrStmtContext: Boolean
+    get() {
+        val expansionContext = expansionContext
+        return expansionContext == MacroExpansionContext.EXPR || expansionContext == MacroExpansionContext.STMT
     }
 
 sealed class MacroExpansion(val file: RsFile) {
@@ -58,26 +62,25 @@ fun parseExpandedTextWithContext(
     factory: RsPsiFactory,
     expandedText: CharSequence
 ): MacroExpansion? =
-    getExpansionFromExpandedFile(context, factory.createFile(prepareExpandedTextForParsing(context, expandedText)))
+    getExpansionFromExpandedFile(context, factory.createFile(context.prepareExpandedTextForParsing(expandedText)))
 
 /** Keep in sync with [MacroExpansionContext.expansionFileStartOffset] */
-private fun prepareExpandedTextForParsing(
-    context: MacroExpansionContext,
+fun MacroExpansionContext.prepareExpandedTextForParsing(
     expandedText: CharSequence
-): CharSequence = when (context) {
-    MacroExpansionContext.EXPR -> "fn f() { $expandedText; }"
-    MacroExpansionContext.PAT -> "fn f($expandedText: ()) {}"
-    MacroExpansionContext.TYPE -> "fn f(_: $expandedText) {}"
-    MacroExpansionContext.STMT -> "fn f() { $expandedText }"
+): CharSequence = when (this) {
+    MacroExpansionContext.EXPR -> "const C:T=$expandedText;"
+    MacroExpansionContext.PAT -> "fn f($expandedText:())"
+    MacroExpansionContext.TYPE -> "type T=$expandedText;"
+    MacroExpansionContext.STMT -> "fn f(){$expandedText}"
     MacroExpansionContext.ITEM -> expandedText
 }
 
 val MacroExpansionContext.expansionFileStartOffset: Int
     get() = when (this) {
-        MacroExpansionContext.EXPR -> 9
+        MacroExpansionContext.EXPR -> 10
         MacroExpansionContext.PAT -> 5
-        MacroExpansionContext.TYPE -> 8
-        MacroExpansionContext.STMT -> 9
+        MacroExpansionContext.TYPE -> 7
+        MacroExpansionContext.STMT -> 7
         MacroExpansionContext.ITEM -> 0
     }
 

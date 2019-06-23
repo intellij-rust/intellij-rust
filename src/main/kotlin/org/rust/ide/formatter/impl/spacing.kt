@@ -176,7 +176,7 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
             -> return lineBreak(keepBlankLines = 0)
 
         // Format blank lines between statements (or return expression)
-            ncPsi1 is RsStmt && ncPsi2.isStmtOrExpr
+            ncPsi1.isStmtOrMacro && ncPsi2.isStmtOrExpr
             -> return lineBreak(
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_CODE)

@@ -9,8 +9,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.EqualityOp
+import org.rust.lang.core.psi.ext.bracesKind
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.operatorType
 import org.rust.lang.core.resolve.ImplLookup
@@ -70,7 +72,19 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             val macro = descriptor.psiElement as RsMacroCall
             val assertArg = macro.assertMacroArgument!!
 
-            val newAssert = buildAssert(project, assertArg) ?: return
+            val (left, right) = comparedAssertArgs(assertArg) ?: return
+            val formatArgs = assertArg.formatMacroArgList
+            val appendix = if (formatArgs.isNotEmpty()) {
+                formatArgs.joinToString(separator = ", ", prefix = ",") { it.text }
+            } else {
+                ""
+            }
+            val newAssert = RsPsiFactory(project).createMacroCall(
+                macro.expansionContext,
+                macro.bracesKind ?: return,
+                assertName,
+                "${left.text}, ${right.text}$appendix"
+            )
             macro.replace(newAssert)
         }
 
@@ -79,19 +93,6 @@ class RsAssertEqualInspection : RsLocalInspectionTool() {
             val right = expr.right ?: return null
             return Pair(expr.left, right)
         }
-
-        private fun buildAssert(project: Project, assertArgument: RsAssertMacroArgument): RsMacroCall? {
-            val factory = RsPsiFactory(project)
-            val (left, right) = comparedAssertArgs(assertArgument) ?: return null
-            val formatArgs = assertArgument.formatMacroArgList
-            val appendix = if (formatArgs.isNotEmpty()) {
-                formatArgs.joinToString(separator = ", ", prefix = ",") { it.text }
-            } else {
-                ""
-            }
-            return (factory.createExpression("$assertName!(${left.text}, ${right.text}$appendix)") as RsMacroExpr).macroCall
-        }
-
     }
 
     object Testmarks {
