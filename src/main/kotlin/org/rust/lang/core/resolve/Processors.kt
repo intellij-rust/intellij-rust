@@ -130,7 +130,7 @@ fun collectCompletionVariants(
     }
 }
 
-private data class SimpleScopeEntry(
+data class SimpleScopeEntry(
     override val name: String,
     override val element: RsElement,
     override val subst: Substitution = emptySubstitution
@@ -160,8 +160,8 @@ private class LazyScopeEntry(
 }
 
 
-operator fun RsResolveProcessor.invoke(name: String, e: RsElement, subst: Substitution = emptySubstitution): Boolean =
-    this(SimpleScopeEntry(name, e, subst))
+operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
+    this(SimpleScopeEntry(name, e))
 
 fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
     this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.PUBLICATION, e)))
@@ -176,14 +176,12 @@ operator fun RsResolveProcessor.invoke(e: BoundElement<RsNamedElement>): Boolean
     return this(SimpleScopeEntry(name, e.element, e.subst))
 }
 
-fun processAll(elements: Collection<RsNamedElement>, processor: RsResolveProcessor): Boolean =
-    processAll(elements.asSequence(), processor)
+fun processAll(elements: List<RsNamedElement>, processor: RsResolveProcessor): Boolean {
+    return elements.any { processor(it) }
+}
 
-fun processAll(elements: Sequence<RsNamedElement>, processor: RsResolveProcessor): Boolean {
-    for (e in elements) {
-        if (processor(e)) return true
-    }
-    return false
+fun processAllScopeEntries(elements: List<ScopeEntry>, processor: RsResolveProcessor): Boolean {
+    return elements.any { processor(it) }
 }
 
 fun processAllWithSubst(

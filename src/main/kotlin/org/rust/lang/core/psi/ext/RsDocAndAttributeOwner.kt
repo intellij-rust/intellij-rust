@@ -98,6 +98,11 @@ class QueryAttributes(
         return attrs.any()
     }
 
+    fun hasAnyOfOuterAttributes(vararg attributes: String): Boolean {
+        val outerAttrList = (psi as? RsOuterAttributeOwner)?.outerAttrList ?: return false
+        return outerAttrList.any { it.metaItem.name in attributes }
+    }
+
     // `#[attributeName]`
     fun hasAtomAttribute(attributeName: String): Boolean {
         val attrs = attrsByName(attributeName)
@@ -108,6 +113,13 @@ class QueryAttributes(
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
         val attrs = attrsByName(attributeName)
         return attrs.any { it.metaItemArgs?.metaItemList?.any { it.name == arg } ?: false }
+    }
+
+    // `#[attributeName(arg)]`
+    fun getFirstArgOfSingularAttribute(attributeName: String): String? {
+        return attrsByName(attributeName).singleOrNull()
+            ?.metaItemArgs?.metaItemList?.firstOrNull()
+            ?.name
     }
 
     // `#[attributeName(key = "value")]`

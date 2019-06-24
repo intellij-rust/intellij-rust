@@ -103,6 +103,22 @@ val RsFunction.isActuallyUnsafe: Boolean
         }
     }
 
+val RsFunction.isBangProcMacroDef: Boolean
+    get() = queryAttributes.hasAtomAttribute("proc_macro")
+
+val RsFunction.isAttributeProcMacroDef: Boolean
+    get() = queryAttributes.hasAtomAttribute("proc_macro_attribute")
+
+val RsFunction.isCustomDeriveProcMacroDef: Boolean
+    get() = queryAttributes.hasAttribute("proc_macro_derive")
+
+val RsFunction.isProcMacroDef: Boolean
+    get() = queryAttributes.hasAnyOfOuterAttributes(
+        "proc_macro",
+        "proc_macro_attribute",
+        "proc_macro_derive"
+    )
+
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 
     constructor(node: ASTNode) : super(node)

@@ -21,6 +21,67 @@ import org.rust.lang.core.psi.ext.*
 object RsPsiPattern {
     private val STATEMENT_BOUNDARIES = TokenSet.create(SEMICOLON, LBRACE, RBRACE)
 
+    /**
+     * Source of attributes: [https://doc.rust-lang.org/1.30.0/reference/attributes.html]
+     */
+    private val STD_ATTRIBUTES: Set<String> = setOf(
+        "crate_name",
+        "crate_type",
+        "no_builtins",
+        "no_main",
+        "no_start",
+        "no_std",
+        "recursion_limit",
+        "windows_subsystem",
+
+        "no_implicit_prelude",
+        "path",
+
+        "link_args",
+        "link",
+        "linked_from",
+
+        "link_name",
+        "linkage",
+
+        "macro_use",
+        "macro_use",
+        "macro_reexport",
+        "macro_export",
+        "no_link",
+
+        "proc_macro",
+        "proc_macro_derive",
+        "proc_macro_attribute",
+
+        "export_name",
+        "global_allocator",
+        "link_section",
+        "no_mangle",
+
+        "deprecated",
+
+        "doc",
+
+        "test",
+        "should_panic",
+
+        "cfg",
+        "cfg_attr",
+
+        "allow",
+        "deny",
+        "forbid",
+        "warn",
+
+        "must_use",
+
+        "cold",
+        "inline",
+
+        "derive"
+    )
+
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 
     fun onStatementBeginning(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
@@ -93,6 +154,14 @@ object RsPsiPattern {
                 .withSuperParent<RsStructOrEnumItemElement>(2)
                 .with("deriveCondition") { e -> e is RsMetaItem && e.name == "derive" }
         )
+
+    /**
+     * Supposed to capture outer attributes names, like `attribute` in `#[attribute(par1, par2)]`.
+     */
+    val nonStdOuterAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
+        psiElement<RsMetaItem>()
+            .withSuperParent(2, RsOuterAttributeOwner::class.java)
+            .with("nonStdAttributeCondition") { e -> e.name !in STD_ATTRIBUTES }
 
     val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(psiElement<RsIncludeMacroArgument>())
