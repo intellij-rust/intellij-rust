@@ -33,15 +33,69 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
     """)
 
     fun `test ignore some nodes`() = doTest("""
-        fn main() {
+        fn foo(e: Enum) {
             /*weak_warning*/for i in 1..10 {
-                println!("{}", i);
+                match e {
+                    Enum::A(y) => { println!("{}", i * y); },
+                    Enum::B(x) => { println!("{}", i + x); },
+                }
             }/*weak_warning**/
             /*weak_warning*/for i in 1 .. /*comment*/10 {
                 // Another comment
-                println!("{}", i);
+                match e {
+                    Enum::A(y) => { println!( "{}", i * y ); },
+                    Enum::B(x) => { println!("{}", i + x); }
+                }
             }/*weak_warning**/
         }
+    """)
+
+    fun `test exclude blocks from analysis`() = doTest("""
+        fn main() {
+            for i in 1..8 {
+                /*weak_warning*/println!("{}", 2i32.pow(i));/*weak_warning**/
+            }
+            for i in 1..16 {
+                /*weak_warning*/println!("{}", 2i32.pow(i));/*weak_warning**/
+            }
+        }
+    """)
+
+    fun `test exclude members from analysis`() = doTest("""
+        impl Foo for i32 {
+            type Bar = i32;
+            fn baz() {}
+        }  
+              
+        impl Foo for String {
+            type Bar = i32;
+            fn baz() {}
+        }  
+    """)
+
+    fun `test exclude where clause from analysis`() = doTest("""
+        fn foo<M, F>() where M: Debug, F: FnMut(&M) -> bool {}
+        fn bar<M, F>() where M: Debug, F: FnMut(&M) -> bool {}
+    """)
+
+    fun `test exclude value argument and value parameter lists from analysis`() = doTest("""
+        fn foo(a: i32, b: u64, c: char, s: &str) {}
+        fn bar(a: i32, b: u64, c: char, s: &str) {}
+        
+        fn main() {
+            foo(a + 1, b, baz(), "foo");
+            bar(a + 1, b, baz(), "foo");
+        }    
+    """)
+
+    fun `test exclude type argument and type parameter lists from analysis`() = doTest("""
+        fn foo<V1: Debug, V2: Copy, F: Hash>() {}
+        fn bar<V1: Debug, V2: Copy, F: Hash>() {}
+        
+        fn main() {
+            foo::<Vec<i32>, i8, BTreeMap<String, u64>>();
+            bar::<Vec<i32>, i8, BTreeMap<String, u64>>();
+        }    
     """)
 
     fun `test binary expr order`() = doTest("""
