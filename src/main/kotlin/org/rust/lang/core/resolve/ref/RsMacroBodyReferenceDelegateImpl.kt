@@ -10,6 +10,7 @@ import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
 import org.rust.lang.core.psi.ext.ancestors
+import org.rust.openapiext.Testmark
 
 class RsMacroBodyReferenceDelegateImpl(
     element: RsReferenceElementBase
@@ -19,6 +20,7 @@ class RsMacroBodyReferenceDelegateImpl(
 
     private val delegates: List<RsReference>
         get() {
+            Testmarks.touched.hit()
             return element.findExpansionElements()?.mapNotNull { delegated ->
                 delegated.ancestors
                     .mapNotNull { it.reference }
@@ -32,4 +34,8 @@ class RsMacroBodyReferenceDelegateImpl(
 
     override fun multiResolve(): List<RsElement> =
         delegates.flatMap { it.multiResolve() }.distinct()
+
+    object Testmarks {
+        val touched = Testmark("touched")
+    }
 }

@@ -77,7 +77,7 @@ abstract class RsCodeFragment(
 
     override fun getForcedResolveScope(): GlobalSearchScope? = forcedResolveScope
 
-    override fun getContext(): PsiElement? = context
+    override fun getContext(): PsiElement = context
 
     final override fun getViewProvider(): SingleRootFileViewProvider = viewProvider
 

@@ -29,6 +29,12 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected inline fun <reified T : NavigatablePsiElement> checkByCodeGeneric(
         @Language("Rust") code: String,
         fileName: String = "main.rs"
+    ) = checkByCodeGeneric(T::class.java, code, fileName)
+
+    protected fun <T : NavigatablePsiElement> checkByCodeGeneric(
+        targetPsiClass: Class<T>,
+        @Language("Rust") code: String,
+        fileName: String = "main.rs"
     ) {
         InlineFile(code, fileName)
 
@@ -43,7 +49,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         }
 
         val resolved = refElement.checkedResolve(offset)
-        val target = findElementInEditor<T>("X")
+        val target = findElementInEditor(targetPsiClass, "X")
 
         check(resolved == target) {
             "$refElement `${refElement.text}` should resolve to $target, was $resolved instead"
