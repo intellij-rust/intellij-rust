@@ -89,8 +89,13 @@ class RsDuplicateScope : DuplicateScopeBase() {
      * A code fragment is analyzed if total weight exceeds the [DuplicateIndexConfiguration.windowSize].
      */
     override fun weightOf(ast: LighterAST, node: LighterASTNode): Int {
-        // TODO: come up with more precise weights
-        return 1
+        return when {
+            node.tokenType == BLOCK -> 3
+            // Weigh only leaf nodes. Otherwise, the inspection result depends on ast complexity
+            // and it will show smaller code fragments
+            node is LighterASTTokenNode -> 1
+            else -> 0
+        }
     }
 
     private fun getNodeType(ast: LighterAST, node: LighterASTNode): NodeType {
