@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.isProcMacroDef
 import java.util.*
 
 enum class Namespace(val itemName: String) {
@@ -33,8 +34,8 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     is RsTypeAlias -> TYPES
 
     is RsPatBinding,
-    is RsConstant,
-    is RsFunction -> VALUES
+    is RsConstant -> VALUES
+    is RsFunction -> if (this.isProcMacroDef) MACROS else VALUES
 
     is RsEnumVariant -> if (blockFields == null) VALUES else TYPES
 

@@ -376,7 +376,7 @@ private fun processQualifiedPathResolveVariants(
         val containingMod = path.containingMod
         if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
             containingMod is RsFile && containingMod.isCrateRoot) {
-            if (processAll(exportedMacros(base), processor)) return true
+            if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
         }
 
         // Proc macro crates are not allowed to export anything but procedural macros,
@@ -392,7 +392,12 @@ private fun processQualifiedPathResolveVariants(
         selfInGroup.hit()
         if (processor("self", base)) return true
     }
-    if (processItemOrEnumVariantDeclarations(base, ns, processor, withPrivateImports = isSuperChain)) return true
+
+    // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
+    // avoid this, we exclude `MACROS` from passed namespaces
+    if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = isSuperChain)) {
+        return true
+    }
     if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
         val baseTy = if (base is RsImplItem && qualifier.hasCself) {
             // impl S { fn foo() { Self::bar() } }
@@ -658,7 +663,14 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
     return simple.any { processor(it) }
 }
 
+/**
+ * Attribute macro can only be resolved to its definition.
+ */
+fun processAttributeProcMacroResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean =
+    processNestedScopesUpwards(element, MACROS, processor)
+
 fun processDeriveTraitResolveVariants(element: RsMetaItem, traitName: String, processor: RsResolveProcessor): Boolean {
+    processNestedScopesUpwards(element, MACROS, processor)
     val knownDerive = KNOWN_DERIVABLE_TRAITS[traitName]?.findTrait(element.knownItems)
     return if (knownDerive != null) {
         processor(knownDerive)
@@ -712,8 +724,8 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
 
 fun processMacrosExportedByCrateName(context: RsElement, crateName: String, processor: RsResolveProcessor): Boolean {
     val crateRoot = findDependencyCrateByName(context, crateName) ?: return false
-    val exportedMacros = exportedMacros(crateRoot)
-    return processAll(exportedMacros, processor)
+    val exportedMacros = exportedMacrosAsScopeEntries(crateRoot)
+    return processAllScopeEntries(exportedMacros, processor)
 }
 
 fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolveProcessor): Boolean {
@@ -723,7 +735,7 @@ fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolvePro
     if (result) return true
 
     val prelude = context.contextOrSelf<RsElement>()?.findDependencyCrateRoot(STD) ?: return false
-    return processAll(exportedMacros(prelude), processor)
+    return processAllScopeEntries(exportedMacrosAsScopeEntries(prelude), processor)
 }
 
 private class MacroResolver private constructor(private val processor: RsResolveProcessor) : RsVisitor() {
@@ -737,7 +749,7 @@ private class MacroResolver private constructor(private val processor: RsResolve
         val crateRoot = startElement.contextOrSelf<RsElement>()?.crateRoot as? RsFile
         if (crateRoot != null) {
             NameResolutionTestmarks.processSelfCrateExportedMacros.hit()
-            if (processAll(exportedMacros(crateRoot), processor)) return true
+            if (processAllScopeEntries(exportedMacrosAsScopeEntries(crateRoot), processor)) return true
         }
 
         return processRemainedExportedMacros()
@@ -821,10 +833,9 @@ private class MacroResolver private constructor(private val processor: RsResolve
     }
 
     private fun processRemainedExportedMacros(): Boolean {
-        for (useItem in visitor.useItems) {
-            if (processAll(collectMacrosImportedWithUseItem(useItem, visitor.exportingMacrosCrates), processor)) return true
+        return visitor.useItems.any { useItem ->
+            processAllScopeEntries(collectMacrosImportedWithUseItem(useItem, visitor.exportingMacrosCrates), processor)
         }
-        return false
     }
 
     companion object {
@@ -907,16 +918,26 @@ private class MacroResolvingVisitor(
                 CachedValueProvider.Result.create(visibleMacros, scope.rustStructureOrAnyPsiModificationTracker)
             }
 
-        private fun processAll(elements: Collection<RsNamedElement>, processor: (RsNamedElement) -> Boolean): Boolean {
-            for (e in elements) {
-                if (processor(e)) return true
-            }
-            return false
-        }
+        private fun processAll(elements: Collection<RsNamedElement>, processor: (RsNamedElement) -> Boolean): Boolean =
+            elements.any { processor(it) }
     }
 }
 
-private fun exportedMacros(scope: RsFile): List<RsNamedElement> {
+private fun exportedMacros(scope: RsFile): List<RsNamedElement> =
+    exportedMacrosAsScopeEntries(scope).mapNotNull { it.element as? RsNamedElement }
+
+/**
+ * We need `[ScopeEntry]` because custom derive procedural macros definitions have name different from the name of the
+ * defined macro:
+ *
+ * ```
+ * #[proc_macro_derive(ProcMacroName)]
+ * pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+ * ```
+ *
+ * The definition function has name `example_proc_macro`, but the defined macro has name `ProcMacroName`.
+ */
+private fun exportedMacrosAsScopeEntries(scope: RsFile): List<ScopeEntry> {
     if (!scope.isCrateRoot) {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
@@ -928,18 +949,18 @@ private fun exportedMacros(scope: RsFile): List<RsNamedElement> {
     }
 }
 
-private val EXPORTED_KEY: Key<CachedValue<List<RsNamedElement>>> = Key.create("EXPORTED_KEY")
-private val EXPORTED_MACROS_KEY: Key<CachedValue<List<RsNamedElement>>> = Key.create("EXPORTED_MACROS_KEY")
+private val EXPORTED_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_KEY")
+private val EXPORTED_MACROS_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create("EXPORTED_MACROS_KEY")
 
-private fun exportedMacrosInternal(scope: RsFile): List<RsNamedElement> {
+private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
+    // proc-macro crates are allowed to export only procedural macros.
     if (scope.containingCargoTarget?.isProcMacro == true) {
-        return scope.stubChildrenOfType<RsFunction>()
-            .filter { it.queryAttributes.hasAtomAttribute("proc_macro") }
+        return scope.stubChildrenOfType<RsFunction>().mapNotNull { asProcMacroDefinition(it) }
     }
 
     val allExportedMacros = RsMacroIndex.allExportedMacros(scope.project)
     return buildList {
-        addAll(allExportedMacros[scope].orEmpty())
+        addAll(allExportedMacros[scope]?.toScopeEntries().orEmpty())
 
         val exportingMacrosCrates = mutableMapOf<String, RsMod>()
 
@@ -947,7 +968,7 @@ private fun exportedMacrosInternal(scope: RsFile): List<RsNamedElement> {
         for (item in externCrates) {
             val reexportedMacros = reexportedMacros(item)
             if (reexportedMacros != null) {
-                addAll(reexportedMacros)
+                addAll(reexportedMacros.toScopeEntries())
             } else {
                 exportingMacrosCrates[item.nameWithAlias] = item.reference.resolve() as? RsMod ?: continue
             }
@@ -967,6 +988,23 @@ private fun exportedMacrosInternal(scope: RsFile): List<RsNamedElement> {
         }
     }
 }
+
+private fun asProcMacroDefinition(item: RsFunction): ScopeEntry? {
+    val macroName = when {
+        item.isBangProcMacroDef || item.isAttributeProcMacroDef -> item.name
+
+        item.isCustomDeriveProcMacroDef -> {
+            item.queryAttributes.getFirstArgOfSingularAttribute("proc_macro_derive")
+        }
+
+        else -> null
+    }
+
+    return macroName?.let { SimpleScopeEntry(it, item) }
+}
+
+private fun List<RsMacro>.toScopeEntries(): List<ScopeEntry> =
+    mapNotNull { item -> item.name?.let { SimpleScopeEntry(it, item) } }
 
 /**
  * Returns list of re-exported macros via `[macro_reexport]` attribute from given extern crate
@@ -992,7 +1030,7 @@ private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
 private fun collectMacrosImportedWithUseItem(
     useItem: RsUseItem,
     exportingMacrosCrates: Map<String, RsMod>
-): List<RsNamedElement> {
+): List<ScopeEntry> {
     // We don't want to perform path resolution during macro resolve (because it can recursively perform
     // macro resolve and so be slow and incorrect).
     // We assume that macro can only be imported by 2-segment path (`foo::bar`), where the first segment
@@ -1004,7 +1042,7 @@ private fun collectMacrosImportedWithUseItem(
             val crateRoot = exportingMacrosCrates[crateName] as? RsFile
                 ?: findDependencyCrateByName(useItem, crateName)
                 ?: continue
-            val exportedMacros = exportedMacros(crateRoot)
+            val exportedMacros = exportedMacrosAsScopeEntries(crateRoot)
             addAll(if (macroName == null) {
                 exportedMacros
             } else {
