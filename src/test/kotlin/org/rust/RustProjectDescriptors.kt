@@ -183,8 +183,11 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 Dependency(packages[5].id),
                 Dependency(packages[6].id)
             ),
-            // dep_lib 0.0.1 depends on dep_lib 0.0.2
-            packages[1].id to setOf(Dependency(packages[4].id))
+            // dep_lib 0.0.1 depends on trans-lib and dep_lib 0.0.2
+            packages[1].id to setOf(
+                Dependency(packages[3].id),
+                Dependency(packages[4].id)
+            )
         )))
     }
 }
