@@ -1063,7 +1063,7 @@ PathExpr ::= OuterAttr* PathGenericArgsWithColons {
 
 WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
   pin = 'while'
-  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" 
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1071,7 +1071,7 @@ Condition ::= [ let OrPats '=' ] NoStructLitExpr
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
-  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" 
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1090,7 +1090,7 @@ BreakExpr ::= OuterAttr* break Label? AnyExpr? {
 
 ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   pin = 'for'
-  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression" 
+  implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1303,14 +1303,14 @@ TT ::= <<any_braces TT*>> | <<unpairedToken>>
 private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
 private SpecialMacro ::= ExprMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro
 
-private ExprMacro ::= &(("try" | "await" | "dbg") '!') PathWithoutTypes '!' ExprMacroArgument { pin = 3 }
+private ExprMacro ::= &(("try" | "await" | "dbg") '!') PathWithoutTypes '!' ExprMacroArgument
 // Expression node is optional to avoid parsing error when expr is not typed yet (like `dbg!()`)
 ExprMacroArgument ::= <<any_braces AnyExpr?>>
 
 // https://doc.rust-lang.org/std/fmt/
 private FormatLikeMacro ::=
   &(("format" | "format_args" | "write" | "writeln" | "print" | "println" | "eprint" | "eprintln" | "panic" | "unimplemented" | "unreachable") '!')
-  PathWithoutTypes '!' FormatMacroArgument { pin = 3 }
+  PathWithoutTypes '!' FormatMacroArgument
 
 FormatMacroArgument ::= <<any_braces [ <<comma_separated_list FormatMacroArg>> ] >>
 FormatMacroArg ::= [ identifier '=' ] AnyExpr
@@ -1318,12 +1318,12 @@ FormatMacroArg ::= [ identifier '=' ] AnyExpr
 
 private AssertMacro ::=
   &(("assert" | "debug_assert" | "assert_eq" | "assert_ne" | "debug_assert_eq" | "debug_assert_ne") '!')
-  PathWithoutTypes '!' AssertMacroArgument { pin = 3 }
+  PathWithoutTypes '!' AssertMacroArgument
 
 AssertMacroArgument ::= <<any_braces (AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ])>>
 
 
-private VecMacro ::= &("vec" '!') PathWithoutTypes '!' VecMacroArgument { pin = 3 }
+private VecMacro ::= &("vec" '!') PathWithoutTypes '!' VecMacroArgument
 VecMacroArgument ::= <<any_braces ArrayInitializer >>
 
 

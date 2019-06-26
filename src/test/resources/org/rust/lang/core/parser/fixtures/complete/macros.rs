@@ -29,27 +29,57 @@ thread_local!(static HANDLE: Handle = Handle(0));
 foo!();
 
 fn foo() {
-    println!("{}", 92);
-    let v1 = vec![1, 2, 3];
-    let v2 = vec![1; 10];
-    try!(bar());
-    format!("{argument}", argument = "test");  // => "test"
-    format_args!("{name} {}", 1, name = 2);    // => "2 1"
-    debug!("{a} {c} {b}", a="a", b='b', c=3);  // => "a 3 b"
+    #[cfg(foo)]
+    foo! {}
+    let a = 0; // needed to check that we parsed the call as a stmt
 
-    try![bar()];
-    try! {
-        bar()
+    macro_rules! bar {
+        () => {};
     }
 
+    let mut macro_rules = 0;
+    macro_rules += 1;
+
+
+    // -- vec macro ---
+    let v1 = vec![1, 2, 3];
+    let v2 = vec![1; 10];
+    let v: Vec<i32> = vec![];
+    vec!(Foo[]); // custom vec macro
+    // ----------------
+
+    // --- format macros ---
+    println!("{}", 92);
+    format!("{argument}", argument = "test");  // => "test"
+    format_args!("{name} {}", 1, name = 2);    // => "2 1"
     format!["hello {}", "world!"];
     format! {
         "x = {}, y = {y}",
         10, y = 30
     }
+    panic!("division by zero");
+    eprintln!(Foo[]); // custom format macro
+    // -------------------
 
+    // --- expr macros ---
+    try!(bar());
+    try![bar()];
+    try! {
+        bar()
+    }
+    dbg!();
+    dbg!("Some text");
+    dbg!(Foo[]); // custom expr macro
+    // ------------------
+
+    // --- log macros ---
     error!();
+    debug!("{a} {c} {b}", a="a", b='b', c=3);  // => "a 3 b"
+    trace!(target: "smbc", "open_with {:?}", options);
+    debug!(log, "debug values"; "x" => 1, "y" => -1); // custom log macro
+    // ------------------
 
+    // --- assert macros ---
     let a = 42u32;
     let b = 43u32;
     assert!(a == b);
@@ -67,24 +97,6 @@ fn foo() {
     debug_assert_eq!(a, b);
     assert_ne!(a, b);
     debug_assert_ne!(a, b);
-
-    let v: Vec<i32> = vec![];
-    panic!("division by zero");
-
-    trace!(target: "smbc", "open_with {:?}", options);
-    debug!(log, "debug values"; "x" => 1, "y" => -1);
-
-    #[cfg(foo)]
-    foo! {}
-    let a = 0; // needed to check that we parsed the call as a stmt
-
-    macro_rules! bar {
-        () => {};
-    }
-
-    dbg!();
-    dbg!("Some text");
-
-    let mut macro_rules = 0;
-    macro_rules += 1;
+    assert_eq!(Foo[]); // custom assert macro
+    // ---------------------
 }
