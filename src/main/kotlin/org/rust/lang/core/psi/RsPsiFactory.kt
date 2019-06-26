@@ -27,6 +27,7 @@ import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
+import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.type
 
 class RsPsiFactory(
@@ -140,11 +141,11 @@ class RsPsiFactory(
         return structLiteralField
     }
 
-    data class BlockField(val pub: Boolean, val name: String, val type: RsTypeReference)
+    data class BlockField(val pub: Boolean, val name: String, val type: Ty)
 
     fun createBlockFields(fields: List<BlockField>): RsBlockFields {
         val fieldsText = fields.joinToString(separator = ",\n") {
-            "${"pub".iff(it.pub)}${it.name}: ${it.type.text}"
+            "${"pub".iff(it.pub)}${it.name}: ${it.type.insertionSafeTextWithLifetimes}"
         }
         return createStruct("struct S { $fieldsText }")
             .blockFields!!

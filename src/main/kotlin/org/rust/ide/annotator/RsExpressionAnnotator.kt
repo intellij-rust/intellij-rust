@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
+import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
@@ -38,8 +39,9 @@ class RsExpressionAnnotator : RsAnnotatorBase() {
                 field.reference.multiResolve().none { it is RsFieldDecl }
             }
             .forEach { field ->
-                holder.createErrorAnnotation(field.referenceNameElement, "No such field")
-                    .highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                val annotation = holder.createErrorAnnotation(field.referenceNameElement, "No such field")
+                annotation.highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotation.registerFix(it) }
             }
 
         for (field in body.structLiteralFieldList.findDuplicateReferences()) {
