@@ -153,6 +153,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test custom vec!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        macro_rules! vec {
+            ($ name:ident [ $($ field:ident = $ index:expr),* ] = $ fixed:ty) => {  };
+        }
+        fn main() {
+            let x = vec!(Vector2 [x=0, y=1] = [T; 2]);
+            x;
+          //^ <unknown>
+        }
+    """)
+
     fun `test format!`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {
@@ -169,6 +181,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = format!("{} {}", "Hello", "world!");
             x;
           //^ String
+        }
+    """)
+
+    fun `test custom format!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        macro_rules! format {
+            ($ name:ident [ $($ field:ident = $ index:expr),* ] = $ fixed:ty) => {  };
+        }
+        fn main() {
+            let x = format!(Vector2 [x=0, y=1] = [T; 2]);
+            x;
+          //^ <unknown>
         }
     """)
 
@@ -350,6 +374,18 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let x = debug_assert_ne!(1, 2);
             x;
           //^ ()
+        }
+    """)
+
+    fun `test custom assert!`() = stubOnlyTypeInfer("""
+    //- main.rs
+        macro_rules! assert {
+            ($ name:ident [ $($ field:ident = $ index:expr),* ] = $ fixed:ty) => {  };
+        }
+        fn main() {
+            let x = assert!(Vector2 [x=0, y=1] = [T; 2]);
+            x;
+          //^ <unknown>
         }
     """)
 

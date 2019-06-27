@@ -1080,8 +1080,9 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferMacroExprType(macroExpr: RsMacroExpr, expected: Ty?): Ty {
-        val name = macroExpr.macroCall.macroName
-        val exprArg = macroExpr.macroCall.exprMacroArgument
+        val macroCall = macroExpr.macroCall
+        val name = macroCall.macroName
+        val exprArg = macroCall.exprMacroArgument
         if (exprArg != null) {
             val expr = exprArg.expr ?: return TyUnknown
             return when (name) {
@@ -1095,7 +1096,7 @@ class RsTypeInferenceWalker(
             }
         }
 
-        val vecArg = macroExpr.macroCall.vecMacroArgument
+        val vecArg = macroCall.vecMacroArgument
         if (vecArg != null) {
             val expectedElemTy = (expected as? TyAdt)?.takeIf { it.item == items.Vec }?.typeArguments?.getOrNull(0)
             val elementType = if (vecArg.semicolon != null) {
@@ -1120,27 +1121,41 @@ class RsTypeInferenceWalker(
             return items.findVecForElementTy(elementType)
         }
 
-        inferChildExprsRecursively(macroExpr.macroCall)
+        inferChildExprsRecursively(macroCall)
         return when {
-            "print" in name || "assert" in name -> TyUnit
-            name == "format" -> items.String.asTy()
-            name == "format_args" -> items.Arguments.asTy()
+            macroCall.assertMacroArgument != null || macroCall.logMacroArgument != null -> TyUnit
+            macroCall.formatMacroArgument != null -> inferFormatMacro(macroCall)
+            macroCall.includeMacroArgument != null -> inferIncludeMacro(macroCall)
             name == "env" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "option_env" -> items.findOptionForElementTy(TyReference(TyStr, Mutability.IMMUTABLE))
             name == "concat" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "line" || name == "column" -> TyInteger.U32
             name == "file" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "stringify" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "include_str" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            name == "include_bytes" -> TyReference(TyArray(TyInteger.U8, null), Mutability.IMMUTABLE)
             name == "module_path" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "cfg" -> TyBool
+            else -> TyUnknown
+        }
+    }
+
+    private fun inferIncludeMacro(macroCall: RsMacroCall): Ty {
+        return when (macroCall.macroName) {
+            "include_str" -> TyReference(TyStr, Mutability.IMMUTABLE)
+            "include_bytes" -> TyReference(TyArray(TyInteger.U8, null), Mutability.IMMUTABLE)
+            else -> TyUnknown
+        }
+    }
+
+    private fun inferFormatMacro(macroCall: RsMacroCall): Ty {
+        val name = macroCall.macroName
+        return when {
+            "print" in name -> TyUnit
+            name == "format" -> items.String.asTy()
+            name == "format_args" -> items.Arguments.asTy()
             name == "unimplemented" || name == "unreachable" || name == "panic" -> TyNever
             name == "write" || name == "writeln" -> {
-                (macroExpr.macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
+                (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
             }
-            macroExpr.macroCall.formatMacroArgument != null || macroExpr.macroCall.logMacroArgument != null -> TyUnit
-
             else -> TyUnknown
         }
     }
