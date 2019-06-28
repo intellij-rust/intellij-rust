@@ -668,7 +668,7 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private VariantArgs ::= BlockFields | TupleFields | VariantDiscriminant
+private VariantArgs ::= (BlockFields | TupleFields)? VariantDiscriminant?
 
 BlockFields ::= '{' (NamedFieldDecl (',' | &'}'))* '}' {
   pin = 1
