@@ -391,6 +391,24 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test std trait method reexported from core`() = checkAutoImportFixByText("""
+        #[derive(Debug)]
+        struct S;
+
+        fn main() {
+            S.<error descr="Unresolved reference: `fmt`">fmt/*caret*/</error>(unreachable!());
+        }
+    """, """
+        use std::fmt::Debug;
+
+        #[derive(Debug)]
+        struct S;
+
+        fn main() {
+            S.fmt/*caret*/(unreachable!());
+        }
+    """)
+
     fun `test do not suggest items from transitive dependencies`() = checkAutoImportFixByFileTree("""
         //- dep-lib-new/lib.rs
         pub struct Foo;

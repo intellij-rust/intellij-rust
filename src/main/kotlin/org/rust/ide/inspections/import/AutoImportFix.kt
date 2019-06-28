@@ -142,13 +142,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .filterIsInstance<RsQualifiedNamedElement>()
                 .map { QualifiedNamedItem.ExplicitItem(it) }
 
-            val reexportedItems = RsReexportIndex.findReexportsByName(project, targetName, importContext.scope)
-                .asSequence()
-                .filter { !it.isStarImport }
-                .mapNotNull {
-                    val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
-                    QualifiedNamedItem.ReexportedItem(it, item)
-                }
+            val reexportedItems = getReexportedItems(project, targetName, importContext.scope)
 
             return (explicitItems + reexportedItems)
                 .filter(itemFilter)
@@ -158,6 +152,20 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 // check that result after import can be resolved and resolved element is suitable
                 // if no, don't add it in candidate list
                 .filter { canBeResolvedToSuitableItem(importingPathText, importContext, it.info) }
+        }
+
+        private fun getReexportedItems(
+            project: Project,
+            targetName: String,
+            scope: GlobalSearchScope
+        ): Sequence<QualifiedNamedItem.ReexportedItem> {
+            return RsReexportIndex.findReexportsByName(project, targetName, scope)
+                .asSequence()
+                .filter { !it.isStarImport }
+                .mapNotNull {
+                    val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
+                    QualifiedNamedItem.ReexportedItem(it, item)
+                }
         }
 
         /**
@@ -178,9 +186,17 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val superMods = LinkedHashSet(scope.containingMod.superMods)
             val attributes = scope.stdlibAttributes
 
+            val searchScope = RsWithMacrosScope(project, RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)))
             return traitsToImport
                 .asSequence()
-                .flatMap { QualifiedNamedItem.ExplicitItem(it).withModuleReexports(project).asSequence() }
+                .map { QualifiedNamedItem.ExplicitItem(it) }
+                .flatMap { traitItem ->
+                    val traitName = traitItem.itemName ?: return@flatMap sequenceOf(traitItem)
+                    val reexportedItems = getReexportedItems(project, traitName, searchScope)
+                        .filter { it.item == traitItem.item }
+                    sequenceOf(traitItem) + reexportedItems
+                }
+                .flatMap { it.withModuleReexports(project).asSequence() }
                 .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
                 .filterImportCandidates(attributes)
         }
