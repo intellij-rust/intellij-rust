@@ -2201,4 +2201,47 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    fun `test arbitrary enum discriminant without repr E0732`() = checkErrors("""
+        #![feature(arbitrary_enum_discriminant)]
+        enum <error descr="`#[repr(inttype)]` must be specified [E0732]">Enum</error> {
+            Unit = 1,
+            Tuple() = 2,
+            Struct{} = 3,
+        }
+    """)
+
+    fun `test valid arbitrary enum discriminant E0732`() = checkErrors("""
+        #![feature(arbitrary_enum_discriminant)]
+        #[repr(u8)]
+        enum Enum {
+            Unit = 3,
+            Tuple(u16) = 2,
+            Struct {
+                a: u8,
+                b: u16,
+            } = 1,
+        } 
+    """)
+
+    @MockRustcVersion("1.37.0-nightly")
+    fun `test arbitrary enum discriminant without feature`() = checkErrors("""
+        #[repr(isize)]
+        enum Enum {
+            Unit = 1, 
+            Tuple() = <error descr="discriminant on a non-unit variant is experimental [E0658]">2</error>,
+            Struct{} = <error descr="discriminant on a non-unit variant is experimental [E0658]">3</error>,
+        } 
+    """)
+
+    @MockRustcVersion("1.37.0-nightly")
+    fun `test arbitrary enum discriminant with feature`() = checkErrors("""
+        #![feature(arbitrary_enum_discriminant)]
+        #[repr(isize)]
+        enum Enum {
+            Unit = 1, 
+            Tuple() = 2,
+            Struct{} = 3,
+        } 
+    """)
+
 }

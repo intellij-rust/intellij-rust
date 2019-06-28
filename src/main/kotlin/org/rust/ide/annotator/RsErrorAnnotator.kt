@@ -46,7 +46,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkEnumItem(holder, o)
-            override fun visitEnumVariant(o: RsEnumVariant) = checkDuplicates(holder, o)
+            override fun visitEnumVariant(o: RsEnumVariant) = checkEnumVariant(holder, o)
             override fun visitFunction(o: RsFunction) = checkFunction(holder, o)
             override fun visitImplItem(o: RsImplItem) = checkImpl(holder, o)
             override fun visitLabel(o: RsLabel) = checkLabel(holder, o)
@@ -89,6 +89,30 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     private fun checkEnumItem(holder: AnnotationHolder, o: RsEnumItem) {
         checkDuplicates(holder, o)
         o.enumBody?.let { checkDuplicateEnumVariants(holder, it) }
+        if (!hasReprIntType(o) && hasStructOrTupleEnumVariantWithDiscriminant(o)) {
+            RsDiagnostic.ReprIntRequired(o.identifier ?: o.enum).addToHolder(holder)
+        }
+    }
+
+    private fun hasReprIntType(owner: RsDocAndAttributeOwner): Boolean =
+        owner.queryAttributes.reprAttributes
+            .mapNotNull { it.metaItemArgs }
+            .flatMap { it.metaItemList.asSequence() }
+            .mapNotNull { it.name }
+            .any { it in TyInteger.NAMES }
+
+    private fun hasStructOrTupleEnumVariantWithDiscriminant(enum: RsEnumItem): Boolean =
+        enum.enumBody?.enumVariantList
+            ?.filter { it.blockFields != null || it.tupleFields != null }
+            ?.mapNotNull { it.variantDiscriminant }
+            ?.isEmpty() == false
+
+    private fun checkEnumVariant(holder: AnnotationHolder, variant: RsEnumVariant) {
+        checkDuplicates(holder, variant)
+        val discr = variant.variantDiscriminant ?: return
+        if (variant.blockFields != null || variant.tupleFields != null) {
+            ARBITRARY_ENUM_DISCRIMINANT.check(holder, discr.expr ?: discr, "discriminant on a non-unit variant")
+        }
     }
 
     private fun checkDuplicateEnumVariants(holder: AnnotationHolder, o: RsEnumBody) {

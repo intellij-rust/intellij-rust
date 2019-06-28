@@ -1054,6 +1054,14 @@ sealed class RsDiagnostic(
             )
         }
     }
+
+    class ReprIntRequired(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0732,
+            "`#[repr(inttype)]` must be specified"
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -1064,7 +1072,7 @@ enum class RsErrorCode {
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
     E0518, E0569, E0583, E0586, E0594,
     E0603, E0614, E0616, E0618, E0624, E0658, E0688, E0695,
-    E0704;
+    E0704, E0732;
 
     val code: String
         get() = toString()
