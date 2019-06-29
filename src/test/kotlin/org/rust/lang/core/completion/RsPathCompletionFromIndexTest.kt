@@ -6,6 +6,8 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
@@ -13,7 +15,7 @@ import org.rust.openapiext.Testmark
 
 class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 
-    fun `test suggest an non-imported symbol from index and add proper import`() = doTest("""
+    fun `test suggest an non-imported symbol from index and add proper import`() = doTestByText("""
         mod collections {
             pub struct BTreeMap;
         }
@@ -33,7 +35,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test doesn't suggest a symbol that already in scope`() = doTest("""
+    fun `test doesn't suggest a symbol that already in scope`() = doTestByText("""
         use collections::BTreeMap;
 
         mod collections {
@@ -55,7 +57,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test doesn't suggest a symbol that leads to name collision`() = doTest("""
+    fun `test doesn't suggest a symbol that leads to name collision`() = doTestByText("""
         struct BTreeMap;
 
         mod collections {
@@ -77,7 +79,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test doesn't suggest an non-imported symbol from index when setting disabled`() = doTest("""
+    fun `test doesn't suggest an non-imported symbol from index when setting disabled`() = doTestByText("""
         struct BTreeMap;
 
         mod collections {
@@ -120,7 +122,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """, Testmarks.pathCompletionFromIndex)
 
-    fun `test enum completion`() = doTest("""
+    fun `test enum completion`() = doTestByText("""
         mod a {
             pub enum Enum {
                 V1, V2
@@ -144,7 +146,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test insert handler`() = doTest("""
+    fun `test insert handler`() = doTestByText("""
         mod foo {
             pub fn bar(x: i32) {}
         }
@@ -164,7 +166,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test insert handler for multiple carets`() = doTest("""
+    fun `test insert handler for multiple carets`() = doTestByText("""
         mod foo {
             pub fn bar(x: i32) {}
         }
@@ -188,7 +190,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test do not import out of scope items when setting disabled`() = doTest("""
+    fun `test do not import out of scope items when setting disabled`() = doTestByText("""
         mod collections {
             pub struct BTreeMap;
         }
@@ -206,7 +208,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """, importOutOfScopeItems = false)
 
-    fun `test macro body`() = doTest("""
+    fun `test macro body`() = doTestByText("""
         mod foo { pub struct Foo; }
         macro_rules! foo {
             ($($ i:item)*) => { $($ i)* };
@@ -244,11 +246,44 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """)
 
-    private fun doTest(
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test pub extern crate`() = doTestByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub extern crate trans_lib;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: FooB/*caret*/) {}
+    """, """
+        extern crate dep_lib_target;
+
+        use dep_lib_target::trans_lib::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         suggestOutOfScopeItems: Boolean = true,
         importOutOfScopeItems: Boolean = true
+    ) = doTest(before, after, suggestOutOfScopeItems, importOutOfScopeItems, ::doSingleCompletion)
+
+    private fun doTestByFileTree(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true
+    ) = doTest(before, after, suggestOutOfScopeItems, importOutOfScopeItems, ::doSingleCompletionMultifile)
+
+    private fun doTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true,
+        check: (String, String) -> Unit
     ) {
         val settings = RsCodeInsightSettings.getInstance()
         val suggestInitialValue = settings.suggestOutOfScopeItems
@@ -256,7 +291,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         settings.suggestOutOfScopeItems = suggestOutOfScopeItems
         settings.importOutOfScopeItems = importOutOfScopeItems
         try {
-            doSingleCompletion(before, after)
+            check(before, after)
         } finally {
             settings.suggestOutOfScopeItems = suggestInitialValue
             settings.importOutOfScopeItems = importInitialValue
