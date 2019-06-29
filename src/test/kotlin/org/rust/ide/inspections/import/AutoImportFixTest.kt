@@ -1972,4 +1972,27 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test struct in a first segment of value path to an assoc function`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                fn baz() {}
+            }
+        }
+        fn main() {
+            <error descr="Unresolved reference: `Foo`">Foo::baz/*caret*/</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                fn baz() {}
+            }
+        }
+        fn main() {
+            Foo::baz/*caret*/();
+        }
+    """)
 }

@@ -14,8 +14,8 @@ import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
-import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.TYPES
-import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.VALUES
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.NO_COLONS
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -102,10 +102,10 @@ class RsPsiFactory(
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
-    fun tryCreatePath(text: String, ns: PathNamespace = TYPES): RsPath? {
+    fun tryCreatePath(text: String, ns: PathParsingMode = NO_COLONS): RsPath? {
         val path = when (ns) {
-            TYPES -> createFromText("fn foo(t: $text) {}")
-            VALUES -> createFromText<RsPathExpr>("fn main() { $text; }")?.path
+            NO_COLONS -> createFromText("fn foo(t: $text) {}")
+            else -> createFromText<RsPathExpr>("fn main() { $text; }")?.path
         } ?: return null
         if (path.text != text) return null
         return path
@@ -426,11 +426,6 @@ class RsPsiFactory(
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
-
-    enum class PathNamespace {
-        TYPES,
-        VALUES
-    }
 }
 
 private fun RsFunction.getSignatureText(subst: Substitution): String? {

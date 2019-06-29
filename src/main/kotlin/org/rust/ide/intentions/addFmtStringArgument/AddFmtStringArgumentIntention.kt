@@ -54,7 +54,14 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         val result = placeholderRegex.findAll(oldStringUntilCaret)
         val placeholderNumber = result.count()
 
-        val codeFragment = RsExpressionCodeFragment(project, CODE_FRAGMENT_TEXT, macroCallExpr)
+        val codeFragment = RsExpressionCodeFragment(
+            project,
+            CODE_FRAGMENT_TEXT,
+            // We enable event system because user will edit this fragment, and we want
+            // to invalidate caches if user change the fragment, so we want events to be fired
+            eventSystemEnabled = true,
+            context = macroCallExpr
+        )
 
         if (ApplicationManager.getApplication().isUnitTestMode) {
             addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)

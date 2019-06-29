@@ -22,7 +22,9 @@ class RsDebuggerEditorsExtension : CidrDebuggerEditorsExtensionBase() {
 
     override fun createExpressionCodeFragment(project: Project, text: String, context: PsiElement, mode: EvaluationMode): PsiFile =
         if (context is RsElement) {
-            RsExpressionCodeFragment(project, text, context)
+            // We enable event system because user will edit this fragment, and we want
+            // to invalidate caches if user change the fragment, so we want events to be fired
+            RsExpressionCodeFragment(project, text, eventSystemEnabled = true, context = context)
         } else {
             super.createExpressionCodeFragment(project, text, context, mode)
         }

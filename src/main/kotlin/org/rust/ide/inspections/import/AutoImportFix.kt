@@ -20,6 +20,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.search.RsCargoProjectScope
 import org.rust.ide.search.RsWithMacrosScope
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
@@ -276,8 +277,13 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             } else {
                 info.externCrateName
             }
-            val path = RsCodeFragmentFactory(context.project)
-                .createPathInTmpMod(importingPathName, context.mod, context.ns, info.usePath, externCrateName) ?: return false
+            val path = RsCodeFragmentFactory(context.project).createPathInTmpMod(
+                importingPathName,
+                context.mod,
+                context.pathParsingMode,
+                info.usePath,
+                externCrateName
+            ) ?: return false
             val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!context.namespaceFilter(element)) return false
             return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
@@ -593,7 +599,7 @@ data class ImportContext private constructor(
     val mod: RsMod,
     val superMods: LinkedHashSet<RsMod>,
     val scope: GlobalSearchScope,
-    val ns: RsPsiFactory.PathNamespace,
+    val pathParsingMode: PathParsingMode,
     val attributes: RsFile.Attributes,
     val namespaceFilter: (RsQualifiedNamedElement) -> Boolean
 ) {
@@ -603,19 +609,19 @@ data class ImportContext private constructor(
             mod = path.containingMod,
             superMods = LinkedHashSet(path.containingMod.superMods),
             scope = RsWithMacrosScope(project, RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project))),
-            ns = path.pathNamespace,
+            pathParsingMode = path.pathParsingMode,
             attributes = path.stdlibAttributes,
             namespaceFilter = path.namespaceFilter(isCompletion)
         )
     }
 }
 
-private val RsPath.pathNamespace: RsPsiFactory.PathNamespace get() = when (context) {
+private val RsPath.pathParsingMode: PathParsingMode get() = when (context) {
     is RsPathExpr,
     is RsStructLiteral,
     is RsPatStruct,
-    is RsPatTupleStruct -> RsPsiFactory.PathNamespace.VALUES
-    else -> RsPsiFactory.PathNamespace.TYPES
+    is RsPatTupleStruct -> PathParsingMode.COLONS
+    else -> PathParsingMode.NO_COLONS
 }
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE

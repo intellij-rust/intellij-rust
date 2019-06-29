@@ -63,7 +63,7 @@ val RsPath.qualifier: RsPath?
         return (ctx as? RsUseSpeck)?.qualifier
     }
 
-fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = context) {
+fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = parent) {
     is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
     is RsUseSpeck -> when {
         // use foo::bar::{self, baz};
@@ -76,6 +76,7 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
         else -> TYPES_N_VALUES_N_MACROS
     }
     is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
+    is RsPathCodeFragment -> parent.ns
     else -> TYPES_N_VALUES
 }
 
