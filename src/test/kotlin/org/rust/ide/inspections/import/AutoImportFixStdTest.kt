@@ -565,4 +565,42 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(x: FooBar/*caret*/) {}
     """)
+
+    fun `test pub extern crate reexport with alias`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub extern crate trans_lib as transitive;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::transitive::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test pub extern crate reexport with alias in inner module`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub extern crate trans_lib as transitive;
+        }
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::transitive::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
 }

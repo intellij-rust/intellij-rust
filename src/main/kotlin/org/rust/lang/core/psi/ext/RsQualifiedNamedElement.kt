@@ -83,7 +83,7 @@ data class RsQualifiedName private constructor(
             result = lookupInIndex(project, RsReexportIndex.KEY) { useSpeck ->
                 if (useSpeck.isStarImport) return@lookupInIndex null
                 val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@lookupInIndex null
-                QualifiedNamedItem.ReexportedItem(useSpeck, candidate)
+                QualifiedNamedItem.ReexportedItem.from(useSpeck, candidate)
             }
         }
 
@@ -412,12 +412,12 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
 
     abstract val itemName: String?
     abstract val isPublic: Boolean
-    abstract val superMods: List<RsMod>?
+    abstract val superMods: List<ModWithName>?
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
     val parentCrateRelativePath: String? get() {
         val path = superMods
-            ?.map { (if (it.isCrateRoot) it.containingCargoTarget?.normName else it.modName) ?: return null }
+            ?.map { it.modName ?: return null }
             ?.asReversed()
             ?.drop(1)
             ?.joinToString("::") ?: return null
@@ -438,47 +438,49 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
     class ExplicitItem(item: RsQualifiedNamedElement) : QualifiedNamedItem(item) {
         override val itemName: String? get() = item.name
         override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
-        override val superMods: List<RsMod>? get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods
+        override val superMods: List<ModWithName>? get() =
+            (if (item is RsMod) item.`super` else item.containingMod)?.superMods?.map { ModWithName(it) }
         override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
     }
 
-    class ReexportedItem(
-        private val useSpeck: RsUseSpeck,
+    class ReexportedItem private constructor(
+        override val itemName: String?,
+        private val reexportItem: RsElement,
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
 
-        override val itemName: String? get() = useSpeck.nameInScope
         override val isPublic: Boolean get() = true
-        override val superMods: List<RsMod>? get() = useSpeck.containingMod.superMods
-        override val containingCargoTarget: CargoWorkspace.Target? get() = useSpeck.containingCargoTarget
-    }
+        override val superMods: List<ModWithName>? get() = reexportItem.containingMod.superMods.map { ModWithName(it) }
+        override val containingCargoTarget: CargoWorkspace.Target? get() = reexportItem.containingCargoTarget
 
-    class ReexportedCrateItem(
-        private val externCrateItem: RsExternCrateItem,
-        item: RsMod
-    ) : QualifiedNamedItem(item) {
+        companion object {
+            fun from(useSpeck: RsUseSpeck, item: RsQualifiedNamedElement): ReexportedItem {
+                return ReexportedItem(useSpeck.nameInScope, useSpeck, item)
+            }
 
-        override val itemName: String? get() = externCrateItem.nameWithAlias
-        override val isPublic: Boolean get() = true
-        override val superMods: List<RsMod>? get() = externCrateItem.containingMod.superMods
-        override val containingCargoTarget: CargoWorkspace.Target? get() = externCrateItem.containingCargoTarget
+            fun from(externCrateItem: RsExternCrateItem, item: RsQualifiedNamedElement): ReexportedItem {
+                return ReexportedItem(item.name, externCrateItem, item)
+            }
+        }
     }
 
     class CompositeItem(
         override val itemName: String?,
         override val isPublic: Boolean,
         private val reexportedModItem: QualifiedNamedItem,
-        private val explicitSuperMods: List<RsMod>,
+        private val explicitSuperMods: List<ModWithName>,
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
 
-        override val superMods: List<RsMod>? get() {
+        override val superMods: List<ModWithName>? get() {
             val mods = ArrayList(explicitSuperMods)
             mods += reexportedModItem.superMods.orEmpty()
             return mods
         }
         override val containingCargoTarget: CargoWorkspace.Target? get() = reexportedModItem.containingCargoTarget
     }
+
+    data class ModWithName(val modItem: RsMod, val modName: String? = modItem.modName)
 }
 
 /**
@@ -503,12 +505,12 @@ private fun QualifiedNamedItem.collectImportItems(
     val importItems = mutableListOf(this)
     val superMods = superMods.orEmpty()
     superMods.forEachIndexed { index, ancestorMod ->
-        val modName = ancestorMod.modName ?: return@forEachIndexed
+        val modName = ancestorMod.modItem.modName ?: return@forEachIndexed
         RsReexportIndex.findReexportsByName(project, modName)
             .mapNotNull {
                 if (it in visited) return@mapNotNull null
                 val reexportedMod = it.pathOrQualifier?.reference?.resolve() as? RsMod
-                if (reexportedMod != ancestorMod) return@mapNotNull null
+                if (reexportedMod != ancestorMod.modItem) return@mapNotNull null
                 it to reexportedMod
             }
             .forEach { (useSpeck, reexportedMod) ->
@@ -552,7 +554,7 @@ private fun QualifiedNamedItem.collectImportItems(
                     // i.e. generate "foo::Baz" item from "foo::[bar::baz::]Baz"
                     useSpeck.containingMod to index
                 }
-                val items = QualifiedNamedItem.ReexportedItem(useSpeck, mod).collectImportItems(project, visited)
+                val items = QualifiedNamedItem.ReexportedItem.from(useSpeck, mod).collectImportItems(project, visited)
                 importItems += items.map {
                     QualifiedNamedItem.CompositeItem(itemName, isPublic, it, superMods.subList(0, endModIndex), item)
                 }
@@ -566,15 +568,16 @@ private fun QualifiedNamedItem.collectImportItems(
 private fun QualifiedNamedItem.withExternCrateReexports(project: Project): List<QualifiedNamedItem> {
     val importItems = mutableListOf(this)
     val superMods = superMods.orEmpty()
-    val root = superMods.lastOrNull() ?: return importItems
+    val root = superMods.lastOrNull()?.modItem ?: return importItems
     if (!root.isCrateRoot) return importItems
     val targetName = root.containingCargoTarget?.normName ?: return importItems
     RsExternCrateReexportIndex.findReexportsByName(project, targetName).forEach { externCrateItem ->
         val mod = externCrateItem.reference.resolve() as? RsMod
         if (mod == root) {
-            val items = QualifiedNamedItem.ReexportedCrateItem(externCrateItem, mod).collectImportItems(project)
+            val items = QualifiedNamedItem.ReexportedItem.from(externCrateItem, mod).collectImportItems(project)
             importItems += items.map {
-                QualifiedNamedItem.CompositeItem(itemName, isPublic, it, superMods, item)
+                val explicitSuperMods = superMods.dropLast(1) + QualifiedNamedItem.ModWithName(mod, externCrateItem.nameWithAlias)
+                QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
             }
         }
     }

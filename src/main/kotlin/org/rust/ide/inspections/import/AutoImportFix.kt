@@ -184,7 +184,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .filter { !it.isStarImport }
                 .mapNotNull {
                     val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
-                    QualifiedNamedItem.ReexportedItem(it, item)
+                    QualifiedNamedItem.ReexportedItem.from(it, item)
                 }
         }
 
@@ -270,12 +270,12 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
             // try to find latest common ancestor module of `parentMod` and `mod` in module tree
             // we need to do it because we can use direct child items of any super mod with any visibility
-            val lca = ourSuperMods.find { it in superMods }
+            val lca = ourSuperMods.find { it.modItem in superMods }
             val crateRelativePath = crateRelativePath ?: return null
 
             val (shouldBePublicMods, importInfo) = if (lca == null) {
                 if (!isPublic) return null
-                val externCrateMod = ourSuperMods.last()
+                val externCrateMod = ourSuperMods.last().modItem
 
                 val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
                     val externCrateItem = superMod.stubChildrenOfType<RsExternCrateItem>()
@@ -306,7 +306,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 if (!isPublic) return null
                 ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(relativePath)
             }
-            return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
+            return if (shouldBePublicMods.all { it.modItem.isPublic }) return importInfo else null
         }
 
         private fun canBeResolvedToSuitableItem(
