@@ -565,7 +565,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test don't import trait method`() = checkAutoImportFixIsUnavailable("""
+    fun `test don't import trait assoc function if its import is useless`() = expect<IllegalStateException> {
+    checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
                 fn bar();
@@ -573,6 +574,51 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
         fn main() {
             <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+        }
+    """)
+    }
+
+    fun `test trait method with self parameter`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Bar {
+                fn bar(&self);
+            }
+        }
+        fn main() {
+            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            pub trait Bar {
+                fn bar(&self);
+            }
+        }
+        fn main() {
+            Bar::bar();
+        }
+    """)
+
+    fun `test trait method with parameter contains Self type`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Bar {
+                fn bar() -> Self;
+            }
+        }
+        fn main() {
+            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            pub trait Bar {
+                fn bar() -> Self;
+            }
+        }
+        fn main() {
+            Bar::bar();
         }
     """)
 

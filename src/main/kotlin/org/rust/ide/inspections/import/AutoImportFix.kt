@@ -331,7 +331,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             ) ?: return false
             val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!context.namespaceFilter(element)) return false
-            return !(element.parent is RsMembers && element.ancestorStrict<RsTraitItem>() != null)
+            // Looks like it's useless to access trait associated types or constants directly
+            // (i.e. `Trait::CONSTANT`), but associated functions can be used in UFCS
+            val isTraitAssocTypeOrConstant =
+                element !is RsFunction && element is RsAbstractable && element.owner is RsAbstractableOwner.Trait
+            return !isTraitAssocTypeOrConstant
         }
 
         private fun Sequence<ImportCandidate>.filterImportCandidates(
