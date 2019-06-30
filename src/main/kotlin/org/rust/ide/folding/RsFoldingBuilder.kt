@@ -102,6 +102,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             when (comment.tokenType) {
                 BLOCK_COMMENT,
                 INNER_EOL_DOC_COMMENT,
+                OUTER_BLOCK_DOC_COMMENT,
                 OUTER_EOL_DOC_COMMENT -> fold(comment)
             }
         }
