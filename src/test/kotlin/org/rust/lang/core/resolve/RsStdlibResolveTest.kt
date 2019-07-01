@@ -199,48 +199,58 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                        //^ .../f64.rs
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
     fun `test inherent impl const ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *const char;
             p.is_null();
-            //^ ...libcore/ptr.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
         }
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
     fun `test inherent impl const ptr 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *const char;
             <*const char>::is_null(p);
-                         //^ ...libcore/ptr.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
         }
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
     fun `test inherent impl const ptr 3`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             <*const char>::is_null(p); //Pass a *mut pointer to a *const method
-                         //^ ...libcore/ptr.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
         }
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
     fun `test inherent impl mut ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             p.is_null();
-            //^ ...libcore/ptr.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
         }
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
     fun `test inherent impl mut ptr 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             <*mut char>::is_null(p);
-                       //^ ...libcore/ptr.rs
+                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
         }
     """)
 
@@ -572,12 +582,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }   //^ .../libcore/sync/atomic.rs
     """)
 
+    // BACKCOMPAT: Rust 1.36.0
+    //  Since 1.37.0 common code from `libcore/mem.rs` moved to `libcore/mem/mod.rs`
     fun `test non-absolute std-qualified path in non-root module`() = stubOnlyResolve("""
     //- main.rs
         mod foo {
             fn main() {
                 std::mem::size_of::<i32>();
-            }           //^ .../libcore/mem.rs
+            }           //^ .../libcore/mem.rs|...libcore/mem/mod.rs
         }
     """)
 

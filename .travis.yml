@@ -12,7 +12,7 @@ env:
   global:
     - OLD_RUST_VERSION=1.28.0
     - CURRENT_RUST_VERSION=1.35.0
-    - NIGHLY_RUST_VERSION=nightly-2019-04-23
+    - NIGHLY_RUST_VERSION=nightly-2019-06-18
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
 
 matrix:
@@ -45,7 +45,7 @@ before_script:
 
 script:
   - travis_wait 30 ./gradlew check -Pkotlin.incremental=false --no-daemon
-  - if [ $RUST_VERSION != $OLD_RUST_VERSION ]; then ./gradlew runPrettyPrintersTests --no-daemon; fi
+  - ./gradlew runPrettyPrintersTests --no-daemon
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
 before_cache:
