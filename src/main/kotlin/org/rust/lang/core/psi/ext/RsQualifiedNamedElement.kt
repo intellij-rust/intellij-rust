@@ -570,15 +570,11 @@ private fun QualifiedNamedItem.withExternCrateReexports(project: Project): List<
     val superMods = superMods.orEmpty()
     val root = superMods.lastOrNull()?.modItem ?: return importItems
     if (!root.isCrateRoot) return importItems
-    val targetName = root.containingCargoTarget?.normName ?: return importItems
-    RsExternCrateReexportIndex.findReexportsByName(project, targetName).forEach { externCrateItem ->
-        val mod = externCrateItem.reference.resolve() as? RsMod
-        if (mod == root) {
-            val items = QualifiedNamedItem.ReexportedItem.from(externCrateItem, mod).collectImportItems(project)
-            importItems += items.map {
-                val explicitSuperMods = superMods.dropLast(1) + QualifiedNamedItem.ModWithName(mod, externCrateItem.nameWithAlias)
-                QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
-            }
+    RsExternCrateReexportIndex.findReexports(project, root).forEach { externCrateItem ->
+        val items = QualifiedNamedItem.ReexportedItem.from(externCrateItem, root).collectImportItems(project)
+        importItems += items.map {
+            val explicitSuperMods = superMods.dropLast(1) + QualifiedNamedItem.ModWithName(root, externCrateItem.nameWithAlias)
+            QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
         }
     }
     return importItems

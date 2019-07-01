@@ -10,8 +10,13 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.RsExternCrateItem
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.lang.core.psi.ext.isPublic
+import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.getElements
@@ -30,8 +35,18 @@ class RsExternCrateReexportIndex : StringStubIndexExtension<RsExternCrateItem>()
             sink.occurrence(KEY, externCrateItem.referenceName)
         }
 
-        fun findReexportsByName(project: Project, name: String): Collection<RsExternCrateItem> {
-            return getElements(KEY, name, project, GlobalSearchScope.allScope(project))
+        fun findReexports(project: Project, crateRoot: RsMod): List<RsExternCrateItem> {
+            return CachedValuesManager.getCachedValue(crateRoot) {
+                val targetName = crateRoot.containingCargoTarget?.normName
+                val reexports = if (targetName != null) {
+                    getElements(KEY, targetName, project, GlobalSearchScope.allScope(project))
+                        .filter { externCrateItem -> externCrateItem.reference.resolve() == crateRoot }
+                } else {
+                    emptyList()
+                }
+
+                CachedValueProvider.Result.create(reexports, crateRoot.rustStructureOrAnyPsiModificationTracker)
+            }
         }
     }
 }
