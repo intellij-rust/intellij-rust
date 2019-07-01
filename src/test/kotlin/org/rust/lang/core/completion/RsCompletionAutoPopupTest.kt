@@ -23,7 +23,6 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
 
 
     fun `test path auto popup`() {
-        val tester = CompletionAutoPopupTester(myFixture)
         myFixture.configureByText("main.rs", """
             enum Foo { Bar, Baz}
             fn main() {
@@ -31,7 +30,7 @@ class RsCompletionAutoPopupTest : RsCompletionTestBase() {
             }
         """)
         tester.typeWithPauses("::")
-        check(tester.lookup != null)
+        assertNotNull(tester.lookup)
     }
 
 }
