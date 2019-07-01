@@ -1290,6 +1290,17 @@ MacroCallNoSemicolons ::= MacroHead {
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
+private NonSpecialMacroCall ::= &(!SpecialExprContextMacroNames) MacroCall
+
+// We parse some macros (like `println`) as a specific syntax constructions. This
+// is a list of such specific macros that should be always parsed as `MacroExpr`.
+// E.g. `println!();` should be parsed as `ExprStmt(MacroExpr(MacroCall(...)))`, but
+// any other `foo!();` as a simple `MacroCall(...)`
+private SpecialExprContextMacroNames ::= "try" | "await" | "dbg" | "format" | "format_args" | "write" |
+"writeln" | "print" | "println" | "eprint" | "eprintln" | "panic" | "unimplemented" | "unreachable" |
+"assert" | "debug_assert" | "assert_eq" | "assert_ne" | "debug_assert_eq" | "debug_assert_ne" |
+"trace" | "log" | "warn" | "debug" | "error" | "info" | "include_str" | "include_bytes"
+
 private MacroHead ::= AttrsAndVis &(PathWithoutTypes '!') (SpecialMacro | CommonMacro)
 
 MacroArgument ::= <<any_braces CompactTT>>
@@ -1376,7 +1387,7 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   elementType = Block
 }
 
-private BlockElement ::= !'}' (Macro | ExprStmtOrLastExpr | Stmt | Item) {
+private BlockElement ::= !'}' (Macro | NonSpecialMacroCall | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1
   recoverWhile = BlockElement_recover
 }

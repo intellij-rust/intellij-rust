@@ -9,11 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsMacroExpr
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.endOffset
-import org.rust.lang.core.psi.ext.macroName
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.ext.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -30,23 +27,23 @@ import kotlin.math.min
  * let a = variable;
  * ```
  */
-class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroExpr>() {
+class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroCall>() {
 
     override fun getText() = "Remove dbg!"
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroExpr? {
-        val macroExpr = element.ancestorStrict<RsMacroExpr>() ?: return null
-        if (macroExpr.macroCall.macroName != "dbg") {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? {
+        val macroCall = element.ancestorStrict<RsMacroCall>() ?: return null
+        if (macroCall.macroName != "dbg") {
             return null
         }
-        return macroExpr
+        return macroCall
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RsMacroExpr) {
-        val expr = ctx.macroCall.exprMacroArgument?.expr ?: return
+    override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
+        val expr = ctx.exprMacroArgument?.expr ?: return
         val cursorOffsetToExpr = max(0, editor.caretModel.offset - expr.startOffset)
-        val newExpr = ctx.replace(expr)
+        val newExpr = ctx.replaceWithExpr(expr)
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         editor.caretModel.moveToOffset(min(newExpr.startOffset + cursorOffsetToExpr, newExpr.endOffset))
     }

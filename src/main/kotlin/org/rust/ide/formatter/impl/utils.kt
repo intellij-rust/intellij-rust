@@ -11,9 +11,12 @@ import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.tree.TokenSet.orSet
+import org.rust.lang.core.macros.MacroExpansionContext
+import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.RS_OPERATORS
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsStmt
 import org.rust.lang.core.psi.ext.RsAttr
 import org.rust.lang.core.psi.ext.RsItemElement
@@ -58,7 +61,10 @@ val PsiElement.isTopLevelItem: Boolean
     get() = (this is RsItemElement || this is RsAttr) && parent is RsMod
 
 val PsiElement.isStmtOrExpr: Boolean
-    get() = this is RsStmt || this is RsExpr
+    get() = this is RsStmt || this is RsExpr || this is RsMacroCall && expansionContext == MacroExpansionContext.STMT
+
+val PsiElement.isStmtOrMacro: Boolean
+    get() = this is RsStmt || this is RsMacroCall && expansionContext == MacroExpansionContext.STMT
 
 
 val ASTNode.isDelimitedBlock: Boolean

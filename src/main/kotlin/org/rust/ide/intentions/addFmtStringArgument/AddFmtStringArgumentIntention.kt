@@ -11,12 +11,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.intentions.RsElementBaseIntentionAction
+import org.rust.lang.core.macros.expansionContext
+import org.rust.lang.core.macros.isExprOrStmtContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.containsOffset
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWriteCommandAction
 
 class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringArgumentIntention.Context>() {
@@ -33,13 +32,13 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         if (!literal.containsOffset(editor.caretModel.offset)) return null
 
         val macroCall = literal.ancestorOrSelf<RsMacroCall>() ?: return null
-        if (macroCall.macroName !in FORMAT_MACROS) return null
+        if (!macroCall.isExprOrStmtContext || macroCall.macroName !in FORMAT_MACROS) return null
 
         return Context(literal, macroCall)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val macroCallExpr = ctx.macroCall.ancestorOrSelf<RsExpr>() ?: return
+        val macroCallExpr = ctx.macroCall.parent as? RsElement ?: return
 
         val literal = ctx.literal
         if (!literal.containsOffset(editor.caretModel.offset)) return
@@ -75,7 +74,8 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
     ) {
         val psiFactory = RsPsiFactory(project)
 
-        val argument = ctx.macroCall.formatMacroArgument ?: return
+        val macroCall = ctx.macroCall
+        val argument = macroCall.formatMacroArgument ?: return
         val arguments = argument.formatMacroArgList
 
         val newPlaceholder = "{}"
@@ -98,10 +98,15 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
 
             argsBeforeLiteral + newString + newArgsAfterLiteral
         }
-        val newMacroCall = psiFactory.createMacroCall(ctx.macroCall.macroName, *newArgs.toTypedArray())
+        val newMacroCall = psiFactory.createMacroCall(
+            macroCall.expansionContext,
+            macroCall.bracesKind ?: return,
+            macroCall.macroName,
+            *newArgs.toTypedArray()
+        )
 
         project.runWriteCommandAction {
-            ctx.macroCall.replace(newMacroCall) as RsMacroCall
+            macroCall.replace(newMacroCall) as RsMacroCall
             editor.caretModel.moveToOffset(editor.caretModel.offset + newPlaceholder.length)
         }
     }

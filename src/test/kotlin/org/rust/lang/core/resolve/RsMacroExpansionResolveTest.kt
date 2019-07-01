@@ -407,4 +407,20 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         use super::S;
                  //^ main.rs
     """)
+
+    fun `test resolve item expanded from stmt context macro`() = checkByCode("""
+        macro_rules! foo {
+            ($ i:item) => ( $ i )
+        }
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }     //X
+        fn main() {
+            foo! {
+                fn foo() -> Foo { Foo }
+            }
+            foo().bar();
+        }       //^
+    """)
 }

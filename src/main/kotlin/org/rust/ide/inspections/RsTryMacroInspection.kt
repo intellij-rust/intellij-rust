@@ -9,8 +9,10 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import org.rust.lang.core.macros.isExprOrStmtContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.replaceWithExpr
 
 /**
  * Change `try!` macro to `?` operator.
@@ -19,8 +21,9 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "try! macro usage"
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
-        override fun visitMacroExpr(o: RsMacroExpr) {
-            if (o.macroCall.macroName != "try" || o.macroCall.exprMacroArgument?.expr == null) return
+        override fun visitMacroCall(o: RsMacroCall) {
+            val isApplicable = o.isExprOrStmtContext && o.macroName == "try" && o.exprMacroArgument?.expr != null
+            if (!isApplicable) return
             holder.registerProblem(
                 o,
                 "try! macro can be replaced with ? operator",
@@ -30,10 +33,11 @@ class RsTryMacroInspection : RsLocalInspectionTool() {
                     override fun getFamilyName() = name
 
                     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-                        val macro = descriptor.psiElement as RsMacroExpr
-                        val body = macro.macroCall.exprMacroArgument?.expr ?: return
-                        val tryExpr = RsPsiFactory(project).createExpression("${body.text}?") as RsTryExpr
-                        macro.replace(tryExpr)
+                        val macro = descriptor.psiElement as? RsMacroCall ?: return
+                        val body = macro.exprMacroArgument?.expr ?: return
+                        val tryExpr = RsPsiFactory(project).createExpression("()?") as RsTryExpr
+                        tryExpr.expr.replace(body.copy())
+                        macro.replaceWithExpr(tryExpr)
                     }
                 }
             )

@@ -14,6 +14,8 @@ import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.MacroExpansionContext
+import org.rust.lang.core.macros.prepareExpandedTextForParsing
 import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.TYPES
 import org.rust.lang.core.psi.RsPsiFactory.PathNamespace.VALUES
 import org.rust.lang.core.psi.ext.*
@@ -47,9 +49,25 @@ class RsPsiFactory(
         "macro_rules! m $text"
     )
 
-    fun createMacroCall(macroName: String, vararg arguments: String): RsMacroCall =
-        createFromText("fn foo() { $macroName!(${arguments.joinToString(", ")}) }")
+    fun createMacroCall(
+        context: MacroExpansionContext,
+        braces: MacroBraces,
+        macroName: String,
+        vararg arguments: String
+    ): RsMacroCall = createMacroCall(context, braces, macroName, arguments.joinToString(", "))
+
+    fun createMacroCall(
+        context: MacroExpansionContext,
+        braces: MacroBraces,
+        macroName: String,
+        argument: String
+    ): RsMacroCall {
+        val appendSemicolon = (context == MacroExpansionContext.ITEM || context == MacroExpansionContext.STMT) &&
+            braces.needsSemicolon
+        val semicolon = if (appendSemicolon) ";" else ""
+        return createFromText(context.prepareExpandedTextForParsing("$macroName!${braces.wrap(argument)}$semicolon"))
             ?: error("Failed to create macro call")
+    }
 
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
@@ -69,7 +87,7 @@ class RsPsiFactory(
             ?: error("Failed to create expression from text: `$text`")
 
     fun tryCreateExpression(text: CharSequence): RsExpr? =
-        createFromText("fn main() { $text; }")
+        createFromText("fn main() { let _ = $text; }")
 
     fun createTryExpression(expr: RsExpr): RsTryExpr {
         val newElement = createExpressionOfType<RsTryExpr>("a?")
@@ -301,7 +319,7 @@ class RsPsiFactory(
             ?: error("Failed to create match body from patterns: `$arms`")
     }
 
-    private inline fun <reified T : RsElement> createFromText(code: String): T? =
+    private inline fun <reified T : RsElement> createFromText(code: CharSequence): T? =
         createFile(code).descendantOfTypeStrict()
 
     fun createPub(): RsVis =
