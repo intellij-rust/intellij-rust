@@ -5,4 +5,5 @@ include 'idea',
         'toml',
         'copyright',
         'intelliLang',
+        'duplicates',
         'intellij-toml'
