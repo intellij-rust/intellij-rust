@@ -5,15 +5,16 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroBinding
 import org.rust.lang.core.psi.RsMacroBindingGroup
 import org.rust.lang.core.psi.ext.fragmentSpecifier
 
 sealed class Matcher {
-    data class Literal(val value: PsiElement) : Matcher()
+    data class Literal(val value: ASTNode) : Matcher()
 
     data class Fragment(val kind: FragmentKind) : Matcher()
 
@@ -23,7 +24,7 @@ sealed class Matcher {
 
     data class Sequence(val matchers: MutableList<Matcher>) : Matcher()
 
-    data class Repeat(val matchers: MutableList<Matcher>, val separator: PsiElement?) : Matcher()
+    data class Repeat(val matchers: MutableList<Matcher>, val separator: ASTNode?) : Matcher()
 
     class InvalidPatternException : Exception()
 
@@ -57,25 +58,24 @@ sealed class Matcher {
             return Choice(matchers)
         }
 
-        private fun addNewMatcher(psi: PsiElement, matchers: MutableList<Matcher>) {
-            when (psi) {
-                is LeafPsiElement -> {
-                    matchers.add(Literal(psi))
-                }
-                is RsMacroBinding -> {
+        private fun addNewMatcher(node: ASTNode, matchers: MutableList<Matcher>) {
+            when (node.elementType) {
+                RsElementTypes.MACRO_BINDING -> {
+                    val psi = node.psi as RsMacroBinding
                     val specifier = psi.fragmentSpecifier ?: throw InvalidPatternException()
                     val kind = FragmentKind.fromString(specifier) ?: throw InvalidPatternException()
                     val matcher = Fragment(kind)
                     matchers.add(matcher)
                 }
-                is RsMacroBindingGroup -> {
+                RsElementTypes.MACRO_BINDING_GROUP -> {
+                    val psi = node.psi as RsMacroBindingGroup
                     val subMatchers = mutableListOf<Matcher>()
                     val contents = psi.macroPatternContents ?: throw InvalidPatternException()
                     val macroPattern = MacroPattern.valueOf(contents)
                     for (subPsi in macroPattern.pattern) {
                         addNewMatcher(subPsi, subMatchers)
                     }
-                    val separator = psi.macroBindingGroupSeparator?.firstChild
+                    val separator = psi.macroBindingGroupSeparator?.node?.firstChildNode
                     val matcher = when {
                         psi.mul != null -> Optional(Repeat(subMatchers, separator))
                         psi.plus != null -> Repeat(subMatchers, separator) // at least once
@@ -84,7 +84,9 @@ sealed class Matcher {
                     }
                     matchers.add(matcher)
                 }
-                else -> throw InvalidPatternException()
+                else -> {
+                    matchers.add(Literal(node))
+                }
             }
         }
     }
