@@ -4,6 +4,7 @@
     <option name="command" value="run --package test-package --bin hello" />
     <option name="allFeatures" value="true" />
     <option name="nocapture" value="true" />
+    <option name="emulateTerminal" value="true" />
     <option name="backtrace" value="FULL" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs>

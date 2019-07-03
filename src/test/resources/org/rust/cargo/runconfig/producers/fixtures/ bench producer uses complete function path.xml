@@ -4,6 +4,7 @@
     <option name="command" value="bench --package test-package --lib foo_mod::bench_foo -- --exact" />
     <option name="allFeatures" value="false" />
     <option name="nocapture" value="false" />
+    <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs />

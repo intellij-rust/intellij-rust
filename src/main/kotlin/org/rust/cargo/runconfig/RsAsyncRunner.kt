@@ -118,7 +118,8 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                     workingDirectory,
                     backtraceMode,
                     environmentVariables,
-                    executableArguments
+                    executableArguments,
+                    emulateTerminal
                 )
             }
         }

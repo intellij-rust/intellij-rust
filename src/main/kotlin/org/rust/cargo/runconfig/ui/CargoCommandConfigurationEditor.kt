@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.ListCellRendererWrapper
 import com.intellij.ui.components.CheckBox
@@ -96,12 +97,14 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     private val environmentVariables = EnvironmentVariablesComponent()
     private val allFeatures = CheckBox("Use all features in tests", false)
     private val nocapture = CheckBox("Show stdout/stderr in tests (and disable test tool window)", false)
+    private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index
         command.text = configuration.command
         allFeatures.isSelected = configuration.allFeatures
         nocapture.isSelected = configuration.nocapture
+        emulateTerminal.isSelected = configuration.emulateTerminal
         backtraceMode.selectedIndex = configuration.backtrace.index
         workingDirectory.component.text = configuration.workingDirectory?.toString() ?: ""
         environmentVariables.envData = configuration.env
@@ -122,6 +125,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         configuration.command = command.text
         configuration.allFeatures = allFeatures.isSelected
         configuration.nocapture = nocapture.isSelected
+        configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.workingDirectory = currentWorkingDirectory
         configuration.env = environmentVariables.envData
@@ -143,6 +147,10 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
 
         row { allFeatures() }
         row { nocapture() }
+
+        if (!SystemInfo.isWindows) {
+            row { emulateTerminal() }
+        }
 
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
         row(workingDirectory.label) {
