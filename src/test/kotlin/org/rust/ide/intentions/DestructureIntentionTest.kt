@@ -15,6 +15,22 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention()) {
         fn main() { let /*caret*/S { x, y } = S { x: 0, y: "" }; }
     """)
 
+    fun `test destructure variable field only usage`() = doAvailableTest("""
+        struct P<T> { p: T }
+        struct S<T, U> { x: P<T>, y: U }
+        fn main() { 
+            let /*caret*/s = S { x: P { p: 0 }, y: "" }; 
+            let z = s.x.p;
+        }
+    """, """
+        struct P<T> { p: T }
+        struct S<T, U> { x: P<T>, y: U }
+        fn main() { 
+            let /*caret*/S { x, y } = S { x: P { p: 0 }, y: "" }; 
+            let z = x.p;
+        }
+    """)
+
     fun `test destructure parameter`() = doAvailableTest("""
         struct S<T, U> { x: T, y: U }
         fn f(/*caret*/x: S<i32, &str>) {}

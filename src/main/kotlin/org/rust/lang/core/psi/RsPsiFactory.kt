@@ -121,6 +121,12 @@ class RsPsiFactory(
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
+    fun tryCreatePathExpr(text: String): RsPathExpr? {
+        val path = createFromText<RsPathExpr>("fn main() { $text; }") ?: return null
+        if (path.text != text) return null
+        return path
+    }
+
     fun tryCreatePath(text: String, ns: PathNamespace = TYPES): RsPath? {
         val path = when (ns) {
             TYPES -> createFromText("fn foo(t: $text) {}")
