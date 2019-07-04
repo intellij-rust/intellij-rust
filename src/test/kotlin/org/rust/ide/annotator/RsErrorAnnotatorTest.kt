@@ -2166,4 +2166,39 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         fn valid(_argc: isize, _argv: *const *const u8) -> isize { 0 }
     """)
 
+    fun `test inclusive range with no end E0586`() = checkErrors("""
+        fn foo() {
+            let x = 1<error descr="inclusive ranges must be bounded at the end (`..=b` or `a..=b`) [E0586]">..=</error>;
+        }
+    """)
+
+    fun `test dot dot dot range with end`() = checkErrors("""
+        fn foo() {
+            let x = 1<error descr="`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range">...</error>2;
+        }
+    """)
+
+    fun `test dot dot dot range with no end`() = checkErrors("""
+        fn foo() {
+            let x = 1<error descr="`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range">...</error>;;
+        }
+    """)
+    fun `test inclusive range with end E0586`() = checkErrors("""
+        fn foo() {
+            let x = 1..=2;
+        }
+    """)
+
+    fun `test range with no end E0586`() = checkErrors("""
+        fn foo() {
+            let x = 1..;
+        }
+    """)
+
+    fun `test range with end E0586`() = checkErrors("""
+        fn foo() {
+            let x = 1..2;
+        }
+    """)
+
 }
