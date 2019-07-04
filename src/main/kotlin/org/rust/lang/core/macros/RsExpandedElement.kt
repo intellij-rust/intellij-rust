@@ -95,6 +95,36 @@ private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): In
         ?.fromBodyRelativeOffset(call)
 }
 
+/**
+ * If [this] element is inside a macro call body and this macro is successfully expanded, returns
+ * a leaf element inside the macro expansion that is expanded from [this] element. Returns a
+ * list of elements because an element inside a macro call body can be placed in a macro expansion
+ * multiple times. Returns null if [this] element is not inside a macro call body, or the macro
+ * expansion failed.
+ *
+ * # Examples
+ *
+ * Returns an empty list if [this] element is not placed to an expansion:
+ *
+ * ```rust
+ * macro_rules foo { (bar) => { fn baz(){} } }
+ * foo!(bar); // This `bar` is matched with the `bar` in the pattern and is not placed to the expansion
+ * ```
+ *
+ * Returns a single-element list if [this] element is placed into the expansion only once:
+ *
+ * ```rust
+ * macro_rules foo { ($i:ident) => { fn $i(){} } }
+ * foo!(bar); // This `bar` is placed to the expansion as a function name
+ * ```
+ *
+ * Returns a list of multiple elements if [this] element is placed into the expansion multiple times:
+ *
+ * ```rust
+ * macro_rules foo { ($i:ident) => { fn $i(){} struct $i{} } }
+ * foo!(bar); // This `bar` is placed to the expansion as a function name AND as a struct name
+ * ```
+ */
 fun PsiElement.findExpansionElements(): List<PsiElement>? {
     val mappedElements = findExpansionElementsNonRecursive() ?: return null
     return mappedElements.flatMap { mappedElement ->
@@ -122,7 +152,6 @@ private fun mapOffsetFromCallBodyToExpansion(
     val fileOffset = call.expansionContext.expansionFileStartOffset
     return expansion.ranges.mapOffsetFromCallBodyToExpansion(relOffsetInCallBody)
         .map { it + fileOffset }
-        .takeIf { it.isNotEmpty() }
 }
 
 private fun Int.toBodyRelativeOffset(call: RsMacroCall): Int? {
