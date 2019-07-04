@@ -76,8 +76,20 @@ abstract class RsCompletionTestBase : RsTestBase() {
         checkNotNull(variants) {
             "Expected completions that contain $text, but no completions found"
         }
-        variants.filter { it.lookupString == text }.forEach { return }
-        error("Expected completions that contain $text, but got ${variants.toList()}")
+        if (variants.all { it.lookupString != text }) {
+            error("Expected completions that contain $text, but got ${variants.toList()}")
+        }
+    }
+
+    protected fun checkNotContainsCompletion(text: String, @Language("Rust") code: String) {
+        InlineFile(code).withCaret()
+        val variants = myFixture.completeBasic()
+        checkNotNull(variants) {
+            "Expected completions that contain $text, but no completions found"
+        }
+        if (variants.any { it.lookupString == text }) {
+            error("Expected completions that don't contain $text, but got ${variants.toList()}")
+        }
     }
 
     protected fun checkNoCompletion(@Language("Rust") code: String) {

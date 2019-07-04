@@ -52,6 +52,17 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
 
         val isSimplePath = simplePathPattern.accepts(parameters.position)
         val expectedTy = getExpectedTypeForEnclosingPathOrDotExpr(element)
+        processElement(element, isSimplePath, expectedTy, processedPathNames, parameters, result)
+    }
+
+    fun processElement(
+        element: RsReferenceElement,
+        isSimplePath: Boolean,
+        expectedTy: Ty?,
+        processedPathNames: HashSet<String>,
+        parameters: CompletionParameters,
+        result: CompletionResultSet
+    ) {
         collectCompletionVariants(result, isSimplePath, expectedTy) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
@@ -184,7 +195,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     val elementPattern: ElementPattern<PsiElement>
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
-    private val simplePathPattern: ElementPattern<PsiElement>
+    val simplePathPattern: ElementPattern<PsiElement>
         get() {
             val simplePath = psiElement<RsPath>()
                 .with(object : PatternCondition<RsPath>("SimplePath") {
