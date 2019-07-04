@@ -583,7 +583,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         val block = myFixture.file.descendantsOfType<RsBlock>().firstOrNull() ?: return
         val cfg = ControlFlowGraph.buildFor(block)
         val expected = expectedIndented.trimIndent()
-        val actual = cfg.depthFirstTraversalTrace()
+        val actual = cfg.graph.depthFirstTraversalTrace(cfg.entry)
         check(actual == expected) { throw ComparisonFailure("Comparision failed", expected, actual) }
     }
 }

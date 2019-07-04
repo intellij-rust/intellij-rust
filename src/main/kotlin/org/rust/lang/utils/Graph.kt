@@ -8,7 +8,7 @@ package org.rust.lang.utils
 import org.rust.stdext.nextOrNull
 import java.util.*
 
-class Graph<N, E>(
+open class Graph<N, E>(
     private val nodes: MutableList<Node<N, E>> = mutableListOf(),
     private val edges: MutableList<Edge<N, E>> = mutableListOf()
 ) {
@@ -113,6 +113,37 @@ class Graph<N, E>(
 
         return result
     }
+}
+
+interface PresentableNodeData {
+    val text: String
+}
+
+class PresentableGraph<N : PresentableNodeData, E> : Graph<N, E>() {
+    /**
+     * Creates graph description written in the DOT language.
+     * Usage: copy the output into `cfg.dot` file and run `dot -Tpng cfg.dot -o cfg.png`
+     */
+    fun createDotDescription(): String =
+        buildString {
+            append("digraph {\n")
+
+            forEachEdge { edge ->
+                val source = edge.source
+                val target = edge.target
+                val sourceNode = source.data
+                val targetNode = target.data
+                val escapedSourceText = sourceNode.text.replace("\"", "\\\"")
+                val escapedTargetText = targetNode.text.replace("\"", "\\\"")
+
+                append("    \"${source.index}: $escapedSourceText\" -> \"${target.index}: $escapedTargetText\";\n")
+            }
+
+            append("}\n")
+        }
+
+    fun depthFirstTraversalTrace(startNode: Node<N, E> = getNode(0)): String =
+        depthFirstTraversal(startNode).joinToString("\n") { it.data.text }
 }
 
 class Node<N, E>(
