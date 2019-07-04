@@ -14,6 +14,8 @@ import org.rust.lang.core.parser.RustParser
 
 fun factory(name: String): IElementType = when (name) {
     "EXPR_CODE_FRAGMENT" -> RsExprCodeFragmentElementType
+    "STMT_CODE_FRAGMENT" -> RsStmtCodeFragmentElementType
+    "TYPE_REF_CODE_FRAGMENT" -> RsTypeRefCodeFragmentElementType
     else -> error("Unknown element $name")
 }
 
@@ -27,3 +29,5 @@ abstract class RsCodeFragmentElementTypeBase(debugName: String) : ICodeFragmentE
 }
 
 object RsExprCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_EXPR_CODE_FRAGMENT")
+object RsStmtCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_STMT_CODE_FRAGMENT")
+object RsTypeRefCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_TYPE_REF_CODE_FRAGMENT")

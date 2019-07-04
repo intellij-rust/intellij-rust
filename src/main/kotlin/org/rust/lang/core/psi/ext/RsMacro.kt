@@ -6,12 +6,16 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.lang.ASTNode
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.macros.MacroGraph
+import org.rust.lang.core.macros.MacroGraphBuilder
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroBody
@@ -62,9 +66,19 @@ val RsMacro.macroBodyStubbed: RsMacroBody?
         }
     }
 
+private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")
+
 val RsMacro.bodyHash: HashCode?
-    get() = CachedValuesManager.getCachedValue(this) {
+    get() = CachedValuesManager.getCachedValue(this, MACRO_BODY_HASH_KEY) {
         val body = greenStub?.macroBody ?: macroBody?.text
         val hash = body?.let { HashCode.compute(it) }
         CachedValueProvider.Result.create(hash, modificationTracker)
+    }
+
+private val MACRO_GRAPH_KEY: Key<CachedValue<MacroGraph?>> = Key.create("MACRO_GRAPH_KEY")
+
+val RsMacro.graph: MacroGraph?
+    get() = CachedValuesManager.getCachedValue(this, MACRO_GRAPH_KEY) {
+        val graph = MacroGraphBuilder(this).build()
+        CachedValueProvider.Result.create(graph, modificationTracker)
     }

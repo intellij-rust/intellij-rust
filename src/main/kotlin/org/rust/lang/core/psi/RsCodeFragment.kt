@@ -20,6 +20,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.RsNamedElement
 
 abstract class RsCodeFragment(
     fileViewProvider: FileViewProvider,
@@ -98,4 +99,15 @@ class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
         : super(project, text, RsElementTypes.EXPR_CODE_FRAGMENT, context)
 
     val expr: RsExpr? get() = PsiTreeUtil.getChildOfType(this, RsExpr::class.java)
+}
+
+class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsElement)
+    : RsCodeFragment(project, text, RsElementTypes.STMT_CODE_FRAGMENT, context) {
+    val stmt: RsStmt? get() = PsiTreeUtil.getChildOfType(this, RsStmt::class.java)
+}
+
+class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context: RsElement)
+    : RsCodeFragment(project, text, RsElementTypes.TYPE_REF_CODE_FRAGMENT, context),
+      RsNamedElement {
+    val typeReference: RsTypeReference? get() = PsiTreeUtil.getChildOfType(this, RsTypeReference::class.java)
 }

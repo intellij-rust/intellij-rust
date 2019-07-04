@@ -11,17 +11,18 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Edge
-import org.rust.lang.utils.Graph
 import org.rust.lang.utils.Node
+import org.rust.lang.utils.PresentableGraph
+import org.rust.lang.utils.PresentableNodeData
 
-sealed class CFGNodeData(val element: RsElement? = null) {
+sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
     class AST(element: RsElement) : CFGNodeData(element)
     object Entry : CFGNodeData()
     object Exit : CFGNodeData()
     object Dummy : CFGNodeData()
     object Unreachable : CFGNodeData()
 
-    val text: String
+    override val text: String
         get() = when (this) {
             is AST -> element?.cfgText()?.trim() ?: "AST"
             is Entry -> "Entry"
@@ -50,7 +51,7 @@ typealias CFGEdge = Edge<CFGNodeData, CFGEdgeData>
 
 class ControlFlowGraph private constructor(
     val owner: RsElement,
-    val graph: Graph<CFGNodeData, CFGEdgeData>,
+    val graph: PresentableGraph<CFGNodeData, CFGEdgeData>,
     val body: RsBlock,
     val entry: CFGNode,
     val exit: CFGNode
@@ -58,7 +59,7 @@ class ControlFlowGraph private constructor(
     companion object {
         fun buildFor(body: RsBlock): ControlFlowGraph {
             val owner = body.parent as RsElement
-            val graph = Graph<CFGNodeData, CFGEdgeData>()
+            val graph = PresentableGraph<CFGNodeData, CFGEdgeData>()
             val entry = graph.addNode(CFGNodeData.Entry)
             val fnExit = graph.addNode(CFGNodeData.Exit)
 
@@ -94,32 +95,6 @@ class ControlFlowGraph private constructor(
 
         return table
     }
-
-    fun depthFirstTraversalTrace(): String =
-        graph.depthFirstTraversal(this.entry).joinToString("\n") { it.data.text }
-
-
-    /**
-     * Creates graph description written in the DOT language.
-     * Usage: copy the output into `cfg.dot` file and run `dot -Tpng cfg.dot -o cfg.png`
-     */
-    fun createDotDescription(): String =
-        buildString {
-            append("digraph {\n")
-
-            graph.forEachEdge { edge ->
-                val source = edge.source
-                val target = edge.target
-                val sourceNode = source.data
-                val targetNode = target.data
-                val escapedSourceText = sourceNode.text.replace("\"", "\\\"")
-                val escapedTargetText = targetNode.text.replace("\"", "\\\"")
-
-                append("    \"${source.index}: $escapedSourceText\" -> \"${target.index}: $escapedTargetText\";\n")
-            }
-
-            append("}\n")
-        }
 }
 
 
