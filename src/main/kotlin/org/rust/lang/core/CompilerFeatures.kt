@@ -330,6 +330,14 @@ val ASSOCIATED_TYPE_BOUNDS = CompilerFeature("associated_type_bounds", ACTIVE, "
 // Allows calling constructor functions in `const fn`
 // FIXME Create issue
 val CONST_CONSTRUCTOR = CompilerFeature("const_constructor", ACTIVE, "1.37.0")
+// Allows `if/while p && let q = r && ...` chains.
+val LET_CHAINS = CompilerFeature("let_chains", ACTIVE, "1.37.0")
+// #[repr(transparent)] on enums.
+val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACTIVE, "1.37.0")
+// #[repr(transparent)] on unions.
+val TRANSPARENT_UNIONS = CompilerFeature("transparent_unions", ACTIVE, "1.37.0")
+// Allows explicit discriminants on non-unit enum variants.
+val ARBITRARY_ENUM_DISCRIMINANT = CompilerFeature("arbitrary_enum_discriminant", ACTIVE, "1.37.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes

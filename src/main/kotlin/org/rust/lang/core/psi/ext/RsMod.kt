@@ -47,23 +47,27 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
      *  Returns directory where direct submodules should be located
      */
     @JvmDefault
-    val ownedDirectory: PsiDirectory? get() {
+    fun getOwnedDirectory(createIfNotExists: Boolean = false): PsiDirectory? {
         if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
 
         val explicitPath = pathAttribute
         val (parentDirectory, path) = if (explicitPath != null) {
             contextualFile.originalFile.parent to explicitPath
         } else {
-            `super`?.ownedDirectory to name
+            `super`?.getOwnedDirectory(createIfNotExists) to name
         }
-
-        if (path == null) return null
+        if (parentDirectory == null || path == null) return null
 
         // Don't use `FileUtil#getNameWithoutExtension` to correctly process relative paths like `./foo`
         val directoryPath = FileUtil.toSystemIndependentName(path).removeSuffix(".${RsFileType.defaultExtension}")
-        val directory = parentDirectory?.virtualFile
-            ?.findFileByMaybeRelativePath(directoryPath) ?: return null
-        return parentDirectory.manager.findDirectory(directory)
+        val directory = parentDirectory.virtualFile
+            .findFileByMaybeRelativePath(directoryPath)
+            ?.let(parentDirectory.manager::findDirectory)
+        return if (directory == null && createIfNotExists) {
+            parentDirectory.createSubdirectory(directoryPath)
+        } else {
+            directory
+        }
     }
 
     val isCrateRoot: Boolean
