@@ -5,6 +5,7 @@
 
 package org.rust.ide.search
 
+import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
@@ -161,6 +162,16 @@ class RsFindUsagesTest : RsTestBase() {
         foo!();// - macro call
     """)
 
+    fun `test struct defined by macro`() = doTestByText("""
+        macro_rules! foo { ($($ i:item)*) => { $( $ i )* }; }
+        foo! {
+            struct X;
+                 //^
+            type T1 = X; // - type reference
+        }
+        type T2 = X; // - type reference
+    """)
+
     fun `test method from trait`() = doTestByText("""
         struct B1; struct B2;
         trait A { fn foo(self, x: i32); }
@@ -209,7 +220,13 @@ class RsFindUsagesTest : RsTestBase() {
 
     private fun doTestByText(@Language("Rust") code: String) {
         InlineFile(code)
-        val source = findElementInEditor<RsNamedElement>()
+
+        val (_, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
+        val source = TargetElementUtil.getInstance().findTargetElement(
+            myFixture.editor,
+            TargetElementUtil.ELEMENT_NAME_ACCEPTED,
+            offset
+        ) as? RsNamedElement ?: error("Element not found")
 
         val actual = markersActual(source)
         val expected = markersFrom(code)

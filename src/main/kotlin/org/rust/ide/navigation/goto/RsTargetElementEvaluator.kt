@@ -10,11 +10,9 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.util.BitUtil
+import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
-import org.rust.lang.core.psi.RsBinaryExpr
-import org.rust.lang.core.psi.RsBinaryOp
-import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -70,4 +68,23 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
      */
     override fun getGotoDeclarationTarget(element: PsiElement, navElement: PsiElement?): PsiElement? =
         element.findNavigationTargetIfMacroExpansion()
+
+    /**
+     * Used to get parent named element when [element] is a name identifier
+     *
+     * Note that if this method returns null, it means "use default logic"
+     */
+    override fun getNamedElement(element: PsiElement): PsiElement? {
+        // This hack enables some actions (e.g. "find usages") when the [element] is inside a macro
+        // call and this element expands to name identifier of some named element.
+        if (element.elementType == RsElementTypes.IDENTIFIER && element.parent is RsMacroBodyIdent) {
+            val delegate = element.findExpansionElements()?.firstOrNull() ?: return null
+            val delegateParent = delegate.parent
+            if (delegateParent is RsNameIdentifierOwner && delegateParent.nameIdentifier == delegate) {
+                return delegateParent
+            }
+        }
+
+        return null
+    }
 }

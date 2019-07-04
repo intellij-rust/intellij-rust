@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.psi
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -36,7 +38,7 @@ object RsPsiImplUtil {
      */
     fun getParameterUseScope(element: RsElement): SearchScope? {
         val owner = element.contextStrict<RsGenericDeclaration>()
-        if (owner != null) return LocalSearchScope(owner)
+        if (owner != null) return localOrMacroSearchScope(owner)
 
         return null
     }
@@ -83,7 +85,7 @@ object RsPsiImplUtil {
             is RsForeignModItem -> getTopLevelDeclarationUseScope(element, owner.containingMod, restrictedVis)
 
             // In this case `owner` is function or code block, i.e. it's local scope
-            else -> LocalSearchScope(owner)
+            else -> localOrMacroSearchScope(owner)
         }
     }
 
@@ -98,12 +100,21 @@ object RsPsiImplUtil {
             is RsVisibility.Restricted -> visibility.inMod
         }
 
-        if (!restrictedMod.hasChildModules()) return LocalSearchScope(containingMod)
+        if (!restrictedMod.hasChildModules()) return localOrMacroSearchScope(containingMod)
 
         // TODO restrict scope to [restrictedMod]. We can't use `DirectoryScope` b/c file from any
         //   directory can be included via `#[path]` attribute.
         return null
     }
+
+    /**
+     * If the [scope] is inside a macro expansion, we can't use it as a local search scope
+     * because elements inside the scope can be referenced from the macro call body via
+     * [org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl]. We use the macro
+     * call as a search scope in this case
+     */
+    fun localOrMacroSearchScope(scope: PsiElement): LocalSearchScope =
+        LocalSearchScope(scope.findMacroCallExpandedFrom() ?: scope)
 }
 
 private fun RsMod.hasChildModules(): Boolean =

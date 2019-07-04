@@ -415,6 +415,16 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(file, "foo.rs")
     }
 
+    fun `test rename reference inside a macro call`() = doTest("Spam", """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        struct Foo;
+        foo! { type T = /*caret*/Foo; }
+    """, """
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        struct Spam;
+        foo! { type T = Spam; }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,

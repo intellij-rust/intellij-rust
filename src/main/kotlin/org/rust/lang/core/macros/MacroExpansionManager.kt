@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.AppTopics
+import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.LaterInvocator
@@ -14,6 +15,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
@@ -559,6 +562,10 @@ private class MacroExpansionServiceImplInner(
     private fun processChangedMacros(workspaceOnly: Boolean) {
         MACRO_LOG.trace("processChangedMacros")
         if (!isExpansionModeNew) return
+
+        // Fixes inplace rename when the renamed element is referenced from a macro call body
+        if (isTemplateActiveInAnyEditor()) return
+
         class ProcessModifiedMacrosTask(private val workspaceOnly: Boolean) : MacroExpansionTaskBase(
             project,
             storage,
@@ -577,6 +584,15 @@ private class MacroExpansionServiceImplInner(
         val task = ProcessModifiedMacrosTask(workspaceOnly)
 
         taskQueue.run(task)
+    }
+
+    private fun isTemplateActiveInAnyEditor(): Boolean {
+        val tm = TemplateManager.getInstance(project)
+        for (editor in FileEditorManager.getInstance(project).allEditors) {
+            if (editor is TextEditor && tm.getActiveTemplate(editor.editor) != null) return true
+        }
+
+        return false
     }
 
     fun ensureUpToDate() {

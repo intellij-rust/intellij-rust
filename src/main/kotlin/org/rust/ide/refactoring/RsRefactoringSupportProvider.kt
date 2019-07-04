@@ -11,15 +11,16 @@ import com.intellij.refactoring.RefactoringActionHandler
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionHandler
 import org.rust.ide.refactoring.introduceParameter.RsIntroduceParameterHandler
 import org.rust.ide.refactoring.introduceVariable.RsIntroduceVariableHandler
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 
 class RsRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun isInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean =
-        element is RsPatBinding
+        element is RsPatBinding && !element.isExpandedFromMacro
 
     override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean =
-        element is RsNameIdentifierOwner
+        element is RsNameIdentifierOwner && !element.isExpandedFromMacro
 
     override fun getIntroduceVariableHandler(): RefactoringActionHandler = RsIntroduceVariableHandler()
 

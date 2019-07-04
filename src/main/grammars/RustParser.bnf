@@ -798,7 +798,7 @@ private ScalarTypeReferenceInner ::= ArrayType
 TypeReference ::= TypeReferenceInner {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -1303,8 +1303,17 @@ private SpecialExprContextMacroNames ::= "try" | "await" | "dbg" | "format" | "f
 
 private MacroHead ::= AttrsAndVis &(PathWithoutTypes '!') (SpecialMacro | CommonMacro)
 
-MacroArgument ::= <<any_braces CompactTT>>
-// `CompactTT` differs from `TT` in that it does not create an additional `TT` nodes for each unpaired token
+MacroArgument ::= <<any_braces MacroArgumentTT>>
+MacroArgumentTT ::= (<<any_braces MacroArgumentTT>> | MacroBodyIdent | MacroBodyQuoteIdent | <<unpairedToken>>)*
+MacroBodyIdent ::= identifier {
+  implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
+  mixin = "org.rust.lang.core.psi.ext.RsMacroBodyIdentMixin"
+}
+MacroBodyQuoteIdent ::= QUOTE_IDENTIFIER {
+  implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
+  mixin = "org.rust.lang.core.psi.ext.RsMacroBodyQuoteIdentMixin"
+}
+
 CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 
 // Used only manually in (external) macro matching code

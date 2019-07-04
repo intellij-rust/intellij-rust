@@ -9,16 +9,27 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.resolve.ref.RsReference
 
-interface RsWeakReferenceElement : RsElement {
-
+/**
+ * Provides basic methods for reference implementation ([org.rust.lang.core.resolve.ref.RsReferenceBase]).
+ * This interface should not be used in any analysis.
+ */
+interface RsReferenceElementBase : RsElement {
     val referenceNameElement: PsiElement?
 
     @JvmDefault
     val referenceName: String? get() = referenceNameElement?.unescapedText
+}
 
+/**
+ * Marks an element that optionally can have a reference.
+ */
+interface RsWeakReferenceElement : RsReferenceElementBase {
     override fun getReference(): RsReference?
 }
 
+/**
+ * Marks an element that has a reference.
+ */
 interface RsReferenceElement : RsWeakReferenceElement {
 
     override val referenceNameElement: PsiElement
