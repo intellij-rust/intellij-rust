@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.MGNodeData.*
 import org.rust.lang.core.psi.RsMacro
@@ -14,7 +15,7 @@ import org.rust.lang.utils.PresentableNodeData
 import java.util.*
 
 sealed class MGNodeData : PresentableNodeData {
-    class Literal(val value: PsiElement) : MGNodeData() {
+    class Literal(val value: ASTNode) : MGNodeData() {
         override val text: String get() = value.text
     }
 

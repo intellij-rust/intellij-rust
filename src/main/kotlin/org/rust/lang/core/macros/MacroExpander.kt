@@ -5,20 +5,20 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.TokenType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
@@ -138,23 +138,23 @@ class MacroExpander(val project: Project) {
     private fun substituteMacro(root: PsiElement, subst: WithParent): Pair<CharSequence, RangeMap>? {
         val sb = StringBuilder()
         val ranges = SmartList<MappedTextRange>()
-        if (!substituteMacro(sb, ranges, root, subst)) return null
+        if (!substituteMacro(sb, ranges, root.node, subst)) return null
         return sb to RangeMap.from(ranges)
     }
 
     private fun substituteMacro(
         sb: StringBuilder,
         ranges: MutableList<MappedTextRange>,
-        root: PsiElement,
+        root: ASTNode,
         subst: WithParent
     ): Boolean {
-        val children = generateSequence(root.firstChild) { it.nextSibling }.filter { it !is PsiComment }
-        for (child in children) {
-            when (child) {
-                is RsMacroExpansion, is RsMacroExpansionContents ->
+        root.forEachChild { child ->
+            when (child.elementType) {
+                in RS_COMMENTS -> Unit
+                MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS ->
                     if (!substituteMacro(sb, ranges, child, subst)) return false
-                is RsMacroReference -> {
-                    val value = subst.getVar(child.referenceName) ?: return false
+                MACRO_REFERENCE -> {
+                    val value = subst.getVar((child.psi as RsMacroReference).referenceName) ?: return false
                     val parensNeeded = value.kind == FragmentKind.Expr
                     if (parensNeeded) {
                         sb.append("(")
@@ -171,22 +171,23 @@ class MacroExpander(val project: Project) {
                         )
                     }
                 }
-                is RsMacroExpansionReferenceGroup -> {
-                    child.macroExpansionContents?.let { contents ->
-                        val separator = child.macroExpansionGroupSeparator?.text ?: ""
+                MACRO_EXPANSION_REFERENCE_GROUP -> {
+                    val childPsi = child.psi as RsMacroExpansionReferenceGroup
+                    childPsi.macroExpansionContents?.let { contents ->
+                        val separator = childPsi.macroExpansionGroupSeparator?.text ?: ""
 
                         val matchedGroup = subst.groups.singleOrNull()
                             ?: subst.groups.firstOrNull { it.definition.matches(contents) }
                             ?: return false
 
                         matchedGroup.substs.joinToWithBuffer(sb, separator) { sb ->
-                            if (!substituteMacro(sb, ranges, contents, WithParent(this, subst))) return false
+                            if (!substituteMacro(sb, ranges, contents.node, WithParent(this, subst))) return false
                         }
                     }
                 }
                 else -> {
 //                    ranges += MappedTextRange(child.offsetInDefBody, sb.length, child.textLength, SourceType.MACRO_DEFINITION)
-                    sb.safeAppend(child.text)
+                    sb.safeAppend(child.chars)
                 }
             }
         }
@@ -194,7 +195,7 @@ class MacroExpander(val project: Project) {
     }
 
     /** Ensures that the buffer ends (or [str] starts) with a whitespace and appends [str] to the buffer */
-    private fun StringBuilder.safeAppend(str: String) {
+    private fun StringBuilder.safeAppend(str: CharSequence) {
         if (!isEmpty() && !last().isWhitespace() && !str.isEmpty() && !str.first().isWhitespace()) {
             append(" ")
         }
@@ -254,7 +255,7 @@ private fun expandDollarCrateVar(call: RsMacroCall, def: RsMacro): String {
 const val MACRO_CRATE_IDENTIFIER_PREFIX: String = "IntellijRustDollarCrate_"
 
 class MacroPattern private constructor(
-    val pattern: Sequence<PsiElement>
+    val pattern: Sequence<ASTNode>
 ) {
     fun match(macroCallBody: PsiBuilder): MacroSubstitution? {
         return matchPartial(macroCallBody)?.let { result ->
@@ -274,9 +275,10 @@ class MacroPattern private constructor(
         val map = HashMap<String, MetaVarValue>()
         val groups = mutableListOf<MacroGroup>()
 
-        for (psi in pattern) {
-            when (psi) {
-                is RsMacroBinding -> {
+        for (node in pattern) {
+            when (node.elementType) {
+                MACRO_BINDING -> {
+                    val psi = node.psi as RsMacroBinding
                     val name = psi.metaVarIdentifier.text ?: return null
                     val fragmentSpecifier = psi.fragmentSpecifier ?: return null
                     val kind = FragmentKind.fromString(fragmentSpecifier) ?: return null
@@ -290,11 +292,12 @@ class MacroPattern private constructor(
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
                     map[name] = MetaVarValue(text, kind, lastOffset)
                 }
-                is RsMacroBindingGroup -> {
+                MACRO_BINDING_GROUP -> {
+                    val psi = node.psi as RsMacroBindingGroup
                     groups += MacroGroup(psi, matchGroup(psi, macroCallBody) ?: return null)
                 }
                 else -> {
-                    if (!macroCallBody.isSameToken(psi)) {
+                    if (!macroCallBody.isSameToken(node)) {
                         MacroExpansionMarks.failMatchPatternByToken.hit()
                         return null
                     }
@@ -309,7 +312,7 @@ class MacroPattern private constructor(
         val groups = mutableListOf<MacroSubstitution>()
         val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return null)
         if (pattern.isEmpty()) return null
-        val separator = group.macroBindingGroupSeparator?.firstChild
+        val separator = group.macroBindingGroupSeparator?.node?.firstChildNode
         var mark: PsiBuilder.Marker? = null
 
         while (true) {
@@ -366,28 +369,28 @@ class MacroPattern private constructor(
 
     companion object {
         fun valueOf(psi: RsMacroPatternContents): MacroPattern =
-            MacroPattern(psi.childrenSkipWhitespaceAndComments().flatten())
+            MacroPattern(psi.node.childrenSkipWhitespaceAndComments().flatten())
 
-        private fun Sequence<PsiElement>.flatten(): Sequence<PsiElement> = flatMap {
-            when (it) {
-                is RsMacroPattern, is RsMacroPatternContents ->
+        private fun Sequence<ASTNode>.flatten(): Sequence<ASTNode> = flatMap {
+            when (it.elementType) {
+                MACRO_PATTERN, MACRO_PATTERN_CONTENTS ->
                     it.childrenSkipWhitespaceAndComments().flatten()
                 else -> sequenceOf(it)
             }
         }
 
-        private fun PsiElement.childrenSkipWhitespaceAndComments(): Sequence<PsiElement> =
-            generateSequence(firstChild) { it.nextSibling }
-                .filter { it !is PsiWhiteSpace && it !is PsiComment }
+        private fun ASTNode.childrenSkipWhitespaceAndComments(): Sequence<ASTNode> =
+            generateSequence(firstChildNode) { it.treeNext }
+                .filter { it.elementType != TokenType.WHITE_SPACE && it.elementType !in RS_COMMENTS }
     }
 }
 
 private val RsMacroCase.pattern: MacroPattern
     get() = MacroPattern.valueOf(macroPattern.macroPatternContents)
 
-fun PsiBuilder.isSameToken(psi: PsiElement): Boolean {
+fun PsiBuilder.isSameToken(node: ASTNode): Boolean {
     val (elementType, size) = collapsedTokenType(this) ?: (tokenType to 1)
-    val result = psi.elementType == elementType && (elementType != IDENTIFIER || psi.text == tokenText)
+    val result = node.elementType == elementType && (elementType != IDENTIFIER || node.chars == tokenText)
     if (result) {
         PsiBuilderUtil.advance(this, size)
     }
