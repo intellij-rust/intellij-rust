@@ -91,7 +91,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
         fn main() {
             my_macro!(Hash/*caret*/);
         }
-    """, setOf())
+    """, setOf(), setOf("HashMap"))
 
     fun `test different fragment offsets`() = doTest("""
         macro_rules! my_macro {
