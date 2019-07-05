@@ -513,4 +513,26 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             pub fn bar() {}
         }
     """, stubOnly = false)
+
+    fun `test make mod decl public`() = checkFixByFileTree("Make `bar` public", """
+    //- main.rs
+        mod foo {
+            mod bar;
+        }
+        fn main() {
+            <error>foo::bar/*caret*/</error>::baz();
+        }
+    //- foo/bar.rs
+        pub fn baz() {}
+    """, """
+    //- main.rs
+        mod foo {
+            pub(crate) mod bar;
+        }
+        fn main() {
+            foo::bar/*caret*/::baz();
+        }
+    //- foo/bar.rs
+        pub fn baz() {}
+    """, stubOnly = false)
 }

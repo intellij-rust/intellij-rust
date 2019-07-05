@@ -191,10 +191,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: AnnotationHolder) {
-        val element = ref.reference.resolve() as? RsVisible ?: return
+        var element = ref.reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
         if (element.isVisibleFrom(oMod)) return
         val withinOneCrate = element.crateRoot == o.crateRoot
+        if (element is RsFile) {
+            element = element.declaration ?: return
+        }
         val error = when {
             element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
@@ -205,7 +208,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                 MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
             else -> {
                 val itemType = when (element) {
-                    is RsMod -> "Module"
+                    is RsMod, is RsModDeclItem -> "Module"
                     is RsConstant -> "Constant"
                     is RsFunction -> "Function"
                     is RsStructItem -> "Struct"
