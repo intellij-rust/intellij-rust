@@ -713,6 +713,19 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """)
 
+    fun `test macro (with arguments) defined with a macro`() = doTest("""
+        macro_rules! foo {
+            ($ a:item) => {
+                macro_rules! bar { ($ b:item) => { $ b }; }
+                bar!($ a);
+            }
+        }
+        foo!(fn foo() {});
+    """, """
+        macro_rules! bar { ($ b:item) => { $ b }; }
+        fn foo() {}
+    """ to MacroExpansionMarks.substMetaVarNotFound)
+
     fun `test expand macro defined in function`() = doTest("""
         fn main() {
             macro_rules! foo {
