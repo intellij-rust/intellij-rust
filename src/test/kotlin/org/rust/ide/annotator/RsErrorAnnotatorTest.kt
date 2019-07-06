@@ -2141,6 +2141,211 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         impl <error descr="Explicit impls for the `Unsize` trait are not permitted [E0328]">Unsize</error> for Foo {}
     """)
 
+    fun `test nested impl Trait not allowed E0666`() = checkErrors("""
+        impl Trait<T>{}
+        
+        fn nested_in_return_bad() -> impl Trait<<error descr="nested `impl Trait` is not allowed [E0666]">impl Debug</error>> { panic!() }
+        
+        fn nested_in_argument_bad(arg: impl Trait<<error descr="nested `impl Trait` is not allowed [E0666]">impl Debug</error>>) {panic!()}
+        
+        fn allowed_in_assoc_type() -> impl Iterator<Item=impl Fn()> {
+            vec![|| println!("woot")].into_iter()
+        }
+    """)
+
+    fun `test impl Trait not allowed in path params E667`() = checkErrors("""
+        use std::fmt::Debug;
+        use std::option;
+        
+        fn parametrized_type_is_allowed() -> Option<impl Debug> {
+            Some(5i32)
+        }
+        
+        fn path_parametrized_type_is_allowed() -> option::Option<impl Debug> {
+            Some(5i32)
+        }
+        
+        fn projection_is_disallowed(x: impl Iterator) -> <<error descr="`impl Trait` is not allowed in path parameters [E0667]">impl Iterator</error>>::Item {
+        //~^ ERROR `impl Trait` is not allowed in path parameters
+            x.next().unwrap()
+        }
+        
+        fn projection_with_named_trait_is_disallowed(x: impl Iterator)
+            -> <<error descr="`impl Trait` is not allowed in path parameters [E0667]">impl Iterator</error> as Iterator>::Item
+        //~^ ERROR `impl Trait` is not allowed in path parameters
+        {
+            x.next().unwrap()
+        }
+        
+        fn projection_with_named_trait_inside_path_is_disallowed()
+            -> <::std::ops::Range<<error descr="`impl Trait` is not allowed in path parameters [E0667]">impl Debug</error>> as Iterator>::Item
+        //~^ ERROR `impl Trait` is not allowed in path parameters
+        {
+            (1i32..100).next().unwrap()
+        }
+        
+        fn projection_from_impl_trait_inside_dyn_trait_is_disallowed()
+            -> <dyn Iterator<Item = <error descr="`impl Trait` is not allowed in path parameters [E0667]">impl Debug</error>> as Iterator>::Item
+        //~^ ERROR `impl Trait` is not allowed in path parameters
+        {
+            panic!()
+        }
+        
+        fn main() {}
+            """)
+
+    fun `test impl Trait not allowed E0562`() = checkErrors("""
+        trait Debug{}
+        // Allowed
+        fn in_parameters(_: impl Debug) { panic!() }
+        
+        // Allowed
+        fn in_return() -> impl Debug { panic!() }
+        
+        // Allowed
+        fn in_adt_in_parameters(_: Vec<impl Debug>) { panic!() }
+        
+        // Allowed
+        fn in_adt_in_return() -> Vec<impl Debug> { panic!() }
+        
+        fn in_fn_parameter_in_parameters(_: fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>)) { panic!() }
+        
+        fn in_fn_return_in_parameters(_: fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>) { panic!() }
+        
+        fn in_fn_parameter_in_return() -> fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>) { panic!() }
+        
+        fn in_fn_return_in_return() -> fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> { panic!() }
+        
+        fn in_dyn_Fn_parameter_in_parameters(_: &dyn Fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>)) { panic!() }
+        
+        fn in_dyn_Fn_return_in_parameters(_: &dyn Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>) { panic!() }
+        
+        fn in_dyn_Fn_parameter_in_return() -> &'static dyn Fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>) { panic!() }
+        
+        fn in_dyn_Fn_return_in_return() -> &'static dyn Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> { panic!() }
+
+        fn in_impl_Fn_return_in_parameters(_: &impl Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]"><error descr="nested `impl Trait` is not allowed [E0666]">impl Debug</error></error>) { panic!() }
+        
+        fn in_impl_Fn_return_in_return() -> &'static impl Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]"><error descr="nested `impl Trait` is not allowed [E0666]">impl Debug</error></error> { panic!() }
+        
+        fn in_Fn_parameter_in_generics<F: Fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>)> (_: F) { panic!() }
+        
+        fn in_Fn_return_in_generics<F: Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>> (_: F) { panic!() }
+         
+        // Allowed
+        fn in_impl_Trait_in_parameters(_: impl Iterator<Item = impl Iterator>) { panic!() }
+        
+        // Allowed
+        fn in_impl_Trait_in_return() -> impl IntoIterator<Item = impl IntoIterator> {
+            vec![vec![0; 10], vec![12; 7], vec![8; 3]]
+        }
+        
+        struct InBraceStructField { x: <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> }
+        
+        struct InAdtInBraceStructField { x: Vec<<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>> }
+        
+        struct InTupleStructField(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>);
+        
+        enum InEnum {
+            InBraceVariant { x: <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> },
+            InTupleVariant(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>),
+        }
+        
+        // Allowed
+        trait InTraitDefnParameters {
+            fn in_parameters(_: impl Debug);
+        }
+        
+        trait InTraitDefnReturn {
+            fn in_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>;
+        }
+        
+        // Allowed and disallowed in trait impls
+        trait DummyTrait {
+//            type Out;
+            fn in_trait_impl_parameter(_: impl Debug);
+            fn in_trait_impl_return() -> Self::Out;
+        }
+        impl DummyTrait for () {
+//            type Out = impl Debug;
+            //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+        
+            fn in_trait_impl_parameter(_: impl Debug) { }
+            // Allowed
+        
+            fn in_trait_impl_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> { () }
+            //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+        }
+        
+        // Allowed
+        struct DummyType;
+        impl DummyType {
+            fn in_inherent_impl_parameters(_: impl Debug) { }
+            fn in_inherent_impl_return() -> impl Debug { () }
+        }
+        
+        // Disallowed
+        extern "C" {
+            fn in_foreign_parameters(_: <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>);
+        
+            fn in_foreign_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>;
+        }
+        
+        // Allowed
+        extern "C" fn in_extern_fn_parameters(_: impl Debug) {
+        }
+        
+        // Allowed
+        extern "C" fn in_extern_fn_return() -> impl Debug {
+            22
+        }
+        
+//        type InTypeAlias<R> = impl Debug;
+        //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+        
+//        type InReturnInTypeAlias<R> = fn() -> impl Debug;
+        //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+        
+        impl PartialEq<<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>> for () {
+        }
+        
+        impl PartialEq<()> for <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> {
+        }
+        
+        impl <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> {
+        }
+        
+        struct InInherentImplAdt<T> { t: T }
+        impl InInherentImplAdt<<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>> {
+        }
+        
+        fn in_fn_where_clause()
+            where <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>: Debug{
+        }
+        
+        fn in_adt_in_fn_where_clause()
+            where Vec<<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>>: Debug{
+        }
+        
+        fn in_trait_parameter_in_fn_where_clause<T>()
+            where T: PartialEq<<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>>{
+        }
+        
+        fn in_Fn_parameter_in_fn_where_clause<T>()
+            where T: Fn(<error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error>){
+        }
+        
+        fn in_Fn_return_in_fn_where_clause<T>()
+            where T: Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> {
+        }
+        
+        fn main() {
+//            let _in_local_variable: impl Fn() = || {};
+            //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+            let _in_return_in_local_variable = || -> impl Fn() { || {} };
+        }
+    """)
+
     @MockRustcVersion("1.34.0")
     fun `test const generics E0658 1`() = checkErrors("""
         fn f<<error descr="const generics is experimental [E0658]">const C: i32</error>>() {}

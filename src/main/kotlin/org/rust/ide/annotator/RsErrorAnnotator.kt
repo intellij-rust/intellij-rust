@@ -83,9 +83,45 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitContExpr(o: RsContExpr) = checkContExpr(holder, o)
             override fun visitAttr(o: RsAttr) = checkAttr(holder, o)
             override fun visitRangeExpr(o: RsRangeExpr) = checkRangeExpr(holder, o)
+            override fun visitTraitType(o: RsTraitType) = checkTraitType(holder, o)
         }
 
         element.accept(visitor)
+    }
+
+
+    private fun checkTraitType(holder: AnnotationHolder, traitType: RsTraitType) {
+        if (!traitType.isImpl) return
+        val invalidContext = traitType
+            .ancestors
+            .firstOrNull {
+                it !is RsTypeArgumentList && it.parent is RsPath ||
+                    it !is RsMembers && it.parent is RsImplItem ||
+                    it is RsFnPointerType ||
+                    it is RsWhereClause ||
+                    it is RsTypeParameterList ||
+                    it is RsFieldsOwner ||
+                    it is RsForeignModItem ||
+                    it is RsRetType && it.ancestorStrict<RsTraitOrImpl>()?.implementedTrait != null
+                // type alias and let expr are not included because
+                // they are planned to be allowed soon
+            }
+
+        if (invalidContext is RsTypeQual) {
+            RsDiagnostic.ImplTraitNotAllowedInPathParams(traitType).addToHolder(holder)
+        } else if (invalidContext != null) {
+            RsDiagnostic.ImplTraitNotAllowedHere(traitType).addToHolder(holder)
+        }
+
+        val outerImplOrStop = traitType
+            .ancestors
+            .drop(1)
+            .firstOrNull { (it is RsTraitType && it.isImpl) || it is RsAssocTypeBinding || it is RsExpr }
+
+        if (outerImplOrStop is RsTraitType) {
+            RsDiagnostic.NestedImplTraitNotAllowed(traitType).addToHolder(holder)
+        }
+
     }
 
     private fun checkEnumItem(holder: AnnotationHolder, o: RsEnumItem) {
