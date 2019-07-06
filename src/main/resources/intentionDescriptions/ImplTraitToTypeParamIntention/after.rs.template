@@ -1,0 +1,2 @@
+trait Trait{}
+fn test<<spot>T: Trait</spot>>(arg: <spot>T</spot>) {}

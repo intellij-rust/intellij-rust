@@ -551,6 +551,10 @@
         <!-- Intentions -->
 
         <intentionAction>
+            <className>org.rust.ide.intentions.ImplTraitToTypeParamIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.ExtractInlineModuleIntention</className>
             <category>Rust</category>
         </intentionAction>
