@@ -17,7 +17,12 @@ class RustType(object):
 
     STD_STRING = "StdString"
     STD_OS_STRING = "StdOsString"
+    STD_PATH_BUF = "StdPathBuf"
     STD_STR = "StdStr"
+    STD_OS_STR = "StdOsStr"
+    STD_PATH = "StdPath"
+    STD_CSTRING = "StdCString"
+    STD_CSTR = "StdCStr"
     STD_VEC = "StdVec"
     STD_VEC_DEQUE = "StdVecDeque"
     STD_BTREE_SET = "StdBTreeSet"
@@ -38,6 +43,11 @@ STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
 # str, mut str, const str*, mut str* (vanilla LLDB); &str, &mut str, *const str, *mut str (Rust-enabled LLDB)
 STD_STR_REGEX = re.compile(r"^[&*]?(const |mut )?str\*?$")
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
+STD_OS_STR_REGEX = re.compile(r"^((&|&mut )?std::ffi::([a-z_]+::)+)OsStr( \*)?$")
+STD_PATH_BUF_REGEX = re.compile(r"^(std::([a-z_]+::)+)PathBuf$")
+STD_PATH_REGEX = re.compile(r"^(&?std::([a-z_]+::)+)Path( \*)?$")
+STD_CSTRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)CString$")
+STD_CSTR_REGEX = re.compile(r"^(&?std::ffi::([a-z_]+::)+)CStr( \*)?$")
 STD_VEC_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)VecDeque<.+>$")
 STD_BTREE_SET_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)BTreeSet<.+>$")
@@ -60,7 +70,12 @@ ENUM_DISR_FIELD_NAME = "<<variant>>"
 STD_TYPE_TO_REGEX = {
     RustType.STD_STRING: STD_STRING_REGEX,
     RustType.STD_OS_STRING: STD_OS_STRING_REGEX,
+    RustType.STD_PATH_BUF: STD_PATH_BUF_REGEX,
+    RustType.STD_PATH: STD_PATH_REGEX,
     RustType.STD_STR: STD_STR_REGEX,
+    RustType.STD_OS_STR: STD_OS_STR_REGEX,
+    RustType.STD_CSTRING: STD_CSTRING_REGEX,
+    RustType.STD_CSTR: STD_CSTR_REGEX,
     RustType.STD_VEC: STD_VEC_REGEX,
     RustType.STD_VEC_DEQUE: STD_VEC_DEQUE_REGEX,
     RustType.STD_HASH_MAP: STD_HASH_MAP_REGEX,
@@ -114,3 +129,12 @@ def classify_union(fields):
         return RustType.COMPRESSED_ENUM
     else:
         return RustType.REGULAR_UNION
+
+
+def classify_pointer(name):
+    if STD_OS_STR_REGEX.match(name):
+        return RustType.STD_OS_STR
+    if STD_PATH_REGEX.match(name):
+        return RustType.STD_PATH
+    if STD_CSTR_REGEX.match(name):
+        return RustType.STD_CSTR

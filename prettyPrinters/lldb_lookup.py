@@ -1,8 +1,8 @@
 from lldb import SBType
-from lldb import eTypeClassStruct, eTypeClassUnion
+from lldb import eTypeClassStruct, eTypeClassUnion, eTypeClassPointer
 
 from lldb_providers import *
-from rust_types import RustType, classify_struct, classify_union
+from rust_types import RustType, classify_struct, classify_union, classify_pointer
 
 
 def classify_rust_type(type):
@@ -12,6 +12,8 @@ def classify_rust_type(type):
         return classify_struct(type.name, type.fields)
     if type_class == eTypeClassUnion:
         return classify_union(type.fields)
+    if type_class == eTypeClassPointer:
+        return classify_pointer(type.name)
 
     return RustType.OTHER
 
@@ -19,14 +21,25 @@ def classify_rust_type(type):
 def summary_lookup(valobj, dict):
     # type: (SBValue, dict) -> str
     """Returns the summary provider for the given value"""
+
     rust_type = classify_rust_type(valobj.GetType())
 
     if rust_type == RustType.STD_STRING:
         return StdStringSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_OS_STRING:
         return StdOsStringSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_PATH_BUF:
+        return StdOsStringSummaryProvider(valobj.GetChildAtIndex(0), dict)
     if rust_type == RustType.STD_STR:
         return StdStrSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_OS_STR:
+        return StdFFIStrSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_PATH:
+        return StdFFIStrSummaryProvider(valobj, dict)
+    if rust_type == RustType.STD_CSTRING:
+        return StdFFIStrSummaryProvider(valobj, dict, is_null_terminated=True)
+    if rust_type == RustType.STD_CSTR:
+        return StdFFIStrSummaryProvider(valobj, dict, is_null_terminated=True)
 
     if rust_type == RustType.STD_VEC:
         return SizeSummaryProvider(valobj, dict)
