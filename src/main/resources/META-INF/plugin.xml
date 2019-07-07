@@ -701,7 +701,14 @@
             <className>org.rust.ide.intentions.addFmtStringArgument.AddFmtStringArgumentIntention</className>
             <category>Rust</category>
         </intentionAction>
-
+        <intentionAction>
+            <className>org.rust.ide.intentions.ConvertToStructIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ConvertToTupleIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

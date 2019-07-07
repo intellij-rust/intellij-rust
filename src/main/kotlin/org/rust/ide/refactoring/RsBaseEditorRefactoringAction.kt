@@ -18,9 +18,11 @@ import org.rust.lang.RsLanguage
 abstract class RsBaseEditorRefactoringAction : BaseRefactoringAction() {
     override fun isAvailableInEditorOnly(): Boolean = true
 
+    public abstract override fun isAvailableOnElementInEditorAndFile(element: PsiElement, editor: Editor, file: PsiFile, context: DataContext): Boolean
+
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = false
 
-    override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler()
+    public override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler()
 
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
 

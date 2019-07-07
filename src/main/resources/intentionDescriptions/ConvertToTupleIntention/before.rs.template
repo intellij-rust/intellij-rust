@@ -1,0 +1,3 @@
+struct MyStruct {
+    a: i32
+}

@@ -1,0 +1,3 @@
+struct MyStruct <spot>{
+    _0: i32
+}</spot>
