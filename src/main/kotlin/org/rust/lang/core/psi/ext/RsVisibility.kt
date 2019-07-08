@@ -32,7 +32,7 @@ fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =
 fun RsVisible.isVisibleFrom(mod: RsMod): Boolean {
     val elementMod = when (val visibility = visibility) {
         RsVisibility.Public -> return true
-        RsVisibility.Private -> (if (this is RsMod) this.`super` else this.contextStrict()) ?: return true
+        RsVisibility.Private -> (if (this is RsMod) this.`super` else containingMod) ?: return true
         is RsVisibility.Restricted -> visibility.inMod
     }
 

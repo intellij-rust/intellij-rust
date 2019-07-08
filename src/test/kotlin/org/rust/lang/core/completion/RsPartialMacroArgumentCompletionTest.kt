@@ -12,7 +12,8 @@ import org.rust.WithStdlibRustProjectDescriptor
 class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test expr 1`() = doTest("""
         macro_rules! my_macro {
-            ($ e:expr) => (1);
+            ($ e:expr, foo) => (1);
+            ($ e:expr, bar) => (1);
         }
 
         fn main() {
@@ -23,7 +24,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
 
     fun `test expr 2`() = doTest("""
         macro_rules! my_macro {
-            ($ e:expr) => (1);
+            ($ e:expr, foo) => (1);
             (foo $ t:ty) => (1);
         }
 
@@ -35,7 +36,8 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
 
     fun `test expr complex`() = doTest("""
         macro_rules! my_macro {
-            ($ e:expr) => (1);
+            ($ e:expr, foo) => (1);
+            ($ e:expr, bar) => (1);
         }
 
         struct S { ii: i32 }
@@ -49,7 +51,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
 
     fun `test expr repeated`() = doTest("""
         macro_rules! my_macro {
-            ($ ($ e:expr),+) => (1);
+            ($ ($ e:expr),+ =>) => (1);
         }
 
         fn main() {
@@ -61,7 +63,7 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test type 1`() = doTest("""
         macro_rules! my_macro {
             (bar $ e:expr) => (1);
-            ($ t:ty) => (1);
+            ($ t:ty, foo) => (1);
         }
 
         fn main() {
@@ -72,8 +74,8 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
 
     fun `test expr and ty`() = doTest("""
         macro_rules! my_macro {
-            ($ i:ident $ e:expr) => (1);
-            ($ i:ident $ t:ty) => (1);
+            ($ i:ident $ e:expr, foo) => (1);
+            ($ i:ident $ t:ty, bar) => (1);
         }
 
         fn main() {
@@ -85,7 +87,8 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no completion from index`() = doTest("""
         macro_rules! my_macro {
-            ($ e:expr) => (1);
+            ($ e:expr, foo) => (1);
+            ($ e:expr, bar) => (1);
         }
 
         fn main() {
@@ -106,11 +109,15 @@ class RsPartialMacroArgumentCompletionTest : RsCompletionTestBase() {
     """, setOf("iii", "i32"))
 
     private fun doTest(@Language("Rust") code: String, contains: Set<String>, notContains: Set<String> = emptySet()) {
-        for (variant in contains) {
-            checkContainsCompletion(variant, code)
-        }
-        for (variant in notContains) {
-            checkNotContainsCompletion(variant, code)
+        RsPartialMacroArgumentCompletionProvider.Testmarks.touched.checkHit {
+            RsFullMacroArgumentCompletionProvider.Testmarks.touched.checkNotHit {
+                for (variant in contains) {
+                    checkContainsCompletion(variant, code)
+                }
+                for (variant in notContains) {
+                    checkNotContainsCompletion(variant, code)
+                }
+            }
         }
     }
 }

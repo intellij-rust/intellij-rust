@@ -108,6 +108,18 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         }
     """, Testmarks.pathCompletionFromIndex)
 
+    fun `test doesn't suggest symbols from index for empty path in macro bodies`() = doTest("""
+        pub mod foo {}
+        macro_rules! foo {
+            ($($ i:item)*) => { $($ i)* };
+        }
+        foo! {
+            fn main() {
+                let _ = /*caret*/
+            }
+        }
+    """, Testmarks.pathCompletionFromIndex)
+
     fun `test enum completion`() = doTest("""
         mod a {
             pub enum Enum {
@@ -193,6 +205,44 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
             let _ = BTreeMap/*caret*/
         }
     """, importOutOfScopeItems = false)
+
+    fun `test macro body`() = doTest("""
+        mod foo { pub struct Foo; }
+        macro_rules! foo {
+            ($($ i:item)*) => { $($ i)* };
+        }
+        foo! {
+            fn bar() {
+                F/*caret*/
+            }
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo { pub struct Foo; }
+        macro_rules! foo {
+            ($($ i:item)*) => { $($ i)* };
+        }
+        foo! {
+            fn bar() {
+                Foo/*caret*/
+            }
+        }
+    """)
+
+    fun `test no completion in macro body if expands to a module`() = checkNoCompletion("""
+        mod foo { pub struct Foo; }
+        macro_rules! foo {
+            ($($ i:item)*) => { $($ i)* };
+        }
+        foo! {
+            mod bar {
+                fn bar() {
+                    F/*caret*/
+                }
+            }
+        }
+    """)
 
     private fun doTest(
         @Language("Rust") before: String,
