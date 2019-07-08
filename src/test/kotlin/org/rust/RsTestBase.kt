@@ -76,7 +76,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     private fun setupMockRustcVersion() {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
-        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel, null))
+        val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
         project.cargoProjects.setRustcInfo(rustcInfo)
     }
 
