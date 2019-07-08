@@ -18,6 +18,6 @@ class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
         val dialog = RunCargoCommandDialog(project, cargoProject)
         if (!dialog.showAndGet()) return
 
-        dialog.getCargoCommandLine().run(cargoProject)
+        dialog.getCargoCommandLine().run(cargoProject, saveConfiguration = true)
     }
 }

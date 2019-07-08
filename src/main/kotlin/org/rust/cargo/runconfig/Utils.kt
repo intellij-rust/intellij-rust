@@ -5,11 +5,8 @@
 
 package org.rust.cargo.runconfig
 
-import com.intellij.execution.ExecutorRegistry
-import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
@@ -20,6 +17,7 @@ import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.run
 import org.rust.stdext.buildList
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
@@ -56,11 +54,7 @@ fun Project.buildProject() {
     }
 
     for (cargoProject in cargoProjects.allProjects) {
-        val cmd = CargoCommandLine.forProject(cargoProject, "build", arguments)
-        val runnerAndConfigurationSettings = RunManager.getInstance(this)
-            .createCargoCommandRunConfiguration(cmd)
-        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
-        ProgramRunnerUtil.executeConfiguration(runnerAndConfigurationSettings, executor)
+        CargoCommandLine.forProject(cargoProject, "build", arguments).run(cargoProject, saveConfiguration = false)
     }
 }
 

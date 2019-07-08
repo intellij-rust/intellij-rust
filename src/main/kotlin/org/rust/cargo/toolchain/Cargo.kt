@@ -68,7 +68,7 @@ class Cargo(private val cargoExecutable: Path) {
     fun installBinaryCrate(project: Project, crateName: String) {
         val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
         val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", crateName))
-        commandLine.run(cargoProject, "Install $crateName")
+        commandLine.run(cargoProject, "Install $crateName", saveConfiguration = true)
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {

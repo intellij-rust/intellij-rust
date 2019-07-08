@@ -5,7 +5,6 @@
 
 package org.rust.cargo.toolchain
 
-import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
@@ -132,26 +131,33 @@ fun CargoWorkspace.Target.launchCommand(): String? {
     }
 }
 
-fun CargoCommandLine.run(cargoProject: CargoProject, presentableName: String = command) {
+fun CargoCommandLine.run(
+    cargoProject: CargoProject,
+    presentableName: String = command,
+    saveConfiguration: Boolean
+) {
     val project = cargoProject.project
-    val runConfiguration =
-        if (project.cargoProjects.allProjects.size > 1)
-            createRunConfiguration(project, this, name = presentableName + " [" + cargoProject.presentableName + "]")
-        else
-            createRunConfiguration(project, this, name = presentableName)
-    val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
-    ProgramRunnerUtil.executeConfiguration(runConfiguration, executor)
+    val name = if (project.cargoProjects.allProjects.size > 1) {
+        "$presentableName [${cargoProject.presentableName}]"
+    } else {
+        presentableName
+    }
+    val configuration = createRunConfiguration(project, this, name, saveConfiguration)
+    val executor = DefaultRunExecutor.getRunExecutorInstance()
+    ProgramRunnerUtil.executeConfiguration(configuration, executor)
 }
 
 private fun createRunConfiguration(
     project: Project,
     cargoCommandLine: CargoCommandLine,
-    name: String? = null
+    name: String? = null,
+    saveConfiguration: Boolean
 ): RunnerAndConfigurationSettings {
     val runManager = RunManagerEx.getInstanceEx(project)
-
     return runManager.createCargoCommandRunConfiguration(cargoCommandLine, name).apply {
-        runManager.setTemporaryConfiguration(this)
+        if (saveConfiguration) {
+            runManager.setTemporaryConfiguration(this)
+        }
     }
 }
 
