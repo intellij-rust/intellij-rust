@@ -109,23 +109,20 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     private fun processCall(callExpr: RsExpr, funcOrReceiver: RsExpr?, args: List<RsExpr?>): CFGNode {
         val funcOrReceiverExit = process(funcOrReceiver, pred)
-        return straightLine(callExpr, funcOrReceiverExit, args)
-    }
-
-    private fun processExpr(expr: RsExpr, parent: RsElement, pred: CFGNode) {
-        val exprExit = process(expr, pred)
-        if (expr.type is TyNever) {
-            addReturningEdge(exprExit)
-            finishWith { addUnreachableNode() }
+        val callExit = straightLine(callExpr, funcOrReceiverExit, args)
+        return if (callExpr.type is TyNever) {
+            addUnreachableNode()
         } else {
-            finishWithAstNode(parent, exprExit)
+            callExit
         }
     }
 
     override fun visitBlock(block: RsBlock) {
         val stmtsExit = block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
         val blockExpr = block.expr ?: return finishWithAstNode(block, stmtsExit)
-        processExpr(blockExpr, block, stmtsExit)
+        val exprExit = process(blockExpr, stmtsExit)
+
+        finishWithAstNode(block, exprExit)
     }
 
     override fun visitLetDecl(letDecl: RsLetDecl) {
@@ -139,8 +136,10 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     override fun visitLabelDecl(labelDecl: RsLabelDecl) = finishWith(pred)
 
-    override fun visitExprStmt(exprStmt: RsExprStmt) =
-        processExpr(exprStmt.expr, exprStmt, pred)
+    override fun visitExprStmt(exprStmt: RsExprStmt) {
+        val exprExit = process(exprStmt.expr, pred)
+        finishWithAstNode(exprStmt, exprExit)
+    }
 
     override fun visitPatIdent(patIdent: RsPatIdent) {
         val subPatExit = process(patIdent.pat, pred)
@@ -162,6 +161,14 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
 
     override fun visitPathExpr(pathExpr: RsPathExpr) =
         finishWithAstNode(pathExpr, pred)
+
+    override fun visitMacroExpr(macroExpr: RsMacroExpr) {
+        if (macroExpr.type is TyNever) {
+            finishWith { addUnreachableNode() }
+        } else {
+            finishWithAstNode(macroExpr, pred)
+        }
+    }
 
     override fun visitRangeExpr(rangeExpr: RsRangeExpr) =
         finishWith { straightLine(rangeExpr, pred, rangeExpr.exprList) }

@@ -534,7 +534,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Exit
     """)
 
-    fun `test noreturn`() = testCFG("""
+    fun `test noreturn simple`() = testCFG("""
         fn main() {
             if true {
                 noreturn();
@@ -548,15 +548,39 @@ class RsControlFlowGraphTest : RsTestBase() {
         true
         noreturn
         noreturn()
-        Exit
         IF
         IF;
         42
         42;
         BLOCK
+        Exit
     """)
 
-    fun `test panic macro call`() = testCFG("""
+    fun `test noreturn complex expr`() = testCFG("""
+        fn main() {
+            if true {
+                foo.bar(1, noreturn());
+            }
+            42;
+        }
+
+        fn noreturn() -> ! { panic!() }
+    """, """
+        Entry
+        true
+        foo
+        1
+        noreturn
+        noreturn()
+        IF
+        IF;
+        42
+        42;
+        BLOCK
+        Exit
+    """)
+
+    fun `test panic macro call inside stmt`() = testCFG("""
         fn main() {
             1;
             if true { 2; } else { panic!(); }
@@ -576,6 +600,49 @@ class RsControlFlowGraphTest : RsTestBase() {
         42;
         BLOCK
         Exit
+    """)
+
+    fun `test panic macro call outside stmt`() = testCFG("""
+        fn main() {
+            match x {
+                true => 2,
+                false => panic!()
+            };
+        }
+    """, """
+        Entry
+        x
+        true
+        Dummy
+        2
+        MATCH
+        MATCH;
+        BLOCK
+        Exit
+        false
+        Dummy
+    """)
+
+    fun `test macro call outside stmt`() = testCFG("""
+        fn main() {
+            match e {
+                E::A => 2,
+                E::B => some_macro!()
+            };
+        }
+    """, """
+        Entry
+        e
+        E::A
+        Dummy
+        2
+        MATCH
+        MATCH;
+        BLOCK
+        Exit
+        E::B
+        Dummy
+        some_macro!()
     """)
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
