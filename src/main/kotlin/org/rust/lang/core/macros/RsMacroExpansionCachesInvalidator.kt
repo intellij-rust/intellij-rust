@@ -11,7 +11,7 @@ import com.intellij.util.io.delete
 class RsMacroExpansionCachesInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
         try {
-            getBaseMacroExpansionDir().delete()
+            getBaseMacroDir().delete()
         } catch (ignored: Exception) {
 
         }
