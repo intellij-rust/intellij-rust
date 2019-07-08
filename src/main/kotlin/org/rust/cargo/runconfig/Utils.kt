@@ -7,8 +7,10 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -51,6 +53,11 @@ fun Project.buildProject() {
             if (allTargets) add("--all-targets")
         }
         if (settings.useOffline) add("-Zoffline")
+    }
+
+    // Initialize run content manager
+    ApplicationManager.getApplication().invokeAndWait {
+        ExecutionManagerImpl.getInstance(this).contentManager
     }
 
     for (cargoProject in cargoProjects.allProjects) {

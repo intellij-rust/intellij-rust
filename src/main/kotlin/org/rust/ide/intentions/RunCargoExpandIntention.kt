@@ -52,7 +52,7 @@ class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandInten
             "expand",
             additionalArguments,
             usePackageOption = false
-        ).run(cargoProject, "Expand ${cargoTarget.normName}$crateRelativePath", saveConfiguration = true)
+        ).run(cargoProject, "Expand ${cargoTarget.normName}$crateRelativePath")
     }
 
     companion object {

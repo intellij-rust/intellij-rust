@@ -89,7 +89,7 @@ class CargoToolWindow(
                     return
                 }
                 val cargoProject = selectedProject ?: return
-                CargoCommandLine.forTarget(target, command).run(cargoProject, saveConfiguration = true)
+                CargoCommandLine.forTarget(target, command).run(cargoProject)
             }
         })
     }

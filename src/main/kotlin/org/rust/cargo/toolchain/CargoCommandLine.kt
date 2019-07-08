@@ -134,7 +134,7 @@ fun CargoWorkspace.Target.launchCommand(): String? {
 fun CargoCommandLine.run(
     cargoProject: CargoProject,
     presentableName: String = command,
-    saveConfiguration: Boolean
+    saveConfiguration: Boolean = true
 ) {
     val project = cargoProject.project
     val name = if (project.cargoProjects.allProjects.size > 1) {
