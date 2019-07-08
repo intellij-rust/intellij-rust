@@ -6,7 +6,7 @@ Feel free to remove all the irrelevant text to request a new feature.
 
 ## Environment
 
-* **Intellij-Rust plugin version:**
+* **IntelliJ Rust plugin version:**
 * **Rust toolchain version:**
 * **IDE name and version:**
 * **Operating system:**
