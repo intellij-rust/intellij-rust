@@ -981,6 +981,9 @@
                 class="org.rust.lang.core.macros.ReexpandMacrosAction"
                 text="Re-expand all Rust macros">
         </action>
+
+        <action id="Rust.CreateNewGithubIssue"
+                class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue"/>
     </actions>
 
 </idea-plugin>
