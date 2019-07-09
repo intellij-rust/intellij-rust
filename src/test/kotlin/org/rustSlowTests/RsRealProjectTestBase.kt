@@ -81,6 +81,12 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         val CARGO = RealProjectInfo("cargo", "cargo", "https://github.com/rust-lang/cargo")
         val MYSQL_ASYNC = RealProjectInfo("mysql_async", "mysql_async", "https://github.com/blackbeam/mysql_async")
         val TOKIO = RealProjectInfo("tokio", "tokio", "https://github.com/tokio-rs/tokio")
+        val AMETHYST = RealProjectInfo("amethyst", "amethyst", "https://github.com/amethyst/amethyst")
+        val CLAP = RealProjectInfo("clap", "clap", "https://github.com/clap-rs/clap")
+        val DIESEL = RealProjectInfo("diesel", "diesel", "https://github.com/diesel-rs/diesel")
+        val RUST_ANALYZER = RealProjectInfo("rust-analyzer", "rust-analyzer", "https://github.com/rust-analyzer/rust-analyzer")
+        val XI_EDITOR = RealProjectInfo("xi-editor", "xi-editor/rust", "https://github.com/xi-editor/xi-editor")
+        val JUNIPER = RealProjectInfo("juniper", "juniper", "https://github.com/graphql-rust/juniper")
 
         private val EXCLUDED_DIRECTORY_NAMES = setOf("target")
     }

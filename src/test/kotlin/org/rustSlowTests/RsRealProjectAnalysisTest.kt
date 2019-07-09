@@ -25,6 +25,12 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
     fun `test analyze Cargo`() = doTest(CARGO)
     fun `test analyze mysql_async`() = doTest(MYSQL_ASYNC)
     fun `test analyze tokio`() = doTest(TOKIO)
+    fun `test analyze amethyst`() = doTest(AMETHYST)
+    fun `test analyze clap`() = doTest(CLAP)
+    fun `test analyze diesel`() = doTest(DIESEL)
+    fun `test analyze rust_analyzer`() = doTest(RUST_ANALYZER)
+    fun `test analyze xi_editor`() = doTest(XI_EDITOR)
+    fun `test analyze juniper`() = doTest(JUNIPER)
 
     private fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
         Disposer.register(
@@ -33,7 +39,7 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
         )
         val inspections = InspectionToolRegistrar.getInstance().createTools()
             .map { it.tool }
-            .filter { it is RsLocalInspectionTool }
+            .filterIsInstance<RsLocalInspectionTool>()
         myFixture.enableInspections(*inspections.toTypedArray())
 
         println("Opening the project")
