@@ -8,6 +8,7 @@ package org.rust.lang.core.cfg
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Edge
@@ -57,13 +58,13 @@ class ControlFlowGraph private constructor(
     val exit: CFGNode
 ) {
     companion object {
-        fun buildFor(body: RsBlock): ControlFlowGraph {
+        fun buildFor(body: RsBlock, regionScopeTree: ScopeTree): ControlFlowGraph {
             val owner = body.parent as RsElement
             val graph = PresentableGraph<CFGNodeData, CFGEdgeData>()
             val entry = graph.addNode(CFGNodeData.Entry)
             val fnExit = graph.addNode(CFGNodeData.Exit)
 
-            val cfgBuilder = CFGBuilder(graph, entry, fnExit)
+            val cfgBuilder = CFGBuilder(regionScopeTree, graph, entry, fnExit)
             val bodyExit = cfgBuilder.process(body, entry)
             cfgBuilder.addContainedEdge(bodyExit, fnExit)
 

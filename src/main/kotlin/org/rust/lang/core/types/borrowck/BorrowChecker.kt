@@ -51,7 +51,7 @@ class BorrowCheckContext(
     private fun buildAnalysisData(bccx: BorrowCheckContext): AnalysisData? {
         val glcx = GatherLoanContext(this)
         val moveData = glcx.check().takeIf { it.isNotEmpty() } ?: return null
-        val cfg = ControlFlowGraph.buildFor(bccx.body)
+        val cfg = ControlFlowGraph.buildFor(bccx.body, regionScopeTree)
         val flowedMoves = FlowedMoveData.buildFor(moveData, bccx, cfg)
         return AnalysisData(flowedMoves)
     }

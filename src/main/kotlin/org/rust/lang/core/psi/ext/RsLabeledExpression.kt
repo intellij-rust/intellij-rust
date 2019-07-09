@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.psi.ext
 
+import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsLabelDecl
 
 interface RsLabeledExpression : RsElement {
     val labelDecl: RsLabelDecl?
+    val block: RsBlock?
 }

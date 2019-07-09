@@ -100,7 +100,7 @@ data class ScopeTree(
         isSubScopeOf(scope1, scope2) || isSubScopeOf(scope2, scope1)
 
     /** Returns the narrowest scope that encloses [scope], if any. */
-    private fun getEnclosingScope(scope: Scope): Scope? = parentMap[scope]?.scope
+    fun getEnclosingScope(scope: Scope): Scope? = parentMap[scope]?.scope
 
     /**
      * Finds the lowest common ancestor of two scopes.

@@ -430,4 +430,71 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let t2 = T { s: <error descr="Use of moved value">s</error> };
         }
     """, checkWarn = false)
+
+    /** Issue [#3970](https://github.com/intellij-rust/intellij-rust/issues/3970) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error while let with break`() = checkByText("""
+        struct S;
+        fn main() {
+            let mut a = Some(S);
+            while let Some(b) = a {
+                match false {
+                    true => { a = Some(S) }
+                    _ => break
+                }
+            }
+        }
+    """, checkWarn = false)
+
+    fun `test no move error after break 1`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            loop {
+                s;
+                break;
+            }
+        }
+    """, checkWarn = false)
+
+    fun `test no move error after break 2`() = checkByText("""
+        struct S;
+        fn main() {
+            loop {
+                let s = S;
+                if cond {
+                    s;
+                    break;
+                }
+                s;
+            }
+        }
+    """, checkWarn = false)
+
+    fun `test no move error after break nested`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            'outer: loop {
+                s;
+                loop {
+                    break 'outer;
+                }
+            }
+        }
+    """, checkWarn = false)
+
+    fun `test no move error after continue`() = checkByText("""
+        struct S;
+        fn main() {
+            loop {
+                let s = S;
+                if cond {
+                    s;
+                    continue;
+                }
+                s;
+            }
+        }
+    """, checkWarn = false)
 }
