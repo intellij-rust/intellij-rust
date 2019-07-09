@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.injected.RsDoctestLanguageInjector.Companion.INJECTED_MAIN_NAME
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_BLOCK_DOC_COMMENT
@@ -82,7 +83,8 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
         override fun visitBlock(o: RsBlock) {
             if (tryFoldBlockWhitespaces(o)) return
-            fold(o)
+            val parentFn = o.parent as? RsFunction
+            if (parentFn?.name != INJECTED_MAIN_NAME) fold(o)
         }
 
         override fun visitMatchBody(o: RsMatchBody) = fold(o)

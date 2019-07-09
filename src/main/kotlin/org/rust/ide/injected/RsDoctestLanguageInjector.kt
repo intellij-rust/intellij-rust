@@ -145,7 +145,7 @@ class RsDoctestLanguageInjector : MultiHostInjector {
                 }
                 if (index == cratesEndIndex && !alreadyHasMain) {
                     if (prefix == null) prefix = StringBuilder()
-                    prefix.append("fn main() {")
+                    prefix.append("fn $INJECTED_MAIN_NAME() {")
                 }
 
                 val suffix = if (isLastIteration && !alreadyHasMain) "}" else null
@@ -155,6 +155,10 @@ class RsDoctestLanguageInjector : MultiHostInjector {
 
             inj.doneInjecting()
         }
+    }
+
+    companion object {
+        const val INJECTED_MAIN_NAME: String = "__main"
     }
 }
 
