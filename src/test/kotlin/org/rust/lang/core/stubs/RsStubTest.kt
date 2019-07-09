@@ -194,9 +194,12 @@ class RsStubTest : RsTestBase() {
         fn foo() {
             if true {
                 struct S;
-                2 + 2
+                1 + 2
+            } else if false {
+                3 + 4
             } else {
-                2 + 2
+                struct T;
+                -5
             };
         }
     """, """
@@ -206,6 +209,36 @@ class RsStubTest : RsTestBase() {
             BLOCK:RsPlaceholderStub
               BLOCK:RsPlaceholderStub
                 STRUCT_ITEM:RsStructItemStub
+              BLOCK:RsPlaceholderStub
+                STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test expressions are stubbed inside function local module`() = doTest("""
+        fn foo() {
+            mod bar {
+                include!("a.rs");
+            }
+        }     
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              MOD_ITEM:RsModItemStub
+                MACRO_CALL:RsMacroCallStub
+                  PATH:RsPathStub
+                  INCLUDE_MACRO_ARGUMENT:RsPlaceholderStub
+                    LIT_EXPR:RsLitExprStub
+    """)
+
+    fun `test expressions are stubs inside file`() = doTest("""
+        include!("foo.rs");    
+    """, """
+        RsFileStub
+          MACRO_CALL:RsMacroCallStub
+            PATH:RsPathStub
+            INCLUDE_MACRO_ARGUMENT:RsPlaceholderStub
+              LIT_EXPR:RsLitExprStub
     """)
 
     private fun doTest(@Language("Rust") code: String, expectedStubText: String) {
