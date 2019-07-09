@@ -1747,6 +1747,37 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    fun `test duplicate enum discriminant const expr E0081`() = checkErrors("""
+        enum Bad {
+            <error descr="Discriminant value `3` already exists [E0081]">X = 1 + 5 - 3</error>,
+            <error descr="Discriminant value `3` already exists [E0081]">Y = 1 + 2</error>
+        }
+    """)
+
+    fun `test duplicate enum discriminant non-const expr E0081`() = checkErrors("""
+        fn foo() -> isize { 0 }
+        enum Good {
+            X = foo(),
+            Y = 0
+        }
+    """)
+
+    fun `test duplicate enum discriminant repr type valid range E0081`() = checkErrors("""
+        #[repr(i8)]
+        enum Bad {
+            <error descr="Discriminant value `-1` already exists [E0081]">X = -1</error>,
+            <error descr="Discriminant value `-1` already exists [E0081]">Y = -1</error>
+        }
+    """)
+
+    fun `test duplicate enum discriminant repr type invalid range E0081`() = checkErrors("""
+        #[repr(u8)]
+        enum Good {
+            X = -1,
+            Y = -1
+        }
+    """)
+
 
     fun `test E0040`() = checkErrors("""
         struct X;

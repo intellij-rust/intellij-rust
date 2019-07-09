@@ -168,16 +168,8 @@ class RsInferenceContext(
                 is RsConstant -> element.typeReference?.type to element.expr
                 is RsArrayType -> TyInteger.USize to element.expr
                 is RsVariantDiscriminant -> {
-                    // A repr attribute like #[repr(u16)] changes the discriminant type of an enum
-                    // https://doc.rust-lang.org/nomicon/other-reprs.html#repru-repri
                     val enum = element.ancestorStrict<RsEnumItem>()
-                    val reprType = enum?.queryAttributes?.reprAttributes
-                        ?.flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
-                        ?.mapNotNull { it.name?.let { TyInteger.fromName(it) } }
-                        ?.lastOrNull()
-                        ?: TyInteger.ISize
-
-                    reprType to element.expr
+                    enum?.reprType to element.expr
                 }
                 is RsExpressionCodeFragment -> {
                     element.context?.inference?.let {
