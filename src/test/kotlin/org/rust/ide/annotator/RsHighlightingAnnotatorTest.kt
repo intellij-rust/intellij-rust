@@ -96,8 +96,8 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         trait <TRAIT>T</TRAIT> {
             fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>();
         }
-        <KEYWORD>union</KEYWORD> <STRUCT>U</STRUCT> { }
-        impl <TRAIT>T</TRAIT> for <STRUCT>U</STRUCT> {
+        <KEYWORD>union</KEYWORD> <UNION>U</UNION> { }
+        impl <TRAIT>T</TRAIT> for <UNION>U</UNION> {
             <KEYWORD>default</KEYWORD> fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>() {}
         }
     """)
