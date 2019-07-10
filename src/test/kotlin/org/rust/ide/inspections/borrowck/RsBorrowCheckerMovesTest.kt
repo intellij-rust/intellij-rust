@@ -369,4 +369,33 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             if *a == *b {}
         }
     """, checkWarn = false)
+
+    fun `test no move error destruct array`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let arr = [S, S, S];
+            let [a, b, c] = arr;
+        }
+    """, checkWarn = false)
+
+    fun `test move array after destruct`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let arr = [S, S, S];
+            let [a, b, c] = arr;
+            <error descr="Use of moved value">arr</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test double destruct array`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let arr = [S, S, S];
+            let [a, b, c] = arr;
+            let <error descr="Use of moved value">[a1, b1, c1]</error> = arr;
+        }
+    """, checkWarn = false)
 }
