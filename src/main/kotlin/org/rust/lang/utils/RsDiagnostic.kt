@@ -546,9 +546,9 @@ sealed class RsDiagnostic(
     }
 
     class DuplicateEnumDiscriminant(
-        element: PsiElement,
+        variant: RsEnumVariant,
         private val id: Long
-    ) : RsDiagnostic(element) {
+    ) : RsDiagnostic(variant.variantDiscriminant?.expr ?: variant) {
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0081,

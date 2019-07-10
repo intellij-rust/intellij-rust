@@ -1693,24 +1693,24 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     fun `test duplicate enum discriminant #1 E0081`() = checkErrors("""
         enum Bad {
             <error descr="Discriminant value `0` already exists [E0081]">X</error>,
-            <error descr="Discriminant value `0` already exists [E0081]">Y = 0</error>,
+            Y = <error descr="Discriminant value `0` already exists [E0081]">0</error>,
         }
     """)
 
     fun `test duplicate enum discriminant #2 E0081`() = checkErrors("""
         enum Bad {
-            <error descr="Discriminant value `3` already exists [E0081]">P = 3</error>,
+            P = <error descr="Discriminant value `3` already exists [E0081]">3</error>,
             Y = 0,
-            <error descr="Discriminant value `3` already exists [E0081]">X = 3</error>,
+            X = <error descr="Discriminant value `3` already exists [E0081]">3</error>,
         }
     """)
 
     fun `test duplicate enum discriminant #3 E0081`() = checkErrors("""
         enum Bad {
-            <error descr="Discriminant value `0` already exists [E0081]">X = 0</error>,
-            <error descr="Discriminant value `0` already exists [E0081]">Y = 0</error>,
-            <error descr="Discriminant value `0` already exists [E0081]">Z = 0</error>,
-            <error descr="Discriminant value `0` already exists [E0081]">W = 0</error>,
+            X = <error descr="Discriminant value `0` already exists [E0081]">0</error>,
+            Y = <error descr="Discriminant value `0` already exists [E0081]">0</error>,
+            Z = <error descr="Discriminant value `0` already exists [E0081]">0</error>,
+            W = <error descr="Discriminant value `0` already exists [E0081]">0</error>,
         }
     """)
 
@@ -1748,9 +1748,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     """)
 
     fun `test duplicate enum discriminant const expr E0081`() = checkErrors("""
-        enum Bad {
-            <error descr="Discriminant value `3` already exists [E0081]">X = 1 + 5 - 3</error>,
-            <error descr="Discriminant value `3` already exists [E0081]">Y = 1 + 2</error>
+                enum Bad {
+            X = <error descr="Discriminant value `3` already exists [E0081]">1 + 5 - 3</error>,
+            Y = <error descr="Discriminant value `3` already exists [E0081]">1 + 2</error>
         }
     """)
 
@@ -1765,8 +1765,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     fun `test duplicate enum discriminant repr type valid range E0081`() = checkErrors("""
         #[repr(i8)]
         enum Bad {
-            <error descr="Discriminant value `-1` already exists [E0081]">X = -1</error>,
-            <error descr="Discriminant value `-1` already exists [E0081]">Y = -1</error>
+            X = <error descr="Discriminant value `-1` already exists [E0081]">-1</error>,
+            Y = <error descr="Discriminant value `-1` already exists [E0081]">-1</error>
         }
     """)
 
