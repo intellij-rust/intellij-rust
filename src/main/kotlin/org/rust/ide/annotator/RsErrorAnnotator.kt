@@ -34,6 +34,8 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
+import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 
 class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -119,10 +121,16 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         data class VariantInfo(val variant: RsEnumVariant, val alreadyReported: Boolean)
 
         var discrCounter = 0L
+        val reprType = (o.parent as? RsEnumItem)?.reprType ?: return
         val indexToVariantMap = hashMapOf<Long, VariantInfo>()
         for (variant in o.enumVariantList) {
-            val literal = variant.variantDiscriminant?.expr as? RsLitExpr
-            val int = literal?.integerValue
+            val expr = variant.variantDiscriminant?.expr
+            val int = if (expr != null) {
+                val result = RsConstExprEvaluator.evaluate(expr, reprType) as? ExprValue.Integer
+                result?.value ?: return
+            } else {
+                null
+            }
             val idx = int ?: discrCounter
             discrCounter = idx + 1
 
