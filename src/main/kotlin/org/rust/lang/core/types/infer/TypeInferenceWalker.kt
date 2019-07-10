@@ -1039,8 +1039,7 @@ class RsTypeInferenceWalker(
             dot3 != null && el.size == 2 -> {
                 "RangeInclusive" to getMoreCompleteType(el[0].inferType(), el[1].inferType())
             }
-
-            else -> error("Unrecognized range expression")
+            else -> return TyUnknown
         }
 
         return items.findRangeTy(rangeName, indexType)
