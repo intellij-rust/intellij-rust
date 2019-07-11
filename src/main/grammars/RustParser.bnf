@@ -384,7 +384,9 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
+private TypeBounds ::= [ Polybound ('+' Polybound)* '+'? ]
+
+TypeParamBounds ::= ':' TypeBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
