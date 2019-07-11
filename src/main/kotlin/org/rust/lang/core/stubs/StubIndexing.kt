@@ -54,6 +54,12 @@ fun IndexSink.indexImplItem(stub: RsImplItemStub) {
     RsImplIndex.index(stub, this)
 }
 
+fun IndexSink.indexTraitAlias(stub: RsTraitAliasStub) {
+    indexNamedStub(stub)
+    indexGotoClass(stub)
+    RsLangItemIndex.index(stub.psi, this)
+}
+
 fun IndexSink.indexFunction(stub: RsFunctionStub) {
     indexNamedStub(stub)
 }
