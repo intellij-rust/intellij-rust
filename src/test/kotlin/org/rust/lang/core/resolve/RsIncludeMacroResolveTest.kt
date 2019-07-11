@@ -99,6 +99,19 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                   //^ lib.rs
     """)
 
+    fun `test include in function local module`() = checkResolve("""
+    //- lib.rs
+        fn foo() {
+            mod foo {
+                include!("bar.rs");
+            }
+            foo::Foo;
+                //^ bar.rs
+        }
+    //- bar.rs
+        struct Foo;
+    """)
+
     fun `test include file in included file 1`() = checkResolve("""
     //- lib.rs
         include!("foo.rs");

@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 172
+        override fun getStubVersion(): Int = 173
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1149,8 +1149,7 @@ class RsExprStubType<PsiT : RsElement>(
     debugName: String,
     psiCtor: (RsPlaceholderStub, IStubElementType<*, *>) -> PsiT
 ) : RsPlaceholderStub.Type<PsiT>(debugName, psiCtor) {
-    override fun shouldCreateStub(node: ASTNode): Boolean =
-        shouldCreateExprStub(node)
+    override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
 }
 
 class RsLitExprStub(
@@ -1159,8 +1158,7 @@ class RsLitExprStub(
 ) : RsPlaceholderStub(parent, elementType) {
     object Type : RsStubElementType<RsLitExprStub, RsLitExpr>("LIT_EXPR") {
 
-        override fun shouldCreateStub(node: ASTNode): Boolean =
-            shouldCreateExprStub(node)
+        override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
 
         override fun serialize(stub: RsLitExprStub, dataStream: StubOutputStream) {
             stub.kind.serialize(dataStream)
@@ -1176,8 +1174,14 @@ class RsLitExprStub(
     }
 }
 
-private fun shouldCreateExprStub(node: ASTNode): Boolean =
-    createStubIfParentIsStub(node) && node.psi.ancestors.none { it is RsBlock && it.parent is RsFunction }
+private fun shouldCreateExprStub(node: ASTNode): Boolean {
+    if (!createStubIfParentIsStub(node)) return false
+    val element = node.psi.ancestors.firstOrNull {
+        val parent = it.parent
+        parent is RsItemElement || parent is RsMod
+    }
+    return element != null && !(element is RsBlock && element.parent is RsFunction)
+}
 
 class RsUnaryExprStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
@@ -1185,8 +1189,7 @@ class RsUnaryExprStub(
 ) : RsPlaceholderStub(parent, elementType) {
     object Type : RsStubElementType<RsUnaryExprStub, RsUnaryExpr>("UNARY_EXPR") {
 
-        override fun shouldCreateStub(node: ASTNode): Boolean =
-            createStubIfParentIsStub(node) && node.psi.parent?.parent !is RsFunction
+        override fun shouldCreateStub(node: ASTNode): Boolean = shouldCreateExprStub(node)
 
         override fun serialize(stub: RsUnaryExprStub, dataStream: StubOutputStream) {
             dataStream.writeEnum(stub.operatorType)
