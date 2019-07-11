@@ -332,7 +332,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             edition = "2018"
 
             [dependencies]
-            my_log = { package = "log", version = "0.4.6" }
+            my_log = { package = "log", version = "=0.4.7" }
         """)
 
         dir("src") {
@@ -341,7 +341,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                     //^
             """)
         }
-    }.checkReferenceIsResolved<RsPath>("src/main.rs", toCrate = "log 0.4.6")
+    }.checkReferenceIsResolved<RsPath>("src/main.rs", toCrate = "log 0.4.7")
 
     @MinRustcVersion("1.31.0")
     fun `test cargo rename of local dependency`() = buildProject {
