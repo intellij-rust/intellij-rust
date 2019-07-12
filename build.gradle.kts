@@ -35,8 +35,8 @@ val isAtLeast192 = platformVersion.toInt() >= 192
 
 plugins {
     idea
-    kotlin("jvm") version "1.3.30"
-    id("org.jetbrains.intellij") version "0.4.8"
+    kotlin("jvm") version "1.3.41"
+    id("org.jetbrains.intellij") version "0.4.9"
     id("org.jetbrains.grammarkit") version "2018.2.2"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
