@@ -155,6 +155,7 @@ class CargoTestEventsConverter(
             }
             "ok" -> {
                 val duration = getTestDuration(testMessage.name)
+                if (!testMessage.stdout.isNullOrEmpty()) messages.add(createTestStdOutMessage(testMessage.name, testMessage.stdout))
                 messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)

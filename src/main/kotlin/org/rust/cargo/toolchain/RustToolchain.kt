@@ -14,6 +14,8 @@ import org.rust.openapiext.*
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 data class RustToolchain(val location: Path) {
 
@@ -114,7 +116,7 @@ data class RustcVersion(
     val host: String,
     val channel: RustChannel,
     val commitHash: String? = null,
-    val commitDate: String? = null
+    val commitDate: LocalDate? = null
 )
 
 private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
@@ -144,15 +146,19 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     val hostText = find(hostRe)?.groups?.get(1)?.value ?: return null
     val versionText = releaseMatch.groups[1]?.value ?: return null
     val commitHash = find(commitHashRe)?.groups?.get(1)?.value
-    val commitDate = find(commitDateRe)?.groups?.get(1)?.value
+    val commitDate = try {
+        LocalDate.parse(find(commitDateRe)?.groups?.get(1)?.value)
+    } catch (e: DateTimeParseException) {
+        null
+    }
 
     val semVer = SemVer.parseFromText(versionText) ?: return null
-
     val releaseSuffix = releaseMatch.groups[2]?.value.orEmpty()
     val channel = when {
         releaseSuffix.isEmpty() -> RustChannel.STABLE
         releaseSuffix.startsWith("-beta") -> RustChannel.BETA
         releaseSuffix.startsWith("-nightly") -> RustChannel.NIGHTLY
+        releaseSuffix.startsWith("-dev") -> RustChannel.DEV
         else -> RustChannel.DEFAULT
     }
     return RustcVersion(semVer, hostText, channel, commitHash, commitDate)
