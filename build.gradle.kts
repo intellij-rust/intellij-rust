@@ -139,6 +139,9 @@ allprojects {
                 // https://youtrack.jetbrains.com/issue/TW-16784
                 ignoreFailures = true
             }
+            if (hasProp("excludeTests")) {
+                exclude(prop("excludeTests"))
+            }
         }
     }
 }

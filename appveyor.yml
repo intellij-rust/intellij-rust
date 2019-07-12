@@ -24,7 +24,7 @@ build_script:
   - gradlew.bat -Dkotlin.compiler.execution.strategy="in-process" assemble testClasses --no-daemon
 
 test_script:
-  - gradlew.bat check --no-daemon
+  - gradlew.bat check -PexcludeTests=org/rustPerformanceTests/** --no-daemon
 
 on_success:
   - ps: rm C:\Users\appveyor\.gradle\caches\modules-2\modules-2.lock -force
