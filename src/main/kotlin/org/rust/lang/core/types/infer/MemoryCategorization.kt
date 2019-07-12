@@ -259,8 +259,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     private fun processPathExpr(pathExpr: RsPathExpr): Cmt {
         val type = inference.getExprType(pathExpr)
-        // TODO: infcx.getResolvedPaths
-        val declaration = inference.getResolvedPaths(pathExpr).singleOrNull() ?: return Cmt(pathExpr, ty = type)
+        val declaration = inference.getResolvedPath(pathExpr).singleOrNull()?.element ?: return Cmt(pathExpr, ty = type)
         return when (declaration) {
             is RsConstant -> {
                 if (!declaration.isConst) {

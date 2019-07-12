@@ -36,6 +36,7 @@ val RsPath.kind: PathKind get() {
     }
 }
 
+/** For `Foo::bar::baz::quux` path returns `Foo` */
 tailrec fun RsPath.basePath(): RsPath {
     val qualifier = path
     @Suppress("IfThenToElvis")

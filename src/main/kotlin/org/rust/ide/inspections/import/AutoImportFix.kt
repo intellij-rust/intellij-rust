@@ -29,6 +29,7 @@ import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
+import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.openapiext.Testmark
@@ -87,8 +88,17 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
         fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
             val basePath = path.basePath()
-            if (TyPrimitive.fromPath(basePath) != null) return null
-            if (basePath.reference.multiResolve().isNotEmpty()) return null
+
+            val isBasePathResolved = TyPrimitive.fromPath(basePath) != null ||
+                basePath.reference.multiResolve().isNotEmpty()
+
+            if (isBasePathResolved) {
+                // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
+                // the view of the rust compiler. Specifically we resolve associated items even if corresponding
+                // trait is not in the scope, so here we suggest importing such traits
+
+                return findApplicableContextForAssocItemPath(path, project)
+            }
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
@@ -117,6 +127,18 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             if (results.isEmpty()) return Context(Unit, emptyList())
             val candidates = getImportCandidates(project, methodCall, results)?.toList() ?: return null
             return Context(Unit, candidates)
+        }
+
+        /** Import traits for type-related UFCS method calls and assoc items */
+        private fun findApplicableContextForAssocItemPath(path: RsPath, project: Project): Context<RsPath>? {
+            val parent = path.parent as? RsPathExpr ?: return null
+            val resolved = path.inference?.getResolvedPath(parent) ?: return null
+            val sources = resolved.map {
+                if (it !is ResolvedPath.AssocItem) return null
+                it.source
+            }
+            val candidates = getTraitImportCandidates(project, path, sources)?.toList() ?: return null
+            return Context(path, candidates)
         }
 
         /**
@@ -181,8 +203,15 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             scope: RsElement,
             resolvedMethods: List<MethodResolveVariant>
         ): Sequence<ImportCandidate>? {
-            val traitsToImport = collectTraitsToImport(scope, resolvedMethods) ?: return null
+            return getTraitImportCandidates(project, scope, resolvedMethods.map { it.source })
+        }
 
+        private fun getTraitImportCandidates(
+            project: Project,
+            scope: RsElement,
+            sources: List<TraitImplSource>
+        ): Sequence<ImportCandidate>? {
+            val traitsToImport = collectTraitsToImport(scope, sources) ?: return null
             val superMods = LinkedHashSet(scope.containingMod.superMods)
             val attributes = scope.stdlibAttributes
 
@@ -206,14 +235,14 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
         private fun collectTraitsToImport(
             scope: RsElement,
-            resolveResults: List<MethodResolveVariant>
+            sources: List<TraitImplSource>
         ): List<RsTraitItem>? {
-            val traits = resolveResults.mapNotNull { variant ->
-                val trait = when (val source = variant.source) {
+            val traits = sources.mapNotNull { source ->
+                val trait = when (source) {
                     is TraitImplSource.ExplicitImpl -> {
                         val impl = source.value
-                        if (impl.traitRef == null) return null
-                        impl.traitRef?.resolveToTrait() ?: return@mapNotNull null
+                        val traitRef = impl.traitRef ?: return null
+                        traitRef.resolveToTrait() ?: return@mapNotNull null
                     }
                     is TraitImplSource.Derived -> source.value
                     is TraitImplSource.Collapsed -> source.value

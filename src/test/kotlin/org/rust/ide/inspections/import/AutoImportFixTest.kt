@@ -1263,6 +1263,164 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test import trait method UFCS of primitive`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `foo`">i32::foo/*caret*/</error>(123);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = i32::foo/*caret*/(123);
+        }
+    """)
+
+    fun `test import trait method UFCS of struct`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        struct S;
+        fn main() {
+            let x = <error descr="Unresolved reference: `foo`">S::foo/*caret*/</error>(123);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        struct S;
+        fn main() {
+            let x = S::foo/*caret*/(123);
+        }
+    """)
+
+    fun `test import trait method UFCS of explicit type-qualified path`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `foo`"><i32>::foo/*caret*/</error>(123);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self);
+            }
+
+            impl<T> Foo for T {
+                fn foo(&self) {}
+            }
+        }
+
+        fn main() {
+            let x = <i32>::foo/*caret*/(123);
+        }
+    """)
+
+    fun `test import trait associated constant`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                const C: i32; 
+            }
+
+            impl<T> Foo for T {
+                const C: i32 = 0;
+            }
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `C`">i32::C/*caret*/</error>(123);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                const C: i32; 
+            }
+
+            impl<T> Foo for T {
+                const C: i32 = 0;
+            }
+        }
+
+        fn main() {
+            let x = i32::C/*caret*/(123);
+        }
+    """)
+
+    fun `test import trait default method UFCS`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `foo`">i32::foo/*caret*/</error>(123);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo {
+                fn foo(&self) {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = i32::foo/*caret*/(123);
+        }
+    """)
+
     fun `test import reexported trait method`() = checkAutoImportFixByText("""
         mod foo {
             mod bar {
