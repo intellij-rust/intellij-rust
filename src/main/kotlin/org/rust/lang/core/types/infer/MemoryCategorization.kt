@@ -259,8 +259,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     private fun processPathExpr(pathExpr: RsPathExpr): Cmt {
         val type = inference.getExprType(pathExpr)
-        // TODO: infcx.getResolvedPaths
-        val declaration = inference.getResolvedPaths(pathExpr).singleOrNull() ?: return Cmt(pathExpr, ty = type)
+        val declaration = inference.getResolvedPath(pathExpr).singleOrNull()?.element ?: return Cmt(pathExpr, ty = type)
         return when (declaration) {
             is RsConstant -> {
                 if (!declaration.isConst) {
@@ -304,7 +303,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
     fun processRvalue(element: RsElement, tempScope: Region, ty: Ty): Cmt =
         Cmt(element, Rvalue(tempScope), Declared, ty)
 
-    fun walkPat(cmt: Cmt, pat: RsPat, callback: (Cmt, RsPat) -> Unit) {
+    fun walkPat(cmt: Cmt, pat: RsPat, callback: (Cmt, RsPat, RsPatBinding) -> Unit) {
         fun processTuplePats(pats: List<RsPat>) {
             for ((index, subPat) in pats.withIndex()) {
                 val subBinding = subPat.descendantsOfType<RsPatBinding>().firstOrNull() ?: continue
@@ -314,10 +313,12 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
             }
         }
 
-        callback(cmt, pat)
-
         when (pat) {
             is RsPatIdent -> {
+                val binding = pat.patBinding
+                if (binding.reference.resolve()?.isConstantLike != true) {
+                    callback(cmt, pat, binding)
+                }
                 if (pat.patBinding.reference.resolve() !is RsEnumVariant) {
                     pat.pat?.let { walkPat(cmt, it, callback) }
                 }
@@ -329,12 +330,20 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
             is RsPatStruct -> {
                 for (patField in pat.patFieldList) {
-                    val binding = patField.patBinding ?: continue
-                    val fieldType = inference.getBindingType(binding)
-                    val fieldName = patField.patFieldFull?.referenceName ?: continue
-                    val fieldPat = patField.patFieldFull?.pat ?: continue
-                    val fieldCmt = cmtOfField(pat, cmt, fieldName, fieldType)
-                    walkPat(fieldCmt, fieldPat, callback)
+                    val binding = patField.patBinding
+                    if (binding != null) {
+                        val fieldName = binding.referenceName
+                        val fieldType = inference.getBindingType(binding)
+                        val fieldCmt = cmtOfField(pat, cmt, fieldName, fieldType)
+                        callback(fieldCmt, pat, binding)
+                    } else {
+                        val patFieldFull = patField.patFieldFull ?: continue
+                        val fieldName = patFieldFull.referenceName
+                        val fieldPat = patFieldFull.pat
+                        val fieldType = inference.getPatType(fieldPat)
+                        val fieldCmt = cmtOfField(pat, cmt, fieldName, fieldType)
+                        walkPat(fieldCmt, fieldPat, callback)
+                    }
                 }
             }
 

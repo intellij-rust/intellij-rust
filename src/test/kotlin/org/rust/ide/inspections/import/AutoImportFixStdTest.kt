@@ -467,4 +467,20 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             let a = HashMap::new/*caret*/();
         }
     """)
+
+    fun `test import derived trait method UFCS`() = checkAutoImportFixByText("""
+        #[derive(Debug)]
+        pub struct S;
+        fn main() {
+            <error descr="Unresolved reference: `fmt`">S::fmt/*caret*/</error>(&S, panic!(""));
+        }
+    """, """
+        use std::fmt::Debug;
+        
+        #[derive(Debug)]
+        pub struct S;
+        fn main() {
+            S::fmt/*caret*/(&S, panic!(""));
+        }
+    """)
 }

@@ -3,14 +3,25 @@ hello
 */</fold>
 
 <fold text='/* ... */'>///
-/// Outer doc
+/// Outer eol doc
 ///</fold>
 fn foo() <fold text='{...}'>{}</fold>
 
 mod m <fold text='{...}'>{
 <fold text='/* ... */'>//!
-    //! Inner doc
+//! Inner eol doc
     //!</fold>
+}</fold>
+
+<fold text='/* ... */'>/**
+    Outer block doc
+*/</fold>
+fn foo() <fold text='{...}'>{}</fold>
+
+mod m <fold text='{...}'>{
+<fold text='/* ... */'>/*!
+    Inner block doc
+*/</fold>
 }</fold>
 
 <fold text='/* ... */'>/*

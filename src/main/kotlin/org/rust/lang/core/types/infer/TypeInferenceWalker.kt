@@ -295,7 +295,7 @@ class RsTypeInferenceWalker(
             if (variants.size > 1 && fnVariants.size == variants.size && path.path != null) {
                 val resolved = collapseToTrait(fnVariants)
                 if (resolved != null) {
-                    ctx.writePath(expr, variants.map { it.element })
+                    ctx.writePath(expr, variants.map { ResolvedPath.from(it) })
                     val subst = collapseSubst(
                         resolved,
                         variants.mapNotNull { e ->
@@ -315,7 +315,7 @@ class RsTypeInferenceWalker(
             resolveVariants
         }
 
-        ctx.writePath(expr, filteredVariants.mapNotNull { it.element })
+        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it) })
 
         val first = filteredVariants.singleOrNull() ?: return TyUnknown
         return instantiatePath(first.element ?: return TyUnknown, first, expr)
@@ -538,7 +538,7 @@ class RsTypeInferenceWalker(
         val ty = resolveTypeVarsWithObligations(callee.inferType()) // or error
         // `struct S; S();`
         if (callee is RsPathExpr) {
-            ctx.getResolvedPaths(callee).singleOrNull()?.let {
+            ctx.getResolvedPath(callee).singleOrNull()?.element?.let {
                 if (it is RsFieldsOwner && it.isFieldless) {
                     return ty
                 }
@@ -1229,7 +1229,7 @@ class RsTypeInferenceWalker(
             sizeExpr?.inferType(TyInteger.USize)
             val size = if (sizeExpr != null) {
                 val exprValue = RsConstExprEvaluator.evaluate(sizeExpr, TyInteger.USize) {
-                    ctx.getResolvedPaths(it).singleOrNull()
+                    ctx.getResolvedPath(it).singleOrNull()?.element
                 }
                 (exprValue as? ExprValue.Integer)?.value
             } else {
