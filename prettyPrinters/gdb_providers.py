@@ -218,23 +218,23 @@ def children_of_node(boxed_node, height, want_values):
         internal_type = lookup_type(internal_type_name)
         return node.cast(internal_type.pointer())
 
-    ptr = boxed_node['ptr']['pointer']
-    node = ptr[ZERO_FIELD]
-    node = cast_to_internal(node) if height > 0 else node
-    leaf = node['data'] if height > 0 else node.dereference()
-    keys = leaf['keys']['value']['value']
-    values = leaf['vals']['value']['value']
+    node_ptr = unwrap_unique_or_non_null(boxed_node['ptr'])
+    node_ptr = cast_to_internal(node_ptr) if height > 0 else node_ptr
+    leaf = node_ptr['data'] if height > 0 else node_ptr.dereference()
+    keys = leaf['keys']
+    values = leaf['vals']
     length = int(leaf['len'])
 
     for i in xrange(0, length + 1):
         if height > 0:
-            for child in children_of_node(node['edges'][i], height - 1, want_values):
+            child_ptr = node_ptr['edges'][i]['value']['value']
+            for child in children_of_node(child_ptr, height - 1, want_values):
                 yield child
         if i < length:
             if want_values:
-                yield (keys[i], values[i])
+                yield (keys[i]['value']['value'], values[i]['value']['value'])
             else:
-                yield keys[i]
+                yield keys[i]['value']['value']
 
 
 class StdBTreeSetProvider:
@@ -242,7 +242,7 @@ class StdBTreeSetProvider:
         self.valobj = valobj
 
     def to_string(self):
-        return "size=".format(self.valobj["map"]["length"])
+        return "size={}".format(self.valobj["map"]["length"])
 
     def children(self):
         root = self.valobj["map"]["root"]
@@ -260,7 +260,7 @@ class StdBTreeMapProvider:
         self.valobj = valobj
 
     def to_string(self):
-        return "size=".format(self.valobj["length"])
+        return "size={}".format(self.valobj["length"])
 
     def children(self):
         root = self.valobj["root"]
