@@ -28,7 +28,8 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): Cargo
         channel = default.channel,
         environmentVariables = default.env,
         allFeatures = default.allFeatures,
-        nocapture = default.nocapture
+        nocapture = default.nocapture,
+        emulateTerminal = default.emulateTerminal
     )
 
 fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommandLine, name: String? = null): RunnerAndConfigurationSettings {

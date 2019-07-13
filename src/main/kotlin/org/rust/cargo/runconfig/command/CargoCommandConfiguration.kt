@@ -45,6 +45,7 @@ class CargoCommandConfiguration(
     var command: String = "run"
     var allFeatures: Boolean = false
     var nocapture: Boolean = false
+    var emulateTerminal: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
@@ -55,6 +56,7 @@ class CargoCommandConfiguration(
         element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("nocapture", nocapture)
+        element.writeBool("emulateTerminal", emulateTerminal)
         element.writeEnum("backtrace", backtrace)
         element.writePath("workingDirectory", workingDirectory)
         env.writeExternal(element)
@@ -70,6 +72,7 @@ class CargoCommandConfiguration(
         element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("nocapture")?.let { nocapture = it }
+        element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         element.readPath("workingDirectory")?.let { workingDirectory = it }
         env = EnvironmentVariablesData.readExternal(element)
@@ -80,6 +83,7 @@ class CargoCommandConfiguration(
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         allFeatures = cmd.allFeatures
         nocapture = cmd.nocapture
+        emulateTerminal = cmd.emulateTerminal
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
@@ -140,7 +144,8 @@ class CargoCommandConfiguration(
                 channel,
                 env,
                 allFeatures,
-                nocapture
+                nocapture,
+                emulateTerminal
             )
         }
 

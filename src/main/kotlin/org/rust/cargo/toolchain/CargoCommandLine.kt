@@ -27,7 +27,8 @@ data class CargoCommandLine(
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val allFeatures: Boolean = false,
-    val nocapture: Boolean = false
+    val nocapture: Boolean = false,
+    val emulateTerminal: Boolean = false
 ) {
     /**
      * Adds [arg] to [additionalArguments] as an positional argument, in other words, inserts [arg] right after

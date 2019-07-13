@@ -10,6 +10,7 @@ import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
@@ -193,6 +194,7 @@ class Cargo(private val cargoExecutable: Path) {
                 backtraceMode,
                 environmentVariables,
                 parameters,
+                emulateTerminal,
                 http
             )
         }
@@ -245,6 +247,7 @@ class Cargo(private val cargoExecutable: Path) {
             backtraceMode: BacktraceMode,
             environmentVariables: EnvironmentVariablesData,
             parameters: List<String>,
+            emulateTerminal: Boolean,
             http: HttpConfigurable = HttpConfigurable.getInstance()
         ): GeneralCommandLine {
             val cmdLine = GeneralCommandLine(executablePath)
@@ -263,7 +266,11 @@ class Cargo(private val cargoExecutable: Path) {
                 BacktraceMode.NO -> Unit
             }
             environmentVariables.configureCommandLine(cmdLine, true)
-            return cmdLine
+            return if (emulateTerminal) {
+                PtyCommandLine(cmdLine).withConsoleMode(false)
+            } else {
+                cmdLine
+            }
         }
 
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
