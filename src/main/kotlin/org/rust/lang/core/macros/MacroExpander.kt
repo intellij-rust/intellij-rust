@@ -154,7 +154,12 @@ class MacroExpander(val project: Project) {
                 MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS ->
                     if (!substituteMacro(sb, ranges, child, subst)) return false
                 MACRO_REFERENCE -> {
-                    val value = subst.getVar((child.psi as RsMacroReference).referenceName) ?: return false
+                    val value = subst.getVar((child.psi as RsMacroReference).referenceName)
+                    if (value == null) {
+                        MacroExpansionMarks.substMetaVarNotFound.hit()
+                        sb.safeAppend(child.text)
+                        return@forEachChild
+                    }
                     val parensNeeded = value.kind == FragmentKind.Expr
                     if (parensNeeded) {
                         sb.append("(")
@@ -448,4 +453,5 @@ object MacroExpansionMarks {
     val groupInputEnd2 = Testmark("groupInputEnd2")
     val groupInputEnd3 = Testmark("groupInputEnd3")
     val groupMatchedEmptyTT = Testmark("groupMatchedEmptyTT")
+    val substMetaVarNotFound = Testmark("substMetaVarNotFound")
 }
