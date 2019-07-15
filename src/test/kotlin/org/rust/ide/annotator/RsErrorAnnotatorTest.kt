@@ -2310,4 +2310,143 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         } 
     """)
 
+
+    fun `test break in closure E0267`() = checkErrors("""
+        fn foo() {
+            let x = || { <error descr="`break` cannot be used in closures, only inside `loop` and `while` blocks [E0267]">break</error>; };
+        }
+    """)
+
+    fun `test continue in closure E0267`() = checkErrors("""
+        fn foo() {
+            let x = || { <error descr="`continue` cannot be used in closures, only inside `loop` and `while` blocks [E0267]">continue</error>; };
+        }
+    """)
+
+    fun `test break without loop E0268`() = checkErrors("""
+        fn foo() {
+            <error descr="`break` may only be used inside `loop` and `while` blocks [E0268]">break</error>;
+        }
+    """)
+
+    fun `test continue without loop E0268`() = checkErrors("""
+        fn foo() {
+            <error descr="`continue` may only be used inside `loop` and `while` blocks [E0268]">continue</error>;
+        }
+    """)
+
+
+    fun `test break in loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            loop {
+                break;
+            }
+        }
+    """)
+
+    fun `test break in while loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            while true {
+                break;
+            }
+        }
+    """)
+
+    fun `test break in for loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            for _ in 0..3 {
+                break;
+            }
+        }
+    """)
+
+
+    fun `test continue in loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            loop {
+                continue;
+            }
+        }
+    """)
+
+    fun `test continue in while loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            while true {
+                continue;
+            }
+        }
+    """)
+
+    fun `test continue in for loop E0267, E0268`() = checkErrors("""
+        fn foo() {
+            for _ in 0..3 {
+                continue;
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test break in block with label E0268`() = checkErrors("""
+        #![feature(label_break_value)]
+        fn main() {
+            let a = 'foo: {
+                break 'foo 1;
+            };
+            println!("{}", a);
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test continue in block with label E0268`() = checkErrors("""
+        #![feature(label_break_value)]
+        fn main() {
+            let a = 'foo: {
+                continue 'foo; // This test should not report E0268; compiler reports E0696 instead
+            };
+            println!("{}", a);
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test nested blocks E0268`() = checkErrors("""
+       #![feature(label_break_value)]
+
+        fn main() {
+            let a = 'a: {
+                let b = {
+                    if true {
+                        break 'a 123
+                    } else {
+                        123
+                    }
+                };
+                b
+            };
+        } 
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test closure inside loop E0268`() = checkErrors("""
+        #![feature(label_break_value)]
+    
+        fn main() {
+            for i in 1..10 {        
+                let a = |x: i32| <error descr="`break` cannot be used in closures, only inside `loop` and `while` blocks [E0267]">break</error>;
+                1
+            };
+        }
+    """)
+
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test loop inside closure E0268`() = checkErrors("""
+        #![feature(label_break_value)]
+    
+        fn main() {
+            || {
+                for i in 1..10 {
+                    break;
+                }
+            };
+        }
+    """)
 }

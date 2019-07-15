@@ -671,10 +671,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkBreakExpr(holder: AnnotationHolder, expr: RsBreakExpr) {
         checkLabelReferenceOwner(holder, expr)
+        checkLabelRefOwnerPlacementCorrectness(holder, expr)
     }
 
     private fun checkContExpr(holder: AnnotationHolder, expr: RsContExpr) {
         checkLabelReferenceOwner(holder, expr)
+        checkLabelRefOwnerPlacementCorrectness(holder, expr)
     }
 
     private fun checkLabelReferenceOwner(holder: AnnotationHolder, expr: RsLabelReferenceOwner) {
@@ -691,6 +693,23 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    // Detect E0267, E0268: break/continue used outside of loop
+    private fun checkLabelRefOwnerPlacementCorrectness(holder: AnnotationHolder, expr: RsLabelReferenceOwner) {
+        for (ancestor in expr.ancestors) {
+            // We are inside a loop, all is good
+            if (ancestor is RsLooplikeExpr) return
+            // let x = 'foo: { break 'foo: 1; }; is allowed (notice `'foo` label, without it would be invalid)
+            if (ancestor is RsBlockExpr && ancestor.labelDecl != null) return
+            // Reached the function definition - can't be in a loop
+            if (ancestor is RsFunction) break
+            if (ancestor is RsLambdaExpr) {
+                RsDiagnostic.LoopOnlyKeywordUsedInClosureError(expr.operator).addToHolder(holder)
+                return
+            }
+        }
+        // If we got here, we aren't inside a loop expr so emit an error
+        RsDiagnostic.LoopOnlyKeywordUsedOutsideOfLoopError(expr.operator).addToHolder(holder)
+    }
 
     private fun isInTraitImpl(o: RsVis): Boolean {
         val impl = o.parent?.parent?.parent

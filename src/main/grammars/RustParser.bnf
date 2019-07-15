@@ -1064,7 +1064,8 @@ PathExpr ::= OuterAttr* PathGenericArgsWithColons {
 WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
   pin = 'while'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsLooplikeExpr" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 Condition ::= [ let OrPats '=' ] NoStructLitExpr
@@ -1072,26 +1073,30 @@ Condition ::= [ let OrPats '=' ] NoStructLitExpr
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsLooplikeExpr"]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ContExpr ::= OuterAttr* continue Label? {
   implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsContMixin"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BreakExpr ::= OuterAttr* break Label? AnyExpr? {
   implements = [ "org.rust.lang.core.psi.ext.RsLabelReferenceOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+  mixin = "org.rust.lang.core.psi.ext.RsBreakMixin"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 ForExpr ::= OuterAttr* LabelDecl? for Pat in NoStructLitExpr SimpleBlock {
   pin = 'for'
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
-                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
+                 "org.rust.lang.core.psi.ext.RsLooplikeExpr" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
