@@ -53,12 +53,13 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
         if (executorId != this.executorId || profile !is CargoCommandConfiguration) {
             return false
         }
-        val cleaned = profile.clean().ok ?: return false
-        if (cleaned.cmd.command !in listOf("run", "test")) {
-            return false
-        }
 
-        return true
+        val cleaned = profile.clean().ok ?: return false
+        return when (cleaned.cmd.command) {
+            "run" -> true
+            "test" -> RsTestRunner.canRunCommandLine(cleaned.cmd)
+            else -> false
+        }
     }
 
     open fun getRunContentDescriptor(

@@ -16,7 +16,7 @@ class RsRunner : DefaultProgramRunner() {
             return false
         }
         val cleaned = profile.clean().ok ?: return false
-        return cleaned.cmd.command != "test"
+        return !RsTestRunner.canRunCommandLine(cleaned.cmd)
     }
 
     override fun getRunnerId(): String = "RustRunner"

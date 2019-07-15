@@ -48,6 +48,90 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         """, sourceElement)
     }
 
+    fun `test doctests statuses`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub fn doctest_should_pass() {}
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub fn doctest_should_fail() {}
+                    /// ```
+                    /// true;
+                    /// ```
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub fn many_doctests() {}
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub mod non_fn_doctest_should_pass {}
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub mod non_fn_doctest_should_fail {}
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub mod mod_with_doctests_should_pass {
+                        /// ```
+                        /// true;
+                        /// ```
+                        pub fn doctest_should_pass() {}
+                        /// ```
+                        /// assert_eq!(1, 2);
+                        /// ```
+                        pub fn doctest_should_fail() {}
+                    }
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub mod mod_with_doctests_should_fail {
+                        /// ```
+                        /// true;
+                        /// ```
+                        pub fn doctest_should_pass() {}
+                        /// ```
+                        /// assert_eq!(1, 2);
+                        /// ```
+                        pub fn doctest_should_fail() {}
+                    }
+                """)
+            }
+        }
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](-)
+            .sandbox (doc-tests)(-)
+            ..doctest_should_fail (line 5)(-)
+            ..doctest_should_pass (line 1)(+)
+            ..many_doctests (line 12)(-)
+            ..many_doctests (line 9)(+)
+            ..mod_with_doctests_should_fail (line 37)(-)
+            ..mod_with_doctests_should_fail(-)
+            ...doctest_should_fail (line 45)(-)
+            ...doctest_should_pass (line 41)(+)
+            ..mod_with_doctests_should_pass (line 24)(+)
+            ..mod_with_doctests_should_pass(-)
+            ...doctest_should_fail (line 32)(-)
+            ...doctest_should_pass (line 28)(+)
+            ..non_fn_doctest_should_fail (line 20)(-)
+            ..non_fn_doctest_should_pass (line 16)(+)
+        """, sourceElement)
+    }
+
     fun `test not executed tests are not shown`() {
         val testProject = buildProject {
             toml("Cargo.toml", """
@@ -71,6 +155,11 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                     #[test]
                     #[ignore]
                     fn test_ignored() {}
+
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub fn doctest_should_pass() {}
                 """)
             }
         }
@@ -81,6 +170,91 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
             .sandbox(-)
             ..test_should_fail(-)
         """)
+    }
+
+    fun `test regular tests and doc tests`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[test]
+                    fn test_should_pass() {}
+
+                    #[test]
+                    fn test_should_fail() {
+                        assert_eq!(1, 2)
+                    }
+
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub fn doctest_should_pass() {}
+                    
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub fn doctest_should_fail() {}
+                """)
+            }
+        }
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](-)
+            .sandbox(-)
+            ..test_should_fail(-)
+            ..test_should_pass(+)
+            .sandbox (doc-tests)(-)
+            ..doctest_should_fail (line 14)(-)
+            ..doctest_should_pass (line 9)(+)
+        """, sourceElement)
+    }
+
+    fun `test doctests only`() {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[test]
+                    fn test_should_pass() {}
+
+                    #[test]
+                    fn test_should_fail() {
+                        assert_eq!(1, 2)
+                    }
+
+                    /// ```
+                    /// true;
+                    /// ```
+                    pub fn doctest_should_pass() {}
+                    
+                    /// ```
+                    /// assert_eq!(1, 2);
+                    /// ```
+                    pub fn doctest_should_fail() {}
+                """)
+            }
+        }
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+
+        checkTestTree("""
+            [root](-)
+            .sandbox (doc-tests)(-)
+            ..doctest_should_fail (line 14)(-)
+            ..doctest_should_pass (line 9)(+)
+        """, sourceElement, onlyDoctests = true)
     }
 
     fun `test multiple failed tests`() {
@@ -273,6 +447,14 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
 
                     #[test]
                     fn test() {}
+
+                    /// ```
+                    /// 1;
+                    /// ```
+                    /// ```
+                    /// 2;
+                    /// ```
+                    pub fn doctest() {}
                 """)
             }
         }
@@ -288,6 +470,12 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
 
         val testInner = root.findTestByName("sandbox::test_mod::test")
         assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test_mod::test".toRegex().matches(testInner.locationUrl ?: ""))
+
+        val doctest1 = root.findTestByName("sandbox (doc-tests)::doctest (line 10)")
+        assertEquals("cargo:test://sandbox-0doctests::doctest", doctest1.locationUrl ?: "")
+
+        val doctest2 = root.findTestByName("sandbox (doc-tests)::doctest (line 13)")
+        assertEquals("cargo:test://sandbox-0doctests::doctest", doctest2.locationUrl ?: "")
     }
 
     fun `test test duration`() {
@@ -329,8 +517,17 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         }
     }
 
-    private fun checkTestTree(expectedFormattedTestTree: String, sourceElement: PsiElement? = null) {
+    private fun checkTestTree(
+        expectedFormattedTestTree: String,
+        sourceElement: PsiElement? = null,
+        onlyDoctests: Boolean = false
+    ) {
         val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
+        if (onlyDoctests) {
+            val cmd = configuration.clean().ok?.cmd!!
+            val cmdWithDoc = cmd.copy(additionalArguments = listOf("--doc") + cmd.additionalArguments)
+            configuration.setFromCmd(cmdWithDoc)
+        }
         val root = executeAndGetTestRoot(configuration)
         assertEquals(expectedFormattedTestTree.trimIndent(), getFormattedTestTree(root))
     }
