@@ -33,6 +33,7 @@ enum class RsColor(humanName: String, val default: TextAttributesKey? = null) {
 
     PRIMITIVE_TYPE("Types//Primitive", Default.KEYWORD),
     STRUCT("Types//Struct", Default.CLASS_NAME),
+    UNION("Types//Union", Default.CLASS_NAME),
     TRAIT("Types//Trait", Default.INTERFACE_NAME),
     ENUM("Types//Enum", Default.CLASS_NAME),
     ENUM_VARIANT("Types//Enum variant", Default.STATIC_FIELD),

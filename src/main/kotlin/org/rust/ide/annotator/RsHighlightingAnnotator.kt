@@ -107,7 +107,10 @@ private fun colorFor(element: RsElement): RsColor? = when (element) {
     is RsPatBinding -> {
         if (element.ancestorStrict<RsValueParameter>() != null) RsColor.PARAMETER else null
     }
-    is RsStructItem -> RsColor.STRUCT
+    is RsStructItem -> when (element.kind) {
+        RsStructKind.STRUCT -> RsColor.STRUCT
+        RsStructKind.UNION -> RsColor.UNION
+    }
     is RsTraitItem -> RsColor.TRAIT
     is RsTypeAlias -> RsColor.TYPE_ALIAS
     is RsTypeParameter -> RsColor.TYPE_PARAMETER
