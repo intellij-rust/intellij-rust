@@ -236,9 +236,9 @@ class Cargo(private val cargoExecutable: Path) {
             }
 
             // Force colors
-            val forceColors = colors
-                && commandLine.command in COLOR_ACCEPTING_COMMANDS
-                && commandLine.additionalArguments.none { it.startsWith("--color") }
+            val forceColors = colors &&
+                commandLine.command in COLOR_ACCEPTING_COMMANDS &&
+                commandLine.additionalArguments.none { it.startsWith("--color") }
             if (forceColors) pre.add(0, "--color=always")
 
             return commandLine.copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)

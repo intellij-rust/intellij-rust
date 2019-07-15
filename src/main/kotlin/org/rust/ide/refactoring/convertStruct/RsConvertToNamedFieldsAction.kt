@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -24,6 +23,7 @@ import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.openapiext.isHeadlessEnvironment
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -42,7 +42,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
         val offset = editor.caretModel.offset
         val element = file.findElementAt(offset)?.ancestorOrSelf<RsFieldsOwner>() ?: return
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        if (isHeadlessEnvironment) {
             val processor = RsConvertToNamedFieldsProcessor(project, element, true)
             processor.setPreviewUsages(false)
             processor.run()

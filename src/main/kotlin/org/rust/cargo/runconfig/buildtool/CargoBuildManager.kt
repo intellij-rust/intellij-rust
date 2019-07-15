@@ -29,7 +29,8 @@ import com.intellij.util.ui.UIUtil
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.util.CargoArgsParser
+import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.openapiext.saveAllDocuments
 import java.util.concurrent.Future
 
@@ -68,7 +69,7 @@ object CargoBuildManager {
             isTestBuild = buildConfiguration.configuration.command == "test"
         )) {
             val viewManager = ServiceManager.getService(project, BuildViewManager::class.java)
-            if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+            if (!isHeadlessEnvironment) {
                 val buildToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD)
                 buildToolWindow?.setAvailable(true, null)
                 buildToolWindow?.show(null)
@@ -86,7 +87,7 @@ object CargoBuildManager {
     ): FutureResult<CargoBuildResult> {
         val processCreationLock = Any()
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        if (isHeadlessEnvironment) {
             context.indicator = EmptyProgressIndicator()
         } else {
             val indicatorResult = FutureResult<ProgressIndicator>()
@@ -150,7 +151,7 @@ object CargoBuildManager {
             "build" -> true
             "test" -> {
                 val additionalArguments = args.drop(1)
-                val (commandArguments, _) = CargoArgsParser.parseArgs(command, additionalArguments)
+                val (commandArguments, _) = parseArgs(command, additionalArguments)
                 "--no-run" in commandArguments
             }
             else -> false
@@ -164,7 +165,7 @@ object CargoBuildManager {
         val command = args.firstOrNull() ?: return null
         if (command !in BUILDABLE_COMMANDS) return null
         val additionalArguments = args.drop(1)
-        val (commandArguments, _) = CargoArgsParser.parseArgs(command, additionalArguments)
+        val (commandArguments, _) = parseArgs(command, additionalArguments)
 
         // https://github.com/intellij-rust/intellij-rust/issues/3707
         if (command == "test" && commandArguments.contains("--doc")) return null
