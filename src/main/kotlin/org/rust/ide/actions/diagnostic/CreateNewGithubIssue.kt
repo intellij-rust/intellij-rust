@@ -101,7 +101,7 @@ class CreateNewGithubIssue : DumbAwareAction(
             get() {
                 if (FileDocumentManager.getInstance().getFile(document)?.isRustFile != true) return ""
                 val selectedCode = selectionModel.selectedText ?: return ""
-                return "```rust\n$selectedCode```"
+                return "```rust\n$selectedCode\n```"
             }
     }
 }
