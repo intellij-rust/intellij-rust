@@ -28,6 +28,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -152,7 +153,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         checkNotCallingDrop(o, holder)
         val deepResolve = path.reference.deepResolve()
         val owner = deepResolve as? RsFieldsOwner ?: return
-        if (owner.tupleFields == null) {
+        if (owner.tupleFields == null && !owner.implLookup.isAnyFn(owner.asTy())) {
             RsDiagnostic.ExpectedFunction(o).addToHolder(holder)
         }
     }

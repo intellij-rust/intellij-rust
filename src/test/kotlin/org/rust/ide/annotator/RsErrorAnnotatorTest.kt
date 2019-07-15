@@ -1644,6 +1644,73 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
+    fun `test expected function on a impl NotFn E0618`() = checkErrors("""
+        struct Foo;
+        trait NotFn<Args> {
+            type Output;
+            fn call(&self, args: Args) -> Self::Output;
+        }
+        impl NotFn<()> for Foo {
+            type Output = ();
+            fn call(&self, (): ()) {}
+        }
+        
+        fn bar() {
+            <error descr="Expected function, found `Foo` [E0618]">Foo</error>();
+        }
+    """)
+
+    fun `test expected function on a impl FnOnce E0618`() = checkErrors("""
+        struct Foo;
+        #[lang = "fn_once"]
+        trait FnOnce<Args> {
+            type Output;
+            fn call_once(self, args: Args) -> Self::Output;
+        }
+        impl FnOnce<()> for Foo {
+            type Output = ();
+            fn call_once(self, (): ()) {}
+        }
+        
+        fn bar() {
+            Foo();
+        }
+    """)
+
+    fun `test expected function on a impl FnMut E0618`() = checkErrors("""
+        struct Foo;
+        #[lang = "fn_mut"]
+        trait FnMut<Args> {
+            type Output;
+            fn call(&mut self, args: Args) -> Self::Output;
+        }
+        impl FnMut<()> for Foo {
+            type Output = ();
+            fn call(&mut self, (): ()) {}
+        }
+        
+        fn bar() {
+            Foo();
+        }
+    """)
+
+    fun `test expected function on a impl Fn E0618`() = checkErrors("""
+        struct Foo;
+        #[lang = "fn"]
+        trait Fn<Args> {
+            type Output;
+            fn call(&self, args: Args) -> Self::Output;
+        }
+        impl Fn<()> for Foo {
+            type Output = ();
+            fn call(&self, (): ()) {}
+        }
+        
+        fn bar() {
+            Foo();
+        }
+    """)
+
     @MockRustcVersion("1.34.0")
     fun `test label_break_value 1`() = checkErrors("""
         fn main() {
