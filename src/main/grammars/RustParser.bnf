@@ -267,6 +267,7 @@ private AttrsAndVis ::= OuterAttr* Vis?
 private Item ::= Constant
                | TypeAlias
                | Function
+               | TraitAlias
                | TraitItem
                | ImplItem
                | ModItem
@@ -384,7 +385,9 @@ ConstParameter ::= OuterAttr* const identifier TypeAscription {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TypeParamBounds ::= ':' [ Polybound ('+' Polybound)* '+'? ] {
+private TypeBounds ::= [ Polybound ('+' Polybound)* '+'? ]
+
+TypeParamBounds ::= ':' TypeBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -758,6 +761,25 @@ private Member ::= !'}' ( Function | Constant | TypeAlias | MacroCall ) {
 }
 private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default"
  | "async" | '}')
+
+TraitAliasBounds ::= TypeBounds {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+TraitAlias ::= AttrsAndVis trait identifier TypeParameterList? '=' TraitAliasBounds? WhereClause? ';' {
+  pin = 5
+  implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsGenericDeclaration"
+                 "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 /* "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" */ ]
+  mixin = "org.rust.lang.core.psi.ext.RsTraitAliasImplMixin"
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
+  stubClass = "org.rust.lang.core.stubs.RsTraitAliasStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Types

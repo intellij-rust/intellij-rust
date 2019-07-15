@@ -87,7 +87,7 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiErrorElement:'#', <constant>, <enum item>, <extern crate item>, <foreign mod item>, <function>, <impl item>, <macro 2>, <macro call>, <macro>, <mod decl item>, <mod item>, <stmt mode expr>, <stmt>, <struct item>, <trait item>, <type alias> or <use item> expected, got '+'
+      PsiErrorElement:'#', <constant>, <enum item>, <extern crate item>, <foreign mod item>, <function>, <impl item>, <macro 2>, <macro call>, <macro>, <mod decl item>, <mod item>, <stmt mode expr>, <stmt>, <struct item>, <trait alias>, <trait item>, <type alias> or <use item> expected, got '+'
         PsiElement(+)('+')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
