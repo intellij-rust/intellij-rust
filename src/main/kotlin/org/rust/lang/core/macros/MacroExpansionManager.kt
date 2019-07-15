@@ -727,12 +727,8 @@ private class MacroExpansionTaskQueue(val project: Project) {
             }
 
             val indicator = when {
-                ApplicationManager.getApplication().isHeadlessEnvironment ->
-                    EmptyProgressIndicator()
-
-                task is MacroExpansionTaskBase && task.isProgressBarDelayed ->
-                    DelayedBackgroundableProcessIndicator(task, 2000)
-
+                isHeadlessEnvironment -> EmptyProgressIndicator()
+                task is MacroExpansionTaskBase && task.isProgressBarDelayed -> DelayedBackgroundableProcessIndicator(task, 2000)
                 else -> BackgroundableProcessIndicator(task)
             }
 

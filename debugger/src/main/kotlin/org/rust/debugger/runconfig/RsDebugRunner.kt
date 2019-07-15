@@ -25,10 +25,10 @@ import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.RsExecutableRunner
 import org.rust.debugger.settings.RsDebuggerSettings
 
-const val ERROR_MESSAGE_TITLE: String = "Debugging is not possible"
+private const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
 
 class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
-    override fun getRunnerId(): String = "RsDebugRunner"
+    override fun getRunnerId(): String = RUNNER_ID
 
     override fun showRunContent(
         state: CargoRunStateBase,
@@ -55,6 +55,14 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
             .runContentDescriptor
     }
 
+    override fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean {
+        if (CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty()) {
+            project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
+            return false
+        }
+        return true
+    }
+
     override fun checkToolchainConfigured(project: Project): Boolean {
         val toolchains = CPPToolchains.getInstance()
         val toolchain = toolchains.defaultToolchain
@@ -79,11 +87,7 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
         return true
     }
 
-    override fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean {
-        if (CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty()) {
-            project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
-            return false
-        }
-        return true
+    companion object {
+        const val RUNNER_ID: String = "RsDebugRunner"
     }
 }

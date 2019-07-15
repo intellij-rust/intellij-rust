@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -16,6 +15,7 @@ import com.intellij.ui.components.JBCheckBox
 import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.openapiext.isHeadlessEnvironment
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -31,7 +31,7 @@ class RsConvertToTupleAction : RsBaseEditorRefactoringAction() {
         val offset = editor.caretModel.offset
         val element = file.findElementAt(offset)?.ancestorOrSelf<RsFieldsOwner>() ?: return
 
-        if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        if (isHeadlessEnvironment) {
             val processor = RsConvertToTupleProcessor(project, element, true)
             processor.setPreviewUsages(false)
             processor.run()

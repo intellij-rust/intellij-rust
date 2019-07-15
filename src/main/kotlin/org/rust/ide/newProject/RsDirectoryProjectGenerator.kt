@@ -9,7 +9,6 @@ import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.ide.util.projectWizard.CustomStepProjectGenerator
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,6 +17,7 @@ import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
 import org.rust.ide.icons.RsIcons
+import org.rust.openapiext.isHeadlessEnvironment
 import java.io.File
 import javax.swing.Icon
 
@@ -44,7 +44,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         val generatedFiles = settings.toolchain?.rawCargo()?.init(module, baseDir, createBinary) ?: return
 
         // Open new files
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+        if (!isHeadlessEnvironment) {
             val navigation = PsiNavigationSupport.getInstance()
             navigation.createNavigatable(project, generatedFiles.manifest, -1).navigate(false)
             for (file in generatedFiles.sourceFiles) {

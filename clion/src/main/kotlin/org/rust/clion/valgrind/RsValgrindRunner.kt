@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.jetbrains.cidr.cpp.valgrind.ValgrindExecutor
 import org.rust.cargo.runconfig.RsExecutableRunner
 
-private const val ERROR_MESSAGE_TITLE: String = "Valgrind is not possible"
+private const val ERROR_MESSAGE_TITLE: String = "Unable to run Valgrind"
 
 class RsValgrindRunner : RsExecutableRunner(ValgrindExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID

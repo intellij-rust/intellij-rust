@@ -38,15 +38,15 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import java.io.File
 import java.io.IOException
 
-private val LOG = Logger.getInstance(RsValgrindConfigurationExtension::class.java.name)
+private val LOG: Logger = Logger.getInstance(RsValgrindConfigurationExtension::class.java.name)
 
 class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
-    override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean {
-        return true
-    }
+    override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
 
-    override fun isEnabledFor(applicableConfiguration: CargoCommandConfiguration, runnerSettings: RunnerSettings?): Boolean =
-        SystemInfo.isLinux || SystemInfo.isMac
+    override fun isEnabledFor(
+        applicableConfiguration: CargoCommandConfiguration,
+        runnerSettings: RunnerSettings?
+    ): Boolean = SystemInfo.isLinux || SystemInfo.isMac
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -144,7 +144,6 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         } catch (e: IOException) {
             LOG.warn("Exception during processListener setup: $e")
         }
-
     }
 
     private fun configureUIListeners(
@@ -181,7 +180,12 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         }
     }
 
-    private fun <T> putUserData(key: Key<T>, value: T, configuration: CargoCommandConfiguration, context: ConfigurationExtensionContext) {
+    private fun <T> putUserData(
+        key: Key<T>,
+        value: T,
+        configuration: CargoCommandConfiguration,
+        context: ConfigurationExtensionContext
+    ) {
         if (configuration.getUserData<Boolean>(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
             configuration.putUserData(key, value)
         } else {
@@ -189,11 +193,14 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         }
     }
 
-    private fun <T> getUserData(key: Key<T>, configuration: CargoCommandConfiguration, context: ConfigurationExtensionContext): T? {
-        return if (configuration.getUserData(STORE_DATA_IN_RUN_CONFIGURATION) == true)
-            configuration.getUserData(key)
-        else
-            context.getUserData(key)
+    private fun <T> getUserData(
+        key: Key<T>,
+        configuration: CargoCommandConfiguration,
+        context: ConfigurationExtensionContext
+    ): T? = if (configuration.getUserData(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
+        configuration.getUserData(key)
+    } else {
+        context.getUserData(key)
     }
 
     companion object {
