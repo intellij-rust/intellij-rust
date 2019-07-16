@@ -24,7 +24,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 
@@ -56,10 +55,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             waitingIndicator
         )
 
-        if (!isHeadlessEnvironment) {
-            WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
-        }
-
+        WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
         buildSessionsQueue.run(queuedTask, null, EmptyProgressIndicator())
     }
 
@@ -173,7 +169,6 @@ private class BackgroundableProjectTaskRunner(
     }
 
     private fun waitForStart(): Boolean {
-        if (isHeadlessEnvironment) return true
         try {
             // Check if this build wasn't cancelled while it was in queue through waiting indicator
             val cancelled = waitingIndicator.get().isCanceled

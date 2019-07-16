@@ -21,6 +21,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
 abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
@@ -29,6 +30,10 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
         val factory = configurationType.factory
         return factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
     }
+
+    protected fun createExecutableRunConfigurationFromContext(
+        location: Location<PsiElement>? = null
+    ): CargoCommandConfiguration = createRunConfigurationFromContext(CargoExecutableRunConfigurationProducer(), location)
 
     protected fun createTestRunConfigurationFromContext(
         location: Location<PsiElement>? = null

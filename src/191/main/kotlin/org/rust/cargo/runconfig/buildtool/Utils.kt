@@ -24,3 +24,17 @@ fun BuildOutputInstantReaderImpl.closeAndGetFuture(): CompletableFuture<Unit> =
     CompletableFuture.completedFuture(close())
 
 fun BuildProgressListener.onEvent(parentEventId: Any, event: BuildEvent) = onEvent(event)
+
+object EmptyBuildProgressListener : BuildProgressListener {
+    override fun onEvent(event: BuildEvent) = Unit
+}
+
+@Suppress("UnstableApiUsage")
+class MockBuildProgressListener : BuildProgressListener {
+    private val _eventHistory: MutableList<BuildEvent> = mutableListOf()
+    val eventHistory: List<BuildEvent> get() = _eventHistory
+
+    override fun onEvent(event: BuildEvent) {
+        _eventHistory.add(event)
+    }
+}

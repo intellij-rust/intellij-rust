@@ -281,11 +281,11 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
     }
 
     companion object {
+        const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
+
         private val PARSER: JsonParser = JsonParser()
 
         private val PROGRESS_TOTAL_RE: Regex = """(\d+)/(\d+)""".toRegex()
-
-        private const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
 
         private val ERROR_OR_WARNING: List<MessageEvent.Kind> =
             listOf(MessageEvent.Kind.ERROR, MessageEvent.Kind.WARNING)

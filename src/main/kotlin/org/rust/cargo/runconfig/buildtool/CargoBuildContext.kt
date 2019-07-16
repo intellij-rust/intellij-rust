@@ -17,8 +17,8 @@ import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 
@@ -29,7 +29,7 @@ class CargoBuildContext(
     val progressTitle: String,
     val isTestBuild: Boolean
 ) {
-    val buildId: String = "build:" + UUID.randomUUID()
+    val buildId: Any = if (isUnitTestMode) CargoBuildManager.testBuildId ?: Any() else Any()
 
     val project: Project get() = cargoProject.project
     val workingDirectory: Path get() = cargoProject.workingDirectory
