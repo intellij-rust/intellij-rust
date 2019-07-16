@@ -82,8 +82,8 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override val skipTestReason: String?
         get() {
-            if (rustup == null) return "No rustup"
-            if (stdlib == null) return "No stdlib"
+            if (rustup == null) throw IllegalStateException("rustup is null")
+            if (stdlib == null) throw IllegalStateException("no stdlib")
             return delegate.skipTestReason
         }
 
