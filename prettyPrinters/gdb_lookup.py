@@ -18,6 +18,17 @@ def classify_rust_type(type):
     return RustType.OTHER
 
 
+def check_enum_discriminant(valobj):
+    content = valobj[valobj.type.fields()[0]]
+    fields = content.type.fields()
+    if len(fields) > 1:
+        discriminant = int(content[fields[0]]) + 1
+        if discriminant > len(fields):
+            # invalid discriminant
+            return False
+    return True
+
+
 def lookup(valobj):
     rust_type = classify_rust_type(valobj.type)
 
@@ -26,7 +37,8 @@ def lookup(valobj):
     if rust_type == RustType.TUPLE:
         return TupleProvider(valobj)
     if rust_type == RustType.ENUM:
-        return EnumProvider(valobj)
+        if check_enum_discriminant(valobj):
+            return EnumProvider(valobj)
 
     if rust_type == RustType.STD_STRING:
         return StdStringProvider(valobj)
