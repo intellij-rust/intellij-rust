@@ -11,8 +11,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.util.DownloadResult
@@ -42,7 +40,7 @@ class Rustup(
         GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "list")
-            .execute(null)
+            .execute()
             ?.stdoutLines
             ?.map { Component.from(it) }
             ?: emptyList()
