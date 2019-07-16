@@ -50,13 +50,11 @@ class Rustfmt(private val rustfmtExecutable: Path) {
         }
 
         val processOutput = try {
-            cargoProject.project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
-                GeneralCommandLine(rustfmtExecutable)
-                    .withWorkDirectory(cargoProject.workingDirectory)
-                    .withParameters(arguments)
-                    .withCharset(Charsets.UTF_8)
-                    .execute(owner, false, stdIn = document.text.toByteArray())
-            }
+            GeneralCommandLine(rustfmtExecutable)
+                .withWorkDirectory(cargoProject.workingDirectory)
+                .withParameters(arguments)
+                .withCharset(Charsets.UTF_8)
+                .execute(owner, false, stdIn = document.text.toByteArray())
         } catch (e: ExecutionException) {
             if (isUnitTestMode) throw e else return
         }
