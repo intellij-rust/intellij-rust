@@ -1,6 +1,9 @@
 FROM ubuntu:16.04
 MAINTAINER Arseniy Pendryak <arseniy.pendryak@jtebrains.com>
 
+ENV HOME /home/test
+USER test
+
 RUN apt-get update
 
 RUN apt-get -y install curl
@@ -15,7 +18,7 @@ RUN java -version
 
 # Intall rustup
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
-ENV PATH root/.cargo/bin:$PATH
+ENV PATH $HOME/.cargo/bin:$PATH
 RUN echo $PATH
 
 RUN rustup component add rust-src
