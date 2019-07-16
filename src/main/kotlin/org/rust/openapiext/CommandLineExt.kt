@@ -13,6 +13,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
@@ -28,12 +29,8 @@ fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
     val output = try {
         val handler = CapturingProcessHandler(this)
-
         LOG.info("Executing `$commandLineString`")
-        if (timeoutInMilliseconds != null)
-            handler.runProcess(timeoutInMilliseconds)
-        else
-            handler.runProcess()
+        handler.runProcessWithGlobalProgress(timeoutInMilliseconds)
     } catch (e: ExecutionException) {
         LOG.warn("Failed to run executable", e)
         return null
@@ -88,12 +85,7 @@ fun GeneralCommandLine.execute(
     }
 
     val output = try {
-        val indicator = ProgressManager.getGlobalProgressIndicator()
-        if (indicator != null) {
-            handler.runProcessWithProgressIndicator(indicator)
-        } else {
-            handler.runProcess()
-        }
+        handler.runProcessWithGlobalProgress(null)
     } finally {
         Disposer.dispose(cargoKiller)
     }
@@ -109,5 +101,23 @@ private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput)
         stdout : ${output.stdout}
         stderr : ${output.stderr}
     """.trimIndent()
+
+private fun CapturingProcessHandler.runProcessWithGlobalProgress(timeoutInMilliseconds: Int? = null): ProcessOutput {
+    return runProcess(ProgressManager.getGlobalProgressIndicator(), timeoutInMilliseconds)
+}
+
+private fun CapturingProcessHandler.runProcess(
+    indicator: ProgressIndicator?,
+    timeoutInMilliseconds: Int? = null
+): ProcessOutput {
+    return when {
+        indicator != null && timeoutInMilliseconds != null ->
+            runProcessWithProgressIndicator(indicator, timeoutInMilliseconds)
+
+        indicator != null -> runProcessWithProgressIndicator(indicator)
+        timeoutInMilliseconds != null -> runProcess(timeoutInMilliseconds)
+        else -> runProcess()
+    }
+}
 
 val ProcessOutput.isSuccess: Boolean get() = !isTimeout && !isCancelled && exitCode == 0
