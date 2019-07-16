@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.buildtool
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildViewManager
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -24,14 +25,17 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SystemNotifications
 import com.intellij.ui.content.MessageView
+import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.isHeadlessEnvironment
+import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 import java.util.concurrent.Future
 
@@ -71,7 +75,12 @@ object CargoBuildManager {
             progressTitle = "Building...",
             isTestBuild = buildConfiguration.configuration.command == "test"
         )) {
-            val viewManager = ServiceManager.getService(project, BuildViewManager::class.java)
+            val buildProgressListener = if (isUnitTestMode) {
+                mockBuildProgressListener ?: EmptyBuildProgressListener
+            } else {
+                ServiceManager.getService(project, BuildViewManager::class.java)
+            }
+
             if (!isHeadlessEnvironment) {
                 val buildToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD)
                 buildToolWindow?.setAvailable(true, null)
@@ -79,7 +88,7 @@ object CargoBuildManager {
             }
 
             processHandler = state.startProcess(emulateTerminal = true)
-            processHandler.addProcessListener(CargoBuildListener(this, viewManager))
+            processHandler.addProcessListener(CargoBuildListener(this, buildProgressListener))
             processHandler.startNotify()
         }
     }
@@ -90,46 +99,56 @@ object CargoBuildManager {
     ): FutureResult<CargoBuildResult> {
         val processCreationLock = Any()
 
-        if (isHeadlessEnvironment) {
-            context.indicator = EmptyProgressIndicator()
-        } else {
-            val indicatorResult = FutureResult<ProgressIndicator>()
-            UIUtil.invokeLaterIfNeeded {
-                object : Task.Backgroundable(context.project, context.taskName, true) {
-                    override fun run(indicator: ProgressIndicator) {
-                        indicatorResult.set(indicator)
+        when {
+            isUnitTestMode ->
+                context.indicator = mockProgressIndicator ?: EmptyProgressIndicator()
+            isHeadlessEnvironment ->
+                context.indicator = EmptyProgressIndicator()
+            else -> {
+                val indicatorResult = FutureResult<ProgressIndicator>()
+                UIUtil.invokeLaterIfNeeded {
+                    object : Task.Backgroundable(context.project, context.taskName, true) {
+                        override fun run(indicator: ProgressIndicator) {
+                            indicatorResult.set(indicator)
 
-                        var wasCanceled = false
-                        while (!context.result.isDone) {
-                            if (!wasCanceled && indicator.isCanceled) {
-                                wasCanceled = true
-                                synchronized(processCreationLock) {
-                                    context.processHandler.destroyProcess()
+                            var wasCanceled = false
+                            while (!context.result.isDone) {
+                                if (!wasCanceled && indicator.isCanceled) {
+                                    wasCanceled = true
+                                    synchronized(processCreationLock) {
+                                        context.processHandler.destroyProcess()
+                                    }
+                                }
+
+                                try {
+                                    Thread.sleep(100)
+                                } catch (e: InterruptedException) {
+                                    throw ProcessCanceledException(e)
                                 }
                             }
-
-                            try {
-                                Thread.sleep(100)
-                            } catch (e: InterruptedException) {
-                                throw ProcessCanceledException(e)
-                            }
                         }
-                    }
-                }.queue()
-            }
+                    }.queue()
+                }
 
-            try {
-                context.indicator = indicatorResult.get()
-                context.indicator.text = context.progressTitle
-                context.indicator.text2 = ""
-            } catch (e: ExecutionException) {
-                context.result.setException(e)
-                return context.result
+                try {
+                    context.indicator = indicatorResult.get()
+                } catch (e: ExecutionException) {
+                    context.result.setException(e)
+                    return context.result
+                }
             }
         }
 
+        context.indicator.text = context.progressTitle
+        context.indicator.text2 = ""
+
         ApplicationManager.getApplication().executeOnPooledThread {
             if (!context.waitAndStart()) return@executeOnPooledThread
+
+            if (isUnitTestMode) {
+                context.doExecute()
+                return@executeOnPooledThread
+            }
 
             TransactionGuard.submitTransaction(context.project, Runnable {
                 synchronized(processCreationLock) {
@@ -219,6 +238,20 @@ object CargoBuildManager {
         val additionalArguments = commandLine.additionalArguments.toMutableList()
         additionalArguments.remove("--quiet")
         addFormatJsonOption(additionalArguments, "--message-format")
-        commandLine.copy(additionalArguments = additionalArguments)
+        val environmentVariables = EnvironmentVariablesData.create(
+            EnvironmentUtil.getEnvironmentMap() +
+                commandLine.environmentVariables.envs - "CI" + ("TERM" to "ansi"),
+            false
+        )
+        commandLine.copy(additionalArguments = additionalArguments, environmentVariables = environmentVariables)
     }
+
+    @TestOnly
+    var testBuildId: Any? = null
+
+    @TestOnly
+    var mockBuildProgressListener: MockBuildProgressListener? = null
+
+    @TestOnly
+    var mockProgressIndicator: MockProgressIndicator? = null
 }
