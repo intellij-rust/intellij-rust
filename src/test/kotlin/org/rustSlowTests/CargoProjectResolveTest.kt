@@ -6,7 +6,7 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.util.SystemInfo
-import org.rust.cargo.MinRustcVersion
+import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
