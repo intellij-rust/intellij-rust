@@ -60,7 +60,7 @@ class Cargo(private val cargoExecutable: Path) {
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
         GeneralCommandLine(cargoExecutable)
             .withParameters("install", "--list")
-            .execute(null)
+            .execute()
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
             ?.map { BinaryCrate.from(it) }

@@ -8,6 +8,7 @@ package org.rust.ide.actions
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -20,7 +21,9 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Rustfmt
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.lang.core.psi.isRustFile
+import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.openapiext.isUnitTestMode
+import org.rust.openapiext.runWriteCommandAction
 import org.rust.openapiext.virtualFile
 
 class RustfmtFileAction : DumbAwareAction() {
@@ -32,12 +35,21 @@ class RustfmtFileAction : DumbAwareAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val (cargoProject, rustfmt, document) = getContext(e) ?: return
-        try {
-            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
-            rustfmt.reformatDocument(cargoProject, document)
+        check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+        val formattedText = cargoProject.project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
+            reformatDocumentAndGetText(cargoProject, rustfmt, document)
+        } ?: return
+        cargoProject.project.runWriteCommandAction { document.setText(formattedText) }
+    }
+
+    private fun reformatDocumentAndGetText(cargoProject: CargoProject, rustfmt: Rustfmt, document: Document): String? {
+        return try {
+            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return null
+            rustfmt.reformatDocumentText(cargoProject, document)
         } catch (e: ExecutionException) {
             // Just easy way to know that something wrong happened
             if (isUnitTestMode) throw e
+            null
         }
     }
 

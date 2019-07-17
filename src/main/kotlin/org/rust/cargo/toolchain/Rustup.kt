@@ -8,11 +8,8 @@ package org.rust.cargo.toolchain
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.util.DownloadResult
@@ -42,7 +39,7 @@ class Rustup(
         GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "list")
-            .execute(null)
+            .execute()
             ?.stdoutLines
             ?.map { Component.from(it) }
             ?: emptyList()
@@ -96,19 +93,13 @@ class Rustup(
         ): Boolean {
             val shortName = componentName.removeSuffix("-preview")
 
-            fun check(): Boolean {
+            val needInstall = run {
                 val rustup = project.toolchain?.rustup(cargoProjectDirectory)
                     ?: return false
                 val (_, isInstalled) = rustup.listComponents()
                     .find { (name, _) -> name.startsWith(shortName) }
                     ?: return false
-                return !isInstalled
-            }
-
-            val needInstall = if (ApplicationManager.getApplication().isDispatchThread) {
-                project.computeWithCancelableProgress("Checking if ${shortName.capitalize()} is installed...", ::check)
-            } else {
-                check()
+                !isInstalled
             }
 
             if (needInstall) {

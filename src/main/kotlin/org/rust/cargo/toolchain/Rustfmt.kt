@@ -9,7 +9,6 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.DocumentUtil.writeInRunUndoTransparentAction
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -22,18 +21,22 @@ import java.nio.file.Path
 class Rustfmt(private val rustfmtExecutable: Path) {
 
     @Throws(ExecutionException::class)
-    fun reformatDocument(
+    fun reformatDocumentText(cargoProject: CargoProject, document: Document): String? {
+        val file = document.virtualFile ?: return null
+        if (file.isNotRustFile || !file.isValid) return null
+
+        val configPath = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
+        return reformatText(cargoProject, document.text, configPath)
+    }
+
+    @Throws(ExecutionException::class)
+    private fun reformatText(
         cargoProject: CargoProject,
-        document: Document,
-        owner: Disposable = cargoProject.project,
+        text: String,
+        configPath: Path? = null,
+        parentDisposable: Disposable = cargoProject.project,
         skipChildren: Boolean = checkSupportForSkipChildrenFlag(cargoProject)
-    ) {
-        checkIsDispatchThread()
-
-        if (!document.isWritable) return
-        val file = document.virtualFile ?: return
-        if (file.isNotRustFile || !file.isValid) return
-
+    ): String? {
         val arguments = buildList<String> {
             add("--emit=stdout")
 
@@ -42,26 +45,23 @@ class Rustfmt(private val rustfmtExecutable: Path) {
                 add("--skip-children")
             }
 
-            val path = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
-            if (path != null) {
+            if (configPath != null) {
                 add("--config-path")
-                add(path.toString())
+                add(configPath.toString())
             }
         }
 
         val processOutput = try {
-            cargoProject.project.computeWithCancelableProgress("Reformatting File with Rustfmt...") {
-                GeneralCommandLine(rustfmtExecutable)
-                    .withWorkDirectory(cargoProject.workingDirectory)
-                    .withParameters(arguments)
-                    .withCharset(Charsets.UTF_8)
-                    .execute(owner, false, stdIn = document.text.toByteArray())
-            }
+            GeneralCommandLine(rustfmtExecutable)
+                .withWorkDirectory(cargoProject.workingDirectory)
+                .withParameters(arguments)
+                .withCharset(Charsets.UTF_8)
+                .execute(parentDisposable, false, stdIn = text.toByteArray())
         } catch (e: ExecutionException) {
-            if (isUnitTestMode) throw e else return
+            if (isUnitTestMode) throw e else return null
         }
 
-        writeInRunUndoTransparentAction { document.setText(processOutput.stdout) }
+        return processOutput.stdout
     }
 
     @Throws(ExecutionException::class)
