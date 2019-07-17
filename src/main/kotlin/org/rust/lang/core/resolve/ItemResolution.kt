@@ -132,11 +132,9 @@ fun processItemDeclarations(
         }
     }
 
-    if (originalProcessor(ScopeEvent.STAR_IMPORTS)) {
-        return false
-    }
-
     if (ipm.withExternCrates && Namespace.Types in ns && scope is RsMod) {
+        if (originalProcessor(ScopeEvent.STAR_IMPORTS)) return false
+
         if (scope.isEdition2018 && !scope.isCrateRoot) {
             val crateRoot = scope.crateRoot
             if (crateRoot != null) {
@@ -171,6 +169,8 @@ fun processItemDeclarations(
     }
 
     for (speck in starImports) {
+        if (originalProcessor(ScopeEvent.STAR_IMPORTS)) return false
+
         val path = speck.path
         val basePath = if (path == null && speck.context is RsUseGroup) {
             // `use foo::bar::{self, *}`
