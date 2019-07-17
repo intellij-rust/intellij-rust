@@ -37,8 +37,19 @@ enum class ScopeEvent : ScopeEntry {
     /**
      * Communicate to the resolve processor that we are about to process wildecard imports.
      * This is basically a hack to make winapi 0.2 work in a reasonable amount of time.
+     *
+     * This event brings (very rare) false negatives: an item can be resolved when it
+     * should be multiresolved (i.e. unresolved from the rustc view)
      */
-    STAR_IMPORTS;
+    STAR_IMPORTS,
+
+    /**
+     * Communicate to the resolve processor that we are changed resolving scope, i.e.
+     * we will NOT process elements with names that are already processed.
+     * This event doesn't break the name resolution rules (unlike [STAR_IMPORTS]).
+     * Used for optimization purposes (mostly optimizes local variables resolution)
+     */
+    SHADOWING_SCOPE;
 
     override val element: RsElement? get() = null
 }
@@ -56,7 +67,7 @@ fun collectPathResolveVariants(
 ): List<BoundElement<RsElement>> {
     val result = SmartList<BoundElement<RsElement>>()
     f { e ->
-        if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
+        if ((e == ScopeEvent.STAR_IMPORTS || e == ScopeEvent.SHADOWING_SCOPE) && result.isNotEmpty()) {
             return@f true
         }
 
@@ -72,7 +83,9 @@ fun collectPathResolveVariants(
 fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
     val result = SmartList<RsElement>()
     f { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+        if ((e == ScopeEvent.STAR_IMPORTS || e == ScopeEvent.SHADOWING_SCOPE) && result.isNotEmpty()) {
+            return@f true
+        }
 
         if (e.name == referenceName) {
             result += e.element ?: return@f false
@@ -83,9 +96,9 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
 }
 
 fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
-    val result = mutableListOf<T>()
+    val result = SmartList<T>()
     f { e ->
-        if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
+        if ((e == ScopeEvent.STAR_IMPORTS || e == ScopeEvent.SHADOWING_SCOPE) && result.isNotEmpty()) {
             return@f true
         }
 

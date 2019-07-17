@@ -1325,12 +1325,12 @@ fun processNestedScopesUpwards(
                 else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
             }
             processLexicalDeclarations(scope, cameFrom, ns, ipm, shadowingProcessor)
-        }
+        }.also { processor(ScopeEvent.SHADOWING_SCOPE) }
     }
     if (stop) return true
 
     // Prelude is injected via implicit star import `use std::prelude::v1::*;`
-    if (processor(ScopeEvent.STAR_IMPORTS)) return false
+    if (processor(ScopeEvent.SHADOWING_SCOPE)) return false
 
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
