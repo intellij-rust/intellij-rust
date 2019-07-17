@@ -279,7 +279,7 @@ fun processItemDeclarationsWithCache(
         val cached = CachedValuesManager.getCachedValue(scope, ipm.cacheKey) {
             val scopeEntryList = SmartList<ScopeEntry>()
             processItemDeclarations(scope, TYPES, {
-                scopeEntryList.add(it)
+                if (it !is ScopeEvent) scopeEntryList.add(it)
                 false
             }, ipm)
             CachedValueProvider.Result.create(scopeEntryList, scope.rustStructureOrAnyPsiModificationTracker)
