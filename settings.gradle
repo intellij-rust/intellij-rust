@@ -4,6 +4,7 @@ include 'idea',
         'debugger',
         'toml',
         'copyright',
+        'coverage',
         'intelliLang',
         'duplicates',
         'intellij-toml'

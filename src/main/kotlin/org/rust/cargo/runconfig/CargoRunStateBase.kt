@@ -36,6 +36,12 @@ abstract class CargoRunStateBase(
     )
     private val workingDirectory: Path? get() = cargoProject?.workingDirectory
 
+    private val commandLinePatches: MutableList<(CargoCommandLine) -> CargoCommandLine> = mutableListOf()
+
+    fun addCommandLinePatch(patch: (CargoCommandLine) -> CargoCommandLine) {
+        commandLinePatches.add(patch)
+    }
+
     fun createFilters(): Collection<Filter> {
         val filters = mutableListOf<Filter>()
         filters.add(RsExplainFilter())
@@ -54,7 +60,13 @@ abstract class CargoRunStateBase(
 
     fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
 
-    open fun prepareCommandLine(): CargoCommandLine = commandLine
+    fun prepareCommandLine(): CargoCommandLine {
+        var commandLine = commandLine
+        for (patch in commandLinePatches) {
+            commandLine = patch(commandLine)
+        }
+        return commandLine
+    }
 
     public override fun startProcess(): ProcessHandler {
         val cmd = toolchain.cargoOrWrapper(workingDirectory)

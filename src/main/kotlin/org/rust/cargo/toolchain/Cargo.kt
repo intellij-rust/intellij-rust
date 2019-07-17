@@ -69,7 +69,7 @@ class Cargo(private val cargoExecutable: Path) {
     fun installBinaryCrate(project: Project, crateName: String) {
         val cargoProject = project.cargoProjects.allProjects.firstOrNull() ?: return
         val commandLine = CargoCommandLine.forProject(cargoProject, "install", listOf("--force", crateName))
-        commandLine.run(cargoProject, "Install $crateName")
+        commandLine.run(cargoProject, "Install $crateName", saveConfiguration = false)
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
@@ -273,13 +273,26 @@ class Cargo(private val cargoExecutable: Path) {
             }
         }
 
+        fun checkNeedInstallGrcov(project: Project): Boolean {
+            val crateName = "grcov"
+            val minVersion = SemVer("v0.4.3", 0, 4, 3)
+            return checkNeedInstallBinaryCrate(
+                project,
+                crateName,
+                NotificationType.ERROR,
+                "Need at least $crateName $minVersion",
+                minVersion
+            )
+        }
+
         fun checkNeedInstallCargoExpand(project: Project): Boolean {
+            val crateName = "cargo-expand"
             val minVersion = SemVer("v0.4.9", 0, 4, 9)
             return checkNeedInstallBinaryCrate(
                 project,
-                "cargo-expand",
+                crateName,
                 NotificationType.ERROR,
-                "Need at least cargo-expand $minVersion",
+                "Need at least $crateName $minVersion",
                 minVersion
             )
         }
