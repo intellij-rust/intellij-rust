@@ -917,4 +917,16 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target::foo;
                           //^ dep-lib/lib.rs
     """)
+
+    fun `test pub extern crate reexport`() = stubOnlyResolve("""
+    //- trans-lib/lib.rs
+        pub struct Foo;
+    //- dep-lib/lib.rs
+        pub extern crate trans_lib;
+    //- lib.rs
+        extern crate dep_lib_target;
+        
+        fn foo(foo: dep_lib_target::trans_lib::Foo) {}
+                                              //^ trans-lib/lib.rs
+    """)
 }

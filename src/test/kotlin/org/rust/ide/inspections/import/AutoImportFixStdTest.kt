@@ -483,4 +483,124 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             S::fmt/*caret*/(&S, panic!(""));
         }
     """)
+
+    fun `test pub extern crate reexport`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub extern crate trans_lib;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::trans_lib::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test pub extern crate reexport in inner module`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub extern crate trans_lib;
+        }
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::trans_lib::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test pub extern crate reexport in inner module with reexport`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub mod foo {
+            mod bar {
+                pub extern crate trans_lib;
+            }
+
+            pub use self::bar::*;
+        }
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::trans_lib::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test several pub extern crate reexports`() = checkAutoImportFixByFileTree("""
+        //- trans-lib-2/lib.rs
+        pub struct FooBar;
+        //- trans-lib/lib.rs
+        pub extern crate trans_lib_2;
+        //- dep-lib/lib.rs
+        pub extern crate trans_lib;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::trans_lib::trans_lib_2::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test pub extern crate reexport with alias`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub extern crate trans_lib as transitive;
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::transitive::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
+
+    fun `test pub extern crate reexport with alias in inner module`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub struct FooBar;
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub extern crate trans_lib as transitive;
+        }
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        extern crate dep_lib_target;
+
+        use dep_lib_target::foo::transitive::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
 }

@@ -13,12 +13,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
-import org.rust.ide.search.RsCargoProjectScope
 import org.rust.ide.search.RsWithMacrosScope
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -186,7 +184,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 .filter { !it.isStarImport }
                 .mapNotNull {
                     val item = it.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@mapNotNull null
-                    QualifiedNamedItem.ReexportedItem(it, item)
+                    QualifiedNamedItem.ReexportedItem.from(it, item)
                 }
         }
 
@@ -215,7 +213,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val superMods = LinkedHashSet(scope.containingMod.superMods)
             val attributes = scope.stdlibAttributes
 
-            val searchScope = RsWithMacrosScope(project, RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project)))
+            val searchScope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project))
             return traitsToImport
                 .asSequence()
                 .map { QualifiedNamedItem.ExplicitItem(it) }
@@ -263,19 +261,21 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         private fun QualifiedNamedItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
             check(superMods.isNotEmpty())
             if (item !is RsVisible) return null
+            val target = containingCargoTarget ?: return null
+            // filter out transitive dependencies
+            if (target.pkg.origin == PackageOrigin.TRANSITIVE_DEPENDENCY) return null
 
             val ourSuperMods = this.superMods ?: return null
             val parentMod = ourSuperMods.getOrNull(0) ?: return null
 
             // try to find latest common ancestor module of `parentMod` and `mod` in module tree
             // we need to do it because we can use direct child items of any super mod with any visibility
-            val lca = ourSuperMods.find { it in superMods }
+            val lca = ourSuperMods.find { it.modItem in superMods }
             val crateRelativePath = crateRelativePath ?: return null
 
             val (shouldBePublicMods, importInfo) = if (lca == null) {
                 if (!isPublic) return null
-                val target = containingCargoTarget ?: return null
-                val externCrateMod = ourSuperMods.last()
+                val externCrateMod = ourSuperMods.last().modItem
 
                 val externCrateWithDepth = superMods.withIndex().mapNotNull { (index, superMod) ->
                     val externCrateItem = superMod.stubChildrenOfType<RsExternCrateItem>()
@@ -306,7 +306,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 if (!isPublic) return null
                 ourSuperMods.takeWhile { it != lca }.dropLast(1) to ImportInfo.LocalImportInfo(relativePath)
             }
-            return if (shouldBePublicMods.all { it.isPublic }) return importInfo else null
+            return if (shouldBePublicMods.all { it.modItem.isPublic }) return importInfo else null
         }
 
         private fun canBeResolvedToSuitableItem(
@@ -647,7 +647,7 @@ data class ImportContext private constructor(
             project = project,
             mod = path.containingMod,
             superMods = LinkedHashSet(path.containingMod.superMods),
-            scope = RsWithMacrosScope(project, RsCargoProjectScope(project.cargoProjects, GlobalSearchScope.allScope(project))),
+            scope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project)),
             ns = path.pathNamespace,
             attributes = path.stdlibAttributes,
             namespaceFilter = path.namespaceFilter(isCompletion)
