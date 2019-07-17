@@ -6,7 +6,7 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
-import org.rust.cargo.MinRustcVersion
+import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.ExternalLinter

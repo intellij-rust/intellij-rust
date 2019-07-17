@@ -8,14 +8,10 @@ package org.rust.cargo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
-import com.intellij.util.text.SemVer
-import org.rust.FileTree
-import org.rust.FileTreeBuilder
-import org.rust.TestProject
+import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.fileTree
 
 /**
  * This class allows executing real Cargo during the tests.
@@ -47,10 +43,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         }
         val minRustVersion = findAnnotationInstance<MinRustcVersion>()
         if (minRustVersion != null) {
-            val requiredVersion = SemVer.parseFromText(minRustVersion.version)
-            if (requiredVersion == null) {
-                fail("Invalid version value: ${minRustVersion.version}")
-            }
+            val requiredVersion = minRustVersion.semver
             val rustcVersion = toolchain.queryVersions().rustc
             if (rustcVersion == null) {
                 System.err.println("SKIP \"$name\": failed to query Rust version")

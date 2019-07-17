@@ -103,10 +103,9 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     }
 
     override fun runTest() {
-        val projectDescriptor = projectDescriptor
-        val reason = (projectDescriptor as? RustProjectDescriptorBase)?.skipTestReason
+        val reason = skipTestReason
         if (reason != null) {
-            System.err.println("SKIP $name: $reason")
+            System.err.println("SKIP \"$name\": $reason")
             return
         }
 
@@ -121,6 +120,21 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
             super.runTest()
         }
     }
+
+    protected open val skipTestReason: String?
+        get() {
+            val projectDescriptor = projectDescriptor as? RustProjectDescriptorBase
+            var reason = projectDescriptor?.skipTestReason
+            if (reason == null) {
+                val minRustVersion = findAnnotationInstance<MinRustcVersion>() ?: return null
+                val requiredVersion = minRustVersion.semver
+                val rustcVersion = projectDescriptor?.rustcInfo?.version ?: return null
+                if (rustcVersion.semver < requiredVersion) {
+                    reason = "$requiredVersion Rust version required, ${rustcVersion.semver} found"
+                }
+            }
+            return reason
+        }
 
     private fun runTestEdition2015() {
         project.cargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015)
