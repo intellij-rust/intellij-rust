@@ -170,6 +170,7 @@ project(":") {
         val plugins = mutableListOf(project(":intellij-toml"), "IntelliLang")
         if (baseIDE == "idea") {
             plugins += "copyright"
+            plugins += "coverage"
             if (isAtLeast192) {
                 plugins += "java"
             }
@@ -346,6 +347,17 @@ project(":duplicates") {
         if (isAtLeast192 && baseIDE == "idea") {
             setPlugins("java")
         }
+    }
+    dependencies {
+        compile(project(":"))
+        testCompile(project(":", "testOutput"))
+    }
+}
+
+project(":coverage") {
+    intellij {
+        version = ideaVersion
+        setPlugins("coverage")
     }
     dependencies {
         compile(project(":"))

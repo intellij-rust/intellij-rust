@@ -25,6 +25,7 @@ class CargoTestRunState(
 
     init {
         consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)
+        addCommandLinePatch { commandLine -> commandLine.copy(additionalArguments = patchArgs(commandLine)) }
         createFilters().forEach { consoleBuilder.addFilter(it) }
     }
 
@@ -34,9 +35,6 @@ class CargoTestRunState(
         console?.attachToProcess(processHandler)
         return DefaultExecutionResult(console, processHandler).apply { setRestartActions(ToggleAutoTestAction()) }
     }
-
-    override fun prepareCommandLine(): CargoCommandLine =
-        super.prepareCommandLine().copy(additionalArguments = patchArgs(commandLine))
 
     companion object {
         @VisibleForTesting

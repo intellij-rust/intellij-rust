@@ -26,6 +26,7 @@
     <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
     <depends optional="true" config-file="copyright-only.xml">com.intellij.copyright</depends>
     <depends optional="true" config-file="duplicates-only.xml">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true" config-file="coverage-only.xml">Coverage</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
