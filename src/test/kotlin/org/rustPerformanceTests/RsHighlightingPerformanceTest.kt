@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rustSlowTests
+package org.rustPerformanceTests
 
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager

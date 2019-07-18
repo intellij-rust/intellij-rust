@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rustSlowTests
+package org.rustPerformanceTests
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor

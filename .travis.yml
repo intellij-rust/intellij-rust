@@ -44,7 +44,7 @@ before_script:
   - ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
 
 script:
-  - travis_wait 30 ./gradlew check -Pkotlin.incremental=false --no-daemon
+  - travis_wait 30 ./gradlew check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
   - ./gradlew runPrettyPrintersTests --no-daemon
 
 # https://docs.travis-ci.com/user/languages/java/#Caching
