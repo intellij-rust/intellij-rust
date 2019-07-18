@@ -492,4 +492,28 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
             1/*caret*/;
         }
     """)
+
+
+    // https://github.com/intellij-rust/intellij-rust/issues/3548
+    fun `test statement ends with comment`() = moveDown("""
+        fn main() {
+            1;
+            {
+                2;
+                /*caret*/3; // 123
+                4;
+            }
+            5;
+        }
+    """, """
+        fn main() {
+            1;
+            {
+                2;
+                4;
+                /*caret*/3; // 123
+            }
+            5;
+        }
+    """)
 }
