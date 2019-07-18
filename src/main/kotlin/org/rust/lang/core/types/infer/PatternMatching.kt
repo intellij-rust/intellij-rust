@@ -16,7 +16,7 @@ import org.rust.lang.core.types.type
 
 fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {
-        is RsPatWild -> {}
+        is RsPatWild -> fcx.writePatTy(this, type)
         is RsPatConst -> {
             val expr = expr
             val expected = when {
@@ -90,7 +90,10 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                     ?: TyUnknown
 
                 when (kind) {
-                    is RsPatFieldKind.Full -> kind.pat.extractBindings(fcx, fieldType, mut)
+                    is RsPatFieldKind.Full -> {
+                        kind.pat.extractBindings(fcx, fieldType, mut)
+                        fcx.writePatFieldTy(patField, fieldType)
+                    }
                     is RsPatFieldKind.Shorthand -> {
                         val bindingType = if (fieldType is TyAdt && kind.isBox) {
                             fieldType.typeArguments.singleOrNull() ?: return

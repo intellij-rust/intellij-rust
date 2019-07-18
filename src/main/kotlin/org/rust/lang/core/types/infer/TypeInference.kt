@@ -45,11 +45,17 @@ sealed class Adjustment(val target: Ty) {
 interface RsInferenceData {
     fun getExprAdjustments(expr: RsExpr): List<Adjustment>
     fun getExprType(expr: RsExpr): Ty
-    fun getBindingType(binding: RsPatBinding): Ty
     fun getExpectedPathExprType(expr: RsPathExpr): Ty
     fun getExpectedDotExprType(expr: RsDotExpr): Ty
     fun getPatType(pat: RsPat): Ty
+    fun getPatFieldType(patField: RsPatField): Ty
     fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath>
+    fun getBindingType(binding: RsPatBinding): Ty =
+        when (val parent = binding.parent) {
+            is RsPat -> getPatType(parent)
+            is RsPatField -> getPatFieldType(parent)
+            else -> TyUnknown // impossible
+        }
 }
 
 /**
@@ -76,15 +82,11 @@ class RsInferenceResult(
     override fun getExprType(expr: RsExpr): Ty =
         exprTypes[expr] ?: TyUnknown
 
-    override fun getBindingType(binding: RsPatBinding): Ty =
-        when (val parent = binding.parent) {
-            is RsPat -> patTypes[parent]
-            is RsPatField -> patFieldTypes[parent]
-            else -> TyUnknown // impossible
-        } ?: TyUnknown
-
     override fun getPatType(pat: RsPat): Ty =
         patTypes[pat] ?: TyUnknown
+
+    override fun getPatFieldType(patField: RsPatField): Ty =
+        patFieldTypes[patField] ?: TyUnknown
 
     override fun getExpectedPathExprType(expr: RsPathExpr): Ty =
         expectedPathExprTypes[expr] ?: TyUnknown
@@ -151,7 +153,7 @@ class RsInferenceContext(
         }
     }
 
-    inline fun <T: Any> commitIfNotNull(action: () -> T?): T? {
+    inline fun <T : Any> commitIfNotNull(action: () -> T?): T? {
         val snapshot = startSnapshot()
         val result = action()
         if (result == null) snapshot.rollback() else snapshot.commit()
@@ -261,15 +263,12 @@ class RsInferenceContext(
         return exprTypes[expr] ?: TyUnknown
     }
 
-    override fun getBindingType(binding: RsPatBinding): Ty =
-        when (val parent = binding.parent) {
-            is RsPat -> patTypes[parent]
-            is RsPatField -> patFieldTypes[parent]
-            else -> TyUnknown // impossible
-        } ?: TyUnknown
-
     override fun getPatType(pat: RsPat): Ty {
         return patTypes[pat] ?: TyUnknown
+    }
+
+    override fun getPatFieldType(patField: RsPatField): Ty {
+        return patFieldTypes[patField] ?: TyUnknown
     }
 
     override fun getExpectedPathExprType(expr: RsPathExpr): Ty {
@@ -661,7 +660,7 @@ class RsInferenceContext(
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
     fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
-        val subst = impl.generics.associate { it to typeVarForParam(it) }.toTypeSubst()
+        val subst = impl.generics.associateWith { typeVarForParam(it) }.toTypeSubst()
         return probe {
             instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
