@@ -27,15 +27,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
-import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.asTy
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.hasTyInfer
-import org.rust.lang.core.types.isMutable
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
@@ -75,8 +71,7 @@ sealed class RsDiagnostic(
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
                     } else  if (element is RsElement) {
-                        val items = element.knownItems
-                        val lookup = ImplLookup(element.project, items)
+                        val (lookup, items) = element.implLookupAndKnownItems
                         if (isFromActualImplForExpected(items, lookup)) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
                         } else { // only check TryFrom if From is not available

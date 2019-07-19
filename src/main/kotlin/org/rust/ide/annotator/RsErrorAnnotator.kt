@@ -28,6 +28,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.asTy
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.*

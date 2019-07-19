@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import org.rust.cargo.project.model.CargoProject
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
@@ -19,8 +20,9 @@ import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.core.types.ty.TyFloat.F32
 import org.rust.lang.core.types.ty.TyFloat.F64
 import org.rust.lang.core.types.ty.TyInteger.*
-import org.rust.openapiext.ProjectCache
+import org.rust.lang.utils.CargoProjectCache
 import org.rust.openapiext.testAssert
+import org.rust.stdext.Cache
 import org.rust.stdext.buildList
 import kotlin.LazyThreadSafetyMode.NONE
 
@@ -159,13 +161,26 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
 
 class ImplLookup(
     private val project: Project,
+    cargoProject: CargoProject?,
     val items: KnownItems,
     private val paramEnv: ParamEnv = ParamEnv.EMPTY
 ) {
     // Non-concurrent HashMap and lazy(NONE) are safe here because this class isn't shared between threads
     private val primitiveTyHardcodedImplsCache = mutableMapOf<TyPrimitive, Collection<BoundElement<RsTraitItem>>>()
-    private val localTraitSelectionCache: MutableMap<TraitRef, SelectionResult<SelectionCandidate>>? =
-        if (paramEnv.isEmpty()) null else mutableMapOf()
+    private val traitSelectionCache: Cache<TraitRef, SelectionResult<SelectionCandidate>> =
+        if (paramEnv.isEmpty() && cargoProject != null) {
+            cargoProjectGlobalTraitSelectionCache.getCache(cargoProject)
+        } else {
+            // function-local cache is used when [paramEnv] is not empty, i.e. if there are trait bounds
+            // that affect trait selection
+            Cache.new()
+        }
+    private val findImplsAndTraitsCache: Cache<Ty, Set<TraitImplSource>> =
+        if (cargoProject != null) {
+            cargoProjectGlobalFindImplsAndTraitsCache.getCache(cargoProject)
+        } else {
+            Cache.new()
+        }
     private val arithOps by lazy(NONE) {
         ArithmeticOp.values().mapNotNull { it.findTrait(items) }
     }
@@ -204,7 +219,7 @@ class ImplLookup(
     }
 
     fun findImplsAndTraits(ty: Ty): Set<TraitImplSource> {
-        val cached = findImplsAndTraitsCache.getOrPut(project, freshen(ty)) { rawFindImplsAndTraits(ty) }
+        val cached = findImplsAndTraitsCache.getOrPut(freshen(ty)) { rawFindImplsAndTraits(ty) }
         return getEnvBoundTransitivelyFor(ty)
             .asIterable().mapTo(cached.toMutableSet()) { TraitImplSource.TraitBound(it.element) }
     }
@@ -379,15 +394,7 @@ class ImplLookup(
     private fun selectWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
         if (recursionDepth > DEFAULT_RECURSION_LIMIT) return SelectionResult.Err
         testAssert { !ctx.hasResolvableTypeVars(ref) }
-        val freshenRef = freshen(ref)
-        @Suppress("IfThenToElvis")
-        return if (localTraitSelectionCache != null) {
-            // function-local cache is used when [paramEnv] is not empty, i.e. if there are trait bounds
-            // that affect trait selection
-            localTraitSelectionCache.getOrPut(freshenRef) { selectCandidate(ref, recursionDepth) }
-        } else {
-            globalTraitSelectionCache.getOrPut(project, freshenRef) { selectCandidate(ref, recursionDepth) }
-        }
+        return traitSelectionCache.getOrPut(freshen(ref)) { selectCandidate(ref, recursionDepth) }
     }
 
     private fun selectCandidate(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
@@ -769,14 +776,14 @@ class ImplLookup(
             } else {
                 ParamEnv.EMPTY
             }
-            return ImplLookup(psi.project, psi.knownItems, paramEnv)
+            return ImplLookup(psi.project, psi.cargoProject, psi.knownItems, paramEnv)
         }
 
-        private val findImplsAndTraitsCache =
-            ProjectCache<Ty, Set<TraitImplSource>>("findImplsAndTraitsCache")
+        private val cargoProjectGlobalFindImplsAndTraitsCache =
+            CargoProjectCache<Ty, Set<TraitImplSource>>("cargoProjectGlobalFindImplsAndTraitsCache")
 
-        private val globalTraitSelectionCache =
-            ProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("globalTraitSelectionCache")
+        private val cargoProjectGlobalTraitSelectionCache =
+            CargoProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("cargoProjectGlobalTraitSelectionCache")
     }
 }
 

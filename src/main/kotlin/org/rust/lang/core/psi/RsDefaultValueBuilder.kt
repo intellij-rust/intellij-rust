@@ -9,6 +9,7 @@ import org.rust.ide.inspections.RsFieldInitShorthandInspection
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.processLocalVariables
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 

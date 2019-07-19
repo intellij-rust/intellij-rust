@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.borrowck.BorrowCheckContext
 import org.rust.lang.core.types.borrowck.BorrowCheckResult
@@ -105,10 +106,15 @@ val RsTraitOrImpl.selfType: Ty
         else -> error("Unreachable")
     }
 
+val RsElement.implLookup: ImplLookup
+    get() = ImplLookup.relativeTo(this)
+
+val RsElement.implLookupAndKnownItems: Pair<ImplLookup, KnownItems>
+    get() = implLookup to knownItems
+
 val RsExpr.cmt: Cmt?
     get() {
-        val items = this.knownItems
-        val lookup = ImplLookup(this.project, items)
+        val (lookup, items) = implLookupAndKnownItems
         val inference = this.inference ?: return null
         return MemoryCategorizationContext(lookup, inference).processExpr(this)
     }

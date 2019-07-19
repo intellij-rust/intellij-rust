@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyStr
 import org.rust.lang.core.types.ty.TyUnit
