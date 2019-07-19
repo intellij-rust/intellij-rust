@@ -7,7 +7,6 @@ package org.rust.ide.actions.macroExpansion
 
 import com.intellij.ide.highlighter.HighlighterFactory
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEx
@@ -18,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.ui.popup.PopupPositionManager
+import com.intellij.util.DocumentUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.expansionContext
@@ -117,7 +117,8 @@ private fun reformatMacroExpansion(
         .takeIf { it.virtualFile == null }
         // Without `eventSystemEnabled` file reformatting is too slow
         ?: RsPsiFactory(expansion.file.project, eventSystemEnabled = true).createFile(expansion.file.text)
-    runWriteAction { formatPsiFile(file) }
+
+    DocumentUtil.writeInRunUndoTransparentAction { formatPsiFile(file) }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)
         ?: error("Can't recover macro expansion after reformat")
