@@ -13,12 +13,10 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.macros.FragmentKind
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.FragmentKind.*
 import org.rust.lang.core.macros.MacroExpansionContext.EXPR
 import org.rust.lang.core.macros.MacroExpansionContext.STMT
-import org.rust.lang.core.macros.MacroGraphWalker
-import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
@@ -39,8 +37,12 @@ object RsPartialMacroArgumentCompletionProvider : CompletionProvider<CompletionP
         val project = parameters.originalFile.project
         val position = parameters.position
         val macroCall = position.ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return
-        // TODO replace with `if (macroCall.expansion != null) return` after hygiene merge
-        if (macroCall.expansion != null && macroCall.expansionContext !in listOf(EXPR, STMT)) return
+
+        val condition = macroCall.expansion != null &&
+            project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New &&
+            macroCall.expansionContext !in listOf(EXPR, STMT) // TODO remove after hygiene merge
+        if (condition) return
+
         val bodyTextRange = macroCall.bodyTextRange ?: return
         val macroCallBody = macroCall.macroBody ?: return
         val macro = macroCall.resolveToMacro() ?: return
