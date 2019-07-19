@@ -77,7 +77,7 @@ val RsPat.type: Ty
     get() = inference?.getPatType(this) ?: TyUnknown
 
 val RsPatField.type: Ty
-    get() = patBinding?.let { inference?.getBindingType(it) } ?: TyUnknown
+    get() = inference?.getPatFieldType(this) ?: TyUnknown
 
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
