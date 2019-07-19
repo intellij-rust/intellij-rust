@@ -93,21 +93,21 @@ abstract class RsCodeFragment(
 
 class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
     constructor(fileViewProvider: FileViewProvider, context: RsElement)
-        : super(fileViewProvider, RsElementTypes.EXPR_CODE_FRAGMENT, context)
+        : super(fileViewProvider, RsCodeFragmentElementType.EXPR, context)
 
     constructor(project: Project, text: CharSequence, context: RsElement)
-        : super(project, text, RsElementTypes.EXPR_CODE_FRAGMENT, context)
+        : super(project, text, RsCodeFragmentElementType.EXPR, context)
 
     val expr: RsExpr? get() = PsiTreeUtil.getChildOfType(this, RsExpr::class.java)
 }
 
 class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsElement)
-    : RsCodeFragment(project, text, RsElementTypes.STMT_CODE_FRAGMENT, context) {
+    : RsCodeFragment(project, text, RsCodeFragmentElementType.STMT, context) {
     val stmt: RsStmt? get() = PsiTreeUtil.getChildOfType(this, RsStmt::class.java)
 }
 
 class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context: RsElement)
-    : RsCodeFragment(project, text, RsElementTypes.TYPE_REF_CODE_FRAGMENT, context),
+    : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context),
       RsNamedElement {
     val typeReference: RsTypeReference? get() = PsiTreeUtil.getChildOfType(this, RsTypeReference::class.java)
 }
