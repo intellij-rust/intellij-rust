@@ -23,7 +23,7 @@ class ToggleExternalLinterOnTheFlyAction : ToggleAction() {
 
     override fun update(e: AnActionEvent) {
         super.update(e)
-        val externalLinterName = e.project?.rustSettings?.externalLinter?.title?.toLowerCase() ?: "external linter"
-        e.presentation.text = "Run $externalLinterName on the fly"
+        val externalLinterName = e.project?.rustSettings?.externalLinter?.title ?: "External Linter"
+        e.presentation.text = "Run $externalLinterName on the Fly"
     }
 }
