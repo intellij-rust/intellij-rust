@@ -10,6 +10,7 @@ import com.intellij.ide.annotator.AnnotationTestFixtureBase
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.TestProject
@@ -118,6 +119,10 @@ class RsAnnotationTestFixture(
         fileTreeFromText(replaceCaretMarker(text)).check(codeInsightFixture)
     }
 
+    override fun configureByText(text: String) {
+        super.configureByText(text.replaceHighlightingComments())
+    }
+
     private fun configureByFileTree(text: String, stubOnly: Boolean) {
         val testProject = configureByFileTree(text)
         if (stubOnly) {
@@ -127,6 +132,17 @@ class RsAnnotationTestFixture(
     }
 
     private fun configureByFileTree(text: String): TestProject {
-        return fileTreeFromText(text).createAndOpenFileWithCaretMarker(codeInsightFixture)
+        return fileTreeFromText(text.replaceHighlightingComments()).createAndOpenFileWithCaretMarker(codeInsightFixture)
+    }
+
+    private fun String.replaceHighlightingComments(): String {
+        return replace(HIGHLIGHTING_TAG_RE) {
+            if (it.groups[3] == null) "<${it.groupValues[1]}>" else "</${it.groupValues[1]}>"
+        }
+    }
+
+    companion object {
+        private val HIGHLIGHTING_TAG_RE =
+            """/\*(($ERROR_MARKER|$WARNING_MARKER|$WEAK_WARNING_MARKER|$INFO_MARKER).*?)(\*)?\*/""".toRegex()
     }
 }

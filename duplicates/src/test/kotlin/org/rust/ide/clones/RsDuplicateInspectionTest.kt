@@ -165,11 +165,7 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
             isEnabled = true
             minSize = 10
         }
-        // TODO: generalize and move into [RsAnnotationTestBase]
-        val text = code
-            .replace("/*weak_warning*/", "<weak_warning>")
-            .replace("/*weak_warning**/", "</weak_warning>")
-        checkByText(text, checkWeakWarn = true)
+        checkByText(code, checkWeakWarn = true)
     }
 
     private fun configureIndex(configure: CommonDuplicateIndexConfiguration.() -> Unit){
