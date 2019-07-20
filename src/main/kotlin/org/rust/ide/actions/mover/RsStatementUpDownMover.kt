@@ -25,8 +25,11 @@ class RsStatementUpDownMover : RsLineMover() {
     private val PsiElement.isBlockExpr: Boolean
         get() = this is RsExpr && parent is RsBlock
 
+    private val PsiElement.isComment: Boolean
+        get() = elementType in RS_COMMENTS
+
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
-        psi.ancestors.find { it.elementType in movableItems || it.isBlockExpr }
+        psi.ancestors.find { it.elementType in movableItems || it.isBlockExpr || it.isComment }
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
         if (isMovingOutOfFunctionBody(sibling, down)) {
