@@ -878,7 +878,7 @@
         <action id="Rust.Build"
                 class="org.rust.ide.actions.RsBuildAction"
                 text="Build"
-                description="Build Project"
+                description="Build project"
                 icon="AllIcons.Actions.Compile"
                 use-shortcut-of="CompileDirty">
             <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
@@ -887,28 +887,28 @@
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
                 class="org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction"
-                text="Promote module to directory"
+                text="Promote Module to Directory"
                 description="Move this module to a dedicated directory">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsDowngradeModuleToFile"
                 class="org.rust.ide.refactoring.RsDowngradeModuleToFile"
-                text="Downgrade module to file"
+                text="Downgrade Module to File"
                 description="Move this module to a single file">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToNamedFields"
                 class="org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction"
-                text="Convert to named fields"
+                text="Convert to Named Fields"
                 description="Converts tuple struct to named fields">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToTuple"
                 class="org.rust.ide.refactoring.convertStruct.RsConvertToTupleAction"
-                text="Convert to tuple"
+                text="Convert to Tuple"
                 description="Converts struct to tuple representation">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
@@ -935,7 +935,7 @@
 
         <action id="Rust.CargoCommand"
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
-                text="Run Cargo command"/>
+                text="Run Cargo Command"/>
 
         <action id="Rust.RunExternalLinter"
                 class="org.rust.ide.actions.RsRunExternalLinterAction"
@@ -943,22 +943,22 @@
 
         <action id="Rust.AttachCargoProject"
                 class="org.rust.cargo.project.model.AttachCargoProjectAction"
-                text="Attach Cargo project"
-                icon="AllIcons.ToolbarDecorator.Add"/>
+                text="Attach Cargo Project"
+                icon="AllIcons.General.Add"/>
 
         <action id="Rust.DetachCargoProject"
                 class="org.rust.cargo.project.model.DetachCargoProjectAction"
-                text="Detach Cargo project"
-                icon="AllIcons.ToolbarDecorator.Remove"
+                text="Detach Cargo Project"
+                icon="AllIcons.General.Remove"
                 use-shortcut-of="$Delete"/>
 
         <action id="Rust.ShowSingleStepMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction"
-                text="Show expanded macro">
+                text="Show Expanded Macro">
         </action>
         <action id="Rust.ShowRecursiveMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowRecursiveMacroExpansionAction"
-                text="Show recursively expanded macro">
+                text="Show Recursively Expanded Macro">
         </action>
         <group id="Rust.MacroExpansionActions"
                text="Show Macro Expansion"
@@ -985,12 +985,12 @@
         </group>
         <action id="Rust.ToggleExternalLinterOnTheFlyAction"
                 class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
-                text="Run external linter (cargo check / clippy) on the fly">
+                text="Run External Linter (Cargo Check / Clippy) on the Fly">
         </action>
 
         <action id="Rust.ReexpandMacrosAction"
                 class="org.rust.lang.core.macros.ReexpandMacrosAction"
-                text="Re-expand all Rust macros">
+                text="Re-Expand All Rust Macros">
         </action>
 
         <action id="Rust.CreateNewGithubIssue"
