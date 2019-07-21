@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.buildAndRunTemplateMultiple
 import org.rust.openapiext.createSmartPointer
 
@@ -27,7 +28,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
         class Struct(patIdent: RsPatIdent, val struct: RsStructItem, val usages: Map<String, List<PsiReference>>) :
             Context(patIdent)
 
-        class Tuple(patIdent: RsPatIdent, val tuple: TyTuple, val usages: Map<String, List<PsiReference>>) :
+        class Tuple(patIdent: RsPatIdent, val tuple: TyTuple, val usages: Map<Int, List<PsiReference>>) :
             Context(patIdent)
     }
 
@@ -44,7 +45,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
                     .mapNotNull {
                         it.element.ancestorStrict<RsDotExpr>()?.fieldLookup
                     }
-                    .groupBy({ it.identifier!!.text },
+                    .groupBy({ it.identifier?.text ?: it.integerLiteral!!.text },
                         { it.reference })
                 val struct = ty.item as? RsStructItem ?: return null
                 val mod = element.contextStrict<RsMod>() ?: return null
@@ -58,7 +59,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
                         it.element.childrenOfType<RsFieldLookup>().isNotEmpty()
                     }
                     .groupBy {
-                        it.element.childrenOfType<RsFieldLookup>().first().integerLiteral!!.text
+                        it.element.childrenOfType<RsFieldLookup>().first().integerLiteral!!.text.toInt()
                     }
                 Context.Tuple(patIdent, ty, usages)
             }
@@ -85,21 +86,16 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
             factory.createPatStruct(struct)
         }
         val newStruct = patIdent.replace(patStruct)
-        if (struct.namedFields.isEmpty()) return
+        if (struct.fields.isEmpty()) return
         when (newStruct) {
             is RsPatTupleStruct -> {
-                replaceFieldPatsWithPlaceholders(editor, newStruct, newStruct
-                    .childrenOfType<RsPat>()
-                    .map {
-                        val sp = it.createSmartPointer()
-                        val refs = usages[it.text] ?: return
-                        Pair(sp, refs)
-                    })
+                val usages = usages.mapKeys { it.key.toInt() }
+                replaceFieldPatsWithPlaceholders(editor, newStruct)
             }
             is RsPatStruct -> {
                 usages.forEach { (field, fieldUsages) ->
-                    fieldUsages.forEach {
-                        val fieldLookup = it.element as? RsFieldLookup ?: return@forEach
+                    fieldUsages.forEach u@{
+                        val fieldLookup = it.element as? RsFieldLookup ?: return@u
                         val dotExpr = fieldLookup.parentDotExpr
                         val pathExpr = RsPsiFactory(project).tryCreatePathExpr(field) ?: return
                         dotExpr.replace(pathExpr)
@@ -112,17 +108,11 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     private fun handleTuple(project: Project,
                             editor: Editor,
                             patIdent: RsPatIdent,
-                            usages: Map<String, List<PsiReference>>,
+                            usages: Map<Int, List<PsiReference>>,
                             fieldNum: Int) {
         val patTuple = RsPsiFactory(project).createPatTuple(fieldNum)
         val newPatTuple = patIdent.replace(patTuple) as? RsPatTup ?: return
-        replaceFieldPatsWithPlaceholders(editor, newPatTuple, newPatTuple
-            .childrenOfType<RsPat>()
-            .map {
-                val sp = it.createSmartPointer()
-                val refs = usages[it.text] ?: return
-                Pair(sp, refs)
-            })
+        replaceFieldPatsWithPlaceholders(editor, newPatTuple)
     }
 
     companion object {
@@ -131,9 +121,26 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
          * Then shows the live template and initiates editing process.
          */
         private fun replaceFieldPatsWithPlaceholders(editor: Editor,
+                                                     newPat: RsPat) {
+            editor.buildAndRunTemplate(newPat, newPat.childrenOfType<RsPat>().map { it.createSmartPointer() })
+        }
+
+        private fun replaceFieldPatsWithPlaceholdersMultiple(editor: Editor,
                                                      newPat: RsPat,
                                                      refs: List<Pair<SmartPsiElementPointer<RsPat>, List<PsiReference>>>) {
             editor.buildAndRunTemplateMultiple(newPat, refs)
         }
+
+        private fun createTupleUsagesMappingsList(tuple: RsPat, usages: Map<Int, List<PsiReference>>):
+            List<Pair<SmartPsiElementPointer<RsPat>, List<PsiReference>>> =
+            tuple
+                .childrenOfType<RsPat>()
+                .mapIndexed { fieldIdx, it ->
+                    val sp = it.createSmartPointer()
+                    val refs = usages[fieldIdx] ?: return@mapIndexed null
+                    Pair(sp, refs)
+                }
+                .filterNotNull()
+
     }
 }
