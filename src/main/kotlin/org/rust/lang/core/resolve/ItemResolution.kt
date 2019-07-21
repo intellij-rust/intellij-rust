@@ -95,9 +95,14 @@ fun processItemDeclarations(
         if (!(isPublic || withPrivateImports)) continue
 
         if (isEdition2018 && isAtom) {
-            // Use items like `use foo;` or `use foo::{self}` are meaningless on 2018 edition.
-            // We should ignore it or it breaks resolve of such `foo` in other places.
+            // Use items like `use foo;` or `use foo::{self}` are meaningful on 2018 edition
+            // only if `foo` is a crate, and it is `pub use` item. Otherwise,
+            // we should ignore it or it breaks resolve of such `foo` in other places.
             ItemResolutionTestmarks.extraAtomUse.hit()
+            if (!withPrivateImports) {
+                val crate = findDependencyCrateByName(path, name)
+                if (crate != null && processor(name, crate)) return true
+            }
             continue
         }
         if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true

@@ -292,7 +292,7 @@ fun processExternCrateResolveVariants(
     return false
 }
 
-private fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
+fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
     val refinedName = when {
         name.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && context.isExpandedFromMacro -> {
             NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
