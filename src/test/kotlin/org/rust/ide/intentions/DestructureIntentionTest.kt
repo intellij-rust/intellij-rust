@@ -31,6 +31,22 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention()) {
         }
     """)
 
+    fun `test destructure variable tuple struct`() = doAvailableTest("""
+        struct P<T> { p: T }
+        struct S<T, U> (P<T>, U);
+        fn main() { 
+            let /*caret*/s = S (P { p: 0 }, ""); 
+            let z = s.1.p;
+        }
+    """, """
+        struct P<T> { p: T }
+        struct S<T, U> (P<T>, U);
+        fn main() { 
+            let S(_0, _1) = S (P { p: 0 }, ""); 
+            let z = _0.p;
+        }
+    """)
+
     fun `test destructure parameter`() = doAvailableTest("""
         struct S<T, U> { x: T, y: U }
         fn f(/*caret*/x: S<i32, &str>) {}
