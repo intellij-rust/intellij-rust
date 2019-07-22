@@ -8,26 +8,24 @@ package org.rust.lang.core.psi
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilderFactory
 import com.intellij.psi.impl.source.tree.ICodeFragmentElementType
+import com.intellij.psi.impl.source.tree.TreeElement
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParser
 
-fun factory(name: String): IElementType = when (name) {
-    "EXPR_CODE_FRAGMENT" -> RsExprCodeFragmentElementType
-    "STMT_CODE_FRAGMENT" -> RsStmtCodeFragmentElementType
-    "TYPE_REF_CODE_FRAGMENT" -> RsTypeRefCodeFragmentElementType
-    else -> error("Unknown element $name")
-}
+class RsCodeFragmentElementType(private val elementType: IElementType, debugName: String) : ICodeFragmentElementType(debugName, RsLanguage) {
 
-abstract class RsCodeFragmentElementTypeBase(debugName: String) : ICodeFragmentElementType(debugName, RsLanguage) {
     override fun parseContents(chameleon: ASTNode): ASTNode? {
-        val project = chameleon.psi.project
+        if (chameleon !is TreeElement) return null
+        val project = chameleon.manager.project
         val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon)
-        val root = RustParser().parse(this, builder)
+        val root = RustParser().parse(elementType, builder)
         return root.firstChildNode
     }
-}
 
-object RsExprCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_EXPR_CODE_FRAGMENT")
-object RsStmtCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_STMT_CODE_FRAGMENT")
-object RsTypeRefCodeFragmentElementType : RsCodeFragmentElementTypeBase("RS_TYPE_REF_CODE_FRAGMENT")
+    companion object {
+        val EXPR = RsCodeFragmentElementType(RsElementTypes.EXPR_CODE_FRAGMENT, "RS_EXPR_CODE_FRAGMENT")
+        val STMT = RsCodeFragmentElementType(RsElementTypes.STMT_CODE_FRAGMENT, "RS_STMT_CODE_FRAGMENT")
+        val TYPE_REF = RsCodeFragmentElementType(RsElementTypes.TYPE_REF_CODE_FRAGMENT, "RS_TYPE_REF_CODE_FRAGMENT")
+    }
+}

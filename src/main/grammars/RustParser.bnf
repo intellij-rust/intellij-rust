@@ -87,7 +87,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    elementTypeFactory("(Expr|Stmt|TypeRef)CodeFragment") = "org.rust.lang.core.psi.RsCodeFragmentElementTypeKt.factory"
+    extraRoot(".*CodeFragment")=true
 
     extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const)") = Pat
 
@@ -109,7 +109,9 @@
 
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
-
+ExprCodeFragment ::= Expr?
+StmtCodeFragment ::= Stmt?
+TypeRefCodeFragment ::= TypeReference?
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -1470,11 +1472,3 @@ private never ::= !()
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
 private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }
-
-// These parsing rules are used directly from the code
-//noinspection BnfUnusedRule
-ExprCodeFragment ::= Expr?
-//noinspection BnfUnusedRule
-StmtCodeFragment ::= Stmt?
-//noinspection BnfUnusedRule
-TypeRefCodeFragment ::= TypeReference?
