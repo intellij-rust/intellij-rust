@@ -8,6 +8,11 @@ def register_printers(objfile):
     objfile.pretty_printers.append(lookup)
 
 
+# BACKCOMPAT: rust 1.35
+def is_hashbrown_hashmap(hash_map):
+    return len(hash_map.type.fields()) == 1
+
+
 def classify_rust_type(type):
     type_class = type.code
     if type_class == gdb.TYPE_CODE_STRUCT:
@@ -44,9 +49,16 @@ def lookup(valobj):
     if rust_type == RustType.STD_BTREE_MAP:
         return StdBTreeMapProvider(valobj)
     if rust_type == RustType.STD_HASH_MAP:
-        return StdHashMapProvider(valobj)
+        if is_hashbrown_hashmap(valobj):
+            return StdHashMapProvider(valobj)
+        else:
+            return StdOldHashMapProvider(valobj)
     if rust_type == RustType.STD_HASH_SET:
-        return StdHashMapProvider(valobj["map"], show_values=False)
+        hash_map = valobj["map"]
+        if is_hashbrown_hashmap(hash_map):
+            return StdHashMapProvider(hash_map, show_values=False)
+        else:
+            return StdOldHashMapProvider(hash_map, show_values=False)
 
     if rust_type == RustType.STD_RC:
         return StdRcProvider(valobj)
