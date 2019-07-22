@@ -282,9 +282,9 @@
                                    implementationClass="org.rust.ide.inspections.RsInspectionSuppressor"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="dyn keyword for trait object"
+                         displayName="Implicit trait objects are deprecated"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsTraitObjectInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsImplicitTraitObjectInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Deprecated element"
