@@ -511,6 +511,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.checkMatch.RsMatchCheckInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Return can be lifted out"
+                         enabledByDefault="true" level="WEAK WARNING"
+                         implementationClass="org.rust.ide.inspections.RsLiftInspection"/>
+
         <globalInspection language="Rust" groupName="Rust"
                           displayName="External Linter"
                           enabledByDefault="true" level="ERROR"
