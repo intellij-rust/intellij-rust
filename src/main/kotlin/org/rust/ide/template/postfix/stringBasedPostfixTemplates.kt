@@ -13,8 +13,7 @@ import org.rust.lang.core.psi.RsBinaryExpr
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.EqualityOp
 import org.rust.lang.core.psi.ext.operatorType
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.type
@@ -124,7 +123,7 @@ class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) :
 }
 
 private val RsExpr.isIntoIterator: Boolean
-    get() = ImplLookup(project, knownItems).isIntoIterator(type)
+    get() = implLookup.isIntoIterator(type)
 
 private val RsExpr.implementsDeref: Boolean
-    get() = ImplLookup(project, knownItems).isDeref(this.type)
+    get() = implLookup.isDeref(this.type)

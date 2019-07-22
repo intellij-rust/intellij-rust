@@ -20,7 +20,7 @@ import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyNever
@@ -68,7 +68,7 @@ fun createLookupElement(
         priority += LOCAL_PRIORITY_OFFSET
     }
 
-    if (isCompatibleTypes(ImplLookup(element.project, element.knownItems), element.asTy, expectedTy)) {
+    if (isCompatibleTypes(element.implLookup, element.asTy, expectedTy)) {
         priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 

@@ -26,7 +26,7 @@ import org.rust.stdext.zipValues
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = element.knownItems
     val paramEnv = if (element is RsGenericDeclaration) ParamEnv.buildFor(element) else ParamEnv.EMPTY
-    val lookup = ImplLookup(element.project, items, paramEnv)
+    val lookup = ImplLookup(element.project, element.cargoProject, items, paramEnv)
     return recursionGuard(element, Computable { lookup.ctx.infer(element) })
         ?: error("Can not run nested type inference")
 }

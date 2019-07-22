@@ -928,4 +928,60 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
             }
         }
     """)
+
+    fun `test full and shorthand pat fields`() = checkByText("""
+        struct S { x: bool, y: i32 }
+        
+        fn foo(s: S) {
+            match s {
+                S { x: true, y } => {}
+                S { x: false, y: _ } => {}
+            }
+        }
+    """)
+
+    fun `test ignored fields 1`() = checkByText("""
+        struct S { x: bool, y: i32 }
+        
+        fn foo(s: S) {
+            match s {
+                S { x: true, y } => {}
+                S { x: false, .. } => {}
+            }
+        }
+    """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/3958
+    fun `test ignored fields 2`() = checkByText("""
+        struct S { s: String, e: E }
+        enum E { A, B }
+        
+        fn foo(s: S) {
+            match s {
+                S { e: E::A, s } => {}
+                S { e: E::B, .. } => {}
+            }
+        }
+    """)
+
+    fun `test ignored fields 3`() = checkFixByText("Add remaining patterns", """
+        struct S { a: bool, b: bool, c: bool }
+        
+        fn foo(s: S) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> s {
+                S { a: true, .. } => {}
+                S { b: true, .. } => {}
+            }
+        }
+    """, """
+        struct S { a: bool, b: bool, c: bool }
+        
+        fn foo(s: S) {
+            match s {
+                S { a: true, .. } => {}
+                S { b: true, .. } => {}
+                S { a: false, b: false, c: _ } => {}
+            }
+        }
+    """)
 }

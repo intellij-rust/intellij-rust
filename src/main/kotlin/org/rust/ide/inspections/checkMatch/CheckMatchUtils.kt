@@ -69,17 +69,21 @@ private val RsPat.kind: PatternKind
         is RsPatStruct -> {
             val item = path.reference.resolve() as? RsFieldsOwner
                 ?: throw CheckMatchException("Can't resolve ${path.text}")
-            val indices = item.namedFields.withIndex().associateBy({ it.value.name }, { it.index })
 
-            val subPatterns = patFieldList
-                .sortedBy { indices[it.patFieldFull?.referenceNameElement?.text] }
-                .map { patField ->
-                    val pat = patField.patFieldFull?.pat
-                    val binding = patField.patBinding
-                    pat?.lower
-                        ?: binding?.type?.let { ty -> Pattern(ty, PatternKind.Binding(ty, binding.name.orEmpty())) }
-                        ?: throw CheckMatchException("Binding type = null")
-                }
+            val subPatterns = mutableListOf<Pattern>()
+            val nameToPatField = patFieldList.associateBy { it.kind.fieldName }
+
+            for (field in item.namedFields) {
+                val patField = nameToPatField[field.name]
+                val pattern = createPatternForField(patField, field)
+                subPatterns.add(pattern)
+            }
+
+            for ((index, field) in item.positionalFields.withIndex()) {
+                val patField = patFieldList.getOrNull(index)
+                val pattern = createPatternForField(patField, field)
+                subPatterns.add(pattern)
+            }
 
             getLeafOrVariant(item, subPatterns)
         }
@@ -116,6 +120,16 @@ private val RsPat.kind: PatternKind
         is RsPatMacro -> TODO()
         is RsPatSlice -> TODO()
         else -> TODO()
+    }
+
+private fun createPatternForField(patField: RsPatField?, field: RsFieldDecl): Pattern =
+    if (patField != null) {
+        patField.patFieldFull?.pat?.let { return it.lower }
+        val binding = patField.patBinding ?: throw CheckMatchException("Invalid RsPatField")
+        Pattern(binding.type, PatternKind.Binding(binding.type, binding.name.orEmpty()))
+    } else {
+        val fieldType = field.typeReference?.type ?: throw CheckMatchException("Field type = null")
+        Pattern(fieldType, PatternKind.Wild)
     }
 
 // lower_variant_or_leaf

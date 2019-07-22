@@ -26,7 +26,6 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
-import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.openapiext.toPsiFile
@@ -135,9 +134,6 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
-
-val RsElement.implLookup: ImplLookup
-    get() = ImplLookup.relativeTo(this)
 
 fun RsElement.findInScope(name: String): PsiElement? {
     var resolved: PsiElement? = null

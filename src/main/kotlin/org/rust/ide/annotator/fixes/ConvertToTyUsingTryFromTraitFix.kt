@@ -13,9 +13,8 @@ import com.intellij.psi.PsiFile
 import org.rust.ide.presentation.tyToStringWithoutTypeArgs
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.withSubst
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.implLookupAndKnownItems
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
@@ -85,8 +84,7 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
     }
 
     private fun isFnRetTyResultAndMatchErrTy(element: RsExpr, fnRetTy: Ty): Boolean {
-        val items = element.knownItems
-        val lookup = ImplLookup(element.project, items)
+        val (lookup, items) = element.implLookupAndKnownItems
         return fnRetTy is TyAdt && fnRetTy.item == items.Result
             && lookup.select(TraitRef(fnRetTy.typeArguments.get(1), (items.From
             ?: return false).withSubst(errTy))).ok() != null
