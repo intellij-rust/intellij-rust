@@ -276,7 +276,8 @@ class StdBTreeMapProvider:
         return "map"
 
 
-class StdHashMapProvider:
+# BACKCOMPAT: rust 1.35
+class StdOldHashMapProvider:
     def __init__(self, valobj, show_values=True):
         self.valobj = valobj
         self.show_values = show_values
@@ -322,6 +323,46 @@ class StdHashMapProvider:
         for index in range(self.size):
             table_index = self.valid_indices[index]
             idx = table_index & self.capacity_mask
+            element = (pairs_start + idx).dereference()
+            if self.show_values:
+                yield ("key{}".format(index), element[ZERO_FIELD])
+                yield ("val{}".format(index), element[FIRST_FIELD])
+            else:
+                yield ("[{}]".format(index), element[ZERO_FIELD])
+
+    def display_hint(self):
+        return "map" if self.show_values else "array"
+
+
+class StdHashMapProvider:
+    def __init__(self, valobj, show_values=True):
+        self.valobj = valobj
+        self.show_values = show_values
+
+        table = self.valobj["base"]["table"]
+        capacity = int(table["bucket_mask"]) + 1
+        ctrl = table["ctrl"]["pointer"]
+
+        self.size = int(table["items"])
+        self.data_ptr = table["data"]["pointer"]
+        self.pair_type = self.data_ptr.dereference().type
+
+        self.valid_indices = []
+        for idx in range(capacity):
+            address = ctrl + idx
+            value = address.dereference()
+            is_presented = value & 128 == 0
+            if is_presented:
+                self.valid_indices.append(idx)
+
+    def to_string(self):
+        return "size={}".format(self.size)
+
+    def children(self):
+        pairs_start = self.data_ptr
+
+        for index in range(self.size):
+            idx = self.valid_indices[index]
             element = (pairs_start + idx).dereference()
             if self.show_values:
                 yield ("key{}".format(index), element[ZERO_FIELD])
