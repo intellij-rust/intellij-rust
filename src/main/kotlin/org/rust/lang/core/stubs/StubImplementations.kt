@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 174
+        override fun getStubVersion(): Int = 175
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -504,6 +504,9 @@ class RsTraitAliasStub(
             RsTraitAliasStub(parentStub, this, dataStream.readNameAsString())
 
         override fun serialize(stub: RsTraitAliasStub, dataStream: StubOutputStream) {
+            with(dataStream) {
+                writeName(stub.name)
+            }
         }
 
         override fun createPsi(stub: RsTraitAliasStub): RsTraitAlias =
