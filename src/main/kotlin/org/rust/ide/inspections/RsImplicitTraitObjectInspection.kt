@@ -19,12 +19,18 @@ import org.rust.lang.core.psi.ext.isEdition2018
 import org.rust.lang.core.resolve.ref.deepResolve
 
 class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
-        override fun visitTypeReference(typeReference: RsTypeReference) {
-            if (!typeReference.isEdition2018) return
+    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RsVisitor() {
+            override fun visitTypeReference(typeReference: RsTypeReference) {
+                if (!typeReference.isEdition2018) return
 
-            if (typeReference.traitType?.run { dyn == null && impl == null } == true ||
-                typeReference.baseType?.path?.reference?.deepResolve() is RsTraitItem) {
+                val traitType = typeReference.traitType
+                val baseTypePath = typeReference.baseType?.path
+                val isTraitType = traitType != null || baseTypePath?.reference?.deepResolve() is RsTraitItem
+                val isSelf = baseTypePath?.cself != null
+                val hasDyn = traitType?.dyn != null
+                val hasImpl = traitType?.impl != null
+                if (!isTraitType || isSelf || hasDyn || hasImpl) return
 
                 holder.registerProblem(
                     typeReference,
@@ -38,8 +44,8 @@ class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
                             val new = RsPsiFactory(project).createDynTraitType(traitText)
                             target.firstChild.replace(new)
                         }
-                    })
+                    }
+                )
             }
         }
-    }
 }
