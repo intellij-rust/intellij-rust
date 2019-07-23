@@ -73,6 +73,22 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
+    fun `test import enum variant 3`() = checkAutoImportFixByText("""
+        enum Foo { A }
+
+        fn main() {
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
+        }
+    """, """
+        use Foo::A;
+
+        enum Foo { A }
+
+        fn main() {
+            let a = A/*caret*/;
+        }
+    """)
+
     fun `test import function`() = checkAutoImportFixByText("""
         mod foo {
             pub fn bar() -> i32 { 0 }

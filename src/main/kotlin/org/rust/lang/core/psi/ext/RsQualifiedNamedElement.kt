@@ -428,7 +428,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         val name = itemName ?: return null
         val parentPath = parentCrateRelativePath ?: return null
         if (parentPath.isEmpty()) return name
-        return "$parentPath::$name"
+        return "$parentPath::$name".removePrefix("::")
     }
 
     override fun toString(): String {
