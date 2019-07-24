@@ -45,6 +45,10 @@ class RsImplicitTraitObjectInspectionTest : RsInspectionsTestBase(RsImplicitTrai
         fn test<X>(a: X) where X : Trait {}
     """)
 
+    fun `test no warning on Self`() = checkByText("""
+        trait Y where Self: Foo {}
+    """)
+
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)
     fun `test simple trait object in edition 2015`() = checkByText("""
         trait Trait {}
