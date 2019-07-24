@@ -62,14 +62,14 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use foo::Foo::A;
+        use foo::Foo;
 
         mod foo {
             pub enum Foo { A }
         }
 
         fn main() {
-            let a = A/*caret*/;
+            let a = Foo::A/*caret*/;
         }
     """)
 
@@ -80,12 +80,44 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """, """
-        use Foo::A;
-
         enum Foo { A }
 
         fn main() {
-            let a = A/*caret*/;
+            let a = Foo::A/*caret*/;
+        }
+    """)
+
+    fun `test import enum variant 4`() = checkAutoImportFixByText("""
+        use foo::Foo;
+        
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = Foo::A/*caret*/;
+        }
+    """)
+
+    fun `test import enum variant 5`() = checkAutoImportFixIsUnavailable("""
+        struct Foo;
+        
+        mod foo {
+            pub enum Foo { A }
+        }
+
+        fn main() {
+            let a = <error descr="Unresolved reference: `A`">A/*caret*/</error>;
         }
     """)
 
@@ -1086,8 +1118,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, setOf("struct_mod::Foo", "enum_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_mod::Bar::Foo", """
-        use enum_mod::Bar::Foo;
+    """, setOf("struct_mod::Foo", "enum_mod::Bar", "type_alias_mod::Foo"), "struct_mod::Foo", """
+        use struct_mod::Foo;
 
         mod struct_mod {
             pub struct Foo { foo: i32 }
@@ -1182,8 +1214,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error> { };
         }
-    """, setOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
-        use enum_struct_mod::Bar::Foo;
+    """, setOf("block_struct_mod::Foo", "enum_struct_mod::Bar", "type_alias_mod::Foo"), "block_struct_mod::Foo", """
+        use block_struct_mod::Foo;
 
         mod struct_mod {
             pub struct Foo;
