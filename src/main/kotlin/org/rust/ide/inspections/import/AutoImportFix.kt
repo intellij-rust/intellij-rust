@@ -10,6 +10,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
@@ -21,6 +22,7 @@ import org.rust.ide.search.RsWithMacrosScope
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.resolve.processNestedScopesUpwards
@@ -173,6 +175,23 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 // check result after import can be resolved and resolved element is suitable
                 // if no, don't add it in candidate list
                 .filter { canBeResolvedToSuitableItem(importingPathText, importContext, it.info) }
+                .also { if ("::" in importingPathText) return it }
+                // instead of importing enum variant we want to import its parent enum
+                .flatMap { candidate ->
+                    val enumVariant = candidate.qualifiedNamedItem.item as? RsEnumVariant
+                        ?: return@flatMap sequenceOf(candidate)
+                    val enum = enumVariant.parentEnum
+                    val enumName = enum.name ?: return@flatMap emptySequence<ImportCandidate>()
+                    getImportCandidates(importContext, enumName, "$enumName::$importingPathText", itemFilter)
+                        .filter { it.qualifiedNamedItem.item == enum }
+                        .filterNot { enumCandidate ->
+                            processNestedScopesUpwards(importContext.path, TYPES) {
+                                it.name == enumCandidate.qualifiedNamedItem.itemName &&
+                                    it.element != enumCandidate.qualifiedNamedItem.item
+                            }
+                        }
+                        .map { it.copy(qualifiedNamedItem = candidate.qualifiedNamedItem) }
+                }
         }
 
         private fun getReexportedItems(
@@ -511,17 +530,39 @@ private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElem
 fun ImportCandidate.import(context: RsElement) {
     checkWriteAccessAllowed()
     val psiFactory = RsPsiFactory(context.project)
+
+    fun processEnumVariant(): RsElement? {
+        val documentManager = PsiDocumentManager.getInstance(context.project) ?: return null
+        val document = documentManager.getDocument(context.containingFile) ?: return null
+
+        val enumName = info.usePath.substringAfterLast("::")
+        val variantName = qualifiedNamedItem.item.name
+
+        val oldPath = context.ancestorOrSelf<RsPath>() ?: return null
+        val newPath = psiFactory.tryCreatePath("$enumName::$variantName", PathParsingMode.COLONS) ?: return null
+        val newContext = oldPath.replace(newPath) as RsElement
+        documentManager.commitDocument(document)
+
+        return if (processNestedScopesUpwards(newContext, TYPES) { it.name == enumName }) null else newContext
+    }
+
+    val newContext = if (qualifiedNamedItem.item is RsEnumVariant) {
+        processEnumVariant() ?: return
+    } else {
+        context
+    }
+
     // depth of `mod` relative to module with `extern crate` item
     // we uses this info to create correct relative use item path if needed
     var relativeDepth: Int? = null
 
-    val isEdition2018 = context.isEdition2018
+    val isEdition2018 = newContext.isEdition2018
     val info = info
     // if crate of importing element differs from current crate
     // we need to add new extern crate item
     if (info is ImportInfo.ExternCrateImportInfo) {
         val target = info.target
-        val crateRoot = context.crateRoot
+        val crateRoot = newContext.crateRoot
         val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
         when {
             // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
@@ -549,16 +590,16 @@ fun ImportCandidate.import(context: RsElement) {
         else -> "super::".repeat(relativeDepth)
     }
 
-    val insertionScope = if (context.isDoctestInjection) {
+    val insertionScope = if (newContext.isDoctestInjection) {
         // In doctest injections all our code is located inside one invisible (main) function.
         // If we try to change PSI outside of that function, we'll take a crash.
         // So here we limit the module search with the last function (and never inert to an RsFile)
         AutoImportFix.Testmarks.doctestInjectionImport.hit()
-        val scope = context.ancestors.find { it is RsMod && it !is RsFile }
-            ?: context.ancestors.findLast { it is RsFunction }
+        val scope = newContext.ancestors.find { it is RsMod && it !is RsFile }
+            ?: newContext.ancestors.findLast { it is RsFunction }
         ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
     } else {
-        context.containingMod
+        newContext.containingMod
     }
     insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
 }
@@ -641,6 +682,7 @@ private val RsUseItem.pathAsList: List<String>?
 @Suppress("DataClassPrivateConstructor")
 data class ImportContext private constructor(
     val project: Project,
+    val path: RsPath,
     val mod: RsMod,
     val superMods: LinkedHashSet<RsMod>,
     val scope: GlobalSearchScope,
@@ -651,6 +693,7 @@ data class ImportContext private constructor(
     companion object {
         fun from(project: Project, path: RsPath, isCompletion: Boolean): ImportContext = ImportContext(
             project = project,
+            path = path,
             mod = path.containingMod,
             superMods = LinkedHashSet(path.containingMod.superMods),
             scope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project)),
