@@ -27,6 +27,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -222,6 +223,8 @@ class Cargo(private val cargoExecutable: Path) {
         )
 
         data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
+
+        val cargoCommonPatch: CargoPatch = { patchArgs(it, true) }
 
         fun patchArgs(commandLine: CargoCommandLine, colors: Boolean): CargoCommandLine {
             val (pre, post) = commandLine.splitOnDoubleDash()

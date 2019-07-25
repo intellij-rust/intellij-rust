@@ -6,17 +6,14 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.configurations.CommandLineState
-import com.intellij.execution.filters.Filter
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.runconfig.filters.RsBacktraceFilter
-import org.rust.cargo.runconfig.filters.RsConsoleFilter
-import org.rust.cargo.runconfig.filters.RsExplainFilter
-import org.rust.cargo.runconfig.filters.RsPanicFilter
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustToolchain
@@ -36,22 +33,10 @@ abstract class CargoRunStateBase(
     )
     private val workingDirectory: Path? get() = cargoProject?.workingDirectory
 
-    private val commandLinePatches: MutableList<(CargoCommandLine) -> CargoCommandLine> = mutableListOf()
+    private val commandLinePatches: MutableList<CargoPatch> = mutableListOf()
 
-    fun addCommandLinePatch(patch: (CargoCommandLine) -> CargoCommandLine) {
+    fun addCommandLinePatch(patch: CargoPatch) {
         commandLinePatches.add(patch)
-    }
-
-    fun createFilters(): Collection<Filter> {
-        val filters = mutableListOf<Filter>()
-        filters.add(RsExplainFilter())
-        val dir = cargoProject?.workspaceRootDir ?: cargoProject?.rootDir
-        if (dir != null) {
-            filters.add(RsConsoleFilter(environment.project, dir))
-            filters.add(RsPanicFilter(environment.project, dir))
-            filters.add(RsBacktraceFilter(environment.project, dir, cargoProject?.workspace))
-        }
-        return filters
     }
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
@@ -66,10 +51,16 @@ abstract class CargoRunStateBase(
         return commandLine
     }
 
-    public override fun startProcess(): ProcessHandler {
-        val cmd = toolchain.cargoOrWrapper(workingDirectory)
-            .toColoredCommandLine(prepareCommandLine())
-        val handler = RsKillableColoredProcessHandler(cmd)
+    override fun startProcess(): ProcessHandler = startProcess(emulateTerminal = false)
+
+    fun startProcess(emulateTerminal: Boolean): ProcessHandler {
+        var commandLine = cargo().toColoredCommandLine(prepareCommandLine())
+        if (emulateTerminal) {
+            commandLine = PtyCommandLine(commandLine)
+                .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+                .withConsoleMode(false)
+        }
+        val handler = RsKillableColoredProcessHandler(commandLine)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }
