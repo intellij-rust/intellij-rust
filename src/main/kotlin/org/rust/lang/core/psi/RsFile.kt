@@ -57,7 +57,12 @@ class RsFile(
     override val containingMod: RsMod get() = getOriginalOrSelf()
 
     override val crateRoot: RsMod?
-        get() = superMods.lastOrNull()?.takeIf { it.isCrateRoot }
+        get() = CachedValuesManager.getCachedValue(this) {
+            CachedValueProvider.Result(doCrateRoot(), rustStructureOrAnyPsiModificationTracker)
+        }
+
+    private fun doCrateRoot(): RsMod? =
+        superMods.lastOrNull()?.takeIf { it.isCrateRoot }
 
     override fun setName(name: String): PsiElement {
         val nameWithExtension = if ('.' !in name) "$name.rs" else name
