@@ -9,7 +9,6 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
-import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.*
@@ -64,7 +63,7 @@ val RsPath.qualifier: RsPath?
         return (ctx as? RsUseSpeck)?.qualifier
     }
 
-fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = context) {
+fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = parent) {
     is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
     is RsUseSpeck -> when {
         // use foo::bar::{self, baz};
@@ -77,6 +76,7 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
         else -> TYPES_N_VALUES_N_MACROS
     }
     is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
+    is RsPathCodeFragment -> parent.ns
     else -> TYPES_N_VALUES
 }
 
@@ -95,8 +95,6 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
         }
 
     override val referenceName: String get() = greenStub?.referenceName ?: super.referenceName
-
-    override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 
     override val containingMod: RsMod
         get() {

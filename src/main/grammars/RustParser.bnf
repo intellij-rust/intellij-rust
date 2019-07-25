@@ -112,6 +112,8 @@ File ::= [ SHEBANG_LINE ] InnerAttr* Items
 ExprCodeFragment ::= Expr?
 StmtCodeFragment ::= Stmt?
 TypeRefCodeFragment ::= TypeReference?
+PathWithColonsCodeFragment ::= PathGenericArgsWithColons?
+PathWithoutColonsCodeFragment ::= PathGenericArgsWithoutColons?
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -172,8 +174,7 @@ MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExpr | MetaItemWithoutTT )>>
 private PathIdent ::= !("union" identifier) identifier | self | super | 'Self' | crate
 
 fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
-  implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement"
-                 "org.rust.lang.core.macros.RsExpandedElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

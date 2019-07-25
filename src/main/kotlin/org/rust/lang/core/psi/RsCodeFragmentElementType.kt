@@ -27,5 +27,7 @@ class RsCodeFragmentElementType(private val elementType: IElementType, debugName
         val EXPR = RsCodeFragmentElementType(RsElementTypes.EXPR_CODE_FRAGMENT, "RS_EXPR_CODE_FRAGMENT")
         val STMT = RsCodeFragmentElementType(RsElementTypes.STMT_CODE_FRAGMENT, "RS_STMT_CODE_FRAGMENT")
         val TYPE_REF = RsCodeFragmentElementType(RsElementTypes.TYPE_REF_CODE_FRAGMENT, "RS_TYPE_REF_CODE_FRAGMENT")
+        val PATH_WITHOUT_COLONS = RsCodeFragmentElementType(RsElementTypes.PATH_WITHOUT_COLONS_CODE_FRAGMENT, "PATH_WITHOUT_COLONS")
+        val PATH_WITH_COLONS = RsCodeFragmentElementType(RsElementTypes.PATH_WITH_COLONS_CODE_FRAGMENT, "PATH_WITH_COLONS")
     }
 }

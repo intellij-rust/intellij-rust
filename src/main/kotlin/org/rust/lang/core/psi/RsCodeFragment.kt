@@ -17,10 +17,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.parser.RustParserUtil
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.resolve.Namespace
 
 abstract class RsCodeFragment(
     fileViewProvider: FileViewProvider,
@@ -89,6 +92,20 @@ abstract class RsCodeFragment(
         clone.viewProvider.forceCachedPsi(clone)
         return clone
     }
+
+    companion object {
+        @JvmStatic
+        protected fun createFileViewProvider(
+            project: Project,
+            text: CharSequence,
+            eventSystemEnabled: Boolean
+        ): FileViewProvider {
+            return PsiManagerEx.getInstanceEx(project).fileManager.createFileViewProvider(
+                LightVirtualFile("fragment.rs", RsLanguage, text),
+                eventSystemEnabled
+            )
+        }
+    }
 }
 
 class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
@@ -110,4 +127,31 @@ class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context:
     : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context),
       RsNamedElement {
     val typeReference: RsTypeReference? get() = PsiTreeUtil.getChildOfType(this, RsTypeReference::class.java)
+}
+
+class RsPathCodeFragment(
+    fileViewProvider: FileViewProvider,
+    context: RsElement,
+    mode: PathParsingMode,
+    val ns: Set<Namespace>
+) : RsCodeFragment(fileViewProvider, mode.elementType(), context), RsInferenceContextOwner {
+    constructor(
+        project: Project,
+        text: CharSequence,
+        eventSystemEnabled: Boolean,
+        context: RsElement,
+        mode: PathParsingMode,
+        ns: Set<Namespace>
+    ) : this(createFileViewProvider(project, text, eventSystemEnabled), context, mode, ns)
+
+    val path: RsPath? get() = PsiTreeUtil.getChildOfType(this, RsPath::class.java)
+
+    companion object {
+        @JvmStatic
+        private fun PathParsingMode.elementType() = when (this) {
+            PathParsingMode.NO_COLONS -> RsCodeFragmentElementType.PATH_WITHOUT_COLONS
+            PathParsingMode.COLONS -> RsCodeFragmentElementType.PATH_WITH_COLONS
+            PathParsingMode.NO_TYPES -> error("NO_TYPES mode is not supported; use NO_COLONS")
+        }
+    }
 }

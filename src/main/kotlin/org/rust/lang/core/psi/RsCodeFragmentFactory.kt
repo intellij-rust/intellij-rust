@@ -8,11 +8,11 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.macros.setContext
-import org.rust.lang.core.psi.RsPsiFactory.PathNamespace
-import org.rust.lang.core.psi.ext.CARGO_WORKSPACE
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.cargoWorkspace
+import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.openapiext.toPsiFile
 
 
@@ -23,20 +23,23 @@ class RsCodeFragmentFactory(val project: Project) {
         check(!pathText.startsWith("::"))
         val vFile = target.crateRoot ?: return null
         val crateRoot = vFile.toPsiFile(project) as? RsFile ?: return null
-        return psiFactory.tryCreatePath(pathText)
-            ?.apply { setContext(crateRoot) }
+        return createPath(pathText, crateRoot)
     }
 
-    fun createPath(path: String, context: RsElement, ns: PathNamespace = PathNamespace.TYPES): RsPath? =
-        psiFactory.tryCreatePath(path, ns)?.apply {
-            setContext(context)
-            containingFile?.putUserData(CARGO_WORKSPACE, context.cargoWorkspace)
-        }
+    fun createPath(
+        path: String,
+        context: RsElement,
+        mode: PathParsingMode = PathParsingMode.NO_COLONS,
+        ns: Set<Namespace> = TYPES_N_VALUES
+    ): RsPath? {
+        return RsPathCodeFragment(project, path, false, context, mode, ns).path
+    }
 
     fun createPathInTmpMod(
         importingPathName: String,
         context: RsMod,
-        ns: PathNamespace,
+        mode: PathParsingMode,
+        ns: Set<Namespace>,
         usePath: String,
         crateName: String?
     ): RsPath? {
@@ -51,6 +54,6 @@ class RsCodeFragmentFactory(val project: Project) {
             $useItem
             """)
         mod.setContext(context)
-        return createPath(importingPathName, mod, ns)
+        return createPath(importingPathName, mod, mode, ns)
     }
 }
