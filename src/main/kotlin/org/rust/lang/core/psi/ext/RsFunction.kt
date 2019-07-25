@@ -22,8 +22,8 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.Icon
 
-val RsFunction.isAssocFn: Boolean get() = selfParameter == null && owner.isImplOrTrait
-val RsFunction.isMethod: Boolean get() = selfParameter != null && owner.isImplOrTrait
+val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTrait
+val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait
 
 val RsFunction.isTest: Boolean get() {
     val stub = greenStub
@@ -66,6 +66,9 @@ val RsFunction.default: PsiElement?
 
 val RsFunction.isAsync: Boolean
     get() = greenStub?.isAsync ?: (node.findChildByType(RsElementTypes.ASYNC) != null)
+
+val RsFunction.hasSelfParameters: Boolean
+    get() = greenStub?.hasSelfParameters ?: (selfParameter != null)
 
 val RsFunction.title: String
     get() = when (owner) {

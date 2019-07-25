@@ -1092,7 +1092,11 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
 private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
         val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, _, source) ->
-            element is RsFunction && element.isMethod && processor(MethodResolveVariant(name, element, ty, i, source))
+            // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
+            // it is an associated item and so if it is a function with self parameter - it is a method.
+            // Also, this place is very hot and `hasSelfParameters` is cheaper than `isMethod`
+            element is RsFunction && element.hasSelfParameters &&
+                processor(MethodResolveVariant(name, element, ty, i, source))
         }
         processAssociatedItems(lookup, ty, VALUES, methodProcessor)
     }
