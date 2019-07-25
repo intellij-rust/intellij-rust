@@ -5,6 +5,7 @@
 
 package org.rust.cargo.runconfig.command
 
+import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -21,6 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.CargoTestRunState
+import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -28,6 +30,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.run
 
 /**
  * This class describes a Run Configuration.
@@ -49,6 +52,15 @@ class CargoCommandConfiguration(
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
+
+    override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
+        val tasks = super.getBeforeRunTasks()
+        return if (tasks.none { it is CargoBuildTaskProvider.BuildTask }) {
+            tasks + CargoBuildTaskProvider.BuildTask()
+        } else {
+            tasks
+        }
+    }
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)

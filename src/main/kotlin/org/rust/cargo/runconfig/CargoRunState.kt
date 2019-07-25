@@ -18,6 +18,6 @@ class CargoRunState(
     init {
         val scope = GlobalSearchScopes.executionScope(environment.project, environment.runProfile)
         consoleBuilder = CargoConsoleBuilder(environment.project, scope)
-        createFilters().forEach { consoleBuilder.addFilter(it) }
+        createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }
 }

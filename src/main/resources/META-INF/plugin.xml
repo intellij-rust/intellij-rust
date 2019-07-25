@@ -722,15 +722,16 @@
 
         <!-- Run Configurations -->
 
-        <programRunner implementation="org.rust.cargo.runconfig.RsRunner"/>
-        <programRunner implementation="org.rust.cargo.runconfig.RsTestRunner"/>
+        <programRunner implementation="org.rust.cargo.runconfig.CargoCommandRunner"/>
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
         <runConfigurationProducer
                 implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
         <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
              producer instead of registering it here. -->
 
-        <projectTaskRunner implementation="org.rust.cargo.runconfig.RsProjectTasksRunner"/>
+        <stepsBeforeRunProvider implementation="org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider"/>
+
+        <projectTaskRunner implementation="org.rust.cargo.runconfig.buildtool.CargoBuildTaskRunner"/>
 
         <!-- Cargo -->
 

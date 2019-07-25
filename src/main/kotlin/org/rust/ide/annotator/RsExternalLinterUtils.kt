@@ -259,7 +259,7 @@ private data class RsExternalLinterFilteredMessage(
     }
 }
 
-private fun RustcSpan.isValid(): Boolean =
+fun RustcSpan.isValid(): Boolean =
     line_end > line_start || (line_end == line_start && column_end >= column_start)
 
 private fun ErrorCode?.formatAsLink(): String? =
