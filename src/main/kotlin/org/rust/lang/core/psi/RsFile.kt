@@ -57,8 +57,12 @@ class RsFile(
     override val containingMod: RsMod get() = getOriginalOrSelf()
 
     override val crateRoot: RsMod?
-        get() = CachedValuesManager.getCachedValue(this) {
-            CachedValueProvider.Result(doCrateRoot(), rustStructureOrAnyPsiModificationTracker)
+        get() {
+            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
+            val key = if (project.macroExpansionManager.isResolvingMacro) CRATE_ROOT_MACROS_KEY else CRATE_ROOT_KEY
+            return CachedValuesManager.getCachedValue(this, key) {
+                CachedValueProvider.Result(doCrateRoot(), rustStructureOrAnyPsiModificationTracker)
+            }
         }
 
     private fun doCrateRoot(): RsMod? =
@@ -144,3 +148,6 @@ val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
 
 private val MOD_DECL_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_KEY")
 private val MOD_DECL_MACROS_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_MACROS_KEY")
+
+private val CRATE_ROOT_KEY: Key<CachedValue<RsMod?>> = Key.create("CRATE_ROOT_KEY")
+private val CRATE_ROOT_MACROS_KEY: Key<CachedValue<RsMod?>> = Key.create("CRATE_ROOT_MACROS_KEY")
