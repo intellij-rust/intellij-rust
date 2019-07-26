@@ -86,7 +86,7 @@ private class DialogExtractFunctionUi(
             "Extract Function",
             panel,
             resizable = true,
-            focusedComponent = functionNameField,
+            focusedComponent = functionNameField.focusableComponent,
             okActionEnabled = false,
             project = project,
             parent = null,
@@ -103,7 +103,6 @@ private class DialogExtractFunctionUi(
             signatureComponent.setSignature(config.signature)
             extractDialog.isOKActionEnabled = isValidRustVariableIdentifier(config.name)
         }
-
         extractDialog.show()
     }
 
