@@ -1,11 +1,7 @@
 FROM ubuntu:16.04
 MAINTAINER Arseniy Pendryak <arseniy.pendryak@jtebrains.com>
 
-ENV HOME /home/test
-USER test
-
 RUN apt-get update
-
 RUN apt-get -y install curl
 
 # Install Open JDK 8
@@ -15,6 +11,9 @@ ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64
 ENV PATH $JAVA_HOME/bin:$PATH
 
 RUN java -version
+
+RUN groupadd -r intellij_rust && useradd -r -m -g intellij_rust intellij_rust
+USER intellij_rust
 
 # Intall rustup
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
