@@ -45,10 +45,7 @@ import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
-import org.rust.openapiext.Testmark
-import org.rust.openapiext.hitOnFalse
-import org.rust.openapiext.isUnitTestMode
-import org.rust.openapiext.toPsiFile
+import org.rust.openapiext.*
 import org.rust.stdext.buildList
 
 // IntelliJ Rust name resolution algorithm.
@@ -461,7 +458,7 @@ private fun processUnqualifiedPathResolveVariants(
     }
 
     val containingMod = path.containingMod
-    val crateRoot = path.crateRoot
+    val crateRoot = containingMod.crateRoot
     /** Path starts with `::` */
     val hasColonColon = path.hasColonColon
     if (!hasColonColon) {
@@ -471,7 +468,7 @@ private fun processUnqualifiedPathResolveVariants(
             if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.isExpandedFromMacro) {
                 val crate = referenceName.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
                 val result = if (crate == "self") {
-                    processor.lazy(referenceName) { path.crateRoot }
+                    if (crateRoot != null) processor(referenceName, crateRoot) else false
                 } else {
                     processExternCrateResolveVariants(path, false) {
                         if (it.name == crate) processor.lazy(referenceName) { it.element } else false
@@ -488,6 +485,8 @@ private fun processUnqualifiedPathResolveVariants(
         }
     }
 
+    val isEdition2018 = (crateRoot ?: containingMod).isEdition2018
+
     // In 2015 edition a path is crate-relative (global) if it's inside use item,
     // inside "visibility restriction" or if it starts with `::`
     // ```rust, edition2015
@@ -499,7 +498,6 @@ private fun processUnqualifiedPathResolveVariants(
     // In 2018 edition a path is crate-relative if it starts with `crate::` (handled above)
     // or if it's inside "visibility restriction". `::`-qualified path on 2018 edition means that
     // such path is a name of some dependency crate (that should be resolved without `extern crate`)
-    val isEdition2018 = path.isEdition2018
     val isCrateRelative = !isEdition2018 && (hasColonColon || path.contextStrict<RsUseItem>() != null)
         || path.contextStrict<RsVisRestriction>() != null
     // see https://doc.rust-lang.org/edition-guide/rust-2018/module-system/path-clarity.html#the-crate-keyword-refers-to-the-current-crate
@@ -1177,7 +1175,7 @@ private fun processLexicalDeclarations(
     ipm: ItemProcessingMode,
     processor: RsResolveProcessor
 ): Boolean {
-    check(cameFrom.context == scope)
+    testAssert { cameFrom.context == scope }
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)

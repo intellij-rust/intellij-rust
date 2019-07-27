@@ -561,9 +561,8 @@ class ExpandedMacroInfo(
 
     private fun getExpansionPsi(): RsFile? {
         val expansionFile = expansionFile?.takeIf { it.isValid } ?: return null
-        check(expansionFile.fileType == RsFileType)
-        val psi = PsiManager.getInstance(sourceFile.project).findFile(expansionFile) as? RsFile ?: return null
-        return psi.takeIf { it.isValid }
+        testAssert { expansionFile.fileType == RsFileType }
+        return PsiManager.getInstance(sourceFile.project).findFile(expansionFile) as? RsFile
     }
 
     fun makePipeline(): Pipeline.Stage1ResolveAndExpand {
