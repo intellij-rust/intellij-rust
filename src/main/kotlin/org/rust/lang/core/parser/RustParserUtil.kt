@@ -27,7 +27,14 @@ import org.rust.stdext.makeBitMask
 
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
-    enum class PathParsingMode { COLONS, NO_COLONS, NO_TYPES }
+    enum class PathParsingMode {
+        /** `Foo::<i32>` */
+        COLONS,
+        /** `Foo<i32>` */
+        NO_COLONS,
+        /** `Foo` */
+        NO_TYPES
+    }
     enum class BinaryMode { ON, OFF }
 
     private val FLAGS: Key<Int> = Key("RustParserUtil.FLAGS")

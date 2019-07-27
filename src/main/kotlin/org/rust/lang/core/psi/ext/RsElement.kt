@@ -10,7 +10,6 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -39,8 +38,6 @@ interface RsElement : PsiElement {
     val crateRoot: RsMod?
 }
 
-val CARGO_WORKSPACE = Key.create<CargoWorkspace>("CARGO_WORKSPACE")
-
 val RsElement.cargoProject: CargoProject?
     get() = contextualFile.originalFile.findCargoProject()
 
@@ -48,7 +45,6 @@ val RsElement.cargoWorkspace: CargoWorkspace?
     get() {
         val psiFile = contextualFile.originalFile
         psiFile.virtualFile?.getInjectedFromIfDoctestInjection(project)?.cargoWorkspace?.let { return it }
-        psiFile.getUserData(CARGO_WORKSPACE)?.let { return it }
         return psiFile.findCargoProject()?.workspace
     }
 
