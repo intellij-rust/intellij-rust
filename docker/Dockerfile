@@ -13,7 +13,7 @@ ENV PATH $JAVA_HOME/bin:$PATH
 RUN java -version
 
 ENV USER root
-ENV HOME /
+ENV HOME /root
 
 # Intall rustup
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
