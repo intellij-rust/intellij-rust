@@ -12,9 +12,8 @@ ENV PATH $JAVA_HOME/bin:$PATH
 
 RUN java -version
 
-RUN groupadd -r intellij_rust && useradd -r -m -g intellij_rust intellij_rust
-USER intellij_rust
-ENV HOME /home/intellij_rust
+ENV USER root
+ENV HOME /
 
 # Intall rustup
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
