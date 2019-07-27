@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 175
+        override fun getStubVersion(): Int = 176
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -537,6 +537,8 @@ class RsFunctionStub(
     val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
     val isVariadic: Boolean get() = BitUtil.isSet(flags, VARIADIC_MASK)
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
+    // Method resolve optimization: stub field access is much faster than PSI traversing
+    val hasSelfParameters: Boolean get() = BitUtil.isSet(flags, HAS_SELF_PARAMETER_MASK)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -568,6 +570,7 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
             flags = BitUtil.set(flags, VARIADIC_MASK, psi.isVariadic)
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
+            flags = BitUtil.set(flags, HAS_SELF_PARAMETER_MASK, psi.hasSelfParameters)
             return RsFunctionStub(parentStub, this,
                 name = psi.name,
                 abiName = psi.abiName,
@@ -588,6 +591,7 @@ class RsFunctionStub(
         private val EXTERN_MASK: Int = makeBitMask(6)
         private val VARIADIC_MASK: Int = makeBitMask(7)
         private val ASYNC_MASK: Int = makeBitMask(8)
+        private val HAS_SELF_PARAMETER_MASK: Int = makeBitMask(9)
     }
 }
 
