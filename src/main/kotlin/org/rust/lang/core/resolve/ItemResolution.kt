@@ -137,7 +137,7 @@ fun processItemDeclarations(
     }
 
     if (ipm.withExternCrates && Namespace.Types in ns && scope is RsMod) {
-        if (scope.isEdition2018 && !scope.isCrateRoot) {
+        if (isEdition2018 && !scope.isCrateRoot) {
             val crateRoot = scope.crateRoot
             if (crateRoot != null) {
                 val result = processWithShadowing(directlyDeclaredNames, processor) { shadowingProcessor ->
