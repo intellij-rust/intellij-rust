@@ -3,11 +3,14 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.rust.lang
 
 import com.intellij.openapi.fileTypes.FileTypeConsumer
 import com.intellij.openapi.fileTypes.FileTypeFactory
 
+// BACKCOMPAT: 2019.1 (use `fileType` extension point instead)
 class RsFileTypeFactory : FileTypeFactory() {
 
     override fun createFileTypes(consumer: FileTypeConsumer) {

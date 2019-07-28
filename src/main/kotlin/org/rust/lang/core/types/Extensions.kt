@@ -114,7 +114,7 @@ val RsElement.implLookupAndKnownItems: Pair<ImplLookup, KnownItems>
 
 val RsExpr.cmt: Cmt?
     get() {
-        val (lookup, items) = implLookupAndKnownItems
+        val lookup = implLookup
         val inference = this.inference ?: return null
         return MemoryCategorizationContext(lookup, inference).processExpr(this)
     }
