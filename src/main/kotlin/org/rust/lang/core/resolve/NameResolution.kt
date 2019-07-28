@@ -526,7 +526,7 @@ private fun processTypeQualifiedPathResolveVariants(
         fun(e: AssocItemScopeEntry): Boolean {
             if (e.element !is RsTypeAlias) return processor(e)
 
-            val implementedTrait = e.source.value.implementedTrait
+            val implementedTrait = e.source.implementedTrait
                 ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
                 ?: return processor(e)
 
@@ -1131,12 +1131,12 @@ private fun processAssociatedItems(
          * which are not implemented.
          */
         fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsAbstractable>): Boolean {
-            val directlyImplemented = traitOrImpl.value.members?.let { accessor(it) }.orEmpty()
+            val directlyImplemented = traitOrImpl.members?.let { accessor(it) }.orEmpty()
             if (directlyImplemented.any { inherentProcessor(it) }) return true
 
             if (traitOrImpl is TraitImplSource.ExplicitImpl) {
                 val direct = directlyImplemented.map { it.name }.toSet()
-                val membersFromTrait = traitOrImpl.value.implementedTrait?.element?.members ?: return false
+                val membersFromTrait = traitOrImpl.implementedTrait?.element?.members ?: return false
                 for (member in accessor(membersFromTrait)) {
                     if (member.name !in direct && inherentProcessor(member)) return true
                 }
@@ -1154,7 +1154,7 @@ private fun processAssociatedItems(
         return false
     }
 
-    val (inherent, traits) = lookup.findImplsAndTraits(type).partition { it is TraitImplSource.ExplicitImpl && it.value.traitRef == null }
+    val (inherent, traits) = lookup.findImplsAndTraits(type).partition { it is TraitImplSource.ExplicitImpl && it.isInherent }
     if (inherent.any { processTraitOrImpl(it, true) }) return true
     if (traits.any { processTraitOrImpl(it, false) }) return true
     return false

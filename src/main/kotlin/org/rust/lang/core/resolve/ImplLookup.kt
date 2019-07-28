@@ -105,25 +105,38 @@ val HARDCODED_FROM_IMPLS_MAP: Map<TyPrimitive, List<TyPrimitive>> = run {
 sealed class TraitImplSource {
     abstract val value: RsTraitOrImpl
 
+    open val implementedTrait: BoundElement<RsTraitItem>? get() = value.implementedTrait
+    open val members: RsMembers? get() = value.members
+
     val impl: RsImplItem?
         get() = (this as? ExplicitImpl)?.value
 
     /** An impl block, directly defined in the code */
-    data class ExplicitImpl(override val value: RsImplItem): TraitImplSource()
+    data class ExplicitImpl(private val cachedImpl: RsCachedImplItem) : TraitImplSource() {
+        override val value: RsImplItem get() = cachedImpl.impl
+        val isInherent: Boolean get() = cachedImpl.traitRef == null
+        override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
+        override val members: RsMembers? get() = cachedImpl.membres
+    }
+
     /** T: Trait */
-    data class TraitBound(override val value: RsTraitItem): TraitImplSource()
+    data class TraitBound(override val value: RsTraitItem) : TraitImplSource()
+
     /** Trait is implemented for item via ```#[derive]``` attribute. */
-    data class Derived(override val value: RsTraitItem): TraitImplSource()
+    data class Derived(override val value: RsTraitItem) : TraitImplSource()
+
     /** dyn/impl Trait or a closure */
-    data class Object(override val value: RsTraitItem): TraitImplSource()
+    data class Object(override val value: RsTraitItem) : TraitImplSource()
+
     /**
      * Used only as a result of method pick. It means that method is resolved to multiple impls of the same trait
      * (with different type parameter values), so we collapsed all impls to that trait. Specific impl
      * will be selected during type inference.
      */
-    data class Collapsed(override val value: RsTraitItem): TraitImplSource()
+    data class Collapsed(override val value: RsTraitItem) : TraitImplSource()
+
     /** A trait impl hardcoded in Intellij-Rust. Mostly it's something defined with a macro in stdlib */
-    data class Hardcoded(override val value: RsTraitItem): TraitImplSource()
+    data class Hardcoded(override val value: RsTraitItem) : TraitImplSource()
 }
 
 /**
@@ -207,7 +220,7 @@ class ImplLookup(
     }
 
     val ctx: RsInferenceContext by lazy(NONE) {
-        RsInferenceContext(this, items)
+        RsInferenceContext(project, this, items)
     }
 
     fun getEnvBoundTransitivelyFor(ty: Ty): Sequence<BoundElement<RsTraitItem>> {
@@ -348,12 +361,13 @@ class ImplLookup(
         return impls
     }
 
-    private fun findSimpleImpls(selfTy: Ty): Sequence<RsImplItem> {
-        return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { impl ->
-            val subst = impl.generics.associate { it to ctx.typeVarForParam(it) }.toTypeSubst()
+    private fun findSimpleImpls(selfTy: Ty): Sequence<RsCachedImplItem> {
+        return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { cachedImpl ->
+            val (type, generics) = cachedImpl.typeAndGenerics ?: return@mapNotNull null
+            val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
             // TODO: take into account the lifetimes (?)
-            val formalSelfTy = impl.typeReference?.type?.substitute(subst) ?: return@mapNotNull null
-            impl.takeIf { ctx.canCombineTypes(formalSelfTy, selfTy) }
+            val formalSelfTy = type.substitute(subst)
+            cachedImpl.takeIf { ctx.canCombineTypes(formalSelfTy, selfTy) }
         }
     }
 
@@ -500,15 +514,15 @@ class ImplLookup(
             .toList()
     }
 
-    private fun Sequence<RsImplItem>.assembleImplCandidates(ref: TraitRef): Sequence<SelectionCandidate> =
-        mapNotNull { impl ->
-            val formalTraitRef = impl.implementedTrait ?: return@mapNotNull null
+    private fun Sequence<RsCachedImplItem>.assembleImplCandidates(ref: TraitRef): Sequence<SelectionCandidate> =
+        mapNotNull { cachedImpl ->
+            val formalTraitRef = cachedImpl.implementedTrait ?: return@mapNotNull null
             if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
-            val formalSelfTy = impl.typeReference?.type ?: return@mapNotNull null
+            val (formalSelfTy, generics) = cachedImpl.typeAndGenerics ?: return@mapNotNull null
             val (_, implTraitRef) =
-                prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTraitRef, ref.selfTy)
+                prepareSubstAndTraitRefRaw(ctx, generics, formalSelfTy, formalTraitRef, ref.selfTy)
             if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
-            SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
+            SelectionCandidate.Impl(cachedImpl.impl, formalSelfTy, formalTraitRef)
         }
 
     private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
@@ -847,7 +861,7 @@ private fun prepareSubstAndTraitRefRaw(
     formalTrait: BoundElement<RsTraitItem>,
     selfTy: Ty
 ): Pair<Substitution, TraitRef> {
-    val subst = generics.associate { it to ctx.typeVarForParam(it) }.toTypeSubst()
+    val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
     val boundSubst = formalTrait.substitute(subst).subst.mapTypeValues { (k, v) ->
         if (k == v && k.parameter is TyTypeParameter.Named) {
             // Default type parameter values `trait Tr<T=Foo> {}`

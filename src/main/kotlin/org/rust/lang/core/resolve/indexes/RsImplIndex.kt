@@ -15,6 +15,7 @@ import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
@@ -31,7 +32,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
          * Note this method may return false positives
          * @see TyFingerprint
          */
-        fun findPotentialImpls(project: Project, target: Ty): Sequence<RsImplItem> {
+        fun findPotentialImpls(project: Project, target: Ty): Sequence<RsCachedImplItem> {
             project.macroExpansionManager.ensureUpToDate()
             val impls = run {
                 val fingerprint = TyFingerprint.create(target)
@@ -40,14 +41,18 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             }
             val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
-            return (impls.asSequence() + freeImpls.asSequence()).filter { it.crateRoot != null }
+            return (impls.asSequence() + freeImpls.asSequence())
+                .map { RsCachedImplItem.forImpl(project, it) }
+                .filter { it.crateRoot != null }
         }
 
         /** return impls for generic type `impl<T> Trait for T {}` */
-        fun findFreeImpls(project: Project): Sequence<RsImplItem> {
+        fun findFreeImpls(project: Project): Sequence<RsCachedImplItem> {
             val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
-            return freeImpls.asSequence().filter { it.crateRoot != null }
+            return freeImpls.asSequence()
+                .map { RsCachedImplItem.forImpl(project, it) }
+                .filter { it.crateRoot != null }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {

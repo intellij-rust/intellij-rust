@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -115,6 +116,7 @@ class RsInferenceResult(
  * A mutable object, which is filled while we walk function body top down.
  */
 class RsInferenceContext(
+    val project: Project,
     val lookup: ImplLookup,
     val items: KnownItems
 ) : RsInferenceData {
@@ -245,13 +247,15 @@ class RsInferenceContext(
             val fnName = (variant.element as? RsFunction)?.name
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
             val fn = impl.members?.functionList?.find { it.name == fnName } ?: continue
-            resolvedPaths[path] = listOf(ResolvedPath.AssocItem(fn, TraitImplSource.ExplicitImpl(impl)))
+            val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(project, impl))
+            resolvedPaths[path] = listOf(ResolvedPath.AssocItem(fn, source))
         }
         for ((call, traitRef) in methodRefinements) {
             val variant = resolvedMethods[call]?.firstOrNull() ?: continue
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
             val fn = impl.members?.functionList?.find { it.name == variant.name } ?: continue
-            resolvedMethods[call] = listOf(variant.copy(element = fn, source = TraitImplSource.ExplicitImpl(impl)))
+            val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(project, impl))
+            resolvedMethods[call] = listOf(variant.copy(element = fn, source = source))
         }
     }
 
