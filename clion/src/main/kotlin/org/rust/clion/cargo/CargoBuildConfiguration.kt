@@ -14,6 +14,9 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 @Suppress("UnstableApiUsage")
 class CLionCargoBuildConfiguration(configuration: CargoCommandConfiguration, environment: ExecutionEnvironment)
     : CargoBuildConfiguration(configuration, environment), CidrBuildConfiguration {
+    override val enabled: Boolean get() = true
+
     override fun getName(): String = "Cargo Build"
+
     override fun getExternalSource(): ProjectModelExternalSource? = super<CargoBuildConfiguration>.getExternalSource()
 }

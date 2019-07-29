@@ -24,6 +24,7 @@ import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
+import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
 import java.io.File
 
 
@@ -39,7 +40,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         cmdLine: GeneralCommandLine,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         val starterPath = profilerStarterPath()
         if (!starterPath.exists()) throw ExecutionException("Internal error: Can't find process starter")
         cmdLine.withEnvironment(DYLD_INSERT_LIBRARIES, starterPath.absolutePath)
@@ -51,7 +52,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         environment: ExecutionEnvironment,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
 
         val targetProcess = (handler as? BaseProcessHandler<*>)?.process
             ?: throw ExecutionException("Profiler connection error: can't detect target process id")
@@ -67,6 +68,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     companion object {
+        private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
         private const val DYLD_INSERT_LIBRARIES = "DYLD_INSERT_LIBRARIES"
         private const val BUNDLED_STARTER_PATH = "profiler/macosx/libosx-starter.dylib"
         private const val STARTER_PATH_PROPERTY = "clion.profiler.osx.starter.path"
