@@ -28,6 +28,7 @@ import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
+import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
 import org.rust.lang.core.psi.RsFunction
 import java.io.File
 
@@ -45,7 +46,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         cmdLine: GeneralCommandLine,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         val project = configuration.project
         val settings = CPPProfilerSettings.instance.state
         val perfPath = settings.executablePath.orEmpty()
@@ -64,7 +65,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         environment: ExecutionEnvironment,
         context: ConfigurationExtensionContext
     ) {
-        if (RsProfilerRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
         if (handler !is BaseProcessHandler<*>)
             throw ExecutionException("Can't detect target process id")
         val outputFile = context.getUserData(PERF_OUTPUT_FILE_KEY)
@@ -92,6 +93,8 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     companion object {
+        private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
+
         private val requiredKernelVariables = listOf(
             KernelVariable("perf_event_paranoid", "1") { it.toInt() <= 1 }, //required, error otherwise
             KernelVariable("kptr_restrict", "0") { it == "0" } //useful, warning otherwise
@@ -107,5 +110,4 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             exePath = perfPath
         }
     }
-
 }

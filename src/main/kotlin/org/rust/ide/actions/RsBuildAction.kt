@@ -9,13 +9,19 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PlatformUtils
+import org.rust.cargo.runconfig.buildProject
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.hasCargoProject
 
 class RsBuildAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        ProjectTaskManager.getInstance(project).buildAllModules()
+        if (CargoBuildManager.isBuildToolWindowEnabled) {
+            ProjectTaskManager.getInstance(project).buildAllModules()
+        } else {
+            project.buildProject()
+        }
     }
 
     override fun update(e: AnActionEvent) {

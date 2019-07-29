@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -43,6 +44,8 @@ object CargoBuildManager {
     @JvmField
     val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
+
+    val isBuildToolWindowEnabled: Boolean get() = Registry.`is`("cargo.build.tool.window.enabled")
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
         val state = CargoRunState(

@@ -18,6 +18,7 @@ import com.intellij.task.impl.ProjectModelBuildTaskImpl
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.CargoCommandRunner
+import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.CANCELED_BUILD_RESULT
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
@@ -41,6 +42,11 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
     ) {
         if (project.isDisposed) return
 
+        if (!CargoBuildManager.isBuildToolWindowEnabled) {
+            project.buildProject()
+            return
+        }
+
         val waitingIndicator = CompletableFuture<ProgressIndicator>()
         val queuedTask = BackgroundableProjectTaskRunner(
             project,
@@ -59,8 +65,12 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
 
     override fun canRun(projectTask: ProjectTask): Boolean =
         when (projectTask) {
-            is ModuleBuildTask -> projectTask.module.cargoProjectRoot != null
-            is ProjectModelBuildTask<*> -> projectTask.buildableElement is CargoBuildConfiguration
+            is ModuleBuildTask ->
+                projectTask.module.cargoProjectRoot != null
+            is ProjectModelBuildTask<*> -> {
+                val buildableElement = projectTask.buildableElement
+                buildableElement is CargoBuildConfiguration && buildableElement.enabled
+            }
             else -> false
         }
 

@@ -18,8 +18,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
-import com.intellij.util.execution.ParametersListUtil
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.BUILDABLE_COMMANDS
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -34,13 +33,9 @@ abstract class RsExecutableRunner(
     private val errorMessageTitle: String
 ) : DefaultProgramRunner() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
-        if (!(executorId == this.executorId &&
-                profile is CargoCommandConfiguration &&
-                profile.clean() is CargoCommandConfiguration.CleanConfiguration.Ok)) return false
-        val args = ParametersListUtil.parse(profile.command)
-        val command = args.firstOrNull() ?: return false
-        if (command !in BUILDABLE_COMMANDS) return false
-        return getBuildConfiguration(profile) != null
+        if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
+            profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
+        return CargoBuildManager.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
     }
 
     override fun execute(

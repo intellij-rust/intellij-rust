@@ -723,7 +723,10 @@
         <!-- Run Configurations -->
 
         <programRunner implementation="org.rust.cargo.runconfig.CargoCommandRunner"/>
+        <programRunner implementation="org.rust.cargo.runconfig.CargoTestCommandRunner"/>
+
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
+
         <runConfigurationProducer
                 implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
         <!-- To register a new producer, add it to the `producers` list in the `CompositeCargoRunConfigurationProducer`
@@ -762,6 +765,9 @@
 
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
+
+        <registryKey key="cargo.build.tool.window.enabled" defaultValue="true"
+                     description="Enable Cargo tasks to use Build Tool Window"/>
 
         <!-- Icon Provider -->
 

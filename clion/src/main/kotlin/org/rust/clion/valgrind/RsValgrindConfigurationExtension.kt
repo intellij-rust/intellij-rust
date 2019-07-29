@@ -35,6 +35,7 @@ import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy
 import java.io.File
 import java.io.IOException
 
@@ -54,7 +55,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         cmdLine: GeneralCommandLine,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
 
         val programPath = cmdLine.exePath
         val valgrindPath = ValgrindSettings.getInstance().valgrindPath
@@ -88,8 +89,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         state: CommandLineState,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
-
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
         val project = configuration.project
         val treeDataModel = MemoryProfileTreeDataModel("Valgrind", project)
         val outputPanel = MemoryProfileOutputPanel(
@@ -118,7 +118,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         environment: ExecutionEnvironment,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
 
         val outputFile = getUserData<File>(OUTPUT_FILE_PATH_KEY, configuration, context) ?: return
         val treeDataModel = getUserData<MemoryProfileTreeDataModel>(DATA_MODEL_KEY, configuration, context) ?: return
@@ -204,6 +204,8 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     companion object {
+        private val VALGRIND_RUNNER_IDS = listOf(RsValgrindRunner.RUNNER_ID, RsValgrindRunnerLegacy.RUNNER_ID)
+
         val OUTPUT_FILE_PATH_KEY = Key.create<File>("valgrind.output_file_path_key")
         val DATA_MODEL_KEY = Key.create<MemoryProfileTreeDataModel>("valgrind.data_model_key")
         val OUTPUT_PANEL_KEY = Key.create<MemoryProfileOutputPanel>("valgrind.output_panel_key")

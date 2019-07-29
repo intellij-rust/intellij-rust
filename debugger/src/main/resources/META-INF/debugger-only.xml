@@ -8,6 +8,7 @@
 
     <extensions defaultExtensionNs="com.intellij">
         <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
+        <programRunner implementation="org.rust.debugger.runconfig.legacy.RsDebugRunnerLegacy"/>
         <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
     </extensions>
 </idea-plugin>
