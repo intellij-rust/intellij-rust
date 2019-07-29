@@ -13,10 +13,12 @@ import com.jetbrains.cidr.execution.RunParameters
 import com.jetbrains.cidr.execution.TrivialInstaller
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.LLDBDriverConfiguration
+import org.rust.cargo.project.model.CargoProject
 
 class RsDebugRunParameters(
     val project: Project,
-    val cmd: GeneralCommandLine
+    val cmd: GeneralCommandLine,
+    val cargoProject: CargoProject?
 ) : RunParameters() {
 
     override fun getInstaller(): Installer = TrivialInstaller(cmd)

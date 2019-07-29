@@ -56,8 +56,6 @@ abstract class CargoRunStateBase(
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
-    fun computeSysroot(): String? = workingDirectory?.let { toolchain.getSysroot(it) }
-
     fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
 
     fun prepareCommandLine(): CargoCommandLine {

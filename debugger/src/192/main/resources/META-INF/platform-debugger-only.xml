@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="cidr.debugger">
+        <debugProcessConfigurator implementation="org.rust.debugger.runconfig.RsDebugProcessConfigurator"/>
+    </extensions>
+</idea-plugin>

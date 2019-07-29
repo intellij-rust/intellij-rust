@@ -24,7 +24,6 @@ import com.jetbrains.cidr.toolchains.OSType
 import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.RsAsyncRunner
-import org.rust.debugger.settings.RsDebuggerSettings
 
 const val ERROR_MESSAGE_TITLE: String = "Debugging is not possible"
 
@@ -37,18 +36,13 @@ class RsDebugRunner : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESS
         environment: ExecutionEnvironment,
         runCommand: GeneralCommandLine
     ): RunContentDescriptor? {
-        val runParameters = RsDebugRunParameters(environment.project, runCommand)
+        val runParameters = RsDebugRunParameters(environment.project, runCommand, state.cargoProject)
         return XDebuggerManager.getInstance(environment.project)
             .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                 override fun start(session: XDebugSession): XDebugProcess =
-                    RsLocalDebugProcess(runParameters, session, state.consoleBuilder, state::computeSysroot).apply {
+                    RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
                         ProcessTerminatedListener.attach(processHandler, environment.project)
-                        val settings = RsDebuggerSettings.getInstance()
-                        loadPrettyPrinters(settings.lldbRenderers, settings.gdbRenderers)
-                        val commitHash = state.cargoProject?.rustcInfo?.version?.commitHash
-                        if (commitHash != null) {
-                            loadRustcSources(commitHash)
-                        }
+                        setupDebugSession(state)
                         start()
                     }
 
