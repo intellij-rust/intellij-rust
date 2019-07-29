@@ -1067,12 +1067,13 @@ StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoT
 
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
-StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) [ ':' AnyExpr ] {
-  pin = 2
+StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) StructLiteralFieldSuffix? {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
 }
+
+private StructLiteralFieldSuffix ::= ':' AnyExpr { pin = 1 }
 
 private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
   pin = 1

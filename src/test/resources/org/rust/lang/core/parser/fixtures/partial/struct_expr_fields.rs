@@ -13,5 +13,7 @@ fn main() {
         baz: 62,
         quux: ,
         quazar: 42,
-    }
+    };
+
+    2+2; // Checks that stmts parsed correctly after broken struct literal
 }
