@@ -18,9 +18,9 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
@@ -35,7 +35,7 @@ abstract class RsExecutableRunner(
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return CargoBuildManager.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
+        return profile.project.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
     }
 
     override fun execute(

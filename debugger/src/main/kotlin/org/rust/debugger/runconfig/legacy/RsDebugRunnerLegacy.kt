@@ -23,7 +23,7 @@ import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
 import com.jetbrains.cidr.toolchains.OSType
 import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.CargoRunStateBase
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
 import org.rust.debugger.runconfig.RsDebugRunParameters
 import org.rust.debugger.runconfig.RsLocalDebugProcess
@@ -31,7 +31,7 @@ import org.rust.debugger.runconfig.RsLocalDebugProcess
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
 
 /**
- * This runner is used if [CargoBuildManager.isBuildToolWindowEnabled] is false.
+ * This runner is used if [isBuildToolWindowEnabled] is false.
  */
 class RsDebugRunnerLegacy : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID
