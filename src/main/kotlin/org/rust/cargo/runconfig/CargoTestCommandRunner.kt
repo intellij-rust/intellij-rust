@@ -17,8 +17,8 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.prependArgument
 import org.rust.openapiext.saveAllDocuments
@@ -29,7 +29,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultRunExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration) return false
         val cleaned = profile.clean().ok ?: return false
-        return !CargoBuildManager.isBuildToolWindowEnabled &&
+        return !profile.project.isBuildToolWindowEnabled &&
             cleaned.cmd.command == "test" &&
             getBuildConfiguration(profile) != null
     }

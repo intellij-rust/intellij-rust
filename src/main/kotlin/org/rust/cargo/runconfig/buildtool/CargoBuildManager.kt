@@ -28,8 +28,10 @@ import com.intellij.ui.content.MessageView
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.execution.ParametersListUtil
+import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -49,7 +51,18 @@ object CargoBuildManager {
     val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
-    val isBuildToolWindowEnabled: Boolean get() = Registry.`is`("cargo.build.tool.window.enabled")
+    private val MIN_RUSTC_VERSION: SemVer = SemVer("1.32.0", 1, 32, 0)
+
+    val Project.isBuildToolWindowEnabled: Boolean
+        get() {
+            if (!Registry.`is`("cargo.build.tool.window.enabled")) return false
+            val rustcVersion = cargoProjects
+                .allProjects
+                .mapNotNull { it.rustcInfo?.version?.semver }
+                .min()
+                ?: return false
+            return rustcVersion >= MIN_RUSTC_VERSION
+        }
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
         val state = CargoRunState(

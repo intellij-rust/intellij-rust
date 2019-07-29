@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.util.Consumer
+import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.buildtool.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
@@ -36,6 +37,7 @@ import org.rust.fileTree
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 import java.util.function.Supplier
 
+@MinRustcVersion("1.32.0")
 class CargoBuildManagerTest : RunConfigurationTestBase() {
 
     override fun setUp() {

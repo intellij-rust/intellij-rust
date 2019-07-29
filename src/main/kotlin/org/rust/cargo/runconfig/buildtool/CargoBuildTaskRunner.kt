@@ -20,6 +20,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.CANCELED_BUILD_RESULT
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -41,7 +42,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
     ) {
         if (project.isDisposed) return
 
-        if (!CargoBuildManager.isBuildToolWindowEnabled) {
+        if (!project.isBuildToolWindowEnabled) {
             project.buildProject()
             return
         }

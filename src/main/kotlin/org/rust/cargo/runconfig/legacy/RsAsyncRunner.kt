@@ -29,8 +29,8 @@ import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.*
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
@@ -43,7 +43,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 /**
- * This runner is used if [CargoBuildManager.isBuildToolWindowEnabled] is false.
+ * This runner is used if [isBuildToolWindowEnabled] is false.
  */
 abstract class RsAsyncRunner(
     private val executorId: String,
@@ -52,7 +52,7 @@ abstract class RsAsyncRunner(
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return !CargoBuildManager.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
+        return !profile.project.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
