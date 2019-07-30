@@ -23,6 +23,7 @@ interface RsTestCase {
             "target_has_atomic=\"32\"",
             "target_has_atomic=\"64\"",
             "target_has_atomic=\"8\"",
+            "target_has_atomic=\"cas\"",
             "target_has_atomic=\"ptr\"",
             "target_arch=\"x86_64\"",
             "target_endian=\"little\"",
