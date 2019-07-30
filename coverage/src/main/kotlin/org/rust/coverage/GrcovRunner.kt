@@ -30,6 +30,7 @@ import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallGrcov
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.stdext.toPath
 import java.io.File
 
@@ -53,9 +54,7 @@ class GrcovRunner : DefaultProgramRunner() {
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
 
-        state.addCommandLinePatch { commandLine ->
-            commandLine.copy(environmentVariables = patchVariables(commandLine))
-        }
+        state.addCommandLinePatch(::patchCommandLine)
 
         val descriptor = super.doExecute(state, environment)
         descriptor?.processHandler?.addProcessListener(object : ProcessAdapter() {
@@ -85,15 +84,16 @@ class GrcovRunner : DefaultProgramRunner() {
             WriteAction.runAndWait<Throwable> { toDelete.forEach { it.delete(null) } }
         }
 
-        private fun patchVariables(commandLine: CargoCommandLine): EnvironmentVariablesData {
+        private fun patchCommandLine(commandLine: CargoCommandLine): CargoCommandLine {
             val oldVariables = commandLine.environmentVariables
-            return EnvironmentVariablesData.create(
+            val newVariables = EnvironmentVariablesData.create(
                 oldVariables.envs + mapOf(
                     "CARGO_INCREMENTAL" to "0",
                     "RUSTFLAGS" to "-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Zno-landing-pads"
                 ),
                 oldVariables.isPassParentEnvs
             )
+            return commandLine.copy(channel = RustChannel.NIGHTLY, environmentVariables = newVariables)
         }
 
         private fun startCollectingCoverage(workingDirectory: File, environment: ExecutionEnvironment) {
