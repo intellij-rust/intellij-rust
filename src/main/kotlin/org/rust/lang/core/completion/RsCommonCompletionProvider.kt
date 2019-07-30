@@ -170,7 +170,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                     val item = candidate.qualifiedNamedItem.item
                     createLookupElement(
                         element = item,
-                        scopeName = elementName,
+                        scopeName = if (item is RsEnumVariant) "${item.parentEnum.name}::$elementName" else elementName,
                         locationString = candidate.info.usePath,
                         forSimplePath = true,
                         expectedTy = expectedTy,
@@ -181,7 +181,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                                 context: InsertionContext,
                                 item: LookupElement
                             ) {
-                                super.handleInsert(element, scopeName, context, item)
+                                super.handleInsert(element, elementName, context, item)
                                 if (RsCodeInsightSettings.getInstance().importOutOfScopeItems) {
                                     context.commitDocument()
                                     context.getElementOfType<RsElement>()?.let { candidate.import(it) }
