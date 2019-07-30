@@ -75,6 +75,68 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "a"
     ))
 
+    fun `test inherited before non-inherited`() = doTest("""
+        struct S;
+        
+        impl S {
+            fn foo1() {}
+            fn foo3() {}
+        }
+        
+        trait T {
+            fn foo2();
+            fn foo4();
+        }
+        
+        impl T for S {
+            fn foo2() {}
+            fn foo4() {}
+        }
+
+        fn foo() { S::/*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo2",
+        RsFunction::class to "foo4"
+    ))
+
+    fun `test assoc fns before methods`() = doTest("""
+        struct S; 
+        
+        impl S {
+            fn foo1() {}
+            fn foo3(&self) {}
+            fn foo5() {}
+            fn foo7(&self) {}
+        }
+        
+        trait T {
+            fn foo2();
+            fn foo4(&self);
+            fn foo6();
+            fn foo8(&self);
+        }
+        
+        impl T for S {
+            fn foo2() {}
+            fn foo4(&self) {}
+            fn foo6() {}
+            fn foo8(&self) {}
+        }
+
+        fn foo() { S::/*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo5",
+        RsFunction::class to "foo2",
+        RsFunction::class to "foo6",
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo7",
+        RsFunction::class to "foo4",
+        RsFunction::class to "foo8"
+    ))
+
     fun `test locals before non-locals`() = doTest("""
         struct foo2;
         const foo3: () = ();
