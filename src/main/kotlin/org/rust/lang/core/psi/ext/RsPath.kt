@@ -91,7 +91,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     override val referenceNameElement: PsiElement
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself ?: crate) {
-            "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile.path}"
+            "Path must contain identifier: $this ${this.text} at ${this.containingFile.virtualFile?.path}"
         }
 
     override val referenceName: String get() = greenStub?.referenceName ?: super.referenceName
