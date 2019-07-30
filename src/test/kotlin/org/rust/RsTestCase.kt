@@ -31,6 +31,8 @@ interface RsTestCase {
             "target_family=\"unix\"",
             "target_os=\"linux\"",
             "target_pointer_width=\"64\"",
+            "target_vendor=\"unknown\"",
+            "target_thread_local",
             "unix",
             "feature=\"use_std\"" /*Not enabled normally*/)
         val testDefaultCfg = testDefaultCfgStdLib.toMutableList() + "test"
