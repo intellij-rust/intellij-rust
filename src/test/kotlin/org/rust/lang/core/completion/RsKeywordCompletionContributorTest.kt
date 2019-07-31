@@ -552,6 +552,43 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test const parameter first`() = checkCompletion("const",
+        "fn foo</*caret*/>() {}",
+        "fn foo<const /*caret*/>() {}"
+    )
+
+    fun `test const parameter before lifetime parameter`() = checkNoCompletion("""
+        "fn foo</*caret*/, 'a>() {}"
+    """)
+
+    fun `test const parameter before type parameter`() = checkNoCompletion("""
+        "fn foo</*caret*/, A>() {}"
+    """)
+
+    fun `test const parameter before const parameter`() = checkCompletion("const",
+        "fn foo</*caret*/, const C: i32>() {}",
+        "fn foo<const /*caret*/, const C: i32>() {}"
+    )
+
+    fun `test const parameter after lifetime parameter`() = checkCompletion("const",
+        "fn foo<'a, /*caret*/>() {}",
+        "fn foo<'a, const /*caret*/>() {}"
+    )
+
+    fun `test const parameter after type parameter`() = checkCompletion("const",
+        "fn foo<A, /*caret*/>() {}",
+        "fn foo<A, const /*caret*/>() {}"
+    )
+
+    fun `test const parameter after const parameter`() = checkCompletion("const",
+        "fn foo<const C: i32, /*caret*/>() {}",
+        "fn foo<const C: i32, const /*caret*/>() {}"
+    )
+
+    fun `test const parameter before comma`() = checkNoCompletion("""
+        "fn foo<T /*caret*/>() {}"
+    """)
+
     private fun checkCompletion(
         lookupStrings: List<String>,
         @Language("Rust") before: String,
