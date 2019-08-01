@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.isBench
-import org.rust.lang.core.psi.ext.processExpandedItemsExceptImpls
+import org.rust.lang.core.psi.ext.processExpandedItemsExceptImplsAndUses
 
 class CargoBenchRunConfigurationProducer : CargoTestRunConfigurationProducerBase() {
     override val commandName: String = "bench"
@@ -23,6 +23,6 @@ class CargoBenchRunConfigurationProducer : CargoTestRunConfigurationProducerBase
 
     companion object {
         private fun hasBenchFunction(mod: RsMod): Boolean =
-            mod.processExpandedItemsExceptImpls { it is RsFunction && it.isBench || it is RsMod && hasBenchFunction(it) }
+            mod.processExpandedItemsExceptImplsAndUses { it is RsFunction && it.isBench || it is RsMod && hasBenchFunction(it) }
     }
 }

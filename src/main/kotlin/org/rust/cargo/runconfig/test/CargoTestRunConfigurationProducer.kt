@@ -48,7 +48,7 @@ class CargoTestRunConfigurationProducer : CargoTestRunConfigurationProducerBase(
 
     companion object {
         private fun hasTestFunction(mod: RsMod): Boolean =
-            mod.processExpandedItemsExceptImpls { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
+            mod.processExpandedItemsExceptImplsAndUses { it is RsFunction && it.isTest || it is RsMod && hasTestFunction(it) }
     }
 }
 
