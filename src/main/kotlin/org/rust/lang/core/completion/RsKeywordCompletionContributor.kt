@@ -15,13 +15,12 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isEdition2018
-import org.rust.lang.core.psi.ext.receiver
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.lookupFutureOutputTy
@@ -55,6 +54,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("break", "continue"))
         extend(CompletionType.BASIC, wherePattern(),
             RsKeywordCompletionProvider("where"))
+        extend(CompletionType.BASIC, constParameterBeginningPattern(),
+            RsKeywordCompletionProvider("const"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -209,6 +210,27 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
                     val awaitTy = receiver.type.lookupFutureOutputTy(lookup)
                     if (awaitTy is TyUnknown) return false
                     context.put(AWAIT_TY, awaitTy)
+                    return true
+                }
+            })
+
+        return psiElement(IDENTIFIER).withParent(parent)
+    }
+
+    private fun constParameterBeginningPattern(): PsiElementPattern.Capture<PsiElement> {
+        val parent = psiElement<RsTypeParameter>()
+            .with(object : PatternCondition<RsTypeParameter>("RsConstParameterBeginning") {
+                override fun accepts(t: RsTypeParameter, context: ProcessingContext?): Boolean {
+                    val leftSibling = t.leftSiblings.firstOrNull { it !is PsiWhiteSpace }
+                    if (leftSibling != null && leftSibling.elementType != LT && leftSibling.elementType != COMMA) {
+                        return false
+                    }
+
+                    val rightSibling = t.rightSiblings.firstOrNull { it is RsElement }
+                    if (rightSibling is RsTypeParameter || rightSibling is RsLifetimeParameter) {
+                        return false
+                    }
+
                     return true
                 }
             })
