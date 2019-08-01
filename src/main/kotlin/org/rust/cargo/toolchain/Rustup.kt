@@ -25,24 +25,16 @@ class Rustup(
     private val rustup: Path,
     private val projectDirectory: Path
 ) {
-    data class Component(val name: String, val isInstalled: Boolean) {
-        companion object {
-            fun from(line: String): Component {
-                val name = line.substringBefore(' ')
-                val isInstalled = line.substringAfter(' ') in listOf("(installed)", "(default)")
-                return Component(name, isInstalled)
-            }
-        }
-    }
-
-    fun listComponents(): List<Component> =
+    fun listComponents(toolchain: String? = null, onlyInstalled: Boolean = false): List<String> =
         GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "list")
+            .apply { if (onlyInstalled) addParameter("--installed") }
+            .apply { if (toolchain != null) addParameters("--toolchain", toolchain) }
             .execute()
             ?.stdoutLines
-            ?.map { Component.from(it) }
-            ?: emptyList()
+            ?.map { it.substringBefore(' ') }
+            .orEmpty()
 
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         val downloadProcessOutput = GeneralCommandLine(rustup)
@@ -51,7 +43,8 @@ class Rustup(
             .execute(null)
 
         return if (downloadProcessOutput?.isSuccess == true) {
-            val sources = toolchain.getStdlibFromSysroot(projectDirectory) ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            val sources = toolchain.getStdlibFromSysroot(projectDirectory)
+                ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
             fullyRefreshDirectory(sources)
             DownloadResult.Ok(sources)
         } else {
@@ -94,11 +87,8 @@ class Rustup(
             val shortName = componentName.removeSuffix("-preview")
 
             val needInstall = run {
-                val rustup = project.toolchain?.rustup(cargoProjectDirectory)
-                    ?: return false
-                val (_, isInstalled) = rustup.listComponents()
-                    .find { (name, _) -> name.startsWith(shortName) }
-                    ?: return false
+                val rustup = project.toolchain?.rustup(cargoProjectDirectory) ?: return false
+                val isInstalled = rustup.listComponents(onlyInstalled = true).any { it.startsWith(shortName) }
                 !isInstalled
             }
 
