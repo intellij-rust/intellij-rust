@@ -15,7 +15,6 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.containingCargoTarget
-import org.rust.lang.core.psi.ext.isPublic
 import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 import org.rust.lang.core.stubs.RsFileStub
@@ -31,7 +30,8 @@ class RsExternCrateReexportIndex : StringStubIndexExtension<RsExternCrateItem>()
 
         fun index(stub: RsExternCrateItemStub, sink: IndexSink) {
             val externCrateItem = stub.psi
-            if (!externCrateItem.isPublic) return
+            val isPublic = externCrateItem?.vis != null
+            if (!isPublic) return
             sink.occurrence(KEY, externCrateItem.referenceName)
         }
 
