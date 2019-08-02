@@ -28,6 +28,12 @@ thread_local!(static HANDLE: Handle = Handle(0));
 #[cfg(foo)]
 foo!();
 
+include!("path/to/rust/file.rs");
+const STR: &str = include_str!("foo.in");
+const BYTES: &[u8] = include_bytes!("data.data",);
+
+include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+
 fn foo() {
     #[cfg(foo)]
     foo! {}
@@ -71,6 +77,7 @@ fn foo() {
     }
     dbg!();
     dbg!("Some text");
+    dbg!(123 + 567,);
     dbg!(Foo[]); // custom expr macro
     // ------------------
 
@@ -101,4 +108,11 @@ fn foo() {
     debug_assert_ne!(a, b);
     assert_eq!(Foo[]); // custom assert macro
     // ---------------------
+
+    // --- concat macros
+    concat!("abc");
+    concat!("abc", "def");
+    concat!("abc", "def",);
+    concat!(Foo[]); // custom concat macro
+    // ------------------
 }

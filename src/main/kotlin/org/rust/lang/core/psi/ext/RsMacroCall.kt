@@ -47,7 +47,7 @@ val RsMacroCall.bracesKind: MacroBraces?
     get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }
 
 val RsMacroCall.semicolon: PsiElement?
-    get() = node.findChildByType(RsElementTypes.SEMICOLON)?.psi
+    get() = node.findChildByType(SEMICOLON)?.psi
 
 val RsMacroCall.macroBody: String?
     get() {
@@ -61,22 +61,38 @@ val RsMacroCall.bodyTextRange: TextRange?
 
 private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
     MACRO_ARGUMENT, FORMAT_MACRO_ARGUMENT, LOG_MACRO_ARGUMENT,
-    ASSERT_MACRO_ARGUMENT, EXPR_MACRO_ARGUMENT, VEC_MACRO_ARGUMENT
+    ASSERT_MACRO_ARGUMENT, EXPR_MACRO_ARGUMENT, VEC_MACRO_ARGUMENT,
+    CONCAT_MACRO_ARGUMENT
 )
 
 private val RsMacroCall.macroArgumentElement: RsElement?
     get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
 
-val RsMacroCall.includingFilePath: String?
-    get() {
-        if (macroName != "include") return null
-        // TODO: support more cases
-        val expr = includeMacroArgument?.expr as? RsLitExpr ?: return null
-        return expr.stringValue ?: return null
+private val RsExpr.value: String? get() {
+    return when (this) {
+        is RsLitExpr -> stringValue
+        is RsMacroExpr -> {
+            val macroCall = macroCall
+            when (macroCall.macroName) {
+                "concat" -> {
+                    val exprList = macroCall.concatMacroArgument?.exprList ?: return null
+                    buildString {
+                        for (expr in exprList) {
+                            val value = expr.value ?: return null
+                            append(value)
+                        }
+                    }
+                }
+                else -> null
+            }
+        }
+        else -> null
     }
+}
 
 fun RsMacroCall.findIncludingFile(): RsFile? {
-    val path = includingFilePath ?: return null
+    if (macroName != "include") return null
+    val path = includeMacroArgument?.expr?.value ?: return null
     // TODO: it doesn't work if `include!()` macro call comes from other macro
     val file = containingFile?.originalFile?.virtualFile ?: return null
     return file.parent?.findFileByRelativePath(path)?.toPsiFile(project)?.rustFile

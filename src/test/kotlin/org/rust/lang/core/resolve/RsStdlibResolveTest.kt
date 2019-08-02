@@ -643,4 +643,10 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             let a = f64::INFINITY;
         }              //^ ...num/f64.rs
     """)
+
+    fun `test resolve concat args`() = stubOnlyResolve("""
+    //- main.rs
+        include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+                        //^ ...libstd/macros.rs
+    """)
 }

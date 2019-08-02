@@ -164,6 +164,54 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
         """)
     }
 
+    fun `test concat in include 1`() = checkResolve("""
+        //- main.rs
+            include!(concat!("foo.rs"));
+            fn main() {
+                Foo.foo();
+                    //^ foo.rs
+            }
+        //- foo.rs
+            struct Foo;
+            impl Foo {
+                fn foo(&self) {}
+            }
+    """)
+
+    fun `test concat in include 2`() = checkResolve("""
+        //- lib.rs
+            include!(concat!("bar/foo.rs"));
+            fn bar() {}
+        //- bar/foo.rs
+            fn foo() {
+                bar();
+            }  //^ lib.rs
+    """)
+
+    fun `test concat in include 3`() = checkResolve("""
+        //- main.rs
+            include!(concat!("bar", "/foo.rs"));
+            fn main() {
+                Foo.foo();
+                    //^ bar/foo.rs
+            }
+        //- bar/foo.rs
+            struct Foo;
+            impl Foo {
+                fn foo(&self) {}
+            }
+    """)
+
+    fun `test recursive concat in include`() = checkResolve("""
+        //- lib.rs
+            include!(concat!(concat!("bar"), "/foo.rs"));
+            fn bar() {}
+        //- bar/foo.rs
+            fn foo() {
+                bar();
+            }  //^ lib.rs
+    """)
+
     private fun checkResolve(@Language("Rust") code: String) {
         stubOnlyResolve(code) { element -> element.containingFile.virtualFile }
     }

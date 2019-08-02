@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 176
+        override fun getStubVersion(): Int = 177
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -144,6 +144,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "MACRO_CALL" -> RsMacroCallStub.Type
 
     "INCLUDE_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("INCLUDE_MACRO_ARGUMENT", ::RsIncludeMacroArgumentImpl)
+    "CONCAT_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("CONCAT_MACRO_ARGUMENT", ::RsConcatMacroArgumentImpl)
 
     "INNER_ATTR" -> RsInnerAttrStub.Type
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
@@ -1083,7 +1084,7 @@ class RsMacroCallStub(
     object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
         override fun shouldCreateStub(node: ASTNode): Boolean {
             val parent = node.psi.parent
-            return parent is RsMod || parent is RsMembers
+            return parent is RsMod || parent is RsMembers || parent is RsMacroExpr && createStubIfParentIsStub(node)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
