@@ -382,13 +382,13 @@ class RsTypeInferenceWalker(
                 val owner = element.owner
                 val (typeParameters, selfTy) = when (owner) {
                     is RsAbstractableOwner.Impl -> {
-                        val typeParameters = instantiateBounds(owner.impl)
+                        val typeParameters = ctx.instantiateBounds(owner.impl)
                         val selfTy = owner.impl.typeReference?.type?.substitute(typeParameters) ?: TyUnknown
                         subst[TyTypeParameter.self()]?.let { ctx.combineTypes(selfTy, it) }
                         typeParameters to selfTy
                     }
                     is RsAbstractableOwner.Trait -> {
-                        val typeParameters = instantiateBounds(owner.trait)
+                        val typeParameters = ctx.instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
                         val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
                         val newSubst = owner.trait.generics.associateBy { it }.toTypeSubst()
@@ -407,13 +407,13 @@ class RsTypeInferenceWalker(
                 }
 
                 if (element is RsGenericDeclaration) {
-                    instantiateBounds(element, selfTy, typeParameters)
+                    ctx.instantiateBounds(element, selfTy, typeParameters)
                 } else {
                     typeParameters
                 }
             }
-            element is RsEnumVariant -> instantiateBounds(element.parentEnum)
-            element is RsGenericDeclaration -> instantiateBounds(element)
+            element is RsEnumVariant -> ctx.instantiateBounds(element.parentEnum)
+            element is RsGenericDeclaration -> ctx.instantiateBounds(element)
             else -> emptySubstitution
         }
 
@@ -426,22 +426,6 @@ class RsTypeInferenceWalker(
         } else {
             type
         }.substitute(typeParameters).foldWith(associatedTypeNormalizer)
-    }
-
-    private fun instantiateBounds(
-        element: RsGenericDeclaration,
-        selfTy: Ty? = null,
-        typeParameters: Substitution = emptySubstitution
-    ): Substitution {
-        val map = run {
-            val map = element
-                .generics
-                .associate { it to ctx.typeVarForParam(it) }
-                .let { if (selfTy != null) it + (TyTypeParameter.self() to selfTy) else it }
-            typeParameters + map.toTypeSubst()
-        }
-        ctx.instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
-        return map
     }
 
     private fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T): T {
@@ -487,7 +471,7 @@ class RsTypeInferenceWalker(
             else -> null
         }
 
-        val typeParameters = genericDecl?.let { instantiateBounds(it) } ?: emptySubstitution
+        val typeParameters = genericDecl?.let { ctx.instantiateBounds(it) } ?: emptySubstitution
         unifySubst(subst, typeParameters)
         if (expected != null) unifySubst(typeParameters, expected.typeParameterValues)
 
@@ -568,43 +552,8 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
-        var typeParameters = when (val source = callee.source) {
-            is TraitImplSource.ExplicitImpl -> {
-                val impl = source.value
-                val typeParameters = instantiateBounds(impl)
-                impl.typeReference?.type?.substitute(typeParameters)?.let { ctx.combineTypes(callee.selfTy, it) }
-                if (callee.element.owner is RsAbstractableOwner.Trait) {
-                    impl.traitRef?.resolveToBoundTrait()?.substitute(typeParameters)?.subst ?: emptySubstitution
-                } else {
-                    typeParameters
-                }
-            }
-            is TraitImplSource.TraitBound -> lookup.getEnvBoundTransitivelyFor(callee.selfTy)
-                .find { it.element == source.value }?.subst ?: emptySubstitution
+        var typeParameters = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
 
-            is TraitImplSource.Derived -> emptySubstitution
-
-            is TraitImplSource.Object -> when (callee.selfTy) {
-                is TyAnon -> callee.selfTy.getTraitBoundsTransitively()
-                    .find { it.element == source.value }?.subst ?: emptySubstitution
-                is TyTraitObject -> callee.selfTy.trait.flattenHierarchy
-                    .find { it.element == source.value }?.subst ?: emptySubstitution
-                else -> emptySubstitution
-            }
-            is TraitImplSource.Collapsed, is TraitImplSource.Hardcoded -> {
-                // Method has been resolved to a trait, so we should add a predicate
-                // `Self : Trait<Args>` to select args and also refine method path if possible.
-                // Method path refinement needed if there are multiple impls of the same trait to the same type
-                val trait = source.value as RsTraitItem
-                val typeParameters = instantiateBounds(trait)
-                val subst = trait.generics.associateBy { it }.toTypeSubst()
-                val boundTrait = BoundElement(trait, subst).substitute(typeParameters)
-                val traitRef = TraitRef(callee.selfTy, boundTrait)
-                fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
-                ctx.registerMethodRefinement(methodCall, traitRef)
-                typeParameters
-            }
-        }
         // TODO: borrow adjustments for self parameter
         /*
         if (callee.selfTy is TyReference) {
@@ -613,7 +562,7 @@ class RsTypeInferenceWalker(
         }
         */
 
-        typeParameters = instantiateBounds(callee.element, callee.selfTy, typeParameters)
+        typeParameters = ctx.instantiateBounds(callee.element, callee.selfTy, typeParameters)
 
         val fnSubst = run {
             val typeArguments = methodCall.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }

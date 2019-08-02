@@ -5,7 +5,7 @@
 
 package org.rust.ide.utils
 
-import org.rust.ide.presentation.stubOnlyText
+import org.rust.ide.presentation.getStubOnlyText
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsMethodCall
@@ -45,7 +45,7 @@ class CallInfo private constructor(
                 append("self")
             }
         },
-        fn.valueParameters.map { Parameter(it.patText ?: "_", it.typeReference?.stubOnlyText ?: "?") }
+        fn.valueParameters.map { Parameter(it.patText ?: "_", it.typeReference?.getStubOnlyText() ?: "?") }
     )
 
     private constructor(fn: TyFunction) : this(

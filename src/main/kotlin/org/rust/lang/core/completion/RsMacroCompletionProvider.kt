@@ -40,7 +40,7 @@ import org.rust.lang.core.withPrevSiblingSkipping
 object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(
         parameters: CompletionParameters,
-        context: ProcessingContext,
+        _context: ProcessingContext,
         result: CompletionResultSet
     ) {
         val position = parameters.position
@@ -54,8 +54,9 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
             leftSiblings.getOrNull(1)?.elementType == IDENTIFIER && (
             leftSiblings.getOrNull(2)?.elementType != COLONCOLON ||
                 leftSiblings.getOrNull(3)?.elementType != IDENTIFIER)
+        val context = RsCompletionContext(isSimplePath = !is2segmentPath)
 
-        collectCompletionVariants(result, forSimplePath = !is2segmentPath) { originalProcessor ->
+        collectCompletionVariants(result, context) { originalProcessor ->
             val processor: (ScopeEntry) -> Boolean = { entry ->
                 val macro = entry.element
                 val hide = mod != null && macro is RsMacro && isHidden(macro, mod)

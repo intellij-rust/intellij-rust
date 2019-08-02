@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.SmartList
+import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
@@ -113,18 +114,15 @@ fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Un
 
 fun collectCompletionVariants(
     result: CompletionResultSet,
-    forSimplePath: Boolean = false,
-    expectedTy: Ty? = null,
+    context: RsCompletionContext,
     f: (RsResolveProcessor) -> Unit
 ) {
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
         result.addElement(createLookupElement(
-            element = element,
-            scopeName = e.name,
-            forSimplePath = forSimplePath,
-            expectedTy = expectedTy
+            scopeEntry = e,
+            context = context
         ))
         false
     }

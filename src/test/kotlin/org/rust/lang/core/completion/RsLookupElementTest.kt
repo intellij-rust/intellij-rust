@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.resolve.SimpleScopeEntry
 
 class RsLookupElementTest : RsTestBase() {
     fun `test fn`() = check("""
@@ -135,7 +136,10 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
-        val lookup = createLookupElement((myFixture.file as RsFile), "foo")
+        val lookup = createLookupElement(
+            SimpleScopeEntry("foo", myFixture.file as RsFile),
+            RsCompletionContext()
+        )
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
@@ -158,7 +162,10 @@ class RsLookupElementTest : RsTestBase() {
     ) where T : NavigatablePsiElement, T : RsElement {
         InlineFile(code)
         val element = findElementInEditor<T>()
-        val lookup = createLookupElement(element as RsElement, element.name!!)
+        val lookup = createLookupElement(
+            SimpleScopeEntry(element.name!!, element as RsElement),
+            RsCompletionContext()
+        )
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)

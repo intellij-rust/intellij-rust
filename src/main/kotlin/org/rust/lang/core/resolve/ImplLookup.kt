@@ -117,6 +117,7 @@ sealed class TraitImplSource {
         val isInherent: Boolean get() = cachedImpl.traitRef == null
         override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
         override val members: RsMembers? get() = cachedImpl.membres
+        val type: Ty? get() = cachedImpl.typeAndGenerics?.first
     }
 
     /** T: Trait */
