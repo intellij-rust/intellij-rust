@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.patterns.ElementPattern
@@ -58,6 +59,24 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
             isSimplePath = simplePathPattern.accepts(parameters.position)
         )
 
+        addCompletionVariants(element, result, context, processedPathNames)
+
+        if (element is RsMethodOrField) {
+            addMethodAndFieldCompletion(element, result, context)
+        }
+
+        if (context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
+            addCompletionsFromIndex(parameters, result, processedPathNames, context.expectedTy)
+        }
+    }
+
+    @VisibleForTesting
+    fun addCompletionVariants(
+        element: RsReferenceElement,
+        result: CompletionResultSet,
+        context: RsCompletionContext,
+        processedPathNames: MutableSet<String>
+    ) {
         collectCompletionVariants(result, context) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
@@ -91,17 +110,10 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
                 }
             }
         }
-
-        if (element is RsMethodOrField) {
-            addMethodAndFieldCompletion(element, result, context)
-        }
-
-        if (context.isSimplePath && RsCodeInsightSettings.getInstance().suggestOutOfScopeItems) {
-            addCompletionsFromIndex(parameters, result, processedPathNames, context.expectedTy)
-        }
     }
 
-    private fun addMethodAndFieldCompletion(
+    @VisibleForTesting
+    fun addMethodAndFieldCompletion(
         element: RsMethodOrField,
         result: CompletionResultSet,
         context: RsCompletionContext
