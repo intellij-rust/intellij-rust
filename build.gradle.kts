@@ -88,8 +88,7 @@ allprojects {
     }
 
     tasks.withType<PublishTask> {
-        username(prop("publishUsername"))
-        password(prop("publishPassword"))
+        token(prop("publishToken"))
         channels(channel)
     }
 
