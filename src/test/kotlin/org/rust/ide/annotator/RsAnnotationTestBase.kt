@@ -229,6 +229,6 @@ abstract class RsAnnotationTestBase : RsTestBase() {
 
     protected fun registerSeverities(severities: List<HighlightSeverity>) {
         val testSeverityProvider = RsTestSeverityProvider(severities)
-        PlatformTestUtil.registerExtension(SeveritiesProvider.EP_NAME, testSeverityProvider, testRootDisposable)
+        SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(testSeverityProvider, testRootDisposable)
     }
 }

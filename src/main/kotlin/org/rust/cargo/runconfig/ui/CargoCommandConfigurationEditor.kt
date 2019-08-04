@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.2
+// BACKCOMPAT: 2019.1
 @file:Suppress("DEPRECATION")
 
 package org.rust.cargo.runconfig.ui
@@ -76,7 +76,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         LabeledComponent.create(textField, ExecutionBundle.message("run.configuration.working.directory.label"))
     }
     private val cargoProject = ComboBox<CargoProject>().apply {
-        // BACKCOMPAT: 2019.2
+        // BACKCOMPAT: 2019.1. Use SimpleListCellRenderer instead
         renderer = object : ListCellRendererWrapper<CargoProject>() {
             override fun customize(list: JList<*>?, value: CargoProject?, index: Int, selected: Boolean, hasFocus: Boolean) {
                 setText(value?.presentableName)

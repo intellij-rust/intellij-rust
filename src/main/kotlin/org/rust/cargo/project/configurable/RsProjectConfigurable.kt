@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.1
+@file:Suppress("DEPRECATION")
+
 package org.rust.cargo.project.configurable
 
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
@@ -38,6 +41,7 @@ class RsProjectConfigurable(
 
     private val macroExpansionEngineComboBox: ComboBox<MacroExpansionEngine> =
         ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java)).apply {
+            // BACKCOMPAT: 2019.1. Use SimpleListCellRenderer instead
             renderer = object : ListCellRendererWrapper<MacroExpansionEngine>() {
                 override fun customize(list: JList<*>?, value: MacroExpansionEngine, index: Int, selected: Boolean, hasFocus: Boolean) {
                     setText(when (value) {

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.1
 @file:Suppress("DEPRECATION")
 
 package org.rust.lang
