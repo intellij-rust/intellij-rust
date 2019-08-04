@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.rt.coverage.data.ClassData
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.ColumnInfo
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.coverage.LcovCoverageReport.Serialization.writeLcov
@@ -171,7 +170,7 @@ class RsCoverageEngine : CoverageEngine() {
 
     private fun convertClassDataToLineHits(classData: ClassData): List<LcovCoverageReport.LineHits> {
         val lineCount = classData.lines.size
-        val lineHitsList = ContainerUtil.newArrayListWithCapacity<LcovCoverageReport.LineHits>(lineCount)
+        val lineHitsList = ArrayList<LcovCoverageReport.LineHits>(lineCount)
         for (lineInd in 0 until lineCount) {
             val lineData = classData.getLineData(lineInd)
             if (lineData != null) {

@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.1
+@file:Suppress("DEPRECATION")
+
 package org.rust
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -33,6 +36,7 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 
+// BACKCOMPAT: 2019.1. Use BasePlatformTestCase instead
 abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {
 
     override fun getProjectDescriptor(): LightProjectDescriptor {

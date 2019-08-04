@@ -45,7 +45,7 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
 
     private fun highlightProjectFile(info: RealProjectInfo, filePath: String): Timings {
         val timings = Timings()
-        val base = openRealProject(info) ?: return timings
+        openRealProject(info) ?: return timings
 
         myFixture.configureFromTempProjectFile(filePath)
 

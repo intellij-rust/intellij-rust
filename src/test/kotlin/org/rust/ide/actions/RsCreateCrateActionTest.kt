@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.TestActionEvent
-import junit.framework.Assert
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
@@ -61,7 +60,7 @@ class RsCreateCrateActionTest : RsWithToolchainTestBase() {
         val main = cargoProjectDirectory.findFileByRelativePath("$name/src/$src.rs")
             ?: error("Source file was not found for crate $name")
         val pkg = project.cargoProjects.findPackageForFile(main) ?: error("Package was not found for file $main")
-        Assert.assertEquals(pkg.targets.size, 1)
+        assertEquals(1, pkg.targets.size)
     }
 
     private fun createProjectScaffold() {
