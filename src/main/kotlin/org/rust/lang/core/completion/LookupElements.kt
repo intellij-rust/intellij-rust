@@ -28,18 +28,19 @@ import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-const val KEYWORD_PRIORITY = 40.0
+const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
 private const val VARIABLE_PRIORITY = 5.0
 private const val ENUM_VARIANT_PRIORITY = 4.0
 private const val FIELD_DECL_PRIORITY = 3.0
-private const val INHERENT_IMPL_MEMBER_PRIORITY = 2.0
+private const val ASSOC_FN_PRIORITY = 2.0
 private const val DEFAULT_PRIORITY = 0.0
 private const val MACRO_PRIORITY = -0.1
 private const val DEPRECATED_PRIORITY = -1.0
 
-private const val EXPECTED_TYPE_PRIORITY_OFFSET = 20.0
-private const val LOCAL_PRIORITY_OFFSET = 10.0
+private const val EXPECTED_TYPE_PRIORITY_OFFSET = 40.0
+private const val LOCAL_PRIORITY_OFFSET = 20.0
+private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 fun createLookupElement(
     element: RsElement,
@@ -59,8 +60,12 @@ fun createLookupElement(
         element is RsPatBinding -> VARIABLE_PRIORITY
         element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
         element is RsFieldDecl -> FIELD_DECL_PRIORITY
-        element is RsAbstractable && element.owner.isInherentImpl -> INHERENT_IMPL_MEMBER_PRIORITY
+        element is RsFunction && element.isAssocFn -> ASSOC_FN_PRIORITY
         else -> DEFAULT_PRIORITY
+    }
+
+    if (element is RsAbstractable && element.owner.isInherentImpl) {
+        priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
     }
 
     if (forSimplePath && !element.canBeExported) {
