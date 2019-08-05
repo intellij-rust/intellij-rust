@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Run" type="GradleRunConfiguration" factoryName="Gradle" singleton="true">
-    <log_file path="$PROJECT_DIR$/build/idea-sandbox/system/log/idea.log" checked="true" skipped="true" show_all="false" alias="idea.log" />
+    <log_file alias="idea.log" path="$PROJECT_DIR$/build/idea-sandbox/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -11,11 +11,12 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":runIde" />
+          <option value=":plugin:runIde" />
         </list>
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <method />
+    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+    <method v="2" />
   </configuration>
 </component>
