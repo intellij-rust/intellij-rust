@@ -24,28 +24,28 @@ cd intellij-rust
 
 ## Building
 
-We use gradle to build the plugin. It comes with a wrapper script (`gradlew` in
-the root of the repository) which downloads appropriate version of gradle
+We use gradle with [gradle-intellij](https://github.com/JetBrains/gradle-intellij-plugin) plugin to build the plugin.
+It comes with a wrapper script (`gradlew` in the root of the repository) which downloads appropriate version of gradle
 automatically as long as you have JDK installed.
 
 Common tasks are
 
-  - `./gradlew :build` -- fully build plugin and create an archive at
-    `build/distributions` which can be installed into IntelliJ IDEA via `Install
+  - `./gradlew :plugin:buildPlugin` -- fully build plugin and create an archive at
+    `plugin/build/distributions` which can be installed into IntelliJ IDEA via `Install
     plugin from disk...` action found in `Settings > Plugins`.
 
-  - `./gradlew :runIde` -- run a development IDE with the plugin installed.
+  - `./gradlew :plugin:runIde` -- run a development IDE with the plugin installed.
 
-  - `./gradlew :test` -- more than two thousands tests. We love tests!
+  - `./gradlew :test` -- more than five thousands tests. We love tests!
 
-Note the `:` in front of the task name. The repository contains two independent
+Note the `:` in front of the task name. The repository contains several modules that belong to two independent
 plugins for Rust and TOML, which are organized as gradle subprojects. Running
-`./gradlew :task` executes the task only for Rust plugin, `:intellij-toml:task` will run
-the task for TOML and `./gradlew task` will do for both.
+`./gradlew :task` executes the task only for root module (core module of Rust plugin), `./gradlew :intellij-toml:task` will run
+the task for TOML module and `./gradlew task` will do for all modules.
 
 ### Modules
 
-Rust plugin sources are divided into several modules. Each module (except root) supports
+Rust plugin sources are divided into several modules. Almost all modules (except root and `plugin` ones) support
 some functionality in particular IDE or integrate with another plugin. Like debugging in CLion or
 integration with `TOML` plugin.
 
@@ -57,6 +57,7 @@ like IDEA and CLion.
 
 The current Rust plugin modules:
 * `:` - root/core module
+* `:plugin` - module to build/run/publish Rust plugin
 * `:idea` - contains code available only in IDEA
 * `:clion` - contains code available only in CLion
 * `:debugger` - debugger related code
@@ -104,7 +105,7 @@ For example, <kbd>Ctrl + Shift + A</kbd>, `Import project` and select `build.gra
 the root directory of the plugin.
 
 There are `Test`, `Run` and `Generate Parser` run configurations for the most
-common tasks. However try executing `./gradlew :test` first, to download all
+common tasks. However, try executing `./gradlew :test` first, to download all
 necessary dependencies and launch all code generation tasks. Unfortunately
 during import IDEA may delete `.idea/runConfigurations`, just revert changes in
 the directory if this happens.
@@ -354,7 +355,7 @@ push additional commits to the pull request branch:
 
 ```
 $ more hacking
-$ git commit -am"Fix code style issues"
+$ git commit -am "Fix code style issues"
 $ ./gradlew test && git push
 ```
 

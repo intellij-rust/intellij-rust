@@ -3,10 +3,8 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.jvm.tasks.Jar
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
-import org.jetbrains.intellij.IntelliJPlugin
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 import org.jetbrains.intellij.tasks.PrepareSandboxTask
 import org.jetbrains.intellij.tasks.PublishTask
@@ -81,15 +79,10 @@ allprojects {
                 untilBuild(prop("untilBuild"))
             }
 
-            "buildSearchableOptions" {
+            buildSearchableOptions {
                 enabled = prop("enableBuildSearchableOptions").toBoolean()
             }
         }
-    }
-
-    tasks.withType<PublishTask> {
-        token(prop("publishToken"))
-        channels(channel)
     }
 
     tasks.withType<KotlinCompile> {
@@ -159,9 +152,8 @@ val Project.dependencyCachePath get(): String {
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 val patchVersion = prop("patchVersion").toInt().let { if (channel.isBlank()) it else it + 1 }
 
-val rustProjects = rootProject.subprojects.filter { it.name != "intellij-toml" }
-
-project(":") {
+// Special module with run, build and publish tasks
+project(":plugin") {
     val versionSuffix = "-$platformVersion$channelSuffix"
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
@@ -177,6 +169,55 @@ project(":") {
         setPlugins(*plugins.toTypedArray())
     }
 
+    dependencies {
+        compile(project(":"))
+        compile(project(":idea"))
+        compile(project(":clion"))
+        compile(project(":debugger"))
+        compile(project(":toml"))
+        compile(project(":copyright"))
+        compile(project(":coverage"))
+        compile(project(":intelliLang"))
+        compile(project(":duplicates"))
+    }
+
+    tasks {
+        buildPlugin {
+            // Set proper name for final plugin zip.
+            // Otherwise, base name is the same as gradle module name
+            archiveBaseName.set("intellij-rust")
+        }
+
+        withType<PrepareSandboxTask> {
+            from("$rootDir/prettyPrinters") {
+                into("${intellij.pluginName}/prettyPrinters")
+                include("*.py")
+            }
+        }
+
+        withType<RunIdeTask> {
+            // Default args for IDEA installation
+            jvmArgs("-Xmx768m", "-XX:+UseConcMarkSweepGC", "-XX:SoftRefLRUPolicyMSPerMB=50")
+            // uncomment if `unexpected exception ProcessCanceledException` prevents you from debugging a running IDE
+            // jvmArgs("-Didea.ProcessCanceledException=disabled")
+        }
+
+        withType<PublishTask> {
+            token(prop("publishToken"))
+            channels(channel)
+        }
+    }
+
+    task("configureCLion") {
+        doLast {
+            intellij {
+                sandboxDirectory = "${project.buildDir.absolutePath}${File.separator}clion-sandbox"
+            }
+        }
+    }
+}
+
+project(":") {
     val testOutput = configurations.create("testOutput")
 
     dependencies {
@@ -184,7 +225,7 @@ project(":") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-        testOutput(sourceSets.getByName("test").output)
+        testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
@@ -222,14 +263,6 @@ project(":") {
         }
     }
 
-    task("configureCLion") {
-        doLast {
-            intellij {
-                sandboxDirectory = "${project.buildDir.absolutePath}${File.separator}clion-sandbox"
-            }
-        }
-    }
-
     task("resolveDependencies") {
         doLast {
             rootProject.allprojects
@@ -237,31 +270,6 @@ project(":") {
                 .flatMap { listOf(it.compile, it.testCompile) }
                 .forEach { it.get().resolve() }
         }
-    }
-
-    tasks.withType<PrepareSandboxTask> {
-        from("prettyPrinters") {
-            into("${intellij.pluginName}/prettyPrinters")
-            include("*.py")
-        }
-        // We need to copy all jar files to add them into final plugin archive
-        if (name == IntelliJPlugin.PREPARE_SANDBOX_TASK_NAME) {
-            for (rustProject in rustProjects) {
-                val jar: Jar by rustProject.tasks
-                from(jar.outputs.files) {
-                    into("${intellij.pluginName}/lib")
-                    include("*.jar")
-                }
-                dependsOn(jar)
-            }
-        }
-    }
-
-    tasks.withType<RunIdeTask> {
-        // Default args for IDEA installation
-        jvmArgs("-Xmx768m", "-XX:+UseConcMarkSweepGC", "-XX:SoftRefLRUPolicyMSPerMB=50")
-        // uncomment if `unexpected exception ProcessCanceledException` prevents you from debugging a running IDE
-//        jvmArgs("-Didea.ProcessCanceledException=disabled")
     }
 }
 
@@ -418,7 +426,7 @@ task("makeRelease") {
         val newChangelogPath = newChangelog
             .replace(".markdown", "")
             .replaceFirst("-", "/").replaceFirst("-", "/").replaceFirst("-", "/")
-        val pluginXmlPath = "./src/main/resources/META-INF/plugin.xml"
+        val pluginXmlPath = "./plugin/src/main/resources/META-INF/plugin.xml"
         val pluginXml = File(pluginXmlPath)
         val oldText = pluginXml.readText()
         val newText = oldText.replace(

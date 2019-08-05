@@ -11,8 +11,8 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":configureCLion" />
-          <option value=":runIde" />
+          <option value=":plugin:configureCLion" />
+          <option value=":plugin:runIde" />
         </list>
       </option>
       <option name="vmOptions" value="" />
