@@ -1,0 +1,4 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <id>org.rust.intelliLang</id>
+    <xi:include href="/META-INF/core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

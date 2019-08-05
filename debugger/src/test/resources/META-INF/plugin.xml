@@ -1,0 +1,5 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <id>org.rust.debugger</id>
+    <xi:include href="/META-INF/core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.clion</depends>
+</idea-plugin>

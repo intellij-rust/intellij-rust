@@ -225,7 +225,7 @@ project(":") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-        testOutput(sourceSets.getByName("test").output)
+        testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
     val generateRustLexer = task<GenerateLexer>("generateRustLexer") {
