@@ -5,10 +5,13 @@
 
 package org.rust.cargo.runconfig.buildtool
 
+import com.intellij.build.BuildContentManager
+import com.intellij.build.BuildViewManager
 import com.intellij.execution.ExecutionException
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -54,6 +57,9 @@ object CargoBuildManager {
 
         val cargoProject = state.cargoProject ?: return CANCELED_BUILD_RESULT
 
+        // Make sure build tool window is initialized:
+        ServiceManager.getService(cargoProject.project, BuildContentManager::class.java)
+
         return execute(CargoBuildContext(
             cargoProject = cargoProject,
             environment = buildConfiguration.environment,
@@ -61,7 +67,15 @@ object CargoBuildManager {
             progressTitle = "Building...",
             isTestBuild = buildConfiguration.configuration.command == "test"
         )) {
+            val viewManager = ServiceManager.getService(project, BuildViewManager::class.java)
+            if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
+                val buildToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD)
+                buildToolWindow?.setAvailable(true, null)
+                buildToolWindow?.show(null)
+            }
+
             processHandler = state.startProcess(emulateTerminal = true)
+            processHandler.addProcessListener(CargoBuildListener(this, viewManager))
             processHandler.startNotify()
         }
     }
