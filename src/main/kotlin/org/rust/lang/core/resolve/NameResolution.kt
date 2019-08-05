@@ -1171,9 +1171,15 @@ private fun processAssociatedItems(
     processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
     val nsFilter: (RsAbstractable) -> Boolean = when {
-        Namespace.Types in ns && Namespace.Values in ns -> {{ true }}
-        Namespace.Types in ns -> {{ it is RsTypeAlias }}
-        Namespace.Values in ns -> {{ it !is RsTypeAlias }}
+        Namespace.Types in ns && Namespace.Values in ns -> {
+            { true }
+        }
+        Namespace.Types in ns -> {
+            { it is RsTypeAlias }
+        }
+        Namespace.Values in ns -> {
+            { it !is RsTypeAlias }
+        }
         else -> return false
     }
 
@@ -1428,7 +1434,7 @@ private fun makeHygieneFilter(anchor: PsiElement): (RsPatBinding) -> Boolean {
         val nameIdentifier = binding.nameIdentifier ?: return false
         val bindingHygienicScope =
             (nameIdentifier.findMacroCallFromWhichLeafIsExpanded() ?: nameIdentifier).containingFile
-            .unwrapCodeFragments()
+                .unwrapCodeFragments()
         return anchorHygienicScope == bindingHygienicScope
     }
 }

@@ -16,6 +16,7 @@ sealed class TyInfer : Ty(HAS_TY_INFER_MASK) {
         val origin: Ty? = null,
         override var parent: NodeOrValue = VarValue(null, 0)
     ) : TyInfer(), Node
+
     class IntVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
     class FloatVar(override var parent: NodeOrValue = VarValue(null, 0)) : TyInfer(), Node
 }

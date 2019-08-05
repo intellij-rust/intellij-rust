@@ -32,8 +32,7 @@ data class TyAdt private constructor(
     val aliasedBy: BoundElement<RsTypeAlias>?
 ) : Ty(mergeFlags(typeArguments) or mergeFlags(regionArguments)) {
 
-    // This method is rarely called (in comparison with folding),
-    // so we can implement it in a such inefficient way
+    // This method is rarely called (in comparison with folding), so we can implement it in a such inefficient way.
     override val typeParameterValues: Substitution
         get() {
             val typeSubst = item.typeParameters.withIndex().associate { (i, param) ->

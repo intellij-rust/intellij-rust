@@ -14,18 +14,26 @@ import org.rust.lang.core.types.type
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-fun RsTypeReference.getStubOnlyText(subst: Substitution = emptySubstitution, renderLifetimes: Boolean = true): String =
-    renderTypeReference(this, subst, renderLifetimes)
+fun RsTypeReference.getStubOnlyText(
+    subst: Substitution = emptySubstitution,
+    renderLifetimes: Boolean = true
+): String = renderTypeReference(this, subst, renderLifetimes)
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-fun RsValueParameterList.getStubOnlyText(subst: Substitution = emptySubstitution, renderLifetimes: Boolean = true): String =
-    renderValueParameterList(this, subst, renderLifetimes)
+fun RsValueParameterList.getStubOnlyText(
+    subst: Substitution = emptySubstitution,
+    renderLifetimes: Boolean = true
+): String = renderValueParameterList(this, subst, renderLifetimes)
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
 fun RsTraitRef.getStubOnlyText(subst: Substitution = emptySubstitution, renderLifetimes: Boolean = true): String =
     buildString { appendPath(path, subst, renderLifetimes) }
 
-private fun renderValueParameterList(list: RsValueParameterList, subst: Substitution, renderLifetimes: Boolean): String {
+private fun renderValueParameterList(
+    list: RsValueParameterList,
+    subst: Substitution,
+    renderLifetimes: Boolean
+): String {
     return buildString {
         append("(")
         val selfParameter = list.selfParameter
@@ -186,7 +194,11 @@ private fun StringBuilder.appendRetType(retType: RsRetType?, subst: Substitution
     }
 }
 
-private fun StringBuilder.appendValueParameterListTypes(list: List<RsValueParameter>, subst: Substitution, renderLifetimes: Boolean) {
+private fun StringBuilder.appendValueParameterListTypes(
+    list: List<RsValueParameter>,
+    subst: Substitution,
+    renderLifetimes: Boolean
+) {
     list.joinToWithBuffer(this, separator = ", ", prefix = "(", postfix = ")") { sb ->
         typeReference?.let { sb.appendTypeReference(it, subst, renderLifetimes) }
     }
