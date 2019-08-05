@@ -174,6 +174,16 @@ class StdRcProvider:
         yield ("strong", self.strong)
         yield ("weak", self.weak)
 
+class CorePointerProvider:
+    def __init__(self, valobj):
+        self.valobj = valobj
+
+    def to_string(self):
+        return "{}".format(self.valobj.type)
+
+    def children(self):
+        yield ("*pointer", unwrap_unique_or_non_null(self.valobj).dereference())
+
 
 class StdCellProvider:
     def __init__(self, valobj):

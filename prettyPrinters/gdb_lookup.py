@@ -86,4 +86,8 @@ def lookup(valobj):
     if rust_type == RustType.STD_REF_CELL:
         return StdRefCellProvider(valobj)
 
+    if rust_type == RustType.CORE_PTR:
+        return CorePointerProvider(valobj)
+
+
     return None
