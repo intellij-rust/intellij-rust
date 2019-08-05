@@ -1,0 +1,38 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <id>org.rust.lang</id>
+    <name>Rust</name>
+
+    <vendor>JetBrains</vendor>
+
+    <description><![CDATA[
+      Rust language support
+    ]]></description>
+
+    <change-notes><![CDATA[
+        <a href="https://intellij-rust.github.io/2019/07/22/changelog-102.html">
+                 https://intellij-rust.github.io/2019/07/22/changelog-102.html
+    ]]>
+    </change-notes>
+
+    <!-- please see https://confluence.jetbrains.com/display/IDEADEV/Plugin+Compatibility+with+IntelliJ+Platform+Products
+         on how to target different products -->
+
+    <depends>com.intellij.modules.lang</depends>
+
+    <xi:include href="/META-INF/core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <depends optional="true" config-file="idea-only.xml">com.intellij.modules.java</depends>
+    <depends optional="true" config-file="clion-only.xml">com.intellij.modules.clion</depends>
+    <depends optional="true" config-file="debugger-only.xml">com.intellij.modules.clion</depends>
+    <depends optional="true" config-file="toml-only.xml">org.toml.lang</depends>
+    <depends optional="true" config-file="copyright-only.xml">com.intellij.copyright</depends>
+    <depends optional="true" config-file="duplicates-only.xml">com.intellij.modules.duplicatesDetector</depends>
+    <depends optional="true" config-file="coverage-only.xml">Coverage</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
+             to be able to open a project created in IDEA without errors -->
+        <moduleType id="RUST_MODULE" implementationClass="org.rust.ide.idea.RsModuleType"/>
+    </extensions>
+
+</idea-plugin>
