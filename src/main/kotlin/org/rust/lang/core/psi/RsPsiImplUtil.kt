@@ -118,4 +118,4 @@ object RsPsiImplUtil {
 }
 
 private fun RsMod.hasChildModules(): Boolean =
-    expandedItemsExceptImpls.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }
+    expandedItemsExceptImplsAndUses.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }

@@ -53,25 +53,16 @@ fun processItemDeclarations(
 ): Boolean {
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 
-    val starImports = mutableListOf<RsUseSpeck>()
-    val itemImports = mutableListOf<RsUseSpeck>()
-
     val directlyDeclaredNames = HashSet<String>()
     val processor = { e: ScopeEntry ->
         directlyDeclaredNames += e.name
         originalProcessor(e)
     }
 
-    loop@ for (item in scope.expandedItemsExceptImpls) {
-        when (item) {
-            is RsUseItem ->
-                if (item.isPublic || withPrivateImports) {
-                    val rootSpeck = item.useSpeck ?: continue@loop
-                    rootSpeck.forEachLeafSpeck { speck ->
-                        (if (speck.isStarImport) starImports else itemImports) += speck
-                    }
-                }
+    val cachedItems = scope.expandedItemsCached
 
+    loop@ for (item in cachedItems.rest) {
+        when (item) {
             // Unit like structs are both types and values
             is RsStructItem -> {
                 if (item.namespaces.intersects(ns) && processor(item)) return true
@@ -100,12 +91,10 @@ fun processItemDeclarations(
     }
 
     val isEdition2018 = scope.isEdition2018
-    for (speck in itemImports) {
-        check(speck.useGroup == null)
-        val path = speck.path ?: continue
-        val name = speck.nameInScope ?: continue
+    for ((isPublic, path, name, isAtom) in cachedItems.namedImports) {
+        if (!(isPublic || withPrivateImports)) continue
 
-        if (isEdition2018 && speck.alias == null && path.isAtom) {
+        if (isEdition2018 && isAtom) {
             // Use items like `use foo;` or `use foo::{self}` are meaningless on 2018 edition.
             // We should ignore it or it breaks resolve of such `foo` in other places.
             ItemResolutionTestmarks.extraAtomUse.hit()
@@ -141,7 +130,7 @@ fun processItemDeclarations(
             val crateRoot = scope.crateRoot
             if (crateRoot != null) {
                 val result = processWithShadowing(directlyDeclaredNames, processor) { shadowingProcessor ->
-                    crateRoot.processExpandedItemsExceptImpls { item ->
+                    crateRoot.processExpandedItemsExceptImplsAndUses { item ->
                         if (item is RsExternCrateItem) {
                             processExternCrateItem(item, shadowingProcessor, true)
                         } else {
@@ -170,7 +159,9 @@ fun processItemDeclarations(
         if (result) return true
     }
 
-    for (speck in starImports) {
+    for ((isPublic, speck) in cachedItems.starImports) {
+        if (!(isPublic || withPrivateImports)) continue
+
         val path = speck.path
         val basePath = if (path == null && speck.context is RsUseGroup) {
             // `use foo::bar::{self, *}`
@@ -292,13 +283,6 @@ fun processItemDeclarationsWithCache(
         processItemDeclarations(scope, ns, processor, ipm)
     }
 }
-
-private val RsPath.isAtom: Boolean
-    get() = when (kind) {
-        PathKind.IDENTIFIER -> qualifier == null
-        PathKind.SELF -> qualifier?.isAtom == true
-        else -> false
-    }
 
 enum class ItemProcessingMode(val withExternCrates: Boolean) {
     WITHOUT_PRIVATE_IMPORTS(false),
