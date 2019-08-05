@@ -18,6 +18,7 @@
          on how to target different products -->
 
     <depends>com.intellij.modules.lang</depends>
+    <depends>org.toml.lang</depends>
 
     <xi:include href="/META-INF/core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
