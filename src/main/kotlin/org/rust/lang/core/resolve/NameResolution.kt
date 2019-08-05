@@ -1336,7 +1336,9 @@ fun processNestedScopesUpwards(
 
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
-        val preludeProcessor: (ScopeEntry) -> Boolean = { v -> v.name !in prevScope && processor(v) }
+        // XXX: fix prelude items resolve on the nightly. Revert it to `v -> v.name !in prevScope`
+        //   after cfg attrs support or when `#[cfg(bootstrap)]` will be removed from the prelude
+        val preludeProcessor: (ScopeEntry) -> Boolean = { v -> prevScope.add(v.name) && processor(v) }
         return processItemDeclarationsWithCache(prelude, ns, preludeProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
     }
 
