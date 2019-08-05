@@ -173,7 +173,7 @@ class RsExtractFunctionConfig private constructor(
             val type = it.declaredType
             val bounds = mutableSetOf<Ty>()
             it.bounds.flatMapTo(bounds) {
-                it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
+                it.bound.traitRef?.path?.typeArguments?.flatMap { it.type.types() }.orEmpty()
             }
             type to bounds
         }

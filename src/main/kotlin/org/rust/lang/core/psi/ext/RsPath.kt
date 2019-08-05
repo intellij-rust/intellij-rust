@@ -80,6 +80,12 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
     else -> TYPES_N_VALUES
 }
 
+val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeList.orEmpty()
+
+val RsPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeReferenceList.orEmpty()
+
+val RsPath.constArguments: List<RsExpr> get() = typeArgumentList?.exprList.orEmpty()
+
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {
     constructor(node: ASTNode) : super(node)

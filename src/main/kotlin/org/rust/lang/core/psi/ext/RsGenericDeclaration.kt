@@ -15,8 +15,8 @@ interface RsGenericDeclaration : RsElement {
 val RsGenericDeclaration.typeParameters: List<RsTypeParameter>
     get() = typeParameterList?.typeParameterList.orEmpty()
 
-val RsGenericDeclaration.constParameters: List<RsConstParameter>
-    get() = typeParameterList?.constParameterList.orEmpty()
-
 val RsGenericDeclaration.lifetimeParameters: List<RsLifetimeParameter>
     get() = typeParameterList?.lifetimeParameterList.orEmpty()
+
+val RsGenericDeclaration.constParameters: List<RsConstParameter>
+    get() = typeParameterList?.constParameterList.orEmpty()
