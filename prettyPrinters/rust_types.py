@@ -32,6 +32,7 @@ class RustType(object):
     STD_REF_CELL = "StdRefCell"
 
 
+# Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
 STD_STRING_REGEX = re.compile(r"^(alloc::(\w+::)+)String$")
 STD_STR_REGEX = re.compile(r"^&str$")
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::(\w+::)+)OsString$")

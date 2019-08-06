@@ -1,4 +1,6 @@
-<idea-plugin>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <xi:include href="/META-INF/platform-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
     <extensions defaultExtensionNs="cidr.debugger">
         <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
         <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
