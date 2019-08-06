@@ -7,17 +7,25 @@ package org.rust.ide.presentation
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.type
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-val RsTypeReference.stubOnlyText: String
-    get() = renderTypeReference(this)
+fun RsTypeReference.getStubOnlyText(subst: Substitution = emptySubstitution): String =
+    renderTypeReference(this, subst)
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
-val RsValueParameterList.stubOnlyText: String
-    get() = renderValueParameterList(this)
+fun RsValueParameterList.getStubOnlyText(subst: Substitution = emptySubstitution): String =
+    renderValueParameterList(this, subst)
 
-private fun renderValueParameterList(list: RsValueParameterList): String {
+/** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
+fun RsTraitRef.getStubOnlyText(subst: Substitution = emptySubstitution): String =
+    buildString { appendPath(path, subst) }
+
+private fun renderValueParameterList(list: RsValueParameterList, subst: Substitution): String {
     return buildString {
         append("(")
         val selfParameter = list.selfParameter
@@ -26,7 +34,7 @@ private fun renderValueParameterList(list: RsValueParameterList): String {
             val typeReference = selfParameter.typeReference
             if (typeReference != null) {
                 append("self: ")
-                appendTypeReference(typeReference)
+                appendTypeReference(typeReference, subst)
             } else {
                 if (selfParameter.isRef) {
                     append("&")
@@ -45,24 +53,33 @@ private fun renderValueParameterList(list: RsValueParameterList): String {
         valueParameterList.joinToWithBuffer(this, separator = ", ") { sb ->
             sb.append(patText ?: "_")
             sb.append(": ")
-            typeReference?.let { sb.appendTypeReference(it) }
+            typeReference?.let { sb.appendTypeReference(it, subst) }
         }
         append(")")
     }
 }
 
-private fun renderTypeReference(ref: RsTypeReference): String =
-    buildString { appendTypeReference(ref) }
+private fun renderTypeReference(ref: RsTypeReference, subst: Substitution): String =
+    buildString { appendTypeReference(ref, subst) }
 
-private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
+private fun renderTraitRef(ref: RsTraitRef, subst: Substitution): String =
+    buildString { appendPath(ref.path, subst) }
+
+private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Substitution) {
+    val ty = ref.type
+    if (ty is TyTypeParameter && subst[ty] != null) {
+        append(ref.substAndGetText(subst))
+        return
+    }
+
     when (val type = ref.typeElement) {
-        is RsTupleType -> type.typeReferenceList.joinToWithBuffer(this, ", ", "(", ")") { it.appendTypeReference(this) }
+        is RsTupleType -> type.typeReferenceList.joinToWithBuffer(this, ", ", "(", ")") { it.appendTypeReference(this, subst) }
 
         is RsBaseType -> when (val kind = type.kind) {
             RsBaseTypeKind.Unit -> append("()")
             RsBaseTypeKind.Never -> append("!")
             RsBaseTypeKind.Underscore -> append("_")
-            is RsBaseTypeKind.Path -> appendPath(kind.path)
+            is RsBaseTypeKind.Path -> appendPath(kind.path, subst)
         }
 
         is RsRefLikeType -> {
@@ -76,12 +93,12 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
                 }
                 if (type.mutability.isMut) append("mut ")
             }
-            appendTypeReference(type.typeReference)
+            appendTypeReference(type.typeReference, subst)
         }
 
         is RsArrayType -> {
             append("[")
-            appendTypeReference(type.typeReference)
+            appendTypeReference(type.typeReference, subst)
             if (!type.isSlice) {
                 append("; ")
                 append(type.arraySize) // may trigger resolve
@@ -91,8 +108,8 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
 
         is RsFnPointerType -> {
             append("fn")
-            appendValueParameterListTypes(type.valueParameterList.valueParameterList)
-            appendRetType(type.retType)
+            appendValueParameterListTypes(type.valueParameterList.valueParameterList, subst)
+            appendRetType(type.retType, subst)
         }
 
         is RsTraitType -> {
@@ -112,14 +129,14 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference) {
                 if (lifetime != null) {
                     sb.append(lifetime.referenceName)
                 } else {
-                    bound.traitRef?.path?.let { sb.appendPath(it) }
+                    bound.traitRef?.path?.let { sb.appendPath(it, subst) }
                 }
             }
         }
     }
 }
 
-private fun StringBuilder.appendPath(path: RsPath) {
+private fun StringBuilder.appendPath(path: RsPath, subst: Substitution) {
     append(path.referenceName)
     val inAngles = path.typeArgumentList // Foo<...>
     val fnSugar = path.valueParameterList // &dyn FnOnce(...) -> i32
@@ -135,7 +152,7 @@ private fun StringBuilder.appendPath(path: RsPath) {
             }
         }
         if (typeReferenceList.isNotEmpty()) {
-            typeReferenceList.joinToWithBuffer(this, ", ") { it.appendTypeReference(this) }
+            typeReferenceList.joinToWithBuffer(this, ", ") { it.appendTypeReference(this, subst) }
             if (assocTypeBindingList.isNotEmpty()) {
                 append(", ")
             }
@@ -143,25 +160,25 @@ private fun StringBuilder.appendPath(path: RsPath) {
         assocTypeBindingList.joinToWithBuffer(this, ", ") { sb ->
             sb.append(referenceName)
             sb.append("=")
-            typeReference?.let { sb.appendTypeReference(it) }
+            typeReference?.let { sb.appendTypeReference(it, subst) }
         }
         append(">")
     } else if (fnSugar != null) {
-        appendValueParameterListTypes(fnSugar.valueParameterList)
-        appendRetType(path.retType)
+        appendValueParameterListTypes(fnSugar.valueParameterList, subst)
+        appendRetType(path.retType, subst)
     }
 }
 
-private fun StringBuilder.appendRetType(retType: RsRetType?) {
+private fun StringBuilder.appendRetType(retType: RsRetType?, subst: Substitution) {
     val retTypeRef = retType?.typeReference
     if (retTypeRef != null) {
         append(" -> ")
-        appendTypeReference(retTypeRef)
+        appendTypeReference(retTypeRef, subst)
     }
 }
 
-private fun StringBuilder.appendValueParameterListTypes(list: List<RsValueParameter>) {
+private fun StringBuilder.appendValueParameterListTypes(list: List<RsValueParameter>, subst: Substitution) {
     list.joinToWithBuffer(this, separator = ", ", prefix = "(", postfix = ")") { sb ->
-        typeReference?.let { sb.appendTypeReference(it) }
+        typeReference?.let { sb.appendTypeReference(it, subst) }
     }
 }

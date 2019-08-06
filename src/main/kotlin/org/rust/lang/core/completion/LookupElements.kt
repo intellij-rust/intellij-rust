@@ -15,12 +15,18 @@ import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.presentation.stubOnlyText
+import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.AssocItemScopeEntryBase
 import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.resolve.ScopeEntry
+import org.rust.lang.core.resolve.ref.FieldResolveVariant
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyNever
@@ -43,14 +49,14 @@ private const val LOCAL_PRIORITY_OFFSET = 20.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
 fun createLookupElement(
-    element: RsElement,
-    scopeName: String,
+    scopeEntry: ScopeEntry,
+    context: RsCompletionContext,
     locationString: String? = null,
-    forSimplePath: Boolean = false,
-    expectedTy: Ty? = null,
     insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
 ): LookupElement {
-    val base = element.getLookupElementBuilder(scopeName)
+    val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
+    val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
+    val base = element.getLookupElementBuilder(scopeEntry.name, subst)
         .withInsertHandler(insertHandler)
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
 
@@ -68,17 +74,27 @@ fun createLookupElement(
         priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
     }
 
-    if (forSimplePath && !element.canBeExported) {
+    if (context.isSimplePath && !element.canBeExported) {
         // It's visible and can't be exported = it's local
         priority += LOCAL_PRIORITY_OFFSET
     }
 
-    if (isCompatibleTypes(element.implLookup, element.asTy, expectedTy)) {
+    if (isCompatibleTypes(element.implLookup, element.asTy, context.expectedTy)) {
         priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 
     return base.withPriority(priority)
 }
+
+private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
+    when (scopeEntry) {
+        is AssocItemScopeEntryBase<*> ->
+            instantiateMethodOwnerSubstitution(scopeEntry).mapTypeValues { (_, v) -> resolveTypeVarsIfPossible(v) }
+        is FieldResolveVariant ->
+            scopeEntry.selfTy.typeParameterValues
+        else ->
+            emptySubstitution
+    }
 
 private val RsElement.asTy: Ty?
     get() = when (this) {
@@ -95,7 +111,7 @@ private val RsElement.asTy: Ty?
 fun LookupElementBuilder.withPriority(priority: Double): LookupElement =
     if (priority == DEFAULT_PRIORITY) this else PrioritizedLookupElement.withPriority(this, priority)
 
-private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementBuilder {
+private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitution): LookupElementBuilder {
     val base = LookupElementBuilder.createWithSmartPointer(scopeName, this)
         .withIcon(if (this is RsFile) RsIcons.MODULE else this.getIcon(0))
         .withStrikeoutness(this is RsDocAndAttributeOwner && queryAttributes.deprecatedAttribute != null)
@@ -108,24 +124,24 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
         }
 
         is RsConstant -> base
-            .withTypeText(typeReference?.stubOnlyText)
+            .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsConstParameter -> base
-            .withTypeText(typeReference?.stubOnlyText)
+            .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
-            .withTypeText(typeReference?.stubOnlyText)
+            .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsTraitItem -> base
 
         is RsFunction -> base
-            .withTypeText(retType?.typeReference?.stubOnlyText ?: "()")
-            .withTailText(valueParameterList?.stubOnlyText ?: "()")
-            .appendTailText(extraTailText, true)
+            .withTypeText(retType?.typeReference?.getStubOnlyText(subst) ?: "()")
+            .withTailText(valueParameterList?.getStubOnlyText(subst) ?: "()")
+            .appendTailText(getExtraTailText(subst), true)
 
         is RsStructItem -> base
-            .withTailText(getFieldsOwnerTailText(this))
+            .withTailText(getFieldsOwnerTailText(this, subst))
 
         is RsEnumVariant -> base
-            .withTypeText(ancestorStrict<RsEnumItem>()?.name ?: "")
-            .withTailText(getFieldsOwnerTailText(this))
+            .withTypeText(stubAncestorStrict<RsEnumItem>()?.name ?: "")
+            .withTailText(getFieldsOwnerTailText(this, subst))
 
         is RsPatBinding -> base
             .withTypeText(type.let {
@@ -143,10 +159,10 @@ private fun RsElement.getLookupElementBuilder(scopeName: String): LookupElementB
     }
 }
 
-private fun getFieldsOwnerTailText(owner: RsFieldsOwner): String = when {
+private fun getFieldsOwnerTailText(owner: RsFieldsOwner, subst: Substitution): String = when {
     owner.blockFields != null -> " { ... }"
     owner.tupleFields != null ->
-        owner.positionalFields.joinToString(prefix = "(", postfix = ")") { it.typeReference.stubOnlyText }
+        owner.positionalFields.joinToString(prefix = "(", postfix = ")") { it.typeReference.getStubOnlyText(subst) }
     else -> ""
 }
 
@@ -256,9 +272,10 @@ private val InsertionContext.alreadyHasCallParens: Boolean
 private val InsertionContext.alreadyHasStructBraces: Boolean
     get() = nextCharIs('{')
 
-private val RsFunction.extraTailText: String
-    get() = ancestorStrict<RsImplItem>()?.traitRef?.text?.let { " of $it" } ?: ""
-
+private fun RsFunction.getExtraTailText(subst: Substitution): String {
+    val traitRef = stubAncestorStrict<RsImplItem>()?.traitRef ?: return ""
+    return " of ${traitRef.getStubOnlyText(subst)}"
+}
 
 fun InsertionContext.nextCharIs(c: Char): Boolean =
     document.charsSequence.indexOfSkippingSpace(c, tailOffset) != null

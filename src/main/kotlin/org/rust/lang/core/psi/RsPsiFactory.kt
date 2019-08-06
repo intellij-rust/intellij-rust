@@ -473,7 +473,7 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
-private fun RsTypeReference.substAndGetText(subst: Substitution): String {
+fun RsTypeReference.substAndGetText(subst: Substitution): String {
     val substitutedType = type.substitute(subst)
     val hasLifetime = refLikeType?.lifetime != null
     return if (hasLifetime) substitutedType.insertionSafeTextWithLifetimes else substitutedType.insertionSafeText

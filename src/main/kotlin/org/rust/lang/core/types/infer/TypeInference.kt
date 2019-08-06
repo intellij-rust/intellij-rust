@@ -661,6 +661,22 @@ class RsInferenceContext(
             .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, Predicate.Trait(it.value)) }
     }
 
+    fun instantiateBounds(
+        element: RsGenericDeclaration,
+        selfTy: Ty? = null,
+        typeParameters: Substitution = emptySubstitution
+    ): Substitution {
+        val map = run {
+            val map = element
+                .generics
+                .associateWith { typeVarForParam(it) }
+                .let { if (selfTy != null) it + (TyTypeParameter.self() to selfTy) else it }
+            typeParameters + map.toTypeSubst()
+        }
+        instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
+        return map
+    }
+
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
     fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
@@ -671,8 +687,50 @@ class RsInferenceContext(
             ff.selectUntilError()
         }
     }
-}
 
+    fun instantiateMethodOwnerSubstitution(
+        callee: AssocItemScopeEntryBase<*>,
+        methodCall: RsMethodCall? = null
+    ): Substitution = when (val source = callee.source) {
+        is TraitImplSource.ExplicitImpl -> {
+            val impl = source.value
+            val typeParameters = instantiateBounds(impl)
+            source.type?.substitute(typeParameters)?.let { combineTypes(callee.selfTy, it) }
+            if (callee.element.owner is RsAbstractableOwner.Trait) {
+                source.implementedTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
+            } else {
+                typeParameters
+            }
+        }
+        is TraitImplSource.TraitBound -> lookup.getEnvBoundTransitivelyFor(callee.selfTy)
+            .find { it.element == source.value }?.subst ?: emptySubstitution
+
+        is TraitImplSource.Derived -> emptySubstitution
+
+        is TraitImplSource.Object -> when (val selfTy = callee.selfTy) {
+            is TyAnon -> selfTy.getTraitBoundsTransitively()
+                .find { it.element == source.value }?.subst ?: emptySubstitution
+            is TyTraitObject -> selfTy.trait.flattenHierarchy
+                .find { it.element == source.value }?.subst ?: emptySubstitution
+            else -> emptySubstitution
+        }
+        is TraitImplSource.Collapsed, is TraitImplSource.Hardcoded -> {
+            // Method has been resolved to a trait, so we should add a predicate
+            // `Self : Trait<Args>` to select args and also refine method path if possible.
+            // Method path refinement needed if there are multiple impls of the same trait to the same type
+            val trait = source.value as RsTraitItem
+            val typeParameters = instantiateBounds(trait)
+            val subst = trait.generics.associateBy { it }.toTypeSubst()
+            val boundTrait = BoundElement(trait, subst).substitute(typeParameters)
+            val traitRef = TraitRef(callee.selfTy, boundTrait)
+            fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
+            if (methodCall != null) {
+                registerMethodRefinement(methodCall, traitRef)
+            }
+            typeParameters
+        }
+    }
+}
 
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }

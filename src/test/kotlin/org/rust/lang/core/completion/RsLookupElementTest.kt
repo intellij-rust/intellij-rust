@@ -5,14 +5,23 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionSorter
+import com.intellij.codeInsight.completion.PrefixMatcher
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.patterns.ElementPattern
 import com.intellij.psi.NavigatablePsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTupleFieldDecl
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsMethodOrField
 import org.rust.lang.core.psi.ext.RsNamedElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.resolve.SimpleScopeEntry
+import org.rust.lang.core.types.implLookup
 
 class RsLookupElementTest : RsTestBase() {
     fun `test fn`() = check("""
@@ -135,13 +144,140 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test mod`() {
         myFixture.configureByText("foo.rs", "")
-        val lookup = createLookupElement((myFixture.file as RsFile), "foo")
+        val lookup = createLookupElement(
+            SimpleScopeEntry("foo", myFixture.file as RsFile),
+            RsCompletionContext()
+        )
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
         assertNotNull(presentation.icon)
         assertEquals("foo", presentation.itemText)
     }
+
+    fun `test generic field`() = checkProvider("""
+        struct S<A> { foo: A }
+        
+        fn main() {
+            let s = S { foo: 0 };
+            s.foo;
+             //^
+        }
+    """, typeText = "i32")
+
+    fun `test generic method (impl)`() = checkProvider("""
+        struct S<A>(A);
+        
+        impl <B> S<B> {
+            fn foo(&self, x: B) -> B { x }
+        }
+        
+        fn main() {
+            let s = S(0);
+            s.foo;
+             //^
+        }
+    """, tailText = "(&self, x: i32)", typeText = "i32")
+
+    fun `test generic method (trait)`() = checkProvider("""
+        struct S<A>(A);
+        
+        trait T<B> {
+            fn foo(&self, x: B) -> B { x }
+        }
+        
+        impl <C> T<C> for S<C> {
+        }
+        
+        fn main() {
+            let s = S(0);
+            s.foo;
+             //^
+        }
+    """, tailText = "(&self, x: i32)", typeText = "i32")
+
+    fun `test generic method (impl trait)`() = checkProvider("""
+        struct S<A>(A);
+        
+        trait T<B> {
+            fn foo(&self, x: B) -> B;
+        }
+        
+        impl <C> T<C> for S<C> {
+            fn foo(&self, x: C) -> C { x }
+        }
+        
+        fn main() {
+            let s = S(0);
+            s.foo;
+             //^
+        }
+    """, tailText = "(&self, x: i32) of T<i32>", typeText = "i32")
+
+    fun `test generic method (impl trait for reference)`() = checkProvider("""
+        struct S<A>(A);
+
+        trait T<B> {
+            fn foo(&self, x: B) -> B;
+        }
+        
+        impl <C> T<C> for &S<C> {
+            fn foo(&self, x: C) -> C { x }
+        }
+        
+        fn main() {
+            let s = &S(0);
+            s.foo;
+             //^
+        }
+
+    """, tailText = "(&self, x: i32) of T<i32>", typeText = "i32")
+
+    fun `test generic function (impl)`() = checkProvider("""
+        struct S<A>(A);
+        
+        impl <B> S<B> {
+            fn foo(x: B) -> B { x }
+        }
+        
+        fn main() {
+            S::<i32>::foo;
+                     //^
+        }
+    """, tailText = "(x: i32)", typeText = "i32")
+
+    fun `test generic function (trait)`() = checkProvider("""
+        struct S<A>(A);
+        
+        trait T<B> {
+            fn foo(x: B) -> B { x }
+        }
+        
+        impl <C> T<C> for S<C> {
+        }
+        
+        fn main() {
+            S::<i32>::foo;
+                     //^
+        }
+    """, tailText = "(x: i32)", typeText = "i32")
+
+    fun `test generic function (impl trait)`() = checkProvider("""
+        struct S<A>(A);
+        
+        trait T<B> {
+            fn foo(x: B) -> B;
+        }
+        
+        impl <C> T<C> for S<C> {
+            fn foo(x: C) -> C { x }
+        }
+        
+        fn main() {
+            S::<i32>::foo;
+                     //^
+        }
+    """, tailText = "(x: i32) of T<i32>", typeText = "i32")
 
     private fun check(
         @Language("Rust") code: String,
@@ -158,10 +294,56 @@ class RsLookupElementTest : RsTestBase() {
     ) where T : NavigatablePsiElement, T : RsElement {
         InlineFile(code)
         val element = findElementInEditor<T>()
-        val lookup = createLookupElement(element as RsElement, element.name!!)
+        val lookup = createLookupElement(
+            SimpleScopeEntry(element.name!!, element as RsElement),
+            RsCompletionContext()
+        )
         val presentation = LookupElementPresentation()
 
         lookup.renderElement(presentation)
+        assertNotNull(presentation.icon)
+        assertEquals(tailText, presentation.tailText)
+        assertEquals(typeText, presentation.typeText)
+        assertEquals(isStrikeout, presentation.isStrikeout)
+    }
+
+    private fun checkProvider(
+        @Language("Rust") code: String,
+        tailText: String? = null,
+        typeText: String? = null,
+        isStrikeout: Boolean = false
+    ) {
+        InlineFile(code)
+        val element = findElementInEditor<RsReferenceElement>()
+        val context = RsCompletionContext(element.implLookup)
+        val processedPathNames = mutableSetOf<String>()
+
+        val lookups = mutableListOf<LookupElement>()
+        val result = object : CompletionResultSet(PrefixMatcher.ALWAYS_TRUE, null, null) {
+            override fun caseInsensitive(): CompletionResultSet = this
+            override fun withPrefixMatcher(matcher: PrefixMatcher): CompletionResultSet = this
+            override fun withPrefixMatcher(prefix: String): CompletionResultSet = this
+            override fun restartCompletionOnPrefixChange(prefixCondition: ElementPattern<String>?) {}
+            override fun addLookupAdvertisement(text: String) {}
+            override fun withRelevanceSorter(sorter: CompletionSorter): CompletionResultSet = this
+            override fun restartCompletionWhenNothingMatches() {}
+            override fun addElement(element: LookupElement) {
+                lookups.add(element)
+            }
+        }
+
+        RsCommonCompletionProvider.addCompletionVariants(element, result, context, processedPathNames)
+        if (element is RsMethodOrField) {
+            RsCommonCompletionProvider.addMethodAndFieldCompletion(element, result, context)
+        }
+
+        val lookup = lookups.single {
+            val namedElement = it.psiElement as? RsNamedElement
+            namedElement?.name == element.referenceName
+        }
+        val presentation = LookupElementPresentation()
+        lookup.renderElement(presentation)
+
         assertNotNull(presentation.icon)
         assertEquals(tailText, presentation.tailText)
         assertEquals(typeText, presentation.typeText)
