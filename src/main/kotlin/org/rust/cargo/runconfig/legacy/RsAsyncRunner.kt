@@ -30,6 +30,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
@@ -52,7 +53,9 @@ abstract class RsAsyncRunner(
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return !profile.project.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
+        return !profile.project.isBuildToolWindowEnabled &&
+            !isBuildConfiguration(profile) &&
+            getBuildConfiguration(profile) != null
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {

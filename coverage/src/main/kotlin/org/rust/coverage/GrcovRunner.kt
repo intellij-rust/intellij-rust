@@ -29,6 +29,7 @@ import org.rust.cargo.CargoConstants.ProjectLayout
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -43,7 +44,7 @@ class GrcovRunner : DefaultProgramRunner() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != CoverageExecutor.EXECUTOR_ID || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return getBuildConfiguration(profile) != null
+        return !isBuildConfiguration(profile) && getBuildConfiguration(profile) != null
     }
 
     override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider?): RunnerSettings {

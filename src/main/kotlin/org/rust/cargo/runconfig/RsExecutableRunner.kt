@@ -35,7 +35,9 @@ abstract class RsExecutableRunner(
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
             profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
-        return profile.project.isBuildToolWindowEnabled && getBuildConfiguration(profile) != null
+        return profile.project.isBuildToolWindowEnabled &&
+            !isBuildConfiguration(profile) &&
+            getBuildConfiguration(profile) != null
     }
 
     override fun execute(
@@ -51,8 +53,7 @@ abstract class RsExecutableRunner(
     }
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-        val configuration = (state as CargoRunStateBase).runConfiguration
-        if (isBuildConfiguration(configuration)) return null
+        if (state !is CargoRunStateBase) return null
 
         val binaries = environment.binaries.orEmpty()
         val errorMessage = when {
