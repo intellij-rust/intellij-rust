@@ -22,6 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.RustcVersion
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -110,6 +111,15 @@ interface CargoProject : UserDataHolderEx {
         fun merge(status: UpdateStatus): UpdateStatus = if (priority >= status.priority) this else status
     }
 }
+
+// Checks that the project is https://github.com/rust-lang/rust
+fun CargoProject.doesProjectLookLikeRustc(): Boolean {
+    val workspace = workspace
+    return workspace?.findPackage(AutoInjectedCrates.STD) != null &&
+        workspace.findPackage(AutoInjectedCrates.CORE) != null &&
+        workspace.findPackage("rustc") != null
+}
+
 
 data class RustcInfo(val sysroot: String, val version: RustcVersion?)
 

@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.rust.cargo.project.model.doesProjectLookLikeRustc
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.AddModuleFileFix
@@ -585,6 +586,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
         checkStartAttribute(holder, attr)
+        checkAttrStableUsed(holder, attr)
     }
 
     // E0132: Invalid `start` attribute
@@ -620,6 +622,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             else ->
                 RsDiagnostic.InvalidStartAttrError.InvalidOwner(attr.metaItem.identifier ?: attr.metaItem)
                     .addToHolder(holder)
+        }
+    }
+
+    // E0497: Stable attribute can only be used in the standard library
+    private fun checkAttrStableUsed(holder: AnnotationHolder, attr: RsAttr) {
+        if (attr.metaItem.name == "stable" && attr.cargoProject?.doesProjectLookLikeRustc() != true) {
+            RsDiagnostic.StableAttributeUsedError(attr).addToHolder(holder)
         }
     }
 

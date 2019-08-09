@@ -30,4 +30,25 @@ class RemoveAttrFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
     """, """
         enum Test {}
     """)
+
+    fun `test fix for fn`() = checkFixByText("Remove attribute `stable`", """
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable/*caret*/</error>]
+        fn test() {}
+    """, """
+        fn test() {}
+    """)
+
+    fun `test fix for struct`() = checkFixByText("Remove attribute `stable`", """
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable/*caret*/</error>]
+        struct Test;
+    """, """
+        struct Test;
+    """)
+
+    fun `test fix for enum`() = checkFixByText("Remove attribute `stable`", """
+        #[<error descr="Stable attribute can only be used in the standard library [E0497]">stable/*caret*/</error>]
+        enum Test {}
+    """, """
+        enum Test {}
+    """)
 }
