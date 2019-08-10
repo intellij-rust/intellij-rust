@@ -17,5 +17,8 @@
         <runConfigurationExtension implementation="org.rust.clion.profiler.dtrace.RsDTraceConfigurationExtension"/>
 
         <runConfigurationExtension implementation="org.rust.clion.valgrind.RsValgrindConfigurationExtension"/>
+
+        <debugger.driverConfigurationProvider
+            implementation="org.rust.clion.debugger.RsCLionDebuggerDriverConfigurationProvider"/>
     </extensions>
 </idea-plugin>

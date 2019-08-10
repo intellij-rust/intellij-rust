@@ -292,6 +292,7 @@ project(":clion") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":debugger"))
         testCompile(project(":", "testOutput"))
     }
 }
