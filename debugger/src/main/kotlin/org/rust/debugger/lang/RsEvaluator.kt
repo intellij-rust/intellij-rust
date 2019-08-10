@@ -15,14 +15,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame
-import com.jetbrains.cidr.execution.debugger.OCEvaluator
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-class RsEvaluator(private val frame: CidrStackFrame) : OCEvaluator(frame) {
+class RsEvaluator(frame: CidrStackFrame) : RsEvaluatorBase(frame) {
     override fun getExpressionRangeAtOffset(project: Project, document: Document, offset: Int, sideEffectsAllowed: Boolean): TextRange? {
         return runReadAction {
             PsiDocumentManager.getInstance(project).getPsiFile(document)?.let { file ->
@@ -38,8 +37,7 @@ class RsEvaluator(private val frame: CidrStackFrame) : OCEvaluator(frame) {
     }
 
     override fun doEvaluate(driver: DebuggerDriver, position: XSourcePosition?, expr: XExpression): CidrEvaluatedValue {
-        val v = driver.evaluate(frame.threadId, frame.frameIndex, expr.expression)
-        return CidrEvaluatedValue(v, frame.process, position, frame, expr.expression)
+        val v = driver.evaluate(myFrame.threadId, myFrame.frameIndex, expr.expression)
+        return CidrEvaluatedValue(v, myFrame.process, position, myFrame, expr.expression)
     }
 }
-
