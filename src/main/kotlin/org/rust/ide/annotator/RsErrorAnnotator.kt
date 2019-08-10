@@ -326,6 +326,24 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             }
         }
 
+        if (path.parent is RsUseSpeck && // For now check just `use` statements
+            path.reference.multiResolve().isEmpty() &&
+            path.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
+            val tooBigSource = if (qualifier != null && qualifier.reference.multiResolve().isEmpty()) {
+                val crateName = qualifier.identifier?.text
+                qualifier.cargoWorkspace?.packages?.any { it.normName == crateName } == true
+            } else {
+                false
+            }
+
+            if (qualifier != null) {
+                // Prefer highlighting only the crate name
+                RsDiagnostic.UnresolvedImportError(qualifier, qualifier.referenceName, tooBigSource)
+            } else {
+                RsDiagnostic.UnresolvedImportError(path, path.referenceName, tooBigSource)
+            }.addToHolder(holder)
+        }
+
         checkReferenceIsPublic(path, path, holder)
     }
 
@@ -666,7 +684,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
         if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
-            RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
+            val crateName = el.identifier?.text
+            val sourceMightBeTooBig = el.cargoWorkspace?.packages?.any { it.normName == crateName } == true
+            RsDiagnostic.CrateNotFoundError(el, el.referenceName, sourceMightBeTooBig).addToHolder(holder)
         }
         if (el.self != null) {
             EXTERN_CRATE_SELF.check(holder, el, "`extern crate self`")

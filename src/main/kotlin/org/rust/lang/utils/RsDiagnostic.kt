@@ -885,9 +885,32 @@ sealed class RsDiagnostic(
         }
     }
 
+    class UnresolvedImportError(
+        startElement: PsiElement,
+        private val itemName: String,
+        private val containingCrateMightBeTooBig: Boolean
+    ) : RsDiagnostic(startElement) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0432,
+            errorText()
+        )
+
+        private fun errorText(): String {
+            val elTextS = escapeString(itemName)
+            val suffix = if (containingCrateMightBeTooBig) {
+                ". Crate's source file might be too big. <a href='https://github.com/intellij-rust/intellij-rust/issues/2297#issuecomment-366326827'>This</a> might be helpful"
+            } else {
+                ""
+            }
+            return "Can't resolve import for `$elTextS`$suffix"
+        }
+    }
+
     class CrateNotFoundError(
         startElement: PsiElement,
-        private val crateName: String
+        private val crateName: String,
+        private val mightBeTooBig: Boolean
     ) : RsDiagnostic(startElement) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
@@ -897,7 +920,12 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             val elTextS = escapeString(crateName)
-            return "Can't find crate for `$elTextS`"
+            val suffix = if (mightBeTooBig) {
+                ". Crate's source file might be too big. <a href='https://github.com/intellij-rust/intellij-rust/issues/2297#issuecomment-366326827'>This</a> might be helpful"
+            } else {
+                ""
+            }
+            return "Can't find crate for `$elTextS`$suffix"
         }
     }
 
@@ -1111,7 +1139,7 @@ enum class RsErrorCode {
     E0106, E0107, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0379, E0384,
-    E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0463,
+    E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0432, E0433, E0449, E0463,
     E0518, E0562, E0569, E0583, E0586, E0594,
     E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
     E0704, E0732;
