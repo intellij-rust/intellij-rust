@@ -212,4 +212,87 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
             let _: T::X = T::X;
         }                  //^
     """)
+
+    fun `test const generic type namespace (type alias)`() = checkByCode("""
+        type A<const N: usize> = 
+                   //X
+            [N; N];
+              //^
+    """)
+
+    fun `test const generic value namespace (type alias)`() = checkByCode("""
+        type A<const N: usize> = [N; N];
+                                //^ unresolved
+    """)
+
+    fun `test const generic type namespace (enum)`() = checkByCode("""
+        enum E<const N: usize> {
+                   //X
+            V([N; N])
+                //^
+        }
+    """)
+
+    fun `test const generic value namespace (enum)`() = checkByCode("""
+        enum E<const N: usize> { V([N; N]) }
+                                  //^ unresolved
+    """)
+
+    fun `test const generic type namespace (struct)`() = checkByCode("""
+        struct S<const N: usize>(
+                     //X
+            [N; N]
+              //^
+        );
+    """)
+
+    fun `test const generic value namespace (struct)`() = checkByCode("""
+        struct S<const N: usize>([N; N]);
+                                //^ unresolved
+    """)
+
+    fun `test const generic type namespace (trait)`() = checkByCode("""
+        trait T<const N: usize> {
+                    //X
+            fn f(x: [N; N]) {}
+                      //^
+        }
+    """)
+
+    fun `test const generic value namespace (trait)`() = checkByCode("""
+        trait T<const N: usize> {
+            fn f(x: [N; N]) {}
+                   //^ unresolved
+        }
+    """)
+
+    fun `test const generic type namespace (impl)`() = checkByCode("""
+        struct S;
+        impl <const N: usize> S {
+                  //X
+            fn f(x: [N; N]) {}
+                      //^
+        }
+    """)
+
+    fun `test const generic value namespace (impl)`() = checkByCode("""
+        struct S;
+        impl <const N: usize> S {
+            fn f(x: [N; N]) {}
+                   //^ unresolved
+        }
+    """)
+
+    fun `test const generic type namespace (function)`() = checkByCode("""
+        fn f<const N: usize>(
+                 //X
+            x: [N; N]
+                 //^
+        ) {}
+    """)
+
+    fun `test const generic value namespace (function)`() = checkByCode("""
+        fn f<const N: usize>(x: [N; N]) {}
+                               //^ unresolved
+    """)
 }
