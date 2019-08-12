@@ -8,7 +8,14 @@ package org.rust.cargo.runconfig.buildtool
 import com.intellij.build.BuildContentManager
 import com.intellij.build.BuildViewManager
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.ExecutorRegistry
+import com.intellij.execution.RunManager
 import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -32,6 +39,7 @@ import com.intellij.util.text.SemVer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -113,6 +121,7 @@ object CargoBuildManager {
         context: CargoBuildContext,
         doExecute: CargoBuildContext.() -> Unit
     ): FutureResult<CargoBuildResult> {
+        context.environment.notifyProcessStartScheduled()
         val processCreationLock = Any()
 
         when {
@@ -160,6 +169,7 @@ object CargoBuildManager {
 
         ApplicationManager.getApplication().executeOnPooledThread {
             if (!context.waitAndStart()) return@executeOnPooledThread
+            context.environment.notifyProcessStarting()
 
             if (isUnitTestMode) {
                 context.doExecute()
@@ -216,6 +226,16 @@ object CargoBuildManager {
             else -> return null
         }
         return buildConfiguration
+    }
+
+    fun createBuildEnvironment(buildConfiguration: CargoCommandConfiguration): ExecutionEnvironment? {
+        require(isBuildConfiguration(buildConfiguration))
+        val project = buildConfiguration.project
+        val runManager = RunManager.getInstance(project) as? RunManagerImpl ?: return null
+        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID) ?: return null
+        val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID) ?: return null
+        val settings = RunnerAndConfigurationSettingsImpl(runManager, buildConfiguration)
+        return ExecutionEnvironment(executor, runner, settings, project)
     }
 
     fun showBuildNotification(

@@ -128,6 +128,8 @@ class CargoBuildContext(
             warnings = warnings,
             message = "$taskName canceled"
         ))
+
+        environment.notifyProcessNotStarted()
     }
 
     companion object {
