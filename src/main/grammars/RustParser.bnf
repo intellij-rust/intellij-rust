@@ -307,25 +307,27 @@ Lifetime ::= QUOTE_IDENTIFIER {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Parameters
-fake ValueParameter ::= Pat? TypeReference? {
+fake ValueParameter ::= OuterAttr* Pat? TypeReference? {
+  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsValueParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameter ::= !(Pat ':' '...') [ Pat ':' ] TypeReference
+FnParameter ::= !(Variadic) OuterAttr* [ Pat ':' ] TypeReference
 private FnParameter_with_recover ::= FnParameter (',' | &')') {
   pin = 1
   recoverWhile = FnParameter_recover
 }
-private FnParameter_recover ::= !(Pat_first | ')' | '...')
+private FnParameter_recover ::= !(Pat_first | OuterAttr_first | ')' | '...')
 
-LambdaParameter ::= Pat TypeAscription?
-AnonParameter ::= [ RestrictedPat ':' ] TypeReference
-PathParameter ::= TypeReference !'='
+LambdaParameter ::= OuterAttr* Pat TypeAscription?
+AnonParameter ::= OuterAttr* [ RestrictedPat ':' ] TypeReference
+PathParameter ::= OuterAttr* TypeReference !'='
 
-SelfParameter ::= [ '&' Lifetime? ] mut? self TypeAscription? {
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
+SelfParameter ::= OuterAttr* [ '&' Lifetime? ] mut? self TypeAscription? {
+  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
+                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsSelfParameterImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsSelfParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -350,7 +352,12 @@ private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '.
 
 private RestrictedPat ::= &( [ mut | '&' '&'? ] ( identifier | '_' ) ) Pat
 
-Variadic ::= [ Pat ':' ] '...'
+Variadic ::= OuterAttr* [ Pat ':' ] '...' {
+    implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+    extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+    stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+    elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
 
 TypeParameterList ::= '<' <<list_element (LifetimeParameter | TypeParameter | ConstParameter)>>* '>' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
