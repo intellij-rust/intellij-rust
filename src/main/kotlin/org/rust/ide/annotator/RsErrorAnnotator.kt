@@ -27,12 +27,8 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.implLookup
-import org.rust.lang.core.types.asTy
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
@@ -86,6 +82,9 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             override fun visitAttr(o: RsAttr) = checkAttr(holder, o)
             override fun visitRangeExpr(o: RsRangeExpr) = checkRangeExpr(holder, o)
             override fun visitTraitType(o: RsTraitType) = checkTraitType(holder, o)
+            override fun visitSelfParameter(o: RsSelfParameter) = checkParamAttrs(holder, o)
+            override fun visitValueParameter(o: RsValueParameter) = checkParamAttrs(holder, o)
+            override fun visitVariadic(o: RsVariadic) = checkParamAttrs(holder, o)
         }
 
         element.accept(visitor)
@@ -795,6 +794,23 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
         }
     }
     message.addToHolder(holder)
+}
+
+private fun checkParamAttrs(holder: AnnotationHolder, o: RsOuterAttributeOwner) {
+    val outerAttrs = o.outerAttrList
+    if (outerAttrs.isEmpty()) return
+    val startElement = outerAttrs.first()
+    val endElement = outerAttrs.last()
+    val message = "attributes on function parameters is experimental"
+    val diagnostic = when (PARAM_ATTRS.availability(startElement)) {
+        NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, emptyList())
+        CAN_BE_ADDED -> {
+            val fix = PARAM_ATTRS.addFeatureFix(startElement)
+            RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(fix))
+        }
+        else -> return
+    }
+    diagnostic.addToHolder(holder)
 }
 
 private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
