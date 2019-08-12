@@ -27,6 +27,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -223,6 +224,8 @@ class Cargo(private val cargoExecutable: Path) {
 
         data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
 
+        val cargoCommonPatch: CargoPatch = { patchArgs(it, true) }
+
         fun patchArgs(commandLine: CargoCommandLine, colors: Boolean): CargoCommandLine {
             val (pre, post) = commandLine.splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
@@ -233,9 +236,9 @@ class Cargo(private val cargoExecutable: Path) {
             }
 
             // Force colors
-            val forceColors = colors
-                && commandLine.command in COLOR_ACCEPTING_COMMANDS
-                && commandLine.additionalArguments.none { it.startsWith("--color") }
+            val forceColors = colors &&
+                commandLine.command in COLOR_ACCEPTING_COMMANDS &&
+                commandLine.additionalArguments.none { it.startsWith("--color") }
             if (forceColors) pre.add(0, "--color=always")
 
             return commandLine.copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)

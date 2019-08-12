@@ -35,18 +35,19 @@ import com.jetbrains.cidr.lang.toolchains.CidrToolEnvironment
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy
 import java.io.File
 import java.io.IOException
 
-private val LOG = Logger.getInstance(RsValgrindConfigurationExtension::class.java.name)
+private val LOG: Logger = Logger.getInstance(RsValgrindConfigurationExtension::class.java.name)
 
 class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
-    override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean {
-        return true
-    }
+    override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
 
-    override fun isEnabledFor(applicableConfiguration: CargoCommandConfiguration, runnerSettings: RunnerSettings?): Boolean =
-        SystemInfo.isLinux || SystemInfo.isMac
+    override fun isEnabledFor(
+        applicableConfiguration: CargoCommandConfiguration,
+        runnerSettings: RunnerSettings?
+    ): Boolean = SystemInfo.isLinux || SystemInfo.isMac
 
     override fun patchCommandLine(
         configuration: CargoCommandConfiguration,
@@ -54,7 +55,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         cmdLine: GeneralCommandLine,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
 
         val programPath = cmdLine.exePath
         val valgrindPath = ValgrindSettings.getInstance().valgrindPath
@@ -88,8 +89,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         state: CommandLineState,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
-
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
         val project = configuration.project
         val treeDataModel = MemoryProfileTreeDataModel("Valgrind", project)
         val outputPanel = MemoryProfileOutputPanel(
@@ -118,7 +118,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         environment: ExecutionEnvironment,
         context: ConfigurationExtensionContext
     ) {
-        if (RsValgrindRunner.RUNNER_ID != environment.runner.runnerId) return
+        if (environment.runner.runnerId !in VALGRIND_RUNNER_IDS) return
 
         val outputFile = getUserData<File>(OUTPUT_FILE_PATH_KEY, configuration, context) ?: return
         val treeDataModel = getUserData<MemoryProfileTreeDataModel>(DATA_MODEL_KEY, configuration, context) ?: return
@@ -144,7 +144,6 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         } catch (e: IOException) {
             LOG.warn("Exception during processListener setup: $e")
         }
-
     }
 
     private fun configureUIListeners(
@@ -181,7 +180,12 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         }
     }
 
-    private fun <T> putUserData(key: Key<T>, value: T, configuration: CargoCommandConfiguration, context: ConfigurationExtensionContext) {
+    private fun <T> putUserData(
+        key: Key<T>,
+        value: T,
+        configuration: CargoCommandConfiguration,
+        context: ConfigurationExtensionContext
+    ) {
         if (configuration.getUserData<Boolean>(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
             configuration.putUserData(key, value)
         } else {
@@ -189,14 +193,19 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         }
     }
 
-    private fun <T> getUserData(key: Key<T>, configuration: CargoCommandConfiguration, context: ConfigurationExtensionContext): T? {
-        return if (configuration.getUserData(STORE_DATA_IN_RUN_CONFIGURATION) == true)
-            configuration.getUserData(key)
-        else
-            context.getUserData(key)
+    private fun <T> getUserData(
+        key: Key<T>,
+        configuration: CargoCommandConfiguration,
+        context: ConfigurationExtensionContext
+    ): T? = if (configuration.getUserData(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
+        configuration.getUserData(key)
+    } else {
+        context.getUserData(key)
     }
 
     companion object {
+        private val VALGRIND_RUNNER_IDS = listOf(RsValgrindRunner.RUNNER_ID, RsValgrindRunnerLegacy.RUNNER_ID)
+
         val OUTPUT_FILE_PATH_KEY = Key.create<File>("valgrind.output_file_path_key")
         val DATA_MODEL_KEY = Key.create<MemoryProfileTreeDataModel>("valgrind.data_model_key")
         val OUTPUT_PANEL_KEY = Key.create<MemoryProfileOutputPanel>("valgrind.output_panel_key")

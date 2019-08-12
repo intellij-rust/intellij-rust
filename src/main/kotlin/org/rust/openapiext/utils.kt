@@ -144,6 +144,7 @@ class CachedVirtualFile(private val url: String?) {
 }
 
 val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
+val isHeadlessEnvironment: Boolean get() = ApplicationManager.getApplication().isHeadlessEnvironment
 
 fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()
 

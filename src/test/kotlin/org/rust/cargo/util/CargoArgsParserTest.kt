@@ -10,6 +10,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 
 @RunWith(Parameterized::class)
 class CargoArgsParserTest(
@@ -24,7 +25,7 @@ class CargoArgsParserTest(
             ParametersListUtil.parse(expectedCommandArguments),
             ParametersListUtil.parse(expectedExecutableArguments)
         ),
-        CargoArgsParser.parseArgs(command, ParametersListUtil.parse(additionalArguments))
+        parseArgs(command, ParametersListUtil.parse(additionalArguments))
     )
 
     companion object {

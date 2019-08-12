@@ -220,7 +220,8 @@ object CargoMetadata {
     data class Artifact(
         val target: Target,
         val profile: Profile,
-        val filenames: List<String>
+        val filenames: List<String>,
+        val executable: String?
     ) {
         companion object {
             fun fromJson(json: JsonObject): Artifact? {

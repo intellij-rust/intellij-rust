@@ -7,16 +7,21 @@ package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.ApplicationInfo
-import com.intellij.openapi.util.BuildNumber
+import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PlatformUtils
 import org.rust.cargo.runconfig.buildProject
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.hasCargoProject
 
 class RsBuildAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
-        e.project?.buildProject()
+        val project = e.project ?: return
+        if (project.isBuildToolWindowEnabled) {
+            ProjectTaskManager.getInstance(project).buildAllModules()
+        } else {
+            project.buildProject()
+        }
     }
 
     override fun update(e: AnActionEvent) {

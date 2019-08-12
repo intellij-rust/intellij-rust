@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig
 
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.filters.Filter
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -18,6 +19,10 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.filters.RsBacktraceFilter
+import org.rust.cargo.runconfig.filters.RsConsoleFilter
+import org.rust.cargo.runconfig.filters.RsExplainFilter
+import org.rust.cargo.runconfig.filters.RsPanicFilter
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.run
 import org.rust.stdext.buildList
@@ -76,4 +81,35 @@ fun getAppropriateCargoProject(dataContext: DataContext): CargoProject? {
 
     return dataContext.getData(CargoToolWindow.SELECTED_CARGO_PROJECT)
         ?: cargoProjects.allProjects.firstOrNull()
+}
+
+fun createFilters(cargoProject: CargoProject?): Collection<Filter> = buildList {
+    add(RsExplainFilter())
+    val dir = cargoProject?.workspaceRootDir ?: cargoProject?.rootDir
+    if (cargoProject != null && dir != null) {
+        add(RsConsoleFilter(cargoProject.project, dir))
+        add(RsPanicFilter(cargoProject.project, dir))
+        add(RsBacktraceFilter(cargoProject.project, dir, cargoProject.workspace))
+    }
+}
+
+fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: String) {
+    val formatJsonOption = "$formatOption=json"
+    val idx = additionalArguments.indexOf(formatOption)
+    val indexArgWithValue = additionalArguments.indexOfFirst { it.startsWith(formatOption) }
+    if (idx != -1) {
+        if (idx < additionalArguments.size - 1) {
+            if (!additionalArguments[idx + 1].startsWith("-")) {
+                additionalArguments[idx + 1] = "json"
+            } else {
+                additionalArguments.add(idx + 1, "json")
+            }
+        } else {
+            additionalArguments.add("json")
+        }
+    } else if (indexArgWithValue != -1) {
+        additionalArguments[indexArgWithValue] = formatJsonOption
+    } else {
+        additionalArguments.add(formatJsonOption)
+    }
 }

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.runconfig
+package org.rust.cargo.runconfig.legacy
 
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
@@ -28,88 +28,49 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.rust.cargo.runconfig.*
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
+import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.prependArgument
-import org.rust.cargo.util.CargoArgsParser
+import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
 import java.nio.file.Paths
 
-abstract class RsAsyncRunner(private val executorId: String, private val errorMessageTitle: String) : AsyncProgramRunner<RunnerSettings>() {
-    class Binary(val path: Path)
-    sealed class BuildResult {
-        data class Binaries(val paths: List<String>) : BuildResult()
-        object UnsupportedToolchain : BuildResult()
-    }
-
-    open fun isApplicable(): Boolean = true
-
+/**
+ * This runner is used if [isBuildToolWindowEnabled] is false.
+ */
+abstract class RsAsyncRunner(
+    private val executorId: String,
+    private val errorMessageTitle: String
+) : AsyncProgramRunner<RunnerSettings>() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
-        if (!isApplicable()) return false
-
-        if (executorId != this.executorId || profile !is CargoCommandConfiguration) {
-            return false
-        }
-
-        val cleaned = profile.clean().ok ?: return false
-        return when (cleaned.cmd.command) {
-            "run" -> true
-            "test" -> RsTestRunner.canRunCommandLine(cleaned.cmd)
-            else -> false
-        }
-    }
-
-    open fun getRunContentDescriptor(
-        state: CargoRunStateBase,
-        environment: ExecutionEnvironment,
-        runCommand: GeneralCommandLine
-    ): RunContentDescriptor? {
-        return showRunContent(executeCmd(state, runCommand, environment), environment)
-    }
-
-    private fun executeCmd(state: CargoRunStateBase, cmd: GeneralCommandLine, environment: ExecutionEnvironment): DefaultExecutionResult {
-        val runConfiguration = state.runConfiguration
-        val context = ConfigurationExtensionContext()
-
-        RsRunConfigurationExtensionManager.getInstance().patchCommandLine(
-            runConfiguration,
-            environment,
-            cmd,
-            context
-        )
-
-        RsRunConfigurationExtensionManager.getInstance().patchCommandLineState(runConfiguration, environment, state, context)
-
-        val handler = RsKillableColoredProcessHandler(cmd)
-        ProcessTerminatedListener.attach(handler) // shows exit code upon termination
-
-        RsRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(
-            runConfiguration,
-            handler,
-            environment,
-            context
-        )
-
-        val console = state.consoleBuilder.console
-        console.attachToProcess(handler)
-        return DefaultExecutionResult(console, handler)
+        if (executorId != this.executorId || profile !is CargoCommandConfiguration ||
+            profile.clean() !is CargoCommandConfiguration.CleanConfiguration.Ok) return false
+        return !profile.project.isBuildToolWindowEnabled &&
+            !isBuildConfiguration(profile) &&
+            getBuildConfiguration(profile) != null
     }
 
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         saveAllDocuments()
-        state as CargoRunStateBase
-        val cmd = Cargo.patchArgs(state.prepareCommandLine(), true)
-        val (commandArguments, executableArguments) = CargoArgsParser.parseArgs(cmd.command, cmd.additionalArguments)
 
-        val isTestRun = cmd.command == "test"
-        val cmdHasNoRun = "--no-run" in cmd.additionalArguments
+        (state as CargoRunStateBase).addCommandLinePatch(cargoCommonPatch)
+        val commandLine = state.prepareCommandLine()
+        val (commandArguments, executableArguments) = parseArgs(commandLine.command, commandLine.additionalArguments)
+
+        val isTestRun = commandLine.command == "test"
+        val cmdHasNoRun = "--no-run" in commandLine.additionalArguments
         val buildCommand = if (isTestRun) {
-            if (cmdHasNoRun) cmd else cmd.prependArgument("--no-run")
+            if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
         } else {
-            cmd.copy(command = "build", additionalArguments = commandArguments)
+            commandLine.copy(command = "build", additionalArguments = commandArguments)
         }
 
         val getRunCommand = { executablePath: Path ->
@@ -130,9 +91,36 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                 if (isTestRun && cmdHasNoRun) return@then null
                 val path = binary?.path ?: return@then null
                 val runCommand = getRunCommand(path)
-
                 getRunContentDescriptor(state, environment, runCommand)
             }
+    }
+
+    open fun getRunContentDescriptor(
+        state: CargoRunStateBase,
+        environment: ExecutionEnvironment,
+        runCommand: GeneralCommandLine
+    ): RunContentDescriptor? = showRunContent(executeCommandLine(state, runCommand, environment), environment)
+
+    private fun executeCommandLine(
+        state: CargoRunStateBase,
+        cmd: GeneralCommandLine,
+        environment: ExecutionEnvironment
+    ): DefaultExecutionResult {
+        val runConfiguration = state.runConfiguration
+        val context = ConfigurationExtensionContext()
+
+        val manager = RsRunConfigurationExtensionManager.getInstance()
+        manager.patchCommandLine(runConfiguration, environment, cmd, context)
+        manager.patchCommandLineState(runConfiguration, environment, state, context)
+
+        val handler = RsKillableColoredProcessHandler(cmd)
+        ProcessTerminatedListener.attach(handler) // shows exit code upon termination
+
+        manager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
+
+        val console = state.consoleBuilder.console
+        console.attachToProcess(handler)
+        return DefaultExecutionResult(console, handler)
     }
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
@@ -145,7 +133,7 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
         project: Project,
         command: CargoCommandLine,
         state: CargoRunStateBase,
-        testsOnly: Boolean
+        isTestBuild: Boolean
     ): Promise<Binary?> {
         val promise = AsyncPromise<Binary?>()
         val cargo = state.cargo()
@@ -162,7 +150,7 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
             }
 
             RunContentExecutor(project, processForUser)
-                .apply { state.createFilters().forEach { withFilter(it) } }
+                .apply { createFilters(state.cargoProject).forEach { withFilter(it) } }
                 .withAfterCompletion {
                     if (processForUserOutput.exitCode != 0) {
                         promise.setResult(null)
@@ -170,7 +158,7 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                     }
 
                     object : Task.Backgroundable(project, "Building Cargo project") {
-                        var result: RsAsyncRunner.BuildResult? = null
+                        var result: BuildResult? = null
 
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
@@ -179,18 +167,19 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                                 return
                             }
 
-                            val processForJson = CapturingProcessHandler(cargo.toGeneralCommandLine(command.prependArgument("--message-format=json")))
+                            val processForJson = CapturingProcessHandler(
+                                cargo.toGeneralCommandLine(command.prependArgument("--message-format=json"))
+                            )
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {
                                 promise.setResult(null)
                                 return
                             }
 
-                            val parser = JsonParser()
                             result = output.stdoutLines
                                 .mapNotNull {
                                     try {
-                                        val jsonElement = parser.parse(it)
+                                        val jsonElement = PARSER.parse(it)
                                         val jsonObject = if (jsonElement.isJsonObject) {
                                             jsonElement.asJsonObject
                                         } else {
@@ -212,18 +201,21 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                                         CargoMetadata.TargetKind.LIB -> profile.test
                                         else -> false
                                     }
-                                    isSuitableTarget && (!testsOnly || profile.test)
+                                    isSuitableTarget && (!isTestBuild || profile.test)
                                 }
-                                .flatMap { it.filenames.filter { !it.endsWith(".dSYM") } } // FIXME: correctly launch binaries for macos
-                                .let(RsAsyncRunner.BuildResult::Binaries)
+                                .flatMap {
+                                    // FIXME: correctly launch binaries for macos
+                                    it.filenames.filter { !it.endsWith(".dSYM") }
+                                }
+                                .let(BuildResult::Binaries)
                         }
 
                         override fun onSuccess() {
                             when (val result = result!!) {
-                                is RsAsyncRunner.BuildResult.UnsupportedToolchain -> {
+                                is BuildResult.UnsupportedToolchain -> {
                                     processUnsupportedToolchain(project, promise)
                                 }
-                                is RsAsyncRunner.BuildResult.Binaries -> {
+                                is BuildResult.Binaries -> {
                                     val binaries = result.paths
                                     when {
                                         binaries.isEmpty() -> {
@@ -231,19 +223,17 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
                                             promise.setResult(null)
                                         }
                                         binaries.size > 1 -> {
-                                            project.showErrorDialog("More than one binary produced. " +
+                                            project.showErrorDialog("More than one binary was produced. " +
                                                 "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly.")
                                             promise.setResult(null)
                                         }
-                                        else -> promise.setResult(RsAsyncRunner.Binary(Paths.get(binaries.single())))
+                                        else -> promise.setResult(Binary(Paths.get(binaries.single())))
                                     }
                                 }
                             }
                         }
 
-                        override fun onThrowable(error: Throwable) {
-                            promise.setResult(null)
-                        }
+                        override fun onThrowable(error: Throwable) = promise.setResult(null)
                     }.queue()
                 }.run()
         }
@@ -253,5 +243,16 @@ abstract class RsAsyncRunner(private val executorId: String, private val errorMe
 
     protected fun Project.showErrorDialog(message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
+    }
+
+    companion object {
+        private val PARSER: JsonParser = JsonParser()
+
+        class Binary(val path: Path)
+
+        private sealed class BuildResult {
+            data class Binaries(val paths: List<String>) : BuildResult()
+            object UnsupportedToolchain : BuildResult()
+        }
     }
 }

@@ -18,9 +18,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.runconfig.RsRunner
+import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoTestRunConfigurationProducer
 
 abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
@@ -29,6 +30,10 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
         val factory = configurationType.factory
         return factory.createTemplateConfiguration(myModule.project) as CargoCommandConfiguration
     }
+
+    protected fun createExecutableRunConfigurationFromContext(
+        location: Location<PsiElement>? = null
+    ): CargoCommandConfiguration = createRunConfigurationFromContext(CargoExecutableRunConfigurationProducer(), location)
 
     protected fun createTestRunConfigurationFromContext(
         location: Location<PsiElement>? = null
@@ -55,7 +60,7 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
             .create(executor, configuration)
             .build()
             .state!!
-        return state.execute(executor, RsRunner())!!
+        return state.execute(executor, CargoCommandRunner())!!
     }
 
     protected fun executeAndGetOutput(configuration: RunConfiguration): ProcessOutput {

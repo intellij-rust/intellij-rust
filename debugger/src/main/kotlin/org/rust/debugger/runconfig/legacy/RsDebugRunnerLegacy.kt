@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.debugger.runconfig
+package org.rust.debugger.runconfig.legacy
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.executors.DefaultDebugExecutor
@@ -21,20 +21,27 @@ import com.intellij.xdebugger.impl.ui.XDebugSessionData
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
 import com.jetbrains.cidr.toolchains.OSType
+import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.CargoRunStateBase
-import org.rust.cargo.runconfig.RsExecutableRunner
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.legacy.RsAsyncRunner
+import org.rust.debugger.runconfig.RsDebugRunParameters
+import org.rust.debugger.runconfig.RsLocalDebugProcess
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
 
-class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
+/**
+ * This runner is used if [isBuildToolWindowEnabled] is false.
+ */
+class RsDebugRunnerLegacy : RsAsyncRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR_MESSAGE_TITLE) {
     override fun getRunnerId(): String = RUNNER_ID
 
-    override fun showRunContent(
+    override fun getRunContentDescriptor(
         state: CargoRunStateBase,
         environment: ExecutionEnvironment,
-        runExecutable: GeneralCommandLine
+        runCommand: GeneralCommandLine
     ): RunContentDescriptor? {
-        val runParameters = RsDebugRunParameters(environment.project, runExecutable, state.cargoProject)
+        val runParameters = RsDebugRunParameters(environment.project, runCommand, state.cargoProject)
         return XDebuggerManager.getInstance(environment.project)
             .startSession(environment, object : XDebugProcessConfiguratorStarter() {
                 override fun start(session: XDebugSession): XDebugProcess =
@@ -47,14 +54,6 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
                 override fun configure(data: XDebugSessionData?) {}
             })
             .runContentDescriptor
-    }
-
-    override fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean {
-        if (CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty()) {
-            project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
-            return false
-        }
-        return true
     }
 
     override fun checkToolchainConfigured(project: Project): Boolean {
@@ -81,7 +80,15 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
         return true
     }
 
+    override fun checkToolchainSupported(state: CargoRunStateBase): Boolean =
+        !(CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty())
+
+    override fun processUnsupportedToolchain(project: Project, promise: AsyncPromise<RsAsyncRunner.Companion.Binary?>) {
+        project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
+        promise.setResult(null)
+    }
+
     companion object {
-        const val RUNNER_ID: String = "RsDebugRunner"
+        const val RUNNER_ID: String = "RsDebugRunnerLegacy"
     }
 }
