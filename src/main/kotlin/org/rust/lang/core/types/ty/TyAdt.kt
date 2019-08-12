@@ -6,9 +6,11 @@
 package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
+import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -26,7 +28,8 @@ import org.rust.lang.core.types.regions.Region
 data class TyAdt private constructor(
     val item: RsStructOrEnumItemElement,
     val typeArguments: List<Ty>,
-    val regionArguments: List<Region>
+    val regionArguments: List<Region>,
+    val aliasedBy: BoundElement<RsTypeAlias>?
 ) : Ty(mergeFlags(typeArguments) or mergeFlags(regionArguments)) {
 
     // This method is rarely called (in comparison with folding),
@@ -43,15 +46,23 @@ data class TyAdt private constructor(
         }
 
     override fun superFoldWith(folder: TypeFolder): TyAdt =
-        TyAdt(item, typeArguments.map { it.foldWith(folder) }, regionArguments.map { it.foldWith(folder) })
+        TyAdt(
+            item,
+            typeArguments.map { it.foldWith(folder) },
+            regionArguments.map { it.foldWith(folder) },
+            aliasedBy
+        )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
         typeArguments.any { it.visitWith(visitor) } || regionArguments.any { it.visitWith(visitor) }
 
+    fun withAlias(aliasedBy: BoundElement<RsTypeAlias>?): TyAdt =
+        copy(aliasedBy = aliasedBy)
+
     companion object {
         fun valueOf(struct: RsStructOrEnumItemElement): TyAdt {
             val item = CompletionUtil.getOriginalOrSelf(struct)
-            return TyAdt(item, defaultTypeArguments(struct), defaultRegionArguments(struct))
+            return TyAdt(item, defaultTypeArguments(struct), defaultRegionArguments(struct), null)
         }
     }
 }

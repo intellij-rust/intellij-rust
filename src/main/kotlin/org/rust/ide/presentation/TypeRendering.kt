@@ -5,7 +5,10 @@
 
 package org.rust.ide.presentation
 
+import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.lifetimeParameters
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
@@ -20,7 +23,7 @@ private const val MAX_SHORT_TYPE_LEN = 50
 
 val Ty.shortPresentableText: String
     get() = generateSequence(1) { it + 1 }
-        .map { TypeRenderer.SHORT.render(this, level = it) }
+        .map { TypeRenderer.SHORT_WITH_ALIASES.render(this, level = it) }
         .withPrevious()
         .takeWhile { (cur, prev) ->
             cur != prev && (prev == null || cur.length <= MAX_SHORT_TYPE_LEN)
@@ -31,6 +34,9 @@ val Ty.insertionSafeText: String
 
 val Ty.insertionSafeTextWithLifetimes: String
     get() = TypeRenderer.INSERTION_SAFE_WITH_LIFETIMES.render(this)
+
+val Ty.textWithAliasNames: String
+    @TestOnly get() = TypeRenderer.WITH_ALIASES.render(this)
 
 fun tyToString(ty: Ty): String = TypeRenderer.DEFAULT.render(ty)
 
@@ -43,7 +49,8 @@ private data class TypeRenderer(
     val integer: String = "{integer}",
     val float: String = "{float}",
     val includeTypeArguments: Boolean = true,
-    val includeLifetimeArguments: Boolean = false
+    val includeLifetimeArguments: Boolean = false,
+    val useAliasNames: Boolean = false
 ) {
     fun render(ty: Ty): String = render(ty, Int.MAX_VALUE)
 
@@ -115,8 +122,12 @@ private data class TypeRenderer(
             is TyTraitObject -> formatTrait(ty.trait, render)
             is TyAnon -> ty.traits.joinToString("+", "impl ") { formatTrait(it, render) }
             is TyAdt -> buildString {
-                append(ty.item.name ?: return anonymous)
-                if (includeTypeArguments) append(formatGenerics(ty, render))
+                if (useAliasNames && ty.aliasedBy != null) {
+                    append(formatBoundElement(ty.aliasedBy, render))
+                } else {
+                    append(ty.item.name ?: return anonymous)
+                    if (includeTypeArguments) append(formatGenerics(ty, render))
+                }
             }
             is TyInfer -> when (ty) {
                 is TyInfer.TyVar -> "_"
@@ -152,12 +163,6 @@ private data class TypeRenderer(
         render: (Ty) -> String,
         includeAssoc: Boolean = true
     ): String {
-        val tySubst = trait.element.typeParameters.map { render(trait.subst[it] ?: TyUnknown) }
-        val regionSubst = if (includeLifetimeArguments) {
-            trait.element.lifetimeParameters.map { render(trait.subst[it] ?: ReUnknown) }
-        } else {
-            emptyList()
-        }
         val assoc = if (includeAssoc) {
             trait.element.associatedTypesTransitively.mapNotNull {
                 val name = it.name ?: return@mapNotNull null
@@ -166,13 +171,39 @@ private data class TypeRenderer(
         } else {
             emptyList()
         }
-        val visibleTypes = regionSubst + tySubst + assoc
+        val visibleTypes = formatBoundElementGenerics(trait, render) + assoc
         return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
+    }
+
+    private fun <T> formatBoundElement(
+        boundElement: BoundElement<T>,
+        render: (Ty) -> String
+    ): String
+        where T : RsGenericDeclaration,
+              T : RsNamedElement {
+        return buildString {
+            append(boundElement.element.name ?: return anonymous)
+            val visibleTypes = formatBoundElementGenerics(boundElement, render)
+            append(if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">"))
+        }
+    }
+
+    private fun formatBoundElementGenerics(
+        boundElement: BoundElement<RsGenericDeclaration>,
+        render: (Ty) -> String
+    ): List<String> {
+        val tySubst = boundElement.element.typeParameters.map { render(boundElement.subst[it] ?: TyUnknown) }
+        val regionSubst = if (includeLifetimeArguments) {
+            boundElement.element.lifetimeParameters.map { render(boundElement.subst[it] ?: ReUnknown) }
+        } else {
+            emptyList()
+        }
+        return regionSubst + tySubst
     }
 
     companion object {
         val DEFAULT: TypeRenderer = TypeRenderer()
-        val SHORT: TypeRenderer = TypeRenderer(unknown = "?")
+        val SHORT_WITH_ALIASES: TypeRenderer = TypeRenderer(unknown = "?", useAliasNames = true)
         val DEFAULT_WITHOUT_TYPE_ARGUMENTS: TypeRenderer = TypeRenderer(includeTypeArguments = false)
         val INSERTION_SAFE: TypeRenderer = TypeRenderer(
             unknown = "_",
@@ -182,5 +213,6 @@ private data class TypeRenderer(
             float = "_"
         )
         val INSERTION_SAFE_WITH_LIFETIMES: TypeRenderer = INSERTION_SAFE.copy(includeLifetimeArguments = true)
+        val WITH_ALIASES: TypeRenderer = TypeRenderer(useAliasNames = true)
     }
 }

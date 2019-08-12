@@ -7,7 +7,6 @@ package org.rust.lang.core.types.infer
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
@@ -30,7 +29,7 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
                 val path = kind.path
                 val primitiveType = TyPrimitive.fromPath(path)
                 if (primitiveType != null) return primitiveType
-                val boundElement = path.reference.advancedDeepResolve() ?: return TyUnknown
+                val boundElement = path.reference.advancedResolve() ?: return TyUnknown
                 val (target, subst) = boundElement
 
                 when {
@@ -50,10 +49,16 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
                     target is RsTraitItem -> {
                         TyTraitObject(boundElement.downcast()!!, defaultTraitObjectRegion ?: ReUnknown)
                     }
-                    else -> {
-                        val element = target as? RsTypeDeclarationElement ?: return TyUnknown
-                        element.declaredType.substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
+                    target is RsTypeDeclarationElement -> {
+                        val ty = target.declaredType
+                            .substituteWithTraitObjectRegion(subst, defaultTraitObjectRegion ?: ReStatic)
+                        if (ty is TyAdt && ty.item != target && target is RsTypeAlias) {
+                            ty.withAlias(boundElement.downcast()!!)
+                        } else {
+                            ty
+                        }
                     }
+                    else -> return TyUnknown
                 }
             }
         }

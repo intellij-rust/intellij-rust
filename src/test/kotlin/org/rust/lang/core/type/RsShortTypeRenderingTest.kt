@@ -62,6 +62,14 @@ class RsShortTypeRenderingTest : RsTestBase() {
         } //^ S<?>
     """)
 
+    fun `test aliased type`() = testShortTypeExpr("""
+        struct S<A, B>(A, B);
+        type Foo<T> = S<T, u8>;
+        fn foo(s: Foo<i32>) {
+            s;
+        } //^ Foo<i32>
+    """)
+
     private fun testShortTypeExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedType) = findElementAndDataInEditor<RsExpr>()
