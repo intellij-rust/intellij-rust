@@ -15,6 +15,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
@@ -414,12 +415,34 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                         addExcludeFolder(FileUtil.join(contentRoot.url, CargoConstants.ProjectLayout.target))
                     }
 
+                    val alreadySetUp = hashSetOf<CargoWorkspace.Package>()
+
+                    fun setupPackage(pkg: CargoWorkspace.Package, module: Module) {
+                        if (pkg in alreadySetUp) return
+                        alreadySetUp += pkg
+                        if (pkg.origin == PackageOrigin.WORKSPACE) {
+                            pkg.contentRoot?.setupContentRoots(module, ContentEntry::setup)
+                        }
+                        for (target in pkg.targets) {
+                            val outDir = target.outDir ?: continue
+                            ModuleRootModificationUtil.updateModel(module) { rootModel ->
+                                val entry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
+                                entry.addSourceFolder(outDir, false)
+                            }
+                        }
+                        for (dependency in pkg.dependencies) {
+                            setupPackage(dependency.pkg, module)
+                        }
+                    }
+
                     val workspacePackages = cargoProject.workspace?.packages
                         .orEmpty()
                         .filter { it.origin == PackageOrigin.WORKSPACE }
 
                     for (pkg in workspacePackages) {
-                        pkg.contentRoot?.setupContentRoots(project, ContentEntry::setup)
+                        val contentRoot = pkg.contentRoot ?: continue
+                        val packageModule = ModuleUtilCore.findModuleForFile(contentRoot, project) ?: continue
+                        setupPackage(pkg, packageModule)
                     }
                 }
             }
@@ -429,6 +452,10 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
 
 private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.(VirtualFile) -> Unit) {
     val packageModule = ModuleUtilCore.findModuleForFile(this, project) ?: return
+    setupContentRoots(packageModule, setup)
+}
+
+private fun VirtualFile.setupContentRoots(packageModule: Module, setup: ContentEntry.(VirtualFile) -> Unit) {
     ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
         rootModel.contentEntries.singleOrNull()?.setup(this)
     }
