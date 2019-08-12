@@ -215,7 +215,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                                     it.name,
                                     it.kind,
                                     it.edition,
-                                    doctest = true
+                                    doctest = true,
+                                    outDirUrl = null
                                 )
                             },
                             source = null,

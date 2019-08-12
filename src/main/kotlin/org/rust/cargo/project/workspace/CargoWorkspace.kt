@@ -107,6 +107,8 @@ interface CargoWorkspace {
         val edition: Edition
 
         val doctest: Boolean
+
+        val outDir: VirtualFile?
     }
 
     interface Dependency {
@@ -301,7 +303,8 @@ private class PackageImpl(
             name = it.name,
             kind = it.kind,
             edition = it.edition,
-            doctest = it.doctest
+            doctest = it.doctest,
+            outDirUrl = it.outDirUrl
         )
     }
 
@@ -322,12 +325,14 @@ private class TargetImpl(
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
     override val edition: CargoWorkspace.Edition,
-    override val doctest: Boolean
+    override val doctest: Boolean,
+    val outDirUrl: String?
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
+    override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
 
-    override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
+    override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl', outDirUrl='$outDirUrl')"
 }
 
 private class DependencyImpl(override val pkg: PackageImpl, name: String? = null) : CargoWorkspace.Dependency {
@@ -349,7 +354,8 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
                 name = it.name,
                 kind = it.kind,
                 edition = edition ?: it.edition,
-                doctest = it.doctest
+                doctest = it.doctest,
+                outDirUrl = it.outDirUrl
             )
         },
         source = source,
@@ -381,7 +387,8 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
             name = name,
             kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
             edition = edition,
-            doctest = true
+            doctest = true,
+            outDirUrl = null
         )),
         source = null,
         origin = PackageOrigin.STDLIB,

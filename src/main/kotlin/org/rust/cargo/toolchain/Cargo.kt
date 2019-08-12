@@ -5,6 +5,8 @@
 
 package org.rust.cargo.toolchain
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,6 +16,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.execution.ParametersListUtil
@@ -24,9 +27,12 @@ import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.impl.CargoBuildPlan
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
@@ -94,12 +100,49 @@ class Cargo(private val cargoExecutable: Path) {
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener? = null
-    ): String {
+    ): CargoWorkspaceData {
+        val rawData = fetchMetadata(owner, projectDirectory, listener)
+        val buildPlan = fetchBuildPlan(owner, projectDirectory, listener)
+        return CargoMetadata.clean(rawData, buildPlan)
+    }
+
+    @Throws(ExecutionException::class)
+    private fun fetchMetadata(
+        owner: Project,
+        projectDirectory: Path,
+        listener: ProcessListener?
+    ): CargoMetadata.Project {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        return CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
+        return try {
+            Gson().fromJson(json, CargoMetadata.Project::class.java)
+        } catch (e: JsonSyntaxException) {
+            throw ExecutionException(e)
+        }
+    }
+
+    private fun fetchBuildPlan(
+        owner: Project,
+        projectDirectory: Path,
+        listener: ProcessListener?
+    ): CargoBuildPlan? {
+        val additionalArgs = mutableListOf("-Z", "unstable-options", "--all-targets", "--build-plan")
+        // Hack to make cargo think that current channel is nightly because we need unstable `--build-plan` option here
+        val envs = EnvironmentVariablesData.create(mapOf(
+            RUSTC_BOOTSTRAP to "1"
+        ), true)
+        return try {
+            val json = CargoCommandLine("build", projectDirectory, additionalArgs, environmentVariables = envs)
+                .execute(owner, listener = listener)
+                .stdout
+            Gson().fromJson(json, CargoBuildPlan::class.java)
+        } catch (e: Exception) {
+            LOG.warn("Failed to fetch build-plan", e)
+            null
+        }
     }
 
     @Throws(ExecutionException::class)
@@ -214,9 +257,18 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     companion object {
+        private val LOG: Logger = Logger.getInstance(Cargo::class.java)
+
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
+
+        /** Environment variable to unlock unstable features of rustc and cargo.
+         *  It doesn't change real toolchain.
+         *
+         * @see <a href="https://github.com/rust-lang/cargo/blob/06ddf3557796038fd87743bd3b6530676e12e719/src/cargo/core/features.rs#L447">features.rs</a>
+         */
+        private const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
 
         data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
 

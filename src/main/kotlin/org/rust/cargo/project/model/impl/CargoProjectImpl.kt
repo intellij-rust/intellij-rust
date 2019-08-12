@@ -5,8 +5,6 @@
 
 package org.rust.cargo.project.model.impl
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -53,7 +51,6 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
@@ -477,7 +474,7 @@ private fun fetchCargoWorkspace(
         }
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
-            val json = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
+            val projectDescriptionData = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                     val text = event.text.trim { it <= ' ' }
                     if (text.startsWith("Updating") || text.startsWith("Downloading")) {
@@ -485,13 +482,6 @@ private fun fetchCargoWorkspace(
                     }
                 }
             })
-
-            val rawData = try {
-                Gson().fromJson(json, CargoMetadata.Project::class.java)
-            } catch (e: JsonSyntaxException) {
-                throw ExecutionException(e)
-            }
-            val projectDescriptionData = CargoMetadata.clean(rawData)
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
             // Running "cargo rustc -- --print cfg" causes an error when run in a project with multiple targets

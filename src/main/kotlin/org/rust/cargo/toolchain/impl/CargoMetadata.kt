@@ -237,13 +237,15 @@ object CargoMetadata {
         val test: Boolean
     )
 
-    fun clean(project: Project): CargoWorkspaceData {
+    fun clean(project: Project, buildPlan: CargoBuildPlan?): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
+
+        val variables = TargetVariables.from(buildPlan)
         return CargoWorkspaceData(
-            project.packages.mapNotNull { it.clean(fs, it.id in members) },
+            project.packages.mapNotNull { it.clean(fs, it.id in members, variables) },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
                     deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
@@ -256,7 +258,11 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
+    private fun Package.clean(
+        fs: LocalFileSystem,
+        isWorkspaceMember: Boolean,
+        variables: TargetVariables
+    ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
@@ -265,22 +271,30 @@ object CargoMetadata {
             root.url,
             name,
             version,
-            targets.mapNotNull { it.clean(root) },
+            targets.mapNotNull { it.clean(this, root, variables) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition()
         )
     }
 
-    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
+    private fun Target.clean(
+        pkg: Package,
+        root: VirtualFile,
+        variables: TargetVariables
+    ): CargoWorkspaceData.Target? {
         val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
+        val outDirPath = variables.getOutDirPath(pkg, this)
+        val outDir = outDirPath?.let { root.fileSystem.refreshAndFindFileByPath(it)?.canonicalFile }
+
         return mainFile?.let {
             CargoWorkspaceData.Target(
                 it.url,
                 name,
                 makeTargetKind(cleanKind, cleanCrateTypes),
                 edition.cleanEdition(),
-                doctest = doctest ?: true
+                doctest = doctest ?: true,
+                outDirUrl = outDir?.url
             )
         }
     }
@@ -304,13 +318,13 @@ object CargoMetadata {
         return EnumSet.copyOf(map {
             when (it) {
                 CrateType.LIB -> LibKind.LIB
-                CargoMetadata.CrateType.DYLIB -> LibKind.DYLIB
-                CargoMetadata.CrateType.STATICLIB -> LibKind.STATICLIB
-                CargoMetadata.CrateType.CDYLIB -> LibKind.CDYLIB
-                CargoMetadata.CrateType.RLIB -> LibKind.RLIB
-                CargoMetadata.CrateType.PROC_MACRO -> LibKind.PROC_MACRO
-                CargoMetadata.CrateType.BIN -> LibKind.UNKNOWN
-                CargoMetadata.CrateType.UNKNOWN -> LibKind.UNKNOWN
+                CrateType.DYLIB -> LibKind.DYLIB
+                CrateType.STATICLIB -> LibKind.STATICLIB
+                CrateType.CDYLIB -> LibKind.CDYLIB
+                CrateType.RLIB -> LibKind.RLIB
+                CrateType.PROC_MACRO -> LibKind.PROC_MACRO
+                CrateType.BIN -> LibKind.UNKNOWN
+                CrateType.UNKNOWN -> LibKind.UNKNOWN
             }
         })
     }
@@ -320,4 +334,28 @@ object CargoMetadata {
         "2018" -> Edition.EDITION_2018
         else -> Edition.EDITION_2015
     }
+}
+
+private class TargetVariables(private val variables: Map<TargetInfo, Map<String, String>>) {
+
+    fun getOutDirPath(pkg: CargoMetadata.Package, target: CargoMetadata.Target): String? =
+        getValue(pkg, target, "OUT_DIR")
+
+    fun getValue(pkg: CargoMetadata.Package, target: CargoMetadata.Target, variableName: String): String? {
+        val key = TargetInfo(pkg.name, pkg.version, target.kind.toSet())
+        return variables[key]?.get(variableName)
+    }
+
+    companion object {
+        fun from(buildPlan: CargoBuildPlan?): TargetVariables {
+            val result = mutableMapOf<TargetInfo, Map<String, String>>()
+            for ((packageName, packageVersion, targetKind, variables) in buildPlan?.invocations.orEmpty()) {
+                val targetInfo = TargetInfo(packageName, packageVersion, targetKind.toSet())
+                result[targetInfo] = variables
+            }
+            return TargetVariables(result)
+        }
+    }
+
+    private data class TargetInfo(val name: String, val version: String, val targetKinds: Set<String>)
 }
