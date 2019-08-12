@@ -16,6 +16,8 @@ import org.rust.lang.core.FeatureState.ACTIVE
 
 // no-tracking-issue-start
 
+// Allows using compiler's own crates.
+val RUSTC_PRIVATE = CompilerFeature("rustc_private", ACTIVE, "1.0.0")
 // Allows using the `rust-intrinsic`'s "ABI".
 val INTRINSICS = CompilerFeature("intrinsics", ACTIVE, "1.0.0")
 // Allows using `#[lang = ".."]` attribute for linking items to special compiler logic.
@@ -70,8 +72,6 @@ val BOX_PATTERNS = CompilerFeature("box_patterns", ACTIVE, "1.0.0")
 val PRELUDE_IMPORT = CompilerFeature("prelude_import", ACTIVE, "1.2.0")
 // no-tracking-issue-end
 
-// Allows using `#[unsafe_destructor_blind_to_params]` (RFC 1238).
-val DROPCK_PARAMETRICITY = CompilerFeature("dropck_parametricity", ACTIVE, "1.3.0")
 // no-tracking-issue-start
 
 // Allows using `#[omit_gdb_pretty_printer_section]`.
@@ -102,8 +102,6 @@ val PROFILER_RUNTIME = CompilerFeature("profiler_runtime", ACTIVE, "1.18.0")
 val ABI_THISCALL = CompilerFeature("abi_thiscall", ACTIVE, "1.19.0")
 // Allows using `#![needs_allocator]`, an implementation detail of `#[global_allocator]`.
 val ALLOCATOR_INTERNALS = CompilerFeature("allocator_internals", ACTIVE, "1.20.0")
-// Allows using the `format_args_nl` macro.
-val FORMAT_ARGS_NL = CompilerFeature("format_args_nl", ACTIVE, "1.29.0")
 // no-tracking-issue-end
 
 // Added for testing E0705; perma-unstable.
@@ -142,10 +140,6 @@ val F16C_TARGET_FEATURE = CompilerFeature("f16c_target_feature", ACTIVE, "1.36.0
 // feature-group-start: actual feature gates
 // -------------------------------------------------------------------------
 
-// Allows using `asm!` macro with which inline assembly can be embedded.
-val ASM = CompilerFeature("asm", ACTIVE, "1.0.0")
-// Allows using the `concat_idents!` macro with which identifiers can be concatenated.
-val CONCAT_IDENTS = CompilerFeature("concat_idents", ACTIVE, "1.0.0")
 // Allows using the `#[link_args]` attribute.
 val LINK_ARGS = CompilerFeature("link_args", ACTIVE, "1.0.0")
 // Allows defining identifiers beyond ASCII.
@@ -156,10 +150,6 @@ val PLUGIN_REGISTRAR = CompilerFeature("plugin_registrar", ACTIVE, "1.0.0")
 val PLUGIN = CompilerFeature("plugin", ACTIVE, "1.0.0")
 // Allows using `#[thread_local]` on `static` items.
 val THREAD_LOCAL = CompilerFeature("thread_local", ACTIVE, "1.0.0")
-// Allows using the `log_syntax!` macro.
-val LOG_SYNTAX = CompilerFeature("log_syntax", ACTIVE, "1.0.0")
-// Allows using the `trace_macros!` macro.
-val TRACE_MACROS = CompilerFeature("trace_macros", ACTIVE, "1.0.0")
 // Allows the use of SIMD types in functions declared in `extern` blocks.
 val SIMD_FFI = CompilerFeature("simd_ffi", ACTIVE, "1.0.0")
 // Allows using custom attributes (RFC 572).
@@ -220,8 +210,6 @@ val ABI_MSP430_INTERRUPT = CompilerFeature("abi_msp430_interrupt", ACTIVE, "1.16
 val DECL_MACRO = CompilerFeature("decl_macro", ACTIVE, "1.17.0")
 // Allows `extern "x86-interrupt" fn()`.
 val ABI_X86_INTERRUPT = CompilerFeature("abi_x86_interrupt", ACTIVE, "1.17.0")
-// Allows module-level inline assembly by way of `global_asm!()`.
-val GLOBAL_ASM = CompilerFeature("global_asm", ACTIVE, "1.18.0")
 // Allows overlapping impls of marker traits.
 val OVERLAPPING_MARKER_TRAITS = CompilerFeature("overlapping_marker_traits", ACTIVE, "1.18.0")
 // Allows a test to fail without failing the whole suite.
@@ -266,8 +254,6 @@ val CONST_RAW_PTR_DEREF = CompilerFeature("const_raw_ptr_deref", ACTIVE, "1.27.0
 val CONST_COMPARE_RAW_POINTERS = CompilerFeature("const_compare_raw_pointers", ACTIVE, "1.27.0")
 // Allows `#[doc(alias = "...")]`.
 val DOC_ALIAS = CompilerFeature("doc_alias", ACTIVE, "1.27.0")
-// Allows defining `existential type`s.
-val EXISTENTIAL_TYPE = CompilerFeature("existential_type", ACTIVE, "1.28.0")
 // Allows inconsistent bounds in where clauses.
 val TRIVIAL_BOUNDS = CompilerFeature("trivial_bounds", ACTIVE, "1.28.0")
 // Allows `'a: { break 'a; }`.
@@ -276,9 +262,6 @@ val LABEL_BREAK_VALUE = CompilerFeature("label_break_value", ACTIVE, "1.28.0")
 val DOC_KEYWORD = CompilerFeature("doc_keyword", ACTIVE, "1.28.0")
 // Allows async and await syntax.
 val ASYNC_AWAIT = CompilerFeature("async_await", ACTIVE, "1.28.0")
-// Allows await! macro-like syntax.
-// This will likely be removed prior to stabilization of async/await.
-val AWAIT_MACRO = CompilerFeature("await_macro", ACTIVE, "1.28.0")
 // Allows reinterpretation of the bits of a value of one type as another type during const eval.
 val CONST_TRANSMUTE = CompilerFeature("const_transmute", ACTIVE, "1.29.0")
 // Allows using `try {...}` expressions.
@@ -304,12 +287,8 @@ val CUSTOM_INNER_ATTRIBUTES = CompilerFeature("custom_inner_attributes", ACTIVE,
 val BIND_BY_MOVE_PATTERN_GUARDS = CompilerFeature("bind_by_move_pattern_guards", ACTIVE, "1.30.0")
 // Allows `impl Trait` in bindings (`let`, `const`, `static`).
 val IMPL_TRAIT_IN_BINDINGS = CompilerFeature("impl_trait_in_bindings", ACTIVE, "1.30.0")
-// Allows `const _: TYPE = VALUE`.
-val UNDERSCORE_CONST_NAMES = CompilerFeature("underscore_const_names", ACTIVE, "1.31.0")
 // Allows using `reason` in lint attributes and the `#[expect(lint)]` lint check.
 val LINT_REASONS = CompilerFeature("lint_reasons", ACTIVE, "1.31.0")
-// Allows paths to enum variants on type aliases.
-val TYPE_ALIAS_ENUM_VARIANTS = CompilerFeature("type_alias_enum_variants", ACTIVE, "1.31.0")
 // Allows exhaustive integer pattern matching on `usize` and `isize`.
 val PRECISE_POINTER_SIZE_MATCHING = CompilerFeature("precise_pointer_size_matching", ACTIVE, "1.32.0")
 // Allows relaxing the coherence rules such that
@@ -321,23 +300,32 @@ val FFI_RETURNS_TWICE = CompilerFeature("ffi_returns_twice", ACTIVE, "1.34.0")
 val CONST_GENERICS = CompilerFeature("const_generics", ACTIVE, "1.34.0")
 // Allows using `#[optimize(X)]`.
 val OPTIMIZE_ATTRIBUTE = CompilerFeature("optimize_attribute", ACTIVE, "1.34.0")
-// Allows using `#[repr(align(X))]` on enums.
-val REPR_ALIGN_ENUM = CompilerFeature("repr_align_enum", ACTIVE, "1.34.0")
 // Allows using C-variadics.
 val C_VARIADIC = CompilerFeature("c_variadic", ACTIVE, "1.34.0")
 // Allows the user of associated type bounds.
 val ASSOCIATED_TYPE_BOUNDS = CompilerFeature("associated_type_bounds", ACTIVE, "1.34.0")
-// Allows calling constructor functions in `const fn`
-// FIXME Create issue
+// Attributes on formal function params.
+val PARAM_ATTRS = CompilerFeature("param_attrs", ACTIVE, "1.36.0")
+// Allows calling constructor functions in `const fn`.
 val CONST_CONSTRUCTOR = CompilerFeature("const_constructor", ACTIVE, "1.37.0")
 // Allows `if/while p && let q = r && ...` chains.
 val LET_CHAINS = CompilerFeature("let_chains", ACTIVE, "1.37.0")
-// #[repr(transparent)] on enums.
+// Allows #[repr(transparent)] on enums (RFC 2645).
 val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACTIVE, "1.37.0")
-// #[repr(transparent)] on unions.
+// Allows #[repr(transparent)] on unions (RFC 2645).
 val TRANSPARENT_UNIONS = CompilerFeature("transparent_unions", ACTIVE, "1.37.0")
 // Allows explicit discriminants on non-unit enum variants.
 val ARBITRARY_ENUM_DISCRIMINANT = CompilerFeature("arbitrary_enum_discriminant", ACTIVE, "1.37.0")
+// Allows `impl Trait` with multiple unrelated lifetimes.
+val MEMBER_CONSTRAINTS = CompilerFeature("member_constraints", ACTIVE, "1.37.0")
+// Allows `async || body` closures.
+val ASYNC_CLOSURE = CompilerFeature("async_closure", ACTIVE, "1.37.0")
+// Allows the use of `#[cfg(doctest)]`, set when rustdoc is collecting doctests
+val CFG_DOCTEST = CompilerFeature("cfg_doctest", ACTIVE, "1.37.0")
+// Allows `[x; N]` where `x` is a constant (RFC 2203).
+val CONST_IN_ARRAY_REPEAT_EXPRESSIONS = CompilerFeature("const_in_array_repeat_expressions", ACTIVE, "1.37.0")
+// Allows `impl Trait` to be used inside type aliases (RFC 2515).
+val TYPE_ALIAS_IMPL_TRAIT = CompilerFeature("type_alias_impl_trait", ACTIVE, "1.38.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -546,3 +534,10 @@ val CFG_TARGET_VENDOR = CompilerFeature("cfg_target_vendor", ACCEPTED, "1.33.0")
 val EXTERN_CRATE_SELF = CompilerFeature("extern_crate_self", ACCEPTED, "1.34.0")
 // Allows arbitrary delimited token streams in non-macro attributes.
 val UNRESTRICTED_ATTRIBUTE_TOKENS = CompilerFeature("unrestricted_attribute_tokens", ACCEPTED, "1.34.0")
+// Allows paths to enum variants on type aliases including `Self`.
+val TYPE_ALIAS_ENUM_VARIANTS = CompilerFeature("type_alias_enum_variants", ACCEPTED, "1.37.0")
+// Allows using `#[repr(align(X))]` on enums with equivalent semantics
+// to wrapping an enum in a wrapper struct with `#[repr(align(X))]`.
+val REPR_ALIGN_ENUM = CompilerFeature("repr_align_enum", ACCEPTED, "1.37.0")
+// Allows `const _: TYPE = VALUE`.
+val UNDERSCORE_CONST_NAMES = CompilerFeature("underscore_const_names", ACCEPTED, "1.37.0")
