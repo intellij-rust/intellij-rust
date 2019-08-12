@@ -29,6 +29,8 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
+val psiViewerPluginVersion = prop("psiViewerPluginVersion")
+
 val isAtLeast192 = platformVersion.toInt() >= 192
 
 plugins {
@@ -158,7 +160,11 @@ project(":plugin") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
-        val plugins = mutableListOf(project(":intellij-toml"), "IntelliLang")
+        val plugins = mutableListOf(
+            project(":intellij-toml"),
+            "IntelliLang",
+            "PsiViewer:$psiViewerPluginVersion"
+        )
         if (baseIDE == "idea") {
             plugins += "copyright"
             plugins += "coverage"
