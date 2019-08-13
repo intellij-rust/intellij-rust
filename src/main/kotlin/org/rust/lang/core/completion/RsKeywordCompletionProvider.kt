@@ -22,7 +22,7 @@ class RsKeywordCompletionProvider(
 ) : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         for (keyword in keywords) {
-            var builder = LookupElementBuilder.create(keyword)
+            var builder = LookupElementBuilder.create(keyword).bold()
             builder = addInsertionHandler(keyword, builder, parameters)
             result.addElement(builder.withPriority(KEYWORD_PRIORITY))
         }
