@@ -14,6 +14,8 @@ pub enum <ENUM>Flag</ENUM> {
 
 const <CONSTANT>QUALITY</CONSTANT>: <ENUM>Flag</ENUM> = <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>;
 
+struct Table<const <CONST_PARAMETER>N</CONST_PARAMETER>: usize>([[i32; <CONST_PARAMETER>N</CONST_PARAMETER>]; <CONST_PARAMETER>N</CONST_PARAMETER>])
+
 pub trait <TRAIT>Write</TRAIT> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize>;
 }
@@ -32,9 +34,15 @@ type <TYPE_ALIAS>RcObject</TYPE_ALIAS><<TYPE_PARAMETER>T</TYPE_PARAMETER>> = <ST
 
 impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> Write for <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
     fn <METHOD>write</METHOD>(&mut <SELF_PARAMETER>self</SELF_PARAMETER>, <PARAMETER>buf</PARAMETER>: &[<PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE>]) -> <ENUM>Result</ENUM><usize> {
-        let s = stuff::<FUNCTION>write_map</FUNCTION>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
+        let s = stuff::<FUNCTION_CALL>write_map</FUNCTION_CALL>(&self.<FIELD>fields</FIELD>, <PARAMETER>buf</PARAMETER>)<Q_OPERATOR>?</Q_OPERATOR>;
         <MACRO>info!</MACRO>("{} byte(s) written", s);
         <ENUM_VARIANT>Ok</ENUM_VARIANT>(s)
+    }
+}
+
+impl<<TYPE_PARAMETER>T</TYPE_PARAMETER>> <TRAIT>Default</TRAIT> for <STRUCT>Object</STRUCT><<TYPE_PARAMETER>T</TYPE_PARAMETER>> {
+    fn <ASSOC_FUNCTION>default</ASSOC_FUNCTION>() -> Self {
+        <STRUCT>Object</STRUCT> { <FIELD>flag</FIELD>: <ENUM>Flag</ENUM>::<ENUM_VARIANT>Good</ENUM_VARIANT>, <FIELD>fields</FIELD>: <STRUCT>HashMap</STRUCT>::<ASSOC_FUNCTION_CALL>new</ASSOC_FUNCTION_CALL>() }
     }
 }
 
@@ -43,13 +51,13 @@ fn <FUNCTION>main</FUNCTION>() {
     // A simple integer calculator:
     // `+` or `-` means add or subtract by 1
     // `*` or `/` means multiply or divide by 2
-    <MODULE>stuff</MODULE>::<STRUCT>AppVersion</STRUCT>::<ASSOC_FUNCTION>print</ASSOC_FUNCTION>();
+    <MODULE>stuff</MODULE>::<STRUCT>AppVersion</STRUCT>::<ASSOC_FUNCTION_CALL>print</ASSOC_FUNCTION_CALL>();
 
     let input = <ENUM>Option</ENUM>::<ENUM_VARIANT>None</ENUM_VARIANT>;
-    let program = input.<METHOD>unwrap_or_else</METHOD>(|| "+ + * - /");
+    let program = input.<METHOD_CALL>unwrap_or_else</METHOD_CALL>(|| "+ + * - /");
     let mut <MUT_BINDING>accumulator</MUT_BINDING> = 0;
 
-    for token in program.<METHOD>chars</METHOD>() {
+    for token in program.<METHOD_CALL>chars</METHOD_CALL>() {
         match token {
             '+' => <MUT_BINDING>accumulator</MUT_BINDING> += 1,
             '-' => <MUT_BINDING>accumulator</MUT_BINDING> -= 1,

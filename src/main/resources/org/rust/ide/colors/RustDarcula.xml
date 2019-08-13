@@ -38,4 +38,14 @@
             <option name="BACKGROUND" value="4D3E3E" />
         </value>
     </option>
+    <option name="org.rust.FUNCTION_CALL">
+        <value>
+            <option name="FOREGROUND" value="FFC66D" />
+        </value>
+    </option>
+    <option name="org.rust.METHOD_CALL">
+        <value>
+            <option name="FOREGROUND" value="FFC66D" />
+        </value>
+    </option>
 </list>
