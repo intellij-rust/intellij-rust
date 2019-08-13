@@ -27,12 +27,8 @@ import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.implLookup
-import org.rust.lang.core.types.asTy
-import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
@@ -104,7 +100,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
                     it is RsTypeParameterList ||
                     it is RsFieldsOwner ||
                     it is RsForeignModItem ||
-                    it is RsRetType && it.ancestorStrict<RsTraitOrImpl>()?.implementedTrait != null
+                    it is RsRetType && it.parent.ancestorStrict<RsTraitOrImpl>(RsAbstractable::class.java)?.implementedTrait != null
                 // type alias and let expr are not included because
                 // they are planned to be allowed soon
             }

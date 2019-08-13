@@ -70,6 +70,9 @@ val PsiElement.elementType: IElementType
 inline fun <reified T : PsiElement> PsiElement.ancestorStrict(): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ true)
 
+inline fun <reified T : PsiElement> PsiElement.ancestorStrict(stopAt: Class<out PsiElement>): T? =
+    PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ true, stopAt)
+
 inline fun <reified T : PsiElement> PsiElement.ancestorOrSelf(): T? =
     PsiTreeUtil.getParentOfType(this, T::class.java, /* strict */ false)
 

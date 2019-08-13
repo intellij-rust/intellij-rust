@@ -2332,6 +2332,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 //            type Out;
             fn in_trait_impl_parameter(_: impl Debug);
             fn in_trait_impl_return() -> Self::Out;
+            fn wrapper();
         }
         impl DummyTrait for () {
 //            type Out = impl Debug;
@@ -2342,6 +2343,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         
             fn in_trait_impl_return() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> { () }
             //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types
+            
+            fn wrapper() {
+                fn in_nested_impl_return() -> impl Debug { () }
+                // Allowed
+            }
         }
         
         // Allowed
