@@ -810,4 +810,44 @@ class RsCompletionTest : RsCompletionTestBase() {
         trait T<const AAA: usize> { const BBB: usize = AAA/*caret*/; }
         enum E<const AAA: usize> { V([usize; AAA/*caret*/]) }
     """)
+
+    fun `test caret navigation in UFCS`() = doSingleCompletion("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+        }
+        
+        fn main() {
+            Foo::fo/*caret*/
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+        }
+        
+        fn main() {
+            Foo::foo(/*caret*/)
+        }
+    """)
+
+    fun `test caret navigation for method with &self parameter in dot syntax call`() = doSingleCompletion("""
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+        }
+        
+        fn main() {
+            Foo.fo/*caret*/
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+        }
+        
+        fn main() {
+            Foo.foo()/*caret*/
+        }
+    """)
 }
