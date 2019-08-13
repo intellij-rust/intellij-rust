@@ -23,4 +23,6 @@ fn main() {
     async || { () };
     async move || { () };
     static move || { () };
+
+    async fn nested() {}
 }
