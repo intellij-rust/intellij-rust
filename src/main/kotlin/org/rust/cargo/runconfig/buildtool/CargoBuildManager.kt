@@ -249,6 +249,7 @@ object CargoBuildManager {
 
     private val cargoBuildPatch: CargoPatch = { commandLine ->
         val additionalArguments = commandLine.additionalArguments.toMutableList()
+        additionalArguments.remove("-q")
         additionalArguments.remove("--quiet")
         addFormatJsonOption(additionalArguments, "--message-format")
         val environmentVariables = EnvironmentVariablesData.create(
