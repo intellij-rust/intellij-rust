@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import org.intellij.lang.annotations.Language
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
@@ -587,6 +588,82 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
 
     fun `test const parameter before comma`() = checkNoCompletion("""
         "fn foo<T /*caret*/>() {}"
+    """)
+
+    fun `test inside trait`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+        pub trait Bar {
+            /*caret*/
+            const i: i32 = 1;
+        }
+    ""","""
+        pub trait Bar {
+            /*lookup*/ /*caret*/
+            const i: i32 = 1;
+        }
+    """)
+
+    fun `test inside trait after statement`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+        pub trait Bar {
+            const i: i32 = 1;
+            /*caret*/
+        }
+    ""","""
+        pub trait Bar {
+            const i: i32 = 1;
+            /*lookup*/ /*caret*/
+        }
+    """)
+
+    fun `test enum inside trait`() = checkNoCompletion("""
+        pub trait Bar {
+            en/*caret*/
+        }
+    """)
+
+    fun `test trait inside trait`() = checkNoCompletion("""
+        pub trait Bar {
+            tra/*caret*/
+        }
+    """)
+
+    fun `test inside impl`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+        struct Foo;
+        
+        impl Bar for Foo {
+            /*caret*/
+            const i: i32 = 1;
+        }
+    ""","""
+        struct Foo;
+        
+        impl Bar for Foo {
+            /*lookup*/ /*caret*/
+            const i: i32 = 1;
+        }
+    """)
+
+    fun `test inside impl after statement`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+        struct Foo;
+        
+        impl Bar for Foo {
+            const i: i32 = 1;
+            /*caret*/
+        }
+    ""","""
+        struct Foo;
+        
+        impl Bar for Foo {
+            const i: i32 = 1;
+            /*lookup*/ /*caret*/
+        }
+    """)
+
+    fun `test impl inside impl`() = checkNoCompletion("""
+        struct Foo;
+        
+        impl Bar for Foo {
+            imp/*caret*/
+        }
     """)
 
     private fun checkCompletion(

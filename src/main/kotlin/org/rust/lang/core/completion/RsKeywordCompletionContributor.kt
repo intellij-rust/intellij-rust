@@ -15,20 +15,19 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.ProcessingContext
-import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.infer.lookupFutureOutputTy
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.lang.core.withPrevSiblingSkipping
-import org.rust.lang.core.withSuperParent
+import kotlin.or
 
 /**
  * Completes Rust keywords
@@ -56,6 +55,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("where"))
         extend(CompletionType.BASIC, constParameterBeginningPattern(),
             RsKeywordCompletionProvider("const"))
+        extend(CompletionType.BASIC, traitOrImplDeclarationPattern(),
+            RsKeywordCompletionProvider(*COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -238,9 +239,19 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return psiElement(IDENTIFIER).withParent(parent)
     }
 
+    private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().withParent(
+            or(
+                psiElement<RsMembers>(),
+                psiElement<PsiErrorElement>().withParent(psiElement<RsMembers>())
+            )
+        ).and(statementBeginningPattern())
+    }
+
     companion object {
         @JvmField
         val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
+        val COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL = arrayOf("const", "fn", "type")
         private val AWAIT_TY: Key<Ty> = Key.create("AWAIT_TY")
     }
 }
