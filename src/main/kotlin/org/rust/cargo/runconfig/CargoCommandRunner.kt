@@ -29,7 +29,8 @@ open class CargoCommandRunner : DefaultProgramRunner() {
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
         val configuration = environment.runProfile
-        return if (configuration is CargoCommandConfiguration && !isBuildConfiguration(configuration)) {
+        return if (configuration is CargoCommandConfiguration &&
+            !(isBuildConfiguration(configuration) && configuration.project.isBuildToolWindowEnabled)) {
             super.doExecute(state, environment)
         } else {
             null
