@@ -1106,57 +1106,44 @@ private fun processAssociatedItems(
     ns: Set<Namespace>,
     processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
+    val nsFilter: (RsAbstractable) -> Boolean = when {
+        Namespace.Types in ns && Namespace.Values in ns -> {{ true }}
+        Namespace.Types in ns -> {{ it is RsTypeAlias }}
+        Namespace.Values in ns -> {{ it !is RsTypeAlias }}
+        else -> return false
+    }
+
     val traitBounds = (type as? TyTypeParameter)?.let { lookup.getEnvBoundTransitivelyFor(it).toList() }
     val visitedInherent = mutableSetOf<String>()
-    fun processTraitOrImpl(traitOrImpl: TraitImplSource, inherent: Boolean): Boolean {
-        fun inherentProcessor(entry: RsAbstractable): Boolean {
-            val name = entry.name ?: return false
-            if (inherent) visitedInherent.add(name)
-            if (!inherent && name in visitedInherent) return false
 
-            val subst = if (traitBounds != null && traitOrImpl is TraitImplSource.TraitBound) {
+    for (traitOrImpl in lookup.findImplsAndTraits(type)) {
+        val isInherentImpl = traitOrImpl is TraitImplSource.ExplicitImpl && traitOrImpl.isInherent
+
+        for (member in traitOrImpl.implAndTraitExpandedMembers) {
+            if (!nsFilter(member)) continue
+            val name = member.name ?: continue
+
+            // In Rust, inherent impl members (`impl Foo {}`) wins over trait impl members (`impl T for Foo {}`).
+            // Note that `findImplsAndTraits` returns ordered sequence: inherent impls are placed to the head
+            if (isInherentImpl) {
+                visitedInherent.add(name)
+            } else if (name in visitedInherent) {
+                continue
+            }
+
+            val result = if (traitBounds != null && traitOrImpl is TraitImplSource.TraitBound) {
                 // Retrieve trait subst for associated type like
                 // trait SliceIndex<T> { type Output; }
                 // fn get<I: : SliceIndex<S>>(index: I) -> I::Output
-                // Resulting subst will contains mapping T => S
-                traitBounds.filter { it.element == traitOrImpl.value }.map { it.subst }
+                // Resulting subst will contain mapping T => S
+                val bounds = traitBounds.filter { it.element == traitOrImpl.value }
+                bounds.any { processor(AssocItemScopeEntry(name, member, it.subst, type, traitOrImpl)) }
             } else {
-                listOf(emptySubstitution)
+                processor(AssocItemScopeEntry(name, member, emptySubstitution, type, traitOrImpl))
             }
-            return subst.any { processor(AssocItemScopeEntry(name, entry, it, type, traitOrImpl)) }
+            if (result) return true
         }
-
-        /**
-         * For `impl T for Foo`, this'll walk impl members and trait `T` members,
-         * which are not implemented.
-         */
-        fun processMembersWithDefaults(accessor: (RsMembers) -> List<RsAbstractable>): Boolean {
-            val directlyImplemented = traitOrImpl.members?.let { accessor(it) }.orEmpty()
-            if (directlyImplemented.any { inherentProcessor(it) }) return true
-
-            if (traitOrImpl is TraitImplSource.ExplicitImpl) {
-                val direct = directlyImplemented.map { it.name }.toSet()
-                val membersFromTrait = traitOrImpl.implementedTrait?.element?.members ?: return false
-                for (member in accessor(membersFromTrait)) {
-                    if (member.name !in direct && inherentProcessor(member)) return true
-                }
-            }
-
-            return false
-        }
-
-        if (Namespace.Values in ns) {
-            if (processMembersWithDefaults { it.expandedMembers.functionsAndConstants }) return true
-        }
-        if (Namespace.Types in ns) {
-            if (processMembersWithDefaults { it.expandedMembers.types }) return true
-        }
-        return false
     }
-
-    val (inherent, traits) = lookup.findImplsAndTraits(type).partition { it is TraitImplSource.ExplicitImpl && it.isInherent }
-    if (inherent.any { processTraitOrImpl(it, true) }) return true
-    if (traits.any { processTraitOrImpl(it, false) }) return true
     return false
 }
 
