@@ -313,7 +313,7 @@ private fun findDependencyCrateByName(context: RsElement, name: String): RsFile?
     return found
 }
 
-fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     val parent = path.context
     if (parent is RsMacroCall) {
         error("Tried to use `processPathResolveVariants` for macro path. See `RsMacroPathReferenceImpl`")
@@ -334,7 +334,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
 
         // `<T as Trait>::Item` or `<T>::Item`
         typeQual != null ->
-            processExplicitTypeQualifiedPathResolveVariants(lookup, ns, typeQual, processor)
+            processExplicitTypeQualifiedPathResolveVariants(lookup, path, ns, typeQual, processor)
 
         else -> processUnqualifiedPathResolveVariants(isCompletion, ns, path, parent, processor)
     }
@@ -347,7 +347,7 @@ fun processPathResolveVariants(lookup: ImplLookup, path: RsPath, isCompletion: B
  * [qualifier]
  */
 private fun processQualifiedPathResolveVariants(
-    lookup: ImplLookup,
+    lookup: ImplLookup?,
     isCompletion: Boolean,
     ns: Set<Namespace>,
     qualifier: RsPath,
@@ -358,8 +358,7 @@ private fun processQualifiedPathResolveVariants(
     val (base, subst) = qualifier.reference.advancedResolve() ?: run {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
-            val selfSubst = mapOf(TyTypeParameter.self() to primitiveType).toTypeSubst()
-            if (processAssociatedItemsWithSelfSubst(lookup, primitiveType, ns, selfSubst, processor)) return true
+            if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType, null)) return true
         }
         return false
     }
@@ -420,14 +419,15 @@ private fun processQualifiedPathResolveVariants(
             null
         }
 
-        if (processTypeQualifiedPathResolveVariants(lookup, processor, ns, baseTy, restrictedTraits)) return true
+        if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, baseTy, restrictedTraits)) return true
     }
     return false
 }
 
 /** `<T as Trait>::Item` or `<T>::Item` */
 private fun processExplicitTypeQualifiedPathResolveVariants(
-    lookup: ImplLookup,
+    lookup: ImplLookup?,
+    path: RsPath,
     ns: Set<Namespace>,
     typeQual: RsTypeQual,
     processor: RsResolveProcessor
@@ -438,7 +438,7 @@ private fun processExplicitTypeQualifiedPathResolveVariants(
         ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
         ?.let { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
     val type = typeQual.typeReference.type
-    return processTypeQualifiedPathResolveVariants(lookup, processor, ns, type, trait?.let { listOf(it) })
+    return processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, type, trait?.let { listOf(it) })
 }
 
 private fun processUnqualifiedPathResolveVariants(
@@ -516,12 +516,15 @@ private fun processUnqualifiedPathResolveVariants(
 }
 
 private fun processTypeQualifiedPathResolveVariants(
-    lookup: ImplLookup,
+    lookup: ImplLookup?,
+    path: RsPath,
     processor: RsResolveProcessor,
     ns: Set<Namespace>,
     baseTy: Ty,
     restrictedTraits: List<BoundElement<RsTraitItem>>?
 ): Boolean {
+    @Suppress("NAME_SHADOWING")
+    val lookup = lookup ?: ImplLookup.relativeTo(path)
     val shadowingProcessor = if (restrictedTraits != null) {
         fun(e: AssocItemScopeEntry): Boolean {
             if (e.element !is RsTypeAlias) return processor(e)
