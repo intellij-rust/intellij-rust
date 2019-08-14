@@ -9,6 +9,7 @@ import org.rust.lang.core.cfg.CFGEdge
 import org.rust.lang.core.cfg.CFGNode
 import org.rust.lang.core.cfg.ControlFlowGraph
 import org.rust.lang.core.psi.ext.RsElement
+import java.util.*
 
 enum class EntryOrExit { Entry, Exit }
 
@@ -128,8 +129,30 @@ class DataFlowContext<O : DataFlowOperator>(
         return true
     }
 
-    // TODO: requires `break` and `continue` control flow and regions which are not implemented yet
-    fun addKillsFromFlowExits() {}
+    fun addKillsFromFlowExits() {
+        if (bitsPerElement == 0) return
+
+        cfg.graph.forEachEdge { edge ->
+            val flowExit = edge.source
+            val (start, end) = getRange(flowExit)
+            val originalKills = scopeKills.subList(start, end)
+
+            var changed = false
+            for (element in edge.data.exitingScopes) {
+                val cfgNodes = cfgTable[element] ?: continue
+                for (node in cfgNodes) {
+                    val (nodeStart, nodeEnd) = getRange(node)
+                    val kills = scopeKills.subList(nodeStart, nodeEnd)
+                    if (Union.bitwise(originalKills, kills)) {
+                        changed = true
+                    }
+                }
+            }
+            if (changed) {
+                Collections.copy(scopeKills.subList(start, end), originalKills)
+            }
+        }
+    }
 
     fun propagate() {
         if (bitsPerElement == 0) return

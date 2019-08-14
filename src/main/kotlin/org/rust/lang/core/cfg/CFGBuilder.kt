@@ -5,32 +5,42 @@
 
 package org.rust.lang.core.cfg
 
+import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
+import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.arms
-import org.rust.lang.core.psi.ext.isLazy
-import org.rust.lang.core.psi.ext.patList
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.regions.Scope
+import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Graph
 import java.util.*
 
-class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode, val exit: CFGNode) : RsVisitor() {
-    class BlockScope(val block: RsBlock, val breakNode: CFGNode)
+class CFGBuilder(
+    private val regionScopeTree: ScopeTree,
+    val graph: Graph<CFGNodeData, CFGEdgeData>,
+    val entry: CFGNode,
+    val exit: CFGNode
+) : RsVisitor() {
+    data class BlockScope(val blockExpr: RsBlockExpr, val breakNode: CFGNode)
 
-    class LoopScope(val loop: RsExpr, val continueNode: CFGNode, val breakNode: CFGNode)
+    data class LoopScope(val loop: RsLabeledExpression, val continueNode: CFGNode, val breakNode: CFGNode)
 
-    enum class ScopeControlFlowKind { BREAK, CONTINUE }
+    enum class ScopeCFKind {
+        Break, Continue;
 
-    data class Destination(val label: RsLabel?, val target: RsElement)
-
+        fun select(breakNode: CFGNode, continueNode: CFGNode): CFGNode = when (this) {
+            Break -> breakNode
+            Continue -> continueNode
+        }
+    }
 
     private var result: CFGNode? = null
-    private val preds: Deque<CFGNode> = ArrayDeque<CFGNode>()
+    private val preds: Deque<CFGNode> = ArrayDeque()
     private val pred: CFGNode get() = preds.peek()
-    private val loopScopes: Deque<LoopScope> = ArrayDeque<LoopScope>()
-    private val breakableBlockScopes: Deque<BlockScope> = ArrayDeque<BlockScope>()
+    private val loopScopes: Deque<LoopScope> = ArrayDeque()
+    private val breakableBlockScopes: Deque<BlockScope> = ArrayDeque()
 
     private inline fun finishWith(callable: () -> CFGNode) {
         result = callable()
@@ -43,10 +53,19 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     private fun finishWithAstNode(element: RsElement, pred: CFGNode) =
         finishWith { addAstNode(element, pred) }
 
+    private fun finishWithUnreachableNode() =
+        finishWith { addUnreachableNode() }
+
     private inline fun withLoopScope(loopScope: LoopScope, callable: () -> Unit) {
         loopScopes.push(loopScope)
         callable()
         loopScopes.pop()
+    }
+
+    private inline fun withBlockScope(blockScope: BlockScope, callable: () -> Unit) {
+        breakableBlockScopes.push(blockScope)
+        callable()
+        breakableBlockScopes.pop()
     }
 
     private fun addAstNode(element: RsElement, vararg preds: CFGNode): CFGNode =
@@ -72,6 +91,48 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
     private fun addReturningEdge(fromNode: CFGNode) {
         val data = CFGEdgeData(loopScopes.map { it.loop })
         graph.addEdge(fromNode, exit, data)
+    }
+
+    private fun addExitingEdge(fromExpr: RsExpr, fromNode: CFGNode, targetScope: Scope, toNode: CFGNode) {
+        val exitingScopes = mutableListOf<RsElement>()
+        var scope: Scope = Scope.Node(fromExpr)
+        while (scope != targetScope) {
+            exitingScopes.add(scope.element)
+            scope = regionScopeTree.getEnclosingScope(scope) ?: break
+        }
+        graph.addEdge(fromNode, toNode, CFGEdgeData(exitingScopes))
+    }
+
+    private fun findScopeEdge(expr: RsExpr, label: RsLabel?, kind: ScopeCFKind): Pair<Scope, CFGNode>? {
+        if (label != null) {
+            val labelDeclaration = label.reference.resolve() ?: return null
+
+            // try to find the corresponding labeled block
+            for ((blockExpr, breakNode) in breakableBlockScopes) {
+                if (labelDeclaration == blockExpr.labelDecl) {
+                    return Pair(Scope.Node(blockExpr), breakNode)
+                }
+            }
+            // if no, try to find the corresponding labeled loop
+            for ((loop, continueNode, breakNode) in loopScopes) {
+                if (labelDeclaration == loop.labelDecl) {
+                    val node = kind.select(breakNode, continueNode)
+                    return Pair(Scope.Node(loop), node)
+                }
+            }
+        } else {
+            // otherwise, try to find the corresponding loop
+            val exprBlock = expr.ancestors.filterIsInstance<RsLabeledExpression>().firstOrNull()?.block
+
+            for ((loop, continueNode, breakNode) in loopScopes) {
+                if (loop.block == exprBlock) {
+                    val node = kind.select(breakNode, continueNode)
+                    return Pair(Scope.Node(loop), node)
+                }
+            }
+        }
+
+        return null
     }
 
     private fun straightLine(expr: RsExpr, pred: CFGNode, subExprs: List<RsExpr?>): CFGNode {
@@ -186,8 +247,19 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWith { processSubPats(patSlice, patSlice.patList) }
 
     override fun visitBlockExpr(blockExpr: RsBlockExpr) {
-        val blockExit = process(blockExpr.block, pred)
-        finishWithAstNode(blockExpr, blockExit)
+        val labelDeclaration = blockExpr.labelDecl
+        if (labelDeclaration != null) {
+            val exprExit = addAstNode(blockExpr)
+            withBlockScope(BlockScope(blockExpr, exprExit)) {
+                val stmtsExit = blockExpr.block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
+                val blockExprExit = process(blockExpr.block.expr, stmtsExit)
+                addContainedEdge(blockExprExit, exprExit)
+            }
+            finishWith(exprExit)
+        } else {
+            val blockExit = process(blockExpr.block, pred)
+            finishWithAstNode(blockExpr, blockExit)
+        }
     }
 
     override fun visitIfExpr(ifExpr: RsIfExpr) {
@@ -326,10 +398,22 @@ class CFGBuilder(val graph: Graph<CFGNodeData, CFGEdgeData>, val entry: CFGNode,
         finishWith { addUnreachableNode() }
     }
 
-    // TODO: this cases require regions which are not implemented yet
-    override fun visitBreakExpr(breakExpr: RsBreakExpr) = finishWith(pred)
+    override fun visitBreakExpr(breakExpr: RsBreakExpr) {
+        val exprExit = process(breakExpr.expr, pred)
+        val (targetScope, breakDestination) = findScopeEdge(breakExpr, breakExpr.label, Break)
+            ?: return finishWithUnreachableNode()
+        val breakExit = addAstNode(breakExpr, exprExit)
+        addExitingEdge(breakExpr, breakExit, targetScope, breakDestination)
+        finishWithUnreachableNode()
+    }
 
-    override fun visitContExpr(contExpr: RsContExpr) = finishWith(pred)
+    override fun visitContExpr(contExpr: RsContExpr) {
+        val (targetScope, contDestination) = findScopeEdge(contExpr, contExpr.label, Continue)
+            ?: return finishWithUnreachableNode()
+        val contExit = addAstNode(contExpr, pred)
+        addExitingEdge(contExpr, contExit, targetScope, contDestination)
+        finishWithUnreachableNode()
+    }
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
         finishWith { straightLine(arrayExpr, pred, arrayExpr.exprList) }

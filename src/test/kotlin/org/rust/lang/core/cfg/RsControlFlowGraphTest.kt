@@ -8,8 +8,9 @@ package org.rust.lang.core.cfg
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.types.regions.getRegionScopeTree
 
 class RsControlFlowGraphTest : RsTestBase() {
     fun `test empty block`() = testCFG("""
@@ -250,6 +251,84 @@ class RsControlFlowGraphTest : RsTestBase() {
         BLOCK
     """)
 
+    fun `test while with break`() = testCFG("""
+        fn main() {
+            while cond1 {
+                op1;
+                if cond2 { break; }
+                op2;
+            }
+        }
+    """, """
+        Entry
+        Dummy
+        cond1
+        WHILE
+        BLOCK
+        Exit
+        op1
+        op1;
+        cond2
+        break
+        IF
+        IF;
+        op2
+        op2;
+        BLOCK
+    """)
+
+    fun `test while with labeled break`() = testCFG("""
+        fn main() {
+            'loop: while cond1 {
+                op1;
+                loop {
+                    if cond2 { break 'loop; }
+                }
+                op2;
+            }
+        }
+    """, """
+        Entry
+        Dummy
+        cond1
+        WHILE
+        BLOCK
+        Exit
+        op1
+        op1;
+        Dummy
+        cond2
+        break 'loop
+        IF
+        BLOCK
+    """)
+
+    fun `test while with continue`() = testCFG("""
+        fn main() {
+            while cond1 {
+                op1;
+                if cond2 { continue; }
+                op2;
+            }
+        }
+    """, """
+        Entry
+        Dummy
+        cond1
+        WHILE
+        BLOCK
+        Exit
+        op1
+        op1;
+        cond2
+        continue
+        IF
+        IF;
+        op2
+        op2;
+        BLOCK
+    """)
+
     fun `test while let`() = testCFG("""
         fn main() {
             while let x = f() {
@@ -376,6 +455,44 @@ class RsControlFlowGraphTest : RsTestBase() {
         x += i
         x += i;
         BLOCK
+    """)
+
+    fun `test for with break and continue`() = testCFG("""
+        fn main() {
+            for x in xs {
+                op1;
+                for y in ys {
+                    op2;
+                    if cond { continue; }
+                    break;
+                    op3;
+                }
+            }
+            y;
+        }
+    """, """
+        Entry
+        Dummy
+        xs
+        FOR
+        FOR;
+        y
+        y;
+        BLOCK
+        Exit
+        op1
+        op1;
+        Dummy
+        ys
+        FOR
+        BLOCK
+        op2
+        op2;
+        cond
+        continue
+        IF
+        IF;
+        break
     """)
 
     fun `test match`() = testCFG("""
@@ -647,8 +764,8 @@ class RsControlFlowGraphTest : RsTestBase() {
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
-        val block = myFixture.file.descendantsOfType<RsBlock>().firstOrNull() ?: return
-        val cfg = ControlFlowGraph.buildFor(block)
+        val function = myFixture.file.descendantsOfType<RsFunction>().firstOrNull() ?: return
+        val cfg = ControlFlowGraph.buildFor(function.block!!, getRegionScopeTree(function))
         val expected = expectedIndented.trimIndent()
         val actual = cfg.graph.depthFirstTraversalTrace(cfg.entry)
         check(actual == expected) { throw ComparisonFailure("Comparision failed", expected, actual) }
