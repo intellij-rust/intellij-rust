@@ -365,7 +365,7 @@ class RsTypeInferenceWalker(
         scopeEntry: ScopeEntry,
         pathExpr: RsPathExpr
     ): Ty {
-        val subst = instantiatePathGenerics(pathExpr.path, BoundElement(element, scopeEntry.subst), lookup).subst
+        val subst = instantiatePathGenerics(pathExpr.path, BoundElement(element, scopeEntry.subst)).subst
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType

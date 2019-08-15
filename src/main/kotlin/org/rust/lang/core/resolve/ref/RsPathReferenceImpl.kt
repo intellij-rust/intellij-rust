@@ -80,22 +80,21 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup): List<ScopeEntry> {
     }
 }
 
-fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)): List<BoundElement<RsElement>> {
+fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElement<RsElement>> {
     val result = collectPathResolveVariants(path.referenceName) {
         processPathResolveVariants(lookup, path, false, it)
     }
 
     return when (result.size) {
         0 -> emptyList()
-        1 -> listOf(instantiatePathGenerics(path, result.single(), lookup))
+        1 -> listOf(instantiatePathGenerics(path, result.single()))
         else -> result
     }
 }
 
 fun <T: RsElement> instantiatePathGenerics(
     path: RsPath,
-    resolved: BoundElement<T>,
-    lookup: ImplLookup
+    resolved: BoundElement<T>
 ): BoundElement<T> {
     val (element, subst) = resolved.downcast<RsGenericDeclaration>() ?: return resolved
     val typeArguments: List<Ty>? = run {
@@ -127,9 +126,11 @@ fun <T: RsElement> instantiatePathGenerics(
                 }
 
                 // Fn() -> T
-                val outputParam = lookup.fnOnceOutput
-                if (outputArg != null && outputParam != null) {
-                    put(outputParam, outputArg)
+                if (outputArg != null) {
+                    val outputParam = path.knownItems.FnOnce?.findAssociatedType("Output")
+                    if (outputParam != null) {
+                        put(outputParam, outputArg)
+                    }
                 }
             }
         } else {
