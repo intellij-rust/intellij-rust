@@ -101,7 +101,7 @@ object CargoBuildManager {
             }
 
             processHandler = state.startProcess(emulateTerminal = true)
-            processHandler.addProcessListener(CargoBuildListener(this, buildProgressListener))
+            processHandler.addProcessListener(CargoBuildAdapter(this, buildProgressListener))
             processHandler.startNotify()
         }
     }

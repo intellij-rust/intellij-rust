@@ -22,7 +22,7 @@ import org.rust.cargo.runconfig.RsExecutableRunner.Companion.binaries
 import org.rust.cargo.runconfig.createFilters
 
 @Suppress("UnstableApiUsage")
-class CargoBuildListener(
+class CargoBuildAdapter(
     private val context: CargoBuildContext,
     private val buildProgressListener: BuildProgressListener
 ) : ProcessAdapter(), AnsiEscapeDecoder.ColoredTextAcceptor {
@@ -39,7 +39,7 @@ class CargoBuildListener(
 
     private val textBuffer: MutableList<String> = mutableListOf()
 
-    override fun startNotified(event: ProcessEvent) {
+    init {
         val descriptor = DefaultBuildDescriptor(
             context.buildId,
             "Run Cargo command",
