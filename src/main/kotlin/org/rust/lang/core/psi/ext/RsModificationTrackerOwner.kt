@@ -32,7 +32,7 @@ interface RsModificationTrackerOwner : RsElement {
     fun incModificationCount(element: PsiElement): Boolean
 }
 
-fun PsiElement.findModificationTrackerOwner(strict: Boolean = true): RsModificationTrackerOwner? {
+fun PsiElement.findModificationTrackerOwner(strict: Boolean): RsModificationTrackerOwner? {
     return PsiTreeUtil.getContextOfType(
         this,
         strict,

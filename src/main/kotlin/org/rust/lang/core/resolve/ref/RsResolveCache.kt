@@ -122,7 +122,7 @@ class RsResolveCache(messageBus: MessageBus) {
     private fun getCacheFor(element: PsiElement, dep: ResolveCacheDependency): ConcurrentMap<PsiElement, Any?> {
         return when (dep) {
             ResolveCacheDependency.LOCAL, ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE -> {
-                val owner = element.findModificationTrackerOwner()
+                val owner = element.findModificationTrackerOwner(strict = false)
                 return if (owner != null) {
                     if (dep == ResolveCacheDependency.LOCAL) {
                         CachedValuesManager.getCachedValue(owner, LOCAL_CACHE_KEY) {
