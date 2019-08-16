@@ -8,7 +8,6 @@ package org.rust.lang.core.completion
 import org.intellij.lang.annotations.Language
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
@@ -590,26 +589,26 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo<T /*caret*/>() {}"
     """)
 
-    fun `test inside trait`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+    fun `test inside trait`() = checkCompletion(MEMBERS_KEYWORDS, """
         pub trait Bar {
             /*caret*/
-            const i: i32 = 1;
+            const C: i32 = 1;
         }
     ""","""
         pub trait Bar {
             /*lookup*/ /*caret*/
-            const i: i32 = 1;
+            const C: i32 = 1;
         }
     """)
 
-    fun `test inside trait after statement`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
+    fun `test inside trait after statement`() = checkCompletion(MEMBERS_KEYWORDS, """
         pub trait Bar {
-            const i: i32 = 1;
+            const C: i32 = 1;
             /*caret*/
         }
     ""","""
         pub trait Bar {
-            const i: i32 = 1;
+            const C: i32 = 1;
             /*lookup*/ /*caret*/
         }
     """)
@@ -626,43 +625,75 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test inside impl`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
-        struct Foo;
-        
+    fun `test inside trait impl`() = checkCompletion(MEMBERS_KEYWORDS, """
         impl Bar for Foo {
             /*caret*/
-            const i: i32 = 1;
+            const C: i32 = 1;
         }
     ""","""
-        struct Foo;
-        
         impl Bar for Foo {
             /*lookup*/ /*caret*/
-            const i: i32 = 1;
+            const C: i32 = 1;
         }
     """)
 
-    fun `test inside impl after statement`() = checkCompletion(COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL.toList(), """
-        struct Foo;
-        
+    fun `test inside impl after statement`() = checkCompletion(MEMBERS_KEYWORDS, """
         impl Bar for Foo {
-            const i: i32 = 1;
+            const C: i32 = 1;
             /*caret*/
         }
     ""","""
-        struct Foo;
-        
         impl Bar for Foo {
-            const i: i32 = 1;
+            const C: i32 = 1;
             /*lookup*/ /*caret*/
         }
     """)
 
     fun `test impl inside impl`() = checkNoCompletion("""
-        struct Foo;
-        
         impl Bar for Foo {
             imp/*caret*/
+        }
+    """)
+
+    fun `test unsafe fn in impl`() = checkCompletion("fn", """
+        impl Foo {
+            unsafe f/*caret*/
+        }    
+    """, """
+        impl Foo {
+            unsafe fn /*caret*/
+        }    
+    """)
+
+    fun `test pub member keyword in inherent impl`() = checkCompletion(MEMBERS_KEYWORDS, """
+        impl Foo {
+            pub /*caret*/
+        }
+    """, """
+        impl Foo {
+            pub /*lookup*/ /*caret*/
+        }
+    """)
+
+    fun `test pub keyword in inherent impl`() = checkCompletion("pub", """
+        impl Foo {
+            pu/*caret*/
+        }
+    """, """
+        impl Foo {
+            pub /*caret*/
+        }
+    """)
+
+    fun `test no pub keyword in trait`() = checkNoCompletion("""
+        trait Foo {
+            pu/*caret*/
+        }
+    """)
+
+    fun `test no pub keyword in trait impl`() = checkNoCompletion("""
+        impl Foo for Bar {
+            pu/*caret*/
         }
     """)
 
@@ -686,5 +717,9 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
         myFixture.lookup.currentItem = lookupItem
         myFixture.type('\n')
+    }
+
+    companion object {
+        private val MEMBERS_KEYWORDS = listOf("fn", "type", "const", "unsafe")
     }
 }
