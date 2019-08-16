@@ -180,9 +180,11 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         context: InsertionContext,
         item: LookupElement
     ) {
+        val document = context.document
+        val startOffset = context.startOffset
         val curUseItem = context.getElementOfType<RsUseItem>()
         if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
-            context.document.insertString(context.startOffset, RS_RAW_PREFIX)
+            document.insertString(startOffset, RS_RAW_PREFIX)
         }
         when (element) {
 
@@ -208,9 +210,15 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     appendSemicolon(context, curUseItem)
                 } else {
                     if (!context.alreadyHasCallParens) {
-                        context.document.insertString(context.selectionEndOffset, "()")
+                        document.insertString(context.selectionEndOffset, "()")
                     }
-                    EditorModificationUtil.moveCaretRelatively(context.editor, if (element.valueParameters.isEmpty()) 2 else 1)
+
+                    val charsSequence = document.charsSequence
+                    val inUFCS = element.hasSelfParameters
+                        && charsSequence.getOrNull(startOffset - 1) == ':'
+                        && charsSequence.getOrNull(startOffset - 2) == ':'
+                    val caretShift = if (element.valueParameters.isEmpty() && !inUFCS) 2 else 1
+                    EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
                     if (!element.valueParameters.isEmpty()) {
                         AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                     }
@@ -227,7 +235,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                         else -> Pair("", 0)
                     }
                     if (!(context.alreadyHasStructBraces || context.alreadyHasCallParens)) {
-                        context.document.insertString(context.selectionEndOffset, text)
+                        document.insertString(context.selectionEndOffset, text)
                     }
                     EditorModificationUtil.moveCaretRelatively(context.editor, shift)
                 }
@@ -240,7 +248,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                             "vec" -> "[]"
                             else -> "()"
                         }
-                        context.document.insertString(context.selectionEndOffset, "!$parens")
+                        document.insertString(context.selectionEndOffset, "!$parens")
                     }
                     EditorModificationUtil.moveCaretRelatively(context.editor, 2)
                 } else {
