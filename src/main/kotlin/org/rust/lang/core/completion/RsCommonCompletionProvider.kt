@@ -42,7 +42,7 @@ import org.rust.openapiext.Testmark
 object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(
         parameters: CompletionParameters,
-        _context: ProcessingContext,
+        processingContext: ProcessingContext,
         result: CompletionResultSet
     ) {
         // Use original position if possible to re-use caches of the real file

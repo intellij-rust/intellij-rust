@@ -88,6 +88,6 @@ class RsMacroCallBodyCompletionTest : RsCompletionTestBase() {
         }
         struct Foo;
         impl Foo { fn bar(&self) {} }
-        foo!(Foo, bar()/*caret*/);
+        foo!(Foo, bar(/*caret*/));
     """)
 }

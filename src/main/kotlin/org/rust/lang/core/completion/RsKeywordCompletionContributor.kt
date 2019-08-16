@@ -15,7 +15,6 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns.or
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.*
@@ -27,7 +26,6 @@ import org.rust.lang.core.types.infer.lookupFutureOutputTy
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import kotlin.or
 
 /**
  * Completes Rust keywords
@@ -56,7 +54,13 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         extend(CompletionType.BASIC, constParameterBeginningPattern(),
             RsKeywordCompletionProvider("const"))
         extend(CompletionType.BASIC, traitOrImplDeclarationPattern(),
-            RsKeywordCompletionProvider(*COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL))
+            RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
+        extend(CompletionType.BASIC, unsafeTraitOrImplDeclarationPattern(),
+            RsKeywordCompletionProvider("fn"))
+        extend(CompletionType.BASIC, inherentImplDeclarationPattern(),
+            RsKeywordCompletionProvider("pub"))
+        extend(CompletionType.BASIC, pubInherentImplDeclarationPattern(),
+            RsKeywordCompletionProvider("const", "fn", "type", "unsafe"))
 
         extend(CompletionType.BASIC, elsePattern(), object : CompletionProvider<CompletionParameters>() {
             override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
@@ -239,19 +243,42 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         return psiElement(IDENTIFIER).withParent(parent)
     }
 
+    private fun baseTraitOrImplDeclaration(): PsiElementPattern.Capture<PsiElement> {
+        return psiElement().withParent(or(
+            psiElement<RsMembers>(),
+            psiElement().withParent(RsMembers::class.java)
+        ))
+    }
+
     private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withParent(
-            or(
-                psiElement<RsMembers>(),
-                psiElement<PsiErrorElement>().withParent(psiElement<RsMembers>())
-            )
-        ).and(statementBeginningPattern())
+        return baseTraitOrImplDeclaration().and(statementBeginningPattern())
+    }
+
+    private fun unsafeTraitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseTraitOrImplDeclaration().and(statementBeginningPattern("unsafe"))
+    }
+
+    private fun baseInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        val membersInInherentImpl = psiElement<RsMembers>().withParent(
+            psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
+        )
+        return psiElement().withParent(or(
+            membersInInherentImpl,
+            psiElement().withParent(membersInInherentImpl)
+        ))
+    }
+
+    private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(statementBeginningPattern())
+    }
+
+    private fun pubInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
+        return baseInherentImplDeclarationPattern().and(statementBeginningPattern("pub"))
     }
 
     companion object {
         @JvmField
         val CONDITION_KEYWORDS: List<String> = listOf("if", "match")
-        val COMPLETION_KEYWORDS_IN_TRAIT_OR_IMPL = arrayOf("const", "fn", "type")
         private val AWAIT_TY: Key<Ty> = Key.create("AWAIT_TY")
     }
 }
