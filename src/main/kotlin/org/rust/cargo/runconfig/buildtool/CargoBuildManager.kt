@@ -89,7 +89,7 @@ object CargoBuildManager {
             environment = environment,
             taskName = "Build",
             progressTitle = "Building...",
-            isTestBuild = configuration.command == "test"
+            isTestBuild = state.commandLine.command == "test"
         )) {
             val buildProgressListener = if (isUnitTestMode) {
                 mockBuildProgressListener ?: EmptyBuildProgressListener
