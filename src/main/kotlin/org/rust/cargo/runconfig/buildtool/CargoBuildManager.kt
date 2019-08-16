@@ -65,13 +65,16 @@ object CargoBuildManager {
         }
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
+        val configuration = buildConfiguration.configuration
+        val environment = buildConfiguration.environment
+
         val state = CargoRunState(
-            buildConfiguration.environment,
-            buildConfiguration.configuration,
-            buildConfiguration.configuration.clean().ok ?: return CANCELED_BUILD_RESULT
+            environment,
+            configuration,
+            configuration.clean().ok ?: return CANCELED_BUILD_RESULT
         ).apply {
             addCommandLinePatch(cargoBuildPatch)
-            for (patch in buildConfiguration.environment.cargoPatches) {
+            for (patch in environment.cargoPatches) {
                 addCommandLinePatch(patch)
             }
         }
@@ -83,10 +86,10 @@ object CargoBuildManager {
 
         return execute(CargoBuildContext(
             cargoProject = cargoProject,
-            environment = buildConfiguration.environment,
+            environment = environment,
             taskName = "Build",
             progressTitle = "Building...",
-            isTestBuild = buildConfiguration.configuration.command == "test"
+            isTestBuild = state.commandLine.command == "test"
         )) {
             val buildProgressListener = if (isUnitTestMode) {
                 mockBuildProgressListener ?: EmptyBuildProgressListener
