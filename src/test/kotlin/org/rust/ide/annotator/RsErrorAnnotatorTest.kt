@@ -2727,4 +2727,41 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             };
         }
     """)
+
+    @MockRustcVersion("1.35.0")
+    fun `test param attrs E0658 1`() = checkErrors("""
+        struct S;
+        fn f1(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> x: S) {}
+        fn f2(<error descr="attributes on function parameters is experimental [E0658]">#[attr1] #[attr2]</error> x: S) {}
+        impl S {
+            fn f3(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> self) {}
+            fn f4(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> &self) {}
+            fn f5<'a>(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> &mut self) {}
+            fn f6<'a>(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> &'a self) {}
+            fn f7<'a>(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> &'a mut self, <error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> x: S, y: S) {}
+            fn f8(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> self: Self) {}
+            fn f9(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> self: S<Self>) {}
+        }
+        trait T { fn f10(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> S); }
+        extern "C" { fn f11(<error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> x: S, <error descr="attributes on function parameters is experimental [E0658]">#[attr]</error> ...); }
+    """)
+
+    @MockRustcVersion("1.36.0-nightly")
+    fun `test param attrs E0658 2`() = checkErrors("""
+        #![feature(param_attrs)]
+        struct S;
+        fn f1(#[attr] x: S) {}
+        fn f2(#[attr1] #[attr2] x: S) {}
+        impl S {
+            fn f3(#[attr] self) {}
+            fn f4(#[attr] &self) {}
+            fn f5<'a>(#[attr] &mut self) {}
+            fn f6<'a>(#[attr] &'a self) {}
+            fn f7<'a>(#[attr] &'a mut self, #[attr] x: S, y: S) {}
+            fn f8(#[attr] self: Self) {}
+            fn f9(#[attr] self: S<Self>) {}
+        }
+        trait T { fn f10(#[attr] S); }
+        extern "C" { fn f11(#[attr] x: S, #[attr] ...); }
+    """)
 }
