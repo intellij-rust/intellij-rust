@@ -23,6 +23,7 @@ import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
 import com.jetbrains.cidr.toolchains.OSType
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.RsExecutableRunner
+import org.rust.openapiext.computeWithCancelableProgress
 
 private const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
 
@@ -50,7 +51,11 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
     }
 
     override fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean {
-        if (CPPToolchains.getInstance().osType == OSType.WIN && "msvc" in state.rustVersion().rustc?.host.orEmpty()) {
+        if (CPPToolchains.getInstance().osType != OSType.WIN) return true
+        val isMsvc = project.computeWithCancelableProgress("Checking if toolchain is supported...") {
+            "msvc" in state.rustVersion().rustc?.host.orEmpty()
+        }
+        if (isMsvc) {
             project.showErrorDialog("MSVC toolchain is not supported. Please use GNU toolchain.")
             return false
         }
@@ -59,6 +64,7 @@ class RsDebugRunner : RsExecutableRunner(DefaultDebugExecutor.EXECUTOR_ID, ERROR
 
     override fun checkToolchainConfigured(project: Project): Boolean {
         val toolchains = CPPToolchains.getInstance()
+        // TODO: Fix synchronous execution on EDT
         val toolchain = toolchains.defaultToolchain
         if (toolchain == null) {
             val option = Messages.showDialog(
