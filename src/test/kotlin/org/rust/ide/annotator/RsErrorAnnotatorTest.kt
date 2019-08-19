@@ -2764,4 +2764,127 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         trait T { fn f10(#[attr] S); }
         extern "C" { fn f11(#[attr] x: S, #[attr] ...); }
     """)
+
+    fun `test no errors when correct field amount in tuple struct`() = checkErrors("""
+        struct Foo (i32, i32, i32);
+
+        fn main() {
+            let Foo (a, b, c) = foo;
+        }
+    """)
+
+    fun `test missing fields in tuple struct`() = checkErrors("""
+        struct Foo (i32, i32, i32);
+
+        fn main() {
+            let <error descr="Tuple struct pattern does not correspond to its declaration: `struct Foo (i32, i32, i32);` [E0023]">Foo (a, b)</error> = foo;
+        }
+    """)
+
+    fun `test extra fields in tuple struct`() = checkErrors("""
+        struct Foo (i32, i32, i32);
+
+        fn main() {
+            let <error descr="Extra fields found in the tuple struct pattern: Expected 3, found 4 [E0023]">Foo (a, b, c, d)</error> = foo;
+        }
+    """)
+
+    fun `test wrong field name`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }
+
+        fn main() {
+            let <error descr="Struct pattern does not correspond to its declaration: `struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }` [E0027]">Foo { a, b, <error descr="Extra field found in the struct pattern: `d` [E0026]">d</error> }</error> = foo;
+        }
+    """)
+
+    fun `test wrong field name with dots`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }
+
+        fn main() {
+            let Foo { <error>d</error>, a, .. } = foo;
+        }
+    """)
+
+    fun `test wrong field name in enum variant pattern`() = checkErrors("""
+        enum Foo {
+            Bar { quux: i32, spam: i32 },
+            Baz(i32, i32),
+        }
+
+        fn f(foo: Foo) {
+            match foo {
+                <error descr="Enum variant pattern does not correspond to its declaration: `Bar { quux: i32, spam: i32 }` [E0027]">Foo::Bar { quux, <error descr="Extra field found in the struct pattern: `abc` [E0026]">abc</error> }</error> => {},
+                <error descr="Enum variant pattern does not correspond to its declaration: `Baz(i32, i32)` [E0023]">Foo::Baz(a)</error> => {},
+            }
+        }
+    """)
+
+    fun `test no error in mixed up fields`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }
+
+        fn main() {
+            let Foo { b, c, a } = foo;
+        }
+    """)
+
+    fun `test no error in mixed up fields with dots`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }
+
+        fn main() {
+            let Foo { c, b, .. } = foo;
+        }
+    """)
+
+    fun `test no error in mixed up fields with extra dots`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            c: i32,
+        }
+
+        fn main() {
+            let Foo { c, b, a, .. } = foo;
+        }
+    """)
+
+    fun `test no error on missing field with cfg-attribute`() = checkErrors("""
+        struct Foo {
+            a: i32,
+            b: i32,
+            #[cfg(foo)]
+            c: i32,
+        }
+
+        fn main() {
+            let Foo { a, b } = foo;
+        }
+    """)
+
+    fun `test no error in tuple with dots in the middle`() = checkErrors("""
+        struct Foo(i32, i32, i32);
+
+        fn main() {
+            let Foo (a, .., b) = foo;
+        }
+    """)
 }
