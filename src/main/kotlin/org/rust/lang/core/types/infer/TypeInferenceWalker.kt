@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
+import org.rust.lang.core.macros.expandedFromSequence
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
@@ -94,10 +95,27 @@ class RsTypeInferenceWalker(
 
     private fun RsBlock.inferType(expected: Ty? = null, coerce: Boolean = false): Ty {
         var isDiverging = false
-        for (stmt in stmtList) {
-            isDiverging = processStatement(stmt) || isDiverging
+        val expandedStmts = expandedStmts
+        val tailExpr = expandedStmts.lastOrNull()
+            ?.let { it as? RsExpr }
+            ?.takeIf { e ->
+                // If tail expr is expanded from a macro, we should check that this macro doesn't have
+                // semicolon (`foo!();`), otherwice it's not a tail expr but a regular statement
+                e.expandedFromSequence.all {
+                    val bracesKind = it.bracesKind ?: return@all false
+                    !bracesKind.needsSemicolon || it.semicolon == null
+                }
+            }
+        for (stmt in expandedStmts) {
+            val result = when (stmt) {
+                tailExpr -> false
+                is RsStmt -> processStatement(stmt)
+                is RsExpr -> stmt.inferType() == TyNever
+                else -> false
+            }
+            isDiverging = result || isDiverging
         }
-        val type = (if (coerce) expr?.inferTypeCoercableTo(expected!!) else expr?.inferType(expected)) ?: TyUnit
+        val type = (if (coerce) tailExpr?.inferTypeCoercableTo(expected!!) else tailExpr?.inferType(expected)) ?: TyUnit
         return if (isDiverging) TyNever else type
     }
 
@@ -1082,7 +1100,7 @@ class RsTypeInferenceWalker(
             name == "stringify" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "module_path" -> TyReference(TyStr, Mutability.IMMUTABLE)
             name == "cfg" -> TyBool
-            else -> TyUnknown
+            else -> (macroCall.expansion as? MacroExpansion.Expr)?.expr?.inferType() ?: TyUnknown
         }
     }
 

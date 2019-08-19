@@ -17,7 +17,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
-import com.intellij.psi.util.*
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -622,8 +625,9 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
 }
 
 fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
+    val hygieneFilter = makeHygieneFilter(place)
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
-        processLexicalDeclarations(scope, cameFrom, VALUES, ItemProcessingMode.WITH_PRIVATE_IMPORTS) { v ->
+        processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter, ItemProcessingMode.WITH_PRIVATE_IMPORTS) { v ->
             val el = v.element
             if (el is RsPatBinding) processor(el)
             false
@@ -1179,6 +1183,7 @@ private fun processLexicalDeclarations(
     scope: RsElement,
     cameFrom: PsiElement,
     ns: Set<Namespace>,
+    hygieneFilter: (RsPatBinding) -> Boolean,
     ipm: ItemProcessingMode,
     processor: RsResolveProcessor
 ): Boolean {
@@ -1186,7 +1191,7 @@ private fun processLexicalDeclarations(
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
-            .filter { it.reference.resolve() == null }
+            .filter { it.reference.resolve() == null && hygieneFilter(it) }
         return processAll(boundNames, processor)
     }
 
@@ -1270,10 +1275,16 @@ private fun processLexicalDeclarations(
                     }
                 }
 
-                for (stmt in scope.stmtList.asReversed()) {
-                    val pat = (stmt as? RsLetDecl)?.pat ?: continue
-                    if (PsiUtilCore.compareElementsByPosition(cameFrom, stmt) < 0) continue
-                    if (stmt == cameFrom) continue
+                val letDecls = mutableListOf<RsLetDecl>()
+                for (stmt in scope.expandedStmts) {
+                    if (cameFrom == stmt) break
+                    if (stmt is RsLetDecl) {
+                        letDecls.add(stmt)
+                    }
+                }
+
+                for (let in letDecls.asReversed()) {
+                    val pat = let.pat ?: continue
                     if (processPattern(pat, shadowingProcessor)) return true
                 }
             }
@@ -1321,6 +1332,11 @@ fun processNestedScopesUpwards(
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
+    val hygieneFilter: (RsPatBinding) -> Boolean = if (scopeStart is RsPath && ns == VALUES) {
+        makeHygieneFilter(scopeStart)
+    } else {
+        { true }
+    }
     val prevScope = mutableSetOf<String>()
     val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         processWithShadowing(prevScope, processor) { shadowingProcessor ->
@@ -1329,7 +1345,7 @@ fun processNestedScopesUpwards(
                 isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
                 else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
             }
-            processLexicalDeclarations(scope, cameFrom, ns, ipm, shadowingProcessor)
+            processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
         }
     }
     if (stop) return true
@@ -1346,6 +1362,37 @@ fun processNestedScopesUpwards(
     }
 
     return false
+}
+
+/**
+ * Main part of the [hygiene](https://rust-lang.github.io/rustc-guide/macro-expansion.html#hygiene) implentation.
+ */
+private fun makeHygieneFilter(anchor: PsiElement): (RsPatBinding) -> Boolean {
+    val anchorHygienicScope = if (!anchor.isExpandedFromMacro) {
+        // This branch is needed to prevent AST access
+        anchor.containingFile
+    } else {
+        val nameIdentifier = if (anchor is RsReferenceElement) anchor.referenceNameElement else anchor
+        (nameIdentifier.findElementExpandedFrom(strict = false) ?: nameIdentifier).containingFile
+    }.unwrapCodeFragments()
+
+    return fun(binding: RsPatBinding): Boolean {
+        val nameIdentifier = binding.nameIdentifier ?: return false
+        val bindingHygienicScope =
+            (nameIdentifier.findElementExpandedFrom(strict = false) ?: nameIdentifier).containingFile
+            .unwrapCodeFragments()
+        return anchorHygienicScope == bindingHygienicScope
+    }
+}
+
+private tailrec fun PsiFile.unwrapCodeFragments(): PsiFile {
+    return if (this !is RsCodeFragment) {
+        this
+    } else {
+        val context = context
+        val file = if (context is PsiFile) context else context.containingFile
+        file.unwrapCodeFragments()
+    }
 }
 
 inline fun processWithShadowing(
@@ -1446,3 +1493,4 @@ object NameResolutionTestmarks {
 }
 
 private data class ImplicitStdlibCrate(val name: String, val crateRoot: RsFile)
+

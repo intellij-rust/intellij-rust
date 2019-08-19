@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import org.rust.ExpandMacros
 import org.rust.lang.core.resolve.RsResolveTestBase
+import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl.Testmarks
 
 @ExpandMacros
 class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
@@ -17,7 +18,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = X;
         }          //^
-    """)
+    """, Testmarks.touched)
 
     fun `test statement context`() = checkByCode("""
         struct X;
@@ -28,19 +29,16 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 type T = X;
             };         //^
         }
-    """)
+    """, Testmarks.touched)
 
-    // TODO adjust type inference to take into account macros
-    fun `test expression context`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test expression context`() = checkByCode("""
         struct X;
              //X
         macro_rules! foo { ($($ i:tt)*) => { $( $ i )* }; }
         fn main () {
             let a = foo!(X);
         }              //^
-    """)
-    }
+    """, Testmarks.touched)
 
     fun `test type context`() = checkByCode("""
         struct X;
@@ -48,7 +46,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         macro_rules! foo { ($($ i:tt)*) => { $( $ i )* }; }
         type T = foo!(X);
                     //^
-    """)
+    """, Testmarks.touched)
 
     // TODO implement `getContext()` in all RsPat PSI elements
     fun `test pattern context`() = expect<IllegalStateException> {
@@ -63,7 +61,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 _ => {}
             }
         }
-    """)
+    """, Testmarks.touched)
     }
 
     fun `test lifetime`() = checkByCode("""
@@ -77,7 +75,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
                 fn foo(&self) -> &'a u8 {}
             }                    //^
         }
-    """)
+    """, Testmarks.touched)
 
     fun `test 2-segment path 1`() = checkByCode("""
         mod foo {
@@ -88,7 +86,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = foo::X;
         }          //^
-    """)
+    """, Testmarks.touched)
 
     fun `test 2-segment path 2`() = checkByCode("""
         mod foo {
@@ -98,5 +96,5 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         foo! {
             type T = foo::X;
         }               //^
-    """)
+    """, Testmarks.touched)
 }

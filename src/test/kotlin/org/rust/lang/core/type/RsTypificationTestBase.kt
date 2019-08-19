@@ -9,9 +9,12 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
+import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Severity
@@ -70,8 +73,10 @@ abstract class RsTypificationTestBase : RsTestBase() {
     }
 
     private fun checkAllExpressionsTypified() {
-        val notTypifiedExprs = myFixture.file.descendantsOfType<RsExpr>().filter { expr ->
+        val notTypifiedExprs = myFixture.file.descendantsWithMacrosOfType<RsExpr>().filter { expr ->
             expr.inference?.isExprTypeInferred(expr) == false
+        }.filter {
+            it.expandedFrom?.let { it.macroName in BUILTIN_MACRO_NAMES } != true
         }
         if (notTypifiedExprs.isNotEmpty()) {
             error(
@@ -84,3 +89,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
         }
     }
 }
+
+private val BUILTIN_MACRO_NAMES = listOf(
+    "env", "option_env", "concat", "line", "column", "file", "stringify", "module_path", "cfg"
+)

@@ -18,6 +18,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.findDescendantsWithMacrosOfAnyType
 
 val PsiFileSystemItem.sourceRoot: VirtualFile?
     get() = virtualFile.let { ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(it) }
@@ -192,6 +193,9 @@ fun <T : PsiElement> getStubDescendantOfType(
         go(listOf(stub))
     }
 }
+
+inline fun <reified T : PsiElement> PsiElement.descendantsWithMacrosOfType(): Collection<T> =
+    findDescendantsWithMacrosOfAnyType(this, true, T::class.java)
 
 /**
  * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].

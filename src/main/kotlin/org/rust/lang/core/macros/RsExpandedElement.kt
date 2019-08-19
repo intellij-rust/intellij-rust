@@ -56,6 +56,9 @@ val RsExpandedElement.expandedFromRecursively: RsMacroCall?
         return call
     }
 
+val RsExpandedElement.expandedFromSequence: Sequence<RsMacroCall>
+    get() = generateSequence(expandedFrom) { it.expandedFrom }
+
 fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
     val found = findMacroCallExpandedFromNonRecursive()
     return found?.findMacroCallExpandedFrom() ?: found
@@ -72,13 +75,64 @@ val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
 
 /**
- * If receiver element is inside a macro expansion, returns the leaf element inside the macro call
- * from which the first token of this element is expanded. Always returns an element inside a root
- * macro call, i.e. outside of any expansion.
+ * If [this] is inside a **macro expansion**, returns a leaf element inside a macro call from which
+ * the first token of this element is expanded. Returns null if [this] element is not inside a
+ * macro expansion or source element is not a part of a macro call (i.e. is a part of a macro
+ * definition)
+ *
+ * If [strict] is `true`, always returns an element inside a root macro call, i.e. outside of any
+ * expansion, or null otherwise.
+ *
+ * # Examples
+ *
+ * ```rust
+ * macro_rules! foo {
+ *     ($i:ident) => { struct $i; }
+ * }
+ * // Source code    // Expansion
+ * foo!(Bar);        // struct Bar;
+ * //     \____________________/
+ *                           //^ For this element returns `Bar` element in the macro call.
+ *                           // It works the same regardless the [strict] value
+ * ```
+ *
+ * ```rust
+ * macro_rules! foo {
+ *     ($i:item) => { $i }
+ * }
+ * macro_rules! bar {
+ *     ($i:ident) => { struct $i; }
+ * }
+ * // Source code       // Expansion step 1    // Expansion step 2
+ * foo! { bar!(Baz); }  // bar!(Baz);          // struct Baz;
+ * //            \_______________________________________/
+ *                                                     //^ For this element returns `Baz` element in the macro call.
+ *                                                     // It works the same regardless the [strict] value
+ * ```
+ *
+ * ```rust
+ * macro_rules! foo {
+ *     () => { bar!(Baz); }
+ * }
+ * macro_rules! bar {
+ *     ($i:ident) => { struct $i; }
+ * }
+ * // Source code  // Expansion step 1    // Expansion step 2
+ * foo!();         // bar!(Baz);          // struct Baz;
+ * //                        \______________________/
+ *                                                //^ For this element returns `Baz` element in the intermediate
+ *                                                // macro call ONLY if the [strict] value is `false`.
+ *                                                // Returns null otherwise
+ * ```
  */
-fun PsiElement.findElementExpandedFrom(): PsiElement? {
+fun PsiElement.findElementExpandedFrom(strict: Boolean = true): PsiElement? {
+    val expandedFrom = findElementExpandedFromUnchecked()
+    return if (strict) expandedFrom?.takeIf { !it.isExpandedFromMacro } else expandedFrom
+}
+
+private fun PsiElement.findElementExpandedFromUnchecked(): PsiElement? {
     val mappedElement = findElementExpandedFromNonRecursive() ?: return null
-    return mappedElement.findElementExpandedFrom() ?: mappedElement.takeIf { !it.isExpandedFromMacro }
+    return mappedElement.findElementExpandedFromUnchecked() ?: mappedElement
 }
 
 private fun PsiElement.findElementExpandedFromNonRecursive(): PsiElement? {
@@ -96,7 +150,7 @@ private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): In
 }
 
 /**
- * If [this] element is inside a macro call body and this macro is successfully expanded, returns
+ * If [this] element is inside a **macro call** body and this macro is successfully expanded, returns
  * a leaf element inside the macro expansion that is expanded from [this] element. Returns a
  * list of elements because an element inside a macro call body can be placed in a macro expansion
  * multiple times. Returns null if [this] element is not inside a macro call body, or the macro

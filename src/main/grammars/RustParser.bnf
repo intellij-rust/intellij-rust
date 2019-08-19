@@ -1449,6 +1449,7 @@ private BlockElement_recover ::= !('}' | Item_first | Expr_first | let | ';')
 
 Stmt ::= LetDecl | EmptyStmt | never ';' {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
+  mixin = "org.rust.lang.core.psi.ext.RsStmtMixin"
 }
 
 ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper) {
