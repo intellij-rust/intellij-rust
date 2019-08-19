@@ -1644,6 +1644,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<i32>
     """)
 
+    fun `test default type argument is used in expression context`() = testExpr("""
+        struct S<A, B=()>(A, B);
+        impl<T> S<T, ()> {
+            fn new() -> Self { unimplemented!() }
+        }
+        fn main() {
+            let s = S::<i32>::new();
+            s;
+        } //^ S<i32, ()>
+    """)
+
     fun `test default type argument is not used in pat context`() = testExpr("""
         struct S<T = X>(T);
         struct X;

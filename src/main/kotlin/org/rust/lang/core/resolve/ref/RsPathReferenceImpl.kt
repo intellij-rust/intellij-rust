@@ -139,18 +139,22 @@ fun <T: RsElement> instantiatePathGenerics(
     }
 
     val parent = path.parent
+
     // Generic arguments are optional in expression context, e.g.
     // `let a = Foo::<u8>::bar::<u16>();` can be written as `let a = Foo::bar();`
     // if it is possible to infer `u8` and `u16` during type inference
     val areOptionalArgs = parent is RsExpr || parent is RsPath && parent.parent is RsExpr
+
     val typeSubst = element.typeParameters.withIndex().associate { (i, param) ->
         val paramTy = TyTypeParameter.named(param)
-        val value = typeArguments?.getOrNull(i) ?: if (!areOptionalArgs) {
-            // Args aren't optional and aren't present, so use either default argument
-            // from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
-            param.typeReference?.type ?: TyUnknown
-        } else {
+        val value = typeArguments?.getOrNull(i) ?: if (areOptionalArgs && typeArguments == null) {
+            // Args are optional and turbofish is not presend. E.g. `Vec::new()`
+            // Let the type inference engine infer a type of the type parameter
             paramTy
+        } else {
+            // Args aren't optional, and some args/turbofish aren't present OR not optional and turbofis is present.
+            // Use either default argument from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
+            param.typeReference?.type ?: TyUnknown
         }
         paramTy to value
     }
