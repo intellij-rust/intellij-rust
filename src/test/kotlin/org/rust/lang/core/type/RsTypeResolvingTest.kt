@@ -7,7 +7,9 @@ package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
+import org.rust.ide.presentation.textWithAliasNames
 import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.type.RsTypeResolvingTest.RenderMode.*
 import org.rust.lang.core.types.type
 
 class RsTypeResolvingTest : RsTypificationTestBase() {
@@ -293,28 +295,28 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
     fun `test primitive str ref with lifetime`() = testType("""
         type T = &'static str;
                 //^ &'static str
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test str ref with lifetime`() = testType("""
         type T<'a> = &'a str;
                     //^ &'a str
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test str mut ref with lifetime`() = testType("""
         type T<'a> = &'a mut str;
                     //^ &'a mut str
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test struct with lifetime`() = testType("""
         struct Struct<'a> {
             field: &'a i32,
         }         //^ &'a i32
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test function with lifetime`() = testType("""
         fn id<'a>(x: &'a str) -> &'a str { x }
                     //^ &'a str
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test impl trait with lifetime`() = testType("""
         trait Trait<'a> {
@@ -326,22 +328,22 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                      //^ &'b str
             }
         }
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test deep generic struct with lifetime`() = testType("""
         struct Struct<'a, T>(&'a Struct<'a, Struct<'a, &'a str>>);
                             //^ &'a Struct<'a, Struct<'a, &'a str>>
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test deep generic struct with static lifetime`() = testType("""
         struct Struct<'a, T>(&'static Struct<'static, Struct<'static, &'a str>>);
                             //^ &'static Struct<'static, Struct<'static, &'a str>>
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test deep generic struct with undeclared lifetime`() = testType("""
         struct Struct<'a, T>(&'b Struct<'b, Struct<'b, &'a str>>);
                             //^ &Struct<'_, Struct<'_, &'a str>>
-    """, renderLifetimes = true)
+    """, WITH_LIFETIMES)
 
     fun `test no infinite recursion on "impl Self 1"`() = testType("""
         impl Self {}
@@ -391,18 +393,43 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
                //^ u8
     """)
 
+    fun `test render alias name`() = testType("""
+        struct S;
+        type Foo = S;
+        type Bar = Foo;
+                 //^ Foo
+    """, WITH_ALIAS_NAMES)
+
+    fun `test render alias name with generics`() = testType("""
+        struct S<A, B>(A, B);
+        type Foo<T> = S<T, u8>;
+        type Bar = Foo<i32>;
+                 //^ Foo<i32>
+    """, WITH_ALIAS_NAMES)
+
     /**
      * Checks the type of the element in [code] pointed to by `//^` marker.
      */
-    private fun testType(@Language("Rust") code: String, renderLifetimes: Boolean = false) {
+    private fun testType(
+        @Language("Rust") code: String,
+        renderMode: RenderMode = DEFAULT
+    ) {
         InlineFile(code)
         val (typeAtCaret, expectedType) = findElementAndDataInEditor<RsTypeReference>()
 
         val ty = typeAtCaret.type
-        val renderedTy = if (renderLifetimes) ty.insertionSafeTextWithLifetimes else ty.toString()
+        val renderedTy = when (renderMode) {
+            DEFAULT -> ty.toString()
+            WITH_LIFETIMES -> ty.insertionSafeTextWithLifetimes
+            WITH_ALIAS_NAMES -> ty.textWithAliasNames
+        }
         check(renderedTy == expectedType) {
             "$renderedTy != $expectedType"
         }
+    }
+
+    private enum class RenderMode {
+        DEFAULT, WITH_LIFETIMES, WITH_ALIAS_NAMES
     }
 }
 
