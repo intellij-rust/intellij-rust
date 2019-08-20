@@ -1006,6 +1006,9 @@
             <reference id="Cargo.RunCargoCommand"/>
             <reference id="Cargo.RunExternalLinter"/>
             <reference id="Cargo.RustfmtCargoProject"/>
+            <separator/>
+            <reference id="ExpandAll"/>
+            <reference id="CollapseAll"/>
         </group>
 
     </actions>
