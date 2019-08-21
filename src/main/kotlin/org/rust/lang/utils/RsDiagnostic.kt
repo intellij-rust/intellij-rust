@@ -1110,17 +1110,18 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "Enum variant pattern does not correspond to its declaration: `$declaration`",
+                "Enum variant pattern does not correspond to its declaration: `${escapeString(declaration)}`",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
     }
+
     class MissingFieldsInEnumVariantPattern(pat: RsPat, private val declaration: String) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
                 E0027,
-                "Enum variant pattern does not correspond to its declaration: `$declaration`",
+                "Enum variant pattern does not correspond to its declaration: `${escapeString(declaration)}`",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
@@ -1131,7 +1132,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0027,
-                "Struct pattern does not correspond to its declaration: `$declaration`",
+                "Struct pattern does not correspond to its declaration: `${escapeString(declaration)}`",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
@@ -1142,7 +1143,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "Tuple struct pattern does not correspond to its declaration: `$declaration`",
+                "Tuple struct pattern does not correspond to its declaration: `${escapeString(declaration)}`",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
