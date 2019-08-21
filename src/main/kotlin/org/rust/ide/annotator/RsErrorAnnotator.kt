@@ -113,7 +113,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkRsPatTupleStruct(holder: AnnotationHolder, patTupleStruct: RsPatTupleStruct) {
         val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
-        val bodyFields = patTupleStruct.childrenOfType<RsPatIdent>()
+        val bodyFields = patTupleStruct.patList
         if (bodyFields.size < declaration.fields.size && patTupleStruct.dotdot == null) {
             if (declaration.elementType == RsElementTypes.ENUM_VARIANT) {
                 RsDiagnostic.MissingFieldsInEnumVariantTuplePattern(patTupleStruct, declaration.text).addToHolder(holder)
