@@ -58,7 +58,6 @@ fun Project.buildProject() {
                 ?: false
             if (allTargets) add("--all-targets")
         }
-        if (settings.useOffline) add("-Zoffline")
     }
 
     // Initialize run content manager

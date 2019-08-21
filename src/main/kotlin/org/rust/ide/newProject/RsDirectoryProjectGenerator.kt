@@ -41,7 +41,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
 
     override fun generateProject(project: Project, baseDir: VirtualFile, data: ConfigurationData, module: Module) {
         val (settings, createBinary) = data
-        val generatedFiles = settings.toolchain?.rawCargo()?.init(module, baseDir, createBinary) ?: return
+        val generatedFiles = settings.toolchain?.rawCargo()?.init(project, module, baseDir, createBinary) ?: return
 
         // Open new files
         if (!isHeadlessEnvironment) {

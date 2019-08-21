@@ -139,7 +139,7 @@ abstract class RsAsyncRunner(
         val cargo = state.cargo()
 
         val processForUserOutput = ProcessOutput()
-        val processForUser = RsKillableColoredProcessHandler(cargo.toColoredCommandLine(command))
+        val processForUser = RsKillableColoredProcessHandler(cargo.toColoredCommandLine(project, command))
 
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
@@ -168,7 +168,7 @@ abstract class RsAsyncRunner(
                             }
 
                             val processForJson = CapturingProcessHandler(
-                                cargo.toGeneralCommandLine(command.prependArgument("--message-format=json"))
+                                cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
                             )
                             val output = processForJson.runProcessWithProgressIndicator(indicator)
                             if (output.isCancelled || output.exitCode != 0) {

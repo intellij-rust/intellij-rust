@@ -53,7 +53,7 @@ class RsCreateCrateAction : RunCargoCommandActionBase(CargoIcons.ICON) {
         val targetDir = runWriteAction {
             root.createChildDirectory(this, name)
         }
-        cargo.init(project, targetDir, binary, "none")
+        cargo.init(project, project, targetDir, binary, "none")
 
         val manifest = targetDir.findChild(RustToolchain.CARGO_TOML)
         manifest?.let {

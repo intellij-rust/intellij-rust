@@ -92,7 +92,6 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
                     ?: false
                 if (allTargets) add("--all-targets")
             }
-            if (settings.useOffline) add("-Zoffline")
         }
 
         return cargoProjects.mapNotNull { cargoProject ->
