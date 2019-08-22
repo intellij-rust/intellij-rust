@@ -44,7 +44,7 @@ class CargoArgsParser private constructor(
         val (_, maxArgsCount) = optionsToArgsCountRange.getOrDefault(option, OptionArgsCountRange.ZERO)
         return cargoArgs.asSequence()
             .drop(optionIdx + 1)
-            .takeWhile { !OPTION_NAME_RE.matches(it) }
+            .takeWhile { it != "--" && !OPTION_NAME_RE.matches(it) }
             .take(maxArgsCount)
             .count()
     }
