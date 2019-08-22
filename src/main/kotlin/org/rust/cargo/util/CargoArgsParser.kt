@@ -41,14 +41,12 @@ class CargoArgsParser private constructor(
     private fun getActualOptionArgsCount(optionIdx: Int): Int {
         val option = cargoArgs[optionIdx]
         // Unknown options are assumed to be the flagging options
-        val (minArgsCount, maxArgsCount) = optionsToArgsCountRange.getOrDefault(option, OptionArgsCountRange.ZERO)
-        val optionArgsCount = cargoArgs.asSequence()
+        val (_, maxArgsCount) = optionsToArgsCountRange.getOrDefault(option, OptionArgsCountRange.ZERO)
+        return cargoArgs.asSequence()
             .drop(optionIdx + 1)
             .takeWhile { !OPTION_NAME_RE.matches(it) }
             .take(maxArgsCount)
             .count()
-        check(optionArgsCount >= minArgsCount) { "Too few arguments for option `$option`" }
-        return optionArgsCount
     }
 
     companion object {
