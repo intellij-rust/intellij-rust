@@ -703,6 +703,14 @@
             <className>org.rust.ide.intentions.AddStructFieldsPatIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.AddStructFieldsLiteralIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.AddStructFieldsLiteralRecursiveIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 

@@ -8,11 +8,32 @@ package org.rust.ide.utils
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.rust.ide.annotator.calculateMissingFields
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
+
+fun addMissingFieldsToStructLiteral(
+    factory: RsPsiFactory,
+    editor: Editor?,
+    structLiteral: RsStructLiteral,
+    recursive: Boolean = false
+) {
+    val declaration = structLiteral.path.reference.deepResolve() as? RsFieldsOwner ?: return
+    val body = structLiteral.structLiteralBody
+    val fieldsToAdd = calculateMissingFields(body, declaration)
+    val defaultValueBuilder = RsDefaultValueBuilder(declaration.knownItems, body.containingMod, factory, recursive)
+    val addedFields = defaultValueBuilder.fillStruct(
+        body,
+        declaration.fields,
+        fieldsToAdd,
+        RsDefaultValueBuilder.getVisibleBindings(structLiteral)
+    )
+    editor?.buildAndRunTemplate(body, addedFields.mapNotNull { it.expr?.createSmartPointer() })
+}
 
 fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
     val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
