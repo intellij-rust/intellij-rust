@@ -742,7 +742,7 @@
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
 
-        <registryKey key="cargo.build.tool.window.enabled" defaultValue="true"
+        <registryKey key="cargo.build.tool.window.enabled" defaultValue="false"
                      description="Enable Cargo tasks to use Build Tool Window"/>
 
         <!-- Icon Provider -->
