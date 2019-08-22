@@ -253,13 +253,6 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
 
 fun processExternCrateResolveVariants(
     element: RsElement,
-    isCompletion: Boolean,
-    processor: RsResolveProcessor
-): Boolean = processExternCrateResolveVariants(element, isCompletion, !isCompletion, processor)
-
-fun processExternCrateResolveVariants(
-    element: RsElement,
-    isCompletion: Boolean,
     withSelf: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
@@ -269,7 +262,6 @@ fun processExternCrateResolveVariants(
 
     val visitedDeps = mutableSetOf<String>()
     fun processPackage(pkg: CargoWorkspace.Package, dependencyName: String? = null): Boolean {
-        if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
         val libTarget = pkg.libTarget ?: return false
         // When crate depends on another version of the same crate
         // we shouldn't add current package into resolve/completion results
@@ -277,7 +269,7 @@ fun processExternCrateResolveVariants(
 
         if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
         visitedDeps += pkg.name
-        return processor.lazy(dependencyName ?: libTarget.normName) {
+        return processor.lazyExternCrate(dependencyName ?: libTarget.normName) {
             libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
         }
     }
@@ -317,7 +309,7 @@ fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
         else -> name
     }
     var found: RsFile? = null
-    processExternCrateResolveVariants(context, false) {
+    processExternCrateResolveVariants(context, withSelf = true) {
         if (it.name == refinedName) {
             found = it.element as? RsFile
             true
@@ -505,7 +497,7 @@ private fun processUnqualifiedPathResolveVariants(
                 val result = if (crate == "self") {
                     if (crateRoot != null) processor(referenceName, crateRoot) else false
                 } else {
-                    processExternCrateResolveVariants(path, false) {
+                    processExternCrateResolveVariants(path, withSelf = true) {
                         if (it.name == crate) processor.lazy(referenceName) { it.element } else false
                     }
                 }
@@ -544,9 +536,9 @@ private fun processUnqualifiedPathResolveVariants(
             false
         }
 
-        isExternCrate -> processExternCrateResolveVariants(path, isCompletion, processor)
+        isExternCrate -> processExternCrateResolveVariants(path, withSelf = false, processor = processor)
 
-        else -> processNestedScopesUpwards(path, ns, isCompletion, processor)
+        else -> processNestedScopesUpwards(path, ns, processor)
     }
 }
 
@@ -688,7 +680,7 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
 fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
     val hygieneFilter = makeHygieneFilter(place)
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
-        processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter, ItemProcessingMode.WITH_PRIVATE_IMPORTS) { v ->
+        processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter) { v ->
             val el = v.element
             if (el is RsPatBinding) processor(el)
             false
@@ -1256,7 +1248,6 @@ private fun processLexicalDeclarations(
     cameFrom: PsiElement,
     ns: Set<Namespace>,
     hygieneFilter: (RsPatBinding) -> Boolean,
-    ipm: ItemProcessingMode,
     processor: RsResolveProcessor
 ): Boolean {
     testAssert { cameFrom.context == scope }
@@ -1288,6 +1279,7 @@ private fun processLexicalDeclarations(
 
     when (scope) {
         is RsMod -> {
+            val ipm = ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
             if (processItemDeclarations(scope, ns, processor, ipm = ipm)) return true
         }
 
@@ -1399,13 +1391,9 @@ private fun processLexicalDeclarations(
     return false
 }
 
-fun processNestedScopesUpwards(scopeStart: RsElement, ns: Set<Namespace>, processor: RsResolveProcessor): Boolean =
-    processNestedScopesUpwards(scopeStart, ns, isCompletion = false, processor = processor)
-
 fun processNestedScopesUpwards(
     scopeStart: RsElement,
     ns: Set<Namespace>,
-    isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
     val hygieneFilter: (RsPatBinding) -> Boolean = if (scopeStart is RsPath && ns == VALUES) {
@@ -1416,12 +1404,7 @@ fun processNestedScopesUpwards(
     val prevScope = mutableSetOf<String>()
     val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
         processWithShadowing(prevScope, processor) { shadowingProcessor ->
-            val ipm = when {
-                scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
-                isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
-                else -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES
-            }
-            processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, ipm, shadowingProcessor)
+            processLexicalDeclarations(scope, cameFrom, ns, hygieneFilter, shadowingProcessor)
         }
     }
     if (stop) return true

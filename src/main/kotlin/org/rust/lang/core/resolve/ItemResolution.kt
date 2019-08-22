@@ -165,10 +165,8 @@ fun processItemDeclarations(
         // See https://blog.rust-lang.org/2018/10/25/Rust-1.30.0.html#module-system-improvements
         // See https://github.com/rust-lang/rust/pull/54404/
         val result = processWithShadowing(directlyDeclaredNames, processor) { shadowingProcessor ->
-            val isCompletion = ipm == ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
             processExternCrateResolveVariants(
                 scope,
-                isCompletion,
                 // We don't want to process `self` as a crate root in this context b/c `self` should be
                 // resolved to current module (processed on the upper level)
                 withSelf = false,
@@ -275,8 +273,7 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
 enum class ItemProcessingMode(val withExternCrates: Boolean) {
     WITHOUT_PRIVATE_IMPORTS(false),
     WITH_PRIVATE_IMPORTS(false),
-    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
-    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION(true);
+    WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true);
 
     val cacheKey: Key<CachedValue<List<ScopeEntry>>> = Key.create("CACHED_ITEM_DECLS_$name")
 }

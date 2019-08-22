@@ -6,7 +6,10 @@
 package org.rust.lang.core.completion
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
@@ -16,6 +19,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
+import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.util.AutoInjectedCrates.PROC_MACRO
+import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.ImportCandidate
 import org.rust.ide.inspections.import.ImportContext
@@ -80,7 +86,6 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         collectCompletionVariants(result, context) {
             when (element) {
                 is RsAssocTypeBinding -> processAssocTypeVariants(element, it)
-                is RsExternCrateItem -> processExternCrateResolveVariants(element, true, it)
                 is RsLabel -> processLabelResolveVariants(element, it)
                 is RsLifetime -> processLifetimeResolveVariants(element, it)
                 is RsMacroReference -> processMacroReferenceVariants(element, it)
@@ -88,6 +93,10 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 is RsPatBinding -> processPatBindingResolveVariants(element, true, it)
                 is RsStructLiteralField -> processStructLiteralFieldResolveVariants(element, true, it)
                 is RsPath -> processPathVariants(element, processedPathNames, it)
+
+                is RsExternCrateItem -> {
+                    processExternCrateResolveVariants(element, withSelf = false, processor = filterStdExternCrates(element, it))
+                }
             }
         }
     }
@@ -110,11 +119,14 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                     filterAssocTypes(
                         element,
                         filterCompletionVariantsByVisibility(
+                            element.containingMod,
                             filterPathCompletionVariantsByTraitBounds(
-                                addProcessedPathName(processor, processedPathNames),
-                                lookup
-                            ),
-                            element.containingMod
+                                lookup,
+                                filterStdExternCrates(
+                                    element,
+                                    addProcessedPathName(processedPathNames, processor)
+                                )
+                            )
                         )
                     )
                 )
@@ -142,8 +154,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             lookup,
             receiverTy,
             filterCompletionVariantsByVisibility(
-                filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy),
-                receiver.containingMod
+                receiver.containingMod,
+                filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy)
             )
         )
     }
@@ -266,8 +278,8 @@ private fun filterAssocTypes(
 }
 
 private fun filterPathCompletionVariantsByTraitBounds(
-    processor: RsResolveProcessor,
-    lookup: ImplLookup
+    lookup: ImplLookup,
+    processor: RsResolveProcessor
 ): RsResolveProcessor {
     val cache = hashMapOf<TraitImplSource, Boolean>()
     return fun(it: ScopeEntry): Boolean {
@@ -309,6 +321,34 @@ private fun filterMethodCompletionVariantsByTraitBounds(
         if (canEvaluate) return processor(it)
 
         return false
+    }
+}
+
+private fun filterStdExternCrates(
+    element: RsReferenceElement,
+    processor: RsResolveProcessor
+): RsResolveProcessor {
+    if (element !is RsExternCrateItem && (element !is RsPath || element.path != null || element.typeQual != null)) {
+        return processor
+    }
+
+    val crateRoot = element.crateRoot as? RsFile
+    val attributes = crateRoot?.attributes ?: RsFile.Attributes.NONE
+    val completeStd = element is RsPath && crateRoot?.isEdition2018 == true
+    val completeProcMacro = crateRoot?.containingCargoTarget?.isProcMacro == true
+
+    return fun(e: ScopeEntry): Boolean {
+        if (!e.isExternCrateEntry) return processor(e)
+        val el = e.element ?: return false
+        if (el.containingCargoPackage?.origin == PackageOrigin.STDLIB) {
+            when (attributes) {
+                RsFile.Attributes.NONE -> if ((e.name != STD || !completeStd) && (e.name != PROC_MACRO || !completeProcMacro)) return false
+                RsFile.Attributes.NO_STD -> Unit
+                RsFile.Attributes.NO_CORE -> return false
+            }
+        }
+
+        return processor(e)
     }
 }
 
@@ -359,8 +399,8 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
 }
 
 private fun addProcessedPathName(
-    processor: RsResolveProcessor,
-    processedPathNames: MutableSet<String>
+    processedPathNames: MutableSet<String>,
+    processor: RsResolveProcessor
 ): RsResolveProcessor = fun(it: ScopeEntry): Boolean {
     if (it.element != null) {
         processedPathNames.add(it.name)

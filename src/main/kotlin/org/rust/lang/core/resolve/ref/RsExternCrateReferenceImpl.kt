@@ -17,7 +17,9 @@ class RsExternCrateReferenceImpl(
 ) : RsReferenceCached<RsExternCrateItem>(externCrate) {
 
     override fun resolveInner(): List<RsElement> =
-        collectResolveVariants(element.referenceName) { processExternCrateResolveVariants(element, false, it) }
+        collectResolveVariants(element.referenceName) {
+            processExternCrateResolveVariants(element, withSelf = true, processor = it)
+        }
 
     override fun isReferenceTo(element: PsiElement): Boolean =
         element is RsFile && super.isReferenceTo(element)
