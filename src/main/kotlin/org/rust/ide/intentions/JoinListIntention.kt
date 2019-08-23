@@ -5,13 +5,12 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsValueArgumentList
-import org.rust.lang.core.psi.RsValueParameter
-import org.rust.lang.core.psi.RsValueParameterList
+import com.intellij.psi.PsiWhiteSpace
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
@@ -19,7 +18,9 @@ import org.rust.lang.core.psi.ext.startOffset
 abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
     listClass: Class<TList>,
     elementClass: Class<TElement>,
-    intentionText: String
+    intentionText: String,
+    private val prefix: String = "",
+    private val suffix: String = ""
 ) : ListIntentionBase<TList, TElement>(listClass, elementClass, intentionText) {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): TList? {
         val list = element.listContext ?: return null
@@ -33,12 +34,17 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
     override fun invoke(project: Project, editor: Editor, ctx: TList) {
         val document = editor.document
         val elements = ctx.elements
+        nextBreak(elements.last())?.replace(prefix, document)
+        elements.dropLast(1).asReversed().forEach { nextBreak(it)?.replace(" ", document) }
+        prevBreak(elements.first())?.replace(suffix, document)
+    }
 
-        nextBreak(elements.last())?.let { document.deleteString(it.startOffset, it.endOffset) }
-        elements.dropLast(1).asReversed().forEach {
-            nextBreak(it)?.let { document.replaceString(it.startOffset, it.endOffset, " ") }
+    private fun PsiWhiteSpace.replace(replaceString: String, document: Document) {
+        if (replaceString.isEmpty()) {
+            document.deleteString(startOffset, endOffset)
+        } else {
+            document.replaceString(startOffset, endOffset, replaceString)
         }
-        prevBreak(elements.first())?.let { document.deleteString(it.startOffset, it.endOffset) }
     }
 }
 
@@ -52,4 +58,12 @@ class JoinArgumentListIntention : JoinListIntentionBase<RsValueArgumentList, RsE
     RsValueArgumentList::class.java,
     RsExpr::class.java,
     "Put arguments on one line"
+)
+
+class JoinFieldListIntention : JoinListIntentionBase<RsBlockFields, RsNamedFieldDecl>(
+    RsBlockFields::class.java,
+    RsNamedFieldDecl::class.java,
+    "Put fields on one line",
+    prefix = " ",
+    suffix = " "
 )

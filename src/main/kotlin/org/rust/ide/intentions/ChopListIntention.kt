@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsValueArgumentList
-import org.rust.lang.core.psi.RsValueParameter
-import org.rust.lang.core.psi.RsValueParameterList
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -64,4 +61,10 @@ class ChopArgumentListIntention : ChopListIntentionBase<RsValueArgumentList, RsE
     RsValueArgumentList::class.java,
     RsExpr::class.java,
     "Put arguments on separate lines"
+)
+
+class ChopFieldListIntention : ChopListIntentionBase<RsBlockFields, RsNamedFieldDecl>(
+    RsBlockFields::class.java,
+    RsNamedFieldDecl::class.java,
+    "Put fields on separate lines"
 )
