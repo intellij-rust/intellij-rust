@@ -672,6 +672,14 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.ChopFieldListIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.JoinFieldListIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.InvertIfIntention</className>
             <category>Rust</category>
         </intentionAction>
