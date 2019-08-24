@@ -68,3 +68,9 @@ class ChopFieldListIntention : ChopListIntentionBase<RsBlockFields, RsNamedField
     RsNamedFieldDecl::class.java,
     "Put fields on separate lines"
 )
+
+class ChopVariantListIntention : ChopListIntentionBase<RsEnumBody, RsEnumVariant>(
+    RsEnumBody::class.java,
+    RsEnumVariant::class.java,
+    "Put variants on separate lines"
+)
