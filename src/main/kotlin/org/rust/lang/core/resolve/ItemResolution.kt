@@ -178,7 +178,7 @@ fun processItemDeclarations(
             // BACKCOMPAT 2019.1
             val rootQualifier = generateSequence(basePath) { it.qualifier }.drop(1).lastOrNull()
             if (rootQualifier != null) {
-                guard.doPreventingRecursion(rootQualifier, false) { basePath.reference.resolve() }
+                guard.doPreventingRecursion(rootQualifier, memoize = false) { basePath.reference.resolve() }
             } else {
                 basePath.reference.resolve()
             }
@@ -191,7 +191,7 @@ fun processItemDeclarations(
                 { it.name !in directlyDeclaredNames && originalProcessor(it) },
                 withPrivateImports = basePath != null && isSuperChain(basePath)
             )
-        })
+        }, memoize = false)
         if (found == true) return true
     }
 
