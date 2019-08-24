@@ -7,7 +7,7 @@ environment:
   # use the most aggressive compressing because .gradle is HUGE
   APPVEYOR_CACHE_ENTRY_ZIP_ARGS: -t7z -m0=lzma2 -mx=9
   JAVA_HOME: C:\Program Files\Java\jdk1.8.0
-  RUST_VERSION: 1.36.0
+  RUST_VERSION: 1.37.0
   JAVA_OPTS: -Xmx2g
   RUST_SRC_WITH_SYMLINK: C:\Users\appveyor\.rust-src
 
