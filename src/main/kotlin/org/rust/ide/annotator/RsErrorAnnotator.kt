@@ -103,11 +103,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.ExtraFieldInStructPattern(it).addToHolder(holder)
         }
         if (missingFields.isNotEmpty() && patStruct.dotdot == null) {
-            if (declaration.elementType == RsElementTypes.ENUM_VARIANT) {
-                RsDiagnostic.MissingFieldsInEnumVariantPattern(patStruct, declaration.text).addToHolder(holder)
-            } else {
-                RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration.text).addToHolder(holder)
-            }
+            RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration).addToHolder(holder)
         }
     }
 
@@ -115,11 +111,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val bodyFields = patTupleStruct.patList
         if (bodyFields.size < declaration.fields.size && patTupleStruct.dotdot == null) {
-            if (declaration.elementType == RsElementTypes.ENUM_VARIANT) {
-                RsDiagnostic.MissingFieldsInEnumVariantTuplePattern(patTupleStruct, declaration.text).addToHolder(holder)
-            } else {
-                RsDiagnostic.MissingFieldsInTupleStructPattern(patTupleStruct, declaration.text).addToHolder(holder)
-            }
+            RsDiagnostic.MissingFieldsInTuplePattern(patTupleStruct, declaration).addToHolder(holder)
         } else if (bodyFields.size > declaration.fields.size) {
             RsDiagnostic.ExtraFieldInTupleStructPattern(
                 patTupleStruct,

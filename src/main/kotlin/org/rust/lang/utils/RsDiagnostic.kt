@@ -1105,45 +1105,27 @@ sealed class RsDiagnostic(
             )
     }
 
-    class MissingFieldsInEnumVariantTuplePattern(pat: RsPat, private val declaration: String) : RsDiagnostic(pat) {
+    class MissingFieldsInTuplePattern(pat: RsPat, private val declaration: RsFieldsOwner) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
+            val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Tuple struct"
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "Enum variant pattern does not correspond to its declaration: `${escapeString(declaration)}`",
+                // TODO: provide number of expected/actual fields
+                "$itemType pattern does not correspond to its declaration",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
     }
 
-    class MissingFieldsInEnumVariantPattern(pat: RsPat, private val declaration: String) : RsDiagnostic(pat) {
+    class MissingFieldsInStructPattern(pat: RsPat, private val declaration: RsFieldsOwner) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
+            val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Struct"
             return PreparedAnnotation(
                 ERROR,
                 E0027,
-                "Enum variant pattern does not correspond to its declaration: `${escapeString(declaration)}`",
-                fixes = listOf(AddStructFieldsPatFix(element))
-            )
-        }
-    }
-
-    class MissingFieldsInStructPattern(pat: RsPat, private val declaration: String) : RsDiagnostic(pat) {
-        override fun prepare(): PreparedAnnotation {
-            return PreparedAnnotation(
-                ERROR,
-                E0027,
-                "Struct pattern does not correspond to its declaration: `${escapeString(declaration)}`",
-                fixes = listOf(AddStructFieldsPatFix(element))
-            )
-        }
-    }
-
-    class MissingFieldsInTupleStructPattern(pat: RsPat, private val declaration: String) : RsDiagnostic(pat) {
-        override fun prepare(): PreparedAnnotation {
-            return PreparedAnnotation(
-                ERROR,
-                E0023,
-                "Tuple struct pattern does not correspond to its declaration: `${escapeString(declaration)}`",
+                // TODO: provide name of missing fields
+                "$itemType pattern does not correspond to its declaration",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
