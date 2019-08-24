@@ -2777,7 +2777,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         struct Foo (i32, i32, i32);
 
         fn main() {
-            let <error descr="Tuple struct pattern does not correspond to its declaration: `struct Foo (i32, i32, i32);` [E0023]">Foo (a, b)</error> = foo;
+            let <error descr="Tuple struct pattern does not correspond to its declaration [E0023]">Foo (a, b)</error> = foo;
         }
     """)
 
@@ -2797,11 +2797,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
 
         fn main() {
-            let <error descr="Struct pattern does not correspond to its declaration: `struct Foo {
-            a: i32,
-            b: i32,
-            c: i32,
-        }` [E0027]">Foo { a, b, <error descr="Extra field found in the struct pattern: `d` [E0026]">d</error> }</error> = foo;
+            let <error descr="Struct pattern does not correspond to its declaration [E0027]">Foo { a, b, <error descr="Extra field found in the struct pattern: `d` [E0026]">d</error> }</error> = foo;
         }
     """)
 
@@ -2817,14 +2813,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
-    fun `test wrong generic type field name`() = checkErrors("""
-        struct Foo(Option<Box<Box<Foo>>>);
-
-        fn main() {
-            let <error descr="Tuple struct pattern does not correspond to its declaration: `struct Foo(Option&lt;Box&lt;Box&lt;Foo&gt;&gt;&gt;);` [E0023]">Foo()</error> = foo;
-        }
-    """)
-
     fun `test wrong field name in enum variant pattern`() = checkErrors("""
         enum Foo {
             Bar { quux: i32, spam: i32 },
@@ -2833,8 +2821,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
         fn f(foo: Foo) {
             match foo {
-                <error descr="Enum variant pattern does not correspond to its declaration: `Bar { quux: i32, spam: i32 }` [E0027]">Foo::Bar { quux, <error descr="Extra field found in the struct pattern: `abc` [E0026]">abc</error> }</error> => {},
-                <error descr="Enum variant pattern does not correspond to its declaration: `Baz(i32, i32)` [E0023]">Foo::Baz(a)</error> => {},
+                <error descr="Enum variant pattern does not correspond to its declaration [E0027]">Foo::Bar { quux, <error descr="Extra field found in the struct pattern: `abc` [E0026]">abc</error> }</error> => {},
+                <error descr="Enum variant pattern does not correspond to its declaration [E0023]">Foo::Baz(a)</error> => {},
             }
         }
     """)
