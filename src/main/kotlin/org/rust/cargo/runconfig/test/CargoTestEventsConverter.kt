@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.unescapeStringCharacters
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import com.intellij.util.execution.ParametersListUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allPackages
@@ -64,26 +65,37 @@ class CargoTestEventsConverter(
     }
 
     /** @return true if message successfully processed. */
-    private fun handleStartMessage(text: String): Boolean =
+    private fun handleStartMessage(text: String): Boolean {
+        if (suitesStack.isNotEmpty()) return false
+
         when (converterState) {
             START_MESSAGE -> {
-                converterState = when (text.trim().toLowerCase()) {
-                    "running" -> EXECUTABLE_NAME
-                    "doc-tests" -> DOCTESTS_PACKAGE_NAME
+                val clean = text.trim().toLowerCase()
+                converterState = when {
+                    clean == "running" -> EXECUTABLE_NAME
+                    clean == "doc-tests" -> DOCTESTS_PACKAGE_NAME
+                    TARGET_PATH_PART in text -> {
+                        val executableName = ParametersListUtil.parse(text)
+                            .firstOrNull()
+                            ?.substringAfterLast("/")
+                            ?.substringBeforeLast(".")
+                            ?.takeIf { it.isNotEmpty() }
+                            ?: error("Can't parse the executable name")
+                        suitesStack.add(executableName)
+                        START_MESSAGE
+                    }
                     else -> START_MESSAGE
                 }
-                converterState != START_MESSAGE
             }
             EXECUTABLE_NAME -> {
-                // target/debug/deps/target_name-xxxxxxxxxxxxxxxx[.exe] -> target_name-xxxxxxxxxxxxxxxx
-                val targetNameWithSuffix = text
+                val executableName = text
                     .trim()
                     .substringAfterLast(File.separator)
-                    .substringBefore(" ")
                     .substringBeforeLast(".")
-                suitesStack.add(targetNameWithSuffix)
+                    .takeIf { it.isNotEmpty() }
+                    ?: error("Can't parse the executable name")
+                suitesStack.add(executableName)
                 converterState = START_MESSAGE
-                true
             }
             DOCTESTS_PACKAGE_NAME -> {
                 // package-name -> target_name-#idoctests
@@ -94,9 +106,11 @@ class CargoTestEventsConverter(
                 val targetNameWithSuffix = "${libTargetName ?: packageName}-${doctestPackageCounter++}$DOCTESTS_SUFFIX"
                 suitesStack.add(targetNameWithSuffix)
                 converterState = START_MESSAGE
-                true
             }
         }
+
+        return true
+    }
 
     private fun handleTestMessage(
         jsonObject: JsonObject,
@@ -241,6 +255,9 @@ class CargoTestEventsConverter(
 
     companion object {
         private val PARSER: JsonParser = JsonParser()
+
+        private const val TARGET_PATH_PART: String = "/target/"
+
         private const val ROOT_SUITE: String = "0"
         private const val NAME_SEPARATOR: String = "::"
         private const val DOCTESTS_SUFFIX = "doctests"
