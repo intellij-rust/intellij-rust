@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -30,17 +31,22 @@ interface CargoWorkspace {
 
     val workspaceRootPath: Path?
 
+    val cfgOptions: CfgOptions
+
     val packages: Collection<Package>
     fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
-    fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo? = null): CargoWorkspace
+    fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
     fun withEdition(edition: Edition): CargoWorkspace
+
+    @TestOnly
+    fun withCfgOptions(cfgOptions: CfgOptions): CargoWorkspace
 
     interface Package {
         val contentRoot: VirtualFile?
@@ -58,6 +64,8 @@ interface CargoWorkspace {
         val libTarget: Target? get() = targets.find { it.isLib }
 
         val dependencies: Collection<Dependency>
+
+        val cfgOptions: CfgOptions
 
         val workspace: CargoWorkspace
 
@@ -120,8 +128,8 @@ interface CargoWorkspace {
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): CargoWorkspace =
-            WorkspaceImpl.deserialize(manifestPath, data)
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): CargoWorkspace =
+            WorkspaceImpl.deserialize(manifestPath, data, cfgOptions)
     }
 }
 
@@ -129,7 +137,8 @@ interface CargoWorkspace {
 private class WorkspaceImpl(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
-    packagesData: Collection<CargoWorkspaceData.Package>
+    packagesData: Collection<CargoWorkspaceData.Package>,
+    override val cfgOptions: CfgOptions
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
@@ -141,7 +150,8 @@ private class WorkspaceImpl(
             pkg.targets,
             pkg.source,
             pkg.origin,
-            pkg.edition
+            pkg.edition,
+            cfgOptions
         )
     }
 
@@ -150,7 +160,7 @@ private class WorkspaceImpl(
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? =
         root.applyWithSymlink { targetByCrateRootUrl[it.url] }
 
-    override fun withStdlib(stdlib: StandardLibrary, rustcInfo: RustcInfo?): CargoWorkspace {
+    override fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo?): CargoWorkspace {
         // This is a bit trickier than it seems required.
         // The problem is that workspace packages and targets have backlinks
         // so we have to rebuild the whole workspace from scratch instead of
@@ -163,8 +173,8 @@ private class WorkspaceImpl(
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData() } +
-                stdlib.crates.map { it.asPackageData(rustcInfo) }
+            packages.map { it.asPackageData() } + stdlib.crates.map { it.asPackageData(rustcInfo) },
+            cfgOptions
         )
 
         run {
@@ -189,29 +199,37 @@ private class WorkspaceImpl(
         return result
     }
 
-    @TestOnly
-    override fun withEdition(edition: CargoWorkspace.Edition): CargoWorkspace {
-        val result = WorkspaceImpl(
-            manifestPath,
-            workspaceRootPath,
-            packages.map { pkg ->
-                // Currently, stdlib doesn't use 2018 edition
-                val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
-                pkg.asPackageData(packageEdition)
-            }
-        )
-
-        val oldIdToPackage = packages.associateBy { it.id }
-        val newIdToPackage = result.packages.associateBy { it.id }
-        newIdToPackage.forEach { (id, pkg) ->
-            pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
-                val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
+    private fun withDependenciesOf(other: WorkspaceImpl): CargoWorkspace {
+        val otherIdToPackage = other.packages.associateBy { it.id }
+        val thisIdToPackage = packages.associateBy { it.id }
+        thisIdToPackage.forEach { (id, pkg) ->
+            pkg.dependencies.addAll(otherIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+                val dependencyPackage = thisIdToPackage[pkg.id] ?: return@mapNotNull null
                 DependencyImpl(dependencyPackage, name)
             })
         }
-
-        return result
+        return this
     }
+
+    @TestOnly
+    override fun withEdition(edition: CargoWorkspace.Edition): CargoWorkspace = WorkspaceImpl(
+        manifestPath,
+        workspaceRootPath,
+        packages.map { pkg ->
+            // Currently, stdlib doesn't use 2018 edition
+            val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
+            pkg.asPackageData(packageEdition)
+        },
+        cfgOptions
+    ).withDependenciesOf(this)
+
+    @TestOnly
+    override fun withCfgOptions(cfgOptions: CfgOptions): CargoWorkspace = WorkspaceImpl(
+        manifestPath,
+        workspaceRootPath,
+        packages.map { it.asPackageData() },
+        cfgOptions
+    ).withDependenciesOf(this)
 
     override fun toString(): String {
         val pkgs = packages.joinToString(separator = "") { "    $it,\n" }
@@ -219,7 +237,7 @@ private class WorkspaceImpl(
     }
 
     companion object {
-        fun deserialize(manifestPath: Path, data: CargoWorkspaceData): WorkspaceImpl {
+        fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): WorkspaceImpl {
             // Packages form mostly a DAG. "Why mostly?", you say.
             // Well, a dev-dependency `X` of package `P` can depend on the `P` itself.
             // This is ok, because cargo can compile `P` (without `X`, because dev-deps
@@ -227,7 +245,7 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages)
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions)
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }
@@ -265,7 +283,8 @@ private class PackageImpl(
     targetsData: Collection<CargoWorkspaceData.Target>,
     override val source: String?,
     override var origin: PackageOrigin,
-    override val edition: CargoWorkspace.Edition
+    override val edition: CargoWorkspace.Edition,
+    override val cfgOptions: CfgOptions
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(

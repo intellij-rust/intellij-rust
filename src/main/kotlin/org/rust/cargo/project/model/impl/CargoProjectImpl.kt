@@ -5,6 +5,8 @@
 
 package org.rust.cargo.project.model.impl
 
+import com.google.gson.Gson
+import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -36,6 +38,7 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
@@ -50,6 +53,7 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
@@ -167,7 +171,7 @@ class CargoProjectsServiceImpl(
 
     override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> =
         modifyProjects { doRefresh(project, it) }
-            .thenApply { projects -> projects.map { it as CargoProject } }
+            .thenApply { projects -> projects.map { it } }
 
     override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
         val guessManifest = project.modules
@@ -180,7 +184,7 @@ class CargoProjectsServiceImpl(
         return modifyProjects { projects ->
             if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
-        }.thenApply { projects -> projects.map { it as CargoProject } }
+        }.thenApply { projects -> projects.map { it } }
     }
 
     /**
@@ -236,6 +240,17 @@ class CargoProjectsServiceImpl(
     }
 
     @TestOnly
+    override fun setCfgOptions(cfgOptions: CfgOptions) {
+        modifyProjectsSync { projects ->
+            val updatedProjects = projects.map { project ->
+                val ws = project.workspace?.withCfgOptions(cfgOptions)
+                project.copy(rawWorkspace = ws)
+            }
+            CompletableFuture.completedFuture(updatedProjects)
+        }
+    }
+
+    @TestOnly
     private fun modifyProjectsSync(f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>) {
         modifyProjects(f).get(1, TimeUnit.MINUTES)
     }
@@ -281,8 +296,8 @@ data class CargoProjectImpl(
     private val rawWorkspace: CargoWorkspace? = null,
     private val stdlib: StandardLibrary? = null,
     override val rustcInfo: RustcInfo? = null,
-    override val workspaceStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
-    override val stdlibStatus: CargoProject.UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val workspaceStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
+    override val stdlibStatus: UpdateStatus = UpdateStatus.NeedsUpdate,
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
     override val project get() = projectService.project
@@ -290,7 +305,7 @@ data class CargoProjectImpl(
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy rawWorkspace
-        rawWorkspace.withStdlib(stdlib, rustcInfo)
+        rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
     }
 
     override val presentableName: String
@@ -499,7 +514,7 @@ private fun fetchCargoWorkspace(
         }
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
-            val ws = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
+            val json = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                     val text = event.text.trim { it <= ' ' }
                     if (text.startsWith("Updating") || text.startsWith("Downloading")) {
@@ -507,6 +522,24 @@ private fun fetchCargoWorkspace(
                     }
                 }
             })
+
+            val rawData = try {
+                Gson().fromJson(json, CargoMetadata.Project::class.java)
+            } catch (e: JsonSyntaxException) {
+                throw ExecutionException(e)
+            }
+            val projectDescriptionData = CargoMetadata.clean(rawData)
+            val manifestPath = projectDirectory.resolve("Cargo.toml")
+
+            // Running "cargo rustc -- --print cfg" causes an error when run in a project with multiple targets
+            // error: extra arguments to `rustc` can only be passed to one target, consider filtering
+            // the package by passing e.g. `--lib` or `--bin NAME` to specify a single target
+            // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
+            // but it also compiles the whole project, which is probably not wanted
+            //TODO: This does not query the target specific cfg flags during cross compilation :-(
+            val rawCfgOptions = toolchain.getCfgOptions(projectDirectory) ?: emptyList()
+            val cfgOptions = CfgOptions.parse(rawCfgOptions)
+            val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             ok(ws)
         } catch (e: ExecutionException) {
             err(e.message ?: "failed to run Cargo")
