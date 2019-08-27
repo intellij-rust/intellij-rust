@@ -20,11 +20,13 @@ interface RsFieldsOwner : RsElement, RsNameIdentifierOwner, RsQualifiedNamedElem
 val RsFieldsOwner.fields: List<RsFieldDecl>
     get() = namedFields + positionalFields
 
+/** Returns those named fields that are not disabled by cfg attributes */
 val RsFieldsOwner.namedFields: List<RsNamedFieldDecl>
-    get() = blockFields?.namedFieldDeclList.orEmpty()
+    get() = blockFields?.namedFieldDeclList?.filter { it.isEnabledByCfg }.orEmpty()
 
+/** Returns those positional (tuple) fields that are not disabled by cfg attributes */
 val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
-    get() = tupleFields?.tupleFieldDeclList.orEmpty()
+    get() = tupleFields?.tupleFieldDeclList?.filter { it.isEnabledByCfg }.orEmpty()
 
 /**
  * If some field of a struct/enum is private (not visible from [mod]),
@@ -43,7 +45,8 @@ val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
 fun RsFieldsOwner.canBeInstantiatedIn(mod: RsMod): Boolean =
     fields.all { it.isVisibleFrom(mod) }
 
-val RsFieldsOwner.fieldTypes: List<Ty> get() = fields.mapNotNull { it.typeReference?.type }
+val RsFieldsOwner.fieldTypes: List<Ty>
+    get() = fields.filter { it.isEnabledByCfg }.mapNotNull { it.typeReference?.type }
 
 /**
  * True for:

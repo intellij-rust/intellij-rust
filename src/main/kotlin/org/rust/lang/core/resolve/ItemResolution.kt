@@ -221,6 +221,7 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
 
     // XXX: there are two `cfg`ed `boxed` modules in liballoc, so
     // we apply "first in the namespace wins" heuristic.
+    // TODO fix after enabling #[cfg(...)] evaluation
 
     if (ns.size == 1) {
         // Optimized version for single namespace.
