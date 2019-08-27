@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsErrorAnnotator
@@ -1105,27 +1106,35 @@ sealed class RsDiagnostic(
             )
     }
 
-    class MissingFieldsInTuplePattern(pat: RsPat, private val declaration: RsFieldsOwner) : RsDiagnostic(pat) {
+    class MissingFieldsInTuplePattern(
+        pat: RsPat,
+        private val declaration: RsFieldsOwner,
+        private val expectedAmount: Int,
+        private val actualAmount: Int
+    ) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
             val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Tuple struct"
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                // TODO: provide number of expected/actual fields
-                "$itemType pattern does not correspond to its declaration",
+                "$itemType pattern does not correspond to its declaration: expected $expectedAmount ${pluralize("field", expectedAmount)}, found $actualAmount",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
     }
 
-    class MissingFieldsInStructPattern(pat: RsPat, private val declaration: RsFieldsOwner) : RsDiagnostic(pat) {
+    class MissingFieldsInStructPattern(
+        pat: RsPat,
+        private val declaration: RsFieldsOwner,
+        private val missingFields: List<RsFieldDecl>
+    ) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
             val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Struct"
+            val missingFieldNames = escapeString(missingFields.joinToString(", ") { "`${it.name!!}`" })
             return PreparedAnnotation(
                 ERROR,
                 E0027,
-                // TODO: provide name of missing fields
-                "$itemType pattern does not correspond to its declaration",
+                "$itemType pattern does not mention ${pluralize("field", missingFields.size)} $missingFieldNames",
                 fixes = listOf(AddStructFieldsPatFix(element))
             )
         }
@@ -1150,7 +1159,7 @@ sealed class RsDiagnostic(
             return PreparedAnnotation(
                 ERROR,
                 E0023,
-                "Extra fields found in the tuple struct pattern: Expected $expectedAmount, found $extraFieldsAmount"
+                "Extra fields found in the tuple struct pattern: expected $expectedAmount, found $extraFieldsAmount"
             )
         }
     }

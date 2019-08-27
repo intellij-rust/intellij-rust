@@ -2781,7 +2781,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         struct Foo (i32, i32, i32);
 
         fn main() {
-            let <error descr="Tuple struct pattern does not correspond to its declaration [E0023]">Foo (a, b)</error> = foo;
+            let <error descr="Tuple struct pattern does not correspond to its declaration: expected 3 fields, found 2 [E0023]">Foo (a, b)</error> = foo;
         }
     """)
 
@@ -2789,7 +2789,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         struct Foo (i32, i32, i32);
 
         fn main() {
-            let <error descr="Extra fields found in the tuple struct pattern: Expected 3, found 4 [E0023]">Foo (a, b, c, d)</error> = foo;
+            let <error descr="Extra fields found in the tuple struct pattern: expected 3, found 4 [E0023]">Foo (a, b, c, d)</error> = foo;
         }
     """)
 
@@ -2801,7 +2801,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
 
         fn main() {
-            let <error descr="Struct pattern does not correspond to its declaration [E0027]">Foo { a, b, <error descr="Extra field found in the struct pattern: `d` [E0026]">d</error> }</error> = foo;
+            let <error descr="Struct pattern does not mention field `c` [E0027]">Foo { a, b, <error descr="Extra field found in the struct pattern: `d` [E0026]">d</error> }</error> = foo;
         }
     """)
 
@@ -2825,8 +2825,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
         fn f(foo: Foo) {
             match foo {
-                <error descr="Enum variant pattern does not correspond to its declaration [E0027]">Foo::Bar { quux, <error descr="Extra field found in the struct pattern: `abc` [E0026]">abc</error> }</error> => {},
-                <error descr="Enum variant pattern does not correspond to its declaration [E0023]">Foo::Baz(a)</error> => {},
+                <error descr="Enum variant pattern does not mention fields `quux`, `spam` [E0027]">Foo::Bar { <error descr="Extra field found in the struct pattern: `abc` [E0026]">abc</error> }</error> => {},
+                <error descr="Enum variant pattern does not correspond to its declaration: expected 2 fields, found 1 [E0023]">Foo::Baz(a)</error> => {},
             }
         }
     """)
@@ -2893,6 +2893,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
 
         fn main() {
             let Foo (_, _, _) = foo;
+        }
+    """)
+
+    fun `test error analysis on invalid syntax with no name elements`() = checkErrors("""
+        struct Foo { a: i32,<error>:</error> i32<error> </error> }
+
+        fn main() {
+            let Foo { a, } = foo;
         }
     """)
 }

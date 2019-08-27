@@ -103,21 +103,18 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             RsDiagnostic.ExtraFieldInStructPattern(it).addToHolder(holder)
         }
         if (missingFields.isNotEmpty() && patStruct.dotdot == null) {
-            RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration).addToHolder(holder)
+            RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)
         }
     }
 
     private fun checkRsPatTupleStruct(holder: AnnotationHolder, patTupleStruct: RsPatTupleStruct) {
         val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
-        val bodyFields = patTupleStruct.patList
-        if (bodyFields.size < declaration.fields.size && patTupleStruct.dotdot == null) {
-            RsDiagnostic.MissingFieldsInTuplePattern(patTupleStruct, declaration).addToHolder(holder)
-        } else if (bodyFields.size > declaration.fields.size) {
-            RsDiagnostic.ExtraFieldInTupleStructPattern(
-                patTupleStruct,
-                bodyFields.size ,
-                declaration.fields.size
-            ).addToHolder(holder)
+        val declarationFieldsAmount = declaration.fields.size
+        val bodyFieldsAmount = patTupleStruct.patList.size
+        if (bodyFieldsAmount < declarationFieldsAmount && patTupleStruct.dotdot == null) {
+            RsDiagnostic.MissingFieldsInTuplePattern(patTupleStruct, declaration, declarationFieldsAmount, bodyFieldsAmount).addToHolder(holder)
+        } else if (bodyFieldsAmount > declarationFieldsAmount) {
+            RsDiagnostic.ExtraFieldInTupleStructPattern(patTupleStruct, bodyFieldsAmount, declarationFieldsAmount).addToHolder(holder)
         }
     }
 
