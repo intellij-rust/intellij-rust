@@ -623,8 +623,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }  //^
     """)
 
-    fun `test cyclic dependent imports`() = expect<IllegalStateException> {
-        checkByCode("""
+    fun `test cyclic dependent imports`() = checkByCode("""
         mod a {
             pub use b::*;
 
@@ -640,7 +639,6 @@ class RsUseResolveTest : RsResolveTestBase() {
             pub use self::c::*;
         }
     """)
-    }
 
     fun `test underscore import doesn't bring a name into scope`() = checkByCode("""
         pub mod foo {
