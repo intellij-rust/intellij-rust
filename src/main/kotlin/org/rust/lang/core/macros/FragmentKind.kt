@@ -13,20 +13,20 @@ import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.tokenSetOf
 
-enum class FragmentKind {
-    Ident,
-    Path,
-    Expr,
-    Ty,
-    Pat,
-    Stmt,
-    Block,
-    Item,
-    Meta,
-    Tt,
-    Vis,
-    Literal,
-    Lifetime;
+enum class FragmentKind(private val kind: String) {
+    Ident("ident"),
+    Path("path"),
+    Expr("expr"),
+    Ty("ty"),
+    Pat("pat"),
+    Stmt("stmt"),
+    Block("block"),
+    Item("item"),
+    Meta("meta"),
+    Tt("tt"),
+    Vis("vis"),
+    Literal("literal"),
+    Lifetime("lifetime");
 
     fun parse(builder: PsiBuilder): Boolean {
         return if (this == Ident) {
@@ -84,22 +84,11 @@ enum class FragmentKind {
     }
 
     companion object {
-        fun fromString(s: String): FragmentKind? = when (s) {
-            "ident" -> Ident
-            "path" -> Path
-            "expr" -> Expr
-            "ty" -> Ty
-            "pat" -> Pat
-            "stmt" -> Stmt
-            "block" -> Block
-            "item" -> Item
-            "meta" -> Meta
-            "vis" -> Vis
-            "tt" -> Tt
-            "lifetime" -> Lifetime
-            "literal" -> Literal
-            else -> null
-        }
+        private val fragmentKinds: Map<String, FragmentKind> = values().associateBy { it.kind }
+
+        val kinds: Set<String> = fragmentKinds.keys
+
+        fun fromString(s: String): FragmentKind? = fragmentKinds[s]
 
         /**
          * Some tokens that treated as keywords by our lexer,
