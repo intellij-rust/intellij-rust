@@ -5,9 +5,12 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
+import org.rust.lang.utils.evaluation.CfgEvaluator
+import org.rust.openapiext.isUnitTestMode
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
 
@@ -89,6 +92,8 @@ class QueryAttributes(
             val stub = psi.greenStub
             if (stub != null) return stub.isCfg
         }
+        // TODO: We probably want this optimization also for other items that we query regularly
+
         return hasAttribute("cfg")
     }
 
@@ -152,8 +157,12 @@ class QueryAttributes(
     val deprecatedAttribute: RsMetaItem?
         get() = (attrsByName("deprecated") + attrsByName("rustc_deprecated")).firstOrNull()
 
+    val cfgAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("cfg")
+
     // `#[attributeName = "Xxx"]`
-    private fun getStringAttributes(attributeName: String): Sequence<String?> = attrsByName(attributeName).map { it.value }
+    private fun getStringAttributes(attributeName: String): Sequence<String?> =
+        attrsByName(attributeName).map { it.value }
 
     val metaItems: Sequence<RsMetaItem>
         get() = attributes.mapNotNull { it.metaItem }
@@ -167,4 +176,27 @@ class QueryAttributes(
         "QueryAttributes(${attributes.joinToString { it.text }})"
 }
 
+/**
+ * Checks if there are any #[cfg()] attributes that disable this element
+ *
+ * HACK: do not check on [RsFile] as [RsFile.queryAttributes] would access the PSI
+ */
+val RsDocAndAttributeOwner.isEnabledByCfg: Boolean
+    get() {
+        // TODO: get rid of this registry key when cfg support is done
+        if (!isUnitTestMode && !Registry.`is`("rust.cfg.attributes.enabled")) return true
 
+        // TODO: add cfg to RsFile's stub and remove this line
+        if (this is RsFile) return true
+
+        if (!queryAttributes.hasCfgAttr()) return true
+        val cfgAttributes = queryAttributes.cfgAttributes.takeIf { it.any() } ?: return true
+
+        // TODO: When we open both cargo projects for an application and a library,
+        // this will return the library as containing package.
+        // When the application now requests certain features, which are not enabled by default in the library
+        // we will evaluate features wrongly here
+        val options = containingCargoPackage?.cfgOptions ?: return true
+
+        return CfgEvaluator(options).evaluate(cfgAttributes)
+    }

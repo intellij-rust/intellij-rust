@@ -695,6 +695,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
         if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
+            if (!el.isEnabledByCfg) return
             RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
         }
         if (el.self != null) {
@@ -853,6 +854,7 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursive
         owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.name != null }
+            .filter { it !is RsDocAndAttributeOwner || it.isEnabledByCfg }
             .flatMap { it.namespaced }
             .groupBy { it.first }       // Group by namespace
             .map { entry ->
@@ -861,10 +863,7 @@ private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursive
                     .map { it.second }
                     .groupBy { it.name }
                     .map { it.value }
-                    .filter {
-                        it.size > 1 &&
-                            it.any { !(it is RsDocAndAttributeOwner && it.queryAttributes.hasCfgAttr()) }
-                    }
+                    .filter { it.size > 1 }
                     .flatten()
                     .toSet()
             }
@@ -906,9 +905,8 @@ private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
 private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     val el = path.reference.resolve()
-    if (el is RsDocAndAttributeOwner && el.queryAttributes.hasCfgAttr()) return null
     return when (el) {
-        is RsFieldsOwner -> el.tupleFields?.tupleFieldDeclList?.size?.let { Pair(it, false) }
+        is RsFieldsOwner -> Pair(el.fields.size, false)
         is RsFunction -> {
             val owner = el.owner
             if (owner.isTraitImpl) return null
@@ -922,7 +920,6 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
 
 private fun RsMethodCall.expectedParamsCount(): Pair<Int, Boolean>? {
     val fn = reference.resolve() as? RsFunction ?: return null
-    if (fn.queryAttributes.hasCfgAttr()) return null
     return fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, fn.isVariadic) }
         .takeIf { fn.owner.isInherentImpl }
 }

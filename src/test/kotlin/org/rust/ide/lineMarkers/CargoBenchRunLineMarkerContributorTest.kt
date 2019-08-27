@@ -5,6 +5,7 @@
 
 package org.rust.ide.lineMarkers
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.fileTree
 
 /**
@@ -43,6 +44,7 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
+    @MockAdditionalCfgOptions("test")
     fun `test function in a nested tests module`() = doTestByText("""
         #[cfg(test)]
         mod tests { // - Bench lib::tests

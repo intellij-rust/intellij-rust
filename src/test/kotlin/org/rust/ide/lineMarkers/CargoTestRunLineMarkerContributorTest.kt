@@ -9,6 +9,7 @@ import com.intellij.execution.TestStateStorage
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.test.CargoTestLocator
 import org.rust.fileTree
@@ -56,6 +57,7 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
+    @MockAdditionalCfgOptions("test")
     fun `test function in a nested tests module`() = doTestByText("""
         #[cfg(test)]
         mod tests { // - Test lib::tests

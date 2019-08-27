@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
@@ -54,6 +55,9 @@ interface CargoProjectsService {
 
     @TestOnly
     fun setEdition(edition: CargoWorkspace.Edition)
+
+    @TestOnly
+    fun setCfgOptions(cfgOptions: CfgOptions)
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {

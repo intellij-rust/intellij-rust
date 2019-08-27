@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -56,7 +57,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
     open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(testCargoPackage(contentRoot))
-        return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()))
+        return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, emptyMap()), CfgOptions.DEFAULT)
     }
 
     protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
@@ -97,7 +98,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val stdlib = StandardLibrary.fromFile(stdlib!!)!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, rustcInfo)
+        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT, rustcInfo)
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
@@ -121,7 +122,7 @@ open class WithCustomStdlibRustProjectDescriptor(
     }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace =
-        delegate.testCargoProject(module, contentRoot).withStdlib(stdlib!!)
+        delegate.testCargoProject(module, contentRoot).withStdlib(stdlib!!, CfgOptions.DEFAULT)
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
@@ -194,6 +195,6 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             packages[3].id to setOf(
                 Dependency(packages[7].id)
             )
-        )))
+        )), CfgOptions.DEFAULT)
     }
 }

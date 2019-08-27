@@ -49,6 +49,7 @@ enum class ScopeEvent : ScopeEntry {
  * return `false` to continue search
  */
 typealias RsResolveProcessor = (ScopeEntry) -> Boolean
+
 typealias RsMethodResolveProcessor = (MethodResolveVariant) -> Boolean
 
 fun collectPathResolveVariants(
@@ -63,7 +64,9 @@ fun collectPathResolveVariants(
 
         if (e.name == referenceName) {
             val element = e.element ?: return@f false
-            result += BoundElement(element, e.subst)
+            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfg) {
+                result += BoundElement(element, e.subst)
+            }
         }
         false
     }
@@ -76,7 +79,10 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
 
         if (e.name == referenceName) {
-            result += e.element ?: return@f false
+            val element = e.element ?: return@f false
+            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfg) {
+                result += element
+            }
         }
         false
     }
@@ -92,8 +98,10 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(referenceName: String,
 
         if (e.name == referenceName) {
             // de-lazying. See `RsResolveProcessor.lazy`
-            e.element ?: return@f false
-            result += e
+            val element = e.element ?: return@f false
+            if (element !is RsDocAndAttributeOwner || element.isEnabledByCfg) {
+                result += e
+            }
         }
         false
     }
@@ -120,10 +128,12 @@ fun collectCompletionVariants(
     f { e ->
         val element = e.element ?: return@f false
         if (element is RsFunction && element.isTest) return@f false
-        result.addElement(createLookupElement(
-            scopeEntry = e,
-            context = context
-        ))
+        if (element !is RsDocAndAttributeOwner || element.isEnabledByCfg) {
+            result.addElement(createLookupElement(
+                scopeEntry = e,
+                context = context
+            ))
+        }
         false
     }
 }
@@ -134,7 +144,7 @@ data class SimpleScopeEntry(
     override val subst: Substitution = emptySubstitution
 ) : ScopeEntry
 
-interface AssocItemScopeEntryBase<out T: RsAbstractable> : ScopeEntry {
+interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
     override val element: T
     val selfTy: Ty
     val source: TraitImplSource
