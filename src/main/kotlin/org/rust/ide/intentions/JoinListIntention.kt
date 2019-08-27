@@ -67,3 +67,11 @@ class JoinFieldListIntention : JoinListIntentionBase<RsBlockFields, RsNamedField
     prefix = " ",
     suffix = " "
 )
+
+class JoinVariantListIntention : JoinListIntentionBase<RsEnumBody, RsEnumVariant>(
+    RsEnumBody::class.java,
+    RsEnumVariant::class.java,
+    "Put variants on one line",
+    prefix = " ",
+    suffix = " "
+)
