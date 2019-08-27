@@ -6,6 +6,7 @@
 package org.rust.ide.docs
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
@@ -43,9 +44,10 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("foo")
     fun `test big signature`() = doTest("""
         /// Docs
-        #[cfg(test)]
+        #[cfg(foo)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T>(x: T) -> u32 where T: Clone { 92 }
 
@@ -137,8 +139,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use std::fmt::{Debug, Display};
 
         /// Docs
-        #[cfg(test)]
-        /// More Docs
         pub const unsafe extern "C" fn foo<T, U, V>(x: T) -> u32 where T: Clone,
                                                                        U: Debug,
                                                                        V: Display
@@ -158,8 +158,6 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
         use std::fmt::{Debug, Display};
 
         /// Docs
-        #[cfg(test)]
-        /// More Docs
         pub const unsafe extern "C" fn foo<T, U, V>(
          x: T,
          y: u32,

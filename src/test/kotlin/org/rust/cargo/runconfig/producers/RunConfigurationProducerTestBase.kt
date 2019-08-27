@@ -22,6 +22,7 @@ import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.RsTestBase
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
@@ -223,7 +224,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                         )
                     ),
                     dependencies = emptyMap()
-                )
+                ),
+                CfgOptions.DEFAULT
             )
 
             project.cargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)

@@ -27,6 +27,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -64,6 +65,7 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
 
         setupMockRustcVersion()
         setupMockEdition()
+        setupMockCfgOptions()
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)
@@ -89,6 +91,17 @@ abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCas
     private fun setupMockEdition() {
         val edition = findAnnotationInstance<MockEdition>()?.edition ?: CargoWorkspace.Edition.EDITION_2015
         project.cargoProjects.setEdition(edition)
+    }
+
+    private fun setupMockCfgOptions() {
+        val additionalOptions = findAnnotationInstance<MockAdditionalCfgOptions>()?.options
+            ?.takeIf { it.isNotEmpty() } ?: return
+
+        val allOptions = CfgOptions(
+            CfgOptions.DEFAULT.keyValueOptions,
+            CfgOptions.DEFAULT.nameOptions + additionalOptions
+        )
+        project.cargoProjects.setCfgOptions(allOptions)
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {

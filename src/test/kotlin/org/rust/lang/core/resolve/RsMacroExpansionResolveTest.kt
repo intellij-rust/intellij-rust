@@ -16,7 +16,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test expand item`() = checkByCode("""
         macro_rules! if_std {
             ($ i:item) => (
-                #[cfg(feature = "use_std")]
                 $ i
             )
         }
@@ -38,7 +37,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test expand items star`() = checkByCode("""
         macro_rules! if_std {
             ($ ($ i:item)*) => ($ (
-                #[cfg(feature = "use_std")]
                 $ i
             )*)
         }
@@ -55,12 +53,12 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^
+
     """)
 
     fun `test expand items star with reexport`() = checkByCode("""
         macro_rules! if_std {
             ($ ($ i:item)*) => ($ (
-                #[cfg(feature = "use_std")]
                 $ i
             )*)
         }
@@ -82,7 +80,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test expand items star with reexport from expansion`() = checkByCode("""
         macro_rules! if_std {
             ($ ($ i:item)*) => ($ (
-                #[cfg(feature = "use_std")]
                 $ i
             )*)
         }
@@ -105,7 +102,6 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test expand items star with nested macro calls`() = checkByCode("""
         macro_rules! if_std {
             ($ ($ i:item)*) => ($ (
-                #[cfg(feature = "use_std")]
                 $ i
             )*)
         }

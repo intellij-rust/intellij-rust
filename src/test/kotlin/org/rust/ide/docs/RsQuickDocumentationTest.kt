@@ -114,7 +114,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test complex fn`() = doTest("""
         /// Docs
-        #[cfg(test)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T: Into<String>, F>(t: T, f: F) where F: Ord {}
                                       //^
