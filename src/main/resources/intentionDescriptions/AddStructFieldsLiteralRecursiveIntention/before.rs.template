@@ -1,0 +1,6 @@
+struct Foo { foobar: i32, baz: Bar }
+struct Bar { baz: i32, quux: i32, eggs:i32 }
+fn f() {
+    let foo = Foo { foobar: 0, baz: Bar { baz: 0, quux: 1, eggs: 2}}
+    let bar = Foo { foobar: 1, ..foo }
+}
