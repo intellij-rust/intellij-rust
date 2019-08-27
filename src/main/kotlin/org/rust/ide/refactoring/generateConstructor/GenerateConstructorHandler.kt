@@ -17,6 +17,8 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.isTupleStruct
+import org.rust.lang.core.psi.ext.namedFields
+import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.openapiext.checkWriteAccessAllowed
 
 class GenerateConstructorAction : CodeInsightAction() {
@@ -93,9 +95,9 @@ data class ConstructorArgument(
     companion object {
         fun fromStruct(structItem: RsStructItem): List<ConstructorArgument> {
             return if (structItem.isTupleStruct) {
-                fromTupleList(structItem.tupleFields?.tupleFieldDeclList.orEmpty())
+                fromTupleList(structItem.positionalFields)
             } else {
-                fromFieldList(structItem.blockFields?.namedFieldDeclList.orEmpty())
+                fromFieldList(structItem.namedFields)
             }
         }
 

@@ -9,8 +9,8 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
-import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
+import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -110,5 +110,5 @@ private fun <T : RsReferenceElement> Collection<T>.findDuplicateReferences(): Co
 
 fun calculateMissingFields(expr: RsStructLiteralBody, decl: RsFieldsOwner): List<RsFieldDecl> {
     val declaredFields = expr.structLiteralFieldList.map { it.referenceName }.toSet()
-    return decl.fields.filter { it.name !in declaredFields && !it.queryAttributes.hasCfgAttr() }
+    return decl.fields.filter { it.name !in declaredFields }
 }
