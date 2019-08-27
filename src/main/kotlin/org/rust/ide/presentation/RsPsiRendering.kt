@@ -108,7 +108,7 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Subst
 
         is RsFnPointerType -> {
             append("fn")
-            appendValueParameterListTypes(type.valueParameterList.valueParameterList, subst)
+            appendValueParameterListTypes(type.valueParameters, subst)
             appendRetType(type.retType, subst)
         }
 

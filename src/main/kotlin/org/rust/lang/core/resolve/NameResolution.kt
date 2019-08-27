@@ -1309,7 +1309,7 @@ private fun processLexicalDeclarations(
 
         is RsLambdaExpr -> {
             if (Namespace.Values !in ns) return false
-            for (parameter in scope.valueParameterList.valueParameterList) {
+            for (parameter in scope.valueParameters) {
                 val pat = parameter.pat
                 if (pat != null && processPattern(pat, processor)) return true
             }
