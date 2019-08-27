@@ -15,6 +15,7 @@ class RsCompletionContributor : CompletionContributor() {
 
     init {
         extend(CompletionType.BASIC, RsPrimitiveTypeCompletionProvider.elementPattern, RsPrimitiveTypeCompletionProvider)
+        extend(CompletionType.BASIC, RsFragmentSpecifierCompletionProvider.elementPattern, RsFragmentSpecifierCompletionProvider)
         extend(CompletionType.BASIC, RsCommonCompletionProvider.elementPattern, RsCommonCompletionProvider)
         extend(CompletionType.BASIC, RsDeriveCompletionProvider.elementPattern, RsDeriveCompletionProvider)
         extend(CompletionType.BASIC, AttributeCompletionProvider.elementPattern, AttributeCompletionProvider)
