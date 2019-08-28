@@ -565,8 +565,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test don't import trait assoc function if its import is useless`() = expect<IllegalStateException> {
-    checkAutoImportFixIsUnavailable("""
+    fun `test don't import trait assoc function if its import is useless`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
                 fn bar();
@@ -576,7 +575,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
         }
     """)
-    }
 
     fun `test trait method with self parameter`() = checkAutoImportFixByText("""
         mod foo {
@@ -622,7 +620,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
     """)
 
-    fun `test don't import trait const`() = checkAutoImportFixIsUnavailable("""
+    fun `test don't import trait associated const`() = checkAutoImportFixIsUnavailable("""
         mod foo {
             pub trait Bar {
                 const BAR: i32;
@@ -630,6 +628,39 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
         fn main() {
             <error descr="Unresolved reference: `Bar`">Bar::BAR/*caret*/</error>();
+        }
+    """)
+
+    fun `test trait const containing Self type`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Bar {
+                const C: Self;
+            }
+        }
+        fn main() {
+            <error descr="Unresolved reference: `Bar`">Bar::C/*caret*/</error>;
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            pub trait Bar {
+                const C: Self;
+            }
+        }
+        fn main() {
+            Bar::C/*caret*/;
+        }
+    """)
+
+    fun `test don't import trait associated type`() = checkAutoImportFixIsUnavailable("""
+        mod foo {
+            pub trait Bar {
+                type Item;
+            }
+        }
+        fn main() {
+            let _: <error descr="Unresolved reference: `Bar`">Bar::Item/*caret*/</error>;
         }
     """)
 
@@ -1480,6 +1511,36 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn main() {
             let x = i32::foo/*caret*/(123);
+        }
+    """)
+
+    fun `test import trait default assoc function`() = checkAutoImportFixByText("""
+        mod foo {
+            pub struct S;
+            pub trait Foo {
+                fn foo() {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = <error descr="Unresolved reference: `S`">S::foo/*caret*/</error>();
+        }
+    """, """
+        use foo::S;
+
+        mod foo {
+            pub struct S;
+            pub trait Foo {
+                fn foo() {}
+            }
+
+            impl<T> Foo for T {}
+        }
+
+        fn main() {
+            let x = S::foo/*caret*/();
         }
     """)
 

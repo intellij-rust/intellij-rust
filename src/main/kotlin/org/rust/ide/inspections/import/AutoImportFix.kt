@@ -29,8 +29,13 @@ import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.infer.ResolvedPath
+import org.rust.lang.core.types.infer.TypeVisitor
+import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.inference
+import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.lang.core.types.ty.TyTypeParameter
+import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.runWriteCommandAction
@@ -331,11 +336,16 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             ) ?: return false
             val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!context.namespaceFilter(element)) return false
-            // Looks like it's useless to access trait associated types or constants directly
-            // (i.e. `Trait::CONSTANT`), but associated functions can be used in UFCS
-            val isTraitAssocTypeOrConstant =
-                element !is RsFunction && element is RsAbstractable && element.owner is RsAbstractableOwner.Trait
-            return !isTraitAssocTypeOrConstant
+
+            // Looks like it's useless to access trait associated types directly (i.e. `Trait::Type`),
+            // but methods can be used in UFCS and associated functions or constants can be accessed
+            // it they have `Self` type in a signature
+
+            if (element !is RsAbstractable || element.owner !is RsAbstractableOwner.Trait) return true
+            if (element.canBeAccessedByTraitName) return true
+            if (path.qualifier?.reference?.deepResolve() !is RsTraitItem) return true
+
+            return false
         }
 
         private fun Sequence<ImportCandidate>.filterImportCandidates(
@@ -682,3 +692,30 @@ private val CargoWorkspace.Target.isStd: Boolean
 
 private val CargoWorkspace.Target.isCore: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.CORE
+
+/**
+ * If function or constant is defined in a trait
+ * ```rust
+ * trait Trait {
+ *     fn foo() {}
+ * }
+ * ```
+ * it potentially can be accessed by the trait name `Trait::foo` only if there are `self` parameter or
+ * `Self` type in the signature
+ */
+private val RsAbstractable.canBeAccessedByTraitName: Boolean
+    get() {
+        check(owner is RsAbstractableOwner.Trait)
+        val type = when (this) {
+            is RsFunction -> {
+                if (selfParameter != null) return true
+                type
+            }
+            is RsConstant -> typeReference?.type ?: return false
+            else -> return false
+        }
+        return type.visitWith(object : TypeVisitor {
+            override fun visitTy(ty: Ty): Boolean =
+                if (ty is TyTypeParameter && ty.parameter is TyTypeParameter.Self) true else ty.superVisitWith(this)
+        })
+    }

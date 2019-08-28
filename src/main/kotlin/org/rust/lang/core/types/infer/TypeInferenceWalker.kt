@@ -388,7 +388,7 @@ class RsTypeInferenceWalker(
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
             is RsEnumVariant -> element.parentEnum.declaredType
-            is RsFunction -> element.typeOfValue
+            is RsFunction -> element.type
             is RsConstant -> element.typeReference?.type ?: TyUnknown
             is RsConstParameter -> element.typeReference?.type ?: TyUnknown
             is RsSelfParameter -> element.typeOfValue
@@ -595,7 +595,7 @@ class RsTypeInferenceWalker(
 
         unifySubst(fnSubst, typeParameters)
 
-        val methodType = (callee.element.typeOfValue)
+        val methodType = (callee.element.type)
             .substitute(typeParameters)
             .foldWith(associatedTypeNormalizer) as TyFunction
         if (expected != null && !callee.element.isAsync) ctx.combineTypes(expected, methodType.retType)
@@ -1313,7 +1313,7 @@ private fun RsSelfParameter.typeOfValue(selfType: Ty): Ty {
 
 }
 
-private val RsFunction.typeOfValue: TyFunction
+val RsFunction.type: TyFunction
     get() {
         val paramTypes = mutableListOf<Ty>()
 
