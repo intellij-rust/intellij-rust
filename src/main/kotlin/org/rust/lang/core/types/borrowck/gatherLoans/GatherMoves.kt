@@ -50,7 +50,7 @@ class GatherMoveContext(private val bccx: BorrowCheckContext, private val moveDa
     private fun gatherMove(moveInfo: GatherMoveInfo) {
         val move = getIllegalMoveOrigin(moveInfo.cmt)
         if (move != null) {
-            bccx.reportMoveError(move, moveInfo.movePlace)
+            bccx.reportMoveError(move)
         } else {
             val loanPath = LoanPath.computeFor(moveInfo.cmt) ?: return
             moveData.addMove(loanPath, moveInfo.element, moveInfo.kind)
