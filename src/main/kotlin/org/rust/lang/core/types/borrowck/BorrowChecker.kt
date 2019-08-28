@@ -64,8 +64,8 @@ class BorrowCheckContext(
         }
     }
 
-    fun reportMoveError(from: Cmt, to: MovePlace?) {
-        moveErrors.add(MoveError(from, to))
+    fun reportMoveError(from: Cmt) {
+        moveErrors.add(MoveError(from))
     }
 }
 
@@ -79,4 +79,4 @@ data class BorrowCheckResult(
 
 data class UseOfMovedValueError(val use: RsElement, val move: Move)
 data class UseOfUninitializedVariable(val use: RsElement)
-data class MoveError(val from: Cmt, val to: MovePlace?)
+data class MoveError(val from: Cmt)

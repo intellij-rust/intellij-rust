@@ -497,4 +497,22 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move from non-copy slice`() = checkByText("""
+        struct S;
+        fn main() {
+            let v: Vec<S> = vec![S, S, S];
+            <error descr="Cannot move">if let [a, b, c] = v[..] {}</error>;
+        }
+    """, checkWarn = false)
+
+    /** Issue [#4307](https://github.com/intellij-rust/intellij-rust/issues/4307) */
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error copy slice`() = checkByText("""
+        fn main() {
+            let v: Vec<i32> = vec![1, 2, 3];
+            if let [a, b, c] = v[..] {}
+        }
+    """, checkWarn = false)
 }
