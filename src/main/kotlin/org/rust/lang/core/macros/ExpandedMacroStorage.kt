@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -209,12 +210,13 @@ class ExpandedMacroStorage(val project: Project) {
                     if (data.readInt() != RANGE_MAP_ATTRIBUTE_VERSION) return null
 
                     val sourceFilesSize = data.readInt()
-                    val sourceFiles = ArrayList<SourceFile>(sourceFilesSize)
+                    val serSourceFiles = ArrayList<SerializedSourceFile>(sourceFilesSize)
 
                     val storage = ExpandedMacroStorage(project)
                     for (i in 0 until sourceFilesSize) {
-                        sourceFiles += SourceFile.readFrom(data, storage) ?: continue
+                        serSourceFiles += SerializedSourceFile.readFrom(data)
                     }
+                    val sourceFiles = runReadAction { serSourceFiles.mapNotNull { it.toSourceFile(storage) } }
                     storage.deserialize(sourceFiles)
                     storage
                 }
@@ -491,9 +493,35 @@ class SourceFile(
             infos.forEach { it.writeTo(data) }
         }
     }
+}
+
+private data class SerializedSourceFile(
+    val fileUrl: String,
+    val depth: Int,
+    private var fresh: Boolean,
+    private var modificationStamp: Long,
+    private val serInfos: List<SerializedExpandedMacroInfo>
+) {
+    fun toSourceFile(storage: ExpandedMacroStorage): SourceFile? {
+        checkReadAccessAllowed() // Needed to access VFS
+
+        val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: return null
+        val infos = ArrayList<ExpandedMacroInfo>(serInfos.size)
+        val sf = SourceFile(
+            storage,
+            file,
+            depth,
+            fresh,
+            modificationStamp,
+            infos
+        )
+
+        serInfos.mapNotNullTo(infos) { it.toExpandedMacroInfo(sf) }
+        return sf
+    }
 
     companion object {
-        fun readFrom(data: DataInputStream, storage: ExpandedMacroStorage): SourceFile? {
+        fun readFrom(data: DataInputStream): SerializedSourceFile {
             val fileUrl = data.readUTF()
             val depth = data.readInt()
             val fresh = data.readBoolean()
@@ -501,18 +529,13 @@ class SourceFile(
             val infosSize = data.readInt()
             val serInfos = (0 until infosSize).map { SerializedExpandedMacroInfo.readFrom(data) }
 
-            val file = VirtualFileManager.getInstance().findFileByUrl(fileUrl) ?: return null
-            val infos = ArrayList<ExpandedMacroInfo>(infosSize)
-            val sf = SourceFile(
-                storage,
-                file,
+            return SerializedSourceFile(
+                fileUrl,
                 depth,
                 fresh,
                 modificationStamp,
-                infos
+                serInfos
             )
-            serInfos.mapNotNullTo(infos) { it.toExpandedMacroInfo(sf) }
-            return sf
         }
     }
 }
