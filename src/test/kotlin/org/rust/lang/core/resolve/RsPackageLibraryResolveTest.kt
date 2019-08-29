@@ -951,4 +951,17 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
             s2.foo();
         }      //^ foo.rs
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test re-exported crate via use item without "extern crate" 2018 edition`() = stubOnlyResolve("""
+    //- trans-lib/lib.rs
+        pub struct Foo;
+    //- dep-lib/lib.rs
+        pub use trans_lib;
+    //- lib.rs
+        use dep_lib_target::trans_lib::Foo;
+        
+        type T = Foo;
+               //^ trans-lib/lib.rs
+    """)
 }
