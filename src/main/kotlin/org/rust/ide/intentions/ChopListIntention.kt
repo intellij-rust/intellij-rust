@@ -31,9 +31,9 @@ abstract class ChopListIntentionBase<TList : RsElement, TElement : RsElement>(
         val startOffset = ctx.startOffset
 
         val elements = ctx.elements
-        val last = elements.last()
-        if (!hasLineBreakAfter(last)) {
-            last.textRange?.endOffset?.also { document.insertString(it, "\n") }
+        val lastElementOrTrailingComma = elements.last().let { commaAfter(it) ?: it }
+        if (!hasLineBreakAfter(lastElementOrTrailingComma)) {
+            lastElementOrTrailingComma.textRange?.endOffset?.also { document.insertString(it, "\n") }
         }
         elements.asReversed().forEach {
             if (!hasLineBreakBefore(it)) {

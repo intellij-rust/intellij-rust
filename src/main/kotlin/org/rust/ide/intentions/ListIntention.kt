@@ -9,9 +9,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.leftSiblings
-import org.rust.lang.core.psi.ext.rightSiblings
+import org.rust.lang.core.psi.RsElementTypes.COMMA
+import org.rust.lang.core.psi.ext.*
 
 abstract class ListIntentionBase<TList : RsElement, TElement : RsElement>(
     private val listClass: Class<TList>,
@@ -31,13 +30,16 @@ abstract class ListIntentionBase<TList : RsElement, TElement : RsElement>(
     protected val TList.elements: List<TElement>
         get() = PsiTreeUtil.getChildrenOfTypeAsList(this, elementClass)
 
-    protected fun hasLineBreakAfter(element: TElement): Boolean = nextBreak(element) != null
+    protected fun hasLineBreakAfter(element: PsiElement): Boolean = nextBreak(element) != null
 
-    protected fun nextBreak(element: TElement): PsiWhiteSpace? = element.rightSiblings.lineBreak()
+    protected fun nextBreak(element: PsiElement): PsiWhiteSpace? = element.rightSiblings.lineBreak()
 
-    protected fun hasLineBreakBefore(element: TElement): Boolean = prevBreak(element) != null
+    protected fun hasLineBreakBefore(element: PsiElement): Boolean = prevBreak(element) != null
 
-    protected fun prevBreak(element: TElement): PsiWhiteSpace? = element.leftSiblings.lineBreak()
+    protected fun prevBreak(element: PsiElement): PsiWhiteSpace? = element.leftSiblings.lineBreak()
+
+    protected fun commaAfter(element: PsiElement): PsiElement? =
+        element.getNextNonCommentSibling()?.takeIf { it.elementType == COMMA }
 
     private fun Sequence<PsiElement>.lineBreak(): PsiWhiteSpace? =
         dropWhile { it !is PsiWhiteSpace && it !is PsiComment }

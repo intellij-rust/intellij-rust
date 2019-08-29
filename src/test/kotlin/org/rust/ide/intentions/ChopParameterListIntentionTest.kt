@@ -80,7 +80,7 @@ class ChopParameterListIntentionTest : RsIntentionTestBase(ChopParameterListInte
         fn foo(/*caret*/p1: i32, // comment p1
                p2: i32, p3: i32 // comment p3
         ) {}
-   """, """
+    """, """
         fn foo(
             p1: i32, // comment p1
             p2: i32,
@@ -88,4 +88,23 @@ class ChopParameterListIntentionTest : RsIntentionTestBase(ChopParameterListInte
         ) {}
     """)
 
+    fun `test trailing comma`() = doAvailableTest("""
+        fn foo(/*caret*/p1: i32, p2: i32, p3: i32,) {}
+    """, """
+        fn foo(
+            p1: i32,
+            p2: i32,
+            p3: i32,
+        ) {}
+    """)
+
+    fun `test trailing comma with comments`() = doAvailableTest("""
+        fn foo(/*caret*/p1: i32 /* comment 1 */, p2: i32, p3: i32 /* comment 2 */,) {}
+    """, """
+        fn foo(
+            p1: i32 /* comment 1 */,
+            p2: i32,
+            p3: i32 /* comment 2 */,
+        ) {}
+    """)
 }
