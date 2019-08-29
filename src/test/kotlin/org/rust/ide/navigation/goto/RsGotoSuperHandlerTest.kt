@@ -139,6 +139,8 @@ class RsGotoSuperHandlerTest : RsTestBase() {
             mod bar;
     """)
 
+    // Navigation from a crate root to Cargo.toml is tested in `CargoTomlGotoSuperHandlerTest`
+
     private fun checkNavigationInFiles(@Language("Rust") fileTreeText: String, expected: String) {
         fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
         val target = gotoSuperTarget(myFixture.file)
