@@ -29,8 +29,8 @@ class CfgEvaluator(val options: CfgOptions) {
         is CfgPredicate.All -> predicate.list.all(::evaluatePredicate)
         is CfgPredicate.Any -> predicate.list.any(::evaluatePredicate)
         is CfgPredicate.Not -> !evaluatePredicate(predicate.single)
-        is CfgPredicate.NameOption -> predicate.name in options.nameOptions
-        is CfgPredicate.NameValueOption -> options.keyValueOptions[predicate.name]?.contains(predicate.value) ?: false
+        is CfgPredicate.NameOption -> options.isNameEnabled(predicate.name)
+        is CfgPredicate.NameValueOption -> options.isNameValueEnabled(predicate.name, predicate.value)
         is CfgPredicate.Error -> true
     }
 }
