@@ -7,8 +7,8 @@ package org.rust.cargo.toolchain.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -16,8 +16,9 @@ import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
+import java.io.File
+import java.io.IOException
 import java.util.*
 
 /**
@@ -238,12 +239,11 @@ object CargoMetadata {
     )
 
     fun clean(project: Project): CargoWorkspaceData {
-        val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error("No `members` key in the `cargo metadata` output.\n" +
             "Your version of Cargo is no longer supported, please upgrade Cargo.")
         return CargoWorkspaceData(
-            project.packages.mapNotNull { it.clean(fs, it.id in members) },
+            project.packages.mapNotNull { it.clean(it.id in members) },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
                     deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
@@ -256,32 +256,42 @@ object CargoMetadata {
         )
     }
 
-    private fun Package.clean(fs: LocalFileSystem, isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
-        val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
-            "`cargo metadata` reported a package which does not exist at `$manifest_path`"
-        }
+    private fun Package.clean(isWorkspaceMember: Boolean): CargoWorkspaceData.Package? {
+        val rootCanonicalPath = toCanonicalPathSafe(PathUtil.getParentPath(manifest_path))
+        val rootUrl = LocalFileSystem.PROTOCOL_PREFIX + rootCanonicalPath
         return CargoWorkspaceData.Package(
             id,
-            root.url,
+            rootUrl,
             name,
             version,
-            targets.mapNotNull { it.clean(root) },
+            targets.mapNotNull { it.clean(rootCanonicalPath) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition()
         )
     }
 
-    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
-        val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
-        return mainFile?.let {
-            CargoWorkspaceData.Target(
-                it.url,
-                name,
-                makeTargetKind(cleanKind, cleanCrateTypes),
-                edition.cleanEdition(),
-                doctest = doctest ?: true
-            )
+    private fun Target.clean(rootPath: String): CargoWorkspaceData.Target? {
+        val crateRootPath = if (FileUtil.isAbsolute(src_path)) {
+            src_path
+        } else {
+            rootPath + File.separator + src_path
+        }
+        val crateRootUrl = LocalFileSystem.PROTOCOL_PREFIX + toCanonicalPathSafe(crateRootPath)
+        return CargoWorkspaceData.Target(
+            crateRootUrl,
+            name,
+            makeTargetKind(cleanKind, cleanCrateTypes),
+            edition.cleanEdition(),
+            doctest = doctest ?: true
+        )
+    }
+
+    private fun toCanonicalPathSafe(rootPath: String): String {
+        return try {
+            File(rootPath).canonicalPath
+        } catch (e: IOException) {
+            rootPath
         }
     }
 
