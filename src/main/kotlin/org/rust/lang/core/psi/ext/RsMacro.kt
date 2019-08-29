@@ -51,6 +51,10 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
 val RsMacro.hasMacroExport: Boolean
     get() = queryAttributes.hasAttribute("macro_export")
 
+/** `#[macro_export(local_inner_macros)]` */
+val RsMacro.hasMacroExportLocalInnerMacros: Boolean
+    get() = queryAttributes.hasAttributeWithArg("macro_export", "local_inner_macros")
+
 val RsMacro.isRustcDocOnlyMacro: Boolean
     get() = queryAttributes.hasAttribute("rustc_doc_only_macro")
 

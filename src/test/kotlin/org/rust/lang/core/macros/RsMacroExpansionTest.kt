@@ -7,11 +7,13 @@ package org.rust.lang.core.macros
 
 import com.intellij.psi.tree.TokenSet
 import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.NameResolutionTestmarks
+import org.rust.stdext.BothEditions
 
 class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     fun `test ident`() = doTest("""
@@ -759,4 +761,113 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         foo!(a);
     """ to MacroExpansionMarks.groupMatchedEmptyTT)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @BothEditions
+    fun `test local_inner_macros 1`() = checkSingleMacroByTree("""
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        foo!();
+        //^
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            () => { bar!{} };
+        }
+
+        #[macro_export]
+        macro_rules! bar {
+            () => { fn bar() {} };
+        }
+    """, """
+        fn bar() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @BothEditions
+    fun `test local_inner_macros 2`() = checkSingleMacroByTree("""
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        foo!();
+        //^
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            () => {
+                macro_rules! bar {
+                    () => { fn fake_bar() {} };
+                }
+                bar!{}
+            };
+        }
+
+        #[macro_export]
+        macro_rules! bar {
+            () => { fn bar() {} };
+        }
+    """, """
+        macro_rules! bar {
+            () => { fn fake_bar() {} };
+        }
+        fn bar() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @BothEditions
+    fun `test local_inner_macros 3`() = checkSingleMacroByTree("""
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        macro_rules! bar {
+            () => { fn local_bar() {} };
+        }
+
+        foo! { bar!{} }
+        //^
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            ($ i:item) => { bar!{} $ i };
+        }
+
+        #[macro_export]
+        macro_rules! bar {
+            () => { fn bar() {} };
+        }
+    """, """
+        fn bar() {}
+        fn local_bar() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @BothEditions
+    fun `test local_inner_macros 4`() = checkSingleMacroByTree("""
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        macro_rules! bar {
+            () => { fn local_bar() {} };
+        }
+        macro_rules! baz {
+            () => { foo! { bar!{} } };
+        }
+
+        baz!();
+        //^
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            ($ i:item) => { bar!{} $ i };
+        }
+
+        #[macro_export]
+        macro_rules! bar {
+            () => { fn bar() {} };
+        }
+    """, """
+        fn bar() {}
+        fn local_bar() {}
+    """)
 }

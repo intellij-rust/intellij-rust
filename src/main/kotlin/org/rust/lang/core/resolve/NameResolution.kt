@@ -718,6 +718,18 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
         if (isCompletion) {
             processMacroCallVariantsInScope(path, processor)
         } else {
+            if (path.findElementExpandedFrom(strict = false) == null) {
+                // Handles `#[macro_export(local_inner_macros)]`
+                // this "recursive" macro resolve should not be a problem because
+                // 1. we resolve the macro from which [path] is expanded, so it can't run into infinite recursion
+                // 2. we expand macros step-by-step, so the result of such resolution should be cached already
+                val def = path.findMacroCallExpandedFromNonRecursive()?.resolveToMacro()
+                if (def != null && def.hasMacroExportLocalInnerMacros) {
+                    val crateRoot = def.crateRoot as? RsFile ?: return false
+                    return processAll(exportedMacros(crateRoot), processor)
+                }
+            }
+
             val resolved = pickFirstResolveVariant(path.referenceName) { processMacroCallVariantsInScope(path, it) }
                 as? RsNamedElement
             resolved?.let { processor(it) } ?: false
