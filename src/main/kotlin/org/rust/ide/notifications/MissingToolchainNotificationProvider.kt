@@ -22,6 +22,7 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.lang.core.psi.isNotRustFile
+import org.rust.openapiext.isUnitTestMode
 
 /**
  * Warn user if rust toolchain or standard library is not properly configured.
@@ -57,6 +58,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
         editor: FileEditor,
         project: Project
     ): RsEditorNotificationPanel? {
+        if (isUnitTestMode) return null
         if (file.isNotRustFile || isNotificationDisabled(file)) return null
         if (guessAndSetupRustProject(project)) return null
 
