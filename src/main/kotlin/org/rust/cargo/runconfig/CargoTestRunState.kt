@@ -13,16 +13,25 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction
+import com.intellij.util.text.SemVer
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.console.CargoTestConsoleBuilder
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.RustcVersion
+import java.time.LocalDate
 
 class CargoTestRunState(
     environment: ExecutionEnvironment,
     runConfiguration: CargoCommandConfiguration,
     config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CargoRunStateBase(environment, runConfiguration, config) {
+
+    private val cargoTestPatch: CargoPatch = { commandLine ->
+        val rustcVer = cargoProject?.rustcInfo?.version
+        commandLine.copy(additionalArguments = patchArgs(commandLine, rustcVer))
+    }
 
     init {
         consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)
@@ -38,12 +47,9 @@ class CargoTestRunState(
     }
 
     companion object {
-        val cargoTestPatch: CargoPatch = { commandLine ->
-            commandLine.copy(additionalArguments = patchArgs(commandLine))
-        }
 
         @VisibleForTesting
-        fun patchArgs(commandLine: CargoCommandLine): List<String> {
+        fun patchArgs(commandLine: CargoCommandLine, rustcVer: RustcVersion?): List<String> {
             val (pre, post) = commandLine.splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
@@ -60,7 +66,24 @@ class CargoTestRunState(
 
             addFormatJsonOption(post, "--format")
 
+            if (checkShowOutputSupport(rustcVer)) {
+                post.add("--show-output")
+            }
+
             return if (post.isEmpty()) pre else pre + "--" + post
+        }
+
+        private fun checkShowOutputSupport(ver: RustcVersion?): Boolean {
+            if (ver == null) return false
+            // --show-output is supported since 1.39.0-nightly/dev with a build date later than 2019-08-27
+            val minRelease = SemVer.parseFromText("1.39.0")
+            val commitDate = LocalDate.of(2019, 8, 27)
+            return when {
+                ver.semver > minRelease -> true
+                ver.semver < minRelease -> false
+                else ->
+                    ver.channel.index <= RustChannel.BETA.index || ver.commitDate?.isAfter(commitDate) ?: false
+            }
         }
     }
 }
