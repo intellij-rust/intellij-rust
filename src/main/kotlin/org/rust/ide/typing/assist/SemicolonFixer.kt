@@ -17,20 +17,7 @@ import org.rust.lang.core.psi.ext.endOffset
  */
 class SemicolonFixer : SmartEnterProcessorWithFixers.Fixer<RsSmartEnterProcessor>() {
     override fun apply(editor: Editor, processor: RsSmartEnterProcessor, element: PsiElement) {
-        fixStatement(editor, element)
-        fixLastExprInBlock(editor, element)
-    }
-
-    private fun fixLastExprInBlock(editor: Editor, element: PsiElement) {
-        val parent = element.parent
-        if (parent is RsBlock && element == parent.expr) {
-            editor.document.insertString(element.endOffset, ";")
-        }
-    }
-
-    private fun fixStatement(editor: Editor, element: PsiElement) {
-        if (element is RsStmt && element.semicolon == null) {
-            editor.document.insertString(element.endOffset, ";")
-        }
+        if (element.parent !is RsBlock || (element as? RsStmt)?.semicolon != null) return
+        editor.document.insertString(element.endOffset, ";")
     }
 }
