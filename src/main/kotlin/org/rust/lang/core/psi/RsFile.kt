@@ -26,6 +26,8 @@ import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.completion.getOriginalOrSelf
+import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
@@ -66,6 +68,7 @@ class RsFile(
     val cargoWorkspace: CargoWorkspace? get() = cachedData.cargoWorkspace
     val cargoTarget: CargoWorkspace.Target? get() = cachedData.cargoTarget
     override val crateRoot: RsMod? get() = cachedData.crateRoot
+    val isDeeplyEnabledByCfg: Boolean get() = cachedData.isDeeplyEnabledByCfg
 
     private val cachedData: CachedData
         get() {
@@ -83,7 +86,10 @@ class RsFile(
         if (isCycledMod) return EMPTY_CACHED_DATA
 
         val declaration = declaration
-        if (declaration != null) return (declaration.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+        if (declaration != null) {
+            val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
+            return (file as? RsFile)?.cachedData?.copy(isDeeplyEnabledByCfg = isEnabledByCfg) ?: EMPTY_CACHED_DATA
+        }
 
         val possibleCrateRoot = this
 
@@ -186,7 +192,8 @@ private data class CachedData(
      * May be not equal to [cargoTarget]'s [CargoWorkspace.Target.crateRoot].
      * For example, in the case of doctest injection
      */
-    val crateRoot: RsFile? = null
+    val crateRoot: RsFile? = null,
+    val isDeeplyEnabledByCfg: Boolean = true
 )
 
 private val EMPTY_CACHED_DATA: CachedData = CachedData()
@@ -206,3 +213,24 @@ private val MOD_DECL_MACROS_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("
 
 private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_KEY")
 private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
+
+private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<PsiFile, Boolean> {
+    if (this is RsDocAndAttributeOwner && !isEnabledByCfg) return contextualFile to false
+    val contextOrMacro = (this as? RsExpandedElement)?.expandedFrom ?: context!!
+    return if (contextOrMacro is PsiFile) {
+        contextOrMacro to (contextOrMacro !is RsDocAndAttributeOwner || contextOrMacro.isEnabledByCfg)
+    } else {
+        contextOrMacro.contextualFileAndIsEnabledByCfgOnThisWay()
+    }
+}
+
+/**
+ * @return true if containing crate root is known for this element and this element is not excluded from
+ * a project via `#[cfg]` attribute on some level (e.g. its parent module)
+ */
+val RsElement.isValidProjectMember: Boolean
+    get() {
+        val (file, isEnabledByCfg) = contextualFileAndIsEnabledByCfgOnThisWay()
+        if (file !is RsFile) return true
+        return isEnabledByCfg && file.isDeeplyEnabledByCfg && file.crateRoot != null
+    }
