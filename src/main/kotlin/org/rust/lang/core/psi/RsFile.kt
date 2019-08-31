@@ -69,6 +69,8 @@ class RsFile(
 
     private val cachedData: CachedData
         get() {
+            val originalFile = originalFile
+            if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
             // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
             val key = if (project.macroExpansionManager.isResolvingMacro) CACHED_DATA_MACROS_KEY else CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
@@ -77,13 +79,18 @@ class RsFile(
         }
 
     private fun doGetCachedData(): CachedData {
-        val possibleCrateRoot = superMods.lastOrNull() as? RsFile ?: return EMPTY_CACHED_DATA
-        val possibleCrateRootOriginal = possibleCrateRoot.originalFile as? RsFile ?: return EMPTY_CACHED_DATA
+        check(originalFile == this)
+        if (isCycledMod) return EMPTY_CACHED_DATA
 
-        val includingMod = RsIncludeMacroIndex.getIncludingMod(possibleCrateRootOriginal)
+        val declaration = declaration
+        if (declaration != null) return (declaration.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+
+        val possibleCrateRoot = this
+
+        val includingMod = RsIncludeMacroIndex.getIncludingMod(possibleCrateRoot)
         if (includingMod != null) return (includingMod.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
-        val crateRootVFile = possibleCrateRootOriginal.virtualFile ?: return EMPTY_CACHED_DATA
+        val crateRootVFile = possibleCrateRoot.virtualFile ?: return EMPTY_CACHED_DATA
 
         val injectedFromFile = crateRootVFile.getInjectedFromIfDoctestInjection(project)
         if (injectedFromFile != null) {
@@ -91,7 +98,7 @@ class RsFile(
             // Doctest injection file should be a crate root to resolve absolute paths inside injection.
             // Doctest contains a single "extern crate $crateName;" declaration at the top level, so
             // we should be able to resolve it by an absolute path
-            return cached.copy(crateRoot = possibleCrateRootOriginal)
+            return cached.copy(crateRoot = possibleCrateRoot)
         }
 
         val cargoProject = project.cargoProjects.findProjectForFile(crateRootVFile) ?: return EMPTY_CACHED_DATA
