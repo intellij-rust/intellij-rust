@@ -19,7 +19,9 @@ import java.nio.file.Paths
 class RustProjectSettingsServiceTest : LightPlatformTestCase() {
 
     fun `test serialization`() {
-        val service = RustProjectSettingsServiceImpl(LightPlatformTestCase.getProject())
+        // BACKCOMPAT: 2019.1
+        @Suppress("UsePropertyAccessSyntax")
+        val service = RustProjectSettingsServiceImpl(getProject())
 
         @Language("XML")
         val text = """
@@ -62,7 +64,9 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
     }
 
     fun `test update from version 1`() {
-        val service = RustProjectSettingsServiceImpl(LightPlatformTestCase.getProject())
+        // BACKCOMPAT: 2019.1
+        @Suppress("UsePropertyAccessSyntax")
+        val service = RustProjectSettingsServiceImpl(getProject())
 
         @Language("XML")
         val text = """

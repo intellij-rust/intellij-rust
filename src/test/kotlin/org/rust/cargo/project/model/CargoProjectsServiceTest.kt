@@ -14,7 +14,9 @@ import java.nio.file.Paths
 
 class CargoProjectsServiceTest : LightPlatformTestCase() {
     fun `test serialization`() {
-        val service = CargoProjectsServiceImpl(LightPlatformTestCase.getProject())
+        // BACKCOMPAT: 2019.1
+        @Suppress("UsePropertyAccessSyntax")
+        val service = CargoProjectsServiceImpl(getProject())
         val text = """
             <state>
               <cargoProject FILE="/foo" />
