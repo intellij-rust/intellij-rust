@@ -870,4 +870,34 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() {}
         fn local_bar() {}
     """)
+
+    fun `test item with docs`() = doTest("""
+        // error: repetition matches empty token tree
+        macro_rules! foo {
+            ($ i:item) => { $ i }
+        }
+        foo! {
+            /// Some docs
+            fn foo() {}
+        }
+    """, """
+        #[doc = r###"Some docs"###]
+        fn foo() {}
+    """ to MacroExpansionMarks.docsLowering)
+
+    fun `test docs lowering`() = doTest("""
+        // error: repetition matches empty token tree
+        macro_rules! foo {
+            (#[$ i:meta]) => {
+                #[$ i]
+                fn foo() {}
+            }
+        }
+        foo! {
+            /// Some docs
+        }
+    """, """
+        #[doc = r###"Some docs"###]
+        fn foo() {}
+    """ to MacroExpansionMarks.docsLowering)
 }

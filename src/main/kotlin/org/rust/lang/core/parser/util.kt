@@ -11,7 +11,7 @@ import com.intellij.lang.PsiBuilderFactory
 import com.intellij.openapi.project.Project
 import org.rust.lang.RsLanguage
 
-fun Project.createRustPsiBuilder(text: String): PsiBuilder {
+fun Project.createRustPsiBuilder(text: CharSequence): PsiBuilder {
     val parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(RsLanguage)
         ?: error("No parser definition for language $RsLanguage")
     val lexer = parserDefinition.createLexer(this)
@@ -25,4 +25,10 @@ inline fun <T> PsiBuilder.probe(action: () -> T): T {
     } finally {
         mark.rollbackTo()
     }
+}
+
+fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
+    val start = rawTokenTypeStart(steps)
+    val end = rawTokenTypeStart(steps + 1)
+    return if (start == -1 || end == -1) "" else originalText.subSequence(start, end)
 }

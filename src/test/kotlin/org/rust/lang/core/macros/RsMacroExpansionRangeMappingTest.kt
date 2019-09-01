@@ -143,6 +143,47 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
                //^
     """)
 
+    fun `test struct name with docs in macro call 1`() = checkOffset("""
+        macro_rules! foo {
+            ($ i:item) => { $ i };
+        }
+        foo! {
+            /// docs
+            struct /*caret*/Foo;
+        }
+        type T = Foo;
+               //^
+    """, SELECT_NAME)
+
+    fun `test struct name with docs in macro call 2`() = checkOffset("""
+        macro_rules! foo {
+            (#[$ m:meta] $ t:tt $ n:ident;) => { #[$ m] $ t $ n; };
+        }
+        foo! {
+            /// docs
+            struct /*caret*/Foo;
+        }
+        type T = Foo;
+               //^
+    """, SELECT_NAME)
+
+    fun `test struct name with docs in macro call 3`() = checkOffset("""
+        macro_rules! foo {
+            ($($ i:item)*) => { $($ i)* };
+        }
+        foo! {
+            /// docs
+            fn foo() {}
+            /// docs
+            mod foo {
+                /// docs
+                pub struct /*caret*/Foo;
+            }
+        }
+        type T = foo::Foo;
+                    //^
+    """, SELECT_NAME)
+
     private fun checkOffset(@Language("Rust") code: String, refiner: (RsElement) -> PsiElement = { it }) {
         InlineFile(code).withCaret()
         val ref = findElementInEditor<RsReferenceElement>("^")

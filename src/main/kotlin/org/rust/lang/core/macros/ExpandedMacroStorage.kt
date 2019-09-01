@@ -199,7 +199,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     companion object {
         private val LOG = Logger.getInstance(ExpandedMacroStorage::class.java)
-        private const val STORAGE_VERSION = 6
+        private const val STORAGE_VERSION = 7
         const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
         fun load(project: Project, dataFile: Path): ExpandedMacroStorage? {
