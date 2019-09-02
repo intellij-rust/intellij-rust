@@ -16,7 +16,7 @@ import org.rust.lang.core.types.ty.*
 class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
 
     fun typeHint(type: Ty): InlayPresentation = factory.roundWithBackground(
-        listOf(text(": "), hint(type, 0)).join()
+        listOf(text(": "), hint(type, 1)).join()
     )
 
     private fun hint(type: Ty, level: Int): InlayPresentation = when (type) {
@@ -38,26 +38,38 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
         val parameters = type.paramTypes
         val returnType = type.retType
 
-        val collapsible = factory.collapsible(
-            prefix = text("fn("),
-            collapsed = text(PLACEHOLDER),
-            expanded = { parametersHint(parameters, level + 1) },
-            suffix = text(")"),
-            startWithPlaceholder = checkSize(level, parameters.size)
-        )
-
-        if (returnType != TyUnit) {
-            return listOf(collapsible, hint(returnType, level)).join(" → ")
+        val startWithPlaceholder = checkSize(level, parameters.size + 1)
+        val fn = if (parameters.isEmpty()) {
+            text("fn()")
+        } else {
+            factory.collapsible(
+                prefix = text("fn("),
+                collapsed = text(PLACEHOLDER),
+                expanded = { parametersHint(parameters, level + 1) },
+                suffix = text(")"),
+                startWithPlaceholder = startWithPlaceholder
+            )
         }
 
-        return collapsible
+        if (returnType != TyUnit) {
+            val ret = factory.collapsible(
+                prefix = text(" → "),
+                collapsed = text(PLACEHOLDER),
+                expanded = { hint(returnType, level + 1) },
+                suffix = text(""),
+                startWithPlaceholder = startWithPlaceholder
+            )
+            return factory.seq(fn, ret)
+        }
+
+        return fn
     }
 
     private fun tupleTypeHint(type: TyTuple, level: Int): InlayPresentation =
         factory.collapsible(
             prefix = text("("),
             collapsed = text(PLACEHOLDER),
-            expanded = { parametersHint(type.types, level) },
+            expanded = { parametersHint(type.types, level + 1) },
             suffix = text(")"),
             startWithPlaceholder = checkSize(level, type.types.size)
         )
@@ -87,12 +99,12 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
 
     private fun referenceTypeHint(type: TyReference, level: Int): InlayPresentation = listOf(
         text("&" + if (type.mutability.isMut) "mut " else ""),
-        hint(type.referenced, level)
+        hint(type.referenced, level) // level is not incremented intentionally
     ).join()
 
     private fun pointerTypeHint(type: TyPointer, level: Int): InlayPresentation = listOf(
         text("*" + if (type.mutability.isMut) "mut " else "const "),
-        hint(type.referenced, level)
+        hint(type.referenced, level) // level is not incremented intentionally
     ).join()
 
     private fun projectionTypeHint(type: TyProjection, level: Int): InlayPresentation {
@@ -136,7 +148,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
                 listOf(basePresentation, sizePresentation).join("; ")
             },
             suffix = text("]"),
-            startWithPlaceholder = checkSize(level, 2)
+            startWithPlaceholder = checkSize(level, 1)
         )
 
     private fun sliceTypeHint(type: TySlice, level: Int): InlayPresentation =
@@ -154,7 +166,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
             collapsed = text(PLACEHOLDER),
             expanded = { traitItemTypeHint(type.trait, level, true) },
             suffix = text(""),
-            startWithPlaceholder = checkSize(level, 2)
+            startWithPlaceholder = checkSize(level, 1)
         )
 
     private fun anonTypeHint(type: TyAnon, level: Int): InlayPresentation =
@@ -192,13 +204,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
                     text(name)
                 }
 
-                val presentation = factory.collapsible(
-                    prefix = listOf(aliasPresentation, text("=")).join(),
-                    collapsed = text(PLACEHOLDER),
-                    expanded = { hint(type, level + 2) },
-                    suffix = text(""),
-                    startWithPlaceholder = checkSize(level + 1, 1)
-                )
+                val presentation = listOf(aliasPresentation, text("="), hint(type, level + 1)).join()
                 assocTypesPresentations.add(presentation)
             }
         }
@@ -221,7 +227,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
     }
 
     private fun checkSize(level: Int, elementsCount: Int): Boolean =
-        level > FOLDING_LEVEL || elementsCount > FOLDING_ELEMENTS_COUNT
+        level + elementsCount > FOLDING_TRESHOLD
 
     private fun List<InlayPresentation>.join(separator: String = ""): InlayPresentation {
         if (separator.isEmpty()) {
@@ -243,7 +249,6 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
 
     companion object {
         private const val PLACEHOLDER: String = "…"
-        private const val FOLDING_LEVEL: Int = 2
-        private const val FOLDING_ELEMENTS_COUNT: Int = 2
+        private const val FOLDING_TRESHOLD: Int = 3
     }
 }

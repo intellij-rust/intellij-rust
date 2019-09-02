@@ -133,7 +133,7 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
 
         fn main() {
             let s: S<(), ()> = unimplemented!();
-            let foo/*hint text="[:  [S [< [[[fn( i32 )]  →  i32] ,  [S [< [[[fn( i32 )]  →  i32] ,  [S [< [[[fn( … )]  →  i32] ,  [S [< … >]]] >]]] >]]] >]]]"*/ = s
+            let foo/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/ = s
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x)
                 .wrap(|x: i32| x)
@@ -270,7 +270,7 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
     fun `test dyn trait with assoc type`() = checkByText("""
         trait Trait { type Item; }
         fn foo(x: &Trait<Item=u8>) {
-            let a/*hint text="[:  [& [dyn  [Trait [< [[Item =] u8 ] >]] ]]]"*/ = x;
+            let a/*hint text="[:  [& [dyn  [Trait [< [Item = u8] >]] ]]]"*/ = x;
         }
     """)
 
@@ -278,7 +278,7 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
         trait Trait { type Item; }
         fn bar() -> impl Trait<Item=u8> { unimplemented!() }
         fn foo() {
-            let a/*hint text="[:  [impl  [Trait [< [[Item =] u8 ] >]] ]]"*/ = bar();
+            let a/*hint text="[:  [impl  [Trait [< [Item = u8] >]] ]]"*/ = bar();
         }
     """)
 
