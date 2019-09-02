@@ -2903,4 +2903,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
             let Foo { a, } = foo;
         }
     """)
+
+    fun `test no E0026 on raw identifier field`() = checkErrors("""
+        struct Foo { r#field: u64 }
+        fn bar(f: Foo) {
+            let Foo { r#field: _ } = f;
+        }
+    """)
 }
