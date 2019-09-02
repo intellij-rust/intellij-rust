@@ -116,7 +116,7 @@ class ChopArgumentListIntentionTest : RsIntentionTestBase(ChopArgumentListIntent
                 2, 3 // comment 3
             );
         }
-   """, """
+    """, """
         fn foo(p1: i32, p2: i32, p3: i32) {}
         fn main() {
             foo(
@@ -127,4 +127,35 @@ class ChopArgumentListIntentionTest : RsIntentionTestBase(ChopArgumentListIntent
         }
     """)
 
+    fun `test trailing comma`() = doAvailableTest("""
+        fn foo(p1: i32, p2: i32, p3: i32) {}
+        fn main() {
+            foo(/*caret*/1, 2, 3,);
+        }
+    """, """
+        fn foo(p1: i32, p2: i32, p3: i32) {}
+        fn main() {
+            foo(
+                1,
+                2,
+                3,
+            );
+        }
+    """)
+
+    fun `test trailing comma with comments`() = doAvailableTest("""
+        fn foo(p1: i32, p2: i32, p3: i32) {}
+        fn main() {
+            foo(/*caret*/1 /* comment 1 */, 2, 3 /* comment 2 */, );
+        }
+    """, """
+        fn foo(p1: i32, p2: i32, p3: i32) {}
+        fn main() {
+            foo(
+                1 /* comment 1 */,
+                2,
+                3 /* comment 2 */,
+            );
+        }
+    """)
 }

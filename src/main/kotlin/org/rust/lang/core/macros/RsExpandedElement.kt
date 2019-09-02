@@ -6,11 +6,11 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroArgument
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 
@@ -144,10 +144,20 @@ private fun PsiElement.findElementExpandedFromNonRecursive(): PsiElement? {
 }
 
 private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): Int? {
+    return mapOffsetFromExpansionToCallBodyRelative(call, offset)
+        ?.fromBodyRelativeOffset(call)
+}
+
+private fun mapOffsetFromExpansionToCallBodyRelative(call: RsMacroCall, offset: Int): Int? {
     val expansion = call.expansion ?: return null
     val fileOffset = call.expansionContext.expansionFileStartOffset
     return expansion.ranges.mapOffsetFromExpansionToCallBody(offset - fileOffset)
-        ?.fromBodyRelativeOffset(call)
+}
+
+fun PsiElement.cameFromMacroCall(): Boolean {
+    val call = findMacroCallExpandedFromNonRecursive() ?: return false
+    val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
+    return mapOffsetFromExpansionToCallBodyRelative(call, startOffset) != null
 }
 
 /**

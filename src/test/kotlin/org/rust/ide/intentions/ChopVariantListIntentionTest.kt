@@ -81,12 +81,32 @@ class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntentio
             /*caret*/A, // comment A
             B, C // comment C
         }
-   """, """
+    """, """
         enum E {
             A,
             // comment A
             B,
             C // comment C
+        }
+    """)
+
+    fun `test trailing comma`() = doAvailableTest("""
+        enum E { /*caret*/A, B, C, }
+    """, """
+        enum E {
+            A,
+            B,
+            C,
+        }
+    """)
+
+    fun `test trailing comma with comments`() = doAvailableTest("""
+        enum E { /*caret*/A /* comment 1 */, B, C /* comment 2 */, }
+    """, """
+        enum E {
+            A /* comment 1 */,
+            B,
+            C /* comment 2 */,
         }
     """)
 }

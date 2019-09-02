@@ -81,12 +81,32 @@ class ChopFieldListIntentionTest : RsIntentionTestBase(ChopFieldListIntention())
             /*caret*/x: i32, // comment x
             y: i32, z: i32 // comment z
         }
-   """, """
+    """, """
         struct S {
             x: i32,
             // comment x
             y: i32,
             z: i32 // comment z
+        }
+    """)
+
+    fun `test trailing comma`() = doAvailableTest("""
+        struct S { /*caret*/x: i32, y: i32, z: i32, }
+    """, """
+        struct S {
+            x: i32,
+            y: i32,
+            z: i32,
+        }
+    """)
+
+    fun `test trailing comma with comments`() = doAvailableTest("""
+        struct S { /*caret*/x: i32 /* comment 1 */, y: i32, z: i32 /* comment 2 */, }
+    """, """
+        struct S {
+            x: i32 /* comment 1 */,
+            y: i32,
+            z: i32 /* comment 2 */,
         }
     """)
 }

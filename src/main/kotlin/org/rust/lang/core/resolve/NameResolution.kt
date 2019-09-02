@@ -718,7 +718,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
         if (isCompletion) {
             processMacroCallVariantsInScope(path, processor)
         } else {
-            if (path.findElementExpandedFrom(strict = false) == null) {
+            if (!path.cameFromMacroCall()) {
                 // Handles `#[macro_export(local_inner_macros)]`
                 // this "recursive" macro resolve should not be a problem because
                 // 1. we resolve the macro from which [path] is expanded, so it can't run into infinite recursion
