@@ -106,7 +106,9 @@ sealed class TraitImplSource {
     abstract val value: RsTraitOrImpl
 
     open val implementedTrait: BoundElement<RsTraitItem>? get() = value.implementedTrait
-    open val members: RsMembers? get() = value.members
+
+    /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */
+    open val implAndTraitExpandedMembers: List<RsAbstractable> get() = value.members?.expandedMembers.orEmpty()
 
     val impl: RsImplItem?
         get() = (this as? ExplicitImpl)?.value
@@ -116,7 +118,7 @@ sealed class TraitImplSource {
         override val value: RsImplItem get() = cachedImpl.impl
         val isInherent: Boolean get() = cachedImpl.traitRef == null
         override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
-        override val members: RsMembers? get() = cachedImpl.membres
+        override val implAndTraitExpandedMembers: List<RsAbstractable> get() = cachedImpl.implAndTraitExpandedMembers
         val type: Ty? get() = cachedImpl.typeAndGenerics?.first
     }
 
@@ -189,7 +191,7 @@ class ImplLookup(
             // that affect trait selection
             Cache.new()
         }
-    private val findImplsAndTraitsCache: Cache<Ty, Set<TraitImplSource>> =
+    private val findImplsAndTraitsCache: Cache<Ty, List<TraitImplSource>> =
         if (cargoProject != null) {
             cargoProjectGlobalFindImplsAndTraitsCache.getCache(cargoProject)
         } else {
@@ -232,14 +234,14 @@ class ImplLookup(
         return paramEnv.boundsFor(ty).flatMap { it.flattenHierarchy.asSequence() }
     }
 
-    fun findImplsAndTraits(ty: Ty): Set<TraitImplSource> {
+    /** Resulting sequence is ordered: inherent impls are placed to the head */
+    fun findImplsAndTraits(ty: Ty): Sequence<TraitImplSource> {
         val cached = findImplsAndTraitsCache.getOrPut(freshen(ty)) { rawFindImplsAndTraits(ty) }
-        return getEnvBoundTransitivelyFor(ty)
-            .asIterable().mapTo(cached.toMutableSet()) { TraitImplSource.TraitBound(it.element) }
+        return cached.asSequence() + getEnvBoundTransitivelyFor(ty).map { TraitImplSource.TraitBound(it.element) }
     }
 
-    private fun rawFindImplsAndTraits(ty: Ty): Set<TraitImplSource> {
-        val implsAndTraits = hashSetOf<TraitImplSource>()
+    private fun rawFindImplsAndTraits(ty: Ty): List<TraitImplSource> {
+        val implsAndTraits = mutableListOf<TraitImplSource>()
         when (ty) {
             is TyTraitObject ->
                 ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
@@ -256,9 +258,12 @@ class ImplLookup(
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
                 implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
-                getHardcodedImpls(ty).mapTo(implsAndTraits) { TraitImplSource.Hardcoded(it.element) }
+                implsAndTraits += getHardcodedImpls(ty).map { TraitImplSource.Hardcoded(it.element) }.distinct()
             }
         }
+        // Place inherent impls to the head of the list
+        implsAndTraits.sortBy { !(it is TraitImplSource.ExplicitImpl && it.isInherent) }
+        testAssert { implsAndTraits.distinct().size == implsAndTraits.size }
         return implsAndTraits
     }
 
@@ -795,7 +800,7 @@ class ImplLookup(
         }
 
         private val cargoProjectGlobalFindImplsAndTraitsCache =
-            CargoProjectCache<Ty, Set<TraitImplSource>>("cargoProjectGlobalFindImplsAndTraitsCache")
+            CargoProjectCache<Ty, List<TraitImplSource>>("cargoProjectGlobalFindImplsAndTraitsCache")
 
         private val cargoProjectGlobalTraitSelectionCache =
             CargoProjectCache<TraitRef, SelectionResult<SelectionCandidate>>("cargoProjectGlobalTraitSelectionCache")
