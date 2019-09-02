@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatField
+import org.rust.lang.core.psi.unescapedText
 
 val RsPatField.kind: RsPatFieldKind
     get() = patBinding?.let { RsPatFieldKind.Shorthand(it, box != null) }
@@ -32,6 +33,6 @@ sealed class RsPatFieldKind {
 
 val RsPatFieldKind.fieldName: String
     get() = when (this) {
-        is RsPatFieldKind.Full -> ident.text
-        is RsPatFieldKind.Shorthand -> binding.identifier.text
+        is RsPatFieldKind.Full -> ident.unescapedText
+        is RsPatFieldKind.Shorthand -> binding.name!! // can't be null
     }
