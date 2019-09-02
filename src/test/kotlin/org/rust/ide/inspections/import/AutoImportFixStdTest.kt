@@ -603,4 +603,26 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(x: FooBar/*caret*/) {}
     """)
+
+    fun `test import struct when accessing derived method UFCS`() = checkAutoImportFixByText("""
+        mod foo {
+            #[derive(Debug)]
+            pub struct Foo;
+        }
+        
+        fn main() {
+            <error descr="Unresolved reference: `Foo`">Foo::fmt/*caret*/</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            #[derive(Debug)]
+            pub struct Foo;
+        }
+        
+        fn main() {
+            Foo::fmt/*caret*/();
+        }
+    """)
 }
