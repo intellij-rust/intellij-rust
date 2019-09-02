@@ -1134,7 +1134,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferLambdaExprType(expr: RsLambdaExpr, expected: Ty?): Ty {
-        val params = expr.valueParameterList.valueParameterList
+        val params = expr.valueParameters
         val expectedFnTy = expected
             ?.let(this::deduceLambdaType)
             ?: unknownTyFunction(params.size)

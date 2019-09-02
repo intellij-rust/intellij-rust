@@ -85,8 +85,7 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
         }
 
         is RsFnPointerType -> {
-            val paramTypes = type.valueParameterList.valueParameterList
-                .map { it.typeReference?.type ?: TyUnknown }
+            val paramTypes = type.valueParameters.map { it.typeReference?.type ?: TyUnknown }
             TyFunction(paramTypes, type.retType?.let { it.typeReference?.type ?: TyUnknown } ?: TyUnit)
         }
 
