@@ -441,11 +441,18 @@ task("makeRelease") {
             "https://intellij-rust.github.io/$newChangelogPath.html"
         )
         pluginXml.writeText(newText)
-        updatePatchVersion()
+        val newPatchVersion = updatePatchVersion()
         "git add $pluginXmlPath gradle.properties".execute()
         "git commit -m Changelog".execute()
         "git push".execute()
-        commitNightly()
+
+        val head = "git rev-parse HEAD".execute()
+        "git checkout release-$newPatchVersion".execute()
+        "git cherry-pick $head".execute()
+        "git push".execute()
+
+        "git checkout master".execute()
+//        commitNightly()
     }
 }
 
@@ -468,12 +475,16 @@ fun commitChangelog(): String {
     return lastPost
 }
 
-fun updatePatchVersion() {
+/** Returns new patch version */
+fun updatePatchVersion(): Int {
     val properties = file("gradle.properties")
+    var newPatchVersion: Int? = null
     val propertiesText = properties.readText().replace(Regex("patchVersion=(\\d+)")) {
-        "patchVersion=${it.groupValues[1].toInt() + 1}"
+        newPatchVersion = it.groupValues[1].toInt() + 1
+        "patchVersion=${newPatchVersion}"
     }
     properties.writeText(propertiesText)
+    return newPatchVersion!!
 }
 
 fun commitNightly() {
