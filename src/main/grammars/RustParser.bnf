@@ -205,8 +205,8 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
-                                            <<list_element (!(identifier '=') TypeReference)>>*
-                                            <<list_element (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)>>*
+                                            <<list_element (!(identifier '=') !'>' TypeReference)>>*
+                                            <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
 AssocTypeBinding ::= identifier '=' TypeReference {
   pin = 2
@@ -314,9 +314,10 @@ fake ValueParameter ::= OuterAttr* Pat? TypeReference? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameter ::= !(Variadic) OuterAttr* [ Pat ':' ] TypeReference
-private FnParameter_with_recover ::= FnParameter (',' | &')') {
-  pin = 1
+FnParameter ::= OuterAttr* [ Pat ':' ] (VariadicUpper | TypeReference)
+upper VariadicUpper ::= '...' ','? { elementType = Variadic }
+private FnParameter_with_recover ::= !')' FnParameter (',' | &')') {
+  pin = 2
   recoverWhile = FnParameter_recover
 }
 private FnParameter_recover ::= !(Pat_first | OuterAttr_first | ')' | '...')
@@ -340,7 +341,7 @@ fake ValueParameterList ::= SelfParameter? ValueParameter* Variadic? {
 }
 
 FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
-                                   FnParameter_with_recover* [Variadic ','? ]
+                                   FnParameter_with_recover*
                           ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 
@@ -800,31 +801,31 @@ private TypeAscription ::= ':' TypeReference
 private TypeReferenceInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
-                               | MacroType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ExplicitTraitType
                                | TrivialBaseType
                                // External rule to find the difference between `T` and `T+T`
                                | <<baseOrTraitType PathGenericArgsWithoutColons ImplicitTraitType TraitType_upper>>
+                               | MacroType
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
 private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
                                | RefLikeType
                                | FnPointerType
-                               | MacroType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
                                | ExplicitTraitType
+                               | MacroType
                                | BaseType
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
 private ScalarTypeReferenceInner ::= ArrayType
                                    | RefLikeType
                                    | FnPointerType
+                                   | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | MacroType
                                    | BaseType
-                                   | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
                                    | ForInType
 
 TypeReference ::= TypeReferenceInner {

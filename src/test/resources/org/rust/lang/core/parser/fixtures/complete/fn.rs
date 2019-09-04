@@ -18,3 +18,5 @@ fn diverging() -> ! { panic("! is a type") }
 
 unsafe extern "C" fn ext_fn1(a: bool, ...) {}
 unsafe extern "C" fn ext_fn2(a: bool, args: ...) {}
+unsafe extern "C" fn ext_fn3(a: bool, ...,) {}
+unsafe extern "C" fn ext_fn4(a: bool, args: ...,) {}
