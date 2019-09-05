@@ -15,13 +15,18 @@ We use [bors](https://bors.tech/) to make sure master is always green. Common co
 
 Don't forget to say "Thank you!" when merging pull requests! :)
 
+After pull request accepting you need:
+* add the corresponding milestone for the pull request to make search "when this change was released" easier
+* add [project](https://github.com/intellij-rust/intellij-rust/projects) to inform QA 
+that these changes should be tested. We don't usually add a project to pull request if it doesn't affect users
+* label the pull request by special tags (`feature`, `fix` and `internal`) if you consider
+that the corresponding changes should be mentioned in changelog.
+If pull request doesn't have any of these labels it will be ignored while changelog generation
+See more about releases in the [corresponding](#Releases) section.
+
 Each non-stalled pull-request should be assigned to a reviewer, who should make
 sure that PR moves forward. However, anybody with r+ can accept any PR, if
 they are confident that the PR is in a good state.
-
-To make release creation easier, PR can be labeled by special tags (`feature`, `fix` and `internal`).
-Set suitable tag(s) if you consider that note about PR should be added to changelog. 
-See more about releases in the [corresponding](#Releases) section.
 
 ## Upgrades
 
@@ -62,12 +67,15 @@ because major platform updates can bring a lot of changes.
 
 ## Releases
 
-Nightly is released automatically by TeamCity. Alpha is generally released each two weeks.
+Nightly and beta are released automatically by [TeamCity]. Stable is generally released every two weeks.
+One week before release we create release branch with `release-%release_version%` name from the `master` branch.
+`release_version` value is the same as the corresponding milestone version.
+Release branches are used to build beta and stable plugin builds.
 
 Release notes live in [intellij-rust.github.io](https://github.com/intellij-rust/intellij-rust.github.io).
-To write notes, run `./changelog.py`. It goes thorough bors merge commits since the latest release and 
+To write notes, run `./changelog.py`. It goes thorough all pull requests from the corresponding milestone and 
 creates a template with default info about merged PRs in `_posts`. 
-The initial section of each point depends on special tags that PR can be labeled. 
+The initial version of each post depends on special tags that PR can be labeled. 
 At this moment, `changelog.py` supports `feature`, `fix` and `internal` tags. 
 Note, PR can be marked with any subset of these tags.
 Transform generated text to user-friendly one, add necessary links/gifs. 
@@ -79,12 +87,9 @@ After finishing with release notes, execute `./gradlew makeRelease` tasks. It'll
 * commit and push release notes to intellij-rust.github.io
 * increase patch version in `gradle.properties` and update changelog in `plugin.xml`
 * push "Changelog" commit to master branch of intellij-rust
-* checkout "nightly" branch, advance versions of EAP idea an nightly rust, and push this branch
+* cherry-pick changelog commit to release branch
 
+Then hit `run` for all `Upload Stable` configuration on [TeamCity].
+Make sure to select the changeset with "Changelog" commit.
 
-Then:
-
-* Hit Run on https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadAlphaRust, make
-  sure to select the changeset with "Changelog" commit.
-
-* Send and r+ PR which bumps nightly.  
+[TeamCity]: https://teamcity.jetbrains.com/project.html?projectId=IntellijIdeaPlugins_Rust
