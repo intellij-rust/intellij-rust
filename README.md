@@ -7,11 +7,12 @@
 
 | Build Status |                                                                              |
 |--------------|------------------------------------------------------------------------------|
-| Alpha        | [![Alpha Build Status][alpha-build-status-svg]][alpha-build-status]          |
-| Nightly      | [![Nightly Build Status][nightly-build-status-svg]][nightly-build-status]    |
-| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
 | Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
 | AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
+| Stable       | [![Stable Build Status][stable-build-status-svg]][stable-build-status]       |
+| Beta         | [![Beta Build Status][beta-build-status-svg]][beta-build-status]             |
+| Nightly      | [![Nightly Build Status][nightly-build-status-svg]][nightly-build-status]    |
+| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
 
 
 ## Status
@@ -57,7 +58,7 @@ with [help wanted].
 [help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
-[TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/.lastSuccessful/intellij-rust-0.2.0.{build.number}-181.zip
+[TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_192_TestIdea/.lastSuccessful/intellij-rust-0.2.104.{build.number}-192-dev.zip
 [intellij-toml]: intellij-toml/
 
 <!-- Badges -->
@@ -74,11 +75,14 @@ with [help wanted].
 [appveyor-build-status]: https://ci.appveyor.com/project/intellij-rust/intellij-rust/branch/master
 [appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/xf8792c7p3637060?svg=true
 
-[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust&guest=1
-[teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_CurrentIdea_TestsRust/statusIcon.svg
+[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_TestIdea&guest=1
+[teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_TestIdea/statusIcon.svg
 
-[alpha-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadAlphaRust&guest=1
-[alpha-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_UploadAlphaRust/statusIcon.svg
+[stable-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadStable&guest=1
+[stable-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadStable/statusIcon.svg
 
-[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_UploadNightlyRust&guest=1
-[nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_UploadNightlyRust/statusIcon.svg
+[beta-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadBeta&guest=1
+[beta-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadBeta/statusIcon.svg
+
+[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadNightlyt&guest=1
+[nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadNightly/statusIcon.svg
