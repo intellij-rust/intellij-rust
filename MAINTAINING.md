@@ -19,10 +19,15 @@ After pull request accepting you need:
 * add the corresponding milestone for the pull request to make search "when this change was released" easier
 * add [project](https://github.com/intellij-rust/intellij-rust/projects) to inform QA 
 that these changes should be tested. We don't usually add a project to pull request if it doesn't affect users
-* label the pull request by special tags (`feature`, `fix` and `internal`) if you consider
+* mark the pull request by special labels ([feature](https://github.com/intellij-rust/intellij-rust/labels/feature), 
+[fix](https://github.com/intellij-rust/intellij-rust/labels/fix) and 
+[internal](https://github.com/intellij-rust/intellij-rust/labels/internal) if you consider
 that the corresponding changes should be mentioned in changelog.
 If pull request doesn't have any of these labels it will be ignored while changelog generation
 See more about releases in the [corresponding](#Releases) section.
+* mark the pull request by [to be documented](https://github.com/intellij-rust/intellij-rust/labels/to%20be%20documented) label
+if the corresponding change should be mentioned in documentation or affects existing documentation
+
 
 Each non-stalled pull-request should be assigned to a reviewer, who should make
 sure that PR moves forward. However, anybody with r+ can accept any PR, if
