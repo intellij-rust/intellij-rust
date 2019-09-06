@@ -165,8 +165,9 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     val containingMod = modDecl.containingMod
 
     val ownedDirectory = containingMod.getOwnedDirectory()
-    val inModRs = modDecl.contextualFile.name == RsConstants.MOD_RS_FILE
-    val inCrateRoot = containingMod.isCrateRoot
+    val contextualFile = modDecl.contextualFile
+    val inModRs = contextualFile.name == RsConstants.MOD_RS_FILE
+    val inCrateRoot = lazy(LazyThreadSafetyMode.NONE) { containingMod.isCrateRoot }
 
     val explicitPath = modDecl.pathAttribute
     if (explicitPath != null) {
@@ -175,7 +176,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         // * parent of module declaration otherwise
         val dir = if (containingMod is RsFile) {
             modDeclExplicitPathInNonInlineModule.hit()
-            modDecl.contextualFile.parent
+            contextualFile.parent
         } else {
             modDeclExplicitPathInInlineModule.hit()
             ownedDirectory
@@ -198,7 +199,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     }
 
     for (file in ownedDirectory.files) {
-        if (file == modDecl.contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
+        if (file == contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
         val mod = file.rustFile ?: continue
         val name = fileName(file)
         if (processor(name, mod)) return true
@@ -210,19 +211,19 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
             if (processor(d.name, mod)) return true
         }
 
-        // Submodule file of crate root (for example, `mod foo;` in `src/main.rs`)
-        // can be located in the same directory with parent module (i.e. in `src/foo.rs`)
-        // or in `mod.rs` of subdirectory of crate root dir (i.e. in `src/foo/mod.rs`)
-        // Both cases are handled above
-        if (inCrateRoot) {
-            crateRootModule.hit()
-            continue
-        }
-
         // We shouldn't search possible module files in subdirectories
         // if module declaration is located in `mod.rs`
         if (inModRs) {
             modRsFile.hit()
+            continue
+        }
+
+        // Submodule file of crate root (for example, `mod foo;` in `src/main.rs`)
+        // can be located in the same directory with parent module (i.e. in `src/foo.rs`)
+        // or in `mod.rs` of subdirectory of crate root dir (i.e. in `src/foo/mod.rs`)
+        // Both cases are handled above
+        if (inCrateRoot.value) {
+            crateRootModule.hit()
             continue
         }
 
