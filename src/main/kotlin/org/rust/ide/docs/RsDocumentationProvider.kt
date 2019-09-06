@@ -10,6 +10,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import org.rust.cargo.project.workspace.PackageOrigin.DEPENDENCY
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
@@ -22,7 +23,6 @@ import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
 import org.rust.openapiext.hitOnFalse
-import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.joinToWithBuffer
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -136,7 +136,19 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
-            else -> if (isUnitTestMode) TEST_HOST else return emptyList()
+            DEPENDENCY -> {
+                val pkg = (element as? RsElement)?.containingCargoPackage ?: return emptyList()
+                // Packages without source don't have documentation at docs.rs
+                if (pkg.source == null) {
+                    Testmarks.pkgWithoutSource.hit()
+                    return emptyList()
+                }
+                "$DOCS_RS_HOST/${pkg.name}/${pkg.version}"
+            }
+            else -> {
+                Testmarks.nonDependency.hit()
+                return emptyList()
+            }
         }
 
         val pagePath = qualifiedName?.toUrlPath() ?: return emptyList()
@@ -172,12 +184,14 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     companion object {
         const val STD_DOC_HOST = "https://doc.rust-lang.org"
-        const val TEST_HOST = "test://doc-host.org"
+        const val DOCS_RS_HOST = "https://docs.rs"
     }
 
     object Testmarks {
         val docHidden = Testmark("docHidden")
         val notExportedMacro = Testmark("notExportedMacro")
+        val pkgWithoutSource = Testmark("pkgWithoutSource")
+        val nonDependency = Testmark("nonDependency")
     }
 }
 
