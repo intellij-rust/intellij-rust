@@ -25,5 +25,8 @@ enum class MacroBraces(val open: String, val close: String) {
             RsElementTypes.LBRACE, RsElementTypes.RBRACE -> BRACES
             else -> null
         }
+
+        fun fromTokenOrFail(token: IElementType): MacroBraces =
+            fromToken(token) ?: error("Given token is not a brace: $token")
     }
 }

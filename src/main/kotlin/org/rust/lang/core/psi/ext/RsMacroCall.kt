@@ -68,6 +68,8 @@ private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
 private val RsMacroCall.macroArgumentElement: RsElement?
     get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
 
+val RsMacroCall.macroArgument: RsMacroArgument? get() = macroArgumentElement as? RsMacroArgument
+
 private val RsExpr.value: String? get() {
     return when (this) {
         is RsLitExpr -> stringValue
@@ -154,15 +156,7 @@ private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) 
 }
 
 private fun PsiElement.braceListBodyTextRange(): TextRange? =
-    textRangeBetweenParens(firstChild, lastChild)
-
-private fun textRangeBetweenParens(bra: PsiElement?, ket: PsiElement?): TextRange? {
-    if (bra == null || ket == null || bra == ket) return null
-    return TextRange(
-        bra.endOffset,
-        ket.startOffset
-    )
-}
+    textRange.let { TextRange(it.startOffset + 1, it.endOffset - 1) }
 
 fun RsMacroCall.replaceWithExpr(expr: RsExpr): RsElement {
     return when (val context = expansionContext) {

@@ -6,12 +6,12 @@
 package org.rust.lang.core.macros
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroBinding
 import org.rust.lang.core.psi.RsMacroBindingGroup
 import org.rust.lang.core.psi.ext.fragmentSpecifier
+import org.rust.lang.core.psi.ext.macroBody
 
 sealed class Matcher {
     data class Literal(val value: ASTNode) : Matcher()

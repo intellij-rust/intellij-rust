@@ -1256,7 +1256,7 @@ YieldExpr ::= OuterAttr* yield Expr? {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
+Macro ::= AttrsAndVis "macro_rules" '!' identifier ShallowMacroBody <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -1269,7 +1269,11 @@ Macro ::= AttrsAndVis "macro_rules" '!' identifier MacroBody <<macroSemicolon>>{
   pin = 3
 }
 
-MacroBody ::= <<any_braces (MacroCase ';'?)*>>
+MacroBody ::= <<any_braces (MacroCase ';'?)*>> {
+  elementTypeFactory = "org.rust.lang.core.psi.LazyElementsKt.factory"
+  extraRoot = true
+}
+private ShallowMacroBody ::= <<parseMacroBodyLazy>>
 
 MacroCase ::= MacroPattern '=>' MacroExpansion { pin = 1 }
 
@@ -1342,7 +1346,11 @@ private SpecialExprContextMacroNames ::= "try" | "await" | "dbg" | "format" | "f
 
 private MacroHead ::= AttrsAndVis &(PathWithoutTypes '!') (SpecialMacro | CommonMacro)
 
-MacroArgument ::= <<any_braces MacroArgumentTT>>
+MacroArgument ::= <<any_braces MacroArgumentTT>> {
+  elementTypeFactory = "org.rust.lang.core.psi.LazyElementsKt.factory"
+  extraRoot = true
+}
+private ShallowMacroArgument ::= <<parseMacroArgumentLazy>>
 MacroArgumentTT ::= (<<any_braces MacroArgumentTT>> | MacroBodyIdent | MacroBodyQuoteIdent | <<unpairedToken>>)*
 MacroBodyIdent ::= identifier {
   implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
@@ -1359,7 +1367,7 @@ CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
 //noinspection BnfUnusedRule
 TT ::= <<any_braces TT*>> | <<unpairedToken>>
 
-private CommonMacro ::= PathWithoutTypes '!' identifier? MacroArgument { pin = 2 }
+private CommonMacro ::= PathWithoutTypes '!' identifier? ShallowMacroArgument { pin = 2 }
 private SpecialMacro ::= ExprMacro | FormatLikeMacro | AssertMacro | VecMacro | LogMacro | IncludeMacro | ConcatMacro
 
 private ExprMacro ::= &(("try" | "await" | "dbg") '!') PathWithoutTypes '!' ExprMacroArgument

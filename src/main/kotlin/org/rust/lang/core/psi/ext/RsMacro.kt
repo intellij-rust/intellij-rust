@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.MacroGraph
 import org.rust.lang.core.macros.MacroGraphBuilder
@@ -47,6 +48,9 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
         return false // force rustStructureModificationTracker to be incremented
     }
 }
+
+val RsMacro.macroBody: RsMacroBody?
+    get() = PsiTreeUtil.getChildOfType(this, RsMacroBody::class.java)
 
 val RsMacro.hasMacroExport: Boolean
     get() = queryAttributes.hasAttribute("macro_export")
