@@ -9,6 +9,7 @@ import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,6 +33,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
+import org.rust.openapiext.recursionGuard
 import org.rust.openapiext.toPsiFile
 
 /**
@@ -74,13 +76,13 @@ class RsFile(
             // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
             val key = if (project.macroExpansionManager.isResolvingMacro) CACHED_DATA_MACROS_KEY else CACHED_DATA_KEY
             return CachedValuesManager.getCachedValue(this, key) {
-                CachedValueProvider.Result(doGetCachedData(), rustStructureOrAnyPsiModificationTracker)
+                val value = recursionGuard(Pair(key, this), Computable { doGetCachedData() }) ?: EMPTY_CACHED_DATA
+                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
             }
         }
 
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
-        if (isCycledMod) return EMPTY_CACHED_DATA
 
         val declaration = declaration
         if (declaration != null) return (declaration.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA

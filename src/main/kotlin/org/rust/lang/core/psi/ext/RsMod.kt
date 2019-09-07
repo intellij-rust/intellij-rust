@@ -81,12 +81,3 @@ val RsMod.superMods: List<RsMod> get() {
         .takeWhile { visited.add(it) }
         .toList()
 }
-
-// For malformed programs, chain of `super`s may be infinite
-// because of cycles, and we need to detect this situation.
-val RsMod.isCycledMod: Boolean
-    get() {
-        val visited = HashSet<RsMod>()
-        return generateSequence(this) { it.`super` }
-            .any { !visited.add(it) }
-    }
