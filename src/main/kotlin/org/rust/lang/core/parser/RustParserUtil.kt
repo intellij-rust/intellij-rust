@@ -244,8 +244,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val bound = enter_section_(b)
         val traitRef = enter_section_(b)
 
-        if (!pathP.parse(b, level + 1)) {
-            // May be it is lifetime `'a` or `for<'a>`
+        if (!pathP.parse(b, level + 1) || nextTokenIs(b, EXCL)) {
+            // May be it is lifetime `'a` or `for<'a>` or `foo!()`
             exit_section_(b, traitRef, null, false)
             exit_section_(b, bound, null, false)
             exit_section_(b, polybound, null, false)
