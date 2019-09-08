@@ -8,7 +8,8 @@ package org.rust.ide.actions.diagnostic
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
@@ -41,11 +42,11 @@ class CreateNewGithubIssue : DumbAwareAction(
             .mapNotNull { it.rustcInfo?.version }
             .firstOrNull()
             ?.displayText
-        val ideVersion = ApplicationInfo.getInstance().build.toString()
+        val ideNameAndVersion = ideNameAndVersion
         val os = SystemInfo.getOsNameAndVersion()
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample ?: ""
 
-        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideVersion, os, codeSnippet)
+        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, codeSnippet)
         val link = "https://github.com/intellij-rust/intellij-rust/issues/new?body=${URLUtil.encodeURIComponent(body)}"
         BrowserUtil.browse(link)
     }
@@ -76,6 +77,25 @@ class CreateNewGithubIssue : DumbAwareAction(
             If the relevant files are large, please provide a link to a public repository or a [Gist](https://gist.github.com/).
             -->            
         """.trimIndent()
+
+        private val ideNameAndVersion: String
+            get() {
+                // BACKCOMPAT: 2019.1. Use ApplicationInfo instead
+                val appInfo = ApplicationInfoEx.getInstanceEx()
+                val appName = appInfo.fullApplicationName
+                val editionName = ApplicationNamesInfo.getInstance().editionName
+                val ideVersion = appInfo.build.toString()
+                return buildString {
+                    append(appName)
+                    if (editionName != null) {
+                        append(" ")
+                        append(editionName)
+                    }
+                    append(" (")
+                    append(ideVersion)
+                    append(")")
+                }
+            }
 
         private val RustcVersion.displayText: String
             get() = buildString {
