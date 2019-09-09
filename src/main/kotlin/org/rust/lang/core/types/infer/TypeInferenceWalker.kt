@@ -965,8 +965,8 @@ class RsTypeInferenceWalker(
         return base.typeArguments.getOrElse(0) { TyUnknown }
     }
 
-    private fun inferTryMacroArgumentType(expr: RsExpr): Ty {
-        val base = expr.inferType() as? TyAdt ?: return TyUnknown
+    private fun inferTryMacroArgumentType(exprTy: Ty): Ty {
+        val base = exprTy as? TyAdt ?: return TyUnknown
         if (base.item != items.Result) return TyUnknown
         return base.typeArguments.firstOrNull() ?: TyUnknown
     }
@@ -1057,15 +1057,12 @@ class RsTypeInferenceWalker(
         val name = macroCall.macroName
         val exprArg = macroCall.exprMacroArgument
         if (exprArg != null) {
-            val expr = exprArg.expr ?: return TyUnknown
+            val type = exprArg.expr?.inferType() ?: return TyUnknown
             return when (name) {
-                "try" -> inferTryMacroArgumentType(expr)
-                "dbg" -> expr.inferType()
-                "await" -> expr.inferType().lookupFutureOutputTy(lookup)
-                else -> {
-                    expr.inferType()
-                    TyUnknown
-                }
+                "try" -> inferTryMacroArgumentType(type)
+                "dbg" -> type
+                "await" -> type.lookupFutureOutputTy(lookup)
+                else -> TyUnknown
             }
         }
 

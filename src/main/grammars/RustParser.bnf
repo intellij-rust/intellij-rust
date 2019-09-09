@@ -1320,7 +1320,7 @@ private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 fake MacroCall ::= AttrsAndVis PathWithoutTypes '!' identifier? (
     MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
-      VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument
+      VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement"
@@ -1395,7 +1395,7 @@ VecMacroArgument ::= <<any_braces ArrayInitializer >>
 //noinspection BnfUnusedRule
 LogMacroArgument ::=
   <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
-  //noinspection BnfUnusedRule
+//noinspection BnfUnusedRule
 IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -1403,6 +1403,12 @@ IncludeMacroArgument ::= <<any_braces (AnyExpr ','?)>> {
 }
 //noinspection BnfUnusedRule
 ConcatMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>?>> {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
+  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+//noinspection BnfUnusedRule
+EnvMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>? >> {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

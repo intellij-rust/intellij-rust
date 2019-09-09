@@ -36,7 +36,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 182
+        override fun getStubVersion(): Int = 183
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -150,6 +150,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 
     "INCLUDE_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("INCLUDE_MACRO_ARGUMENT", ::RsIncludeMacroArgumentImpl)
     "CONCAT_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("CONCAT_MACRO_ARGUMENT", ::RsConcatMacroArgumentImpl)
+    "ENV_MACRO_ARGUMENT" -> RsPlaceholderStub.Type("ENV_MACRO_ARGUMENT", ::RsEnvMacroArgumentImpl)
 
     "INNER_ATTR" -> RsInnerAttrStub.Type
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)

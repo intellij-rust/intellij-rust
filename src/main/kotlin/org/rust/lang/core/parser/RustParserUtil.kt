@@ -303,6 +303,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         put(RustParser::IncludeMacroArgument, true, "include_str", "include_bytes")
         put(RustParser::IncludeMacroArgument, false, "include")
         put(RustParser::ConcatMacroArgument, true, "concat")
+        put(RustParser::EnvMacroArgument, true, "env")
     }
 
     @JvmStatic
