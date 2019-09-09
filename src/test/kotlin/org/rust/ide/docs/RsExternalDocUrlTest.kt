@@ -14,7 +14,7 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         //- dep-lib/lib.rs
         pub struct Foo;
                   //^
-    """, "test://doc-host.org/dep_lib_target/struct.Foo.html")
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html")
 
     fun `test associated const`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -24,7 +24,7 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
             pub const BAR: i32 = 123;
                      //^
         }
-    """, "test://doc-host.org/dep_lib_target/struct.Foo.html#associatedconstant.BAR")
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html#associatedconstant.BAR")
 
     fun `test private item`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -54,7 +54,7 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
                     //^
             () => { unimplemented!() };
         }
-    """, "test://doc-host.org/dep_lib_target/macro.foo.html")
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
 
     fun `test not exported macro`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -63,4 +63,16 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
             () => { unimplemented!() };
         }
     """, null, RsDocumentationProvider.Testmarks.notExportedMacro)
+
+    fun `test not external url for workspace package`() = doUrlTestByFileTree("""
+        //- lib.rs
+        pub enum Foo { FOO, BAR }
+                //^
+    """, null, RsDocumentationProvider.Testmarks.nonDependency)
+
+    fun `test not external url for dependency package without source`() = doUrlTestByFileTree("""
+        //- no-source-lib/lib.rs
+        pub enum Foo { FOO, BAR }
+                //^
+    """, null, RsDocumentationProvider.Testmarks.pkgWithoutSource)
 }

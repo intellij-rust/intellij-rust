@@ -177,16 +177,18 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO),
             externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2"),
             externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2",
-                origin = PackageOrigin.TRANSITIVE_DEPENDENCY)
+                origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+            externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null)
         )
 
         return CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(packages, mapOf(
-            // Our package depends on dep_lib 0.0.1, nosrc_lib, dep-proc-macro and dep_lib-2
+            // Our package depends on dep_lib 0.0.1, nosrc_lib, dep-proc-macro, dep_lib-2 and no-source-lib
             packages[0].id to setOf(
                 Dependency(packages[1].id),
                 Dependency(packages[2].id),
                 Dependency(packages[5].id),
-                Dependency(packages[6].id)
+                Dependency(packages[6].id),
+                Dependency(packages[8].id)
             ),
             // dep_lib 0.0.1 depends on trans-lib and dep_lib 0.0.2
             packages[1].id to setOf(
