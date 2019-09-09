@@ -43,7 +43,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
             return (impls.asSequence() + freeImpls.asSequence())
                 .map { RsCachedImplItem.forImpl(project, it) }
-                .filter { it.crateRoot != null }
+                .filter { it.isValid }
         }
 
         /** return impls for generic type `impl<T> Trait for T {}` */
@@ -52,7 +52,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
             return freeImpls.asSequence()
                 .map { RsCachedImplItem.forImpl(project, it) }
-                .filter { it.crateRoot != null }
+                .filter { it.isValid }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {

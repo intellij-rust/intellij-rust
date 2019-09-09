@@ -10,6 +10,8 @@ import org.rust.MockAdditionalCfgOptions
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsCfgAttrResolveTest : RsResolveTestBase() {
+    override val followMacroExpansions: Boolean get() = true
+
     @MockAdditionalCfgOptions("foo")
     fun `test fn with cfg`() = checkByCode("""
         #[cfg(foo)]
@@ -127,7 +129,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @MockAdditionalCfgOptions("foo")
     fun `test extern crate with cfg`() = stubOnlyResolve(""" 
-        //- main.rs
+    //- main.rs
         #[cfg(foo)]
         extern crate test_package;
 
@@ -135,8 +137,98 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             test_package::hello();
         }               //^ lib.rs
 
-        //- lib.rs
+    //- lib.rs
         pub fn hello() {}
              //X
+     """)
+
+    @MockAdditionalCfgOptions("foo")
+    fun `test impl`() = checkByCode(""" 
+        struct S;
+        #[cfg(foo)]
+        impl S { fn foo(&self) {} }
+                   //X
+        #[cfg(not(foo))]
+        impl S { fn foo(&self) {} }
+        fn main() {
+            S.foo()
+        }   //^
+     """)
+
+    @MockAdditionalCfgOptions("foo")
+    fun `test impl in inline mod with cfg`() = checkByCode(""" 
+        struct S;
+        #[cfg(foo)]
+        mod foo {
+            impl super::S { fn foo(&self) {} }
+                             //X
+        }
+        #[cfg(not(foo))]
+        mod foo {
+            impl super::S { fn foo(&self) {} }
+        }
+        fn main() {
+            S.foo()
+        }   //^
+     """)
+
+    @MockAdditionalCfgOptions("foo")
+    fun `test impl in non-inline mod with cfg`() = stubOnlyResolve(""" 
+    //- bar.rs
+        impl super::S { fn foo(&self) {} }
+    //- baz.rs
+        impl super::S { fn foo(&self) {} }
+    //- lib.rs
+        struct S;
+        
+        #[cfg(foo)]
+        #[path = "bar.rs"]
+        mod foo;
+        
+        #[cfg(not(foo))]
+        #[path = "baz.rs"]
+        mod foo;
+        
+        fn main() {
+            S.foo()
+        }   //^ bar.rs
+     """)
+
+    @MockAdditionalCfgOptions("foo")
+    fun `test impl in function body with cfg`() = checkByCode(""" 
+        struct S;
+        #[cfg(foo)]
+        fn foo() {
+            impl S { fn foo(&self) {} }
+                      //X
+        }
+        #[cfg(not(foo))]
+        fn foo() {
+            impl S { fn foo(&self) {} }
+        }
+        fn main() {
+            S.foo()
+        }   //^
+     """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("foo")
+    fun `test impl expanded from macro with cfg`() = checkByCode(""" 
+        macro_rules! same {
+            ($ i:item) => { $ i };
+        }
+        struct S;
+        #[cfg(foo)]
+        same! {
+            impl S { fn foo(&self) {} }
+                      //X
+        }
+        #[cfg(not(foo))]
+        same! {
+            impl S { fn foo(&self) {} }
+        }
+        fn main() {
+            S.foo()
+        }   //^
      """)
 }

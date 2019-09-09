@@ -10,9 +10,9 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.RsAbstractable
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.expandedMembers
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.types.BoundElement
@@ -28,10 +28,11 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
  * [ImplLookup.assembleCandidates] and [processAssociatedItems] in particular
  */
 class RsCachedImplItem(
-    val impl: RsImplItem,
-    val crateRoot: RsMod? = impl.crateRoot,
-    val traitRef: RsTraitRef? = impl.traitRef
+    val impl: RsImplItem
 ) {
+    val traitRef: RsTraitRef? = impl.traitRef
+    val isValid: Boolean = impl.isValidProjectMember
+
     val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }
     val typeAndGenerics: Pair<Ty, List<TyTypeParameter>>? by lazy(PUBLICATION) {
         impl.typeReference?.type?.let { it to impl.generics }
