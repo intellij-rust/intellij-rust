@@ -15,42 +15,31 @@
 | TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
 
 
-## Status
-
-This is a **work in progress**, some features are implemented partially, 
-there may be performance problems.
-
 ## Installation & Usage
 
-Visit [intellij-rust.github.io] to find documentation about available
-installation options and features. All new features are announced in 
+Available installation options and features are described on [intellij-rust.github.io]. All new features are announced in 
 the [changelog](https://intellij-rust.github.io/thisweek/).
 
-If you want to jump straight in, install IntelliJ IDEA, open `Settings > Plugins > Browse repositories`,
-install Rust plugin, and use **project from existing sources** action to import a Cargo-based project.
+If you want to jump straight in, open `Settings > Plugins > Marketplace` in your IDE,
+search for _Rust_ and install the plugin. To open a project, use **File | Open** and point to the directory containing `Cargo.toml`. For creating projects, use the **Rust** template. You can find more details in the [Quick Start Guide](https://intellij-rust.github.io/docs/quick-start.html). 
 
 Unstable master branch builds can be downloaded from [TeamCity].
 
-## FAQ
+## Compatible IDEs
 
-Frequently asked questions, a.k.a. "Where is Rust SDK?", are on the [website] :)
+The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.1. 
+The feature set is similar except for the debugger which is available only in [CLion](https://www.jetbrains.com/clion/).
 
 ## TOML
 
 If you are looking for the TOML plugin, see [intellij-toml] directory.
 
-## Compatible IDEs
-
-The plugin is compatible with any IntelliJ based IDE starting from 2019.1. 
-If you don't have any yet, try [IntelliJ IDEA Community Edition](https://www.jetbrains.com/idea/), it's free.
-If you want to use debugger, try [CLion](https://www.jetbrains.com/clion/).
-
 ## Contributing
 
-You're encouraged to contribute to the plugin in any form if you've found any
-issues or missing functionality that you'd want to see. Check out
-[CONTRIBUTING.md] to learn how to setup the project and [ARCHITECTURE.md] to
-understand the high level structure of the code base. Good first bugs are tagged
+You're encouraged to contribute to the plugin if you've found any
+issues or missing functionality that you would want to see. Check out
+[CONTRIBUTING.md] to learn how to set up the project and [ARCHITECTURE.md] to
+understand the high-level structure of the codebase. Commonly encountered problems are tagged
 with [help wanted].
 
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
