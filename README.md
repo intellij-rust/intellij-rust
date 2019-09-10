@@ -21,7 +21,7 @@ Available installation options and features are described on [intellij-rust.gith
 the [changelog](https://intellij-rust.github.io/thisweek/).
 
 If you want to jump straight in, open `Settings > Plugins > Marketplace` in your IDE,
-search for _Rust_ and install the plugin. To open a project, use **File | Open** and point to the directory containing `Cargo.toml`. For creating projects, use the **Rust** template. You can find more details in the [Quick Start Guide](https://intellij-rust.github.io/docs/quick-start.html). 
+search for _Rust_ and install the plugin. To open an existing project, use **File | Open** and point to the directory containing `Cargo.toml`. For creating projects, use the **Rust** template. You can find more details in the [Quick Start Guide](https://intellij-rust.github.io/docs/quick-start.html). 
 
 Unstable master branch builds can be downloaded from [TeamCity].
 
