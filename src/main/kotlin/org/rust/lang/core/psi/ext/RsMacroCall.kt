@@ -19,9 +19,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsMacroCallStub
+import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.HashCode
-
 
 abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
                                       RsMacroCall {
@@ -93,6 +93,11 @@ private val RsExpr.value: String? get() {
                         }
                     }
                 }
+                "env" -> {
+                    val expr = macroCall.envMacroArgument?.variableNameExpr as? RsLitExpr ?: return null
+                    // TODO: support more variables here
+                    if (expr.value == "OUT_DIR") expr.containingCargoTarget?.outDir?.path else null
+                }
                 else -> null
             }
         }
@@ -105,7 +110,7 @@ fun RsMacroCall.findIncludingFile(): RsFile? {
     val path = includeMacroArgument?.expr?.value ?: return null
     // TODO: it doesn't work if `include!()` macro call comes from other macro
     val file = containingFile?.originalFile?.virtualFile ?: return null
-    return file.parent?.findFileByRelativePath(path)?.toPsiFile(project)?.rustFile
+    return file.parent?.findFileByMaybeRelativePath(path)?.toPsiFile(project)?.rustFile
 }
 
 val RsMacroCall.bodyHash: HashCode?
