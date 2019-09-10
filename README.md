@@ -27,8 +27,21 @@ Unstable master branch builds can be downloaded from [TeamCity].
 
 ## Compatible IDEs
 
-The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.1. 
-The feature set is similar except for the debugger which is available only in [CLion](https://www.jetbrains.com/clion/).
+The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.1, with the following differences in the sets of the available features:
+
+
+| | Open-source and Educational IDEs (*)| IDEA Ultimate, PyCharm, other commercial IDEs | [CLion](https://www.jetbrains.com/clion/) (commercial)|
+|--------------|----------------------------|---| ---|
+|Language support| + | + | + | +
+|Cargo support| + | + | + | +
+| Code coverage    | + | + | - 
+| Debugger       | - | - | +
+| Profiler        | - | - | +
+| Valgrind Memcheck      | - | - | +
+|[Detecting duplicates](https://www.jetbrains.com/help/idea/analyzing-duplicates.html)        | - | + | +
+
+
+(*) [IDEA](https://www.jetbrains.com/idea/) Community Edition, [PyCharm](https://www.jetbrains.com/pycharm/) Community Edition, [PyCharm Edu and IntelliJ IDEA Edu](https://www.jetbrains.com/education).
 
 ## TOML
 
@@ -39,8 +52,7 @@ If you are looking for the TOML plugin, see [intellij-toml] directory.
 You're encouraged to contribute to the plugin if you've found any
 issues or missing functionality that you would want to see. Check out
 [CONTRIBUTING.md] to learn how to set up the project and [ARCHITECTURE.md] to
-understand the high-level structure of the codebase. Commonly encountered problems are tagged
-with [help wanted].
+understand the high-level structure of the codebase. If you are not sure where to start, consider the issues tagged with [help wanted].
 
 [intellij-rust.github.io]: https://intellij-rust.github.io/docs/
 [website]: https://intellij-rust.github.io/docs/faq.html
