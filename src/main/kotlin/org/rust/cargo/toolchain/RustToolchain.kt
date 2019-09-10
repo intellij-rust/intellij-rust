@@ -5,6 +5,7 @@
 
 package org.rust.cargo.toolchain
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -126,6 +127,11 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
         ?.stdoutLines
         ?: return null
 
+    return parseRustcVersion(lines)
+}
+
+@VisibleForTesting
+fun parseRustcVersion(lines: List<String>): RustcVersion? {
     // We want to parse following
     //
     //  ```
@@ -147,7 +153,7 @@ private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
     val versionText = releaseMatch.groups[1]?.value ?: return null
     val commitHash = find(commitHashRe)?.groups?.get(1)?.value
     val commitDate = try {
-        LocalDate.parse(find(commitDateRe)?.groups?.get(1)?.value)
+        find(commitDateRe)?.groups?.get(1)?.value?.let(LocalDate::parse)
     } catch (e: DateTimeParseException) {
         null
     }
