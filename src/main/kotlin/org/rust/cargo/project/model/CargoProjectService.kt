@@ -47,8 +47,8 @@ interface CargoProjectsService {
      */
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
-    fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
-    fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>
+    fun refreshAllProjects(): CompletableFuture<out List<CargoProject>>
+    fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>>
 
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(

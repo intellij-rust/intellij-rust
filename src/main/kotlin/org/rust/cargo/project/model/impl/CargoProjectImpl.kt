@@ -123,6 +123,7 @@ open class CargoProjectsServiceImpl(
                 contentRoot?.put(cargoProject)
                 for (target in targets) {
                     target.crateRoot?.parent?.put(cargoProject)
+                    target.outDir?.put(cargoProject)
                 }
             }
 
@@ -175,11 +176,10 @@ open class CargoProjectsServiceImpl(
         }
     }
 
-    override fun refreshAllProjects(): CompletableFuture<List<CargoProject>> =
+    override fun refreshAllProjects(): CompletableFuture<out List<CargoProject>> =
         modifyProjects { doRefresh(project, it) }
-            .thenApply { projects -> projects.map { it } }
 
-    override fun discoverAndRefresh(): CompletableFuture<List<CargoProject>> {
+    override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
         val guessManifest = project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
@@ -190,7 +190,7 @@ open class CargoProjectsServiceImpl(
         return modifyProjects { projects ->
             if (hasAtLeastOneValidProject(projects)) return@modifyProjects CompletableFuture.completedFuture(projects)
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
-        }.thenApply { projects -> projects.map { it } }
+        }
     }
 
     /**
