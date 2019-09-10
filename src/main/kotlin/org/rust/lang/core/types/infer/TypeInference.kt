@@ -770,17 +770,6 @@ data class TyWithObligations<out T>(
 fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
     TyWithObligations(value, obligations + addObligations)
 
-fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
-    if (this !is TyAnon) return TyUnknown
-    val futureTrait = lookup.items.Future ?: return TyUnknown
-    val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
-    return lookup.lookupAssocTypeInBounds(
-        getTraitBoundsTransitively().asSequence(),
-        futureTrait,
-        outputType
-    ) ?: TyUnknown
-}
-
 sealed class ResolvedPath {
     abstract val element: RsElement
 

@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.infer.lookupFutureOutputTy
+import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
@@ -274,6 +274,13 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     private fun pubInherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
         return baseInherentImplDeclarationPattern().and(statementBeginningPattern("pub"))
+    }
+
+    private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
+        val futureTrait = lookup.items.Future ?: return TyUnknown
+        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
+        val selection = lookup.selectProjectionStrict(TraitRef(this, futureTrait.withSubst()), outputType)
+        return selection.ok()?.value ?: TyUnknown
     }
 
     companion object {
