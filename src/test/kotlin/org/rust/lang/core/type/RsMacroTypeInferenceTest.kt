@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.type
 
+import org.rust.lang.core.types.infer.TypeInferenceMarks
+
 class RsMacroTypeInferenceTest : RsTypificationTestBase() {
     override val followMacroExpansions: Boolean get() = true
 
@@ -124,4 +126,12 @@ class RsMacroTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ <unknown>
     """)
+
+    fun `test infinite recursion`() = testExpr("""
+        macro_rules! foo { () => { foo!(); }; }
+        fn main() {
+            let a = foo!();
+            a;
+        } //^ <unknown>
+    """, TypeInferenceMarks.macroExprDepthLimitReached)
 }
