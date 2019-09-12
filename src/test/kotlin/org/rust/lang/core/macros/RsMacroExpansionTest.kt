@@ -346,7 +346,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         struct Baz;
     """)
 
-    fun `test match pattern by word token`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+    fun `test match pattern by word token 1`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
         macro_rules! foo {
             ($ i:ident) => (
                 mod $ i {}
@@ -361,6 +361,52 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo! { foo }
         foo! { spam bar }
         foo! { eggs Baz }
+    """, """
+        mod foo {}
+    """, """
+        fn bar() {}
+    """, """
+        struct Baz;
+    """)
+
+    fun `test match pattern by word token 2`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+        macro_rules! foo {
+            ($ i:ident) => (
+                mod $ i {}
+            );
+            ('spam $ i:ident) => (
+                fn $ i() {}
+            );
+            ('eggs $ i:ident) => (
+                struct $ i;
+            )
+        }
+        foo! { foo }
+        foo! { 'spam bar }
+        foo! { 'eggs Baz }
+    """, """
+        mod foo {}
+    """, """
+        fn bar() {}
+    """, """
+        struct Baz;
+    """)
+
+    fun `test match pattern by word token 3`() = doTest(MacroExpansionMarks.failMatchPatternByToken, """
+        macro_rules! foo {
+            ($ i:ident) => (
+                mod $ i {}
+            );
+            ("spam" $ i:ident) => (
+                fn $ i() {}
+            );
+            ("eggs" $ i:ident) => (
+                struct $ i;
+            )
+        }
+        foo! { foo }
+        foo! { "spam" bar }
+        foo! { "eggs" Baz }
     """, """
         mod foo {}
     """, """

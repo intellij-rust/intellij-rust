@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
+import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
@@ -459,9 +460,11 @@ class MacroPattern private constructor(
 private val RsMacroCase.pattern: MacroPattern
     get() = MacroPattern.valueOf(macroPattern.macroPatternContents)
 
+private val COMPARE_BY_TEXT_TOKES = TokenSet.orSet(tokenSetOf(IDENTIFIER, QUOTE_IDENTIFIER), RS_LITERALS)
+
 fun PsiBuilder.isSameToken(node: ASTNode): Boolean {
     val (elementType, size) = collapsedTokenType(this) ?: (tokenType to 1)
-    val result = node.elementType == elementType && (elementType != IDENTIFIER || node.chars == tokenText)
+    val result = node.elementType == elementType && (elementType !in COMPARE_BY_TEXT_TOKES || node.chars == tokenText)
     if (result) {
         PsiBuilderUtil.advance(this, size)
     }
