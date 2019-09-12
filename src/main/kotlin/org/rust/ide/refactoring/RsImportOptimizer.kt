@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsImportOptimizer : ImportOptimizer {
-    override fun supports(file: PsiFile?): Boolean = file is RsFile
+    override fun supports(file: PsiFile): Boolean = file is RsFile
 
     override fun processFile(file: PsiFile) = Runnable {
         val documentManager = PsiDocumentManager.getInstance(file.project)

@@ -13,6 +13,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.Key
 import com.intellij.task.ProjectTaskManager
+import com.intellij.task.ProjectTaskNotification
+import com.intellij.task.ProjectTaskResult
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -43,9 +45,11 @@ class CargoBuildTaskProvider : BeforeRunTaskProvider<CargoBuildTaskProvider.Buil
         val buildableElement = CargoBuildConfiguration(buildConfiguration, buildEnvironment)
 
         val result = CompletableFuture<Boolean>()
-        ProjectTaskManager.getInstance(configuration.project).build(arrayOf(buildableElement)) {
-            result.complete(it.errors == 0 && !it.isAborted)
-        }
+        ProjectTaskManager.getInstance(configuration.project).build(arrayOf(buildableElement), object: ProjectTaskNotification {
+            override fun finished(executionResult: ProjectTaskResult) {
+                result.complete(executionResult.errors == 0 && !executionResult.isAborted)
+            }
+        })
         return result.get()
     }
 
