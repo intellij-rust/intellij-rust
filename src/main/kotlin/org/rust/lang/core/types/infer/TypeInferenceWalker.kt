@@ -606,7 +606,7 @@ class RsTypeInferenceWalker(
         return methodType.retType
     }
 
-    private fun <T: AssocItemScopeEntryBase<E>, E> filterAssocItems(variants: List<T>, context: RsElement): List<T> {
+    private fun <T : AssocItemScopeEntryBase<E>, E> filterAssocItems(variants: List<T>, context: RsElement): List<T> {
         return variants.singleOrLet { list ->
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
@@ -1288,6 +1288,13 @@ class RsTypeInferenceWalker(
 
     fun writePatFieldTy(psi: RsPatField, ty: Ty): Unit =
         ctx.writePatFieldTy(psi, ty)
+
+    private fun Ty.lookupFutureOutputTy(lookup: ImplLookup): Ty {
+        val futureTrait = lookup.items.Future ?: return TyUnknown
+        val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
+        val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType)
+        return selection.ok()?.register() ?: TyUnknown
+    }
 }
 
 private val RsSelfParameter.typeOfValue: Ty
