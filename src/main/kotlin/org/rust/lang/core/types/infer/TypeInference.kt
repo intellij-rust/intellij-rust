@@ -803,4 +803,5 @@ object TypeInferenceMarks {
     val methodPickDerefOrder = Testmark("methodPickDerefOrder")
     val methodPickCollapseTraits = Testmark("methodPickCollapseTraits")
     val traitSelectionSpecialization = Testmark("traitSelectionSpecialization")
+    val macroExprDepthLimitReached = Testmark("reachMacroExprDepthLimit")
 }
