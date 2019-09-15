@@ -46,9 +46,8 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
         row("Compile all project targets if possible:", compileAllTargetsCheckBox, """
             Pass `--target-all` option to cargo build/check command.
         """)
-        row("Offline mode (nightly only):", useOfflineCheckbox, """
-            Pass `-Z offline` option to cargo not to perform network requests.
-            Used only for nightly toolchain.
+        row("Offline mode:", useOfflineCheckbox, """
+            Pass `--offline` option to cargo not to perform network requests.
         """)
         block("External Linter") {
             row("External linter:", externalLinterComboBox, """

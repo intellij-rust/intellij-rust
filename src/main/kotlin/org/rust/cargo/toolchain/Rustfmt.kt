@@ -69,10 +69,11 @@ class Rustfmt(private val rustfmtExecutable: Path) {
         cargoProject: CargoProject,
         owner: Disposable = cargoProject.project
     ) {
-        cargoProject.project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
-            cargoProject.project.toolchain
+        val project = cargoProject.project
+        project.computeWithCancelableProgress("Reformatting Cargo Project with Rustfmt...") {
+            project.toolchain
                 ?.cargoOrWrapper(cargoProject.workingDirectory)
-                ?.toGeneralCommandLine(CargoCommandLine.forProject(cargoProject, "fmt", listOf("--all")))
+                ?.toGeneralCommandLine(project, CargoCommandLine.forProject(cargoProject, "fmt", listOf("--all")))
                 ?.execute(owner, false)
         }
     }

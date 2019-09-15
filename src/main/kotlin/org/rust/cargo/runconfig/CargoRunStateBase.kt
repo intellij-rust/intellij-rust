@@ -54,7 +54,7 @@ abstract class CargoRunStateBase(
     override fun startProcess(): ProcessHandler = startProcess(emulateTerminal = false)
 
     fun startProcess(emulateTerminal: Boolean): ProcessHandler {
-        var commandLine = cargo().toColoredCommandLine(prepareCommandLine())
+        var commandLine = cargo().toColoredCommandLine(environment.project, prepareCommandLine())
         if (emulateTerminal) {
             commandLine = PtyCommandLine(commandLine)
                 .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
