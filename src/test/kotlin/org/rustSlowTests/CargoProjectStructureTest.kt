@@ -5,23 +5,19 @@
 
 package org.rustSlowTests
 
-import com.intellij.ide.util.treeView.AbstractTreeNode
-import com.intellij.ide.util.treeView.AbstractTreeStructure
-import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.util.ui.tree.TreeUtil
+import com.intellij.testFramework.ProjectViewTestUtil
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.toolwindow.CargoProjectStructure
+import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure
+import org.rust.cargo.project.toolwindow.CargoProjectsTree
 import org.rust.fileTree
-import javax.swing.tree.TreeModel
 
 class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     fun `test targets`() = doTest("""
         Root
-         Project
+         Project(unitTest)
           Targets
            Target(foo[lib])
            Target(foo[bin])
@@ -53,7 +49,7 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     fun `test workspace members`() = doTest("""
         Root
-         Project
+         Project(unitTest)
           Targets
            Target(foo[bin])
           WorkspaceMember(bar)
@@ -90,25 +86,11 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     private fun doTest(expectedTreeStructure: String, builder: FileTreeBuilder.() -> Unit) {
         fileTree(builder).create()
-        val structure = CargoProjectStructure(project.cargoProjects.allProjects.toList())
-        assertTreeStructureEquals(structure, expectedTreeStructure.trimIndent() + "\n")
-    }
-
-    // TODO: use [com.intellij.testFramework.PlatformTestUtil#assertTreeEqual(javax.swing.JTree, java.lang.String)]
-    //  Original [com.intellij.testFramework.PlatformTestUtil#assertTreeStructureEquals] was dropped in
-    //  https://github.com/JetBrains/intellij-community/commit/6c92cfb65a482f05a87f5e3990b5635010e787f0
-    //  So, it's temporarily solution to allow test works as before
-    private fun assertTreeStructureEquals(treeModel: TreeModel, expected: String) {
-        val structure = object : AbstractTreeStructure() {
-            override fun getRootElement(): Any = treeModel.root
-            override fun getChildElements(element: Any): Array<Any> =
-                TreeUtil.nodeChildren(element, treeModel).toList().toTypedArray()
-            override fun getParentElement(element: Any): Any? = (element as AbstractTreeNode<*>).parent
-            override fun createDescriptor(element: Any, parentDescriptor: NodeDescriptor<*>?): NodeDescriptor<*> =
-                throw UnsupportedOperationException()
-            override fun commit(): Unit = throw UnsupportedOperationException()
-            override fun hasSomethingToCommit(): Boolean = throw UnsupportedOperationException()
-        }
-        assertEquals(expected, PlatformTestUtil.print(structure, treeModel.root, 0, null, -1, ' ', null).toString())
+        val structure = CargoProjectTreeStructure(
+            CargoProjectsTree(),
+            testRootDisposable,
+            project.cargoProjects.allProjects.toList()
+        )
+        ProjectViewTestUtil.assertStructureEqual(structure, expectedTreeStructure.trimIndent() + "\n", null)
     }
 }
