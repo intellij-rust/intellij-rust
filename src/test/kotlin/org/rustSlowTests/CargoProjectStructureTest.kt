@@ -13,7 +13,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.toolwindow.CargoProjectStructure
+import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure
 import org.rust.fileTree
 import javax.swing.tree.TreeModel
 
@@ -90,7 +90,7 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     private fun doTest(expectedTreeStructure: String, builder: FileTreeBuilder.() -> Unit) {
         fileTree(builder).create()
-        val structure = CargoProjectStructure(project.cargoProjects.allProjects.toList())
+        val structure = CargoProjectTreeStructure(project.cargoProjects.allProjects.toList())
         assertTreeStructureEquals(structure, expectedTreeStructure.trimIndent() + "\n")
     }
 
