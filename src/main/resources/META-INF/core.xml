@@ -998,6 +998,12 @@
                 class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
                 text="Run External Linter (Cargo Check / Clippy) on the Fly"/>
 
+        <action id="Cargo.ShowSettings"
+                class="org.rust.ide.actions.CargoEditSettingsAction" text="Cargo Settings"
+                description="Edit Cargo settings for the current project"
+                icon="AllIcons.General.Settings">
+        </action>
+
         <group id="Rust.Cargo">
             <reference id="Cargo.RefreshCargoProject"/>
             <reference id="Cargo.AttachCargoProject"/>
@@ -1009,6 +1015,8 @@
             <separator/>
             <reference id="ExpandAll"/>
             <reference id="CollapseAll"/>
+            <separator/>
+            <reference id="Cargo.ShowSettings"/>
         </group>
 
     </actions>
