@@ -6,20 +6,29 @@
 package org.rustSlowTests.cargo.runconfig
 
 import com.intellij.execution.ExecutionResult
+import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.Location
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.process.*
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.DataManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.runconfig.CargoCommandRunner
+import org.rust.cargo.runconfig.buildtool.CargoBuildConfiguration
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager
+import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
@@ -81,6 +90,21 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
         }
         Disposer.dispose(result.executionConsole)
         return listener.output
+    }
+
+    protected fun buildProject(): CargoBuildResult {
+        val buildConfiguration = createBuildConfiguration()
+        return CargoBuildManager.build(buildConfiguration).get()
+    }
+
+    protected fun createBuildConfiguration(): CargoBuildConfiguration {
+        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+        val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID)!!
+        val runManager = RunManager.getInstance(project) as RunManagerImpl
+        val configuration = CargoBuildManager.getBuildConfiguration(createConfiguration())!!
+        val settings = RunnerAndConfigurationSettingsImpl(runManager, configuration)
+        val environment = ExecutionEnvironment(executor, runner, settings, project)
+        return CargoBuildConfiguration(configuration, environment)
     }
 }
 
