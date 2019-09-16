@@ -39,7 +39,7 @@ data class RangeMap private constructor(private val ranges: List<MappedTextRange
         return ranges.mapNotNull { it.dstIntersection(toMap) }
     }
 
-    private fun mapMappedTextRangeFromExpansionToCallBody(toMap: MappedTextRange): List<MappedTextRange> {
+    fun mapMappedTextRangeFromExpansionToCallBody(toMap: MappedTextRange): List<MappedTextRange> {
         return mapTextRangeFromExpansionToCallBody(TextRange(toMap.srcOffset, toMap.srcEndOffset)).map { mapped ->
             MappedTextRange(
                 mapped.srcOffset,
@@ -101,6 +101,10 @@ data class MappedTextRange(
 
 val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
 val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
+
+val MappedTextRange.srcRange: TextRange get() = TextRange(srcOffset, srcOffset + length)
+
+fun MappedTextRange.srcShiftLeft(delta: Int) = copy(srcOffset = srcOffset - delta)
 
 private fun MappedTextRange.dstIntersection(range: TextRange): MappedTextRange? {
     val newDstStart = Math.max(dstOffset, range.startOffset)
