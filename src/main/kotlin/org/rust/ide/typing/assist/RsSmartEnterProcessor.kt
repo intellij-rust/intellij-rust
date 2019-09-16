@@ -10,9 +10,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsStmt
+import org.rust.lang.core.psi.RsElementTypes
 
 /**
  * Smart enter implementation for the Rust language.
@@ -29,10 +28,22 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
     }
 
     override fun getStatementAtCaret(editor: Editor?, psiFile: PsiFile?): PsiElement? {
-        val atCaret = super.getStatementAtCaret(editor, psiFile)
+        var atCaret = super.getStatementAtCaret(editor, psiFile)
         if (atCaret is PsiWhiteSpace) return null
+        while (atCaret != null) {
+            val parent = atCaret.parent
+            val elementType = atCaret.node.elementType
+            atCaret = when {
+                elementType == RsElementTypes.LBRACE || elementType == RsElementTypes.RBRACE -> parent
+                parent is RsBlock -> return atCaret
+                else -> parent
+            }
+        }
+        return null
+    }
 
-        return PsiTreeUtil.getParentOfType(atCaret, RsStmt::class.java, RsBlock::class.java)
+    override fun doNotStepInto(element: PsiElement?): Boolean {
+        return true
     }
 
     private inner class PlainEnterProcessor : FixEnterProcessor() {
