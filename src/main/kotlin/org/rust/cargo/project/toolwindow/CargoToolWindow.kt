@@ -5,10 +5,9 @@
 
 package org.rust.cargo.project.toolwindow
 
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionToolbar
-import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.ide.DefaultTreeExpander
+import com.intellij.ide.TreeExpander
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -23,6 +22,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
+import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -40,17 +40,17 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
     private val cargoTab = CargoToolWindow(project)
 
     init {
-        setToolbar(cargoTab.toolbar.component)
+        toolbar = cargoTab.toolbar.component
         cargoTab.toolbar.setTargetComponent(this)
         setContent(cargoTab.content)
     }
 
-    override fun getData(dataId: String): Any? {
-        if (CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId)) {
-            return cargoTab.selectedProject
+    override fun getData(dataId: String): Any? =
+        when {
+            CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId) -> cargoTab.selectedProject
+            PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> cargoTab.treeExpander
+            else -> super.getData(dataId)
         }
-        return super.getData(dataId)
-    }
 }
 
 class CargoToolWindow(
@@ -68,6 +68,10 @@ class CargoToolWindow(
 
     private val projectTree = CargoProjectsTree()
     private val projectStructure = CargoProjectTreeStructure(projectTree, project)
+
+    val treeExpander: TreeExpander = object : DefaultTreeExpander(projectTree) {
+        override fun isVisible(event: AnActionEvent): Boolean = super.isVisible(event) && project.hasCargoProject
+    }
 
     val selectedProject: CargoProject? get() = projectTree.selectedProject
 

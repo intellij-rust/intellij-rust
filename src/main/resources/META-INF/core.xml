@@ -922,45 +922,6 @@
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
-        <action id="Rust.RustfmtFile"
-                class="org.rust.ide.actions.RustfmtFileAction"
-                text="Reformat File with Rustfmt"
-                description="Reformat current file with rustfmt"
-                icon="AllIcons.Actions.RealIntentionBulb">
-            <add-to-group group-id="CodeMenu" anchor="last"/>
-        </action>
-
-        <action id="Rust.RustfmtCargoProject"
-                class="org.rust.ide.actions.RustfmtCargoProjectAction"
-                text="Reformat Cargo Project with Rustfmt"
-                description="Reformat cargo project with rustfmt"
-                icon="AllIcons.Actions.RealIntentionBulb">
-            <add-to-group group-id="CodeMenu" anchor="last"/>
-        </action>
-
-        <action id="Rust.RefreshCargoProject"
-                class="org.rust.ide.actions.RefreshCargoProjectAction"
-                icon="AllIcons.Actions.Refresh"/>
-
-        <action id="Rust.CargoCommand"
-                class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
-                text="Run Cargo Command"/>
-
-        <action id="Rust.RunExternalLinter"
-                class="org.rust.ide.actions.RsRunExternalLinterAction"
-                text="Run External Linter"/>
-
-        <action id="Rust.AttachCargoProject"
-                class="org.rust.cargo.project.model.AttachCargoProjectAction"
-                text="Attach Cargo Project"
-                icon="AllIcons.General.Add"/>
-
-        <action id="Rust.DetachCargoProject"
-                class="org.rust.cargo.project.model.DetachCargoProjectAction"
-                text="Detach Cargo Project"
-                icon="AllIcons.General.Remove"
-                use-shortcut-of="$Delete"/>
-
         <action id="Rust.ShowSingleStepMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction"
                 text="Show Expanded Macro">
@@ -983,19 +944,6 @@
                 text="Generate Constructor">
             <add-to-group group-id="GenerateGroup"/>
         </action>
-        <group id="Rust.Cargo">
-            <reference id="Rust.RefreshCargoProject"/>
-            <reference id="Rust.CargoCommand"/>
-            <reference id="Rust.RustfmtCargoProject"/>
-            <reference id="Rust.RunExternalLinter"/>
-            <separator/>
-            <reference id="Rust.AttachCargoProject"/>
-            <reference id="Rust.DetachCargoProject"/>
-        </group>
-        <action id="Rust.ToggleExternalLinterOnTheFlyAction"
-                class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
-                text="Run External Linter (Cargo Check / Clippy) on the Fly">
-        </action>
 
         <action id="Rust.ReexpandMacrosAction"
                 class="org.rust.lang.core.macros.ReexpandMacrosAction"
@@ -1004,6 +952,73 @@
 
         <action id="Rust.CreateNewGithubIssue"
                 class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue"/>
+
+        // Cargo
+
+        <action id="Cargo.RustfmtFile"
+                class="org.rust.ide.actions.RustfmtFileAction"
+                text="Reformat File with Rustfmt"
+                description="Reformat current file with rustfmt"
+                icon="AllIcons.Actions.RealIntentionBulb">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+
+        <action id="Cargo.RustfmtCargoProject"
+                class="org.rust.ide.actions.RustfmtCargoProjectAction"
+                text="Reformat Cargo Project with Rustfmt"
+                description="Reformat cargo project with rustfmt"
+                icon="AllIcons.Actions.RealIntentionBulb">
+            <add-to-group group-id="CodeMenu" anchor="last"/>
+        </action>
+
+        <action id="Cargo.RefreshCargoProject"
+                class="org.rust.ide.actions.RefreshCargoProjectAction"
+                icon="AllIcons.Actions.Refresh"/>
+
+        <action id="Cargo.AttachCargoProject"
+                class="org.rust.cargo.project.model.AttachCargoProjectAction"
+                text="Attach Cargo Project"
+                icon="AllIcons.General.Add"/>
+
+        <action id="Cargo.DetachCargoProject"
+                class="org.rust.cargo.project.model.DetachCargoProjectAction"
+                text="Detach Cargo Project"
+                icon="AllIcons.General.Remove"
+                use-shortcut-of="$Delete"/>
+
+        <action id="Cargo.RunCargoCommand"
+                class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
+                text="Run Cargo Command"/>
+
+        <action id="Cargo.RunExternalLinter"
+                class="org.rust.ide.actions.RsRunExternalLinterAction"
+                text="Run External Linter"/>
+
+        <action id="Cargo.ToggleExternalLinterOnTheFlyAction"
+                class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
+                text="Run External Linter (Cargo Check / Clippy) on the Fly"/>
+
+        <action id="Cargo.ShowSettings"
+                class="org.rust.ide.actions.CargoEditSettingsAction" text="Cargo Settings"
+                description="Edit Cargo settings for the current project"
+                icon="AllIcons.General.Settings">
+        </action>
+
+        <group id="Rust.Cargo">
+            <reference id="Cargo.RefreshCargoProject"/>
+            <reference id="Cargo.AttachCargoProject"/>
+            <reference id="Cargo.DetachCargoProject"/>
+            <separator/>
+            <reference id="Cargo.RunCargoCommand"/>
+            <reference id="Cargo.RunExternalLinter"/>
+            <reference id="Cargo.RustfmtCargoProject"/>
+            <separator/>
+            <reference id="ExpandAll"/>
+            <reference id="CollapseAll"/>
+            <separator/>
+            <reference id="Cargo.ShowSettings"/>
+        </group>
+
     </actions>
 
 </idea-plugin>
