@@ -82,14 +82,7 @@ class RsTypeInferenceWalker(
     fun inferFnBody(block: RsBlock): Ty =
         block.inferTypeCoercableTo(returnTy)
 
-    fun inferLambdaBody(expr: RsExpr): Ty =
-        if (expr is RsBlockExpr) {
-            // skipping diverging procession for lambda body
-            ctx.writeExprTy(expr, returnTy)
-            inferFnBody(expr.block)
-        } else {
-            expr.inferTypeCoercableTo(returnTy)
-        }
+    fun inferLambdaBody(expr: RsExpr): Ty = expr.inferTypeCoercableTo(returnTy)
 
     private fun RsBlock.inferTypeCoercableTo(expected: Ty): Ty =
         inferType(expected, true)
