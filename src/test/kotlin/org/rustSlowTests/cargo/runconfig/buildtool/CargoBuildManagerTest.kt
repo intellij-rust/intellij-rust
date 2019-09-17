@@ -40,6 +40,8 @@ import java.util.function.Supplier
 @MinRustcVersion("1.32.0")
 class CargoBuildManagerTest : RunConfigurationTestBase() {
 
+    override fun shouldRunTest(): Boolean = false
+
     override fun setUp() {
         super.setUp()
         testBuildId = Any()
