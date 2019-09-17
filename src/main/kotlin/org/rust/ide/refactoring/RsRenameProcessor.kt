@@ -9,16 +9,24 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
-import org.rust.lang.core.psi.RsLabel
-import org.rust.lang.core.psi.RsLabelDecl
-import org.rust.lang.core.psi.RsLifetime
-import org.rust.lang.core.psi.RsLifetimeParameter
+import com.intellij.usageView.UsageInfo
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
 class RsRenameProcessor : RenamePsiElementProcessor() {
 
     override fun canProcessElement(element: PsiElement): Boolean = element is RsNamedElement
+
+    override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo>, listener: RefactoringElementListener?) {
+        val newRenameElement = if (element is RsPatBinding && element.parent.parent is RsPatStruct) {
+            val newPatField = RsPsiFactory(element.project)
+                .createPatFieldFull(element.identifier.text, element.text)
+            element.replace(newPatField).descendantOfTypeStrict<RsPatBinding>()!!
+        } else element
+        super.renameElement(newRenameElement, newName, usages, listener)
+    }
 
     override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
         if (element is RsLifetime || element is RsLifetimeParameter || element is RsLabel || element is RsLabelDecl) {

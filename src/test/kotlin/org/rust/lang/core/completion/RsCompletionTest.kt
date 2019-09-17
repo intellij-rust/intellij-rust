@@ -296,6 +296,18 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test struct field pattern`() = doSingleCompletion("""
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let S { foo/*caret*/ } = S{ foobarbaz: 0 };
+        }
+    """, """
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let S { foobarbaz/*caret*/ } = S{ foobarbaz: 0 };
+        }
+    """)
+
     fun `test enum field`() = doSingleCompletion("""
         enum E { X { bazbarfoo: i32 } }
         fn main() {
