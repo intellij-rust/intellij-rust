@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsInlayTypeHintsProvider"/>
+    </extensions>
+</idea-plugin>

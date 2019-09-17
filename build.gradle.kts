@@ -87,6 +87,12 @@ allprojects {
         }
     }
 
+    grammarKit {
+        if (platformVersion == "193") {
+            grammarKitRelease = "07f30a1e76"
+        }
+    }
+
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "1.8"

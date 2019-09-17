@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <duplicateScope language="Rust" implementationClass="org.rust.ide.clones.RsDuplicateScope"/>
+    </extensions>
+</idea-plugin>
