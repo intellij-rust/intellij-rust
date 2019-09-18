@@ -32,6 +32,8 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     private val INIT_STRUCT = UsageType("init struct")
     private val INIT_FIELD = UsageType("init field")
 
+    private val PAT_BINDING = UsageType("variable binding")
+
     private val FIELD = UsageType("field")
 
     private val META_ITEM = UsageType("meta item")
@@ -74,6 +76,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
             is RsMetaItem -> META_ITEM
             is RsFieldLookup -> FIELD
             is RsMacroCall -> MACRO_CALL
+            is RsPatBinding -> PAT_BINDING
             else -> when (parent.parent) {
                 is RsModDeclItem -> MOD
                 else -> null
