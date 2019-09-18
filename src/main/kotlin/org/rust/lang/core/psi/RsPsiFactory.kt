@@ -378,8 +378,9 @@ class RsPsiFactory(
             ?: error("Failed to create parameter element")
     }
 
-    fun tryCreatePat(text: CharSequence): RsPat? =
-        createFromText("fn f($text: ()) {}")
+    fun createPatFieldFull(name: String, value: String): RsPatFieldFull =
+        createFromText("fn f(A{$name: $value}: ()) {}")
+            ?: error("Failed to create full field pattern")
 
     fun createPatBinding(name: String, mutable: Boolean = false, ref: Boolean = false): RsPatBinding =
         (createStatement("let ${"ref ".iff(ref)}${"mut ".iff(mutable)}$name = 10;") as RsLetDecl).pat

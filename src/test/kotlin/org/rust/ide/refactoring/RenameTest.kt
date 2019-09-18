@@ -69,6 +69,7 @@ class RenameTest : RsTestBase() {
         fn main() {
             let x = S { foo: 92 };
             println!("{}", x.foo);
+            let S { foo } = x;
             let foo = 62;
             S { foo };
         }
@@ -78,10 +79,38 @@ class RenameTest : RsTestBase() {
         fn main() {
             let x = S { spam: 92 };
             println!("{}", x.spam);
+            let S { spam: foo } = x;
             let foo = 62;
             S { spam: foo };
         }
     """)
+
+    fun `test pat binding in let`() = doTest("spam", """
+        struct S { foo: i32 }
+        fn main() {
+            let S { ref foo } = S { foo: 92 };
+            let x = foo/*caret*/;
+        }
+    """, """
+        struct S { foo: i32 }
+        fn main() {
+            let S { foo: ref spam } = S { foo: 92 };
+            let x = spam;
+        }
+    """)
+
+    fun `test pat binding in fn`() = doTest("spam", """
+        struct S { foo: i32 }
+        fn test(S { foo }:S) {
+            let x = foo/*caret*/;
+        }
+    """, """
+        struct S { foo: i32 }
+        fn test(S { foo: spam }:S) {
+            let x = spam;
+        }
+    """)
+
 
     fun `test rename lifetime`() = doTest("'bar", """
         fn foo<'foo>(a: &/*caret*/'foo u32) {}

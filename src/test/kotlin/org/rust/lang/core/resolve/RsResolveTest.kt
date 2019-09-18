@@ -1141,6 +1141,16 @@ class RsResolveTest : RsResolveTestBase() {
         }                     //^
     """)
 
+    fun `test pattern binding in let`() = checkByCode("""
+        struct S { foo: i32 }
+                  //X
+        fn main() {
+            let S { foo } = S { foo: 92 };
+                   //^
+            let x = foo;
+        }
+    """)
+
     fun `test match enum path`() = checkByCode("""
         enum Enum { Var1, Var2 }
                   //X

@@ -563,6 +563,12 @@ private fun processTypeQualifiedPathResolveVariants(
 }
 
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+    if (binding.parent is RsPatField) {
+        val parentPat = binding.parent.parent as RsPatStruct
+        val patStruct = parentPat.path.reference.resolve()
+        if (patStruct is RsFieldsOwner && processFieldDeclarations(patStruct, processor)) return true
+    }
+
     return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES) { entry ->
         processor.lazy(entry.name) {
             val element = entry.element ?: return@lazy null
@@ -1191,7 +1197,7 @@ private fun processLexicalDeclarations(
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
-            .filter { it.reference.resolve() == null && hygieneFilter(it) }
+            .filter { (it.parent is RsPatField || !it.isReferenceToConstant) && hygieneFilter(it) }
         return processAll(boundNames, processor)
     }
 

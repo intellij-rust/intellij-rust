@@ -48,7 +48,7 @@ val RsPatBinding.topLevelPattern: RsPat
         .lastOrNull()
         ?: error("Binding outside the pattern: `${this.text}`")
 
-val RsPatBinding.isReferenceToConstant: Boolean get() = reference.resolve() != null
+val RsPatBinding.isReferenceToConstant: Boolean get() = reference.resolve()?.isConstantLike == true
 
 abstract class RsPatBindingImplMixin(node: ASTNode) : RsNamedElementImpl(node),
                                                       RsPatBinding {
