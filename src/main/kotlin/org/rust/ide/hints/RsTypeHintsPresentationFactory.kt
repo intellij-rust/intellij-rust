@@ -81,7 +81,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
         val typeArguments = aliasedBy?.element?.typeParameters?.map { aliasedBy.subst[it] ?: TyUnknown }
             ?: type.typeArguments
 
-        val typeDeclaration = type.item
+        val typeDeclaration = aliasedBy?.element ?: type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
 
         if (typeArguments.isNotEmpty()) {
