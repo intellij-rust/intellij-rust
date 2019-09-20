@@ -48,4 +48,13 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     else -> TYPES_N_VALUES
 }
 
+val RsUseSpeck.namespaces: Set<Namespace>
+    get() = path
+        ?.reference
+        ?.multiResolve()
+        ?.asSequence()
+        ?.filterIsInstance<RsNamedElement>()
+        ?.flatMap { it.namespaces.asSequence() }
+        ?.toSet()
+        .orEmpty()
 

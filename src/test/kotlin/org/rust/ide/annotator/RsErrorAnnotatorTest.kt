@@ -821,6 +821,51 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test duplicates with import E0252`() = checkErrors("""
+        use bar::{<error descr="A second item with name 'test1' imported. Try to use an alias. [E0252]">test1</error>};
+        use baz::<error descr="A second item with name 'test2' imported. Try to use an alias. [E0252]">test2</error>;
+        use bar::<error descr="A second item with name 'test3' imported. Try to use an alias. [E0252]">test3</error>;
+        use baz::<error descr="A second item with name 'test3' imported. Try to use an alias. [E0252]">test3</error>;
+        use bar::A as <error descr="A second item with name 'Arc' imported. Try to use an alias. [E0252]">Arc</error>;
+        struct <error descr="A type named `Arc` has already been defined in this module [E0428]">Arc</error>{}
+        fn <error descr="A value named `test1` has already been defined in this module [E0428]">test1</error>(){}
+        fn <error descr="A value named `test2` has already been defined in this module [E0428]">test2</error>(){}
+        
+        
+        mod bar{
+            pub struct A{}
+            pub mod test3{}
+            pub fn test1(){}
+        }
+        mod baz{
+            pub struct test3{}
+            pub const test2:u8 = 0;
+        }    
+    """)
+
+    fun `test no duplicates with import E0252`() = checkErrors("""
+        use bar::{test1};   
+        use baz::test2;
+        use bar::test3;
+        use bar::unresolved;
+        use baz::unresolved;
+        use baz::test3;
+        use bar::Arc as A;
+        struct Arc{}
+        fn test1(){}
+        fn test2(){}
+        
+        mod bar{
+            pub struct Arc{}
+            pub mod test1{}
+            pub mod test3{}
+        }
+        mod baz{
+            pub struct test2{}
+            pub const test3:u8 = 0;
+        }        
+    """)
+
     fun `test unnecessary pub E0449`() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 
