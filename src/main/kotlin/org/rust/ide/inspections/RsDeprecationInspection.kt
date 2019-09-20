@@ -5,7 +5,9 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.LIKE_DEPRECATED
+import com.intellij.codeInspection.ProblemHighlightType.WARNING
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
@@ -14,6 +16,7 @@ import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
+import org.toml.lang.CrateVersion
 
 class RsDeprecationInspection : RsLintInspection() {
     override fun getDisplayName() = "Deprecated item"
@@ -41,22 +44,39 @@ class RsDeprecationInspection : RsLintInspection() {
     private fun checkAndRegisterAsDeprecated(identifier: PsiElement, original: PsiElement, holder: ProblemsHolder) {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
-            holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), LIKE_DEPRECATED)
+            val (message, highlightType) = attr.extractDeprecatedMessage(identifier.text)
+            holder.registerProblem(identifier, message, highlightType)
         }
     }
 
-    private fun RsMetaItem.extractDeprecatedMessage(item: String): String {
+    private fun RsMetaItem.extractDeprecatedMessage(item: String): Pair<String, ProblemHighlightType> {
         val (note, since) = if (DEPRECATED_ATTR_NAME == name) {
             extract(NOTE_PARAM_NAME, SINCE_PARAM_NAME)
         } else {
             extract(REASON_PARAM_NAME, SINCE_PARAM_NAME)
         }
 
-        return buildString {
-            append("`$item` is deprecated")
-            if (since != null) append(" since $since")
-            if (note != null) append(": $note")
+        return if (isPresentlyDeprecated(since)) {
+            buildString {
+                append("`$item` is deprecated")
+                if (since != null) append(" since $since")
+                if (note != null) append(": $note")
+            } to LIKE_DEPRECATED
+        } else {
+            buildString {
+                append("`$item` will be deprecated from $since")
+                if (note != null) append(": $note")
+            } to WARNING
         }
+    }
+
+    // Presently as in not in the future; in the current version
+    private fun RsMetaItem.isPresentlyDeprecated(since: String?): Boolean {
+        // In case we can't check if the since version is at least the current version just assume it is
+        val sinceVersion = CrateVersion.tryParse(since ?: return true) ?: return true
+        val currentVersion = CrateVersion.tryParse(this.containingCargoPackage?.version ?: return true) ?: return true
+
+        return currentVersion >= sinceVersion
     }
 
     private fun RsMetaItem.extract(noteParamName: String, sinceParamName: String): DeprecatedAttribute {
