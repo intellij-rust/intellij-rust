@@ -14,6 +14,7 @@ import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RsPatBindingReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.ty.TyAdt
@@ -28,6 +29,12 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
      */
     override fun getElementByReference(ref: PsiReference, flags: Int): PsiElement? {
         if (ref !is RsReference) return null
+
+        // prefer pattern binding to its target if element name is accepted
+        if (ref is RsPatBindingReferenceImpl && BitUtil.isSet(flags, TargetElementUtil.ELEMENT_NAME_ACCEPTED)) {
+            return ref.element
+        }
+
         // These conditions should filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest)
         // and leave invocations from GotoDeclarationAction only.
         // Really it is a hack and it may break down in the future.

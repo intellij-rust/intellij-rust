@@ -24,6 +24,28 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
+    fun `test pattern binding usages 1`() = doTestByText("""
+        struct S{x:i32}
+        fn foo() -> i32 {
+            let S{x} = S{x:0};
+                //^
+            let y = x * 3;// - expr
+            let x = y;
+            x
+        }
+    """)
+
+    fun `test pattern binding usages 2`() = doTestByText("""
+        struct S{x:i32}
+               //^
+        fn foo() -> i32 {
+            let y = S{x:0};// - init field
+            let S{x} = y;// - variable binding
+            x
+        }
+    """)
+
+
     fun `test function usages`() = doTestByText("""
          fn foo() {}
            //^
