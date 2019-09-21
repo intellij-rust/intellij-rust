@@ -49,7 +49,7 @@ class RsResolveCache(messageBus: MessageBus) {
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
     private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     private val _macroCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
-    private val guard = RecursionGuardWrapper.createGuard("RsResolveCache")
+    private val guard = RecursionManager.createGuard<PsiElement>("RsResolveCache")
 
     private val rustStructureDependentCache: ConcurrentMap<PsiElement, Any?>
         get() = _rustStructureDependentCache.getOrCreateMap()

@@ -8,10 +8,12 @@ package org.rust.cargo.project.model.impl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import org.rust.RsTestBase
 
-class CargoTomlWatcherTest : CargoTomlWatcherTestBase() {
+class CargoTomlWatcherTest : RsTestBase() {
     private var counter = 0
 
     fun `test toml modifications`() {
@@ -95,6 +97,11 @@ class CargoTomlWatcherTest : CargoTomlWatcherTestBase() {
         check(counter == old) {
             "Watcher should have ignored $event"
         }
+    }
+
+    private fun newCreateEvent(name: String): Pair<VirtualFile, VFileCreateEvent> {
+        val vFile = myFixture.tempDirFixture.createFile("proj/$name")
+        return vFile to VFileCreateEvent(null, vFile.parent, vFile.name, false, null, null, true, null)
     }
 
     private fun newChangeEvent(vFile: VirtualFile) = VFileContentChangeEvent(null, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)

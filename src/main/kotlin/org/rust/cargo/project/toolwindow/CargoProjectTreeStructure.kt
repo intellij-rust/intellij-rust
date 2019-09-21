@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.tree.AsyncTreeModel
+import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.treeStructure.CachingSimpleNode
 import com.intellij.ui.treeStructure.SimpleNode
 import com.intellij.ui.treeStructure.SimpleTreeStructure
@@ -28,7 +29,7 @@ class CargoProjectTreeStructure(
     private var cargoProjects: List<CargoProject> = emptyList()
 ) : SimpleTreeStructure() {
 
-    private val treeModel = StructureTreeModelWrapper(this, parentDisposable)
+    private val treeModel = StructureTreeModel(this, parentDisposable)
     private var root = CargoSimpleNode.Root(cargoProjects)
 
     init {

@@ -33,7 +33,6 @@ import org.rust.lang.core.psi.RsFunction
 import java.io.File
 
 class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
-    private val PERF_OUTPUT_FILE_KEY = Key.create<File>("perf.output")
 
     override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
 
@@ -50,7 +49,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         val project = configuration.project
         val settings = CPPProfilerSettings.instance.state
         val perfPath = settings.executablePath.orEmpty()
-        val validationResult = checkKernelVariables(requiredKernelVariables)
+        val validationResult = checkKernelVariables(REQUIRED_KERNEL_VARIABLES)
         if (validationResult is HasInvalidVariables) {
             throw KernelVariablesChangeRequiredException(validationResult, project)
         }
@@ -93,9 +92,10 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     companion object {
+        private val PERF_OUTPUT_FILE_KEY = Key.create<File>("perf.output")
         private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
 
-        private val requiredKernelVariables = listOf(
+        private val REQUIRED_KERNEL_VARIABLES = listOf(
             KernelVariable("perf_event_paranoid", "1") { it.toInt() <= 1 }, //required, error otherwise
             KernelVariable("kptr_restrict", "0") { it == "0" } //useful, warning otherwise
         )

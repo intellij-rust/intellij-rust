@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.xdebugger.XExpression
 import com.intellij.xdebugger.XSourcePosition
+import com.jetbrains.cidr.execution.debugger.CidrEvaluator
 import com.jetbrains.cidr.execution.debugger.CidrStackFrame
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
 import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
@@ -21,7 +22,7 @@ import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-class RsEvaluator(frame: CidrStackFrame) : RsEvaluatorBase(frame) {
+class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
     override fun getExpressionRangeAtOffset(project: Project, document: Document, offset: Int, sideEffectsAllowed: Boolean): TextRange? {
         return runReadAction {
             PsiDocumentManager.getInstance(project).getPsiFile(document)?.let { file ->
