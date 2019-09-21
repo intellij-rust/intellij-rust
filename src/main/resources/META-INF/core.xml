@@ -12,7 +12,11 @@
 
         <!-- File-type Factory -->
 
-        <fileTypeFactory implementation="org.rust.lang.RsFileTypeFactory"/>
+        <fileType name="Rust"
+                  language="Rust"
+                  implementationClass="org.rust.lang.RsFileType"
+                  extensions="rs"
+                  fieldName="INSTANCE"/>
         <internalFileTemplate name="Rust File"/>
 
         <!-- Parser -->
