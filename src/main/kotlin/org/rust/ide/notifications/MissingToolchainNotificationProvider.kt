@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,7 +31,7 @@ import org.rust.openapiext.isUnitTestMode
  * Try to fix this automatically (toolchain from PATH, standard library from the last project)
  * and if not successful show the actual notification to the user.
  */
-class MissingToolchainNotificationProvider(project: Project) : RsNotificationProvider(project) {
+class MissingToolchainNotificationProvider(project: Project) : RsNotificationProvider(project), DumbAware {
 
     override val VirtualFile.disablingKey: String get() = NOTIFICATION_STATUS_KEY
 
