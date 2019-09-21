@@ -199,6 +199,53 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(file, "mod.rs")
     }
 
+    fun `test rename mod declaration for dir module`() = checkByDirectory("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use bar::Spam;
+        mod bar;
+
+        fn main() { let _ = Spam::Quux; }
+    //- bar/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
+        val mod = myFixture.configureFromTempProjectFile("main.rs").descendantsOfType<RsModDeclItem>().single()
+        check(mod.name == "foo")
+        val file = mod.reference.resolve()!!
+        myFixture.renameElement(file, "bar")
+    }
+
+    fun `test rename dir for dir module`() = checkByDirectory("""
+    //- main.rs
+        use foo::Spam;
+        mod foo;
+
+        fn main() { let _ = Spam::Quux; }
+    //- foo/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """, """
+    //- main.rs
+        use bar::Spam;
+        mod bar;
+
+        fn main() { let _ = Spam::Quux; }
+    //- bar/mod.rs
+        pub enum Spam { Quux, Eggs }
+    """) {
+        val mod = myFixture.configureFromTempProjectFile("main.rs").descendantsOfType<RsModDeclItem>().single()
+        check(mod.name == "foo")
+        val file = myFixture.configureFromTempProjectFile("foo/mod.rs")
+        myFixture.renameElement(file, "bar")
+    }
+
+
     fun `test rename file to keyword`() = checkByDirectory("""
     //- main.rs
         mod foo;

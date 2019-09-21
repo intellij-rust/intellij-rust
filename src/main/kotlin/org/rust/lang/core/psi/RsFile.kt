@@ -125,6 +125,7 @@ class RsFile(
     }
 
     override fun setName(name: String): PsiElement {
+        if (this.name == RsConstants.MOD_RS_FILE) return this
         val nameWithExtension = if ('.' !in name) "$name.rs" else name
         return super.setName(nameWithExtension)
     }
@@ -147,7 +148,7 @@ class RsFile(
     override val crateRelativePath: String? get() = RsPsiImplUtil.modCrateRelativePath(this)
 
     override val ownsDirectory: Boolean
-        get() = name == RsConstants.MOD_RS_FILE || isCrateRoot
+        get() = getOwnedDirectory() != null
 
     override val isCrateRoot: Boolean
         get() = originalFile == crateRoot
