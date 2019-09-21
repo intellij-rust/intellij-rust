@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.1
-@file:Suppress("DEPRECATION")
-
 package org.rust.cargo.project.configurable
 
 import com.intellij.codeInsight.hints.InlayParameterHintsExtension
@@ -16,7 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.ListCellRendererWrapper
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
@@ -29,7 +26,6 @@ import org.rust.openapiext.ComboBoxDelegate
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.JComponent
-import javax.swing.JList
 
 class RsProjectConfigurable(
     project: Project
@@ -41,14 +37,12 @@ class RsProjectConfigurable(
 
     private val macroExpansionEngineComboBox: ComboBox<MacroExpansionEngine> =
         ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java)).apply {
-            // BACKCOMPAT: 2019.1. Use SimpleListCellRenderer instead
-            renderer = object : ListCellRendererWrapper<MacroExpansionEngine>() {
-                override fun customize(list: JList<*>?, value: MacroExpansionEngine, index: Int, selected: Boolean, hasFocus: Boolean) {
-                    setText(when (value) {
-                        MacroExpansionEngine.DISABLED -> "Disable (use only if you have problems with macro expansions)"
-                        MacroExpansionEngine.OLD -> "Expand with default engine"
-                        MacroExpansionEngine.NEW -> "Expand with experimental engine (faster, but not yet stable)"
-                    })
+            renderer = SimpleListCellRenderer.create("") {
+                @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
+                when (it) {
+                    MacroExpansionEngine.DISABLED -> "Disable (use only if you have problems with macro expansions)"
+                    MacroExpansionEngine.OLD -> "Expand with default engine"
+                    MacroExpansionEngine.NEW -> "Expand with experimental engine (faster, but not yet stable)"
                 }
             }
         }

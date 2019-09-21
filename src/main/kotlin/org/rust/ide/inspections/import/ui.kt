@@ -71,9 +71,7 @@ private class PopupImportItemUi(private val project: Project, private val dataCo
             override fun getTextFor(value: ImportCandidate): String = value.info.usePath
             override fun getIconFor(value: ImportCandidate): Icon? = value.qualifiedNamedItem.item.getIcon(0)
         }
-        // BACKCOMPAT: 2019.1
-        @Suppress("DEPRECATION")
-        val popup = object : ListPopupImpl(step) {
+        val popup = object : ListPopupImpl(project, step) {
             override fun getListElementRenderer(): ListCellRenderer<*> {
                 val baseRenderer = super.getListElementRenderer() as PopupListElementRenderer<Any>
                 val psiRenderer = RsElementCellRenderer()

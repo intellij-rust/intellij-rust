@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.1
-@file:Suppress("DEPRECATION")
-
 package org.rust.cargo.runconfig.ui
 
 import com.intellij.execution.ExecutionBundle
@@ -19,7 +16,7 @@ import com.intellij.openapi.ui.LabeledComponent
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.ui.ListCellRendererWrapper
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.components.Label
 import com.intellij.ui.layout.CCFlags
@@ -40,7 +37,6 @@ import java.awt.Dimension
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
-import javax.swing.JList
 import javax.swing.JPanel
 
 
@@ -76,12 +72,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         LabeledComponent.create(textField, ExecutionBundle.message("run.configuration.working.directory.label"))
     }
     private val cargoProject = ComboBox<CargoProject>().apply {
-        // BACKCOMPAT: 2019.1. Use SimpleListCellRenderer instead
-        renderer = object : ListCellRendererWrapper<CargoProject>() {
-            override fun customize(list: JList<*>?, value: CargoProject?, index: Int, selected: Boolean, hasFocus: Boolean) {
-                setText(value?.presentableName)
-            }
-        }
+        renderer = SimpleListCellRenderer.create("") { it.presentableName }
         allCargoProjects.forEach { addItem(it) }
 
         addItemListener {

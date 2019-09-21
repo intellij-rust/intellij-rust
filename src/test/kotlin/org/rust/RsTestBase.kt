@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.1
-@file:Suppress("DEPRECATION")
-
 package org.rust
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -23,7 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
@@ -39,8 +36,7 @@ import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 
-// BACKCOMPAT: 2019.1. Use BasePlatformTestCase instead
-abstract class RsTestBase : LightPlatformCodeInsightFixtureTestCase(), RsTestCase {
+abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val annotation = findAnnotationInstance<ProjectDescriptor>() ?: return DefaultDescriptor

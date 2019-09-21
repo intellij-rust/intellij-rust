@@ -3,17 +3,13 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.1
-@file:Suppress("DEPRECATION")
-
 package org.rust.toml
 
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 
-// BACKCOMPAT: 2019.1. Use BasePlatformTestCase instead
-abstract class CargoTomlCompletionTestBase : LightPlatformCodeInsightFixtureTestCase() {
+abstract class CargoTomlCompletionTestBase : BasePlatformTestCase() {
     protected fun doSingleCompletion(@Language("TOML") before: String, @Language("TOML") after: String) {
         checkByText(before, after) { executeSoloCompletion() }
     }

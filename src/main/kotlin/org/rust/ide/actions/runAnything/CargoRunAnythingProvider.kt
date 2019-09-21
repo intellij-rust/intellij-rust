@@ -59,6 +59,8 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
 
     override fun getCompletionGroupTitle(): String = "Cargo commands"
 
+    override fun getHelpGroupTitle(): String = "Cargo"
+
     override fun getHelpCommandPlaceholder(): String = "cargo <subcommand> <args...>"
 
     override fun getHelpCommand(): String = HELP_COMMAND

@@ -55,9 +55,7 @@ class CompositeCargoRunConfigurationProducer : CargoRunConfigurationProducer() {
             if (preferredConfig.configuration.isSame(settings?.configuration)) {
                 preferredConfig.setConfigurationSettings(settings)
             } else {
-                // BACKCOMPAT: 2019.1
-                @Suppress("DEPRECATION")
-                RunManager.getInstance(context.project).setUniqueNameIfNeed(preferredConfig.configuration)
+                RunManager.getInstance(context.project).setUniqueNameIfNeeded(preferredConfig.configuration)
             }
         }
         return preferredConfig
