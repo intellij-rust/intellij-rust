@@ -17,18 +17,13 @@ env:
 
 matrix:
   include:
-    # 191 platform
-    - name: idea-191/old-rust
-      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=191 ORG_GRADLE_PROJECT_ideaVersion=2019.1.2
     # 192 platform
+    - name: idea-192/old-rust
+      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192 ORG_GRADLE_PROJECT_ideaVersion=IU-2019.2.1 ORG_GRADLE_PROJECT_clionVersion=CL-2019.2.1
     - name: idea-192/stable-rust
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192
     - name: clion-192/stable-rust
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192 ORG_GRADLE_PROJECT_baseIDE=clion
-    - name: idea-192/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192
-    - name: clion-192/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192 ORG_GRADLE_PROJECT_baseIDE=clion
     # 193 platform
     - name: idea-193/nightly-rust
       env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193
