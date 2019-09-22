@@ -1,3 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
-    <xi:include href="/META-INF/platform-duplicates-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <extensions defaultExtensionNs="com.intellij">
+        <duplicateScope language="Rust" implementationClass="org.rust.ide.clones.RsDuplicateScope"/>
+    </extensions>
 </idea-plugin>

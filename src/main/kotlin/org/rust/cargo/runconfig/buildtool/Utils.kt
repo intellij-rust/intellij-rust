@@ -7,6 +7,8 @@
 
 package org.rust.cargo.runconfig.buildtool
 
+import com.intellij.build.BuildProgressListener
+import com.intellij.build.events.BuildEvent
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -55,5 +57,19 @@ class MockProgressIndicator : EmptyProgressIndicator() {
     override fun setText2(text: String?) {
         super.setText2(text)
         _textHistory += text
+    }
+}
+
+object EmptyBuildProgressListener : BuildProgressListener {
+    override fun onEvent(buildId: Any, event: BuildEvent) = Unit
+}
+
+@Suppress("UnstableApiUsage")
+class MockBuildProgressListener : BuildProgressListener {
+    private val _eventHistory: MutableList<BuildEvent> = mutableListOf()
+    val eventHistory: List<BuildEvent> get() = _eventHistory
+
+    override fun onEvent(buildId: Any, event: BuildEvent) {
+        _eventHistory.add(event)
     }
 }

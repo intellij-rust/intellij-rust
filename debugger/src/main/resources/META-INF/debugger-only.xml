@@ -1,6 +1,4 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
-    <xi:include href="/META-INF/platform-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"
                         interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"/>
@@ -10,6 +8,7 @@
         <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
         <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
         <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
+        <debugProcessConfigurator implementation="org.rust.debugger.runconfig.RsDebugProcessConfigurator"/>
         <backendConsoleInjectionHelper implementation="org.rust.debugger.RsBackendConsoleInjectionHelper"/>
     </extensions>
 

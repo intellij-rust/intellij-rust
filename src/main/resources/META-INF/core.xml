@@ -12,7 +12,11 @@
 
         <!-- File-type Factory -->
 
-        <fileTypeFactory implementation="org.rust.lang.RsFileTypeFactory"/>
+        <fileType name="Rust"
+                  language="Rust"
+                  implementationClass="org.rust.lang.RsFileType"
+                  extensions="rs"
+                  fieldName="INSTANCE"/>
         <internalFileTemplate name="Rust File"/>
 
         <!-- Parser -->
@@ -127,6 +131,7 @@
                                    implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
         <codeInsight.parameterNameHints language="Rust"
                                         implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
+        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsInlayTypeHintsProvider"/>
 
         <declarationRangeHandler key="org.rust.lang.core.psi.RsStructItem"
                                  implementationClass="org.rust.ide.hints.RsStructItemDeclarationRangeHandler"/>
@@ -828,7 +833,6 @@
 
         <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
                                        implementation="org.rust.ide.actions.runAnything.CargoRunAnythingProvider"/>
-        <runAnything.helpGroup implementation="org.rust.ide.actions.runAnything.CargoRunAnythingHelpGroup"/>
 
         <lang.elementManipulator forClass="org.rust.lang.core.psi.RsLitExpr"
                                  implementationClass="org.rust.ide.injected.RsStringLiteralManipulator"/>

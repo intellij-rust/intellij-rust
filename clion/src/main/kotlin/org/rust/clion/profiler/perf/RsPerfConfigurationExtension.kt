@@ -18,6 +18,7 @@ import com.intellij.profiler.ProfilerToolWindowManager
 import com.intellij.profiler.clion.CPPProfilerSettings
 import com.intellij.profiler.clion.perf.Addr2LineProcess
 import com.intellij.profiler.clion.perf.AddressSymbolizer
+import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.keepTempProfilerFiles
 import com.intellij.profiler.linux.HasInvalidVariables
 import com.intellij.profiler.linux.KernelVariable
@@ -28,10 +29,10 @@ import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
 import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
+import org.rust.lang.core.psi.RsFunction
 import java.io.File
 
 class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
-    private val PERF_OUTPUT_FILE_KEY = Key.create<File>("perf.output")
 
     override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
 
@@ -48,7 +49,7 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
         val project = configuration.project
         val settings = CPPProfilerSettings.instance.state
         val perfPath = settings.executablePath.orEmpty()
-        val validationResult = checkKernelVariables(requiredKernelVariables)
+        val validationResult = checkKernelVariables(REQUIRED_KERNEL_VARIABLES)
         if (validationResult is HasInvalidVariables) {
             throw KernelVariablesChangeRequiredException(validationResult, project)
         }
@@ -70,13 +71,14 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = RsPerfProfilerProcess(
+        val profilerProcess = PerfProfilerProcess(
             handler,
-            outputFile.path,
+            outputFile,
             createAddressSymbolizer(),
             configuration.name,
             project,
-            System.currentTimeMillis()
+            System.currentTimeMillis(),
+            RsFunction::class.java
         )
         ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(profilerProcess)
     }
@@ -90,9 +92,10 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     companion object {
+        private val PERF_OUTPUT_FILE_KEY = Key.create<File>("perf.output")
         private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
 
-        private val requiredKernelVariables = listOf(
+        private val REQUIRED_KERNEL_VARIABLES = listOf(
             KernelVariable("perf_event_paranoid", "1") { it.toInt() <= 1 }, //required, error otherwise
             KernelVariable("kptr_restrict", "0") { it == "0" } //useful, warning otherwise
         )

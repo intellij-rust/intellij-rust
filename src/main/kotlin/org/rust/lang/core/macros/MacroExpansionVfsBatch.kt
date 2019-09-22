@@ -5,11 +5,12 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.util.io.*
 import org.apache.commons.lang.RandomStringUtils
@@ -36,7 +37,7 @@ interface MacroExpansionVfsBatch {
 class LocalFsMacroExpansionVfsBatch(
     private val realFsExpansionContentRoot: Path
 ) : MacroExpansionVfsBatch {
-    private val batch: VfsBatch = createEventBasedVfsBatch()
+    private val batch: VfsBatch = EventBasedVfsBatch()
 
     override fun resolve(file: VirtualFile): MacroExpansionVfsBatch.Path =
         PathImpl.VFile(file)
@@ -149,7 +150,7 @@ abstract class VfsBatch {
 
 }
 
-abstract class EventBasedVfsBatch : VfsBatch() {
+class EventBasedVfsBatch : VfsBatch() {
     override fun applyToVfs() {
         checkWriteAccessAllowed()
         if (dirEvents.isEmpty() && fileEvents.isEmpty()) return
@@ -181,7 +182,26 @@ abstract class EventBasedVfsBatch : VfsBatch() {
         }
     }
 
-    protected abstract fun DirCreateEvent.toVFileEvent(): VFileEvent?
+    private fun DirCreateEvent.toVFileEvent(): VFileEvent? {
+        val vParent = LocalFileSystem.getInstance().findFileByPath(parent.toString()) ?: return null
+        @Suppress("UnstableApiUsage")
+        return VFileCreateEvent(null, vParent, name, true, null, null, true, ChildInfo.EMPTY_ARRAY)
+    }
 
-    protected abstract fun Event.toVFileEvent(): VFileEvent?
+    private fun Event.toVFileEvent(): VFileEvent? = when (this) {
+        is Event.Create -> {
+            val vParent = LocalFileSystem.getInstance().findFileByPath(parent.toString())!!
+            val attributes = FileSystemUtil.getAttributes(parent.resolve(name).toString())
+            VFileCreateEvent(null, vParent, name, false, attributes, null, true, null)
+        }
+        is Event.Write -> {
+            val vFile = LocalFileSystem.getInstance().findFileByPath(file.toString())!!
+            VFileContentChangeEvent(null, vFile, vFile.modificationStamp, -1, true)
+        }
+        is Event.Delete -> {
+            val vFile = LocalFileSystem.getInstance().findFileByPath(file.toString())
+            // skip if file is already deleted (not sure how this can happen)
+            if (vFile == null) null else VFileDeleteEvent(null, vFile, true)
+        }
+    }
 }

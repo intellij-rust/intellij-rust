@@ -38,12 +38,7 @@ data class RsDTraceNavigatableNativeCall(private val nativeCall: NativeCall) : B
         private val LOG = logger<RsDTraceNavigatableNativeCall>()
 
         fun read(string: String, interner: WeakStringInterner? = null): RsDTraceNavigatableNativeCall? {
-            // BACKCOMPAT: 2019.1. Drop try/catch
-             return try {
-                 NativeCall.read(string, interner)?.let(::RsDTraceNavigatableNativeCall)
-             } catch (e: Exception) {
-                 null
-             }
+             return NativeCall.read(string, interner)?.let(::RsDTraceNavigatableNativeCall)
         }
 
     }

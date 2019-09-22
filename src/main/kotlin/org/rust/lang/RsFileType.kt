@@ -12,18 +12,13 @@ import javax.swing.Icon
 
 object RsFileType : LanguageFileType(RsLanguage) {
 
-    object DEFAULTS {
-        val EXTENSION: String = "rs"
-    }
-
     override fun getName(): String = "Rust"
 
     override fun getIcon(): Icon = RsIcons.RUST_FILE
 
-    override fun getDefaultExtension(): String = DEFAULTS.EXTENSION
+    override fun getDefaultExtension(): String = "rs"
 
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
     override fun getDescription(): String = "Rust Files"
 }
-
