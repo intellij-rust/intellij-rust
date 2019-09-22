@@ -30,18 +30,18 @@ Unstable master branch builds can be downloaded from [TeamCity].
 The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.2, with the following differences in the sets of the available features:
 
 
-| | Open-source and Educational IDEs (*)| IDEA Ultimate, PyCharm, other commercial IDEs | [CLion](https://www.jetbrains.com/clion/) (commercial)|
-|--------------|----------------------------|---| ---|
-|Language support| + | + | + | +
-|Cargo support| + | + | + | +
-| Code coverage    | + | + | - 
-| Debugger       | - | - | +
-| Profiler        | - | - | +
-| Valgrind Memcheck      | - | - | +
-|[Detecting duplicates](https://www.jetbrains.com/help/idea/analyzing-duplicates.html)        | - | + | +
+|                        | Open-source and Educational IDEs (*) | [CLion] (commercial) | IDEA Ultimate, PyCharm, other commercial IDEs |
+|------------------------|---|---|---|
+| Language support       | + | + | + |
+| Cargo support          | + | + | + |
+| Code coverage          | + | - | + |
+| Debugger               | - | + | - |
+| Profiler               | - | + | - |
+| Valgrind Memcheck      | - | + | - |
+| [Detecting duplicates] | - | + | + |
 
 
-(*) [IDEA](https://www.jetbrains.com/idea/) Community Edition, [PyCharm](https://www.jetbrains.com/pycharm/) Community Edition, [PyCharm Edu and IntelliJ IDEA Edu](https://www.jetbrains.com/education).
+(*) [IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
 
 ## TOML
 
@@ -87,3 +87,10 @@ understand the high-level structure of the codebase. If you are not sure where t
 
 [nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadNightlyt&guest=1
 [nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadNightly/statusIcon.svg
+
+
+[IDEA]: https://www.jetbrains.com/idea/
+[CLion]: https://www.jetbrains.com/clion/
+[PyCharm]: https://www.jetbrains.com/pycharm/
+[PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education
+[Detecting duplicates]: https://www.jetbrains.com/help/idea/analyzing-duplicates.html
