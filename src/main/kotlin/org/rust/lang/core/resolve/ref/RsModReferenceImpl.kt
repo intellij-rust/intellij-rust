@@ -24,4 +24,6 @@ class RsModReferenceImpl(
 
     override fun isReferenceTo(element: PsiElement): Boolean =
         element is RsFile && super.isReferenceTo(element)
+
+    override fun bindToElement(element: PsiElement): PsiElement? = null
 }
