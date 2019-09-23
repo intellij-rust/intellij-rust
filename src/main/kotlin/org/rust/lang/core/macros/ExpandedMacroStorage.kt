@@ -20,6 +20,7 @@ import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
+import com.intellij.psi.impl.source.StubbedSpine
 import com.intellij.reference.SoftReference
 import com.intellij.util.indexing.FileBasedIndexScanRunnableCollector
 import gnu.trove.TIntObjectHashMap
@@ -359,7 +360,7 @@ class SourceFile(
         for (info in infos) {
             val stubIndex = info.stubIndex
             if (stubIndex != -1) {
-                val call = psi.stubbedSpine.getStubPsi(stubIndex) as RsMacroCall
+                val call = psi.stubbedSpine.getMacroCall(stubIndex) ?: return
                 info.bindTo(call)
             }
         }
@@ -463,6 +464,31 @@ class SourceFile(
     fun invalidateStubIndices() {
         checkWriteAccessAllowed()
         cachedPsi = null
+        modificationStamp = -1
+    }
+
+    private fun StubbedSpine.getMacroCall(stubIndex: Int): RsMacroCall? {
+        val element = getStubPsi(stubIndex)
+        return if (element is RsMacroCall) {
+            element
+        } else {
+            MACRO_LOG.error(
+                "Detected broken stub reference to a macro!",
+                Throwable(),
+                "File: `${file.path}`,",
+                "Stored stamp: $modificationStamp,",
+                "Actual stamp: ${getActualModStamp()},",
+                "Stub index: $stubIndex,",
+                "Found element: $element, ",
+                "Found element text: `${element?.text}`"
+            )
+            markForRebind()
+            null
+        }
+    }
+
+    private fun markForRebind() {
+        unbindPsi()
         modificationStamp = -1
     }
 
