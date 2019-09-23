@@ -23,7 +23,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES_N_VALUES
 import org.rust.lang.core.resolve.TraitImplSource
-import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
@@ -110,7 +109,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 return Context(basePath, emptyList())
             }
 
-            val isNameInScope = processNestedScopesUpwards(path, TYPES_N_VALUES) { it.name == basePath.referenceName }
+            val isNameInScope = path.hasInScope(basePath.referenceName, TYPES_N_VALUES)
             if (isNameInScope) {
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
