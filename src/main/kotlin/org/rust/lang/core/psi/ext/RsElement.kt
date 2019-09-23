@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.rustFile
-import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.openapiext.toPsiFile
 
@@ -108,10 +108,10 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
 
-fun RsElement.findInScope(name: String): PsiElement? {
+fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     var resolved: PsiElement? = null
-    processNestedScopesUpwards(this, VALUES) { entry ->
-        if (entry.name == name) {
+    processNestedScopesUpwards(this, ns) { entry ->
+        if (entry.name == name && entry.element != null) {
             resolved = entry.element
             true
         } else {
@@ -120,3 +120,6 @@ fun RsElement.findInScope(name: String): PsiElement? {
     }
     return resolved
 }
+
+fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
+    findInScope(name, ns) != null

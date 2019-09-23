@@ -18,6 +18,7 @@ import org.rust.lang.core.macros.prepareExpandedTextForParsing
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.resolve
@@ -307,7 +308,7 @@ class RsPsiFactory(
                 blockFields != null -> " { .. }"
                 else -> ""
             }
-            val prefix = if (context.findInScope(variantName) != variant) "$enumName::" else ""
+            val prefix = if (context.findInScope(variantName, VALUES) != variant) "$enumName::" else ""
             "$prefix$variantName$suffix => {}"
         }
         return createExpressionOfType<RsMatchExpr>("match x { $matchBodyText }").matchBody

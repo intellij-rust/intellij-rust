@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.findInScope
 import org.rust.lang.core.psi.ext.parentEnum
+import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
@@ -27,7 +28,7 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
                 val variantName = kind.variant.name.orEmpty()
                 val itemName = kind.item.name
 
-                val variantInScope = ctx?.findInScope(variantName)
+                val variantInScope = ctx?.findInScope(variantName, VALUES)
                     ?.takeIf { (it as? RsEnumVariant)?.parentEnum == kind.item }
 
                 // if the variant is already in scope, it can be used as just `A` instead of full `MyEnum::A`
