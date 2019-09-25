@@ -1,0 +1,59 @@
+name: IntelliJ Rust Check
+
+on: push
+
+jobs:
+    build:
+        runs-on: ubuntu-16.04
+        strategy:
+            matrix:
+                rust-version: [ 1.28.0, 1.37.0, nightly-2019-06-18 ]
+                base-ide: [ idea, clion ]
+                platform-version: [ 192, 193 ]
+                # Unfortunately, we have to exclude unnecessary tasks because `include` cannot add new tasks to matrix
+                exclude:
+                    -  rust-version: 1.28.0
+                       base-ide: idea
+                       platform-version: 193
+                    -  rust-version: 1.28.0
+                       base-ide: clion
+                       platform-version: 192
+                    -  rust-version: 1.28.0
+                       base-ide: clion
+                       platform-version: 193
+        steps:
+            - uses: actions/checkout@v1
+
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                  java-version: 1.8
+
+            - name: Set up environment
+              run: |
+                curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.rust-version }} -y
+                export PATH=$HOME/.cargo/bin:$PATH
+                rustup component add rust-src
+                if [ "${{ matrix.rust-version }}" != "1.28.0" ]; then rustup component add clippy-preview; fi # BACKCOMPAT: Rust 1.28.0
+                rustup component add rustfmt-preview
+
+            - name: Check license
+              run: ./check-license.sh
+
+            - name: Build & check plugin
+              env:
+                  CI: true
+                  ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
+                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+              run: |
+                export RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
+                ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
+                ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
+                ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
+                ./gradlew check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
+
+            - name: Check bundled Rust formatters
+              env:
+                  CI: true
+                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+              run: ./gradlew runPrettyPrintersTests --no-daemon
