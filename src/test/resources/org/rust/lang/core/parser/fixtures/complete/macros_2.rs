@@ -31,5 +31,10 @@ macro vec {
             )*
             temp_vec
         }
-    };
+    },
+}
+
+pub macro compile_error {
+    ($msg:expr) => ({ /* compiler built-in */ }),
+    ($msg:expr,) => ({ /* compiler built-in */ }),
 }
