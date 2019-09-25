@@ -218,8 +218,11 @@ AssocTypeBinding ::= identifier '=' TypeReference {
 }
 
 
-// Paths for expressions:
-//     a::b::<T,U>::c
+// Paths for types:
+//    Vec<T>
+//    a::b<T,U>::c<V,W>
+//    std::Fn(V) -> W
+//    std::Fn(V)
 PathGenericArgsWithoutColons ::= <<typeQuals 'ON' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
 PathGenericArgsWithoutColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
 
@@ -227,10 +230,8 @@ PathGenericArgsWithoutColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'NO_COLO
 //     a::b::c
 PathWithoutTypes ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPES' PathImpl>>>> { elementType = Path }
 
-// Paths for types:
-//    a::b<T,U>::c<V,W>
-//    a::b<T,U>::c(V) -> W
-//    a::b<T,U>::c(V)
+// Paths for expressions:
+//     a::b::<T,U>::c
 PathGenericArgsWithColons ::= <<typeQuals 'ON' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
 PathGenericArgsWithColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
 
