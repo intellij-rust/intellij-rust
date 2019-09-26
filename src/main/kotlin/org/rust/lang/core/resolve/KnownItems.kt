@@ -114,7 +114,9 @@ class KnownItems(
     val PartialOrd: RsTraitItem? get() = findLangItem("partial_ord") ?: findItem("core::cmp::PartialOrd")
     // Some old versions of stdlib contain `Ord` trait without lang attribute
     val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
-    val Debug: RsTraitItem? get() = findLangItem("debug_trait")
+    // Some stdlib versions don't have direct `#[lang="debug_trait"]` attribute on `Debug` trait.
+    // In this case, fully qualified name search is used
+    val Debug: RsTraitItem? get() = findLangItem("debug_trait") ?: findItem("core::fmt::Debug")
     val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
 
     val drop: RsFunction? get() = findItem("core::mem::drop")
