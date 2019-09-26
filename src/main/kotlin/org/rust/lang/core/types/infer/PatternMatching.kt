@@ -16,7 +16,10 @@ import org.rust.lang.core.types.type
 
 fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {
-        is RsPatWild -> fcx.writePatTy(this, type)
+        is RsPatWild -> {
+            val expected = if (type is TyReference && type.referenced is TyStr) type else type.stripReferences(defBm).first
+            fcx.writePatTy(this, expected)
+        }
         is RsPatConst -> {
             val expr = expr
             val expected = when {

@@ -984,4 +984,18 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
             }
         }
     """)
+
+    // https://github.com/intellij-rust/intellij-rust/issues/4349
+    fun `test match ergonomics on tuple with wildcard`() = checkByText("""
+        enum E { A, B }
+        
+        fn foo(e: &E) {
+            match (e, e) {
+                (E::A, E::A) => {},
+                (E::B, E::B) => {},
+                (E::B, _) => {},
+                (_, E::B) => {},
+            }
+        }
+    """)
 }
