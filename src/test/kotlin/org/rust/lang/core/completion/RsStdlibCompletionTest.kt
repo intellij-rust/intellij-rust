@@ -65,15 +65,15 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test rustc doc only macro from prelude`() = doSingleCompletion("""
-        fn main() { format_arg/*caret*/ }
+        fn main() { stringif/*caret*/ }
     """, """
-        fn main() { format_args!(/*caret*/) }
+        fn main() { stringify!(/*caret*/) }
     """)
 
     fun `test rustc doc only macro from std`() = doSingleCompletion("""
-        fn main() { std::format_arg/*caret*/ }
+        fn main() { std::stringif/*caret*/ }
     """, """
-        fn main() { std::format_args!(/*caret*/) }
+        fn main() { std::stringify!(/*caret*/) }
     """)
 }
 
