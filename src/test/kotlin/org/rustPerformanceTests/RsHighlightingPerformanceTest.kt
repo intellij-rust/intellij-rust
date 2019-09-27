@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.stdext.Timings
+import org.rust.stdext.repeatBenchmark
 
 
 class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
@@ -22,29 +23,26 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
     override fun isPerformanceTest(): Boolean = false
 
     fun `test highlighting Cargo`() =
-        repeatTest { highlightProjectFile(CARGO, "src/cargo/core/resolver/mod.rs") }
+        repeatTest { highlightProjectFile(CARGO, "src/cargo/core/resolver/mod.rs", it) }
 
     fun `test highlighting mysql_async`() =
-        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/conn/mod.rs") }
+        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/conn/mod.rs", it) }
 
     fun `test highlighting mysql_async 2`() =
-        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/connection_like/mod.rs") }
+        repeatTest { highlightProjectFile(MYSQL_ASYNC, "src/connection_like/mod.rs", it) }
 
-    private fun repeatTest(f: () -> Timings) {
-        var result = Timings()
+    private fun repeatTest(f: (Timings) -> Unit) {
         println("${name.substring("test ".length)}:")
-        repeat(10) {
+        repeatBenchmark {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
-            result = result.merge(f())
+            f(it)
             Disposer.dispose(disposable)
             tearDown()
             setUp()
         }
-        result.report()
     }
 
-    private fun highlightProjectFile(info: RealProjectInfo, filePath: String): Timings {
-        val timings = Timings()
+    private fun highlightProjectFile(info: RealProjectInfo, filePath: String, timings: Timings): Timings {
         openRealProject(info) ?: return timings
 
         myFixture.configureFromTempProjectFile(filePath)

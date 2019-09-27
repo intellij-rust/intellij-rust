@@ -13,7 +13,6 @@ import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 import java.lang.reflect.Field
 
