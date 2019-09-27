@@ -10,6 +10,9 @@ package org.rust.stdext
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.math.max
+import kotlin.math.pow
+import kotlin.math.sqrt
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 
@@ -24,36 +27,6 @@ class Timings(
 
     fun <T> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
 
-    fun merge(other: Timings): Timings {
-        val values = values()
-        val otherValues = other.values()
-        check(values.isEmpty() || otherValues.isEmpty() || values.size == otherValues.size)
-        val result = Timings()
-        for (k in values.keys.union(otherValues.keys)) {
-            result.valuesTotal[k] =
-                // https://www.youtube.com/watch?v=vrfYLlR8X8k&feature=youtu.be&t=25m17s
-                minOf(values.getOrDefault(k, Long.MAX_VALUE), otherValues.getOrDefault(k, Long.MAX_VALUE))
-            result.invokes[k] = 1
-        }
-        return result
-    }
-
-    fun report() {
-        val values = values()
-        if (values.isEmpty()) {
-            println("No metrics recorder")
-            return
-        }
-
-        val width = values.keys.map { it.length }.max()!!
-        for ((k, v) in values) {
-            println("${k.padEnd(width)}: $v ms")
-        }
-        val total = values.values.sum()
-        println("$total ms total.")
-        println()
-    }
-
     private fun <T> measureInternal(name: String, f: () -> T): T {
         var result: T? = null
         val time = measureTimeMillis { result = f() }
@@ -63,12 +36,89 @@ class Timings(
         return result as T
     }
 
-    private fun values(): Map<String, Long> {
+    fun values(): Map<String, Long> {
         val result = LinkedHashMap<String, Long>()
         for ((k, sum) in valuesTotal) {
             result[k] = (sum.toDouble() / invokes[k]!!).toLong()
         }
         return result
+    }
+}
+
+class ListTimings {
+    private val timings: MutableMap<String, MutableList<Long>> = LinkedHashMap()
+
+    fun add(t: Timings) {
+        for ((k, v) in t.values()) {
+            timings.computeIfAbsent(k) { mutableListOf() }.add(v)
+        }
+    }
+
+    fun add(action: (Timings) -> Unit) {
+        val t = Timings()
+        action(t)
+        add(t)
+    }
+
+    fun print() {
+        val values = timings.mapValues { (_, v) -> calculate(v) }
+        val table = listOf(listOf("LABEL", "MIN (ms)", "MAX (ms)", "AVG (ms)", "ERROR")) +
+            values.map { (k, v) ->
+                listOf(
+                    k,
+                    v.min.toString(),
+                    v.max.toString(),
+                    v.avg.toInt().toString(),
+                    String.format("± %.2f", v.standardDeviation)
+                )
+            }
+        val widths = IntArray(table[0].size)
+        for (row in table) {
+            row.forEachIndexed { i, s -> widths[i] = max(widths[i], s.length) }
+        }
+        for (row in table) {
+            println(row.withIndex().joinToString(" ") { (i, s) ->
+                s.padEnd(widths[i])
+            })
+        }
+    }
+
+    private fun calculate(values: MutableList<Long>): Statistics {
+        val min = values.min() ?: error("Empty timings!")
+        val max = values.max() ?: error("Empty timings!")
+        val avg = values.sum() / values.size.toDouble()
+        val variance = if (values.size > 1) {
+            values.fold(0.0) { acc, i -> acc + (i - avg).pow(2.0) } / (values.size - 1)
+        } else {
+            Double.NaN
+        }
+        val standardDeviation = sqrt(variance)
+
+        return Statistics(min, max, avg, standardDeviation)
+    }
+}
+
+data class Statistics(
+    val min: Long,
+    val max: Long,
+    val avg: Double,
+    val standardDeviation: Double
+)
+
+fun repeatBenchmark(warmupIterations: Int = 10, iterations: Int = 10, action: (Timings) -> Unit) {
+    repeatBenchmarkInternal(warmupIterations, "Warmup iteration", action)
+    repeatBenchmarkInternal(iterations, "Iteration", action)
+}
+
+private fun repeatBenchmarkInternal(times: Int = 10, label: String, action: (Timings) -> Unit) {
+    val timings = ListTimings()
+    repeat(times) { i ->
+        println("$label #${i + 1}")
+        timings.add {
+            action(it)
+        }
+        timings.print()
+        println()
     }
 }
 

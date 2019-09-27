@@ -9,37 +9,32 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.completion.RsCompletionTestBase
 import org.rust.stdext.Timings
+import org.rust.stdext.repeatBenchmark
 
 class RsCompletionPerformanceTest : RsCompletionTestBase() {
     override fun isPerformanceTest(): Boolean = false
 
-    fun `test completion`() = repeatTest {
-        val timings = Timings()
+    fun `test completion`() = repeatTest { timings ->
         myFixture.configureByText("main.rs", text)
         timings.measure("simple_completion") {
             myFixture.completeBasicAllCarets(null)
         }
-        timings
     }
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test completion with stdlib`() = repeatTest {
-        val timings = Timings()
+    fun `test completion with stdlib`() = repeatTest { timings ->
         myFixture.configureByText("main.rs", text)
         timings.measure("completion_from_index") {
             myFixture.completeBasicAllCarets(null)
         }
-        timings
     }
 
-    private fun repeatTest(f: () -> Timings) {
-        var result = Timings()
-        repeat(10) {
-            result = result.merge(f())
+    private fun repeatTest(f: (Timings) -> Unit) {
+        repeatBenchmark {
+            f(it)
             tearDown()
             setUp()
         }
-        result.report()
     }
 
     companion object {
