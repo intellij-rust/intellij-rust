@@ -75,6 +75,8 @@ fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
 val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
 
+private data class MacroCallAndOffset(val call: RsMacroCall, val absoluteOffset: Int)
+
 /**
  * If [this] is inside a **macro expansion**, returns a leaf element inside a macro call from which
  * the first token of this element is expanded. Returns null if [this] element is not inside a
@@ -132,15 +134,20 @@ fun PsiElement.findElementExpandedFrom(strict: Boolean = true): PsiElement? {
 }
 
 private fun PsiElement.findElementExpandedFromUnchecked(): PsiElement? {
-    val mappedElement = findElementExpandedFromNonRecursive() ?: return null
-    return mappedElement.findElementExpandedFromUnchecked() ?: mappedElement
+    val (anchor, offset) = findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset) ?: return null
+    return anchor.containingFile.findElementAt(offset)
+        ?.takeIf { it.startOffset == offset }
 }
 
-private fun PsiElement.findElementExpandedFromNonRecursive(): PsiElement? {
-    val call = findMacroCallExpandedFromNonRecursive() ?: return null
+private fun findMacroCallAndOffsetExpandedFromUnchecked(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
+    val mappedElement = findMacroCallAndOffsetExpandedFromNonRecursive(anchor, startOffset) ?: return null
+    return findMacroCallAndOffsetExpandedFromUnchecked(mappedElement.call, mappedElement.absoluteOffset) ?: mappedElement
+}
+
+private fun findMacroCallAndOffsetExpandedFromNonRecursive(anchor: PsiElement, startOffset: Int): MacroCallAndOffset? {
+    val call = anchor.findMacroCallExpandedFromNonRecursive() ?: return null
     val mappedOffset = mapOffsetFromExpansionToCallBody(call, startOffset) ?: return null
-    return call.containingFile.findElementAt(mappedOffset)
-        ?.takeIf { it.startOffset == mappedOffset }
+    return MacroCallAndOffset(call, mappedOffset)
 }
 
 private fun mapOffsetFromExpansionToCallBody(call: RsMacroCall, offset: Int): Int? {
@@ -158,6 +165,15 @@ fun PsiElement.cameFromMacroCall(): Boolean {
     val call = findMacroCallExpandedFromNonRecursive() ?: return false
     val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
     return mapOffsetFromExpansionToCallBodyRelative(call, startOffset) != null
+}
+
+/**
+ * Works like [findElementExpandedFrom]`(strict = false)`, but returns [RsMacroCall] instead of a leaf inside it.
+ * Does not switch to AST if [this] is [RsPath]. Very specific to hygiene
+ */
+fun PsiElement.findMacroCallFromWhichLeafIsExpanded(): RsMacroCall? {
+    val startOffset = (this as? RsPath)?.greenStub?.startOffset ?: startOffset
+    return findMacroCallAndOffsetExpandedFromUnchecked(this, startOffset)?.call
 }
 
 /**
