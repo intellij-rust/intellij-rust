@@ -118,6 +118,33 @@ class RsInlayParameterHintsProviderTest : RsPlainInlayHintsProviderTestBase() {
         }
     """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
 
+    fun `test fn arg with mut ident`() = checkByText("""
+        fn foo(mut arg: u32) {}
+        fn main() { foo(/*hint text="arg:"*/0); }
+    """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
+
+    fun `test fn arg with mut array`() = checkByText("""
+        fn foo([mut x, y]: [i32; 2]) {}
+        fn main() { foo(/*hint text="[x, y]:"*/0); }
+    """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
+
+    fun `test fn arg with mut tuple`() = checkByText("""
+        fn foo((mut x, y): (i32, i32)) {}
+        fn main() { foo(/*hint text="(x, y):"*/0); }
+    """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
+
+    fun `test fn arg with mut struct`() = checkByText("""
+        struct S { x: i32, y: i32 }
+        fn foo(S { mut x, y }: S) {}
+        fn main() { foo(/*hint text="S {x, y}:"*/0); }
+    """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
+
+    fun `test fn arg with mut tuple struct`() = checkByText("""
+        struct S(i32, i32);
+        fn foo(S(mut x, y): S) {}
+        fn main() { foo(/*hint text="S(x, y):"*/0); }
+    """, enabledHints = RsPlainParameterHint.PARAMETER_HINT)
+
     fun `test don't touch ast`() {
         fileTreeFromText("""
         //- main.rs
