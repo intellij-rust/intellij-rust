@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.presentation.insertionSafeText
+import org.rust.ide.presentation.insertionSafeTextWithAliases
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
@@ -41,7 +41,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val factory = RsPsiFactory(project)
-        val createdType = factory.createType(ctx.type.insertionSafeText)
+        val createdType = factory.createType(ctx.type.insertionSafeTextWithAliases)
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)

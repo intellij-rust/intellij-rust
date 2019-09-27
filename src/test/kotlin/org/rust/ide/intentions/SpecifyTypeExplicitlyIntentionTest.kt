@@ -16,6 +16,22 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
         """struct A<T>(T);fn main() { let var: A<i32> = A(42); } """
     )
 
+    fun `test aliased type`() = doAvailableTest("""
+        struct Foo<T>;
+        struct Bar<T>;
+        type Baz<T> = Foo<Bar<T>>;
+        fn foo<T>(c: &Baz<T>) {
+            let b/*caret*/ = c;
+        }
+    """, """
+        struct Foo<T>;
+        struct Bar<T>;
+        type Baz<T> = Foo<Bar<T>>;
+        fn foo<T>(c: &Baz<T>) {
+            let b: &Baz<T> = c;
+        }
+    """)
+
     fun `test not inferred type`() = doUnavailableTest(
         """ fn main() { let var/*caret*/ = a; } """
     )
