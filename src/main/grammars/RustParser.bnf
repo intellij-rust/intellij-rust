@@ -1315,7 +1315,7 @@ Macro2 ::= AttrsAndVis MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2Matc
 }
 
 private Macro2FunctionLikeBody ::= '(' MacroPatternContents ')' '{' MacroExpansionContents '}'
-private Macro2MatchLikeBody ::= '{' MacroCase ';'? '}'
+private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 MacroCall ::= MacroHead <<macroSemicolon>> {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
