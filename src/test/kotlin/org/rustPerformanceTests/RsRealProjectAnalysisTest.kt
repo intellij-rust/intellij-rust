@@ -8,12 +8,13 @@ package org.rustPerformanceTests
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.openapi.util.Disposer
 import org.junit.ComparisonFailure
+import org.rust.ide.annotator.RsAnnotatorBase
+import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 import java.lang.reflect.Field
 
@@ -37,6 +38,7 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             testRootDisposable,
             project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
         )
+        RsAnnotatorBase.enableAnnotator(RsErrorAnnotator::class.java, testRootDisposable)
         val inspections = InspectionToolRegistrar.getInstance().createTools()
             .map { it.tool }
             .filterIsInstance<RsLocalInspectionTool>()
