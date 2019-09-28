@@ -958,9 +958,11 @@
         </action>
 
         <action id="Rust.CreateNewGithubIssue"
-                class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue"/>
+                class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue">
+            <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ReportProblem"/>
+        </action>
 
-        // Cargo
+        <!-- Cargo-->
 
         <action id="Cargo.RustfmtFile"
                 class="org.rust.ide.actions.RustfmtFileAction"
