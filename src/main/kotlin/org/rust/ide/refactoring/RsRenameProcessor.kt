@@ -31,6 +31,19 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean = element is RsNamedElement
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo>, listener: RefactoringElementListener?) {
+        if (element is RsPatBinding) {
+            usages
+                .filter {
+                    val usageElement = it.element
+                    usageElement is RsStructLiteralField && usageElement.colon == null
+                }
+                .forEach {
+                    val newPatField = RsPsiFactory(element.project)
+                        .createPatFieldFull(element.text, newName)
+                    it.element!!.replace(newPatField)
+                }
+        }
+
         val newRenameElement = if (element is RsPatBinding && element.parent.parent is RsPatStruct) {
             val newPatField = RsPsiFactory(element.project)
                 .createPatFieldFull(element.identifier.text, element.text)
