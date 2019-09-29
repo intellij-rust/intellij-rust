@@ -2,6 +2,7 @@
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/platform-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
@@ -842,14 +843,6 @@
         <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
-
-        <!--  Experimental features -->
-        <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="0">
-            <description>Enable Cargo tasks to use Build Tool Window</description>
-        </experimentalFeature>
-        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="0">
-            <description>Enable Rust cfg attributes support</description>
-        </experimentalFeature>
 
     </extensions>
 

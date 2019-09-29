@@ -230,6 +230,16 @@ project(":plugin") {
 }
 
 project(":") {
+    sourceSets {
+        main {
+            if (channel == "nightly" || channel == "dev") {
+                resources.srcDirs("src/main/resources-nightly")
+            } else {
+                resources.srcDirs("src/main/resources-stable")
+            }
+        }
+    }
+
     val testOutput = configurations.create("testOutput")
 
     dependencies {

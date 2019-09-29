@@ -1,0 +1,10 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="0">
+            <description>Enable Cargo tasks to use Build Tool Window</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="0">
+            <description>Enable Rust cfg attributes support</description>
+        </experimentalFeature>
+    </extensions>
+</idea-plugin>
