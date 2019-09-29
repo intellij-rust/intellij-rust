@@ -9,7 +9,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
@@ -19,6 +18,7 @@ import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
@@ -1233,7 +1233,7 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     }
 }
 
-fun RsDiagnostic.addToHolder(holder: ProblemsHolder) {
+fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {
     val prepared = prepare()
     val descriptor = holder.manager.createProblemDescriptor(
         element,

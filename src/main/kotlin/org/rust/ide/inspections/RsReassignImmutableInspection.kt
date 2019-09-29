@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
@@ -17,7 +16,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsReassignImmutableInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 val left = expr.left.takeIf { it.isImmutable } ?: return
@@ -35,7 +34,7 @@ class RsReassignImmutableInspection : RsLocalInspectionTool() {
             }
         }
 
-    private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
+    private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         val fix = AddMutableFix.createIfCompatible(nameExpr)
         RsDiagnostic.CannotReassignToImmutable(expr, fix).addToHolder(holder)
     }

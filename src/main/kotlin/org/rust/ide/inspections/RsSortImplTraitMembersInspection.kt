@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.tree.IElementType
@@ -17,7 +16,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val trait = impl.traitRef?.resolveToTrait() ?: return
             val typeRef = impl.typeReference ?: return

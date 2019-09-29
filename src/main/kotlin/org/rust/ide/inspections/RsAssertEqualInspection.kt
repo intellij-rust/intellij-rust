@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.psi.*
@@ -20,7 +19,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.Testmark
 
 class RsAssertEqualInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 
         override fun visitMacroCall(o: RsMacroCall) {
             if (o.macroName != "assert") return

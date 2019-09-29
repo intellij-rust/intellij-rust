@@ -6,10 +6,10 @@
 package org.rust.ide.inspections.checkMatch
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.rust.ide.inspections.RsLocalInspectionTool
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.checkMatch.Constructor.Companion.allConstructors
 import org.rust.ide.inspections.checkMatch.Usefulness.*
 import org.rust.ide.inspections.fixes.SubstituteTextFix
@@ -29,7 +29,7 @@ import org.rust.lang.utils.addToHolder
 class RsMatchCheckInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Match Check"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMatchExpr(matchExpr: RsMatchExpr) {
             val exprType = matchExpr.expr?.type ?: return
             if (exprType.containsTyOfClass(TyUnknown::class.java)) return
@@ -44,7 +44,7 @@ class RsMatchCheckInspection : RsLocalInspectionTool() {
 }
 
 
-private fun checkUselessArm(match: RsMatchExpr, holder: ProblemsHolder) {
+private fun checkUselessArm(match: RsMatchExpr, holder: RsProblemsHolder) {
     val matrix = match.arms
         .calculateMatrix()
         .takeIf { it.type !is TyUnknown }
@@ -83,7 +83,7 @@ private fun checkUselessArm(match: RsMatchExpr, holder: ProblemsHolder) {
     }
 }
 
-private fun checkExhaustive(match: RsMatchExpr, holder: ProblemsHolder) {
+private fun checkExhaustive(match: RsMatchExpr, holder: RsProblemsHolder) {
     val matrix = match.arms
         .filter { it.matchArmGuard == null }
         .calculateMatrix()

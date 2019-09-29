@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
@@ -19,7 +18,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsTraitImplementationInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val traitRef = impl.traitRef ?: return
             val trait = traitRef.resolveToTrait() ?: return
@@ -47,7 +46,7 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
     }
 
     private fun checkTraitFnImplParams(
-        holder: ProblemsHolder,
+        holder: RsProblemsHolder,
         fn: RsFunction,
         superFn: RsFunction,
         traitName: String

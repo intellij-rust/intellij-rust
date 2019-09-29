@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElementVisitor
@@ -29,7 +28,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
     override fun getDisplayName() = "Unresolved reference"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitPath(path: RsPath) {
                 if (path.parent is RsPath) return
@@ -57,7 +56,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             }
         }
 
-    private fun ProblemsHolder.registerProblem(
+    private fun RsProblemsHolder.registerProblem(
         element: RsElement,
         candidates: List<ImportCandidate>,
         referenceName: String?,

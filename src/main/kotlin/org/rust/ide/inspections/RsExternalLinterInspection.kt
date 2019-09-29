@@ -37,7 +37,6 @@ import org.rust.ide.annotator.createAnnotationsForFile
 import org.rust.ide.annotator.createDisposableOnAnyPsiChange
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.cargoProject
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.stdext.buildList
 import java.util.*

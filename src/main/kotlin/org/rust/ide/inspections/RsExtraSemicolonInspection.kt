@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.cfg.ExitPoint
@@ -27,14 +26,14 @@ import org.rust.lang.core.types.type
 class RsExtraSemicolonInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Extra semicolon"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitFunction(o: RsFunction) = inspect(holder, o)
         }
 }
 
 
-private fun inspect(holder: ProblemsHolder, fn: RsFunction) {
+private fun inspect(holder: RsProblemsHolder, fn: RsFunction) {
     val retType = fn.retType?.typeReference ?: return
     if (retType.type == TyUnit) return
     ExitPoint.process(fn) { exitPoint ->

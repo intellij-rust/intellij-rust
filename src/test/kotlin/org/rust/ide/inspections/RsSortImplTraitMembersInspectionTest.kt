@@ -214,7 +214,7 @@ class RsSortImplTraitMembersInspectionTest : RsInspectionsTestBase(RsSortImplTra
         }
 
         // Some comment
-        #[cfg(some_attr = "value")]
+        #[allow(something)]
         <weak_warning descr="Different impl member order from the trait">/*caret*/impl Foo for ()</weak_warning> {
             fn bar() {
             }

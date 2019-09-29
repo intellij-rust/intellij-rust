@@ -327,7 +327,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct Foo;
         }
 
-        #[cfg(test)]
         mod tests {
             fn foo() {
                 let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
@@ -338,7 +337,6 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub struct Foo;
         }
 
-        #[cfg(test)]
         mod tests {
             use foo::Foo;
 
