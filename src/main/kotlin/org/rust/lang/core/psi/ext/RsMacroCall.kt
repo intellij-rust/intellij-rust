@@ -46,9 +46,6 @@ val RsMacroCall.macroName: String
 val RsMacroCall.bracesKind: MacroBraces?
     get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }
 
-val RsMacroCall.semicolon: PsiElement?
-    get() = node.findChildByType(SEMICOLON)?.psi
-
 val RsMacroCall.macroBody: String?
     get() {
         val stub = greenStub
@@ -80,8 +77,6 @@ private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
 
 private val RsMacroCall.macroArgumentElement: RsElement?
     get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
-
-val RsMacroCall.macroArgument: RsMacroArgument? get() = macroArgumentElement as? RsMacroArgument
 
 private val RsExpr.value: String? get() {
     return when (this) {

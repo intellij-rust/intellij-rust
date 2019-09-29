@@ -14,7 +14,6 @@ import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsWithMacroExpansionsRecursiveElementWalkingVisitor
 import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.macroArgument
 
 
 /**

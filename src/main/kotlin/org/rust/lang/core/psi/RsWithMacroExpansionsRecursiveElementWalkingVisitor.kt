@@ -8,7 +8,6 @@ package org.rust.lang.core.psi
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.macroArgument
 
 abstract class RsWithMacroExpansionsRecursiveElementWalkingVisitor : PsiRecursiveElementWalkingVisitor() {
     override fun visitElement(element: PsiElement) {
