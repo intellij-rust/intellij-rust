@@ -26,7 +26,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
@@ -44,6 +43,8 @@ import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isHeadlessEnvironment
 import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
@@ -63,7 +64,7 @@ object CargoBuildManager {
 
     val Project.isBuildToolWindowEnabled: Boolean
         get() {
-            if (!Registry.`is`("cargo.build.tool.window.enabled")) return false
+            if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
             val rustcVersion = cargoProjects
                 .allProjects
                 .mapNotNull { it.rustcInfo?.version?.semver }

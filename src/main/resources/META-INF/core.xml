@@ -774,11 +774,6 @@
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
 
-        <registryKey key="cargo.build.tool.window.enabled" defaultValue="true"
-                     description="Enable Cargo tasks to use Build Tool Window"/>
-        <registryKey key="rust.cfg.attributes.enabled" defaultValue="false"
-                     description="Enable Rust cfg attributes support"/>
-
         <!-- Icon Provider -->
 
         <fileIconProvider implementation="org.rust.cargo.icons.CargoIconProvider"/>
@@ -847,6 +842,14 @@
         <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
+
+        <!--  Experimental features -->
+        <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="0">
+            <description>Enable Cargo tasks to use Build Tool Window</description>
+        </experimentalFeature>
+        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="0">
+            <description>Enable Rust cfg attributes support</description>
+        </experimentalFeature>
 
     </extensions>
 
