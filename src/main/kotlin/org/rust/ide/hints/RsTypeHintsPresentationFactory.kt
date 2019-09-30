@@ -76,13 +76,14 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
 
     private fun adtTypeHint(type: TyAdt, level: Int): InlayPresentation {
         val aliasedBy = type.aliasedBy
+        val alias = aliasedBy?.element
 
-        val adtName = aliasedBy?.element?.name ?: type.item.name
-        val typeArguments = aliasedBy?.element?.typeParameters?.map { aliasedBy.subst[it] ?: TyUnknown }
-            ?: type.typeArguments
-
-        val typeDeclaration = type.item
+        val adtName = alias?.name ?: type.item.name
+        val typeDeclaration = alias ?: type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
+
+        val typeArguments = alias?.typeParameters?.map { aliasedBy.subst[it] ?: TyUnknown }
+            ?: type.typeArguments
 
         if (typeArguments.isNotEmpty()) {
             val collapsible = factory.collapsible(
@@ -120,12 +121,8 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
             startWithPlaceholder = checkSize(level, 2)
         )
 
-        val targetDeclaration = type.target.navigationElement
-        val targetPresentation = if (targetDeclaration != null) {
-            factory.psiSingleReference(text(type.target.name)) { targetDeclaration }
-        } else {
-            text(type.target.name)
-        }
+        val targetDeclaration = type.target
+        val targetPresentation = factory.psiSingleReference(text(targetDeclaration.name)) { targetDeclaration }
 
         return listOf(collapsible, targetPresentation).join("::")
     }
@@ -133,7 +130,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
     private fun typeParameterTypeHint(type: TyTypeParameter): InlayPresentation {
         val parameter = type.parameter
         if (parameter is TyTypeParameter.Named) {
-            return factory.psiSingleReference(text(parameter.name)) { parameter.parameter.navigationElement }
+            return factory.psiSingleReference(text(parameter.name)) { parameter.parameter }
         }
         return text(parameter.name)
     }
@@ -194,15 +191,10 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
         val assocTypesPresentations = mutableListOf<InlayPresentation>()
         if (includeAssoc) {
             for (alias in trait.element.associatedTypesTransitively) {
-                val name = alias.name ?: continue
+                val aliasName = alias.name ?: continue
                 val type = trait.assoc[alias] ?: continue
 
-                val declaration = alias.navigationElement
-                val aliasPresentation = if (declaration != null) {
-                    factory.psiSingleReference(text(name)) { declaration }
-                } else {
-                    text(name)
-                }
+                val aliasPresentation = factory.psiSingleReference(text(aliasName)) { alias }
 
                 val presentation = listOf(aliasPresentation, text("="), hint(type, level + 1)).join()
                 assocTypesPresentations.add(presentation)
