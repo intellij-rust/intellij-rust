@@ -109,4 +109,55 @@ class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention()) {
             let /*caret*/x = S { x: 0, y: 1 };
         }
     """)
+
+    fun `test import unresolved type`() = doAvailableTest("""
+        use a::foo;
+
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+
+        fn main() {
+            let /*caret*/x = foo();
+        }
+    """, """
+        use a::{foo, S};
+
+        mod a {
+            pub struct S;
+            pub fn foo() -> S { S }
+        }
+
+        fn main() {
+            let S {} = foo();
+        }
+    """)
+
+    // TODO: Support type aliases
+    fun `test import unresolved type alias`() = doAvailableTest("""
+        use a::foo;
+
+        mod a {
+            pub struct S;
+            pub type R = S;
+            pub fn foo() -> R { S }
+        }
+
+        fn main() {
+            let /*caret*/x = foo();
+        }
+    """, """
+        use a::{foo, S};
+
+        mod a {
+            pub struct S;
+            pub type R = S;
+            pub fn foo() -> R { S }
+        }
+
+        fn main() {
+            let S {} = foo();
+        }
+    """)
 }

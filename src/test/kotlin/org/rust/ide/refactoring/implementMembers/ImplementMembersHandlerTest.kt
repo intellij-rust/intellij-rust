@@ -94,6 +94,37 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    // TODO: Support type aliases
+    fun `test import unresolved types`() = doTest("""
+        use a::T;
+        mod a {
+            pub struct R;
+            pub type U = R;
+            pub trait T {
+                fn f() -> (R, U);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, U)", true, true)
+    ), """
+        use a::{T, R};
+        mod a {
+            pub struct R;
+            pub type U = R;
+            pub trait T {
+                fn f() -> (R, U);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, R) {
+                unimplemented!()
+            }
+        }
+    """)
+
     fun `test implement unsafe methods`() = doTest("""
         trait T {
             unsafe fn f1();
