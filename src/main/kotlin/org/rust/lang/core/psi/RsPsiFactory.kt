@@ -134,6 +134,12 @@ class RsPsiFactory(
     fun createStructLiteral(name: String): RsStructLiteral =
         createExpressionOfType("$name { }")
 
+    fun createStructLiteralField(name: String, value: String): RsStructLiteralField {
+        return createExpressionOfType<RsStructLiteral>("S { $name: $value }")
+            .structLiteralBody
+            .structLiteralFieldList[0]
+    }
+
     fun createStructLiteralField(name: String, value: RsExpr? = null): RsStructLiteralField {
         val structLiteralField = createExpressionOfType<RsStructLiteral>("S { $name: () }")
             .structLiteralBody

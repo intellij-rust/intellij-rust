@@ -112,6 +112,24 @@ class RenameTest : RsTestBase() {
     """)
 
 
+    fun `test field initialization shorthand`() = doTest("spam", """
+        struct S { foo: i32 }
+
+        fn main() {
+            let /*caret*/foo = 92;
+            let x = S { foo };
+            println!("{}", x.foo);
+        }
+    """, """
+        struct S { foo: i32 }
+
+        fn main() {
+            let spam = 92;
+            let x = S { foo: spam };
+            println!("{}", x.foo);
+        }
+    """)
+
     fun `test rename lifetime`() = doTest("'bar", """
         fn foo<'foo>(a: &/*caret*/'foo u32) {}
     """, """
