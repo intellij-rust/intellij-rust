@@ -29,11 +29,11 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 /**
- * [CargoProjectsService] stores a list of `Cargo.toml` file,
- * registered with the current IDE project. Each `Cargo.toml`
- * is represented by a [CargoProject], whose main attribute is
- * `workspace`: a description of a Cargo project acquired from
- * Cargo itself via `cargo metadata` command.
+ * Stores a list of [CargoProject]s associated with the current IntelliJ [Project].
+ * Use [Project.cargoProjects] to get an instance of the service.
+ *
+ * See [ARCHITECTURE.md](https://github.com/intellij-rust/intellij-rust/blob/master/ARCHITECTURE.md#project-model)
+ * for more details.
  */
 interface CargoProjectsService {
     val allProjects: Collection<CargoProject>
@@ -42,6 +42,9 @@ interface CargoProjectsService {
     fun findProjectForFile(file: VirtualFile): CargoProject?
     fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package?
 
+    /**
+     * @param manifest a path to `Cargo.toml` file of the project that should be attached
+     */
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
     fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
@@ -82,6 +85,8 @@ interface CargoProjectsService {
 val Project.cargoProjects get() = service<CargoProjectsService>()
 
 /**
+ * See docs for [CargoProjectsService].
+ *
  * Instances of this class are immutable and will be re-created on each project refresh.
  * This class implements [UserDataHolderEx] interface and therefore any data can be attached
  * to it. Note that since instances of this class are re-created on each project refresh,

@@ -291,3 +291,109 @@ Read more about [indexing].
 [stub-switch]: https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27
 
 
+# Project model
+
+Each Rust project in IDE consists of multiple [CargoProject]s. 
+
+```
+              [CargoProject]
+                    |
+            [CargoWorkspace]
+              /          \
+         [Package]   [Package]
+           /   \         |
+    [Target] [Target] [Target]
+   (main.rs) (lib.rs) (lib.rs)
+```
+
+## CargoProject
+
+Basically, [CargoProject] corresponds to a `Cargo.toml` file inside a project
+source folder that is linked to the current IDE project via [attachCargoProject].
+Each valid [CargoProject] contains exactly one [CargoWorkspace] (see
+[CargoProject.workspace]). A workspace may be null if project is not valid
+(project is in updating state, Cargo is not installed, broken `Cargo.toml`, etc).
+
+## CargoWorkspace
+
+[CargoWorkspace] is attached to each valid [CargoProject] and stores info
+about its packages (see [CargoWorkspace.packages]). A workspace is acquired
+from Cargo itself via `cargo metadata` command.
+
+## Package
+
+[CargoWorkspace.Package] is a thing that can be considered as a dependency (has
+a name and version) and can have dependencies. A package may contain one library
+target and/or multiple targets of other types. Package is described by `[package]`
+section of `Cargo.toml`
+
+## Target
+
+[CargoWorkspace.Target] is a thing that can be compiled to some binary artifact,
+e.g. executable binary, library, example library/executable, test executable, etc.
+Each target has crate root (see [CargoWorkspace.Target.crateRoot]). For example,
+`main.rs` or `lib.rs`.
+
+## Project model FAQ
+
+Q: What's the difference between [CargoProject] and [CargoWorkspace]?
+
+A: They are mostly the same, i.e. they are linked to each other. The most
+  difference is that [CargoWorkspace] is acquired from external tool,
+  and so may be `null` sometimes, while [CargoProject] is always persisted.
+
+Q: How does [CargoWorkspace] relate to `[workspace]` section in `Cargo.toml`?
+
+A: Each Cargo project has a workspace even if there is no `[workspace]` in
+  the `Cargo.toml`. With `[workspace]` the [CargoWorkspace] contains all
+  `[workspace.members]` packages.
+
+Q: What's the difference between [CargoWorkspace.Package] and [CargoWorkspace.Target]?
+
+A: [CargoWorkspace.Package] may contain multiple [CargoWorkspace.Target]s.
+  E.g. a package may contain common library target, multiple binary
+  targets that use it, test targets, benchmark targets, etc.
+
+Q: What is `Cargo.toml` dependency in the terms of this model?
+
+A: Dependency (that is `foo = "1.0"` in `Cargo.toml`) is a
+  [CargoWorkspace.Package] (of specified name and version) with one
+  _library_ target. See [CargoWorkspace.Package.dependencies]
+
+Q: What is a Rust crate in the terms of this model?
+
+A: It is always [CargoWorkspace.Target]. In the case of `extern crate foo;`
+  it is a library [CargoWorkspace.Target] (with a name `foo`) of some
+  dependency package of the current package.
+
+Q: What's the difference between [CargoWorkspace.Package.name] and [CargoWorkspace.Target.name]?
+
+A: [CargoWorkspace.Package.name] is a name of a dependency that should be mentioned in
+  `[dependencies]` section of `Cargo.toml`. [CargoWorkspace.Target.name] is a name
+  that visible in the Rust code, e.g. in `extern crate` syntax. Usually they are equal.
+  A name of a package can be specified by `[package.name]` property in `Cargo.toml`.
+  A name of a target can be specified in sections like `[lib]`, `[[bin]]`, etc.
+  Also, name of a dependency target can be changed.
+  Note that if a name of a target appears in the rust code, all `-` symbols are replaced with `_`.
+  To get such replaced names, use [CargoWorkspace.Target.normName] or [CargoWorkspace.Package.normName].
+  See [reference](https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html#renaming-dependencies-in-cargotoml)
+
+See Cargo's [workspace.rs], [package.rs] and [manifest.rs].
+
+[attachCargoProject]:                  https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/model/CargoProjectService.kt#L45
+[CargoProject]:                        https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/model/CargoProjectService.kt#L90
+[CargoProject.workspace]:              https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/model/CargoProjectService.kt#L97
+[CargoWorkspace]:                      https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L28
+[CargoWorkspace.packages]:             https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L36
+[CargoWorkspace.Package]:              https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L51
+[CargoWorkspace.Package.dependencies]: https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L66
+[CargoWorkspace.Package.name]:         https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L55
+[CargoWorkspace.Package.normName]:     https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L56
+[CargoWorkspace.Target]:               https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L78
+[CargoWorkspace.Target.name]:          https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L79
+[CargoWorkspace.Target.normName]:      https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L82
+[CargoWorkspace.Target.crateRoot]:     https://github.com/intellij-rust/intellij-rust/blob/1a8cc0ee1/src/main/kotlin/org/rust/cargo/project/workspace/CargoWorkspace.kt#L95
+[workspace.rs]: https://github.com/rust-lang/cargo/blob/d0f82841/src/cargo/core/workspace.rs
+[package.rs]: https://github.com/rust-lang/cargo/blob/d0f82841/src/cargo/core/package.rs
+[manifest.rs]: https://github.com/rust-lang/cargo/blob/d0f82841/src/cargo/core/manifest.rs#L228
+
