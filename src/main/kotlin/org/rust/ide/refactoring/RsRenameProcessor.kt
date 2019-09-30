@@ -39,7 +39,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
                 }
                 .forEach {
                     val newPatField = RsPsiFactory(element.project)
-                        .createPatFieldFull(element.text, newName)
+                        .createStructLiteralField(element.text, newName)
                     it.element!!.replace(newPatField)
                 }
         }
