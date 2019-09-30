@@ -216,6 +216,7 @@
         <!-- Spell-checker -->
 
         <spellchecker.support language="Rust" implementationClass="org.rust.ide.spelling.RsSpellcheckingStrategy"/>
+        <spellchecker.bundledDictionaryProvider implementation="org.rust.ide.spelling.RsBundledDictionaryProvider"/>
 
         <!-- Handlers -->
 

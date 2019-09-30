@@ -38,6 +38,14 @@ class RsSpellCheckerTest : RsTestBase() {
         fn r#<TYPO>wodrl</TYPO>() {}
     """)
 
+    fun `test do not highlight word from rust bundled dictionary`() = doTest("""
+        pub struct Bar;
+        impl<T> Deref for Bar {
+            type Target = ();
+            fn deref(&self) -> &Self::Target { unimplemented!() }
+        }         
+    """)
+
     private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
         val inspection = SpellCheckingInspection()
         inspection.processLiterals = processLiterals
