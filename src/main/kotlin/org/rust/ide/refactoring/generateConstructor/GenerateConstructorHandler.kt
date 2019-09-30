@@ -9,7 +9,6 @@ package org.rust.ide.refactoring.generateConstructor
 import com.intellij.codeInsight.CodeInsightActionHandler
 import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.lang.LanguageCodeInsightActionHandler
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -20,6 +19,7 @@ import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.openapiext.checkWriteAccessAllowed
+import org.rust.openapiext.checkWriteAccessNotAllowed
 
 class GenerateConstructorAction : CodeInsightAction() {
 
@@ -44,7 +44,7 @@ class GenerateConstructorHandler : LanguageCodeInsightActionHandler {
     }
 
     private fun generateConstructorBody(structItem: RsStructItem, editor: Editor) {
-        check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+        checkWriteAccessNotAllowed()
         val chosenFields = showConstructorArgumentsChooser(structItem.project, structItem) ?: return
         runWriteAction {
             insertNewConstructor(structItem, chosenFields, editor)

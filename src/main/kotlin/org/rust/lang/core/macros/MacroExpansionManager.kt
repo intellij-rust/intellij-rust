@@ -695,7 +695,7 @@ private class MacroExpansionTaskQueue(val project: Project) {
 
     fun ensureUpToDate() {
         if (isUnitTestMode && ApplicationManager.getApplication().isDispatchThread && !processor.isEmpty) {
-            check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+            checkWriteAccessNotAllowed()
             while (!processor.isEmpty && !project.isDisposed) {
                 LaterInvocator.dispatchPendingFlushes()
                 Thread.sleep(10)
