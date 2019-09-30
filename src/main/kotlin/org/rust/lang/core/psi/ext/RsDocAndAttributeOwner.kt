@@ -5,11 +5,12 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
+import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isUnitTestMode
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
@@ -184,7 +185,7 @@ class QueryAttributes(
 val RsDocAndAttributeOwner.isEnabledByCfg: Boolean
     get() {
         // TODO: get rid of this registry key when cfg support is done
-        if (!isUnitTestMode && !Registry.`is`("rust.cfg.attributes.enabled")) return true
+        if (!isUnitTestMode && !isFeatureEnabled(RsExperiments.CFG_ATTRIBUTES_SUPPORT)) return true
 
         // TODO: add cfg to RsFile's stub and remove this line
         if (this is RsFile) return true

@@ -2,6 +2,7 @@
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/platform-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
@@ -773,11 +774,6 @@
 
         <additionalLibraryRootsProvider
                 implementation="org.rust.cargo.project.workspace.RsAdditionalLibraryRootsProvider"/>
-
-        <registryKey key="cargo.build.tool.window.enabled" defaultValue="true"
-                     description="Enable Cargo tasks to use Build Tool Window"/>
-        <registryKey key="rust.cfg.attributes.enabled" defaultValue="false"
-                     description="Enable Rust cfg attributes support"/>
 
         <!-- Icon Provider -->
 
