@@ -54,43 +54,6 @@ private fun insertNewTraitMembers(
     if (selected.isEmpty()) return
 
     val templateImpl = RsPsiFactory(existingMembers.project).createMembers(selected, trait.subst)
-    val mod = existingMembers.containingMod
-    val superMods = LinkedHashSet(mod.superMods)
-    val importCandidates = mutableListOf<ImportCandidate>()
-    val importCandidateVisitor = object : RsVisitor() {
-        override fun visitElement(element: RsElement) = element.acceptChildren(this)
-
-        override fun visitTypeReference(o: RsTypeReference) {
-            val ty = o.type
-            val item: RsQualifiedNamedElement = when (ty) {
-                is TyAdt -> ty.item
-                is TyTraitObject -> ty.trait.element
-                else -> return
-            }
-
-            val candidate = QualifiedNamedItem.ExplicitItem(item)
-                .withModuleReexports(mod.project)
-                .mapNotNull { ImportCandidate(it, it.canBeImported(superMods) ?: return@mapNotNull null) }
-                .firstOrNull() ?: return
-
-            importCandidates.add(candidate)
-
-            visitElement(o) // type reference also can contains sub type references
-        }
-    }
-
-    // Visit the existing trait functions to determine the types that need to be imported.
-    selected.forEach { it.accept(importCandidateVisitor) }
-
-    // Determine which of the type references we found are already in scope.
-    val inScopeItems: Set<RsElement> = importCandidates
-        .mapNotNull { it.qualifiedNamedItem.item as? RsItemElement }
-        .filterInScope(existingMembers)
-        .toSet()
-
-    importCandidates
-        .filter { !inScopeItems.contains(it.qualifiedNamedItem.item) }
-        .forEach { it.import(mod) }
 
     val traitMembers = trait.element.expandedMembers
     val newMembers = templateImpl.childrenOfType<RsAbstractable>()

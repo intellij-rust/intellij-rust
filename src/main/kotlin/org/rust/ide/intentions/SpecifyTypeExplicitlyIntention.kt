@@ -44,6 +44,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)
+        importTypeReferencesFromTy(ctx.letDecl, ctx.type, useAliases = true)
     }
 
 

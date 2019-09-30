@@ -10,8 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.types.type
 
 class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : LocalQuickFixOnPsiElement(match) {
     override fun getFamilyName() = "Add remaining patterns"
@@ -25,5 +27,8 @@ class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : Loc
         for (arm in newArms) {
             oldMatchBody.addBefore(arm, oldMatchBody.rbrace)
         }
+
+        val ty = startElement.expr?.type ?: return
+        importTypeReferencesFromTy(startElement, ty)
     }
 }
