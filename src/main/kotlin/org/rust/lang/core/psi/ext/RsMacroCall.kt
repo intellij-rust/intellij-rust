@@ -57,7 +57,20 @@ val RsMacroCall.macroBody: String?
     }
 
 val RsMacroCall.bodyTextRange: TextRange?
-    get() = macroArgumentElement?.braceListBodyTextRange()
+    get() {
+        val stub = greenStub
+        return if (stub != null) {
+            val bodyStartOffset = stub.bodyStartOffset
+            val macroBody = stub.macroBody
+            if (bodyStartOffset != -1 && macroBody != null) {
+                TextRange(bodyStartOffset, bodyStartOffset + macroBody.length)
+            } else {
+                null
+            }
+        } else {
+            macroArgumentElement?.braceListBodyTextRange()
+        }
+    }
 
 private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
     MACRO_ARGUMENT, FORMAT_MACRO_ARGUMENT, LOG_MACRO_ARGUMENT,

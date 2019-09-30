@@ -1378,14 +1378,13 @@ private fun makeHygieneFilter(anchor: PsiElement): (RsPatBinding) -> Boolean {
         // This branch is needed to prevent AST access
         anchor.containingFile
     } else {
-        val nameIdentifier = if (anchor is RsReferenceElement) anchor.referenceNameElement else anchor
-        (nameIdentifier.findElementExpandedFrom(strict = false) ?: nameIdentifier).containingFile
+        (anchor.findMacroCallFromWhichLeafIsExpanded() ?: anchor).containingFile
     }.unwrapCodeFragments()
 
     return fun(binding: RsPatBinding): Boolean {
         val nameIdentifier = binding.nameIdentifier ?: return false
         val bindingHygienicScope =
-            (nameIdentifier.findElementExpandedFrom(strict = false) ?: nameIdentifier).containingFile
+            (nameIdentifier.findMacroCallFromWhichLeafIsExpanded() ?: nameIdentifier).containingFile
             .unwrapCodeFragments()
         return anchorHygienicScope == bindingHygienicScope
     }

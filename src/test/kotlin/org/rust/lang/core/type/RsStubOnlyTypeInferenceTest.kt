@@ -36,4 +36,20 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
           //^ ()
         }
     """)
+
+    fun `test const expr in a macro`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        macro_rules! foo { ($ i:item) => { $ i }; }
+        const COUNT: usize = 2;
+        foo! { pub fn foo() -> [i32; COUNT] { unimplemented!() } }
+
+    //- main.rs
+        mod foo;
+
+        fn main() {
+            let x = foo::foo();
+            x;
+          //^ [i32; 2]
+        }
+    """)
 }
