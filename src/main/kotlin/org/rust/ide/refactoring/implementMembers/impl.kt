@@ -6,20 +6,21 @@
 package org.rust.ide.refactoring.implementMembers
 
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromElements
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
+import org.rust.openapiext.checkWriteAccessNotAllowed
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
-    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+    checkWriteAccessNotAllowed()
     val (implInfo, trait) = findMembersToImplement(impl) ?: run {
         if (editor != null) {
             HintManager.getInstance().showErrorHint(editor, "No members to implement have been found")
@@ -44,7 +45,11 @@ private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationIn
     return implInfo to trait
 }
 
-private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existingMembers: RsMembers, trait: BoundElement<RsTraitItem>) {
+private fun insertNewTraitMembers(
+    selected: Collection<RsAbstractable>,
+    existingMembers: RsMembers,
+    trait: BoundElement<RsTraitItem>
+) {
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
@@ -55,8 +60,8 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
 
     // [1] First, check if the order of the existingMembers already implemented
     // matches the order of existingMembers in the trait declaration.
-    val existingMembersWithPosInTrait = existingMembers.expandedMembers.map {
-        existingMember -> Pair(existingMember, traitMembers.indexOfFirst {
+    val existingMembersWithPosInTrait = existingMembers.expandedMembers.map { existingMember ->
+        Pair(existingMember, traitMembers.indexOfFirst {
             it.elementType == existingMember.elementType && it.name == existingMember.name
         })
     }.toMutableList()
@@ -100,6 +105,8 @@ private fun insertNewTraitMembers(selected: Collection<RsAbstractable>, existing
             existingMembers.addAfter(whitespaces, addedMember)
         }
     }
+
+    importTypeReferencesFromElements(existingMembers, selected, trait.subst)
 }
 
 private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiElement): PsiElement {

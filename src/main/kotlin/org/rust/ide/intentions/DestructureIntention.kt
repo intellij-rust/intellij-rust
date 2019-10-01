@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
@@ -53,7 +54,11 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
         } else {
             factory.createPatStruct(struct)
         }
-        val newPatStruct = patIdent.replace(patStruct) as? RsPatTupleStruct ?: return
+        val newPatStruct = patIdent.replace(patStruct) as? RsPat ?: return
+
+        importTypeReferencesFromTy(newPatStruct, struct.declaredType)
+
+        if (newPatStruct !is RsPatTupleStruct) return
         if (struct.positionalFields.isNotEmpty()) {
             replaceFieldPatsWithPlaceholders(editor, newPatStruct)
         }

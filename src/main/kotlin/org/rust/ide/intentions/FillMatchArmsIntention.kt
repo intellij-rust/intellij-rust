@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.arms
@@ -31,22 +32,28 @@ class FillMatchArmsIntention : RsElementBaseIntentionAction<FillMatchArmsIntenti
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (expr, name, variants) = ctx
-        var body = RsPsiFactory(project).createMatchBody(expr, name, variants)
-        val matchBody = expr.matchBody
-        if (matchBody != null) {
-            val rbrace = matchBody.rbrace
-            for (arm in body.matchArmList){
-                matchBody.addBefore(arm, rbrace)
+        val (matchExpr, name, variants) = ctx
+
+        val body = RsPsiFactory(project).createMatchBody(matchExpr, name, variants)
+            .let { body ->
+                val matchBody = matchExpr.matchBody
+                if (matchBody != null) {
+                    val rbrace = matchBody.rbrace
+                    for (arm in body.matchArmList) {
+                        matchBody.addBefore(arm, rbrace)
+                    }
+                    matchBody
+                } else {
+                    matchExpr.addAfter(body, matchExpr.expr) as RsMatchBody
+                }
             }
-            body = matchBody
-        } else {
-            body = expr.addAfter(body, expr.expr) as RsMatchBody
-        }
 
         val lbraceOffset = (body.matchArmList.firstOrNull()?.expr as? RsBlockExpr)
             ?.block?.lbrace?.textOffset ?: return
         editor.caretModel.moveToOffset(lbraceOffset + 1)
+
+        val ty = matchExpr.expr?.type ?: return
+        importTypeReferencesFromTy(matchExpr, ty)
     }
 
     data class Context(

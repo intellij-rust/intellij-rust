@@ -25,11 +25,12 @@ interface RsQualifiedNamedElement : RsNamedElement {
     val crateRelativePath: String?
 }
 
-val RsQualifiedNamedElement.qualifiedName: String? get() {
-    val inCratePath = crateRelativePath ?: return null
-    val cargoTarget = containingCargoTarget?.normName ?: return null
-    return "$cargoTarget$inCratePath"
-}
+val RsQualifiedNamedElement.qualifiedName: String?
+    get() {
+        val inCratePath = crateRelativePath ?: return null
+        val cargoTarget = containingCargoTarget?.normName ?: return null
+        return "$cargoTarget$inCratePath"
+    }
 
 @Suppress("DataClassPrivateConstructor")
 data class RsQualifiedName private constructor(
@@ -82,7 +83,8 @@ data class RsQualifiedName private constructor(
             // if any variant has the same `RsQualifiedName`
             result = lookupInIndex(project, RsReexportIndex.KEY) { useSpeck ->
                 if (useSpeck.isStarImport) return@lookupInIndex null
-                val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement ?: return@lookupInIndex null
+                val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement
+                    ?: return@lookupInIndex null
                 QualifiedNamedItem.ReexportedItem.from(useSpeck, candidate)
             }
         }
@@ -415,21 +417,23 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
     abstract val superMods: List<ModWithName>?
     abstract val containingCargoTarget: CargoWorkspace.Target?
 
-    val parentCrateRelativePath: String? get() {
-        val path = superMods
-            ?.map { it.modName ?: return null }
-            ?.asReversed()
-            ?.drop(1)
-            ?.joinToString("::") ?: return null
-        return if (item is RsEnumVariant) item.parentEnum.name?.let { "$path::$it" } else path
-    }
+    val parentCrateRelativePath: String?
+        get() {
+            val path = superMods
+                ?.map { it.modName ?: return null }
+                ?.asReversed()
+                ?.drop(1)
+                ?.joinToString("::") ?: return null
+            return if (item is RsEnumVariant) item.parentEnum.name?.let { "$path::$it" } else path
+        }
 
-    val crateRelativePath: String? get() {
-        val name = itemName ?: return null
-        val parentPath = parentCrateRelativePath ?: return null
-        if (parentPath.isEmpty()) return name
-        return "$parentPath::$name".removePrefix("::")
-    }
+    val crateRelativePath: String?
+        get() {
+            val name = itemName ?: return null
+            val parentPath = parentCrateRelativePath ?: return null
+            if (parentPath.isEmpty()) return name
+            return "$parentPath::$name".removePrefix("::")
+        }
 
     override fun toString(): String {
         return "${containingCargoTarget?.normName}::$crateRelativePath"
@@ -438,8 +442,8 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
     class ExplicitItem(item: RsQualifiedNamedElement) : QualifiedNamedItem(item) {
         override val itemName: String? get() = item.name
         override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
-        override val superMods: List<ModWithName>? get() =
-            (if (item is RsMod) item.`super` else item.containingMod)?.superMods?.map { ModWithName(it) }
+        override val superMods: List<ModWithName>?
+            get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods?.map { ModWithName(it) }
         override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
     }
 
@@ -472,11 +476,12 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
 
-        override val superMods: List<ModWithName>? get() {
-            val mods = ArrayList(explicitSuperMods)
-            mods += reexportedModItem.superMods.orEmpty()
-            return mods
-        }
+        override val superMods: List<ModWithName>?
+            get() {
+                val mods = ArrayList(explicitSuperMods)
+                mods += reexportedModItem.superMods.orEmpty()
+                return mods
+            }
         override val containingCargoTarget: CargoWorkspace.Target? get() = reexportedModItem.containingCargoTarget
     }
 

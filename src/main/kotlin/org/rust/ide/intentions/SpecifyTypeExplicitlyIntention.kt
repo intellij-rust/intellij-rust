@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.ide.presentation.insertionSafeTextWithAliases
 import org.rust.lang.core.psi.RsLetDecl
 import org.rust.lang.core.psi.RsPatIdent
@@ -28,9 +29,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null
-        if(letDecl.typeReference != null) {
-            return null
-        }
+        if (letDecl.typeReference != null) return null
         val ident = letDecl.pat as? RsPatIdent ?: return null
         val type = ident.patBinding.type
         if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java))) {
@@ -45,6 +44,7 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         val letDecl = ctx.letDecl
         val colon = letDecl.addAfter(factory.createColon(), letDecl.pat)
         letDecl.addAfter(createdType, colon)
+        importTypeReferencesFromTy(ctx.letDecl, ctx.type, useAliases = true)
     }
 
 

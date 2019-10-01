@@ -146,7 +146,7 @@ sealed class RsDiagnostic(
         private fun errTyOfTryFromActualImplForTy(ty: Ty, items: KnownItems, lookup: ImplLookup): Ty? {
             val fromTrait = items.TryFrom ?: return null
             val result = lookup.selectProjectionStrict(TraitRef(ty, fromTrait.withSubst(actualTy)),
-                fromTrait.associatedTypesTransitively.find { it.name == "Error"} ?: return null)
+                fromTrait.associatedTypesTransitively.find { it.name == "Error" } ?: return null)
             return result.ok()?.value
         }
 
@@ -208,7 +208,7 @@ sealed class RsDiagnostic(
             // for the first type X in the "actual sequence" that is also in the "expected sequence"; get the number of
             // dereferences we need to apply to get to X from `actualTy` and number of references to get to `expectedTy`
             val derefs = actualCoercionSeq.indexOfFirst { refSeqEnd = tyToExpectedRefSeq[it]; refSeqEnd != null }
-            val refs = expectedRefSeq.subList(0, refSeqEnd?: return null)
+            val refs = expectedRefSeq.subList(0, refSeqEnd ?: return null)
             // check that mutability of references would not contradict the `element`
             val isSuitableMutability = refs.isEmpty() ||
                 !refs.last().isMut ||

@@ -238,4 +238,31 @@ class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention())
             }
         }
     """)
+
+    fun `test import unresolved type`() = doAvailableTest("""
+        use a::foo;
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            match/*caret*/ foo() {};
+        }
+    """, """
+        use a::{foo, FooBar};
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            match foo() {
+                FooBar::Foo => {},
+                FooBar::Bar => {},
+            };
+        }
+    """)
 }

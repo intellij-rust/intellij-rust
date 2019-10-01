@@ -68,6 +68,10 @@ fun checkWriteAccessAllowed() {
     }
 }
 
+fun checkWriteAccessNotAllowed() {
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed)
+}
+
 fun checkReadAccessAllowed() {
     check(ApplicationManager.getApplication().isReadAccessAllowed) {
         "Needs read action"

@@ -984,4 +984,35 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
             }
         }
     """)
+
+    fun `test import unresolved type`() = checkFixByText("Add remaining patterns", """
+        use a::foo;
+        use a::E::A;
+
+        mod a {
+            pub enum E { A, B }
+            pub fn foo() -> E { E::A }
+        }
+
+        fn main() {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> foo() {
+                A => {}
+            };
+        }
+    """, """
+        use a::{foo, E};
+        use a::E::A;
+
+        mod a {
+            pub enum E { A, B }
+            pub fn foo() -> E { E::A }
+        }
+
+        fn main() {
+            match foo() {
+                A => {}
+                E::B => {}
+            };
+        }
+    """)
 }
