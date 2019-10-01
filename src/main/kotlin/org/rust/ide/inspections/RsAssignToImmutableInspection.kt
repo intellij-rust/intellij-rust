@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.containerExpr
@@ -21,14 +20,14 @@ import org.rust.lang.utils.addToHolder
 
 class RsAssignToImmutableInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 if (expr.isAssignBinaryExpr) checkAssignment(expr, holder)
             }
         }
 
-    private fun checkAssignment(expr: RsBinaryExpr, holder: ProblemsHolder) {
+    private fun checkAssignment(expr: RsBinaryExpr, holder: RsProblemsHolder) {
         val left = unwrapParenExprs(expr.left).takeIf { it.isImmutable } ?: return
 
         when (left) {
@@ -38,14 +37,14 @@ class RsAssignToImmutableInspection : RsLocalInspectionTool() {
         }
     }
 
-    private fun registerDereferenceProblem(left: RsUnaryExpr, holder: ProblemsHolder, expr: RsBinaryExpr) {
+    private fun registerDereferenceProblem(left: RsUnaryExpr, holder: RsProblemsHolder, expr: RsBinaryExpr) {
         when (left.expr?.type) {
             is TyReference -> registerProblem(holder, "immutable borrowed content", expr)
             is TyPointer -> registerProblem(holder, "immutable dereference of raw pointer", expr)
         }
     }
 
-    private fun registerProblem(holder: ProblemsHolder, message: String, expr: RsExpr, assigneeExpr: RsExpr? = null) {
+    private fun registerProblem(holder: RsProblemsHolder, message: String, expr: RsExpr, assigneeExpr: RsExpr? = null) {
         val fix = assigneeExpr?.let { AddMutableFix.createIfCompatible(it) }
         RsDiagnostic.CannotAssignToImmutable(expr, message, fix).addToHolder(holder)
     }

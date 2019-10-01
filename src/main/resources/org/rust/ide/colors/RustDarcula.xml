@@ -40,12 +40,17 @@
     </option>
     <option name="org.rust.FUNCTION_CALL">
         <value>
-            <option name="FOREGROUND" value="FFC66D" />
+            <option name="FOREGROUND" value="FFC66D"/>
         </value>
     </option>
     <option name="org.rust.METHOD_CALL">
         <value>
-            <option name="FOREGROUND" value="FFC66D" />
+            <option name="FOREGROUND" value="FFC66D"/>
+        </value>
+    </option>
+    <option name="org.rust.CFG_DISABLED_CODE">
+        <value>
+            <option name="FOREGROUND" value="686A4E"/>
         </value>
     </option>
 </list>

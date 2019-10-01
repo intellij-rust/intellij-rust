@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -27,6 +28,8 @@ class RsHighlightingAnnotator : RsAnnotatorBase() {
             element is RsReferenceElement -> highlightReference(element)
             else -> highlightNotReference(element)
         } ?: return
+
+        if (!element.isEnabledByCfg) return
 
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
         holder.createAnnotation(severity, partToHighlight, null).textAttributes = color.textAttributesKey

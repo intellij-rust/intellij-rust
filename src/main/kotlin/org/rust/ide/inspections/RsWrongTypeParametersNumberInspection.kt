@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveTypeParameter
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -16,7 +15,7 @@ import org.rust.lang.core.psi.ext.RsGenericDeclaration
  */
 class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
                 // Don't apply generic declaration checks to Fn-traits and `Self`
@@ -29,10 +28,10 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
             override fun visitMethodCall(o: RsMethodCall) = checkMethod(holder, o)
         }
 
-    private fun checkMethod(holder: ProblemsHolder, o: RsElement) {
+    private fun checkMethod(holder: RsProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = when (o) {
             is RsMethodCall ->
-                o.typeArgumentList  to o.reference.resolve()
+                o.typeArgumentList to o.reference.resolve()
 
             is RsCallExpr ->
                 (o.expr as? RsPathExpr)?.path?.typeArgumentList to (o.expr as? RsPathExpr)?.path?.reference?.resolve()

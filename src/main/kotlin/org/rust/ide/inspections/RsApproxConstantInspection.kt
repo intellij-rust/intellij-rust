@@ -5,15 +5,14 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsLitExpr
 import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.kind
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitLitExpr(o: RsLitExpr) {
             val literal = o.kind
             if (literal is RsLiteralKind.Float) {
@@ -52,6 +51,6 @@ data class PredefinedConstant(val name: String, val value: Double, val minDigits
     fun matches(value: Double) = Math.abs(value - this.value) < accuracy
 }
 
-private fun ProblemsHolder.registerProblem(element: PsiElement, type: String, constant: PredefinedConstant) {
+private fun RsProblemsHolder.registerProblem(element: RsElement, type: String, constant: PredefinedConstant) {
     registerProblem(element, "Approximate value of `std::$type::consts::${constant.name}` found. Consider using it directly.")
 }

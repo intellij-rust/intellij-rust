@@ -12,6 +12,7 @@ import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
 import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve
@@ -19,17 +20,18 @@ import java.util.*
 
 class RsExpressionAnnotator : RsAnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
-        element.accept(RedundantParenthesisVisitor(holder))
+        val rsHolder = RsAnnotationHolder(holder)
+        element.accept(RedundantParenthesisVisitor(rsHolder))
         if (element is RsStructLiteral) {
             val decl = element.path.reference.deepResolve() as? RsFieldsOwner
             if (decl != null) {
-                checkStructLiteral(holder, decl, element)
+                checkStructLiteral(rsHolder, decl, element)
             }
         }
     }
 
     private fun checkStructLiteral(
-        holder: AnnotationHolder,
+        holder: RsAnnotationHolder,
         decl: RsFieldsOwner,
         literal: RsStructLiteral
     ) {
@@ -40,8 +42,8 @@ class RsExpressionAnnotator : RsAnnotatorBase() {
             }
             .forEach { field ->
                 val annotation = holder.createErrorAnnotation(field.referenceNameElement, "No such field")
-                annotation.highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotation.registerFix(it) }
+                annotation?.highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
+                CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotation?.registerFix(it) }
             }
 
         for (field in body.structLiteralFieldList.findDuplicateReferences()) {
@@ -56,9 +58,11 @@ class RsExpressionAnnotator : RsAnnotatorBase() {
             }
         } else {
             if (calculateMissingFields(body, decl).isNotEmpty()) {
+                if (!literal.isEnabledByCfg) return
+
                 val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
                 if (structNameRange != null) {
-                    val annotation = holder.createErrorAnnotation(structNameRange, "Some fields are missing")
+                    val annotation = holder.holder.createErrorAnnotation(structNameRange, "Some fields are missing")
                     annotation.registerFix(AddStructFieldsFix(literal), body.parent.textRange)
                     annotation.registerFix(AddStructFieldsFix(literal, recursive = true), body.parent.textRange)
                 }
@@ -69,7 +73,7 @@ class RsExpressionAnnotator : RsAnnotatorBase() {
 }
 
 
-private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) : RsVisitor() {
+private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder) : RsVisitor() {
     override fun visitCondition(o: RsCondition) =
         o.expr.warnIfParens("Predicate expression has unnecessary parentheses")
 
@@ -90,8 +94,7 @@ private class RedundantParenthesisVisitor(private val holder: AnnotationHolder) 
         if (this !is RsParenExpr) return
         val fix = RemoveParenthesesFromExprIntention()
         if (fix.isAvailable(this))
-            holder.createWeakWarningAnnotation(this, message)
-                .registerFix(RemoveParenthesesFromExprIntention())
+            holder.createWeakWarningAnnotation(this, message)?.registerFix(RemoveParenthesesFromExprIntention())
     }
 }
 

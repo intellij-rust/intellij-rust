@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.SimplifyBooleanExpressionFix
 import org.rust.ide.utils.BooleanExprSimplifier
 import org.rust.ide.utils.isPure
@@ -18,7 +17,7 @@ import org.rust.lang.core.psi.RsVisitor
 class RsSimplifyBooleanExpressionInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Simplify boolean expression"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 
         override fun visitExpr(expr: RsExpr) {
             if (expr.isPure() == true && BooleanExprSimplifier.canBeSimplified(expr)) {

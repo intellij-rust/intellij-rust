@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import org.rust.ide.inspections.ReferenceLifetime.*
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
@@ -24,7 +23,7 @@ import org.rust.stdext.chain
  * Corresponds to needless_lifetimes lint from Rust Clippy.
  */
 class RsNeedlessLifetimesInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitFunction(fn: RsFunction) {
             if (couldUseElision(fn)) registerProblem(holder, fn)
         }
@@ -231,7 +230,7 @@ private fun checkLifetimesUsedInBody(body: RsBlock?): Boolean {
     return checker.lifetimesUsedInBody
 }
 
-private fun registerProblem(holder: ProblemsHolder, fn: RsFunction) {
+private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction) {
     holder.registerProblem(
         fn,
         "Explicit lifetimes given in parameter types where they could be elided",

@@ -71,7 +71,8 @@ enum class RsColor(humanName: String, val default: TextAttributesKey? = null) {
     PARENTHESES("Braces and Operators//Parentheses", Default.PARENTHESES),
 
     ATTRIBUTE("Attribute", Default.METADATA),
-    UNSAFE_CODE("Unsafe code")
+    UNSAFE_CODE("Unsafe code"),
+    CFG_DISABLED_CODE("Conditionally disabled code"),
     ;
 
     val textAttributesKey = TextAttributesKey.createTextAttributesKey("org.rust.$name", default)

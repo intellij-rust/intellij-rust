@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsUnaryExpr
 import org.rust.lang.core.psi.RsVisitor
@@ -19,7 +18,7 @@ import org.rust.lang.core.psi.RsVisitor
 class RsDoubleNegInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Double negation"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitUnaryExpr(expr: RsUnaryExpr) {
                 if (expr.isNegation && expr.expr.isNegation) {

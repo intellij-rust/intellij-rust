@@ -35,12 +35,17 @@
     </option>
     <option name="org.rust.DIMMED_TEXT">
         <value>
-            <option name="FOREGROUND" value="CBCBCB" />
+            <option name="FOREGROUND" value="CBCBCB"/>
         </value>
     </option>
     <option name="org.rust.UNSAFE_CODE">
         <value>
-            <option name="BACKGROUND" value="FFE8C6" />
+            <option name="BACKGROUND" value="FFE8C6"/>
+        </value>
+    </option>
+    <option name="org.rust.CFG_DISABLED_CODE">
+        <value>
+            <option name="FOREGROUND" value="526544"/>
         </value>
     </option>
 </list>

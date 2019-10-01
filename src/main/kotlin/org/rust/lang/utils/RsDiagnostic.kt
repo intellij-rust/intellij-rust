@@ -9,21 +9,23 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -1193,6 +1195,12 @@ class PreparedAnnotation(
     val fixes: List<LocalQuickFix> = emptyList()
 )
 
+fun RsDiagnostic.addToHolder(holder: RsAnnotationHolder) {
+    if (element.isEnabledByCfg) {
+        addToHolder(holder.holder)
+    }
+}
+
 fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     val prepared = prepare()
 
@@ -1233,7 +1241,7 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     }
 }
 
-fun RsDiagnostic.addToHolder(holder: ProblemsHolder) {
+fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {
     val prepared = prepare()
     val descriptor = holder.manager.createProblemDescriptor(
         element,

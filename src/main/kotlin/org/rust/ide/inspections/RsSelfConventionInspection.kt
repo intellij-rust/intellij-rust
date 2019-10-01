@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsVisitor
@@ -17,7 +16,7 @@ import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val traitOrImpl = when (val owner = m.owner) {
@@ -70,7 +69,7 @@ private val RsFunction.selfSignature: SelfSignature
 
 data class SelfConvention(val prefix: String, val selfSignatures: Collection<SelfSignature>)
 
-private fun ProblemsHolder.registerProblem(element: PsiElement, convention: SelfConvention) {
+private fun RsProblemsHolder.registerProblem(element: PsiElement, convention: SelfConvention) {
     val selfTypes = convention.selfSignatures.joinToString(" or ") { it.description }
 
     val description = "methods called `${convention.prefix}*` usually take $selfTypes; " +

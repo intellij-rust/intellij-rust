@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveRefFix
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsPathExpr
@@ -22,12 +21,12 @@ import org.rust.lang.core.types.type
 class RsDropRefInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "Drop reference"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitCallExpr(expr: RsCallExpr) = inspectExpr(expr, holder)
         }
 
-    fun inspectExpr(expr: RsCallExpr, holder: ProblemsHolder) {
+    fun inspectExpr(expr: RsCallExpr, holder: RsProblemsHolder) {
         val pathExpr = expr.expr as? RsPathExpr ?: return
 
         val fn = pathExpr.path.reference.resolve() ?: return

@@ -7,7 +7,6 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsPsiFactory
@@ -19,7 +18,7 @@ import org.rust.lang.core.psi.ext.isEdition2018
 import org.rust.lang.core.resolve.ref.deepResolve
 
 class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitTypeReference(typeReference: RsTypeReference) {
                 if (!typeReference.isEdition2018) return

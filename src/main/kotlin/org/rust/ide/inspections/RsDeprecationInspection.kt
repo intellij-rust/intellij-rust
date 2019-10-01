@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType.LIKE_DEPRECATED
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsFile
@@ -20,7 +19,7 @@ class RsDeprecationInspection : RsLintInspection() {
 
     override val lint: RsLint = RsLint.Deprecated
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitElement(ref: RsElement) {
             // item is non-inline module declaration or not reference element
             if (ref is RsModDeclItem || ref !is RsWeakReferenceElement) return
@@ -38,7 +37,7 @@ class RsDeprecationInspection : RsLintInspection() {
         }
     }
 
-    private fun checkAndRegisterAsDeprecated(identifier: PsiElement, original: PsiElement, holder: ProblemsHolder) {
+    private fun checkAndRegisterAsDeprecated(identifier: PsiElement, original: PsiElement, holder: RsProblemsHolder) {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
             holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), LIKE_DEPRECATED)

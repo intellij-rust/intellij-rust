@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.components.CheckBox
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.JBUI
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -90,6 +91,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (file.project.service<DumbService>().isDumb) return true
                 if (element !is RsElement) return true
+                if (!element.isEnabledByCfg) return true
 
                 if (settings.showForVariables) {
                     presentVariable(element)

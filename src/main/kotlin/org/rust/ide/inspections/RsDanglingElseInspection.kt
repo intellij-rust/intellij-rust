@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -27,7 +26,7 @@ import org.rust.lang.core.psi.ext.startOffset
 class RsDanglingElseInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Dangling else"
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
                 val elseEl = expr.`else`

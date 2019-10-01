@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemsHolder
 import org.rust.ide.annotator.fixes.AddMutableFix
 import org.rust.ide.inspections.fixes.DeriveCopyFix
 import org.rust.ide.inspections.fixes.InitializeWithDefaultValueFix
@@ -18,7 +17,7 @@ import org.rust.lang.core.types.type
 
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return
@@ -52,21 +51,21 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
             }
         }
 
-    private fun registerProblem(holder: ProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
+    private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
         val fix = AddMutableFix.createIfCompatible(nameExpr)
         holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", fix)
     }
 
-    private fun registerUseOfMovedValueProblem(holder: ProblemsHolder, use: RsElement) {
+    private fun registerUseOfMovedValueProblem(holder: RsProblemsHolder, use: RsElement) {
         val fix = DeriveCopyFix.createIfCompatible(use)
         holder.registerProblem(use, "Use of moved value", fix)
     }
 
-    private fun registerMoveProblem(holder: ProblemsHolder, element: RsElement) {
+    private fun registerMoveProblem(holder: RsProblemsHolder, element: RsElement) {
         holder.registerProblem(element, "Cannot move")
     }
 
-    private fun registerUseOfUninitializedVariableProblem(holder: ProblemsHolder, use: RsElement) {
+    private fun registerUseOfUninitializedVariableProblem(holder: RsProblemsHolder, use: RsElement) {
         val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
         holder.registerProblem(use, "Use of possibly uninitialized variable", fix)
     }

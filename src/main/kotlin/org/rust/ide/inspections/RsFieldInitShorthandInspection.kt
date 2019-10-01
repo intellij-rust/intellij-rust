@@ -8,7 +8,6 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsStructLiteralField
@@ -16,7 +15,7 @@ import org.rust.lang.core.psi.RsVisitor
 
 
 class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitStructLiteralField(o: RsStructLiteralField) {
             val init = o.expr ?: return
             if (!(init is RsPathExpr && init.text == o.identifier?.text)) return
@@ -36,8 +35,7 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
     }
 
     companion object {
-        fun applyShorthandInit(field: RsStructLiteralField)
-        {
+        fun applyShorthandInit(field: RsStructLiteralField) {
             field.expr?.delete()
             field.colon?.delete()
         }

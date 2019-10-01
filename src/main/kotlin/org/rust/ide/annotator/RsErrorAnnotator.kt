@@ -18,6 +18,7 @@ import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.annotator.fixes.CreateLifetimeParameterFromUsageFix
 import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
@@ -38,7 +39,8 @@ import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
-    override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+    override fun annotateInternal(element: PsiElement, rawHolder: AnnotationHolder) {
+        val holder = RsAnnotationHolder(rawHolder)
         val visitor = object : RsVisitor() {
             override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
             override fun visitCondition(o: RsCondition) = checkCondition(holder, o)
@@ -92,7 +94,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         element.accept(visitor)
     }
 
-    private fun checkRsPatStruct(holder: AnnotationHolder, patStruct: RsPatStruct) {
+    private fun checkRsPatStruct(holder: RsAnnotationHolder, patStruct: RsPatStruct) {
         val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val declarationFieldNames = declaration.fields.map { it.name }
         val bodyFields = patStruct.patFieldList
@@ -107,7 +109,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkRsPatTupleStruct(holder: AnnotationHolder, patTupleStruct: RsPatTupleStruct) {
+    private fun checkRsPatTupleStruct(holder: RsAnnotationHolder, patTupleStruct: RsPatTupleStruct) {
         val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
         val declarationFieldsAmount = declaration.fields.size
         val bodyFieldsAmount = patTupleStruct.patList.size
@@ -118,7 +120,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkTraitType(holder: AnnotationHolder, traitType: RsTraitType) {
+    private fun checkTraitType(holder: RsAnnotationHolder, traitType: RsTraitType) {
         if (!traitType.isImpl) return
         val invalidContext = traitType
             .ancestors
@@ -152,7 +154,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     }
 
-    private fun checkEnumItem(holder: AnnotationHolder, o: RsEnumItem) {
+    private fun checkEnumItem(holder: RsAnnotationHolder, o: RsEnumItem) {
         checkDuplicates(holder, o)
         o.enumBody?.let { checkDuplicateEnumVariants(holder, it) }
         if (!hasReprIntType(o) && hasStructOrTupleEnumVariantWithDiscriminant(o)) {
@@ -173,7 +175,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
             ?.mapNotNull { it.variantDiscriminant }
             ?.isEmpty() == false
 
-    private fun checkEnumVariant(holder: AnnotationHolder, variant: RsEnumVariant) {
+    private fun checkEnumVariant(holder: RsAnnotationHolder, variant: RsEnumVariant) {
         checkDuplicates(holder, variant)
         val discr = variant.variantDiscriminant ?: return
         if (variant.blockFields != null || variant.tupleFields != null) {
@@ -181,7 +183,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkDuplicateEnumVariants(holder: AnnotationHolder, o: RsEnumBody) {
+    private fun checkDuplicateEnumVariants(holder: RsAnnotationHolder, o: RsEnumBody) {
         data class VariantInfo(val variant: RsEnumVariant, val alreadyReported: Boolean)
 
         var discrCounter = 0L
@@ -211,7 +213,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkCallExpr(holder: AnnotationHolder, o: RsCallExpr) {
+    private fun checkCallExpr(holder: RsAnnotationHolder, o: RsCallExpr) {
         val path = (o.expr as? RsPathExpr)?.path ?: return
         checkNotCallingDrop(o, holder)
         val deepResolve = path.reference.deepResolve()
@@ -221,14 +223,14 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkTraitRef(holder: AnnotationHolder, o: RsTraitRef) {
+    private fun checkTraitRef(holder: RsAnnotationHolder, o: RsTraitRef) {
         val item = o.path.reference.resolve() as? RsItemElement ?: return
         if (item !is RsTraitItem) {
             RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
         }
     }
 
-    private fun checkDotExpr(holder: AnnotationHolder, o: RsDotExpr) {
+    private fun checkDotExpr(holder: RsAnnotationHolder, o: RsDotExpr) {
         val field = o.fieldLookup ?: o.methodCall ?: return
         checkReferenceIsPublic(field, o, holder)
         if (field is RsMethodCall) {
@@ -236,12 +238,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkYieldExpr(holder: AnnotationHolder, o: RsYieldExpr) {
+    private fun checkYieldExpr(holder: RsAnnotationHolder, o: RsYieldExpr) {
         GENERATORS.check(holder, o.yield, "`yield` syntax")
     }
 
     // E0040: Explicit destructor call (call to Drop::drop() method on an instance explicitly)
-    private fun checkNotCallingDrop(call: RsElement, holder: AnnotationHolder) {
+    private fun checkNotCallingDrop(call: RsElement, holder: RsAnnotationHolder) {
         val (ref, identifier) = when (call) {
             is RsCallExpr -> (call.expr as? RsPathExpr)?.path?.reference?.resolve() to call.expr
             is RsMethodCall -> call.reference.resolve() to call.identifier
@@ -262,7 +264,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: AnnotationHolder) {
+    private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: RsAnnotationHolder) {
         var element = ref.reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
         if (element.isVisibleFrom(oMod)) return
@@ -297,7 +299,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         error.addToHolder(holder)
     }
 
-    private fun checkBaseType(holder: AnnotationHolder, type: RsBaseType) {
+    private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.owner.parent
         if ((owner is RsValueParameter && owner.parent.parent is RsFunction)
@@ -306,20 +308,20 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkPatBox(holder: AnnotationHolder, box: RsPatBox) {
+    private fun checkPatBox(holder: RsAnnotationHolder, box: RsPatBox) {
         BOX_PATTERNS.check(holder, box.box, "`box` pattern syntax")
     }
 
-    private fun checkPatField(holder: AnnotationHolder, field: RsPatField) {
+    private fun checkPatField(holder: RsAnnotationHolder, field: RsPatField) {
         val box = field.box ?: return
         BOX_PATTERNS.check(holder, box, "`box` pattern syntax")
     }
 
-    private fun checkPatBinding(holder: AnnotationHolder, binding: RsPatBinding) {
+    private fun checkPatBinding(holder: RsAnnotationHolder, binding: RsPatBinding) {
         binding.ancestorStrict<RsValueParameterList>()?.let { checkDuplicates(holder, binding, it, recursively = true) }
     }
 
-    private fun checkPath(holder: AnnotationHolder, path: RsPath) {
+    private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
             holder.createErrorAnnotation(path.referenceNameElement, "Invalid path: self and super are allowed only at the beginning")
@@ -355,36 +357,36 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         checkReferenceIsPublic(path, path, holder)
     }
 
-    private fun checkConstParameter(holder: AnnotationHolder, constParameter: RsConstParameter) {
+    private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {
         CONST_GENERICS.check(holder, constParameter, "const generics")
         checkDuplicates(holder, constParameter)
     }
 
-    private fun checkLifetimeParameter(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+    private fun checkLifetimeParameter(holder: RsAnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
         checkReservedLifetimeName(holder, lifetimeParameter)
         checkDuplicates(holder, lifetimeParameter)
     }
 
-    private fun checkReservedLifetimeName(holder: AnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
+    private fun checkReservedLifetimeName(holder: RsAnnotationHolder, lifetimeParameter: RsLifetimeParameter) {
         val lifetimeName = lifetimeParameter.quoteIdentifier.text
         if (lifetimeName in RESERVED_LIFETIME_NAMES) {
             RsDiagnostic.ReservedLifetimeNameError(lifetimeParameter, lifetimeName).addToHolder(holder)
         }
     }
 
-    private fun checkVis(holder: AnnotationHolder, vis: RsVis) {
+    private fun checkVis(holder: RsAnnotationHolder, vis: RsVis) {
         if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis)) {
             RsDiagnostic.UnnecessaryVisibilityQualifierError(vis).addToHolder(holder)
         }
         checkCrateVisibilityModifier(holder, vis)
     }
 
-    private fun checkCrateVisibilityModifier(holder: AnnotationHolder, vis: RsVis) {
+    private fun checkCrateVisibilityModifier(holder: RsAnnotationHolder, vis: RsVis) {
         val crateModifier = vis.crate ?: return
         CRATE_VISIBILITY_MODIFIER.check(holder, crateModifier, "`crate` visibility modifier")
     }
 
-    private fun checkVisRestriction(holder: AnnotationHolder, visRestriction: RsVisRestriction) {
+    private fun checkVisRestriction(holder: RsAnnotationHolder, visRestriction: RsVisRestriction) {
         val path = visRestriction.path
         // pub(foo) or pub(super::bar)
         if (visRestriction.`in` == null && (path.path != null || path.kind == PathKind.IDENTIFIER)) {
@@ -392,12 +394,12 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkLabel(holder: AnnotationHolder, label: RsLabel) {
+    private fun checkLabel(holder: RsAnnotationHolder, label: RsLabel) {
         if (!hasResolve(label)) return
         RsDiagnostic.UndeclaredLabelError(label).addToHolder(holder)
     }
 
-    private fun checkLifetime(holder: AnnotationHolder, lifetime: RsLifetime) {
+    private fun checkLifetime(holder: RsAnnotationHolder, lifetime: RsLifetime) {
         if (lifetime.isPredefined || !hasResolve(lifetime)) return
 
         val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
@@ -420,7 +422,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkModDecl(holder: AnnotationHolder, modDecl: RsModDeclItem) {
+    private fun checkModDecl(holder: RsAnnotationHolder, modDecl: RsModDeclItem) {
         checkDuplicates(holder, modDecl)
         val pathAttribute = modDecl.pathAttribute
 
@@ -457,7 +459,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkImpl(holder: AnnotationHolder, impl: RsImplItem) {
+    private fun checkImpl(holder: RsAnnotationHolder, impl: RsImplItem) {
         checkImplForNonAdtError(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait() ?: return
@@ -488,7 +490,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0118: Can impl only `struct`s, `enum`s and `union`s (when not implementing a trait)
-    private fun checkImplForNonAdtError(holder: AnnotationHolder, impl: RsImplItem) {
+    private fun checkImplForNonAdtError(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.`for` != null) return
         val typeRef = impl.typeReference ?: return
         if (typeRef.traitType != null) return
@@ -506,13 +508,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
 
     // E0322: Explicit impls for the `Sized` trait are not permitted
     // E0328: Explicit impls for the `Unsized` trait are not permitted
-    private fun checkForbiddenImpl(holder: AnnotationHolder, traitRef: RsTraitRef, trait: RsTraitItem) {
+    private fun checkForbiddenImpl(holder: RsAnnotationHolder, traitRef: RsTraitRef, trait: RsTraitItem) {
         if (trait == trait.knownItems.Sized) RsDiagnostic.ImplSizedError(traitRef).addToHolder(holder)
         if (trait == trait.knownItems.Unsize) RsDiagnostic.ImplUnsizeError(traitRef).addToHolder(holder)
     }
 
     // E0120: Drop can be only implemented by structs and enums
-    private fun checkImplDropForNonAdtError(holder: AnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
+    private fun checkImplDropForNonAdtError(holder: RsAnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
         if (trait != trait.knownItems.Drop) return
 
         if (impl.typeReference?.type is TyAdt?) return
@@ -520,11 +522,11 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ImplDropForNonAdtError(traitRef).addToHolder(holder)
     }
 
-    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
+    private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
         checkImplBothCopyAndDrop(holder, impl.typeReference?.type ?: return, impl.traitRef ?: return, trait)
     }
 
-    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, attr: RsAttr) {
+    private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, attr: RsAttr) {
         if (attr.metaItem.name != "derive") return
         val deriveCopy = attr.metaItem.metaItemArgs?.metaItemList?.find { it?.identifier?.text == "Copy" } ?: return
         val selfType = (attr.parent as? RsStructOrEnumItemElement)?.declaredType ?: return
@@ -532,7 +534,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0184: Cannot implement both Copy and Drop
-    private fun checkImplBothCopyAndDrop(holder: AnnotationHolder, self: Ty, element: PsiElement, trait: RsTraitItem) {
+    private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, self: Ty, element: PsiElement, trait: RsTraitItem) {
         val oppositeTrait = when (trait) {
             trait.knownItems.Drop -> trait.knownItems.Copy
             trait.knownItems.Copy -> trait.knownItems.Drop
@@ -543,23 +545,23 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ImplBothCopyAndDropError(element).addToHolder(holder)
     }
 
-    private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
+    private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
         checkDuplicates(holder, ta)
     }
 
-    private fun checkUnary(holder: AnnotationHolder, o: RsUnaryExpr) {
+    private fun checkUnary(holder: RsAnnotationHolder, o: RsUnaryExpr) {
         val box = o.box ?: return
         BOX_SYNTAX.check(holder, box, "`box` expression syntax")
     }
 
-    private fun checkBinary(holder: AnnotationHolder, o: RsBinaryExpr) {
+    private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
             val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
-            annotator.registerFix(AddTurbofishFix())
+            annotator?.registerFix(AddTurbofishFix())
         }
     }
 
-    private fun checkValueArgumentList(holder: AnnotationHolder, args: RsValueArgumentList) {
+    private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
         val (expectedCount, variadic) = when (val parent = args.parent) {
             is RsCallExpr -> parent.expectedParamsCount()
             is RsMethodCall -> parent.expectedParamsCount()
@@ -573,7 +575,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkCondition(holder: AnnotationHolder, element: RsCondition) {
+    private fun checkCondition(holder: RsAnnotationHolder, element: RsCondition) {
         val patList = element.patList
         val pat = patList.singleOrNull()
         if (pat != null && pat.isIrrefutable) {
@@ -589,24 +591,24 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkConstant(holder: AnnotationHolder, element: RsConstant) {
+    private fun checkConstant(holder: RsAnnotationHolder, element: RsConstant) {
         collectDiagnostics(holder, element)
         checkDuplicates(holder, element)
     }
 
-    private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
+    private fun checkFunction(holder: RsAnnotationHolder, fn: RsFunction) {
         collectDiagnostics(holder, fn)
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
     }
 
-    private fun collectDiagnostics(holder: AnnotationHolder, element: RsInferenceContextOwner) {
+    private fun collectDiagnostics(holder: RsAnnotationHolder, element: RsInferenceContextOwner) {
         for (it in element.inference.diagnostics) {
             if (it.inspectionClass == javaClass) it.addToHolder(holder)
         }
     }
 
-    private fun checkAttr(holder: AnnotationHolder, attr: RsAttr) {
+    private fun checkAttr(holder: RsAnnotationHolder, attr: RsAttr) {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
@@ -614,7 +616,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0132: Invalid `start` attribute
-    private fun checkStartAttribute(holder: AnnotationHolder, attr: RsAttr) {
+    private fun checkStartAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
         if (attr.metaItem.name != "start") return
 
         START.check(holder, attr.metaItem, "#[start] function")
@@ -650,7 +652,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0084: Enum with no variants can't have `repr` attribute
-    private fun checkReprForEmptyEnum(holder: AnnotationHolder, attr: RsAttr) {
+    private fun checkReprForEmptyEnum(holder: RsAnnotationHolder, attr: RsAttr) {
         if (attr.metaItem.name != "repr") return
         val enum = attr.owner as? RsEnumItem ?: return
         // Not using `enum.variants` to avoid false positive for enum without body
@@ -660,7 +662,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0518: Inline attribute is allowed only on functions
-    private fun checkInlineAttr(holder: AnnotationHolder, attr: RsAttr) {
+    private fun checkInlineAttr(holder: RsAnnotationHolder, attr: RsAttr) {
         val metaItem = attr.metaItem
         if (metaItem.name == "inline") {
             val parent = when (attr) {
@@ -680,7 +682,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
 
-    private fun checkRetExpr(holder: AnnotationHolder, ret: RsRetExpr) {
+    private fun checkRetExpr(holder: RsAnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
         val fn = ret.ancestors.find {
             it is RsFunction || it is RsLambdaExpr || it is RsBlockExpr && it.isAsync
@@ -690,7 +692,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         RsDiagnostic.ReturnMustHaveValueError(ret).addToHolder(holder)
     }
 
-    private fun checkExternCrate(holder: AnnotationHolder, el: RsExternCrateItem) {
+    private fun checkExternCrate(holder: RsAnnotationHolder, el: RsExternCrateItem) {
         if (el.reference.multiResolve().isEmpty() && el.containingCargoPackage?.origin == PackageOrigin.WORKSPACE) {
             if (!el.isEnabledByCfg) return
             RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
@@ -706,13 +708,13 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkPolybound(holder: AnnotationHolder, o: RsPolybound) {
+    private fun checkPolybound(holder: RsAnnotationHolder, o: RsPolybound) {
         if (o.lparen != null && o.bound.lifetime != null) {
             holder.createErrorAnnotation(o, "Parenthesized lifetime bounds are not supported")
         }
     }
 
-    private fun checkBlockExpr(holder: AnnotationHolder, expr: RsBlockExpr) {
+    private fun checkBlockExpr(holder: RsAnnotationHolder, expr: RsBlockExpr) {
         val label = expr.labelDecl
         if (label != null) {
             LABEL_BREAK_VALUE.check(holder, label, "label on block")
@@ -720,7 +722,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0586: inclusive range with no end
-    private fun checkRangeExpr(holder: AnnotationHolder, range: RsRangeExpr) {
+    private fun checkRangeExpr(holder: RsAnnotationHolder, range: RsRangeExpr) {
         val dotdoteq = range.dotdoteq ?: range.dotdotdot ?: return
         if (dotdoteq == range.dotdotdot) {
             // rustc doesn't have an error code for this ("error: unexpected token: `...`")
@@ -734,17 +736,17 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    private fun checkBreakExpr(holder: AnnotationHolder, expr: RsBreakExpr) {
+    private fun checkBreakExpr(holder: RsAnnotationHolder, expr: RsBreakExpr) {
         checkLabelReferenceOwner(holder, expr)
         checkLabelRefOwnerPlacementCorrectness(holder, expr)
     }
 
-    private fun checkContExpr(holder: AnnotationHolder, expr: RsContExpr) {
+    private fun checkContExpr(holder: RsAnnotationHolder, expr: RsContExpr) {
         checkLabelReferenceOwner(holder, expr)
         checkLabelRefOwnerPlacementCorrectness(holder, expr)
     }
 
-    private fun checkLabelReferenceOwner(holder: AnnotationHolder, expr: RsLabelReferenceOwner) {
+    private fun checkLabelReferenceOwner(holder: RsAnnotationHolder, expr: RsLabelReferenceOwner) {
         if (expr.label == null) {
             val block = expr.ancestors.filterIsInstance<RsLabeledExpression>().firstOrNull() as? RsBlockExpr ?: return
             if (block.labelDecl != null) {
@@ -759,7 +761,7 @@ class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
     }
 
     // Detect E0267, E0268: break/continue used outside of loop
-    private fun checkLabelRefOwnerPlacementCorrectness(holder: AnnotationHolder, expr: RsLabelReferenceOwner) {
+    private fun checkLabelRefOwnerPlacementCorrectness(holder: RsAnnotationHolder, expr: RsLabelReferenceOwner) {
         for (ancestor in expr.ancestors) {
             // We are inside a loop, all is good
             if (ancestor is RsLooplikeExpr) return
@@ -797,7 +799,7 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     return op is ComparisonOp || op is EqualityOp
 }
 
-private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
+private fun checkDuplicates(holder: RsAnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
@@ -824,7 +826,7 @@ private fun checkDuplicates(holder: AnnotationHolder, element: RsNameIdentifierO
     message.addToHolder(holder)
 }
 
-private fun checkParamAttrs(holder: AnnotationHolder, o: RsOuterAttributeOwner) {
+private fun checkParamAttrs(holder: RsAnnotationHolder, o: RsOuterAttributeOwner) {
     val outerAttrs = o.outerAttrList
     if (outerAttrs.isEmpty()) return
     val startElement = outerAttrs.first()
@@ -932,7 +934,7 @@ private fun isValidSelfSuperPrefix(path: RsPath): Boolean {
     return true
 }
 
-private fun checkTypesAreSized(holder: AnnotationHolder, fn: RsFunction) {
+private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     val arguments = fn.valueParameterList?.valueParameterList.orEmpty()
     val retType = fn.retType
     if (arguments.isEmpty() && retType == null) return
