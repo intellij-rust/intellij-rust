@@ -205,17 +205,19 @@ TypeArgumentList ::= TypeArgumentListImpl {
 ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
 private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
-                                            <<list_element (!(identifier '=') !'>' TypeReference)>>*
+                                            <<list_element (!(identifier ('='|':')) !'>' TypeReference)>>*
                                             <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
                                             <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
-AssocTypeBinding ::= identifier '=' TypeReference {
-  pin = 2
+AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsAssocTypeBindingMixin"
   stubClass = "org.rust.lang.core.stubs.RsAssocTypeBindingStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private AssocTypeBindingType ::=  '=' TypeReference { pin = 1 }
+private AssocTypeBindingBound ::=  ':' TypeBounds { pin = 1 }
 
 
 // Paths for types:

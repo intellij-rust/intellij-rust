@@ -34,3 +34,9 @@ fn parenthesized_dyn_bound(b: &mut dyn (Bar)) {}
 fn dyn_multiple_bound(b: &mut dyn Bar + Baz) {}
 
 fn parenthesized_dyn_multiple_bound(b: &mut dyn (Bar) + (Baz)) {}
+
+fn assoc_type_bounds1<T: Foo<Item: Bar>>(t: T) {}
+fn assoc_type_bounds2<T: Foo<Item: Bar+Baz>>(t: T) {}
+fn assoc_type_bounds3<T: Foo<Item1: Bar, Item2 = ()>>(t: T) {}
+fn assoc_type_bounds4<T: Foo<Item1 = (), Item2: Bar>>(t: T) {}
+fn assoc_type_bounds_in_args(t: &dyn Foo<Item: Bar>) {}
