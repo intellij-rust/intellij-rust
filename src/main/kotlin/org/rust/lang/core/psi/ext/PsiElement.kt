@@ -23,21 +23,24 @@ import org.rust.openapiext.findDescendantsWithMacrosOfAnyType
 val PsiFileSystemItem.sourceRoot: VirtualFile?
     get() = virtualFile.let { ProjectRootManager.getInstance(project).fileIndex.getSourceRootForFile(it) }
 
-val PsiElement.ancestors: Sequence<PsiElement> get() = generateSequence(this) {
-    if (it is PsiFile) null else it.parent
-}
-
-val PsiElement.contexts: Sequence<PsiElement> get() = generateSequence(this) {
-    if (it is PsiFile) null else it.context
-}
-
-val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>> get() {
-    val parent = this.parent ?: return emptySequence()
-    return generateSequence(Pair(this, parent)) { (_, parent) ->
-        val grandPa = parent.parent
-        if (parent is PsiFile || grandPa == null) null else parent to grandPa
+val PsiElement.ancestors: Sequence<PsiElement>
+    get() = generateSequence(this) {
+        if (it is PsiFile) null else it.parent
     }
-}
+
+val PsiElement.contexts: Sequence<PsiElement>
+    get() = generateSequence(this) {
+        if (it is PsiFile) null else it.context
+    }
+
+val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>>
+    get() {
+        val parent = this.parent ?: return emptySequence()
+        return generateSequence(Pair(this, parent)) { (_, parent) ->
+            val grandPa = parent.parent
+            if (parent is PsiFile || grandPa == null) null else parent to grandPa
+        }
+    }
 
 val PsiElement.stubParent: PsiElement
     get() {
@@ -235,6 +238,16 @@ fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
 val PsiElement.rangeWithPrevSpace: TextRange
     get() = rangeWithPrevSpace(prevSibling)
 
+val PsiElement.rangeWithSurroundingLineBreaks: TextRange
+    get() {
+        val startOffset = textRange.startOffset
+        val endOffset = textRange.endOffset
+        val text = containingFile.text
+        val newLineBefore = text.lastIndexOf('\n', startOffset).takeIf { it >= 0 }?.let { it + 1 } ?: startOffset
+        val newLineAfter = text.indexOf('\n', endOffset).takeIf { it >= 0 }?.let { it + 1 } ?: endOffset
+        return TextRange(newLineBefore, newLineAfter)
+    }
+
 private fun PsiElement.getLineCount(): Int {
     val doc = containingFile?.let { file -> PsiDocumentManager.getInstance(project).getDocument(file) }
     if (doc != null) {
@@ -254,5 +267,5 @@ private fun PsiElement.getLineCount(): Int {
 fun PsiWhiteSpace.isMultiLine(): Boolean = getLineCount() > 1
 
 @Suppress("UNCHECKED_CAST")
-inline val <T: StubElement<*>> StubBasedPsiElement<T>.greenStub: T?
+inline val <T : StubElement<*>> StubBasedPsiElement<T>.greenStub: T?
     get() = (this as? StubBasedPsiElementBase<T>)?.greenStub

@@ -160,6 +160,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsUnsafeExpressionAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCfgDisabledCodeAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <!-- Line Marker Providers -->
