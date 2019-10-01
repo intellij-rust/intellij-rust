@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPointer
@@ -20,17 +21,20 @@ import org.rust.openapiext.isUnitTestMode
 
 class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {
-            override fun visitCallExpr(o: RsCallExpr) = checkCall(o, holder)
-            override fun visitMethodCall(o: RsMethodCall) = checkMethodCall(o, holder)
-            override fun visitPathExpr(o: RsPathExpr) = checkPathExpr(o, holder)
-            override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnary(o, holder)
+            override fun visitCallExpr(o: RsCallExpr) = checkCall(o, rsHolder)
+            override fun visitMethodCall(o: RsMethodCall) = checkMethodCall(o, rsHolder)
+            override fun visitPathExpr(o: RsPathExpr) = checkPathExpr(o, rsHolder)
+            override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnary(o, rsHolder)
         }
 
         element.accept(visitor)
     }
 
-    private fun annotateUnsafeCall(expr: RsExpr, holder: AnnotationHolder) {
+    private fun annotateUnsafeCall(expr: RsExpr, holder: RsAnnotationHolder) {
+        if (!expr.isEnabledByCfg) return
+
         if (expr.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
             val textRange = when (expr) {
                 is RsCallExpr -> when (val callee = expr.expr) {
@@ -43,13 +47,13 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
                 }
                 else -> return // unreachable
             }
-            holder.createUnsafeAnnotation(textRange, "Call to unsafe function")
+            holder.holder.createUnsafeAnnotation(textRange, "Call to unsafe function")
         } else {
             RsDiagnostic.UnsafeError(expr, "Call to unsafe function requires unsafe function or block").addToHolder(holder)
         }
     }
 
-    private fun annotateUnsafeStaticRef(expr: RsPathExpr, element: RsConstant, holder: AnnotationHolder) {
+    private fun annotateUnsafeStaticRef(expr: RsPathExpr, element: RsConstant, holder: RsAnnotationHolder) {
         val constantType = when {
             element.kind == RsConstantKind.MUT_STATIC -> "mutable"
             element.kind == RsConstantKind.STATIC && element.parent is RsForeignModItem -> "extern"
@@ -57,14 +61,14 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
         }
 
         if (expr.isInUnsafeBlockOrFn()) {
-            holder.createUnsafeAnnotation(expr.path.textRangeOfLastSegment, "Use of unsafe $constantType static")
+            holder.holder.createUnsafeAnnotation(expr.path.textRangeOfLastSegment, "Use of unsafe $constantType static")
         } else {
             RsDiagnostic.UnsafeError(expr, "Use of $constantType static is unsafe and requires unsafe function or block")
                 .addToHolder(holder)
         }
     }
 
-    fun checkMethodCall(o: RsMethodCall, holder: AnnotationHolder) {
+    fun checkMethodCall(o: RsMethodCall, holder: RsAnnotationHolder) {
         val fn = o.reference.resolve() as? RsFunction ?: return
 
         if (fn.isActuallyUnsafe) {
@@ -72,7 +76,7 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
         }
     }
 
-    fun checkCall(element: RsCallExpr, holder: AnnotationHolder) {
+    fun checkCall(element: RsCallExpr, holder: RsAnnotationHolder) {
         val path = (element.expr as? RsPathExpr)?.path ?: return
         val fn = path.reference.resolve() as? RsFunction ?: return
 
@@ -81,17 +85,17 @@ class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
         }
     }
 
-    fun checkPathExpr(expr: RsPathExpr, holder: AnnotationHolder) {
+    fun checkPathExpr(expr: RsPathExpr, holder: RsAnnotationHolder) {
         val constant = expr.path.reference.resolve() as? RsConstant ?: return
         annotateUnsafeStaticRef(expr, constant, holder)
     }
 
-    fun checkUnary(element: RsUnaryExpr, holder: AnnotationHolder) {
+    fun checkUnary(element: RsUnaryExpr, holder: RsAnnotationHolder) {
         val mul = element.mul ?: return // operatorType != UnaryOperator.DEREF
         if (element.expr?.type !is TyPointer) return
 
         if (element.isInUnsafeBlockOrFn()) {
-            holder.createUnsafeAnnotation(mul.textRange, "Unsafe dereference of raw pointer")
+            holder.holder.createUnsafeAnnotation(mul.textRange, "Unsafe dereference of raw pointer")
         } else {
             RsDiagnostic.UnsafeError(element, "Dereference of raw pointer requires unsafe function or block")
                 .addToHolder(holder)

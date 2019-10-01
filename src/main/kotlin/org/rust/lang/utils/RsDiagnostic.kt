@@ -15,6 +15,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil.escapeString
+import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
@@ -24,6 +25,7 @@ import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -1192,6 +1194,12 @@ class PreparedAnnotation(
     val description: String = "",
     val fixes: List<LocalQuickFix> = emptyList()
 )
+
+fun RsDiagnostic.addToHolder(holder: RsAnnotationHolder) {
+    if (element.isEnabledByCfg) {
+        addToHolder(holder.holder)
+    }
+}
 
 fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     val prepared = prepare()

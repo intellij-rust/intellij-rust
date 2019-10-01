@@ -10,6 +10,7 @@ import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.SemVer
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.FeatureState.ACCEPTED
@@ -36,6 +37,13 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
     }
 
     fun check(
+        holder: RsAnnotationHolder,
+        element: PsiElement,
+        presentableFeatureName: String,
+        vararg fixes: LocalQuickFix
+    ) = check(holder, element, null, "$presentableFeatureName is experimental", *fixes)
+
+    fun check(
         holder: AnnotationHolder,
         element: PsiElement,
         presentableFeatureName: String,
@@ -49,19 +57,35 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
         message: String,
         vararg fixes: LocalQuickFix
     ) {
-        val diagnostic = when (availability(startElement)) {
-            NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
-            CAN_BE_ADDED -> {
-                val fix = addFeatureFix(startElement)
-                RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
-            }
-            else -> return
-        }
-        diagnostic.addToHolder(holder)
+        getDiagnostic(startElement, endElement, message, *fixes)?.addToHolder(holder)
+    }
+
+    fun check(
+        holder: RsAnnotationHolder,
+        startElement: PsiElement,
+        endElement: PsiElement?,
+        message: String,
+        vararg fixes: LocalQuickFix
+    ) {
+        getDiagnostic(startElement, endElement, message, *fixes)?.addToHolder(holder)
     }
 
     fun addFeatureFix(element: PsiElement) =
         AddFeatureAttributeFix(name, element)
+
+    private fun getDiagnostic(
+        startElement: PsiElement,
+        endElement: PsiElement?,
+        message: String,
+        vararg fixes: LocalQuickFix
+    ) = when (availability(startElement)) {
+        NOT_AVAILABLE -> RsDiagnostic.ExperimentalFeature(startElement, endElement, message, fixes.toList())
+        CAN_BE_ADDED -> {
+            val fix = addFeatureFix(startElement)
+            RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
+        }
+        else -> null
+    }
 }
 
 enum class FeatureState {
