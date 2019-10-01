@@ -44,10 +44,10 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @MockAdditionalCfgOptions("foo")
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test big signature`() = doTest("""
         /// Docs
-        #[cfg(foo)]
+        #[cfg(intellij_rust)]
         /// More Docs
         pub const unsafe extern "C" fn foo<T>(x: T) -> u32 where T: Clone { 92 }
 

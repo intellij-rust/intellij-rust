@@ -9,29 +9,105 @@ import org.rust.cargo.CfgOptions
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.value
+import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
 import org.rust.openapiext.Testmark
+import org.rust.openapiext.isUnitTestMode
 
 // See https://doc.rust-lang.org/reference/conditional-compilation.html for more information
 
+
+/**
+ * Three-valued logic with the following rules:
+ * - !Unknown = Unknown
+ * - True && Unknown = Unknown
+ * - False && Unknown = False
+ * - Unknown && Unknown = Unknown
+ * - True || Unknown = True
+ * - False || Unknown = Unknown
+ * - Unknown || Unknown = Unknown
+ *
+ * For more information, see https://en.wikipedia.org/wiki/Three-valued_logic
+ */
+enum class ThreeValuedLogic {
+    True, False, Unknown;
+
+    companion object {
+        fun fromBoolean(value: Boolean) = when (value) {
+            true -> True
+            false -> False
+        }
+    }
+}
+
+infix fun ThreeValuedLogic.and(other: ThreeValuedLogic): ThreeValuedLogic = when (this) {
+    True -> other
+    False -> False
+    Unknown -> if (other == False) False else Unknown
+}
+
+infix fun ThreeValuedLogic.or(other: ThreeValuedLogic): ThreeValuedLogic = when (this) {
+    True -> True
+    False -> other
+    Unknown -> if (other == True) True else Unknown
+}
+
+operator fun ThreeValuedLogic.not(): ThreeValuedLogic = when (this) {
+    True -> False
+    False -> True
+    Unknown -> Unknown
+}
+
 class CfgEvaluator(val options: CfgOptions) {
-    fun evaluate(cfgAttributes: Sequence<RsMetaItem>): Boolean {
+    fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
         val cfgPredicate = CfgPredicate.fromCfgAttributes(cfgAttributes)
         val result = evaluatePredicate(cfgPredicate)
 
         when (result) {
-            true -> CfgTestmarks.evaluatesTrue.hit()
-            false -> CfgTestmarks.evaluatesFalse.hit()
+            True -> CfgTestmarks.evaluatesTrue.hit()
+            False -> CfgTestmarks.evaluatesFalse.hit()
+            Unknown -> Unit
         }
+
         return result
     }
 
-    private fun evaluatePredicate(predicate: CfgPredicate): Boolean = when (predicate) {
-        is CfgPredicate.All -> predicate.list.all(::evaluatePredicate)
-        is CfgPredicate.Any -> predicate.list.any(::evaluatePredicate)
+    private fun evaluatePredicate(predicate: CfgPredicate): ThreeValuedLogic = when (predicate) {
+        is CfgPredicate.All -> predicate.list.fold(True) { acc, pred -> acc and evaluatePredicate(pred) }
+        is CfgPredicate.Any -> predicate.list.fold(False) { acc, pred -> acc or evaluatePredicate(pred) }
         is CfgPredicate.Not -> !evaluatePredicate(predicate.single)
-        is CfgPredicate.NameOption -> options.isNameEnabled(predicate.name)
-        is CfgPredicate.NameValueOption -> options.isNameValueEnabled(predicate.name, predicate.value)
-        is CfgPredicate.Error -> true
+        is CfgPredicate.NameOption -> evaluateName(predicate.name)
+        is CfgPredicate.NameValueOption -> evaluateNameValue(predicate.name, predicate.value)
+        is CfgPredicate.Error -> Unknown
+    }
+
+    private fun evaluateName(name: String): ThreeValuedLogic = when {
+        name in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
+        name == CfgOptions.TEST && isUnitTestMode -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
+        else -> Unknown
+    }
+
+    private fun evaluateNameValue(name: String, value: String): ThreeValuedLogic = when (name) {
+        in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
+        else -> Unknown
+    }
+
+    companion object {
+        private val SUPPORTED_NAME_OPTIONS: Set<String> = setOf(
+            "debug_assertions",
+            "unix",
+            "windows"
+        )
+
+        private val SUPPORTED_NAME_VALUE_OPTIONS: Set<String> = setOf(
+            "target_arch",
+            "target_endian",
+            "target_env",
+            "target_family",
+            "target_feature",
+            "target_os",
+            "target_pointer_width",
+            "target_vendor"
+        )
     }
 }
 

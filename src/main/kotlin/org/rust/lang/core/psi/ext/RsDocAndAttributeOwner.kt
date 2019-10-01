@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
+import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.isUnitTestMode
 
@@ -183,21 +184,26 @@ class QueryAttributes(
  * HACK: do not check on [RsFile] as [RsFile.queryAttributes] would access the PSI
  */
 val RsDocAndAttributeOwner.isEnabledByCfg: Boolean
-    get() {
-        // TODO: get rid of this registry key when cfg support is done
-        if (!isUnitTestMode && !isFeatureEnabled(RsExperiments.CFG_ATTRIBUTES_SUPPORT)) return true
+    get() = evaluateCfg() != ThreeValuedLogic.False
 
-        // TODO: add cfg to RsFile's stub and remove this line
-        if (this is RsFile) return true
+val RsDocAndAttributeOwner.isCfgUnknown: Boolean
+    get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
-        if (!queryAttributes.hasCfgAttr()) return true
-        val cfgAttributes = queryAttributes.cfgAttributes.takeIf { it.any() } ?: return true
+private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
+    // TODO: get rid of this registry key when cfg support is done
+    if (!isUnitTestMode && !isFeatureEnabled(RsExperiments.CFG_ATTRIBUTES_SUPPORT)) return ThreeValuedLogic.True
 
-        // TODO: When we open both cargo projects for an application and a library,
-        // this will return the library as containing package.
-        // When the application now requests certain features, which are not enabled by default in the library
-        // we will evaluate features wrongly here
-        val options = containingCargoPackage?.cfgOptions ?: return true
+    // TODO: add cfg to RsFile's stub and remove this line
+    if (this is RsFile) return ThreeValuedLogic.True
 
-        return CfgEvaluator(options).evaluate(cfgAttributes)
-    }
+    if (!queryAttributes.hasCfgAttr()) return ThreeValuedLogic.True
+    val cfgAttributes = queryAttributes.cfgAttributes.takeIf { it.any() } ?: return ThreeValuedLogic.True
+
+    // TODO: When we open both cargo projects for an application and a library,
+    // this will return the library as containing package.
+    // When the application now requests certain features, which are not enabled by default in the library
+    // we will evaluate features wrongly here
+    val options = containingCargoPackage?.cfgOptions ?: return ThreeValuedLogic.True
+
+    return CfgEvaluator(options).evaluate(cfgAttributes)
+}

@@ -783,13 +783,13 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
         }
     """)
 
-    @MockAdditionalCfgOptions("foo")
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test respects cfg attribute E0428`() = checkErrors("""
         mod opt {
             #[cfg(not(bar))] mod foo {}
             #[cfg(bar)]      mod foo {}
 
-            #[cfg(foo)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
+            #[cfg(intellij_rust)] fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
             fn <error descr="A value named `hello_world` has already been defined in this module [E0428]">hello_world</error>() {}
 
             #[cfg(bar)] fn hello_rust() {}

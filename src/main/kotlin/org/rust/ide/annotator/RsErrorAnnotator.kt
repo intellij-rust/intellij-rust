@@ -18,6 +18,7 @@ import org.rust.ide.annotator.fixes.AddTurbofishFix
 import org.rust.ide.annotator.fixes.CreateLifetimeParameterFromUsageFix
 import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
@@ -800,11 +801,20 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
 }
 
 private fun checkDuplicates(holder: RsAnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
+    if (element.isCfgUnknown) return
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
     val ns = element.namespaces.find { element in duplicates[it].orEmpty() }
         ?: return
     val name = element.name!!
+
+    val elementDuplicates = duplicates.getValue(ns)
+        .minus(element)
+        .filterIsInstance<RsNamedElement>()
+        .filter { it.name == name }
+        .filter { !it.isCfgUnknown }
+    if (elementDuplicates.isEmpty()) return
+
     val identifier = element.nameIdentifier ?: element
     val message = when {
         element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
