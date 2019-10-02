@@ -231,4 +231,26 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             S.foo()
         }   //^
      """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("foo")
+    fun `test cfg inside macros`() = checkByCode(""" 
+        macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
+        as_is! {
+            #[cfg(bar)]
+            mod spam { pub fn eggs() {} }
+            #[cfg(bar)]
+            pub use spam::*;
+        
+            #[cfg(foo)]
+            mod spam {
+                pub fn eggs() {}
+            }        //X
+            #[cfg(foo)]
+            pub use spam::*;
+        }
+        fn main() {
+            eggs();
+        }  //^
+     """)
 }
