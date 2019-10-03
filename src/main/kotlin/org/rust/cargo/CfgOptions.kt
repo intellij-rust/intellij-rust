@@ -57,5 +57,8 @@ class CfgOptions(
 
         @TestOnly
         val EMPTY: CfgOptions = CfgOptions(emptyMap(), emptySet())
+
+        @TestOnly
+        const val TEST: String = "intellij_rust"
     }
 }
