@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
@@ -99,6 +100,15 @@ fun checkIsBackgroundThread() {
 
 fun checkIsSmartMode(project: Project) {
     if (DumbService.getInstance(project).isDumb) throw IndexNotReadyException.create()
+}
+
+fun checkCommitIsNotInProgress(project: Project) {
+    val app = ApplicationManager.getApplication()
+    if ((app.isUnitTestMode || app.isInternal) && app.isDispatchThread) {
+        if ((PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase).isCommitInProgress) {
+            error("Accessing indices during PSI event processing can lead to typing performance issues")
+        }
+    }
 }
 
 fun fullyRefreshDirectory(directory: VirtualFile) {

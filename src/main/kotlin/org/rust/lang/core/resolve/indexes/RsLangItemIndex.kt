@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
@@ -31,6 +32,7 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
             langAttribute: String,
             crateName: String = AutoInjectedCrates.CORE
         ): RsNamedElement? {
+            checkCommitIsNotInProgress(project)
             val elements = getElements(KEY, langAttribute, project, GlobalSearchScope.allScope(project))
             return if (elements.size < 2) {
                 elements.firstOrNull() as? RsNamedElement

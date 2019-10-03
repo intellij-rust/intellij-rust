@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsMacroCallIndex : StringStubIndexExtension<RsMacroCall>() {
@@ -33,7 +34,9 @@ class RsMacroCallIndex : StringStubIndexExtension<RsMacroCall>() {
         fun getMacroCalls(
             project: Project,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
-        ): Collection<RsMacroCall> =
-            getElements(KEY, SINGLE_KEY, project, scope)
+        ): Collection<RsMacroCall> {
+            checkCommitIsNotInProgress(project)
+            return getElements(KEY, SINGLE_KEY, project, scope)
+        }
     }
 }
