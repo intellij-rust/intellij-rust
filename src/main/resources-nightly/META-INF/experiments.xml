@@ -3,7 +3,7 @@
         <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="100">
             <description>Enable Cargo tasks to use Build Tool Window</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="0">
+        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="100">
             <description>Enable Rust cfg attributes support</description>
         </experimentalFeature>
     </extensions>
