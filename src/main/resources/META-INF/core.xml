@@ -1025,6 +1025,13 @@
             <reference id="Cargo.ShowSettings"/>
         </group>
 
+        <!-- Internal -->
+
+        <action id="RsGenerateDictionaries" class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
+                text="Generate Rust Spellchecker Dictionaries" internal="true">
+            <add-to-group group-id="Internal"/>
+        </action>
+
     </actions>
 
 </idea-plugin>
