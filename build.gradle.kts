@@ -580,8 +580,6 @@ fun commitNightly() {
 
 task("updateCompilerFeatures") {
     doLast {
-        val featureGateUrl = URL("https://raw.githubusercontent.com/rust-lang/rust/master/src/libsyntax/feature_gate.rs")
-        val text = featureGateUrl.openStream().bufferedReader().readText()
         val file = File("src/main/kotlin/org/rust/lang/core/CompilerFeatures.kt")
         file.bufferedWriter().use {
             it.writeln("""
@@ -598,21 +596,25 @@ task("updateCompilerFeatures") {
                 import org.rust.lang.core.FeatureState.ACTIVE
 
             """.trimIndent())
-            it.writeFeatures("active", text)
+            it.writeFeatures("active", "https://raw.githubusercontent.com/rust-lang/rust/master/src/libsyntax/feature_gate/active.rs")
             it.writeln()
-            it.writeFeatures("accepted", text)
+            it.writeFeatures("accepted", "https://raw.githubusercontent.com/rust-lang/rust/master/src/libsyntax/feature_gate/accepted.rs")
         }
     }
 }
 
-fun Writer.writeFeatures(featureSet: String, text: String) {
+fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
+    val text = URL(remoteFileUrl).openStream().bufferedReader().readText()
+    val commentRegex = "^/{2,}".toRegex()
     """((\s*//.*\n)*)\s*\($featureSet, (\w+), (\"\d+\.\d+\.\d+\"), .*\),"""
         .toRegex(RegexOption.MULTILINE)
         .findAll(text)
         .forEach { matcher ->
             val (comments, _, featureName, version) = matcher.destructured
             if (comments.isNotEmpty()) {
-                writeln(comments.trimIndent().trim())
+                comments.trimIndent().trim().lines().forEach { line ->
+                    writeln(line.replace(commentRegex, "//"))
+                }
             }
             writeln("""val ${featureName.toUpperCase()} = CompilerFeature("$featureName", ${featureSet.toUpperCase()}, $version)""")
         }
