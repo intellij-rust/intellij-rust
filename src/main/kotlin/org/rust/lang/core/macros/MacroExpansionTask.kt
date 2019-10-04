@@ -143,7 +143,7 @@ abstract class MacroExpansionTaskBase(
             realTaskIndicator.text2 = "Expanding macros"
 
             val stages1 = extractableList.parallelStream().unordered().flatMap { extractable ->
-                executeUnderProgress(subTaskIndicator) {
+                executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode because rebind can be performed
                     runReadActionInSmartMode(project) {
                         val result = extractable.extract()
