@@ -218,6 +218,7 @@
         <!-- Spell-checker -->
 
         <spellchecker.support language="Rust" implementationClass="org.rust.ide.spelling.RsSpellcheckingStrategy"/>
+        <spellchecker.bundledDictionaryProvider implementation="org.rust.ide.spelling.RsBundledDictionaryProvider"/>
 
         <!-- Handlers -->
 
@@ -1024,6 +1025,13 @@
             <separator/>
             <reference id="Cargo.ShowSettings"/>
         </group>
+
+        <!-- Internal -->
+
+        <action id="RsGenerateDictionaries" class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
+                text="Generate Rust Spellchecker Dictionaries" internal="true">
+            <add-to-group group-id="Internal"/>
+        </action>
 
     </actions>
 
