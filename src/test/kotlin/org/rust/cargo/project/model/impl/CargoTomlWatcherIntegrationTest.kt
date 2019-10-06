@@ -54,7 +54,7 @@ class CargoTomlWatcherIntegrationTest : RsWithToolchainTestBase() {
         }.create()
 
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
-        project.cargoProjects.discoverAndRefreshSync()
+        project.testCargoProjects.discoverAndRefreshSync()
 
         val toml = p.root.findFileByRelativePath("Cargo.toml")!!
         runWriteAction {

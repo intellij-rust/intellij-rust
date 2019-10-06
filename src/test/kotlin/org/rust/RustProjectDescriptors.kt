@@ -14,7 +14,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -51,7 +51,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 
         val projectDir = contentEntry.file!!
         val ws = testCargoProject(module, projectDir.url)
-        module.project.cargoProjects.createTestProject(projectDir, ws, rustcInfo)
+        module.project.testCargoProjects.createTestProject(projectDir, ws, rustcInfo)
     }
 
     open fun setUp(fixture: CodeInsightTestFixture) {}

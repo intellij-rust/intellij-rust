@@ -72,7 +72,7 @@ import java.util.concurrent.atomic.AtomicReference
     Storage(StoragePathMacros.WORKSPACE_FILE),
     Storage("misc.xml", deprecated = true)
 ])
-class CargoProjectsServiceImpl(
+open class CargoProjectsServiceImpl(
     val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element> {
     init {
@@ -200,7 +200,7 @@ class CargoProjectsServiceImpl(
      * go through this method: it makes sure that when we update various IDEA listeners,
      * [allProjects] contains fresh projects.
      */
-    private fun modifyProjects(
+    protected fun modifyProjects(
         f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
@@ -217,51 +217,6 @@ class CargoProjectsServiceImpl(
 
                 projects
             }
-
-    @TestOnly
-    override fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo?) {
-        val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
-        val testProject = CargoProjectImpl(manifest, this, ws, null, rustcInfo,
-            workspaceStatus = UpdateStatus.UpToDate,
-            rustcInfoStatus = if (rustcInfo != null) UpdateStatus.UpToDate else UpdateStatus.NeedsUpdate)
-        testProject.setRootDir(rootDir)
-        modifyProjectsSync { CompletableFuture.completedFuture(listOf(testProject)) }
-    }
-
-    @TestOnly
-    override fun setRustcInfo(rustcInfo: RustcInfo) {
-        modifyProjectsSync { projects ->
-            val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = UpdateStatus.UpToDate) }
-            CompletableFuture.completedFuture(updatedProjects)
-        }
-    }
-
-    @TestOnly
-    override fun setEdition(edition: CargoWorkspace.Edition) {
-        modifyProjectsSync { projects ->
-            val updatedProjects = projects.map { project ->
-                val ws = project.workspace?.withEdition(edition)
-                project.copy(rawWorkspace = ws)
-            }
-            CompletableFuture.completedFuture(updatedProjects)
-        }
-    }
-
-    @TestOnly
-    override fun setCfgOptions(cfgOptions: CfgOptions) {
-        modifyProjectsSync { projects ->
-            val updatedProjects = projects.map { project ->
-                val ws = project.workspace?.withCfgOptions(cfgOptions)
-                project.copy(rawWorkspace = ws)
-            }
-            CompletableFuture.completedFuture(updatedProjects)
-        }
-    }
-
-    @TestOnly
-    private fun modifyProjectsSync(f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>) {
-        modifyProjects(f).get(1, TimeUnit.MINUTES)
-    }
 
     override fun getState(): Element {
         val state = Element("state")
