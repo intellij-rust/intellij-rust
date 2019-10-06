@@ -39,7 +39,11 @@ class CargoPackageIndex(
             val packages = cargoProject.workspace?.packages.orEmpty()
             indices[cargoProject] = LightDirectoryIndex(disposable, Optional.empty(), Consumer { index ->
                 for (pkg in packages) {
-                    index.putInfo(pkg.contentRoot, Optional.of(pkg))
+                    val info = Optional.of(pkg)
+                    index.putInfo(pkg.contentRoot, info)
+                    for (target in pkg.targets) {
+                        index.putInfo(target.crateRoot?.parent, info)
+                    }
                 }
             })
         }

@@ -3,12 +3,15 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package org.rust.cargo.project.workspace
 
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.AdditionalLibraryRootsProvider
 import com.intellij.openapi.roots.SyntheticLibrary
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.cargoProjects
@@ -21,15 +24,15 @@ import javax.swing.Icon
  */
 class CargoLibrary(
     private val name: String,
-    private val root: VirtualFile,
-    private val excluded: Set<VirtualFile>,
+    private val sourceRoots: Set<VirtualFile>,
+    private val excludedRoots: Set<VirtualFile>,
     private val isStd: Boolean
 ) : SyntheticLibrary(), ItemPresentation {
-    override fun getSourceRoots(): Collection<VirtualFile> = listOf(root)
-    override fun getExcludedRoots(): Set<VirtualFile> = excluded
+    override fun getSourceRoots(): Collection<VirtualFile> = sourceRoots
+    override fun getExcludedRoots(): Set<VirtualFile> = excludedRoots
 
-    override fun equals(other: Any?): Boolean = other is CargoLibrary && other.root == root
-    override fun hashCode(): Int = root.hashCode()
+    override fun equals(other: Any?): Boolean = other is CargoLibrary && other.sourceRoots == sourceRoots
+    override fun hashCode(): Int = sourceRoots.hashCode()
 
     override fun getLocationString(): String? = null
 
@@ -63,12 +66,31 @@ private val CargoWorkspace.ideaLibraries: Collection<CargoLibrary>
         .mapNotNull { pkg ->
             val root = pkg.contentRoot ?: return@mapNotNull null
             val isStd = pkg.origin == PackageOrigin.STDLIB
-            val excluded = if (isStd) {
-                listOfNotNull(root.findChild("tests"), root.findChild("benches")).toSet()
+            val (sourceRoots, excludedRoots) = if (isStd) {
+                setOf(root) to listOfNotNull(root.findChild("tests"), root.findChild("benches")).toSet()
             } else {
-                // TODO exclude full module hierarchy instead of crate roots only
-                pkg.targets.filter { !it.isLib }.mapNotNull { it.crateRoot }.toSet()
+                val sourceRoots = mutableSetOf<VirtualFile>()
+                val excludedRoots = mutableSetOf<VirtualFile>()
+                for (target in pkg.targets) {
+                    val crateRoot = target.crateRoot ?: continue
+                    if (target.isLib) {
+                        val crateRootDir = crateRoot.parent
+                        val commonAncestor = VfsUtilCore.getCommonAncestor(root, crateRootDir)
+                        when (commonAncestor) {
+                            root -> sourceRoots += root
+                            crateRootDir -> sourceRoots += crateRootDir
+                            else -> {
+                                sourceRoots += root
+                                sourceRoots += crateRootDir
+                            }
+                        }
+                    } else {
+                        // TODO exclude full module hierarchy instead of crate roots only
+                        excludedRoots += crateRoot
+                    }
+                }
+                sourceRoots to excludedRoots
             }
-            CargoLibrary(pkg.name, root, excluded, isStd)
+            CargoLibrary(pkg.name, sourceRoots, excludedRoots, isStd)
         }
 

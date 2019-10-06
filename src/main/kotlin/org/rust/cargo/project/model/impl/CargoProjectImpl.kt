@@ -114,27 +114,35 @@ class CargoProjectsServiceImpl(
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
         LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
             val visited = mutableSetOf<VirtualFile>()
+
             fun VirtualFile.put(cargoProject: CargoProjectImpl) {
                 if (this in visited) return
                 visited += this
                 index.putInfo(this, cargoProject)
             }
 
-            val lowPriority = mutableListOf<Pair<VirtualFile?, CargoProjectImpl>>()
+            fun CargoWorkspace.Package.put(cargoProject: CargoProjectImpl) {
+                contentRoot?.put(cargoProject)
+                for (target in targets) {
+                    target.crateRoot?.parent?.put(cargoProject)
+                }
+            }
+
+            val lowPriority = mutableListOf<Pair<CargoWorkspace.Package, CargoProjectImpl>>()
 
             for (cargoProject in projects.currentState) {
                 cargoProject.rootDir?.put(cargoProject)
                 for (pkg in cargoProject.workspace?.packages.orEmpty()) {
                     if (pkg.origin == PackageOrigin.WORKSPACE) {
-                        pkg.contentRoot?.put(cargoProject)
+                        pkg.put(cargoProject)
                     } else {
-                        lowPriority += pkg.contentRoot to cargoProject
+                        lowPriority += pkg to cargoProject
                     }
                 }
             }
 
-            for ((contentRoot, cargoProject) in lowPriority) {
-                contentRoot?.put(cargoProject)
+            for ((pkg, cargoProject) in lowPriority) {
+                pkg.put(cargoProject)
             }
         })
 
