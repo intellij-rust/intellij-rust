@@ -419,8 +419,14 @@ project(":intellij-toml") {
         purgeOldFiles = true
     }
 
-    tasks.withType<KotlinCompile> {
-        dependsOn(generateTomlLexer, generateTomlParser)
+    tasks{
+        withType<KotlinCompile> {
+            dependsOn(generateTomlLexer, generateTomlParser)
+        }
+        withType<PublishTask> {
+            token(prop("publishToken"))
+            channels(channel)
+        }
     }
 }
 
