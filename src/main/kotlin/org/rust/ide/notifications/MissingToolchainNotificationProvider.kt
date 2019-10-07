@@ -109,7 +109,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
     private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, message: String): RsEditorNotificationPanel =
         RsEditorNotificationPanel(debugId).apply {
             setText(message)
-            createActionLabel("Attach", "Rust.AttachCargoProject")
+            createActionLabel("Attach", "Cargo.AttachCargoProject")
             createActionLabel("Do not show again") {
                 disableNotification(file)
                 updateAllNotifications()
