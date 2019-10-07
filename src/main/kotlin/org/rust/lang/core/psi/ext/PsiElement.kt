@@ -42,11 +42,11 @@ val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>>
         }
     }
 
-val PsiElement.stubParent: PsiElement
+val PsiElement.stubParent: PsiElement?
     get() {
         if (this is StubBasedPsiElement<*>) {
             val stub = this.greenStub
-            if (stub != null) return stub.parentStub.psi
+            if (stub != null) return stub.parentStub?.psi
         }
         return parent
     }

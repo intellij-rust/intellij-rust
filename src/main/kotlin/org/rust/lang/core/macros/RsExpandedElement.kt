@@ -24,11 +24,11 @@ interface RsExpandedElement : RsElement {
     override fun getContext(): PsiElement?
 
     companion object {
-        fun getContextImpl(psi: RsExpandedElement): PsiElement? {
+        fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
             psi.expandedFrom?.let { return it.context }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             val parent = psi.stubParent
-            if (parent is RsFile) {
+            if (parent is RsFile && !isIndexAccessForbidden) {
                 RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
             }
             return parent

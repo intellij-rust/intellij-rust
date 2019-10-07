@@ -7,10 +7,11 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiManager
+import kotlin.reflect.KClass
 
 /**
  * A PSI element that holds modification tracker for some reason.
@@ -33,11 +34,30 @@ interface RsModificationTrackerOwner : RsElement {
 }
 
 fun PsiElement.findModificationTrackerOwner(strict: Boolean): RsModificationTrackerOwner? {
-    return PsiTreeUtil.getContextOfType(
-        this,
+    return findContextOfTypeWithoutIndexAccess(
         strict,
-        RsItemElement::class.java,
-        RsMacroCall::class.java,
-        RsMacro::class.java
+        RsItemElement::class,
+        RsMacroCall::class,
+        RsMacro::class
     ) as? RsModificationTrackerOwner
 }
+
+// We have to process contexts without index access because accessing indices during PSI event processing is slow.
+private val PsiElement.contextWithoutIndexAccess: PsiElement?
+    get() = if (this is RsExpandedElement) {
+        RsExpandedElement.getContextImpl(this, isIndexAccessForbidden = true)
+    } else {
+        stubParent
+    }
+
+@Suppress("UNCHECKED_CAST")
+private fun <T : PsiElement> PsiElement.findContextOfTypeWithoutIndexAccess(strict: Boolean, vararg classes: KClass<out T>): T? {
+    var element = if (strict) contextWithoutIndexAccess else this
+
+    while (element != null && !classes.any { it.isInstance(element) }) {
+        element = element.contextWithoutIndexAccess
+    }
+
+    return element as T?
+}
+
