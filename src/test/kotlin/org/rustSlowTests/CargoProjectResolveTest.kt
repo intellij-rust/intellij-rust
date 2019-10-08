@@ -6,30 +6,28 @@
 package org.rustSlowTests
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
+import org.rust.openapiext.pathAsPath
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
-    // TODO: do we need to support stdlib dependencies?
-//    fun `test resolve feature gated crate`() = buildProject {
-//        toml("Cargo.toml", """
-//            [package]
-//            name = "intellij-rust-test"
-//            version = "0.1.0"
-//            authors = []
-//        """)
-//
-//        dir("src") {
-//            rust("main.rs", """
-//                extern crate libc;
-//                use libc::int8_t;
-//                   //^
-//            """)
-//        }
-//    }.checkReferenceIsResolved<RsPath>("src/main.rs")
+    private val tempDirFixture = TempDirTestFixtureImpl()
+
+    override fun setUp() {
+        super.setUp()
+        tempDirFixture.setUp()
+    }
+
+    override fun tearDown() {
+        tempDirFixture.tearDown()
+        super.tearDown()
+    }
 
     fun `test resolve external library which hides std crate`() = buildProject {
         toml("Cargo.toml", """
@@ -417,4 +415,58 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
+
+    fun `test custom target path`() {
+        val libraryDir = tempDirFixture.getFile(".")!!
+        val library = fileTree {
+            dir("cargo") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "foo"
+                    version = "0.1.0"
+                    authors = []
+
+                    [lib]
+                    path = "../lib.rs"
+                """)
+            }
+
+            rust("lib.rs", """
+                mod qqq {
+                    pub fn baz() {}
+                }
+                pub mod bar;
+            """)
+            rust("bar.rs", """
+                pub use super::qqq::baz;
+            """)
+        }.create(project, libraryDir)
+
+        val libraryPath = FileUtil.toSystemIndependentName(library.root.pathAsPath.resolve("cargo").toString())
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                foo = { path = "$libraryPath" }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    extern crate foo;
+
+                    use foo::bar::baz;
+
+                    fn main() {
+                        baz();
+                        //^
+                    }
+                """)
+            }
+        }
+        testProject.checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
 }
