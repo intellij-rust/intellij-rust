@@ -445,8 +445,7 @@ RetType ::= '->' TypeReferenceNoImplicitTraitType {
 Function ::= OuterAttr*
              default_?
              Vis?
-             const? unsafe? ExternAbi?
-             async?
+             async? const? unsafe? ExternAbi?
              fn identifier
              TypeParameterList?
              FnParameters
