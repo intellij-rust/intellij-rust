@@ -436,14 +436,8 @@ class SourceFile(
     private fun areStubIndicesActual() =
         file.isValid && modificationStamp != -1L && modificationStamp == getActualModStamp()
 
-    private fun getActualModStamp(): Long {
-        val document = FileDocumentManager.getInstance().getCachedDocument(file)
-        return if (document != null) {
-            PsiDocumentManager.getInstance(project).getLastCommittedStamp(document)
-        } else {
-            file.modificationStamp
-        }
-    }
+    private fun getActualModStamp(): Long =
+        loadPsi()?.viewProvider?.modificationStamp ?: file.modificationStamp
 
     private fun recoverPsi(): RsFile? {
         val psi = loadPsi() ?: return null
@@ -472,12 +466,19 @@ class SourceFile(
         return if (element is RsMacroCall) {
             element
         } else {
+            val document = FileDocumentManager.getInstance().getCachedDocument(file)
+            val lastCommitedDocStamp =
+                document?.let { PsiDocumentManager.getInstance(project).getLastCommittedStamp(it) }
             MACRO_LOG.error(
                 "Detected broken stub reference to a macro!",
                 Throwable(),
                 "File: `${file.path}`,",
                 "Stored stamp: $modificationStamp,",
                 "Actual stamp: ${getActualModStamp()},",
+                "PSI stamp: ${loadPsi()?.viewProvider?.modificationStamp},",
+                "File stamp: ${file.modificationStamp},",
+                "Document stamp: ${document?.modificationStamp},",
+                "Last commited document stamp: $lastCommitedDocStamp,",
                 "Stub index: $stubIndex,",
                 "Found element: $element, ",
                 "Found element text: `${element?.text}`"
