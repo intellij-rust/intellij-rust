@@ -23,7 +23,7 @@ import org.jdom.Element
 import org.rust.RsTestBase
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -138,8 +138,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
         private inner class Target(
             val name: String,
             val file: File,
-            val kind: CargoWorkspace.TargetKind,
-            val edition: CargoWorkspace.Edition
+            val kind: TargetKind,
+            val edition: Edition
         )
 
         private var targets = arrayListOf<Target>()
@@ -228,13 +228,13 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                 CfgOptions.DEFAULT
             )
 
-            project.cargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)
+            project.testCargoProjects.createTestProject(myFixture.findFileInTempDir("."), projectDescription)
         }
 
         private fun addTarget(
             name: String,
-            kind: CargoWorkspace.TargetKind,
-            edition: CargoWorkspace.Edition,
+            kind: TargetKind,
+            edition: Edition,
             path: String,
             code: String
         ) {

@@ -50,26 +50,6 @@ interface CargoProjectsService {
     fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
     fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>
 
-    @TestOnly
-    fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null)
-
-    @TestOnly
-    fun setRustcInfo(rustcInfo: RustcInfo)
-
-    @TestOnly
-    fun setEdition(edition: CargoWorkspace.Edition)
-
-    @TestOnly
-    fun setCfgOptions(cfgOptions: CfgOptions)
-
-    @TestOnly
-    fun discoverAndRefreshSync(): List<CargoProject> {
-        val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
-            ?: error("Timeout when refreshing a test Cargo project")
-        if (projects.isEmpty()) error("Failed to update a test Cargo project")
-        return projects
-    }
-
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(
             "cargo projects changes",
@@ -82,7 +62,7 @@ interface CargoProjectsService {
     }
 }
 
-val Project.cargoProjects get() = service<CargoProjectsService>()
+val Project.cargoProjects: CargoProjectsService get() = service()
 
 /**
  * See docs for [CargoProjectsService].

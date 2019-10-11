@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.*
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -32,7 +32,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         }
 
     protected fun refreshWorkspace() {
-        project.cargoProjects.discoverAndRefreshSync()
+        project.testCargoProjects.discoverAndRefreshSync()
     }
 
     override fun runTest() {

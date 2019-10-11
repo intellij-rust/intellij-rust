@@ -26,7 +26,7 @@ import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustcVersion
@@ -81,12 +81,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
         val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
-        project.cargoProjects.setRustcInfo(rustcInfo)
+        project.testCargoProjects.setRustcInfo(rustcInfo)
     }
 
     private fun setupMockEdition() {
         val edition = findAnnotationInstance<MockEdition>()?.edition ?: CargoWorkspace.Edition.EDITION_2015
-        project.cargoProjects.setEdition(edition)
+        project.testCargoProjects.setEdition(edition)
     }
 
     private fun setupMockCfgOptions() {
@@ -97,7 +97,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             CfgOptions.DEFAULT.keyValueOptions,
             CfgOptions.DEFAULT.nameOptions + additionalOptions
         )
-        project.cargoProjects.setCfgOptions(allOptions)
+        project.testCargoProjects.setCfgOptions(allOptions)
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {
@@ -152,12 +152,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }
 
     private fun runTestEdition2015() {
-        project.cargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015)
+        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015)
         super.runTest()
     }
 
     private fun runTestEdition2018() {
-        project.cargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018)
+        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018)
         super.runTest()
     }
 
