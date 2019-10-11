@@ -14,9 +14,14 @@ import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.icons.CargoIcons
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.workspace.PackageOrigin.*
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.checkReadAccessAllowed
+import org.rust.stdext.buildList
 import javax.swing.Icon
 
 /**
@@ -26,7 +31,8 @@ class CargoLibrary(
     private val name: String,
     private val sourceRoots: Set<VirtualFile>,
     private val excludedRoots: Set<VirtualFile>,
-    private val isStd: Boolean
+    private val icon: Icon,
+    private val version: String?
 ) : SyntheticLibrary(), ItemPresentation {
     override fun getSourceRoots(): Collection<VirtualFile> = sourceRoots
     override fun getExcludedRoots(): Set<VirtualFile> = excludedRoots
@@ -36,9 +42,9 @@ class CargoLibrary(
 
     override fun getLocationString(): String? = null
 
-    override fun getIcon(unused: Boolean): Icon? = if (isStd) RsIcons.RUST else CargoIcons.ICON
+    override fun getIcon(unused: Boolean): Icon? = icon
 
-    override fun getPresentableText(): String? = name
+    override fun getPresentableText(): String? = if (version != null) "$name $version" else name
 }
 
 
@@ -46,7 +52,6 @@ class RsAdditionalLibraryRootsProvider : AdditionalLibraryRootsProvider() {
     override fun getAdditionalProjectLibraries(project: Project): Collection<CargoLibrary> {
         checkReadAccessAllowed()
         return project.cargoProjects.allProjects
-            .mapNotNull { it.workspace }
             .smartFlatMap { it.ideaLibraries }
     }
 
@@ -61,36 +66,70 @@ private fun <U, V> Collection<U>.smartFlatMap(transform: (U) -> Collection<V>): 
         else -> this.flatMap(transform)
     }
 
-private val CargoWorkspace.ideaLibraries: Collection<CargoLibrary>
-    get() = packages.filter { it.origin != PackageOrigin.WORKSPACE }
-        .mapNotNull { pkg ->
-            val root = pkg.contentRoot ?: return@mapNotNull null
-            val isStd = pkg.origin == PackageOrigin.STDLIB
-            val (sourceRoots, excludedRoots) = if (isStd) {
-                setOf(root) to listOfNotNull(root.findChild("tests"), root.findChild("benches")).toSet()
-            } else {
-                val sourceRoots = mutableSetOf<VirtualFile>()
-                val excludedRoots = mutableSetOf<VirtualFile>()
-                for (target in pkg.targets) {
-                    val crateRoot = target.crateRoot ?: continue
-                    if (target.isLib) {
-                        val crateRootDir = crateRoot.parent
-                        val commonAncestor = VfsUtilCore.getCommonAncestor(root, crateRootDir)
-                        when (commonAncestor) {
-                            root -> sourceRoots += root
-                            crateRootDir -> sourceRoots += crateRootDir
-                            else -> {
-                                sourceRoots += root
-                                sourceRoots += crateRootDir
-                            }
-                        }
-                    } else {
-                        // TODO exclude full module hierarchy instead of crate roots only
-                        excludedRoots += crateRoot
-                    }
-                }
-                sourceRoots to excludedRoots
+private val CargoProject.ideaLibraries: Collection<CargoLibrary>
+    get() {
+        val workspace = workspace ?: return emptyList()
+        val stdlibPackages = mutableListOf<CargoWorkspace.Package>()
+        val dependencyPackages = mutableListOf<CargoWorkspace.Package>()
+        for (pkg in workspace.packages) {
+            when (pkg.origin) {
+                STDLIB -> stdlibPackages += pkg
+                DEPENDENCY,
+                TRANSITIVE_DEPENDENCY -> dependencyPackages += pkg
+                else -> Unit
             }
-            CargoLibrary(pkg.name, sourceRoots, excludedRoots, isStd)
         }
 
+        return buildList {
+            makeStdlibLibrary(stdlibPackages, rustcInfo?.version)?.let(this::add)
+            for (pkg in dependencyPackages) {
+                pkg.toCargoLibrary()?.let(this::add)
+            }
+        }
+    }
+
+private fun makeStdlibLibrary(packages: List<CargoWorkspace.Package>, rustcVersion: RustcVersion?): CargoLibrary? {
+    if (packages.isEmpty()) return null
+    val sourceRoots = mutableSetOf<VirtualFile>()
+    val excludedRoots = mutableSetOf<VirtualFile>()
+    for (pkg in packages) {
+        val root = pkg.contentRoot ?: continue
+        sourceRoots += root
+        excludedRoots += listOfNotNull(root.findChild("tests"), root.findChild("benches"))
+    }
+
+    val version = rustcVersion?.stdlibVersion()
+    return CargoLibrary("stdlib", sourceRoots, excludedRoots, RsIcons.RUST, version)
+}
+
+private fun RustcVersion.stdlibVersion(): String = buildString {
+    append(semver)
+    if (channel > RustChannel.STABLE) {
+        channel.channel?.let { append("-$it") }
+    }
+}
+
+private fun CargoWorkspace.Package.toCargoLibrary(): CargoLibrary? {
+    val root = contentRoot ?: return null
+    val sourceRoots = mutableSetOf<VirtualFile>()
+    val excludedRoots = mutableSetOf<VirtualFile>()
+    for (target in targets) {
+        val crateRoot = target.crateRoot ?: continue
+        if (target.isLib) {
+            val crateRootDir = crateRoot.parent
+            val commonAncestor = VfsUtilCore.getCommonAncestor(root, crateRootDir)
+            when (commonAncestor) {
+                root -> sourceRoots += root
+                crateRootDir -> sourceRoots += crateRootDir
+                else -> {
+                    sourceRoots += root
+                    sourceRoots += crateRootDir
+                }
+            }
+        } else {
+            // TODO exclude full module hierarchy instead of crate roots only
+            excludedRoots += crateRoot
+        }
+    }
+    return CargoLibrary(name, sourceRoots, excludedRoots, CargoIcons.ICON, version)
+}
