@@ -45,11 +45,12 @@ class CargoProjectTreeStructure(
     }
 
     sealed class CargoSimpleNode(parent: SimpleNode?) : CachingSimpleNode(parent) {
+        abstract fun toTestString(): String
 
         class Root(private val cargoProjects: List<CargoProject>) : CargoSimpleNode(null) {
             override fun buildChildren(): Array<SimpleNode> = cargoProjects.map { Project(it, this) }.toTypedArray()
             override fun getName(): String = ""
-            override fun toString(): String = "Root"
+            override fun toTestString(): String = "Root"
         }
 
         class Project(val cargoProject: CargoProject, parent: SimpleNode) : CargoSimpleNode(parent) {
@@ -90,7 +91,8 @@ class CargoProjectTreeStructure(
                 presentation.addText(cargoProject.presentableName, attrs)
                 presentation.setIcon(icon)
             }
-            override fun toString(): String = "Project($name)"
+
+            override fun toTestString(): String = "Project($name)"
         }
 
         class WorkspaceMember(val pkg: CargoWorkspace.Package, parent: SimpleNode) : CargoSimpleNode(parent) {
@@ -101,7 +103,7 @@ class CargoProjectTreeStructure(
 
             override fun buildChildren(): Array<SimpleNode> = arrayOf(Targets(pkg.targets, this))
             override fun getName(): String = pkg.name
-            override fun toString(): String = "WorkspaceMember($name)"
+            override fun toTestString(): String = "WorkspaceMember($name)"
         }
 
         class Targets(val targets: Collection<CargoWorkspace.Target>, parent: SimpleNode) : CargoSimpleNode(parent) {
@@ -112,7 +114,7 @@ class CargoProjectTreeStructure(
 
             override fun buildChildren(): Array<SimpleNode> = targets.map { Target(it, this) }.toTypedArray()
             override fun getName(): String = "targets"
-            override fun toString(): String = "Targets"
+            override fun toTestString(): String = "Targets"
         }
 
         class Target(val target: CargoWorkspace.Target, parent: SimpleNode) : CargoSimpleNode(parent) {
@@ -130,7 +132,8 @@ class CargoProjectTreeStructure(
                     presentation.tooltip = "${StringUtil.capitalize(targetKind.name)} target `${name}`"
                 }
             }
-            override fun toString(): String = "Target($name[${target.kind.name.toLowerCase()}])"
+
+            override fun toTestString(): String = "Target($name[${target.kind.name.toLowerCase()}])"
 
             private val CargoWorkspace.Target.icon: Icon?
                 get() = when (kind) {
