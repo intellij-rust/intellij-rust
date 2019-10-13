@@ -50,22 +50,13 @@ private class RsStructureViewElement(
     override fun getPresentation(): ItemPresentation = getPresentationForStructure(psi)
 
     override fun getChildren(): Array<TreeElement> =
-        childElements.sortedBy { it.textOffset }.map(::RsStructureViewElement).toTypedArray()
+        childElements.map(::RsStructureViewElement).toTypedArray()
 
     private val childElements: List<RsElement>
         get() {
             return when (psi) {
                 is RsEnumItem -> psi.variants
-                is RsImplItem, is RsTraitItem -> {
-                    val members = (psi as? RsImplItem)?.members
-                        ?: (psi as? RsTraitItem)?.members
-                        ?: return emptyList()
-                    buildList {
-                        addAll(members.functionList)
-                        addAll(members.constantList)
-                        addAll(members.typeAliasList)
-                    }
-                }
+                is RsTraitOrImpl -> psi.expandedMembers
                 is RsMod -> extractItems(psi)
                 is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
@@ -75,8 +66,11 @@ private class RsStructureViewElement(
         }
 
     private fun extractItems(psi: RsItemsOwner): List<RsElement> =
+        extractItems(psi.itemsAndMacros)
+
+    private fun extractItems(itemsAndMacros: Sequence<RsElement>): List<RsElement> =
         buildList {
-            for (item in psi.itemsAndMacros) {
+            for (item in itemsAndMacros) {
                 when (item) {
                     is RsMacro,
                     is RsFunction,
@@ -88,8 +82,15 @@ private class RsStructureViewElement(
                     is RsConstant -> add(item)
 
                     is RsForeignModItem -> {
-                        addAll(item.functionList)
-                        addAll(item.constantList)
+                        for (child in item.children) {
+                            if (child is RsFunction || child is RsConstant) {
+                                add(child as RsElement)
+                            }
+                        }
+                    }
+
+                    is RsMacroCall -> {
+                        addAll(extractItems(item.expansionFlatten.asSequence()))
                     }
                 }
             }

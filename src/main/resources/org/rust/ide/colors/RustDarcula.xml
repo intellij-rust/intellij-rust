@@ -53,4 +53,9 @@
             <option name="FOREGROUND" value="686A4E"/>
         </value>
     </option>
+    <option name="org.rust.GENERATED_ITEM">
+        <value>
+            <option name="FOREGROUND" value="848504" />
+        </value>
+    </option>
 </list>

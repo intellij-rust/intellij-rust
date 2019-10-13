@@ -7,7 +7,9 @@ package org.rust.ide.presentation
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.navigation.ItemPresentation
+import org.rust.ide.colors.RsColor
 import org.rust.ide.icons.addVisibilityIcon
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -31,21 +33,21 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
         append(presentableName(psi))
         when (psi) {
             is RsFunction -> {
-                appendCommaList(psi.valueParameters.mapNotNull { it.typeReference?.text })
+                appendCommaList(psi.valueParameters.mapNotNull { it.typeReference?.getStubOnlyText() })
 
                 val ret = psi.retType?.typeReference
-                if (ret != null) append(" -> ${ret.text}")
+                if (ret != null) append(" -> ${ret.getStubOnlyText()}")
             }
             is RsConstant -> {
-                psi.typeReference?.let { append(": ${it.text}") }
+                psi.typeReference?.let { append(": ${it.getStubOnlyText()}") }
             }
             is RsNamedFieldDecl -> {
-                psi.typeReference?.let { append(": ${it.text}") }
+                psi.typeReference?.let { append(": ${it.getStubOnlyText()}") }
             }
             is RsEnumVariant -> {
                 val fields = psi.tupleFields
                 if (fields != null) {
-                    appendCommaList(fields.tupleFieldDeclList.map { it.typeReference.text })
+                    appendCommaList(fields.tupleFieldDeclList.map { it.typeReference.getStubOnlyText() })
                 }
             }
         }
@@ -54,7 +56,10 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
     if ((psi as? RsVisibilityOwner)?.isPublic == true) {
         icon = icon.addVisibilityIcon(true)
     }
-    return PresentationData(presentation, null, icon, null)
+
+    val textAttributes = if (psi.isExpandedFromMacro) RsColor.GENERATED_ITEM.textAttributesKey else null
+
+    return PresentationData(presentation, null, icon, textAttributes)
 }
 
 private fun presentableName(psi: RsElement): String? {
