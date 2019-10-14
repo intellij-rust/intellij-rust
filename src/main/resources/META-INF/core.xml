@@ -89,7 +89,10 @@
         <findUsagesHandlerFactory implementation="org.rust.ide.search.RsFindUsagesHandlerFactory"/>
         <usageTypeProvider implementation="org.rust.ide.search.RsUsageTypeProvider"/>
         <readWriteAccessDetector implementation="org.rust.ide.search.RsReadWriteAccessDetector" id="rust"/>
-        <fileStructureGroupRuleProvider implementation="org.rust.ide.search.RsFunctionGroupingRuleProvider" id="rs-function"/>
+        <fileStructureGroupRuleProvider implementation="org.rust.ide.search.RsFunctionGroupingRuleProvider"
+                                        id="rs-function"/>
+        <fileStructureGroupRuleProvider implementation="org.rust.ide.search.RsTraitOrImplGroupingRuleProvider"
+                                        order="before rs-function"/>
 
         <!-- Todos -->
 
