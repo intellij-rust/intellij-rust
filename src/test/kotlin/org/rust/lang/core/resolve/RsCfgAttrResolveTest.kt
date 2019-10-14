@@ -253,4 +253,23 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             eggs();
         }  //^
      """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg on macros inside macros`() = checkByCode(""" 
+        macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
+        as_is! {
+            #[cfg(not(intellij_rust))]
+            as_is! {
+                fn foo() {}
+            }
+            #[cfg(intellij_rust)]
+            as_is! {
+                fn foo() {}
+            }    //X
+        }
+        fn main() {
+            foo();
+        }  //^
+     """)
 }
