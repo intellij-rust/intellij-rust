@@ -76,6 +76,10 @@
         <lang.implementationTextSelectioner language="Rust"
                                             implementationClass="org.rust.ide.hints.RsImplementationTextSelectioner"/>
 
+        <!-- Filters -->
+
+        <analyzeStacktraceFilter implementation="org.rust.cargo.runconfig.filters.RsBacktraceFilter"/>
+
         <!-- Structure View -->
 
         <lang.psiStructureViewFactory language="Rust"

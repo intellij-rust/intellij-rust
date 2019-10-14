@@ -10,6 +10,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.stdext.BothEditions
 
 /**
@@ -19,8 +20,7 @@ import org.rust.stdext.BothEditions
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
     private val filter: RsBacktraceFilter
-        get() =
-            RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
+        get() = RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
 
     fun `test rustc source code link`() =
         checkHighlights(filter,
@@ -85,6 +85,29 @@ stack backtrace:
   10:     0x7feeefb3f538 - btest::main::h888e623968051ab6
                         at src/main.rs:22""",
             "                        at [src/main.rs -> main.rs]:22", 14)
+
+    fun `test full output without explicit project dir and workspace`() {
+        val cargoProject = project.cargoProjects.allProjects.singleOrNull() as? CargoProjectImpl
+        cargoProject?.setRootDir(projectDir)
+
+        checkHighlights(RsBacktraceFilter(project),
+            """    Running `target/debug/test`
+thread '<main>' panicked at 'called `Option::unwrap()` on a `None` value', ../src/libcore/option.rs:325
+stack backtrace:
+   1:     0x7feeefb45b1f - std::sys::backtrace::tracing::imp::write::h3800f45f421043b8
+   2:     0x7feeefb47b93 - std::panicking::default_hook::hf3839060ccbb8764
+   3:     0x7feeefb4095d - std::panicking::rust_panic_with_hook::h5dd7da6bb3d06020
+   4:     0x7feeefb48151 - std::panicking::begin_panic::h9bf160aee246b9f6
+   5:     0x7feeefb411fa - std::panicking::begin_panic_fmt::haf08a9a70a097ee1
+   6:     0x7feeefb480ee - rust_begin_unwind
+   7:     0x7feeefb7d11f - core::panicking::panic_fmt::h93df64e7370b5253
+   8:     0x7feeefb7d3f8 - core::panicking::panic::h9d5bd65bbb401959
+   9:     0x7feeefb3f765 - <core::option::Option<T>>::unwrap::hbe9ea065746f6376
+                        at ../src/libcore/macros.rs:21
+  10:     0x7feeefb3f538 - btest::main::h888e623968051ab6
+                        at src/main.rs:22""",
+            "                        at [src/main.rs -> main.rs]:22", 14)
+    }
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test crate with "-" in name`() =
