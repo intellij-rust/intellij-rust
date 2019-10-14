@@ -10,11 +10,13 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -37,7 +39,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         saveAllDocuments()
         val onlyBuild = "--no-run" in (state as CargoRunStateBase).commandLine.additionalArguments
-        return buildTests(environment.project, state, onlyBuild)
+        return buildTests(environment, state, onlyBuild)
             .then { exitCode ->
                 if (onlyBuild || exitCode != 0) return@then null
                 showRunContent(state.execute(environment.executor, this), environment)
@@ -47,7 +49,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
     companion object {
         const val RUNNER_ID: String = "CargoTestCommandRunner"
 
-        private fun buildTests(project: Project, state: CargoRunStateBase, cmdHasNoRun: Boolean): Promise<Int?> {
+        private fun buildTests(environment: ExecutionEnvironment, state: CargoRunStateBase, cmdHasNoRun: Boolean): Promise<Int?> {
             val buildProcessHandler = run {
                 val buildCmd = if (cmdHasNoRun) state.commandLine else state.commandLine.prependArgument("--no-run")
                 val buildConfig = CargoCommandConfiguration.CleanConfiguration.Ok(buildCmd, state.config.toolchain)
@@ -55,10 +57,23 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
                 buildState.startProcess(emulateTerminal = false)
             }
             val exitCode = AsyncPromise<Int?>()
-            RunContentExecutor(project, buildProcessHandler)
-                .apply { createFilters(state.cargoProject).forEach { withFilter(it) } }
-                .withAfterCompletion { exitCode.setResult(buildProcessHandler.exitCode) }
-                .run()
+
+            val activateToolWindow = environment.runnerAndConfigurationSettings?.isActivateToolWindowBeforeRun == true
+            if (activateToolWindow) {
+                RunContentExecutor(environment.project, buildProcessHandler)
+                    .apply { createFilters(state.cargoProject).forEach { withFilter(it) } }
+                    .withAfterCompletion { exitCode.setResult(buildProcessHandler.exitCode) }
+                    .run()
+            } else {
+                buildProcessHandler.addProcessListener(object : ProcessAdapter() {
+                    override fun processTerminated(event: ProcessEvent) {
+                        ApplicationManager.getApplication().invokeLater {
+                            exitCode.setResult(buildProcessHandler.exitCode)
+                        }
+                    }
+                })
+                buildProcessHandler.startNotify()
+            }
             return exitCode
         }
     }
