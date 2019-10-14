@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacroArgument
@@ -213,6 +214,9 @@ fun PsiElement.findExpansionElements(): List<PsiElement>? {
     }
 }
 
+fun PsiElement.findExpansionElementOrSelf(): PsiElement =
+    findExpansionElements()?.singleOrNull() ?: this
+
 private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
     val call = ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return null
     val expansion = call.expansion ?: return null
@@ -236,7 +240,9 @@ private fun mapOffsetFromCallBodyToExpansion(
 }
 
 private fun Int.toBodyRelativeOffset(call: RsMacroCall): Int? {
-    val macroOffset = call.bodyTextRange?.startOffset ?: return null
+    val bodyTextRange = call.bodyTextRange ?: return null
+    if (this !in bodyTextRange) return null
+    val macroOffset = bodyTextRange.startOffset
     val elementOffset = this - macroOffset
     check(elementOffset >= 0)
     return elementOffset
@@ -247,6 +253,48 @@ private fun Int.fromBodyRelativeOffset(call: RsMacroCall): Int? {
     val elementOffset = this + macroRange.startOffset
     check(elementOffset <= macroRange.endOffset)
     return elementOffset
+}
+
+private fun MappedTextRange.fromBodyRelativeRange(call: RsMacroCall): MappedTextRange? {
+    val newSrcOffset = srcOffset.fromBodyRelativeOffset(call) ?: return null
+    return MappedTextRange(newSrcOffset, dstOffset, length)
+}
+
+fun RsMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRange? {
+    return mapRangeFromExpansionToCallBody(range).singleOrNull()?.takeIf { it.length == range.length }
+}
+
+private fun RsMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
+    val expansion = expansion ?: return emptyList()
+    return mapRangeFromExpansionToCallBody(expansion, this, range)
+}
+
+private fun mapRangeFromExpansionToCallBody(
+    expansion: MacroExpansion,
+    call: RsMacroCall,
+    range: TextRange
+): List<TextRange> {
+    return mapRangeFromExpansionToCallBody(
+        expansion,
+        call,
+        MappedTextRange(range.startOffset, range.startOffset, range.length)
+    ).map { it.srcRange }
+}
+
+private fun mapRangeFromExpansionToCallBody(
+    expansion: MacroExpansion,
+    call: RsMacroCall,
+    range: MappedTextRange
+): List<MappedTextRange> {
+    val fileOffset = call.expansionContext.expansionFileStartOffset
+    if (range.srcOffset - fileOffset < 0) return emptyList()
+    val mappedRanges = expansion.ranges.mapMappedTextRangeFromExpansionToCallBody(range.srcShiftLeft(fileOffset))
+        .mapNotNull { it.fromBodyRelativeRange(call) }
+    val parentCall = call.findMacroCallExpandedFromNonRecursive() ?: return mappedRanges
+    return mappedRanges.flatMap {
+        val parentExpansion = parentCall.expansion ?: return emptyList() // impossible?
+        mapRangeFromExpansionToCallBody(parentExpansion, parentCall, it)
+    }
 }
 
 /**

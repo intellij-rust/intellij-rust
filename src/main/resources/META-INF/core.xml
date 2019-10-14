@@ -39,6 +39,7 @@
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsGroupSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsFieldLikeSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsListSelectionHandler"/>
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsMacroCallSelectionHandler"/>
 
         <!-- Syntax Highlighter -->
 
