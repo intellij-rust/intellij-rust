@@ -10,8 +10,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
-import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.RustToolchain
 
 /**
  * This class allows executing real Cargo during the tests.
@@ -20,9 +18,10 @@ import org.rust.cargo.toolchain.RustToolchain
  * and instead copies real files.
  */
 abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
-    open val dataPath: String = ""
 
-    private val toolchain = RustToolchain.suggest()
+    private lateinit var rustupFixture: RustupTestFixture
+
+    open val dataPath: String = ""
 
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
 
@@ -36,15 +35,15 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     }
 
     override fun runTest() {
-        val toolchain = toolchain
-        if (toolchain == null) {
-            System.err.println("SKIP \"$name\": no Rust toolchain found")
+        val skipReason = rustupFixture.skipTestReason
+        if (skipReason != null) {
+            System.err.println("SKIP \"$name\": $skipReason")
             return
         }
         val minRustVersion = findAnnotationInstance<MinRustcVersion>()
         if (minRustVersion != null) {
             val requiredVersion = minRustVersion.semver
-            val rustcVersion = toolchain.queryVersions().rustc
+            val rustcVersion = rustupFixture.toolchain!!.queryVersions().rustc
             if (rustcVersion == null) {
                 System.err.println("SKIP \"$name\": failed to query Rust version")
                 return
@@ -60,14 +59,12 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
 
     override fun setUp() {
         super.setUp()
-
-        if (toolchain != null) {
-            project.rustSettings.modify { it.toolchain = toolchain }
-        }
+        rustupFixture = RustupTestFixture(project)
+        rustupFixture.setUp()
     }
 
     override fun tearDown() {
-        project.rustSettings.modify { it.toolchain = null }
+        rustupFixture.tearDown()
         super.tearDown()
     }
 

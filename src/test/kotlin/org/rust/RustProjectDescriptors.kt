@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -105,6 +106,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
+        stdlib?.let { VfsRootAccess.allowRootAccess(fixture.testRootDisposable, it.path) }
     }
 }
 
