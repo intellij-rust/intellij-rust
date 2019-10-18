@@ -51,7 +51,8 @@ class RsCompilerSourcesPerformance : RsTestBase() {
                                ignored: Collection<String>,
                                expectedNumberOfFiles: Int,
                                checkForErrors: Boolean) {
-        val processed = ArrayList<FileStats>()
+        val processed = mutableListOf<FileStats>()
+        val errors = mutableListOf<String>()
         val totalTime = measureTimeMillis {
             VfsUtilCore.visitChildrenRecursively(directory, object : VirtualFileVisitor<Void>() {
                 override fun visitFileEx(file: VirtualFile): Result {
@@ -64,8 +65,8 @@ class RsCompilerSourcesPerformance : RsTestBase() {
                         val psiString = DebugUtil.psiToString(psi, /* skipWhitespace = */ true)
 
                         if (checkForErrors) {
-                            check("PsiErrorElement" !in psiString) {
-                                "Failed to parse ${file.path}\n\n$fileContent\n\n$psiString\n\n${file.path}"
+                            if ("PsiErrorElement" in psiString) {
+                                errors += file.path
                             }
                         }
                     }
@@ -75,6 +76,11 @@ class RsCompilerSourcesPerformance : RsTestBase() {
                     return CONTINUE
                 }
             })
+        }
+        if (checkForErrors) {
+            check(errors.isEmpty()) {
+                "Failed to parse:\n${errors.joinToString("\n")}"
+            }
         }
         check(processed.size > expectedNumberOfFiles)
 
