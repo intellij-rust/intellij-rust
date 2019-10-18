@@ -79,8 +79,14 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 is ChildMovement.After -> event.child
                 is ChildrenChange.After -> if (!event.isGenericChange) event.parent else return
                 is PropertyChange.After -> {
-                    if (event.propertyName == PsiTreeChangeEvent.PROP_WRITABLE) return
-                    event.element ?: return
+                    when (event.propertyName) {
+                        PsiTreeChangeEvent.PROP_UNLOADED_PSI -> {
+                            incRustStructureModificationCount()
+                            return
+                        }
+                        PsiTreeChangeEvent.PROP_WRITABLE -> return
+                        else -> event.element ?: return
+                    }
                 }
                 else -> return
             }
