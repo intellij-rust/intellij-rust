@@ -109,7 +109,7 @@ enum class FragmentKind(private val kind: String) {
             RustParser::EnumItem,
             RustParser::UseItem,
             RustParser::ExternCrateItem,
-            RustParser::MacroCall
+            RustParser::ItemLikeMacroCall
         )
     }
 }

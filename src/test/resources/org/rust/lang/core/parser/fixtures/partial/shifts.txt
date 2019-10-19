@@ -93,7 +93,7 @@ FILE
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
               PsiElement(<)('<')
-            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro call no semicolons>, <struct literal>, <while expr>, Self, crate, identifier, self, super or '|' expected, got '<'
+            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro call>, <struct literal>, <while expr>, Self, crate, identifier, self, super or '|' expected, got '<'
               <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)
@@ -131,7 +131,7 @@ FILE
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
               PsiElement(<)('<')
-            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro call no semicolons>, <struct literal>, <while expr>, Self, crate, identifier, self, super or '|' expected, got '<'
+            PsiErrorElement:'#', '::', <, <block expr>, <expr>, <for expr>, <loop expr>, <macro call>, <struct literal>, <while expr>, Self, crate, identifier, self, super or '|' expected, got '<'
               <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)

@@ -36,6 +36,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
         NO_TYPES
     }
     enum class BinaryMode { ON, OFF }
+    enum class MacroCallParsingMode(val semicolon: Boolean, val pin: Boolean, val forbidExprSpecialMacros: Boolean) {
+        ITEM(semicolon = true, pin = true, forbidExprSpecialMacros = false),
+        BLOCK(semicolon = true, pin = false, forbidExprSpecialMacros = true),
+        EXPR(semicolon = false, pin = true, forbidExprSpecialMacros = false)
+    }
 
     private val FLAGS: Key<Int> = Key("RustParserUtil.FLAGS")
     private var PsiBuilder.flags: Int
@@ -267,6 +272,90 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val result = traitTypeUpperP.parse(b, level + 1)
         exit_section_(b, baseOrTrait, TRAIT_TYPE, result)
         return result
+    }
+
+    private val SPECIAL_MACRO_PARSERS: Map<String, (PsiBuilder, Int) -> Boolean>
+    private val SPECIAL_EXPR_MACROS: Set<String>
+
+    init {
+        val specialParsers = hashMapOf<String, (PsiBuilder, Int) -> Boolean>()
+        val exprMacros = hashSetOf<String>()
+        SPECIAL_MACRO_PARSERS = specialParsers
+        SPECIAL_EXPR_MACROS = exprMacros
+
+        fun put(parser: (PsiBuilder, Int) -> Boolean, isExpr: Boolean, vararg keys: String) {
+            for (name in keys) {
+                check(name !in specialParsers) { "$name was already added" }
+                specialParsers[name] = parser
+                if (isExpr) {
+                    exprMacros += name
+                }
+            }
+        }
+
+        put(RustParser::ExprMacroArgument, true, "try", "await", "dbg")
+        put(RustParser::FormatMacroArgument, true, "format", "format_args", "write", "writeln", "print", "println",
+            "eprint", "eprintln", "panic", "unimplemented", "unreachable")
+        put(RustParser::AssertMacroArgument, true, "assert", "debug_assert", "assert_eq", "assert_ne",
+            "debug_assert_eq", "debug_assert_ne")
+        put(RustParser::VecMacroArgument, true, "vec")
+        put(RustParser::LogMacroArgument, true, "trace", "log", "warn", "debug", "error", "info")
+        put(RustParser::IncludeMacroArgument, true, "include_str", "include_bytes")
+        put(RustParser::IncludeMacroArgument, false, "include")
+        put(RustParser::ConcatMacroArgument, true, "concat")
+    }
+
+    @JvmStatic
+    fun parseMacroCall(b: PsiBuilder, level: Int, mode: MacroCallParsingMode): Boolean {
+        if (!RustParser.AttrsAndVis(b, level + 1)) return false
+
+        val macroName = lookupSimpleMacroName(b)
+        if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false
+
+        if (!RustParser.PathWithoutTypes(b, level + 1) || !consumeToken(b, EXCL)) {
+            return false
+        }
+
+        // foo! bar {}
+        //      ^ this ident
+        val hasIdent = consumeTokenFast(b, IDENTIFIER)
+
+        val braceKind = b.tokenType?.let { MacroBraces.fromToken(it) }
+
+        if (macroName != null && !hasIdent && braceKind != null) { // try special macro
+            val specialParser = SPECIAL_MACRO_PARSERS[macroName]
+            if (specialParser != null && specialParser(b, level + 1)) {
+                if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
+                    b.error("`;` expected, got '${b.tokenText}'")
+                    return mode.pin
+                }
+                return true
+            }
+        }
+
+        if (braceKind == null || !parseMacroArgumentLazy(b, level + 1)) {
+            b.error("<macro argument> expected, got '${b.tokenText}'")
+            return mode.pin
+        }
+        if (braceKind.needsSemicolon && mode.semicolon && !consumeToken(b, SEMICOLON)) {
+            b.error("`;` expected, got '${b.tokenText}'")
+            return mode.pin
+        }
+        return true
+    }
+
+    // foo ! ();
+    // ^ this name
+    private fun lookupSimpleMacroName(b: PsiBuilder): String? {
+        return if (b.tokenType == IDENTIFIER) {
+            val nextTokenIsExcl = b.probe {
+                b.advanceLexer()
+                b.tokenType == EXCL
+            }
+            if (nextTokenIsExcl) b.tokenText else null
+        } else {
+            null
+        }
     }
 
     @JvmStatic
