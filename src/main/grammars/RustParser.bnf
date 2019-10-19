@@ -481,7 +481,7 @@ Pat ::= PatWild
       | PatRange
       | PatBox {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
-      }
+}
 
 private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
@@ -580,7 +580,7 @@ private UseSpeck_with_recover ::= !'}' UseSpeck (','|&'}') {
   pin = 1
   recoverWhile = UseSpeck_recover
 }
-private UseSpeck_recover ::= !('}' | '{' | self | identifier | '::' | '*' )
+private UseSpeck_recover ::= !('}' | '{' | self | super | crate | identifier | '::' | '*' )
 
 Alias ::= as ('_' | identifier) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner" ]
