@@ -17,3 +17,4 @@ use a::{B, d::{self, *, g::H}};
 use ::{*, *};
 
 use foo::{bar, {baz, quux}};
+use {crate::foo, crate::bar, super::baz};
