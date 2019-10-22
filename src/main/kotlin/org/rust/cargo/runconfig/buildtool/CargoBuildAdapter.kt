@@ -5,6 +5,7 @@
 
 package org.rust.cargo.runconfig.buildtool
 
+import com.intellij.build.BuildContentDescriptor
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.impl.*
@@ -26,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.runconfig.createFilters
+import javax.swing.JComponent
 
 @Suppress("UnstableApiUsage")
 class CargoBuildAdapter(
@@ -42,16 +44,19 @@ class CargoBuildAdapter(
     init {
         val processHandler = checkNotNull(context.processHandler) { "Process handler can't be null" }
         context.environment.notifyProcessStarted(processHandler)
-        val descriptor = DefaultBuildDescriptor(
-            context.buildId,
-            "Run Cargo command",
-            context.workingDirectory.toString(),
-            context.started
-        )
-        val buildStarted = StartBuildEventImpl(descriptor, "${context.taskName} running...")
-            .withExecutionFilters(*createFilters(context.cargoProject).toTypedArray())
+
+        val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Build")
+        val activateToolWindow = context.environment.isActivateToolWindowBeforeRun
+        buildContentDescriptor.isActivateToolWindowWhenAdded = activateToolWindow
+        buildContentDescriptor.isActivateToolWindowWhenFailed = activateToolWindow
+
+        val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo command", context.workingDirectory.toString(), context.started)
+            .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(createRerunAction(processHandler, context.environment))
             .withRestartAction(createStopAction(processHandler))
+            .apply { createFilters(context.cargoProject).forEach { withExecutionFilter(it) } }
+
+        val buildStarted = StartBuildEventImpl(descriptor, "${context.taskName} running...")
         buildProgressListener.onEvent(context.buildId, buildStarted)
     }
 

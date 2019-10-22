@@ -49,6 +49,9 @@ fun ExecutionEnvironment.notifyProcessTerminating(handler: ProcessHandler) =
 fun ExecutionEnvironment.notifyProcessTerminated(handler: ProcessHandler, exitCode: Int) =
     executionListener.processTerminated(executor.id, this, handler, exitCode)
 
+val ExecutionEnvironment?.isActivateToolWindowBeforeRun: Boolean
+    get() = this?.runnerAndConfigurationSettings?.isActivateToolWindowBeforeRun != false
+
 class MockProgressIndicator : EmptyProgressIndicator() {
     private val _textHistory: MutableList<String?> = mutableListOf()
     val textHistory: List<String?> get() = _textHistory

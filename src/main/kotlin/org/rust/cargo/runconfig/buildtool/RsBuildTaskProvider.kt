@@ -22,9 +22,7 @@ abstract class RsBuildTaskProvider<T : RsBuildTaskProvider.BuildTask<T>> : Befor
     override fun isSingleton(): Boolean = true
 
     protected fun doExecuteTask(buildConfiguration: CargoCommandConfiguration, environment: ExecutionEnvironment): Boolean {
-        val buildEnvironment = createBuildEnvironment(buildConfiguration)
-            ?.also { environment.copyUserDataTo(it) }
-            ?: return false
+        val buildEnvironment = createBuildEnvironment(buildConfiguration, environment) ?: return false
         val buildableElement = CargoBuildConfiguration(buildConfiguration, buildEnvironment)
 
         val result = CompletableFuture<Boolean>()
