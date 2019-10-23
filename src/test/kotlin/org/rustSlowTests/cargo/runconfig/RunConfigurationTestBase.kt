@@ -7,6 +7,7 @@ package org.rustSlowTests.cargo.runconfig
 
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Location
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.configurations.RunConfiguration
@@ -42,7 +43,14 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
     private fun createRunConfigurationFromContext(
         producer: RunConfigurationProducer<CargoCommandConfiguration>,
         location: Location<PsiElement>? = null
-    ): CargoCommandConfiguration {
+    ): CargoCommandConfiguration = createRunnerAndConfigurationSettingsFromContext(producer, location)
+        .configuration as? CargoCommandConfiguration
+        ?: error("Can't create run configuration")
+
+    protected fun createRunnerAndConfigurationSettingsFromContext(
+        producer: RunConfigurationProducer<CargoCommandConfiguration>,
+        location: Location<PsiElement>? = null
+    ): RunnerAndConfigurationSettings {
         val context = if (location != null) {
             ConfigurationContext.createEmptyContextForLocation(location)
         } else {
@@ -50,8 +58,8 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
             ConfigurationContext.getFromContext(dataContext)
         }
         return producer.createConfigurationFromContext(context)
-            ?.configuration as? CargoCommandConfiguration
-            ?: error("Can't create run configuration")
+            ?.configurationSettings
+            ?: error("Can't create run configuration settings")
     }
 
     protected fun execute(configuration: RunConfiguration): ExecutionResult {

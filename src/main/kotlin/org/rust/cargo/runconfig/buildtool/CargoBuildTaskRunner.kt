@@ -20,11 +20,14 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.buildProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.CANCELED_BUILD_RESULT
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
+import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 
@@ -56,7 +59,12 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             waitingIndicator
         )
 
-        WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
+        if (isUnitTestMode) {
+            waitingIndicator.complete(EmptyProgressIndicator())
+        } else {
+            WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
+        }
+
         buildSessionsQueue.run(queuedTask, null, EmptyProgressIndicator())
     }
 
@@ -75,10 +83,19 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
         if (task !is ModuleBuildTask) return listOf(task)
 
         val project = task.module.project
+        val runManager = RunManager.getInstance(project)
+
+        val selectedConfiguration = runManager.selectedConfiguration?.configuration as? CargoCommandConfiguration
+        if (selectedConfiguration != null) {
+            val buildConfiguration = getBuildConfiguration(selectedConfiguration) ?: return emptyList()
+            val environment = createBuildEnvironment(buildConfiguration) ?: return emptyList()
+            val buildableElement = CargoBuildConfiguration(buildConfiguration, environment)
+            return listOf(ProjectModelBuildTaskImpl(buildableElement, false))
+        }
+
         val cargoProjects = project.cargoProjects.allProjects
         if (cargoProjects.isEmpty()) return emptyList()
 
-        val runManager = RunManager.getInstance(project)
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
         val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID) ?: return emptyList()
 
