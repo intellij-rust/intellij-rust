@@ -283,6 +283,9 @@ private val RsItemElement.declarationModifiers: List<String> get() {
     }
     when (this) {
         is RsFunction -> {
+            if (isAsync) {
+                modifiers += "async"
+            }
             if (isConst) {
                 modifiers += "const"
             }
