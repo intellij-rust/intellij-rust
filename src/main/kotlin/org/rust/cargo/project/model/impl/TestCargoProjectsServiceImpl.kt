@@ -7,10 +7,10 @@ package org.rust.cargo.project.model.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.openapiext.pathAsPath
 import java.util.concurrent.CompletableFuture
@@ -18,6 +18,7 @@ import java.util.concurrent.TimeUnit
 
 class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(project) {
 
+    @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
         val testProject = CargoProjectImpl(manifest, this, ws, null, rustcInfo,
@@ -27,6 +28,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         modifyProjectsSync { CompletableFuture.completedFuture(listOf(testProject)) }
     }
 
+    @TestOnly
     fun setRustcInfo(rustcInfo: RustcInfo) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = CargoProject.UpdateStatus.UpToDate) }
@@ -34,6 +36,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         }
     }
 
+    @TestOnly
     fun setEdition(edition: CargoWorkspace.Edition) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { project ->
@@ -44,6 +47,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         }
     }
 
+    @TestOnly
     fun setCfgOptions(cfgOptions: CfgOptions) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { project ->
@@ -58,6 +62,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         modifyProjects(f).get(1, TimeUnit.MINUTES) ?: error("Timeout when refreshing a test Cargo project")
     }
 
+    @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
         val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
@@ -65,5 +70,3 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         return projects
     }
 }
-
-val Project.testCargoProjects: TestCargoProjectsServiceImpl get() = cargoProjects as TestCargoProjectsServiceImpl

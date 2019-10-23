@@ -9,7 +9,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.ui.UIUtil.dispatchAllInvocationEvents
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.lang.core.psi.RsPath
 
