@@ -27,6 +27,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 
@@ -58,7 +59,12 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             waitingIndicator
         )
 
-        WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
+        if (isUnitTestMode) {
+            waitingIndicator.complete(EmptyProgressIndicator())
+        } else {
+            WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
+        }
+
         buildSessionsQueue.run(queuedTask, null, EmptyProgressIndicator())
     }
 

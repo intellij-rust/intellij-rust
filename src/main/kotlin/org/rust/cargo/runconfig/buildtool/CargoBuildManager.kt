@@ -42,6 +42,7 @@ import org.rust.cargo.runconfig.CargoCommandRunner
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.addFormatJsonOption
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
@@ -92,6 +93,10 @@ object CargoBuildManager {
 
         // Make sure build tool window is initialized:
         ServiceManager.getService(cargoProject.project, BuildContentManager::class.java)
+
+        if (isUnitTestMode) {
+            lastBuildCommandLine = state.commandLine
+        }
 
         return execute(CargoBuildContext(
             cargoProject = cargoProject,
@@ -285,11 +290,18 @@ object CargoBuildManager {
     }
 
     @TestOnly
+    @Volatile
     var testBuildId: Any? = null
 
     @TestOnly
+    @Volatile
     var mockBuildProgressListener: MockBuildProgressListener? = null
 
     @TestOnly
+    @Volatile
     var mockProgressIndicator: MockProgressIndicator? = null
+
+    @TestOnly
+    @Volatile
+    var lastBuildCommandLine: CargoCommandLine? = null
 }

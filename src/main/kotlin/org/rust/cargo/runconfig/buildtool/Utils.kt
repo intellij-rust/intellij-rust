@@ -9,6 +9,7 @@ package org.rust.cargo.runconfig.buildtool
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.build.events.FinishBuildEvent
 import com.intellij.execution.ExecutionListener
 import com.intellij.execution.ExecutionManager
 import com.intellij.execution.process.ProcessHandler
@@ -16,6 +17,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
 import org.rust.cargo.toolchain.CargoCommandLine
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 typealias CargoPatch = (CargoCommandLine) -> CargoCommandLine
 
@@ -65,11 +68,20 @@ object EmptyBuildProgressListener : BuildProgressListener {
 }
 
 @Suppress("UnstableApiUsage")
-class MockBuildProgressListener : BuildProgressListener {
+class MockBuildProgressListener(buildsCount: Int = 1) : BuildProgressListener {
+    private val latch: CountDownLatch = CountDownLatch(buildsCount)
     private val _eventHistory: MutableList<BuildEvent> = mutableListOf()
     val eventHistory: List<BuildEvent> get() = _eventHistory
 
     override fun onEvent(buildId: Any, event: BuildEvent) {
         _eventHistory.add(event)
+        if (event is FinishBuildEvent) {
+            latch.countDown()
+        }
+    }
+
+    @Throws(InterruptedException::class)
+    fun waitFinished(timeout: Long = 1, unit: TimeUnit = TimeUnit.MINUTES) {
+        latch.await(timeout, unit)
     }
 }
