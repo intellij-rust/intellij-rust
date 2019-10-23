@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
+import org.rust.ide.annotator.isValid
 
 // https://docs.rs/cargo/0.33.0/cargo/util/machine_message/struct.FromCompiler.html
 data class CargoTopMessage(
@@ -48,7 +49,13 @@ data class RustcMessage(
     val message: String,
     val rendered: String?,
     val spans: List<RustcSpan>
-)
+) {
+    val mainSpan: RustcSpan?
+        get() {
+            val validSpans = spans.filter { it.isValid() && !it.file_name.startsWith("<") }
+            return validSpans.firstOrNull { it.is_primary } ?: validSpans.maxBy { it.byte_start }
+        }
+}
 
 // https://doc.rust-lang.org/nightly/nightly-rustc/syntax/json/struct.DiagnosticCode.html
 data class ErrorCode(
