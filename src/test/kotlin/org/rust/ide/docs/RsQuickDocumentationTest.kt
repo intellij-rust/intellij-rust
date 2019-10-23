@@ -93,6 +93,14 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         extern "C" fn <b>foo</b>()</pre></div>
     """)
 
+    fun `test async fn`() = doTest("""
+        async fn foo() {}
+                //^
+    """, """
+        <div class='definition'><pre>test_package
+        async fn <b>foo</b>()</pre></div>
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test generic fn`() = doTest("""
         fn foo<T: Into<String>>(t: T) {}
