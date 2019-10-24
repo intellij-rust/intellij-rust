@@ -468,6 +468,7 @@ class RsPsiFactory(
 }
 
 private fun RsFunction.getSignatureText(subst: Substitution): String? {
+    val async = if (isAsync) "async " else ""
     val unsafe = if (isUnsafe) "unsafe " else ""
     // We can't simply take a substring of original method declaration
     // because of anonymous parameters.
@@ -483,7 +484,7 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 
     val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
     val where = whereClause?.text ?: ""
-    return "${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+    return "${async}${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
 }
 
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "

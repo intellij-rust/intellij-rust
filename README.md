@@ -85,7 +85,7 @@ understand the high-level structure of the codebase. If you are not sure where t
 [beta-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadBeta&guest=1
 [beta-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadBeta/statusIcon.svg
 
-[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadNightlyt&guest=1
+[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadNightly&guest=1
 [nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadNightly/statusIcon.svg
 
 

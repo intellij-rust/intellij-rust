@@ -158,6 +158,39 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement async methods`() = doTest("""
+        trait T {
+            async fn f1();
+            async fn f2();
+            async fn f3() {}
+            async fn f4() {}
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f1()", true, true),
+        ImplementMemberSelection("f2()", true, false),
+        ImplementMemberSelection("f3()", false, false),
+        ImplementMemberSelection("f4()", false, true)
+    ), """
+        trait T {
+            async fn f1();
+            async fn f2();
+            async fn f3() {}
+            async fn f4() {}
+        }
+        struct S;
+        impl T for S {
+            async fn f1() {
+                unimplemented!()
+            }
+
+            async fn f4() {
+                unimplemented!()
+            }
+        }
+    """)
+
     fun `test implement more methods`() = doTest("""
         trait T {
             fn f1(a: i8, b: i16, c: i32, d: i64);
