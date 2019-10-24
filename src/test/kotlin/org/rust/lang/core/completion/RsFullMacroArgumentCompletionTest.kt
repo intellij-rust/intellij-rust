@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.completion
 
-class RsMacroCallBodyCompletionTest : RsCompletionTestBase() {
+class RsFullMacroArgumentCompletionTest : RsCompletionTestBase() {
     fun `test simple`() = doSingleCompletion("""
         macro_rules! foo {
             ($($ i:item)*) => { $($ i)* };
