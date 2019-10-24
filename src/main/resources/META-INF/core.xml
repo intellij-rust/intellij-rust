@@ -26,6 +26,11 @@
         <stubElementTypeHolder class="org.rust.lang.core.psi.RsElementTypes"/>
         <lang.ast.factory language="Rust" implementationClass="org.rust.lang.core.RsASTFactory"/>
 
+        <!-- Sources -->
+
+        <generatedSourcesFilter implementation="org.rust.cargo.project.model.RsGeneratedSourcesFilter"/>
+        <writingAccessProvider implementation="org.rust.cargo.project.model.RsGeneratedSourcesWritingAccessProvider"/>
+
         <!-- Code insight settings -->
 
         <applicationService serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
@@ -124,7 +129,6 @@
 
         <targetElementEvaluator language="Rust"
                                 implementationClass="org.rust.ide.navigation.goto.RsTargetElementEvaluator"/>
-        <generatedSourcesFilter implementation="org.rust.ide.navigation.goto.RsGeneratedSourcesFilter"/>
 
         <!-- Focus mode -->
         <focusModeProvider language="Rust" implementationClass="org.rust.ide.focusMode.RsFocusModeProvider"/>
