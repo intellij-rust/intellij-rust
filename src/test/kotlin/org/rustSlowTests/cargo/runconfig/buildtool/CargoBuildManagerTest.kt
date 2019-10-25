@@ -11,7 +11,6 @@ import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FailureResultImpl
 import com.intellij.build.events.impl.SuccessResultImpl
 import org.rust.MinRustcVersion
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.fileTree
@@ -39,8 +38,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -95,8 +93,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -156,8 +153,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -221,8 +217,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -292,9 +287,8 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
         mockProgressIndicator?.cancel()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -335,8 +329,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -404,8 +397,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -464,8 +456,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -529,8 +520,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 """)
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -606,7 +596,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                     name = "second"
                     version = "0.1.0"
                     authors = []
-                    
+
                     [dependencies]
                     first = { path = "../first" }
                 """)
@@ -618,8 +608,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 }
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -702,7 +691,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                     name = "second"
                     version = "0.1.0"
                     authors = []
-                    
+
                     [dependencies]
                     first = { path = "../first" }
                 """)
@@ -714,8 +703,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 }
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,
@@ -803,7 +791,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                     name = "second"
                     version = "0.1.0"
                     authors = []
-                    
+
                     [dependencies]
                     first = { path = "../first" }
                 """)
@@ -815,8 +803,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
                 }
             }
         }.create()
-        val buildConfiguration = createBuildConfiguration()
-        val buildResult = CargoBuildManager.build(buildConfiguration).get()
+        val buildResult = buildProject()
 
         checkResult(
             buildResult,

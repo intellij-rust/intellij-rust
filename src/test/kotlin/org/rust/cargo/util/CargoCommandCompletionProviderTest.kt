@@ -106,7 +106,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             name = name,
             kind = kind,
             edition = edition,
-            doctest = true
+            doctest = true,
+            outDirUrl = null
         )
 
         fun pkg(

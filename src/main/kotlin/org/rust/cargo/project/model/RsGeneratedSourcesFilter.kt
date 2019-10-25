@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.navigation.goto
+package org.rust.cargo.project.model
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.GeneratedSourcesFilter
@@ -16,7 +16,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 
 class RsGeneratedSourcesFilter : GeneratedSourcesFilter() {
     override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
-        return project.macroExpansionManager.isExpansionFile(file)
+        return project.macroExpansionManager.isExpansionFile(file) || project.cargoProjects.isGeneratedFile(file)
     }
 
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {

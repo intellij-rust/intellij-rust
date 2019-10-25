@@ -14,11 +14,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
-import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RustToolchain
@@ -26,7 +25,6 @@ import org.rust.cargo.toolchain.RustcVersion
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 
 /**
  * Stores a list of [CargoProject]s associated with the current IntelliJ [Project].
@@ -47,8 +45,8 @@ interface CargoProjectsService {
      */
     fun attachCargoProject(manifest: Path): Boolean
     fun detachCargoProject(cargoProject: CargoProject)
-    fun refreshAllProjects(): CompletableFuture<List<CargoProject>>
-    fun discoverAndRefresh(): CompletableFuture<List<CargoProject>>
+    fun refreshAllProjects(): CompletableFuture<out List<CargoProject>>
+    fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>>
 
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(
@@ -63,6 +61,14 @@ interface CargoProjectsService {
 }
 
 val Project.cargoProjects: CargoProjectsService get() = service()
+
+fun CargoProjectsService.isGeneratedFile(file: VirtualFile): Boolean {
+    val pkg = findPackageForFile(file) ?: return false
+    return pkg.targets.any {
+        val outDir = it.outDir ?: return false
+        VfsUtil.isAncestor(outDir, file, false)
+    }
+}
 
 /**
  * See docs for [CargoProjectsService].

@@ -8,6 +8,7 @@ package org.rust.cargo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 
@@ -74,4 +75,23 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     /** Tries to find the specified annotation on the current test method and then on the current class */
     private inline fun <reified T : Annotation> findAnnotationInstance(): T? =
         javaClass.getMethod(name).getAnnotation(T::class.java) ?: javaClass.getAnnotation(T::class.java)
+
+    /**
+     * Tries to launches [action]. If it returns `false`, invokes [UIUtil.dispatchAllInvocationEvents] and tries again
+     *
+     * Can be used to wait file system refresh, for example
+     */
+    protected fun runWithInvocationEventsDispatching(
+        errorMessage: String = "Failed to invoke `action` successfully",
+        action: () -> Boolean
+    ) {
+        for (retries in 0..1000) {
+            Thread.sleep(10)
+            UIUtil.dispatchAllInvocationEvents()
+            if (action()) {
+                return
+            }
+        }
+        error(errorMessage)
+    }
 }

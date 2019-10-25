@@ -35,7 +35,8 @@ data class CargoWorkspaceData(
         val name: String,
         val kind: CargoWorkspace.TargetKind,
         val edition: CargoWorkspace.Edition,
-        val doctest: Boolean
+        val doctest: Boolean,
+        val outDirUrl: String?
     )
 
     data class Dependency(

@@ -115,4 +115,12 @@ fn foo() {
     concat!("abc", "def",);
     concat!(Foo[]); // custom concat macro
     // ------------------
+
+    // - env macros
+    env!("FOO");
+    env!("FOO",);
+    env!("FOO", "error message");
+    env!("FOO", "error message", );
+    env!(Foo[]); // custom env macro
+    // ------------------
 }

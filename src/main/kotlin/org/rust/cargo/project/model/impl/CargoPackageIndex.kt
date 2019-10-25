@@ -43,6 +43,7 @@ class CargoPackageIndex(
                     index.putInfo(pkg.contentRoot, info)
                     for (target in pkg.targets) {
                         index.putInfo(target.crateRoot?.parent, info)
+                        index.putInfo(target.outDir, info)
                     }
                 }
             })
