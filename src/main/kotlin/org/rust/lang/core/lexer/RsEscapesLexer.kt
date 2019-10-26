@@ -6,6 +6,8 @@
 package org.rust.lang.core.lexer
 
 import com.intellij.ext.lexer.LexerBaseEx
+import com.intellij.ext.lexer.esc
+import com.intellij.ext.lexer.isWhitespaceChar
 import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
@@ -84,7 +86,7 @@ class RsEscapesLexer private constructor(
                     }
                 '\r', '\n' -> {
                     var j = i
-                    while (j < bufferEnd && bufferSequence[j].isRustWhitespaceChar()) {
+                    while (j < bufferEnd && bufferSequence[j].isWhitespaceChar()) {
                         j++
                     }
                     return j
@@ -96,9 +98,6 @@ class RsEscapesLexer private constructor(
             return if (idx != -1) idx else bufferEnd
         }
     }
-
-    private fun esc(test: Boolean): IElementType =
-        if (test) VALID_STRING_ESCAPE_TOKEN else INVALID_CHARACTER_ESCAPE_TOKEN
 
     private fun isValidByteEscape(start: Int, end: Int, extended: Boolean = false): Boolean =
         end - start == BYTE_ESCAPE_LENGTH &&
@@ -159,11 +158,5 @@ class RsEscapesLexer private constructor(
             STRING_LITERAL,
             BYTE_STRING_LITERAL
         )
-
     }
 }
-
-/**
- * Determines if the char is a Rust whitespace character.
- */
-private fun Char.isRustWhitespaceChar(): Boolean = equals(' ') || equals('\r') || equals('\n') || equals('\t')
