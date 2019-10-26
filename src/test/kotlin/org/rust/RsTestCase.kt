@@ -5,23 +5,8 @@
 
 package org.rust
 
-import org.rust.lang.RsFileType
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.intellij.ext.TestCase
 
-interface RsTestCase {
-
-    fun getTestDataPath(): String
-
-    companion object {
-        const val testResourcesPath = "src/test/resources"
-    }
+interface RsTestCase : TestCase {
+    override val testFileExtension: String get() = "rs"
 }
-
-
-fun RsTestCase.pathToSourceTestFile(name: String): Path =
-    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.rs")
-
-fun RsTestCase.pathToGoldTestFile(name: String): Path =
-    Paths.get("${RsTestCase.testResourcesPath}/${getTestDataPath()}/$name.txt")
-

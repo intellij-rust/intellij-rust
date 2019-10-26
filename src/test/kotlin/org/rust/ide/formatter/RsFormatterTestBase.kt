@@ -6,8 +6,8 @@
 package org.rust.ide.formatter
 
 import com.intellij.psi.formatter.FormatterTestCase
+import com.intellij.ext.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
 import kotlin.reflect.KMutableProperty0
 
 abstract class RsFormatterTestBase : FormatterTestCase() {
@@ -19,7 +19,7 @@ abstract class RsFormatterTestBase : FormatterTestCase() {
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RsTestBase.camelOrWordsToSnake(camelCase)
+        return TestCase.camelOrWordsToSnake(camelCase)
     }
 
     override fun doTextTest(@Language("Rust") text: String, @Language("Rust") textAfter: String) {
