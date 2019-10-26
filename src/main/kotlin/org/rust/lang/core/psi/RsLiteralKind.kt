@@ -7,7 +7,7 @@ package org.rust.lang.core.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
-import org.rust.lang.core.lexer.RustEscapesLexer
+import org.rust.lang.core.lexer.RsEscapesLexer
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.utils.unescapeRust
 
@@ -86,7 +86,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
             return if (node.elementType in RS_RAW_LITERALS)
                 rawValue
             else
-                rawValue?.unescapeRust(RustEscapesLexer.of(node.elementType))
+                rawValue?.unescapeRust(RsEscapesLexer.of(node.elementType))
         }
     }
 
@@ -100,7 +100,7 @@ sealed class RsLiteralKind(val node: ASTNode) {
 
         override val value: kotlin.String?
             get() = offsets.value?.substring(node.text)
-                ?.unescapeRust(RustEscapesLexer.of(node.elementType))
+                ?.unescapeRust(RsEscapesLexer.of(node.elementType))
     }
 
     companion object {

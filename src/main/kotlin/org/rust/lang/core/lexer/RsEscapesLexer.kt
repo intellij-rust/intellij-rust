@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.lexer
 
+import com.intellij.ext.lexer.LexerBaseEx
 import com.intellij.openapi.util.text.StringUtil.isHexDigit
 import com.intellij.psi.StringEscapesTokenTypes.*
 import com.intellij.psi.tree.IElementType
@@ -19,7 +20,7 @@ private const val UNICODE_ESCAPE_MAX_LENGTH = "\\u{000000}".length
 /**
  * Performs lexical analysis of Rust byte/char/string/byte string literals using Rust character escaping rules.
  */
-class RustEscapesLexer private constructor(
+class RsEscapesLexer private constructor(
     val defaultToken: IElementType,
     val unicode: Boolean = false,
     val eol: Boolean = false,
@@ -126,28 +127,28 @@ class RustEscapesLexer private constructor(
 
     companion object {
         /**
-         * Create an instance of [RustEscapesLexer] suitable for given [IElementType].
+         * Create an instance of [RsEscapesLexer] suitable for given [IElementType].
          *
          * For the set of supported token types see [ESCAPABLE_LITERALS_TOKEN_SET].
          *
          * @throws IllegalArgumentException when given token type is unsupported
          */
-        fun of(tokenType: IElementType): RustEscapesLexer = when (tokenType) {
-            BYTE_LITERAL -> RustEscapesLexer(BYTE_LITERAL, extendedByte = true)
-            CHAR_LITERAL -> RustEscapesLexer(CHAR_LITERAL, unicode = true)
-            BYTE_STRING_LITERAL -> RustEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
-            STRING_LITERAL -> RustEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
+        fun of(tokenType: IElementType): RsEscapesLexer = when (tokenType) {
+            BYTE_LITERAL -> RsEscapesLexer(BYTE_LITERAL, extendedByte = true)
+            CHAR_LITERAL -> RsEscapesLexer(CHAR_LITERAL, unicode = true)
+            BYTE_STRING_LITERAL -> RsEscapesLexer(BYTE_STRING_LITERAL, eol = true, extendedByte = true)
+            STRING_LITERAL -> RsEscapesLexer(STRING_LITERAL, unicode = true, eol = true)
             else -> throw IllegalArgumentException("unsupported literal type: $tokenType")
         }
 
         /**
-         * Create an instance of [RustEscapesLexer] suitable for situations
+         * Create an instance of [RsEscapesLexer] suitable for situations
          * when there is no need to care about token types.
          *
-         * There are no constraints on the value of [RustEscapesLexer.defaultToken] in dummy instances.
+         * There are no constraints on the value of [RsEscapesLexer.defaultToken] in dummy instances.
          */
-        fun dummy(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): RustEscapesLexer =
-            RustEscapesLexer(STRING_LITERAL, unicode, eol, extendedByte)
+        fun dummy(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): RsEscapesLexer =
+            RsEscapesLexer(STRING_LITERAL, unicode, eol, extendedByte)
 
         /**
          * Set of possible arguments for [of]

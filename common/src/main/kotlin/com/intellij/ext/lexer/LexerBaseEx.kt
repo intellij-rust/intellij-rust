@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.lexer
+package com.intellij.ext.lexer
 
 import com.intellij.lexer.LexerBase
 import com.intellij.psi.tree.IElementType

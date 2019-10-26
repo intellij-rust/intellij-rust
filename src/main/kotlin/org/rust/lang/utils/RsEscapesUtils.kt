@@ -6,19 +6,19 @@
 package org.rust.lang.utils
 
 import com.intellij.psi.StringEscapesTokenTypes.*
-import org.rust.lang.core.lexer.RustEscapesLexer
+import org.rust.lang.core.lexer.RsEscapesLexer
 import org.rust.lang.core.lexer.tokenize
 
 /**
  * Unescape string escaped using Rust escaping rules.
  */
 fun String.unescapeRust(unicode: Boolean = true, eol: Boolean = true, extendedByte: Boolean = true): String =
-    this.unescapeRust(RustEscapesLexer.dummy(unicode, eol, extendedByte))
+    this.unescapeRust(RsEscapesLexer.dummy(unicode, eol, extendedByte))
 
 /**
  * Unescape string escaped using Rust escaping rules.
  */
-fun String.unescapeRust(escapesLexer: RustEscapesLexer): String =
+fun String.unescapeRust(escapesLexer: RsEscapesLexer): String =
     this.tokenize(escapesLexer)
         .joinToString(separator = "") {
             val (type, text) = it
@@ -46,7 +46,7 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder): Pair<IntA
 private fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffsets: IntArray): Boolean {
     val outOffset = outChars.length
     var index = 0
-    for ((type, text) in chars.tokenize(RustEscapesLexer.dummy())) {
+    for ((type, text) in chars.tokenize(RsEscapesLexer.dummy())) {
         // Set offset for the decoded character to the beginning of the escape sequence.
         sourceOffsets[outChars.length - outOffset] = index
         sourceOffsets[outChars.length - outOffset + 1] = index + 1
