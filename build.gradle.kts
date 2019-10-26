@@ -429,7 +429,7 @@ project(":intellij-toml") {
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
-        targetDir = "src/gen/org/toml/lang/parse"
+        targetDir = "src/gen/org/toml/lang/lexer"
         targetClass = "_TomlLexer"
         purgeOldFiles = true
     }
