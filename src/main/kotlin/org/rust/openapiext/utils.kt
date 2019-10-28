@@ -304,3 +304,13 @@ val DataContext.elementUnderCaretInEditor: PsiElement?
 
         return psiFile.findElementAt(editor.caretModel.offset)
     }
+
+fun runWithEnabledFeature(featureId: String, action: () -> Unit) {
+    val currentValue = isFeatureEnabled(featureId)
+    setFeatureEnabled(featureId, true)
+    try {
+        action()
+    } finally {
+        setFeatureEnabled(featureId, currentValue)
+    }
+}

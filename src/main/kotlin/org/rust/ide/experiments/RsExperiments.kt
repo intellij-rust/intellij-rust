@@ -8,4 +8,5 @@ package org.rust.ide.experiments
 object RsExperiments {
     const val BUILD_TOOL_WINDOW = "org.rust.cargo.build.tool.window"
     const val CFG_ATTRIBUTES_SUPPORT = "org.rust.lang.cfg.attributes"
+    const val FETCH_OUT_DIR = "org.rust.cargo.fetch.out.dir"
 }

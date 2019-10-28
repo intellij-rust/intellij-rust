@@ -34,6 +34,7 @@ import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
+import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
@@ -129,8 +130,9 @@ class Cargo(private val cargoExecutable: Path) {
         projectDirectory: Path,
         listener: ProcessListener?
     ): CargoBuildPlan? {
+        if (!isFeatureEnabled(RsExperiments.FETCH_OUT_DIR)) return null
         val additionalArgs = mutableListOf("-Z", "unstable-options", "--all-targets", "--build-plan")
-        // Hack to make cargo think that current channel is nightly because we need unstable `--build-plan` option here
+        // Hack to make cargo think that unstable options are available because we need unstable `--build-plan` option here
         val envs = EnvironmentVariablesData.create(mapOf(
             RUSTC_BOOTSTRAP to "1"
         ), true)
