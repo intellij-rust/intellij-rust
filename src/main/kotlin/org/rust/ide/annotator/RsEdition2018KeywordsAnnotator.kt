@@ -8,6 +8,7 @@ package org.rust.ide.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
@@ -15,6 +16,7 @@ import org.rust.lang.core.psi.ext.*
 class RsEdition2018KeywordsAnnotator : RsAnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (!isEdition2018Keyword(element)) return
+        if (!element.isEnabledByCfg) return
 
         val isEdition2018 = element.isEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
