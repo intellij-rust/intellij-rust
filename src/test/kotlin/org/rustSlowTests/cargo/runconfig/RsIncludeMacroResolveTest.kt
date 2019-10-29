@@ -6,12 +6,14 @@
 package org.rustSlowTests.cargo.runconfig
 
 import org.rust.MinRustcVersion
+import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath
+import org.rust.openapiext.runWithEnabledFeature
 
 @MinRustcVersion("1.32.0")
 class RsIncludeMacroResolveTest : RunConfigurationTestBase() {
 
-    fun `test include in workspace project`() {
+    fun `test include in workspace project`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """
                 [package]
@@ -55,7 +57,7 @@ class RsIncludeMacroResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    fun `test include in dependency`() {
+    fun `test include in dependency`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """
                 [package]
@@ -80,4 +82,7 @@ class RsIncludeMacroResolveTest : RunConfigurationTestBase() {
             testProject.findElementInFile<RsPath>("src/lib.rs").reference.resolve() != null
         }
     }
+
+    private fun withEnabledFetchOutDirFeature(action: () -> Unit) =
+        runWithEnabledFeature(RsExperiments.FETCH_OUT_DIR, action)
 }
