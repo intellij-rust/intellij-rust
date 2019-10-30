@@ -5,6 +5,7 @@
 
 package org.rust.openapiext
 
+import com.intellij.util.ExceptionUtil
 import junit.framework.TestCase.fail
 import org.jetbrains.annotations.TestOnly
 
@@ -50,18 +51,21 @@ import org.jetbrains.annotations.TestOnly
  * not in "test" code, it's useless, but we can't
  * provide a runtime assertion for this case.
  */
-class Testmark(val name: String) {
+class Testmark(val name: String): TestmarkPred {
     @Volatile
     private var state = TestmarkState.NEW
+    @Volatile
+    private var hitAt: Throwable? = null
 
     fun hit() {
         if (state == TestmarkState.NOT_HIT) {
             state = TestmarkState.HIT
+            hitAt = Throwable()
         }
     }
 
     @TestOnly
-    fun <T> checkHit(f: () -> T): T = checkHit(TestmarkState.HIT, f)
+    override fun <T> checkHit(f: () -> T): T = checkHit(TestmarkState.HIT, f)
 
     @TestOnly
     fun <T> checkNotHit(f: () -> T): T = checkHit(TestmarkState.NOT_HIT, f)
@@ -73,7 +77,13 @@ class Testmark(val name: String) {
             state = TestmarkState.NOT_HIT
             val result = f()
             if (state != expected) {
-                fail("Testmark `$name` ${if (expected == TestmarkState.HIT) "not " else ""}hit")
+                if (expected == TestmarkState.HIT) {
+                    fail("Testmark `$name` not hit")
+                } else {
+                    val attachment = ExceptionUtil.getThrowableText(hitAt!!)
+                    fail("Testmark `$name` hit at $attachment;")
+                }
+
             }
             return result
         } finally {
@@ -87,4 +97,14 @@ class Testmark(val name: String) {
 fun Testmark.hitOnFalse(b: Boolean): Boolean {
     if (!b) hit()
     return b
+}
+
+interface TestmarkPred {
+    @TestOnly
+    fun <T> checkHit(f: () -> T): T
+}
+
+@TestOnly
+operator fun Testmark.not(): TestmarkPred = object : TestmarkPred {
+    override fun <T> checkHit(f: () -> T): T = checkNotHit(f)
 }
