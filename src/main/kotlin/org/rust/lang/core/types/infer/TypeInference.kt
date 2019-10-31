@@ -40,7 +40,7 @@ sealed class Adjustment(open val target: Ty) {
         val mutability: Mutability? = (target as? TyReference)?.mutability
     ) : Adjustment(target)
 
-    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
+//    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
 }
 
 interface RsInferenceData {
@@ -176,7 +176,7 @@ class RsInferenceContext(
                     enum?.reprType to element.expr
                 }
                 is RsExpressionCodeFragment -> {
-                    element.context?.inference?.let {
+                    element.context.inference?.let {
                         patTypes.putAll(it.patTypes)
                         patFieldTypes.putAll(it.patFieldTypes)
                         exprTypes.putAll(it.exprTypes)

@@ -72,7 +72,7 @@ class RsHighlightingMutableAnnotator : RsAnnotatorBase() {
     }
 }
 
-val RsElement.isMut: Boolean
+private val RsElement.isMut: Boolean
     get() = when (this) {
         is RsPatBinding -> mutability.isMut || type.let { it is TyReference && it.mutability.isMut }
         is RsSelfParameter -> mutability.isMut
