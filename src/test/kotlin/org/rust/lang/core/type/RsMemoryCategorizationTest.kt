@@ -246,4 +246,20 @@ class RsMemoryCategorizationTest : RsTestBase() {
                  //^ Index, Inherited
         }
     """)
+
+    fun `test overloadable operator with borrow adjustment`() = testExpr("""
+        fn main() {
+            let mut x = 0;
+            x += 1;
+          //^ Rvalue, Declared
+        }
+    """)
+
+    fun `test overloadable operator with inconsistent borrow adjustment`() = testExpr("""
+        fn main() {
+            let x = 0;
+            x += 1;
+          //^ Local, Immutable
+        }
+    """)
 }

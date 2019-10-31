@@ -216,9 +216,15 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
                 // TODO: overloaded deref
                 processDeref(expr, processExprAdjustedWith(expr, adjustments))
             }
-            is Adjustment.BorrowReference, is Adjustment.BorrowPointer -> {
+            is Adjustment.BorrowReference -> {
                 val target = adjustment.target
-                processRvalue(expr, target)
+                val unadjustedCmt = processExprUnadjusted(expr)
+                if (target.mutability.isMut && !unadjustedCmt.isMutable) {
+                    // ignore inconsistent adjustment
+                    processExprUnadjusted(expr)
+                } else {
+                    processRvalue(expr, target)
+                }
             }
             else -> processExprUnadjusted(expr)
         }

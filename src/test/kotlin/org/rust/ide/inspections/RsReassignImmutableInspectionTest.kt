@@ -130,4 +130,18 @@ class RsReassignImmutableInspectionTest : RsInspectionsTestBase(RsReassignImmuta
             <error>test<caret> = &mut b</error>;
         }
     """)
+
+    fun `test E0384 augmented reassign mutable`() = checkByText("""
+        fn main() {
+            let mut a = 0;
+            a += 1;
+        }
+    """)
+
+    fun `test E0384 augmented reassign immutable`() = checkByText("""
+        fn main() {
+            let a = 0;
+            <error>a += 1</error>;
+        }
+    """)
 }

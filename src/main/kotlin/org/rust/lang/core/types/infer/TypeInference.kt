@@ -32,10 +32,10 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
         ?: error("Can not run nested type inference")
 }
 
-sealed class Adjustment(val target: Ty) {
+sealed class Adjustment(open val target: Ty) {
     class Deref(target: Ty) : Adjustment(target)
     class BorrowReference(
-        target: Ty,
+        override val target: TyReference,
         val region: Region? = (target as? TyReference)?.region,
         val mutability: Mutability? = (target as? TyReference)?.mutability
     ) : Adjustment(target)
