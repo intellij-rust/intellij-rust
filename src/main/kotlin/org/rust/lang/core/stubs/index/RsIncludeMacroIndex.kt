@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.stubs.index
 
+import com.intellij.openapi.util.Computable
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
@@ -17,6 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroCallStub
+import org.rust.openapiext.recursionGuard
 
 class RsIncludeMacroIndex : StringStubIndexExtension<RsMacroCall>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -45,20 +47,22 @@ class RsIncludeMacroIndex : StringStubIndexExtension<RsMacroCall>() {
         }
 
         private fun getIncludingModInternal(file: RsFile): RsMod? {
-            val key = file.name
-            val project = file.project
+            return recursionGuard(file, Computable {
+                val key = file.name
+                val project = file.project
 
-            var parentMod: RsMod? = null
-            StubIndex.getInstance().processElements(KEY, key, project, GlobalSearchScope.allScope(project), RsMacroCall::class.java) { macroCall ->
-                val includingFile = macroCall.findIncludingFile()
-                if (includingFile == file) {
-                    parentMod = macroCall.containingMod
-                    false
-                } else {
-                    true
+                var parentMod: RsMod? = null
+                StubIndex.getInstance().processElements(KEY, key, project, GlobalSearchScope.allScope(project), RsMacroCall::class.java) { macroCall ->
+                    val includingFile = macroCall.findIncludingFile()
+                    if (includingFile == file) {
+                        parentMod = macroCall.containingMod
+                        false
+                    } else {
+                        true
+                    }
                 }
-            }
-            return parentMod
+                parentMod
+            })
         }
 
         private fun key(call: RsMacroCall): String? {
