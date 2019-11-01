@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.lexer
+package org.toml.lang.lexer
 
 import com.intellij.ext.lexer.LexerTestCaseBase
-import org.rust.RsTestCase
+import org.toml.TomlTestCase
 
-abstract class RsLexingTestCaseBase : LexerTestCaseBase(), RsTestCase
+abstract class TomlLexerTestBase : LexerTestCaseBase(), TomlTestCase

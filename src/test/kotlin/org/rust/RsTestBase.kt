@@ -23,6 +23,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
+import com.intellij.ext.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
@@ -52,7 +53,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     open val dataPath: String = ""
 
-    override fun getTestDataPath(): String = "${RsTestCase.testResourcesPath}/$dataPath"
+    override fun getTestDataPath(): String = "${TestCase.testResourcesPath}/$dataPath"
 
     override fun setUp() {
         super.setUp()
@@ -165,7 +166,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         get() = "$testName.rs"
 
     private val testName: String
-        get() = camelOrWordsToSnake(getTestName(true))
+        get() = getTestName(true)
+
+    override fun getTestName(lowercaseFirstLetter: Boolean): String {
+        val camelCase = super.getTestName(lowercaseFirstLetter)
+        return TestCase.camelOrWordsToSnake(camelCase)
+    }
 
     protected fun checkByFile(ignoreTrailingWhitespace: Boolean = true, action: () -> Unit) {
         val (before, after) = (fileName to fileName.replace(".rs", "_after.rs"))
@@ -353,13 +359,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         // XXX: hides `Assert.fail`
         fun fail(message: String): Nothing {
             throw AssertionFailedError(message)
-        }
-
-        @JvmStatic
-        fun camelOrWordsToSnake(name: String): String {
-            if (' ' in name) return name.trim().replace(" ", "_")
-
-            return name.split("(?=[A-Z])".toRegex()).joinToString("_", transform = String::toLowerCase)
         }
 
         @JvmStatic

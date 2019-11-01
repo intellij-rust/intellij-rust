@@ -243,10 +243,12 @@ project(":") {
     val testOutput = configurations.create("testOutput")
 
     dependencies {
+        compile(project(":common"))
         compile("org.jetbrains:markdown:0.1.30") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
+        testCompile(project(":common", "testOutput"))
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
@@ -304,7 +306,9 @@ project(":idea") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -314,8 +318,10 @@ project(":clion") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         compile(project(":debugger"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -325,7 +331,9 @@ project(":debugger") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -339,7 +347,9 @@ project(":toml") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -353,7 +363,9 @@ project(":intelliLang") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -368,7 +380,9 @@ project(":copyright") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -380,7 +394,9 @@ project(":duplicates") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -391,7 +407,9 @@ project(":coverage") {
     }
     dependencies {
         compile(project(":"))
+        compile(project(":common"))
         testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
     }
 }
 
@@ -404,9 +422,14 @@ project(":intellij-toml") {
         }
     }
 
+    dependencies {
+        compile(project(":common"))
+        testCompile(project(":common", "testOutput"))
+    }
+
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
         source = "src/main/grammars/TomlLexer.flex"
-        targetDir = "src/gen/org/toml/lang/parse"
+        targetDir = "src/gen/org/toml/lang/lexer"
         targetClass = "_TomlLexer"
         purgeOldFiles = true
     }
@@ -427,6 +450,14 @@ project(":intellij-toml") {
             token(prop("publishToken"))
             channels(channel)
         }
+    }
+}
+
+project(":common") {
+    val testOutput = configurations.create("testOutput")
+
+    dependencies {
+        testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 }
 

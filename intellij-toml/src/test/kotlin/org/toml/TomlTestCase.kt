@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust
+package org.toml
 
 import com.intellij.ext.TestCase
 
-interface RsTestCase : TestCase {
-    override val testFileExtension: String get() = "rs"
+interface TomlTestCase : TestCase {
+    override val testFileExtension: String get() = "toml"
 }

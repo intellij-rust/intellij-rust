@@ -13,8 +13,8 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import com.intellij.testFramework.PlatformTestCase
+import com.intellij.ext.TestCase
 import org.jetbrains.annotations.NonNls
-import org.rust.RsTestBase
 import org.rust.RsTestCase
 import org.rust.ide.typing.RsBraceMatcher
 import org.rust.lang.RsLanguage
@@ -41,7 +41,7 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String) : ParsingTestCase
 
     override fun getTestName(lowercaseFirstLetter: Boolean): String {
         val camelCase = super.getTestName(lowercaseFirstLetter)
-        return RsTestBase.camelOrWordsToSnake(camelCase)
+        return TestCase.camelOrWordsToSnake(camelCase)
     }
 
     override fun checkResult(targetDataName: String, file: PsiFile) {
