@@ -34,7 +34,7 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 |------------------------|---|---|---|
 | Language support       | + | + | + |
 | Cargo support          | + | + | + |
-| Code coverage          | + | - | + |
+| Code coverage          | + | + | + |
 | Debugger               | - | + | - |
 | Profiler               | - | + | - |
 | Valgrind Memcheck      | - | + | - |
