@@ -32,12 +32,13 @@ val baseVersion = when (baseIDE) {
 val psiViewerPluginVersion = prop("psiViewerPluginVersion")
 
 val isAtLeast192 = platformVersion.toInt() >= 192
+val isAtLeast193 = platformVersion.toInt() >= 193
 
 plugins {
     idea
     kotlin("jvm") version "1.3.50"
-    id("org.jetbrains.intellij") version "0.4.10"
-    id("org.jetbrains.grammarkit") version "2019.2"
+    id("org.jetbrains.intellij") version "0.4.11"
+    id("org.jetbrains.grammarkit") version "2019.3"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
 }
@@ -88,8 +89,8 @@ allprojects {
     }
 
     grammarKit {
-        if (platformVersion == "193") {
-            grammarKitRelease = "07f30a1e76"
+        if (!isAtLeast193) {
+            grammarKitRelease = "2019.1"
         }
     }
 
@@ -402,8 +403,12 @@ project(":duplicates") {
 
 project(":coverage") {
     intellij {
-        version = ideaVersion
-        setPlugins("coverage")
+        if (!isAtLeast193) {
+            version = ideaVersion
+        }
+        if (baseIDE == "idea") {
+            setPlugins("coverage")
+        }
     }
     dependencies {
         compile(project(":"))
