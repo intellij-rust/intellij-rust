@@ -5,6 +5,7 @@
 
 package org.rust
 
+import com.intellij.TestCase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -23,7 +24,6 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
-import com.intellij.ext.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
