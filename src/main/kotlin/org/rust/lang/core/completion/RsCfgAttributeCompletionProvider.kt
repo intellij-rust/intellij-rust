@@ -13,7 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
@@ -93,7 +93,7 @@ object RsCfgAttributeCompletionProvider : CompletionProvider<CompletionParameter
                         .withParent(cfgAttr)
                 )
 
-            return PlatformPatterns.psiElement()
+            return psiElement()
                 .withLanguage(RsLanguage)
                 .inside(cfgOption)
         }

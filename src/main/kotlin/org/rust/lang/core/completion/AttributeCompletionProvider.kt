@@ -12,7 +12,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PlatformPatterns
+import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.ide.icons.RsIcons
@@ -77,13 +77,18 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         result.addAllElements(suggestions)
     }
 
-    val elementPattern: ElementPattern<PsiElement> get() {
-        val outerAttrElem = psiElement<RsOuterAttr>()
-        val innerAttrElem = psiElement<RsInnerAttr>()
-        val metaItemElem = psiElement<RsMetaItem>()
-            .and(PlatformPatterns.psiElement().withParent(outerAttrElem) or PlatformPatterns.psiElement().withParent(innerAttrElem))
-        return PlatformPatterns.psiElement().withParent(metaItemElem).withLanguage(RsLanguage)
-    }
+    val elementPattern: ElementPattern<PsiElement>
+        get() {
+            val outerAttrElem = psiElement<RsOuterAttr>()
+            val innerAttrElem = psiElement<RsInnerAttr>()
+            val metaItemElem = psiElement<RsMetaItem>().and(
+                psiElement().withParent(outerAttrElem) or psiElement().withParent(innerAttrElem)
+            )
+
+            return psiElement()
+                .withLanguage(RsLanguage)
+                .withParent(metaItemElem)
+        }
 
     private fun createLookupElement(name: String): LookupElement =
         if (name.endsWith("()")) {
