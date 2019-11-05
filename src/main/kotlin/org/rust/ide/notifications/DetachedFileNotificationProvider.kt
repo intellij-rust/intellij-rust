@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotificationPanel
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.RUST_STRUCTURE_CHANGE_TOPIC
 import org.rust.lang.core.psi.RustStructureChangeListener
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.lang.core.psi.rustFile
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.toPsiFile
 
 class DetachedFileNotificationProvider(project: Project) : RsNotificationProvider(project) {

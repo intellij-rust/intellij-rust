@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.util.TextRange
@@ -19,7 +20,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
-class RsSyntaxErrorsAnnotator : RsAnnotatorBase() {
+class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
             is RsFunction -> checkFunction(holder, element)

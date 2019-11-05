@@ -11,13 +11,13 @@ import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.openapiext.Testmark
 
 class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTypeParamIntention.Context>() {
     override fun getText(): String = "Convert `impl Trait` to type parameter"

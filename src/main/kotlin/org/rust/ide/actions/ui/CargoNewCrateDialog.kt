@@ -10,11 +10,11 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.components.JBTextField
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.newProject.RsPackageNameValidator
 import org.rust.ide.ui.layout
-import org.rust.openapiext.isUnitTestMode
 import javax.swing.JComponent
 
 data class CargoNewCrateSettings(val binary: Boolean, val crateName: String)

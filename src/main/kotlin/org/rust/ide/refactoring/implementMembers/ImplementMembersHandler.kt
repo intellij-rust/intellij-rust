@@ -8,11 +8,11 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.lang.LanguageCodeInsightActionHandler
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.openapiext.Testmark
 
 class ImplementMembersHandler : LanguageCodeInsightActionHandler {
     override fun isValidFor(editor: Editor, file: PsiFile): Boolean {

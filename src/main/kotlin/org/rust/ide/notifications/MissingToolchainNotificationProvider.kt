@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -23,7 +24,6 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.lang.core.psi.isNotRustFile
-import org.rust.openapiext.isUnitTestMode
 
 /**
  * Warn user if rust toolchain or standard library is not properly configured.

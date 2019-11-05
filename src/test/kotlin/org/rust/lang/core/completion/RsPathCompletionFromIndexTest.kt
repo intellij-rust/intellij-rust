@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
-import org.rust.openapiext.Testmark
 
 class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
 

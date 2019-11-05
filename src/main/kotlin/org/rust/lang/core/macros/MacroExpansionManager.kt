@@ -21,6 +21,9 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.*
+import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.isHeadlessEnvironment
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager

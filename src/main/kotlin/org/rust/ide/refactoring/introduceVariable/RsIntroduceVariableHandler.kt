@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.introduceVariable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.RefactoringActionHandler
@@ -16,7 +17,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.refactoring.findCandidateExpressionsToExtract
 import org.rust.ide.refactoring.showExpressionChooser
 import org.rust.lang.core.psi.RsFile
-import org.rust.openapiext.Testmark
 
 class RsIntroduceVariableHandler : RefactoringActionHandler {
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext) {

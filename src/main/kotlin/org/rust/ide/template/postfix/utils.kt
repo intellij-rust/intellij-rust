@@ -8,6 +8,7 @@ package org.rust.ide.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.openapi.editor.Document
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.rust.lang.core.psi.RsBlock
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.negate
-import org.rust.openapiext.isUnitTestMode
 
 internal object RsPostfixTemplatePsiInfo : PostfixTemplatePsiInfo() {
     override fun getNegatedExpression(element: PsiElement): PsiElement =

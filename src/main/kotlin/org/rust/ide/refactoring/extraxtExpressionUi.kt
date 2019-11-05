@@ -8,6 +8,7 @@ package org.rust.ide.refactoring
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.refactoring.IntroduceTargetChooser
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
@@ -15,7 +16,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
-import org.rust.openapiext.isUnitTestMode
 
 
 fun showExpressionChooser(

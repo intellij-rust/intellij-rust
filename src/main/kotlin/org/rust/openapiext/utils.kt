@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -149,9 +150,6 @@ class CachedVirtualFile(private val url: String?) {
         return file
     }
 }
-
-val isUnitTestMode: Boolean get() = ApplicationManager.getApplication().isUnitTestMode
-val isHeadlessEnvironment: Boolean get() = ApplicationManager.getApplication().isHeadlessEnvironment
 
 fun saveAllDocuments() = FileDocumentManager.getInstance().saveAllDocuments()
 

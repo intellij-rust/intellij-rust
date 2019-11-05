@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.io.delete
@@ -26,7 +27,6 @@ import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks.stubBasedRe
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.psi.ext.expansion
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.pathAsPath
 

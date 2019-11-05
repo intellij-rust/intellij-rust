@@ -5,10 +5,10 @@
 
 package org.rust.ide.inspections.import
 
+import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
-import org.rust.openapiext.Testmark
 
 abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
 

@@ -7,13 +7,12 @@ package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.Testmark
 
 abstract class RsAnnotationTestBase : RsTestBase() {
 

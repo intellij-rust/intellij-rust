@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.rust.ide.experiments.RsExperiments
@@ -12,7 +13,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.openapiext.isUnitTestMode
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
 

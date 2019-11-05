@@ -13,11 +13,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
+import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
 import org.rust.ide.icons.RsIcons
-import org.rust.openapiext.isHeadlessEnvironment
 import java.io.File
 import javax.swing.Icon
 

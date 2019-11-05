@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
 import org.rust.openapiext.*
 import java.io.File

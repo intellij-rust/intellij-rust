@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.PopupListElementRenderer
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.icons.RsIcons
-import org.rust.openapiext.isUnitTestMode
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*

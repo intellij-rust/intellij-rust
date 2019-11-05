@@ -7,6 +7,7 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.TestOnly
@@ -20,7 +21,6 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
 import org.rust.stdext.zipValues
 

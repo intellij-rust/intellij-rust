@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator
 
-abstract class RsAnnotatorTestBase(private val annotatorClass: Class<out RsAnnotatorBase>) : RsAnnotationTestBase() {
+import com.intellij.ide.annotator.AnnotatorBase
+
+abstract class RsAnnotatorTestBase(private val annotatorClass: Class<out AnnotatorBase>) : RsAnnotationTestBase() {
     override fun setUp() {
         super.setUp()
-        RsAnnotatorBase.enableAnnotator(annotatorClass, testRootDisposable)
+        AnnotatorBase.enableAnnotator(annotatorClass, testRootDisposable)
     }
 }
