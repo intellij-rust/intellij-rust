@@ -271,7 +271,7 @@ inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Bo
 private val InsertionContext.isInUseGroup: Boolean
     get() = getElementOfType<RsUseGroup>() != null
 
-private val InsertionContext.alreadyHasCallParens: Boolean
+val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
 
 private val InsertionContext.alreadyHasStructBraces: Boolean

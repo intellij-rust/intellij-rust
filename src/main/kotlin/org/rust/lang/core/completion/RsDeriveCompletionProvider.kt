@@ -86,7 +86,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
                 )
 
             return psiElement()
-                .inside(traitMetaItem)
                 .withLanguage(RsLanguage)
+                .inside(traitMetaItem)
         }
 }
