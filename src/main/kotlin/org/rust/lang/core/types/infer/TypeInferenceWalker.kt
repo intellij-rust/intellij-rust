@@ -199,32 +199,36 @@ class RsTypeInferenceWalker(
     }
 
     private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean {
-        val ok = tryCoerce(inferred, expected)
-        if (!ok) {
-            // ignoring possible false-positives (it's only basic experimental type checking)
-            val ignoredTys = listOf(
-                TyUnknown::class.java,
-                TyInfer.TyVar::class.java,
-                TyTypeParameter::class.java,
-                TyProjection::class.java,
-                TyTraitObject::class.java,
-                TyAnon::class.java
-            )
+        when (val result = tryCoerce(inferred, expected)) {
+            CoerceResult.Ok -> return true
 
-            if (!expected.containsTyOfClass(ignoredTys) && !inferred.containsTyOfClass(ignoredTys)) {
-                // another awful hack: check that inner expressions did not annotated as an error
-                // to disallow annotation intersections. This should be done in a different way
-                if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
-                    ctx.reportTypeMismatch(element, expected, inferred)
+            is CoerceResult.Mismatch -> {
+                // ignoring possible false-positives (it's only basic experimental type checking)
+                val ignoredTys = listOf(
+                    TyUnknown::class.java,
+                    TyInfer.TyVar::class.java,
+                    TyTypeParameter::class.java,
+                    TyProjection::class.java,
+                    TyTraitObject::class.java,
+                    TyAnon::class.java
+                )
+
+                if (result.ty1.javaClass !in ignoredTys && result.ty2.javaClass !in ignoredTys) {
+                    // another awful hack: check that inner expressions did not annotated as an error
+                    // to disallow annotation intersections. This should be done in a different way
+                    if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
+                        ctx.reportTypeMismatch(element, expected, inferred)
+                    }
                 }
+
+                return false
             }
         }
-        return ok
     }
 
-    private fun tryCoerce(inferred: Ty, expected: Ty): Boolean {
+    private fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
         return when {
-            inferred == TyNever -> true
+            inferred == TyNever -> CoerceResult.Ok
             // Coerce array to slice
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {
@@ -257,14 +261,14 @@ class RsTypeInferenceWalker(
      * Reborrows `&mut A` to `&mut B` and `&(mut) A` to `&B`.
      * To match `A` with `B`, autoderef will be performed
      */
-    private fun coerceReference(inferred: TyReference, expected: TyReference): Boolean {
+    private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
         for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
             // TODO proper handling of lifetimes
             val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
-            if (ctx.combineTypesIfOk(derefTyRef, expected)) return true
+            if (ctx.combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
         }
 
-        return false
+        return CoerceResult.Mismatch(inferred, expected)
     }
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
@@ -1082,7 +1086,7 @@ class RsTypeInferenceWalker(
                 val elementTypes = vecArg.exprList.map { it.inferType(expectedElemTy) }
                 val elementType = if (elementTypes.isNotEmpty()) getMoreCompleteType(elementTypes) else TyInfer.TyVar()
 
-                if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy)) {
+                if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
                     expectedElemTy
                 } else {
                     elementType
@@ -1213,7 +1217,7 @@ class RsTypeInferenceWalker(
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
-            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy)) {
+            val inferredTy = if (expectedElemTy != null && tryCoerce(elementType, expectedElemTy).isOk) {
                 expectedElemTy
             } else {
                 elementType

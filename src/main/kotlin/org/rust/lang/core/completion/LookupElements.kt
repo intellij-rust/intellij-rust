@@ -317,5 +317,5 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?
         }
     }
 
-    return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder))
+    return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder)).isOk
 }

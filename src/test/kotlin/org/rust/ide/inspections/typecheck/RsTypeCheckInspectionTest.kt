@@ -263,4 +263,13 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             })();
         }
     """)
+
+    fun `test type mismatch E0308 partially unknown type`() = checkByText("""
+        struct A<T>(T);
+        struct B<T>(T);
+
+        fn foo() -> A<i32> {
+            return <error>B(Unknown)</error>
+        }
+    """)
 }
