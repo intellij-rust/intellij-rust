@@ -352,4 +352,10 @@ class RsDeprecationInspectionTest : RsInspectionsTestBase(RsDeprecationInspectio
         }
     """)
 
+    fun `test no warning on Self inside deprecated trait`() = checkByText("""
+        #[deprecated()]
+        trait T {
+            fn new() -> Self;
+        }
+    """)
 }

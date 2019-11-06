@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.ProblemHighlightType.LIKE_DEPRECATED
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.rust.lang.core.psi.RsElementTypes.CSELF
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsModDeclItem
@@ -26,6 +27,9 @@ class RsDeprecationInspection : RsLintInspection() {
 
             val original = ref.reference?.resolve() ?: return
             val identifier = ref.referenceNameElement ?: return
+
+            // ignore `Self` identifier
+            if (identifier.elementType == CSELF) return
 
             val targetElement = when (original) {
                 is RsFile -> original.declaration
