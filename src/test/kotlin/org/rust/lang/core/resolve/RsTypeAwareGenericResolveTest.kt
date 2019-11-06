@@ -1042,4 +1042,20 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             let a: <&B as Bound>::Item;
         }                       //^
     """)
+
+    fun `test non-inherent impl with unresolved trait does not affect name resolution`() = checkByCode("""
+        struct S;
+        struct X; struct Y; struct Z;
+
+        trait Foo<T> { fn foo(_: T); }
+
+        impl Foo<X> for S { fn foo(_: X) {} }
+                             //X
+        impl Foo<Y> for S { fn foo(_: Y) {} }
+        impl Unknown<Z> for S { fn foo(_: Z) {} }
+        
+        fn main() {
+            S::foo(X);
+        }    //^
+    """)
 }

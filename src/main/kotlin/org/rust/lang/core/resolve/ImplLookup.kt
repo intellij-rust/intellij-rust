@@ -116,7 +116,7 @@ sealed class TraitImplSource {
     /** An impl block, directly defined in the code */
     data class ExplicitImpl(private val cachedImpl: RsCachedImplItem) : TraitImplSource() {
         override val value: RsImplItem get() = cachedImpl.impl
-        val isInherent: Boolean get() = cachedImpl.traitRef == null
+        val isInherent: Boolean get() = cachedImpl.isInherent
         override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
         override val implAndTraitExpandedMembers: List<RsAbstractable> get() = cachedImpl.implAndTraitExpandedMembers
         val type: Ty? get() = cachedImpl.typeAndGenerics?.first
@@ -373,7 +373,12 @@ class ImplLookup(
             val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
             // TODO: take into account the lifetimes (?)
             val formalSelfTy = type.substitute(subst)
-            cachedImpl.takeIf { ctx.canCombineTypes(formalSelfTy, selfTy) }
+            cachedImpl.takeIf {
+                ctx.canCombineTypes(formalSelfTy, selfTy) &&
+                    // Check that trait resolved if it's not inherent impl; checking it after types because
+                    // we assume that unresolved trait is a rare case
+                    (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
+            }
         }
     }
 

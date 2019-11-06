@@ -30,8 +30,9 @@ import kotlin.LazyThreadSafetyMode.PUBLICATION
 class RsCachedImplItem(
     val impl: RsImplItem
 ) {
-    val traitRef: RsTraitRef? = impl.traitRef
+    private val traitRef: RsTraitRef? = impl.traitRef
     val isValid: Boolean = impl.isValidProjectMember
+    val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }
     val typeAndGenerics: Pair<Ty, List<TyTypeParameter>>? by lazy(PUBLICATION) {
