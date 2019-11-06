@@ -45,12 +45,12 @@ class RsParameterInfoHandlerTest
     fun `test fn many args`() = checkByText("""
         fn foo(id: u32, name: &'static str, mut year: &u16) {}
         fn main() { foo(<caret>); }
-    """, "id: u32, name: &'static str, mut year: &u16", 0)
+    """, "id: u32, name: &'static str, year: &u16", 0)
 
     fun `test fn poorly formatted args`() = checkByText("""
         fn foo(  id   :   u32   , name: &'static str   , mut year   : &u16   ) {}
         fn main() { foo(<caret>); }
-    """, "id: u32, name: &'static str, mut year: &u16", 0)
+    """, "id: u32, name: &'static str, year: &u16", 0)
 
     fun `test fn arg index0`() = checkByText("""
         fn foo(a1: u32, a2: u32) {}
