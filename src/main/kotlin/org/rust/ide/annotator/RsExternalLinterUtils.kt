@@ -216,11 +216,9 @@ private data class RsExternalLinterFilteredMessage(
                 else -> HighlightSeverity.INFORMATION
             }
 
-            val span = message.spans
-                .firstOrNull { it.is_primary && it.isValid() }
-                // Some error messages are global, and we *could* show then atop of the editor,
-                // but they look rather ugly, so just skip them.
-                ?: return null
+            // Some error messages are global, and we *could* show then atop of the editor,
+            // but they look rather ugly, so just skip them.
+            val span = message.mainSpan ?: return null
 
             val syntaxErrors = listOf("expected pattern", "unexpected token")
             if (syntaxErrors.any { it in span.label.orEmpty() || it in message.message }) {

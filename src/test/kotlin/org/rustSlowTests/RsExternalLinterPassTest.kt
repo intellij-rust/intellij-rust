@@ -33,6 +33,16 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     """)
 
+    @MinRustcVersion("1.32.0")
+    fun `test highlights errors from macro`() = doTest("""
+        fn main() {
+            let mut x = 42;
+            let r = &mut x;
+            dbg!(x);
+            dbg!(<error descr="${RsExternalLinterUtils.TEST_MESSAGE}">r</error>);
+        }
+    """)
+
     fun `test highlights errors in tests`() = doTest("""
         fn main() {}
 
