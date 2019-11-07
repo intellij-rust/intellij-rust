@@ -513,7 +513,7 @@ class ImplLookup(
                         ?.let { add(SelectionCandidate.TraitObject) }
                 }
                 getHardcodedImpls(ref.selfTy).filter { be ->
-                    be.element == element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)) }
+                    be.element == element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
                 }.forEach { add(SelectionCandidate.HardcodedImpl) }
             }
         }
@@ -605,7 +605,7 @@ class ImplLookup(
             }
             is SelectionCandidate.HardcodedImpl -> {
                 val impl = getHardcodedImpls(ref.selfTy).first { be ->
-                    be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)) }
+                    be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
                 }
                 ctx.combineBoundElements(impl, ref.trait)
                 Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())

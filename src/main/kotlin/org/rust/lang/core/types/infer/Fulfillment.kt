@@ -210,7 +210,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
                     pendingObligation.stalledOn = traitRefTypeVars(predicate.projectionTy.traitRef)
                     ProcessPredicateResult.NoChanges
                 } else {
-                    if (ctx.combineTypes(predicate.ty, result.value)) {
+                    if (ctx.combineTypes(predicate.ty, result.value).isOk) {
                         ProcessPredicateResult.Ok((result.obligations).map { PendingPredicateObligation(it) })
                     } else {
                         ProcessPredicateResult.Err
