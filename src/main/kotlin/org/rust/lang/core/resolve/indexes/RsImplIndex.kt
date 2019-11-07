@@ -6,7 +6,6 @@
 package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.AbstractStubIndex
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
@@ -48,7 +47,8 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
 
         /** return impls for generic type `impl<T> Trait for T {}` */
         fun findFreeImpls(project: Project): Sequence<RsCachedImplItem> {
-            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, GlobalSearchScope.allScope(project))
+            project.macroExpansionManager.ensureUpToDate()
+            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
             // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
             return freeImpls.asSequence()
                 .map { RsCachedImplItem.forImpl(project, it) }
