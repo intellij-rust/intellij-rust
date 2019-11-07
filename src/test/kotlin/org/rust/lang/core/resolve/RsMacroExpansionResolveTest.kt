@@ -505,4 +505,18 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             let a = 2;
         }
     """)
+
+    fun `test resolve generic impl from impl trait`() = checkByCode("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { $($ t)* };
+        }
+        trait Foo {}
+        trait Bar { fn bar(&self) {} }
+                     //X
+        foo! { impl<T: Foo> Bar for T {} }
+        fn foo() -> impl Foo { unimplemented!() }
+        fn main() {
+            foo().bar();
+        }       //^
+    """)
 }
