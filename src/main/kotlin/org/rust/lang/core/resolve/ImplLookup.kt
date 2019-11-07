@@ -246,18 +246,17 @@ class ImplLookup(
             is TyTraitObject ->
                 ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
             is TyFunction -> {
-                implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
+                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
             }
             is TyAnon -> {
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
-                RsImplIndex.findFreeImpls(project)
-                    .mapTo(implsAndTraits) { TraitImplSource.ExplicitImpl(it) }
+                RsImplIndex.findFreeImpls(project) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
             }
             is TyUnknown -> Unit
             else -> {
                 implsAndTraits += findDerivedTraits(ty).map { TraitImplSource.Derived(it) }
-                implsAndTraits += findSimpleImpls(ty).map { TraitImplSource.ExplicitImpl(it) }
+                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
                 implsAndTraits += getHardcodedImpls(ty).map { TraitImplSource.Hardcoded(it.element) }.distinct()
             }
         }
@@ -367,18 +366,17 @@ class ImplLookup(
         return impls
     }
 
-    private fun findSimpleImpls(selfTy: Ty): Sequence<RsCachedImplItem> {
-        return RsImplIndex.findPotentialImpls(project, selfTy).mapNotNull { cachedImpl ->
-            val (type, generics) = cachedImpl.typeAndGenerics ?: return@mapNotNull null
+    private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
+        return RsImplIndex.findPotentialImpls(project, selfTy) { cachedImpl ->
+            val (type, generics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
             val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
             // TODO: take into account the lifetimes (?)
             val formalSelfTy = type.substitute(subst)
-            cachedImpl.takeIf {
-                ctx.canCombineTypes(formalSelfTy, selfTy) &&
-                    // Check that trait resolved if it's not inherent impl; checking it after types because
-                    // we assume that unresolved trait is a rare case
-                    (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
-            }
+            val isAppropriateImpl = ctx.canCombineTypes(formalSelfTy, selfTy) &&
+                // Check that trait is resolved if it's not an inherent impl; checking it after types because
+                // we assume that unresolved trait is a rare case
+                (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
+            isAppropriateImpl && processor(cachedImpl)
         }
     }
 
@@ -494,9 +492,10 @@ class ImplLookup(
             ref.selfTy is TyAnon -> buildList {
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { add(SelectionCandidate.TraitObject) }
-                RsImplIndex.findFreeImpls(project)
-                    .assembleImplCandidates(ref)
-                    .forEach(::add)
+                RsImplIndex.findFreeImpls(project) {
+                    it.trySelectCandidate(ref)?.let { add(it) }
+                    false
+                }
             }
             element.isAuto -> autoTraitCandidates(ref.selfTy, element)
             else -> buildList {
@@ -505,7 +504,7 @@ class ImplLookup(
                     .map { SelectionCandidate.TypeParameter(it) }
                     .forEach(::add)
                 if (ref.selfTy is TyTypeParameter) return@buildList
-                addAll(assembleImplCandidates(ref))
+                assembleImplCandidates(ref) { add(it); false }
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
                 if (ref.selfTy is TyTraitObject) {
@@ -519,22 +518,22 @@ class ImplLookup(
         }
     }
 
-    private fun assembleImplCandidates(ref: TraitRef): List<SelectionCandidate> {
-        return RsImplIndex.findPotentialImpls(project, ref.selfTy)
-            .assembleImplCandidates(ref)
-            .toList()
+    private fun assembleImplCandidates(ref: TraitRef, processor: RsProcessor<SelectionCandidate>): Boolean {
+        return RsImplIndex.findPotentialImpls(project, ref.selfTy) {
+            val candidate = it.trySelectCandidate(ref)
+            candidate != null && processor(candidate)
+        }
     }
 
-    private fun Sequence<RsCachedImplItem>.assembleImplCandidates(ref: TraitRef): Sequence<SelectionCandidate> =
-        mapNotNull { cachedImpl ->
-            val formalTraitRef = cachedImpl.implementedTrait ?: return@mapNotNull null
-            if (formalTraitRef.element != ref.trait.element) return@mapNotNull null
-            val (formalSelfTy, generics) = cachedImpl.typeAndGenerics ?: return@mapNotNull null
-            val (_, implTraitRef) =
-                prepareSubstAndTraitRefRaw(ctx, generics, formalSelfTy, formalTraitRef, ref.selfTy)
-            if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return@mapNotNull null
-            SelectionCandidate.Impl(cachedImpl.impl, formalSelfTy, formalTraitRef)
-        }
+    private fun RsCachedImplItem.trySelectCandidate(ref: TraitRef): SelectionCandidate? {
+        val formalTraitRef = implementedTrait ?: return null
+        if (formalTraitRef.element != ref.trait.element) return null
+        val (formalSelfTy, generics) = typeAndGenerics ?: return null
+        val (_, implTraitRef) =
+            prepareSubstAndTraitRefRaw(ctx, generics, formalSelfTy, formalTraitRef, ref.selfTy)
+        if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return null
+        return SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
+    }
 
     private fun assembleDerivedCandidates(ref: TraitRef): List<SelectionCandidate> {
         return (ref.selfTy as? TyAdt)?.item?.derivedTraits.orEmpty()
