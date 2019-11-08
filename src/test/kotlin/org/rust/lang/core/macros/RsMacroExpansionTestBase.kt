@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import junit.framework.ComparisonFailure
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.expandAllMacrosRecursively
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.openapiext.Testmark
 
 abstract class RsMacroExpansionTestBase : RsTestBase() {
     fun doTest(@Language("Rust") code: String, @Language("Rust") vararg expectedExpansions: Pair<String, Testmark?>) {

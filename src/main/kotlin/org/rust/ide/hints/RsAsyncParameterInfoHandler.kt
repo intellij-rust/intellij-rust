@@ -10,11 +10,11 @@ import com.intellij.lang.parameterInfo.ParameterInfoHandler
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.openapiext.isUnitTestMode
 import java.util.concurrent.Callable
 import java.util.concurrent.Executor
 

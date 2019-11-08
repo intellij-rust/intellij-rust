@@ -10,10 +10,10 @@ import com.intellij.codeInsight.generation.MemberChooserObject
 import com.intellij.codeInsight.generation.MemberChooserObjectBase
 import com.intellij.ide.util.MemberChooser
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.openapiext.isUnitTestMode
 
 private var MOCK: StructMemberChooserUi? = null
 

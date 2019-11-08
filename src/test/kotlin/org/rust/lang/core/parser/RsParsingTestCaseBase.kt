@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.parser
 
+import com.intellij.TestCase
 import com.intellij.lang.LanguageBraceMatching
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.psi.PsiElement
@@ -13,7 +14,6 @@ import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.ParsingTestCase
 import com.intellij.testFramework.PlatformTestCase
-import com.intellij.ext.TestCase
 import org.jetbrains.annotations.NonNls
 import org.rust.RsTestCase
 import org.rust.ide.typing.RsBraceMatcher

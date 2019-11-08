@@ -5,13 +5,13 @@
 
 package org.rust.lang.utils.evaluation
 
+import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.value
 import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
-import org.rust.openapiext.Testmark
-import org.rust.openapiext.isUnitTestMode
 
 // See https://doc.rust-lang.org/reference/conditional-compilation.html for more information
 

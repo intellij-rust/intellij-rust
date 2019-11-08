@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.utils.isEnabledByCfg
@@ -17,9 +19,8 @@ import org.rust.lang.core.types.ty.TyPointer
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
-import org.rust.openapiext.isUnitTestMode
 
-class RsUnsafeExpressionAnnotator : RsAnnotatorBase() {
+class RsUnsafeExpressionAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {

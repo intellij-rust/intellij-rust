@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -17,7 +18,6 @@ import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.openapiext.Testmark
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) =

@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
 import org.rust.cargo.project.model.cargoProjects
@@ -27,7 +28,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.cargoProjectRoot
-import org.rust.openapiext.isUnitTestMode
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 

@@ -5,13 +5,13 @@
 
 package org.rust.lang.core.resolve
 
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsWeakReferenceElement
 import org.rust.lang.core.resolve.ref.RsResolveCache.Testmarks
-import org.rust.openapiext.Testmark
 
 class RsResolveCacheTest : RsTestBase() {
     fun `test cache invalidated on rust structure change`() = checkResolvedToXY("""

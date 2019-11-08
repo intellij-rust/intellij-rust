@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.convertStruct
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.RefactoringDialog
@@ -15,7 +16,6 @@ import com.intellij.ui.components.JBCheckBox
 import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.openapiext.isHeadlessEnvironment
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent

@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.lexer
 
-import com.intellij.ext.lexer.LexerTestCaseBase
+import com.intellij.lang.lexer.LexerTestCaseBase
 import org.rust.RsTestCase
 
 abstract class RsLexingTestCaseBase : LexerTestCaseBase(), RsTestCase

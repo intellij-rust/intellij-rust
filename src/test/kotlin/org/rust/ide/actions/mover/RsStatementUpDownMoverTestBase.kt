@@ -6,9 +6,9 @@
 package org.rust.ide.actions.mover
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.openapiext.Testmark
 
 abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
     fun moveDown(

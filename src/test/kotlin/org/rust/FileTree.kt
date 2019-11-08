@@ -132,6 +132,15 @@ class FileTree(val rootDirectory: Entry.Directory) {
     }
 }
 
+fun FileTree.create(fixture: CodeInsightTestFixture): TestProject =
+    create(fixture.project, fixture.findFileInTempDir("."))
+
+fun FileTree.createAndOpenFileWithCaretMarker(fixture: CodeInsightTestFixture): TestProject {
+    val testProject = create(fixture)
+    fixture.configureFromTempProjectFile(testProject.fileWithCaret)
+    return testProject
+}
+
 class TestProject(
     private val project: Project,
     val root: VirtualFile,

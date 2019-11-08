@@ -5,7 +5,7 @@
 
 package org.rust
 
-import com.intellij.ext.TestCase
+import com.intellij.TestCase
 
 interface RsTestCase : TestCase {
     override val testFileExtension: String get() = "rs"

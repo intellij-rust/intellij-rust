@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
@@ -25,7 +26,6 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroStub
 import org.rust.openapiext.getElements
-import org.rust.openapiext.hitOnFalse
 
 class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
 

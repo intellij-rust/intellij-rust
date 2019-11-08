@@ -9,11 +9,11 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
-import org.rust.openapiext.Testmark
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {

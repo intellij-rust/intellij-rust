@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns
@@ -37,7 +38,6 @@ import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.openapiext.Testmark
 
 object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(

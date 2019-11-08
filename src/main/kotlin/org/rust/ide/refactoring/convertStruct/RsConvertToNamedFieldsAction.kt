@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.ui.RefactoringDialog
@@ -23,7 +24,6 @@ import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.openapiext.isHeadlessEnvironment
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints

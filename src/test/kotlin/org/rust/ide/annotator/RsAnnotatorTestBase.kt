@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator
 
-abstract class RsAnnotatorTestBase(private val annotatorClass: Class<out RsAnnotatorBase>) : RsAnnotationTestBase() {
-    override fun setUp() {
-        super.setUp()
-        RsAnnotatorBase.enableAnnotator(annotatorClass, testRootDisposable)
-    }
+import com.intellij.ide.annotator.AnnotatorBase
+import kotlin.reflect.KClass
+
+abstract class RsAnnotatorTestBase(private val annotatorClass: KClass<out AnnotatorBase>) : RsAnnotationTestBase() {
+
+    override fun createAnnotationFixture(): RsAnnotationTestFixture =
+        RsAnnotationTestFixture(myFixture, annotatorClasses = listOf(annotatorClass))
 }

@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class AddTurbofishFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class AddTurbofishFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     private val intention = "Add turbofish operator"
 
     fun `test trivial happy path`() = checkStatement(

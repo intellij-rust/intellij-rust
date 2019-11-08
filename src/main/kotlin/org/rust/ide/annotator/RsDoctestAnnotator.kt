@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.EditorColors
@@ -26,7 +27,7 @@ import org.rust.lang.core.psi.ext.containingCargoTarget
  * We have to do it this way because we want to highlight fully range inside ```backticks```
  * but a real injections is shifted by 1 character and empty lines are skipped.
  */
-class RsDoctestAnnotator : RsAnnotatorBase() {
+class RsDoctestAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (element !is RsDocCommentImpl) return
         if (!element.project.rustSettings.doctestInjectionEnabled) return

@@ -5,9 +5,11 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
@@ -15,10 +17,9 @@ import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
-import org.rust.openapiext.isUnitTestMode
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
-class RsHighlightingAnnotator : RsAnnotatorBase() {
+class RsHighlightingAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = when {

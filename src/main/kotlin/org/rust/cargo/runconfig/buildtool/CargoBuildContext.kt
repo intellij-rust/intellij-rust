@@ -13,11 +13,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.openapiext.isUnitTestMode
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit

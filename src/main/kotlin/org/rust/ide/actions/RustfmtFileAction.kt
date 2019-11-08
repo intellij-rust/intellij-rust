@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -20,7 +21,10 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Rustfmt
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.lang.core.psi.isRustFile
-import org.rust.openapiext.*
+import org.rust.openapiext.checkWriteAccessNotAllowed
+import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.runWriteCommandAction
+import org.rust.openapiext.virtualFile
 
 class RustfmtFileAction : DumbAwareAction() {
 

@@ -8,6 +8,8 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.rust.cargo.project.workspace.PackageOrigin.DEPENDENCY
@@ -20,9 +22,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.documentationAsHtml
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.escaped
-import org.rust.openapiext.hitOnFalse
 import org.rust.stdext.joinToWithBuffer
 
 class RsDocumentationProvider : AbstractDocumentationProvider() {

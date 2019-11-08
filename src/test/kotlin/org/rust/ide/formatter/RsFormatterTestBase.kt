@@ -5,8 +5,8 @@
 
 package org.rust.ide.formatter
 
+import com.intellij.TestCase
 import com.intellij.psi.formatter.FormatterTestCase
-import com.intellij.ext.TestCase
 import org.intellij.lang.annotations.Language
 import kotlin.reflect.KMutableProperty0
 

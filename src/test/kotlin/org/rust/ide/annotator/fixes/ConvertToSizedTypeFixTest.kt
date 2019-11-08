@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class ConvertToSizedTypeFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test convert function arg to reference`() = checkFixByText("Convert to reference", """
         fn foo(slice: <error>[u8]/*caret*/</error>) {}

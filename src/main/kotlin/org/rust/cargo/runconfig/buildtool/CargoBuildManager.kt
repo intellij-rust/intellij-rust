@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapiext.isHeadlessEnvironment
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.SystemNotifications
 import com.intellij.ui.content.MessageView
 import com.intellij.util.EnvironmentUtil
@@ -46,8 +48,6 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
-import org.rust.openapiext.isHeadlessEnvironment
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.saveAllDocuments
 import java.util.concurrent.Future
 

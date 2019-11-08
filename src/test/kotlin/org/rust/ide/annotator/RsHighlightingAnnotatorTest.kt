@@ -11,7 +11,7 @@ import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 
-class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class.java) {
+class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class) {
 
     override fun setUp() {
         super.setUp()

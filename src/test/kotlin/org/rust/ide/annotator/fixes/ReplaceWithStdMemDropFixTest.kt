@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class ReplaceWithStdMemDropFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test correct self type call expr`() = checkFixByText("Replace with `std::mem::drop`", """
         struct X;

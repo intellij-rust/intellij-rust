@@ -5,12 +5,12 @@
 
 package org.rust.lang.core.resolve.ref
 
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsReferenceElementBase
 import org.rust.lang.core.psi.ext.ancestors
-import org.rust.openapiext.Testmark
 
 class RsMacroBodyReferenceDelegateImpl(
     element: RsReferenceElementBase

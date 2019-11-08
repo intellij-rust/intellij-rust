@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.extractFunction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.refactoring.ui.MethodSignatureComponent
 import com.intellij.refactoring.ui.NameSuggestionsField
 import com.intellij.ui.components.dialog
@@ -17,7 +18,6 @@ import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
-import org.rust.openapiext.isUnitTestMode
 
 private var MOCK: ExtractFunctionUi? = null
 

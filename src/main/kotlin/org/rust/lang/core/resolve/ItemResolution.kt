@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
@@ -18,7 +19,6 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.recursionGuard
 import org.rust.stdext.intersects
 import java.util.*

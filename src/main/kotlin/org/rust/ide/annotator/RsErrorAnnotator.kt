@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
@@ -37,7 +38,7 @@ import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.ExprValue
 import org.rust.lang.utils.evaluation.RsConstExprEvaluator
 
-class RsErrorAnnotator : RsAnnotatorBase(), HighlightRangeExtension {
+class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
     override fun annotateInternal(element: PsiElement, rawHolder: AnnotationHolder) {

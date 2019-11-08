@@ -17,10 +17,10 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.HttpRequests
 import org.jdom.JDOMException
 import org.rust.lang.core.psi.isRustFile
-import org.rust.openapiext.isUnitTestMode
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
 import java.io.IOException

@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package com.intellij.ide.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
-import org.rust.openapiext.isUnitTestMode
 
-abstract class RsAnnotatorBase : Annotator {
+abstract class AnnotatorBase : Annotator {
 
     final override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         if (!isUnitTestMode || javaClass in enabledAnnotators) {
@@ -25,10 +25,10 @@ abstract class RsAnnotatorBase : Annotator {
     protected abstract fun annotateInternal(element: PsiElement, holder: AnnotationHolder)
 
     companion object {
-        private val enabledAnnotators: MutableSet<Class<out RsAnnotatorBase>> = ContainerUtil.newConcurrentSet()
+        private val enabledAnnotators: MutableSet<Class<out AnnotatorBase>> = ContainerUtil.newConcurrentSet()
 
         @TestOnly
-        fun enableAnnotator(annotatorClass: Class<out RsAnnotatorBase>, parentDisposable: Disposable) {
+        fun enableAnnotator(annotatorClass: Class<out AnnotatorBase>, parentDisposable: Disposable) {
             enabledAnnotators += annotatorClass
             Disposer.register(parentDisposable, Disposable { enabledAnnotators -= annotatorClass })
         }

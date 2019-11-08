@@ -6,6 +6,7 @@
 package org.rust.lang.core.type
 
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
@@ -18,7 +19,6 @@ import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.Severity
-import org.rust.openapiext.Testmark
 
 abstract class RsTypificationTestBase : RsTestBase() {
     protected fun testExpr(@Language("Rust") code: String, description: String = "", allowErrors: Boolean = false) {

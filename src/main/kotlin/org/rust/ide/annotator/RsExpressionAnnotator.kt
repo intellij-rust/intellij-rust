@@ -6,6 +6,7 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
@@ -18,7 +19,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.deepResolve
 import java.util.*
 
-class RsExpressionAnnotator : RsAnnotatorBase() {
+class RsExpressionAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val rsHolder = RsAnnotationHolder(holder)
         element.accept(RedundantParenthesisVisitor(rsHolder))

@@ -10,6 +10,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
@@ -23,7 +24,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocKind
-import org.rust.openapiext.Testmark
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.joinToWithBuffer
 import org.rust.stdext.mapNotNullToSet

@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class.java) {
+class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
     fun `test no injection 1`() = doTest("""
         |/// ``` ```
         |fn foo() {}

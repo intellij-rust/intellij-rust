@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class RemoveAttrFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class RemoveAttrFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test inline on struct`() = checkFixByText("Remove attribute `inline`", """
         #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
