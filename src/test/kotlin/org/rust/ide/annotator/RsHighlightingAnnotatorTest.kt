@@ -15,7 +15,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
 
     override fun setUp() {
         super.setUp()
-        registerSeverities(RsColor.values().map(RsColor::testSeverity))
+        annotationFixture.registerSeverities(RsColor.values().map(RsColor::testSeverity))
     }
 
     fun `test attributes`() = checkHighlighting("""

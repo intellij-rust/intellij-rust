@@ -10,7 +10,7 @@ import org.rust.ide.colors.RsColor
 class RsUnsafeExpressionErrorAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
     override fun setUp() {
         super.setUp()
-        registerSeverities(listOf(RsColor.UNSAFE_CODE.testSeverity))
+        annotationFixture.registerSeverities(listOf(RsColor.UNSAFE_CODE.testSeverity))
     }
 
     fun `test extern static requires unsafe`() = checkErrors("""
