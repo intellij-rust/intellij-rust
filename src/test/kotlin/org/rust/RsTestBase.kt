@@ -334,11 +334,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }
     }
 
-    protected fun applyQuickFix(name: String) {
-        val action = myFixture.findSingleIntention(name)
-        myFixture.launchAction(action)
-    }
-
     protected fun checkAstNotLoaded(fileFilter: VirtualFileFilter) {
         PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
@@ -384,16 +379,9 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }
     }
 
-    protected fun FileTree.create(): TestProject =
-        create(myFixture.project, myFixture.findFileInTempDir("."))
-
-    protected fun FileTree.createAndOpenFileWithCaretMarker(): TestProject {
-        val testProject = create()
-        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
-        return testProject
-    }
+    protected fun FileTree.create(): TestProject = create(myFixture)
+    protected fun FileTree.createAndOpenFileWithCaretMarker(): TestProject = createAndOpenFileWithCaretMarker(myFixture)
 
     protected val PsiElement.lineNumber: Int
         get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
 }
-

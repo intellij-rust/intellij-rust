@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
-class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     fun `test E0428 respects crate aliases`() = checkErrors("""
         extern crate core as core_alias;
         mod core {}

@@ -10,7 +10,7 @@ import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     fun `test make simple const public`() = checkFixByText("Make `BAR` public", """
         mod foo {
             const BAR: i32 = 10;

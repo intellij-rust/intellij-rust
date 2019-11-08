@@ -7,7 +7,7 @@ package org.rust.ide.annotator
 
 import org.rust.ide.colors.RsColor
 
-class RsUnsafeExpressionHighlightingAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class.java) {
+class RsUnsafeExpressionHighlightingAnnotatorTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
     override fun setUp() {
         super.setUp()
         registerSeverities(listOf(RsColor.UNSAFE_CODE.testSeverity))

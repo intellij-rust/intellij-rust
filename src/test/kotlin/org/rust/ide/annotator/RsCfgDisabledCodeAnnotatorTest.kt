@@ -10,7 +10,7 @@ import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 
-class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class.java) {
+class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class) {
     override fun setUp() {
         super.setUp()
         registerSeverities(listOf(RsColor.CFG_DISABLED_CODE.testSeverity))
@@ -61,7 +61,7 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]try {
                 let x = 1;
             }
-        </CFG_DISABLED_CODE>    
+        </CFG_DISABLED_CODE>
         }
     """)
 }

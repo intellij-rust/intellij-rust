@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class CreateLifetimeParameterFromUsageFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class CreateLifetimeParameterFromUsageFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
     fun `test fix when empty parameters`() = checkFixByText("Create lifetime parameter", """
         struct Foo<> {

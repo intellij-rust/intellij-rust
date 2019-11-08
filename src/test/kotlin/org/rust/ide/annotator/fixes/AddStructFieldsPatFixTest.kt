@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
-class AddStructFieldsPatFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class.java) {
+class AddStructFieldsPatFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     fun `test one field missing`() = checkFixByText("Add missing fields", """
         struct Foo {
             a: i32,
