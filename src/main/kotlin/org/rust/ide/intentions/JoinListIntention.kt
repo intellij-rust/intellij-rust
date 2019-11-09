@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -24,8 +25,8 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
 ) : ListIntentionBase<TList, TElement>(listClass, elementClass, intentionText) {
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): TList? {
         val list = element.listContext ?: return null
-        val elements = list.elements
-        if (elements.isEmpty() || !hasLineBreakBefore(elements.first()) && elements.none { hasLineBreakAfter(it) }) {
+        val elements = getElements(list)
+        if (elements.isEmpty() || !hasLineBreakBefore(elements.first()) && elements.none { hasLineBreakAfter(list, it) }) {
             return null
         }
         return list
@@ -33,8 +34,10 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
 
     override fun invoke(project: Project, editor: Editor, ctx: TList) {
         val document = editor.document
-        val elements = ctx.elements
-        nextBreak(elements.last())?.replace(prefix, document)
+        val elements = getElements(ctx)
+
+        val last = getEndElement(ctx, elements.last())
+        nextBreak(last)?.replace(prefix, document)
         elements.dropLast(1).asReversed().forEach { nextBreak(it)?.replace(" ", document) }
         prevBreak(elements.first())?.replace(suffix, document)
     }
@@ -67,6 +70,24 @@ class JoinFieldListIntention : JoinListIntentionBase<RsBlockFields, RsNamedField
     prefix = " ",
     suffix = " "
 )
+
+class JoinLiteralFieldListIntention : JoinListIntentionBase<RsStructLiteralBody, RsStructLiteralField>(
+    RsStructLiteralBody::class.java,
+    RsStructLiteralField::class.java,
+    "Put fields on one line",
+    prefix = " ",
+    suffix = " "
+) {
+    override fun getElements(context: RsStructLiteralBody): List<PsiElement> = super.getElements(context) + listOfNotNull(context.dotdot)
+    override fun getEndElement(ctx: RsStructLiteralBody, element: PsiElement): PsiElement {
+        return if (element.elementType == RsElementTypes.DOTDOT) {
+            ctx.expr?.let {
+                getEndElement(ctx, it)
+            } ?: element
+        }
+        else super.getEndElement(ctx, element)
+    }
+}
 
 class JoinVariantListIntention : JoinListIntentionBase<RsEnumBody, RsEnumVariant>(
     RsEnumBody::class.java,
