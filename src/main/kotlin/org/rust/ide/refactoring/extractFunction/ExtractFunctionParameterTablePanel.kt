@@ -8,6 +8,8 @@ package org.rust.ide.refactoring.extractFunction
 import com.intellij.openapi.project.Project
 import com.intellij.refactoring.util.AbstractParameterTablePanel
 import com.intellij.refactoring.util.AbstractVariableData
+import com.intellij.ui.BooleanTableCellEditor
+import com.intellij.ui.BooleanTableCellRenderer
 import com.intellij.util.ui.ColumnInfo
 
 class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : AbstractVariableData() {
@@ -15,6 +17,20 @@ class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : 
         parameter.name = name
         onChange()
     }
+}
+
+class ChooseColumn : ColumnInfo<ParameterDataHolder, Boolean>(null) {
+
+    override fun valueOf(item: ParameterDataHolder): Boolean = item.parameter.isSelected
+
+    override fun setValue(item: ParameterDataHolder, value: Boolean) {
+        item.parameter.isSelected = value
+    }
+
+    override fun getColumnClass(): Class<*> = Boolean::class.java
+
+    override fun isCellEditable(item: ParameterDataHolder?): Boolean = true
+
 }
 
 class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<ParameterDataHolder, String>("Name") {
@@ -44,10 +60,16 @@ class ExtractFunctionParameterTablePanel(nameValidator: (String) -> Boolean,
                                          private val config: RsExtractFunctionConfig,
                                          private val onChange: () -> Unit)
     : AbstractParameterTablePanel<ParameterDataHolder>(
+    ChooseColumn(),
     NameColumn(nameValidator),
     TypeColumn(project)
 ) {
     init {
+        myTable.setDefaultRenderer(Boolean::class.java, BooleanTableCellRenderer())
+        myTable.setDefaultEditor(Boolean::class.java, BooleanTableCellEditor())
+        myTable.columnModel.getColumn(0).preferredWidth = WIDTH
+        myTable.columnModel.getColumn(0).maxWidth = WIDTH
+
         init(config.parameters.map {
             ParameterDataHolder(it) {
                 updateSignature()
@@ -60,5 +82,9 @@ class ExtractFunctionParameterTablePanel(nameValidator: (String) -> Boolean,
     override fun updateSignature() {
         config.parameters = variableData.map { it.parameter }
         onChange()
+    }
+
+    companion object {
+        private const val WIDTH = 40
     }
 }

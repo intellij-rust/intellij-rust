@@ -42,7 +42,8 @@ class Parameter private constructor(
     var name: String,
     val type: Ty? = null,
     val reference: Reference = Reference.NONE,
-    isMutableValue: Boolean = false
+    isMutableValue: Boolean = false,
+    var isSelected: Boolean = true
 ) {
     /** Original name of the parameter (parameter renaming does not affect it) */
     private val originalName = name
@@ -94,13 +95,13 @@ class RsExtractFunctionConfig private constructor(
         get() = parameters.filter { !it.isSelf }
 
     private val parametersText: String
-        get() = parameters.joinToString(", ") { it.parameterText }
+        get() = parameters.filter { it.isSelected }.joinToString(", ") { it.parameterText }
 
     private val originalParametersText: String
-        get() = parameters.joinToString(", ") { it.originalParameterText }
+        get() = parameters.filter { it.isSelected }.joinToString(", ") { it.originalParameterText }
 
     val argumentsText: String
-        get() = valueParameters.joinToString(", ") { it.argumentText }
+        get() = valueParameters.filter { it.isSelected }.joinToString(", ") { it.argumentText }
 
     val signature: String
         get() = signature(false)
@@ -127,7 +128,10 @@ class RsExtractFunctionConfig private constructor(
             val body = if (single is RsBlockExpr) {
                 single.block.text
             } else {
-                val stmts = elements.map { it.text }.toMutableList()
+                val stmts = parameters.filter { !it.isSelected }.map { "let ${it.name}: ${it.type};" }.toMutableList()
+                    stmts.add("")
+
+                elements.map { it.text }.forEach { stmts.add(it) }
                 if (returnValue?.expression != null) {
                     stmts.add(returnValue.expression)
                 }

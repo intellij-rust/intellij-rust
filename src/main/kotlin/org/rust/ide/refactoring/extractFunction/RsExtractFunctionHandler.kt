@@ -44,7 +44,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             val psiFactory = RsPsiFactory(project)
             val extractedFunction = addExtractedFunction(project, config, psiFactory) ?: return@run
             replaceOldStatementsWithCallExpr(config, psiFactory)
-            renameFunctionParameters(extractedFunction, config.valueParameters.map { it.name })
+            renameFunctionParameters(extractedFunction, config.valueParameters.filter { it.isSelected }.map { it.name })
         }
     }
 

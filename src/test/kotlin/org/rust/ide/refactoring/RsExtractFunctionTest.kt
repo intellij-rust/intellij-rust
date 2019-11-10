@@ -947,14 +947,61 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    fun `test extract select arguments`() = doTest("""
+        use std::sync::Arc;
+
+        struct Test {
+            i: i32
+        }
+
+        fn main() {
+            let r = 1;
+            let s = 2;
+            let a = Test { i: 12 };
+            let b = { 12 };
+
+            <selection>Arc::new(r);
+            Arc::new(s);
+            Arc::new(a);
+            Arc::new(b);</selection>
+        }
+    """, """
+        use std::sync::Arc;
+
+        struct Test {
+            i: i32
+        }
+
+        fn main() {
+            let r = 1;
+            let s = 2;
+            let a = Test { i: 12 };
+            let b = { 12 };
+
+            bar(r, s, b);
+        }
+
+        fn bar(r: i32, s: i32, b: i32) {
+            let a: Test;
+
+            Arc::new(r);
+            Arc::new(s);
+            Arc::new(a);
+            Arc::new(b);
+        }
+    """, false, "bar", listOf("a")
+    )
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
-                       name: String) {
+                       name: String,
+                       noSelected: List<String> = emptyList()) {
         withMockExtractFunctionUi(object : ExtractFunctionUi {
             override fun extract(config: RsExtractFunctionConfig, callback: () -> Unit) {
                 config.name = name
                 config.visibilityLevelPublic = pub
+                noSelected.forEach { n -> config.parameters.filter { n == it.name }[0].isSelected = false }
                 callback()
             }
         }) {
