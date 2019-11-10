@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.psi.LiteralOffsets
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import org.junit.Assert.assertEquals
