@@ -13,7 +13,7 @@ import org.rust.ide.colors.RsColor
 class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnnotator::class) {
     override fun setUp() {
         super.setUp()
-        registerSeverities(listOf(RsColor.CFG_DISABLED_CODE.testSeverity))
+        annotationFixture.registerSeverities(listOf(RsColor.CFG_DISABLED_CODE.testSeverity))
     }
 
     @MockAdditionalCfgOptions("intellij_rust")

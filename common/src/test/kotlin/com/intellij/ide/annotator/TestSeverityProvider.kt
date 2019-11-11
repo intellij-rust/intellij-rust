@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.annotator
+package com.intellij.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
@@ -11,7 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 
-class RsTestSeverityProvider(private val severities: List<HighlightSeverity>) : SeveritiesProvider() {
+class TestSeverityProvider(private val severities: List<HighlightSeverity>) : SeveritiesProvider() {
     override fun getSeveritiesHighlightInfoTypes(): List<HighlightInfoType> = severities.map(::TestHighlightingInfoType)
 }
 

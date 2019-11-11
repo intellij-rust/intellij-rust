@@ -5,8 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.codeInsight.daemon.impl.SeveritiesProvider
-import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.intellij.lang.annotations.Language
@@ -119,10 +117,5 @@ abstract class RsAnnotationTestBase : RsTestBase() {
 
         myFixture.configureFromTempProjectFile(testFilePath)
         myFixture.testHighlighting(false, checkInfo, false)
-    }
-
-    protected fun registerSeverities(severities: List<HighlightSeverity>) {
-        val testSeverityProvider = RsTestSeverityProvider(severities)
-        SeveritiesProvider.EP_NAME.getPoint(null).registerExtension(testSeverityProvider, testRootDisposable)
     }
 }
