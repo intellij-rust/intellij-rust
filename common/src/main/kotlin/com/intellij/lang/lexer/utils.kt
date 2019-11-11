@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.lexer
+package com.intellij.lang.lexer
 
 import com.intellij.lexer.Lexer
 import com.intellij.psi.tree.IElementType
@@ -16,4 +16,3 @@ fun CharSequence.tokenize(lexer: Lexer): Sequence<Pair<IElementType, String>> =
         lexer.advance()
         lexer.tokenType?.to(lexer.tokenText)
     })
-
