@@ -272,4 +272,13 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             return <error>B(Unknown)</error>
         }
     """)
+
+    fun `test no type mismatch E0308 on reference coecrion of partially unknown type`() = checkByText("""
+        struct Bar;
+        fn foo(a: &Bar) {}
+        
+        fn main() {
+            foo(&Unknown);
+        }
+    """)
 }

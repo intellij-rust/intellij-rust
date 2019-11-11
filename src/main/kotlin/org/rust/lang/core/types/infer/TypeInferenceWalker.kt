@@ -213,7 +213,10 @@ class RsTypeInferenceWalker(
                     TyAnon::class.java
                 )
 
-                if (result.ty1.javaClass !in ignoredTys && result.ty2.javaClass !in ignoredTys) {
+                if (result.ty1.javaClass !in ignoredTys && result.ty2.javaClass !in ignoredTys
+                    && !(expected is TyReference && inferred is TyReference
+                        && (expected.containsTyOfClass(ignoredTys) || inferred.containsTyOfClass(ignoredTys)))
+                ) {
                     // another awful hack: check that inner expressions did not annotated as an error
                     // to disallow annotation intersections. This should be done in a different way
                     if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
