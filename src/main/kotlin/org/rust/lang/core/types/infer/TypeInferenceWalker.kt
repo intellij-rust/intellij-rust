@@ -1213,7 +1213,7 @@ class RsTypeInferenceWalker(
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
-            if (elementTypes.isNullOrEmpty()) return TySlice(TyUnknown)
+            if (elementTypes.isNullOrEmpty()) return TyArray(TyInfer.TyVar(), 0)
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)

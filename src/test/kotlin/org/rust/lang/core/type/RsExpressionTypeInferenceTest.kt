@@ -834,6 +834,13 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test array expression type6`() = testExpr("""
+        fn main() {
+            let x: [i32; 0] = [];
+                            //^ [i32; 0]
+        }
+    """)
+
     fun `test usize constant as array size`() = testExpr("""
         const COUNT: usize = 2;
         fn main() {
