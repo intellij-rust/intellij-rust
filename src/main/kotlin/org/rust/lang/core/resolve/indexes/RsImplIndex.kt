@@ -15,6 +15,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.RsCachedImplItem
+import org.rust.lang.core.resolve.RsProcessor
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
@@ -31,28 +32,30 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
          * Note this method may return false positives
          * @see TyFingerprint
          */
-        fun findPotentialImpls(project: Project, target: Ty): Sequence<RsCachedImplItem> {
-            project.macroExpansionManager.ensureUpToDate()
-            val impls = run {
-                val fingerprint = TyFingerprint.create(target)
-                    ?: return@run emptyList<RsImplItem>()
-                getElements(KEY, fingerprint, project, RsWithMacrosProjectScope(project))
-            }
-            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
-            // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
-            return (impls.asSequence() + freeImpls.asSequence())
-                .map { RsCachedImplItem.forImpl(project, it) }
-                .filter { it.isValid }
+        fun findPotentialImpls(project: Project, target: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
+            val fingerprint = TyFingerprint.create(target)
+            if (fingerprint != null && findPotentialImplsInner(project, fingerprint, processor)) return true
+            return findPotentialImplsInner(project, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, processor)
         }
 
         /** return impls for generic type `impl<T> Trait for T {}` */
-        fun findFreeImpls(project: Project): Sequence<RsCachedImplItem> {
+        fun findFreeImpls(project: Project, processor: RsProcessor<RsCachedImplItem>): Boolean {
+            return findPotentialImplsInner(project, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, processor)
+        }
+
+        private fun findPotentialImplsInner(
+            project: Project,
+            tyf: TyFingerprint,
+            processor: RsProcessor<RsCachedImplItem>
+        ): Boolean {
             project.macroExpansionManager.ensureUpToDate()
-            val freeImpls = getElements(KEY, TyFingerprint.TYPE_PARAMETER_FINGERPRINT, project, RsWithMacrosProjectScope(project))
-            // filter dangling (not attached to some crate) rust files, e.g. tests, generated source
-            return freeImpls.asSequence()
-                .map { RsCachedImplItem.forImpl(project, it) }
-                .filter { it.isValid }
+            val impls = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
+            // I intentionally use `getElements` with intermediate collection instead of `StubIndex.processElements`
+            // to simplify profiling
+            return impls.any {
+                val cachedImpl = RsCachedImplItem.forImpl(project, it)
+                cachedImpl.isValid && processor(cachedImpl)
+            }
         }
 
         fun index(stub: RsImplItemStub, sink: IndexSink) {

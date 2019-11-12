@@ -44,6 +44,8 @@ enum class ScopeEvent : ScopeEntry {
     override val element: RsElement? get() = null
 }
 
+typealias RsProcessor<T> = (T) -> Boolean
+
 /**
  * Return `true` to stop further processing,
  * return `false` to continue search
