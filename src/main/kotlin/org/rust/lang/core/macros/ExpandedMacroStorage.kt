@@ -331,15 +331,17 @@ class SourceFile(
     private inline fun <T> sync(action: () -> T): T =
         lock.withLock(action)
 
-    private inline fun switchToStubRefsInReadAction(
+    private fun switchToStubRefsInReadAction(
         kind: RefKind,
         action: (MutableList<ExpandedMacroInfoImpl>) -> Unit
     ) {
         checkReadAccessAllowed()
         sync {
             if (getRefKind() != kind) return
-            action(infos)
-            modificationStamp = getActualModStamp()
+            ProgressManager.getInstance().executeNonCancelableSection {
+                action(infos)
+                modificationStamp = getActualModStamp()
+            }
         }
     }
 
@@ -680,7 +682,7 @@ class SourceFile(
                 "Detected broken stub reference to a macro!",
                 Throwable(),
                 "File: `${file.path}`,",
-                "Stored stamp: $modificationStamp,",
+                "Stored stamp: ${sync { modificationStamp }},",
                 "Actual stamp: ${getActualModStamp()},",
                 "PSI stamp: ${loadPsi()?.viewProvider?.modificationStamp},",
                 "File stamp: ${file.modificationStamp},",
