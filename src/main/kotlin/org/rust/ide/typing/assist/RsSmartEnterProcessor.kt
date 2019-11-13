@@ -32,7 +32,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         if (atCaret is PsiWhiteSpace) return null
         while (atCaret != null) {
             val parent = atCaret.parent
-            val elementType = atCaret.node.elementType
+            val elementType = atCaret.node?.elementType
             atCaret = when {
                 elementType == RsElementTypes.LBRACE || elementType == RsElementTypes.RBRACE -> parent
                 parent is RsBlock -> return atCaret
