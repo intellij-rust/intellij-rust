@@ -1,0 +1,4 @@
+let s = struct S {
+    <spot>x: 0,
+    y: 1</spot>
+}

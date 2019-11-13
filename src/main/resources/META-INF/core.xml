@@ -703,6 +703,14 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.ChopLiteralFieldListIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.JoinLiteralFieldListIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.ChopVariantListIntention</className>
             <category>Rust</category>
         </intentionAction>
