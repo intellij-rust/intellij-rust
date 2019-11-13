@@ -18,6 +18,8 @@ import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.toml.lang.psi.*
+import org.toml.lang.psi.ext.TomlLiteralKind
+import org.toml.lang.psi.ext.kind
 import kotlin.reflect.KProperty
 
 
@@ -25,20 +27,8 @@ fun tomlPluginIsAbiCompatible(): Boolean = computeOnce
 
 private val computeOnce: Boolean by lazy {
     try {
-        load<TomlKey>()
-        load<TomlValue>()
-
-        load(TomlKeyValue::key)
-        load(TomlKeyValue::value)
-
-        load(TomlTable::entries)
-        load(TomlTable::header)
-
-        load(TomlArrayTable::entries)
-        load(TomlArrayTable::header)
-
-        load(TomlTableHeader::names)
-        load(TomlKeyValueOwner::entries)
+        load<TomlLiteralKind>()
+        load(TomlLiteral::kind)
         true
     } catch (e: LinkageError) {
         showBalloonWithoutProject(

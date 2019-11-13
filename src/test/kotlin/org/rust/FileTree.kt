@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
+import org.junit.Assert
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
@@ -104,9 +105,7 @@ class FileTree(val rootDirectory: Entry.Directory) {
                     is Entry.File -> {
                         check(!a.isDirectory)
                         val actualText = convertLineSeparators(String(a.contentsToByteArray(), UTF_8))
-                        check(entry.text.trimEnd() == actualText.trimEnd()) {
-                            "Expected:\n${entry.text}\nGot:\n$actualText"
-                        }
+                        Assert.assertEquals(entry.text.trimEnd(), actualText.trimEnd())
                     }
                     is Entry.Directory -> go(entry, a)
                 }

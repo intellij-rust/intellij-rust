@@ -10,21 +10,10 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.lang.core.or
 import org.rust.lang.core.psi.RsFile
-import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
-import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.toml.lang.psi.TomlKey
 
-class CargoTomlKeyReferenceContributor : PsiReferenceContributor() {
-
-    override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-        registrar.registerReferenceProvider(onDependencyKey or onSpecificDependencyHeaderKey,
-            CargoDependencyReferenceProvider())
-    }
-}
-
-private class CargoDependencyReferenceProvider : PsiReferenceProvider() {
+class CargoDependencyReferenceProvider : PsiReferenceProvider() {
 
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
         if (element !is TomlKey) return emptyArray()
