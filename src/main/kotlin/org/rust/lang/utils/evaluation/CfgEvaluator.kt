@@ -8,6 +8,8 @@ package org.rust.lang.utils.evaluation
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
+import org.rust.cargo.project.workspace.CargoWorkspace.FeatureState
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.value
@@ -57,7 +59,7 @@ operator fun ThreeValuedLogic.not(): ThreeValuedLogic = when (this) {
     Unknown -> Unknown
 }
 
-class CfgEvaluator(val options: CfgOptions) {
+class CfgEvaluator(val options: CfgOptions, val features: Map<String, FeatureState>, val origin: PackageOrigin) {
     fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
         val cfgPredicate = CfgPredicate.fromCfgAttributes(cfgAttributes)
         val result = evaluatePredicate(cfgPredicate)
@@ -77,6 +79,7 @@ class CfgEvaluator(val options: CfgOptions) {
         is CfgPredicate.Not -> !evaluatePredicate(predicate.single)
         is CfgPredicate.NameOption -> evaluateName(predicate.name)
         is CfgPredicate.NameValueOption -> evaluateNameValue(predicate.name, predicate.value)
+        is CfgPredicate.Feature -> evaluateFeature(predicate.name)
         is CfgPredicate.Error -> Unknown
     }
 
@@ -89,6 +92,19 @@ class CfgEvaluator(val options: CfgOptions) {
     private fun evaluateNameValue(name: String, value: String): ThreeValuedLogic = when (name) {
         in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
         else -> Unknown
+    }
+
+    private fun evaluateFeature(name: String): ThreeValuedLogic {
+        if (origin == PackageOrigin.WORKSPACE || origin == PackageOrigin.STDLIB) {
+            // Currently evaluates only dependency features
+            return Unknown
+        }
+
+        return when (features[name]) {
+            FeatureState.Enabled -> True
+            FeatureState.Disabled -> False
+            null -> Unknown
+        }
     }
 
     companion object {
@@ -115,6 +131,7 @@ class CfgEvaluator(val options: CfgOptions) {
 private sealed class CfgPredicate {
     data class NameOption(val name: String) : CfgPredicate()
     data class NameValueOption(val name: String, val value: String) : CfgPredicate()
+    data class Feature(val name: String) : CfgPredicate()
     class All(val list: List<CfgPredicate>) : CfgPredicate()
     class Any(val list: List<CfgPredicate>) : CfgPredicate()
     class Not(val single: CfgPredicate) : CfgPredicate()
@@ -149,6 +166,9 @@ private sealed class CfgPredicate {
                         else -> Error
                     }
                 }
+
+                // e.g. `#[cfg(feature = "my_feature")]`
+                name == "feature" && value != null -> Feature(value)
 
                 // e.g. `#[cfg(target_os = "macos")]`
                 name != null && value != null -> NameValueOption(name, value)

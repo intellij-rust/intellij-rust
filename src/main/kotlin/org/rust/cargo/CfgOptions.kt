@@ -15,9 +15,8 @@ class CfgOptions(
     fun isNameEnabled(name: String): Boolean =
         name in nameOptions
 
-    // TODO remove special case for "feature"
     fun isNameValueEnabled(name: String, value: String): Boolean =
-        name == "feature" || keyValueOptions[name]?.contains(value) ?: false
+        keyValueOptions[name]?.contains(value) ?: false
 
     companion object {
         fun parse(rawCfgOptions: List<String>): CfgOptions {
