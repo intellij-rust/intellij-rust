@@ -38,8 +38,8 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         fn main() {
             let mut x = 42;
             let r = &mut x;
-            dbg!(x);
-            dbg!(<error descr="${RsExternalLinterUtils.TEST_MESSAGE}">r</error>);
+            <error descr="${RsExternalLinterUtils.TEST_MESSAGE}">dbg!(x);</error>
+            dbg!(r);
         }
     """)
 
