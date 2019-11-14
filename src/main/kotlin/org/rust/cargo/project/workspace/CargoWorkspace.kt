@@ -74,6 +74,8 @@ interface CargoWorkspace {
 
         val cfgOptions: CfgOptions
 
+        val features: Collection<Feature>
+
         val workspace: CargoWorkspace
 
         val edition: Edition
@@ -137,6 +139,16 @@ interface CargoWorkspace {
         EDITION_2015, EDITION_2018
     }
 
+    class Feature(
+        val name: String,
+        val state: FeatureState
+    )
+
+    enum class FeatureState {
+        Enabled,
+        Disabled
+    }
+
     companion object {
         fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): CargoWorkspace =
             WorkspaceImpl.deserialize(manifestPath, data, cfgOptions)
@@ -161,7 +173,8 @@ private class WorkspaceImpl(
             pkg.source,
             pkg.origin,
             pkg.edition,
-            cfgOptions
+            cfgOptions,
+            pkg.features
         )
     }
 
@@ -294,7 +307,8 @@ private class PackageImpl(
     override val source: String?,
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
-    override val cfgOptions: CfgOptions
+    override val cfgOptions: CfgOptions,
+    override val features: Collection<CargoWorkspace.Feature>
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
@@ -360,7 +374,8 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         },
         source = source,
         origin = origin,
-        edition = edition ?: this.edition
+        edition = edition ?: this.edition,
+        features = features
     )
 
 private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
@@ -392,7 +407,8 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
         )),
         source = null,
         origin = PackageOrigin.STDLIB,
-        edition = edition
+        edition = edition,
+        features = emptyList()
     )
 }
 
