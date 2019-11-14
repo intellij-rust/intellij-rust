@@ -430,8 +430,11 @@ class RsPsiFactory(
     fun createFunctionCall(functionName: String, arguments: Iterable<RsExpr>): RsCallExpr =
         createExpressionOfType("$functionName(${arguments.joinToString { it.text }})")
 
-    fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr =
-        createExpressionOfType("$typeText::$methodNameText(${arguments.joinToString { it.text }})")
+    fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr {
+        val isCorrectTypePath = tryCreatePath(typeText) != null
+        val typePath = if (isCorrectTypePath) typeText else "<$typeText>"
+        return createExpressionOfType("$typePath::$methodNameText(${arguments.joinToString { it.text }})")
+    }
 
     fun createNoArgsMethodCall(expr: RsExpr, methodNameText: String): RsDotExpr = when (expr) {
         is RsBinaryExpr, is RsUnaryExpr, is RsCastExpr -> createExpressionOfType("(${expr.text}).$methodNameText()")
