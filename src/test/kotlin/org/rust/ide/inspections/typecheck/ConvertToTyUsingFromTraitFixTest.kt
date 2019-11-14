@@ -13,37 +13,36 @@ import org.rust.ide.inspections.RsTypeCheckInspection
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspection::class) {
     fun `test B from A when impl From A for B is available`() = checkFixByText("Convert to B using `From` trait", """
-        struct A{}
-        struct B{}
+        struct A;
+        struct B;
 
-        impl From<A> for B { fn from(item: A) -> Self {B{}} }
+        impl From<A> for B { fn from(item: A) -> Self { B } }
 
         fn main () {
-            let b: B = <error>A {}<caret></error>;
+            let b: B = <error>A<caret></error>;
         }
     """, """
-        struct A{}
-        struct B{}
+        struct A;
+        struct B;
 
-        impl From<A> for B { fn from(item: A) -> Self {B{}} }
+        impl From<A> for B { fn from(item: A) -> Self { B } }
 
         fn main () {
-            let b: B = B::from(A {});
+            let b: B = B::from(A);
         }
     """)
 
     fun `test no fix when impl From A for B is not available`() = checkFixIsUnavailable("Convert to B using `From` trait", """
-        struct A{}
-        struct B{}
-        struct C{}
+        struct A;
+        struct B;
+        struct C;
 
-        impl From<A> for C { fn from(item: A) -> Self {C{}} }
+        impl From<A> for C { fn from(item: A) -> Self { C } }
 
         fn main () {
-            let b: B = <error>A {}<caret></error>;
+            let b: B = <error>A<caret></error>;
         }
     """)
-
 
     fun `test From impl provided by std lib`() = checkFixByText("Convert to u32 using `From` trait", """
         fn main () {
