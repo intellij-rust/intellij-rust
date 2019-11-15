@@ -15,7 +15,6 @@ import org.intellij.lang.annotations.Language
 import org.rust.TestProject
 import org.rust.createAndOpenFileWithCaretMarker
 import org.rust.fileTreeFromText
-import org.rust.lang.core.macros.macroExpansionManager
 import kotlin.reflect.KClass
 
 class RsAnnotationTestFixture(
@@ -97,7 +96,6 @@ class RsAnnotationTestFixture(
     ) {
         val newConfigure: (String) -> Unit = {
             configure(it)
-            project.macroExpansionManager.ensureUpToDate()
         }
         super.check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, newConfigure, testmark)
     }
@@ -113,7 +111,6 @@ class RsAnnotationTestFixture(
     ) {
         val newConfigure: (String) -> Unit = {
             configure(it)
-            project.macroExpansionManager.ensureUpToDate()
         }
         super.checkFix(fixName, before, after, newConfigure, checkBefore, checkAfter, testmark)
     }

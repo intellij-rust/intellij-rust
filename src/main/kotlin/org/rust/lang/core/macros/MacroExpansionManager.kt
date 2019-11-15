@@ -58,7 +58,6 @@ import java.util.concurrent.*
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
-    fun ensureUpToDate()
     fun getExpansionFor(call: RsMacroCall): MacroExpansion?
     fun getExpandedFrom(element: RsExpandedElement): RsMacroCall?
     fun isExpansionFile(file: VirtualFile): Boolean
@@ -132,10 +131,6 @@ class MacroExpansionManagerImpl(
 
     override val indexableDirectory: VirtualFile?
         get() = dirs?.expansionsDirVi
-
-    override fun ensureUpToDate() {
-        inner?.ensureUpToDate()
-    }
 
     override fun getExpansionFor(call: RsMacroCall): MacroExpansion? {
         val impl = inner
@@ -384,6 +379,15 @@ private class MacroExpansionServiceImplInner(
         }
         ApplicationManager.getApplication().addApplicationListener(treeChangeListener, disposable ?: project)
 
+        if (disposable != null) {
+            check(isUnitTestMode)
+            ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
+                override fun afterWriteActionFinished(action: Any) {
+                    ensureUpToDate()
+                }
+            }, disposable)
+        }
+
         val indexableSet = object : IndexableFileSet {
             override fun isInSet(file: VirtualFile): Boolean =
                 isExpansionFile(file)
@@ -580,10 +584,8 @@ private class MacroExpansionServiceImplInner(
         return false
     }
 
-    fun ensureUpToDate() {
-        if (!isExpansionModeNew) return
-        ProgressManager.checkCanceled()
-
+    private fun ensureUpToDate() {
+        check(isUnitTestMode)
         taskQueue.ensureUpToDate()
     }
 
@@ -599,7 +601,6 @@ private class MacroExpansionServiceImplInner(
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
-        ensureUpToDate()
         return storage.getInfoForCall(call)?.getExpansion()
     }
 
@@ -673,13 +674,19 @@ private class MacroExpansionTaskQueue(val project: Project) {
         processor.add(SimpleTaskData(runnable))
     }
 
+    private var isProcessingUpdates = false
+
     fun ensureUpToDate() {
-        if (isUnitTestMode && ApplicationManager.getApplication().isDispatchThread && !processor.isEmpty) {
+        check(isUnitTestMode)
+        if (ApplicationManager.getApplication().isDispatchThread && !processor.isEmpty) {
             checkWriteAccessNotAllowed()
+            if (isProcessingUpdates) return
+            isProcessingUpdates = true
             while (!processor.isEmpty && !project.isDisposed) {
                 LaterInvocator.dispatchPendingFlushes()
                 Thread.sleep(10)
             }
+            isProcessingUpdates = false
         }
     }
 

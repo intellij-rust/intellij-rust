@@ -32,7 +32,6 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             var result: RsModDeclItem? = null
 
-            project.macroExpansionManager.ensureUpToDate()
             val scope = if (project.macroExpansionManager.isResolvingMacro) {
                 GlobalSearchScope.allScope(project)
             } else {
