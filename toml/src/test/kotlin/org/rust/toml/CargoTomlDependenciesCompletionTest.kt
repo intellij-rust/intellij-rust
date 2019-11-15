@@ -13,7 +13,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         <caret>
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0"<caret>
     """, "dep" to "1.0")
 
     fun `test empty key with complex dependency head`() = doTest("""
@@ -21,7 +21,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         <caret>
     """, """
         [target.'cfg(windows)'.dev-dependencies]
-        dep = "1.0"
+        dep = "1.0"<caret>
     """, "dep" to "1.0")
 
     fun `test partial key`() = doTest("""
@@ -29,7 +29,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         d<caret>
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0"<caret>
     """, "app" to "1.0", "dep" to "1.0")
 
     fun `test empty value complete without '=' and quotes 1_0`() = doTest("""
@@ -37,7 +37,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep <caret>
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0<caret>"
     """, "dep" to "1.0")
 
     fun `test empty value complete without quotes 1_0`() = doTest("""
@@ -45,7 +45,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = <caret>
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0<caret>"
     """, "dep" to "1.0")
 
     fun `test empty value complete without quotes 1_0_0`() = doTest("""
@@ -53,7 +53,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = <caret>
     """, """
         [dependencies]
-        dep = "1.0.0"
+        dep = "1.0.0<caret>"
     """, "dep" to "1.0.0")
 
     fun `test empty value complete inside quotes`() = doTest("""
@@ -61,7 +61,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "<caret>"
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0<caret>"
     """, "dep" to "1.0")
 
     fun `test partial value complete inside quotes`() = doTest("""
@@ -69,7 +69,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "1.<caret>"
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0<caret>"
     """, "dep" to "1.0")
 
     fun `test empty value complete inside quotes without '='`() = doTest("""
@@ -77,7 +77,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep "<caret>"
     """, """
         [dependencies]
-        dep = "1.0"
+        dep = "1.0<caret>"
     """, "dep" to "1.0")
 
     // TODO we may want to add a closing quotation mark
@@ -86,7 +86,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         dep = "<caret>
     """, """
         [dependencies]
-        dep = "1.0
+        dep = "1.0<caret>
     """, "dep" to "1.0")
 
     fun `test no completion when caret after string literal`() = checkNoCompletion("""
@@ -112,14 +112,14 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
     fun `test complete specific dependency header empty key`() = doTest("""
         [dependencies.<caret>]
     """, """
-        [dependencies.dep]
+        [dependencies.dep<caret>]
         version = "1.0"
     """, "dep" to "1.0")
 
     fun `test complete specific dependency header partial key`() = doTest("""
         [dependencies.d<caret>]
     """, """
-        [dependencies.dep]
+        [dependencies.dep<caret>]
         version = "1.0"
     """, "dep" to "1.0", "bar" to "2.0")
 
@@ -128,7 +128,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         <caret>
     """, """
         [dependencies.dep]
-        version = "1.0"
+        version = "1.0"<caret>
     """, "dep" to "1.0")
 
     fun `test complete specific dependency version partial key`() = doTest("""
@@ -136,7 +136,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         ver<caret>
     """, """
         [dependencies.dep]
-        version = "1.0"
+        version = "1.0"<caret>
     """, "dep" to "1.0")
 
     fun `test complete specific dependency empty version value`() = doTest("""
@@ -144,7 +144,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version <caret>
     """, """
         [dependencies.dep]
-        version = "1.0"
+        version = "1.0<caret>"
     """, "dep" to "1.0")
 
     fun `test complete specific dependency partial version value`() = doTest("""
@@ -152,7 +152,7 @@ class CargoTomlDependenciesCompletionTest : CargoTomlCompletionTestBase() {
         version = "1.<caret>"
     """, """
         [dependencies.dep]
-        version = "1.0"
+        version = "1.0<caret>"
     """, "dep" to "1.0")
 
     private fun doTest(

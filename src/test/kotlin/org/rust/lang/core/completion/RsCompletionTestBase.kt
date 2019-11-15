@@ -5,16 +5,26 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.fileTreeFromText
-import org.rust.hasCaretMarker
 
 abstract class RsCompletionTestBase : RsTestBase() {
+
+    protected lateinit var completionFixture: RsCompletionTestFixture
+
+    override fun setUp() {
+        super.setUp()
+        completionFixture = RsCompletionTestFixture(myFixture)
+        completionFixture.setUp()
+    }
+
+    override fun tearDown() {
+        completionFixture.tearDown()
+        super.tearDown()
+    }
+
     // Prefer using `doSingleCompletion` instead
     @Deprecated(
         "Use doSingleCompletion, because it's simpler and checks caret position as well",
@@ -42,95 +52,37 @@ abstract class RsCompletionTestBase : RsTestBase() {
         }
     }
 
-    protected fun doFirstCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
-        check(hasCaretMarker(before) && hasCaretMarker(after)) {
-            "Please add `/*caret*/` marker"
-        }
-        checkByText(before.trimIndent(), after.trimIndent()) {
-            val variants = myFixture.completeBasic()
-            if (variants != null) {
-                myFixture.type('\n')
-            }
-        }
-    }
+    protected fun doFirstCompletion(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = completionFixture.doFirstCompletion(before, after)
 
-    protected fun doSingleCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
-        check(hasCaretMarker(before) && hasCaretMarker(after)) {
-            "Please add `/*caret*/` marker"
-        }
-        checkByText(before.trimIndent(), after.trimIndent()) { executeSoloCompletion() }
-    }
+    protected fun doSingleCompletion(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = completionFixture.doSingleCompletion(before, after)
 
-    protected fun doSingleCompletionMultifile(@Language("Rust") before: String, @Language("Rust") after: String) {
-        val testProject = fileTreeFromText(before).createAndOpenFileWithCaretMarker()
-        checkAstNotLoaded(VirtualFileFilter { file ->
-            !file.path.endsWith(testProject.fileWithCaret)
-        })
-        executeSoloCompletion()
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
-    }
+    protected fun doSingleCompletionByFileTree(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String
+    ) = completionFixture.doSingleCompletionByFileTree(before, after)
 
-    protected fun checkContainsCompletion(text: String, @Language("Rust") code: String) {
-        InlineFile(code).withCaret()
-        val variants = myFixture.completeBasic()
-        checkNotNull(variants) {
-            "Expected completions that contain $text, but no completions found"
-        }
-        if (variants.all { it.lookupString != text }) {
-            error("Expected completions that contain $text, but got ${variants.toList()}")
-        }
-    }
+    protected fun checkContainsCompletion(
+        text: String,
+        @Language("Rust") code: String
+    ) = completionFixture.checkContainsCompletion(text, code)
 
-    protected fun checkNotContainsCompletion(text: String, @Language("Rust") code: String) {
-        InlineFile(code).withCaret()
-        val variants = myFixture.completeBasic()
-        checkNotNull(variants) {
-            "Expected completions that contain $text, but no completions found"
-        }
-        if (variants.any { it.lookupString == text }) {
-            error("Expected completions that don't contain $text, but got ${variants.toList()}")
-        }
-    }
+    protected fun checkNotContainsCompletion(
+        text: String,
+        @Language("Rust") code: String
+    ) = completionFixture.checkNotContainsCompletion(text, code)
 
-    protected fun checkNoCompletion(@Language("Rust") code: String) {
-        InlineFile(code).withCaret()
-        noCompletionCheck()
-    }
+    protected fun checkNoCompletion(@Language("Rust") code: String) = completionFixture.checkNoCompletion(code)
 
-    protected fun checkNoCompletionWithMultifile(@Language("Rust") code: String) {
-    val testProject = fileTreeFromText(code).createAndOpenFileWithCaretMarker()
-        checkAstNotLoaded(VirtualFileFilter { file ->
-            !file.path.endsWith(testProject.fileWithCaret)
-        })
-        noCompletionCheck()
-    }
+    protected fun checkNoCompletionByFileTree(@Language("Rust") code: String) =
+        completionFixture.checkNoCompletionByFileTree(code)
 
-    private fun noCompletionCheck() {
-        val variants = myFixture.completeBasic()
-        checkNotNull(variants) {
-            val element = myFixture.file.findElementAt(myFixture.caretOffset - 1)
-            "Expected zero completions, but one completion was auto inserted: `${element?.text}`."
-        }
-        check(variants.isEmpty()) {
-            "Expected zero completions, got ${variants.size}."
-        }
-    }
-
-    protected fun executeSoloCompletion() {
-        val variants = myFixture.completeBasic()
-
-        if (variants != null) {
-            if (variants.size == 1) {
-                // for cases like `frob/*caret*/nicate()`,
-                // completion won't be selected automatically.
-                myFixture.type('\n')
-                return
-            }
-            fun LookupElement.debug(): String = "$lookupString ($psiElement)"
-            error("Expected a single completion, but got ${variants.size}\n"
-                + variants.joinToString("\n") { it.debug() })
-        }
-    }
+    protected fun executeSoloCompletion() = completionFixture.executeSoloCompletion()
 
     private fun PsiElement.fitsHierarchically(target: String): Boolean = when {
         text == target -> true

@@ -35,7 +35,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
         edition = 8<caret>
     """, """
         $sectionName
-        edition = "2018"
+        edition = "2018<caret>"
     """)
 
     @Test
@@ -44,7 +44,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
         edition = "8<caret>"
     """, """
         $sectionName
-        edition = "2018"
+        edition = "2018<caret>"
     """)
 
     @Test
@@ -53,7 +53,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
         edition = 5<caret>
     """, """
         $sectionName
-        edition = "2015"
+        edition = "2015<caret>"
     """)
 
     @Test
@@ -62,7 +62,7 @@ class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTom
         edition = "5<caret>"
     """, """
         $sectionName
-        edition = "2015"
+        edition = "2015<caret>"
     """)
 
     @Test

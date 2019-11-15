@@ -6,7 +6,7 @@
 package org.rust.lang.core.completion
 
 class RsStubOnlyCompletionTest : RsCompletionTestBase() {
-    fun `test function`() = doSingleCompletionMultifile("""
+    fun `test function`() = doSingleCompletionByFileTree("""
     //- foo.rs
         pub fn bar(a: i32, b: u8) {}
     //- main.rs
@@ -17,7 +17,7 @@ class RsStubOnlyCompletionTest : RsCompletionTestBase() {
         use foo::bar/*caret*/;
     """)
 
-    fun `test constant`() = doSingleCompletionMultifile("""
+    fun `test constant`() = doSingleCompletionByFileTree("""
     //- foo.rs
         pub const CONST: i32 = 0;
     //- main.rs
@@ -28,7 +28,7 @@ class RsStubOnlyCompletionTest : RsCompletionTestBase() {
         use foo::CONST/*caret*/;
     """)
 
-    fun `test tuple struct`() = doSingleCompletionMultifile("""
+    fun `test tuple struct`() = doSingleCompletionByFileTree("""
     //- foo.rs
         pub struct Struct(i32);
     //- main.rs
@@ -39,7 +39,7 @@ class RsStubOnlyCompletionTest : RsCompletionTestBase() {
         use foo::Struct/*caret*/;
     """)
 
-    fun `test field`() = doSingleCompletionMultifile("""
+    fun `test field`() = doSingleCompletionByFileTree("""
     //- foo.rs
         pub struct S {
             pub field: i32
