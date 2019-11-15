@@ -56,8 +56,11 @@ class RsCompletionTestFixture(
         checkByText(before.trimIndent(), after.trimIndent()) { executeSoloCompletion() }
     }
 
-    fun doSingleCompletionByFileTree(before: String, after: String) {
-        val testProject = fileTreeFromText(before).createAndOpenFileWithCaretMarker(myFixture)
+    fun doSingleCompletionByFileTree(before: String, after: String) =
+        doSingleCompletionByFileTree(fileTreeFromText(before), after)
+
+    fun doSingleCompletionByFileTree(fileTree: FileTree, after: String) {
+        val testProject = fileTree.createAndOpenFileWithCaretMarker(myFixture)
         checkAstNotLoaded(VirtualFileFilter { file ->
             !file.path.endsWith(testProject.fileWithCaret)
         })
