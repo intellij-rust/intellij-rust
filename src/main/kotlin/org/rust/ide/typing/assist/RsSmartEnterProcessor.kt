@@ -11,7 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RsBlock
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RsElementTypes.LBRACE
+import org.rust.lang.core.psi.RsElementTypes.RBRACE
+import org.rust.lang.core.psi.ext.ancestors
 
 /**
  * Smart enter implementation for the Rust language.
@@ -27,22 +29,20 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             PlainEnterProcessor())
     }
 
-    override fun getStatementAtCaret(editor: Editor?, psiFile: PsiFile?): PsiElement? {
-        var atCaret = super.getStatementAtCaret(editor, psiFile)
+    override fun getStatementAtCaret(editor: Editor, psiFile: PsiFile): PsiElement? {
+        val atCaret = super.getStatementAtCaret(editor, psiFile) ?: return null
         if (atCaret is PsiWhiteSpace) return null
-        while (atCaret != null) {
-            val parent = atCaret.parent
-            val elementType = atCaret.node.elementType
-            atCaret = when {
-                elementType == RsElementTypes.LBRACE || elementType == RsElementTypes.RBRACE -> parent
-                parent is RsBlock -> return atCaret
-                else -> parent
+        loop@ for (each in atCaret.ancestors) {
+            val elementType = each.node.elementType
+            when {
+                elementType == LBRACE || elementType == RBRACE -> continue@loop
+                each.parent is RsBlock -> return each
             }
         }
         return null
     }
 
-    override fun doNotStepInto(element: PsiElement?): Boolean {
+    override fun doNotStepInto(element: PsiElement): Boolean {
         return true
     }
 
