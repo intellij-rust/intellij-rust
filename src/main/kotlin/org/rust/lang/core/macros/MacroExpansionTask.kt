@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -99,7 +100,13 @@ abstract class MacroExpansionTaskBase(
             MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
         } finally {
             RsResolveCache.getInstance(project).endExpandingMacros()
-            heavyProcessToken?.finish()
+            heavyProcessToken?.let {
+                it.finish()
+                // Restart `DaemonCodeAnalyzer` after releasing `HeavyProcessLatch`. Used instead of
+                // `DaemonCodeAnalyzer.restart()` to do restart more gracefully, i.e. don't invalidate
+                // highlights if nothing actually changed
+                WriteAction.runAndWait<Throwable> {  }
+            }
         }
     }
 
