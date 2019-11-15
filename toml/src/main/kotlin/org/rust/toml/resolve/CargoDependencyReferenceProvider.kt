@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.TextRange

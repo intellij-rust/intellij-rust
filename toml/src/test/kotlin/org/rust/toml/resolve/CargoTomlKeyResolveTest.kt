@@ -3,13 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.fileTree
-import org.rust.lang.core.resolve.RsResolveTestBase
 import org.toml.lang.psi.TomlKey
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)

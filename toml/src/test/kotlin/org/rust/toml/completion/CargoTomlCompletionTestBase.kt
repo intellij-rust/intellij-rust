@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.completion
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language

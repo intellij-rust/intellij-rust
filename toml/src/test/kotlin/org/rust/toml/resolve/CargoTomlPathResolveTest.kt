@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import org.toml.lang.psi.TomlLiteral
 

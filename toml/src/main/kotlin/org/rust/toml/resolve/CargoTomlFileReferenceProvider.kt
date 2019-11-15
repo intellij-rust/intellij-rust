@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import com.intellij.openapi.util.Condition
 import com.intellij.patterns.PsiElementPattern
@@ -17,7 +17,8 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.or
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.toml.PathPatternType.*
+import org.rust.toml.CargoTomlPsiPattern
+import org.rust.toml.resolve.PathPatternType.*
 import org.toml.lang.psi.TomlHeaderOwner
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.ext.TomlLiteralKind

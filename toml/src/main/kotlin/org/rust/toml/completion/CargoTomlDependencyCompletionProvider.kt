@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionProvider
@@ -11,6 +11,8 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.toml.StringValueInsertionHandler
+import org.rust.toml.getClosestKeyValueAncestor
 import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable

@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceRegistrar
 import org.rust.lang.core.or
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
+import org.rust.toml.tomlPluginIsAbiCompatible
 
 class CargoTomlReferenceContributor : PsiReferenceContributor() {
 
