@@ -11,5 +11,6 @@ include(
     "coverage",
     "intelliLang",
     "duplicates",
+    "grazie",
     "intellij-toml"
 )
