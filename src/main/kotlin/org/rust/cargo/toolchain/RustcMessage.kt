@@ -52,8 +52,9 @@ data class RustcMessage(
 ) {
     val mainSpan: RustcSpan?
         get() {
-            val validSpans = spans.filter { it.isValid() && !it.file_name.startsWith("<") }
-            return validSpans.firstOrNull { it.is_primary } ?: validSpans.maxBy { it.byte_start }
+            val validSpan = spans.filter { it.isValid() }.firstOrNull { it.is_primary } ?: return null
+            return generateSequence(validSpan) { it.expansion?.span }.last()
+                .takeIf { it.isValid() && !it.file_name.startsWith("<") }
         }
 }
 
