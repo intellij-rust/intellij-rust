@@ -23,7 +23,7 @@ class RsReferencesSearchExtensionImpl : QueryExecutorBase<RsReference, Reference
                 val elementIndex = elementOwnerStruct.tupleFields!!.tupleFieldDeclList.indexOf(element)
                 queryParameters.optimizer.searchWord(
                     elementIndex.toString(),
-                    elementOwnerStruct.useScope,
+                    queryParameters.effectiveSearchScope,
                     UsageSearchContext.IN_CODE,
                     false,
                     element
@@ -32,7 +32,7 @@ class RsReferencesSearchExtensionImpl : QueryExecutorBase<RsReference, Reference
             element is RsFile && element.getOwnedDirectory() != null ->
                 queryParameters.optimizer.searchWord(
                     element.getOwnedDirectory()!!.name,
-                    element.useScope,
+                    queryParameters.effectiveSearchScope,
                     true,
                     element)
         }
