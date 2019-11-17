@@ -167,8 +167,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
             element,
             false,
             RsItemElement::class.java,
-            RsMacro::class.java,
-            RsMacroArgument::class.java
+            RsMacro::class.java
         ) == null
         if (shouldInc) modificationTracker.incModificationCount()
         return shouldInc

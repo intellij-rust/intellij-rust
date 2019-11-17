@@ -9,6 +9,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
@@ -146,9 +147,23 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         macro_rules! foo { () => { /*caret*/ } }
     """)
 
-    fun `test macro call`() = doTest(INC, """
+    fun `test macro call (old engine)`() = checkModCount(INC, """
         foo! { /*caret*/ }
-    """)
+    """, "a")
+
+    @ExpandMacros
+    fun `test macro call (new engine)`() = checkModCount(NOT_INC, """
+        foo! { /*caret*/ }
+    """, "a")
+
+    fun `test macro call inside a function (old engine)`() = checkModCount(NOT_INC, """
+        fn wrapped() { foo! { /*caret*/ } }
+    """, "a")
+
+    @ExpandMacros
+    fun `test macro call a function (new engine)`() = checkModCount(NOT_INC, """
+        fn wrapped() { foo! { /*caret*/ } }
+    """, "a")
 
     //
 
@@ -231,7 +246,7 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
         fn foo() { 2/*caret*/; }
     """, "\b{ macro_rules! foo { () => {} } }")
 
-    fun `test replace expr with block with call`() = doTest(INC, """
+    fun `test replace expr with block with call`() = doTest(NOT_INC, """
         fn foo() { 2/*caret*/; }
     """, "\b{ foo!() }")
 }

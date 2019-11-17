@@ -36,7 +36,8 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
 
     override fun incModificationCount(element: PsiElement): Boolean {
         modificationTracker.incModificationCount()
-        return false // force rustStructureModificationTracker to be incremented
+        val isStructureModification = ancestors.any { it is RsMacroCall && it.macroName == "include" }
+        return !isStructureModification // Note: RsMacroCall is a special case for RsPsiManagerImpl
     }
 }
 
@@ -132,10 +133,7 @@ val RsMacroCall.expansion: MacroExpansion?
             // will be different if completion invoked inside the macro body.
             it.macroBody == this.macroBody
         } ?: this
-        CachedValueProvider.Result.create(
-            project.macroExpansionManager.getExpansionFor(originalOrSelf),
-            rustStructureOrAnyPsiModificationTracker
-        )
+        project.macroExpansionManager.getExpansionFor(originalOrSelf)
     }
 
 val RsMacroCall.expansionFlatten: List<RsExpandedElement>

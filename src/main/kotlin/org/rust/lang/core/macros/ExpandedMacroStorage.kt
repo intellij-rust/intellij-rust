@@ -13,6 +13,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -54,8 +56,10 @@ class ExpandedMacroStorage(val project: Project) {
     private val sourceFiles: TIntObjectHashMap<SourceFile> = TIntObjectHashMap()
     private val expandedFileToInfo: TIntObjectHashMap<ExpandedMacroInfoImpl> = TIntObjectHashMap()
     private val stepped: Array<MutableList<SourceFile>?> = arrayOfNulls(DEFAULT_RECURSION_LIMIT)
+    private val _modificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
     val isEmpty: Boolean get() = sourceFiles.isEmpty
+    val modificationTracker: ModificationTracker get() = _modificationTracker
 
     private fun deserialize(sfs: List<SourceFile>) {
         for (sf in sfs) {
@@ -67,6 +71,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun clear() {
         checkWriteAccessAllowed()
+        _modificationTracker.incModificationCount()
         sourceFiles.clear()
         expandedFileToInfo.clear()
         stepped.fill(null)
@@ -126,6 +131,7 @@ class ExpandedMacroStorage(val project: Project) {
         ranges: RangeMap?
     ): ExpandedMacroInfoImpl {
         checkWriteAccessAllowed()
+        _modificationTracker.incModificationCount()
         @Suppress("NAME_SHADOWING")
         val oldInfo = oldInfo as ExpandedMacroInfoImpl
 
@@ -159,6 +165,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun removeInvalidInfo(oldInfo: ExpandedMacroInfo, clean: Boolean) {
         checkWriteAccessAllowed()
+        _modificationTracker.incModificationCount()
         @Suppress("NAME_SHADOWING")
         val oldInfo = oldInfo as ExpandedMacroInfoImpl
 
