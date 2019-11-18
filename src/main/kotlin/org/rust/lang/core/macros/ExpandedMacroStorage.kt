@@ -205,13 +205,14 @@ class ExpandedMacroStorage(val project: Project) {
 
     companion object {
         private val LOG = Logger.getInstance(ExpandedMacroStorage::class.java)
-        private const val STORAGE_VERSION = 7
+        private const val STORAGE_VERSION = 8
         const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
         fun load(project: Project, dataFile: Path): ExpandedMacroStorage? {
             return try {
                 DataInputStream(InflaterInputStream(Files.newInputStream(dataFile))).use { data ->
                     if (data.readInt() != STORAGE_VERSION) return null
+                    if (data.readInt() != MacroExpander.EXPANDER_VERSION) return null
                     if (data.readInt() != RsFileStub.Type.stubVersion) return null
                     if (data.readInt() != RANGE_MAP_ATTRIBUTE_VERSION) return null
 
@@ -240,6 +241,7 @@ class ExpandedMacroStorage(val project: Project) {
             Files.createDirectories(dataFile.parent)
             DataOutputStream(DeflaterOutputStream(Files.newOutputStream(dataFile))).use { data ->
                 data.writeInt(STORAGE_VERSION)
+                data.writeInt(MacroExpander.EXPANDER_VERSION)
                 data.writeInt(RsFileStub.Type.stubVersion)
                 data.writeInt(RANGE_MAP_ATTRIBUTE_VERSION)
 
@@ -716,7 +718,6 @@ class SourceFile(
         data.apply {
             writeUTF(fileUrl)
             writeInt(depth)
-            writeBoolean(false) // TODO remove
             writeLong(modificationStamp)
             writeInt(infos.size)
             infos.forEach { it.writeTo(data) }
@@ -755,7 +756,6 @@ private data class SerializedSourceFile(
         fun readFrom(data: DataInputStream): SerializedSourceFile {
             val fileUrl = data.readUTF()
             val depth = data.readInt()
-            val fresh = data.readBoolean()
             val modificationStamp = data.readLong()
             val infosSize = data.readInt()
             val serInfos = (0 until infosSize).map { SerializedExpandedMacroInfo.readFrom(data) }
@@ -763,7 +763,7 @@ private data class SerializedSourceFile(
             return SerializedSourceFile(
                 fileUrl,
                 depth,
-                if (fresh) FRESH_FLAG else modificationStamp,
+                modificationStamp,
                 serInfos
             )
         }

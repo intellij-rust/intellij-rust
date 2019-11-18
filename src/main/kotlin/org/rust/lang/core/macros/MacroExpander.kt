@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
+import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -94,6 +95,7 @@ private data class WithParent(
 data class MetaVarValue(
     val value: String,
     val kind: FragmentKind?,
+    val elementType: IElementType?,
     val offsetInCallBody: Int
 )
 
@@ -106,7 +108,7 @@ class MacroExpander(val project: Project) {
             subst,
             WithParent(
                 MacroSubstitution(
-                    singletonMap("crate", MetaVarValue(expandDollarCrateVar(call, def), null, -1)),
+                    singletonMap("crate", MetaVarValue(expandDollarCrateVar(call, def), null, null, -1)),
                     emptyList()
                 ),
                 null
@@ -211,6 +213,7 @@ class MacroExpander(val project: Project) {
                         return@forEachChild
                     }
                     val parensNeeded = value.kind == FragmentKind.Expr
+                        && value.elementType != LIT_EXPR && value.elementType != MACRO_EXPR
                     if (parensNeeded) {
                         sb.append("(")
                         sb.append(value.value)
@@ -272,6 +275,10 @@ class MacroExpander(val project: Project) {
         } else {
             add(range)
         }
+    }
+
+    companion object {
+        const val EXPANDER_VERSION = 1
     }
 }
 
@@ -362,7 +369,8 @@ class MacroPattern private constructor(
                         return null
                     }
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
-                    map[name] = MetaVarValue(text, kind, lastOffset)
+                    val elementType = macroCallBody.latestDoneMarker?.tokenType
+                    map[name] = MetaVarValue(text, kind, elementType, lastOffset)
                 }
                 MACRO_BINDING_GROUP -> {
                     val psi = node.psi as RsMacroBindingGroup
