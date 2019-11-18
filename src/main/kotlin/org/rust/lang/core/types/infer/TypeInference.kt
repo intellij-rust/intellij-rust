@@ -32,15 +32,15 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
         ?: error("Can not run nested type inference")
 }
 
-sealed class Adjustment(val target: Ty) {
+sealed class Adjustment(open val target: Ty) {
     class Deref(target: Ty) : Adjustment(target)
     class BorrowReference(
-        target: Ty,
+        override val target: TyReference,
         val region: Region? = (target as? TyReference)?.region,
         val mutability: Mutability? = (target as? TyReference)?.mutability
     ) : Adjustment(target)
 
-    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
+//    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
 }
 
 interface RsInferenceData {
@@ -176,7 +176,7 @@ class RsInferenceContext(
                     enum?.reprType to element.expr
                 }
                 is RsExpressionCodeFragment -> {
-                    element.context?.inference?.let {
+                    element.context.inference?.let {
                         patTypes.putAll(it.patTypes)
                         patFieldTypes.putAll(it.patFieldTypes)
                         exprTypes.putAll(it.exprTypes)
