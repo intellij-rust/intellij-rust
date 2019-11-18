@@ -276,6 +276,10 @@ class MacroExpander(val project: Project) {
             add(range)
         }
     }
+
+    companion object {
+        const val EXPANDER_VERSION = 1
+    }
 }
 
 /**
