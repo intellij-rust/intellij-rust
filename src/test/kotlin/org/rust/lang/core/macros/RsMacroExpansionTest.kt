@@ -535,7 +535,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo! { 1, 2, 3, 4 }
     """, """
-        fn foo() { (1); (2); (3); (4); }
+        fn foo() { 1; 2; 3; 4; }
     """)
 
     fun `test match non-group pattern with asterisk`() = doTest("""
@@ -567,7 +567,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo! { mod a {}, mod b {}; 1, 2 }
     """, """
-        fn foo() { (1); (2); }
+        fn foo() { 1; 2; }
         mod a {}
         mod b {}
     """)
@@ -580,8 +580,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo! { foo 1,2,3; bar 4,5,6 }
     """, """
-        fn foo() { (1); (2); (3); }
-        fn bar() { (4); (5); (6); }
+        fn foo() { 1; 2; 3; }
+        fn bar() { 4; 5; 6; }
     """)
 
     fun `test nested groups that uses vars from outer group`() = doTest("""
@@ -592,11 +592,11 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo! { 1, foo, bar, baz; 2, quux, eggs }
     """, """
-        fn foo() { (1); }
-        fn bar() { (1); }
-        fn baz() { (1); }
-        fn quux() { (2); }
-        fn eggs() { (2); }
+        fn foo() { 1; }
+        fn bar() { 1; }
+        fn baz() { 1; }
+        fn quux() { 2; }
+        fn eggs() { 2; }
     """)
 
     fun `test group in braces`() = doTest("""
@@ -613,7 +613,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
          mod a {}
          mod b {}
-         fn foo() { (2); }
+         fn foo() { 2; }
     """)
 
     fun `test group with the separator the same as the next token 1`() = doTest(MacroExpansionMarks.groupInputEnd1, """
@@ -734,7 +734,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
             vec![1, 2, 3];
         } //^
     """, """
-        <[_]>::into_vec(box [(1), (2), (3)])
+        <[_]>::into_vec(box [1, 2, 3])
     """)
 
     fun `test expend macro definition`() = doTest("""
@@ -918,7 +918,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test item with docs`() = doTest("""
-        // error: repetition matches empty token tree
         macro_rules! foo {
             ($ i:item) => { $ i }
         }
@@ -932,7 +931,6 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """ to MacroExpansionMarks.docsLowering)
 
     fun `test docs lowering`() = doTest("""
-        // error: repetition matches empty token tree
         macro_rules! foo {
             (#[$ i:meta]) => {
                 #[$ i]
@@ -946,4 +944,30 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         #[doc = r###"Some docs"###]
         fn foo() {}
     """ to MacroExpansionMarks.docsLowering)
+
+    fun `test literal expr is not wrapped into parens`() = doTest("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                #[cfg(feature = $ e)]
+                fn bar() {}
+            }
+        }
+        foo!("bar");
+    """, """
+        #[cfg(feature = "bar")]
+        fn bar() {}
+    """)
+
+    fun `test macro call expr is not wrapped into parens`() = checkSingleMacro("""
+        macro_rules! foo {
+            ($ e:expr) => {
+                $ e
+            }
+        }
+        fn main() {
+            let a = foo!(foo!(foo!(2 + 2)));
+        }         //^
+    """, """
+        (2 + 2)
+    """)
 }

@@ -1029,34 +1029,34 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             {
                 match *self {
                     ErrorKind::Msg(ref s) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("{}"), s) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", s) };
 
                         display_fn(self, fmt)
                     }
                     #[cfg(unix)]
                     ErrorKind::Another(ref e) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("{}"), e) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", e) };
 
                         display_fn(self, fmt)
                     }
                     ErrorKind::Fmt(ref err) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("{}"), err) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", err) };
 
                         display_fn(self, fmt)
                     }
                     #[cfg(unix)]
                     ErrorKind::Io(ref err) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("{}"), err) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", err) };
 
                         display_fn(self, fmt)
                     }
                     ErrorKind::InvalidToolchainName(ref t) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("invalid toolchain name: '{}'"), t) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "invalid toolchain name: '{}'", t) };
 
                         display_fn(self, fmt)
                     }
                     ErrorKind::UnknownToolchainVersion(ref v) => {
-                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, ("unknown toolchain version: '{}'"), v) };
+                        let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "unknown toolchain version: '{}'", v) };
 
                         display_fn(self, fmt)
                     }
@@ -1084,10 +1084,10 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                         (::std::error::Error::description(err))
                     }
                     ErrorKind::InvalidToolchainName(ref t) => {
-                        ("invalid toolchain name")
+                        "invalid toolchain name"
                     }
                     ErrorKind::UnknownToolchainVersion(ref v) => {
-                        ("unknown toolchain version")
+                        "unknown toolchain version"
                     }
 
                     _ => "",

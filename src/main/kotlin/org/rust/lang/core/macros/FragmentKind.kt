@@ -41,7 +41,7 @@ enum class FragmentKind(private val kind: String) {
                 RustParser.EXTENDS_SETS_
             )
             val marker = GeneratedParserUtilBase
-                .enter_section_(adaptBuilder, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+                .enter_section_(adaptBuilder, 0, 0, null)
 
             val parsed = when (this) {
                 Path -> RustParser.PathGenericArgsWithColons(adaptBuilder, 0)
@@ -58,7 +58,7 @@ enum class FragmentKind(private val kind: String) {
                 Literal -> RustParser.LitExpr(adaptBuilder, 0)
                 Ident -> false // impossible
             }
-            GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, root, parsed, true) { _, _ -> false }
+            GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, null, parsed, true) { _, _ -> false }
             parsed
         }
     }
