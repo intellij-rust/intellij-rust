@@ -469,4 +469,96 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
         testProject.checkReferenceIsResolved<RsPath>("src/main.rs")
     }
+
+    fun `test disabled cfg feature`() = buildProject {
+        toml(
+            "Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [dependencies]
+            foo = { path = "./foo", features = [] }
+        """
+        )
+        dir("src") {
+            rust(
+                "main.rs", """
+                extern crate foo;
+                fn main() {
+                    let _ = foo::bar();
+                              // ^
+                }
+            """
+            )
+        }
+        dir("foo") {
+            toml(
+                "Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                
+                [features]
+                foobar = []
+            """
+            )
+            dir("src") {
+                rust(
+                    "lib.rs", """
+                    #[cfg(feature="foobar")]
+                    pub fn bar() -> u32 { 42 }
+            """
+                )
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+    }
+
+    fun `test enabled cfg feature`() = buildProject {
+        toml(
+            "Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+
+            [dependencies]
+            foo = { path = "./foo", features = ["foobar"] }
+        """
+        )
+        dir("src") {
+            rust(
+                "main.rs", """
+                extern crate foo;
+                fn main() {
+                    let _ = foo::bar();
+                              // ^
+                }
+            """
+            )
+        }
+        dir("foo") {
+            toml(
+                "Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                
+                [features]
+                foobar = []
+            """
+            )
+            dir("src") {
+                rust(
+                    "lib.rs", """
+                    #[cfg(feature="foobar")]
+                    pub fn bar() -> u32 { 42 }
+            """
+                )
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
 }

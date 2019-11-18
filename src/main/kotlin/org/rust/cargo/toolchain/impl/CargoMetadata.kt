@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -19,6 +20,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*
+
+private val LOG = Logger.getInstance(CargoMetadata::class.java)
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -95,7 +98,13 @@ object CargoMetadata {
          * Can be "2015", "2018" or null. Null value can be got from old version of cargo
          * so it is the same as "2015"
          */
-        val edition: String?
+        val edition: String?,
+
+        /**
+         * Features available in this package.
+         * The entry named "default" defines which features are enabled by default.
+         */
+        val features: Map<String, List<String>>
     )
 
 
@@ -198,9 +207,13 @@ object CargoMetadata {
          * List of dependency info
          *
          * Contains additional info compared with [dependencies] like custom package name.
-         * Can be null for old cargo version
          */
-        val deps: List<Dep>?
+        val deps: List<Dep>?,
+
+        /**
+         * Enabled features (including optional dependencies)
+         */
+        val features: List<String>?
     )
 
     data class Dep(
@@ -240,12 +253,32 @@ object CargoMetadata {
     fun clean(project: Project, buildPlan: CargoBuildPlan?): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
-            ?: error("No `members` key in the `cargo metadata` output.\n" +
-            "Your version of Cargo is no longer supported, please upgrade Cargo.")
-
+            ?: error(
+                "No `workspace_members` key in the `cargo metadata` output.\n" +
+                    "Your version of Cargo is no longer supported, please upgrade Cargo."
+            )
         val variables = TargetVariables.from(buildPlan)
+        val packageIdToNode = project.resolve.nodes.associateBy { it.id }
+
         return CargoWorkspaceData(
-            project.packages.mapNotNull { it.clean(fs, it.id in members, variables) },
+            project.packages.mapNotNull { pkg ->
+                // resolve contains all enabled features for each package
+                val resolveNode = packageIdToNode[pkg.id]
+                if (resolveNode == null) {
+                    LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
+                }
+
+                val enabledFeatures = resolveNode?.features?.toSet().orEmpty()
+                val features = pkg.features.keys.map { feature ->
+                    val state = when {
+                        enabledFeatures.contains(feature) -> CargoWorkspace.FeatureState.Enabled
+                        else -> CargoWorkspace.FeatureState.Disabled
+                    }
+                    CargoWorkspace.Feature(feature, state)
+                }
+
+                pkg.clean(fs, pkg.id in members, variables, features)
+            },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
                     deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
@@ -261,11 +294,13 @@ object CargoMetadata {
     private fun Package.clean(
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
-        variables: TargetVariables
+        variables: TargetVariables,
+        features: List<CargoWorkspace.Feature>
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
+
         return CargoWorkspaceData.Package(
             id,
             root.url,
@@ -274,7 +309,8 @@ object CargoMetadata {
             targets.mapNotNull { it.clean(this, root, variables) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
-            edition = edition.cleanEdition()
+            edition = edition.cleanEdition(),
+            features = features
         )
     }
 
