@@ -1414,11 +1414,7 @@ EnvMacroArgument ::= <<any_braces <<comma_separated_list AnyExpr>>? >> {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-private meta any_braces ::=
-  '(' <<param>> ')'
-| '{' <<param>> '}'
-| '[' <<param>> ']'
-{ pin = 1 }
+private meta any_braces ::= <<parseAnyBraces <<param>>>> | never '(' '{' '[' ']' '}' ')' <<param>>
 
 // Macro wrappers
 MacroExpr ::= ExprLikeMacroCall {

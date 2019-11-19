@@ -32,3 +32,12 @@ fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
     val end = rawTokenTypeStart(steps + 1)
     return if (start == -1 || end == -1) "" else originalText.subSequence(start, end)
 }
+
+fun PsiBuilder.Marker.close(result: Boolean): Boolean {
+    if (result) {
+        drop()
+    } else {
+        rollbackTo()
+    }
+    return result
+}

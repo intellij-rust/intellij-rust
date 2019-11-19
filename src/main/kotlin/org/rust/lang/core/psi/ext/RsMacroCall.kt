@@ -179,7 +179,7 @@ private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) 
 }
 
 private fun PsiElement.braceListBodyTextRange(): TextRange? =
-    textRange.let { TextRange(it.startOffset + 1, it.endOffset - 1) }
+    textRange.let { TextRange(it.startOffset + 1, it.endOffset - if (it.length == 1) 0 else 1) }
 
 fun RsMacroCall.replaceWithExpr(expr: RsExpr): RsElement {
     return when (val context = expansionContext) {
