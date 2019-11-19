@@ -120,7 +120,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
             Thread.sleep(10)
             LaterInvocator.dispatchPendingFlushes()
         }
-        project.macroExpansionManager.ensureUpToDate()
     }
 
     fun `test re-open project without changes`() = stubBasedRefMatch.checkReExpanded(doNothing(), """

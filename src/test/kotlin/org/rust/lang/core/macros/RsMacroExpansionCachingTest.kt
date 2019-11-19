@@ -62,10 +62,15 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         }
     }
 
-    private fun checkReExpanded(action: () -> Unit, @Language("Rust") code: String, vararg names: String) {
+    private fun checkReExpandedInner(
+        testmark: TestmarkPred?,
+        action: () -> Unit,
+        @Language("Rust") code: String,
+        vararg names: String
+    ) {
         InlineFile(code).withCaret()
         val oldStamps = myFixture.file.collectMacros().collectStamps()
-        action()
+        testmark?.checkHit { action() } ?: action()
         val collectMacros = myFixture.file.collectMacros()
         val changed = collectMacros.collectStamps().entries
             .filter { oldStamps[it.key] != it.value }
@@ -75,8 +80,11 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         }
     }
 
+    private fun checkReExpanded(action: () -> Unit, @Language("Rust") code: String, vararg names: String) =
+        checkReExpandedInner(null, action, code, *names)
+
     private fun TestmarkPred.checkReExpanded(action: () -> Unit, @Language("Rust") code: String, vararg names: String) =
-        checkHit { this@RsMacroExpansionCachingTest.checkReExpanded(action, code, *names) }
+        checkReExpandedInner(this, action, code, *names)
 
     private fun checkReExpandedTree(
         action: (p: TestProject) -> Unit,
@@ -110,7 +118,6 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         @Language("Rust") vararg expectedExpansions: String
     ) {
         InlineFile(code)
-        project.macroExpansionManager.ensureUpToDate()
 
         action()
 
@@ -218,7 +225,6 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         Testmarks.refsRecover.checkNotHit {
             myFixture.type("\b\b\b")
             PsiDocumentManager.getInstance(project).commitAllDocuments()
-            project.macroExpansionManager.ensureUpToDate()
 
             FileDocumentManager.getInstance().saveAllDocuments()
             FileDocumentManager.getInstance().reloadFromDisk(myFixture.getDocument(myFixture.file))

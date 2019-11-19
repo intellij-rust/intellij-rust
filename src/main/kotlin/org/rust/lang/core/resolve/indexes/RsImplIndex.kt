@@ -11,7 +11,6 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.io.KeyDescriptor
 import org.rust.ide.search.RsWithMacrosProjectScope
-import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.resolve.RsCachedImplItem
@@ -48,7 +47,6 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             tyf: TyFingerprint,
             processor: RsProcessor<RsCachedImplItem>
         ): Boolean {
-            project.macroExpansionManager.ensureUpToDate()
             val impls = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
             // I intentionally use `getElements` with intermediate collection instead of `StubIndex.processElements`
             // to simplify profiling

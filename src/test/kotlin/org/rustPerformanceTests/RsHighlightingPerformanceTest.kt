@@ -47,10 +47,6 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
 
         myFixture.configureFromTempProjectFile(filePath)
 
-        timings.measure("macros") {
-            project.macroExpansionManager.ensureUpToDate()
-        }
-
         val modificationCount = currentPsiModificationCount()
 
         val refs = timings.measure("collecting") {
