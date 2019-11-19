@@ -9,11 +9,14 @@ import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeAlias
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.type
 
-class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
+class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, private val showObviousTypes: Boolean) {
 
     fun typeHint(type: Ty): InlayPresentation = factory.roundWithBackground(
         listOf(text(": "), hint(type, 1)).join()
@@ -82,8 +85,14 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
         val typeDeclaration = alias ?: type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
 
-        val typeArguments = alias?.typeParameters?.map { aliasedBy.subst[it] ?: TyUnknown }
-            ?: type.typeArguments
+        val typeArguments = mutableListOf<Ty>()
+        for ((argument, parameter) in type.typeArguments.zip(type.item.typeParameters)) {
+            if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
+                // don't show default types
+                continue
+            }
+            typeArguments.add(argument)
+        }
 
         if (typeArguments.isNotEmpty()) {
             val collapsible = factory.collapsible(
@@ -184,6 +193,10 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
         val typeParametersPresentations = mutableListOf<InlayPresentation>()
         for (parameter in trait.element.typeParameters) {
             val argument = trait.subst[parameter] ?: continue
+            if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
+                // don't show default types
+                continue
+            }
             val parameterPresentation = hint(argument, level + 1)
             typeParametersPresentations.add(parameterPresentation)
         }
@@ -193,6 +206,10 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
             for (alias in trait.element.associatedTypesTransitively) {
                 val aliasName = alias.name ?: continue
                 val type = trait.assoc[alias] ?: continue
+                if (!showObviousTypes && isDefaultTypeAlias(type, alias)) {
+                    // don't show default types
+                    continue
+                }
 
                 val aliasPresentation = factory.psiSingleReference(text(aliasName)) { alias }
 
@@ -220,6 +237,12 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory) {
 
     private fun checkSize(level: Int, elementsCount: Int): Boolean =
         level + elementsCount > FOLDING_TRESHOLD
+
+    private fun isDefaultTypeParameter(argument: Ty, parameter: RsTypeParameter): Boolean =
+        argument == parameter.typeReference?.type
+
+    private fun isDefaultTypeAlias(argument: Ty, alias: RsTypeAlias): Boolean =
+        argument == alias.typeReference?.type
 
     private fun List<InlayPresentation>.join(separator: String = ""): InlayPresentation {
         if (separator.isEmpty()) {

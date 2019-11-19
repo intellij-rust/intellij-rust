@@ -289,6 +289,29 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
         }
     """)
 
+    fun `test don't show default type in adt`() = checkByText(
+        """
+        struct MyType;
+        struct S<A, B = MyType> { x: A, y: B }
+
+        fn main() {
+            let a = S { x: 42, y: MyType };
+            let b/*hint text="[:  [S [< i32 >]]]"*/ = a;
+        }
+    """
+    )
+
+    fun `test don't show default type in anon type`() = checkByText(
+        """
+        struct MyType;
+        trait MyTrait<A, B = MyType> {}
+
+        fn foo(x: impl MyTrait<i32>) {
+            let y/*hint text="[:  [impl  [MyTrait [< i32 >]] ]]"*/ = x;
+        }
+    """
+    )
+
     private fun checkByText(@Language("Rust") code: String) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
 

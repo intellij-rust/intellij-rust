@@ -86,7 +86,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
     override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? =
         object : FactoryInlayHintsCollector(editor) {
 
-            val typeHintsFactory = RsTypeHintsPresentationFactory(factory)
+            val typeHintsFactory = RsTypeHintsPresentationFactory(factory, settings.showObviousTypes)
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (file.project.service<DumbService>().isDumb) return true
