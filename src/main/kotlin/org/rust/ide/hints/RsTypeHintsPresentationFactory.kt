@@ -187,7 +187,11 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
     private fun parametersHint(types: List<Ty>, level: Int): InlayPresentation =
         types.map { hint(it, level) }.join(", ")
 
-    private fun traitItemTypeHint(trait: BoundElement<RsTraitItem>, level: Int, includeAssoc: Boolean): InlayPresentation {
+    private fun traitItemTypeHint(
+        trait: BoundElement<RsTraitItem>,
+        level: Int,
+        includeAssoc: Boolean
+    ): InlayPresentation {
         val traitPresentation = factory.psiSingleReference(text(trait.element.name)) { trait.element }
 
         val typeParametersPresentations = mutableListOf<InlayPresentation>()
@@ -236,7 +240,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
     }
 
     private fun checkSize(level: Int, elementsCount: Int): Boolean =
-        level + elementsCount > FOLDING_TRESHOLD
+        level + elementsCount > FOLDING_THRESHOLD
 
     private fun isDefaultTypeParameter(argument: Ty, parameter: RsTypeParameter): Boolean =
         argument == parameter.typeReference?.type
@@ -264,6 +268,6 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
 
     companion object {
         private const val PLACEHOLDER: String = "…"
-        private const val FOLDING_TRESHOLD: Int = 3
+        private const val FOLDING_THRESHOLD: Int = 3
     }
 }
