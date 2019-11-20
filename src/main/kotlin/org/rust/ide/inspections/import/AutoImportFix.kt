@@ -677,7 +677,7 @@ data class ImportContext private constructor(
             mod = element.containingMod,
             superMods = LinkedHashSet(element.containingMod.superMods),
             scope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project)),
-            pathParsingMode = PathParsingMode.NO_COLONS,
+            pathParsingMode = PathParsingMode.TYPE,
             attributes = element.stdlibAttributes,
             namespaceFilter = { true }
         )
@@ -689,8 +689,8 @@ private val RsPath.pathParsingMode: PathParsingMode
         is RsPathExpr,
         is RsStructLiteral,
         is RsPatStruct,
-        is RsPatTupleStruct -> PathParsingMode.COLONS
-        else -> PathParsingMode.NO_COLONS
+        is RsPatTupleStruct -> PathParsingMode.VALUE
+        else -> PathParsingMode.TYPE
     }
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE

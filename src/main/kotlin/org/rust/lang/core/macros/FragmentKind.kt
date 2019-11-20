@@ -44,7 +44,7 @@ enum class FragmentKind(private val kind: String) {
                 .enter_section_(adaptBuilder, 0, 0, null)
 
             val parsed = when (this) {
-                Path -> RustParser.PathGenericArgsWithColons(adaptBuilder, 0)
+                Path -> RustParser.ValuePathGenericArgs(adaptBuilder, 0)
                 Expr -> RustParser.Expr(adaptBuilder, 0, -1)
                 Ty -> RustParser.TypeReference(adaptBuilder, 0)
                 Pat -> RustParser.Pat(adaptBuilder, 0)
