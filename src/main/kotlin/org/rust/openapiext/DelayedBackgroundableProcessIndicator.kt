@@ -8,6 +8,7 @@ package org.rust.openapiext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.util.ui.UIUtil
 
@@ -26,10 +27,14 @@ class DelayedBackgroundableProcessIndicator(task: Task.Backgroundable, delay: In
         // "Show in a modal window" (the window won't really be shown, see prepareShowDialog)
         PerformInBackgroundOption.DEAF
     ) {
+
+    @Volatile
+    private var isFinishCalled = false
+
     init {
         val timer = UIUtil.createNamedTimer("DelayedBackgroundableProcessIndicator timer", delay) {
             ApplicationManager.getApplication().invokeLater({
-                if (isRunning) {
+                if (isRunning && !isFinishCalled) {
                     background()
                 }
             }, modalityState)
@@ -40,5 +45,10 @@ class DelayedBackgroundableProcessIndicator(task: Task.Backgroundable, delay: In
 
     override fun prepareShowDialog() {
         // Don't show the modal window
+    }
+
+    override fun finish(task: TaskInfo) {
+        isFinishCalled = true
+        super.finish(task)
     }
 }
