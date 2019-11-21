@@ -618,7 +618,7 @@ class SourceFile(
         if (refKind == RefKind.STRONG) {
             val infos = infos // No synchronization needed in the write action
             for (call in newMacroCalls) {
-                if (call.isTopLevelExpansion && infos.none { it.derefMacroCall() == call }) {
+                if (call.isTopLevelExpansion && infos.none { it.macroCallStrongRef == call }) {
                     infos += ExpandedMacroInfoImpl(this, null, null, null, macroCallStrongRef = call)
                 }
             }
