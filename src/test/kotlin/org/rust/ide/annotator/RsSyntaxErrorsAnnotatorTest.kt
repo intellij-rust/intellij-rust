@@ -244,6 +244,16 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn foo<T, <error descr="Lifetime parameters must be declared prior to type parameters">'a</error>>(bar: &'a T) {}
     """)
 
+    fun `test default type parameters in impl`() = checkErrors("""
+        struct S<T=String>{ f: T }
+        impl<T=<error descr="Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">String</error>> S<T> {}
+    """)
+
+    fun `test default type parameters order`() = checkErrors("""
+        struct S1<<error descr="Type parameters with a default must be trailing">T1=Debug</error>,T2>{ f1: T1, f2: T2 }
+        struct S2<T2,T1=String>{ f1: T1, f2: T2 }
+    """)
+
     @MockRustcVersion("1.34.0-nightly")
     fun `test c-variadic function E0658 1`() = checkErrors("""
         unsafe extern "C" fn ext_fn1(a: bool, <error descr="C-variadic functions is experimental [E0658]">...</error>) {}
