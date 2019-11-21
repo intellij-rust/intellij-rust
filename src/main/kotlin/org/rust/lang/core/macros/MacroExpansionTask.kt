@@ -14,9 +14,11 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.lang.core.psi.RsMacroCall
@@ -54,7 +56,7 @@ abstract class MacroExpansionTaskBase(
     private val currentStep = AtomicInteger()
     private val totalExpanded = AtomicInteger()
     private lateinit var realTaskIndicator: ProgressIndicator
-    private val subTaskIndicator: ProgressIndicator = EmptyProgressIndicator()
+    private lateinit var subTaskIndicator: ProgressIndicator
     private lateinit var expansionSteps: Iterator<List<Extractable>>
     @Volatile
     private var heavyProcessRequested = false
@@ -66,6 +68,18 @@ abstract class MacroExpansionTaskBase(
         realTaskIndicator = indicator
 
         expansionSteps = getMacrosToExpand().iterator()
+
+        if (indicator is ProgressIndicatorEx) {
+            // [indicator] can be an instance of [BackgroundableProcessIndicator] class, which is thread
+            // sensitive and its `checkCanceled` method should be used only from a single thread
+            // (see [ProgressWindow.MyDelegate.checkCanceled]). So we propagate cancellation.
+            subTaskIndicator = EmptyProgressIndicator()
+            indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+                override fun cancel() = subTaskIndicator.cancel()
+            })
+        } else {
+            subTaskIndicator = indicator
+        }
 
         indicator.checkCanceled()
         var heavyProcessToken: AccessToken? = null
@@ -80,11 +94,6 @@ abstract class MacroExpansionTaskBase(
                         currentStep.get(),
                         doneStages.get().toDouble() / max(estimateStages.get(), 1)
                     )
-
-                    // Type of [indicator] can be [BackgroundableProcessIndicator] which is thread sensitive
-                    // and its `checkCanceled` method should be used only from a single thread.
-                    // So we propagating cancellation. See [ProgressWindow.MyDelegate.checkCanceled].
-                    if (indicator.isCanceled && !subTaskIndicator.isCanceled) subTaskIndicator.cancel()
 
                     // If project is disposed, then queue will be disposed too, so we shouldn't await sub task finish
                     // (and sub task may not call `sync.countDown()`, so without this `break` we will be blocked
