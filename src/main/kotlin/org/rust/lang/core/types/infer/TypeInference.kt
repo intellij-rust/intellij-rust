@@ -167,6 +167,15 @@ class RsInferenceContext(
             val fctx = RsTypeInferenceWalker(this, element.returnType)
             fctx.extractParameterBindings(element)
             element.block?.let { fctx.inferFnBody(it) }
+        } else if (element is RsReplCodeFragment) {
+            element.context.inference?.let {
+                patTypes.putAll(it.patTypes)
+                patFieldTypes.putAll(it.patFieldTypes)
+                exprTypes.putAll(it.exprTypes)
+            }
+
+            val walker = RsTypeInferenceWalker(this, TyUnknown)
+            walker.inferReplCodeFragment(element)
         } else {
             val (retTy, expr) = when (element) {
                 is RsConstant -> element.typeReference?.type to element.expr
