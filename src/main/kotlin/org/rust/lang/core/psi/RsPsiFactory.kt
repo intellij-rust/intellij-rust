@@ -121,11 +121,11 @@ class RsPsiFactory(
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
-    fun tryCreatePath(text: String, ns: PathParsingMode = NO_COLONS): RsPath? {
+    fun tryCreatePath(text: String, ns: PathParsingMode = TYPE): RsPath? {
         val path = when (ns) {
-            NO_COLONS -> createFromText("fn foo(t: $text) {}")
-            COLONS -> createFromText<RsPathExpr>("fn main() { $text; }")?.path
-            NO_TYPES -> error("NO_TYPES mode is not supported; use NO_COLONS")
+            TYPE -> createFromText("fn foo(t: $text) {}")
+            VALUE -> createFromText<RsPathExpr>("fn main() { $text; }")?.path
+            NO_TYPE_ARGS -> error("$NO_TYPE_ARGS mode is not supported; use $TYPE")
         } ?: return null
         if (path.text != text) return null
         return path

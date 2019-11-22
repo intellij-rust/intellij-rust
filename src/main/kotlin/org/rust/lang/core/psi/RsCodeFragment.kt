@@ -17,8 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
+import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.RsMod
@@ -149,9 +149,9 @@ class RsPathCodeFragment(
     companion object {
         @JvmStatic
         private fun PathParsingMode.elementType() = when (this) {
-            PathParsingMode.NO_COLONS -> RsCodeFragmentElementType.PATH_WITHOUT_COLONS
-            PathParsingMode.COLONS -> RsCodeFragmentElementType.PATH_WITH_COLONS
-            PathParsingMode.NO_TYPES -> error("NO_TYPES mode is not supported; use NO_COLONS")
+            TYPE -> RsCodeFragmentElementType.TYPE_PATH_CODE_FRAGMENT
+            VALUE -> RsCodeFragmentElementType.VALUE_PATH_CODE_FRAGMENT
+            NO_TYPE_ARGS -> error("$NO_TYPE_ARGS mode is not supported; use $TYPE")
         }
     }
 }

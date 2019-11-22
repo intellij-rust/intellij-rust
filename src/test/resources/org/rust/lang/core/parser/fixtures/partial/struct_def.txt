@@ -41,7 +41,7 @@ FILE
             RsPathImpl(PATH)
               PsiElement(identifier)('i32')
         PsiWhiteSpace('\n    ')
-        PsiErrorElement:'!', '(', '+', '::' or < expected, got 'f2'
+        PsiErrorElement:'!', '+', '::', <path parameters> or <type argument list> expected, got 'f2'
           PsiElement(identifier)('f2')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')

@@ -1,6 +1,9 @@
 type FunType = Fn(f64) -> f64;
+type FunType2 = FnOnce::(i32);
 
 type FunTypeVoid = Fn();
+
+type ColonColon = Vec::<[u8; 8]>;
 
 type Sum = Box<A + Copy>;
 

@@ -6,18 +6,17 @@
 package org.rust.ide.annotator
 
 import com.intellij.codeInsight.daemon.impl.HighlightRangeExtension
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.annotator.fixes.AddModuleFileFix
-import org.rust.ide.annotator.fixes.AddTurbofishFix
-import org.rust.ide.annotator.fixes.CreateLifetimeParameterFromUsageFix
-import org.rust.ide.annotator.fixes.MakePublicFix
+import org.rust.ide.annotator.fixes.*
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
@@ -47,6 +46,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitBaseType(o: RsBaseType) = checkBaseType(holder, o)
             override fun visitCondition(o: RsCondition) = checkCondition(holder, o)
             override fun visitConstant(o: RsConstant) = checkConstant(holder, o)
+            override fun visitTypeArgumentList(o: RsTypeArgumentList) = checkTypeArgumentList(holder, o)
+            override fun visitValueParameterList(o: RsValueParameterList) = checkValueParameterList(holder, o)
             override fun visitValueArgumentList(o: RsValueArgumentList) = checkValueArgumentList(holder, o)
             override fun visitStructItem(o: RsStructItem) = checkDuplicates(holder, o)
             override fun visitEnumItem(o: RsEnumItem) = checkEnumItem(holder, o)
@@ -561,6 +562,26 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
             annotator?.registerFix(AddTurbofishFix())
         }
+    }
+
+    private fun checkTypeArgumentList(holder: RsAnnotationHolder, args: RsTypeArgumentList) {
+        checkRedundantColonColon(holder, args)
+    }
+
+    private fun checkValueParameterList(holder: RsAnnotationHolder, args: RsValueParameterList) {
+        checkRedundantColonColon(holder, args)
+    }
+
+    private fun checkRedundantColonColon(holder: RsAnnotationHolder, args: RsElement) {
+        // For some reason `::(i32) -> i32` in `Fn::(i32) -> i32` has `RsValueParameterList` instead of `RsTypeArgumentList`.
+        // `RsValueParameterList` and `RsTypeArgumentList` shouldn't have common interfaces
+        // So we have to use low level ASTNode API to avoid code duplication
+        val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
+        // `::` is redundant only in types
+        if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
+        val annotation = holder.createWeakWarningAnnotation(coloncolon, "Redundant `::`") ?: return
+        annotation.highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
+        annotation.registerFix(RemoveElementFix(coloncolon))
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {

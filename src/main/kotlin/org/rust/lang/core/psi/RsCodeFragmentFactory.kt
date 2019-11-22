@@ -29,7 +29,7 @@ class RsCodeFragmentFactory(val project: Project) {
     fun createPath(
         path: String,
         context: RsElement,
-        mode: PathParsingMode = PathParsingMode.NO_COLONS,
+        mode: PathParsingMode = PathParsingMode.TYPE,
         ns: Set<Namespace> = TYPES_N_VALUES
     ): RsPath? {
         return RsPathCodeFragment(project, path, false, context, mode, ns).path

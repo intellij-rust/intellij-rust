@@ -28,12 +28,21 @@ import org.rust.stdext.removeLast
 @Suppress("UNUSED_PARAMETER")
 object RustParserUtil : GeneratedParserUtilBase() {
     enum class PathParsingMode {
-        /** `Foo::<i32>` */
-        COLONS,
-        /** `Foo<i32>` */
-        NO_COLONS,
-        /** `Foo` */
-        NO_TYPES
+        /**
+         * Accepts paths like `Foo::<i32>`
+         * Should be used to parse references to values
+         */
+        VALUE,
+        /**
+         * Accepts paths like `Foo<i32>`, `Foo::<i32>`, Fn(i32) -> i32 and Fn::(i32) -> i32
+         * Should be used to parse type and trait references
+         */
+        TYPE,
+        /**
+         * Accepts paths like `Foo`
+         * Should be used to parse paths where type args cannot be specified: `use` items, macro calls, etc.
+         */
+        NO_TYPE_ARGS
     }
     enum class BinaryMode { ON, OFF }
     enum class MacroCallParsingMode(val semicolon: Boolean, val pin: Boolean, val forbidExprSpecialMacros: Boolean) {
@@ -61,22 +70,22 @@ object RustParserUtil : GeneratedParserUtilBase() {
     private val TYPE_QUAL_ALLOWED: Int = makeBitMask(2)
     private val STMT_EXPR_MODE: Int = makeBitMask(3)
 
-    private val PATH_COLONS: Int = makeBitMask(4)
-    private val PATH_NO_COLONS: Int = makeBitMask(5)
-    private val PATH_NO_TYPES: Int = makeBitMask(6)
+    private val PATH_VALUE: Int = makeBitMask(4)
+    private val PATH_TYPE: Int = makeBitMask(5)
+    private val PATH_NO_TYPE_ARGS: Int = makeBitMask(6)
     private fun setPathMod(flags: Int, mode: PathParsingMode): Int {
         val flag = when (mode) {
-            PathParsingMode.COLONS -> PATH_COLONS
-            PathParsingMode.NO_COLONS -> PATH_NO_COLONS
-            PathParsingMode.NO_TYPES -> PATH_NO_TYPES
+            PathParsingMode.VALUE -> PATH_VALUE
+            PathParsingMode.TYPE -> PATH_TYPE
+            PathParsingMode.NO_TYPE_ARGS -> PATH_NO_TYPE_ARGS
         }
-        return flags and (PATH_COLONS or PATH_NO_COLONS or PATH_NO_TYPES).inv() or flag
+        return flags and (PATH_VALUE or PATH_TYPE or PATH_NO_TYPE_ARGS).inv() or flag
     }
 
     private fun getPathMod(flags: Int): PathParsingMode = when {
-        BitUtil.isSet(flags, PATH_COLONS) -> PathParsingMode.COLONS
-        BitUtil.isSet(flags, PATH_NO_COLONS) -> PathParsingMode.NO_COLONS
-        BitUtil.isSet(flags, PATH_NO_TYPES) -> PathParsingMode.NO_TYPES
+        BitUtil.isSet(flags, PATH_VALUE) -> PathParsingMode.VALUE
+        BitUtil.isSet(flags, PATH_TYPE) -> PathParsingMode.TYPE
+        BitUtil.isSet(flags, PATH_NO_TYPE_ARGS) -> PathParsingMode.NO_TYPE_ARGS
         else -> error("Path parsing mode not set")
     }
 
@@ -313,7 +322,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         val macroName = lookupSimpleMacroName(b)
         if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false
 
-        if (!RustParser.PathWithoutTypes(b, level + 1) || !consumeToken(b, EXCL)) {
+        if (!RustParser.PathWithoutTypeArgs(b, level + 1) || !consumeToken(b, EXCL)) {
             return false
         }
 

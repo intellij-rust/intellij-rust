@@ -112,8 +112,8 @@ File ::= [ SHEBANG_LINE ] InnerAttr* Items
 ExprCodeFragment ::= Expr?
 StmtCodeFragment ::= Stmt?
 TypeRefCodeFragment ::= TypeReference?
-PathWithColonsCodeFragment ::= PathGenericArgsWithColons?
-PathWithoutColonsCodeFragment ::= PathGenericArgsWithoutColons?
+ValuePathCodeFragment ::= ValuePathGenericArgs?
+TypePathCodeFragment ::= TypePathGenericArgs?
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -194,20 +194,20 @@ TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
 
 left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
 
-private PathTypeArguments ::= <<isPathMode 'COLONS'>> ColonTypeArgumentList
-                            | <<isPathMode 'NO_COLONS '>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
+private PathTypeArguments ::= <<isPathMode 'VALUE'>> ColonTypeArgumentList
+                            | <<isPathMode 'TYPE'>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar
 
 TypeArgumentList ::= TypeArgumentListImpl {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-ColonTypeArgumentList ::= '::' TypeArgumentListImpl { elementType = TypeArgumentList }
+ColonTypeArgumentList ::= &'::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
-private TypeArgumentListImpl ::= '<' !'=' ( <<list_element Lifetime>>*
-                                            <<list_element (!(identifier ('='|':')) !'>' TypeReference)>>*
-                                            <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
-                                            <<list_element AssocTypeBinding>>*) '>' { pin = 2 }
+private TypeArgumentListImpl ::= '::'? '<' !'=' ( <<list_element Lifetime>>*
+                                                  <<list_element (!(identifier ('='|':')) !'>' TypeReference)>>*
+                                                  <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
+                                                  <<list_element AssocTypeBinding>>*) '>' { pin = 3 }
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
@@ -225,20 +225,20 @@ private AssocTypeBindingBound ::=  ':' TypeBounds { pin = 1 }
 //    a::b<T,U>::c<V,W>
 //    std::Fn(V) -> W
 //    std::Fn(V)
-PathGenericArgsWithoutColons ::= <<typeQuals 'ON' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
-PathGenericArgsWithoutColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'NO_COLONS' PathImpl>>>> { elementType = Path }
+TypePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'TYPE' PathImpl>>>> { elementType = Path }
+TypePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'TYPE' PathImpl>>>> { elementType = Path }
 
 // Paths without type arguments, for use declarations:
 //     a::b::c
-PathWithoutTypes ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPES' PathImpl>>>> { elementType = Path }
+PathWithoutTypeArgs ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPE_ARGS' PathImpl>>>> { elementType = Path }
 
 // Paths for expressions:
 //     a::b::<T,U>::c
-PathGenericArgsWithColons ::= <<typeQuals 'ON' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
-PathGenericArgsWithColonsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'COLONS' PathImpl>>>> { elementType = Path }
+ValuePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'VALUE' PathImpl>>>> { elementType = Path }
+ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl>>>> { elementType = Path }
 
 // Path semantically constrained to resolve to a trait
-TraitRef ::= PathGenericArgsWithoutColonsNoTypeQual {
+TraitRef ::= TypePathGenericArgsNoTypeQual {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -253,7 +253,7 @@ Vis ::= crate | pub VisRestriction? {
   stubClass = "org.rust.lang.core.stubs.RsVisStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-VisRestriction ::= '(' in? PathWithoutTypes ')' {
+VisRestriction ::= '(' in? PathWithoutTypeArgs ')' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -349,7 +349,7 @@ FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
 
 FnTypeParameters      ::= <<variadic_params_impl AnonParameter>>
-PathParameters        ::= '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 1 }
+PathParameters        ::= '::'? '(' [ <<comma_separated_list PathParameter>> ] ')' { pin = 2 }
 
 
 private meta variadic_params_impl ::= '(' [ <<param>> (',' <<param>>)*  [ ',' '...'? ] ] ')' { pin = 1 }
@@ -496,8 +496,8 @@ PatBox ::= box Pat
 //   }
 PatIdent ::= PatBinding [ '@' Pat ]
 
-PatStruct ::= PathGenericArgsWithColonsNoTypeQual '{' PatField_with_recover* '..'? '}'
-PatTupleStruct   ::= PathGenericArgsWithColonsNoTypeQual '(' SeqPat ')'
+PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* '..'? '}'
+PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
 
 // TODO: actual recover
 private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
@@ -561,7 +561,7 @@ UseItem ::= AttrsAndVis use UseSpeck ';' {
 //  foo::bar::{self, foo};
 //  foo::{};
 //  ::foo::*;
-UseSpeck ::= PathWithoutTypes [ Alias | '::' UseSpeckProjection ]
+UseSpeck ::= PathWithoutTypeArgs [ Alias | '::' UseSpeckProjection ]
            | '::'? UseSpeckProjection {
   extends = "org.rust.lang.core.psi.ext.RsUseSpeckImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsUseSpeckStub"
@@ -808,7 +808,7 @@ private TypeReferenceInner ::= ArrayType
                                | ExplicitTraitType
                                | TrivialBaseType
                                // External rule to find the difference between `T` and `T+T`
-                               | <<baseOrTraitType PathGenericArgsWithoutColons ImplicitTraitType TraitType_upper>>
+                               | <<baseOrTraitType TypePathGenericArgs ImplicitTraitType TraitType_upper>>
                                | MacroType
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
@@ -889,7 +889,7 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-BaseType ::= TrivialBaseTypeInner | PathGenericArgsWithoutColons {
+BaseType ::= TrivialBaseTypeInner | TypePathGenericArgs {
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
@@ -1070,7 +1070,7 @@ LambdaExpr ::= OuterAttr* [asyncBlock | static] move? LambdaParameters RetType? 
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-StructLiteral ::= <<checkStructAllowed>> OuterAttr* PathGenericArgsWithColonsNoTypeQual StructLiteralBody {
+StructLiteral ::= <<checkStructAllowed>> OuterAttr* ValuePathGenericArgsNoTypeQual StructLiteralBody {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1092,7 +1092,7 @@ private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
 
 private StructLiteralField_recover ::= !(identifier | INTEGER_LITERAL | ',' | '}' | '..' | '#')
 
-PathExpr ::= OuterAttr* PathGenericArgsWithColons {
+PathExpr ::= OuterAttr* ValuePathGenericArgs {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -1318,7 +1318,7 @@ Macro2 ::= AttrsAndVis MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2Matc
 private Macro2FunctionLikeBody ::= '(' MacroPatternContents ')' '{' MacroExpansionContents '}'
 private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
-fake MacroCall ::= AttrsAndVis PathWithoutTypes '!' identifier? (
+fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
     MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
       VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument
     ) ';'? {
