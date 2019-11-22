@@ -5,16 +5,12 @@
 
 package org.rust.lang.core.types.borrowck.gatherLoans
 
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsExprStmt
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.borrowck.*
 import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.infer.MemoryCategorizationContext
-import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveData: MoveData = MoveData()) : Delegate {
@@ -38,6 +34,8 @@ class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveDa
     override fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode) {
         guaranteeAssignmentValid(assignmentElement, assigneeCmt, mode)
     }
+
+    override fun useElement(element: RsElement, cmt: Cmt) {}
 
     /** Guarantees that [cmt] is assignable, or reports an error */
     private fun guaranteeAssignmentValid(assignment: RsElement, cmt: Cmt, mode: MutateMode) {
