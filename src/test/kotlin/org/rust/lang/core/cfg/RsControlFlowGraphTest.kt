@@ -701,12 +701,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         1
         noreturn
         noreturn()
+        Exit
         IF
         IF;
         42
         42;
         BLOCK
-        Exit
     """)
 
     fun `test panic macro call inside stmt`() = testCFG("""

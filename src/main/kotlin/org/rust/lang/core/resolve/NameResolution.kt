@@ -1286,7 +1286,7 @@ private fun processLexicalDeclarations(
                 }
 
                 val letDecls = mutableListOf<RsLetDecl>()
-                for (stmt in scope.expandedStmts) {
+                for (stmt in scope.expandedStmtsAndTailExpr.first) {
                     if (cameFrom == stmt) break
                     if (stmt is RsLetDecl) {
                         letDecls.add(stmt)
