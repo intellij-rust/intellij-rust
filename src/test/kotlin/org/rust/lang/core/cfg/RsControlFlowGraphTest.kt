@@ -677,12 +677,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         true
         noreturn
         noreturn()
+        Exit
         IF
         IF;
         42
         42;
         BLOCK
-        Exit
     """)
 
     fun `test noreturn complex expr`() = testCFG("""
@@ -701,12 +701,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         1
         noreturn
         noreturn()
+        Exit
         IF
         IF;
         42
         42;
         BLOCK
-        Exit
     """)
 
     fun `test panic macro call inside stmt`() = testCFG("""
@@ -821,6 +821,20 @@ class RsControlFlowGraphTest : RsTestBase() {
         x
         y
         (x) + (y)
+        BLOCK
+        Exit
+    """)
+
+    fun `test println macro call`() = testCFG("""
+        fn main() {
+            println!("{} {}", x, y);
+        }
+    """, """
+        Entry
+        x
+        y
+        println!("{} {}", x, y)
+        println!("{} {}", x, y);
         BLOCK
         Exit
     """)

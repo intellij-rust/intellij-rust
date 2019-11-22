@@ -35,7 +35,13 @@ sealed class Categorization {
     data class Local(val declaration: RsElement) : Categorization()
 
     /** Dereference of a pointer */
-    data class Deref(val cmt: Cmt, val pointerKind: PointerKind) : Categorization()
+    data class Deref(val cmt: Cmt, val pointerKind: PointerKind) : Categorization() {
+        fun unwrapDerefs(): Cmt =
+            when (cmt.category) {
+                is Deref -> cmt.category.unwrapDerefs()
+                else -> cmt
+            }
+    }
 
     /** Something reachable from the base without a pointer dereference (e.g. field) */
     sealed class Interior : Categorization() {

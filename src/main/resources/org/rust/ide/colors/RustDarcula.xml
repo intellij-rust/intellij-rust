@@ -58,4 +58,9 @@
             <option name="FOREGROUND" value="848504" />
         </value>
     </option>
+    <option name="org.rust.DEAD_CODE">
+        <value>
+            <option name="FOREGROUND" value="808080"/>
+        </value>
+    </option>
 </list>

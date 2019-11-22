@@ -62,6 +62,8 @@ class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveDat
         }
     }
 
+    override fun useElement(element: RsElement, cmt: Cmt) {}
+
     fun checkLoans(body: RsBlock) {
         val mc = MemoryCategorizationContext(bccx.implLookup, bccx.inference)
         ExprUseWalker(this, mc).consumeBody(body)

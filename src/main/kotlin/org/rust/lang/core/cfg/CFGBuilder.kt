@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.cfg
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
@@ -172,6 +173,7 @@ class CFGBuilder(
         val funcOrReceiverExit = process(funcOrReceiver, pred)
         val callExit = straightLine(callExpr, funcOrReceiverExit, args)
         return if (callExpr.type is TyNever) {
+            addReturningEdge(callExit)
             addUnreachableNode()
         } else {
             callExit
@@ -227,11 +229,27 @@ class CFGBuilder(
     override fun visitPathExpr(pathExpr: RsPathExpr) =
         finishWithAstNode(pathExpr, pred)
 
+    override fun visitMacroBodyIdent(macroBodyIdent: RsMacroBodyIdent) =
+        finishWithAstNode(macroBodyIdent, pred)
+
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
         if (macroExpr.type is TyNever) {
             finishWith { addUnreachableNode() }
         } else {
-            finishWithAstNode(macroExpr, pred)
+            visitMacroCall(macroExpr.macroCall)
+        }
+    }
+
+    override fun visitMacroCall(macroCall: RsMacroCall) {
+        finishWith {
+            val subElements = PsiTreeUtil.findChildrenOfAnyType(
+                macroCall,
+                true,
+                RsPathExpr::class.java,
+                RsMacroBodyIdent::class.java
+            )
+            val subElementsExit = subElements.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            addAstNode(macroCall, subElementsExit)
         }
     }
 

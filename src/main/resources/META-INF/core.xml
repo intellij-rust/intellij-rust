@@ -516,6 +516,11 @@
                           enabledByDefault="true" level="ERROR"
                           implementationClass="org.rust.ide.inspections.RsExternalLinterInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Liveness analysis"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsLivenessInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
