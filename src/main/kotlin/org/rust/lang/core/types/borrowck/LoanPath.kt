@@ -29,7 +29,7 @@ data class LoanPath(val kind: LoanPathKind, val ty: Ty, val element: RsElement) 
             is Var -> {
                 val variable = kind.declaration
                 if (variable is RsPatBinding) {
-                    bccx.regionScopeTree.getVariableScope(variable) ?: Scope.Node(variable)
+                    bccx.cfg.regionScopeTree.getVariableScope(variable) ?: Scope.Node(variable)
                 } else {
                     Scope.Node(variable)
                 }

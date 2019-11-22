@@ -63,7 +63,7 @@ class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveDat
     }
 
     fun checkLoans(body: RsBlock) {
-        val mc = MemoryCategorizationContext(bccx.implLookup, bccx.owner.inference)
+        val mc = MemoryCategorizationContext(bccx.implLookup, bccx.inference)
         ExprUseWalker(this, mc).consumeBody(body)
     }
 

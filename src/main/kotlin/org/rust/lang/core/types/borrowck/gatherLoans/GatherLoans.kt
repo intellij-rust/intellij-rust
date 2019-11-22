@@ -54,7 +54,7 @@ class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveDa
     }
 
     fun check(): MoveData {
-        val visitor = ExprUseWalker(this, MemoryCategorizationContext(bccx.implLookup, bccx.owner.inference))
+        val visitor = ExprUseWalker(this, MemoryCategorizationContext(bccx.implLookup, bccx.inference))
         visitor.consumeBody(bccx.body)
         return moveData
     }
