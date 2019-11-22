@@ -350,6 +350,18 @@ class Cargo(private val cargoExecutable: Path) {
             )
         }
 
+        fun checkNeedInstallEvcxr(project: Project): Boolean {
+            val crateName = "evcxr_repl"
+            val minVersion = SemVer("v0.4.5", 0, 4, 5)
+            return checkNeedInstallBinaryCrate(
+                project,
+                crateName,
+                NotificationType.ERROR,
+                "Need at least $crateName $minVersion",
+                minVersion
+            )
+        }
+
         private fun checkNeedInstallBinaryCrate(
             project: Project,
             crateName: String,
