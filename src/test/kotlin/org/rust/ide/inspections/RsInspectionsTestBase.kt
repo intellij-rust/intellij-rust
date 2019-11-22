@@ -12,7 +12,7 @@ import org.rust.ide.annotator.RsAnnotationTestFixture
 import kotlin.reflect.KClass
 
 abstract class RsInspectionsTestBase(
-    private val inspectionClass: KClass<out InspectionProfileEntry>
+    protected val inspectionClass: KClass<out InspectionProfileEntry>
 ) : RsAnnotationTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture =

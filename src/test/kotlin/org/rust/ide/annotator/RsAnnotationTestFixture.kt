@@ -20,10 +20,9 @@ import kotlin.reflect.KClass
 class RsAnnotationTestFixture(
     codeInsightFixture: CodeInsightTestFixture,
     annotatorClasses: List<KClass<out AnnotatorBase>> = emptyList(),
-    inspectionClasses: List<KClass<out InspectionProfileEntry>> = emptyList()
-) : AnnotationTestFixtureBase(codeInsightFixture, annotatorClasses, inspectionClasses) {
-
+    inspectionClasses: List<KClass<out InspectionProfileEntry>> = emptyList(),
     override val baseFileName: String = "main.rs"
+) : AnnotationTestFixtureBase(codeInsightFixture, annotatorClasses, inspectionClasses) {
 
     fun checkByFileTree(
         @Language("Rust") text: String,

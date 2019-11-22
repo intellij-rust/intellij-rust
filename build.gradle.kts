@@ -29,10 +29,11 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val psiViewerPluginVersion = prop("psiViewerPluginVersion")
-
 val isAtLeast192 = platformVersion.toInt() >= 192
 val isAtLeast193 = platformVersion.toInt() >= 193
+
+val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
+val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 
 plugins {
     idea
@@ -170,7 +171,8 @@ project(":plugin") {
         val plugins = mutableListOf(
             project(":intellij-toml"),
             "IntelliLang",
-            "PsiViewer:$psiViewerPluginVersion"
+            graziePlugin,
+            psiViewerPlugin
         )
         if (baseIDE == "idea") {
             plugins += "copyright"
@@ -192,6 +194,7 @@ project(":plugin") {
         compile(project(":coverage"))
         compile(project(":intelliLang"))
         compile(project(":duplicates"))
+        compile(project(":grazie"))
     }
 
     tasks {
@@ -409,6 +412,18 @@ project(":coverage") {
         if (baseIDE == "idea") {
             setPlugins("coverage")
         }
+    }
+    dependencies {
+        compile(project(":"))
+        compile(project(":common"))
+        testCompile(project(":", "testOutput"))
+        testCompile(project(":common", "testOutput"))
+    }
+}
+
+project(":grazie") {
+    intellij {
+        setPlugins(graziePlugin)
     }
     dependencies {
         compile(project(":"))

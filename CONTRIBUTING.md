@@ -67,6 +67,7 @@ The current Rust plugin modules:
 * `:copyright` - integration with [copyright](https://github.com/JetBrains/intellij-community/tree/master/plugins/copyright) plugin
 * `:duplicates` - support `Duplicated code fragment` inspection
 * `:coverage` - integration with [coverage](https://github.com/JetBrains/intellij-community/tree/master/plugins/coverage-common) plugin
+* `:grazie` - integration with [grazie](https://plugins.jetbrains.com/plugin/12175-grazie) plugin 
 
 If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
 
