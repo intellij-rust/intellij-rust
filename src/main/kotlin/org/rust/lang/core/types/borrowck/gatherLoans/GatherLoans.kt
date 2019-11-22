@@ -30,14 +30,9 @@ class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveDa
         if (mode is ConsumeMode.Move) gmcx.gatherMoveFromPat(pat, cmt)
     }
 
-    override fun declarationWithoutInit(element: RsElement) {
-        val type = when (element) {
-            is RsExpr -> element.type
-            is RsExprStmt -> element.expr.type
-            is RsPatBinding -> element.type
-            else -> TyUnknown
-        }
-        gmcx.gatherDeclaration(element, type)
+    override fun declarationWithoutInit(binding: RsPatBinding) {
+        val type = binding.type
+        gmcx.gatherDeclaration(binding, type)
     }
 
     override fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode) {

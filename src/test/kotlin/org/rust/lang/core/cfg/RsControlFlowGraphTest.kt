@@ -99,7 +99,7 @@ class RsControlFlowGraphTest : RsTestBase() {
 
     fun `test if else`() = testCFG("""
         fn foo() {
-            if true { 1 } else { 2 };
+            if true { 1 } else if false { 2 } else { 3 };
         }
     """, """
         Entry
@@ -110,7 +110,11 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        false
         2
+        BLOCK
+        IF
+        3
         BLOCK
     """)
 
@@ -432,24 +436,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """, """
         Entry
-        Dummy
         x
         42
         x.foo(42)
+        Dummy
         FOR
         FOR;
         y
         y;
         BLOCK
         Exit
-        Dummy
+        i
+        i
         0
         x
         x.bar
         x.bar.foo
         0..x.bar.foo
+        Dummy
         FOR
         BLOCK
+        j
+        j
         x
         i
         x += i
@@ -472,20 +480,24 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """, """
         Entry
-        Dummy
         xs
+        Dummy
         FOR
         FOR;
         y
         y;
         BLOCK
         Exit
+        x
+        x
         op1
         op1;
-        Dummy
         ys
+        Dummy
         FOR
         BLOCK
+        y
+        y
         op2
         op2;
         cond
@@ -665,12 +677,12 @@ class RsControlFlowGraphTest : RsTestBase() {
         true
         noreturn
         noreturn()
+        Exit
         IF
         IF;
         42
         42;
         BLOCK
-        Exit
     """)
 
     fun `test noreturn complex expr`() = testCFG("""
@@ -761,6 +773,23 @@ class RsControlFlowGraphTest : RsTestBase() {
         Dummy
         some_macro!()
     """)
+
+    fun `test shorthand struct literal`() = testCFG(
+        """
+        struct S { x: i32 }
+        
+        fn foo(x: i32) {
+            S { x };
+        }
+    """, """
+        Entry
+        x
+        S { x }
+        S { x };
+        BLOCK
+        Exit
+    """
+    )
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
