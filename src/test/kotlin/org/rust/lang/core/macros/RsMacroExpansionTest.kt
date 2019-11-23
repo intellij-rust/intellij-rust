@@ -970,4 +970,14 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """, """
         (2 + 2)
     """)
+
+    fun `test 1-char macro call body`() = doTest(
+    """
+        macro_rules! foo {
+            () => { fn bar() {} }
+        }
+        foo!{""", // '{' must be the LAST character in the file
+    """
+        fn bar() {}
+    """)
 }

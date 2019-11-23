@@ -102,7 +102,7 @@ data class MetaVarValue(
 class MacroExpander(val project: Project) {
     fun expandMacroAsText(def: RsMacro, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call) ?: return null
-        val macroExpansion = case.macroExpansion ?: return null
+        val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return null
 
         val substWithGlobalVars = WithParent(
             subst,
@@ -115,7 +115,7 @@ class MacroExpander(val project: Project) {
             )
         )
 
-        return substituteMacro(macroExpansion.macroExpansionContents, substWithGlobalVars)?.let { (text, ranges) ->
+        return substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
             text to loweringRanges.mapAll(ranges)
         }
     }
@@ -448,8 +448,8 @@ class MacroPattern private constructor(
     }
 
     companion object {
-        fun valueOf(psi: RsMacroPatternContents): MacroPattern =
-            MacroPattern(psi.node.childrenSkipWhitespaceAndComments().flatten())
+        fun valueOf(psi: RsMacroPatternContents?): MacroPattern =
+            MacroPattern(psi?.node?.childrenSkipWhitespaceAndComments()?.flatten() ?: emptySequence())
 
         private fun Sequence<ASTNode>.flatten(): Sequence<ASTNode> = flatMap {
             when (it.elementType) {
