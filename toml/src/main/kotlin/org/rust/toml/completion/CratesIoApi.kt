@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.completion
 
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException

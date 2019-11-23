@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.injected
+package com.intellij.lang.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiLanguageInjectionHost
 
 /** Same as [com.intellij.psi.LiteralTextEscaper.createSimple], but multi line */
-class RsSimpleMultiLineEscaper<T: PsiLanguageInjectionHost>(host: T) : LiteralTextEscaper<T>(host) {
+class SimpleMultiLineTextEscaper<T: PsiLanguageInjectionHost>(host: T) : LiteralTextEscaper<T>(host) {
     override fun decode(rangeInsideHost: TextRange, outChars: java.lang.StringBuilder): Boolean {
         outChars.append(rangeInsideHost.substring(myHost.text))
         return true

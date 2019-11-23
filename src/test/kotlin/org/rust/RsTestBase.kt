@@ -227,18 +227,9 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         fail("No ${X::class.java} was thrown during the test")
     }
 
-    inner class InlineFile(@Language("Rust") private val code: String, val name: String = "main.rs") {
-        private val hasCaretMarker = "/*caret*/" in code
-
-        init {
-            myFixture.configureByText(name, replaceCaretMarker(code))
-        }
-
-        fun withCaret() {
-            check(hasCaretMarker) {
-                "Please, add `/*caret*/` marker to\n$code"
-            }
-        }
+    @Suppress("TestFunctionName")
+    protected fun InlineFile(@Language("Rust") code: String, name: String = "main.rs"): InlineFile {
+        return InlineFile(myFixture, code, name)
     }
 
     protected inline fun <reified T : PsiElement> findElementInEditor(marker: String = "^"): T =

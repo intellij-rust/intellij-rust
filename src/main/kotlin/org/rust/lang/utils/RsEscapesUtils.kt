@@ -5,9 +5,10 @@
 
 package org.rust.lang.utils
 
+import com.intellij.lang.lexer.parseStringCharacters
 import com.intellij.psi.StringEscapesTokenTypes.*
 import org.rust.lang.core.lexer.RsEscapesLexer
-import org.rust.lang.core.lexer.tokenize
+import com.intellij.lang.lexer.tokenize
 
 /**
  * Unescape string escaped using Rust escaping rules.
@@ -40,43 +41,8 @@ fun parseRustStringCharacters(chars: String, outChars: StringBuilder): Pair<IntA
     return sourceOffsets to result
 }
 
-/**
- * Mimics [com.intellij.codeInsight.CodeInsightUtilCore.parseStringCharacters], but obeys Rust escaping rules.
- */
 private fun parseRustStringCharacters(chars: String, outChars: StringBuilder, sourceOffsets: IntArray): Boolean {
-    val outOffset = outChars.length
-    var index = 0
-    for ((type, text) in chars.tokenize(RsEscapesLexer.dummy())) {
-        // Set offset for the decoded character to the beginning of the escape sequence.
-        sourceOffsets[outChars.length - outOffset] = index
-        sourceOffsets[outChars.length - outOffset + 1] = index + 1
-        when (type) {
-            VALID_STRING_ESCAPE_TOKEN -> {
-                outChars.append(decodeEscape(text))
-                // And perform a "jump"
-                index += text.length
-            }
-
-            INVALID_CHARACTER_ESCAPE_TOKEN,
-            INVALID_UNICODE_ESCAPE_TOKEN ->
-                return false
-
-            else -> {
-                val first = outChars.length - outOffset
-                outChars.append(text)
-                val last = outChars.length - outOffset - 1
-                // Set offsets for each character of given chunk
-                for (i in first..last) {
-                    sourceOffsets[i] = index
-                    index++
-                }
-            }
-        }
-    }
-
-    sourceOffsets[outChars.length - outOffset] = index
-
-    return true
+    return parseStringCharacters(RsEscapesLexer.dummy(), chars, outChars, sourceOffsets, ::decodeEscape)
 }
 
 private fun decodeEscape(esc: String): String = when (esc) {

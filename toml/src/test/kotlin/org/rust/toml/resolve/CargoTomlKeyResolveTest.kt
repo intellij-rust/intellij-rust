@@ -3,17 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.toml
+package org.rust.toml.resolve
 
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.fileTree
-import org.rust.lang.core.resolve.RsResolveTestBase
 import org.toml.lang.psi.TomlKey
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-class CargoTomlKeyResolveTest : RsResolveTestBase() {
+class CargoTomlKeyResolveTest : CargoTomlResolveTestBase() {
     fun `test in dependencies block`() = checkResolve("""
         [package]
         name = "intellij-rust-test"
@@ -48,8 +46,7 @@ class CargoTomlKeyResolveTest : RsResolveTestBase() {
 
     """)
 
-    private fun checkResolve(@Language("TOML") code: String) {
-        val fileTree = fileTree { toml("Cargo.toml", code) }
-        stubOnlyResolve<TomlKey>(fileTree, resolveFileProducer = this::getActualResolveFile)
+    private fun checkResolve(@Language("TOML") code: String) = doResolveTest<TomlKey> {
+        toml("Cargo.toml", code)
     }
 }

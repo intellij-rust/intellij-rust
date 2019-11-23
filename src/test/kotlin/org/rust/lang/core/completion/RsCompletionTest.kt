@@ -341,7 +341,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test child file`() = doSingleCompletionMultifile("""
+    fun `test child file`() = doSingleCompletionByFileTree("""
     //- main.rs
         use foo::Spam;
         mod foo;
@@ -355,7 +355,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn main() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file`() = doSingleCompletionMultifile("""
+    fun `test parent file`() = doSingleCompletionByFileTree("""
     //- main.rs
         mod foo;
         pub enum Spam { Quux, Eggs }
@@ -368,7 +368,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         fn foo() { let _ = Spam::Quux/*caret*/; }
     """)
 
-    fun `test parent file 2`() = doSingleCompletionMultifile("""
+    fun `test parent file 2`() = doSingleCompletionByFileTree("""
     //- main.rs
         mod foo;
         pub enum Spam { Quux, Eggs }
@@ -524,7 +524,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test complete macro with qualified path`() = doSingleCompletionMultifile("""
+    fun `test complete macro with qualified path`() = doSingleCompletionByFileTree("""
     //- lib.rs
         fn bar() {
             dep_lib_target::fo/*caret*/
@@ -539,7 +539,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test complete outer macro with qualified path 1`() = doSingleCompletionMultifile("""
+    fun `test complete outer macro with qualified path 1`() = doSingleCompletionByFileTree("""
     //- lib.rs
         dep_lib_target::fo/*caret*/
         fn foo(){}
@@ -552,7 +552,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test complete outer macro with qualified path 2`() = doSingleCompletionMultifile("""
+    fun `test complete outer macro with qualified path 2`() = doSingleCompletionByFileTree("""
     //- lib.rs
         ::dep_lib_target::fo/*caret*/
         fn foo(){}
@@ -590,7 +590,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
-    fun `test no completion for outer macro with qualified path of 3 segments`() = checkNoCompletionWithMultifile("""
+    fun `test no completion for outer macro with qualified path of 3 segments`() = checkNoCompletionByFileTree("""
     //- lib.rs
         quux::dep_lib_target::fo/*caret*/
         fn foo(){}
@@ -663,7 +663,7 @@ class RsCompletionTest : RsCompletionTestBase() {
        }
     """)
 
-    fun `test complete paths in include macro`() = doSingleCompletionMultifile("""
+    fun `test complete paths in include macro`() = doSingleCompletionByFileTree("""
     //- main.rs
         include!("fo/*caret*/");
     //- foo.rs
@@ -672,7 +672,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         include!("foo.rs/*caret*/");
     """)
 
-    fun `test complete path in path attribute on mod decl`() = doSingleCompletionMultifile("""
+    fun `test complete path in path attribute on mod decl`() = doSingleCompletionByFileTree("""
     //- main.rs
         #[path="b/*caret*/"]
         mod foo;
@@ -683,7 +683,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod foo;
     """)
 
-    fun `test complete rust file path in path attribute`() = doSingleCompletionMultifile("""
+    fun `test complete rust file path in path attribute`() = doSingleCompletionByFileTree("""
     //- main.rs
         #[path="b/*caret*/"]
         mod foo;
@@ -696,7 +696,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         mod foo;
     """)
 
-    fun `test complete path in path attribute on mod`() = doSingleCompletionMultifile("""
+    fun `test complete path in path attribute on mod`() = doSingleCompletionByFileTree("""
     //- main.rs
         #[path="ba/*caret*/"]
         mod foo {
@@ -709,7 +709,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete path in path attribute on inner mod decl`() = doSingleCompletionMultifile("""
+    fun `test complete path in path attribute on inner mod decl`() = doSingleCompletionByFileTree("""
     //- main.rs
         #[path="baz"]
         mod foo {
@@ -828,7 +828,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         impl Foo {
             fn foo(&self) {}
         }
-        
+
         fn main() {
             Foo::fo/*caret*/
         }
@@ -837,7 +837,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         impl Foo {
             fn foo(&self) {}
         }
-        
+
         fn main() {
             Foo::foo(/*caret*/)
         }
@@ -848,7 +848,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         impl Foo {
             fn foo(&self) {}
         }
-        
+
         fn main() {
             Foo.fo/*caret*/
         }
@@ -857,7 +857,7 @@ class RsCompletionTest : RsCompletionTestBase() {
         impl Foo {
             fn foo(&self) {}
         }
-        
+
         fn main() {
             Foo.foo()/*caret*/
         }

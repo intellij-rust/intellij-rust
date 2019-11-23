@@ -328,7 +328,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         @Language("Rust") after: String,
         suggestOutOfScopeItems: Boolean = true,
         importOutOfScopeItems: Boolean = true
-    ) = doTest(before, after, suggestOutOfScopeItems, importOutOfScopeItems, ::doSingleCompletionMultifile)
+    ) = doTest(before, after, suggestOutOfScopeItems, importOutOfScopeItems, ::doSingleCompletionByFileTree)
 
     private fun doTest(
         @Language("Rust") before: String,

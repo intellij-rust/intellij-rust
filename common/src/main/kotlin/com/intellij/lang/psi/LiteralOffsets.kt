@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.psi
+package com.intellij.lang.psi
 
 import com.intellij.openapi.util.TextRange
 
@@ -18,8 +18,10 @@ data class LiteralOffsets(
     val suffix: TextRange? = null
 ) {
     companion object {
-        fun fromEndOffsets(prefixEnd: Int, openDelimEnd: Int, valueEnd: Int,
-                           closeDelimEnd: Int, suffixEnd: Int): LiteralOffsets {
+        fun fromEndOffsets(
+            prefixEnd: Int, openDelimEnd: Int, valueEnd: Int,
+            closeDelimEnd: Int, suffixEnd: Int
+        ): LiteralOffsets {
             val prefix = makeRange(0, prefixEnd)
             val openDelim = makeRange(prefixEnd, openDelimEnd)
 
@@ -32,7 +34,8 @@ data class LiteralOffsets(
 
             return LiteralOffsets(
                 prefix = prefix, openDelim = openDelim, value = value,
-                closeDelim = closeDelim, suffix = suffix)
+                closeDelim = closeDelim, suffix = suffix
+            )
         }
 
         private fun makeRange(start: Int, end: Int): TextRange? = when {

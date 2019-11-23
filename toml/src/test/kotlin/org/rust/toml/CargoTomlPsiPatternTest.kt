@@ -9,12 +9,16 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.toml.CargoTomlPsiPattern.buildPath
 import org.rust.toml.CargoTomlPsiPattern.inDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
+import org.rust.toml.CargoTomlPsiPattern.packageWorkspacePath
+import org.rust.toml.CargoTomlPsiPattern.path
+import org.rust.toml.CargoTomlPsiPattern.workspacePath
 
 class CargoTomlPsiPatternTest : RsTestBase() {
 
@@ -124,6 +128,40 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         [dependencies]
         version = ""
         #^
+    """)
+
+    fun `test workspace member path`() = testPattern(workspacePath, """
+        [workspace]
+        members = [ "path/to/crate" ]
+                        #^
+    """)
+
+    fun `test workspace default member path`() = testPattern(workspacePath, """
+        [workspace]
+        default-members = [ "path/to/crate" ]
+                                 #^
+    """)
+
+    fun `test package workspace path`() = testPattern(packageWorkspacePath, """
+        [package]
+        workspace = "path/to/root/crate"
+                         #^
+    """)
+
+    fun `test path`() = testPattern(path, """
+        path = "path/to/crate"
+                   #^
+    """)
+
+    fun `test path in inline table`() = testPattern(path, """
+        crate_name = { path = "path/to/crate" }
+                                   #^
+    """)
+
+    fun `test build path`() = testPattern(buildPath, """
+        [package]
+        build = "build.rs"
+                  #^
     """)
 
     private inline fun <reified T : PsiElement> testPattern(
