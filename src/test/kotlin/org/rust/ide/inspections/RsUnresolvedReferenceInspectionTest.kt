@@ -127,6 +127,11 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """)
 
+    fun `test no unresolved reference for 'Self' type`() = checkByText("""
+        struct Foo;
+        impl Foo { fn foo() -> Self {} }
+    """, false)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val inspection = inspection as RsUnresolvedReferenceInspection
         val defaultValue = inspection.ignoreWithoutQuickFix
