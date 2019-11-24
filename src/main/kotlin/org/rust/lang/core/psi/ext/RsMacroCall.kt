@@ -50,7 +50,8 @@ val RsMacroCall.macroBody: String?
     get() {
         val stub = greenStub
         if (stub != null) return stub.macroBody
-        return bodyTextRange?.subSequence(containingFile.text)?.toString()
+        // Note: `node` is usually an instance of `LazyParseableElement` where `chars` is cached
+        return macroArgumentElement?.node?.chars?.let { it.subSequence(1, it.length - if (it.length == 1) 0 else 1) }?.toString()
     }
 
 val RsMacroCall.bodyTextRange: TextRange?
@@ -65,7 +66,7 @@ val RsMacroCall.bodyTextRange: TextRange?
                 null
             }
         } else {
-            macroArgumentElement?.braceListBodyTextRange()
+            macroArgumentElement?.textRange?.let { TextRange(it.startOffset + 1, it.endOffset - if (it.length == 1) 0 else 1) }
         }
     }
 
@@ -177,9 +178,6 @@ private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) 
         else -> processor(this)
     }
 }
-
-private fun PsiElement.braceListBodyTextRange(): TextRange? =
-    textRange.let { TextRange(it.startOffset + 1, it.endOffset - if (it.length == 1) 0 else 1) }
 
 fun RsMacroCall.replaceWithExpr(expr: RsExpr): RsElement {
     return when (val context = expansionContext) {

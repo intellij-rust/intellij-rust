@@ -661,13 +661,13 @@ private class MacroExpansionTaskQueue(val project: Project) {
                 false
             }
         }
-        val data = BackgroundableTaskData(task)
+        val data = BackgroundableTaskData(task, ::onFinish)
         cancelableTasks += data
         processor.add(data)
     }
 
     fun run(task: Task.Backgroundable) {
-        processor.add(BackgroundableTaskData(task))
+        processor.add(BackgroundableTaskData(task) {})
     }
 
     fun runSimple(runnable: () -> Unit) {
@@ -698,11 +698,19 @@ private class MacroExpansionTaskQueue(val project: Project) {
         cancelableTasks.clear()
     }
 
+    @Synchronized
+    private fun onFinish(data: BackgroundableTaskData) {
+        cancelableTasks.remove(data)
+    }
+
     private interface ContinuableRunnable {
         fun run(continuation: Runnable)
     }
 
-    private class BackgroundableTaskData(val task: Task.Backgroundable) : ContinuableRunnable {
+    private class BackgroundableTaskData(
+        val task: Task.Backgroundable,
+        val onFinish: (BackgroundableTaskData) -> Unit
+    ) : ContinuableRunnable {
         private var state: State = State.Pending
 
         @Synchronized
@@ -723,7 +731,15 @@ private class MacroExpansionTaskQueue(val project: Project) {
             state = State.Running(indicator)
 
             val pm = ProgressManager.getInstance() as ProgressManagerImpl
-            pm.runProcessWithProgressAsynchronously(task, indicator, continuation, ModalityState.NON_MODAL)
+            pm.runProcessWithProgressAsynchronously(
+                task,
+                indicator,
+                {
+                    onFinish(this)
+                    continuation.run()
+                },
+                ModalityState.NON_MODAL
+            )
         }
 
         @Synchronized
