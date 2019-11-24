@@ -74,7 +74,8 @@ class RsResolveCache(messageBus: MessageBus) {
             override fun beforePsiChanged(isPhysical: Boolean) {}
         })
         connection.subscribe(RUST_PSI_CHANGE_TOPIC, object : RustPsiChangeListener {
-            override fun rustPsiChanged(element: PsiElement) = onRustPsiChanged(element)
+            override fun rustPsiChanged(file: PsiFile, element: PsiElement, isStructureModification: Boolean) =
+                onRustPsiChanged(element)
         })
     }
 
