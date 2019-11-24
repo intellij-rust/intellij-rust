@@ -155,7 +155,9 @@ class CargoTestEventsConverter(
             }
             "ok" -> {
                 val duration = getTestDuration(testMessage.name)
-                if (!testMessage.stdout.isNullOrEmpty()) messages.add(createTestStdOutMessage(testMessage.name, testMessage.stdout))
+                if (!testMessage.stdout.isNullOrEmpty()) {
+                    messages.add(createTestStdOutMessage(testMessage.name, testMessage.stdout))
+                }
                 messages.add(createTestFinishedMessage(testMessage.name, duration))
                 recordSuiteChildFinished(testMessage.name)
                 processFinishedSuites(messages)
@@ -265,8 +267,9 @@ class CargoTestEventsConverter(
 
         private val DOCTEST_PATH_RE: Regex = """"[0-9 a-z_A-Z\-\\.]+ - """.toRegex()
 
-        private val COMPARISON_ASSERT_RE: Regex =
-            """thread '.*' panicked at 'assertion failed: `\(left == right\)`\s*left: `(.*)`,\s*right: `(.*?)`(:.*)?'""".toRegex()
+        private val ERROR_MESSAGE_RE: Regex =
+            """thread '.*' panicked at '(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*)',"""
+                .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
 
         private val NodeId.name: String
             get() = if (contains(NAME_SEPARATOR)) {
@@ -308,12 +311,21 @@ class CargoTestEventsConverter(
         private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
             val builder = ServiceMessageBuilder.testFailed(test.name)
                 .addAttribute("nodeId", test)
-                .addAttribute("message", "")
+                // TODO: pass backtrace here
                 .addAttribute("details", failedMessage)
-            val (left, right) = extractDiffResult(failedMessage) ?: return builder
+            val parseResult = parseErrorMessage(failedMessage)
+            if (parseResult == null) {
+                builder.addAttribute("message", "")
+            } else {
+                val (message, diff) = parseResult
+                builder.addAttribute("message", message)
+                if (diff != null) {
+                    builder
+                        .addAttribute("actual", diff.left)
+                        .addAttribute("expected", diff.right)
+                }
+            }
             return builder
-                .addAttribute("actual", left)
-                .addAttribute("expected", right)
         }
 
         private fun createTestFinishedMessage(test: NodeId, duration: String): ServiceMessageBuilder =
@@ -341,11 +353,21 @@ class CargoTestEventsConverter(
             return FailedTestOutput(stdout, failedMessage)
         }
 
-        private fun extractDiffResult(failedMessage: String): DiffResult? {
-            val result = COMPARISON_ASSERT_RE.find(failedMessage) ?: return null
-            val left = unquoteString(unescapeStringCharacters(result.groupValues[1]))
-            val right = unquoteString(unescapeStringCharacters(result.groupValues[2]))
-            return DiffResult(left, right)
+        private fun parseErrorMessage(failedMessage: String): ErrorMessage? {
+            val groups = ERROR_MESSAGE_RE.find(failedMessage)?.groups ?: return null
+            val message = groups["message"]?.value ?: error("Failed to find `message` capturing group")
+
+            fun unescape(s: String): String = unquoteString(unescapeStringCharacters(s))
+
+            val diff = if (groups["sign"]?.value == "==") {
+                val left = groups["left"]?.value?.let(::unescape)
+                val right = groups["right"]?.value?.let(::unescape)
+                if (left != null && right != null) DiffResult(left, right) else null
+            } else {
+                null
+            }
+
+            return ErrorMessage(message, diff, null)
         }
 
         private fun findLibTargetForPackageName(
@@ -374,6 +396,7 @@ class CargoTestEventsConverter(
 }
 
 private data class FailedTestOutput(val stdout: String, val failedMessage: String)
+private data class ErrorMessage(val message: String, val diff: DiffResult?, val backtrace: String?)
 private data class DiffResult(val left: String, val right: String)
 
 private data class LibtestSuiteMessage(
