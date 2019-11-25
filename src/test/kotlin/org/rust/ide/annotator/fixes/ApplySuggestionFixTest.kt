@@ -21,18 +21,18 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
     }
 
     fun `test rustc suggestion (machine applicable)`() = checkFixByText("""
-        fn main() {
+        pub fn main() {
             let <weak_warning>x</weak_warning> = 0;
         }
     """, """
-        fn main() {
+        pub fn main() {
             let _x = 0;
         }
     """)
 
     fun `test rustc suggestion (maybe incorrect)`() = checkFixByText("""
         struct Foo(i32);
-        
+
         impl Foo {
             fn foo(self) -> i32 {
                 <error>this</error>.0
@@ -40,7 +40,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         }
     """, """
         struct Foo(i32);
-        
+
         impl Foo {
             fn foo(self) -> i32 {
                 self.0
@@ -72,11 +72,11 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
 
     @MinRustcVersion("1.29.0")
     fun `test clippy suggestion`() = checkFixByText("""
-        fn main() {
+        pub fn main() {
             <weak_warning>if true { true } else { false }</weak_warning>;
         }
     """, """
-        fn main() {
+        pub fn main() {
             true;
         }
     """, externalLinter = ExternalLinter.CLIPPY)
@@ -96,10 +96,10 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
             """)
 
             dir("src") {
-                file("main.rs", before)
+                file("lib.rs", before)
             }
         }.create()
-        val filePath = "src/main.rs"
+        val filePath = "src/lib.rs"
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath(filePath)!!)
         myFixture.checkHighlighting()
         val action = myFixture.getAllQuickFixes(filePath)
