@@ -434,7 +434,7 @@ project(":grazie") {
 }
 
 project(":intellij-toml") {
-    version = "0.2.0.${prop("buildNumber")}$versionSuffix"
+    version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
 
     intellij {
         if (isAtLeast192 && baseIDE == "idea") {
