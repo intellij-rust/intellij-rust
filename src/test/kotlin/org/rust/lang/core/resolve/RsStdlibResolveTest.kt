@@ -265,7 +265,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             assert_eq!("Hello, World!", "");
-        }   //^ ...libcore/macros.rs
+        }   //^ ...libcore/macros.rs|...libcore/macros/mod.rs
     """)
 
     fun `test iterating a vec`() = stubOnlyResolve("""
@@ -626,14 +626,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             format_args!(true);
-        }   //^ ...libstd/macros.rs|...libcore/macros.rs
+        }   //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
     """)
 
     fun `test rustc doc only macro from std`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             std::format_args!(true);
-        }        //^ ...libstd/macros.rs|...libcore/macros.rs
+        }        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
     """)
 
     fun `test f64 INFINITY`() = stubOnlyResolve("""
@@ -647,6 +647,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve concat args`() = stubOnlyResolve("""
     //- main.rs
         include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-                        //^ ...libstd/macros.rs|...libcore/macros.rs
+                        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
     """)
 }

@@ -32,11 +32,14 @@ class RsStdlibResolveLinkTest : RsTestBase() {
     fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", ".../libcore/marker.rs")
     fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", ".../libcore/result.rs")
     fun `test macro fqn link`() = doTest("std/macro.println.html", ".../libstd/macros.rs")
-    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", ".../libcore/macros.rs")
+    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", ".../libcore/macros.rs|...libcore/macros/mod.rs")
 
-    private fun doTest(link: String, expectedPath: String, @Language("Rust") code: String = DEFAULT_TEXT) {
-        check(expectedPath.startsWith("...")) {
-            "Expected path should start with '...', but '$expectedPath' was found"
+    private fun doTest(link: String, expectedPaths: String, @Language("Rust") code: String = DEFAULT_TEXT) {
+        val paths = expectedPaths.split("|")
+        for (expectedPath in paths) {
+            check(expectedPath.startsWith("...")) {
+                "Expected path should start with '...', but '$expectedPath' was found"
+            }
         }
         InlineFile(code)
         val context = findElementInEditor<RsNamedElement>("^")
@@ -46,8 +49,12 @@ class RsStdlibResolveLinkTest : RsTestBase() {
 
         val actualFile = element.containingFile.virtualFile
 
-        check(actualFile.path.endsWith(expectedPath.drop(3))) {
-            "Should resolve to $expectedPath, was ${actualFile.path} instead"
+        check(paths.any { actualFile.path.endsWith(it.drop(3)) }) {
+            if (paths.size == 1) {
+                "Should resolve to ${paths.single()}, was ${actualFile.path} instead"
+            } else {
+                "Should resolve to one of $paths, was ${actualFile.path} instead"
+            }
         }
     }
 
