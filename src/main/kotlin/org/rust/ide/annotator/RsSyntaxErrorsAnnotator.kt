@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import java.lang.Integer.max
 
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
@@ -186,6 +187,22 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
 }
 
 private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypeParameterList) {
+    if (element.parent is RsImplItem || element.parent is RsFunction) {
+        element.typeParameterList
+            .mapNotNull { it.typeReference }
+            .forEach {
+                holder.createErrorAnnotation(it,
+                    "Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions")
+            }
+    } else {
+        val lastNotDefaultIndex = max(element.typeParameterList.indexOfLast { it.typeReference == null }, 0)
+        element.typeParameterList
+            .take(lastNotDefaultIndex)
+            .filter { it.typeReference != null }
+            .forEach {
+                holder.createErrorAnnotation(it, "Type parameters with a default must be trailing")
+            }
+    }
     val lifetimeParams = element.lifetimeParameterList
     if (lifetimeParams.isEmpty()) return
     val startOfTypeParams = element.typeParameterList.firstOrNull()?.textOffset ?: return
