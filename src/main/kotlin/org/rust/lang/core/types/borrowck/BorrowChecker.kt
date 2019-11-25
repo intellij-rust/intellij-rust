@@ -12,14 +12,15 @@ import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.borrowck.gatherLoans.GatherLoanContext
+import org.rust.lang.core.types.controlFlowGraph
 import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.regions.ScopeTree
-import org.rust.lang.core.types.regions.getRegionScopeTree
+import org.rust.lang.core.types.infer.RsInferenceResult
+import org.rust.lang.core.types.inference
 
-class BorrowCheckContext(
-    val regionScopeTree: ScopeTree,
-    val owner: RsInferenceContextOwner,
+class BorrowCheckContext private constructor(
+    val inference: RsInferenceResult,
     val body: RsBlock,
+    val cfg: ControlFlowGraph,
     val implLookup: ImplLookup = ImplLookup.relativeTo(body),
     private val usesOfMovedValue: MutableSet<UseOfMovedValueError> = hashSetOf(),
     private val usesOfUninitializedVariable: MutableSet<UseOfUninitializedVariable> = hashSetOf(),
@@ -29,8 +30,8 @@ class BorrowCheckContext(
         fun buildFor(owner: RsInferenceContextOwner): BorrowCheckContext? {
             // TODO: handle body represented by RsExpr
             val body = owner.body as? RsBlock ?: return null
-            val regionScopeTree = getRegionScopeTree(owner)
-            return BorrowCheckContext(regionScopeTree, owner, body)
+            val cfg = owner.controlFlowGraph ?: return null
+            return BorrowCheckContext(owner.inference, body, cfg)
         }
     }
 
@@ -51,7 +52,6 @@ class BorrowCheckContext(
     private fun buildAnalysisData(bccx: BorrowCheckContext): AnalysisData? {
         val glcx = GatherLoanContext(this)
         val moveData = glcx.check().takeIf { it.isNotEmpty() } ?: return null
-        val cfg = ControlFlowGraph.buildFor(bccx.body, regionScopeTree)
         val flowedMoves = FlowedMoveData.buildFor(moveData, bccx, cfg)
         return AnalysisData(flowedMoves)
     }

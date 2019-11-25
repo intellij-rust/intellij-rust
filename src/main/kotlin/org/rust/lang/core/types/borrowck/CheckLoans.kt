@@ -16,7 +16,6 @@ import org.rust.lang.core.types.borrowck.LoanPathKind.Extend
 import org.rust.lang.core.types.borrowck.gatherLoans.isAdtWithDestructor
 import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.infer.MemoryCategorizationContext
-import org.rust.lang.core.types.inference
 
 class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveData: FlowedMoveData) : Delegate {
     override fun consume(element: RsElement, cmt: Cmt, mode: ConsumeMode) {
@@ -63,7 +62,7 @@ class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveDat
     }
 
     fun checkLoans(body: RsBlock) {
-        val mc = MemoryCategorizationContext(bccx.implLookup, bccx.owner.inference)
+        val mc = MemoryCategorizationContext(bccx.implLookup, bccx.inference)
         ExprUseWalker(this, mc).consumeBody(body)
     }
 

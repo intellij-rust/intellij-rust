@@ -54,6 +54,7 @@ class ControlFlowGraph private constructor(
     val owner: RsElement,
     val graph: PresentableGraph<CFGNodeData, CFGEdgeData>,
     val body: RsBlock,
+    val regionScopeTree: ScopeTree,
     val entry: CFGNode,
     val exit: CFGNode
 ) {
@@ -68,7 +69,7 @@ class ControlFlowGraph private constructor(
             val bodyExit = cfgBuilder.process(body, entry)
             cfgBuilder.addContainedEdge(bodyExit, fnExit)
 
-            return ControlFlowGraph(owner, graph, body, entry, fnExit)
+            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit)
         }
     }
 

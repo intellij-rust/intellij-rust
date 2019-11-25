@@ -13,8 +13,6 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.types.borrowck.*
 import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.infer.MemoryCategorizationContext
-import org.rust.lang.core.types.inference
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
 class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveData: MoveData = MoveData()) : Delegate {
@@ -54,7 +52,7 @@ class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveDa
     }
 
     fun check(): MoveData {
-        val visitor = ExprUseWalker(this, MemoryCategorizationContext(bccx.implLookup, bccx.owner.inference))
+        val visitor = ExprUseWalker(this, MemoryCategorizationContext(bccx.implLookup, bccx.inference))
         visitor.consumeBody(bccx.body)
         return moveData
     }
