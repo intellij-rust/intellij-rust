@@ -23,8 +23,20 @@ class ConvertToTyUsingFromTraitFix(expr: PsiElement, val ty: Ty) : LocalQuickFix
 
     override fun getText(): String = "Convert to $ty using `From` trait"
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+    override fun invoke(
+        project: Project,
+        file: PsiFile,
+        editor: Editor?,
+        startElement: PsiElement,
+        endElement: PsiElement
+    ) {
         if (startElement !is RsExpr) return
-        startElement.replace(RsPsiFactory(project).createAssocFunctionCall(tyToStringWithoutTypeArgs(ty), "from", listOf(startElement)))
+
+        val newElement = RsPsiFactory(project).createAssocFunctionCall(
+            tyToStringWithoutTypeArgs(ty),
+            "from",
+            listOf(startElement)
+        )
+        startElement.replace(newElement)
     }
 }
