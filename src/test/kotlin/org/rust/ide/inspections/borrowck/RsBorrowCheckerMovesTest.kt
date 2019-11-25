@@ -145,6 +145,19 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move else if`() = checkByText("""
+        struct S;
+        
+        fn main() {
+            let x = S;
+            if a {
+            } else if b {
+                x;
+            }
+            <error descr="Use of moved value">x</error>;
+        }
+    """, checkWarn = false)
+
     fun `test move in while let or patterns`() = checkByText("""
         struct S;
         enum E { A(S), B(S), C }

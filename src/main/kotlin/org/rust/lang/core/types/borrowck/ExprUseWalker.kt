@@ -188,6 +188,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsIfExpr -> {
                 expr.condition?.let { walkCondition(it) }
                 expr.block?.let { walkBlock(it) }
+                expr.elseBranch?.ifExpr?.let { walkExpr(it) }
                 expr.elseBranch?.block?.let { walkBlock(it) }
             }
 

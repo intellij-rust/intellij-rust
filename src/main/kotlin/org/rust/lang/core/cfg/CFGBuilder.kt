@@ -50,8 +50,8 @@ class CFGBuilder(
         result = value
     }
 
-    private fun finishWithAstNode(element: RsElement, pred: CFGNode) =
-        finishWith { addAstNode(element, pred) }
+    private fun finishWithAstNode(element: RsElement, vararg preds: CFGNode) =
+        finishWith { addAstNode(element, *preds) }
 
     private fun finishWithUnreachableNode() =
         finishWith { addUnreachableNode() }
@@ -291,10 +291,16 @@ class CFGBuilder(
         val elseBranch = ifExpr.elseBranch
 
         if (elseBranch != null) {
-            val elseExit = process(elseBranch.block, exprExit)
-            finishWith { addAstNode(ifExpr, thenExit, elseExit) }
+            val elseBranchBlock = elseBranch.block
+            if (elseBranchBlock != null) {
+                val elseExit = process(elseBranch.block, exprExit)
+                finishWithAstNode(ifExpr, thenExit, elseExit)
+            } else {
+                val nestedIfExit = process(elseBranch.ifExpr, exprExit)
+                finishWithAstNode(ifExpr, thenExit, nestedIfExit)
+            }
         } else {
-            finishWith { addAstNode(ifExpr, exprExit, thenExit) }
+            finishWithAstNode(ifExpr, exprExit, thenExit)
         }
     }
 
@@ -381,7 +387,7 @@ class CFGBuilder(
         if (binaryExpr.binaryOp.isLazy) {
             val leftExit = process(binaryExpr.left, pred)
             val rightExit = process(binaryExpr.right, leftExit)
-            finishWith { addAstNode(binaryExpr, leftExit, rightExit) }
+            finishWithAstNode(binaryExpr, leftExit, rightExit)
         } else {
             if (binaryExpr.left.type is TyPrimitive) {
                 finishWith { straightLine(binaryExpr, pred, listOf(binaryExpr.left, binaryExpr.right)) }

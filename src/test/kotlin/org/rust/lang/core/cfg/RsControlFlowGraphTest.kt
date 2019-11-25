@@ -99,7 +99,7 @@ class RsControlFlowGraphTest : RsTestBase() {
 
     fun `test if else`() = testCFG("""
         fn foo() {
-            if true { 1 } else { 2 };
+            if true { 1 } else if false { 2 } else { 3 };
         }
     """, """
         Entry
@@ -110,7 +110,11 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        false
         2
+        BLOCK
+        IF
+        3
         BLOCK
     """)
 
