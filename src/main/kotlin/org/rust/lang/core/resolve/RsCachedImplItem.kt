@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.RsAbstractable
 import org.rust.lang.core.psi.ext.expandedMembers
+import org.rust.lang.core.psi.ext.isReservationImpl
 import org.rust.lang.core.psi.ext.resolveToBoundTrait
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
@@ -31,7 +32,7 @@ class RsCachedImplItem(
     val impl: RsImplItem
 ) {
     private val traitRef: RsTraitRef? = impl.traitRef
-    val isValid: Boolean = impl.isValidProjectMember
+    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl
     val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }
