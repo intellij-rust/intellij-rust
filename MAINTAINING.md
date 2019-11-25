@@ -76,6 +76,7 @@ Nightly and beta are released automatically by [TeamCity]. Stable is generally r
 One week before release we create release branch with `release-%release_version%` name from the `master` branch.
 `release_version` value is the same as the corresponding milestone version.
 Release branches are used to build beta and stable plugin builds.
+After release branch creation, don't forget to increase `patchVersion` property in `gradle.properties` of master branch
 
 Release notes live in [intellij-rust.github.io](https://github.com/intellij-rust/intellij-rust.github.io).
 To write notes, run `./changelog.py`. It goes thorough all pull requests from the corresponding milestone and 
@@ -90,7 +91,6 @@ After finishing with release notes, execute `./gradlew makeRelease` tasks. It'll
 
 * add links to the release notes
 * commit and push release notes to intellij-rust.github.io
-* increase patch version in `gradle.properties` and update changelog in `plugin.xml`
 * push "Changelog" commit to master branch of intellij-rust
 * cherry-pick changelog commit to release branch
 
