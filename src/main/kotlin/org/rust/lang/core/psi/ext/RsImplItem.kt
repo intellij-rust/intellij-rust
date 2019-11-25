@@ -24,6 +24,9 @@ import org.rust.lang.core.types.ty.Ty
 val RsImplItem.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
 
+val RsImplItem.isReservationImpl: Boolean
+    get() = queryAttributes.hasAttribute("rustc_reservation_impl")
+
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
     constructor(node: ASTNode) : super(node)
