@@ -161,7 +161,7 @@ val Project.dependencyCachePath get(): String {
 
 val channelSuffix = if (channel.isBlank()) "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
-val patchVersion = prop("patchVersion").toInt().let { if (channel.isBlank()) it else it + 1 }
+val patchVersion = prop("patchVersion").toInt()
 
 // Special module with run, build and publish tasks
 project(":plugin") {
@@ -514,13 +514,12 @@ task("makeRelease") {
             "https://intellij-rust.github.io/$newChangelogPath.html"
         )
         pluginXml.writeText(newText)
-        val newPatchVersion = updatePatchVersion()
-        "git add $pluginXmlPath gradle.properties".execute()
         "git commit -m Changelog".execute()
         "git push".execute()
 
         val head = "git rev-parse HEAD".execute()
-        "git checkout release-$newPatchVersion".execute()
+        // We assume that current version in master is 1 more than version in release branch
+        "git checkout release-${patchVersion - 1}".execute()
         "git cherry-pick $head".execute()
         "git push".execute()
 
@@ -546,18 +545,6 @@ fun commitChangelog(): String {
     if (!yes) error("Human says no")
     "git push".execute(website)
     return lastPost
-}
-
-/** Returns new patch version */
-fun updatePatchVersion(): Int {
-    val properties = file("gradle.properties")
-    var newPatchVersion: Int? = null
-    val propertiesText = properties.readText().replace(Regex("patchVersion=(\\d+)")) {
-        newPatchVersion = it.groupValues[1].toInt() + 1
-        "patchVersion=${newPatchVersion}"
-    }
-    properties.writeText(propertiesText)
-    return newPatchVersion!!
 }
 
 fun commitNightly() {
