@@ -368,15 +368,33 @@ class CFGBuilder(
     }
 
     override fun visitForExpr(forExpr: RsForExpr) {
-        val loopBack = addDummyNode(pred)
+        //
+        //         [pred]
+        //           |
+        //           v 1
+        //         [iter]
+        //           |
+        //           v 2
+        //   +----[loopback]<-+ 5
+        //   |        |         |
+        //   |        v         |
+        //   |      [pat]?      |
+        //   |       |          |
+        //   |       v 4        |
+        //   |     [body] ------+
+        //   v 3
+        // [forExpr]
+        //
         val exprExit = addAstNode(forExpr)
+        val iterExprExit = process(forExpr.expr, pred)
+        val loopBack = addDummyNode(iterExprExit)
+        addContainedEdge(loopBack, exprExit)
+
         val loopScope = LoopScope(forExpr, loopBack, exprExit)
 
         withLoopScope(loopScope) {
-            val conditionExit = process(forExpr.expr, loopBack)
-            addContainedEdge(conditionExit, exprExit)
-
-            val bodyExit = process(forExpr.block, conditionExit)
+            val patExit = process(forExpr.pat, loopBack)
+            val bodyExit = process(forExpr.block, patExit)
             addContainedEdge(bodyExit, loopBack)
         }
 

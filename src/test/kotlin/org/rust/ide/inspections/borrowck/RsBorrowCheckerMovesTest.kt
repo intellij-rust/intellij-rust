@@ -158,6 +158,25 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move for loop`() = checkByText("""
+        struct S { data: i32 }
+        struct T;
+
+        fn f(s: S) {}
+
+        fn main() {
+            let x = S { data: 42 };
+            for mut i in 0..5 {
+                if x.data == 10 { f(<error descr="Use of moved value">x</error>); } else {}
+                i += 1;
+            }
+            <error descr="Use of moved value">x<caret></error>;
+
+            let ts = vec![T, T, T];
+            for t in ts { t; }
+        }
+    """, checkWarn = false)
+
     fun `test move in while let or patterns`() = checkByText("""
         struct S;
         enum E { A(S), B(S), C }
@@ -526,6 +545,17 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         fn main() {
             let v: Vec<i32> = vec![1, 2, 3];
             if let [a, b, c] = v[..] {}
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move error for loop`() = checkByText("""
+        struct S;
+        fn main() {
+            let xs: Vec<S> = vec![S, S, S];
+            for x in xs {
+                let y = x;
+            }
         }
     """, checkWarn = false)
 }

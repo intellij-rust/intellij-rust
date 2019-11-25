@@ -436,24 +436,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """, """
         Entry
-        Dummy
         x
         42
         x.foo(42)
+        Dummy
         FOR
         FOR;
         y
         y;
         BLOCK
         Exit
-        Dummy
+        i
+        i
         0
         x
         x.bar
         x.bar.foo
         0..x.bar.foo
+        Dummy
         FOR
         BLOCK
+        j
+        j
         x
         i
         x += i
@@ -476,20 +480,24 @@ class RsControlFlowGraphTest : RsTestBase() {
         }
     """, """
         Entry
-        Dummy
         xs
+        Dummy
         FOR
         FOR;
         y
         y;
         BLOCK
         Exit
+        x
+        x
         op1
         op1;
-        Dummy
         ys
+        Dummy
         FOR
         BLOCK
+        y
+        y
         op2
         op2;
         cond
