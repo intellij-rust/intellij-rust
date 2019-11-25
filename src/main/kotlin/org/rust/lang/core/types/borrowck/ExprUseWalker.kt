@@ -284,8 +284,19 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkStructExpr(fields: List<RsStructLiteralField>, withExpr: RsExpr?) {
-        // TODO: consume shorthand literals with `it.expr == null`
-        fields.mapNotNull { it.expr }.forEach { consumeExpr(it) }
+        for (field in fields) {
+            val expr = field.expr
+            if (expr != null) {
+                consumeExpr(expr)
+            } else if (field.identifier != null) {
+                val binding = field.resolveToBinding() ?: continue
+                val mutability = binding.mutability
+                val type = binding.type
+                val cmt = Cmt(field, Local(binding), MutabilityCategory.from(mutability), type)
+                delegateConsume(field, cmt)
+            }
+        }
+
         if (withExpr == null) return
 
         val withCmt = mc.processExpr(withExpr)

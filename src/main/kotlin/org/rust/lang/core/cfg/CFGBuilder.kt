@@ -454,8 +454,14 @@ class CFGBuilder(
     override fun visitTupleExpr(tupleExpr: RsTupleExpr) =
         finishWith { straightLine(tupleExpr, pred, tupleExpr.exprList) }
 
-    override fun visitStructLiteral(structLiteral: RsStructLiteral) =
-        finishWith { straightLine(structLiteral, pred, structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr }) }
+    override fun visitStructLiteral(structLiteral: RsStructLiteral) {
+        val subExprs = structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr ?: it }
+        val subExprsExit = subExprs.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+        finishWithAstNode(structLiteral, subExprsExit)
+    }
+
+    override fun visitStructLiteralField(structLiteralField: RsStructLiteralField) =
+        finishWithAstNode(structLiteralField, pred)
 
     override fun visitCastExpr(castExpr: RsCastExpr) =
         finishWith { straightLine(castExpr, pred, listOf(castExpr.expr)) }

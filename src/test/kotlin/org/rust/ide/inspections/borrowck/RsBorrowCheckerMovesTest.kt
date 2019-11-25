@@ -145,6 +145,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    fun `test move in shorthand struct literal`() = checkByText("""
+        struct S;
+        struct T { s: S }
+        fn main() {
+            let s = S;
+            s;
+            let t = T { <error descr="Use of moved value">s</error> };
+        }
+    """, checkWarn = false)
+
     fun `test move else if`() = checkByText("""
         struct S;
         

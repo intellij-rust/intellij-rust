@@ -774,6 +774,21 @@ class RsControlFlowGraphTest : RsTestBase() {
         some_macro!()
     """)
 
+    fun `test shorthand struct literal`() = testCFG("""
+        struct S { x: i32 }
+        
+        fn foo(x: i32) {
+            S { x };
+        }
+    """, """
+        Entry
+        x
+        S { x }
+        S { x };
+        BLOCK
+        Exit
+    """)
+
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val function = myFixture.file.descendantsOfType<RsFunction>().firstOrNull() ?: return
