@@ -90,7 +90,12 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         val filePosition = getFilePosition(rustcMessage)
         val messageEvent = createMessageEvent(parentEventId, kind, message, detailedMessage, filePosition)
         if (messageEvents.add(messageEvent)) {
+            if (startEvents.none { it.id == parentEventId }) {
+                handleCompilingMessage("Compiling $parentEventId", true, messageConsumer)
+            }
+
             messageConsumer.accept(messageEvent)
+
             if (kind == MessageEvent.Kind.ERROR) {
                 context.errors += 1
             } else {
