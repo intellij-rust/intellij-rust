@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
+import org.rust.lang.core.cfg.ControlFlowGraph
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
@@ -20,6 +21,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.borrowck.BorrowCheckContext
 import org.rust.lang.core.types.borrowck.BorrowCheckResult
 import org.rust.lang.core.types.infer.*
+import org.rust.lang.core.types.regions.getRegionScopeTree
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
@@ -136,3 +138,12 @@ val RsInferenceContextOwner.borrowCheckResult: BorrowCheckResult?
 
 fun RsNamedElement?.asTy(): Ty =
     (this as? RsTypeDeclarationElement)?.declaredType ?: TyUnknown
+
+private val CONTROL_FLOW_KEY: Key<CachedValue<ControlFlowGraph>> = Key.create("CONTROL_FLOW_KEY")
+
+val RsInferenceContextOwner.controlFlowGraph: ControlFlowGraph?
+    get() = CachedValuesManager.getCachedValue(this, CONTROL_FLOW_KEY) {
+        val regionScopeTree = getRegionScopeTree(this)
+        val cfg = (body as? RsBlock)?.let { ControlFlowGraph.buildFor(it, regionScopeTree) }
+        createResult(cfg)
+    }
