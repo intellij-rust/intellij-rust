@@ -319,6 +319,18 @@ object InvalidationPipeline {
     }
 }
 
+class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Stage1ResolveAndExpand,
+                                                                    Pipeline.Stage2WriteToFs,
+                                                                    Pipeline.Stage3SaveToStorage {
+
+    override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun save(storage: ExpandedMacroStorage) {
+        checkWriteAccessAllowed()
+        storage.removeSourceFileIfEmpty(sf)
+    }
+}
+
 object ExpansionPipeline {
     class Stage1(
         val call: RsMacroCall,

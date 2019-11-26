@@ -172,7 +172,14 @@ class ExpandedMacroStorage(val project: Project) {
         expandedFileToInfo.remove(oldInfo.fileId)
         val sf = oldInfo.sourceFile
         sf.removeInfo(oldInfo)
-        if (clean && sf.isEmpty()) {
+        if (clean) {
+            removeSourceFileIfEmpty(sf)
+        }
+    }
+
+    fun removeSourceFileIfEmpty(sf: SourceFile) {
+        checkWriteAccessAllowed()
+        if (sf.isEmpty()) {
             sourceFiles.remove(sf.fileId)
             stepped[sf.depth]?.remove(sf)
         }
@@ -477,16 +484,17 @@ class SourceFile(
             FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) ||
                 project.macroExpansionManager.isExpansionFile(file))
 
-        if (!isIndexedFile) {
+        val stages1 = if (!isIndexedFile) {
             // The file is now outside of the project, so we should not access it.
             // All infos of this file should be invalidated
-            return syncAndMapInfos { info ->
+            syncAndMapInfos { info ->
                 info.markInvalid()
                 info.makeInvalidationPipeline()
             }
+        } else {
+            matchRefs(MakePipeline(), calls)
         }
-
-        return matchRefs(MakePipeline(), calls)
+        return stages1.takeIf { it.isNotEmpty() } ?: listOf(RemoveSourceFileIfEmptyPipeline(this))
     }
 
     private inner class MakePipeline : RefMatcher<List<Pipeline.Stage1ResolveAndExpand>> {
