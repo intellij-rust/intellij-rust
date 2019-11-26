@@ -11,11 +11,11 @@ import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.types.borrowck.ConsumeMode.Copy
 import org.rust.lang.core.types.borrowck.ConsumeMode.Move
-import org.rust.lang.core.types.borrowck.MatchMode.CopyingMatch
-import org.rust.lang.core.types.borrowck.MatchMode.NonBindingMatch
+import org.rust.lang.core.types.borrowck.MatchMode.*
 import org.rust.lang.core.types.borrowck.MoveReason.DirectRefMove
 import org.rust.lang.core.types.borrowck.MoveReason.PatBindingMove
-import org.rust.lang.core.types.infer.Categorization
+import org.rust.lang.core.types.infer.Categorization.Interior
+import org.rust.lang.core.types.infer.Categorization.Local
 import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.infer.MemoryCategorizationContext
 import org.rust.lang.core.types.infer.MutabilityCategory
@@ -38,10 +38,7 @@ interface Delegate {
      */
     fun matchedPat(pat: RsPat, cmt: Cmt, mode: MatchMode)
 
-    /**
-     * The value found at [cmt] is either copied or moved via the
-     * pattern binding [consumePat], depending on mode.
-     */
+    /** The value found at [cmt] is either copied or moved via the pattern binding [consumePat], depending on mode */
     fun consumePat(pat: RsPat, cmt: Cmt, mode: ConsumeMode)
 
     /** The local variable [binding] is declared but not initialized */
@@ -57,8 +54,8 @@ sealed class ConsumeMode {
 
     val matchMode: MatchMode
         get() = when (this) {
-            is Copy -> MatchMode.CopyingMatch
-            is Move -> MatchMode.MovingMatch
+            is Copy -> CopyingMatch
+            is Move -> MovingMatch
         }
 }
 
@@ -82,9 +79,9 @@ sealed class TrackMatchMode {
 
     val matchMode: MatchMode
         get() = when (this) {
-            is Unknown -> MatchMode.NonBindingMatch
+            is Unknown -> NonBindingMatch
             is Definite -> mode
-            is Conflicting -> MatchMode.MovingMatch
+            is Conflicting -> MovingMatch
         }
 
     fun leastUpperBound(mode: MatchMode): TrackMatchMode =
@@ -253,7 +250,9 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             val initCmt = mc.processExpr(init)
             walkIrrefutablePat(initCmt, pat)
         } else {
-            pat.descendantsOfType<RsPatBinding>().forEach { delegate.declarationWithoutInit(it) }
+            for (binding in pat.descendantsOfType<RsPatBinding>()) {
+                delegate.declarationWithoutInit(binding)
+            }
         }
     }
 
@@ -261,7 +260,9 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         val init = condition.expr
         walkExpr(init)
         val initCmt = mc.processExpr(init)
-        condition.patList.forEach { walkIrrefutablePat(initCmt, it) }
+        for (pat in condition.patList) {
+            walkIrrefutablePat(initCmt, pat)
+        }
     }
 
     private fun walkBlock(block: RsBlock) {
@@ -281,7 +282,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             for (field in structFields) {
                 val isMentioned = fields.any { it.identifier?.text == field.identifier.text }
                 if (!isMentioned) {
-                    val interior = Categorization.Interior.Field(withCmt, field.name)
+                    val interior = Interior.Field(withCmt, field.name)
                     val fieldCmt = Cmt(withExpr, interior, withCmt.mutabilityCategory.inherit(), withType)
                     delegateConsume(withExpr, fieldCmt)
                 }
@@ -313,7 +314,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         var newMode = mode
         mc.walkPat(discriminantCmt, pat) { subPatCmt, _, binding ->
             newMode = when (binding.kind) {
-                is BindByReference -> newMode.leastUpperBound(MatchMode.BorrowingMatch)
+                is BindByReference -> newMode.leastUpperBound(BorrowingMatch)
                 is BindByValue -> newMode.leastUpperBound(copyOrMove(mc, subPatCmt, PatBindingMove).matchMode)
             }
         }
@@ -328,7 +329,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     private fun walkPat(discriminantCmt: Cmt, pat: RsPat, @Suppress("UNUSED_PARAMETER") matchMode: MatchMode) {
         mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat, binding ->
             val mutabilityCategory = MutabilityCategory.from(binding.mutability)
-            val bindingCmt = Cmt(binding, Categorization.Local(binding), mutabilityCategory, binding.type)
+            val bindingCmt = Cmt(binding, Local(binding), mutabilityCategory, binding.type)
 
             // Each match binding is effectively an assignment to the binding being produced.
             delegate.mutate(subPat, bindingCmt, MutateMode.Init)
