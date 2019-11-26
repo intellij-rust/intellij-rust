@@ -644,6 +644,19 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
          fn foo() {}
     """)
 
+    fun `test distinguish between ',)+' and '),*' groups`() = doTest("""
+        macro_rules! foo {
+            ($($ e:expr,)+) => { fn foo() { $( $ e; )+ } };
+            ($($ e:expr),*) => { fn bar() { $( $ e; )* } };
+        }
+        foo!{ 1, 2, }
+        foo!{ 1, 2 }
+    """, """
+        fn foo() { 1; 2; }
+    """, """
+        fn bar() { 1; 2; }
+    """)
+
     fun `test impl members context`() = checkSingleMacro("""
         macro_rules! foo {
             () => {

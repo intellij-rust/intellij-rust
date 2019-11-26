@@ -278,7 +278,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 1
+        const val EXPANDER_VERSION = 2
     }
 }
 
@@ -428,9 +428,10 @@ class MacroPattern private constructor(
                 break
             }
 
+            mark?.drop()
+            mark = macroCallBody.mark()
+
             if (separator != null) {
-                mark?.drop()
-                mark = macroCallBody.mark()
                 if (!macroCallBody.isSameToken(separator)) {
                     MacroExpansionMarks.failMatchGroupBySeparator.hit()
                     break
