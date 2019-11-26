@@ -44,8 +44,8 @@ interface Delegate {
      */
     fun consumePat(pat: RsPat, cmt: Cmt, mode: ConsumeMode)
 
-    /** The local variable [element] is declared but not initialized */
-    fun declarationWithoutInit(element: RsElement)
+    /** The local variable [binding] is declared but not initialized */
+    fun declarationWithoutInit(binding: RsPatBinding)
 
     /** The path at [assigneeCmt] is being assigned to */
     fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode)

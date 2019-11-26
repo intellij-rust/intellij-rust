@@ -6,6 +6,7 @@
 package org.rust.lang.core.types.borrowck.gatherLoans
 
 import org.rust.lang.core.psi.RsPat
+import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
@@ -26,9 +27,9 @@ class GatherMoveContext(private val bccx: BorrowCheckContext, private val moveDa
         val movePlace: MovePlace? = null
     )
 
-    fun gatherDeclaration(variable: RsElement, variableType: Ty) {
-        val loanPath = LoanPath(LoanPathKind.Var(variable), variableType, variable)
-        moveData.addMove(loanPath, variable, MoveKind.Declared)
+    fun gatherDeclaration(binding: RsPatBinding, variableType: Ty) {
+        val loanPath = LoanPath(LoanPathKind.Var(binding), variableType, binding)
+        moveData.addMove(loanPath, binding, MoveKind.Declared)
     }
 
     fun gatherMoveFromExpr(element: RsElement, cmt: Cmt, moveReason: MoveReason) {

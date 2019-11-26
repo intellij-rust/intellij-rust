@@ -7,6 +7,7 @@ package org.rust.lang.core.types.borrowck
 
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsPat
+import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatSlice
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
@@ -44,7 +45,7 @@ class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveDat
     private fun isInsideSliceDestructing(loanPath: LoanPath, move: Move): Boolean =
         loanPath.element is RsPatSlice && move.element.ancestorOrSelf<RsPatSlice>() == loanPath.element
 
-    override fun declarationWithoutInit(element: RsElement) {}
+    override fun declarationWithoutInit(binding: RsPatBinding) {}
 
     override fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode) {
         val loanPath = LoanPath.computeFor(assigneeCmt) ?: return
