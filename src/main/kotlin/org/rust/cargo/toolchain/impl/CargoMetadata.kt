@@ -366,8 +366,8 @@ object CargoMetadata {
     }
 
     private fun String?.cleanEdition(): Edition = when (this) {
-        "2015" -> Edition.EDITION_2015
-        "2018" -> Edition.EDITION_2018
+        Edition.EDITION_2015.presentation -> Edition.EDITION_2015
+        Edition.EDITION_2018.presentation -> Edition.EDITION_2018
         else -> Edition.EDITION_2015
     }
 }

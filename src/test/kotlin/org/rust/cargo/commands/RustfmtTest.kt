@@ -46,6 +46,35 @@ class RustfmtTest : RsWithToolchainTestBase() {
         """.trimIndent(), myFixture.editor.document.text.trim())
     }
 
+    @MinRustcVersion("1.31.0")
+    fun `test rustfmt file action edition 2018`() {
+        val fileWithCaret = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+                edition = "2018"
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    async fn foo() {/*caret*/
+                    println!("Hello, ΣΠ∫!");
+                    }
+                """)
+            }
+        }.create().fileWithCaret
+
+        myFixture.configureFromTempProjectFile(fileWithCaret)
+        reformatDocument(myFixture.editor)
+        assertEquals("""
+            async fn foo() {
+                println!("Hello, ΣΠ∫!");
+            }
+        """.trimIndent(), myFixture.editor.document.text.trim())
+    }
+
     fun `test rustfmt cargo project action`() {
         val fileWithCaret = fileTree {
             toml("Cargo.toml", """
