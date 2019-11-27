@@ -319,6 +319,18 @@ object InvalidationPipeline {
     }
 }
 
+class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Stage1ResolveAndExpand,
+                                                                    Pipeline.Stage2WriteToFs,
+                                                                    Pipeline.Stage3SaveToStorage {
+
+    override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun save(storage: ExpandedMacroStorage) {
+        checkWriteAccessAllowed()
+        storage.removeSourceFileIfEmpty(sf)
+    }
+}
+
 object ExpansionPipeline {
     class Stage1(
         val call: RsMacroCall,
@@ -340,10 +352,11 @@ object ExpansionPipeline {
             if (info.isUpToDate(call, def)) {
                 return EmptyPipeline // old expansion is up-to-date
             }
+
             val expansion = expander.expandMacroAsText(def, call)
             if (expansion == null) {
                 MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName}!(${call.macroBody})`")
-                return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, defHash)
+                return nextStageFail(callHash, defHash)
             }
 
             val expansionText = expansion.first.toString()
@@ -352,12 +365,9 @@ object ExpansionPipeline {
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 val oldExpansionText = VfsUtil.loadText(oldExpansionFile)
                 if (expansionText == oldExpansionText) {
-                    val oldRanges = oldExpansionFile.loadRangeMap()
-                    return if (ranges != oldRanges) {
-                        Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges)
-                    } else {
-                        EmptyPipeline
-                    }
+                    // Expansion text isn't changed, but [callHash] or [defHash] or [ranges]
+                    // are changed and should be updated
+                    return Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges)
                 }
             }
 
