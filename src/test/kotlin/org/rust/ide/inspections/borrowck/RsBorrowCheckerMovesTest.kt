@@ -568,4 +568,13 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+
+    fun `test move in lambda expr`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            let f = || { s };
+            <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
 }

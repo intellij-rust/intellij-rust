@@ -234,6 +234,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 consumeExpr(right)
             }
 
+            is RsLambdaExpr -> expr.expr?.let { walkExpr(it) }
+
             is RsBlockExpr -> walkBlock(expr.block)
 
             is RsBreakExpr -> expr.expr?.let { consumeExpr(it) }

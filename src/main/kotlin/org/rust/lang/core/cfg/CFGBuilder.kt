@@ -530,5 +530,10 @@ class CFGBuilder(
         finishWith(exprExit)
     }
 
+    override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) {
+        val exprExit = process(lambdaExpr.expr, pred)
+        finishWithAstNode(lambdaExpr, exprExit)
+    }
+
     override fun visitElement(element: RsElement) = finishWith(pred)
 }
