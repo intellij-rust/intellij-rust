@@ -577,4 +577,13 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             <error descr="Use of moved value">s</error>;
         }
     """, checkWarn = false)
+
+    fun `test move in paren expr`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            (s);
+            <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
 }
