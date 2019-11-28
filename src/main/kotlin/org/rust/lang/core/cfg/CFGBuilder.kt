@@ -179,11 +179,15 @@ class CFGBuilder(
     }
 
     override fun visitBlock(block: RsBlock) {
-        val stmtsExit = block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
-        val blockExpr = block.expr ?: return finishWithAstNode(block, stmtsExit)
-        val exprExit = process(blockExpr, stmtsExit)
+        val (expandedStmts, tailExpr) = block.expandedStmtsAndTailExpr
+        val stmtsExit = expandedStmts.fold(pred) { pred, stmt -> process(stmt, pred) }
 
-        finishWithAstNode(block, exprExit)
+        if (tailExpr != null) {
+            val exprExit = process(tailExpr, stmtsExit)
+            finishWithAstNode(block, exprExit)
+        } else {
+            finishWithAstNode(block, stmtsExit)
+        }
     }
 
     override fun visitLetDecl(letDecl: RsLetDecl) {
