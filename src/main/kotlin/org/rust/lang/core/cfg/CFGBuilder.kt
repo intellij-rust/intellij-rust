@@ -50,8 +50,8 @@ class CFGBuilder(
         result = value
     }
 
-    private fun finishWithAstNode(element: RsElement, pred: CFGNode) =
-        finishWith { addAstNode(element, pred) }
+    private fun finishWithAstNode(element: RsElement, vararg preds: CFGNode) =
+        finishWith { addAstNode(element, *preds) }
 
     private fun finishWithUnreachableNode() =
         finishWith { addUnreachableNode() }
@@ -291,10 +291,16 @@ class CFGBuilder(
         val elseBranch = ifExpr.elseBranch
 
         if (elseBranch != null) {
-            val elseExit = process(elseBranch.block, exprExit)
-            finishWith { addAstNode(ifExpr, thenExit, elseExit) }
+            val elseBranchBlock = elseBranch.block
+            if (elseBranchBlock != null) {
+                val elseExit = process(elseBranch.block, exprExit)
+                finishWithAstNode(ifExpr, thenExit, elseExit)
+            } else {
+                val nestedIfExit = process(elseBranch.ifExpr, exprExit)
+                finishWithAstNode(ifExpr, thenExit, nestedIfExit)
+            }
         } else {
-            finishWith { addAstNode(ifExpr, exprExit, thenExit) }
+            finishWithAstNode(ifExpr, exprExit, thenExit)
         }
     }
 
@@ -362,15 +368,33 @@ class CFGBuilder(
     }
 
     override fun visitForExpr(forExpr: RsForExpr) {
-        val loopBack = addDummyNode(pred)
+        //
+        //         [pred]
+        //           |
+        //           v 1
+        //         [iter]
+        //           |
+        //           v 2
+        //   +----[loopback]<-+ 5
+        //   |        |         |
+        //   |        v         |
+        //   |      [pat]?      |
+        //   |       |          |
+        //   |       v 4        |
+        //   |     [body] ------+
+        //   v 3
+        // [forExpr]
+        //
         val exprExit = addAstNode(forExpr)
+        val iterExprExit = process(forExpr.expr, pred)
+        val loopBack = addDummyNode(iterExprExit)
+        addContainedEdge(loopBack, exprExit)
+
         val loopScope = LoopScope(forExpr, loopBack, exprExit)
 
         withLoopScope(loopScope) {
-            val conditionExit = process(forExpr.expr, loopBack)
-            addContainedEdge(conditionExit, exprExit)
-
-            val bodyExit = process(forExpr.block, conditionExit)
+            val patExit = process(forExpr.pat, loopBack)
+            val bodyExit = process(forExpr.block, patExit)
             addContainedEdge(bodyExit, loopBack)
         }
 
@@ -381,7 +405,7 @@ class CFGBuilder(
         if (binaryExpr.binaryOp.isLazy) {
             val leftExit = process(binaryExpr.left, pred)
             val rightExit = process(binaryExpr.right, leftExit)
-            finishWith { addAstNode(binaryExpr, leftExit, rightExit) }
+            finishWithAstNode(binaryExpr, leftExit, rightExit)
         } else {
             if (binaryExpr.left.type is TyPrimitive) {
                 finishWith { straightLine(binaryExpr, pred, listOf(binaryExpr.left, binaryExpr.right)) }
@@ -430,8 +454,14 @@ class CFGBuilder(
     override fun visitTupleExpr(tupleExpr: RsTupleExpr) =
         finishWith { straightLine(tupleExpr, pred, tupleExpr.exprList) }
 
-    override fun visitStructLiteral(structLiteral: RsStructLiteral) =
-        finishWith { straightLine(structLiteral, pred, structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr }) }
+    override fun visitStructLiteral(structLiteral: RsStructLiteral) {
+        val subExprs = structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr ?: it }
+        val subExprsExit = subExprs.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+        finishWithAstNode(structLiteral, subExprsExit)
+    }
+
+    override fun visitStructLiteralField(structLiteralField: RsStructLiteralField) =
+        finishWithAstNode(structLiteralField, pred)
 
     override fun visitCastExpr(castExpr: RsCastExpr) =
         finishWith { straightLine(castExpr, pred, listOf(castExpr.expr)) }
@@ -498,6 +528,11 @@ class CFGBuilder(
         addReturningEdge(checkExpr)
         addContainedEdge(expr, exprExit)
         finishWith(exprExit)
+    }
+
+    override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) {
+        val exprExit = process(lambdaExpr.expr, pred)
+        finishWithAstNode(lambdaExpr, exprExit)
     }
 
     override fun visitElement(element: RsElement) = finishWith(pred)

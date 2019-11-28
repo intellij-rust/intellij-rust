@@ -70,6 +70,7 @@ enum class MatchMode {
     BorrowingMatch,
     CopyingMatch,
     MovingMatch,
+    NonConsumingMatch,
 }
 
 sealed class TrackMatchMode {
@@ -188,6 +189,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsIfExpr -> {
                 expr.condition?.let { walkCondition(it) }
                 expr.block?.let { walkBlock(it) }
+                expr.elseBranch?.ifExpr?.let { walkExpr(it) }
                 expr.elseBranch?.block?.let { walkBlock(it) }
             }
 
@@ -210,6 +212,17 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 expr.block?.let { walkBlock(it) }
             }
 
+            is RsForExpr -> {
+                val init = expr.expr
+                val pat = expr.pat
+                if (init != null && pat != null) {
+                    walkExpr(init)
+                    val initCmt = mc.processExpr(init)
+                    walkPat(initCmt, pat, NonConsumingMatch)
+                }
+                expr.block?.let { walkBlock(it) }
+            }
+
             is RsBinaryExpr -> {
                 val left = expr.left
                 val right = expr.right ?: return
@@ -220,6 +233,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 }
                 consumeExpr(right)
             }
+
+            is RsLambdaExpr -> expr.expr?.let { walkExpr(it) }
 
             is RsBlockExpr -> walkBlock(expr.block)
 
@@ -271,8 +286,19 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkStructExpr(fields: List<RsStructLiteralField>, withExpr: RsExpr?) {
-        // TODO: consume shorthand literals with `it.expr == null`
-        fields.mapNotNull { it.expr }.forEach { consumeExpr(it) }
+        for (field in fields) {
+            val expr = field.expr
+            if (expr != null) {
+                consumeExpr(expr)
+            } else if (field.identifier != null) {
+                val binding = field.resolveToBinding() ?: continue
+                val mutability = binding.mutability
+                val type = binding.type
+                val cmt = Cmt(field, Local(binding), MutabilityCategory.from(mutability), type)
+                delegateConsume(field, cmt)
+            }
+        }
+
         if (withExpr == null) return
 
         val withCmt = mc.processExpr(withExpr)
@@ -326,7 +352,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
      * The core driver for walking a pattern; [matchMode] must be established up front, e.g. via [determinePatMoveMode]
      * (see also [walkIrrefutablePat] for patterns that stand alone)
      */
-    private fun walkPat(discriminantCmt: Cmt, pat: RsPat, @Suppress("UNUSED_PARAMETER") matchMode: MatchMode) {
+    private fun walkPat(discriminantCmt: Cmt, pat: RsPat, matchMode: MatchMode) {
         mc.walkPat(discriminantCmt, pat) { subPatCmt, subPat, binding ->
             val mutabilityCategory = MutabilityCategory.from(binding.mutability)
             val bindingCmt = Cmt(binding, Local(binding), mutabilityCategory, binding.type)
@@ -336,7 +362,10 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
             // It is also a borrow or copy/move of the value being matched.
             if (binding.kind is BindByValue) {
-                delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
+                // In case of NonConsumingMatch (e.g. `for x in xs {}`), the pat should not be consumed as copy/move
+                if (matchMode != NonConsumingMatch) {
+                    delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
+                }
             }
         }
     }
