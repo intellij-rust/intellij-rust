@@ -577,4 +577,25 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             <error descr="Use of moved value">s</error>;
         }
     """, checkWarn = false)
+
+    fun `test move in paren expr`() = checkByText("""
+        struct S;
+        fn main() {
+            let s = S;
+            (s);
+            <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
+
+    fun `test move in expanded macro call`() = checkByText("""
+        macro_rules! my_macro_move {
+            ($ e:expr) => ($ e;);
+        }
+        struct S;
+        fn main() {
+            let s = S;
+            my_macro_move!(s);
+            <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
 }

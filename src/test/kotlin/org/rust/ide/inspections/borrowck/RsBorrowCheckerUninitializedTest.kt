@@ -228,4 +228,15 @@ class RsBorrowCheckerUninitializedTest : RsInspectionsTestBase(RsBorrowCheckerIn
             value
         }
     """, checkWarn = false)
+
+    fun `test no E0381 init in macro call`() = checkByText("""
+        macro_rules! my_macro_init {
+            ($ i:ident) => ($ i = 42);
+        }
+        fn main() {
+            let value: i32;
+            my_macro_init!(value);
+            value;
+        }
+    """, checkWarn = false)
 }

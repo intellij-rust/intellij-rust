@@ -243,6 +243,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             is RsRetExpr -> expr.expr?.let { consumeExpr(it) }
 
             is RsCastExpr -> consumeExpr(expr.expr)
+
+            is RsParenExpr -> consumeExpr(expr.expr)
         }
     }
 
@@ -281,8 +283,17 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkBlock(block: RsBlock) {
-        block.stmtList.forEach { walkStmt(it) }
-        block.expr?.let { consumeExpr(it) }
+        val (expandedStmts, tailExpr) = block.expandedStmtsAndTailExpr
+        for (element in expandedStmts) {
+            when (element) {
+                is RsStmt -> walkStmt(element)
+                is RsExpr -> walkExpr(element)
+            }
+        }
+
+        if (tailExpr != null) {
+            consumeExpr(tailExpr)
+        }
     }
 
     private fun walkStructExpr(fields: List<RsStructLiteralField>, withExpr: RsExpr?) {
