@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.2
+@file:Suppress("DEPRECATION", "UnstableApiUsage")
+
 package org.rust.lang.core
 
 import com.intellij.core.CoreASTFactory

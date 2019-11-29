@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.2
+@file:Suppress("UnstableApiUsage", "DEPRECATION")
+
 package org.rust.lang.core.psi
 
 import com.intellij.psi.PsiFileFactory

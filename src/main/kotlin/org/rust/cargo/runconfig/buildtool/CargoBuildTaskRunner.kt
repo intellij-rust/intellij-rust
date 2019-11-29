@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+
+// BACKCOMPAT: 2019.2
+@file:Suppress("DEPRECATION", "UnstableApiUsage")
+
 package org.rust.cargo.runconfig.buildtool
 
 import com.intellij.execution.ExecutorRegistry
@@ -33,7 +37,6 @@ import java.util.concurrent.*
 
 private val LOG: Logger = Logger.getInstance(CargoBuildTaskRunner::class.java)
 
-@Suppress("UnstableApiUsage")
 class CargoBuildTaskRunner : ProjectTaskRunner() {
     private val buildSessionsQueue: BackgroundTaskQueue = BackgroundTaskQueue(null, "Building...")
 

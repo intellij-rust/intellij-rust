@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.2
+@file:Suppress("DEPRECATION")
+
 package org.rust.debugger.runconfig
 
 import com.intellij.execution.configurations.GeneralCommandLine

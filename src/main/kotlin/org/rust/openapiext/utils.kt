@@ -267,7 +267,7 @@ fun runWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit)
 fun submitTransaction(parentDisposable: Disposable, runnable: Runnable) {
     ApplicationManager.getApplication().invokeLater(Runnable {
         TransactionGuard.submitTransaction(parentDisposable, runnable)
-    }, ModalityState.any(), Condition.FALSE)
+    }, ModalityState.any(), Conditions.alwaysFalse<Any>())
 }
 
 class TransactionExecutor(val project: Project) : Executor {
