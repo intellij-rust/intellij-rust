@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rustSlowTests
+package org.rustSlowTests.lang.resolve
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -471,45 +471,37 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
     }
 
     fun `test disabled cfg feature`() = buildProject {
-        toml(
-            "Cargo.toml", """
+        toml("Cargo.toml", """
             [package]
             name = "hello"
             version = "0.1.0"
 
             [dependencies]
             foo = { path = "./foo", features = [] }
-        """
-        )
+        """)
         dir("src") {
-            rust(
-                "main.rs", """
+            rust("main.rs", """
                 extern crate foo;
                 fn main() {
                     let _ = foo::bar();
                               // ^
                 }
-            """
-            )
+            """)
         }
         dir("foo") {
-            toml(
-                "Cargo.toml", """
+            toml("Cargo.toml", """
                 [package]
                 name = "foo"
                 version = "1.0.0"
-                
+
                 [features]
                 foobar = []
-            """
-            )
+            """)
             dir("src") {
-                rust(
-                    "lib.rs", """
+                rust("lib.rs", """
                     #[cfg(feature="foobar")]
                     pub fn bar() -> u32 { 42 }
-            """
-                )
+                """)
             }
         }
     }.run {
@@ -517,45 +509,37 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
     }
 
     fun `test enabled cfg feature`() = buildProject {
-        toml(
-            "Cargo.toml", """
+        toml("Cargo.toml", """
             [package]
             name = "hello"
             version = "0.1.0"
 
             [dependencies]
             foo = { path = "./foo", features = ["foobar"] }
-        """
-        )
+        """)
         dir("src") {
-            rust(
-                "main.rs", """
+            rust("main.rs", """
                 extern crate foo;
                 fn main() {
                     let _ = foo::bar();
                               // ^
                 }
-            """
-            )
+            """)
         }
         dir("foo") {
-            toml(
-                "Cargo.toml", """
+            toml("Cargo.toml", """
                 [package]
                 name = "foo"
                 version = "1.0.0"
-                
+
                 [features]
                 foobar = []
-            """
-            )
+            """)
             dir("src") {
-                rust(
-                    "lib.rs", """
+                rust("lib.rs", """
                     #[cfg(feature="foobar")]
                     pub fn bar() -> u32 { 42 }
-            """
-                )
+                """)
             }
         }
     }.run {

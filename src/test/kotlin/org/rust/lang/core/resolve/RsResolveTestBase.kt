@@ -116,25 +116,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     }
 
     protected fun check(actualResolveFile: VirtualFile, expectedFilePath: String): ResolveResult {
-        if (expectedFilePath.startsWith("...")) {
-            if (!actualResolveFile.path.endsWith(expectedFilePath.drop(3))) {
-                return ResolveResult.Err("Should resolve to $expectedFilePath, was ${actualResolveFile.path} instead")
-
-            }
-        } else {
-            val expectedResolveFile = myFixture.findFileInTempDir(expectedFilePath)
-                ?: return ResolveResult.Err("Can't find `$expectedFilePath` file")
-
-            if (actualResolveFile != expectedResolveFile) {
-                return ResolveResult.Err("Should resolve to ${expectedResolveFile.path}, was ${actualResolveFile.path} instead")
-            }
-        }
-        return ResolveResult.Ok
-    }
-
-    protected sealed class ResolveResult {
-        object Ok : ResolveResult()
-        data class Err(val message: String) : ResolveResult()
+        return checkResolvedFile(actualResolveFile, expectedFilePath) { path -> myFixture.findFileInTempDir(path) }
     }
 }
 
