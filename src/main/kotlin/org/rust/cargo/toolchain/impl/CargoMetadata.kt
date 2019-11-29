@@ -17,6 +17,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.BuildScriptMessage
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*
@@ -250,7 +251,11 @@ object CargoMetadata {
         val test: Boolean
     )
 
-    fun clean(project: Project, buildPlan: CargoBuildPlan?): CargoWorkspaceData {
+    fun clean(
+        project: Project,
+        buildScriptsInfo: BuildScriptsInfo,
+        buildPlan: CargoBuildPlan?
+    ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error(
@@ -276,8 +281,8 @@ object CargoMetadata {
                     }
                     CargoWorkspace.Feature(feature, state)
                 }
-
-                pkg.clean(fs, pkg.id in members, variables, features)
+                val buildScriptMessage = buildScriptsInfo[pkg.id]
+                pkg.clean(fs, pkg.id in members, variables, features, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
@@ -295,7 +300,8 @@ object CargoMetadata {
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         variables: TargetVariables,
-        features: List<CargoWorkspace.Feature>
+        features: List<CargoWorkspace.Feature>,
+        buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"

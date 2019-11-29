@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -28,9 +29,11 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -104,7 +107,8 @@ class Cargo(private val cargoExecutable: Path) {
     ): CargoWorkspaceData {
         val rawData = fetchMetadata(owner, projectDirectory, listener)
         val buildPlan = fetchBuildPlan(owner, projectDirectory, listener)
-        return CargoMetadata.clean(rawData, buildPlan)
+        val buildScriptsInfo = fetchBuildScriptsInfo(owner, projectDirectory, listener)
+        return CargoMetadata.clean(rawData, buildScriptsInfo, buildPlan)
     }
 
     @Throws(ExecutionException::class)
@@ -123,6 +127,31 @@ class Cargo(private val cargoExecutable: Path) {
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
+    }
+
+    private fun fetchBuildScriptsInfo(
+        owner: Project,
+        projectDirectory: Path,
+        listener: ProcessListener?
+    ): BuildScriptsInfo {
+        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return BuildScriptsInfo(emptyMap())
+        val additionalArgs = listOf("--message-format", "json")
+        val processOutput = CargoCommandLine("check", projectDirectory, additionalArgs)
+            .execute(owner, listener = listener)
+
+        val parser = JsonParser()
+        val messages = mutableMapOf<PackageId, BuildScriptMessage>()
+
+        for (line in processOutput.stdoutLines) {
+            val jsonObject = try {
+                parser.parse(line).asJsonObject
+            } catch (ignore: JsonSyntaxException){
+                continue
+            }
+            val message = BuildScriptMessage.fromJson(jsonObject) ?: continue
+            messages[message.package_id] = message
+        }
+        return BuildScriptsInfo(messages)
     }
 
     private fun fetchBuildPlan(
