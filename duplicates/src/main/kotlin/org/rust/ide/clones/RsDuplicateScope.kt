@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKOMPAT: 2019.2
+@file:Suppress("DEPRECATION")
+
 package org.rust.ide.clones
 
 import com.intellij.lang.LighterAST

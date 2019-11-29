@@ -32,6 +32,8 @@ class DelayedBackgroundableProcessIndicator(task: Task.Backgroundable, delay: In
     private var isFinishCalled = false
 
     init {
+        // BACKCOMPAT: 2019.2
+        @Suppress("DEPRECATION")
         val timer = UIUtil.createNamedTimer("DelayedBackgroundableProcessIndicator timer", delay) {
             ApplicationManager.getApplication().invokeLater({
                 if (isRunning && !isFinishCalled) {

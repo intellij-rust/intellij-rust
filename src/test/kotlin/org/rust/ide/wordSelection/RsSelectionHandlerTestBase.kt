@@ -20,7 +20,7 @@ abstract class RsSelectionHandlerTestBase : RsTestBase() {
 
     private fun doTestWithMacro(before: String, after: Array<out String>) {
         val wrap = fun(s: String) = """
-           macro_rules! foo { ($ i:item) => { $ i } } 
+           macro_rules! foo { ($ i:item) => { $ i } }
            foo! {
            $s
            }
@@ -28,7 +28,7 @@ abstract class RsSelectionHandlerTestBase : RsTestBase() {
         doTestInner(wrap(before), after.map { wrap(it) })
     }
 
-    private fun doTestInner(before: String, after: List<out String>) {
+    private fun doTestInner(before: String, after: List<String>) {
         myFixture.configureByText("main.rs", before)
         val action = SelectWordHandler(null)
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)

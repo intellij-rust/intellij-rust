@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.rust.ide.clones
 
 import com.intellij.psi.search.GlobalSearchScope
@@ -65,12 +67,12 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
         impl Foo for i32 {
             type Bar = i32;
             fn baz() {}
-        }  
-              
+        }
+
         impl Foo for String {
             type Bar = i32;
             fn baz() {}
-        }  
+        }
     """)
 
     fun `test exclude where clause from analysis`() = doTest("""
@@ -81,21 +83,21 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
     fun `test exclude value argument and value parameter lists from analysis`() = doTest("""
         fn foo(a: i32, b: u64, c: char, s: &str) {}
         fn bar(a: i32, b: u64, c: char, s: &str) {}
-        
+
         fn main() {
             foo(a + 1, b, baz(), "foo");
             bar(a + 1, b, baz(), "foo");
-        }    
+        }
     """)
 
     fun `test exclude type argument and type parameter lists from analysis`() = doTest("""
         fn foo<V1: Debug, V2: Copy, F: Hash>() {}
         fn bar<V1: Debug, V2: Copy, F: Hash>() {}
-        
+
         fn main() {
             foo::<Vec<i32>, i8, BTreeMap<String, u64>>();
             bar::<Vec<i32>, i8, BTreeMap<String, u64>>();
-        }    
+        }
     """)
 
     fun `test binary expr order`() = doTest("""
