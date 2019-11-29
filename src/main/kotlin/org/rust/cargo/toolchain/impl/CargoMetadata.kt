@@ -307,6 +307,9 @@ object CargoMetadata {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
 
+        val generatedFeatures = buildScriptMessage?.cfgs.orEmpty()
+            .map { CargoWorkspace.Feature(it, CargoWorkspace.FeatureState.Enabled) }
+
         return CargoWorkspaceData.Package(
             id,
             root.url,
@@ -316,7 +319,7 @@ object CargoMetadata {
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition(),
-            features = features
+            features = features + generatedFeatures
         )
     }
 

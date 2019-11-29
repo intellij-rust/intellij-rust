@@ -17,6 +17,8 @@ import org.junit.Assert
 import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.resolve.ResolveResult
+import org.rust.lang.core.resolve.checkResolvedFile
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.saveAllDocuments
 import org.rust.openapiext.toPsiFile
@@ -157,7 +159,8 @@ class TestProject(
     inline fun <reified T : RsReferenceElement> checkReferenceIsResolved(
         path: String,
         shouldNotResolve: Boolean = false,
-        toCrate: String? = null
+        toCrate: String? = null,
+        toFile: String? = null
     ) {
         val ref = findElementInFile<T>(path)
         val res = ref.reference.resolve()
@@ -173,6 +176,13 @@ class TestProject(
                 val pkg = res.containingCargoPackage?.let { "${it.name} ${it.version}" } ?: "[nowhere]"
                 check(pkg == toCrate) {
                     "Expected to be resolved to $toCrate but actually resolved to $pkg"
+                }
+            }
+            if (toFile != null) {
+                val file = res.containingFile.virtualFile
+                val result = checkResolvedFile(file, toFile) { file.fileSystem.findFileByPath(it) }
+                check(result !is ResolveResult.Err) {
+                    (result as ResolveResult.Err).message
                 }
             }
         }

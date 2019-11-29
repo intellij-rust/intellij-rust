@@ -87,6 +87,7 @@ class CfgEvaluator(val options: CfgOptions, val features: Map<String, FeatureSta
         name in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
         name == "test" && origin == PackageOrigin.STDLIB -> False
         name == CfgOptions.TEST && isUnitTestMode -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
+        name in features -> evaluateFeature(name)
         else -> Unknown
     }
 
