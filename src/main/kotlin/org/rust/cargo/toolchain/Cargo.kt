@@ -106,8 +106,13 @@ class Cargo(private val cargoExecutable: Path) {
         listener: ProcessListener? = null
     ): CargoWorkspaceData {
         val rawData = fetchMetadata(owner, projectDirectory, listener)
-        val buildPlan = fetchBuildPlan(owner, projectDirectory, listener)
         val buildScriptsInfo = fetchBuildScriptsInfo(owner, projectDirectory, listener)
+        val buildPlan = if (buildScriptsInfo?.containsOutDirInfo != true) {
+            fetchBuildPlan(owner, projectDirectory, listener)
+        } else {
+            null
+        }
+
         return CargoMetadata.clean(rawData, buildScriptsInfo, buildPlan)
     }
 
@@ -133,8 +138,8 @@ class Cargo(private val cargoExecutable: Path) {
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
-    ): BuildScriptsInfo {
-        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return BuildScriptsInfo(emptyMap())
+    ): BuildScriptsInfo? {
+        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
         val processOutput = CargoCommandLine("check", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)

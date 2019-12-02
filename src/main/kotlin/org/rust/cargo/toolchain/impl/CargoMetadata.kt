@@ -253,7 +253,7 @@ object CargoMetadata {
 
     fun clean(
         project: Project,
-        buildScriptsInfo: BuildScriptsInfo,
+        buildScriptsInfo: BuildScriptsInfo?,
         buildPlan: CargoBuildPlan?
     ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
@@ -281,7 +281,7 @@ object CargoMetadata {
                     }
                     CargoWorkspace.Feature(feature, state)
                 }
-                val buildScriptMessage = buildScriptsInfo[pkg.id]
+                val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
                 pkg.clean(fs, pkg.id in members, variables, features, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
@@ -314,7 +314,7 @@ object CargoMetadata {
             .filter { it.size == 2 }
             .associate { (key, value) -> key to value }
 
-        val outDirPath = variables.getOutDirPath(this)
+        val outDirPath = buildScriptMessage?.out_dir ?: variables.getOutDirPath(this)
         val outDir = outDirPath?.let { root.fileSystem.refreshAndFindFileByPath(it)?.canonicalFile }
 
         return CargoWorkspaceData.Package(
