@@ -162,6 +162,9 @@ class QueryAttributes(
     val cfgAttributes: Sequence<RsMetaItem>
         get() = attrsByName("cfg")
 
+    val unstableAttributes: Sequence<RsMetaItem>
+        get() = attrsByName("unstable")
+
     // `#[attributeName = "Xxx"]`
     private fun getStringAttributes(attributeName: String): Sequence<String?> =
         attrsByName(attributeName).map { it.value }
