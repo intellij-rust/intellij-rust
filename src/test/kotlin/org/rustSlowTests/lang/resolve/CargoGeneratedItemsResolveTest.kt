@@ -13,6 +13,7 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath
 import org.rust.openapiext.runWithEnabledFeature
 
+// TODO: merge with [org.rustSlowTests.cargo.runconfig.RsIncludeMacroResolveTest]
 class CargoGeneratedItemsResolveTest : RsWithToolchainTestBase() {
 
     private val tempDirFixture = TempDirTestFixtureImpl()
@@ -91,5 +92,41 @@ class CargoGeneratedItemsResolveTest : RsWithToolchainTestBase() {
                 """)
             }
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
+    }
+
+    fun `test generated environment variables`() = runWithEnabledFeature(RsExperiments.EVALUATE_BUILD_SCRIPTS) {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                edition = "2018"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    include!(concat!("foo/", env!("GENERATED_ENV_DIR"), "/hello.rs"));
+                    fn main() {
+                        hello();
+                         //^
+                    }
+                """)
+                dir("foo") {
+                    dir("bar") {
+                        rust("hello.rs", """
+                            fn hello() {
+                                println!("Hello!");
+                            }
+                        """)
+                    }
+                }
+            }
+            rust("build.rs", """
+                fn main() {
+                    println!("cargo:rustc-env=GENERATED_ENV_DIR=bar");
+                }
+            """)
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../foo/bar/hello.rs")
     }
 }

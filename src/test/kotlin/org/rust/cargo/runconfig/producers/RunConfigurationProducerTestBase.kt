@@ -216,7 +216,8 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                             source = null,
                             origin = PackageOrigin.WORKSPACE,
                             edition = Edition.EDITION_2015,
-                            features = emptyList()
+                            features = emptyList(),
+                            env = emptyMap()
                         )
                     ),
                     dependencies = emptyMap()

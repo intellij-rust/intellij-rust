@@ -80,6 +80,8 @@ interface CargoWorkspace {
 
         val edition: Edition
 
+        val env: Map<String, String>
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
@@ -174,7 +176,8 @@ private class WorkspaceImpl(
             pkg.origin,
             pkg.edition,
             cfgOptions,
-            pkg.features
+            pkg.features,
+            pkg.env
         )
     }
 
@@ -308,7 +311,8 @@ private class PackageImpl(
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
     override val cfgOptions: CfgOptions,
-    override val features: Collection<CargoWorkspace.Feature>
+    override val features: Collection<CargoWorkspace.Feature>,
+    override val env: Map<String, String>
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
@@ -375,7 +379,8 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         source = source,
         origin = origin,
         edition = edition ?: this.edition,
-        features = features
+        features = features,
+        env = env
     )
 
 private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
@@ -408,7 +413,8 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
         source = null,
         origin = PackageOrigin.STDLIB,
         edition = edition,
-        features = emptyList()
+        features = emptyList(),
+        env = emptyMap()
     )
 }
 

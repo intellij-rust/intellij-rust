@@ -28,7 +28,8 @@ data class CargoWorkspaceData(
         val source: String?,
         val origin: PackageOrigin,
         val edition: CargoWorkspace.Edition,
-        val features: Collection<CargoWorkspace.Feature>
+        val features: Collection<CargoWorkspace.Feature>,
+        val env: Map<String, String>
     )
 
     data class Target(

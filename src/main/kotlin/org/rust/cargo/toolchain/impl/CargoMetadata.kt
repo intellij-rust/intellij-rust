@@ -310,6 +310,10 @@ object CargoMetadata {
         val generatedFeatures = buildScriptMessage?.cfgs.orEmpty()
             .map { CargoWorkspace.Feature(it, CargoWorkspace.FeatureState.Enabled) }
 
+        val env = buildScriptMessage?.env.orEmpty()
+            .filter { it.size == 2 }
+            .associate { (key, value) -> key to value }
+
         return CargoWorkspaceData.Package(
             id,
             root.url,
@@ -319,7 +323,8 @@ object CargoMetadata {
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition(),
-            features = features + generatedFeatures
+            features = features + generatedFeatures,
+            env = env
         )
     }
 
