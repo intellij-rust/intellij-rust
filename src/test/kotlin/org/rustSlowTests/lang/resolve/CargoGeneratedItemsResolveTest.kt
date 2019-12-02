@@ -8,6 +8,7 @@ package org.rustSlowTests.lang.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.MinRustcVersion
+import org.rust.cargo.toolchain.Cargo
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath
@@ -226,6 +227,55 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
+    @MinRustcVersion("1.41.0-nightly")
+    fun `test include with build script info`() = withEnabledEvaluateBuildScriptsFeature {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                code-generation-example = "0.1.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    fn main() {
+                        println!("{}", code_generation_example::message());
+                                                               //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/lib.rs")
+    }
+
+    @MinRustcVersion("1.41.0-nightly")
+    fun `test do not run build-plan if build script info is enough`() = withEnabledFetchOutDirFeature {
+        withEnabledEvaluateBuildScriptsFeature {
+            Cargo.Testmarks.fetchBuildPlan.checkNotHit {
+                buildProject {
+                    toml("Cargo.toml", """
+                        [package]
+                        name = "intellij-rust-test"
+                        version = "0.1.0"
+                        authors = []
+
+                        [dependencies]
+                        code-generation-example = "0.1.0"
+                    """)
+                    dir("src") {
+                        rust("lib.rs", """
+                            fn main() {
+                                println!("{}", code_generation_example::message());
+                                                                       //^
+                            }
+                        """)
+                    }
+                }.checkReferenceIsResolved<RsPath>("src/lib.rs")
+            }
+        }
+    }
 
     fun `test generated cfg option`() = withEnabledEvaluateBuildScriptsFeature {
         val libraryDir = tempDirFixture.getFile(".")!!
@@ -327,6 +377,57 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 }
             """)
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../foo/bar/hello.rs")
+    }
+
+    fun `test generated environment variables 2`() = withEnabledFetchOutDirFeature {
+        withEnabledEvaluateBuildScriptsFeature {
+            buildProject {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "intellij-rust-test"
+                    version = "0.1.0"
+                    edition = "2018"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("main.rs", """
+                        include!(concat!(env!("GENERATED_ENV_DIR"), "/hello.rs"));
+                        fn main() {
+                            println!("{}", message());
+                                           //^
+                        }
+                    """)
+                }
+                rust("build.rs", """
+                    use std::env;
+                    use std::fs;
+                    use std::fs::File;
+                    use std::io::Write;
+                    use std::path::Path;
+
+                    fn main() {
+                        let out_dir = env::var("OUT_DIR").unwrap();
+                        let gen_dir = Path::new(&out_dir).join("gen");
+                        if !gen_dir.exists() {
+                            fs::create_dir(&gen_dir).unwrap();
+                        }
+                        let dest_path = gen_dir.join("hello.rs");
+                        generate_file(&dest_path, b"
+                            pub fn message() -> &'static str {
+                                \"Hello, World!\"
+                            }
+                        ");
+                        println!("cargo:rustc-env=GENERATED_ENV_DIR={}", gen_dir.display());
+                    }
+
+                    fn generate_file<P: AsRef<Path>>(path: P, text: &[u8]) {
+                        let mut f = File::create(path).unwrap();
+                        f.write_all(text).unwrap()
+                    }
+                """)
+            }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../gen/hello.rs")
+        }
     }
 
     private fun withEnabledFetchOutDirFeature(action: () -> Unit) =

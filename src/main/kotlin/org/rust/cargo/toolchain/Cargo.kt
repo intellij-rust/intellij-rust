@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.Testmark
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
@@ -165,6 +166,7 @@ class Cargo(private val cargoExecutable: Path) {
         listener: ProcessListener?
     ): CargoBuildPlan? {
         if (!isFeatureEnabled(RsExperiments.FETCH_OUT_DIR)) return null
+        Testmarks.fetchBuildPlan.hit()
         val additionalArgs = mutableListOf("-Z", "unstable-options", "--all-targets", "--build-plan")
         // Hack to make cargo think that unstable options are available because we need unstable `--build-plan` option here
         val envs = EnvironmentVariablesData.create(mapOf(
@@ -428,6 +430,10 @@ class Cargo(private val cargoExecutable: Path) {
 
             return needInstall
         }
+    }
+
+    object Testmarks {
+        val fetchBuildPlan = Testmark("fetchBuildPlan")
     }
 }
 
