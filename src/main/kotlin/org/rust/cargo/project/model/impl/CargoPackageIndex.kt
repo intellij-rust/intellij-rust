@@ -41,9 +41,9 @@ class CargoPackageIndex(
                 for (pkg in packages) {
                     val info = Optional.of(pkg)
                     index.putInfo(pkg.contentRoot, info)
+                    index.putInfo(pkg.outDir, info)
                     for (target in pkg.targets) {
                         index.putInfo(target.crateRoot?.parent, info)
-                        index.putInfo(target.outDir, info)
                     }
                 }
             })

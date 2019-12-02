@@ -97,9 +97,10 @@ private val RsExpr.value: String? get() {
                 }
                 "env" -> {
                     val expr = macroCall.envMacroArgument?.variableNameExpr as? RsLitExpr ?: return null
+                    val pkg = expr.containingCargoPackage ?: return null
                     when (val variableName = expr.value) {
-                        "OUT_DIR" -> expr.containingCargoTarget?.outDir?.path
-                        else -> expr.containingCargoPackage?.env?.get(variableName)
+                        "OUT_DIR" -> pkg.outDir?.path
+                        else -> pkg.env[variableName]
                     }
                 }
                 else -> null

@@ -12,6 +12,6 @@ data class CargoBuildPlan(
 data class CargoBuildInvocation(
     val package_name: String,
     val package_version: String,
-    val target_kind: List<String>,
+    val compile_mode: String,
     val env: Map<String, String>
 )
