@@ -78,6 +78,8 @@ data class RustToolchain(val location: Path) {
 
     fun grcov(): Grcov? = if (hasExecutable(GRCOV)) Grcov(pathToExecutable(GRCOV)) else null
 
+    fun evcxr(): Evcxr? = if (hasExecutable(EVCXR)) Evcxr(pathToExecutable(EVCXR)) else null
+
     val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
 
     val presentableLocation: String = pathToExecutable(CARGO).toString()
@@ -101,6 +103,7 @@ data class RustToolchain(val location: Path) {
         private const val RUSTUP = "rustup"
         private const val XARGO = "xargo"
         private const val GRCOV = "grcov"
+        private const val EVCXR = "evcxr"
 
         const val CARGO_TOML = "Cargo.toml"
         const val CARGO_LOCK = "Cargo.lock"

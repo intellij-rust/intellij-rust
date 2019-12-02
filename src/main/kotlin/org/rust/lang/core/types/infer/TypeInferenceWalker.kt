@@ -7,6 +7,7 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
@@ -99,6 +100,13 @@ class RsTypeInferenceWalker(
         }
         val type = (if (coerce) tailExpr?.inferTypeCoercableTo(expected!!) else tailExpr?.inferType(expected)) ?: TyUnit
         return if (isDiverging) TyNever else type
+    }
+
+    fun inferReplCodeFragment(element: RsReplCodeFragment) {
+        for (stmt in element.stmts) {
+            processStatement(stmt)
+        }
+        element.tailExpr?.inferType()
     }
 
     // returns true if expr is always diverging

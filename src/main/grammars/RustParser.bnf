@@ -114,6 +114,7 @@ StmtCodeFragment ::= Stmt?
 TypeRefCodeFragment ::= TypeReference?
 ValuePathCodeFragment ::= ValuePathGenericArgs?
 TypePathCodeFragment ::= TypePathGenericArgs?
+ReplCodeFragment ::= (Item | Stmt)* Expr?
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes

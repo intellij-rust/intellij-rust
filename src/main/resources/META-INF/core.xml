@@ -867,6 +867,12 @@
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
 
+        <!-- REPL Console -->
+
+        <toolWindow id="Rust Console" anchor="bottom" icon="AllIcons.Debugger.Console" canCloseContents="true"
+                    factoryClass="org.rust.ide.console.RsConsoleToolWindowFactory" secondary="false"
+                    conditionClass="org.rust.ide.console.RsConsoleToolWindowFactory"/>
+
     </extensions>
 
     <extensionPoints>
@@ -881,6 +887,9 @@
         <component>
             <implementation-class>org.rust.cargo.RustfmtWatcher</implementation-class>
         </component>
+        <component>
+            <implementation-class>org.rust.ide.console.RsConsoleRunnerFactory</implementation-class>
+        </component>
     </application-components>
 
     <project-components>
@@ -894,6 +903,9 @@
         <component>
             <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
             <implementation-class>org.rust.lang.core.macros.MacroExpansionManagerImpl</implementation-class>
+        </component>
+        <component>
+            <implementation-class>org.rust.ide.console.RsConsoleToolWindow</implementation-class>
         </component>
     </project-components>
 

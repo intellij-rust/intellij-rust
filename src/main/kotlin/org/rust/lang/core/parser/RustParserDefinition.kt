@@ -19,6 +19,8 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
+import org.rust.ide.console.RsConsoleCodeFragmentContext
+import org.rust.ide.console.RsConsoleView
 import org.rust.lang.RsDebugInjectionListener
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.psi.*
@@ -48,6 +50,10 @@ class RustParserDefinition : ParserDefinition {
             injectionListener.didInject(host)
 
             return fragment
+        } else if (viewProvider.virtualFile.name == RsConsoleView.VIRTUAL_FILE_NAME) {
+            val project = viewProvider.manager.project
+            val context = RsConsoleCodeFragmentContext.createContext(project, null)
+            return RsReplCodeFragment(viewProvider, context)
         }
         return default()
     }
