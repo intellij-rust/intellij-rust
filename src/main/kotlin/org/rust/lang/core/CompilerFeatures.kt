@@ -329,6 +329,8 @@ val REGISTER_ATTR = CompilerFeature("register_attr", ACTIVE, "1.41.0")
 val REGISTER_TOOL = CompilerFeature("register_tool", ACTIVE, "1.41.0")
 // Allows the use of `if` and `match` in constants.
 val CONST_IF_MATCH = CompilerFeature("const_if_match", ACTIVE, "1.41.0")
+// Allows the use of `#[cfg(sanitize = "option")]`; set when -Zsanitizer is used.
+val CFG_SANITIZE = CompilerFeature("cfg_sanitize", ACTIVE, "1.41.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
