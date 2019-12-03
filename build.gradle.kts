@@ -514,6 +514,7 @@ task("makeRelease") {
             "https://intellij-rust.github.io/$newChangelogPath.html"
         )
         pluginXml.writeText(newText)
+        "git add $pluginXmlPath".execute()
         "git commit -m Changelog".execute()
         "git push".execute()
 
