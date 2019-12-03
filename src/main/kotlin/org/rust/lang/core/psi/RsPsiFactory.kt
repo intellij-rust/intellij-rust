@@ -218,7 +218,7 @@ class RsPsiFactory(
         val body = members.joinToString(separator = "\n", transform = {
             when (it) {
                 is RsConstant ->
-                    "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                    "    const ${it.nameIdentifier!!.text}: ${it.typeReference.substAndGetText(subst)} = unimplemented!();"
                 is RsTypeAlias ->
                     "    type ${it.name} = ();"
                 is RsFunction ->
@@ -342,10 +342,10 @@ class RsPsiFactory(
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
 
     fun createSemicolon(): PsiElement =
-        createFromText<RsConstant>("const C: () = ();")!!.semicolon!!
+        createFromText<RsConstant>("const C: () = ();")!!.semicolon
 
     fun createColon(): PsiElement =
-        createFromText<RsConstant>("const C: () = ();")!!.colon!!
+        createFromText<RsConstant>("const C: () = ();")!!.colon
 
     fun createEq(): PsiElement =
         createFromText<RsConstant>("const C: () = ();")!!.eq!!

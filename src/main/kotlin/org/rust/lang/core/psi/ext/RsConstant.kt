@@ -56,4 +56,6 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
+
+    override fun getNameIdentifier(): PsiElement? = identifier ?: underscore
 }

@@ -14,7 +14,9 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAbstractable
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.superItem
 import javax.swing.Icon
 
 /**
@@ -38,7 +40,7 @@ class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
         }
 
         val (type, element) = when (el) {
-            is RsConstant -> "constant" to el.identifier
+            is RsConstant -> "constant" to el.nameIdentifier!!
             is RsFunction -> "method" to el.identifier
             is RsTypeAlias -> "type" to el.identifier
             else -> error("unreachable")

@@ -532,7 +532,7 @@ BindingMode ::= ref mut? | mut
 
 OrPats ::= '|'? Pat ('|' Pat)*
 
-Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
+Constant ::= OuterAttr* default_? Vis? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
