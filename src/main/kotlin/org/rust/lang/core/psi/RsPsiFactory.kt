@@ -218,7 +218,7 @@ class RsPsiFactory(
         val body = members.joinToString(separator = "\n", transform = {
             when (it) {
                 is RsConstant ->
-                    "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                    "    const ${it.nameLikeElement.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
                 is RsTypeAlias ->
                     "    type ${it.name} = ();"
                 is RsFunction ->

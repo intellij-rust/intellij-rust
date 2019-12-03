@@ -38,6 +38,9 @@ val RsConstant.default: PsiElement?
 
 val RsConstant.mutability: Mutability get() = Mutability.valueOf(isMut)
 
+val RsConstant.nameLikeElement: PsiElement
+    get() = nameIdentifier ?: underscore ?: error("Constant without name: `$text`")
+
 abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, RsConstant {
     constructor(node: ASTNode) : super(node)
 
