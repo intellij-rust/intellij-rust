@@ -26,15 +26,15 @@ class JoinFieldListIntentionTest : RsIntentionTestBase(JoinFieldListIntention())
     """)
 
     fun `test has some line breaks`() = doAvailableTest("""
-        struct S { x: i32, /*caret*/y: i32, 
+        struct S { x: i32, /*caret*/y: i32,
                    z: i32 }
     """, """
         struct S { x: i32, y: i32, z: i32 }
     """)
 
     fun `test has some line breaks 2`() = doAvailableTest("""
-        struct S { 
-            x: i32, y: i32, z: i32/*caret*/ 
+        struct S {
+            x: i32, y: i32, z: i32/*caret*/
         }
     """, """
         struct S { x: i32, y: i32, z: i32 }
@@ -54,5 +54,12 @@ class JoinFieldListIntentionTest : RsIntentionTestBase(JoinFieldListIntention())
         struct S { x: i32, /*
                    comment
                    */ y: i32, z: i32 }
+    """)
+
+    fun `test has end-of-line comments`() = doUnavailableTest("""
+        struct S {
+            /*caret*/x: i32, // comment
+            y: i32
+        }
     """)
 }

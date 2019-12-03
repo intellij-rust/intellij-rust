@@ -44,7 +44,7 @@ class JoinLiteralFieldListIntentionTest : RsIntentionTestBase(JoinLiteralFieldLi
     fun `test has some line breaks`() = doAvailableTest("""
         struct S { x: i32, y: i32, z: i32 }
         fn foo() {
-            S { x: 0, /*caret*/y: 0, 
+            S { x: 0, /*caret*/y: 0,
                 z: 0 };
         }
     """, """
@@ -57,8 +57,8 @@ class JoinLiteralFieldListIntentionTest : RsIntentionTestBase(JoinLiteralFieldLi
     fun `test has some line breaks 2`() = doAvailableTest("""
         struct S { x: i32, y: i32, z: i32 }
         fn foo() {
-            S { 
-                x: 0, y: 0, z: 0/*caret*/ 
+            S {
+                x: 0, y: 0, z: 0/*caret*/
             };
         }
     """, """
@@ -143,6 +143,16 @@ class JoinLiteralFieldListIntentionTest : RsIntentionTestBase(JoinLiteralFieldLi
         enum E { A { x: i32, y: i32, z: i32 } }
         fn foo() {
             let e = E::A { x: 0, y: 0, z: 0 };
+        }
+    """)
+
+    fun `test has end-of-line comments`() = doUnavailableTest("""
+        struct S { x: i32, y: i32 }
+        fn foo() {
+            S {
+                /*caret*/x: 0, // comment
+                y: 0
+            };
         }
     """)
 }

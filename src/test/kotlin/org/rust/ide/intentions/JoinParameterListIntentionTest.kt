@@ -55,4 +55,11 @@ class JoinParameterListIntentionTest : RsIntentionTestBase(JoinParameterListInte
                comment
                */ p2: i32, p3: i32) {}
     """)
+
+    fun `test has end-of-line comments`() = doUnavailableTest("""
+        fn foo(
+            /*caret*/p1: i32, // comment
+            p2: i32
+        ) {}
+    """)
 }
