@@ -93,4 +93,14 @@ class JoinArgumentListIntentionTest : RsIntentionTestBase(JoinArgumentListIntent
                 */ 2, 3);
         }
     """)
+
+    fun `test has end-of-line comments`() = doUnavailableTest("""
+        fn foo(p1: i32, p2: i32) {}
+        fn main() {
+            foo(
+                /*caret*/1, // comment
+                2
+            );
+        }
+    """)
 }
