@@ -11,6 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.DOTDOT
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.startOffset
@@ -79,15 +80,14 @@ class ChopLiteralFieldListIntention : ChopListIntentionBase<RsStructLiteralBody,
     RsStructLiteralField::class.java,
     "Put fields on separate lines"
 ) {
-    override fun getElements(context: RsStructLiteralBody): List<PsiElement> = super.getElements(context) + listOfNotNull(context.dotdot)
-    override fun getEndElement(ctx: RsStructLiteralBody, element: PsiElement): PsiElement {
-        return if (element.elementType == RsElementTypes.DOTDOT) {
-            ctx.expr?.let {
-                getEndElement(ctx, it)
-            } ?: element
+    override fun getElements(context: RsStructLiteralBody): List<PsiElement> =
+        super.getElements(context) + listOfNotNull(context.dotdot)
+
+    override fun getEndElement(ctx: RsStructLiteralBody, element: PsiElement): PsiElement =
+        when (element.elementType) {
+            DOTDOT -> ctx.expr?.let { getEndElement(ctx, it) } ?: element
+            else -> super.getEndElement(ctx, element)
         }
-        else super.getEndElement(ctx, element)
-    }
 }
 
 class ChopVariantListIntention : ChopListIntentionBase<RsEnumBody, RsEnumVariant>(
