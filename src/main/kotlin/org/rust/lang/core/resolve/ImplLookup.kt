@@ -526,8 +526,8 @@ class ImplLookup(
                     .filter { ctx.probe { ctx.combineBoundElements(it, ref.trait) } }
                     .map { SelectionCandidate.TypeParameter(it) }
                     .forEach(::add)
-                if (ref.selfTy is TyTypeParameter) return@buildList
                 assembleImplCandidates(ref) { add(it); false }
+                if (ref.selfTy is TyTypeParameter) return@buildList
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
                 if (ref.selfTy is TyTraitObject) {
@@ -729,6 +729,7 @@ class ImplLookup(
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         return when (selfTy) {
             is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
+                ?: lookupAssocTypeInSelection(res, assocType)
             is TyTraitObject -> selfTy.trait.assoc[assocType]
             else -> {
                 lookupAssocTypeInSelection(res, assocType)

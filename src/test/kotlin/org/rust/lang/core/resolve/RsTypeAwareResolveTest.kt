@@ -811,6 +811,52 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }                   //^
     """, NameResolutionTestmarks.selfRelatedTypeSpecialCase)
 
+    fun `test Self-qualified path for blanket impl resolved to curr impl`() = checkByCode("""
+        struct S;
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+
+        impl<T> Trait for T {
+            type Item = i32;
+                //X
+            fn foo() -> Self::Item { unreachable!() }
+        }                    //^
+    """)
+
+    fun `test Self-qualified path resolved to curr impl when inapplicable blanket impl exists`() = checkByCode("""
+        struct S;
+        trait Bound{}
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+        impl<T:Bound> Trait for T {
+            type Item = usize;
+            fn foo() -> Self::Item { unreachable!() }
+        }
+        impl Trait for S {
+            type Item = i32;
+                //X
+            fn foo() -> Self::Item { unreachable!() }
+        }                    //^
+    """)
+
+    fun `test type parameter qualified path in blanket impl resolved to type param`() = checkByCode("""
+        trait Bound{ type Item; }
+                         //X
+        trait Trait {
+            type Item;
+            fn foo() -> Self::Item;
+        }
+
+        impl<T:Bound<Item=()>> Trait for T {
+            type Item = i32;
+            fn foo() -> T::Item { unreachable!() }
+        }                  //^
+    """)
+
     fun `test explicit UFCS-like type-qualified path`() = checkByCode("""
         struct S;
         impl S {
