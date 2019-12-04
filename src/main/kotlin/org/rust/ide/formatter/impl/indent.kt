@@ -12,6 +12,9 @@ import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsIfExpr
+import org.rust.lang.core.psi.RsMatchExpr
+import org.rust.lang.core.psi.RsStructLiteral
+import org.rust.lang.core.psi.ext.RsLooplikeExpr
 
 fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
     val parentType = node.elementType
@@ -53,6 +56,15 @@ fun RsFmtBlock.computeIndent(child: ASTNode, childCtx: RsFmtContext): Indent? {
 
     // Indent if-expressions
         parentPsi is RsIfExpr -> Indent.getNoneIndent()
+
+    // Indent loop-expressions
+        parentPsi is RsLooplikeExpr -> Indent.getNoneIndent()
+
+    // Indent match-expressions
+        parentPsi is RsMatchExpr -> Indent.getNoneIndent()
+
+    // Indent struct literals
+        parentPsi is RsStructLiteral -> Indent.getNoneIndent()
 
     // Indent other expressions (chain calls, binary expressions, ...)
         parentPsi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
