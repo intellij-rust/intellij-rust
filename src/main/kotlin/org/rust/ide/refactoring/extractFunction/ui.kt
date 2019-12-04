@@ -71,7 +71,7 @@ private class DialogExtractFunctionUi(
             signatureComponent.setSignature(config.signature)
         }
 
-        val parameterPanel = ExtractFunctionParameterTablePanel(::isValidRustVariableIdentifier, project, config) {
+        val parameterPanel = ExtractFunctionParameterTablePanel(project, ::isValidRustVariableIdentifier, config) {
             signatureComponent.setSignature(config.signature)
         }
 
