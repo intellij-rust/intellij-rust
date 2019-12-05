@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
 import com.intellij.psi.tree.IStubFileElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.BitUtil
 import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
@@ -1188,7 +1187,7 @@ class RsBinaryOpStub(
 
 object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl) {
     override fun shouldCreateStub(node: ASTNode): Boolean =
-        createStubIfParentIsStub(node) || PsiTreeUtil.getChildOfType(node.psi, RsItemElement::class.java) != null
+        createStubIfParentIsStub(node) || node.psi.childOfType<RsItemElement>() != null
 }
 
 class RsExprStubType<PsiT : RsElement>(
