@@ -79,6 +79,12 @@ class MoveTypeConstraintToWhereClauseIntentionTest : RsIntentionTestBase(MoveTyp
         struct Spam<Foo, Bar> where Foo: Iterator, Bar: Future { }
     """)
 
+    fun `test with defaults`() = doAvailableTest("""
+        struct Spam<Foo:Debug = String, Bar: /*caret*/Debug>{ }
+    """, """
+        struct Spam<Foo = String, Bar> where Foo: Debug, Bar: Debug { }
+    """)
+
     fun `test no lifetime bounds`() = doUnavailableTest(""" fn foo<'a, /*caret*/'b>(t: &'a i32, f: &'b i32) { } """)
 
     fun `test no trait bounds`() = doUnavailableTest(""" fn foo<T, /*caret*/F>(t: T, f: F) { } """)
