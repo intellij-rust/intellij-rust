@@ -58,6 +58,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
+            override fun visitUseSpeck(o: RsUseSpeck) = checkUseSpeck(holder,o)
             override fun visitPatBox(o: RsPatBox) = checkPatBox(holder, o)
             override fun visitPatField(o: RsPatField) = checkPatField(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
@@ -95,6 +96,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkUseSpeck(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
+        if (useSpeck.isStarImport || useSpeck.useGroup != null) return
+        val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(useSpeck.containingMod, false)
+        if (useSpeck.namespaces.any { useSpeck in duplicates[it].orEmpty() }) {
+            val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
+            RsDiagnostic.DuplicateImportError(identifier).addToHolder(holder)
+        }
     }
 
     private fun checkRsPatStruct(holder: RsAnnotationHolder, patStruct: RsPatStruct) {
@@ -830,13 +840,6 @@ private fun checkDuplicates(holder: RsAnnotationHolder, element: RsNameIdentifie
         ?: return
     val name = element.name!!
 
-    val elementDuplicates = duplicates.getValue(ns)
-        .minus(element)
-        .filterIsInstance<RsNamedElement>()
-        .filter { it.name == name }
-        .filter { !it.isCfgUnknown }
-    if (elementDuplicates.isEmpty()) return
-
     val identifier = element.nameIdentifier ?: element
     val message = when {
         element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
@@ -875,24 +878,45 @@ private fun checkParamAttrs(holder: RsAnnotationHolder, o: RsOuterAttributeOwner
     diagnostic.addToHolder(holder)
 }
 
+private fun PsiElement.nameOrImportedName(): String? =
+    when (this) {
+        is RsNamedElement -> name
+        is RsUseSpeck -> nameInScope
+        else -> null
+    }
+
 private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
     if (owner.parent is RsFnPointerType) return emptyMap()
+
+    fun PsiElement.namespaced(): Sequence<Pair<Namespace, PsiElement>> =
+        when (this) {
+            is RsNamedElement -> namespaces
+            is RsUseSpeck -> namespaces
+            else -> emptySet()
+        }.asSequence().map { Pair(it, this) }
 
     val fileMap = fileDuplicatesMap()
     fileMap[owner]?.let { return it }
 
+    val importedNames = (owner as? RsItemsOwner)
+        ?.expandedItemsCached
+        ?.namedImports
+        ?.asSequence()
+        ?.mapNotNull { it.path.parent as? RsUseSpeck }
+        .orEmpty()
     val duplicates: Map<Namespace, Set<PsiElement>> =
-        owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
+        (owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
+            + importedNames)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
-            .filter { it.name != null }
-            .filter { it !is RsDocAndAttributeOwner || it.isEnabledByCfg }
-            .flatMap { it.namespaced }
+            .filter { it.nameOrImportedName() != null }
+            .filter { it !is RsDocAndAttributeOwner || (it.isEnabledByCfg && !it.isCfgUnknown) }
+            .flatMap { it.namespaced() }
             .groupBy { it.first }       // Group by namespace
             .map { entry ->
                 val (namespace, items) = entry
                 namespace to items.asSequence()
                     .map { it.second }
-                    .groupBy { it.name }
+                    .groupBy { it.nameOrImportedName() }
                     .map { it.value }
                     .filter { it.size > 1 }
                     .flatten()
@@ -930,8 +954,6 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
     return map
 }
 
-private val RsNamedElement.namespaced: Sequence<Pair<Namespace, RsNamedElement>>
-    get() = namespaces.asSequence().map { Pair(it, this) }
 
 private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
