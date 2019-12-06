@@ -11,7 +11,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SyntaxTraverser
-import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -93,7 +92,7 @@ private fun RsDocAndAttributeOwner.outerDocs(): Sequence<Pair<RsDocKind, String>
 private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RsDocKind, String>> {
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
-    val childBlock = PsiTreeUtil.getChildOfType(this, RsBlock::class.java) ?: this
+    val childBlock = childOfType<RsBlock>() ?: this
 
     val childInnerIterable = SyntaxTraverser.psiTraverser().children(childBlock)
 

@@ -13,7 +13,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.tree.FileElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightVirtualFile
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
@@ -115,12 +114,12 @@ class RsExpressionCodeFragment : RsCodeFragment, RsInferenceContextOwner {
     constructor(project: Project, text: CharSequence, context: RsElement)
         : super(project, text, RsCodeFragmentElementType.EXPR, context)
 
-    val expr: RsExpr? get() = PsiTreeUtil.getChildOfType(this, RsExpr::class.java)
+    val expr: RsExpr? get() = childOfType()
 }
 
 class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsElement)
     : RsCodeFragment(project, text, RsCodeFragmentElementType.STMT, context) {
-    val stmt: RsStmt? get() = PsiTreeUtil.getChildOfType(this, RsStmt::class.java)
+    val stmt: RsStmt? get() = childOfType()
 }
 
 class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var context: RsElement)
@@ -134,7 +133,7 @@ class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var contex
 class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context: RsElement)
     : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context),
       RsNamedElement {
-    val typeReference: RsTypeReference? get() = PsiTreeUtil.getChildOfType(this, RsTypeReference::class.java)
+    val typeReference: RsTypeReference? get() = childOfType()
 }
 
 class RsPathCodeFragment(
@@ -152,7 +151,7 @@ class RsPathCodeFragment(
         ns: Set<Namespace>
     ) : this(createFileViewProvider(project, text, eventSystemEnabled), context, mode, ns)
 
-    val path: RsPath? get() = PsiTreeUtil.getChildOfType(this, RsPath::class.java)
+    val path: RsPath? get() = childOfType()
 
     companion object {
         @JvmStatic
