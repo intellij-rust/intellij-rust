@@ -264,7 +264,10 @@ class RsPsiFactory(
 
         val typeConstraints = typeBounds
             .filter { it.typeParamBounds != null }
-            .mapNotNull { it.text }
+            .map {
+                //ignore default type parameter
+                it.text.take(it.eq?.startOffsetInParent ?: it.textLength)
+            }
 
         val whereClauseConstraints = (lifetimeConstraints + typeConstraints).joinToString(", ")
 

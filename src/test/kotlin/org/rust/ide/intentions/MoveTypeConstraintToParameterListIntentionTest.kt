@@ -57,6 +57,11 @@ class MoveTypeConstraintToParameterListIntentionTest : RsIntentionTestBase(MoveT
         """ enum Foo<T: Copy>/*caret*/ { X(T) } """
     )
 
+    fun `test with default`() = doAvailableTest(
+        """ struct Foo<T = i32> /*caret*/where T: Copy { x: T } """,
+        """ struct Foo<T: Copy = i32>/*caret*/ { x: T } """
+    )
+
     fun `test no type`() = doUnavailableTest(""" fn foo<'a>() /*caret*/where T: Clone {}""")
 
     fun `test no lifetime`() = doUnavailableTest(""" fn foo<T>() /*caret*/where 'b: 'a {}""")
