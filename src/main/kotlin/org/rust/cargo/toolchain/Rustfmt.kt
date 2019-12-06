@@ -7,13 +7,17 @@ package org.rust.cargo.toolchain
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
+import com.intellij.util.text.SemVer
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
@@ -26,29 +30,27 @@ class Rustfmt(private val rustfmtExecutable: Path) {
         val file = document.virtualFile ?: return null
         if (file.isNotRustFile || !file.isValid) return null
 
-        val configPath = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
-        return reformatText(cargoProject, document.text, configPath)
-    }
-
-    @Throws(ExecutionException::class)
-    private fun reformatText(
-        cargoProject: CargoProject,
-        text: String,
-        configPath: Path? = null,
-        parentDisposable: Disposable = cargoProject.project,
-        skipChildren: Boolean = checkSupportForSkipChildrenFlag(cargoProject)
-    ): String? {
         val arguments = buildList<String> {
             add("--emit=stdout")
 
-            if (skipChildren) {
+            if (checkSupportForSkipChildrenFlag(cargoProject)) {
                 add("--unstable-features")
                 add("--skip-children")
             }
 
+            val configPath = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
             if (configPath != null) {
                 add("--config-path")
                 add(configPath.toString())
+            }
+
+            val currentRustcVersion = cargoProject.rustcInfo?.version?.semver
+            if (currentRustcVersion != null && currentRustcVersion >= RUST_1_31) {
+                val edition = runReadAction {
+                    val psiFile = file.toPsiFile(cargoProject.project)
+                    psiFile?.edition ?: CargoWorkspace.Edition.EDITION_2018
+                }
+                add("--edition=${edition.presentation}")
             }
         }
 
@@ -57,7 +59,7 @@ class Rustfmt(private val rustfmtExecutable: Path) {
                 .withWorkDirectory(cargoProject.workingDirectory)
                 .withParameters(arguments)
                 .withCharset(Charsets.UTF_8)
-                .execute(parentDisposable, false, stdIn = text.toByteArray())
+                .execute(cargoProject.project, false, stdIn = document.text.toByteArray())
         } catch (e: ExecutionException) {
             if (isUnitTestMode) throw e else return null
         }
@@ -93,6 +95,7 @@ class Rustfmt(private val rustfmtExecutable: Path) {
     }
 
     companion object {
+        private val RUST_1_31: SemVer = SemVer.parseFromText("1.31.0")!!
         private val CONFIG_FILES: List<String> = listOf("rustfmt.toml", ".rustfmt.toml")
 
         private fun findConfigPathRecursively(directory: VirtualFile, stopAt: Path): Path? {

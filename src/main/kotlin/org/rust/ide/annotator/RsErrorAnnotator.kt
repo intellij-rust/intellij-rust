@@ -346,7 +346,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val crate = path.crate
         val useSpeck = path.ancestorStrict<RsUseSpeck>()
-        val edition = path.containingCargoTarget?.edition
+        val edition = path.edition
 
         // `pub(crate)` should be annotated
         if (crate != null && (qualifier != null || path.ancestorStrict<RsVisRestriction>() == null)) {
