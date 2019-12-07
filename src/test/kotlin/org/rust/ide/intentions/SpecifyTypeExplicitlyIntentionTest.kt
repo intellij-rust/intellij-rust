@@ -35,6 +35,14 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
         }
     """)
 
+    fun `test unavailable in expr 1`() = doUnavailableTest(
+        """ fn main() { let var = /*caret*/1; } """
+    )
+
+    fun `test unavailable in expr 2`() = doUnavailableTest(
+        """ fn main() { let var = 1/*caret*/; } """
+    )
+
     fun `test not inferred type`() = doUnavailableTest(
         """ fn main() { let var/*caret*/ = a; } """
     )
