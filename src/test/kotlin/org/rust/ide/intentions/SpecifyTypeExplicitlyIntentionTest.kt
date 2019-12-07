@@ -18,6 +18,10 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
         """struct A<T>(T);fn main() { let var/*caret*/ = A(42); } """,
         """struct A<T>(T);fn main() { let var: A<i32> = A(42); } """
     )
+    fun `test complex pattern`() = doAvailableTest(
+        """ fn main() { let (a, b)/*caret*/ = (1, 2); } """,
+        """ fn main() { let (a, b): (i32, i32) = (1, 2); } """
+    )
 
     fun `test aliased type`() = doAvailableTest("""
         struct Foo<T>;

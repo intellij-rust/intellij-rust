@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.ide.presentation.insertionSafeTextWithAliases
 import org.rust.lang.core.psi.RsLetDecl
-import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.startOffset
@@ -33,8 +32,8 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         if (letDecl.typeReference != null) return null
         val initializer = letDecl.expr
         if (initializer != null && element.startOffset >= initializer.startOffset - 1) return null
-        val ident = letDecl.pat as? RsPatIdent ?: return null
-        val type = ident.patBinding.type
+        val pat = letDecl.pat ?: return null
+        val type = pat.type
         if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java))) {
             return null
         }
