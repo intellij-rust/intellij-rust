@@ -202,4 +202,24 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
             MyStruct/*caret*/
         }
     """)
+
+    fun `test derived method is not completed if the derived trait is not implemented to type argument`() = checkNoCompletion("""
+        #[lang = "clone"]  pub trait Clone { fn clone(&self) -> Self; }
+        struct X; // Not `Clone`
+        #[derive(Clone)]
+        struct S<T>(T);
+        fn main() {
+            S(X).cl/*caret*/;
+        }
+    """)
+
+    fun `test derived method is not completed UFCS if the derived trait is not implemented to type argument`() = checkNoCompletion("""
+        #[lang = "clone"]  pub trait Clone { fn clone(&self) -> Self; }
+        struct X; // Not `Clone`
+        #[derive(Clone)]
+        struct S<T>(T);
+        fn main() {
+            <S<X>>::cl/*caret*/;
+        }
+    """)
 }
