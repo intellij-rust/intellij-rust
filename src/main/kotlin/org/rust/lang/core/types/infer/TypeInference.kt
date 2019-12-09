@@ -690,7 +690,10 @@ class RsInferenceContext(
     fun canEvaluateBounds(source: TraitImplSource, selfTy: Ty): Boolean {
         return when (source) {
             is TraitImplSource.ExplicitImpl -> canEvaluateBounds(source.value, selfTy)
-            is TraitImplSource.Derived -> lookup.canSelect(TraitRef(selfTy, BoundElement(source.value)))
+            is TraitImplSource.Derived, is TraitImplSource.Hardcoded -> {
+                if (source.value.typeParameters.isNotEmpty()) return true
+                lookup.canSelect(TraitRef(selfTy, BoundElement(source.value as RsTraitItem)))
+            }
             else -> return true
         }
     }

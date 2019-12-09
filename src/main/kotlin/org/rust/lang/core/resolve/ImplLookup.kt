@@ -275,6 +275,11 @@ class ImplLookup(
 
     // TODO rename to BuiltinImpls
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+        if (ty is TyTuple) {
+            // Keep in sync with `getHardcodedImplPredicates`
+            return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
+        }
+
         if (project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New) {
             if (ty is TyUnit) {
                 return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
@@ -364,6 +369,14 @@ class ImplLookup(
         }
 
         return impls
+    }
+
+    private fun getHardcodedImplPredicates(ty: Ty, trait: BoundElement<RsTraitItem>): List<Predicate> {
+        if (ty is TyTuple) {
+            // Keep in sync with `getHardcodedImplPredicated`
+            return ty.types.map { Predicate.Trait(TraitRef(it, trait)) }
+        }
+        return emptyList()
     }
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
@@ -610,7 +623,8 @@ class ImplLookup(
                     be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
                 }
                 ctx.combineBoundElements(impl, ref.trait)
-                Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
+                val obligations = getHardcodedImplPredicates(ref.selfTy, impl).map { Obligation(newRecDepth, it) }
+                Selection(impl.element, obligations, mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
             }
         }
     }
