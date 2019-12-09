@@ -448,6 +448,7 @@ private class MacroExpansionServiceImplInner(
         override fun handleEvent(event: RsPsiTreeChangeEvent) {
             if (!isExpansionModeNew) return
             val file = event.file as? RsFile ?: return
+            if (RsPsiManager.isIgnorePsiEvents(file)) return
             val virtualFile = file.virtualFile ?: return
             if (virtualFile !is VirtualFileWithId) return
 

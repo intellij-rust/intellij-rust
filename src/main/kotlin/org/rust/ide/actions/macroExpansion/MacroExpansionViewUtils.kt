@@ -25,6 +25,7 @@ import org.rust.lang.core.macros.getExpansionFromExpandedFile
 import org.rust.lang.core.macros.parseExpandedTextWithContext
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsPsiManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.computeWithCancelableProgress
 import java.awt.BorderLayout
@@ -118,7 +119,9 @@ private fun reformatMacroExpansion(
         // Without `eventSystemEnabled` file reformatting is too slow
         ?: RsPsiFactory(expansion.file.project, eventSystemEnabled = true).createFile(expansion.file.text)
 
-    DocumentUtil.writeInRunUndoTransparentAction { formatPsiFile(file) }
+    RsPsiManager.withIgnoredPsiEvents(file) {
+        DocumentUtil.writeInRunUndoTransparentAction { formatPsiFile(file) }
+    }
 
     return getExpansionFromExpandedFile(macroToExpand.expansionContext, file)
         ?: error("Can't recover macro expansion after reformat")
