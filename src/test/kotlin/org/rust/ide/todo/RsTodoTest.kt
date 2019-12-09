@@ -54,5 +54,24 @@ class RsTodoTest : TodoItemsTestCase() {
         }
     """)
 
+    fun `test todo in todo! macro call`() = doTest("""
+        fn main() {
+            [todo!("foo bar")];
+        }
+    """)
+
+    fun `test todo in todo! macro with module in path`() = doTest("""
+        fn main() {
+            std::[todo!("foo bar")];
+        }
+    """)
+
+    fun `test todo in todo! macro call multiline`() = doTest("""
+        fn main() {
+            std::[todo!("foo\
+                bar")];
+        }
+    """)
+
     private fun doTest(@Language("Rust") text: String) = testTodos(text)
 }
