@@ -6,6 +6,7 @@
 package org.rust.cargo.project.settings.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -13,12 +14,14 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.WslRustToolchain
 import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JLabel
+import kotlin.concurrent.thread
 
 class RustProjectSettingsPanel(
     private val cargoProjectDir: Path = Paths.get("."),
@@ -114,6 +117,7 @@ class RustProjectSettingsPanel(
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
                 } else {
+                    Logger.getInstance(RustToolchain::class.java).info(rustcVersion.parsedVersion)
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
                 }

@@ -10,12 +10,12 @@ import com.intellij.util.io.systemIndependentPath
 import java.io.File
 import java.nio.file.Path
 
-class Evcxr(private val evcxrExecutable: Path) {
+class Evcxr(private val toolchain: RustToolchain) {
     fun createCommandLine(workingDirectory: File): PtyCommandLine =
         PtyCommandLine()
             .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
             .withConsoleMode(true)
-            .withExePath(evcxrExecutable.systemIndependentPath)
+            .withExePath(toolchain.location.resolve(RustToolchain.EVCXR).systemIndependentPath)
             .withParameters("--disable-readline")
             .withWorkDirectory(workingDirectory)
             .withCharset(Charsets.UTF_8) as PtyCommandLine

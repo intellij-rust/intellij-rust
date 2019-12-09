@@ -6,43 +6,106 @@
 package org.rust.cargo.toolchain
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessListener
+import com.intellij.execution.process.ProcessOutput
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
+import org.rust.openapiext.checkIsBackgroundThread
+import org.rust.openapiext.execute
+import org.rust.openapiext.isSuccess
 import java.io.File
+import java.io.IOException
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
-abstract class RustToolchain(val location: Path) {
+abstract class RustToolchain(open val location: Path) {
 
-    abstract fun looksLikeValidToolchain(): Boolean
+    /**
+     * @return true if the tool is in the toolchain and is executable
+     */
+    abstract fun hasExecutable(name: String): Boolean
 
-    abstract fun queryVersions(): VersionInfo
+    /**
+     * @return true if the toolchain contains the cargo and rustc binaries
+     */
+    fun looksLikeValidToolchain(): Boolean = hasExecutable(CARGO) && hasExecutable(RUSTC)
 
-    abstract fun getSysroot(projectDirectory: Path): String?
+    /**
+     * @return version information about the rust compiler
+     */
+    fun queryVersions(): VersionInfo {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
 
-    abstract fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile?
+        val version = runTool(RUSTC, "--version", "--verbose")
+            ?: return VersionInfo(null)
 
-    abstract fun getCfgOptions(projectDirectory: Path): List<String>?
+        return VersionInfo(rustc = parseRustcVersion(version.stdoutLines))
+    }
 
-    abstract fun rawCargo(): Cargo
+    open fun getSysroot(projectDirectory: Path): String? {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
+        val output = runTool(RUSTC, "--print", "sysroot", workingDirectory = projectDirectory, timeout = 10000)
+        return if (output?.isSuccess == true) output.stdout.trim() else null
+    }
 
-    abstract fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo
+    fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
+        val sysroot = getSysroot(projectDirectory) ?: return null
+        val fs = LocalFileSystem.getInstance()
+        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
+    }
 
-    abstract fun rustup(cargoProjectDirectory: Path): Rustup?
+    fun getCfgOptions(projectDirectory: Path): List<String>? {
+        val output = runTool(RUSTC, "--print", "cfg", workingDirectory = projectDirectory, timeout = 10000)
+        return if (output?.isSuccess == true) output.stdoutLines else null
+    }
 
-    abstract fun rustfmt(): Rustfmt
+    fun rawCargo(): Cargo = Cargo(this, CARGO)
 
-    abstract fun grcov(): Grcov?
+    fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
+        val hasXargoToml = cargoProjectDirectory?.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
+        val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
+        return Cargo(this, cargoWrapper)
+    }
 
-    abstract fun evcxr(): Evcxr?
+    fun rustup(cargoProjectDirectory: Path): Rustup? = when {
+        isRustupAvailable -> Rustup(this, cargoProjectDirectory)
+        else -> null
+    }
+
+    fun rustfmt(): Rustfmt = Rustfmt(this)
+
+    fun grcov(): Grcov? = if (hasExecutable(GRCOV)) Grcov(this) else null
+
+    fun evcxr(): Evcxr? = if (hasExecutable(EVCXR)) Evcxr(this) else null
 
     abstract val isRustupAvailable: Boolean
 
     abstract val presentableLocation: String
+
+    abstract fun createGeneralCommandLine(tool: String, vararg arguments: String, workingDirectory: Path?, setup: GeneralCommandLine.() -> Unit = {}): GeneralCommandLine
+
+    fun runTool(name: String, vararg arguments: String, workingDirectory: Path? = null, timeout: Int? = 1000): ProcessOutput? {
+        return createGeneralCommandLine(name, *arguments, workingDirectory = workingDirectory)
+            .execute(timeout)
+    }
+
+    fun runTool(name: String, vararg arguments: String, workingDirectory: Path? = null, owner: Disposable, ignoreExitCode: Boolean = true, stdIn: ByteArray? = null, listener: ProcessListener? = null): ProcessOutput {
+        return createGeneralCommandLine(name, *arguments, workingDirectory = workingDirectory)
+            .execute(owner, ignoreExitCode = ignoreExitCode, stdIn = stdIn, listener = listener)
+    }
 
     data class VersionInfo(
         val rustc: RustcVersion?
@@ -63,6 +126,7 @@ abstract class RustToolchain(val location: Path) {
 
         fun get(location: Path): RustToolchain {
             return when {
+                location.toString().startsWith("""\\wsl$\""") -> WslRustToolchain(location)
                 else -> NativeRustToolchain(location)
             }
         }
@@ -71,10 +135,9 @@ abstract class RustToolchain(val location: Path) {
             return get(Paths.get(location))
         }
 
-        fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
-            val candidate = get(it.toPath().toAbsolutePath())
-            if (candidate.looksLikeValidToolchain()) candidate else null
-        }.firstOrNull()
+        fun suggest(): RustToolchain? = Suggestions.all()
+            .map { get(it.toPath().toAbsolutePath()) }
+            .firstOrNull { it.looksLikeValidToolchain() }
 
         @VisibleForTesting
         fun parseRustcVersion(lines: List<String>): RustcVersion? {
@@ -174,7 +237,19 @@ private object Suggestions {
             programFiles.listFiles { file -> file.isDirectory }?.asSequence()
                 ?.filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
                 ?.map { File(it, "bin") } ?: emptySequence()
+        val fromWsl: Sequence<File> = if (SystemInfo.isWin10OrNewer) {
+            try {
+                val nixPathBytes = Runtime.getRuntime().exec("""bash.exe -c "source ~/.profile && which cargo"""")
+                    .inputStream.readAllBytes()
+                val nixPath = String(nixPathBytes).trim()
+                val wslPathBytes = Runtime.getRuntime().exec("""bash.exe -c "wslpath -w $nixPath"""")
+                    .inputStream.readAllBytes()
+                sequenceOf(File(String(wslPathBytes).trim()).parentFile)
+            } catch (e: IOException) {
+                emptySequence<File>()
+            }
+        } else emptySequence()
 
-        return sequenceOf(fromHome) + fromProgramFiles
+        return sequenceOf(fromHome) + fromProgramFiles + fromWsl
     }
 }

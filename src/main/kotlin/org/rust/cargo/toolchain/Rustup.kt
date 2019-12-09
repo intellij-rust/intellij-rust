@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RustToolchain.Companion.RUSTUP
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
@@ -22,7 +23,6 @@ private val LOG = Logger.getInstance(Rustup::class.java)
 
 class Rustup(
     private val toolchain: RustToolchain,
-    private val rustup: Path,
     private val projectDirectory: Path
 ) {
     data class Component(val name: String, val isInstalled: Boolean) {
@@ -36,22 +36,17 @@ class Rustup(
     }
 
     fun listComponents(): List<Component> =
-        GeneralCommandLine(rustup)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("component", "list")
-            .execute()
+        toolchain.runTool(RUSTUP, "component", "list", workingDirectory = projectDirectory)
             ?.stdoutLines
             ?.map { Component.from(it) }
             ?: emptyList()
 
     fun downloadStdlib(): DownloadResult<VirtualFile> {
-        val downloadProcessOutput = GeneralCommandLine(rustup)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("component", "add", "rust-src")
-            .execute(null)
+        val downloadProcessOutput = toolchain.runTool(RUSTUP, "component", "add", "rust-src", workingDirectory = projectDirectory, timeout = null)
 
         return if (downloadProcessOutput?.isSuccess == true) {
-            val sources = toolchain.getStdlibFromSysroot(projectDirectory) ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
+            val sources = toolchain.getStdlibFromSysroot(projectDirectory)
+                ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
             fullyRefreshDirectory(sources)
             DownloadResult.Ok(sources)
         } else {
@@ -63,10 +58,15 @@ class Rustup(
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
         try {
-            GeneralCommandLine(rustup)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", componentName)
-                .execute(owner, false)
+            toolchain.runTool(
+                RUSTUP,
+                "component",
+                "add",
+                componentName,
+                workingDirectory = projectDirectory,
+                owner = owner,
+                ignoreExitCode = false
+            )
             DownloadResult.Ok(Unit)
         } catch (e: ExecutionException) {
             val message = "rustup failed: `${e.message}`"
