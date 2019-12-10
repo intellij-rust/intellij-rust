@@ -500,6 +500,32 @@ task("runPrettyPrintersTests") {
     }
 }
 
+task("makeReleaseBranch") {
+    doLast {
+        val regex = Regex("patchVersion=(\\d+)")
+
+        val properties = file("gradle.properties")
+        val propertiesText = properties.readText()
+        val patchVersion = regex.find(propertiesText)?.groupValues?.get(1)?.toInt()
+            ?: error("Failed to read 'patchVersion' property")
+        val releaseBranchName = "release-$patchVersion"
+
+        // Create local release branch
+        "git branch $releaseBranchName".execute()
+        // Update patchVersion property
+        val newPropertiesText = propertiesText.replace(regex) {
+            "patchVersion=${patchVersion + 1}"
+        }
+        properties.writeText(newPropertiesText)
+        // Push release branch
+        "git push -u origin $releaseBranchName".execute()
+        // Commit changes in `gradle.properties`
+        "git add gradle.properties".execute()
+        listOf("git", "commit", "-m", ":arrow_up: patch version").execute()
+        "git push".execute()
+    }
+}
+
 task("makeRelease") {
     doLast {
         val newChangelog = commitChangelog()
