@@ -6,6 +6,7 @@
 package org.rust.cargo.project.settings.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -13,12 +14,14 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.WslRustToolchain
 import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JLabel
+import kotlin.concurrent.thread
 
 class RustProjectSettingsPanel(
     private val cargoProjectDir: Path = Paths.get("."),
@@ -40,7 +43,7 @@ class RustProjectSettingsPanel(
         "Select directory with standard library source code")
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
-        val rustup = RustToolchain(Paths.get(pathToToolchainField.text)).rustup
+        val rustup = RustToolchain.get(pathToToolchainField.text).rustup
         if (rustup != null) {
             object : Task.Backgroundable(null, "Downloading Rust standard library") {
                 override fun shouldStartInBackground(): Boolean = false
@@ -58,7 +61,7 @@ class RustProjectSettingsPanel(
 
     var data: Data
         get() {
-            val toolchain = RustToolchain(Paths.get(pathToToolchainField.text))
+            val toolchain = RustToolchain.get(pathToToolchainField.text)
             return Data(
                 toolchain = toolchain,
                 explicitPathToStdlib = pathToStdlibField.text.blankToNull()?.takeIf { toolchain.rustup == null }
@@ -95,7 +98,7 @@ class RustProjectSettingsPanel(
         val pathToToolchain = pathToToolchainField.text
         versionUpdateDebouncer.run(
             onPooledThread = {
-                val toolchain = RustToolchain(Paths.get(pathToToolchain))
+                val toolchain = RustToolchain.get(pathToToolchain)
                 val rustcVersion = toolchain.queryVersions().rustc?.semver
                 val rustup = toolchain.rustup
                 val stdlibLocation = toolchain.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl
@@ -114,6 +117,7 @@ class RustProjectSettingsPanel(
                     toolchainVersion.text = "N/A"
                     toolchainVersion.foreground = JBColor.RED
                 } else {
+                    Logger.getInstance(RustToolchain::class.java).info(rustcVersion.parsedVersion)
                     toolchainVersion.text = rustcVersion.parsedVersion
                     toolchainVersion.foreground = JBColor.foreground()
                 }

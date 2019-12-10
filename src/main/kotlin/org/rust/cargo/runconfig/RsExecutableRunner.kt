@@ -24,6 +24,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEna
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -70,12 +71,12 @@ abstract class RsExecutableRunner(
         val runCargoCommand = state.prepareCommandLine()
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
         val runExecutable = Cargo.createGeneralCommandLine(
-            binaries.single(),
             runCargoCommand.workingDirectory,
             runCargoCommand.backtraceMode,
             runCargoCommand.environmentVariables,
             executableArguments,
-            runCargoCommand.emulateTerminal
+            runCargoCommand.emulateTerminal,
+            toolchain = RustToolchain.get(binaries.single().parent)
         )
         return showRunContent(state, environment, runExecutable)
     }

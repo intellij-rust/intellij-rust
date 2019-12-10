@@ -36,6 +36,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.prependArgument
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -76,12 +77,12 @@ abstract class RsAsyncRunner(
         val getRunCommand = { executablePath: Path ->
             with(buildCommand) {
                 Cargo.createGeneralCommandLine(
-                    executablePath,
                     workingDirectory,
                     backtraceMode,
                     environmentVariables,
                     executableArguments,
-                    emulateTerminal
+                    emulateTerminal,
+                    toolchain = RustToolchain.get(executablePath.parent)
                 )
             }
         }

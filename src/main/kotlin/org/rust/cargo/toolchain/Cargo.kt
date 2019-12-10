@@ -30,6 +30,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
+import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
@@ -50,7 +51,7 @@ import java.nio.file.Path
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(private val cargoExecutable: Path) {
+class Cargo(private val toolchain: RustToolchain, private val cargoWrapper: String = CARGO) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -63,9 +64,7 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        GeneralCommandLine(cargoExecutable)
-            .withParameters("install", "--list")
-            .execute()
+        toolchain.runTool(cargoWrapper, arguments = *arrayOf("install", "--list"))
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
             ?.map { BinaryCrate.from(it) }
@@ -78,9 +77,7 @@ class Cargo(private val cargoExecutable: Path) {
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = GeneralCommandLine(cargoExecutable)
-            .withParameters("help", "check")
-            .execute()
+        val lines = toolchain.runTool(cargoWrapper, arguments = *arrayOf("help, check"))
             ?.stdoutLines
             ?: return false
 
@@ -230,13 +227,14 @@ class Cargo(private val cargoExecutable: Path) {
                 addAll(additionalArguments)
             }
             createGeneralCommandLine(
-                cargoExecutable,
                 workingDirectory,
                 backtraceMode,
                 environmentVariables,
                 parameters,
                 emulateTerminal,
-                http
+                http,
+                toolchain,
+                cargoWrapper = cargoWrapper
             )
         }
 
@@ -295,23 +293,20 @@ class Cargo(private val cargoExecutable: Path) {
         }
 
         fun createGeneralCommandLine(
-            executablePath: Path,
             workingDirectory: Path,
             backtraceMode: BacktraceMode,
             environmentVariables: EnvironmentVariablesData,
             parameters: List<String>,
             emulateTerminal: Boolean,
-            http: HttpConfigurable = HttpConfigurable.getInstance()
+            http: HttpConfigurable = HttpConfigurable.getInstance(),
+            toolchain: RustToolchain,
+            cargoWrapper: String = CARGO
         ): GeneralCommandLine {
-            val cmdLine = GeneralCommandLine(executablePath)
-                .withWorkDirectory(workingDirectory)
-                .withEnvironment("TERM", "ansi")
-                .withRedirectErrorStream(true)
-                .withParameters(parameters)
-                // Explicitly use UTF-8.
-                // Even though default system encoding is usually not UTF-8 on Windows,
-                // most Rust programs are UTF-8 only.
-                .withCharset(Charsets.UTF_8)
+            val cmdLine = toolchain.createGeneralCommandLine(cargoWrapper, workingDirectory = workingDirectory) {
+                withEnvironment("TERM", "ansi")
+                isRedirectErrorStream = true
+                withParameters(parameters)
+            }
             withProxyIfNeeded(cmdLine, http)
             when (backtraceMode) {
                 BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
