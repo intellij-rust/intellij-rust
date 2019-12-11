@@ -21,14 +21,31 @@ import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
-data class CompilerFeature(val name: String, val state: FeatureState, val since: SemVer) {
-    constructor(name: String, state: FeatureState, since: String) : this(name, state, SemVer.parseFromText(since)!!)
+class CompilerFeature(
+    val name: String,
+    val state: FeatureState,
+    val since: SemVer?,
+    cache: Boolean = true
+) {
+
+    constructor(
+        name: String,
+        state: FeatureState,
+        since: String,
+        cache: Boolean = true
+    ) : this(name, state, SemVer.parseFromText(since)!!, cache)
+
+    init {
+        if (cache) {
+            knownFeatures[name] = this
+        }
+    }
 
     fun availability(element: PsiElement): FeatureAvailability {
         val rsElement = element.ancestorOrSelf<RsElement>() ?: return UNKNOWN
         val version = rsElement.cargoProject?.rustcInfo?.version ?: return UNKNOWN
 
-        if (state == ACCEPTED && version.semver >= since) return AVAILABLE
+        if (state == ACCEPTED && (since == null || version.semver >= since)) return AVAILABLE
         if (version.channel != RustChannel.NIGHTLY) return NOT_AVAILABLE
 
         val crateRoot = rsElement.crateRoot ?: return UNKNOWN
@@ -85,6 +102,12 @@ data class CompilerFeature(val name: String, val state: FeatureState, val since:
             RsDiagnostic.ExperimentalFeature(startElement, endElement, message, listOf(*fixes, fix))
         }
         else -> null
+    }
+
+    companion object {
+        private val knownFeatures: MutableMap<String, CompilerFeature> = hashMapOf()
+
+        fun find(featureName: String): CompilerFeature? = knownFeatures[featureName]
     }
 }
 
