@@ -17,19 +17,34 @@ import org.rust.lang.utils.PresentableGraph
 import org.rust.lang.utils.PresentableNodeData
 
 sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
+
+    /** Any execution unit (e.g. expression, statement) */
     class AST(element: RsElement) : CFGNodeData(element)
+
+    /** Execution start */
     object Entry : CFGNodeData()
+
+    /** Normal execution end (e.g. after `main` function block) */
     object Exit : CFGNodeData()
+
+    /** Any real (e.g. `panic!()` call) or imaginary (e.g. after infinite loop) execution end */
+    object Termination : CFGNodeData()
+
+    /** Supplementary node to build complex control flow (e.g. loops and pattern matching) */
     object Dummy : CFGNodeData()
+
+    /** Start of any unreachable code (e.g. after `return`) */
     object Unreachable : CFGNodeData()
+
 
     override val text: String
         get() = when (this) {
             is AST -> element?.cfgText()?.trim() ?: "AST"
-            is Entry -> "Entry"
-            is Exit -> "Exit"
-            is Dummy -> "Dummy"
-            is Unreachable -> "Unreachable"
+            Entry -> "Entry"
+            Exit -> "Exit"
+            Termination -> "Termination"
+            Dummy -> "Dummy"
+            Unreachable -> "Unreachable"
         }
 
     private fun RsElement.cfgText(): String =
@@ -56,7 +71,8 @@ class ControlFlowGraph private constructor(
     val body: RsBlock,
     val regionScopeTree: ScopeTree,
     val entry: CFGNode,
-    val exit: CFGNode
+    val exit: CFGNode,
+    val termination: CFGNode
 ) {
     companion object {
         fun buildFor(body: RsBlock, regionScopeTree: ScopeTree): ControlFlowGraph {
@@ -64,12 +80,14 @@ class ControlFlowGraph private constructor(
             val graph = PresentableGraph<CFGNodeData, CFGEdgeData>()
             val entry = graph.addNode(CFGNodeData.Entry)
             val fnExit = graph.addNode(CFGNodeData.Exit)
+            val termination = graph.addNode(CFGNodeData.Termination)
 
-            val cfgBuilder = CFGBuilder(regionScopeTree, graph, entry, fnExit)
+            val cfgBuilder = CFGBuilder(regionScopeTree, graph, entry, fnExit, termination)
             val bodyExit = cfgBuilder.process(body, entry)
             cfgBuilder.addContainedEdge(bodyExit, fnExit)
+            cfgBuilder.addContainedEdge(fnExit, termination)
 
-            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit)
+            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit, termination)
         }
     }
 

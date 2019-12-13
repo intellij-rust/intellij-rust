@@ -21,7 +21,8 @@ class CFGBuilder(
     private val regionScopeTree: ScopeTree,
     val graph: Graph<CFGNodeData, CFGEdgeData>,
     val entry: CFGNode,
-    val exit: CFGNode
+    val exit: CFGNode,
+    val termination: CFGNode
 ) : RsVisitor() {
     data class BlockScope(val blockExpr: RsBlockExpr, val breakNode: CFGNode)
 
@@ -53,8 +54,12 @@ class CFGBuilder(
     private fun finishWithAstNode(element: RsElement, vararg preds: CFGNode) =
         finishWith { addAstNode(element, *preds) }
 
-    private fun finishWithUnreachableNode() =
+    private fun finishWithUnreachableNode(end: CFGNode? = null) {
+        if (end != null) {
+            addTerminationEdge(end)
+        }
         finishWith { addUnreachableNode() }
+    }
 
     private inline fun withLoopScope(loopScope: LoopScope, callable: () -> Unit) {
         loopScopes.push(loopScope)
@@ -91,6 +96,11 @@ class CFGBuilder(
     private fun addReturningEdge(fromNode: CFGNode) {
         val data = CFGEdgeData(loopScopes.map { it.loop })
         graph.addEdge(fromNode, exit, data)
+    }
+
+    private fun addTerminationEdge(fromNode: CFGNode) {
+        val data = CFGEdgeData(loopScopes.map { it.loop })
+        graph.addEdge(fromNode, termination, data)
     }
 
     private fun addExitingEdge(fromExpr: RsExpr, fromNode: CFGNode, targetScope: Scope, toNode: CFGNode) {
@@ -172,6 +182,7 @@ class CFGBuilder(
         val funcOrReceiverExit = process(funcOrReceiver, pred)
         val callExit = straightLine(callExpr, funcOrReceiverExit, args)
         return if (callExpr.type is TyNever) {
+            addTerminationEdge(callExit)
             addUnreachableNode()
         } else {
             callExit
@@ -368,6 +379,7 @@ class CFGBuilder(
             addContainedEdge(bodyExit, loopBack)
         }
 
+        addTerminationEdge(loopBack)
         finishWith(exprExit)
     }
 
@@ -423,24 +435,24 @@ class CFGBuilder(
         val valueExit = process(retExpr.expr, pred)
         val returnExit = addAstNode(retExpr, valueExit)
         addReturningEdge(returnExit)
-        finishWith { addUnreachableNode() }
+        finishWithUnreachableNode()
     }
 
     override fun visitBreakExpr(breakExpr: RsBreakExpr) {
         val exprExit = process(breakExpr.expr, pred)
         val (targetScope, breakDestination) = findScopeEdge(breakExpr, breakExpr.label, Break)
-            ?: return finishWithUnreachableNode()
+            ?: return finishWithUnreachableNode(exprExit)
         val breakExit = addAstNode(breakExpr, exprExit)
         addExitingEdge(breakExpr, breakExit, targetScope, breakDestination)
-        finishWithUnreachableNode()
+        finishWithUnreachableNode(breakExit)
     }
 
     override fun visitContExpr(contExpr: RsContExpr) {
-        val (targetScope, contDestination) = findScopeEdge(contExpr, contExpr.label, Continue)
-            ?: return finishWithUnreachableNode()
         val contExit = addAstNode(contExpr, pred)
+        val (targetScope, contDestination) = findScopeEdge(contExpr, contExpr.label, Continue)
+            ?: return finishWithUnreachableNode(contExit)
         addExitingEdge(contExpr, contExit, targetScope, contDestination)
-        finishWithUnreachableNode()
+        finishWithUnreachableNode(contExit)
     }
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
