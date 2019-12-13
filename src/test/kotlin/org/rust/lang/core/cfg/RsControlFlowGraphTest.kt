@@ -819,6 +819,23 @@ class RsControlFlowGraphTest : RsTestBase() {
         Termination
     """)
 
+    fun `test struct literal dot dot syntax`() = testCFG("""
+        struct S { x: i32, y: i32 }
+        
+        fn main() {
+            S { x, ..s };
+        }
+    """, """
+        Entry
+        x
+        s
+        S { x, ..s }
+        S { x, ..s };
+        BLOCK
+        Exit
+        Termination
+    """)
+
     fun `test lambda expr`() = testCFG("""
         fn foo() {
             let f = |x: i32| { x + 1 };

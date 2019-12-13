@@ -525,7 +525,8 @@ class CFGBuilder(
         finishWith { straightLine(tupleExpr, pred, tupleExpr.exprList) }
 
     override fun visitStructLiteral(structLiteral: RsStructLiteral) {
-        val subExprs = structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr ?: it }
+        val structLiteralBody = structLiteral.structLiteralBody
+        val subExprs = structLiteralBody.structLiteralFieldList.map { it.expr ?: it }.plus(structLiteralBody.expr)
         val subExprsExit = subExprs.fold(pred) { acc, subExpr -> process(subExpr, acc) }
         finishWithAstNode(structLiteral, subExprsExit)
     }
