@@ -797,6 +797,21 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test tuple struct field completion`() = checkContainsCompletion("1", """
+        struct Foo(i32, i32);
+        fn main() {
+            let foo = Foo(1, 2);
+            foo./*caret*/
+        }
+    """)
+
+    fun `test tuple field completion`() = checkContainsCompletion("1", """
+        fn main() {
+            let foo = (1, 2);
+            foo./*caret*/
+        }
+    """)
+
     fun `test completion after tuple field expr`() = doSingleCompletion("""
         struct S { field: i32 }
         fn main() {
