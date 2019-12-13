@@ -39,7 +39,7 @@ import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 
-object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsCommonCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
         parameters: CompletionParameters,
         processingContext: ProcessingContext,
@@ -212,7 +212,7 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
         element1.contextOrSelf<RsElement>()?.containingMod ==
             element2.contextOrSelf<RsElement>()?.containingMod
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() = PlatformPatterns.psiElement().withParent(psiElement<RsReferenceElement>())
 
     private val simplePathPattern: ElementPattern<PsiElement>
@@ -234,7 +234,11 @@ object RsCommonCompletionProvider : CompletionProvider<CompletionParameters>() {
     }
 }
 
-data class RsCompletionContext(val lookup: ImplLookup? = null, val expectedTy: Ty? = null, val isSimplePath: Boolean = false)
+data class RsCompletionContext(
+    val lookup: ImplLookup? = null,
+    val expectedTy: Ty? = null,
+    val isSimplePath: Boolean = false
+)
 
 private fun filterAssocTypes(
     path: RsPath,

@@ -22,7 +22,7 @@ import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psiElement
 
-object RsCfgAttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
 
     private val NAME_OPTIONS: List<String> = listOf(
         "unix",
@@ -79,7 +79,7 @@ object RsCfgAttributeCompletionProvider : CompletionProvider<CompletionParameter
     private val InsertionContext.alreadyHasValue: Boolean
         get() = nextCharIs('=')
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() {
             val cfgAttr = psiElement<RsMetaItem>()
                 .with(object : PatternCondition<RsMetaItem>("cfg") {

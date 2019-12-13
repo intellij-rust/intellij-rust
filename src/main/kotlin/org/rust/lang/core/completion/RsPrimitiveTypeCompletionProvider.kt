@@ -19,7 +19,7 @@ import org.rust.lang.core.with
 import org.rust.lang.core.withSuperParent
 import org.rust.stdext.buildList
 
-object RsPrimitiveTypeCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsPrimitiveTypeCompletionProvider : RsCompletionProvider() {
 
     private val primitives: List<String> = buildList {
         addAll(TyInteger.NAMES)
@@ -29,7 +29,7 @@ object RsPrimitiveTypeCompletionProvider : CompletionProvider<CompletionParamete
         add(TyChar.name)
     }
 
-    val elementPattern: ElementPattern<PsiElement> get() = PlatformPatterns.psiElement()
+    override val elementPattern: ElementPattern<PsiElement> get() = PlatformPatterns.psiElement()
         .withSuperParent<RsTypeReference>(3)
         .with("FirstChild") { e -> e.prevSibling == null }
 
