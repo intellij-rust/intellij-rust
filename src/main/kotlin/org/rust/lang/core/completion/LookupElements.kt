@@ -162,6 +162,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
         is RsConstParameter -> base
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
+            .bold()
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsTraitItem -> base
 

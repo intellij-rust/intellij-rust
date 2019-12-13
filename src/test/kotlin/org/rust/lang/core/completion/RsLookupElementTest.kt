@@ -105,12 +105,12 @@ class RsLookupElementTest : RsTestBase() {
     fun `test named field`() = check("""
         struct S { field: String }
                    //^
-    """, typeText = "String")
+    """, typeText = "String", isBold = true)
 
     fun `test tuple field`() = checkInner<RsTupleFieldDecl>("""
         struct S(String);
                  //^
-    """, typeText = "String")
+    """, typeText = "String", isBold = true)
 
     fun `test macro simple`() = check("""
         macro_rules! test {
@@ -157,21 +157,21 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic field`() = checkProvider("""
         struct S<A> { foo: A }
-        
+
         fn main() {
             let s = S { foo: 0 };
             s.foo;
              //^
         }
-    """, typeText = "i32")
+    """, typeText = "i32", isBold = true)
 
     fun `test generic method (impl)`() = checkProvider("""
         struct S<A>(A);
-        
+
         impl <B> S<B> {
             fn foo(&self, x: B) -> B { x }
         }
-        
+
         fn main() {
             let s = S(0);
             s.foo;
@@ -181,14 +181,14 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic method (trait)`() = checkProvider("""
         struct S<A>(A);
-        
+
         trait T<B> {
             fn foo(&self, x: B) -> B { x }
         }
-        
+
         impl <C> T<C> for S<C> {
         }
-        
+
         fn main() {
             let s = S(0);
             s.foo;
@@ -198,15 +198,15 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic method (impl trait)`() = checkProvider("""
         struct S<A>(A);
-        
+
         trait T<B> {
             fn foo(&self, x: B) -> B;
         }
-        
+
         impl <C> T<C> for S<C> {
             fn foo(&self, x: C) -> C { x }
         }
-        
+
         fn main() {
             let s = S(0);
             s.foo;
@@ -220,11 +220,11 @@ class RsLookupElementTest : RsTestBase() {
         trait T<B> {
             fn foo(&self, x: B) -> B;
         }
-        
+
         impl <C> T<C> for &S<C> {
             fn foo(&self, x: C) -> C { x }
         }
-        
+
         fn main() {
             let s = &S(0);
             s.foo;
@@ -235,11 +235,11 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic function (impl)`() = checkProvider("""
         struct S<A>(A);
-        
+
         impl <B> S<B> {
             fn foo(x: B) -> B { x }
         }
-        
+
         fn main() {
             S::<i32>::foo;
                      //^
@@ -248,14 +248,14 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic function (trait)`() = checkProvider("""
         struct S<A>(A);
-        
+
         trait T<B> {
             fn foo(x: B) -> B { x }
         }
-        
+
         impl <C> T<C> for S<C> {
         }
-        
+
         fn main() {
             S::<i32>::foo;
                      //^
@@ -264,15 +264,15 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test generic function (impl trait)`() = checkProvider("""
         struct S<A>(A);
-        
+
         trait T<B> {
             fn foo(x: B) -> B;
         }
-        
+
         impl <C> T<C> for S<C> {
             fn foo(x: C) -> C { x }
         }
-        
+
         fn main() {
             S::<i32>::foo;
                      //^
@@ -283,13 +283,15 @@ class RsLookupElementTest : RsTestBase() {
         @Language("Rust") code: String,
         tailText: String? = null,
         typeText: String? = null,
+        isBold: Boolean = false,
         isStrikeout: Boolean = false
-    ) = checkInner<RsNamedElement>(code, tailText, typeText, isStrikeout)
+    ) = checkInner<RsNamedElement>(code, tailText, typeText, isBold, isStrikeout)
 
     private inline fun <reified T> checkInner(
         @Language("Rust") code: String,
         tailText: String? = null,
         typeText: String? = null,
+        isBold: Boolean = false,
         isStrikeout: Boolean = false
     ) where T : NavigatablePsiElement, T : RsElement {
         InlineFile(code)
@@ -298,19 +300,21 @@ class RsLookupElementTest : RsTestBase() {
             SimpleScopeEntry(element.name!!, element as RsElement),
             RsCompletionContext()
         )
-        val presentation = LookupElementPresentation()
 
-        lookup.renderElement(presentation)
-        assertNotNull(presentation.icon)
-        assertEquals(tailText, presentation.tailText)
-        assertEquals(typeText, presentation.typeText)
-        assertEquals(isStrikeout, presentation.isStrikeout)
+        checkLookupPresentation(
+            lookup,
+            tailText = tailText,
+            typeText = typeText,
+            isBold = isBold,
+            isStrikeout = isStrikeout
+        )
     }
 
     private fun checkProvider(
         @Language("Rust") code: String,
         tailText: String? = null,
         typeText: String? = null,
+        isBold: Boolean = false,
         isStrikeout: Boolean = false
     ) {
         InlineFile(code)
@@ -341,12 +345,29 @@ class RsLookupElementTest : RsTestBase() {
             val namedElement = it.psiElement as? RsNamedElement
             namedElement?.name == element.referenceName
         }
+        checkLookupPresentation(
+            lookup,
+            tailText = tailText,
+            typeText = typeText,
+            isBold = isBold,
+            isStrikeout = isStrikeout
+        )
+    }
+
+    private fun checkLookupPresentation(
+        lookup: LookupElement,
+        tailText: String?,
+        typeText: String?,
+        isBold: Boolean,
+        isStrikeout: Boolean
+    ) {
         val presentation = LookupElementPresentation()
         lookup.renderElement(presentation)
 
-        assertNotNull(presentation.icon)
-        assertEquals(tailText, presentation.tailText)
-        assertEquals(typeText, presentation.typeText)
-        assertEquals(isStrikeout, presentation.isStrikeout)
+        assertNotNull("Item icon should be not null", presentation.icon)
+        assertEquals("Tail text mismatch", tailText, presentation.tailText)
+        assertEquals("Type text mismatch", typeText, presentation.typeText)
+        assertEquals("Bold text attribute mismatch", isBold, presentation.isItemTextBold)
+        assertEquals("Strikeout text attribute mismatch", isStrikeout, presentation.isStrikeout)
     }
 }
