@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.cfg
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
@@ -238,12 +239,65 @@ class CFGBuilder(
     override fun visitPathExpr(pathExpr: RsPathExpr) =
         finishWithAstNode(pathExpr, pred)
 
+    override fun visitMacroBodyIdent(macroBodyIdent: RsMacroBodyIdent) =
+        finishWithAstNode(macroBodyIdent, pred)
+
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
+        val macroCallExit = process(macroExpr.macroCall, pred)
+
         if (macroExpr.type is TyNever) {
-            finishWith { addUnreachableNode() }
+            finishWithUnreachableNode(macroCallExit)
         } else {
-            finishWithAstNode(macroExpr, pred)
+            finishWith(macroCallExit)
         }
+    }
+
+    override fun visitMacroCall(macroCall: RsMacroCall) {
+        val subExprsExit = when (val argument = macroCall.macroArgumentElement) {
+            is RsExprMacroArgument -> argument.expr?.let { process(it, pred) }
+            is RsIncludeMacroArgument -> argument.expr?.let { process(it, pred) }
+
+            is RsConcatMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            is RsEnvMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            is RsVecMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+
+            is RsFormatMacroArgument -> {
+                argument.formatMacroArgList.map { it.expr }.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+
+            is RsLogMacroArgument -> {
+                listOfNotNull(argument.expr)
+                    .plus(argument.formatMacroArgList.map { it.expr })
+                    .fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+            is RsAssertMacroArgument -> {
+                listOfNotNull(argument.expr)
+                    .plus(argument.formatMacroArgList.map { it.expr })
+                    .fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+
+            is RsMacroArgument -> {
+                val expansion = macroCall.expansion
+                val expandedElementsExit = expansion?.elements?.fold(pred) { pred, element -> process(element, pred) }
+                expandedElementsExit
+            }
+
+            null -> null
+
+            else -> error("unreachable")
+        }
+
+        val subElementsExit = subExprsExit ?: run {
+            val subPathsIdents = PsiTreeUtil.findChildrenOfAnyType(
+                macroCall,
+                true,
+                RsPathExpr::class.java,
+                RsMacroBodyIdent::class.java
+            )
+            subPathsIdents.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+        }
+
+        finishWithAstNode(macroCall, subElementsExit)
     }
 
     override fun visitRangeExpr(rangeExpr: RsRangeExpr) =
