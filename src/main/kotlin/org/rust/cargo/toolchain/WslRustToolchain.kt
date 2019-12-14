@@ -6,7 +6,6 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.util.containers.map2Array
 import org.intellij.lang.annotations.Language
 import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Files
@@ -37,7 +36,7 @@ class WslRustToolchain(location: Path) : RustToolchain(location) {
         val generalCommandLine = GeneralCommandLine("wsl.exe")
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(workingDirectory)
-            .withParameters("$basePath/$tool", *arguments.map2Array(transform))
+            .withParameters("$basePath/$tool", *arguments.map(transform).toTypedArray())
         generalCommandLine.setup()
         return generalCommandLine
     }
@@ -57,7 +56,7 @@ class WslRustToolchain(location: Path) : RustToolchain(location) {
     companion object {
         fun executeBashCommand(command: String): String {
             val process = Runtime.getRuntime().exec("""wsl $command""")
-            val bytes = process.inputStream.readAllBytes()
+            val bytes = process.inputStream.readBytes()
             return String(bytes).trim()
         }
 
