@@ -14,6 +14,6 @@ enum class BacktraceMode(val index: Int, val title: String) {
 
     companion object {
         val DEFAULT = SHORT
-        fun fromIndex(index: Int) = BacktraceMode.values().find { it.index == index } ?: DEFAULT
+        fun fromIndex(index: Int) = values().find { it.index == index } ?: DEFAULT
     }
 }

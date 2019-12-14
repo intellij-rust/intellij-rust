@@ -64,7 +64,7 @@ class Cargo(private val toolchain: RustToolchain, private val cargoWrapper: Stri
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        toolchain.runTool(cargoWrapper, arguments = *arrayOf("install", "--list"))
+        toolchain.runTool(cargoWrapper, "install", "--list")
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
             ?.map { BinaryCrate.from(it) }
@@ -77,7 +77,7 @@ class Cargo(private val toolchain: RustToolchain, private val cargoWrapper: Stri
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = toolchain.runTool(cargoWrapper, arguments = *arrayOf("help, check"))
+        val lines = toolchain.runTool(cargoWrapper, "help, check")
             ?.stdoutLines
             ?: return false
 
@@ -111,10 +111,13 @@ class Cargo(private val toolchain: RustToolchain, private val cargoWrapper: Stri
         listener: ProcessListener?
     ): CargoMetadata.Project {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
+        val stdout = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
+        Logger.getInstance(javaClass).info(stdout)
+        val json = toolchain.processOutput(stdout)
             .dropWhile { it != '{' }
+        Logger.getInstance(javaClass).info(json)
         return try {
             Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch (e: JsonSyntaxException) {
@@ -302,10 +305,13 @@ class Cargo(private val toolchain: RustToolchain, private val cargoWrapper: Stri
             toolchain: RustToolchain,
             cargoWrapper: String = CARGO
         ): GeneralCommandLine {
-            val cmdLine = toolchain.createGeneralCommandLine(cargoWrapper, workingDirectory = workingDirectory) {
+            val cmdLine = toolchain.createGeneralCommandLine(
+                cargoWrapper,
+                arguments = *parameters.toTypedArray(),
+                workingDirectory = workingDirectory
+            ) {
                 withEnvironment("TERM", "ansi")
                 isRedirectErrorStream = true
-                withParameters(parameters)
             }
             withProxyIfNeeded(cmdLine, http)
             when (backtraceMode) {

@@ -40,6 +40,11 @@ abstract class RustToolchain(open val location: Path) {
     fun looksLikeValidToolchain(): Boolean = hasExecutable(CARGO) && hasExecutable(RUSTC)
 
     /**
+     * Perform necessary transforms on the data, such as converting WSL paths to Windows paths
+     */
+    open fun processOutput(original: String): String = original
+
+    /**
      * @return version information about the rust compiler
      */
     fun queryVersions(): VersionInfo {
@@ -239,12 +244,11 @@ private object Suggestions {
                 ?.map { File(it, "bin") } ?: emptySequence()
         val fromWsl: Sequence<File> = if (SystemInfo.isWin10OrNewer) {
             try {
-                val nixPathBytes = Runtime.getRuntime().exec("""bash.exe -c "source ~/.profile && which cargo"""")
-                    .inputStream.readAllBytes()
-                val nixPath = String(nixPathBytes).trim()
-                val wslPathBytes = Runtime.getRuntime().exec("""bash.exe -c "wslpath -w $nixPath"""")
-                    .inputStream.readAllBytes()
-                sequenceOf(File(String(wslPathBytes).trim()).parentFile)
+                val path = WslRustToolchain.executeBashCommand(
+                    "source ~/.profile && which cargo"
+                )
+                val pathToCargo = WslRustToolchain.wslPathToWindows(path)
+                sequenceOf(File(pathToCargo).parentFile)
             } catch (e: IOException) {
                 emptySequence<File>()
             }

@@ -280,11 +280,8 @@ object CargoMetadata {
                 pkg.clean(fs, pkg.id in members, variables, features)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
-                val dependencySet = if (deps != null) {
-                    deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
-                } else {
-                    dependencies.mapToSet { CargoWorkspaceData.Dependency(it) }
-                }
+                val dependencySet = deps?.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
+                    ?: dependencies.mapToSet { CargoWorkspaceData.Dependency(it) }
                 id to dependencySet
             },
             project.workspace_root
