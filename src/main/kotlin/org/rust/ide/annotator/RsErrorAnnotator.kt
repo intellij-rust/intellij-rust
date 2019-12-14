@@ -24,6 +24,7 @@ import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.knownItems
@@ -246,6 +247,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkDotExpr(holder: RsAnnotationHolder, o: RsDotExpr) {
         val field = o.fieldLookup ?: o.methodCall ?: return
         checkReferenceIsPublic(field, o, holder)
+        checkUnstableAttribute(field, holder)
         if (field is RsMethodCall) {
             checkNotCallingDrop(field, holder)
         }
@@ -312,6 +314,21 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         error.addToHolder(holder)
     }
 
+    private fun checkUnstableAttribute(ref: RsReferenceElement, holder: RsAnnotationHolder) {
+        val startElement = ref.referenceNameElement.takeIf { it.elementType == IDENTIFIER } ?: return
+        if (ref.containingCargoPackage?.origin == PackageOrigin.STDLIB) return
+        val element = ref.reference.resolve() as? RsOuterAttributeOwner ?: return
+        for (attr in element.queryAttributes.unstableAttributes) {
+            val metaItems = attr.metaItemArgs?.metaItemList ?: continue
+            val featureName = metaItems.singleOrNull { it.name == "feature" }?.value ?: continue
+            val reason = metaItems.singleOrNull { it.name == "reason" }?.value
+            val reasonSuffix = if (reason != null) ": $reason" else ""
+            val feature = CompilerFeature.find(featureName)
+                ?: CompilerFeature(featureName, FeatureState.ACTIVE, null, cache = false)
+            feature.check(holder, startElement, null, "`$featureName` is unstable$reasonSuffix")
+        }
+    }
+
     private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.owner.parent
@@ -368,6 +385,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         checkReferenceIsPublic(path, path, holder)
+        checkUnstableAttribute(path, holder)
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {

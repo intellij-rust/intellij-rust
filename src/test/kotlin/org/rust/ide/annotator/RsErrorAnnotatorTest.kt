@@ -2955,4 +2955,59 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let Foo { r#field: _ } = f;
         }
     """)
+
+    @MockRustcVersion("1.40.0-nightly")
+    fun `test unstable feature E0658 1`() = checkErrors("""
+        mod a {
+            #[unstable(feature = "aaa")]
+            pub struct S {
+                #[unstable(feature = "bbb", reason = "foo")] pub field: i32
+            }
+        }
+        
+        use a::<error descr="`aaa` is unstable [E0658]">S</error>;
+        
+        #[unstable(feature = "ddd")]
+        impl <error descr="`aaa` is unstable [E0658]">S</error> {
+            #[unstable(feature = "ccc", reason = "bar \
+                baz")]
+            fn foo(self) -> Self {}
+        }
+        
+        fn main() {
+            let x = <error descr="`aaa` is unstable [E0658]">S</error> { field: 0 };
+            x.<error descr="`bbb` is unstable: foo [E0658]">field</error>;
+            x.<error descr="`ccc` is unstable: bar baz [E0658]">foo</error>();
+        }
+    """)
+
+    @MockRustcVersion("1.40.0-nightly")
+    fun `test unstable feature E0658 2`() = checkErrors("""
+        #![feature(aaa)]
+        #![feature(bbb)]
+        #![feature(ccc)]
+        #![feature(ddd)]
+        
+        mod a {
+            #[unstable(feature = "aaa")]
+            pub struct S {
+                #[unstable(feature = "bbb", reason = "foo")] pub field: i32
+            }
+        }
+        
+        use a::S;
+        
+        #[unstable(feature = "ddd")]
+        impl S {
+            #[unstable(feature = "ccc", reason = "bar \
+                baz")]
+            fn foo(self) -> Self {}
+        }
+        
+        fn main() {
+            let x = S { field: 0 };
+            x.field;
+            x.foo();
+        }
+    """)
 }
