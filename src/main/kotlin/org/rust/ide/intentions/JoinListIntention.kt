@@ -8,12 +8,14 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsElementTypes.DOTDOT
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
     listClass: Class<TList>,
@@ -27,7 +29,7 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
         val elements = getElements(list)
         if (elements.isEmpty()
             || !hasLineBreakBefore(elements.first()) && elements.none { hasLineBreakAfter(list, it) }
-            || list.hasEolComment()
+            || hasEolComment(list)
         ) {
             return null
         }
@@ -51,8 +53,6 @@ abstract class JoinListIntentionBase<TList : RsElement, TElement : RsElement>(
             document.replaceString(startOffset, endOffset, replaceString)
         }
     }
-
-    private fun RsElement.hasEolComment() = descendantsOfType<PsiComment>().any { it.elementType == EOL_COMMENT }
 }
 
 class JoinParameterListIntention : JoinListIntentionBase<RsValueParameterList, RsValueParameter>(
@@ -82,15 +82,14 @@ class JoinLiteralFieldListIntention : JoinListIntentionBase<RsStructLiteralBody,
     prefix = " ",
     suffix = " "
 ) {
-    override fun getElements(context: RsStructLiteralBody): List<PsiElement> = super.getElements(context) + listOfNotNull(context.dotdot)
-    override fun getEndElement(ctx: RsStructLiteralBody, element: PsiElement): PsiElement {
-        return if (element.elementType == RsElementTypes.DOTDOT) {
-            ctx.expr?.let {
-                getEndElement(ctx, it)
-            } ?: element
+    override fun getElements(context: RsStructLiteralBody): List<PsiElement> =
+        super.getElements(context) + listOfNotNull(context.dotdot)
+
+    override fun getEndElement(ctx: RsStructLiteralBody, element: PsiElement): PsiElement =
+        when (element.elementType) {
+            DOTDOT -> ctx.expr?.let { getEndElement(ctx, it) } ?: element
+            else -> super.getEndElement(ctx, element)
         }
-        else super.getEndElement(ctx, element)
-    }
 }
 
 class JoinVariantListIntention : JoinListIntentionBase<RsEnumBody, RsEnumVariant>(
