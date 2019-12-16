@@ -8,26 +8,33 @@ package org.rust.ide.annotator
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.cache.impl.IndexPatternUtil
+import com.intellij.psi.impl.search.PsiTodoSearchHelperImpl
+import com.intellij.psi.search.PsiTodoSearchHelper
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
+import org.rust.ide.todo.isTodoPattern
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.openapiext.getOrPut
 
 // Highlighting logic here should be kept in sync with tags in RustColorSettingsPage
 class RsHighlightingAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val (partToHighlight, color) = when {
-            element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element)
-            element is RsMacroCall -> highlightNotReference(element)
-            element is RsModDeclItem -> highlightNotReference(element)
-            element is RsReferenceElement -> highlightReference(element)
-            else -> highlightNotReference(element)
+            element is RsPatBinding && !element.isReferenceToConstant -> highlightNotReference(element, holder)
+            element is RsMacroCall -> highlightNotReference(element, holder)
+            element is RsModDeclItem -> highlightNotReference(element, holder)
+            element is RsReferenceElement -> highlightReference(element, holder)
+            else -> highlightNotReference(element, holder)
         } ?: return
 
         if (!element.isEnabledByCfg) return
@@ -36,16 +43,17 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         holder.createAnnotation(severity, partToHighlight, null).textAttributes = color.textAttributesKey
     }
 
-    private fun highlightReference(element: RsReferenceElement): Pair<TextRange, RsColor>? {
+    private fun highlightReference(element: RsReferenceElement, holder: AnnotationHolder): Pair<TextRange, RsColor>? {
         // These should be highlighted as keywords by the lexer
         if (element is RsPath && element.kind != PathKind.IDENTIFIER) return null
         if (element is RsExternCrateItem && element.self != null) return null
 
         val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null
+        val parent = element.parent
 
         val color = when {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
-            element.parent is RsMacroCall -> RsColor.MACRO
+            parent is RsMacroCall -> if (shouldHighlightMacroCall(parent, holder)) RsColor.MACRO else null
             element is RsMethodCall -> RsColor.METHOD_CALL
             element is RsFieldLookup && element.identifier?.text == "await" && element.isEdition2018 -> RsColor.KEYWORD
             element is RsPath && element.isCall() -> {
@@ -77,7 +85,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         return expr is RsCallExpr
     }
 
-    private fun highlightNotReference(element: PsiElement): Pair<TextRange, RsColor>? {
+    private fun highlightNotReference(element: PsiElement, holder: AnnotationHolder): Pair<TextRange, RsColor>? {
         if (element is RsLitExpr) {
             if (element.parent is RsMetaItem) {
                 val literal = element.firstChild
@@ -94,6 +102,10 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             return element.textRange to RsColor.KEYWORD
         }
 
+        if (element is RsMacroCall) {
+            if (!shouldHighlightMacroCall(element, holder)) return null
+        }
+
         if (element is RsElement) {
             val color = colorFor(element)
             val part = partToHighlight(element)
@@ -102,6 +114,24 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             }
         }
         return null
+    }
+
+    private fun shouldHighlightMacroCall(element: RsMacroCall, holder: AnnotationHolder): Boolean {
+        if (element.macroName != "todo") return true
+        return !isTodoHighlightingEnabled(element.containingFile, holder)
+    }
+
+    private fun isTodoHighlightingEnabled(file: PsiFile, holder: AnnotationHolder): Boolean {
+        return holder.currentAnnotationSession.getOrPut(IS_TODO_HIGHLIGHTING_ENABLED) {
+            val helper = PsiTodoSearchHelper.SERVICE.getInstance(file.project) as? PsiTodoSearchHelperImpl
+                ?: return@getOrPut false
+            if (!helper.shouldHighlightInEditor(file)) return@getOrPut false
+            IndexPatternUtil.getIndexPatterns().any { it.isTodoPattern }
+        }
+    }
+
+    companion object {
+        private val IS_TODO_HIGHLIGHTING_ENABLED: Key<Boolean> = Key.create("IS_TODO_HIGHLIGHTING_ENABLED")
     }
 }
 

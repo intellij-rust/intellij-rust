@@ -5,6 +5,8 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.todo.TodoConfiguration
+import com.intellij.psi.search.TodoPattern
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
@@ -199,4 +201,23 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             dummy.<KEYWORD>await</KEYWORD>;
         }
     """)
+
+    fun `test highlight todo macro when todo highlighting disabled`() = withoutTodoHighlighting {
+        checkHighlighting("""
+            fn main() {
+                <MACRO>todo</MACRO><MACRO>!</MACRO>("");
+            }
+        """)
+    }
+
+    private fun withoutTodoHighlighting(action: () -> Unit) {
+        val todoConfiguration = TodoConfiguration.getInstance()
+        val todoPatterns = todoConfiguration.todoPatterns
+        todoConfiguration.todoPatterns = emptyArray()
+        try {
+            action()
+        } finally {
+            todoConfiguration.todoPatterns = todoPatterns
+        }
+    }
 }
