@@ -755,6 +755,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             mod <error>foo</error>;
             fn foo() {}
+
+            // Macros have thair own namespace
+            type NO_M_DUP = u16;
+            macro NO_M_DUP(){}
         }
     """)
 
