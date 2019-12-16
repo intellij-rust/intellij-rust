@@ -197,7 +197,7 @@ abstract class MacroExpansionTaskBase(
                     val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
                     val stages3 = stages2c.map { stage2 ->
                         if (project.isDisposed) throw ProcessCanceledException()
-                        val result = stage2.writeExpansionToFs(fs)
+                        val result = stage2.writeExpansionToFs(fs, currentStep.get())
                         doneStages.incrementAndGet()
                         result
                     }
@@ -283,7 +283,7 @@ object Pipeline {
     }
 
     interface Stage2WriteToFs {
-        fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Stage3SaveToStorage
+        fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Stage3SaveToStorage
     }
 
     interface Stage3SaveToStorage {
@@ -292,7 +292,7 @@ object Pipeline {
 }
 
 object EmptyPipeline : Pipeline.Stage2WriteToFs, Pipeline.Stage3SaveToStorage {
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {}
 }
 
@@ -302,7 +302,7 @@ object InvalidationPipeline {
     }
 
     class Stage2(val info: ExpandedMacroInfo) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val expansionFile = info.expansionFile
             if (expansionFile != null && expansionFile.isValid) {
                 fs.deleteFile(fs.resolve(expansionFile))
@@ -324,7 +324,7 @@ class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Sta
                                                                     Pipeline.Stage3SaveToStorage {
 
     override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {
         checkWriteAccessAllowed()
         storage.removeSourceFileIfEmpty(sf)
@@ -396,7 +396,7 @@ object ExpansionPipeline {
         private val expansionText: String,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             val file = if (oldExpansionFile != null) {
                 check(oldExpansionFile.isValid) { "VirtualFile is not valid ${oldExpansionFile.url}" }
@@ -404,7 +404,7 @@ object ExpansionPipeline {
                 fs.writeFile(file, expansionText)
                 file
             } else {
-                fs.createFileWithContent(expansionText)
+                fs.createFileWithContent(expansionText, stepNumber)
             }
             return Stage3(info, callHash, defHash, file, ranges)
         }
@@ -417,7 +417,7 @@ object ExpansionPipeline {
         private val oldExpansionFile: VirtualFile,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val file = fs.resolve(oldExpansionFile)
             return Stage3(info, callHash, defHash, file, ranges)
         }
@@ -428,7 +428,7 @@ object ExpansionPipeline {
         private val callHash: HashCode?,
         private val defHash: HashCode?
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 fs.deleteFile(fs.resolve(oldExpansionFile))
