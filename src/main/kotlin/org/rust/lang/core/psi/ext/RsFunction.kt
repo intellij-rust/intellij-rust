@@ -29,7 +29,7 @@ val RsFunction.isTest: Boolean
     get() {
         val stub = greenStub
         return stub?.isTest
-            ?: (queryAttributes.hasAtomAttribute("test") || queryAttributes.hasAtomAttribute("quickcheck"))
+            ?: (queryAttributes.hasMatchingAttribute(Regex("test")) || queryAttributes.hasAtomAttribute("quickcheck"))
     }
 
 val RsFunction.isBench: Boolean

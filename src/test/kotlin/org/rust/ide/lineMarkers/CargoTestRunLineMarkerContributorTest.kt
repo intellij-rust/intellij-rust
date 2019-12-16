@@ -201,6 +201,11 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn has_icon() { assert(true) } // - Test has_icon
     """)
 
+    fun `test custom test attribute`() = doTestByText("""
+        #[tokio::test(threaded_scheduler)]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
