@@ -144,6 +144,25 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test derive for generic type`() = doTest("""
+        struct X; // Not `Copy`
+        #[derive(Copy, Clone)]
+        struct S<T>(T);
+        type T = S<X>;
+               //^ !Copy
+    """)
+
+    fun `test tuple of 'Copy' types is 'Copy'`() = doTest("""
+        type T = (i32, i32);
+               //^ Copy
+    """)
+
+    fun `test tuple of not 'Copy' types is not 'Copy'`() = doTest("""
+        struct X;
+        type T = (i32, X);
+               //^ !Copy
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
@@ -157,8 +176,8 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
 
     private fun doTest(@Language("Rust") code: String) {
         val fullTestCode = """
-            #[lang = "sized"]
-            pub trait Sized {}
+            #[lang = "sized"] pub trait Sized {}
+            #[lang = "copy"]  pub trait Copy {}
 
             $code
         """
@@ -173,7 +192,11 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
         }
 
         val lookup = ImplLookup.relativeTo(typeRef)
-        val hasImpl = lookup.isSized(typeRef.type)
+        val hasImpl = when (traitName) {
+            "Sized" -> lookup.isSized(typeRef.type)
+            "Copy" -> lookup.isCopy(typeRef.type)
+            else -> error("Unknown trait: $traitName")
+        }
 
         check(mustHaveImpl == hasImpl) {
             "Expected: `${typeRef.type}` ${if (mustHaveImpl) "has" else "doesn't have" } impl of `$traitName` trait"
