@@ -97,7 +97,8 @@ private fun checkTypeAlias(holder: AnnotationHolder, ta: RsTypeAlias) {
 }
 
 private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
-    val title = if (const.static != null) "Static constant `${const.identifier.text}`" else "Constant `${const.identifier.text}`"
+    val name = const.nameLikeElement.text
+    val title = if (const.static != null) "Static constant `$name`" else "Constant `$name`"
     when (const.owner) {
         is RsAbstractableOwner.Free -> {
             deny(const.default, holder, "$title cannot have the `default` qualifier")

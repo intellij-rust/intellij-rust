@@ -3014,4 +3014,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             x.foo();
         }
     """)
+
+    fun `test no E0428 multiple underscore constants`() = checkErrors("""
+        const _: i32 = 1;
+        const _: i32 = 1;
+    """)
 }
