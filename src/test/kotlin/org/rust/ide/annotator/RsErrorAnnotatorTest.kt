@@ -755,6 +755,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             mod <error>foo</error>;
             fn foo() {}
+
+            // Macros have thair own namespace
+            type NO_M_DUP = u16;
+            macro NO_M_DUP(){}
         }
     """)
 
@@ -830,8 +834,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         struct <error descr="A type named `Arc` has already been defined in this module [E0428]">Arc</error>{}
         fn <error descr="A value named `test1` has already been defined in this module [E0428]">test1</error>(){}
         fn <error descr="A value named `test2` has already been defined in this module [E0428]">test2</error>(){}
-        
-        
+
+
         mod bar{
             pub struct A{}
             pub mod test3{}
@@ -840,11 +844,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         mod baz{
             pub struct test3{}
             pub const test2:u8 = 0;
-        }    
+        }
     """)
 
     fun `test no duplicates with import E0252`() = checkErrors("""
-        use bar::{test1};   
+        use bar::{test1};
         use baz::test2;
         use bar::test3;
         use bar::unresolved;
@@ -854,7 +858,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         struct Arc{}
         fn test1(){}
         fn test2(){}
-        
+
         mod bar{
             pub struct Arc{}
             pub mod test1{}
@@ -863,7 +867,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         mod baz{
             pub struct test2{}
             pub const test3:u8 = 0;
-        }        
+        }
     """)
 
     fun `test unnecessary pub E0449`() = checkErrors("""

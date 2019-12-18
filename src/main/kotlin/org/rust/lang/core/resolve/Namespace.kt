@@ -43,7 +43,7 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
 
     is RsLifetimeParameter -> LIFETIMES
 
-    is RsMacro -> MACROS
+    is RsMacro, is RsMacro2 -> MACROS
 
     else -> TYPES_N_VALUES
 }

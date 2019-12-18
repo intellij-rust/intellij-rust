@@ -275,6 +275,11 @@ class ImplLookup(
 
     // TODO rename to BuiltinImpls
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
+        if (ty is TyTuple) {
+            // Keep in sync with `getHardcodedImplPredicates`
+            return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
+        }
+
         if (project.macroExpansionManager.macroExpansionMode is MacroExpansionMode.New) {
             if (ty is TyUnit) {
                 return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
@@ -364,6 +369,14 @@ class ImplLookup(
         }
 
         return impls
+    }
+
+    private fun getHardcodedImplPredicates(ty: Ty, trait: BoundElement<RsTraitItem>): List<Predicate> {
+        if (ty is TyTuple) {
+            // Keep in sync with `getHardcodedImplPredicated`
+            return ty.types.map { Predicate.Trait(TraitRef(it, trait)) }
+        }
+        return emptyList()
     }
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
@@ -546,11 +559,7 @@ class ImplLookup(
 
     private fun sizedTraitCandidates(ty: Ty, sizedTrait: RsTraitItem): List<SelectionCandidate> {
         if (!ty.isSized()) return emptyList()
-        val candidate = if (ty is TyTypeParameter) {
-            SelectionCandidate.TypeParameter(sizedTrait.withSubst())
-        } else {
-            SelectionCandidate.DerivedTrait(sizedTrait)
-        }
+        val candidate = SelectionCandidate.TypeParameter(BoundElement(sizedTrait))
         return listOf(candidate)
     }
 
@@ -558,7 +567,7 @@ class ImplLookup(
     private fun autoTraitCandidates(ty: Ty, trait: RsTraitItem): List<SelectionCandidate> {
         // FOr now, just think that any type is Sync + Send
         // TODO implement auto trait logic
-        return listOf(SelectionCandidate.DerivedTrait(trait))
+        return listOf(SelectionCandidate.TypeParameter(BoundElement(trait)))
     }
 
     private fun confirmCandidate(
@@ -579,7 +588,14 @@ class ImplLookup(
                 val obligations = ctx.instantiateBounds(candidate.impl.bounds, candidateSubst, newRecDepth).toList()
                 Selection(candidate.impl, obligations, candidateSubst)
             }
-            is SelectionCandidate.DerivedTrait -> Selection(candidate.item, emptyList())
+            is SelectionCandidate.DerivedTrait -> {
+                val selfTy = ref.selfTy as TyAdt // Guaranteed by `assembleCandidates`
+                // For `#[derive(Clone)] struct S<T>(T);` add `T: Clone` obligation
+                val obligations = selfTy.typeArguments.map {
+                    Obligation(newRecDepth, Predicate.Trait(TraitRef(it, BoundElement(candidate.item))))
+                }
+                Selection(candidate.item, obligations)
+            }
             is SelectionCandidate.Closure -> {
                 // TODO hacks hacks hacks
                 val (trait, _, assoc) = ref.trait
@@ -607,7 +623,8 @@ class ImplLookup(
                     be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
                 }
                 ctx.combineBoundElements(impl, ref.trait)
-                Selection(impl.element, emptyList(), mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
+                val obligations = getHardcodedImplPredicates(ref.selfTy, impl).map { Obligation(newRecDepth, it) }
+                Selection(impl.element, obligations, mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst())
             }
         }
     }

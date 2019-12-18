@@ -66,6 +66,8 @@ fn foo() {
         10, y = 30
     }
     panic!("division by zero");
+    unimplemented!("{} {} {}", 1, 2, 3);
+    todo!("it's too {epithet} to implement", epithet = "boring");
     eprintln!(Foo[]); // custom format macro
     // -------------------
 

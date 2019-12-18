@@ -7,7 +7,6 @@ package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
@@ -629,8 +628,7 @@ class RsTypeInferenceWalker(
         }.singleOrFilter { callee ->
             // 2. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
-            val impl = callee.source.impl ?: return@singleOrFilter true
-            ctx.canEvaluateBounds(impl, callee.selfTy)
+            ctx.canEvaluateBounds(callee.source, callee.selfTy)
         }
     }
 

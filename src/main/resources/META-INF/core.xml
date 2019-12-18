@@ -890,6 +890,9 @@
         <component>
             <implementation-class>org.rust.ide.console.RsConsoleRunnerFactory</implementation-class>
         </component>
+        <component>
+            <implementation-class>org.rust.ide.todo.RsTodoApplicationComponent</implementation-class>
+        </component>
     </application-components>
 
     <project-components>

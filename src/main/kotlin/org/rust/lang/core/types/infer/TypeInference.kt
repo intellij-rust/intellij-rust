@@ -686,8 +686,20 @@ class RsInferenceContext(
         return map
     }
 
+    /** Checks that [selfTy] satisfies all trait bounds of the [source] */
+    fun canEvaluateBounds(source: TraitImplSource, selfTy: Ty): Boolean {
+        return when (source) {
+            is TraitImplSource.ExplicitImpl -> canEvaluateBounds(source.value, selfTy)
+            is TraitImplSource.Derived, is TraitImplSource.Hardcoded -> {
+                if (source.value.typeParameters.isNotEmpty()) return true
+                lookup.canSelect(TraitRef(selfTy, BoundElement(source.value as RsTraitItem)))
+            }
+            else -> return true
+        }
+    }
+
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
-    fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
+    private fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
         val subst = impl.generics.associateWith { typeVarForParam(it) }.toTypeSubst()
         return probe {

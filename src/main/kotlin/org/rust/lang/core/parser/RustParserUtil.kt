@@ -326,7 +326,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
         put(RustParser::ExprMacroArgument, true, "try", "await", "dbg")
         put(RustParser::FormatMacroArgument, true, "format", "format_args", "write", "writeln", "print", "println",
-            "eprint", "eprintln", "panic", "unimplemented", "unreachable")
+            "eprint", "eprintln", "panic", "unimplemented", "unreachable", "todo")
         put(RustParser::AssertMacroArgument, true, "assert", "debug_assert", "assert_eq", "assert_ne",
             "debug_assert_eq", "debug_assert_ne")
         put(RustParser::VecMacroArgument, true, "vec")

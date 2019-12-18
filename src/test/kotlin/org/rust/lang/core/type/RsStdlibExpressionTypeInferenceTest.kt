@@ -770,4 +770,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             c;
         } //^ String
     """)
+
+    fun `test 'Clone' is not derived for generic type`() = stubOnlyTypeInfer("""
+    //- main.rs
+        struct X; // Not `Clone`
+        #[derive(Clone)]
+        struct S<T>(T);
+        fn main() {
+            let a = &S(X);
+            let b = a.clone(); // `S<X>` is not `Clone`, so resolved to std `impl for &T`
+            b;
+        } //^ &S<X>
+    """)
 }
