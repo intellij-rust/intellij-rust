@@ -27,7 +27,7 @@ import org.rust.lang.core.psiElement
  * successfully, i.e. [RsMacroCall.expansion] == null. If macro is expanded successfully,
  * [RsFullMacroArgumentCompletionProvider] is used.
  */
-object RsPartialMacroArgumentCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsPartialMacroArgumentCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         fun addCompletions(fragment: RsCodeFragment, offset: Int) {
             val element = fragment.findElementAt(offset) ?: return
@@ -70,7 +70,7 @@ object RsPartialMacroArgumentCompletionProvider : CompletionProvider<CompletionP
         }
     }
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() = psiElement()
             .withLanguage(RsLanguage)
             .inside(psiElement<RsMacroArgument>())

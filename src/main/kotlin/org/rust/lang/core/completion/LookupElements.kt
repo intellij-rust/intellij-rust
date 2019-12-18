@@ -37,17 +37,60 @@ import org.rust.lang.core.types.type
 const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
 const val FRAGMENT_SPECIFIER_PRIORITY = KEYWORD_PRIORITY
-private const val VARIABLE_PRIORITY = 5.0
-private const val ENUM_VARIANT_PRIORITY = 4.0
-private const val FIELD_DECL_PRIORITY = 3.0
-private const val ASSOC_FN_PRIORITY = 2.0
-private const val DEFAULT_PRIORITY = 0.0
-private const val MACRO_PRIORITY = -0.1
-private const val DEPRECATED_PRIORITY = -1.0
+const val VARIABLE_PRIORITY = 5.0
+const val ENUM_VARIANT_PRIORITY = 4.0
+const val FIELD_DECL_PRIORITY = 3.0
+const val ASSOC_FN_PRIORITY = 2.0
+const val DEFAULT_PRIORITY = 0.0
+const val MACRO_PRIORITY = -0.1
+const val DEPRECATED_PRIORITY = -1.0
 
 private const val EXPECTED_TYPE_PRIORITY_OFFSET = 40.0
 private const val LOCAL_PRIORITY_OFFSET = 20.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
+
+interface CompletionEntity {
+    val ty: Ty?
+    val implLookup: ImplLookup
+    fun getBasePriority(context: RsCompletionContext): Double
+    fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder
+}
+
+class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : CompletionEntity {
+
+    private val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
+
+    override val ty: Ty? get() = element.asTy
+    override val implLookup: ImplLookup get() = element.implLookup
+
+    override fun getBasePriority(context: RsCompletionContext): Double {
+        var priority = when {
+            element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
+            element is RsMacro -> MACRO_PRIORITY
+            element is RsPatBinding -> VARIABLE_PRIORITY
+            element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
+            element is RsFieldDecl -> FIELD_DECL_PRIORITY
+            element is RsFunction && element.isAssocFn -> ASSOC_FN_PRIORITY
+            else -> DEFAULT_PRIORITY
+        }
+
+        if (element is RsAbstractable && element.owner.isInherentImpl) {
+            priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
+        }
+
+        if (context.isSimplePath && !element.canBeExported) {
+            // It's visible and can't be exported = it's local
+            priority += LOCAL_PRIORITY_OFFSET
+        }
+
+        return priority
+    }
+
+    override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {
+        val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
+        return element.getLookupElementBuilder(scopeEntry.name, subst)
+    }
+}
 
 fun createLookupElement(
     scopeEntry: ScopeEntry,
@@ -55,36 +98,26 @@ fun createLookupElement(
     locationString: String? = null,
     insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
 ): LookupElement {
-    val element = checkNotNull(scopeEntry.element) { "Invalid scope entry" }
-    val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
-    val base = element.getLookupElementBuilder(scopeEntry.name, subst)
+    val completionEntity = ScopedBaseCompletionEntity(scopeEntry)
+    return createLookupElement(completionEntity, context, locationString, insertHandler)
+}
+
+fun createLookupElement(
+    completionEntity: CompletionEntity,
+    context: RsCompletionContext,
+    locationString: String? = null,
+    insertHandler: InsertHandler<LookupElement> = RsDefaultInsertHandler()
+): LookupElement {
+    val lookup = completionEntity.createBaseLookupElement(context)
         .withInsertHandler(insertHandler)
         .let { if (locationString != null) it.appendTailText(" ($locationString)", true) else it }
+    var priority = completionEntity.getBasePriority(context)
 
-    var priority = when {
-        element is RsDocAndAttributeOwner && element.queryAttributes.deprecatedAttribute != null -> DEPRECATED_PRIORITY
-        element is RsMacro -> MACRO_PRIORITY
-        element is RsPatBinding -> VARIABLE_PRIORITY
-        element is RsEnumVariant -> ENUM_VARIANT_PRIORITY
-        element is RsFieldDecl -> FIELD_DECL_PRIORITY
-        element is RsFunction && element.isAssocFn -> ASSOC_FN_PRIORITY
-        else -> DEFAULT_PRIORITY
-    }
-
-    if (element is RsAbstractable && element.owner.isInherentImpl) {
-        priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
-    }
-
-    if (context.isSimplePath && !element.canBeExported) {
-        // It's visible and can't be exported = it's local
-        priority += LOCAL_PRIORITY_OFFSET
-    }
-
-    if (isCompatibleTypes(element.implLookup, element.asTy, context.expectedTy)) {
+    if (isCompatibleTypes(completionEntity.implLookup, completionEntity.ty, context.expectedTy)) {
         priority += EXPECTED_TYPE_PRIORITY_OFFSET
     }
 
-    return base.withPriority(priority)
+    return lookup.withPriority(priority)
 }
 
 private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
@@ -129,6 +162,7 @@ private fun RsElement.getLookupElementBuilder(scopeName: String, subst: Substitu
         is RsConstParameter -> base
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsFieldDecl -> base
+            .bold()
             .withTypeText(typeReference?.getStubOnlyText(subst))
         is RsTraitItem -> base
 

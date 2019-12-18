@@ -14,15 +14,20 @@ import org.rust.lang.core.psi.ext.elementType
 class RsCompletionContributor : CompletionContributor() {
 
     init {
-        extend(CompletionType.BASIC, RsPrimitiveTypeCompletionProvider.elementPattern, RsPrimitiveTypeCompletionProvider)
-        extend(CompletionType.BASIC, RsFragmentSpecifierCompletionProvider.elementPattern, RsFragmentSpecifierCompletionProvider)
-        extend(CompletionType.BASIC, RsCommonCompletionProvider.elementPattern, RsCommonCompletionProvider)
-        extend(CompletionType.BASIC, RsDeriveCompletionProvider.elementPattern, RsDeriveCompletionProvider)
-        extend(CompletionType.BASIC, AttributeCompletionProvider.elementPattern, AttributeCompletionProvider)
-        extend(CompletionType.BASIC, RsMacroCompletionProvider.elementPattern, RsMacroCompletionProvider)
-        extend(CompletionType.BASIC, RsPartialMacroArgumentCompletionProvider.elementPattern, RsPartialMacroArgumentCompletionProvider)
-        extend(CompletionType.BASIC, RsFullMacroArgumentCompletionProvider.elementPattern, RsFullMacroArgumentCompletionProvider)
-        extend(CompletionType.BASIC, RsCfgAttributeCompletionProvider.elementPattern, RsCfgAttributeCompletionProvider)
+        extend(CompletionType.BASIC, RsPrimitiveTypeCompletionProvider)
+        extend(CompletionType.BASIC, RsFragmentSpecifierCompletionProvider)
+        extend(CompletionType.BASIC, RsCommonCompletionProvider)
+        extend(CompletionType.BASIC, RsTupleFieldCompletionProvider)
+        extend(CompletionType.BASIC, RsDeriveCompletionProvider)
+        extend(CompletionType.BASIC, AttributeCompletionProvider)
+        extend(CompletionType.BASIC, RsMacroCompletionProvider)
+        extend(CompletionType.BASIC, RsPartialMacroArgumentCompletionProvider)
+        extend(CompletionType.BASIC, RsFullMacroArgumentCompletionProvider)
+        extend(CompletionType.BASIC, RsCfgAttributeCompletionProvider)
+    }
+
+    fun extend(type: CompletionType?, provider: RsCompletionProvider) {
+        extend(type, provider.elementPattern, provider)
     }
 
     override fun invokeAutoPopup(position: PsiElement, typeChar: Char): Boolean =

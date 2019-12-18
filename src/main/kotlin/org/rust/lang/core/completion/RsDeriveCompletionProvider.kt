@@ -27,7 +27,7 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.withDependencies
 import org.rust.lang.core.types.TraitRef
 
-object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsDeriveCompletionProvider : RsCompletionProvider() {
 
     private const val DEFAULT_PRIORITY = 5.0
     private const val GROUP_PRIORITY = DEFAULT_PRIORITY + 0.1
@@ -67,7 +67,7 @@ object RsDeriveCompletionProvider : CompletionProvider<CompletionParameters>() {
             }
     }
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() {
 
             val deriveAttr = psiElement(META_ITEM)
