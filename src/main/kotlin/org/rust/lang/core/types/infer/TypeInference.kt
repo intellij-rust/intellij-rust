@@ -38,11 +38,12 @@ sealed class Adjustment(open val target: Ty): TypeFoldable<Adjustment> {
         override fun superFoldWith(folder: TypeFolder): Adjustment = Deref(target.foldWith(folder))
         override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
     }
+
     class BorrowReference(
         override val target: TyReference,
         val region: Region? = target.region,
         val mutability: Mutability? = target.mutability
-    ) : Adjustment(target){
+    ) : Adjustment(target) {
         override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowReference(target.foldWith(folder) as TyReference)
         override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
     }
