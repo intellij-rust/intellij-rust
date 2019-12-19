@@ -22,6 +22,23 @@ inline fun <reified T : RsElement> RsStructLiteralField.resolveToElement(): T? =
 fun RsStructLiteralField.resolveToDeclaration(): RsFieldDecl? = resolveToElement()
 fun RsStructLiteralField.resolveToBinding(): RsPatBinding? = resolveToElement()
 
+/**
+ * ```
+ * struct S {
+ *     foo: i32,
+ *     bar: i32,
+ * }
+ * fn main() {
+ *     let foo = 1;
+ *     let s = S {
+ *         foo,   // isShorthand = true
+ *         bar: 1 // isShorthand = false
+ *     };
+ * }
+ * ```
+ */
+val RsStructLiteralField.isShorthand: Boolean get() = colon == null
+
 abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node), RsStructLiteralField {
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)

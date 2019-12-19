@@ -16,6 +16,7 @@ import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.isShorthand
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineValueProcessor(
@@ -41,7 +42,7 @@ class RsInlineValueProcessor(
             val reference = it.reference as? RsReference ?: return@loop
             when (val element = reference.element) {
                 is RsStructLiteralField -> {
-                    if (element.colon == null) {
+                    if (element.isShorthand) {
                         element.addAfter(factory.createColon(), element.referenceNameElement)
                     }
                     if (element.expr == null) {
