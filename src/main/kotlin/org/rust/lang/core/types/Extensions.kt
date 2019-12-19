@@ -85,6 +85,12 @@ val RsPatField.type: Ty
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 
+val RsExpr.adjustments: List<Adjustment>
+    get() = inference?.getExprAdjustments(this) ?: emptyList()
+
+val RsStructLiteralField.adjustments: List<Adjustment>
+    get() = inference?.getExprAdjustments(this) ?: emptyList()
+
 val RsPathExpr.expectedType: Ty?
     get() = inference?.getExpectedPathExprType(this)
 

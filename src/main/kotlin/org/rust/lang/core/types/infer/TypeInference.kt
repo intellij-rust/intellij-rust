@@ -23,6 +23,7 @@ import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.snapshot.CombinedSnapshot
 import org.rust.lang.utils.snapshot.Snapshot
 import org.rust.openapiext.recursionGuard
+import org.rust.stdext.mapToMutableList
 import org.rust.stdext.zipValues
 
 fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
@@ -33,19 +34,26 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
         ?: error("Can not run nested type inference")
 }
 
-sealed class Adjustment(open val target: Ty) {
-    class Deref(target: Ty) : Adjustment(target)
+sealed class Adjustment(open val target: Ty): TypeFoldable<Adjustment> {
+    class Deref(target: Ty) : Adjustment(target) {
+        override fun superFoldWith(folder: TypeFolder): Adjustment = Deref(target.foldWith(folder))
+        override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
+    }
+
     class BorrowReference(
         override val target: TyReference,
-        val region: Region? = (target as? TyReference)?.region,
-        val mutability: Mutability? = (target as? TyReference)?.mutability
-    ) : Adjustment(target)
+        val region: Region? = target.region,
+        val mutability: Mutability? = target.mutability
+    ) : Adjustment(target) {
+        override fun superFoldWith(folder: TypeFolder): Adjustment = BorrowReference(target.foldWith(folder) as TyReference)
+        override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
+    }
 
 //    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
 }
 
 interface RsInferenceData {
-    fun getExprAdjustments(expr: RsExpr): List<Adjustment>
+    fun getExprAdjustments(expr: RsElement): List<Adjustment>
     fun getExprType(expr: RsExpr): Ty
     fun getExpectedPathExprType(expr: RsPathExpr): Ty
     fun getExpectedDotExprType(expr: RsDotExpr): Ty
@@ -73,12 +81,12 @@ class RsInferenceResult(
     private val resolvedPaths: Map<RsPathExpr, List<ResolvedPath>>,
     private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
-    private val adjustments: Map<RsExpr, List<Adjustment>>,
+    private val adjustments: Map<RsElement, List<Adjustment>>,
     val diagnostics: List<RsDiagnostic>
 ) : RsInferenceData {
     private val timestamp: Long = System.nanoTime()
 
-    override fun getExprAdjustments(expr: RsExpr): List<Adjustment> =
+    override fun getExprAdjustments(expr: RsElement): List<Adjustment> =
         adjustments[expr] ?: emptyList()
 
     override fun getExprType(expr: RsExpr): Ty =
@@ -132,7 +140,7 @@ class RsInferenceContext(
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
     private val pathRefinements: MutableList<Pair<RsPathExpr, TraitRef>> = mutableListOf()
     private val methodRefinements: MutableList<Pair<RsMethodCall, TraitRef>> = mutableListOf()
-    private val adjustments: MutableMap<RsExpr, MutableList<Adjustment>> = hashMapOf()
+    private val adjustments: MutableMap<RsElement, MutableList<Adjustment>> = hashMapOf()
     val diagnostics: MutableList<RsDiagnostic> = mutableListOf()
 
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
@@ -227,6 +235,7 @@ class RsInferenceContext(
         patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
         diagnostics.replaceAll { if (it is RsDiagnostic.TypeError) fullyResolve(it) else it }
+        adjustments.replaceAll { _, it -> it.mapToMutableList { fullyResolve(it) } }
 
         performPathsRefinement(lookup)
 
@@ -282,7 +291,7 @@ class RsInferenceContext(
         }
     }
 
-    override fun getExprAdjustments(expr: RsExpr): List<Adjustment> {
+    override fun getExprAdjustments(expr: RsElement): List<Adjustment> {
         return adjustments[expr] ?: emptyList()
     }
 
@@ -360,9 +369,13 @@ class RsInferenceContext(
         }
     }
 
-    fun addAdjustment(expression: RsExpr, adjustment: Adjustment, count: Int = 1) {
-        repeat(count) {
-            adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
+    fun addAdjustment(expression: RsElement, adjustment: Adjustment) {
+        adjustments.getOrPut(expression) { mutableListOf() }.add(adjustment)
+    }
+
+    fun addDerefAdjustments(expression: RsExpr, types: List<Ty>) {
+        for (ty in types) {
+            adjustments.getOrPut(expression) { mutableListOf() }.add(Adjustment.Deref(ty))
         }
     }
 
@@ -389,11 +402,11 @@ class RsInferenceContext(
         return res
     }
 
-    fun combineTypes(ty1: Ty, ty2: Ty): CoerceResult {
+    fun combineTypes(ty1: Ty, ty2: Ty): RelateResult {
         return combineTypesResolved(shallowResolve(ty1), shallowResolve(ty2))
     }
 
-    private fun combineTypesResolved(ty1: Ty, ty2: Ty): CoerceResult {
+    private fun combineTypesResolved(ty1: Ty, ty2: Ty): RelateResult {
         return when {
             ty1 is TyInfer.TyVar -> combineTyVar(ty1, ty2)
             ty2 is TyInfer.TyVar -> combineTyVar(ty2, ty1)
@@ -405,7 +418,7 @@ class RsInferenceContext(
         }
     }
 
-    private fun combineTyVar(ty1: TyInfer.TyVar, ty2: Ty): CoerceResult {
+    private fun combineTyVar(ty1: TyInfer.TyVar, ty2: Ty): RelateResult {
         when (ty2) {
             is TyInfer.TyVar -> varUnificationTable.unifyVarVar(ty1, ty2)
             else -> {
@@ -426,31 +439,31 @@ class RsInferenceContext(
                 }
             }
         }
-        return CoerceResult.Ok
+        return RelateResult.Ok
     }
 
-    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty): CoerceResult {
+    private fun combineIntOrFloatVar(ty1: TyInfer, ty2: Ty): RelateResult {
         when (ty1) {
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
                 is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.Mismatch(ty1, ty2)
+                else -> return RelateResult.Mismatch(ty1, ty2)
             }
             is TyInfer.FloatVar -> when (ty2) {
                 is TyInfer.FloatVar -> floatUnificationTable.unifyVarVar(ty1, ty2)
                 is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.Mismatch(ty1, ty2)
+                else -> return RelateResult.Mismatch(ty1, ty2)
             }
             is TyInfer.TyVar -> error("unreachable")
         }
-        return CoerceResult.Ok
+        return RelateResult.Ok
     }
 
-    fun combineTypesNoVars(ty1: Ty, ty2: Ty): CoerceResult =
+    fun combineTypesNoVars(ty1: Ty, ty2: Ty): RelateResult =
         when {
-            ty1 === ty2 -> CoerceResult.Ok
-            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> CoerceResult.Ok
-            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> CoerceResult.Ok
+            ty1 === ty2 -> RelateResult.Ok
+            ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> RelateResult.Ok
+            ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> RelateResult.Ok
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
                 combineTypes(ty1.referenced, ty2.referenced)
             }
@@ -469,14 +482,14 @@ class RsInferenceContext(
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
                 combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
             }
-            ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> CoerceResult.Ok
-            ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> CoerceResult.Ok
-            ty1 is TyNever || ty2 is TyNever -> CoerceResult.Ok
-            else -> CoerceResult.Mismatch(ty1, ty2)
+            ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> RelateResult.Ok
+            ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> RelateResult.Ok
+            ty1 is TyNever || ty2 is TyNever -> RelateResult.Ok
+            else -> RelateResult.Mismatch(ty1, ty2)
         }
 
-    fun combinePairs(pairs: List<Pair<Ty, Ty>>): CoerceResult {
-        var canUnify: CoerceResult = CoerceResult.Ok
+    fun combinePairs(pairs: List<Pair<Ty, Ty>>): RelateResult {
+        var canUnify: RelateResult = RelateResult.Ok
         for ((t1, t2) in pairs) {
             canUnify = combineTypes(t1, t2).and { canUnify }
         }
@@ -726,23 +739,35 @@ class RsInferenceContext(
     fun instantiateMethodOwnerSubstitution(
         callee: AssocItemScopeEntryBase<*>,
         methodCall: RsMethodCall? = null
-    ): Substitution = when (val source = callee.source) {
+    ): Substitution = instantiateMethodOwnerSubstitution(callee.source, callee.selfTy, callee.element, methodCall)
+
+    fun instantiateMethodOwnerSubstitution(
+        callee: MethodPick,
+        methodCall: RsMethodCall? = null
+    ): Substitution = instantiateMethodOwnerSubstitution(callee.source, callee.formalSelfTy, callee.element, methodCall)
+
+    private fun instantiateMethodOwnerSubstitution(
+        source: TraitImplSource,
+        selfTy: Ty,
+        element: RsAbstractable,
+        methodCall: RsMethodCall? = null
+    ): Substitution = when (source) {
         is TraitImplSource.ExplicitImpl -> {
             val impl = source.value
             val typeParameters = instantiateBounds(impl)
-            source.type?.substitute(typeParameters)?.let { combineTypes(callee.selfTy, it) }
-            if (callee.element.owner is RsAbstractableOwner.Trait) {
+            source.type?.substitute(typeParameters)?.let { combineTypes(selfTy, it) }
+            if (element.owner is RsAbstractableOwner.Trait) {
                 source.implementedTrait?.substitute(typeParameters)?.subst ?: emptySubstitution
             } else {
                 typeParameters
             }
         }
-        is TraitImplSource.TraitBound -> lookup.getEnvBoundTransitivelyFor(callee.selfTy)
+        is TraitImplSource.TraitBound -> lookup.getEnvBoundTransitivelyFor(selfTy)
             .find { it.element == source.value }?.subst ?: emptySubstitution
 
         is TraitImplSource.Derived -> emptySubstitution
 
-        is TraitImplSource.Object -> when (val selfTy = callee.selfTy) {
+        is TraitImplSource.Object -> when (selfTy) {
             is TyAnon -> selfTy.getTraitBoundsTransitively()
                 .find { it.element == source.value }?.subst ?: emptySubstitution
             is TyTraitObject -> selfTy.trait.flattenHierarchy
@@ -757,7 +782,7 @@ class RsInferenceContext(
             val typeParameters = instantiateBounds(trait)
             val subst = trait.generics.associateBy { it }.toTypeSubst()
             val boundTrait = BoundElement(trait, subst).substitute(typeParameters)
-            val traitRef = TraitRef(callee.selfTy, boundTrait)
+            val traitRef = TraitRef(selfTy, boundTrait)
             fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
             if (methodCall != null) {
                 registerMethodRefinement(methodCall, traitRef)
@@ -829,16 +854,52 @@ sealed class ResolvedPath {
     }
 }
 
-sealed class CoerceResult {
-    object Ok : CoerceResult()
-    class Mismatch(val ty1: Ty, val ty2: Ty) : CoerceResult()
+data class MethodPick(
+    val element: RsFunction,
+    /** A type that should be unified with `Self` type of the `impl` */
+    val formalSelfTy: Ty,
+    /** An actual type of `self` inside the method. Can differ from [formalSelfTy] because of `&mut self`, etc */
+    val methodSelfTy: Ty,
+    val derefCount: Int,
+    val source: TraitImplSource,
+    val derefChain: List<Ty>,
+    val borrow: Mutability?,
+    val isValid: Boolean
+) {
+    fun toMethodResolveVariant(): MethodResolveVariant =
+        MethodResolveVariant(element.name!!, element, formalSelfTy, derefCount, source)
+
+    companion object {
+        fun from(m: MethodResolveVariant, methodSelfTy: Ty, derefChain: List<Ty>, borrow: Mutability?) =
+            MethodPick(m.element, m.selfTy, methodSelfTy, m.derefCount, m.source, derefChain, borrow, true)
+
+        fun from(m: MethodResolveVariant) =
+            MethodPick(m.element, m.selfTy, TyUnknown, m.derefCount, m.source, emptyList(), null, false)
+    }
+}
+
+sealed class RelateResult {
+    object Ok : RelateResult()
+    class Mismatch(val ty1: Ty, val ty2: Ty) : RelateResult()
 
     val isOk: Boolean get() = this == Ok
 }
 
-inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = when (this) {
-    is CoerceResult.Mismatch -> this
-    CoerceResult.Ok -> rhs()
+inline fun RelateResult.and(rhs: () -> RelateResult): RelateResult = when (this) {
+    is RelateResult.Mismatch -> this
+    RelateResult.Ok -> rhs()
+}
+
+sealed class CoerceResult {
+    class Ok(val adjustments: List<Adjustment> = emptyList()) : CoerceResult()
+    class Mismatch(val ty1: Ty, val ty2: Ty) : CoerceResult()
+
+    val isOk: Boolean get() = this is Ok
+}
+
+fun RelateResult.into(): CoerceResult = when (this) {
+    RelateResult.Ok -> CoerceResult.Ok()
+    is RelateResult.Mismatch -> CoerceResult.Mismatch(ty1, ty2)
 }
 
 object TypeInferenceMarks {

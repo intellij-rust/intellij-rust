@@ -266,7 +266,14 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         val type = inference.getExprType(indexExpr)
         val base = indexExpr.containerExpr ?: return Cmt(indexExpr, ty = type)
         val baseCmt = processExpr(base)
-        return Cmt(indexExpr, Interior.Index(baseCmt), baseCmt.mutabilityCategory.inherit(), type)
+        return if (baseCmt.ty is TyArray) {
+            Cmt(indexExpr, Interior.Index(baseCmt), baseCmt.mutabilityCategory.inherit(), type)
+        } else {
+            // rustc'a cat_overloaded_place
+            val baseTy = baseCmt.ty as? TyReference ?: return Cmt(indexExpr, ty = type)
+            val refTy = TyReference(type, baseTy.mutability, baseTy.region)
+            return processDeref(indexExpr, processRvalue(indexExpr, refTy))
+        }
     }
 
     private fun processPathExpr(pathExpr: RsPathExpr): Cmt {

@@ -87,6 +87,38 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            (buf[0]);
+                 //^ Deref, Immutable
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 1`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            buf[0] = 1;
+               //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 2`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            (buf[0]) = 1;
+                //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 3`() = testExpr("""
+        fn f(buf: &mut [&mut [u8]]) {
+            buf[0][0] = 1;
+               //^ Deref, Declared
+        }
+    """)
+
     fun `test immutable struct`() = testExpr("""
         struct Foo { a: i32 }
         fn main() {
@@ -236,14 +268,6 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
           (|mut x: i32| x + 1);
                       //^ Local, Declared
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test array`() = testExpr("""
-        fn f(buf: &mut [u8]) {
-            (buf[0]);
-                 //^ Index, Inherited
         }
     """)
 
