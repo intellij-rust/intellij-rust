@@ -43,17 +43,17 @@ inline fun RsAbstractable.getOwner(getAncestor: PsiElement.() -> PsiElement?): R
 // Resolve a const, fn or type in a impl block to the corresponding item in the trait block
 val RsAbstractable.superItem: RsAbstractable?
     get() {
-        val rustImplItem = ancestorStrict<RsImplItem>() ?: return null
-        val superTrait = rustImplItem.traitRef?.resolveToTrait() ?: return null
+        val impl = (owner as? RsAbstractableOwner.Impl)?.impl ?: return null
+        val superTrait = impl.traitRef?.resolveToTrait() ?: return null
         return superTrait.findCorrespondingElement(this)
     }
 
 fun RsTraitOrImpl.findCorrespondingElement(element: RsAbstractable): RsAbstractable? {
-    val members = members ?: return null
+    val members = expandedMembers
     return when (element) {
-        is RsConstant -> members.constantList.find { it.name == element.name }
-        is RsFunction -> members.functionList.find { it.name == element.name }
-        is RsTypeAlias -> members.typeAliasList.find { it.name == element.name }
+        is RsConstant -> members.constants.find { it.name == element.name }
+        is RsFunction -> members.functions.find { it.name == element.name }
+        is RsTypeAlias -> members.types.find { it.name == element.name }
         else -> error("unreachable")
     }
 }
