@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.ide.presentation.insertionSafeTextWithAliases
 import org.rust.lang.core.psi.RsLetDecl
-import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAnon
@@ -30,8 +30,10 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val letDecl = element.ancestorStrict<RsLetDecl>() ?: return null
         if (letDecl.typeReference != null) return null
-        val ident = letDecl.pat as? RsPatIdent ?: return null
-        val type = ident.patBinding.type
+        val initializer = letDecl.expr
+        if (initializer != null && element.startOffset >= initializer.startOffset - 1) return null
+        val pat = letDecl.pat ?: return null
+        val type = pat.type
         if (type.containsTyOfClass(listOf(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java))) {
             return null
         }
