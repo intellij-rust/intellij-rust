@@ -22,6 +22,8 @@ inline fun <reified T : RsElement> RsStructLiteralField.resolveToElement(): T? =
 fun RsStructLiteralField.resolveToDeclaration(): RsFieldDecl? = resolveToElement()
 fun RsStructLiteralField.resolveToBinding(): RsPatBinding? = resolveToElement()
 
+val RsStructLiteralField.isShorthand: Boolean get() = colon == null
+
 abstract class RsStructLiteralFieldImplMixin(node: ASTNode) : RsElementImpl(node), RsStructLiteralField {
 
     override fun getReference(): RsReference = RsStructLiteralFieldReferenceImpl(this)

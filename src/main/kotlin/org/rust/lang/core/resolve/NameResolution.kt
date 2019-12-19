@@ -109,9 +109,16 @@ fun processFieldExprResolveVariants(
     receiverType: Ty,
     processor: (FieldResolveVariant) -> Boolean
 ): Boolean {
-    for ((i, ty) in lookup.coercionSequence(receiverType).withIndex()) {
-        if (ty !is TyAdt || ty.item !is RsStructItem) continue
-        if (processFieldDeclarations(ty.item) { processor(FieldResolveVariant(it.name, it.element!!, ty, i)) }) return true
+    val derefSequence = mutableListOf<Ty>()
+    lookup.coercionSequence(receiverType).forEachIndexed { i, ty ->
+        if (i != 0) {
+            derefSequence += ty
+        }
+        if (ty !is TyAdt || ty.item !is RsStructItem) return@forEachIndexed
+        val result = processFieldDeclarations(ty.item) {
+            processor(FieldResolveVariant(it.name, it.element!!, ty, derefSequence))
+        }
+        if (result) return true
     }
 
     return false

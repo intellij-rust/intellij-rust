@@ -35,7 +35,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
             usages
                 .filter {
                     val usageElement = it.element
-                    usageElement is RsStructLiteralField && usageElement.colon == null
+                    usageElement is RsStructLiteralField && usageElement.isShorthand
                 }
                 .forEach {
                     val newPatField = RsPsiFactory(element.project)

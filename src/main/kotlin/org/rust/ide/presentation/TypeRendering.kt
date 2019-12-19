@@ -17,6 +17,7 @@ import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.openapiext.escaped
 import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
@@ -219,4 +220,16 @@ private data class TypeRenderer(
         val INSERTION_SAFE_WITH_LIFETIMES: TypeRenderer = INSERTION_SAFE.copy(includeLifetimeArguments = true)
         val WITH_ALIASES: TypeRenderer = TypeRenderer(useAliasNames = true)
     }
+}
+
+fun renderAndAlignTypes(ty1: Ty, ty2: Ty): Pair<String, String> {
+    val ty1rendered = ty1.toString()
+    val ty1escaped = ty1rendered.escaped
+    val ty2rendered = ty2.toString()
+    val ty2escaped = ty2rendered.escaped
+    val ty1alignment = ty2rendered.indexOf(ty1rendered).takeIf { it != -1 } ?: 0
+    val ty2alignment = ty1rendered.indexOf(ty2rendered).takeIf { it != -1 } ?: 0
+    val ty1aligned = "&nbsp;".repeat(ty1alignment) + ty1escaped
+    val ty2aligned = "&nbsp;".repeat(ty2alignment) + ty2escaped
+    return ty1aligned to ty2aligned
 }

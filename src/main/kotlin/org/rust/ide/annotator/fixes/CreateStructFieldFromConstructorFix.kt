@@ -13,7 +13,6 @@ import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.parentStructLiteral
-import org.rust.lang.core.psi.ext.resolveToBinding
 import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
@@ -36,7 +35,7 @@ class CreateStructFieldFromConstructorFix(
     ) {
         val field = startElement as RsStructLiteralField
         val fieldName = field.identifier?.text ?: return
-        val fieldType = field.inferFieldTy() ?: return
+        val fieldType = field.type
         val struct = field.resolveToStructItem() ?: return
         val pub = struct.visibility == RsVisibility.Public
         val psiFactory = RsPsiFactory(project)
@@ -59,7 +58,7 @@ class CreateStructFieldFromConstructorFix(
     companion object {
         fun tryCreate(field: RsStructLiteralField): CreateStructFieldFromConstructorFix? {
             if (field.identifier == null) return null
-            val type = field.inferFieldTy() ?: return null
+            val type = field.type
             if (!canUse(type)) return null
             val struct = field.resolveToStructItem() ?: return null
             if (struct.tupleFields != null) return null
@@ -70,10 +69,6 @@ class CreateStructFieldFromConstructorFix(
 
         private fun RsStructLiteralField.resolveToStructItem(): RsStructItem? {
             return parentStructLiteral.path.reference.resolve() as? RsStructItem
-        }
-
-        private fun RsStructLiteralField.inferFieldTy(): Ty? {
-            return if (colon == null) resolveToBinding()?.type else expr?.type
         }
 
         private fun canUse(ty: Ty): Boolean {
