@@ -13,10 +13,7 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
-import org.rust.lang.core.psi.RsExpr
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsPat
-import org.rust.lang.core.psi.RsPatField
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.contexts
 import org.rust.lang.core.types.ty.Ty
@@ -31,7 +28,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         pivot.findExpansionElementOrSelf()
             .contexts
             .takeWhile { it !is RsItemElement }
-            .filter { it is RsExpr || it is RsPat || it is RsPatField }
+            .filter { it is RsExpr || it is RsPat || it is RsPatField || it is RsStructLiteralField }
             .mapNotNull { it.wrapExpandedElements() }
             .toList()
 
@@ -45,6 +42,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
         is RsExpr -> element.type
         is RsPat -> element.type
         is RsPatField -> element.type
+        is RsStructLiteralField -> element.type
         else -> error("Unexpected element type: $element")
     }
 }
