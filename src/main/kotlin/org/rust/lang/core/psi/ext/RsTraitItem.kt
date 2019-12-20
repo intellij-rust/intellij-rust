@@ -95,7 +95,7 @@ val RsTraitItem.isSized: Boolean get() {
 }
 
 fun RsTraitItem.withSubst(vararg subst: Ty): BoundElement<RsTraitItem> {
-    val typeParameterList = typeParameterList?.typeParameterList.orEmpty()
+    val typeParameterList = typeParameters
     val substitution = if (typeParameterList.size != subst.size) {
         LOG.warn("Trait has ${typeParameterList.size} type parameters but received ${subst.size} types for substitution")
         emptySubstitution

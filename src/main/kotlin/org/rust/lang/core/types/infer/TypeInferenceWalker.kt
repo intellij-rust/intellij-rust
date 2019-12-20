@@ -392,7 +392,13 @@ class RsTypeInferenceWalker(
         scopeEntry: ScopeEntry,
         pathExpr: RsPathExpr
     ): Ty {
-        val subst = instantiatePathGenerics(pathExpr.path, BoundElement(element, scopeEntry.subst)).subst
+        val path = pathExpr.path
+        val subst = instantiatePathGenerics(path, BoundElement(element, scopeEntry.subst)).subst
+
+        if (element is RsGenericDeclaration) {
+            inferConstArgumentTypes(element.constParameters, path.constArguments)
+        }
+
         val type = when (element) {
             is RsPatBinding -> ctx.getBindingType(element)
             is RsTypeDeclarationElement -> element.declaredType
@@ -579,6 +585,8 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
+        inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
+
         ctx.addDerefAdjustments(methodCall.receiver, callee.derefChain)
         if (callee.borrow != null) {
             ctx.addAdjustment(methodCall.receiver, Adjustment.BorrowReference(callee.methodSelfTy as TyReference))
@@ -729,6 +737,10 @@ class RsTypeInferenceWalker(
                 expr.inferTypeCoercableTo(type)
             }
         }
+    }
+
+    fun inferConstArgumentTypes(constParameters: List<RsConstParameter>, constArguments: List<RsExpr>) {
+        inferArgumentTypes(constParameters.map { it.typeReference?.type ?: TyUnknown }, constArguments)
     }
 
     private fun inferFieldExprType(receiver: Ty, fieldLookup: RsFieldLookup): Ty {
