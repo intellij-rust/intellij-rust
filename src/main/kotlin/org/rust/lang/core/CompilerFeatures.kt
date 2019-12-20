@@ -34,9 +34,6 @@ val ALLOW_INTERNAL_UNSTABLE = CompilerFeature("allow_internal_unstable", ACTIVE,
 // below (it has to be checked before expansion possibly makes
 // macros disappear).
 val ALLOW_INTERNAL_UNSAFE = CompilerFeature("allow_internal_unsafe", ACTIVE, "1.0.0")
-// Allows using `#[rustc_const_unstable(feature = "foo", ..)]` which
-// lets a function to be `const` when opted into with `#![feature(foo)]`.
-val RUSTC_CONST_UNSTABLE = CompilerFeature("rustc_const_unstable", ACTIVE, "1.0.0")
 // no-tracking-issue-end
 
 // Allows using `#[link_name="llvm.*"]`.
@@ -181,6 +178,8 @@ val NAKED_FUNCTIONS = CompilerFeature("naked_functions", ACTIVE, "1.9.0")
 val CFG_TARGET_HAS_ATOMIC = CompilerFeature("cfg_target_has_atomic", ACTIVE, "1.9.0")
 // Allows `X..Y` patterns.
 val EXCLUSIVE_RANGE_PATTERN = CompilerFeature("exclusive_range_pattern", ACTIVE, "1.11.0")
+// Allows the `!` type. Does not imply 'exhaustive_patterns' (below) any more.
+val NEVER_TYPE = CompilerFeature("never_type", ACTIVE, "1.13.0")
 // Allows exhaustive pattern matching on types that contain uninhabited types.
 val EXHAUSTIVE_PATTERNS = CompilerFeature("exhaustive_patterns", ACTIVE, "1.13.0")
 // Allows `union`s to implement `Drop`. Moreover, `union`s may now include fields
@@ -250,9 +249,6 @@ val TRIVIAL_BOUNDS = CompilerFeature("trivial_bounds", ACTIVE, "1.28.0")
 val LABEL_BREAK_VALUE = CompilerFeature("label_break_value", ACTIVE, "1.28.0")
 // Allows using `#[doc(keyword = "...")]`.
 val DOC_KEYWORD = CompilerFeature("doc_keyword", ACTIVE, "1.28.0")
-// Allows reinterpretation of the bits of a value of one type as another
-// type during const eval.
-val CONST_TRANSMUTE = CompilerFeature("const_transmute", ACTIVE, "1.29.0")
 // Allows using `try {...}` expressions.
 val TRY_BLOCKS = CompilerFeature("try_blocks", ACTIVE, "1.29.0")
 // Allows defining an `#[alloc_error_handler]`.
@@ -331,6 +327,10 @@ val REGISTER_TOOL = CompilerFeature("register_tool", ACTIVE, "1.41.0")
 val CONST_IF_MATCH = CompilerFeature("const_if_match", ACTIVE, "1.41.0")
 // Allows the use of `#[cfg(sanitize = "option")]`; set when -Zsanitizer is used.
 val CFG_SANITIZE = CompilerFeature("cfg_sanitize", ACTIVE, "1.41.0")
+// Allows using `&mut` in constant functions.
+val CONST_MUT_REFS = CompilerFeature("const_mut_refs", ACTIVE, "1.41.0")
+// Allows the use of `loop` and `while` in constants.
+val CONST_LOOP = CompilerFeature("const_loop", ACTIVE, "1.41.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -560,8 +560,6 @@ val NON_EXHAUSTIVE = CompilerFeature("non_exhaustive", ACCEPTED, "1.40.0")
 val CONST_CONSTRUCTOR = CompilerFeature("const_constructor", ACCEPTED, "1.40.0")
 // Allows the use of `#[cfg(doctest)]`, set when rustdoc is collecting doctests.
 val CFG_DOCTEST = CompilerFeature("cfg_doctest", ACCEPTED, "1.40.0")
-// Allows the `!` type. Does not imply 'exhaustive_patterns' any more.
-val NEVER_TYPE = CompilerFeature("never_type", ACCEPTED, "1.41.0")
 // Allows relaxing the coherence rules such that
 // `impl<T> ForeignTrait<LocalType> for ForeignType<T>` is permitted.
 val RE_REBALANCE_COHERENCE = CompilerFeature("re_rebalance_coherence", ACCEPTED, "1.41.0")
