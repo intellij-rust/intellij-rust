@@ -213,8 +213,28 @@ class RsNamespaceResolveTest : RsResolveTestBase() {
         }                  //^
     """)
 
+    fun `test tuple struct pattern namespace`() = checkByCode("""
+        struct Foo {}
+        enum Bar {
+            Foo(i32)
+        } //X
+        use self::Bar::*;
+        fn main() {
+            let Foo(_) = Foo(1);
+        }     //^
+    """)
+
+    fun `test struct pattern namespace`() = checkByCode("""
+        struct Foo { f: i32 }
+             //X
+        fn Foo() {}
+        fn main() {
+            let Foo { f } = Foo { f: 1 };
+        }     //^
+    """)
+
     fun `test const generic type namespace (type alias)`() = checkByCode("""
-        type A<const N: usize> = 
+        type A<const N: usize> =
                    //X
             [N; N];
               //^
