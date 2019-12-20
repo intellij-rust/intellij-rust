@@ -240,6 +240,7 @@ ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= TypePathGenericArgsNoTypeQual {
+  implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -891,7 +892,8 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
 }
 
 BaseType ::= TrivialBaseTypeInner | TypePathGenericArgs {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsTypeElement"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

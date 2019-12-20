@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.resolve.ref.resolvePathRaw
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
@@ -171,40 +172,53 @@ class RsInferenceContext(
     }
 
     fun infer(element: RsInferenceContextOwner): RsInferenceResult {
-        if (element is RsFunction) {
-            val fctx = RsTypeInferenceWalker(this, element.returnType)
-            fctx.extractParameterBindings(element)
-            element.block?.let { fctx.inferFnBody(it) }
-        } else if (element is RsReplCodeFragment) {
-            element.context.inference?.let {
-                patTypes.putAll(it.patTypes)
-                patFieldTypes.putAll(it.patFieldTypes)
-                exprTypes.putAll(it.exprTypes)
+        when (element) {
+            is RsFunction -> {
+                val fctx = RsTypeInferenceWalker(this, element.returnType)
+                fctx.extractParameterBindings(element)
+                element.block?.let { fctx.inferFnBody(it) }
             }
-
-            val walker = RsTypeInferenceWalker(this, TyUnknown)
-            walker.inferReplCodeFragment(element)
-        } else {
-            val (retTy, expr) = when (element) {
-                is RsConstant -> element.typeReference?.type to element.expr
-                is RsArrayType -> TyInteger.USize to element.expr
-                is RsVariantDiscriminant -> {
-                    val enum = element.ancestorStrict<RsEnumItem>()
-                    enum?.reprType to element.expr
+            is RsReplCodeFragment -> {
+                element.context.inference?.let {
+                    patTypes.putAll(it.patTypes)
+                    patFieldTypes.putAll(it.patFieldTypes)
+                    exprTypes.putAll(it.exprTypes)
                 }
-                is RsExpressionCodeFragment -> {
-                    element.context.inference?.let {
-                        patTypes.putAll(it.patTypes)
-                        patFieldTypes.putAll(it.patFieldTypes)
-                        exprTypes.putAll(it.exprTypes)
+                RsTypeInferenceWalker(this, TyUnknown).inferReplCodeFragment(element)
+            }
+            is RsBaseType, is RsTraitRef -> {
+                val path = when (element) {
+                    is RsBaseType -> element.path
+                    is RsTraitRef -> element.path
+                    else -> null
+                }
+                val declaration = path?.let { resolvePathRaw(it, lookup) }?.singleOrNull()?.element as? RsGenericDeclaration
+                val constParameters = declaration?.constParameters.orEmpty()
+                val constArguments = path?.constArguments.orEmpty()
+                RsTypeInferenceWalker(this, TyUnknown).inferConstArgumentTypes(constParameters, constArguments)
+            }
+            else -> {
+                val (retTy, expr) = when (element) {
+                    is RsConstant -> element.typeReference?.type to element.expr
+                    is RsArrayType -> TyInteger.USize to element.expr
+                    is RsVariantDiscriminant -> {
+                        val enum = element.contextStrict<RsEnumItem>()
+                        enum?.reprType to element.expr
                     }
-                    null to element.expr
+                    is RsExpressionCodeFragment -> {
+                        element.context.inference?.let {
+                            patTypes.putAll(it.patTypes)
+                            patFieldTypes.putAll(it.patFieldTypes)
+                            exprTypes.putAll(it.exprTypes)
+                        }
+                        null to element.expr
+                    }
+                    else -> error("Type inference is not implemented for PSI element of type " +
+                        "`${element.javaClass}` that implement `RsInferenceContextOwner`")
                 }
-                else -> error("Type inference is not implemented for PSI element of type " +
-                    "`${element.javaClass}` that implement `RsInferenceContextOwner`")
-            }
-            if (expr != null) {
-                RsTypeInferenceWalker(this, retTy ?: TyUnknown).inferLambdaBody(expr)
+                if (expr != null) {
+                    RsTypeInferenceWalker(this, retTy ?: TyUnknown).inferLambdaBody(expr)
+                }
             }
         }
 

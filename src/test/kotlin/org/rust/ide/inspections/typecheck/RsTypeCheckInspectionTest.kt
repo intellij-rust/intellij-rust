@@ -27,6 +27,21 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         const A: [u8; <error>1u8</error>] = [0];
     """)
 
+    fun `test typecheck in const argument`() = checkByText("""
+        #![feature(const_generics)]
+        struct S<const N: usize>;
+        trait T<const N: usize> {
+            fn foo<const N: usize>(&self) -> S<{ N }>;
+        }
+        impl T<<error>1u8</error>> for S<<error>1u8</error>> {
+            fn foo<const N: usize>(self) -> S<<error>1u8</error>> { self }
+        }
+        fn bar(x: S<<error>1u8</error>>) -> S<<error>1u8</error>> {
+            let s: S<<error>1u8</error>> = S::<<error>1u8</error>>;
+            s.foo::<<error>1u8</error>>()
+        }
+    """)
+
     fun `test typecheck in enum variant discriminant`() = checkByText("""
         enum Foo { BAR = <error>1u8</error> }
     """)
