@@ -1375,29 +1375,31 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         fn foo2() -> i32 { unimplemented!() }
     """)
 
-    fun `test trait method can have arg with Self type E0277`() = checkErrors("""
+    fun `test trait method without body can have arg with '?Sized' type E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         trait Foo {
             fn foo(x: Self);
+            fn bar(x: <error>Self</error>) {}
+            fn foobar() -> Self;
+            fn baz() -> <error>Self</error> { unimplemented!() }
+            fn spam<T: ?Sized>(a: T);
+            fn eggs<T: ?Sized>(a: <error>T</error>) {}
+            fn quux<T>(a: [T]);
+            fn quuux<T>(a: <error>[T]</error>) {}
         }
     """)
 
-    fun `test trait method can return Self type E0277`() = checkErrors("""
-        trait Foo {
-            fn foo() -> Self;
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test Self type inside trait is sized if have Sized bound E0277`() = checkErrors("""
+        #[lang = "sized"] trait Sized {}
         trait Foo: Sized {
-            fn foo() -> (Self, Self);
+            fn foo() -> (Self, Self) { unimplemented!() }
         }
         trait Bar where Self: Sized {
-            fn foo() -> (Self, Self);
+            fn foo() -> (Self, Self) { unimplemented!() }
         }
         // TODO
 //        trait Baz {
-//            fn foo() -> (Self, Self) where Self: Sized;
+//            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
 //        }
     """)
 
