@@ -306,7 +306,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = f32/*error*/::zero();
+            let x = f32/*caret*/::zero();
         }
     """)
 
@@ -476,7 +476,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
     """, """
         use std::fmt::Debug;
-        
+
         #[derive(Debug)]
         pub struct S;
         fn main() {
@@ -609,7 +609,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             #[derive(Debug)]
             pub struct Foo;
         }
-        
+
         fn main() {
             <error descr="Unresolved reference: `Foo`">Foo::fmt/*caret*/</error>();
         }
@@ -620,7 +620,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             #[derive(Debug)]
             pub struct Foo;
         }
-        
+
         fn main() {
             Foo::fmt/*caret*/();
         }

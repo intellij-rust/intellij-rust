@@ -3,6 +3,7 @@
     <words>
       <w>clippy</w>
       <w>debouncer</w>
+      <w>foldable</w>
       <w>frobnicate</w>
       <w>nocapture</w>
       <w>parens</w>
@@ -11,6 +12,7 @@
       <w>rustup</w>
       <w>subcommand</w>
       <w>subcommands</w>
+      <w>testmark</w>
       <w>toml</w>
       <w>tuples</w>
       <w>unsafety</w>
