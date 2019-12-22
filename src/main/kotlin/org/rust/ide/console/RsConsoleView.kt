@@ -13,11 +13,15 @@ import com.intellij.execution.ui.ObservableConsoleView
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.JBSplitter
+import org.rust.ide.structure.RsStructureViewModel
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsReplCodeFragment
 import org.rust.openapiext.toPsiFile
+import java.awt.BorderLayout
 import javax.swing.JComponent
 
 class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FILE_NAME, RsLanguage),
@@ -26,8 +30,10 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
     lateinit var executeActionHandler: RsConsoleExecuteActionHandler
 
     private val initialized: ActionCallback = ActionCallback()
-    private val codeFragment: RsReplCodeFragment? = virtualFile.toPsiFile(project) as? RsReplCodeFragment
-    private val codeFragmentContext: RsConsoleCodeFragmentContext = RsConsoleCodeFragmentContext()
+    val codeFragment: RsReplCodeFragment? = virtualFile.toPsiFile(project) as? RsReplCodeFragment
+    private val codeFragmentContext: RsConsoleCodeFragmentContext = RsConsoleCodeFragmentContext(project)
+    private var variablesView: RsConsoleVariablesView? = null
+    val options: RsConsoleOptions = RsConsoleOptions.getInstance(project)
 
     init {
         val virtualFile = virtualFile
@@ -68,10 +74,57 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
 
     fun initialized() = initialized.setDone()
 
-    fun updateCodeFragmentContext() {
+    fun addToContext(lastCommandContext: RsConsoleOneCommandContext) {
         if (codeFragment != null) {
+            codeFragmentContext.addToContext(lastCommandContext)
             codeFragmentContext.updateContext(project, codeFragment)
+            variablesView?.rebuild()
         }
+    }
+
+    private fun splitWindow() {
+        val console = getComponent(0)
+        removeAll()
+        val p = JBSplitter(false, 2f / 3)
+        p.firstComponent = console as JComponent
+        p.secondComponent = variablesView as JComponent
+        p.isShowDividerControls = true
+        p.setHonorComponentsMinimumSize(true)
+        add(p, BorderLayout.CENTER)
+        validate()
+        repaint()
+    }
+
+    fun restoreWindow() {
+        val component = getComponent(0)
+        val variablesView = variablesView
+        if (variablesView != null && component is JBSplitter) {
+            removeAll()
+            Disposer.dispose(variablesView)
+            this.variablesView = null
+            add(component.firstComponent, BorderLayout.CENTER)
+            validate()
+            repaint()
+        }
+    }
+
+    fun initVariablesWindow() {
+        if (options.isShowVars) {
+            showVariables()
+        }
+    }
+
+    fun showVariables() {
+        val file = codeFragmentContext.variablesFile
+        val structureViewModel = RsStructureViewModel(null, file)
+        variablesView = RsConsoleVariablesView(project, structureViewModel)
+        splitWindow()
+    }
+
+    override fun dispose() {
+        super.dispose()
+        variablesView?.let { Disposer.dispose(it) }
+        variablesView = null
     }
 
     companion object {

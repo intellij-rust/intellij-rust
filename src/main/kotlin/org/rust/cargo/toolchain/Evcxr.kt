@@ -11,12 +11,16 @@ import java.io.File
 import java.nio.file.Path
 
 class Evcxr(private val evcxrExecutable: Path) {
-    fun createCommandLine(workingDirectory: File): PtyCommandLine =
+    fun createCommandLine(workingDirectory: File?): PtyCommandLine =
         PtyCommandLine()
             .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
             .withConsoleMode(true)
             .withExePath(evcxrExecutable.systemIndependentPath)
-            .withParameters("--disable-readline")
+            .withParameters(
+                "--ide-mode",
+                "--disable-readline",
+                "--opt", "0"
+            )
             .withWorkDirectory(workingDirectory)
             .withCharset(Charsets.UTF_8) as PtyCommandLine
 }

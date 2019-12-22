@@ -5,37 +5,44 @@
 
 package org.rust.ide.console
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFileFactory
+import com.intellij.ui.GuiUtils
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
+import org.rust.openapiext.document
 import org.rust.openapiext.toPsiFile
 
-class RsConsoleCodeFragmentContext {
+class RsConsoleCodeFragmentContext(project: Project) {
 
     private val topLevelElements: MutableMap<String, String> = mutableMapOf()
     private val allCommandsText: StringBuilder = StringBuilder()
+    val variablesFile: RsReplCodeFragment = PsiFileFactory.getInstance(project)
+        .createFileFromText(RsConsoleView.VIRTUAL_FILE_NAME, RsLanguage, "") as RsReplCodeFragment
 
-    fun updateContext(project: Project, codeFragment: RsReplCodeFragment) {
-        processLine(codeFragment)
-        val allCommandsText = getAllCommandsText()
-        codeFragment.context = createContext(project, codeFragment.crateRoot as RsFile?, allCommandsText)
+    fun addToContext(lastCommandContext: RsConsoleOneCommandContext) {
+        topLevelElements.putAll(lastCommandContext.topLevelElements)
+        allCommandsText.append(lastCommandContext.statementsText)
     }
 
-    private fun processLine(codeFragment: RsReplCodeFragment) {
-        for (namedElement in codeFragment.namedElements) {
-            val name = namedElement.name ?: continue
-            topLevelElements[name] = namedElement.text
-        }
+    fun updateContext(project: Project, codeFragment: RsReplCodeFragment) {
+        val allCommandsText = getAllCommandsText()
 
-        for (stmt in codeFragment.stmts) {
-            allCommandsText.append(stmt.text)
-        }
+        GuiUtils.invokeLaterIfNeeded({
+            ApplicationManager.getApplication().runWriteAction {
+                variablesFile.virtualFile.document?.setText(allCommandsText)
+                codeFragment.context = createContext(project, codeFragment.crateRoot as RsFile?, allCommandsText)
+            }
+        }, ModalityState.defaultModalityState())
     }
 
     private fun getAllCommandsText(): String {
-        val topLevelElementsText = topLevelElements.values.joinToString()
-        return topLevelElementsText + allCommandsText
+        val topLevelElementsText = topLevelElements.values.joinToString("\n")
+        return topLevelElementsText + "\n" + allCommandsText
     }
 
     companion object {
@@ -53,5 +60,19 @@ class RsConsoleCodeFragmentContext {
             val crateRoot = cargoProject.workspace?.packages?.firstOrNull()?.targets?.firstOrNull()?.crateRoot
             return crateRoot?.toPsiFile(project)?.rustFile
         }
+    }
+}
+
+class RsConsoleOneCommandContext(codeFragment: RsReplCodeFragment) {
+    val topLevelElements: MutableMap<String, String> = mutableMapOf()
+    val statementsText: String
+
+    init {
+        for (namedElement in codeFragment.namedElements) {
+            val name = namedElement.name ?: continue
+            topLevelElements[name] = namedElement.text
+        }
+
+        statementsText = codeFragment.stmts.joinToString("\n") { it.text } + "\n"
     }
 }
