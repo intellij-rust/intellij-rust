@@ -16,9 +16,10 @@ import com.intellij.psi.NavigatablePsiElement
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.impl.RsPatIdentImpl
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFile)
+class RsStructureViewModel(editor: Editor?, file: RsFileBase)
     : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
       StructureViewModel.ElementInfoProvider {
 
@@ -61,6 +62,10 @@ private class RsStructureViewElement(
                 is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
+                is RsReplCodeFragment -> {
+                    val variables = psi.childrenOfType<RsLetDecl>().filter { it.pat is RsPatIdentImpl }
+                    psi.namedElements + variables
+                }
                 else -> emptyList()
             }
         }
