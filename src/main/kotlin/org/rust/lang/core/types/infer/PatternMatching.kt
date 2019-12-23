@@ -48,12 +48,10 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
             pat?.extractBindings(fcx, type)
         }
         is RsPatTup -> {
-            val (expected, mb) = type.stripReferences(defBm)
+            val (expected, bm) = type.stripReferences(defBm)
             fcx.writePatTy(this, expected)
             val types = (expected as? TyTuple)?.types.orEmpty()
-            for ((idx, p) in patList.withIndex()) {
-                p.extractBindings(fcx, types.getOrElse(idx) { TyUnknown }, mb)
-            }
+            inferTupleFieldsTypes(fcx, patList, bm, types.size) { types.getOrElse(it) { TyUnknown } }
         }
         is RsPatTupleStruct -> {
             val (expected, bm) = type.stripReferences(defBm)
@@ -63,14 +61,13 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 ?: return
 
             val tupleFields = item.positionalFields
-            for ((idx, p) in patList.withIndex()) {
-                val fieldType = tupleFields
+            inferTupleFieldsTypes(fcx, patList, bm, tupleFields.size) { idx ->
+                tupleFields
                     .getOrNull(idx)
                     ?.typeReference
                     ?.type
                     ?.substituteOrUnknown(expected.typeParameterValues)
                     ?: TyUnknown
-                p.extractBindings(fcx, fieldType, bm)
             }
         }
         is RsPatStruct -> {
@@ -126,6 +123,35 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         else -> {
             // not yet handled
         }
+    }
+}
+
+private fun inferTupleFieldsTypes(
+    fcx: RsTypeInferenceWalker,
+    patList: List<RsPat>,
+    bm: RsBindingModeKind,
+    tupleSize: Int,
+    type: (Int) -> Ty
+) {
+    // In correct code, tuple or tuple struct patterns contain only one `..` pattern.
+    // But it's pretty simple to support type inference for cases with multiple `..` patterns like `let (x, .., y, .., z) = tuple`
+    // just ignoring all binding between first and last `..` patterns
+    var firstPatRestIndex = Int.MAX_VALUE
+    var lastPatRestIndex = -1
+    for ((index, pat) in patList.withIndex()) {
+        if (pat is RsPatRest) {
+            firstPatRestIndex = minOf(firstPatRestIndex, index)
+            lastPatRestIndex = maxOf(lastPatRestIndex, index)
+        }
+    }
+
+    for ((idx, p) in patList.withIndex()) {
+        val fieldType = when {
+            idx < firstPatRestIndex -> type(idx)
+            idx > lastPatRestIndex -> type(tupleSize - (patList.size - idx))
+            else -> TyUnknown
+        }
+        p.extractBindings(fcx, fieldType, bm)
     }
 }
 
