@@ -38,7 +38,7 @@ fun addMissingFieldsToStructLiteral(
 fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
     val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
     val hasTrailingComma = patStruct.rbrace.getPrevNonCommentSibling()?.elementType == RsElementTypes.COMMA
-    patStruct.dotdot?.delete()
+    patStruct.patRest?.delete()
     val existingFields = patStruct.patFieldList
     val bodyFieldNames = existingFields.map { it.kind.fieldName }.toSet()
     val missingFields = declaration.fields
@@ -73,7 +73,7 @@ fun expandTupleStructFields(factory: RsPsiFactory, editor: Editor?, patTuple: Rs
     val bodyFields = patTuple.childrenOfType<RsPatIdent>()
     val missingFieldsAmount = declaration.fields.size - bodyFields.size
     addFieldsToPat(factory, patTuple, createTupleStructMissingFields(factory, missingFieldsAmount), hasTrailingComma)
-    patTuple.dotdot?.delete()
+    patTuple.patRest?.delete()
     editor?.buildAndRunTemplate(patTuple, patTuple.childrenOfType<RsPatBinding>().map { it.createSmartPointer() })
 }
 
@@ -92,13 +92,13 @@ private fun addFieldsToPat(factory: RsPsiFactory, pat: RsPat, fields: List<PsiEl
         // Do not insert comma if we are in the middle of pattern
         // since it will cause double comma in patterns with a trailing comma.
         if (fields.last() == missingField) {
-            if (anchor.nextSibling?.getNextNonCommentSibling()?.elementType != RsElementTypes.DOTDOT) {
+            if (anchor.nextSibling?.getNextNonCommentSibling() !is RsPatRest) {
                 pat.addAfter(factory.createComma(), anchor.nextSibling)
             }
         } else {
             pat.addAfter(factory.createComma(), anchor.nextSibling)
         }
-        anchor = anchor.nextSibling.nextSibling as LeafPsiElement
+        anchor = anchor.nextSibling.nextSibling
     }
     if (!hasTrailingComma) {
         anchor.delete()
@@ -106,11 +106,11 @@ private fun addFieldsToPat(factory: RsPsiFactory, pat: RsPat, fields: List<PsiEl
 }
 
 private fun determineOrCreateAnchor(factory: RsPsiFactory, pat: RsPat): PsiElement {
-    val dots = pat.childrenOfType<LeafPsiElement>().firstOrNull { it.elementType == RsElementTypes.DOTDOT }
-    if (dots != null) {
-        // Picking dots prev sibling as anchor allows as to fill the pattern starting from dots position
+    val patRest = pat.childrenOfType<RsPatRest>().firstOrNull()
+    if (patRest != null) {
+        // Picking prev sibling of '..' as anchor allows us to fill the pattern starting from '..' position
         // instead of filling pattern starting from the end.
-        return dots.getPrevNonCommentSibling()!! as LeafPsiElement
+        return patRest.getPrevNonCommentSibling()!!
     }
     val lastElementInBody = pat.lastChild.getPrevNonCommentSibling()!!
     return if (lastElementInBody !is LeafPsiElement) {
