@@ -10,13 +10,13 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
     fun `test const expr`() = stubOnlyTypeInfer("""
     //- foo.rs
         const COUNT: usize = 2;
-        pub fn foo() -> [i32; (2 * COUNT + 3) << (4 / 2)] { unimplemented!() }
+        pub fn foo(a: i32) -> [i32; (2 * COUNT + 3) << (4 / 2)] { unimplemented!() }
 
     //- main.rs
         mod foo;
 
         fn main() {
-            let x = foo::foo();
+            let x = foo::foo(0);
             x;
           //^ [i32; 28]
         }
