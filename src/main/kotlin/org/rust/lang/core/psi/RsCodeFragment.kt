@@ -159,6 +159,7 @@ class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var contex
     : RsCodeFragment(fileViewProvider, RsCodeFragmentElementType.REPL, context, false),
       RsInferenceContextOwner, RsItemsOwner {
     val stmts: List<RsStmt> get() = childrenOfType()
-    val tailExpr: RsExpr? get() = children.lastOrNull()?.let { it as? RsExpr }
+    val tailExpr: RsExpr?
+        get() = children.findLast { it is RsExpr || it !is PsiWhiteSpace }?.let { it as? RsExpr }
     val namedElements: List<RsNamedElement> get() = childrenOfType()
 }

@@ -38,7 +38,12 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         override fun getStubVersion(): Int = 188
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
-            override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
+            override fun createStubForFile(file: PsiFile): StubElement<*> = when (file) {
+                // for RsConsoleCompletionTest
+                is RsReplCodeFragment -> RsFileStub(null, RsFile.Attributes.NONE)
+                else -> RsFileStub(file as RsFile)
+            }
+
             override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, node: ASTNode): Boolean {
                 val elementType = node.elementType
                 return elementType == RsElementTypes.MACRO_ARGUMENT || elementType == RsElementTypes.MACRO_BODY
