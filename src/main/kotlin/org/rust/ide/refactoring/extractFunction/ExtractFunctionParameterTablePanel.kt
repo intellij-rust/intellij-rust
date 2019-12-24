@@ -20,8 +20,8 @@ class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : 
 }
 
 class ChooseColumn : ColumnInfo<ParameterDataHolder, Boolean>(null) {
-
-    override fun valueOf(item: ParameterDataHolder): Boolean = item.parameter.isSelected
+    override fun valueOf(item: ParameterDataHolder): Boolean =
+        item.parameter.isSelected
 
     override fun setValue(item: ParameterDataHolder, value: Boolean) {
         item.parameter.isSelected = value
@@ -29,14 +29,12 @@ class ChooseColumn : ColumnInfo<ParameterDataHolder, Boolean>(null) {
 
     override fun getColumnClass(): Class<*> = Boolean::class.java
 
-    override fun isCellEditable(item: ParameterDataHolder?): Boolean = true
-
+    override fun isCellEditable(item: ParameterDataHolder): Boolean = true
 }
 
 class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<ParameterDataHolder, String>("Name") {
-    override fun valueOf(item: ParameterDataHolder): String {
-        return item.parameter.name
-    }
+    override fun valueOf(item: ParameterDataHolder): String =
+        item.parameter.name
 
     override fun setValue(item: ParameterDataHolder, value: String) {
         if (nameValidator(value)) {
@@ -44,22 +42,20 @@ class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<Pa
         }
     }
 
-    override fun isCellEditable(item: ParameterDataHolder): Boolean {
-        return true
-    }
+    override fun isCellEditable(item: ParameterDataHolder): Boolean = true
 }
 
 class TypeColumn(val project: Project) : ColumnInfo<ParameterDataHolder, String>("Type") {
-    override fun valueOf(item: ParameterDataHolder): String {
-        return item.parameter.type?.toString() ?: "_"
-    }
+    override fun valueOf(item: ParameterDataHolder): String =
+        item.parameter.type?.toString() ?: "_"
 }
 
-class ExtractFunctionParameterTablePanel(nameValidator: (String) -> Boolean,
-                                         project: Project,
-                                         private val config: RsExtractFunctionConfig,
-                                         private val onChange: () -> Unit)
-    : AbstractParameterTablePanel<ParameterDataHolder>(
+class ExtractFunctionParameterTablePanel(
+    project: Project,
+    nameValidator: (String) -> Boolean,
+    private val config: RsExtractFunctionConfig,
+    private val onChange: () -> Unit
+) : AbstractParameterTablePanel<ParameterDataHolder>(
     ChooseColumn(),
     NameColumn(nameValidator),
     TypeColumn(project)
@@ -70,15 +66,17 @@ class ExtractFunctionParameterTablePanel(nameValidator: (String) -> Boolean,
         myTable.columnModel.getColumn(0).preferredWidth = WIDTH
         myTable.columnModel.getColumn(0).maxWidth = WIDTH
 
-        init(config.parameters.map {
-            ParameterDataHolder(it) {
-                updateSignature()
-            }
-        }.toTypedArray())
+        init(
+            config.parameters.map {
+                ParameterDataHolder(it, ::updateSignature)
+            }.toTypedArray()
+        )
     }
 
     override fun doEnterAction() {}
+
     override fun doCancelAction() {}
+
     override fun updateSignature() {
         config.parameters = variableData.map { it.parameter }
         onChange()
