@@ -17,6 +17,8 @@ import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.infer.constGenerics
 import org.rust.lang.core.types.infer.generics
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
@@ -36,8 +38,8 @@ class RsCachedImplItem(
     val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }
-    val typeAndGenerics: Pair<Ty, List<TyTypeParameter>>? by lazy(PUBLICATION) {
-        impl.typeReference?.type?.let { it to impl.generics }
+    val typeAndGenerics: Triple<Ty, List<TyTypeParameter>, List<CtConstParameter>>? by lazy(PUBLICATION) {
+        impl.typeReference?.type?.let { Triple(it, impl.generics, impl.constGenerics) }
     }
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */

@@ -8,7 +8,7 @@ package org.rust.ide.inspections.checkMatch
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.ConstExpr.Value
 
 sealed class PatternKind {
     object Wild : PatternKind()
@@ -25,9 +25,9 @@ sealed class PatternKind {
     /** &P, &mut P, etc */
     data class Deref(val subPattern: Pattern) : PatternKind()
 
-    data class Const(val value: ExprValue) : PatternKind()
+    data class Const(val value: Value<*>) : PatternKind()
 
-    data class Range(val lc: ExprValue, val rc: ExprValue, val isInclusive: Boolean) : PatternKind()
+    data class Range(val lc: Value<*>, val rc: Value<*>, val isInclusive: Boolean) : PatternKind()
 
 
     interface SliceField {

@@ -8,9 +8,13 @@ package org.rust.ide.presentation
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.emptySubstitution
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.joinToWithBuffer
 
 /** Return text of the element without switching to AST (loses non-stubbed parts of PSI) */
@@ -111,7 +115,7 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Subst
             type.typeReference?.let { appendTypeReference(it, subst, renderLifetimes) }
             if (!type.isSlice) {
                 append("; ")
-                append(type.arraySize) // may trigger resolve
+                append(type.arraySize ?: "{}") // may trigger resolve
             }
             append("]")
         }
@@ -151,29 +155,37 @@ private fun StringBuilder.appendPath(path: RsPath, subst: Substitution, renderLi
     val inAngles = path.typeArgumentList // Foo<...>
     val fnSugar = path.valueParameterList // &dyn FnOnce(...) -> i32
     if (inAngles != null) {
-        val lifetimeList = inAngles.lifetimeList
-        val typeReferenceList = inAngles.typeReferenceList
-        val assocTypeBindingList = inAngles.assocTypeBindingList
+        val lifetimeArguments = inAngles.lifetimeList
+        val typeArguments = inAngles.typeReferenceList
+        val constArguments = inAngles.exprList
+        val assocTypeBindings = inAngles.assocTypeBindingList
 
-        val hasLifetimes = renderLifetimes && lifetimeList.isNotEmpty()
-        val hasTypeReferences = typeReferenceList.isNotEmpty()
-        val hasAssocTypeBindings = assocTypeBindingList.isNotEmpty()
+        val hasLifetimes = renderLifetimes && lifetimeArguments.isNotEmpty()
+        val hasTypeReferences = typeArguments.isNotEmpty()
+        val hasConstArguments = constArguments.isNotEmpty()
+        val hasAssocTypeBindings = assocTypeBindings.isNotEmpty()
 
-        if (hasLifetimes || hasTypeReferences || hasAssocTypeBindings) {
+        if (hasLifetimes || hasTypeReferences || hasConstArguments || hasAssocTypeBindings) {
             append("<")
             if (hasLifetimes) {
-                lifetimeList.joinToWithBuffer(this, ", ") { it.append(referenceName) }
-                if (hasTypeReferences || hasAssocTypeBindings) {
+                lifetimeArguments.joinToWithBuffer(this, ", ") { it.append(referenceName) }
+                if (hasTypeReferences || hasConstArguments || hasAssocTypeBindings) {
                     append(", ")
                 }
             }
             if (hasTypeReferences) {
-                typeReferenceList.joinToWithBuffer(this, ", ") { it.appendTypeReference(this, subst, renderLifetimes) }
+                typeArguments.joinToWithBuffer(this, ", ") { it.appendTypeReference(this, subst, renderLifetimes) }
+                if (hasConstArguments || hasAssocTypeBindings) {
+                    append(", ")
+                }
+            }
+            if (hasConstArguments) {
+                constArguments.joinToWithBuffer(this, ", ") { it.appendConstExpr(this, subst) }
                 if (hasAssocTypeBindings) {
                     append(", ")
                 }
             }
-            assocTypeBindingList.joinToWithBuffer(this, ", ") { sb ->
+            assocTypeBindings.joinToWithBuffer(this, ", ") { sb ->
                 sb.append(referenceName)
                 sb.append("=")
                 typeReference?.let { sb.appendTypeReference(it, subst, renderLifetimes) }
@@ -183,6 +195,14 @@ private fun StringBuilder.appendPath(path: RsPath, subst: Substitution, renderLi
     } else if (fnSugar != null) {
         appendValueParameterListTypes(fnSugar.valueParameterList, subst, renderLifetimes)
         appendRetType(path.retType, subst, renderLifetimes)
+    }
+}
+
+private fun StringBuilder.appendConstExpr(expr: RsExpr, subst: Substitution) {
+    when (val const = expr.evaluate().substitute(subst)) { // may trigger resolve
+        is CtValue -> append(const)
+        is CtConstParameter -> append("{ $const }")
+        else -> append("{}")
     }
 }
 

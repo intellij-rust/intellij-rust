@@ -48,6 +48,8 @@ import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.CtInferVar
+import org.rust.lang.core.types.infer.foldCtConstParameterWith
 import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
@@ -419,7 +421,12 @@ private fun processQualifiedPathResolveVariants(
                 // it means that all possible `TyInfer` has already substituted (with `_`)
                 subst
             } else {
-                subst.mapTypeValues { (_, v) -> v.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+                subst
+                    .mapTypeValues { (_, v) ->
+                        v.foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                            .foldCtConstParameterWith { CtInferVar(it) }
+                    }
+                    .mapConstValues { (_, v) -> v.foldCtConstParameterWith { CtInferVar(it) } }
             }
             base.declaredType.substitute(realSubst)
         }
@@ -429,7 +436,11 @@ private fun processQualifiedPathResolveVariants(
         val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
             NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
             base.implementedTrait?.flattenHierarchy
-                ?.map { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+                ?.map { value ->
+                    value
+                        .foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                        .foldCtConstParameterWith { CtInferVar(it) }
+                }
         } else {
             null
         }
@@ -451,7 +462,11 @@ private fun processExplicitTypeQualifiedPathResolveVariants(
         // TODO this is a hack to fix completion test `test associated type in explicit UFCS form`.
         // Looks like we should use getOriginalOrSelf during resolve
         ?.let { BoundElement(CompletionUtil.getOriginalOrSelf(it.element), it.subst) }
-        ?.let { it.foldTyTypeParameterWith { TyInfer.TyVar(it) } }
+        ?.let { value ->
+            value
+                .foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                .foldCtConstParameterWith { CtInferVar(it) }
+        }
     val type = typeQual.typeReference.type
     return processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, type, trait?.let { listOf(it) })
 }
@@ -546,6 +561,7 @@ private fun processTypeQualifiedPathResolveVariants(
 
             val implementedTrait = e.source.implementedTrait
                 ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                ?.foldCtConstParameterWith { CtInferVar(it) }
                 ?: return processor(e)
 
             val isAppropriateTrait = restrictedTraits.any {

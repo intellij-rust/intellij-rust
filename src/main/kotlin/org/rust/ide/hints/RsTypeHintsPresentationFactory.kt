@@ -13,6 +13,9 @@ import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Kind
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
@@ -22,19 +25,22 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
         listOf(text(": "), hint(type, 1)).join()
     )
 
-    private fun hint(type: Ty, level: Int): InlayPresentation = when (type) {
-        is TyTuple -> tupleTypeHint(type, level)
-        is TyAdt -> adtTypeHint(type, level)
-        is TyFunction -> functionTypeHint(type, level)
-        is TyReference -> referenceTypeHint(type, level)
-        is TyPointer -> pointerTypeHint(type, level)
-        is TyProjection -> projectionTypeHint(type, level)
-        is TyTypeParameter -> typeParameterTypeHint(type)
-        is TyArray -> arrayTypeHint(type, level)
-        is TySlice -> sliceTypeHint(type, level)
-        is TyTraitObject -> traitObjectTypeHint(type, level)
-        is TyAnon -> anonTypeHint(type, level)
-        else -> text(type.shortPresentableText)
+    private fun hint(kind: Kind, level: Int): InlayPresentation = when (kind) {
+        is TyTuple -> tupleTypeHint(kind, level)
+        is TyAdt -> adtTypeHint(kind, level)
+        is TyFunction -> functionTypeHint(kind, level)
+        is TyReference -> referenceTypeHint(kind, level)
+        is TyPointer -> pointerTypeHint(kind, level)
+        is TyProjection -> projectionTypeHint(kind, level)
+        is TyTypeParameter -> typeParameterTypeHint(kind)
+        is TyArray -> arrayTypeHint(kind, level)
+        is TySlice -> sliceTypeHint(kind, level)
+        is TyTraitObject -> traitObjectTypeHint(kind, level)
+        is TyAnon -> anonTypeHint(kind, level)
+        is CtConstParameter -> constParameterTypeHint(kind)
+        is CtValue -> text(kind.expr.toString())
+        is Ty -> text(kind.shortPresentableText)
+        else -> text(null)
     }
 
     private fun functionTypeHint(type: TyFunction, level: Int): InlayPresentation {
@@ -88,22 +94,25 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
         val typeArguments = alias?.typeParameters?.map { (aliasedBy.subst[it] ?: TyUnknown) to it }
             ?: type.typeArguments.zip(type.item.typeParameters)
 
-        val userVisibleTypeArguments = mutableListOf<Ty>()
+        val userVisibleKindArguments = mutableListOf<Kind>()
         for ((argument, parameter) in typeArguments) {
             if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
                 // don't show default types
                 continue
             }
-            userVisibleTypeArguments.add(argument)
+            userVisibleKindArguments.add(argument)
+        }
+        for (argument in type.constArguments) {
+            userVisibleKindArguments.add(argument)
         }
 
-        if (userVisibleTypeArguments.isNotEmpty()) {
+        if (userVisibleKindArguments.isNotEmpty()) {
             val collapsible = factory.collapsible(
                 prefix = text("<"),
                 collapsed = text(PLACEHOLDER),
-                expanded = { parametersHint(userVisibleTypeArguments, level + 1) },
+                expanded = { parametersHint(userVisibleKindArguments, level + 1) },
                 suffix = text(">"),
-                startWithPlaceholder = checkSize(level, userVisibleTypeArguments.size)
+                startWithPlaceholder = checkSize(level, userVisibleKindArguments.size)
             )
             return listOf(typeNamePresentation, collapsible).join()
         }
@@ -147,6 +156,9 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
         return text(parameter.name)
     }
 
+    private fun constParameterTypeHint(const: CtConstParameter): InlayPresentation =
+        factory.psiSingleReference(text(const.parameter.name)) { const.parameter }
+
     private fun arrayTypeHint(type: TyArray, level: Int): InlayPresentation =
         factory.collapsible(
             prefix = text("["),
@@ -187,8 +199,8 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
             startWithPlaceholder = checkSize(level, type.traits.size)
         )
 
-    private fun parametersHint(types: List<Ty>, level: Int): InlayPresentation =
-        types.map { hint(it, level) }.join(", ")
+    private fun parametersHint(kinds: List<Kind>, level: Int): InlayPresentation =
+        kinds.map { hint(it, level) }.join(", ")
 
     private fun traitItemTypeHint(
         trait: BoundElement<RsTraitItem>,

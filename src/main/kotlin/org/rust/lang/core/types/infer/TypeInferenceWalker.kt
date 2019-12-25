@@ -15,10 +15,16 @@ import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.Const
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtInferVar
+import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
-import org.rust.lang.utils.evaluation.ExprValue
-import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.lang.utils.evaluation.ConstExpr
+import org.rust.lang.utils.evaluation.PathExprResolver
+import org.rust.lang.utils.evaluation.evaluate
+import org.rust.lang.utils.evaluation.toConst
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
@@ -37,9 +43,9 @@ class RsTypeInferenceWalker(
     private val RsStructLiteralField.type: Ty get() = resolveToDeclaration()?.typeReference?.type ?: TyUnknown
 
     private fun resolveTypeVarsWithObligations(ty: Ty): Ty {
-        if (!ty.hasTyInfer) return ty
+        if (!ty.needsInfer) return ty
         val tyRes = ctx.resolveTypeVarsIfPossible(ty)
-        if (!tyRes.hasTyInfer) return tyRes
+        if (!tyRes.needsInfer) return tyRes
         selectObligationsWherePossible()
         return ctx.resolveTypeVarsIfPossible(tyRes)
     }
@@ -203,34 +209,35 @@ class RsTypeInferenceWalker(
             resolveTypeVarsWithObligations(expected)
         )
 
-    private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean {
+    private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean =
         when (val result = tryCoerce(inferred, expected)) {
-            CoerceResult.Ok -> return true
+            CoerceResult.Ok -> true
 
-            is CoerceResult.Mismatch -> {
-                // ignoring possible false-positives (it's only basic experimental type checking)
-                val ignoredTys = listOf(
-                    TyUnknown::class.java,
-                    TyInfer.TyVar::class.java,
-                    TyTypeParameter::class.java,
-                    TyProjection::class.java,
-                    TyTraitObject::class.java,
-                    TyAnon::class.java
-                )
-
-                if (result.ty1.javaClass !in ignoredTys && result.ty2.javaClass !in ignoredTys
+            is CoerceResult.TypeMismatch -> {
+                if (result.ty1.javaClass !in IGNORED_TYS && result.ty2.javaClass !in IGNORED_TYS
                     && !(expected is TyReference && inferred is TyReference
-                        && (expected.containsTyOfClass(ignoredTys) || inferred.containsTyOfClass(ignoredTys)))
+                        && (expected.containsTyOfClass(IGNORED_TYS) || inferred.containsTyOfClass(IGNORED_TYS)))
                 ) {
-                    // another awful hack: check that inner expressions did not annotated as an error
-                    // to disallow annotation intersections. This should be done in a different way
-                    if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
-                        ctx.reportTypeMismatch(element, expected, inferred)
-                    }
+                    reportTypeMismatch(element, expected, inferred)
                 }
 
-                return false
+                false
             }
+
+            is CoerceResult.ConstMismatch -> {
+                if (result.const1.javaClass !in IGNORED_CONSTS && result.const2.javaClass !in IGNORED_CONSTS) {
+                    reportTypeMismatch(element, expected, inferred)
+                }
+
+                false
+            }
+        }
+
+    // Another awful hack: check that inner expressions did not annotated as an error
+    // to disallow annotation intersections. This should be done in a different way
+    private fun reportTypeMismatch(element: RsElement, expected: Ty, inferred: Ty) {
+        if (ctx.diagnostics.all { !element.isAncestorOf(it.element) }) {
+            ctx.reportTypeMismatch(element, expected, inferred)
         }
     }
 
@@ -276,7 +283,7 @@ class RsTypeInferenceWalker(
             if (ctx.combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
         }
 
-        return CoerceResult.Mismatch(inferred, expected)
+        return CoerceResult.TypeMismatch(inferred, expected)
     }
 
     private fun inferLitExprType(expr: RsLitExpr, expected: Ty?): Ty {
@@ -286,7 +293,9 @@ class RsTypeInferenceWalker(
             is RsStubLiteralKind.String -> {
                 // TODO infer the actual lifetime
                 if (stubKind.isByte) {
-                    TyReference(TyArray(TyInteger.U8, stubKind.value?.length?.toLong() ?: 0), Mutability.IMMUTABLE)
+                    val size = stubKind.value?.length?.toLong()
+                    val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize).toConst() } ?: CtUnknown
+                    TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE)
                 } else {
                     TyReference(TyStr, Mutability.IMMUTABLE)
                 }
@@ -369,19 +378,31 @@ class RsTypeInferenceWalker(
 
     /** See test `test type arguments remap on collapse to trait` */
     private fun collapseSubst(parentFn: RsFunction, variants: List<BoundElement<RsGenericDeclaration>>): Substitution {
-        //TODO remap lifetimes
-        val collapsed = mutableMapOf<TyTypeParameter, Ty>()
         val generics = parentFn.generics
+        val typeSubst = mutableMapOf<TyTypeParameter, Ty>()
         for (fn in variants) {
             for ((key, newValue) in generics.zip(fn.positionalTypeArguments)) {
                 @Suppress("NAME_SHADOWING")
-                collapsed.compute(key) { key, oldValue ->
+                typeSubst.compute(key) { key, oldValue ->
                     if (oldValue == null || oldValue == newValue) newValue else TyInfer.TyVar(key)
                 }
             }
         }
-        variants.first().subst[TyTypeParameter.self()]?.let { collapsed[TyTypeParameter.self()] = it }
-        return collapsed.toTypeSubst()
+        variants.first().subst[TyTypeParameter.self()]?.let { typeSubst[TyTypeParameter.self()] = it }
+
+        val constGenerics = parentFn.constGenerics
+        val constSubst = mutableMapOf<CtConstParameter, Const>()
+        for (fn in variants) {
+            for ((key, newValue) in constGenerics.zip(fn.positionalConstArguments)) {
+                @Suppress("NAME_SHADOWING")
+                constSubst.compute(key) { key, oldValue ->
+                    if (oldValue == null || oldValue == newValue) newValue else CtInferVar(key)
+                }
+            }
+        }
+
+        // TODO: remap lifetimes
+        return Substitution(typeSubst = typeSubst, constSubst = constSubst)
     }
 
     private fun instantiatePath(
@@ -390,22 +411,16 @@ class RsTypeInferenceWalker(
         pathExpr: RsPathExpr
     ): Ty {
         val path = pathExpr.path
-        val subst = instantiatePathGenerics(path, BoundElement(element, scopeEntry.subst)).subst
 
         if (element is RsGenericDeclaration) {
             inferConstArgumentTypes(element.constParameters, path.constArguments)
         }
 
-        val type = when (element) {
-            is RsPatBinding -> ctx.getBindingType(element)
-            is RsTypeDeclarationElement -> element.declaredType
-            is RsEnumVariant -> element.parentEnum.declaredType
-            is RsFunction -> element.type
-            is RsConstant -> element.typeReference?.type ?: TyUnknown
-            is RsConstParameter -> element.typeReference?.type ?: TyUnknown
-            is RsSelfParameter -> element.typeOfValue
-            else -> return TyUnknown
-        }
+        val subst = instantiatePathGenerics(
+            path,
+            BoundElement(element, scopeEntry.subst),
+            PathExprResolver.fromContext(ctx)
+        ).subst
 
         val typeParameters = when {
             scopeEntry is AssocItemScopeEntry && element is RsAbstractable -> {
@@ -421,7 +436,10 @@ class RsTypeInferenceWalker(
                         val typeParameters = ctx.instantiateBounds(owner.trait)
                         // UFCS - add predicate `Self : Trait<Args>`
                         val selfTy = subst[TyTypeParameter.self()] ?: ctx.typeVarForParam(TyTypeParameter.self())
-                        val newSubst = owner.trait.generics.associateBy { it }.toTypeSubst()
+                        val newSubst = Substitution(
+                            typeSubst = owner.trait.generics.associateBy { it },
+                            constSubst = owner.trait.constGenerics.associateBy { it }
+                        )
                         val boundTrait = BoundElement(owner.trait, newSubst)
                             .substitute(typeParameters)
                         val traitRef = TraitRef(selfTy, boundTrait)
@@ -449,6 +467,16 @@ class RsTypeInferenceWalker(
 
         unifySubst(subst, typeParameters)
 
+        val type = when (element) {
+            is RsPatBinding -> ctx.getBindingType(element)
+            is RsTypeDeclarationElement -> element.declaredType
+            is RsEnumVariant -> element.parentEnum.declaredType
+            is RsFunction -> element.type
+            is RsConstant -> element.typeReference?.type ?: TyUnknown
+            is RsConstParameter -> element.typeReference?.type ?: TyUnknown
+            is RsSelfParameter -> element.typeOfValue
+            else -> return TyUnknown
+        }
         val tupleFields = (element as? RsFieldsOwner)?.tupleFields
         return if (tupleFields != null) {
             // Treat tuple constructor as a function
@@ -475,6 +503,13 @@ class RsTypeInferenceWalker(
             subst2[k]?.let { v2 ->
                 if (k != v1 && k != TyTypeParameter.self() && v1 !is TyTypeParameter && v1 !is TyUnknown) {
                     ctx.combineTypes(v2, v1)
+                }
+            }
+        }
+        subst1.constSubst.forEach { (k, c1) ->
+            subst2[k]?.let { c2 ->
+                if (k != c1 && c1 !is CtConstParameter && c1 !is CtUnknown) {
+                    ctx.combineConsts(c2, c1)
                 }
             }
         }
@@ -565,7 +600,11 @@ class RsTypeInferenceWalker(
         return calleeType.retType
     }
 
-    private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall, expected: Ty?): Ty {
+    private fun inferMethodCallExprType(
+        receiver: Ty,
+        methodCall: RsMethodCall,
+        expected: Ty?
+    ): Ty {
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
@@ -584,7 +623,7 @@ class RsTypeInferenceWalker(
 
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
 
-        var typeParameters = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
+        var newSubst = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
 
         // TODO: borrow adjustments for self parameter
         /*
@@ -594,23 +633,25 @@ class RsTypeInferenceWalker(
         }
         */
 
-        typeParameters = ctx.instantiateBounds(callee.element, callee.selfTy, typeParameters)
+        newSubst = ctx.instantiateBounds(callee.element, callee.selfTy, newSubst)
 
-        val fnSubst = run {
-            val typeArguments = methodCall.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
-            if (typeArguments.isEmpty()) {
-                emptySubstitution
-            } else {
-                val parameters = callee.element.typeParameterList?.typeParameterList.orEmpty()
-                    .map { TyTypeParameter.named(it) }
-                parameters.zip(typeArguments).toMap().toTypeSubst()
-            }
+        val typeParameters = callee.element.typeParameters.map { TyTypeParameter.named(it) }
+        val typeArguments = methodCall.typeArguments.map { it.type }
+        val typeSubst = typeParameters.zip(typeArguments).toMap()
+
+        val constParameters = callee.element.constParameters.map { CtConstParameter(it) }
+        val resolver = PathExprResolver.fromContext(ctx)
+        val constArguments = methodCall.constArguments.withIndex().map { (i, expr) ->
+            val expectedTy = constParameters.getOrNull(i)?.parameter?.typeReference?.type ?: TyUnknown
+            expr.evaluate(expectedTy, resolver)
         }
+        val constSubst = constParameters.zip(constArguments).toMap()
 
-        unifySubst(fnSubst, typeParameters)
+        val fnSubst = Substitution(typeSubst = typeSubst, constSubst = constSubst)
+        unifySubst(fnSubst, newSubst)
 
         val methodType = (callee.element.type)
-            .substitute(typeParameters)
+            .substitute(newSubst)
             .foldWith(associatedTypeNormalizer) as TyFunction
         if (expected != null && !callee.element.isAsync) ctx.combineTypes(expected, methodType.retType)
         // drop first element of paramTypes because it's `self` param
@@ -779,7 +820,7 @@ class RsTypeInferenceWalker(
 
     private fun inferLabeledExprType(expr: RsLabeledExpression, baseType: Ty, matchOnlyByLabel: Boolean): Ty {
         val returningTypes = mutableListOf(baseType)
-        val label = expr.labelDecl?.name
+        val label = expr.takeIf { it.block?.stub == null }?.labelDecl?.name
 
         fun collectReturningTypes(element: PsiElement, matchOnlyByLabel: Boolean) {
             element.forEachChild { child ->
@@ -1140,7 +1181,7 @@ class RsTypeInferenceWalker(
     private fun inferIncludeMacro(macroCall: RsMacroCall): Ty {
         return when (macroCall.macroName) {
             "include_str" -> TyReference(TyStr, Mutability.IMMUTABLE)
-            "include_bytes" -> TyReference(TyArray(TyInteger.U8, null), Mutability.IMMUTABLE)
+            "include_bytes" -> TyReference(TyArray(TyInteger.U8, CtUnknown), Mutability.IMMUTABLE)
             else -> TyUnknown
         }
     }
@@ -1227,18 +1268,19 @@ class RsTypeInferenceWalker(
                 ?: return TySlice(TyUnknown)
             val sizeExpr = expr.sizeExpr
             sizeExpr?.inferType(TyInteger.USize)
-            val size = if (sizeExpr != null) {
-                val exprValue = RsConstExprEvaluator.evaluate(sizeExpr, TyInteger.USize) {
-                    ctx.getResolvedPath(it).singleOrNull()?.element
-                }
-                (exprValue as? ExprValue.Integer)?.value
-            } else {
-                null
-            }
+            val size = sizeExpr?.evaluate(TyInteger.USize, PathExprResolver.fromContext(ctx)) ?: CtUnknown
             elementType to size
         } else {
             val elementTypes = expr.arrayElements?.map { it.inferType(expectedElemTy) }
-            if (elementTypes.isNullOrEmpty()) return TyArray(TyInfer.TyVar(), 0)
+            val size = if (elementTypes != null) {
+                val size = elementTypes.size.toLong()
+                ConstExpr.Value.Integer(size, TyInteger.USize).toConst()
+            } else {
+                CtUnknown
+            }
+            if (elementTypes.isNullOrEmpty()) {
+                return TyArray(TyInfer.TyVar(), size.foldCtConstParameterWith { CtInferVar(it) })
+            }
 
             // '!!' is safe here because we've just checked that elementTypes isn't null
             val elementType = getMoreCompleteType(elementTypes!!)
@@ -1247,7 +1289,7 @@ class RsTypeInferenceWalker(
             } else {
                 elementType
             }
-            inferredTy to elementTypes.size.toLong()
+            inferredTy to size
         }
 
         return TyArray(elementType, size)
@@ -1327,6 +1369,24 @@ class RsTypeInferenceWalker(
         val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
         val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType)
         return selection.ok()?.register() ?: TyUnknown
+    }
+
+    companion object {
+        // ignoring possible false-positives (it's only basic experimental type checking)
+
+        val IGNORED_TYS: List<Class<out Ty>> = listOf(
+            TyUnknown::class.java,
+            TyInfer.TyVar::class.java,
+            TyTypeParameter::class.java,
+            TyProjection::class.java,
+            TyTraitObject::class.java,
+            TyAnon::class.java
+        )
+
+        val IGNORED_CONSTS: List<Class<out Const>> = listOf(
+            CtUnknown::class.java,
+            CtInferVar::class.java
+        )
     }
 }
 

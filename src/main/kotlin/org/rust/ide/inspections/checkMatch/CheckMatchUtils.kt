@@ -7,12 +7,13 @@ package org.rust.ide.inspections.checkMatch
 
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.evaluation.ExprValue
-import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.lang.utils.evaluation.ConstExpr.Value
+import org.rust.lang.utils.evaluation.evaluate
 
 class CheckMatchException(message: String) : Exception(message)
 
@@ -44,7 +45,8 @@ val Matrix.firstColumnType: Ty
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }
 
-private val RsExpr.value: ExprValue? get() = RsConstExprEvaluator.evaluate(this)
+private val RsExpr.value: Value<*>?
+    get() = (evaluate() as? CtValue)?.expr
 
 // lower_pattern_unadjusted
 private val RsPat.kind: PatternKind

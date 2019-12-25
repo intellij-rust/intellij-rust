@@ -31,12 +31,12 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
-import org.rust.lang.utils.evaluation.ExprValue
-import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.lang.utils.evaluation.evaluate
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -211,12 +211,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val indexToVariantMap = hashMapOf<Long, VariantInfo>()
         for (variant in o.enumVariantList) {
             val expr = variant.variantDiscriminant?.expr
-            val int = if (expr != null) {
-                val result = RsConstExprEvaluator.evaluate(expr, reprType) as? ExprValue.Integer
-                result?.value ?: return
-            } else {
-                null
-            }
+            val int = if (expr != null) expr.evaluate(reprType).asLong() ?: return else null
             val idx = int ?: discrCounter
             discrCounter = idx + 1
 

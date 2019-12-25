@@ -20,6 +20,7 @@ import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsTraitItemStub
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.ty.Ty
@@ -120,7 +121,11 @@ private fun defaultSubstitution(item: RsTraitItem): Substitution {
         val parameter = ReEarlyBound(it)
         parameter to parameter
     }
-    return Substitution(typeSubst, regionSubst)
+    val constSubst = item.constParameters.associate {
+        val parameter = CtConstParameter(it)
+        parameter to parameter
+    }
+    return Substitution(typeSubst, regionSubst, constSubst)
 }
 
 abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>, RsTraitItem {

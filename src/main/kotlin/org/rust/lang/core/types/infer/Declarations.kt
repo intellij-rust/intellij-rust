@@ -8,12 +8,17 @@ package org.rust.lang.core.types.infer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.consts.Const
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.evaluation.evaluate
+import org.rust.lang.utils.evaluation.tryEvaluate
 
 
 // Keep in sync with TyFingerprint-create
@@ -84,7 +89,8 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
             if (type.isSlice) {
                 TySlice(componentType)
             } else {
-                TyArray(componentType, type.arraySize)
+                val const = type.expr?.evaluate(TyInteger.USize) ?: CtUnknown
+                TyArray(componentType, const)
             }
         }
 
@@ -117,18 +123,24 @@ fun RsLifetime?.resolve(): Region {
     return if (resolved is RsLifetimeParameter) ReEarlyBound(resolved) else ReUnknown
 }
 
-private fun <T> TypeFoldable<T>.substituteWithTraitObjectRegion(
+private fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteWithTraitObjectRegion(
     subst: Substitution,
     defaultTraitObjectRegion: Region
 ): T = foldWith(object : TypeFolder {
     override fun foldTy(ty: Ty): Ty = when {
         ty is TyTypeParameter -> handleTraitObject(ty) ?: ty
-        ty.needToSubstitute -> ty.superFoldWith(this)
+        ty.needsSubst -> ty.superFoldWith(this)
         else -> ty
     }
 
     override fun foldRegion(region: Region): Region =
         (region as? ReEarlyBound)?.let { subst[it] } ?: region
+
+    override fun foldConst(const: Const): Const = when {
+        const is CtConstParameter -> subst[const] ?: const
+        const.hasCtConstParameters -> const.superFoldWith(this)
+        else -> const
+    }
 
     fun handleTraitObject(paramTy: TyTypeParameter): Ty? {
         val ty = subst[paramTy]
@@ -141,4 +153,4 @@ private fun <T> TypeFoldable<T>.substituteWithTraitObjectRegion(
         }
         return TyTraitObject(ty.trait, region)
     }
-})
+}).tryEvaluate()

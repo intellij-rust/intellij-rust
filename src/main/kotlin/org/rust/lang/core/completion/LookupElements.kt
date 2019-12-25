@@ -123,7 +123,9 @@ fun createLookupElement(
 private fun RsInferenceContext.getSubstitution(scopeEntry: ScopeEntry): Substitution =
     when (scopeEntry) {
         is AssocItemScopeEntryBase<*> ->
-            instantiateMethodOwnerSubstitution(scopeEntry).mapTypeValues { (_, v) -> resolveTypeVarsIfPossible(v) }
+            instantiateMethodOwnerSubstitution(scopeEntry)
+                .mapTypeValues { (_, v) -> resolveTypeVarsIfPossible(v) }
+                .mapConstValues { (_, v) -> resolveTypeVarsIfPossible(v) }
         is FieldResolveVariant ->
             scopeEntry.selfTy.typeParameterValues
         else ->

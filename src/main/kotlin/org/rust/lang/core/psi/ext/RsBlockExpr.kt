@@ -7,12 +7,13 @@ package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.stubs.RsBlockExprStub
 
 val RsBlockExpr.isUnsafe: Boolean
-    get() = node.findChildByType(RsElementTypes.UNSAFE) != null
+    get() = (greenStub as? RsBlockExprStub)?.isUnsafe ?: (node.findChildByType(RsElementTypes.UNSAFE) != null)
 
 val RsBlockExpr.isAsync: Boolean
-    get() = node.findChildByType(RsElementTypes.ASYNC) != null
+    get() = (greenStub as? RsBlockExprStub)?.isAsync ?: (node.findChildByType(RsElementTypes.ASYNC) != null)
 
 val RsBlockExpr.isTry: Boolean
-    get() = node.findChildByType(RsElementTypes.TRY) != null
+    get() = (greenStub as? RsBlockExprStub)?.isTry ?: (node.findChildByType(RsElementTypes.TRY) != null)

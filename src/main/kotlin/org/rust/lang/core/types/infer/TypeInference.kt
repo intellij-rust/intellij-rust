@@ -18,6 +18,7 @@ import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.resolve.ref.resolvePathRaw
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.*
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
@@ -139,12 +140,14 @@ class RsInferenceContext(
     private val intUnificationTable: UnificationTable<TyInfer.IntVar, TyInteger> = UnificationTable()
     private val floatUnificationTable: UnificationTable<TyInfer.FloatVar, TyFloat> = UnificationTable()
     private val varUnificationTable: UnificationTable<TyInfer.TyVar, Ty> = UnificationTable()
+    private val constUnificationTable: UnificationTable<CtInferVar, Const> = UnificationTable()
     private val projectionCache: ProjectionCache = ProjectionCache()
 
     fun startSnapshot(): Snapshot = CombinedSnapshot(
         intUnificationTable.startSnapshot(),
         floatUnificationTable.startSnapshot(),
         varUnificationTable.startSnapshot(),
+        constUnificationTable.startSnapshot(),
         projectionCache.startSnapshot()
     )
 
@@ -435,12 +438,12 @@ class RsInferenceContext(
             is TyInfer.IntVar -> when (ty2) {
                 is TyInfer.IntVar -> intUnificationTable.unifyVarVar(ty1, ty2)
                 is TyInteger -> intUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.Mismatch(ty1, ty2)
+                else -> return CoerceResult.TypeMismatch(ty1, ty2)
             }
             is TyInfer.FloatVar -> when (ty2) {
                 is TyInfer.FloatVar -> floatUnificationTable.unifyVarVar(ty1, ty2)
                 is TyFloat -> floatUnificationTable.unifyVarValue(ty1, ty2)
-                else -> return CoerceResult.Mismatch(ty1, ty2)
+                else -> return CoerceResult.TypeMismatch(ty1, ty2)
             }
             is TyInfer.TyVar -> error("unreachable")
         }
@@ -461,28 +464,64 @@ class RsInferenceContext(
             ty1 is TyPointer && ty2 is TyPointer && ty1.mutability == ty2.mutability -> {
                 combineTypes(ty1.referenced, ty2.referenced)
             }
-            ty1 is TyArray && ty2 is TyArray &&
-                (ty1.size == null || ty2.size == null || ty1.size == ty2.size) -> combineTypes(ty1.base, ty2.base)
+            ty1 is TyArray && ty2 is TyArray && (ty1.size == null || ty2.size == null || ty1.size == ty2.size) ->
+                combineTypes(ty1.base, ty2.base).and { combineConsts(ty1.const, ty2.const) }
             ty1 is TySlice && ty2 is TySlice -> combineTypes(ty1.elementType, ty2.elementType)
             ty1 is TyTuple && ty2 is TyTuple && ty1.types.size == ty2.types.size -> {
-                combinePairs(ty1.types.zip(ty2.types))
+                combineTypePairs(ty1.types.zip(ty2.types))
             }
             ty1 is TyFunction && ty2 is TyFunction && ty1.paramTypes.size == ty2.paramTypes.size -> {
-                combinePairs(ty1.paramTypes.zip(ty2.paramTypes)).and { combineTypes(ty1.retType, ty2.retType) }
+                combineTypePairs(ty1.paramTypes.zip(ty2.paramTypes))
+                    .and { combineTypes(ty1.retType, ty2.retType) }
             }
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
-                combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
+                combineTypePairs(ty1.typeArguments.zip(ty2.typeArguments))
+                    .and { combineConstPairs(ty1.constArguments.zip(ty2.constArguments)) }
             }
             ty1 is TyTraitObject && ty2 is TyTraitObject && combineBoundElements(ty1.trait, ty2.trait) -> CoerceResult.Ok
             ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> CoerceResult.Ok
             ty1 is TyNever || ty2 is TyNever -> CoerceResult.Ok
-            else -> CoerceResult.Mismatch(ty1, ty2)
+            else -> CoerceResult.TypeMismatch(ty1, ty2)
         }
 
-    fun combinePairs(pairs: List<Pair<Ty, Ty>>): CoerceResult {
+    fun combineConsts(const1: Const, const2: Const): CoerceResult {
+        return combineConstsResolved(shallowResolve(const1), shallowResolve(const2))
+    }
+
+    private fun combineConstsResolved(const1: Const, const2: Const): CoerceResult =
+        when {
+            const1 is CtInferVar -> combineConstVar(const1, const2)
+            const2 is CtInferVar -> combineConstVar(const2, const1)
+            else -> combineConstsNoVars(const1, const2)
+        }
+
+    private fun combineConstVar(const1: CtInferVar, const2: Const): CoerceResult {
+        if (const2 is CtInferVar) {
+            constUnificationTable.unifyVarVar(const1, const2)
+        } else {
+            val const1r = constUnificationTable.findRoot(const1)
+            constUnificationTable.unifyVarValue(const1r, const2)
+        }
+        return CoerceResult.Ok
+    }
+
+    private fun combineConstsNoVars(const1: Const, const2: Const): CoerceResult =
+        when {
+            const1 === const2 -> CoerceResult.Ok
+            const1 is CtUnknown || const2 is CtUnknown -> CoerceResult.Ok
+            const1 is CtUnevaluated || const2 is CtUnevaluated -> CoerceResult.Ok
+            const1 == const2 -> CoerceResult.Ok
+            else -> CoerceResult.ConstMismatch(const1, const2)
+        }
+
+    fun combineTypePairs(pairs: List<Pair<Ty, Ty>>): CoerceResult = combinePairs(pairs, ::combineTypes)
+
+    fun combineConstPairs(pairs: List<Pair<Const, Const>>): CoerceResult = combinePairs(pairs, ::combineConsts)
+
+    private fun <T : Kind> combinePairs(pairs: List<Pair<T, T>>, combine: (T, T) -> CoerceResult): CoerceResult {
         var canUnify: CoerceResult = CoerceResult.Ok
-        for ((t1, t2) in pairs) {
-            canUnify = combineTypes(t1, t2).and { canUnify }
+        for ((k1, k2) in pairs) {
+            canUnify = combine(k1, k2).and { canUnify }
         }
         return canUnify
     }
@@ -492,44 +531,88 @@ class RsInferenceContext(
             combineTypes(ref1.selfTy, ref2.selfTy).isOk &&
             ref1.trait.subst.zipTypeValues(ref2.trait.subst).all { (a, b) ->
                 combineTypes(a, b).isOk
+            } &&
+            ref1.trait.subst.zipConstValues(ref2.trait.subst).all { (a, b) ->
+                combineConsts(a, b).isOk
             }
 
     fun <T : RsElement> combineBoundElements(be1: BoundElement<T>, be2: BoundElement<T>): Boolean =
         be1.element == be2.element &&
-            combinePairs(be1.subst.zipTypeValues(be2.subst)).isOk &&
-            combinePairs(zipValues(be1.assoc, be2.assoc)).isOk
+            combineTypePairs(be1.subst.zipTypeValues(be2.subst)).isOk &&
+            combineConstPairs(be1.subst.zipConstValues(be2.subst)).isOk &&
+            combineTypePairs(zipValues(be1.assoc, be2.assoc)).isOk
 
-    fun shallowResolve(ty: Ty): Ty {
-        if (ty !is TyInfer) return ty
+    fun <T : TypeFoldable<T>> shallowResolve(value: T): T = value.foldWith(shallowResolver)
 
-        return when (ty) {
-            is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: ty
-            is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: ty
-            is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(this::shallowResolve) ?: ty
-        }
-    }
+    private inner class ShallowResolver : TypeFolder {
 
-    fun <T : TypeFoldable<T>> resolveTypeVarsIfPossible(ty: T): T {
-        return ty.foldTyInferWith(this::shallowResolve)
-    }
+        override fun foldTy(ty: Ty): Ty = shallowResolve(ty)
 
-    fun <T : TypeFoldable<T>> fullyResolve(ty: T): T {
-        fun go(ty: Ty): Ty {
+        override fun foldConst(const: Const): Const =
+            if (const is CtInferVar) {
+                constUnificationTable.findValue(const) ?: const
+            } else {
+                const
+            }
+
+        private fun shallowResolve(ty: Ty): Ty {
             if (ty !is TyInfer) return ty
 
             return when (ty) {
-                is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: TyUnknown
-                is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: TyUnknown
-                is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(::go) ?: TyUnknown
+                is TyInfer.IntVar -> intUnificationTable.findValue(ty) ?: ty
+                is TyInfer.FloatVar -> floatUnificationTable.findValue(ty) ?: ty
+                is TyInfer.TyVar -> varUnificationTable.findValue(ty)?.let(this::shallowResolve) ?: ty
             }
         }
-
-        return ty.foldTyInferWith(::go)
     }
 
-    fun typeVarForParam(ty: TyTypeParameter): Ty {
-        return TyInfer.TyVar(ty)
+    private val shallowResolver: ShallowResolver = ShallowResolver()
+
+    fun <T : TypeFoldable<T>> resolveTypeVarsIfPossible(value: T): T = value.foldWith(opportunisticVarResolver)
+
+    private inner class OpportunisticVarResolver : TypeFolder {
+        override fun foldTy(ty: Ty): Ty {
+            if (!ty.needsInfer) return ty
+            val res = shallowResolve(ty)
+            return res.superFoldWith(this)
+        }
+
+        override fun foldConst(const: Const): Const {
+            if (!const.hasCtInfer) return const
+            val res = shallowResolve(const)
+            return res.superFoldWith(this)
+        }
     }
+
+    private val opportunisticVarResolver: OpportunisticVarResolver = OpportunisticVarResolver()
+
+    /**
+     * Full type resolution replaces all type and const variables with their concrete results.
+     */
+    fun <T : TypeFoldable<T>> fullyResolve(value: T): T {
+        return value.foldWith(fullTypeResolver)
+    }
+
+    private inner class FullTypeResolver : TypeFolder {
+        override fun foldTy(ty: Ty): Ty {
+            if (!ty.needsInfer) return ty
+            val res = shallowResolve(ty)
+            return if (res is TyInfer) TyUnknown else res.superFoldWith(this)
+        }
+
+        override fun foldConst(const: Const): Const =
+            if (const is CtInferVar) {
+                constUnificationTable.findValue(const) ?: CtUnknown
+            } else {
+                const
+            }
+    }
+
+    private val fullTypeResolver: FullTypeResolver = FullTypeResolver()
+
+    fun typeVarForParam(ty: TyTypeParameter): Ty = TyInfer.TyVar(ty)
+
+    fun constVarForParam(const: CtConstParameter): Const = CtInferVar(const)
 
     /** Deeply normalize projection types. See [normalizeProjectionType] */
     fun <T : TypeFoldable<T>> normalizeAssociatedTypesIn(ty: T, recursionDepth: Int = 0): TyWithObligations<T> {
@@ -694,14 +777,17 @@ class RsInferenceContext(
     fun instantiateBounds(
         element: RsGenericDeclaration,
         selfTy: Ty? = null,
-        typeParameters: Substitution = emptySubstitution
+        subst: Substitution = emptySubstitution
     ): Substitution {
         val map = run {
-            val map = element
+            val typeSubst = element
                 .generics
                 .associateWith { typeVarForParam(it) }
                 .let { if (selfTy != null) it + (TyTypeParameter.self() to selfTy) else it }
-            typeParameters + map.toTypeSubst()
+            val constSubst = element
+                .constGenerics
+                .associateWith { constVarForParam(it) }
+            subst + Substitution(typeSubst = typeSubst, constSubst = constSubst)
         }
         instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
         return map
@@ -722,7 +808,10 @@ class RsInferenceContext(
     /** Checks that [selfTy] satisfies all trait bounds of the [impl] */
     private fun canEvaluateBounds(impl: RsImplItem, selfTy: Ty): Boolean {
         val ff = FulfillmentContext(this, lookup)
-        val subst = impl.generics.associateWith { typeVarForParam(it) }.toTypeSubst()
+        val subst = Substitution(
+            typeSubst = impl.generics.associateWith { typeVarForParam(it) },
+            constSubst = impl.constGenerics.associateWith { constVarForParam(it) }
+        )
         return probe {
             instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
@@ -770,7 +859,10 @@ class RsInferenceContext(
             // Method path refinement needed if there are multiple impls of the same trait to the same type
             val trait = source.value as RsTraitItem
             val typeParameters = instantiateBounds(trait)
-            val subst = trait.generics.associateBy { it }.toTypeSubst()
+            val subst = Substitution(
+                typeSubst = trait.generics.associateBy { it },
+                constSubst = trait.constGenerics.associateBy { it }
+            )
             val boundTrait = BoundElement(trait, subst).substitute(typeParameters)
             val traitRef = TraitRef(callee.selfTy, boundTrait)
             fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
@@ -788,6 +880,9 @@ class RsInferenceContext(
 
 val RsGenericDeclaration.generics: List<TyTypeParameter>
     get() = typeParameters.map { TyTypeParameter.named(it) }
+
+val RsGenericDeclaration.constGenerics: List<CtConstParameter>
+    get() = constParameters.map { CtConstParameter(it) }
 
 val RsGenericDeclaration.bounds: List<TraitRef>
     get() = CachedValuesManager.getCachedValue(this) {
@@ -855,15 +950,13 @@ sealed class ResolvedPath {
 
 sealed class CoerceResult {
     object Ok : CoerceResult()
-    class Mismatch(val ty1: Ty, val ty2: Ty) : CoerceResult()
+    class TypeMismatch(val ty1: Ty, val ty2: Ty) : CoerceResult()
+    class ConstMismatch(val const1: Const, val const2: Const) : CoerceResult()
 
-    val isOk: Boolean get() = this == Ok
+    val isOk: Boolean get() = this is Ok
 }
 
-inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = when (this) {
-    is CoerceResult.Mismatch -> this
-    CoerceResult.Ok -> rhs()
-}
+inline fun CoerceResult.and(rhs: () -> CoerceResult): CoerceResult = if (isOk) rhs() else this
 
 object TypeInferenceMarks {
     val cyclicType = Testmark("cyclicType")
