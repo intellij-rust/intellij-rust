@@ -877,4 +877,50 @@ class RsCompletionTest : RsCompletionTestBase() {
             Foo.foo()/*caret*/
         }
     """)
+
+    fun `test function pointer completion`() = doSingleCompletion("""
+        fn multiply_by_two(input: i32) -> i32 {
+            input * 2
+        }
+        fn main() {
+            Some(5).map(multi/*caret*/)
+        }
+    """, """
+        fn multiply_by_two(input: i32) -> i32 {
+            input * 2
+        }
+        fn main() {
+            Some(5).map(multiply_by_two)/*caret*/
+        }
+    """)
+
+    fun `test function completion`() = doSingleCompletion("""
+        fn multiply_by_two(input: i32) -> i32 { input * 2 }
+        fn main() {
+            Some(5).map(|i| {
+                multi/*caret*/
+            });
+        }
+    """, """
+        fn multiply_by_two(input: i32) -> i32 { input * 2 }
+        fn main() {
+            Some(5).map(|i| {
+                multiply_by_two(/*caret*/)
+            });
+        }
+    """)
+
+    fun `test function completion in function composition`() = doSingleCompletion("""
+        fn foo() -> i32 {0}
+        fn bar(i: i32) {}
+        fn main() {
+            bar(fo/*caret*/);
+        }
+    """, """
+        fn foo() -> i32 {0}
+        fn bar(i: i32) {}
+        fn main() {
+            bar(foo()/*caret*/);
+        }
+    """)
 }

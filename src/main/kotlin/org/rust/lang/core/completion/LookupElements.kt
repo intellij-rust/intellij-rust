@@ -244,9 +244,18 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                 if (curUseItem != null) {
                     appendSemicolon(context, curUseItem)
                 } else {
-                    val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
+                    val methodOrField = context.getElementOfType<RsMethodOrField>()
+                    val isMethodCall = methodOrField != null
                     if (!context.alreadyHasCallParens) {
-                        document.insertString(context.selectionEndOffset, "()")
+                        val rsMethodCall = context.getElementOfType<RsMethodCall>()
+                        if (rsMethodCall == null) {
+                            document.insertString(context.selectionEndOffset, "()")
+                        } else {
+                            val exprList = rsMethodCall.valueArgumentList.exprList
+                            if (exprList.any { (it as? RsLambdaExpr)?.textRange?.contains(context.selectionEndOffset) == true }) {
+                                document.insertString(context.selectionEndOffset, "()")
+                            }
+                        }
                     }
                     val caretShift = if (element.valueParameters.isEmpty() && (isMethodCall || !element.hasSelfParameters)) 2 else 1
                     EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
