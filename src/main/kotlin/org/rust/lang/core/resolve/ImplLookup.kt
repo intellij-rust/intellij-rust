@@ -27,8 +27,7 @@ import org.rust.stdext.buildList
 import kotlin.LazyThreadSafetyMode.NONE
 
 private val RsTraitItem.typeParamSingle: TyTypeParameter?
-    get() =
-        typeParameterList?.typeParameterList?.singleOrNull()?.let { TyTypeParameter.named(it) }
+    get() = typeParameters.singleOrNull()?.let { TyTypeParameter.named(it) }
 
 const val DEFAULT_RECURSION_LIMIT = 64
 

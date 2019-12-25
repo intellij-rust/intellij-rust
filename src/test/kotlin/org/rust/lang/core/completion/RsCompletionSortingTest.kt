@@ -5,13 +5,11 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.psi.NavigatablePsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldDecl
 import kotlin.reflect.KClass
-
 
 class RsCompletionSortingTest : RsTestBase() {
     fun `test macros are low priority`() = doTest("""
@@ -77,17 +75,17 @@ class RsCompletionSortingTest : RsTestBase() {
 
     fun `test inherited before non-inherited`() = doTest("""
         struct S;
-        
+
         impl S {
             fn foo1() {}
             fn foo3() {}
         }
-        
+
         trait T {
             fn foo2();
             fn foo4();
         }
-        
+
         impl T for S {
             fn foo2() {}
             fn foo4() {}
@@ -102,22 +100,22 @@ class RsCompletionSortingTest : RsTestBase() {
     ))
 
     fun `test assoc fns before methods`() = doTest("""
-        struct S; 
-        
+        struct S;
+
         impl S {
             fn foo1() {}
             fn foo3(&self) {}
             fn foo5() {}
             fn foo7(&self) {}
         }
-        
+
         trait T {
             fn foo2();
             fn foo4(&self);
             fn foo6();
             fn foo8(&self);
         }
-        
+
         impl T for S {
             fn foo2() {}
             fn foo4(&self) {}
@@ -391,19 +389,30 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo8"
     ))
 
-    private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out NavigatablePsiElement>, String>>) {
+    fun `test tuple field order`() = doTest("""
+        fn main() {
+            let tuple = (0, "", 0.0);
+            let d: f64 = tuple./*caret*/
+        }
+    """, listOf(
+        Int::class to "2",
+        Int::class to "0",
+        Int::class to "1"
+    ))
+
+    private fun doTest(@Language("Rust") code: String, expected: List<Pair<KClass<out Any>, String>>) {
         InlineFile(code).withCaret()
         val elements = myFixture.completeBasic()
-            .map { it.psiElement!! as NavigatablePsiElement }
         check(elements.size == expected.size) {
             "Wrong size of completion variants. Expected ${expected.size}, actual: ${elements.size}"
         }
         for ((actual, e) in elements.zip(expected)) {
+            val lookupObject = actual.psiElement ?: actual.`object`
             val (klass, name) = e
-            check(klass.isInstance(actual)) {
-                "Expected a ${klass.java.name}, found ${actual.javaClass}"
+            check(klass.isInstance(lookupObject)) {
+                "Expected a ${klass.java.name}, found ${lookupObject.javaClass}"
             }
-            val actualName = actual.name
+            val actualName = actual.lookupString
             check(name == actualName) { "Expected $name got $actualName" }
         }
     }

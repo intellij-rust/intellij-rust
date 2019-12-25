@@ -7,6 +7,7 @@ package org.rust.ide.refactoring.extractFunction
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.rust.ide.presentation.insertionSafeText
@@ -18,23 +19,20 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyReference
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
+import org.rust.stdext.buildList
 
-class ReturnValue(val expression: String?, val type: Ty) {
+class ReturnValue(val exprText: String?, val type: Ty) {
     companion object {
-        fun direct(expr: RsExpr): ReturnValue {
-            return ReturnValue(null, expr.type)
-        }
+        fun direct(expr: RsExpr): ReturnValue =
+            ReturnValue(null, expr.type)
 
-        fun namedValue(value: RsPatBinding): ReturnValue {
-            return ReturnValue(value.referenceName, value.type)
-        }
+        fun namedValue(value: RsPatBinding): ReturnValue =
+            ReturnValue(value.referenceName, value.type)
 
-        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue {
-            return ReturnValue(
-                value.joinToString(", ", postfix = ")", prefix = "(") { it.referenceName },
-                TyTuple(value.map { it.type })
-            )
-        }
+        fun tupleNamedValue(value: List<RsPatBinding>): ReturnValue = ReturnValue(
+            value.joinToString(", ", postfix = ")", prefix = "(") { it.referenceName },
+            TyTuple(value.map { it.type })
+        )
     }
 }
 
@@ -45,29 +43,31 @@ class Parameter private constructor(
     isMutableValue: Boolean = false,
     var isSelected: Boolean = true
 ) {
-    /** Original name of the parameter (parameter renaming does not affect it) */
-    private val originalName = name
-
     enum class Reference(val text: String) {
         MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
     }
 
-    private val mut = if (isMutableValue) "mut " else ""
+    /** Original name of the parameter (parameter renaming does not affect it) */
+    private val originalName = name
+
+    private val mutText: String = if (isMutableValue) "mut " else ""
+    private val referenceText: String = reference.text
+    private val typeText: String = type?.insertionSafeText.orEmpty()
 
     val originalParameterText: String
-        get() = if (type != null) "$mut$originalName: ${reference.text}${type.insertionSafeText}" else originalName
+        get() = if (type != null) "$mutText$originalName: $referenceText$typeText" else originalName
 
     val parameterText: String
-        get() = if (type != null) "$mut$name: ${reference.text}${type.insertionSafeText}" else name
+        get() = if (type != null) "$mutText$name: $referenceText$typeText" else name
 
     val argumentText: String
-        get() = "${reference.text}$originalName"
+        get() = "$referenceText$originalName"
 
     val isSelf: Boolean
         get() = type == null
 
     companion object {
-        fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
+        private fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
             val reference = when {
                 requiredMutableValue -> if (requiredBorrowing) Reference.MUTABLE else Reference.NONE
                 value.mutability.isMut -> Reference.MUTABLE
@@ -77,8 +77,30 @@ class Parameter private constructor(
             return Parameter(value.referenceName, value.type, reference, requiredMutableValue)
         }
 
-        fun self(value: String): Parameter {
-            return Parameter(value)
+        fun self(name: String): Parameter =
+            Parameter(name)
+
+        // TODO: Get rid of the heuristics and implement proper borrow analysis
+        fun build(
+            binding: RsPatBinding,
+            references: List<PsiReference>,
+            isUsedAfterEnd: Boolean,
+            implLookup: ImplLookup
+        ): Parameter? {
+            val hasRefOperator = references.any {
+                val operatorType = (it.element.ancestorStrict<RsUnaryExpr>())?.operatorType
+                operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
+            }
+            val requiredBorrowing = hasRefOperator ||
+                (isUsedAfterEnd && binding.type !is TyReference && !implLookup.isCopy(binding.type))
+
+            val requiredMutableValue = binding.mutability.isMut && references.any {
+                if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
+                val operatorType = it.element.ancestorStrict<RsUnaryExpr>()?.operatorType
+                operatorType == null || operatorType == UnaryOperator.REF_MUT
+            }
+
+            return direct(binding, requiredBorrowing, requiredMutableValue)
         }
     }
 }
@@ -128,14 +150,21 @@ class RsExtractFunctionConfig private constructor(
             val body = if (single is RsBlockExpr) {
                 single.block.text
             } else {
-                val stmts = parameters.filter { !it.isSelected }.map { "let ${it.name}: ${it.type};" }.toMutableList()
-                    stmts.add("")
+                val unselectedParamsTexts = parameters
+                    .filter { !it.isSelected }
+                    .map { "let ${it.name}: ${it.type} ;\n" }
+                val elementsTexts = elements.map { it.text }
+                val returnExprText = returnValue?.exprText.orEmpty()
 
-                elements.map { it.text }.forEach { stmts.add(it) }
-                if (returnValue?.expression != null) {
-                    stmts.add(returnValue.expression)
+                val bodyContent = buildList<String> {
+                    addAll(unselectedParamsTexts)
+                    addAll(elementsTexts)
+                    if (returnExprText.isNotEmpty()) {
+                        add(returnExprText)
+                    }
                 }
-                "{\n${stmts.joinToString(separator = "\n")}\n}"
+
+                bodyContent.joinToString(separator = "\n", prefix = "{\n", postfix = "\n}")
             }
             append(body)
         }
@@ -168,16 +197,15 @@ class RsExtractFunctionConfig private constructor(
         return containingFunction.typeParameters.filter { it.declaredType in paramAndReturnTypes }
     }
 
-    private fun typeParameterBounds(): Map<Ty, Set<Ty>> {
-        return containingFunction.typeParameters.associate {
-            val type = it.declaredType
+    private fun typeParameterBounds(): Map<Ty, Set<Ty>> =
+        containingFunction.typeParameters.associate { typeParameter ->
+            val type = typeParameter.declaredType
             val bounds = mutableSetOf<Ty>()
-            it.bounds.flatMapTo(bounds) {
-                it.bound.traitRef?.path?.typeArgumentList?.typeReferenceList?.flatMap { it.type.types() } ?: emptyList()
+            typeParameter.bounds.flatMapTo(bounds) {
+                it.bound.traitRef?.path?.typeArguments?.flatMap { it.type.types() }.orEmpty()
             }
             type to bounds
         }
-    }
 
     companion object {
         fun create(file: PsiFile, start: Int, end: Int): RsExtractFunctionConfig? {
@@ -186,43 +214,31 @@ class RsExtractFunctionConfig private constructor(
             val first = elements.first()
             val last = elements.last()
 
-            // check element should be a part of one block
-            val fn = first.ancestorStrict<RsFunction>() ?: return null
-            if (fn != last.ancestorStrict<RsFunction>()) return null
+            // check elements should be a part of one block
+            val fn = first
+                .ancestorStrict<RsFunction>()
+                .takeIf { it == last.ancestorStrict<RsFunction>() }
+                ?: return null
 
             val letBindings = fn.descendantsOfType<RsPatBinding>()
                 .filter { it.textOffset <= end }
 
             val implLookup = ImplLookup.relativeTo(fn)
-            val parameters = letBindings
-                .mapNotNull {
-                    if (it.textOffset > start) return@mapNotNull null
-                    val result = ReferencesSearch.search(it, LocalSearchScope(fn))
+            val parameters = letBindings.mapNotNull { binding ->
+                if (binding.textOffset > start) return@mapNotNull null
+                val result = ReferencesSearch.search(binding, LocalSearchScope(fn))
+                val targets = result.filter { it.element.textOffset in start..end }
+                if (targets.isEmpty()) return@mapNotNull null
+                val isUsedAfterEnd = result.any { it.element.textOffset > end }
 
-                    val targets = result.filter { it.element.textOffset in start..end }
-                    if (targets.isEmpty()) return@mapNotNull null
-
-                    val hasRefOperator = targets.any {
-                        val operatorType = (it.element.ancestorStrict<RsUnaryExpr>())?.operatorType
-                        operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
-                    }
-                    val requiredBorrowing = hasRefOperator || result.any { it.element.textOffset > end }
-                        && it.type !is TyReference && !implLookup.isCopy(it.type)
-
-                    val requiredMutableValue = it.mutability.isMut && targets.any {
-                        if (it.element.ancestorStrict<RsValueArgumentList>() == null) return@any false
-                        val operatorType = it.element.ancestorStrict<RsUnaryExpr>()?.operatorType
-                        operatorType == null || operatorType == UnaryOperator.REF_MUT
-                    }
-
-                    Parameter.direct(it, requiredBorrowing, requiredMutableValue)
-                }
-                .toMutableList()
+                Parameter.build(binding, targets, isUsedAfterEnd, implLookup)
+            }.toMutableList()
 
             val innerBindings = letBindings
                 .filter { it.textOffset >= start }
                 .filter {
-                    ReferencesSearch.search(it, LocalSearchScope(fn))
+                    ReferencesSearch
+                        .search(it, LocalSearchScope(fn))
                         .any { ref -> ref.element.textOffset > end }
                 }
 
@@ -233,9 +249,12 @@ class RsExtractFunctionConfig private constructor(
             }
             val selfParameter = fn.selfParameter
             if (fn.owner.isImplOrTrait && selfParameter != null) {
-                val used = ReferencesSearch.search(selfParameter, LocalSearchScope(fn))
+                val used = ReferencesSearch
+                    .search(selfParameter, LocalSearchScope(fn))
                     .any { ref -> ref.element.textOffset in start..end }
-                if (used) parameters.add(0, Parameter.self(selfParameter.text))
+                if (used) {
+                    parameters.add(0, Parameter.self(selfParameter.text))
+                }
             }
 
             return RsExtractFunctionConfig(

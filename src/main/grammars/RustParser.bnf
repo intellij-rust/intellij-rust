@@ -89,7 +89,7 @@
 
     extraRoot(".*CodeFragment")=true
 
-    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const)") = Pat
+    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest)") = Pat
 
     generateTokenAccessors=true
 
@@ -240,6 +240,7 @@ ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= TypePathGenericArgsNoTypeQual {
+  implements = "org.rust.lang.core.psi.ext.RsInferenceContextOwner"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -470,6 +471,7 @@ Function ::= OuterAttr*
 }
 
 Pat ::= PatWild
+      | PatRest
       | PatRef
       | PatTup
       | PatSlice
@@ -483,7 +485,7 @@ Pat ::= PatWild
   implements = "org.rust.lang.core.macros.RsExpandedElement"
 }
 
-private Pat_first ::= '_' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
+private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
 
 
 PatBox ::= box Pat
@@ -497,11 +499,11 @@ PatBox ::= box Pat
 //   }
 PatIdent ::= PatBinding [ '@' Pat ]
 
-PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* '..'? '}'
+PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* PatRest? '}'
 PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
 
 // TODO: actual recover
-private Pat_with_recover ::= Pat (',' | &(')' | ']' | '..'))
+private Pat_with_recover ::= Pat (',' | &(')' | ']'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
@@ -509,13 +511,15 @@ PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
 PatTup ::= '(' SeqPat ')'
 PatSlice ::= '[' SeqPat ']'
-// NB: there are `[x, .. , y]` and `[x, z.. , y]`
-private SeqPat ::= Pat_with_recover* ['..' [',' Pat_with_recover+] ]
+// NB: there are `[x, .. , y]`
+private SeqPat ::= Pat_with_recover*
 
 PatRef ::= '&' mut? Pat
 
 PatWild ::= '_'
-PatBinding ::= BindingMode? identifier !'...' !'::' {
+PatRest ::= '..'
+
+PatBinding ::= BindingMode? identifier !'...' !'::' !'..=' !'..' {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
@@ -532,8 +536,8 @@ BindingMode ::= ref mut? | mut
 
 OrPats ::= '|'? Pat ('|' Pat)*
 
-Constant ::= OuterAttr* default_? Vis? (static mut? | const) identifier TypeAscription [ '=' AnyExpr ] ';' {
-  pin = 'identifier'
+Constant ::= OuterAttr* default_? Vis? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
+  pin = 5
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -891,7 +895,8 @@ ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
 }
 
 BaseType ::= TrivialBaseTypeInner | TypePathGenericArgs {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsTypeElement"
+                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

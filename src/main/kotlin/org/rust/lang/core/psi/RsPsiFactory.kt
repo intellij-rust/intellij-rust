@@ -121,6 +121,9 @@ class RsPsiFactory(
     fun createUnsafeBlockExpr(body: String): RsBlockExpr =
         createExpressionOfType("unsafe { $body }")
 
+    fun createRetExpr(expr: String): RsRetExpr =
+        createExpressionOfType("return $expr")
+
     fun tryCreatePath(text: String, ns: PathParsingMode = TYPE): RsPath? {
         val path = when (ns) {
             TYPE -> createFromText("fn foo(t: $text) {}")
@@ -218,7 +221,7 @@ class RsPsiFactory(
         val body = members.joinToString(separator = "\n", transform = {
             when (it) {
                 is RsConstant ->
-                    "    const ${it.identifier.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                    "    const ${it.nameLikeElement.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
                 is RsTypeAlias ->
                     "    type ${it.name} = ();"
                 is RsFunction ->

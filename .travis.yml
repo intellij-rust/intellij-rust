@@ -11,8 +11,8 @@ jdk: openjdk8
 env:
   global:
     - OLD_RUST_VERSION=1.28.0
-    - CURRENT_RUST_VERSION=1.39.0
-    - NIGHLY_RUST_VERSION=nightly-2019-12-05
+    - CURRENT_RUST_VERSION=1.40.0
+    - NIGHLY_RUST_VERSION=nightly-2019-12-19
     - RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
 
 matrix:

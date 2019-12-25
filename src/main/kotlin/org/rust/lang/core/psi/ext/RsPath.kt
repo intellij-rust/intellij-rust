@@ -64,7 +64,7 @@ val RsPath.qualifier: RsPath?
     }
 
 fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = parent) {
-    is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral -> TYPES
+    is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral, is RsPatStruct -> TYPES
     is RsUseSpeck -> when {
         // use foo::bar::{self, baz};
         //     ~~~~~~~~
@@ -76,9 +76,16 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
         else -> TYPES_N_VALUES_N_MACROS
     }
     is RsPathExpr -> if (isCompletion) TYPES_N_VALUES else VALUES
+    is RsPatTupleStruct -> VALUES
     is RsPathCodeFragment -> parent.ns
     else -> TYPES_N_VALUES
 }
+
+val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeList.orEmpty()
+
+val RsPath.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeReferenceList.orEmpty()
+
+val RsPath.constArguments: List<RsExpr> get() = typeArgumentList?.exprList.orEmpty()
 
 abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                                  RsPath {

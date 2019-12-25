@@ -133,7 +133,7 @@ private class LifetimesCollector(val isForInputParams: Boolean = false) : RsVisi
     }
 
     private fun collectAnonymousLifetimes(path: RsPath) {
-        if (path.typeArgumentList?.lifetimeList.orEmpty().isNotEmpty()) return
+        if (path.lifetimeArguments.isNotEmpty()) return
         when (val resolved = path.reference.resolve()) {
             is RsStructItem, is RsTraitItem, is RsTypeAlias -> {
                 val declaration = resolved as RsGenericDeclaration

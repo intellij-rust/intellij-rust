@@ -16,8 +16,8 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.macros.FragmentKind
 import org.rust.lang.core.psi.RsMacroBinding
 
-object RsFragmentSpecifierCompletionProvider : CompletionProvider<CompletionParameters>() {
-    val elementPattern: ElementPattern<PsiElement>
+object RsFragmentSpecifierCompletionProvider : RsCompletionProvider() {
+    override val elementPattern: ElementPattern<PsiElement>
         get() = PlatformPatterns.psiElement().withParent(RsMacroBinding::class.java)
 
     override fun addCompletions(

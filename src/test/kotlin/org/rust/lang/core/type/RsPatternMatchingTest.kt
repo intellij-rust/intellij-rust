@@ -69,8 +69,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test let remaining front single`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test let remaining front single in tuple pat`() = testExpr("""
         struct S;
         struct T;
         struct U;
@@ -81,10 +80,8 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
           //^ U
         }
     """)
-    }
 
-    fun `test let remaining front multiple`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test let remaining front multiple in tuple pat`() = testExpr("""
         struct S;
         struct T;
         struct U;
@@ -95,9 +92,8 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
           //^ U
         }
     """)
-    }
 
-    fun `test let remaining back single`() = testExpr("""
+    fun `test let remaining back single in tuple pat`() = testExpr("""
         struct S;
         struct T;
         struct U;
@@ -109,8 +105,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test let remaining middle multiple`() = expect<IllegalStateException> {
-        testExpr("""
+    fun `test let remaining middle multiple in tuple pat`() = testExpr("""
         struct S;
         struct T;
         struct U;
@@ -122,7 +117,90 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
           //^ V
         }
     """)
-    }
+
+    fun `test let multiple rest pat in tuple pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct V;
+        struct W;
+
+        fn main() {
+            // Note, multiple `..` patterns are not allowed in correct Rust code
+            let (s, .., u, .., w) = (S, T, U, V, W);
+            (s, u, w);
+          //^ (S, <unknown>, W)
+        }
+    """)
+
+    fun `test let remaining front single in tuple struct pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct X(S, T, U);
+
+        fn main() {
+            let X(.., t, u) = X(S, T, U);
+            u;
+          //^ U
+        }
+    """)
+
+    fun `test let remaining front multiple in tuple struct pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct X(S, T, U);
+
+        fn main() {
+            let X(.., u) = X(S, T, U);
+            u;
+          //^ U
+        }
+    """)
+
+    fun `test let remaining back single in tuple struct pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct X(S, T, U);
+
+        fn main() {
+            let X(s, t, ..) = X(S, T, U);
+            t;
+          //^ T
+        }
+    """)
+
+    fun `test let remaining middle multiple in tuple struct pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct V;
+        struct X(S, T, U, V);
+
+        fn main() {
+            let X(s, .., v) = X(S, T, U, V);
+            v;
+          //^ V
+        }
+    """)
+
+    fun `test let multiple rest pat in tuple struct pat`() = testExpr("""
+        struct S;
+        struct T;
+        struct U;
+        struct V;
+        struct W;
+        struct X(S, T, U, V, W);
+
+        fn main() {
+            // Note, multiple `..` patterns are not allowed in correct Rust code
+            let X(s, .., u, .., w) = X(S, T, U, V, W);
+            (s, u, w);
+          //^ (S, <unknown>, W)
+        }
+    """)
 
     fun `test struct pattern`() = testExpr("""
         struct S;

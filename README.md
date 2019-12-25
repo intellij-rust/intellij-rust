@@ -30,7 +30,7 @@ Unstable master branch builds can be downloaded from [TeamCity].
 The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.2, with the following differences in the sets of the available features:
 
 
-|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | IDEA Ultimate, PyCharm, other commercial IDEs |
+|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate, [PyCharm] Professional, other commercial IDEs |
 |------------------------|---|---|---|
 | Language support       | + | + | + |
 | Cargo support          | + | + | + |
@@ -41,7 +41,7 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 | [Detecting duplicates] | - | + | + |
 
 
-\* [IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
+\* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
 
 <!-- BACKCOMPAT: 2019.2 -->
 \** Since CLion 2019.3
@@ -92,7 +92,7 @@ understand the high-level structure of the codebase. If you are not sure where t
 [nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadNightly/statusIcon.svg
 
 
-[IDEA]: https://www.jetbrains.com/idea/
+[IntelliJ IDEA]: https://www.jetbrains.com/idea/
 [CLion]: https://www.jetbrains.com/clion/
 [PyCharm]: https://www.jetbrains.com/pycharm/
 [PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education

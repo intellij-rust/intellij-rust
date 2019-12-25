@@ -42,7 +42,7 @@ import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.psiElement
 
-object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() {
+object AttributeCompletionProvider : RsCompletionProvider() {
 
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
 
@@ -77,7 +77,7 @@ object AttributeCompletionProvider : CompletionProvider<CompletionParameters>() 
         result.addAllElements(suggestions)
     }
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() {
             val outerAttrElem = psiElement<RsOuterAttr>()
             val innerAttrElem = psiElement<RsInnerAttr>()

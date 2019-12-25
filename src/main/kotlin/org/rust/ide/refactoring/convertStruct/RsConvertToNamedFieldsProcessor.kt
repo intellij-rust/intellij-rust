@@ -15,10 +15,7 @@ import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.descendantOfTypeStrict
+import org.rust.lang.core.psi.ext.*
 
 class RsConvertToNamedFieldsProcessor(
     project: Project,
@@ -70,16 +67,35 @@ class RsConvertToNamedFieldsProcessor(
                     nameElement.replace(rsPsiFactory.createIdentifier((usage as MyUsageInfo).fieldName!!))
                 }
                 is RsPatTupleStruct -> {
-                    //for tuples `..` can be in the middle
-                    var dotdotPos = 0
-                    PsiTreeUtil.findSiblingForward(usageParent.lparen, RsElementTypes.DOTDOT) { el -> if (el is RsPat) dotdotPos += 1 }
+                    var firstPatRestIndex = Int.MAX_VALUE
+                    var lastPatRestIndex = -1
+                    for ((index, pat) in usageParent.patList.withIndex()) {
+                        if (pat is RsPatRest) {
+                            firstPatRestIndex = minOf(firstPatRestIndex, index)
+                            lastPatRestIndex = maxOf(lastPatRestIndex, index)
+                        }
+                    }
 
-                    val text = "let ${usageParent.path.text}{" +
-                        usageParent.patList.withIndex().joinToString(", ") { (index, pat) ->
-                            val fieldNumber = if (index < dotdotPos) index else (index + types.size - usageParent.patList.size)
-                            "${newNames[fieldNumber]}:${pat.text}"
-                        } +
-                        " ${if (usageParent.dotdot != null) ", .." else ""}} = 0;"
+                    val text = buildString {
+                        append("let ${usageParent.path.text}{")
+                        usageParent.patList.withIndex()
+                            // Filter out all patterns between first and last `..` patterns.
+                            // In most cases it skips only single `..` pattern
+                            .filter { (index, _) -> index < firstPatRestIndex || index > firstPatRestIndex }
+                            .joinTo(this, ", ") { (index, pat) ->
+                                val fieldNumber = when {
+                                    index < firstPatRestIndex -> index
+                                    index > lastPatRestIndex -> index + types.size - usageParent.patList.size
+                                    else -> error("Unreachable")
+                                }
+                                "${newNames[fieldNumber]}:${pat.text}"
+                            }
+                        // If there is at least one `..` pattern, we need to add the corresponding pattern in
+                        if (lastPatRestIndex != -1) {
+                            append(", ..")
+                        }
+                        append("} = 0;")
+                    }
 
                     val patternPsiElement = rsPsiFactory
                         .createStatement(text)

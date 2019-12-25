@@ -94,8 +94,8 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
 
     private fun replaceOldStatementsWithCallExpr(config: RsExtractFunctionConfig, psiFactory: RsPsiFactory) {
         var stmt = ""
-        if (config.returnValue?.expression != null) {
-            stmt += "let ${config.returnValue.expression} = "
+        if (config.returnValue?.exprText != null) {
+            stmt += "let ${config.returnValue.exprText} = "
         }
         val firstParameter = config.parameters.firstOrNull()
         stmt += if (firstParameter != null && firstParameter.isSelf) {
@@ -112,7 +112,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
         }
-        val element = if (config.returnValue == null || config.returnValue.expression != null) {
+        val element = if (config.returnValue == null || config.returnValue.exprText != null) {
             stmt += ";"
             psiFactory.createStatement(stmt)
         } else {

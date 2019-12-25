@@ -24,7 +24,7 @@ import org.rust.lang.core.psi.ext.startOffset
  * successfully, i.e. [RsMacroCall.expansion] != null. If macro is not expanded successfully,
  * [RsPartialMacroArgumentCompletionProvider] is used.
  */
-object RsFullMacroArgumentCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsFullMacroArgumentCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
         parameters: CompletionParameters,
         context: ProcessingContext,
@@ -37,7 +37,7 @@ object RsFullMacroArgumentCompletionProvider : CompletionProvider<CompletionPara
         rerunCompletion(parameters.withPosition(dstElement, dstOffset), result)
     }
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() = psiElement()
             .withLanguage(RsLanguage)
             .inside(psiElement(MACRO_ARGUMENT))

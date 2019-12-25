@@ -30,18 +30,46 @@ class RsPathReferenceImpl(
 
     override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
 
-    override fun isReferenceTo(element: PsiElement): Boolean {
-        if (element is RsFieldDecl) return false
+    override fun isReferenceTo(target: PsiElement): Boolean {
+        if (target is RsFieldDecl) return false
 
         val path = this.element
-        if (element is RsNamedElement && !path.allowedNamespaces().intersects(element.namespaces)) return false
+        if (target is RsNamedElement && !path.allowedNamespaces().intersects(target.namespaces)) return false
 
-        val isMember = element is RsAbstractable && element.owner.isImplOrTrait
-        if (isMember && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
-            return false
+        if (target is RsAbstractable) {
+            val owner = target.owner
+            if (owner.isImplOrTrait && (path.parent is RsUseSpeck || path.path == null && path.typeQual == null)) {
+                return false
+            }
+
+            // If `path.parent` is expression, then `path.reference.resolve()` will invoke type inference for the
+            // function containing `path`, which can be very heavy. Trying to avoid it
+            if (target !is RsTypeAlias && path.parent is RsPathExpr) {
+                val resolvedRaw = resolvePathRaw(path)
+                val mgr = target.manager
+                when (owner) {
+                    RsAbstractableOwner.Free, RsAbstractableOwner.Foreign ->
+                        return resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
+                    is RsAbstractableOwner.Impl -> if (owner.isInherent) {
+                        return resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
+                    } else {
+                        if (resolvedRaw.size == 1 && mgr.areElementsEquivalent(resolvedRaw.single().element, target)) return true
+                        val superItem = target.superItem ?: return false
+                        val canBeReferenceTo = resolvedRaw.any {
+                            mgr.areElementsEquivalent(it.element, target) ||
+                                mgr.areElementsEquivalent(it.element, superItem)
+                        }
+                        if (!canBeReferenceTo) return false
+                    }
+                    is RsAbstractableOwner.Trait -> {
+                        val canBeReferenceTo = resolvedRaw.any { mgr.areElementsEquivalent(it.element, target) }
+                        if (!canBeReferenceTo) return false
+                    }
+                }
+            }
         }
-        val target = resolve()
-        return element.manager.areElementsEquivalent(target, element)
+        val resolved = resolve()
+        return target.manager.areElementsEquivalent(resolved, target)
     }
 
     override fun advancedResolve(): BoundElement<RsElement>? =
@@ -74,7 +102,7 @@ class RsPathReferenceImpl(
     }
 }
 
-fun resolvePathRaw(path: RsPath, lookup: ImplLookup): List<ScopeEntry> {
+fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
     return collectResolveVariantsAsScopeEntries(path.referenceName) {
         processPathResolveVariants(lookup, path, false, it)
     }
@@ -97,7 +125,8 @@ fun <T: RsElement> instantiatePathGenerics(
     resolved: BoundElement<T>
 ): BoundElement<T> {
     val (element, subst) = resolved.downcast<RsGenericDeclaration>() ?: return resolved
-    val typeArguments: List<Ty>? = run {
+
+    val typeArguments = run {
         val inAngles = path.typeArgumentList
         val fnSugar = path.valueParameterList
         when {
@@ -108,7 +137,6 @@ fun <T: RsElement> instantiatePathGenerics(
             else -> null
         }
     }
-    val regionArguments: List<Region>? = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
     val outputArg = path.retType?.typeReference?.type
 
     val assocTypes = run {
@@ -158,7 +186,9 @@ fun <T: RsElement> instantiatePathGenerics(
         }
         paramTy to value
     }
+
     val regionParameters = element.lifetimeParameters.map { ReEarlyBound(it) }
+    val regionArguments = path.typeArgumentList?.lifetimeList?.map { it.resolve() }
     val regionSubst = regionParameters.zip(regionArguments ?: regionParameters).toMap()
     val newSubst = Substitution(typeSubst, regionSubst)
     return BoundElement(resolved.element, subst + newSubst, assocTypes)

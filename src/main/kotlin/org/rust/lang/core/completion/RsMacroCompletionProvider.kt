@@ -37,7 +37,7 @@ import org.rust.lang.core.withPrevSiblingSkipping
  * fn main() {}
  * ```
  */
-object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
+object RsMacroCompletionProvider : RsCompletionProvider() {
     override fun addCompletions(
         parameters: CompletionParameters,
         _context: ProcessingContext,
@@ -72,7 +72,7 @@ object RsMacroCompletionProvider : CompletionProvider<CompletionParameters>() {
         }
     }
 
-    val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<PsiElement>
         get() {
             val incompleteItem = psiElement<RsItemElement>().withLastChild(RsPsiPattern.error)
             return psiElement(IDENTIFIER)

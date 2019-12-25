@@ -1613,7 +1613,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         enum E2 { A, V { x: i32 } }
         fn foo(a: S, b: ST, c: E1, d: E2, e: Unknown) {
             if let <error descr="irrefutable let pattern is experimental [E0658]">S { x }</error> = a {}
-            if let <error descr="irrefutable let pattern is experimental [E0658]">S(x)</error> = b {}
+            if let <error descr="irrefutable let pattern is experimental [E0658]">ST(x)</error> = b {}
             if let <error descr="irrefutable let pattern is experimental [E0658]">E1::V { x }</error> = c {}
             if let E2::V { x } = d {}
             if let Unknown { x } = e {}
@@ -2968,16 +2968,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                 #[unstable(feature = "bbb", reason = "foo")] pub field: i32
             }
         }
-        
+
         use a::<error descr="`aaa` is unstable [E0658]">S</error>;
-        
+
         #[unstable(feature = "ddd")]
         impl <error descr="`aaa` is unstable [E0658]">S</error> {
             #[unstable(feature = "ccc", reason = "bar \
                 baz")]
             fn foo(self) -> Self {}
         }
-        
+
         fn main() {
             let x = <error descr="`aaa` is unstable [E0658]">S</error> { field: 0 };
             x.<error descr="`bbb` is unstable: foo [E0658]">field</error>;
@@ -2991,27 +2991,32 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #![feature(bbb)]
         #![feature(ccc)]
         #![feature(ddd)]
-        
+
         mod a {
             #[unstable(feature = "aaa")]
             pub struct S {
                 #[unstable(feature = "bbb", reason = "foo")] pub field: i32
             }
         }
-        
+
         use a::S;
-        
+
         #[unstable(feature = "ddd")]
         impl S {
             #[unstable(feature = "ccc", reason = "bar \
                 baz")]
             fn foo(self) -> Self {}
         }
-        
+
         fn main() {
             let x = S { field: 0 };
             x.field;
             x.foo();
         }
+    """)
+
+    fun `test no E0428 multiple underscore constants`() = checkErrors("""
+        const _: i32 = 1;
+        const _: i32 = 1;
     """)
 }

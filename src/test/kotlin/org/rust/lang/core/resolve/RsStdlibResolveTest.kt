@@ -543,7 +543,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             let _: String = "".into();
-        }                    //^ ...convert.rs
+        }                    //^ ...convert.rs|...convert/mod.rs
     """)
 
     fun `test resolve with no_std attribute`() = stubOnlyResolve("""

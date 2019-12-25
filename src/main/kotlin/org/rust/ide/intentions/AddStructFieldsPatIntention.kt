@@ -23,9 +23,11 @@ class AddStructFieldsPatIntention : RsElementBaseIntentionAction<AddStructFields
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
-        return if (element.elementType == RsElementTypes.DOTDOT
-            && (element.context is RsPatStruct || element.context is RsPatTupleStruct)) {
-            Context(element.context as RsPat)
+        if (element.elementType != RsElementTypes.DOTDOT) return null
+        val restPat = element.context as? RsPatRest ?: return null
+        val context = restPat.context as? RsPat
+        return if (context is RsPatStruct || context is RsPatTupleStruct) {
+            Context(context)
         } else {
             null
         }
