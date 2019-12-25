@@ -561,6 +561,104 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test implement generic trait with consts 1`() = doTest("""
+        struct S<const N: usize>;
+        trait T<const M: usize> {
+            fn f1(_: S<{ M }>) -> S<{ M }>;
+            const C1: S<{ M }>;
+            fn f2(_: S<{ UNKNOWN }>) -> S<{ UNKNOWN }>;
+            const C2: S<{ UNKNOWN }>;
+            fn f3(_: [i32; M]) -> [i32; M];
+            const C3: [i32; M];
+            fn f4(_: [i32; UNKNOWN]) -> [i32; UNKNOWN];
+            const C4: [i32; UNKNOWN];
+        }
+        impl T<1> for S<1> {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f1(_: S<{ M }>) -> S<{ M }>", true),
+        ImplementMemberSelection("C1: S<{ M }>", true),
+        ImplementMemberSelection("f2(_: S<{ UNKNOWN }>) -> S<{ UNKNOWN }>", true),
+        ImplementMemberSelection("C2: S<{ UNKNOWN }>", true),
+        ImplementMemberSelection("f3(_: [i32; M]) -> [i32; M]", true),
+        ImplementMemberSelection("C3: [i32; M]", true),
+        ImplementMemberSelection("f4(_: [i32; UNKNOWN]) -> [i32; UNKNOWN]", true),
+        ImplementMemberSelection("C4: [i32; UNKNOWN]", true)
+    ), """
+        struct S<const N: usize>;
+        trait T<const M: usize> {
+            fn f1(_: S<{ M }>) -> S<{ M }>;
+            const C1: S<{ M }>;
+            fn f2(_: S<{ UNKNOWN }>) -> S<{ UNKNOWN }>;
+            const C2: S<{ UNKNOWN }>;
+            fn f3(_: [i32; M]) -> [i32; M];
+            const C3: [i32; M];
+            fn f4(_: [i32; UNKNOWN]) -> [i32; UNKNOWN];
+            const C4: [i32; UNKNOWN];
+        }
+        impl T<1> for S<1> {
+            fn f1(_: S<1>) -> S<1> {
+                unimplemented!()
+            }
+
+            const C1: S<1> = S;
+
+            fn f2(_: S<{}>) -> S<{}> {
+                unimplemented!()
+            }
+
+            const C2: S<{}> = S;
+
+            fn f3(_: [i32; 1]) -> [i32; 1] {
+                unimplemented!()
+            }
+
+            const C3: [i32; 1] = [];
+
+            fn f4(_: [i32; {}]) -> [i32; {}] {
+                unimplemented!()
+            }
+
+            const C4: [i32; {}] = [];
+        }
+    """)
+
+    fun `test implement generic trait with consts 2`() = doTest("""
+        struct S<const N: usize>;
+        trait T<const M: usize> {
+            fn f1(_: S<{ M }>) -> S<{ M }>;
+            const C1: S<{ M }>;
+            fn f2(_: [i32; M]) -> [i32; M];
+            const C2: [i32; M];
+        }
+        impl <const K: usize> T<{ K }> for S<{ K }> {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f1(_: S<{ M }>) -> S<{ M }>", true),
+        ImplementMemberSelection("C1: S<{ M }>", true),
+        ImplementMemberSelection("f2(_: [i32; M]) -> [i32; M]", true),
+        ImplementMemberSelection("C2: [i32; M]", true)
+    ), """
+        struct S<const N: usize>;
+        trait T<const M: usize> {
+            fn f1(_: S<{ M }>) -> S<{ M }>;
+            const C1: S<{ M }>;
+            fn f2(_: [i32; M]) -> [i32; M];
+            const C2: [i32; M];
+        }
+        impl <const K: usize> T<{ K }> for S<{ K }> {
+            fn f1(_: S<{ K }>) -> S<{ K }> {
+                unimplemented!()
+            }
+
+            const C1: S<{ K }> = S;
+
+            fn f2(_: [i32; K]) -> [i32; K] {
+                unimplemented!()
+            }
+
+            const C2: [i32; K] = [];
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
