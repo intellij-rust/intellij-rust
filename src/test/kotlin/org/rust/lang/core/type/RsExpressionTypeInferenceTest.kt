@@ -6,6 +6,8 @@
 package org.rust.lang.core.type
 
 import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
@@ -1200,6 +1202,15 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
             let a = |x: u8| x;
             a;
         } //^ fn(u8) -> u8
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test infer lambda parameters from type parameter`() = testExpr("""
+        fn test<T:Sync + FnOnce(u8)->u8>(arg:T) {}
+        fn main(){
+            test(|x| x );
+                   //^ u8
+        }
     """)
 
     fun `test infer lambda parameters rvalue from lvalue fn pointer`() = testExpr("""
