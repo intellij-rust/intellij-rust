@@ -20,7 +20,7 @@ class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
     override fun getTemplateDescription(): String = "if expr"
 
     override fun createTemplate(project: Project): RsIfExpr =
-        RsPsiFactory(project).createExpression("if a {stmnt;}") as RsIfExpr
+        RsPsiFactory(project).createExpression("if a {stmt;}") as RsIfExpr
 
     override fun getWrappedExpression(expression: RsIfExpr): RsExpr =
         expression.condition!!.expr

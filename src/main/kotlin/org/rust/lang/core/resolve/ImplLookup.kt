@@ -106,7 +106,7 @@ sealed class TraitImplSource {
 
     open val implementedTrait: BoundElement<RsTraitItem>? get() = value.implementedTrait
 
-    /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */
+    /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overridden by the impl */
     open val implAndTraitExpandedMembers: List<RsAbstractable> get() = value.members?.expandedMembers.orEmpty()
 
     val impl: RsImplItem?

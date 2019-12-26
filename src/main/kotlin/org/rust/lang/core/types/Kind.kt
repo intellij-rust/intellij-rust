@@ -13,7 +13,7 @@ const val HAS_TY_PROJECTION_MASK: TypeFlags = 4
 const val HAS_RE_EARLY_BOUND_MASK: TypeFlags = 8
 
 /**
- * An entity in the Rust typesystem, which can be one of several kinds (only types and lifetimes for now).
+ * An entity in the Rust type system, which can be one of several kinds (only types and lifetimes for now).
  */
 interface Kind {
     val flags: TypeFlags

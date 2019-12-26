@@ -134,8 +134,8 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
             if (block.parent !is RsFunction) return false
 
             val doc = PsiDocumentManager.getInstance(block.project).getDocument(block.containingFile) ?: return false
-            val maxLenght = rightMargin - block.getOffsetInLine(doc) - ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH
-            if (!block.isSingleLine(doc, maxLenght)) return false
+            val maxLength = rightMargin - block.getOffsetInLine(doc) - ONE_LINER_PLACEHOLDERS_EXTRA_LENGTH
+            if (!block.isSingleLine(doc, maxLength)) return false
 
             val lbrace = block.lbrace
             val rbrace = block.rbrace ?: return false

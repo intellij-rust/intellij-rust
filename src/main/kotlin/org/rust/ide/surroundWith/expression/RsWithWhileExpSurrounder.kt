@@ -20,7 +20,7 @@ class RsWithWhileExpSurrounder : RsExpressionSurrounderBase<RsWhileExpr>() {
     override fun getTemplateDescription(): String = "while expr"
 
     override fun createTemplate(project: Project): RsWhileExpr =
-        RsPsiFactory(project).createExpression("while a {stmnt;}") as RsWhileExpr
+        RsPsiFactory(project).createExpression("while a {stmt;}") as RsWhileExpr
 
     override fun getWrappedExpression(expression: RsWhileExpr): RsExpr =
         expression.condition!!.expr
