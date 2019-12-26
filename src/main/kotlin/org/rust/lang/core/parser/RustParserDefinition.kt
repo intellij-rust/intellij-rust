@@ -16,7 +16,6 @@ import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.TokenType
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider
 import com.intellij.psi.tree.IFileElementType
 import com.intellij.psi.tree.TokenSet
 import org.rust.ide.console.RsConsoleCodeFragmentContext
@@ -32,26 +31,25 @@ class RustParserDefinition : ParserDefinition {
     override fun createFile(viewProvider: FileViewProvider): PsiFile {
         val default = { RsFile(viewProvider) }
 
-        if (viewProvider is InjectedFileViewProvider) {
-            val project = viewProvider.manager.project
-            val host = InjectedLanguageManager.getInstance(project).getInjectionHost(viewProvider)
+        val project = viewProvider.manager.project
+        val injectionHost = InjectedLanguageManager.getInstance(project).getInjectionHost(viewProvider)
 
+        if (injectionHost != null) {
             // this class is contained in clion.jar, so it cannot be used inside `is` type check
-            if (host.javaClass.simpleName != "GDBExpressionPlaceholder") {
+            if (injectionHost.javaClass.simpleName != "GDBExpressionPlaceholder") {
                 return default()
             }
 
             val injectionListener = project.messageBus.syncPublisher(RsDebugInjectionListener.INJECTION_TOPIC)
             val contextResult = RsDebugInjectionListener.DebugContext()
-            injectionListener.evalDebugContext(host, contextResult)
+            injectionListener.evalDebugContext(injectionHost, contextResult)
             val context = contextResult.element ?: return default()
 
             val fragment = RsExpressionCodeFragment(viewProvider, context)
-            injectionListener.didInject(host)
+            injectionListener.didInject(injectionHost)
 
             return fragment
         } else if (viewProvider.virtualFile.name == RsConsoleView.VIRTUAL_FILE_NAME) {
-            val project = viewProvider.manager.project
             val context = RsConsoleCodeFragmentContext.createContext(project, null)
             return RsReplCodeFragment(viewProvider, context)
         }
