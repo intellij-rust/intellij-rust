@@ -31,12 +31,15 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.infer.bounds
+import org.rust.lang.core.types.infer.foldTyTypeParameterWith
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.ExprValue
 import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.stdext.letIf
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -1011,22 +1014,30 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     val retType = fn.retType
     if (arguments.isEmpty() && retType == null) return
 
+    val isSelfSized = fn.bounds.any { it.selfTy.isSelf && it.trait.element == fn.knownItems.Sized }
     val owner = fn.owner
 
     fun isError(ty: Ty): Boolean = !ty.isSized() &&
-        // '?Sized' type paramter types in abstract trait method is not an error
+        // '?Sized' type parameter types in abstract trait method is not an error
         !(owner is RsAbstractableOwner.Trait && fn.isAbstract)
+
+    fun Ty.withSelfSubst(): Ty =
+        letIf(isSelfSized) {
+            foldTyTypeParameterWith {
+                it.letIf(it.isSelf) { TyTypeParameter.self(fn.knownItems.Sized!!) }
+            }
+        }
 
     for (arg in arguments) {
         val typeReference = arg.typeReference ?: continue
-        val ty = typeReference.type
+        val ty = typeReference.type.withSelfSubst()
         if (isError(ty)) {
             RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
         }
     }
 
     val typeReference = retType?.typeReference ?: return
-    val ty = typeReference.type
+    val ty = typeReference.type.withSelfSubst()
     if (isError(ty)) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
     }

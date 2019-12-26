@@ -21,3 +21,6 @@ inline fun <T> VirtualFile.applyWithSymlink(f: (VirtualFile) -> T?): T? {
 }
 
 fun String.toPath(): Path = Paths.get(this)
+
+fun <T> T.letIf(cond: Boolean, let: (T) -> T): T =
+    if (cond) let(this) else this
