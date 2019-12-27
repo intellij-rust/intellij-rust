@@ -96,10 +96,14 @@ class RustProjectSettingsPanel(
         versionUpdateDebouncer.run(
             onPooledThread = {
                 val toolchain = RustToolchain(Paths.get(pathToToolchain))
-                val rustcVersion = toolchain.queryVersions().rustc?.semver
-                val rustup = toolchain.rustup
-                val stdlibLocation = toolchain.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl
-                Triple(rustcVersion, stdlibLocation, rustup != null)
+                if (toolchain.looksLikeValidToolchain()) {
+                    val rustcVersion = toolchain.queryVersions().rustc?.semver
+                    val rustup = toolchain.rustup
+                    val stdlibLocation = toolchain.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl
+                    Triple(rustcVersion, stdlibLocation, rustup != null)
+                } else {
+                    Triple(null, null, false)
+                }
             },
             onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
                 downloadStdlibLink.isVisible = hasRustup && stdlibLocation == null
