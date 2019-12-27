@@ -122,14 +122,6 @@ class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsE
     val stmt: RsStmt? get() = childOfType()
 }
 
-class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var context: RsElement)
-    : RsCodeFragment(fileViewProvider, RsCodeFragmentElementType.REPL, context, false),
-      RsInferenceContextOwner, RsItemsOwner {
-    val stmts: List<RsStmt> get() = childrenOfType()
-    val tailExpr: RsExpr? get() = children.lastOrNull()?.let { it as? RsExpr }
-    val namedElements: List<RsNamedElement> get() = childrenOfType()
-}
-
 class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context: RsElement)
     : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context),
       RsNamedElement {
@@ -156,9 +148,17 @@ class RsPathCodeFragment(
     companion object {
         @JvmStatic
         private fun PathParsingMode.elementType() = when (this) {
-            TYPE -> RsCodeFragmentElementType.TYPE_PATH_CODE_FRAGMENT
-            VALUE -> RsCodeFragmentElementType.VALUE_PATH_CODE_FRAGMENT
+            TYPE -> RsCodeFragmentElementType.TYPE_PATH
+            VALUE -> RsCodeFragmentElementType.VALUE_PATH
             NO_TYPE_ARGS -> error("$NO_TYPE_ARGS mode is not supported; use $TYPE")
         }
     }
+}
+
+class RsReplCodeFragment(fileViewProvider: FileViewProvider, override var context: RsElement)
+    : RsCodeFragment(fileViewProvider, RsCodeFragmentElementType.REPL, context, false),
+      RsInferenceContextOwner, RsItemsOwner {
+    val stmts: List<RsStmt> get() = childrenOfType()
+    val tailExpr: RsExpr? get() = children.lastOrNull()?.let { it as? RsExpr }
+    val namedElements: List<RsNamedElement> get() = childrenOfType()
 }

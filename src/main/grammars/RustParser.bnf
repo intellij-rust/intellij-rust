@@ -87,7 +87,7 @@
     elementType(".+BinExpr") = BinaryExpr
     elementType(".+BinOp") = BinaryOp
 
-    extraRoot(".*CodeFragment")=true
+    extraRoot(".*CodeFragmentElement")=true
 
     extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest)") = Pat
 
@@ -109,12 +109,12 @@
 
 
 File ::= [ SHEBANG_LINE ] InnerAttr* Items
-ExprCodeFragment ::= Expr?
-StmtCodeFragment ::= Stmt?
-TypeRefCodeFragment ::= TypeReference?
-ValuePathCodeFragment ::= ValuePathGenericArgs?
-TypePathCodeFragment ::= TypePathGenericArgs?
-ReplCodeFragment ::= (Item | Stmt)* Expr?
+ExpressionCodeFragmentElement ::= Expr?
+StatementCodeFragmentElement ::= Stmt?
+TypeReferenceCodeFragmentElement ::= TypeReference?
+ValuePathCodeFragmentElement ::= ValuePathGenericArgs?
+TypePathCodeFragmentElement ::= TypePathGenericArgs?
+ReplCodeFragmentElement ::= (Item | Stmt)* Expr?
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes

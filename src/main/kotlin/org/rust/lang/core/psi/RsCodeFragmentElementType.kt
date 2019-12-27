@@ -24,11 +24,11 @@ class RsCodeFragmentElementType(private val elementType: IElementType, debugName
     }
 
     companion object {
-        val EXPR = RsCodeFragmentElementType(RsElementTypes.EXPR_CODE_FRAGMENT, "RS_EXPR_CODE_FRAGMENT")
-        val STMT = RsCodeFragmentElementType(RsElementTypes.STMT_CODE_FRAGMENT, "RS_STMT_CODE_FRAGMENT")
-        val REPL = RsCodeFragmentElementType(RsElementTypes.REPL_CODE_FRAGMENT, "RS_REPL_CODE_FRAGMENT")
-        val TYPE_REF = RsCodeFragmentElementType(RsElementTypes.TYPE_REF_CODE_FRAGMENT, "RS_TYPE_REF_CODE_FRAGMENT")
-        val TYPE_PATH_CODE_FRAGMENT = RsCodeFragmentElementType(RsElementTypes.TYPE_PATH_CODE_FRAGMENT, "RS_TYPE_PATH_CODE_FRAGMENT")
-        val VALUE_PATH_CODE_FRAGMENT = RsCodeFragmentElementType(RsElementTypes.VALUE_PATH_CODE_FRAGMENT, "RS_VALUE_PATH_CODE_FRAGMENT")
+        val EXPR = RsCodeFragmentElementType(RsElementTypes.EXPRESSION_CODE_FRAGMENT_ELEMENT, "RS_EXPR_CODE_FRAGMENT")
+        val STMT = RsCodeFragmentElementType(RsElementTypes.STATEMENT_CODE_FRAGMENT_ELEMENT, "RS_STMT_CODE_FRAGMENT")
+        val TYPE_REF = RsCodeFragmentElementType(RsElementTypes.TYPE_REFERENCE_CODE_FRAGMENT_ELEMENT, "RS_TYPE_REF_CODE_FRAGMENT")
+        val TYPE_PATH = RsCodeFragmentElementType(RsElementTypes.TYPE_PATH_CODE_FRAGMENT_ELEMENT, "RS_TYPE_PATH_CODE_FRAGMENT")
+        val VALUE_PATH = RsCodeFragmentElementType(RsElementTypes.VALUE_PATH_CODE_FRAGMENT_ELEMENT, "RS_VALUE_PATH_CODE_FRAGMENT")
+        val REPL = RsCodeFragmentElementType(RsElementTypes.REPL_CODE_FRAGMENT_ELEMENT, "RS_REPL_CODE_FRAGMENT")
     }
 }
