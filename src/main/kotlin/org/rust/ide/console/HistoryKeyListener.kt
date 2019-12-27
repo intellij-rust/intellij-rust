@@ -86,10 +86,10 @@ class HistoryKeyListener(
 
                 historyPos = min(historyPos + 1, history.size)
                 project.runWriteCommandAction {
-                    val comamnd =
+                    val command =
                         if (historyPos == history.size) unfinishedCommand
                         else history[historyPos].entryText
-                    document.setText(comamnd)
+                    document.setText(command)
                     prevCaretOffset = document.textLength
                     EditorUtil.scrollToTheEnd(consoleEditor)
                 }

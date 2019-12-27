@@ -17,14 +17,13 @@ class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
     override fun getFamilyName(): String = text
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsIfExpr? {
-        val ifStmnt = element.ancestorStrict<RsIfExpr>() ?: return null
-        return if (ifStmnt.elseBranch == null) ifStmnt else null
+        val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return null
+        return if (ifExpr.elseBranch == null) ifExpr else null
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsIfExpr) {
-        val ifStmnt = ctx
-        val ifExpr = RsPsiFactory(project).createExpression("${ifStmnt.text}\nelse {}") as RsIfExpr
-        val elseBlockOffset = (ifStmnt.replace(ifExpr) as RsIfExpr).elseBranch?.block?.textOffset ?: return
+        val newIfExpr = RsPsiFactory(project).createExpression("${ctx.text}\nelse {}") as RsIfExpr
+        val elseBlockOffset = (ctx.replace(newIfExpr) as RsIfExpr).elseBranch?.block?.textOffset ?: return
         editor.caretModel.moveToOffset(elseBlockOffset + 1)
     }
 }

@@ -47,7 +47,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
             RsKeywordCompletionProvider("return", "let"))
         extend(CompletionType.BASIC, letPattern(),
             RsKeywordCompletionProvider("mut"))
-        extend(CompletionType.BASIC, loopFlowCommandPatern(),
+        extend(CompletionType.BASIC, loopFlowCommandPattern(),
             RsKeywordCompletionProvider("break", "continue"))
         extend(CompletionType.BASIC, wherePattern(),
             RsKeywordCompletionProvider("where"))
@@ -142,7 +142,7 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun letPattern(): PsiElementPattern.Capture<PsiElement> =
         baseCodeStatementPattern().and(statementBeginningPattern("let"))
 
-    private fun loopFlowCommandPatern(): PsiElementPattern.Capture<PsiElement> =
+    private fun loopFlowCommandPattern(): PsiElementPattern.Capture<PsiElement> =
         RsPsiPattern.inAnyLoop.and(newCodeStatementPattern())
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =

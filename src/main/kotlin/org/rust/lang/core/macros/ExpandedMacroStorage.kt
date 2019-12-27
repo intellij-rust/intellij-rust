@@ -654,7 +654,7 @@ class SourceFile(
         checkWriteAccessAllowed()
         if (getRefKind() == RefKind.STUB) {
             val psi = loadPsi() ?: return false
-            // Used insted of `psi.stubbedSpine` to avoid switching to spine refs during PSI event processing
+            // Used instead of `psi.stubbedSpine` to avoid switching to spine refs during PSI event processing
             // which is forbidden (see `PsiFileImpl.subtreeChanged`)
             val spine = psi.greenStubTree?.spine
                 ?: psi.treeElement?.stubbedSpine
@@ -693,7 +693,7 @@ class SourceFile(
             element
         } else {
             val document = FileDocumentManager.getInstance().getCachedDocument(file)
-            val lastCommitedDocStamp =
+            val lastCommittedDocStamp =
                 document?.let { PsiDocumentManager.getInstance(project).getLastCommittedStamp(it) }
             MACRO_LOG.error(
                 "Detected broken stub reference to a macro!",
@@ -704,7 +704,7 @@ class SourceFile(
                 "PSI stamp: ${loadPsi()?.viewProvider?.modificationStamp},",
                 "File stamp: ${file.modificationStamp},",
                 "Document stamp: ${document?.modificationStamp},",
-                "Last commited document stamp: $lastCommitedDocStamp,",
+                "Last committed document stamp: $lastCommittedDocStamp,",
                 "Stub index: $stubIndex,",
                 "Found element: $element, ",
                 "Found element text: `${element?.text}`"

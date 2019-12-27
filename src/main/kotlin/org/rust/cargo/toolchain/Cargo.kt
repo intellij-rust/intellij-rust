@@ -23,7 +23,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.CargoConstants.RUST_BACTRACE_ENV_VAR
+import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -314,8 +314,8 @@ class Cargo(private val cargoExecutable: Path) {
                 .withCharset(Charsets.UTF_8)
             withProxyIfNeeded(cmdLine, http)
             when (backtraceMode) {
-                BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "short")
-                BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACTRACE_ENV_VAR, "full")
+                BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACKTRACE_ENV_VAR, "short")
+                BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACKTRACE_ENV_VAR, "full")
                 BacktraceMode.NO -> Unit
             }
             environmentVariables.configureCommandLine(cmdLine, true)
