@@ -18,8 +18,11 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import java.util.logging.Logger
 
 data class RustToolchain(val location: Path) {
+
+    private val isWslToolchain = WINDOWS_WSL_PATH_REGEX.toRegex().matches(location.toString())
 
     fun looksLikeValidToolchain(): Boolean =
         hasExecutable(CARGO) && hasExecutable(RUSTC)
@@ -85,12 +88,12 @@ data class RustToolchain(val location: Path) {
     val presentableLocation: String = pathToExecutable(CARGO).toString()
 
     private fun pathToExecutable(toolName: String): Path {
-        val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
+        val exeName = if (SystemInfo.isWindows && !isWslToolchain) "$toolName.exe" else toolName
         return location.resolve(exeName).toAbsolutePath()
     }
 
     private fun hasExecutable(exec: String): Boolean =
-        Files.isExecutable(pathToExecutable(exec))
+        Files.exists(pathToExecutable(exec))
 
     data class VersionInfo(
         val rustc: RustcVersion?
@@ -195,7 +198,7 @@ private object Suggestions {
     private fun fromPath(): Sequence<File> = System.getenv("PATH").orEmpty()
         .split(File.pathSeparator)
         .asSequence()
-        .filter { !it.isEmpty() }
+        .filter { it.isNotEmpty() }
         .map(::File)
         .filter { it.isDirectory }
 
@@ -216,13 +219,33 @@ private object Suggestions {
         val fromHome = File(System.getProperty("user.home") ?: "", ".cargo/bin")
 
         val programFiles = File(System.getenv("ProgramFiles") ?: "")
-        val fromProgramFiles = if (!programFiles.exists() || !programFiles.isDirectory)
-            emptySequence()
-        else
-            programFiles.listFiles { file -> file.isDirectory }.asSequence()
-                .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
-                .map { File(it, "bin") }
+        val fromProgramFiles =
+            if (!programFiles.exists() || !programFiles.isDirectory)
+                emptySequence()
+            else
+                programFiles.listFiles { file -> file.isDirectory }
+                    ?.asSequence()
+                    ?.filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
+                    ?.map { File(it, "bin") }
+                    ?: emptySequence()
+        val fromWsl = if (SystemInfo.isWin10OrNewer) {
+            val outputBytes = Runtime.getRuntime()
+                .exec("$WSL source ~/.profile && wslpath -w $(which cargo)") // rustup adds cargo to PATH in ~/.profile, so it needs to be sourced
+                .inputStream
+                .readAllBytes()
+            val output = String(outputBytes).trim() // an extra newline is attached in the output
+            val isWslPath = WINDOWS_WSL_PATH_REGEX.toRegex().matches(output)
+            // if it is not a WSL path, `which` could not find cargo and help text will be outputted instead
+            if (isWslPath) {
+                val toolchainLocation = File(output).parentFile
+                sequenceOf(toolchainLocation)
+            } else {
+                emptySequence<File>()
+            }
+        } else {
+            emptySequence() // WSL is not supported on anything other than Windows 10
+        }
 
-        return sequenceOf(fromHome) + fromProgramFiles
+        return sequenceOf(fromHome) + fromProgramFiles + fromWsl
     }
 }

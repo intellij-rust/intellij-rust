@@ -26,7 +26,54 @@ fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(pat
 
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
+private const val WINDOWS_PATH_REGEX = """^[A-Z]:.*$"""
+const val WINDOWS_WSL_PATH_REGEX = """^\\\\wsl\$\\(\w+)(\\.+)$"""
+const val WSL = "wsl"
+
+fun GeneralCommandLine.adjustForWsl(): Boolean {
+    val normalizedExePath = exePath.replace("/", "\\")
+    WINDOWS_WSL_PATH_REGEX.toRegex().find(normalizedExePath)?.also {
+        val distribution = it.groupValues[1]
+        val unixPath = it.groupValues[2].replace("\\", "/")
+
+        parametersList.parameters.forEachIndexed { index, parameter ->
+            val isWindowsPath =
+                WINDOWS_PATH_REGEX.toRegex().containsMatchIn(parameter)
+            if (isWindowsPath) {
+                val parameterEscaped = parameter.replace("\\", "\\\\")
+                val transformedPathBytes = Runtime.getRuntime()
+                    .exec("$WSL wslpath $parameterEscaped")
+                    .inputStream
+                    .readAllBytes()
+                val transformedBytes = String(transformedPathBytes).trim()
+                parametersList.set(index, transformedBytes)
+            }
+        }
+        exePath = WSL
+        parametersList.prependAll("-d", distribution, unixPath)
+        return true
+    }
+    return false
+}
+
+const val UNIX_PATH_REGEX = """/[\w_\-/.]+"""
+
+fun ProcessOutput.withUnixPathsTransformed(): ProcessOutput {
+    val transformed = ProcessOutput(exitCode)
+    if (isCancelled) transformed.setCancelled()
+    if (isTimeout) transformed.setTimeout()
+
+    val transform: (MatchResult) -> String = { path ->
+        val bytes = Runtime.getRuntime().exec("$WSL wslpath -w ${path.value}").inputStream.readAllBytes()
+        String(bytes).trim().replace("\\", "\\\\")
+    }
+    transformed.appendStdout(stdout.replace(UNIX_PATH_REGEX.toRegex(), transform))
+    transformed.appendStderr(stderr.replace(UNIX_PATH_REGEX.toRegex(), transform))
+    return transformed
+}
+
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
+    val isAdjusted = adjustForWsl()
     val output = try {
         val handler = CapturingProcessHandler(this)
         LOG.info("Executing `$commandLineString`")
@@ -40,7 +87,7 @@ fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutpu
         LOG.warn(errorMessage(this, output))
     }
 
-    return output
+    return if (isAdjusted) output.withUnixPathsTransformed() else output
 }
 
 @Throws(ExecutionException::class)
@@ -50,7 +97,7 @@ fun GeneralCommandLine.execute(
     stdIn: ByteArray? = null,
     listener: ProcessListener? = null
 ): ProcessOutput {
-
+    val isAdjusted = adjustForWsl()
     val handler = CapturingProcessHandler(this)
     val cargoKiller = Disposable {
         // Don't attempt a graceful termination, Cargo can be SIGKILLed safely.
@@ -92,7 +139,7 @@ fun GeneralCommandLine.execute(
     if (!ignoreExitCode && output.exitCode != 0) {
         throw ExecutionException(errorMessage(this, output))
     }
-    return output
+    return if (isAdjusted) output.withUnixPathsTransformed() else output
 }
 
 private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String = """
