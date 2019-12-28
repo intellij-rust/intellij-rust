@@ -23,7 +23,7 @@ val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsExpandedElement>, RsExpr?>
             ?.let { it as? RsExpr }
             ?.takeIf { e ->
                 // If tail expr is expanded from a macro, we should check that this macro doesn't have
-                // semicolon (`foo!();`), otherwice it's not a tail expr but a regular statement
+                // semicolon (`foo!();`), otherwise it's not a tail expr but a regular statement
                 e.expandedFromSequence.all {
                     val bracesKind = it.bracesKind ?: return@all false
                     !bracesKind.needsSemicolon || it.semicolon == null

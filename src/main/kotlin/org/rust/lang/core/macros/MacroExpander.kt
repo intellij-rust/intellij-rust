@@ -213,7 +213,7 @@ class MacroExpander(val project: Project) {
                         return@forEachChild
                     }
                     val parensNeeded = value.kind == FragmentKind.Expr
-                        && value.elementType !in USELES_PARENS_EXPRS
+                        && value.elementType !in USELESS_PARENS_EXPRS
                     if (parensNeeded) {
                         sb.append("(")
                         sb.append(value.value)
@@ -279,7 +279,7 @@ class MacroExpander(val project: Project) {
 
     companion object {
         const val EXPANDER_VERSION = 3
-        private val USELES_PARENS_EXPRS = tokenSetOf(
+        private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
     }
