@@ -83,4 +83,12 @@ class CargoCrateDocLineMarkerProviderTest : RsTestBase() {
         [dependencies]
         config_rs = { package = "config", version = "0.9" }  # - Open documentation for `config@0.9`
     """)
+
+    fun `test unescape string literals`() = doTestByText("""
+        [dependencies]
+        serde = '1.0.104'  # - Open documentation for `serde@1.0.104`
+        serde_json = { version = '''1.0.104''' }  # - Open documentation for `serde_json@1.0.104`
+        serde_yaml_rs = { package = 'serde_yaml', version = '''0.8.11''' }  # - Open documentation for `serde_yaml@0.8.11`
+        serde_derive_rs = { package = "serde\u005Fderive", version ="1\u002E0\u002E104" }  # - Open documentation for `serde_derive@1.0.104`
+    """)
 }
