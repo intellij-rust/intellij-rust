@@ -64,7 +64,7 @@ class RsGroupSelectionHandler : ExtendWordSelectionHandlerBase() {
 
         while (endElement is PsiWhiteSpace) endElement = endElement.prevSibling
 
-        result.addAll(ExtendWordSelectionHandlerBase.expandToWholeLine(
+        result.addAll(expandToWholeLine(
             editorText, TextRange(startElement.startOffset, endElement.endOffset)))
 
         return result
