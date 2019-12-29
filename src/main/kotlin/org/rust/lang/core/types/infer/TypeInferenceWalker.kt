@@ -23,7 +23,6 @@ import org.rust.openapiext.forEachChild
 import org.rust.stdext.notEmptyOrLet
 import org.rust.stdext.singleOrFilter
 import org.rust.stdext.singleOrLet
-import org.rust.stdext.withPrevious
 
 class RsTypeInferenceWalker(
     private val ctx: RsInferenceContext,
@@ -196,10 +195,7 @@ class RsTypeInferenceWalker(
 
     private fun coerceResolved(element: RsElement, inferred: Ty, expected: Ty): Boolean {
         when (val result = tryCoerce(inferred, expected)) {
-            is CoerceResult.Ok -> {
-                result.adjustments.forEach { ctx.addAdjustment(element, it) }
-                return true
-            }
+            CoerceResult.Ok -> return true
 
             is CoerceResult.Mismatch -> {
                 // ignoring possible false-positives (it's only basic experimental type checking)
@@ -230,21 +226,21 @@ class RsTypeInferenceWalker(
 
     private fun tryCoerce(inferred: Ty, expected: Ty): CoerceResult {
         return when {
-            inferred == TyNever -> CoerceResult.Ok()
+            inferred == TyNever -> CoerceResult.Ok
             // Coerce array to slice
             inferred is TyReference && inferred.referenced is TyArray &&
                 expected is TyReference && expected.referenced is TySlice -> {
-                ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType).into()
+                ctx.combineTypes(inferred.referenced.base, expected.referenced.elementType)
             }
             // Coerce reference to pointer
             inferred is TyReference && expected is TyPointer &&
                 coerceMutability(inferred.mutability, expected.mutability) -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced).into()
+                ctx.combineTypes(inferred.referenced, expected.referenced)
             }
             // Coerce mutable pointer to const pointer
             inferred is TyPointer && inferred.mutability.isMut
                 && expected is TyPointer && !expected.mutability.isMut -> {
-                ctx.combineTypes(inferred.referenced, expected.referenced).into()
+                ctx.combineTypes(inferred.referenced, expected.referenced)
             }
             // Coerce references
             inferred is TyReference && expected is TyReference &&
@@ -252,7 +248,7 @@ class RsTypeInferenceWalker(
                 coerceReference(inferred, expected)
             }
             // TODO trait object unsizing
-            else -> ctx.combineTypes(inferred, expected).into()
+            else -> ctx.combineTypes(inferred, expected)
         }
     }
 
@@ -264,19 +260,10 @@ class RsTypeInferenceWalker(
      * To match `A` with `B`, autoderef will be performed
      */
     private fun coerceReference(inferred: TyReference, expected: TyReference): CoerceResult {
-        val derefSequence = mutableListOf<Ty>()
         for (derefTy in lookup.coercionSequence(inferred).drop(1)) {
-            derefSequence += derefTy
             // TODO proper handling of lifetimes
             val derefTyRef = TyReference(derefTy, expected.mutability, expected.region)
-            if (ctx.combineTypesIfOk(derefTyRef, expected)) {
-                val isTrivialReborrow = derefSequence.size == 1 && inferred.mutability == expected.mutability &&
-                    !expected.mutability.isMut // See rustc's `coerce_borrowed_pointer`
-                if (!isTrivialReborrow) {
-                    return CoerceResult.Ok(derefSequence.map { Adjustment.Deref(it) } + listOf(Adjustment.BorrowReference(derefTyRef)))
-                }
-                return CoerceResult.Ok()
-            }
+            if (ctx.combineTypesIfOk(derefTyRef, expected)) return CoerceResult.Ok
         }
 
         return CoerceResult.Mismatch(inferred, expected)
@@ -574,10 +561,10 @@ class RsTypeInferenceWalker(
             val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
             val callee = pickSingleMethod(receiver, variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
-            val variantsForDisplay = callee?.let { listOf(it.toMethodResolveVariant()) } ?: variants
+            val variantsForDisplay = (callee?.let(::listOf) ?: variants)
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
 
-            callee ?: variants.firstOrNull()?.let { MethodPick.from(it) }
+            callee ?: variants.firstOrNull()
         }
         if (callee == null) {
             val methodType = unknownTyFunction(argExprs.size)
@@ -587,13 +574,17 @@ class RsTypeInferenceWalker(
 
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
 
-        ctx.addDerefAdjustments(methodCall.receiver, callee.derefChain)
-        if (callee.borrow != null) {
-            ctx.addAdjustment(methodCall.receiver, Adjustment.BorrowReference(callee.methodSelfTy as TyReference))
-        }
-
         var typeParameters = ctx.instantiateMethodOwnerSubstitution(callee, methodCall)
-        typeParameters = ctx.instantiateBounds(callee.element, callee.formalSelfTy, typeParameters)
+
+        // TODO: borrow adjustments for self parameter
+        /*
+        if (callee.selfTy is TyReference) {
+            val adjustment = BorrowReference( callee.selfTy)
+            ctx.addAdjustment(methodCall.receiver, adjustment)
+        }
+        */
+
+        typeParameters = ctx.instantiateBounds(callee.element, callee.selfTy, typeParameters)
 
         val fnSubst = run {
             val typeArguments = methodCall.typeArgumentList?.typeReferenceList.orEmpty().map { it.type }
@@ -649,37 +640,27 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodPick? {
-        val picked = run {
-            val list = filterAssocItems(variants, methodCall)
-
+    private fun pickSingleMethod(receiver: Ty, variants: List<MethodResolveVariant>, methodCall: RsMethodCall): MethodResolveVariant? {
+        val filtered = filterAssocItems(variants, methodCall).singleOrLet { list ->
             // 3. Pick results matching receiver type
             TypeInferenceMarks.methodPickDerefOrder.hit()
 
-            fun pick(ty: Ty, derefChain: List<Ty>, borrow: Mutability?): List<MethodPick> =
+            fun pick(ty: Ty): List<MethodResolveVariant> =
                 list.filter { it.element.selfParameter?.typeOfValue(it.selfTy) == ty }
-                    .map { MethodPick.from(it, ty, derefChain, borrow) }
-
-            val derefChain = mutableListOf<Ty>()
 
             // https://github.com/rust-lang/rust/blob/a646c912/src/librustc_typeck/check/method/probe.rs#L885
-            lookup.coercionSequence(receiver).withIndex().mapNotNull { (i, ty) ->
-                if (i != 0) {
-                    derefChain.add(ty)
-                }
-                pick(ty, derefChain, null)
+            lookup.coercionSequence(receiver).mapNotNull { ty ->
+                pick(ty)
                     // TODO do something with lifetimes
-                    .notEmptyOrLet { pick(TyReference(ty, Mutability.IMMUTABLE), derefChain, Mutability.IMMUTABLE) }
-                    .notEmptyOrLet { pick(TyReference(ty, Mutability.MUTABLE), derefChain, Mutability.MUTABLE) }
+                    .notEmptyOrLet { pick(TyReference(ty, Mutability.IMMUTABLE)) }
+                    .notEmptyOrLet { pick(TyReference(ty, Mutability.MUTABLE)) }
                     .takeIf { it.isNotEmpty() }
-            }.firstOrNull()
-                ?: list.singleOrNull()?.let { listOf(MethodPick.from(it)) }
-                ?: emptyList()
+            }.firstOrNull() ?: emptyList()
         }
 
-        return when (picked.size) {
+        return when (filtered.size) {
             0 -> null
-            1 -> picked.single()
+            1 -> filtered.single()
             else -> {
                 // 4. Try to collapse multiple resolved methods of the same trait, e.g.
                 // ```rust
@@ -690,18 +671,15 @@ class RsTypeInferenceWalker(
                 // In this case we `filtered` list contains 2 function defined in 2 impls.
                 // We want to collapse them to the single function defined in the trait.
                 // Specific impl will be selected later according to the method parameter type.
-                val first = picked.first()
-                collapseToTrait(picked.map { it.element })?.let { fn ->
+                val first = filtered.first()
+                collapseToTrait(filtered.map { it.element })?.let { fn ->
                     TypeInferenceMarks.methodPickCollapseTraits.hit()
-                    MethodPick(
+                    MethodResolveVariant(
+                        first.name,
                         fn,
-                        first.formalSelfTy,
-                        first.methodSelfTy,
+                        first.selfTy,
                         first.derefCount,
-                        TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait),
-                        first.derefChain,
-                        first.borrow,
-                        first.isValid
+                        TraitImplSource.Collapsed((fn.owner as RsAbstractableOwner.Trait).trait)
                     )
                 }
             }
@@ -752,20 +730,16 @@ class RsTypeInferenceWalker(
         ctx.writeResolvedField(fieldLookup, variants.map { it.element })
         val field = variants.firstOrNull()
         if (field == null) {
-            val derefSequence = mutableListOf<Ty>()
-            lookup.coercionSequence(receiver).forEachIndexed { i, type ->
-                if (i != 0) {
-                    derefSequence += type
-                }
+            for ((index, type) in lookup.coercionSequence(receiver).withIndex()) {
                 if (type is TyTuple) {
-                    ctx.addDerefAdjustments(fieldLookup.parentDotExpr.expr, derefSequence)
+                    ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), index)
                     val fieldIndex = fieldLookup.integerLiteral?.text?.toIntOrNull() ?: return TyUnknown
                     return type.types.getOrElse(fieldIndex) { TyUnknown }
                 }
             }
             return TyUnknown
         }
-        ctx.addDerefAdjustments(fieldLookup.parentDotExpr.expr, field.derefSequence)
+        ctx.addAdjustment(fieldLookup.parentDotExpr.expr, Adjustment.Deref(receiver), field.derefCount)
 
         val fieldElement = field.element
 
@@ -1055,29 +1029,26 @@ class RsTypeInferenceWalker(
         val containerType = containerExpr.inferType()
         val indexType = ctx.resolveTypeVarsIfPossible(indexExpr.inferType())
 
-        val derefSequence = mutableListOf<Ty>()
-        val result = lookup.coercionSequence(containerType).withPrevious().mapIndexedNotNull { i, (type, prevType) ->
-            if (i != 0 && !isArrayToSlice(prevType, type)) {
-                derefSequence += type
-            }
-            lookup.findIndexOutputType(type, indexType)?.register()
-        }.firstOrNull() ?: TyUnknown
-
-        if (result != TyUnknown) {
-            val parent = expr.context
-            // TODO locate lvalues correctly
-            val requiredMutability = Mutability.valueOf(parent is RsBinaryExpr && parent.operatorType is AssignmentOp)
-            val prevTy = derefSequence.getOrNull(derefSequence.size - 2) ?: containerType
-            if (prevTy is TyReference && prevTy.mutability == requiredMutability) {
-                if (derefSequence.size > 1) {
-                    ctx.addDerefAdjustments(containerExpr, derefSequence.dropLast(1))
-                }
-            } else {
-                ctx.addDerefAdjustments(containerExpr, derefSequence)
-                val lastTy = derefSequence.lastOrNull() ?: containerType
-                ctx.addAdjustment(containerExpr, Adjustment.BorrowReference(TyReference(lastTy, requiredMutability)))
-            }
+        if (indexType is TyReference) {
+            ctx.addAdjustment(indexExpr, Adjustment.BorrowReference(indexType)) // TODO
         }
+
+        var derefCount = -1 // starts with -1 because the fist element of the coercion sequence is the type itself
+        var prevType: Ty? = null
+        var result: Ty = TyUnknown
+        for (type in lookup.coercionSequence(containerType)) {
+            if (!isArrayToSlice(prevType, type)) derefCount++
+
+            val outputType = lookup.findIndexOutputType(type, indexType)
+            if (outputType != null) {
+                result = outputType.register()
+                break
+            }
+
+            prevType = type
+        }
+
+        ctx.addAdjustment(containerExpr, Adjustment.Deref(containerType), derefCount)
         return result
     }
 
