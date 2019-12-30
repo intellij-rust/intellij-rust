@@ -1184,7 +1184,7 @@ class RsTypeInferenceWalker(
             is TyInfer.TyVar -> {
                 fulfill.pendingObligations
                     .mapNotNull { it.obligation.predicate as? Predicate.Trait }
-                    .find { it.trait.selfTy == expected }
+                    .find { it.trait.selfTy == expected && it.trait.trait.element in listOf(items.Fn, items.FnMut, items.FnOnce) }
                     ?.let { lookup.asTyFunction(it.trait.trait) }
             }
             is TyTraitObject -> lookup.asTyFunction(expected.trait)
