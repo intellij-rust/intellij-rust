@@ -82,10 +82,8 @@ data class FieldResolveVariant(
     override val name: String,
     override val element: RsElement,
     override val selfTy: Ty,
-    val derefSequence: List<Ty>
-) : DotExprResolveVariant {
-    override val derefCount: Int get() = derefSequence.size
-}
+    override val derefCount: Int
+) : DotExprResolveVariant
 
 data class MethodResolveVariant(
     override val name: String,

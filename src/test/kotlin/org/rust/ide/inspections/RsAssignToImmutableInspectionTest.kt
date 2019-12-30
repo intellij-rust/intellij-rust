@@ -100,4 +100,13 @@ class RsAssignToImmutableInspectionTest : RsInspectionsTestBase(RsAssignToImmuta
             x.a = 1;
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no E0594 for mutable generic slice of Copy types`() = checkByText("""
+        fn swap<T>(index_a: usize, index_b: usize, arr: &mut [T]) where T: Copy {
+            let temp = arr[index_a];
+            arr[index_a] = arr[index_b];
+            arr[index_b] = temp;
+        }
+    """)
 }
