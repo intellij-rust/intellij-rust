@@ -19,6 +19,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
         return object : RsVisitor() {
             override fun visitIfExpr(o: RsIfExpr) {
+                if (o.parent is RsElseBranch) return
                 checkExpr(o, o.`if`)
             }
 
