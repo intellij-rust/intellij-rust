@@ -35,6 +35,6 @@ class RsBlockSelectionHandler : ExtendWordSelectionHandlerBase() {
         if (startOffset >= endOffset) return null
 
         val range = TextRange.create(startOffset, endOffset)
-        return ExtendWordSelectionHandlerBase.expandToWholeLine(editorText, range)
+        return expandToWholeLine(editorText, range)
     }
 }

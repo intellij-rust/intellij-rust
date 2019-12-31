@@ -7,10 +7,11 @@ package org.rust.ide.wordSelection
 
 import com.intellij.codeInsight.editorActions.SelectWordHandler
 import com.intellij.ide.DataManager
+import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 abstract class RsSelectionHandlerTestBase : RsTestBase() {
-    fun doTest(before: String, vararg after: String) {
+    fun doTest(@Language("Rust") before: String, @Language("Rust") vararg after: String) {
         doTestWithoutMacro(before, after)
         doTestWithMacro(before, after)
     }

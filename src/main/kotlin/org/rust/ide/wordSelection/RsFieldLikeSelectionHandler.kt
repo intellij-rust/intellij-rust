@@ -30,7 +30,7 @@ class RsFieldLikeSelectionHandler : ExtendWordSelectionHandlerBase() {
             ?.takeIf { it.elementType == RsElementTypes.COMMA }
             ?.let { end = it.endOffset }
 
-        return ExtendWordSelectionHandlerBase.expandToWholeLine(editorText, TextRange.create(start, end))
+        return expandToWholeLine(editorText, TextRange.create(start, end))
     }
 
     companion object {

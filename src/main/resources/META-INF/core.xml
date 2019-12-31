@@ -40,6 +40,7 @@
 
         <!-- Selection Handler -->
 
+        <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsStringLiteralSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsBlockSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsGroupSelectionHandler"/>
         <extendWordSelectionHandler implementation="org.rust.ide.wordSelection.RsFieldLikeSelectionHandler"/>
