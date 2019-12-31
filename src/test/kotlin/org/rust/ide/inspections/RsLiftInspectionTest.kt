@@ -74,6 +74,44 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
         }
     """, checkWeakWarn = true, testmark = RsLiftInspection.Testmarks.insideRetExpr)
 
+    fun `test lift return in else if`() = checkFixIsUnavailable("Lift return out of 'if'", """
+        fn get_char(n: u32) -> char {
+            /*weak_warning descr="Return can be lifted out of 'if'"*/if/*weak_warning**/ n == 0 {
+                return 'a'
+            } else /*caret*/if n == 1 {
+                return 'b'
+            } else {
+                return 'c'
+            }
+        }
+    """, checkWeakWarn = true)
+
+    fun `test lift return in if with else if`() = checkFixByText("Lift return out of 'if'", """
+        fn get_char(n: u32) -> char {
+            /*weak_warning descr="Return can be lifted out of 'if'"*/if/*caret*//*weak_warning**/ n == 0 {
+                return 'a'
+            } else if n == 1 {
+                return 'b'
+            } else if n == 2 {
+                return 'c'
+            } else {
+                return 'd'
+            }
+        }
+    """, """
+        fn get_char(n: u32) -> char {
+            return if n == 0 {
+                'a'
+            } else if n == 1 {
+                'b'
+            } else if n == 2 {
+                'c'
+            } else {
+                'd'
+            }
+        }
+    """, checkWeakWarn = true)
+
     fun `test lift return in match 1`() = checkFixByText("Lift return out of 'match'", """
         fn foo(x: bool) -> i32 {
             /*weak_warning descr="Return can be lifted out of 'match'"*/match/*caret*//*weak_warning**/ x {

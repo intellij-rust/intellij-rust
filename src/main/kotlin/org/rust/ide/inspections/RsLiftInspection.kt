@@ -19,6 +19,7 @@ class RsLiftInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
         return object : RsVisitor() {
             override fun visitIfExpr(o: RsIfExpr) {
+                if (o.parent is RsElseBranch) return
                 checkExpr(o, o.`if`)
             }
 
@@ -91,7 +92,12 @@ private fun RsExpr.getFoldableReturns(): List<FoldableElement>? {
             }
             is RsIfExpr -> {
                 if (block?.collectFoldableReturns() != true) return false
-                if (elseBranch?.block?.collectFoldableReturns() != true) return false
+                val elseIf = elseBranch?.ifExpr
+                if (elseIf != null) {
+                    if (!elseIf.collectFoldableReturns()) return false
+                } else {
+                    if (elseBranch?.block?.collectFoldableReturns() != true) return false
+                }
             }
             is RsMatchExpr -> {
                 val arms = matchBody?.matchArmList ?: return false
