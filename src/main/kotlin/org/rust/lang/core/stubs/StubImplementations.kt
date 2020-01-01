@@ -38,7 +38,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 188
+        override fun getStubVersion(): Int = 189
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> = RsFileStub(file as RsFile)
@@ -1029,7 +1029,8 @@ class RsLifetimeParameterStub(
 class RsMacroStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
-    val macroBody: String?
+    val macroBody: String?,
+    val preferredBraces: MacroBraces
 ) : StubBase<RsMacro>(parent, elementType),
     RsNamedStub {
 
@@ -1040,20 +1041,22 @@ class RsMacroStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroStub(parentStub, this,
                 dataStream.readNameAsString(),
-                dataStream.readUTFFastAsNullable()
+                dataStream.readUTFFastAsNullable(),
+                dataStream.readEnum()
             )
 
         override fun serialize(stub: RsMacroStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeName(stub.name)
                 writeUTFFastAsNullable(stub.macroBody)
+                writeEnum(stub.preferredBraces)
             }
 
         override fun createPsi(stub: RsMacroStub): RsMacro =
             RsMacroImpl(stub, this)
 
         override fun createStub(psi: RsMacro, parentStub: StubElement<*>?) =
-            RsMacroStub(parentStub, this, psi.name, psi.macroBody?.text)
+            RsMacroStub(parentStub, this, psi.name, psi.macroBody?.text, psi.preferredBraces)
 
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
     }
