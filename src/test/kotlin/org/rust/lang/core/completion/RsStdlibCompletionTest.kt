@@ -54,6 +54,12 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         fn main() { vec![/*caret*/] }
     """)
 
+    fun `test macro with braces`() = doFirstCompletion("""
+       thread_lo/*caret*/
+    """, """
+       thread_local! {/*caret*/}
+    """)
+
     fun `test macro in use item`() = doSingleCompletion("""
        #![feature(use_extern_macros)]
 

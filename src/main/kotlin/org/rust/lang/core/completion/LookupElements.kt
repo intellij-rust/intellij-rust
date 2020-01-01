@@ -274,14 +274,21 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
 
             is RsMacro -> {
                 if (curUseItem == null) {
+                    var caretShift = 2
                     if (!context.nextCharIs('!')) {
-                        val parens = when (element.name) {
-                            "vec" -> "[]"
-                            else -> "()"
+                        val braces = element.preferredBraces
+                        val text = buildString {
+                            append("!")
+                            if (braces == MacroBraces.BRACES) {
+                                append(" ")
+                                caretShift = 3
+                            }
+                            append(braces.openText)
+                            append(braces.closeText)
                         }
-                        document.insertString(context.selectionEndOffset, "!$parens")
+                        document.insertString(context.selectionEndOffset, text)
                     }
-                    EditorModificationUtil.moveCaretRelatively(context.editor, 2)
+                    EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
                 } else {
                     appendSemicolon(context, curUseItem)
                 }
