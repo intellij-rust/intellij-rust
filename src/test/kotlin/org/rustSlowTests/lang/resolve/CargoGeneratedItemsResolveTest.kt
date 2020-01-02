@@ -343,6 +343,270 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
     }
 
+    fun `test generated feature`() = withEnabledEvaluateBuildScriptsFeature {
+        val libraryDir = tempDirFixture.getFile(".")!!
+        val library = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(feature = "generated_feature"))]
+                    mod disabled;
+                    #[cfg(feature = "generated_feature")]
+                    mod enabled;
+
+                    #[cfg(not(feature = "generated_feature"))]
+                    pub use disabled::function_under_feature;
+                    #[cfg(feature = "generated_feature")]
+                    pub use enabled::function_under_feature;
+                """)
+                rust("disabled.rs", """
+                    pub fn function_under_feature() {
+                        println!("'generated_feature' is disabled")
+                    }
+                """)
+                rust("enabled.rs", """
+                    pub fn function_under_feature() {
+                        println!("'generated_feature' is enabled")
+                    }
+                """)
+            }
+
+            rust("build.rs", """
+                fn main() {
+                    println!("cargo:rustc-cfg=feature=\"generated_feature\"");
+                }
+            """)
+        }.create(project, libraryDir)
+
+        val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                edition = "2018"
+                authors = []
+
+                [dependencies]
+                foo = { path = "$libraryPath" }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    use foo::function_under_feature;
+                    fn main() {
+                        function_under_feature();
+                              //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
+    }
+
+    fun `test custom generated feature`() = withEnabledEvaluateBuildScriptsFeature {
+        val libraryDir = tempDirFixture.getFile(".")!!
+        val library = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(generated_feature_key = "generated_feature_value"))]
+                    mod disabled;
+                    #[cfg(generated_feature_key = "generated_feature_value")]
+                    mod enabled;
+
+                    #[cfg(not(generated_feature_key = "generated_feature_value"))]
+                    pub use disabled::function_under_custom_feature;
+                    #[cfg(generated_feature_key = "generated_feature_value")]
+                    pub use enabled::function_under_custom_feature;
+                """)
+                rust("disabled.rs", """
+                    pub fn function_under_custom_feature() {
+                        println!("custom generated feature is disabled")
+                    }
+                """)
+                rust("enabled.rs", """
+                    pub fn function_under_custom_feature() {
+                        println!("custom generated feature is enabled")
+                    }
+                """)
+            }
+
+            rust("build.rs", """
+                fn main() {
+                    println!("cargo:rustc-cfg=generated_feature_key=\"generated_feature_value\"");
+                }
+            """)
+        }.create(project, libraryDir)
+
+        val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                edition = "2018"
+                authors = []
+
+                [dependencies]
+                foo = { path = "$libraryPath" }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    use foo::function_under_custom_feature;
+                    fn main() {
+                        function_under_custom_feature();
+                              //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
+    }
+
+    fun `test generated cfg option with the same name as compiler one`() = withEnabledEvaluateBuildScriptsFeature {
+        val libraryDir = tempDirFixture.getFile(".")!!
+        val library = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(windows))]
+                    mod disabled;
+                    #[cfg(windows)]
+                    mod enabled;
+
+                    #[cfg(not(windows))]
+                    pub use disabled::function_under_cfg;
+                    #[cfg(windows)]
+                    pub use enabled::function_under_cfg;
+                """)
+                rust("disabled.rs", """
+                    pub fn function_under_cfg() {
+                        println!("custom generated cfg option is disabled")
+                    }
+                """)
+                rust("enabled.rs", """
+                    pub fn function_under_cfg() {
+                        println!("custom generated cfg option is enabled")
+                    }
+                """)
+            }
+
+            rust("build.rs", """
+                fn main() {
+                    println!("cargo:rustc-cfg=windows");
+                }
+            """)
+        }.create(project, libraryDir)
+
+        val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                edition = "2018"
+                authors = []
+
+                [dependencies]
+                foo = { path = "$libraryPath" }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    use foo::function_under_cfg;
+                    fn main() {
+                        function_under_cfg();
+                              //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
+    }
+
+    fun `test generated custom feature with the same name as compiler one`() = withEnabledEvaluateBuildScriptsFeature {
+        val libraryDir = tempDirFixture.getFile(".")!!
+        val library = fileTree {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(not(target_family = "windows"))]
+                    mod disabled;
+                    #[cfg(target_family = "windows")]
+                    mod enabled;
+
+                    #[cfg(not(target_family = "windows"))]
+                    pub use disabled::function_under_cfg;
+                    #[cfg(target_family = "windows")]
+                    pub use enabled::function_under_cfg;
+                """)
+                rust("disabled.rs", """
+                    pub fn function_under_cfg() {
+                        println!("custom generated cfg option is disabled")
+                    }
+                """)
+                rust("enabled.rs", """
+                    pub fn function_under_cfg() {
+                        println!("custom generated cfg option is enabled")
+                    }
+                """)
+            }
+
+            rust("build.rs", """
+                fn main() {
+                    println!("cargo:rustc-cfg=target_family=\"windows\"");
+                }
+            """)
+        }.create(project, libraryDir)
+
+        val libraryPath = FileUtil.toSystemIndependentName(library.root.path)
+
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                edition = "2018"
+                authors = []
+
+                [dependencies]
+                foo = { path = "$libraryPath" }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    use foo::function_under_cfg;
+                    fn main() {
+                        function_under_cfg();
+                              //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
+    }
+
     fun `test generated environment variables`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """

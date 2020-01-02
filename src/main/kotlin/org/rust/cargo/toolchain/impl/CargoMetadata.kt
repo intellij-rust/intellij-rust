@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
@@ -307,8 +308,7 @@ object CargoMetadata {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
 
-        val generatedFeatures = buildScriptMessage?.cfgs.orEmpty()
-            .map { CargoWorkspace.Feature(it, CargoWorkspace.FeatureState.Enabled) }
+        val cfgOptions = CfgOptions.parse(buildScriptMessage?.cfgs.orEmpty())
 
         val env = buildScriptMessage?.env.orEmpty()
             .filter { it.size == 2 }
@@ -326,7 +326,8 @@ object CargoMetadata {
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition(),
-            features = features + generatedFeatures,
+            features = features,
+            cfgOptions = cfgOptions,
             env = env,
             outDirUrl = outDir?.url
         )

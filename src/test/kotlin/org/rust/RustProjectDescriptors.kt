@@ -76,6 +76,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         origin = PackageOrigin.WORKSPACE,
         edition = Edition.EDITION_2015,
         features = emptyList(),
+        cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
     )
@@ -161,6 +162,7 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             origin = origin,
             edition = Edition.EDITION_2015,
             features = emptyList(),
+            cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
             outDirUrl = null
         )

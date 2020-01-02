@@ -175,7 +175,7 @@ private class WorkspaceImpl(
             pkg.source,
             pkg.origin,
             pkg.edition,
-            cfgOptions,
+            pkg.cfgOptions,
             pkg.features,
             pkg.env,
             pkg.outDirUrl
@@ -380,6 +380,7 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         origin = origin,
         edition = edition ?: this.edition,
         features = features,
+        cfgOptions = cfgOptions,
         env = env,
         outDirUrl = outDirUrl
     )
@@ -414,6 +415,7 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
         origin = PackageOrigin.STDLIB,
         edition = edition,
         features = emptyList(),
+        cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
     )

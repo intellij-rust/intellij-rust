@@ -124,6 +124,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition,
             features = emptyList(),
+            cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
             outDirUrl = null
         )

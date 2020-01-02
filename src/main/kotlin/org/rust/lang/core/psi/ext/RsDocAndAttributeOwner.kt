@@ -208,5 +208,5 @@ private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
     // we will evaluate features wrongly here
     val pkg = containingCargoPackage ?: return ThreeValuedLogic.True
     val features = pkg.features.associate { it.name to it.state }
-    return CfgEvaluator(pkg.cfgOptions, features, pkg.origin).evaluate(cfgAttributes)
+    return CfgEvaluator(pkg.workspace.cfgOptions, pkg.cfgOptions, features, pkg.origin).evaluate(cfgAttributes)
 }
