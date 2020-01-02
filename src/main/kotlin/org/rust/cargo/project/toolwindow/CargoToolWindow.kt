@@ -9,9 +9,12 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.ColorUtil
@@ -23,6 +26,8 @@ import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.runconfig.hasCargoProject
+import org.rust.cargo.toolchain.RustToolchain
+import org.rust.openapiext.modules
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -108,5 +113,33 @@ class CargoToolWindow(
     companion object {
         @JvmStatic
         val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
+    }
+}
+
+class CargoToolWindowCondition: Condition<Project> {
+    override fun value(project: Project?): Boolean {
+        if (project == null) {
+            LOG.info("Condition failed, project is null")
+            return false
+        }
+        val contentRoots = project.modules
+            .asSequence()
+            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+        if (contentRoots.none()) {
+            LOG.debug("Condition failed, no content roots found for project ${project.name}")
+            return false
+        }
+        val cargoTomls = contentRoots
+            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+        if (cargoTomls.none()) {
+            LOG.debug("Condition failed, no ${RustToolchain.CARGO_TOML} found for project ${project.name}")
+            return false
+        }
+        LOG.debug("Condition passed")
+        return true
+    }
+
+    companion object {
+        private val LOG: Logger = Logger.getInstance(CargoToolWindowCondition::class.java)
     }
 }

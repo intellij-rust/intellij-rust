@@ -798,6 +798,7 @@
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"
+                    conditionClass="org.rust.cargo.project.toolwindow.CargoToolWindowCondition"
                     icon="/icons/tool-window.svg"/>
 
         <additionalLibraryRootsProvider
