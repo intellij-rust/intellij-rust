@@ -163,6 +163,17 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ !Copy
     """)
 
+    fun `test array of 'Copy' type is 'Copy'`() = doTest("""
+        type T = [i32; 4];
+               //^ Copy
+    """)
+
+    fun `test array of non 'Copy' type is not 'Copy'`() = doTest("""
+        struct X;
+        type T = [X; 4];
+               //^ !Copy
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
