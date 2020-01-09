@@ -5,8 +5,10 @@
 
 package org.rust.grazie
 
+import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.strategy.StrategyUtils
+import com.intellij.grazie.grammar.strategy.impl.ReplaceCharRule
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.psi.PsiElement
@@ -20,6 +22,8 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
     override fun isMyContextRoot(element: PsiElement): Boolean =
         element is RsDocCommentImpl || element is RsLitExpr && element.stubKind is RsStubLiteralKind.String
 
+    override fun getElementBehavior(root: PsiElement, child: PsiElement) = GrammarCheckingStrategy.ElementBehavior.TEXT
+
     override fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange): Boolean {
         if (root !is RsDocCommentImpl) return true
 
@@ -30,6 +34,10 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
 
     override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup? = RuleGroup.LITERALS
 
+    override fun getIgnoredTypoCategories(root: PsiElement, child: PsiElement): Set<Typo.Category>? = null
+
     override fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> =
         StrategyUtils.indentIndexes(text, setOf(' ', '/', '!'))
+
+    override fun getReplaceCharRules(root: PsiElement): List<ReplaceCharRule> = emptyList()
 }
