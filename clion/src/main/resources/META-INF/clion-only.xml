@@ -6,6 +6,9 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
+        <programRunner implementation="org.rust.clion.debugger.runconfig.RsCLionDebugRunner"/>
+        <programRunner implementation="org.rust.clion.debugger.runconfig.legacy.RsCLionDebugRunnerLegacy"/>
+
         <programRunner implementation="org.rust.clion.profiler.RsProfilerRunner"/>
         <programRunner implementation="org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy"/>
         <projectService serviceImplementation="org.rust.clion.profiler.RsCachingStackElementReader"/>

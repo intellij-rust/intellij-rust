@@ -1,4 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <depends>com.intellij.modules.cidr.debugger</depends>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"
                         interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"/>
@@ -13,8 +15,6 @@
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
-        <programRunner implementation="org.rust.debugger.runconfig.RsDebugRunner"/>
-        <programRunner implementation="org.rust.debugger.runconfig.legacy.RsDebugRunnerLegacy"/>
         <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
     </extensions>
 </idea-plugin>
