@@ -100,6 +100,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
         if (cargoProjects.isEmpty()) return emptyList()
 
         val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+            ?: return emptyList()
         val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID) ?: return emptyList()
 
         val additionalArguments = buildList<String> {

@@ -47,7 +47,7 @@ class GrcovRunner : DefaultProgramRunner() {
         return !isBuildConfiguration(profile) && getBuildConfiguration(profile) != null
     }
 
-    override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider?): RunnerSettings {
+    override fun createConfigurationData(settingsProvider: ConfigurationInfoProvider): RunnerSettings {
         return CoverageRunnerData()
     }
 
