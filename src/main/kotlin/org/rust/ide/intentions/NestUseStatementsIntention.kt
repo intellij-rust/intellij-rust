@@ -93,7 +93,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
     }
 
     class PathInUseItem(
-        useItem: RsUseItem,
+        private val useItem: RsUseItem,
         useItems: List<RsUseItem>,
         override val basePath: String
     ) : Context {
@@ -103,11 +103,12 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
                 val useItemList = mutableListOf<RsUseItem>()
 
                 val basePath = useSpeck.path?.let { getBasePathFromPath(it) } ?: return null
+                val visibility = useItemOnCursor.visibility
                 useItemList += useItemOnCursor.leftSiblings.filterIsInstance<RsUseItem>()
-                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath }
+                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath && it.visibility == visibility }
                 useItemList.add(useItemOnCursor)
                 useItemList += useItemOnCursor.rightSiblings.filterIsInstance<RsUseItem>()
-                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath }
+                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath && it.visibility == visibility }
                 if (useItemList.size == 1) return null
 
                 return PathInUseItem(useItemOnCursor, useItemList, basePath)
@@ -115,7 +116,7 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
         }
 
         override fun createElement(path: String, project: Project): PsiElement {
-            return RsPsiFactory(project).createUseItem(path)
+            return RsPsiFactory(project).createUseItem(path, useItem.vis?.text ?: "")
         }
 
         override val useSpecks: List<RsUseSpeck> = useItems.mapNotNull { it.useSpeck }

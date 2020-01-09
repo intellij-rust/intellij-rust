@@ -264,4 +264,38 @@ class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsInte
         };
 
     """)
+
+    fun `test pub and non-pub on pub`() = doAvailableTest("""
+        pub use a::b1;
+        use a::b2;
+        pub use a::b3/*caret*/;
+        use a::b4;
+        pub use a::b5;
+    """, """
+        pub use a::{
+            b1,
+            b3,
+            b5
+        };
+        use a::b2;
+        use a::b4;
+
+    """)
+
+    fun `test pub and non-pub on non-pub`() = doAvailableTest("""
+        use a::b1;
+        pub use a::b2;
+        use a::b3/*caret*/;
+        pub use a::b4;
+        use a::b5;
+    """, """
+        use a::{
+            b1,
+            b3,
+            b5
+        };
+        pub use a::b2;
+        pub use a::b4;
+
+    """)
 }
