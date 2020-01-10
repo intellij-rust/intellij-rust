@@ -722,6 +722,58 @@ class RsFormatterTest : RsFormatterTestBase() {
         fn foo<T, C>(value: T) where T: Trait<Output=C> {}
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/907
+    fun `test issue 907`() = checkNotChanged("""
+        struct TestStruct
+        {
+            a: i32,
+            b: i32,
+        }
+
+        impl TestStruct
+        {
+            fn new() -> Self
+            {
+                Self
+                {
+                    a: 0,
+                    b: 0,
+                }
+            }
+        }
+
+        enum TestEnum
+        {
+            A,
+            B,
+        }
+
+        fn main()
+        {
+            for _ in 0..42
+            {
+                let i = 3;
+            }
+            while 1 != 1
+            {
+                let i = 5;
+            }
+            loop
+            {
+                let i = 10;
+            }
+            if 6 == 6
+            {
+                let x = 7;
+            }
+            match 8
+            {
+                9 => Some(()),
+                _ => None,
+            }
+        }
+    """)
+
     private fun common() = getSettings(RsLanguage)
     private fun custom() = settings.rust
 }
