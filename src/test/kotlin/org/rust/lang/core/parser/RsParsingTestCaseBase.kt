@@ -6,7 +6,9 @@
 package org.rust.lang.core.parser
 
 import com.intellij.TestCase
+import com.intellij.core.CoreInjectedLanguageManager
 import com.intellij.lang.LanguageBraceMatching
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiErrorElement
@@ -27,6 +29,7 @@ abstract class RsParsingTestCaseBase(@NonNls dataPath: String) : ParsingTestCase
     override fun setUp() {
         super.setUp()
         addExplicitExtension(LanguageBraceMatching.INSTANCE, RsLanguage, RsBraceMatcher())
+        project.registerService(InjectedLanguageManager::class.java, CoreInjectedLanguageManager::class.java)
     }
 
     override fun getTestDataPath(): String = "src/test/resources"
