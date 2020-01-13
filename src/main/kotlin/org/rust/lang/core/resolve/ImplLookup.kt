@@ -273,9 +273,14 @@ class ImplLookup(
     }
 
     // TODO rename to BuiltinImpls
+    /**
+     * Keep in sync with [getHardcodedImplPredicates]
+     *
+     * @see <a href="https://doc.rust-lang.org/std/clone/trait.Clone.html#additional-implementors">Clone additional implementors</a>
+     * @see <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html#additional-implementors">Copy additional implementors</a>
+     */
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        if (ty is TyTuple) {
-            // Keep in sync with `getHardcodedImplPredicates`
+        if (ty is TyTuple || ty is TyArray) {
             return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
         }
 
@@ -370,12 +375,18 @@ class ImplLookup(
         return impls
     }
 
+    /**
+     * Keep in sync with [getHardcodedImpls]
+     *
+     * @see <a href="https://doc.rust-lang.org/std/clone/trait.Clone.html#additional-implementors">Clone additional implementors</a>
+     * @see <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html#additional-implementors">Copy additional implementors</a>
+     */
     private fun getHardcodedImplPredicates(ty: Ty, trait: BoundElement<RsTraitItem>): List<Predicate> {
-        if (ty is TyTuple) {
-            // Keep in sync with `getHardcodedImplPredicated`
-            return ty.types.map { Predicate.Trait(TraitRef(it, trait)) }
+        return when (ty) {
+            is TyTuple -> ty.types.map { Predicate.Trait(TraitRef(it, trait)) }
+            is TyArray -> listOf(Predicate.Trait(TraitRef(ty.base, trait)))
+            else -> emptyList()
         }
-        return emptyList()
     }
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
