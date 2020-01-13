@@ -32,6 +32,7 @@ val baseVersion = when (baseIDE) {
 val isAtLeast192 = platformVersion.toInt() >= 192
 val isAtLeast193 = platformVersion.toInt() >= 193
 
+val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 
@@ -331,7 +332,13 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-        version = clionVersion
+        if (isAtLeast193) {
+            if (baseIDE == "idea") {
+                setPlugins(nativeDebugPlugin)
+            }
+        } else {
+            version = clionVersion
+        }
     }
     dependencies {
         compile(project(":"))
