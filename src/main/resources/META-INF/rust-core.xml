@@ -1065,6 +1065,11 @@
             <reference id="Cargo.ShowSettings"/>
         </group>
 
+        <group id="Rust.ProjectView">
+            <reference id="Cargo.AttachCargoProject"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
+        </group>
+
         <!-- Internal -->
 
         <action id="RsGenerateDictionaries" class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
