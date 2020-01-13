@@ -219,6 +219,10 @@ project(":plugin") {
             // jvmArgs("-Didea.ProcessCanceledException=disabled")
         }
 
+        withType<PatchPluginXmlTask> {
+            pluginDescription(file("description.html").readText())
+        }
+
         withType<PublishTask> {
             token(prop("publishToken"))
             channels(channel)
