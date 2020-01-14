@@ -87,13 +87,16 @@ interface CargoProject : UserDataHolderEx {
 
     val rustcInfo: RustcInfo?
 
+    val userOverriddenFeatures: Map<String, Map<String, Boolean>>
+
     val workspaceStatus: UpdateStatus
     val stdlibStatus: UpdateStatus
     val rustcInfoStatus: UpdateStatus
 
-    val mergedStatus: UpdateStatus get() = workspaceStatus
-        .merge(stdlibStatus)
-        .merge(rustcInfoStatus)
+    val mergedStatus: UpdateStatus
+        get() = workspaceStatus
+            .merge(stdlibStatus)
+            .merge(rustcInfoStatus)
 
     sealed class UpdateStatus(private val priority: Int) {
         object UpToDate : UpdateStatus(0)

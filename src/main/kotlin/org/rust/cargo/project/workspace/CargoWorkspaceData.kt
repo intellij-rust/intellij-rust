@@ -30,7 +30,7 @@ data class CargoWorkspaceData(
         val source: String?,
         val origin: PackageOrigin,
         val edition: CargoWorkspace.Edition,
-        val features: Collection<CargoWorkspace.Feature>,
+        val features: FeatureGraph,
         val cfgOptions: CfgOptions,
         val env: Map<String, String>,
         val outDirUrl: String?

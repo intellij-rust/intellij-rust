@@ -35,6 +35,9 @@ object RsIcons {
     val STATIC_MARK = AllIcons.Nodes.StaticMark!!
     val TEST_MARK = AllIcons.Nodes.JunitTestMark!!
     val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.svg")
+    val FEATURE_CHECKED_MARK = AllIcons.Diff.GutterCheckBoxSelected!!
+    val FEATURE_UNCHECKED_MARK = AllIcons.Diff.GutterCheckBox!!
+    val FEATURES_SETTINGS = AllIcons.General.Settings!!
 
     // Source code elements
 

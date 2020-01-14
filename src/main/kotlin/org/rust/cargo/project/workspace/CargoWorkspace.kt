@@ -40,6 +40,7 @@ interface CargoWorkspace {
      * obtain workspace members.
      */
     val packages: Collection<Package>
+
     fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
@@ -74,7 +75,7 @@ interface CargoWorkspace {
 
         val cfgOptions: CfgOptions
 
-        val features: Collection<Feature>
+        val features: FeatureGraph
 
         val workspace: CargoWorkspace
 
@@ -86,6 +87,9 @@ interface CargoWorkspace {
 
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
+
+        fun syncFeature(feature: String, newState: Boolean)
+        fun syncAllFeatures(newState: Boolean)
     }
 
     /** See docs for [CargoProjectsService] */
@@ -139,16 +143,6 @@ interface CargoWorkspace {
 
     enum class Edition(val presentation: String) {
         EDITION_2015("2015"), EDITION_2018("2018")
-    }
-
-    class Feature(
-        val name: String,
-        val state: FeatureState
-    )
-
-    enum class FeatureState {
-        Enabled,
-        Disabled
     }
 
     companion object {
@@ -312,7 +306,7 @@ private class PackageImpl(
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
     override val cfgOptions: CfgOptions,
-    override val features: Collection<CargoWorkspace.Feature>,
+    override val features: FeatureGraph,
     override val env: Map<String, String>,
     val outDirUrl: String?
 ) : CargoWorkspace.Package {
@@ -335,6 +329,14 @@ private class PackageImpl(
     override val dependencies: MutableList<DependencyImpl> = ArrayList()
 
     override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
+
+    override fun syncFeature(feature: String, newState: Boolean) {
+        features.updateFeature(feature, FeatureState.fromBoolean(newState))
+    }
+
+    override fun syncAllFeatures(newState: Boolean) {
+        features.updateAllFeatures(FeatureState.fromBoolean(newState))
+    }
 
     override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl', outDirUrl='$outDirUrl')"
 }
@@ -414,7 +416,7 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
         source = null,
         origin = PackageOrigin.STDLIB,
         edition = edition,
-        features = emptyList(),
+        features = FeatureGraph.Empty,
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
