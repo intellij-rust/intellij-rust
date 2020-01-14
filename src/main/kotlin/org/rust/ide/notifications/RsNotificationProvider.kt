@@ -36,4 +36,10 @@ abstract class RsNotificationProvider(
         PropertiesComponent.getInstance(project).getBoolean(file.disablingKey)
 }
 
-class RsEditorNotificationPanel(val debugId: String) : EditorNotificationPanel()
+class RsEditorNotificationPanel(val debugId: String) : EditorNotificationPanel() {
+    override fun getActionPlace(): String = NOTIFICATION_PANEL_PLACE
+
+    companion object {
+        const val NOTIFICATION_PANEL_PLACE = "RsEditorNotificationPanel"
+    }
+}
