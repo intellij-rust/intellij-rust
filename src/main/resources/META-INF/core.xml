@@ -573,10 +573,6 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.RemoveParenthesesFromExprIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
             <className>org.rust.ide.intentions.RemoveDbgIntention</className>
             <category>Rust</category>
         </intentionAction>

@@ -5,14 +5,16 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
 import org.rust.ide.annotator.fixes.AddStructFieldsFix
 import org.rust.ide.annotator.fixes.CreateStructFieldFromConstructorFix
-import org.rust.ide.intentions.RemoveParenthesesFromExprIntention
+import org.rust.ide.annotator.fixes.RemoveRedundantParenthesesFix
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -92,10 +94,24 @@ private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder
     }
 
     private fun RsExpr?.warnIfParens(message: String) {
-        if (this !is RsParenExpr) return
-        val fix = RemoveParenthesesFromExprIntention()
-        if (fix.isAvailable(this))
-            holder.createWeakWarningAnnotation(this, message)?.registerFix(RemoveParenthesesFromExprIntention())
+        if (this !is RsParenExpr || !canWarn(this)) return
+        holder.createWeakWarningAnnotation(this, message)?.registerFix(RemoveRedundantParenthesesFix(this))
+    }
+
+    private fun canWarn(expr: RsParenExpr): Boolean {
+        if (PsiTreeUtil.getContextOfType(
+                expr,
+                false,
+                RsCondition::class.java,
+                RsMatchExpr::class.java,
+                RsForExpr::class.java
+            ) == null) return true
+
+        return when (val child = expr.children.singleOrNull()) {
+            is RsStructLiteral -> false
+            is RsBinaryExpr -> child.exprList.all { it !is RsStructLiteral }
+            else -> true
+        }
     }
 }
 
