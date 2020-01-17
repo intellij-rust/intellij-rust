@@ -19,7 +19,7 @@ val CI = System.getenv("CI") != null
 val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
 
 val channel = prop("publishChannel")
-val platformVersion = prop("platformVersion")
+val platformVersion = prop("platformVersion").toInt()
 val baseIDE = prop("baseIDE")
 val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
@@ -29,8 +29,8 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val isAtLeast192 = platformVersion.toInt() >= 192
-val isAtLeast193 = platformVersion.toInt() >= 193
+val isAtLeast192 = platformVersion >= 192
+val isAtLeast193 = platformVersion >= 193
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
@@ -172,9 +172,12 @@ project(":plugin") {
         val plugins = mutableListOf(
             project(":intellij-toml"),
             "IntelliLang",
-            graziePlugin,
             psiViewerPlugin
         )
+        // TODO: temporary solution until grazie plugin for 2020.1 is not published
+        if (platformVersion < 201) {
+            plugins += graziePlugin
+        }
         if (baseIDE == "idea") {
             plugins += "copyright"
             plugins += "coverage"
@@ -435,7 +438,10 @@ project(":coverage") {
 
 project(":grazie") {
     intellij {
-        setPlugins(graziePlugin)
+        // TODO: temporary solution until grazie plugin for 2020.1 is not published
+        if (platformVersion < 201) {
+            setPlugins(graziePlugin)
+        }
     }
     dependencies {
         compile(project(":"))
