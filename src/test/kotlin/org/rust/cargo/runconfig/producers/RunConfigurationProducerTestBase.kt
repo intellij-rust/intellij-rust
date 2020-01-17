@@ -9,11 +9,8 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.ide.DataManager
-import com.intellij.idea.IdeaTestApplication
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
@@ -21,6 +18,7 @@ import com.intellij.testFramework.TestDataProvider
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.RsTestBase
+import org.rust.TestApplicationManagerWrapper
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.impl.testCargoProjects
@@ -64,14 +62,10 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
     }
 
     protected fun checkOnFiles(vararg files: PsiElement) {
-        Disposer.register(testRootDisposable, Disposable {
-            IdeaTestApplication.getInstance().setDataProvider(null)
-        })
-
-        IdeaTestApplication.getInstance().setDataProvider(object : TestDataProvider(project) {
+        TestApplicationManagerWrapper.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String): Any? =
                 if (PSI_ELEMENT_ARRAY.`is`(dataId)) files else super.getData(dataId)
-        })
+        }, testRootDisposable)
 
         val dataContext = DataManager.getInstance().getDataContext(myFixture.editor.component)
         val configurationContext = ConfigurationContext.getFromContext(dataContext)

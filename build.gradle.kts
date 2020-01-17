@@ -40,7 +40,7 @@ plugins {
     idea
     kotlin("jvm") version "1.3.60"
     id("org.jetbrains.intellij") version "0.4.13"
-    id("org.jetbrains.grammarkit") version "2019.3"
+    id("org.jetbrains.grammarkit") version "2020.1"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
 }
@@ -336,7 +336,8 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-        if (isAtLeast193) {
+        // TODO: temporary solution until native debug plugin for 2020.1 is not published
+        if (platformVersion == 193) {
             if (baseIDE == "idea") {
                 setPlugins(nativeDebugPlugin)
             }
@@ -473,7 +474,7 @@ project(":intellij-toml") {
         purgeOldFiles = true
     }
 
-    tasks{
+    tasks {
         withType<KotlinCompile> {
             dependsOn(generateTomlLexer, generateTomlParser)
         }

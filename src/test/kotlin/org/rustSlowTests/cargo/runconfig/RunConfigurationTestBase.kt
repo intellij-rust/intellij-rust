@@ -98,7 +98,7 @@ abstract class RunConfigurationTestBase : RsWithToolchainTestBase() {
     }
 
     protected fun createBuildConfiguration(): CargoBuildConfiguration {
-        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)
+        val executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID)!!
         val runner = ProgramRunner.findRunnerById(CargoCommandRunner.RUNNER_ID)!!
         val runManager = RunManager.getInstance(project) as RunManagerImpl
         val configuration = CargoBuildManager.getBuildConfiguration(createConfiguration())!!

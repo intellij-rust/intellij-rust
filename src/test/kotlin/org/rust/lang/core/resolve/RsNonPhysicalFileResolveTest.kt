@@ -43,8 +43,7 @@ class RsNonPhysicalFileResolveTest : RsResolveTestBase() {
 
     private fun tryResolveEverything(file: PsiFile) {
         file.accept(object : PsiElementVisitor() {
-            override fun visitElement(element: PsiElement?) {
-                element ?: return
+            override fun visitElement(element: PsiElement) {
                 element.reference?.resolve()
                 element.acceptChildren(this)
             }
