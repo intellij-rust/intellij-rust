@@ -15,9 +15,13 @@ import org.rust.fileTreeFromText
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before.trimIndent()).withCaret()
+        doAvailableTestRaw(before.trimIndent(), after.trimIndent())
+    }
+
+    protected fun doAvailableTestRaw(@Language("Rust") before: String, @Language("Rust") after: String) {
+        InlineFile(before).withCaret()
         launchAction()
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+        myFixture.checkResult(replaceCaretMarker(after))
     }
 
     protected fun doAvailableTestWithFileTree(@Language("Rust") fileStructureBefore: String, @Language("Rust") openedFileAfter: String) {
