@@ -1,5 +1,5 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
     <id>org.rust.grazie</id>
-    <xi:include href="/META-INF/core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <depends optional="true" config-file="grazie-only.xml">tanvd.grazi</depends>
 </idea-plugin>
