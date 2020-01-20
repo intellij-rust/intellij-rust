@@ -51,7 +51,7 @@ class RsTypeInferenceWalker(
     private fun inferBlockExprType(blockExpr: RsBlockExpr, expected: Ty? = null): Ty =
         when {
             blockExpr.isTry -> inferTryBlockExprType(blockExpr, expected)
-            blockExpr.isAsync -> inferAsyncBlockExprType(blockExpr)
+            blockExpr.isAsync -> inferAsyncBlockExprType(blockExpr, expected)
             else -> {
                 val type = blockExpr.block.inferType(expected)
                 inferLabeledExprType(blockExpr, type, true)
@@ -72,10 +72,17 @@ class RsTypeInferenceWalker(
         }
     }
 
-    private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr): Ty {
+    private fun inferAsyncBlockExprType(blockExpr: RsBlockExpr, expected: Ty? = null): Ty {
         require(blockExpr.isAsync)
-        val outputTy = blockExpr.block.inferType()
-        return items.makeFuture(outputTy)
+        val retTy = expected
+            ?.let(::resolveTypeVarsWithObligations)
+            .takeUnless { it is TyInfer.TyVar }
+            ?.lookupFutureOutputTy(lookup)
+            ?: TyInfer.TyVar()
+        RsTypeInferenceWalker(ctx, retTy).apply {
+            blockExpr.block.inferType(retTy, coerce = true)
+        }
+        return items.makeFuture(resolveTypeVarsWithObligations(retTy))
     }
 
     fun inferFnBody(block: RsBlock): Ty =

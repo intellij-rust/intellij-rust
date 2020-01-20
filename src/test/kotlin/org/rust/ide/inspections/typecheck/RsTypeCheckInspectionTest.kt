@@ -296,4 +296,25 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
             foo(&Unknown);
         }
     """)
+
+    fun `test async block expr expected`() = checkByText("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn foo() -> impl Future<Output=i32> {
+            async { <error>42.0</error> }
+        }
+    """)
+
+    fun `test async block expr return`() = checkByText("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+        fn main() {
+            async {
+                return 1;
+                return 2;
+                return <error>3.0</error>;
+                <error>"4"</error>
+            };
+        }
+    """)
 }
