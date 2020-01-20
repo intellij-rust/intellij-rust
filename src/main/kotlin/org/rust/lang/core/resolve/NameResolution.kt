@@ -1252,10 +1252,9 @@ private fun processLexicalDeclarations(
         is RsFunction -> {
             if (Namespace.Types in ns && processAll(scope.typeParameters, processor)) return true
             if (Namespace.Values in ns && processAll(scope.constParameters, processor)) return true
-            // XXX: `cameFrom !is RsValueParameterList` prevents switches to AST in cases like
-            // `fn foo(a: usize, b: [u8; SIZE])`. Note that rustc really process them and show
-            // [E0435] on this: `fn foo(a: usize, b: [u8; a])`.
-            if (Namespace.Values in ns && cameFrom !is RsValueParameterList) {
+            // XXX: `cameFrom is RsBlock` prevents switches to AST in cases like `fn foo(a: usize, b: [u8; SIZE])`.
+            // Note that rustc really process them and show [E0435] on this: `fn foo(a: usize, b: [u8; a])`.
+            if (Namespace.Values in ns && cameFrom is RsBlock) {
                 val selfParam = scope.selfParameter
                 if (selfParam != null && processor("self", selfParam)) return true
 
