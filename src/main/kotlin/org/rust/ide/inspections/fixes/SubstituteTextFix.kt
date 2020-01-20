@@ -9,9 +9,9 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
+import org.rust.openapiext.document
 
 /**
  * Fix that removes the given range from the document and places a text onto its place.
@@ -36,7 +36,7 @@ class SubstituteTextFix private constructor(
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
         val file = fileWithRange.containingFile ?: return
         val range = fileWithRange.range ?: return
-        val document = PsiDocumentManager.getInstance(project).getDocument(file)
+        val document = file.document
         document?.deleteString(range.startOffset, range.endOffset)
         if (substitution != null) {
             document?.insertString(range.startOffset, substitution)

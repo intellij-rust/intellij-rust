@@ -19,6 +19,7 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsReplCodeFragment
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.document
 import org.rust.openapiext.findDescendantsWithMacrosOfAnyType
 
 val PsiFileSystemItem.sourceRoot: VirtualFile?
@@ -274,7 +275,7 @@ val PsiElement.rangeWithSurroundingLineBreaks: TextRange
     }
 
 private fun PsiElement.getLineCount(): Int {
-    val doc = containingFile?.let { file -> PsiDocumentManager.getInstance(project).getDocument(file) }
+    val doc = containingFile?.document
     if (doc != null) {
         val spaceRange = textRange ?: TextRange.EMPTY_RANGE
 

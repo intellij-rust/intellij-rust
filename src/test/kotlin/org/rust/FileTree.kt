@@ -10,7 +10,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
@@ -19,6 +22,7 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.resolve.ResolveResult
 import org.rust.lang.core.resolve.checkResolvedFile
+import org.rust.openapiext.document
 import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.saveAllDocuments
 import org.rust.openapiext.toPsiFile
@@ -233,7 +237,7 @@ private fun findElementInFile(file: PsiFile, marker: String): PsiElement {
     val markerOffset = file.text.indexOf(marker)
     check(markerOffset != -1) { "No `$marker` in \n${file.text}" }
 
-    val doc = PsiDocumentManager.getInstance(file.project).getDocument(file)!!
+    val doc = file.document!!
     val markerLine = doc.getLineNumber(markerOffset)
     val makerColumn = markerOffset - doc.getLineStartOffset(markerLine)
     val elementOffset = doc.getLineStartOffset(markerLine - 1) + makerColumn

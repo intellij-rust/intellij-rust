@@ -7,10 +7,14 @@ package org.rust.toml.resolve
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiReferenceBase
+import com.intellij.psi.PsiReferenceProvider
 import com.intellij.util.ProcessingContext
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.psi.RsFile
+import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.TomlKey
 
 class CargoDependencyReferenceProvider : PsiReferenceProvider() {
@@ -28,7 +32,7 @@ private class CargoDependencyReferenceImpl(key: TomlKey) : PsiReferenceBase<Toml
         val file = element.containingFile?.virtualFile ?: return null
         val cargoProject = project.cargoProjects.findProjectForFile(file) ?: return null
         val crateRoot = cargoProject.workspace?.findPackage(element.text)?.libTarget?.crateRoot ?: return null
-        return PsiManager.getInstance(project).findFile(crateRoot) as? RsFile
+        return crateRoot.toPsiFile(project) as? RsFile
     }
 
     override fun getVariants(): Array<out LookupElement> = LookupElement.EMPTY_ARRAY
