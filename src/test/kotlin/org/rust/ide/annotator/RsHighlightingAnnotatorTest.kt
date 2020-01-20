@@ -6,11 +6,11 @@
 package org.rust.ide.annotator
 
 import com.intellij.ide.todo.TodoConfiguration
-import com.intellij.psi.search.TodoPattern
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ide.colors.RsColor
 
 class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator::class) {
@@ -22,6 +22,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
 
     fun `test attributes`() = checkHighlighting("""
         <ATTRIBUTE>#[cfg_attr(foo)]</ATTRIBUTE>
+        <ATTRIBUTE>#[foo(<STRING>"bar"</STRING>)]</ATTRIBUTE>
         fn <FUNCTION>main</FUNCTION>() {
             <ATTRIBUTE>#![crate_type = <STRING>"lib"</STRING>]</ATTRIBUTE>
         }
@@ -47,7 +48,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             fn <METHOD>foo</METHOD>(&self);
             fn <ASSOC_FUNCTION>bar</ASSOC_FUNCTION>() {}
         }
-        impl <TRAIT><TRAIT>T</TRAIT></TRAIT> for <STRUCT>S</STRUCT> {
+        impl <TRAIT>T</TRAIT> for <STRUCT>S</STRUCT> {
             fn <METHOD>foo</METHOD>(&self) {}
             fn <ASSOC_FUNCTION>bar</ASSOC_FUNCTION>() {}
         }
@@ -70,17 +71,18 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
-    fun `test macro`() = checkHighlighting("""
+    fun `test macro`() = checkByText("""
         fn <FUNCTION>main</FUNCTION>() {
             <MACRO>println</MACRO><MACRO>!</MACRO>["Hello, World!"];
             <MACRO>unreachable</MACRO><MACRO>!</MACRO>();
         }
-        <MACRO>macro_rules!</MACRO> foo {
+        <MACRO>macro_rules</MACRO><MACRO>!</MACRO> foo {
             (x => $ <FUNCTION>e</FUNCTION>:expr) => (println!("mode X: {}", $ <FUNCTION>e</FUNCTION>));
             (y => $ <FUNCTION>e</FUNCTION>:expr) => (println!("mode Y: {}", $ <FUNCTION>e</FUNCTION>));
         }
         impl T {
             <MACRO>foo</MACRO><MACRO>!</MACRO>();
+        }
     """)
 
     fun `test type parameters`() = checkHighlighting("""
@@ -149,12 +151,14 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         trait <TRAIT>Foo</TRAIT> { fn <ASSOC_FUNCTION>foo</ASSOC_FUNCTION>(_: Self) -> Self; }
     """, checkWarn = false, ignoreExtraHighlighting = false)
 
-    fun `test primitive`() = checkHighlighting("""
+    fun `test primitive`() = checkByText("""
         fn <FUNCTION>main</FUNCTION>() -> <PRIMITIVE_TYPE>bool</PRIMITIVE_TYPE> {
             let a: <PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE> = 42;
             let b: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = 10.0;
             let c: &<PRIMITIVE_TYPE>str</PRIMITIVE_TYPE> = "example";
             <PRIMITIVE_TYPE>char</PRIMITIVE_TYPE>::is_lowercase('a');
+            let mut i32 = 1;
+            i32 = 2;
             true
         }
     """)
@@ -188,14 +192,14 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @MockEdition(Edition.EDITION_2015)
     fun `test postfix await 2015`() = checkHighlighting("""
         fn main() {
             dummy.await;
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockEdition(Edition.EDITION_2018)
     fun `test postfix await 2018`() = checkHighlighting("""
         fn main() {
             dummy.<KEYWORD>await</KEYWORD>;
@@ -209,6 +213,18 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             }
         """)
     }
+
+    @MockEdition(Edition.EDITION_2018)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test highlight macro in use item`() = checkByFileTree("""
+    //- lib.rs
+        use <CRATE>dep_lib_target</CRATE>::<MACRO>foo</MACRO>; /*caret*/
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
 
     private fun withoutTodoHighlighting(action: () -> Unit) {
         val todoConfiguration = TodoConfiguration.getInstance()
