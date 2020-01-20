@@ -67,6 +67,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)
         }
+        disableMissedCacheAssertions(testRootDisposable)
     }
 
     override fun tearDown() {

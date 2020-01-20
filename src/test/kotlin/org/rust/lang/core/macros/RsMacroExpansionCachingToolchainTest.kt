@@ -6,8 +6,10 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapiext.Testmark
@@ -33,6 +35,15 @@ import org.rust.openapiext.pathAsPath
 class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
     private val dirFixture = TempDirTestFixtureImpl()
     private var macroExpansionServiceDisposable: Disposable? = null
+
+    override fun runTest() {
+        // fixme on 2020.1
+        if (ApplicationInfo.getInstance().build <= BuildNumber.fromString("193")) {
+            super.runTest()
+        } else {
+            System.err.println("ApplySuggestionFixTest is temporarily disabled for 201.* builds")
+        }
+    }
 
     override fun setUp() {
         dirFixture.setUp()

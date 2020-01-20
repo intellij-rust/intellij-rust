@@ -20,7 +20,7 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     fun `test targets`() = doTest("""
         Root
-         Project(unitTest)
+         Project
           Targets
            Target(bench[bench])
            Target(example[example])
@@ -52,7 +52,7 @@ class CargoProjectStructureTest : RsWithToolchainTestBase() {
 
     fun `test workspace members`() = doTest("""
         Root
-         Project(unitTest)
+         Project
           Targets
            Target(foo[bin])
           WorkspaceMember(bar)
