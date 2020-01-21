@@ -62,6 +62,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         super.setUp()
         rustupFixture = RustupTestFixture(project)
         rustupFixture.setUp()
+        disableMissedCacheAssertions(testRootDisposable)
     }
 
     override fun tearDown() {

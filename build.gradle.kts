@@ -19,7 +19,7 @@ val CI = System.getenv("CI") != null
 val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
 
 val channel = prop("publishChannel")
-val platformVersion = prop("platformVersion")
+val platformVersion = prop("platformVersion").toInt()
 val baseIDE = prop("baseIDE")
 val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
@@ -29,8 +29,8 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val isAtLeast192 = platformVersion.toInt() >= 192
-val isAtLeast193 = platformVersion.toInt() >= 193
+val isAtLeast192 = platformVersion >= 192
+val isAtLeast193 = platformVersion >= 193
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
@@ -40,7 +40,7 @@ plugins {
     idea
     kotlin("jvm") version "1.3.60"
     id("org.jetbrains.intellij") version "0.4.13"
-    id("org.jetbrains.grammarkit") version "2019.3"
+    id("org.jetbrains.grammarkit") version "2020.1"
     id("de.undercouch.download") version "3.4.3"
     id("net.saliman.properties") version "1.4.6"
 }
@@ -172,9 +172,12 @@ project(":plugin") {
         val plugins = mutableListOf(
             project(":intellij-toml"),
             "IntelliLang",
-            graziePlugin,
             psiViewerPlugin
         )
+        // TODO: temporary solution until grazie plugin for 2020.1 is not published
+        if (platformVersion < 201) {
+            plugins += graziePlugin
+        }
         if (baseIDE == "idea") {
             plugins += "copyright"
             plugins += "coverage"
@@ -336,7 +339,8 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-        if (isAtLeast193) {
+        // TODO: temporary solution until native debug plugin for 2020.1 is not published
+        if (platformVersion == 193) {
             if (baseIDE == "idea") {
                 setPlugins(nativeDebugPlugin)
             }
@@ -434,7 +438,10 @@ project(":coverage") {
 
 project(":grazie") {
     intellij {
-        setPlugins(graziePlugin)
+        // TODO: temporary solution until grazie plugin for 2020.1 is not published
+        if (platformVersion < 201) {
+            setPlugins(graziePlugin)
+        }
     }
     dependencies {
         compile(project(":"))
@@ -473,7 +480,7 @@ project(":intellij-toml") {
         purgeOldFiles = true
     }
 
-    tasks{
+    tasks {
         withType<KotlinCompile> {
             dependsOn(generateTomlLexer, generateTomlParser)
         }

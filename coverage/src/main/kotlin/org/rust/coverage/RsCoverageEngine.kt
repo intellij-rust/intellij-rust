@@ -79,16 +79,16 @@ class RsCoverageEngine : CoverageEngine() {
         stateBean: CoverageViewManager.StateBean
     ): CoverageViewExtension? =
         object : DirectoryCoverageViewExtension(project, getCoverageAnnotator(project), suiteBundle, stateBean) {
-            override fun createColumnInfos(): Array<ColumnInfo<NodeDescriptor<Any>, String>> {
+            override fun createColumnInfos(): Array<ColumnInfo<NodeDescriptor<*>, String>> {
                 val percentage = PercentageCoverageColumnInfo(
                     1,
                     "Covered, %",
                     mySuitesBundle,
                     myStateBean
                 )
-                val files = object : ColumnInfo<NodeDescriptor<Any>, String>("File") {
-                    override fun valueOf(item: NodeDescriptor<Any>?): String? = item.toString()
-                    override fun getComparator(): Comparator<NodeDescriptor<Any>>? = AlphaComparator.INSTANCE
+                val files = object : ColumnInfo<NodeDescriptor<*>, String>("File") {
+                    override fun valueOf(item: NodeDescriptor<*>?): String? = item.toString()
+                    override fun getComparator(): Comparator<NodeDescriptor<*>>? = AlphaComparator.INSTANCE
                 }
                 return arrayOf(files, percentage)
             }

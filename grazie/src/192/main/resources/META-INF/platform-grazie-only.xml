@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij.grazie">
+        <grammar.strategy language="Rust" implementationClass="org.rust.grazie.RsGrammarCheckingStrategy"/>
+    </extensions>
+</idea-plugin>

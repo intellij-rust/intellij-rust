@@ -9,18 +9,24 @@ jobs:
             matrix:
                 rust-version: [ 1.28.0, 1.40.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 192, 193 ]
+                platform-version: [ 192, 193, 201 ]
                 # Unfortunately, we have to exclude unnecessary tasks because `include` cannot add new tasks to matrix
                 exclude:
-                    -  rust-version: 1.28.0
-                       base-ide: idea
-                       platform-version: 193
-                    -  rust-version: 1.28.0
-                       base-ide: clion
-                       platform-version: 192
-                    -  rust-version: 1.28.0
-                       base-ide: clion
-                       platform-version: 193
+                    -   rust-version: 1.28.0
+                        base-ide: idea
+                        platform-version: 193
+                    -   rust-version: 1.28.0
+                        base-ide: clion
+                        platform-version: 192
+                    -   rust-version: 1.28.0
+                        base-ide: clion
+                        platform-version: 193
+                    -   rust-version: 1.28.0
+                        base-ide: idea
+                        platform-version: 201
+                    -   rust-version: 1.28.0
+                        base-ide: clion
+                        platform-version: 201
         steps:
             - uses: actions/checkout@v1
 

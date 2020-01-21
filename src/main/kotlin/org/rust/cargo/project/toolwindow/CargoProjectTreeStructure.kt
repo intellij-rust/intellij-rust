@@ -92,7 +92,7 @@ class CargoProjectTreeStructure(
                 presentation.setIcon(icon)
             }
 
-            override fun toTestString(): String = "Project($name)"
+            override fun toTestString(): String = "Project"
         }
 
         class WorkspaceMember(val pkg: CargoWorkspace.Package, parent: SimpleNode) : CargoSimpleNode(parent) {
