@@ -47,6 +47,7 @@ interface CargoProjectsService {
     fun detachCargoProject(cargoProject: CargoProject)
     fun refreshAllProjects(): CompletableFuture<out List<CargoProject>>
     fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>>
+    fun suggestManifests(): Sequence<VirtualFile>
 
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(

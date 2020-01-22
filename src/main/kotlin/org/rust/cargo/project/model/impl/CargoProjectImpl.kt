@@ -180,11 +180,7 @@ open class CargoProjectsServiceImpl(
         modifyProjects { doRefresh(project, it) }
 
     override fun discoverAndRefresh(): CompletableFuture<out List<CargoProject>> {
-        val guessManifest = project.modules
-            .asSequence()
-            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
-            .firstOrNull()
+        val guessManifest = suggestManifests().firstOrNull()
             ?: return CompletableFuture.completedFuture(projects.currentState)
 
         return modifyProjects { projects ->
@@ -192,6 +188,12 @@ open class CargoProjectsServiceImpl(
             doRefresh(project, listOf(CargoProjectImpl(guessManifest.pathAsPath, this)))
         }
     }
+
+    override fun suggestManifests(): Sequence<VirtualFile> =
+        project.modules
+            .asSequence()
+            .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
+            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
 
     /**
      * All modifications to project model except for low-level `loadState` should
@@ -336,8 +338,8 @@ data class CargoProjectImpl(
     }
 
     private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
-        val toolchain = toolchain ?:
-            return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
+        val toolchain = toolchain
+            ?: return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 

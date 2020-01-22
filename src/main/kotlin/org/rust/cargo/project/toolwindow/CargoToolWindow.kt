@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.ui.ColorUtil
@@ -26,13 +27,18 @@ import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
-class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
+class CargoToolWindowFactory : ToolWindowFactory, Condition<Project>, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
         val toolwindowPanel = CargoToolWindowPanel(project)
         val tab = ContentFactory.SERVICE.getInstance()
             .createContent(toolwindowPanel, "", false)
         toolWindow.contentManager.addContent(tab)
+    }
+
+    override fun value(project: Project): Boolean {
+        val cargoProjects = project.cargoProjects
+        return cargoProjects.hasAtLeastOneValidProject || cargoProjects.suggestManifests().any()
     }
 }
 
