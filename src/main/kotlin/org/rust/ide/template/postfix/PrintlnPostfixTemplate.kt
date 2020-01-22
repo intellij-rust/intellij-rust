@@ -8,7 +8,6 @@ package org.rust.ide.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateWithExpressionSelector
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.codeStyle.CodeStyleManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
@@ -58,12 +57,8 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
             return macroExpression
         }
 
-        fun replaceWithMacro(expression: PsiElement, addTrailingComma: Boolean = false) {
-            val newElement = expression.replace(createMacro(expression.text, expression.parent is RsBlock))
-            if (addTrailingComma) {
-                newElement.add(psiFactory.createComma())
-            }
-            editor.caretModel.moveToOffset(newElement.endOffset)
+        fun replaceWithMacro(expression: PsiElement): PsiElement {
+            return expression.replace(createMacro(expression.text, expression.parent is RsBlock))
         }
     }
 
@@ -84,13 +79,22 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
             is RsMatchArm -> {
                 val matchBody = parent.ancestorStrict<RsMatchBody>() ?: return
                 if (matchBody.containsUnitArm) {
-                    macroCreator.replaceWithMacro(expression, parent.comma == null)
+                    val newElement = macroCreator.replaceWithMacro(expression)
+                    val caretAnchor = if (parent.comma == null) {
+                        parent.addAfter(psiFactory.createComma(), newElement)
+                    } else {
+                        newElement
+                    }
+                    editor.caretModel.moveToOffset(caretAnchor.endOffset)
                 } else {
                     surroundWithBlockExpression(macroCreator.createMacro(expression.text), expression, psiFactory, editor)
                 }
             }
             is RsBinaryExpr -> addMacroNextToElement(macroCreator.createMacro(expression.text), parent, psiFactory, editor)
-            else -> macroCreator.replaceWithMacro(expression)
+            else -> {
+                val newElement = macroCreator.replaceWithMacro(expression)
+                editor.caretModel.moveToOffset(newElement.endOffset)
+            }
         }
     }
 
@@ -103,7 +107,6 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
             val newElement = container.addAfter(macro, childToContainer.first.getNextNonCommentSibling()?.prevSibling)
             editor.caretModel.moveToOffset(newElement.endOffset)
             newElement.add(psiFactory.createNewline())
-            CodeStyleManager.getInstance(newElement.project).reformat(container.ancestorStrict<RsBlock>() ?: container)
         }
     }
 
