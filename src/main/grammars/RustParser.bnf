@@ -454,7 +454,7 @@ Function ::= OuterAttr*
              FnParameters
              RetType?
              WhereClause?
-             (';' | ShallowBlock | never SimpleBlock)
+             (';' | ShallowBlock)
 {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"

@@ -80,10 +80,10 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
  * **Do not instantiate directly**, use [RsDocAndAttributeOwner.queryAttributes] instead.
  */
 class QueryAttributes(
-    private val psi: RsDocAndAttributeOwner
+    private val psi: RsDocAndAttributeOwner,
+    private val attributes: Sequence<RsAttr> = (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().asSequence() +
+        (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().asSequence()
 ) {
-    private val attributes: Sequence<RsAttr> = Sequence { (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().iterator() } +
-        Sequence { (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().iterator() }
 
     // #[doc(hidden)]
     val isDocHidden: Boolean get() = hasAttributeWithArg("doc", "hidden")

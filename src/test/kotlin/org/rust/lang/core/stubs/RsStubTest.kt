@@ -19,7 +19,6 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test expression is not stubbed inside statement`() = doTest("""
@@ -28,7 +27,6 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test literal is not stubbed inside function tail expr`() = doTest("""
@@ -41,7 +39,6 @@ class RsStubTest : RsTestBase() {
               TYPE_REFERENCE:RsPlaceholderStub
                 BASE_TYPE:RsBaseTypeStub
                   PATH:RsPathStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test expression is not stubbed inside function tail expr`() = doTest("""
@@ -54,7 +51,6 @@ class RsStubTest : RsTestBase() {
               TYPE_REFERENCE:RsPlaceholderStub
                 BASE_TYPE:RsBaseTypeStub
                   PATH:RsPathStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test lifetime is stubbed inside function signature`() = doTest("""
@@ -76,7 +72,6 @@ class RsStubTest : RsTestBase() {
               TYPE_REFERENCE:RsPlaceholderStub
                 BASE_TYPE:RsBaseTypeStub
                   PATH:RsPathStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test literal is not stubbed inside closure tail expr`() = doTest("""
@@ -87,7 +82,6 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test expression is not stubbed inside closure tail expr`() = doTest("""
@@ -98,7 +92,6 @@ class RsStubTest : RsTestBase() {
         RsFileStub
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
-            BLOCK:RsPlaceholderStub
     """)
 
     fun `test literal is stubbed inside const body`() = doTest("""
@@ -153,6 +146,44 @@ class RsStubTest : RsTestBase() {
                   LIT_EXPR:RsLitExprStub
                   BINARY_OP:RsBinaryOpStub
                   LIT_EXPR:RsLitExprStub
+    """)
+
+    fun `test function block is stubbed if contains item`() = doTest("""
+        fn foo() {
+            struct S;
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              STRUCT_ITEM:RsStructItemStub
+    """)
+
+    fun `test function block is stubbed if contains union`() = doTest("""
+        fn foo() {
+            union Foo {}
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              STRUCT_ITEM:RsStructItemStub
+                BLOCK_FIELDS:RsPlaceholderStub
+    """)
+
+    fun `test function block is stubbed if contains inner attrs`() = doTest("""
+        fn foo() {
+            #![foo]
+        }
+    """, """
+        RsFileStub
+          FUNCTION:RsFunctionStub
+            VALUE_PARAMETER_LIST:RsPlaceholderStub
+            BLOCK:RsPlaceholderStub
+              INNER_ATTR:RsInnerAttrStub
+                META_ITEM:RsMetaItemStub
     """)
 
     fun `test nested block is stubbed if contains items`() = doTest("""
@@ -218,7 +249,7 @@ class RsStubTest : RsTestBase() {
             mod bar {
                 include!("a.rs");
             }
-        }     
+        }
     """, """
         RsFileStub
           FUNCTION:RsFunctionStub
@@ -232,7 +263,7 @@ class RsStubTest : RsTestBase() {
     """)
 
     fun `test expressions are stubs inside file`() = doTest("""
-        include!("foo.rs");    
+        include!("foo.rs");
     """, """
         RsFileStub
           MACRO_CALL:RsMacroCallStub
