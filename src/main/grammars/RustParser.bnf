@@ -454,7 +454,7 @@ Function ::= OuterAttr*
              FnParameters
              RetType?
              WhereClause?
-             (';' | InnerAttrsAndBlock)
+             (';' | ShallowBlock | never SimpleBlock)
 {
   pin = 'identifier'
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
@@ -1450,6 +1450,8 @@ InnerAttrsAndBlock ::= '{' InnerAttr* BlockElement* '}' {
   pin = 1
   elementType = Block
 }
+
+private ShallowBlock ::= <<parseCodeBlockLazy>>
 
 private BlockElement ::= !'}' (Macro | BlockElementMacroCall | ExprStmtOrLastExpr | Stmt | Item) {
   pin = 1

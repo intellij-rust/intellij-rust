@@ -17,7 +17,7 @@ FILE
               PsiElement(identifier)('i32')
       PsiWhiteSpace(' ')
       PsiElement())(')')
-    PsiErrorElement:'->', ';', where or '{' expected, got 'fn'
+    PsiErrorElement:'->', ';' or where expected, got 'fn'
       <empty list>
   PsiWhiteSpace('\n\n')
   RsFunctionImpl(FUNCTION)

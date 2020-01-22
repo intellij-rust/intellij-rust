@@ -5,16 +5,22 @@
 
 package org.rust.lang.core.stubs
 
-import com.intellij.lang.ASTNode
-import com.intellij.lang.FileASTNode
+import com.intellij.lang.*
+import com.intellij.lang.parser.GeneratedParserUtilBase
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
+import com.intellij.psi.impl.source.tree.LazyParseableElement
 import com.intellij.psi.stubs.*
-import com.intellij.psi.tree.IStubFileElementType
+import com.intellij.psi.tree.*
 import com.intellij.util.BitUtil
+import com.intellij.util.CharTable
+import com.intellij.util.diff.FlyweightCapableTreeStructure
 import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.lexer.RsLexer
+import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -23,7 +29,6 @@ import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
 import org.rust.stdext.makeBitMask
-
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
     val attributes: RsFile.Attributes
@@ -1192,9 +1197,61 @@ class RsBinaryOpStub(
     }
 }
 
-object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl) {
+/**
+ * [IReparseableElementTypeBase] and [ICustomParsingType] are implemented to provide incremental parsing
+ *  of function bodies.
+ * [ICompositeElementType] - to create AST of type [LazyParseableElement] in the case of non-lazy parsing
+ *  (`if` bodies, `match` arms, etc), just to have the same AST class for all code blocks (I'm not sure
+ *  if that makes sense; made just in case)
+ * [ILightLazyParseableElementType] is needed to diff trees correctly (see `PsiBuilderImpl.MyComparator`).
+*/
+object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl),
+                         ICustomParsingType,
+                         ICompositeElementType,
+                         IReparseableElementTypeBase,
+                         ILightLazyParseableElementType {
+
     override fun shouldCreateStub(node: ASTNode): Boolean =
         createStubIfParentIsStub(node) || node.findChildByType(RS_ITEMS) != null
+
+    // Lazy parsed (function body)
+    override fun parse(text: CharSequence, table: CharTable): ASTNode = LazyParseableElement(this, text)
+
+    // Non-lazy case (`if` body, etc).
+    override fun createCompositeNode(): ASTNode = LazyParseableElement(this, null)
+
+    override fun parseContents(chameleon: ASTNode): ASTNode? {
+        val project = chameleon.treeParent.psi.project
+        val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, null, RsLanguage, chameleon.chars)
+        parseBlock(builder)
+        return builder.treeBuilt.firstChildNode
+    }
+
+    override fun parseContents(chameleon: LighterLazyParseableNode): FlyweightCapableTreeStructure<LighterASTNode> {
+        val project = chameleon.containingFile?.project ?: error("`containingFile` must not be null: $chameleon")
+        val builder = PsiBuilderFactory.getInstance().createBuilder(project, chameleon, null, RsLanguage, chameleon.text)
+        parseBlock(builder)
+        return builder.lightTree
+    }
+
+    private fun parseBlock(builder: PsiBuilder) {
+        // Should be `RustParser().parseLight(BLOCK, builder)`, but we don't have parsing rule for `BLOCK`.
+        // Here is a copy of `RustParser.parseLight` method with `RustParser.InnerAttrsAndBlock` parser.
+        // Note: we can't use `RustParser().parseLight(INNER_ATTRS_AND_BLOCK, builder)` because the root
+        // parsed node must be of BLOCK type. Otherwise, tree diff mechanizm works incorrectly
+        // (see `BlockSupport.ReparsedSuccessfullyException`)
+        val adaptBuilder = GeneratedParserUtilBase.adapt_builder_(BLOCK, builder, RustParser(), RustParser.EXTENDS_SETS_)
+        val marker = GeneratedParserUtilBase.enter_section_(adaptBuilder, 0, GeneratedParserUtilBase._COLLAPSE_, null)
+        val result = RustParser.InnerAttrsAndBlock(adaptBuilder, 0)
+        GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, BLOCK, result, true, GeneratedParserUtilBase.TRUE_CONDITION)
+    }
+
+    // Restricted to a function body only because it is well tested case. May be unrestricted to any block in future
+    override fun isParsable(parent: ASTNode?, buffer: CharSequence, fileLanguage: Language, project: Project): Boolean =
+        parent?.elementType == FUNCTION && PsiBuilderUtil.hasProperBraceBalance(buffer, RsLexer(), LBRACE, RBRACE)
+
+    // Avoid double lexing
+    override fun reuseCollapsedTokens(): Boolean = true
 }
 
 class RsExprStubType<PsiT : RsElement>(
