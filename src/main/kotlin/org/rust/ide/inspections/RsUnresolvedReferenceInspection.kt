@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.endOffsetInParent
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.qualifier
 import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
@@ -33,30 +34,48 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitPath(path: RsPath) {
-                if (path.parent is RsPath) return
                 // Don't show unresolved reference error in attributes for now
                 if (path.ancestorStrict<RsMetaItem>() != null) return
-                val (basePath, candidates) = AutoImportFix.findApplicableContext(holder.project, path) ?: return
+                // here we check if this path is resolved
+                // if it is we return
+                // if not than check whether qualifier of this path is resolved
+                // if it is we register problem
+                // if not then we assume that unresolved parent paths of this path
+                // were or will be handled
+                // because all paths will eventually be processed by visitor
+                val (problemPath, candidates) = AutoImportFix.findApplicableContext(holder.project, path)
+                    ?: return
+
                 if (candidates.isEmpty() && ignoreWithoutQuickFix) return
 
-                val referenceName = basePath.identifier?.text
-                // Don't highlight generic parameters
+                path.qualifier
+                    ?.let { AutoImportFix.findApplicableContext(holder.project, it) }
+                    ?.let { return }
+
+                val referenceName = problemPath.identifier?.text
                 val range = TextRange(
-                    0,
-                    path.typeArgumentList?.getPrevNonCommentSibling()?.endOffsetInParent ?: path.textLength
+                    // Don't highlight parent identifiers
+                    problemPath.identifier?.startOffsetInParent ?: 0,
+                    // Don't highlight generic parameters
+                    problemPath.typeArgumentList?.getPrevNonCommentSibling()?.endOffsetInParent
+                        ?: problemPath.textLength
                 )
-                holder.registerProblem(path, candidates, referenceName, range)
+
+                holder.registerProblem(problemPath, candidates, referenceName, range)
             }
 
             override fun visitMethodCall(methodCall: RsMethodCall) {
-                val (_, candidates) = AutoImportFix.findApplicableContext(holder.project, methodCall) ?: return
+                val (_, candidates) = AutoImportFix.findApplicableContext(holder.project, methodCall)
+                    ?: return
 
                 if (candidates.isEmpty() && ignoreWithoutQuickFix) return
 
-                val identifier = methodCall.identifier
-                val referenceName = identifier.text
-                val range = TextRange(0, identifier.textLength)
-                holder.registerProblem(methodCall, candidates, referenceName, range)
+                val range = TextRange(
+                    0,
+                    methodCall.identifier.textLength
+                )
+
+                holder.registerProblem(methodCall, candidates, methodCall.identifier.text, range)
             }
         }
 

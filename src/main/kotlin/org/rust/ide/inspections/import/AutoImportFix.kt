@@ -91,11 +91,9 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
         fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
             val reference = path.reference ?: return null
-            val basePath = path.basePath()
+            val isPathResolved = TyPrimitive.fromPath(path) != null || reference.multiResolve().isNotEmpty()
 
-            val isBasePathResolved = TyPrimitive.fromPath(basePath) != null || reference.multiResolve().isNotEmpty()
-
-            if (isBasePathResolved) {
+            if (isPathResolved) {
                 // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
                 // the view of the rust compiler. Specifically we resolve associated items even if corresponding
                 // trait is not in the scope, so here we suggest importing such traits
@@ -106,23 +104,27 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
                 Testmarks.pathInUseItem.hit()
-                return Context(basePath, emptyList())
+                return Context(path, emptyList())
             }
 
-            val isNameInScope = path.hasInScope(basePath.referenceName, TYPES_N_VALUES)
+            val isNameInScope = path.hasInScope(path.referenceName, TYPES_N_VALUES)
             if (isNameInScope) {
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
                 // It's possible for incorrect or incomplete code like "let map = HashMap"
                 Testmarks.nameInScope.hit()
-                return Context(basePath, emptyList())
+                return Context(path, emptyList())
             }
 
-            val candidates = getImportCandidates(ImportContext.from(project, path, false), basePath.referenceName, path.text) {
-                path != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
+            val candidates = getImportCandidates(
+                ImportContext.from(project, path, false),
+                path.referenceName,
+                path.text
+            ) {
+                true
             }.toList()
 
-            return Context(basePath, candidates)
+            return Context(path, candidates)
         }
 
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
