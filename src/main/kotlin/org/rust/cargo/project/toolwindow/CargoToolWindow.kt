@@ -58,7 +58,7 @@ class CargoToolWindow(
 ) {
     val toolbar: ActionToolbar = run {
         val actionManager = ActionManager.getInstance()
-        actionManager.createActionToolbar("Cargo Toolbar", actionManager.getAction("Rust.Cargo") as DefaultActionGroup, true)
+        actionManager.createActionToolbar(CARGO_TOOLBAR_PLACE, actionManager.getAction("Rust.Cargo") as DefaultActionGroup, true)
     }
 
     val note = JEditorPane("text/html", html("")).apply {
@@ -108,5 +108,7 @@ class CargoToolWindow(
     companion object {
         @JvmStatic
         val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
+
+        const val CARGO_TOOLBAR_PLACE: String = "Cargo Toolbar"
     }
 }

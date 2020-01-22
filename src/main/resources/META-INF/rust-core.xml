@@ -825,6 +825,7 @@
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.DetachedFileNotificationProvider"/>
+        <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
 
         <!-- Editor Tab Title Providers -->
 
@@ -1063,6 +1064,11 @@
             <reference id="CollapseAll"/>
             <separator/>
             <reference id="Cargo.ShowSettings"/>
+        </group>
+
+        <group id="Rust.ProjectView">
+            <reference id="Cargo.AttachCargoProject"/>
+            <add-to-group group-id="ProjectViewPopupMenu"/>
         </group>
 
         <!-- Internal -->

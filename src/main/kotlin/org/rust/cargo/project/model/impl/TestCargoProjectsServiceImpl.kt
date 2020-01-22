@@ -64,9 +64,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
 
     @TestOnly
     fun discoverAndRefreshSync(): List<CargoProject> {
-        val projects = discoverAndRefresh().get(1, TimeUnit.MINUTES)
+        return discoverAndRefresh().get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
-        if (projects.isEmpty()) error("Failed to update a test Cargo project")
-        return projects
     }
 }

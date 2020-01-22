@@ -69,15 +69,8 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
         }
 
         val cargoProjects = project.cargoProjects
-        if (!cargoProjects.hasAtLeastOneValidProject) {
-            return createNoCargoProjectsPanel(file)
-        }
 
-        val cargoProject = cargoProjects.findProjectForFile(file) ?:
-            //TODO: more precise check here
-            return createNoCargoProjectForFilePanel(file)
-
-        val workspace = cargoProject.workspace ?: return null
+        val workspace = cargoProjects.findProjectForFile(file)?.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
@@ -94,22 +87,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
             }
-            createActionLabel("Do not show again") {
-                disableNotification(file)
-                updateAllNotifications()
-            }
-        }
-
-    private fun createNoCargoProjectsPanel(file: VirtualFile): RsEditorNotificationPanel =
-        createAttachCargoProjectPanel(NO_CARGO_PROJECTS, file, "No Cargo projects found")
-
-    private fun createNoCargoProjectForFilePanel(file: VirtualFile): RsEditorNotificationPanel =
-        createAttachCargoProjectPanel(FILE_NOT_IN_CARGO_PROJECT, file, "File does not belong to any known Cargo project")
-
-    private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, message: String): RsEditorNotificationPanel =
-        RsEditorNotificationPanel(debugId).apply {
-            setText(message)
-            createActionLabel("Attach", "Cargo.AttachCargoProject")
             createActionLabel("Do not show again") {
                 disableNotification(file)
                 updateAllNotifications()
@@ -142,8 +119,6 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
     companion object {
         private const val NOTIFICATION_STATUS_KEY = "org.rust.hideToolchainNotifications"
         const val NO_RUST_TOOLCHAIN = "NoRustToolchain"
-        const val NO_CARGO_PROJECTS = "NoCargoProjects"
-        const val FILE_NOT_IN_CARGO_PROJECT = "FileNotInCargoProject"
         const val NO_ATTACHED_STDLIB = "NoAttachedStdlib"
 
         private val PROVIDER_KEY: Key<EditorNotificationPanel> = Key.create("Setup Rust toolchain")
