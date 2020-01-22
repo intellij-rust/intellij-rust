@@ -34,8 +34,8 @@ import java.awt.BorderLayout
 import java.nio.charset.StandardCharsets
 import javax.swing.JPanel
 
-class RsConsoleRunner(project: Project, title: String) :
-    AbstractConsoleRunnerWithHistory<RsConsoleView>(project, title, null) {
+class RsConsoleRunner(project: Project) :
+    AbstractConsoleRunnerWithHistory<RsConsoleView>(project, TOOL_WINDOW_TITLE, null) {
 
     private lateinit var commandLine: GeneralCommandLine
     private val consoleCommunication: RsConsoleCommunication = RsConsoleCommunication()
@@ -61,10 +61,6 @@ class RsConsoleRunner(project: Project, title: String) :
         return consoleView
     }
 
-    override fun showConsole(defaultExecutor: Executor, contentDescriptor: RunContentDescriptor) {
-        RsConsoleToolWindow.getInstance(project).setContent(contentDescriptor)
-    }
-
     override fun fillToolBarActions(
         toolbarActions: DefaultActionGroup,
         defaultExecutor: Executor,
@@ -79,7 +75,7 @@ class RsConsoleRunner(project: Project, title: String) :
     }
 
     fun runSync(requestEditorFocus: Boolean) {
-        if (checkNeedInstallEvcxr()) return
+        if (Cargo.checkNeedInstallEvcxr(project)) return
 
         try {
             initAndRun()
@@ -99,7 +95,7 @@ class RsConsoleRunner(project: Project, title: String) :
     }
 
     fun run(requestEditorFocus: Boolean) {
-        if (checkNeedInstallEvcxr()) return
+        if (Cargo.checkNeedInstallEvcxr(project)) return
         TransactionGuard.submitTransaction(project, Runnable { saveAllDocuments() })
 
         ApplicationManager.getApplication().executeOnPooledThread {
@@ -119,16 +115,6 @@ class RsConsoleRunner(project: Project, title: String) :
                 }
             })
         }
-    }
-
-    private fun checkNeedInstallEvcxr(): Boolean {
-        val needInstallEvcxr = Cargo.checkNeedInstallEvcxr(project)
-        if (needInstallEvcxr) {
-            ApplicationManager.getApplication().invokeLater {
-                RsConsoleToolWindow.getInstance(project).hide()
-            }
-        }
-        return needInstallEvcxr
     }
 
     override fun initAndRun() {
@@ -192,8 +178,7 @@ class RsConsoleRunner(project: Project, title: String) :
                 }
 
                 GuiUtils.invokeLaterIfNeeded({
-                    val runner = RsConsoleRunnerFactory.getInstance().createConsoleRunner(project, null)
-                    runner.run(true)
+                    RsConsoleRunner(project).run(true)
                 }, ModalityState.defaultModalityState())
             }
         }.queue()
@@ -217,18 +202,16 @@ class RsConsoleRunner(project: Project, title: String) :
             messages += message.lines()
         }
 
-
         errorViewPanel.addMessage(MessageCategory.ERROR, messages.toTypedArray(), null, -1, -1, null)
         panel.add(errorViewPanel, BorderLayout.CENTER)
-
 
         val contentDescriptor = RunContentDescriptor(null, processHandler, panel, "Error running console")
 
         showConsole(executor, contentDescriptor)
     }
 
-
     companion object {
+        const val TOOL_WINDOW_TITLE: String = "Rust REPL"
         val LOG: Logger = Logger.getInstance(RsConsoleRunner::class.java)
     }
 }

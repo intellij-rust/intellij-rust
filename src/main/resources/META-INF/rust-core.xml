@@ -877,12 +877,6 @@
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
 
-        <!-- REPL Console -->
-
-        <toolWindow id="Rust Console" anchor="bottom" icon="AllIcons.Debugger.Console" canCloseContents="true"
-                    factoryClass="org.rust.ide.console.RsConsoleToolWindowFactory" secondary="false"
-                    conditionClass="org.rust.ide.console.RsConsoleToolWindowFactory"/>
-
     </extensions>
 
     <extensionPoints>
@@ -896,9 +890,6 @@
         </component>
         <component>
             <implementation-class>org.rust.cargo.RustfmtWatcher</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.rust.ide.console.RsConsoleRunnerFactory</implementation-class>
         </component>
         <component>
             <implementation-class>org.rust.ide.todo.RsTodoApplicationComponent</implementation-class>
@@ -916,9 +907,6 @@
         <component>
             <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
             <implementation-class>org.rust.lang.core.macros.MacroExpansionManagerImpl</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.rust.ide.console.RsConsoleToolWindow</implementation-class>
         </component>
     </project-components>
 
@@ -1076,6 +1064,15 @@
             <reference id="Cargo.AttachCargoProject"/>
             <add-to-group group-id="ProjectViewPopupMenu"/>
         </group>
+
+        <!-- Repl -->
+
+        <action id="Rust.ConsoleREPL"
+                class="org.rust.ide.console.RunRustConsoleAction"
+                text="Rust REPL"
+                icon="AllIcons.Debugger.Console">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
 
         <!-- Internal -->
 
