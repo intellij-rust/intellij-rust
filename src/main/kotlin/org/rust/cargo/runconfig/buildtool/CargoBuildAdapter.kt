@@ -110,6 +110,12 @@ class CargoBuildAdapter(
         // otherwise the line contains only part of the message.
         if (concat.contains("{\"reason\"") && !concat.endsWith("}\n")) return
 
+        // Bit of a weird hack, but it's entirely possible that the error message contains explanations.
+        // Those explanations can contain "}\n", and even more bizarre, it's entirely possible that
+        // we get the text event that splits the message exactly on that boundary.
+        val count = concat.count { it == '\"' }
+        if ((count and 1) != 0) return
+
         val text = concat.replace(BUILD_PROGRESS_FULL_RE) { it.value.trimEnd(' ', '\r', '\n') + "\n" }
         textBuffer.clear()
 
