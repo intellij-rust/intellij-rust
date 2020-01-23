@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiFile
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
@@ -94,7 +95,11 @@ class RsExternalLinterPass(
             override fun canEat(update: Update?): Boolean = true
         }
 
-        factory.scheduleExternalActivity(update)
+        if (isUnitTestMode) {
+            update.run()
+        } else {
+            factory.scheduleExternalActivity(update)
+        }
     }
 
     private fun doApply(annotationResult: RsExternalLinterResult) {

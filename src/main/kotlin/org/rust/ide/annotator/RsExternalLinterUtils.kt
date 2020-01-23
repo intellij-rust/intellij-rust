@@ -16,6 +16,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -101,14 +102,18 @@ object RsExternalLinterUtils {
     ): RsExternalLinterResult? {
         val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
             saveAllDocumentsAsTheyAre()
-            BackgroundableProcessIndicator(
-                project,
-                "Analyzing Project with External Linter",
-                PerformInBackgroundOption.ALWAYS_BACKGROUND,
-                CommonBundle.getCancelButtonText(),
-                CommonBundle.getCancelButtonText(),
-                true
-            )
+            if (isUnitTestMode) {
+                EmptyProgressIndicator()
+            } else {
+                BackgroundableProcessIndicator(
+                    project,
+                    "Analyzing Project with External Linter",
+                    PerformInBackgroundOption.ALWAYS_BACKGROUND,
+                    CommonBundle.getCancelButtonText(),
+                    CommonBundle.getCancelButtonText(),
+                    true
+                )
+            }
         }
         return ProgressManager.getInstance().runProcess(
             Computable { check(toolchain, project, owner, workingDirectory, packageName) },
