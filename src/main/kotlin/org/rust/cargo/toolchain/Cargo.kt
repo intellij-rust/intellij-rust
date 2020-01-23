@@ -38,7 +38,9 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 
 
 /**
@@ -118,11 +120,31 @@ class Cargo(private val cargoExecutable: Path) {
             .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
-        return try {
+        val project = try {
             Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
+
+        val workspaceRoot = project.workspace_root
+
+        if (workspaceRoot == null || projectDirectory.toString() == workspaceRoot) {
+            return project
+        }
+
+        val workspaceRootPath = Paths.get(workspaceRoot)
+
+        // If the selected projectDirectory doesn't resolve directly to the directory that Cargo spat out at us,
+        // then there's something a bit special with the cargo workspace, and we don't want to assume anything.
+        if (!Files.isSameFile(projectDirectory, workspaceRootPath)) {
+            return project
+        }
+
+        // Otherwise, it's just a normal symlink.
+
+        val normalisedWorkspace = projectDirectory.normalize().toString()
+
+        return project.copy(workspace_root = normalisedWorkspace)
     }
 
     private fun fetchBuildPlan(
