@@ -17,18 +17,13 @@ env:
 
 matrix:
   include:
-    # 192 platform
-    - name: idea-192/old-rust
-      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192 ORG_GRADLE_PROJECT_ideaVersion=IU-2019.2.1 ORG_GRADLE_PROJECT_clionVersion=CL-2019.2.1
-    - name: idea-192/stable-rust
-      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192
-    - name: clion-192/stable-rust
-      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=192 ORG_GRADLE_PROJECT_baseIDE=clion
     # 193 platform
-    - name: idea-193/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193
-    - name: clion-193/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193 ORG_GRADLE_PROJECT_baseIDE=clion
+    - name: idea-193/old-rust
+      env: RUST_VERSION=$OLD_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193 ORG_GRADLE_PROJECT_ideaVersion=IU-2019.3 ORG_GRADLE_PROJECT_clionVersion=CL-2019.3
+    - name: idea-193/stable-rust
+      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193
+    - name: clion-193/stable-rust
+      env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=193 ORG_GRADLE_PROJECT_baseIDE=clion
     # 201 platform
     - name: idea-201/nightly-rust
       env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=201
