@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.ex.ApplicationUtil
@@ -302,6 +303,9 @@ val DataContext.elementUnderCaretInEditor: PsiElement?
 
         return psiFile.findElementAt(editor.caretModel.offset)
     }
+
+fun isFeatureEnabled(featureId: String): Boolean = Experiments.getInstance().isFeatureEnabled(featureId)
+fun setFeatureEnabled(featureId: String, enabled: Boolean) = Experiments.getInstance().setFeatureEnabled(featureId, enabled)
 
 fun runWithEnabledFeature(featureId: String, action: () -> Unit) {
     val currentValue = isFeatureEnabled(featureId)

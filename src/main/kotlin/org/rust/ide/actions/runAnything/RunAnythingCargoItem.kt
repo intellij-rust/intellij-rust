@@ -15,9 +15,13 @@ import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JPanel
 
-abstract class RunAnythingCargoItemBase(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
+class RunAnythingCargoItem(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
 
-    protected fun customizeComponent(component: Component) {
+    override fun createComponent(pattern: String?, isSelected: Boolean, hasFocus: Boolean): Component {
+        return super.createComponent(pattern, isSelected, hasFocus).also(this::customizeComponent)
+    }
+
+    private fun customizeComponent(component: Component) {
         if (component !is JPanel) return
 
         val params = ParametersListUtil.parse(StringUtil.trimStart(command, "cargo"))

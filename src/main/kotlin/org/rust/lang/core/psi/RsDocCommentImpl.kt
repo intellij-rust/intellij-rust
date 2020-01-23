@@ -8,8 +8,11 @@
 
 package org.rust.lang.core.psi
 
+import com.intellij.lang.psi.SimpleMultiLineTextEscaper
+import com.intellij.psi.LiteralTextEscaper
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.impl.source.tree.PsiCoreCommentImpl
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import com.intellij.psi.tree.IElementType
@@ -25,9 +28,9 @@ import org.rust.lang.doc.psi.RsDocKind
  * [InjectionBackgroundSuppressor] is used to disable builtin background highlighting for injection.
  * We create such background manually by [RsDoctestAnnotator] (see the class docs)
  */
-abstract class RsDocCommentImplBase(type: IElementType, text: CharSequence) : PsiCoreCommentImpl(type, text),
-                                                                              PsiLanguageInjectionHost,
-                                                                              InjectionBackgroundSuppressor {
+class RsDocCommentImpl(type: IElementType, text: CharSequence) : PsiCoreCommentImpl(type, text),
+                                                                 PsiLanguageInjectionHost,
+                                                                 InjectionBackgroundSuppressor {
     override fun isValidHost(): Boolean = true
 
     /**
@@ -78,4 +81,7 @@ abstract class RsDocCommentImplBase(type: IElementType, text: CharSequence) : Ps
             ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
         return replace(newElement) as RsDocCommentImpl
     }
+
+    override fun createLiteralTextEscaper(): LiteralTextEscaper<PsiCommentImpl> =
+        SimpleMultiLineTextEscaper(this)
 }
