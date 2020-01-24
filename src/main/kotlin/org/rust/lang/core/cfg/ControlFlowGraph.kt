@@ -99,8 +99,11 @@ class ControlFlowGraph private constructor(
 
         if (func is RsFunction) {
             val formals = object : RsVisitor() {
+                override fun visitPatBinding(binding: RsPatBinding) {
+                    table.getOrPut(binding, ::mutableListOf).add(entry)
+                }
+
                 override fun visitPat(pat: RsPat) {
-                    table.getOrPut(pat, ::mutableListOf).add(entry)
                     pat.acceptChildren(this)
                 }
             }
