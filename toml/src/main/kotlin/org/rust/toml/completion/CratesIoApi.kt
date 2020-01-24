@@ -33,23 +33,17 @@ data class CrateDescription(
 val CrateDescription.dependencyLine: String
     get() = "$name = \"$maxVersion\""
 
-fun searchCrate(key: TomlKey): Collection<CrateDescription> {
+fun searchCratesIo(context: PsiElement, name: String): Collection<CrateDescription> {
     if (isUnitTestMode) return MOCK!!
 
-    val name = CompletionUtil.getOriginalElement(key)?.text ?: ""
-    if (name.isEmpty()) return emptyList()
-
-    val response = requestCratesIo<SearchResult>(key, "crates?page=1&per_page=20&q=$name&sort=") ?: return emptyList()
+    val response = requestCratesIo<SearchResult>(context, "crates?page=1&per_page=20&q=$name&sort=") ?: return emptyList()
     return response.crates
 }
 
-fun getCrateLastVersion(key: TomlKey): String? {
+fun getCratesIoLastVersion(context: PsiElement, name: String): String? {
     if (isUnitTestMode) return MOCK!!.first().maxVersion
 
-    val name = CompletionUtil.getOriginalElement(key)?.text ?: ""
-    if (name.isEmpty()) return null
-
-    val response = requestCratesIo<CrateInfoResult>(key, "crates/$name") ?: return null
+    val response = requestCratesIo<CrateInfoResult>(context, "crates/$name") ?: return null
     return response.crate.maxVersion
 }
 
