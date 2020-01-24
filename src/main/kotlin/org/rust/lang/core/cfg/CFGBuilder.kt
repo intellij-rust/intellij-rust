@@ -309,8 +309,20 @@ class CFGBuilder(
     override fun visitPatTupleStruct(patTupleStruct: RsPatTupleStruct) =
         finishWith { processSubPats(patTupleStruct, patTupleStruct.patList) }
 
-    override fun visitPatStruct(patStruct: RsPatStruct) =
-        finishWith { processSubPats(patStruct, patStruct.patFieldList.mapNotNull { it.patFieldFull?.pat }) }
+    override fun visitPatStruct(patStruct: RsPatStruct) {
+        val patFieldsExit = patStruct.patFieldList.fold(pred) { acc, patField -> process(patField, acc) }
+        finishWithAstNode(patStruct, patFieldsExit)
+    }
+
+    override fun visitPatField(patField: RsPatField) {
+        val patFieldFull = patField.patFieldFull
+        val subPatExit = if (patFieldFull != null) {
+            process(patFieldFull.pat, pred)
+        } else {
+            process(patField.patBinding, pred)
+        }
+        finishWithAstNode(patField, subPatExit)
+    }
 
     override fun visitPatSlice(patSlice: RsPatSlice) =
         finishWith { processSubPats(patSlice, patSlice.patList) }

@@ -642,6 +642,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         fn main() {
             let x = S { data1: 42, data2: 24 };
             let S { data1: a, data2: b } = s;
+            let S { data1, data2 } = x;
             let (x, (y, z)) = (1, (2, 3));
             [0, 1 + a];
         }
@@ -656,10 +657,19 @@ class RsControlFlowGraphTest : RsTestBase() {
         s
         a
         a
+        data1: a
         b
         b
+        data2: b
         S { data1: a, data2: b }
         let S { data1: a, data2: b } = s;
+        x
+        data1
+        data1
+        data2
+        data2
+        S { data1, data2 }
+        let S { data1, data2 } = x;
         1
         2
         3
