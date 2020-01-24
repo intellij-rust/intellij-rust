@@ -931,6 +931,26 @@ class RsControlFlowGraphTest : RsTestBase() {
         Termination
     """)
 
+    fun `test panic in lambda expr`() = testCFG("""
+        fn foo() {
+            let f = || { panic!() };
+            1;
+        }
+    """, """
+        Entry
+        panic!()
+        Termination
+        || { panic!() }
+        f
+        f
+        let f = || { panic!() };
+        1
+        1;
+        BLOCK
+        Exit
+    """)
+
+
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val function = myFixture.file.descendantsOfType<RsFunction>().firstOrNull() ?: return

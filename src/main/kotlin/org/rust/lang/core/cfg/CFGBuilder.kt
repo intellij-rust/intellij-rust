@@ -605,17 +605,28 @@ class CFGBuilder(
     override fun visitParenExpr(parenExpr: RsParenExpr) = parenExpr.expr.accept(this)
 
     override fun visitTryExpr(tryExpr: RsTryExpr) {
-        val exprExit = addAstNode(tryExpr)
-        val expr = process(tryExpr.expr, pred)
-        val checkExpr = addDummyNode(expr)
+        val tryExprExit = addAstNode(tryExpr)
+        val exprExit = process(tryExpr.expr, pred)
+        val checkExpr = addDummyNode(exprExit)
         addReturningEdge(checkExpr)
-        addContainedEdge(expr, exprExit)
-        finishWith(exprExit)
+        addContainedEdge(exprExit, tryExprExit)
+        finishWith(tryExprExit)
     }
 
+    //
+    //     [pred] -----
+    //       |        |
+    //       v 1      |
+    //    [expr]      |
+    //       |        |
+    //       v 3      |
+    // [lambdaExpr] <-+
+    //
     override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) {
         val exprExit = process(lambdaExpr.expr, pred)
-        finishWithAstNode(lambdaExpr, exprExit)
+        val lambdaExprExit = addAstNode(lambdaExpr, exprExit)
+        addContainedEdge(pred, lambdaExprExit)
+        finishWith(lambdaExprExit)
     }
 
     override fun visitElement(element: RsElement) = finishWith(pred)
