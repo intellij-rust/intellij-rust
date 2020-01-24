@@ -7,6 +7,7 @@ package org.rust.lang.core.types.borrowck
 
 import org.rust.lang.core.DataFlowContext
 import org.rust.lang.core.DataFlowOperator
+import org.rust.lang.core.FlowDirection
 import org.rust.lang.core.KillFrom
 import org.rust.lang.core.KillFrom.Execution
 import org.rust.lang.core.KillFrom.ScopeEnd
@@ -286,8 +287,8 @@ class FlowedMoveData private constructor(
 
     companion object {
         fun buildFor(moveData: MoveData, bccx: BorrowCheckContext, cfg: ControlFlowGraph): FlowedMoveData {
-            val dfcxMoves = DataFlowContext(cfg, MoveDataFlowOperator, moveData.moves.size)
-            val dfcxAssign = DataFlowContext(cfg, AssignDataFlowOperator, moveData.varAssignments.size)
+            val dfcxMoves = DataFlowContext(cfg, MoveDataFlowOperator, moveData.moves.size, FlowDirection.Forward)
+            val dfcxAssign = DataFlowContext(cfg, AssignDataFlowOperator, moveData.varAssignments.size, FlowDirection.Forward)
 
             moveData.addGenKills(bccx, dfcxMoves, dfcxAssign)
             dfcxMoves.addKillsFromFlowExits()
