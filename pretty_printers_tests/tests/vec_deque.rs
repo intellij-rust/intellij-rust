@@ -4,8 +4,10 @@
 
 // lldb-command:print d
 // lldbg-check:[...]$0 = size=7 { [0] = 2 [1] = 3 [2] = 4 [3] = 5 [4] = 6 [5] = 7 [6] = 8 }
+// lldbg-check-201:[...]d = size=7 { [0] = 2 [1] = 3 [2] = 4 [3] = 5 [4] = 6 [5] = 7 [6] = 8 }
 // lldb-command:print empty_d
 // lldbg-check:[...]$1 = size=0
+// lldbg-check-201:[...]empty_d = size=0
 
 // === LLDB TESTS ==================================================================================
 

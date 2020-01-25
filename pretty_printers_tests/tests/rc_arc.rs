@@ -6,8 +6,10 @@
 
 // lldb-command:print r
 // lldbg-check:[...]$0 = strong=2, weak=1 { value = 42 }
+// lldbg-check-201:[...]r = strong=2, weak=1 { value = 42 }
 // lldb-command:print a
 // lldbg-check:[...]$1 = strong=2, weak=1 { data = 42 }
+// lldbg-check-201:[...]a = strong=2, weak=1 { data = 42 }
 
 // === GDB TESTS ==================================================================================
 

@@ -4,8 +4,10 @@
 
 // lldb-command:print s
 // lldbg-check:[...]$0 = "A∆й中" [...]
+// lldbg-check-201:[...]s = "A∆й中" [...]
 // lldb-command:print empty
 // lldbg-check:[...]$1 = "" [...]
+// lldbg-check-201:[...]empty = "" [...]
 
 // === GDB TESTS ==================================================================================
 

@@ -37,19 +37,27 @@ struct Settings {
 fn main() -> Result<(), ()> {
     let args: Vec<String> = std::env::args().collect();
     let debugger = args.get(1).expect("You need to choose a debugger (lldb or gdb)").clone().to_lowercase();
+    let debugger_path = args.get(2);
+
+    // BACKOMPAT: 2019.3
+    let platform_version: i32 = if let Some(num) = args.get(3) {
+        num.parse().unwrap_or(201)
+    } else {
+        201
+    };
 
     if debugger == "lldb" {
-        let lldb_python = args.get(2).unwrap_or(&String::from("./")).clone();
-        test(Debugger::LLDB, lldb_python)
+        let lldb_python = debugger_path.unwrap_or(&String::from("./")).clone();
+        test(Debugger::LLDB, lldb_python, platform_version)
     } else if debugger == "gdb" {
         let gdb_binary = args.get(2).unwrap_or(&String::from("gdb")).clone();
-        test(Debugger::GDB, gdb_binary)
+        test(Debugger::GDB, gdb_binary, platform_version)
     } else {
         panic!("Invalid debugger");
     }
 }
 
-fn test(debugger: Debugger, parameter: String) -> Result<(), ()> {
+fn test(debugger: Debugger, path: String, platform_version: i32) -> Result<(), ()> {
     let settings = fs::read_to_string(SETTINGS).expect(&format!("Cannot read {}", SETTINGS));
     let settings: Settings = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
 
@@ -59,19 +67,21 @@ fn test(debugger: Debugger, parameter: String) -> Result<(), ()> {
             pretty_printers_path: settings.pretty_printers_path,
             lldb_batchmode: settings.lldb_batchmode,
             lldb_lookup: settings.lldb_lookup,
-            lldb_python: parameter,
+            lldb_python: path,
             python: settings.python,
             print_stdout: settings.print_stdout,
             native_rust: settings.native_rust,
+            platform_version,
         }),
 
         Debugger::GDB => Config::GDB(GDBConfig {
             test_dir: settings.test_dir.clone(),
             pretty_printers_path: settings.pretty_printers_path,
-            gdb: parameter,
+            gdb: path,
             gdb_lookup: settings.gdb_lookup,
             print_stdout: settings.print_stdout,
             native_rust: settings.native_rust,
+            platform_version,
         })
     };
 
