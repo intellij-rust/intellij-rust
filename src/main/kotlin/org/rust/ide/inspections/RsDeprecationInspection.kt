@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.ext.*
 class RsDeprecationInspection : RsLintInspection() {
     override fun getDisplayName() = "Deprecated item"
 
-    override val lint: RsLint = RsLint.Deprecated
+    override fun getLint(element: PsiElement): RsLint = RsLint.Deprecated
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitElement(ref: RsElement) {
