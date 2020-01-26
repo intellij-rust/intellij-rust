@@ -272,6 +272,7 @@ private try ::= <<tryKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
+// Note: don't forget to add new item element types to [org.rust.lang.core.psi.RS_ITEMS]
 private Item ::= Constant
                | TypeAlias
                | Function

@@ -9,6 +9,10 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 
+/**
+ * Note: don't forget to add an element type to [org.rust.lang.core.psi.RS_ITEMS]
+ * when implementing [RsItemElement]
+ */
 interface RsItemElement : RsVisibilityOwner, RsOuterAttributeOwner, RsExpandedElement
 
 fun <T : RsItemElement> Iterable<T>.filterInScope(scope: RsElement): List<T> {
