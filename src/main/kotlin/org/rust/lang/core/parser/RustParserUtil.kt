@@ -337,6 +337,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
         put(RustParser::EnvMacroArgument, true, "env")
     }
 
+    fun isSpecialMacro(name: String): Boolean =
+        name in SPECIAL_MACRO_PARSERS
+
     @JvmStatic
     fun parseMacroCall(b: PsiBuilder, level: Int, mode: MacroCallParsingMode): Boolean {
         if (!RustParser.AttrsAndVis(b, level + 1)) return false
