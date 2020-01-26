@@ -10,7 +10,6 @@ import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.SyntaxTraverser
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.MarkdownTokenTypes
@@ -74,8 +73,7 @@ private fun RsDocAndAttributeOwner.outerDocs(): Sequence<Pair<RsDocKind, String>
     // rustdoc appends the contents of each doc comment and doc attribute in order
     // so we have to resolve these attributes that are edge-bound at the top of the
     // children list.
-    val childOuterIterable = SyntaxTraverser.psiTraverser().children(this)
-    return childOuterIterable.asSequence()
+    return childrenWithLeaves
         // All these outer elements have been edge bound; if we reach something that isn't one
         // of these, we have reached the actual parse children of this item.
         .takeWhile { it is RsOuterAttr || it is PsiComment || it is PsiWhiteSpace }
@@ -94,9 +92,7 @@ private fun RsDocAndAttributeOwner.innerDocs(): Sequence<Pair<RsDocKind, String>
     // lexical order, after the outer elements. This only applies to functions and modules.
     val childBlock = childOfType<RsBlock>() ?: this
 
-    val childInnerIterable = SyntaxTraverser.psiTraverser().children(childBlock)
-
-    return childInnerIterable.asSequence()
+    return childBlock.childrenWithLeaves
         .mapNotNull {
             when {
                 it is RsInnerAttr -> it.metaItem.docAttr?.let { RsDocKind.Attr to it }
