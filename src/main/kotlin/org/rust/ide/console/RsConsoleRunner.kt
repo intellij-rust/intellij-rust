@@ -38,7 +38,7 @@ class RsConsoleRunner(project: Project, title: String) :
     AbstractConsoleRunnerWithHistory<RsConsoleView>(project, title, null) {
 
     private lateinit var commandLine: GeneralCommandLine
-    private val consoleCommunication: RsConsoleCommunication = RsConsoleCommunication()
+    private lateinit var consoleCommunication: RsConsoleCommunication
 
     val commandHistory: CommandHistory = CommandHistory()
 
@@ -52,6 +52,7 @@ class RsConsoleRunner(project: Project, title: String) :
 
     override fun createConsoleView(): RsConsoleView {
         val consoleView = RsConsoleView(project)
+        consoleCommunication = RsConsoleCommunication(consoleView)
 
         val consoleEditor = consoleView.consoleEditor
         val historyKeyListener = HistoryKeyListener(project, consoleEditor, commandHistory)
@@ -134,8 +135,6 @@ class RsConsoleRunner(project: Project, title: String) :
     override fun initAndRun() {
         UIUtil.invokeAndWaitIfNeeded(Runnable {
             super.initAndRun()
-
-            consoleExecuteActionHandler.sendText(":opt 0\n")
         })
     }
 
@@ -177,7 +176,7 @@ class RsConsoleRunner(project: Project, title: String) :
 
     override fun createExecuteActionHandler(): RsConsoleExecuteActionHandler {
         val consoleExecuteActionHandler =
-            RsConsoleExecuteActionHandler(processHandler!!, this, consoleCommunication, consoleView)
+            RsConsoleExecuteActionHandler(processHandler!!, this, consoleCommunication)
         consoleExecuteActionHandler.isEnabled = false
         return consoleExecuteActionHandler
     }
