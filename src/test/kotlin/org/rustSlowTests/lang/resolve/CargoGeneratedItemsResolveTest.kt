@@ -324,7 +324,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
 
                 [dependencies]
@@ -333,6 +332,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
             dir("src") {
                 rust("main.rs", """
+                    extern crate foo;
                     use foo::function_under_cfg;
                     fn main() {
                         function_under_cfg();
@@ -390,7 +390,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
 
                 [dependencies]
@@ -399,6 +398,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
             dir("src") {
                 rust("main.rs", """
+                    extern crate foo;
                     use foo::function_under_feature;
                     fn main() {
                         function_under_feature();
@@ -456,7 +456,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
 
                 [dependencies]
@@ -465,6 +464,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
             dir("src") {
                 rust("main.rs", """
+                    extern crate foo;
                     use foo::function_under_custom_feature;
                     fn main() {
                         function_under_custom_feature();
@@ -522,7 +522,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
 
                 [dependencies]
@@ -531,6 +530,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
             dir("src") {
                 rust("main.rs", """
+                    extern crate foo;
                     use foo::function_under_cfg;
                     fn main() {
                         function_under_cfg();
@@ -588,7 +588,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
 
                 [dependencies]
@@ -597,6 +596,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
             dir("src") {
                 rust("main.rs", """
+                    extern crate foo;
                     use foo::function_under_cfg;
                     fn main() {
                         function_under_cfg();
@@ -607,13 +607,13 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
     }
 
+    @MinRustcVersion("1.32.0")
     fun `test generated environment variables`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "intellij-rust-test"
                 version = "0.1.0"
-                edition = "2018"
                 authors = []
             """)
 
@@ -643,6 +643,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../foo/bar/hello.rs")
     }
 
+    @MinRustcVersion("1.32.0")
     fun `test generated environment variables 2`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -650,7 +651,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                     [package]
                     name = "intellij-rust-test"
                     version = "0.1.0"
-                    edition = "2018"
                     authors = []
                 """)
 
@@ -694,6 +694,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
+    @MinRustcVersion("1.32.0")
     fun `test include without file name in literal`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -701,7 +702,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                     [package]
                     name = "intellij-rust-test"
                     version = "0.1.0"
-                    edition = "2018"
                     authors = []
                 """)
 
@@ -745,6 +745,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
+    @MinRustcVersion("1.32.0")
     fun `test include without file name in literal 2`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -752,7 +753,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                     [package]
                     name = "intellij-rust-test"
                     version = "0.1.0"
-                    edition = "2018"
                     authors = []
                 """)
 
