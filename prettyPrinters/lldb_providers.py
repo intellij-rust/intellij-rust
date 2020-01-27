@@ -47,13 +47,13 @@ class ValueBuilder:
 
     def from_int(self, name, value):
         # type: (str, int) -> SBValue
-        type = self.valobj.GetType().GetBasicType(eBasicTypeLong)
+        type = self.valobj.GetTarget().GetBasicType(eBasicTypeLong)
         data = SBData.CreateDataFromSInt64Array(self.endianness, self.pointer_size, [value])
         return self.valobj.CreateValueFromData(name, data, type)
 
     def from_uint(self, name, value):
         # type: (str, int) -> SBValue
-        type = self.valobj.GetType().GetBasicType(eBasicTypeUnsignedLong)
+        type = self.valobj.GetTarget().GetBasicType(eBasicTypeUnsignedLong)
         data = SBData.CreateDataFromUInt64Array(self.endianness, self.pointer_size, [value])
         return self.valobj.CreateValueFromData(name, data, type)
 

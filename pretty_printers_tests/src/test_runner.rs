@@ -31,6 +31,7 @@ pub struct LLDBConfig {
     pub python: String,
     pub print_stdout: bool,
     pub native_rust: bool,
+    pub platform_version: i32,
 }
 
 #[derive(Clone)]
@@ -41,6 +42,7 @@ pub struct GDBConfig {
     pub gdb_lookup: String,
     pub print_stdout: bool,
     pub native_rust: bool,
+    pub platform_version: i32,
 }
 
 #[derive(Clone)]
@@ -50,6 +52,8 @@ enum DebuggerCommands {
     Run {
         commands: Vec<String>,
         check_lines: Vec<String>,
+        check_lines_201: Vec<String>,
+        // BACKOMPAT: 2019.3
         breakpoint_lines: Vec<usize>,
     },
     Skip(String),
@@ -63,7 +67,7 @@ pub trait TestRunner<'test> {
 pub enum TestResult {
     Ok,
     Skipped(String),
-    Err(String)
+    Err(String),
 }
 
 pub fn create_test_runner<'test>(
@@ -137,6 +141,7 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
             DebuggerCommands::Run {
                 commands,
                 check_lines,
+                check_lines_201: _,
                 breakpoint_lines,
             } => (commands, check_lines, breakpoint_lines),
             DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
@@ -236,12 +241,13 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
         };
 
         // Parse debugger commands etc from test files
-        let (commands, check_lines, breakpoint_lines) = match parse_debugger_commands(self.src_path, prefixes) {
+        let (commands, check_lines, check_lines_201, breakpoint_lines) = match parse_debugger_commands(self.src_path, prefixes) {
             DebuggerCommands::Run {
                 commands,
                 check_lines,
+                check_lines_201,
                 breakpoint_lines,
-            } => (commands, check_lines, breakpoint_lines),
+            } => (commands, check_lines, check_lines_201, breakpoint_lines),
             DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
             DebuggerCommands::Err(reason) => return TestResult::Err(reason),
         };
@@ -286,21 +292,33 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
             return TestResult::Err(String::from(format!("Error while running LLDB:\n{}", debugger_run_result.stderr)));
         }
 
-        check_debugger_output(&debugger_run_result, &check_lines, self.config.print_stdout)
+        let platform_check_lines = if self.config.platform_version < 201 {
+            &check_lines
+        } else {
+            &check_lines_201
+        };
+
+        check_debugger_output(
+            &debugger_run_result,
+            &platform_check_lines,
+            self.config.print_stdout,
+        )
     }
 }
 
 fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> DebuggerCommands {
     let directives = debugger_prefixes
         .iter()
-        .map(|prefix| (format!("{}-command", prefix), format!("{}-check", prefix)))
-        .collect::<Vec<_>>();
+        .map(|prefix|
+            (format!("{}-command", prefix), format!("{}-check", prefix), format!("{}-check-201", prefix))
+        ).collect::<Vec<_>>();
 
     let rustc_version = rustc_version_runtime::version();
 
     let mut breakpoint_lines = vec![];
     let mut commands = vec![];
     let mut check_lines = vec![];
+    let mut check_lines_201 = vec![];
     let mut counter = 1;
     let reader = BufReader::new(File::open(src_path).unwrap());
     for line in reader.lines() {
@@ -317,12 +335,12 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
                         if rustc_version < min_version {
                             return DebuggerCommands::Skip(
                                 format!("Current rustc version ({}) is less than minimum version ({}) required for test", rustc_version, min_version)
-                            )
+                            );
                         }
-                    },
+                    }
                     Err(e) => {
-                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e))
-                    },
+                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e));
+                    }
                     _ => {}
                 }
 
@@ -331,12 +349,12 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
                         if rustc_version > max_version {
                             return DebuggerCommands::Skip(
                                 format!("Current rustc version ({}) is greater than maximum version ({}) required for test", rustc_version, max_version)
-                            )
+                            );
                         }
-                    },
+                    }
                     Err(e) => {
-                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e))
-                    },
+                        return DebuggerCommands::Err(format!("Error while parsing rustc version: {}", e));
+                    }
                     _ => {}
                 }
 
@@ -344,12 +362,17 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
                     breakpoint_lines.push(counter);
                 }
 
-                for &(ref command_directive, ref check_directive) in &directives {
+                for &(ref command_directive,
+                    ref check_directive,
+                    ref check_directive_201) in &directives {
                     parse_name_value_directive(&line, command_directive)
                         .map(|cmd| commands.push(cmd));
 
                     parse_name_value_directive(&line, check_directive)
                         .map(|cmd| check_lines.push(cmd));
+
+                    parse_name_value_directive(&line, check_directive_201)
+                        .map(|cmd| check_lines_201.push(cmd));
                 }
             }
             Err(e) => {
@@ -358,7 +381,7 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
         }
         counter += 1;
     }
-    DebuggerCommands::Run { commands, check_lines, breakpoint_lines }
+    DebuggerCommands::Run { commands, check_lines, check_lines_201, breakpoint_lines }
 }
 
 fn parse_rustc_version(line: &str, prefix: &str) -> Result<Option<Version>, SemVerError> {
