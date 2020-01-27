@@ -15,6 +15,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_CO
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.stubs.RsFileStub
 
 open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 
@@ -91,3 +92,23 @@ val RS_LIST_OPEN_SYMBOLS = tokenSetOf(LPAREN, LT)
 val RS_LIST_CLOSE_SYMBOLS = tokenSetOf(RPAREN, GT)
 
 val RS_BLOCK_LIKE_EXPRESSIONS = tokenSetOf(WHILE_EXPR, IF_EXPR, FOR_EXPR, LOOP_EXPR, MATCH_EXPR, BLOCK_EXPR)
+
+/** Successors of [org.rust.lang.core.psi.ext.RsItemElement] */
+val RS_ITEMS = tokenSetOf(
+    CONSTANT,
+    ENUM_ITEM,
+    EXTERN_CRATE_ITEM,
+    FOREIGN_MOD_ITEM,
+    FUNCTION,
+    IMPL_ITEM,
+    MACRO_2,
+    MOD_DECL_ITEM,
+    MOD_ITEM,
+    STRUCT_ITEM,
+    TRAIT_ALIAS,
+    TRAIT_ITEM,
+    TYPE_ALIAS,
+    USE_ITEM
+)
+
+val RS_MOD_OR_FILE = tokenSetOf(MOD_ITEM, RsFileStub.Type)

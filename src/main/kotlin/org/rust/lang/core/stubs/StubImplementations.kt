@@ -6,6 +6,7 @@
 package org.rust.lang.core.stubs
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.FileASTNode
 import com.intellij.psi.PsiFile
 import com.intellij.psi.StubBuilder
 import com.intellij.psi.stubs.*
@@ -15,10 +16,12 @@ import com.intellij.util.io.DataInputOutputUtil.readNullable
 import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
+import org.rust.openapiext.ancestors
 import org.rust.stdext.makeBitMask
 
 
@@ -1031,7 +1034,8 @@ class RsMacroStub(
     RsNamedStub {
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
+        override fun shouldCreateStub(node: ASTNode): Boolean =
+            node.treeParent.elementType in RS_MOD_OR_FILE
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroStub(parentStub, this,
@@ -1062,7 +1066,7 @@ class RsMacro2Stub(
     RsNamedStub {
 
     object Type : RsStubElementType<RsMacro2Stub, RsMacro2>("MACRO_2") {
-        override fun shouldCreateStub(node: ASTNode): Boolean = node.psi.parent is RsMod
+        override fun shouldCreateStub(node: ASTNode): Boolean = node.elementType in RS_MOD_OR_FILE
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacro2Stub(parentStub, this,
@@ -1092,8 +1096,8 @@ class RsMacroCallStub(
 
     object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
         override fun shouldCreateStub(node: ASTNode): Boolean {
-            val parent = node.psi.parent
-            return parent is RsMod || parent is RsMembers || parent is RsMacroExpr && createStubIfParentIsStub(node)
+            val parent = node.treeParent.elementType
+            return parent in RS_MOD_OR_FILE || parent == MEMBERS || parent == MACRO_EXPR && createStubIfParentIsStub(node)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -1187,7 +1191,7 @@ class RsBinaryOpStub(
 
 object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl) {
     override fun shouldCreateStub(node: ASTNode): Boolean =
-        createStubIfParentIsStub(node) || node.psi.childOfType<RsItemElement>() != null
+        createStubIfParentIsStub(node) || node.findChildByType(RS_ITEMS) != null
 }
 
 class RsExprStubType<PsiT : RsElement>(
@@ -1221,11 +1225,11 @@ class RsLitExprStub(
 
 private fun shouldCreateExprStub(node: ASTNode): Boolean {
     if (!createStubIfParentIsStub(node)) return false
-    val element = node.psi.ancestors.firstOrNull {
-        val parent = it.parent
-        parent is RsItemElement || parent is RsMod
+    val element = node.ancestors.firstOrNull {
+        val parent = it.treeParent
+        parent?.elementType in RS_ITEMS || parent is FileASTNode
     }
-    return element != null && !(element is RsBlock && element.parent is RsFunction)
+    return element != null && !(element.elementType == BLOCK && element.treeParent?.elementType == FUNCTION)
 }
 
 class RsUnaryExprStub(
