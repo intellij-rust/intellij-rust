@@ -16,12 +16,11 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.MacroGraph
 import org.rust.lang.core.macros.MacroGraphBuilder
-import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsMacro
-import org.rust.lang.core.psi.RsMacroBody
-import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsMacroStub
+import org.rust.lang.doc.documentation
 import org.rust.stdext.HashCode
+import java.util.*
 import javax.swing.Icon
 
 abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
@@ -72,6 +71,29 @@ val RsMacro.macroBodyStubbed: RsMacroBody?
             )
         }
     }
+
+val RsMacro.preferredBraces: MacroBraces
+    get() = stub?.preferredBraces ?: guessPreferredBraces()
+
+
+private val MACRO_CALL_PATTERN: Regex = """(^|[^\p{Alnum}_])(r#)?(?<name>\w+)\s*!\s*(?<brace>[({\[])""".toRegex()
+
+/**
+ * Analyses documentation of macro definition to determine what kind of brackets usually used
+ */
+private fun RsMacro.guessPreferredBraces(): MacroBraces {
+    val documentation = documentation()
+    if (documentation.isNullOrEmpty()) return MacroBraces.PARENS
+
+    val map: MutableMap<MacroBraces, Int> = EnumMap(MacroBraces::class.java)
+    for (result in MACRO_CALL_PATTERN.findAll(documentation)) {
+        if (result.groups["name"]?.value != name) continue
+        val braces = MacroBraces.values().find { it.openText == result.groups["brace"]?.value } ?: continue
+        map.merge(braces, 1, Int::plus)
+    }
+
+    return map.maxBy { it.value }?.key ?: MacroBraces.PARENS
+}
 
 private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")
 
