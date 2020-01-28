@@ -175,7 +175,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         }
 
         val context = RsCompletionContext(path.implLookup, expectedTy, isSimplePath = true)
-        for (elementName in CompletionUtilsExt.sortMatching(result.prefixMatcher, keys)) {
+        for (elementName in result.prefixMatcher.sortMatching(keys)) {
             val candidates = AutoImportFix.getImportCandidates(importContext, elementName, elementName) {
                 !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }

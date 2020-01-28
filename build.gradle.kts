@@ -29,7 +29,6 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val isAtLeast192 = platformVersion >= 192
 val isAtLeast193 = platformVersion >= 193
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
@@ -181,9 +180,7 @@ project(":plugin") {
         if (baseIDE == "idea") {
             plugins += "copyright"
             plugins += "coverage"
-            if (isAtLeast192) {
-                plugins += "java"
-            }
+            plugins += "java"
         }
         setPlugins(*plugins.toTypedArray())
     }
@@ -312,9 +309,7 @@ project(":") {
 project(":idea") {
     intellij {
         version = ideaVersion
-        if (isAtLeast192) {
-            setPlugins("java")
-        }
+        setPlugins("java")
     }
     dependencies {
         compile(project(":"))
@@ -358,7 +353,7 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        if (isAtLeast192 && baseIDE == "idea") {
+        if (baseIDE == "idea") {
             setPlugins(project(":intellij-toml"), "java")
         } else {
             setPlugins(project(":intellij-toml"))
@@ -374,7 +369,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        if (isAtLeast192 && baseIDE == "idea") {
+        if (baseIDE == "idea") {
             setPlugins("IntelliLang", "java")
         } else {
             setPlugins("IntelliLang")
@@ -391,11 +386,7 @@ project(":intelliLang") {
 project(":copyright") {
     intellij {
         version = ideaVersion
-        if (isAtLeast192) {
-            setPlugins("copyright", "java")
-        } else {
-            setPlugins("copyright")
-        }
+        setPlugins("copyright", "java")
     }
     dependencies {
         compile(project(":"))
@@ -407,7 +398,7 @@ project(":copyright") {
 
 project(":duplicates") {
     intellij {
-        if (isAtLeast192 && baseIDE == "idea") {
+        if (baseIDE == "idea") {
             setPlugins("java")
         }
     }
@@ -455,7 +446,7 @@ project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
 
     intellij {
-        if (isAtLeast192 && baseIDE == "idea") {
+        if (baseIDE == "idea") {
             setPlugins("java")
         }
     }
