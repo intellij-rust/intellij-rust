@@ -22,6 +22,8 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.Icon
 
+val FUNCTION_TEST_REGEX = Regex(".*test.*")
+
 val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTrait
 val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait
 
@@ -29,7 +31,7 @@ val RsFunction.isTest: Boolean
     get() {
         val stub = greenStub
         return stub?.isTest
-            ?: (queryAttributes.hasMatchingAttribute(Regex("test")) || queryAttributes.hasAtomAttribute("quickcheck"))
+            ?: (queryAttributes.hasAttribute(FUNCTION_TEST_REGEX) || queryAttributes.hasAtomAttribute("quickcheck"))
     }
 
 val RsFunction.isBench: Boolean

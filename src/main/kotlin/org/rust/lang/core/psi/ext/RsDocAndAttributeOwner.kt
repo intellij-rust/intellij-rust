@@ -105,8 +105,8 @@ class QueryAttributes(
         return attrs.any()
     }
 
-    fun hasMatchingAttribute(regex: Regex): Boolean {
-        val attrs = attrsByRegex(regex)
+    fun hasAttribute(attributeNameRe: Regex): Boolean {
+        val attrs = attrsByText(attributeNameRe)
         return attrs.any()
     }
 
@@ -183,9 +183,12 @@ class QueryAttributes(
     private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.name == name }
 
     /**
-     * Get a sequence of all attributes matching the given [regex]
+     * Get a sequence of all attributes that match the given [regex]
      */
-    private fun attrsByRegex(regex: Regex): Sequence<RsMetaItem> = metaItems.filter { it.name?.let { name -> regex.containsMatchIn(name) } ?: false }
+    private fun attrsByText(regex: Regex): Sequence<RsMetaItem> = metaItems.filter {
+        val name = it.text ?: return@filter false
+        name.matches(regex)
+    }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"

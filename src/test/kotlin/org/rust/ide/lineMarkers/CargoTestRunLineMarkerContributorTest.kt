@@ -201,7 +201,17 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn has_icon() { assert(true) } // - Test has_icon
     """)
 
-    fun `test custom test attribute`() = doTestByText("""
+    fun `test simple custom test attribute`() = doTestByText("""
+        #[custom_test]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test custom test attribute with path`() = doTestByText("""
+        #[tokio::test]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test custom test attribute with parameters`() = doTestByText("""
         #[tokio::test(threaded_scheduler)]
         fn has_icon() { assert(true) } // - Test has_icon
     """)
