@@ -43,12 +43,13 @@ class RsConsoleToolWindow(private val project: Project) {
         val toolWindow = toolWindow
             ?: error("toolWindow is null inside setContent function, which is called after toolWindow is initialized")
         setContent(toolWindow, contentDescriptor)
-        doInit()
+        doInit(toolWindow)
     }
 
-    private fun doInit() {
+    private fun doInit(toolWindow: ToolWindow) {
         if (!isInitialized) {
             isInitialized = true
+            toolWindow.setToHideOnEmptyContent(true)
         }
     }
 
