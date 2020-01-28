@@ -22,7 +22,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.Icon
 
-val FUNCTION_TEST_REGEX = Regex(".*test.*")
+private val FUNCTION_TEST_REGEX = Regex("""^[\w:]*test.*""")
 
 val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTrait
 val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait
