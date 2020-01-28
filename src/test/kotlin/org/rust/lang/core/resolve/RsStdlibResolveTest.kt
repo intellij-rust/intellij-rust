@@ -206,7 +206,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *const char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
         }
     """)
 
@@ -217,7 +217,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *const char;
             <*const char>::is_null(p);
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
         }
     """)
 
@@ -228,7 +228,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             <*const char>::is_null(p); //Pass a *mut pointer to a *const method
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
         }
     """)
 
@@ -239,7 +239,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs
         }
     """)
 
@@ -250,7 +250,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             <*mut char>::is_null(p);
-                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs
+                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs
         }
     """)
 
