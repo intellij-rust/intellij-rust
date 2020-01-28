@@ -49,8 +49,8 @@
 
         <!-- Syntax Highlighter -->
 
-        <lang.syntaxHighlighterFactory language="Rust"
-                                       implementationClass="org.rust.ide.highlight.RsHighlighterFactory"/>
+        <lang.syntaxHighlighter language="Rust"
+                                implementationClass="org.rust.ide.highlight.RsHighlighter"/>
         <highlightUsagesHandlerFactory implementation="org.rust.ide.highlight.RsHighlightExitPointsHandlerFactory"/>
 
         <!-- Formatter -->
