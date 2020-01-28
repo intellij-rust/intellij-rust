@@ -1226,7 +1226,7 @@ private fun processLexicalDeclarations(
 
     when (scope) {
         is RsMod -> {
-            if (processItemDeclarationsWithCache(scope, ns, processor, ipm = ipm)) return true
+            if (processItemDeclarations(scope, ns, processor, ipm = ipm)) return true
         }
 
         is RsTypeAlias -> {
@@ -1372,7 +1372,7 @@ fun processNestedScopesUpwards(
         // XXX: fix prelude items resolve on the nightly. Revert it to `v -> v.name !in prevScope`
         //   after cfg attrs support or when `#[cfg(bootstrap)]` will be removed from the prelude
         val preludeProcessor: (ScopeEntry) -> Boolean = { v -> prevScope.add(v.name) && processor(v) }
-        return processItemDeclarationsWithCache(prelude, ns, preludeProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
+        return processItemDeclarations(prelude, ns, preludeProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
     }
 
     return false
