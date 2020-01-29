@@ -5,11 +5,10 @@
 
 package org.rust.cargo
 
-import com.intellij.util.SmartList
 import org.jetbrains.annotations.TestOnly
 
 class CfgOptions(
-    val keyValueOptions: Map<String, List<String>>,
+    val keyValueOptions: Map<String, Set<String>>,
     val nameOptions: Set<String>
 ) {
     fun isNameEnabled(name: String): Boolean =
@@ -20,7 +19,7 @@ class CfgOptions(
 
     companion object {
         fun parse(rawCfgOptions: List<String>): CfgOptions {
-            val knownKeyValueOptions = hashMapOf<String, SmartList<String>>()
+            val knownKeyValueOptions = hashMapOf<String, MutableSet<String>>()
             val knownNameOptions = hashSetOf<String>()
 
             for (option in rawCfgOptions) {
@@ -29,7 +28,7 @@ class CfgOptions(
                 val value = parts.getOrNull(1)?.trim('"')
 
                 if (key != null && value != null) {
-                    knownKeyValueOptions.getOrPut(key, { SmartList() }).add(value)
+                    knownKeyValueOptions.getOrPut(key, ::hashSetOf).add(value)
                 } else if (key != null) {
                     knownNameOptions.add(key)
                 }
@@ -38,24 +37,23 @@ class CfgOptions(
             return CfgOptions(knownKeyValueOptions, knownNameOptions)
         }
 
+        val EMPTY: CfgOptions = CfgOptions(emptyMap(), emptySet())
+
         @TestOnly
         val DEFAULT: CfgOptions = CfgOptions(
             keyValueOptions = hashMapOf(
-                "target_has_atomic" to listOf("8", "16", "32", "64", "ptr", "cas"),
-                "target_arch" to listOf("x86_64"),
-                "target_endian" to listOf("little"),
-                "target_env" to listOf("gnu"),
-                "target_family" to listOf("unix"),
-                "target_os" to listOf("linux"),
-                "target_pointer_width" to listOf("64"),
-                "feature" to listOf("use_std")
+                "target_has_atomic" to hashSetOf("8", "16", "32", "64", "ptr", "cas"),
+                "target_arch" to hashSetOf("x86_64"),
+                "target_endian" to hashSetOf("little"),
+                "target_env" to hashSetOf("gnu"),
+                "target_family" to hashSetOf("unix"),
+                "target_os" to hashSetOf("linux"),
+                "target_pointer_width" to hashSetOf("64"),
+                "feature" to hashSetOf("use_std")
             ),
 
             nameOptions = hashSetOf("debug_assertions", "unix")
         )
-
-        @TestOnly
-        val EMPTY: CfgOptions = CfgOptions(emptyMap(), emptySet())
 
         @TestOnly
         const val TEST: String = "intellij_rust"

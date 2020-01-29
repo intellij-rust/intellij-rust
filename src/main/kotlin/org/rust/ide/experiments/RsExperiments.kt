@@ -10,4 +10,5 @@ object RsExperiments {
     const val CFG_ATTRIBUTES_SUPPORT = "org.rust.lang.cfg.attributes"
     const val FETCH_OUT_DIR = "org.rust.cargo.fetch.out.dir"
     const val REPL_TOOL_WINDOW = "org.rust.ide.repl.tool.window"
+    const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
 }

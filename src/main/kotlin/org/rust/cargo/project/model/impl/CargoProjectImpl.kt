@@ -121,9 +121,9 @@ open class CargoProjectsServiceImpl(
 
             fun CargoWorkspace.Package.put(cargoProject: CargoProjectImpl) {
                 contentRoot?.put(cargoProject)
+                outDir?.put(cargoProject)
                 for (target in targets) {
                     target.crateRoot?.parent?.put(cargoProject)
-                    target.outDir?.put(cargoProject)
                 }
             }
 
@@ -425,8 +425,8 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                         if (pkg.origin == PackageOrigin.WORKSPACE) {
                             pkg.contentRoot?.setupContentRoots(module, ContentEntry::setup)
                         }
-                        for (target in pkg.targets) {
-                            val outDir = target.outDir ?: continue
+                        val outDir = pkg.outDir
+                        if (outDir != null) {
                             ModuleRootModificationUtil.updateModel(module) { rootModel ->
                                 val entry = rootModel.contentEntries.singleOrNull() ?: return@updateModel
                                 entry.addSourceFolder(outDir, false)

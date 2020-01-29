@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain
 
 import com.google.gson.Gson
+import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -19,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.Testmark
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
@@ -28,9 +30,11 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspaceData
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -103,8 +107,14 @@ class Cargo(private val cargoExecutable: Path) {
         listener: ProcessListener? = null
     ): CargoWorkspaceData {
         val rawData = fetchMetadata(owner, projectDirectory, listener)
-        val buildPlan = fetchBuildPlan(owner, projectDirectory, listener)
-        return CargoMetadata.clean(rawData, buildPlan)
+        val buildScriptsInfo = fetchBuildScriptsInfo(owner, projectDirectory, listener)
+        val buildPlan = if (buildScriptsInfo?.containsOutDirInfo != true) {
+            fetchBuildPlan(owner, projectDirectory, listener)
+        } else {
+            null
+        }
+
+        return CargoMetadata.clean(rawData, buildScriptsInfo, buildPlan)
     }
 
     @Throws(ExecutionException::class)
@@ -125,12 +135,38 @@ class Cargo(private val cargoExecutable: Path) {
         }
     }
 
+    private fun fetchBuildScriptsInfo(
+        owner: Project,
+        projectDirectory: Path,
+        listener: ProcessListener?
+    ): BuildScriptsInfo? {
+        if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
+        val additionalArgs = listOf("--message-format", "json")
+        val processOutput = CargoCommandLine("check", projectDirectory, additionalArgs)
+            .execute(owner, listener = listener)
+
+        val parser = JsonParser()
+        val messages = mutableMapOf<PackageId, BuildScriptMessage>()
+
+        for (line in processOutput.stdoutLines) {
+            val jsonObject = try {
+                parser.parse(line).asJsonObject
+            } catch (ignore: JsonSyntaxException){
+                continue
+            }
+            val message = BuildScriptMessage.fromJson(jsonObject) ?: continue
+            messages[message.package_id] = message
+        }
+        return BuildScriptsInfo(messages)
+    }
+
     private fun fetchBuildPlan(
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
     ): CargoBuildPlan? {
         if (!isFeatureEnabled(RsExperiments.FETCH_OUT_DIR)) return null
+        Testmarks.fetchBuildPlan.hit()
         val additionalArgs = mutableListOf("-Z", "unstable-options", "--all-targets", "--build-plan")
         // Hack to make cargo think that unstable options are available because we need unstable `--build-plan` option here
         val envs = EnvironmentVariablesData.create(mapOf(
@@ -394,6 +430,10 @@ class Cargo(private val cargoExecutable: Path) {
 
             return needInstall
         }
+    }
+
+    object Testmarks {
+        val fetchBuildPlan = Testmark("fetchBuildPlan")
     }
 }
 

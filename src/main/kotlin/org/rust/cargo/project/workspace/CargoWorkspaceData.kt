@@ -5,6 +5,8 @@
 
 package org.rust.cargo.project.workspace
 
+import org.rust.cargo.CfgOptions
+
 typealias PackageId = String
 
 /**
@@ -28,7 +30,10 @@ data class CargoWorkspaceData(
         val source: String?,
         val origin: PackageOrigin,
         val edition: CargoWorkspace.Edition,
-        val features: Collection<CargoWorkspace.Feature>
+        val features: Collection<CargoWorkspace.Feature>,
+        val cfgOptions: CfgOptions,
+        val env: Map<String, String>,
+        val outDirUrl: String?
     )
 
     data class Target(
@@ -36,8 +41,7 @@ data class CargoWorkspaceData(
         val name: String,
         val kind: CargoWorkspace.TargetKind,
         val edition: CargoWorkspace.Edition,
-        val doctest: Boolean,
-        val outDirUrl: String?
+        val doctest: Boolean
     )
 
     data class Dependency(

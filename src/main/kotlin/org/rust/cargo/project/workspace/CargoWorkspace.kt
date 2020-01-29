@@ -80,6 +80,10 @@ interface CargoWorkspace {
 
         val edition: Edition
 
+        val env: Map<String, String>
+
+        val outDir: VirtualFile?
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
@@ -109,8 +113,6 @@ interface CargoWorkspace {
         val edition: Edition
 
         val doctest: Boolean
-
-        val outDir: VirtualFile?
     }
 
     interface Dependency {
@@ -173,8 +175,10 @@ private class WorkspaceImpl(
             pkg.source,
             pkg.origin,
             pkg.edition,
-            cfgOptions,
-            pkg.features
+            pkg.cfgOptions,
+            pkg.features,
+            pkg.env,
+            pkg.outDirUrl
         )
     }
 
@@ -308,7 +312,9 @@ private class PackageImpl(
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
     override val cfgOptions: CfgOptions,
-    override val features: Collection<CargoWorkspace.Feature>
+    override val features: Collection<CargoWorkspace.Feature>,
+    override val env: Map<String, String>,
+    val outDirUrl: String?
 ) : CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
@@ -317,8 +323,7 @@ private class PackageImpl(
             name = it.name,
             kind = it.kind,
             edition = it.edition,
-            doctest = it.doctest,
-            outDirUrl = it.outDirUrl
+            doctest = it.doctest
         )
     }
 
@@ -329,7 +334,9 @@ private class PackageImpl(
 
     override val dependencies: MutableList<DependencyImpl> = ArrayList()
 
-    override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl')"
+    override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
+
+    override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl', outDirUrl='$outDirUrl')"
 }
 
 
@@ -339,14 +346,12 @@ private class TargetImpl(
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
     override val edition: CargoWorkspace.Edition,
-    override val doctest: Boolean,
-    val outDirUrl: String?
+    override val doctest: Boolean
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
-    override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
 
-    override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl', outDirUrl='$outDirUrl')"
+    override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
 
 private class DependencyImpl(override val pkg: PackageImpl, name: String? = null) : CargoWorkspace.Dependency {
@@ -368,14 +373,16 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
                 name = it.name,
                 kind = it.kind,
                 edition = edition ?: it.edition,
-                doctest = it.doctest,
-                outDirUrl = it.outDirUrl
+                doctest = it.doctest
             )
         },
         source = source,
         origin = origin,
         edition = edition ?: this.edition,
-        features = features
+        features = features,
+        cfgOptions = cfgOptions,
+        env = env,
+        outDirUrl = outDirUrl
     )
 
 private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
@@ -402,13 +409,15 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
             name = name,
             kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
             edition = edition,
-            doctest = true,
-            outDirUrl = null
+            doctest = true
         )),
         source = null,
         origin = PackageOrigin.STDLIB,
         edition = edition,
-        features = emptyList()
+        features = emptyList(),
+        cfgOptions = CfgOptions.EMPTY,
+        env = emptyMap(),
+        outDirUrl = null
     )
 }
 

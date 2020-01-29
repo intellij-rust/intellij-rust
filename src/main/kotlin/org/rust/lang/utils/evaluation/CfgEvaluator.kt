@@ -59,7 +59,15 @@ operator fun ThreeValuedLogic.not(): ThreeValuedLogic = when (this) {
     Unknown -> Unknown
 }
 
-class CfgEvaluator(val options: CfgOptions, val features: Map<String, FeatureState>, val origin: PackageOrigin) {
+// Note, [options] and [packageOptions] can contain the same option values,
+// i.e. it's possible to have both `unix` and `windows` values at the same time.
+// See https://doc.rust-lang.org/reference/conditional-compilation.html#set-configuration-options
+class CfgEvaluator(
+    val options: CfgOptions,
+    val packageOptions: CfgOptions,
+    val features: Map<String, FeatureState>,
+    val origin: PackageOrigin
+) {
     fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
         val cfgPredicate = CfgPredicate.fromCfgAttributes(cfgAttributes)
         val result = evaluatePredicate(cfgPredicate)
@@ -84,14 +92,18 @@ class CfgEvaluator(val options: CfgOptions, val features: Map<String, FeatureSta
     }
 
     private fun evaluateName(name: String): ThreeValuedLogic = when {
+        name in packageOptions.nameOptions -> True
+        // TODO: convert whitelist to blacklist and merge options with packageOption
         name in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
         name == "test" && origin == PackageOrigin.STDLIB -> False
         name == CfgOptions.TEST && isUnitTestMode -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
         else -> Unknown
     }
 
-    private fun evaluateNameValue(name: String, value: String): ThreeValuedLogic = when (name) {
-        in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
+    private fun evaluateNameValue(name: String, value: String): ThreeValuedLogic = when {
+        packageOptions.isNameValueEnabled(name, value) -> True
+        // TODO: convert whitelist to blacklist and merge options with packageOption
+        name in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
         else -> Unknown
     }
 
@@ -104,7 +116,7 @@ class CfgEvaluator(val options: CfgOptions, val features: Map<String, FeatureSta
         return when (features[name]) {
             FeatureState.Enabled -> True
             FeatureState.Disabled -> False
-            null -> Unknown
+            null -> if (packageOptions.isNameValueEnabled("feature", name)) True else Unknown
         }
     }
 

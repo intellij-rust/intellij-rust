@@ -209,14 +209,16 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
                                     it.name,
                                     it.kind,
                                     it.edition,
-                                    doctest = true,
-                                    outDirUrl = null
+                                    doctest = true
                                 )
                             },
                             source = null,
                             origin = PackageOrigin.WORKSPACE,
                             edition = Edition.EDITION_2015,
-                            features = emptyList()
+                            features = emptyList(),
+                            cfgOptions = CfgOptions.EMPTY,
+                            env = emptyMap(),
+                            outDirUrl = null
                         )
                     ),
                     dependencies = emptyMap()

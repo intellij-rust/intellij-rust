@@ -135,3 +135,22 @@ enum class Applicability {
     @SerializedName("Unspecified")
     UNSPECIFIED
 }
+
+/**
+ * Represents execution result of build script
+ *
+ * @see <a href="https://github.com/rust-lang/cargo/blob/f0f73f04d104b67f982c3e24f074f48308c0afd0/src/cargo/util/machine_message.rs#L62-L70">machine_message.rs</a>
+ */
+data class BuildScriptMessage(
+    val package_id: String,
+    val cfgs: List<String>,
+    val env: List<List<String>>,
+    val out_dir: String?
+) {
+    companion object {
+        fun fromJson(json: JsonObject): BuildScriptMessage? {
+            if (json.getAsJsonPrimitive("reason")?.asString != "build-script-executed") return null
+            return Gson().fromJson(json, BuildScriptMessage::class.java)
+        }
+    }
+}

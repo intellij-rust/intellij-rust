@@ -11,12 +11,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.BuildScriptMessage
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*
@@ -250,14 +252,18 @@ object CargoMetadata {
         val test: Boolean
     )
 
-    fun clean(project: Project, buildPlan: CargoBuildPlan?): CargoWorkspaceData {
+    fun clean(
+        project: Project,
+        buildScriptsInfo: BuildScriptsInfo?,
+        buildPlan: CargoBuildPlan?
+    ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
             ?: error(
                 "No `workspace_members` key in the `cargo metadata` output.\n" +
                     "Your version of Cargo is no longer supported, please upgrade Cargo."
             )
-        val variables = TargetVariables.from(buildPlan)
+        val variables = PackageVariables.from(buildPlan)
         val packageIdToNode = project.resolve.nodes.associateBy { it.id }
 
         return CargoWorkspaceData(
@@ -276,8 +282,8 @@ object CargoMetadata {
                     }
                     CargoWorkspace.Feature(feature, state)
                 }
-
-                pkg.clean(fs, pkg.id in members, variables, features)
+                val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
+                pkg.clean(fs, pkg.id in members, variables, features, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
@@ -294,34 +300,41 @@ object CargoMetadata {
     private fun Package.clean(
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
-        variables: TargetVariables,
-        features: List<CargoWorkspace.Feature>
+        variables: PackageVariables,
+        features: List<CargoWorkspace.Feature>,
+        buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
             "`cargo metadata` reported a package which does not exist at `$manifest_path`"
         }
+
+        val cfgOptions = CfgOptions.parse(buildScriptMessage?.cfgs.orEmpty())
+
+        val env = buildScriptMessage?.env.orEmpty()
+            .filter { it.size == 2 }
+            .associate { (key, value) -> key to value }
+
+        val outDirPath = buildScriptMessage?.out_dir ?: variables.getOutDirPath(this)
+        val outDir = outDirPath?.let { root.fileSystem.refreshAndFindFileByPath(it)?.canonicalFile }
 
         return CargoWorkspaceData.Package(
             id,
             root.url,
             name,
             version,
-            targets.mapNotNull { it.clean(this, root, variables) },
+            targets.mapNotNull { it.clean(root) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition(),
-            features = features
+            features = features,
+            cfgOptions = cfgOptions,
+            env = env,
+            outDirUrl = outDir?.url
         )
     }
 
-    private fun Target.clean(
-        pkg: Package,
-        root: VirtualFile,
-        variables: TargetVariables
-    ): CargoWorkspaceData.Target? {
+    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
         val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
-        val outDirPath = variables.getOutDirPath(pkg, this)
-        val outDir = outDirPath?.let { root.fileSystem.refreshAndFindFileByPath(it)?.canonicalFile }
 
         return mainFile?.let {
             CargoWorkspaceData.Target(
@@ -329,8 +342,7 @@ object CargoMetadata {
                 name,
                 makeTargetKind(cleanKind, cleanCrateTypes),
                 edition.cleanEdition(),
-                doctest = doctest ?: true,
-                outDirUrl = outDir?.url
+                doctest = doctest ?: true
             )
         }
     }
@@ -372,26 +384,26 @@ object CargoMetadata {
     }
 }
 
-private class TargetVariables(private val variables: Map<TargetInfo, Map<String, String>>) {
+private class PackageVariables(private val variables: Map<PackageInfo, Map<String, String>>) {
 
-    fun getOutDirPath(pkg: CargoMetadata.Package, target: CargoMetadata.Target): String? =
-        getValue(pkg, target, "OUT_DIR")
+    fun getOutDirPath(pkg: CargoMetadata.Package): String? = getValue(pkg, "OUT_DIR")
 
-    fun getValue(pkg: CargoMetadata.Package, target: CargoMetadata.Target, variableName: String): String? {
-        val key = TargetInfo(pkg.name, pkg.version, target.kind.toSet())
+    fun getValue(pkg: CargoMetadata.Package, variableName: String): String? {
+        val key = PackageInfo(pkg.name, pkg.version)
         return variables[key]?.get(variableName)
     }
 
     companion object {
-        fun from(buildPlan: CargoBuildPlan?): TargetVariables {
-            val result = mutableMapOf<TargetInfo, Map<String, String>>()
-            for ((packageName, packageVersion, targetKind, variables) in buildPlan?.invocations.orEmpty()) {
-                val targetInfo = TargetInfo(packageName, packageVersion, targetKind.toSet())
+        fun from(buildPlan: CargoBuildPlan?): PackageVariables {
+            val result = mutableMapOf<PackageInfo, Map<String, String>>()
+            for ((packageName, packageVersion, compileMode, variables) in buildPlan?.invocations.orEmpty()) {
+                if (compileMode != "run-custom-build") continue
+                val targetInfo = PackageInfo(packageName, packageVersion)
                 result[targetInfo] = variables
             }
-            return TargetVariables(result)
+            return PackageVariables(result)
         }
     }
 
-    private data class TargetInfo(val name: String, val version: String, val targetKinds: Set<String>)
+    private data class PackageInfo(val name: String, val version: String)
 }
