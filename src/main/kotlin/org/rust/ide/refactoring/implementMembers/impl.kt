@@ -8,6 +8,7 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromElements
@@ -32,7 +33,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     if (chosen.isEmpty()) return
     runWriteAction {
         // Non-null was checked by `findMembersToImplement`.
-        insertNewTraitMembers(chosen, impl.members!!, trait)
+        insertNewTraitMembers(chosen, impl.members!!, trait, editor)
     }
 }
 
@@ -48,7 +49,8 @@ private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationIn
 private fun insertNewTraitMembers(
     selected: Collection<RsAbstractable>,
     existingMembers: RsMembers,
-    trait: BoundElement<RsTraitItem>
+    trait: BoundElement<RsTraitItem>,
+    editor: Editor?
 ) {
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
@@ -67,6 +69,7 @@ private fun insertNewTraitMembers(
     }.toMutableList()
     val existingMembersOrder = existingMembersWithPosInTrait.map { it.second }
     val areExistingMembersInTheRightOrder = existingMembersOrder == existingMembersOrder.sorted()
+    var needToSelect: RsElement? = null
 
     for ((index, newMember) in newMembers.withIndex()) {
         val posInTrait = traitMembers.indexOfFirst {
@@ -104,9 +107,29 @@ private fun insertNewTraitMembers(
             val whitespaces = createExtraWhitespacesAroundFunction(addedMember, next)
             existingMembers.addAfter(whitespaces, addedMember)
         }
+
+        if (needToSelect == null) {
+            needToSelect = when (addedMember) {
+                is RsFunction -> addedMember.block?.expr
+                is RsTypeAlias -> addedMember.typeReference
+                is RsConstant -> addedMember.expr
+                else -> error("unreachable")
+            }
+        }
     }
 
     importTypeReferencesFromElements(existingMembers, selected, trait.subst)
+
+    if (needToSelect != null && editor != null) {
+        selectElement(needToSelect, editor)
+    }
+}
+
+private fun selectElement(element: RsElement, editor: Editor) {
+    val start = element.textRange.startOffset
+    editor.caretModel.moveToOffset(start)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    editor.selectionModel.setSelection(start, element.textRange.endOffset)
 }
 
 private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiElement): PsiElement {

@@ -85,7 +85,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             fn f4() {
@@ -120,7 +120,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f() -> (R, R) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -149,7 +149,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             unsafe fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             unsafe fn f4() {
@@ -182,7 +182,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             async fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             async fn f4() {
@@ -218,7 +218,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1(a: i8, b: i16, c: i32, d: i64) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             fn f2(a: (i32, u32)) {
@@ -262,7 +262,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            type T1 = ();
+            type T1 = <selection>()</selection>;
             type T4 = ();
         }
     """)
@@ -290,7 +290,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            const C1: i32 = unimplemented!();
+            const C1: i32 = <selection>unimplemented!()</selection>;
             const C4: &'static str = unimplemented!();
         }
     """)
@@ -325,7 +325,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             type T1 = ();
@@ -363,7 +363,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<u8, u16> for S {
             fn f1(_: u8) -> u8 {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             const C1: u8 = unimplemented!();
@@ -441,7 +441,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     }
     impl<'b> T<'b> for S<'b> {
         fn f1(&'b self) -> &'b str {
-            unimplemented!()
+            <selection>unimplemented!()</selection>
         }
 
         const C1: &'b str = unimplemented!();
@@ -507,7 +507,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn f1() { }
 
             fn f2() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -535,7 +535,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             fn f2() { }
@@ -572,7 +572,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             type T1 = u32;
@@ -617,7 +617,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             type T1 = u32;
 
             fn f1() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             const C1: i32 = unimplemented!();
@@ -651,7 +651,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn x() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             type y = ();
@@ -681,7 +681,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            type Item = ();
+            type Item = <selection>()</selection>;
 
             fn foo() -> Self::Item {
                 unimplemented!()
@@ -719,7 +719,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             foo!(foo, {});
 
             fn bar() {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
 
             fn baz() {}
@@ -745,7 +745,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(&self, bar: &mut Bar) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -770,7 +770,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: Box<Self>, bar: &mut Bar) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -794,7 +794,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: *const Self, bar: &mut Bar) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -822,7 +822,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: Pin<&mut Self>, bar: &mut Bar) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
@@ -850,7 +850,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl<'a> Baz<'a> for Foo {
             fn baz(self: Pin<&'a mut Self>, bar: &mut Bar) {
-                unimplemented!()
+                <selection>unimplemented!()</selection>
             }
         }
     """)
