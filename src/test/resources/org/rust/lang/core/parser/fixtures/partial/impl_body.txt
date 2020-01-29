@@ -23,7 +23,7 @@ FILE
         RsValueParameterListImpl(VALUE_PARAMETER_LIST)
           PsiElement(()('(')
           PsiElement())(')')
-        PsiErrorElement:'->', ';', where or '{' expected, got 'bar'
+        PsiErrorElement:'->', ';' or where expected, got 'bar'
           <empty list>
       PsiWhiteSpace('\n    ')
       PsiElement(identifier)('bar')
@@ -70,7 +70,7 @@ FILE
         RsValueParameterListImpl(VALUE_PARAMETER_LIST)
           PsiElement(()('(')
           PsiElement())(')')
-        PsiErrorElement:'->', ';', where or '{' expected, got 'fn'
+        PsiErrorElement:'->', ';' or where expected, got 'fn'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsFunctionImpl(FUNCTION)
