@@ -33,6 +33,7 @@ matrix:
 install: true
 
 before_script:
+  - dig +short myip.opendns.com @resolver1.opendns.com
   - curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain $RUST_VERSION -y
   - export PATH=$HOME/.cargo/bin:$PATH
   - rustup component add rust-src
