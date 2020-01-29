@@ -27,6 +27,7 @@
       <w>grazie</w>
       <w>grcov</w>
       <w>ide</w>
+      <w>ident</w>
       <w>indexable</w>
       <w>infos</w>
       <w>intelli</w>
@@ -34,6 +35,7 @@
       <w>killable</w>
       <w>lbrace</w>
       <w>linter</w>
+      <w>liveness</w>
       <w>lookback</w>
       <w>loopback</w>
       <w>mixin</w>

@@ -598,4 +598,22 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             <error descr="Use of moved value">s</error>;
         }
     """, checkWarn = false)
+
+    /* Issue https://github.com/intellij-rust/intellij-rust/issues/4795 */
+    fun `test no move when deref raw pointer`() = checkByText("""
+        struct Node<T> {
+            data: T,
+            next: *mut Self,
+        }
+        
+        impl<T> Node<T> {
+            unsafe fn next(node: *mut Self) -> *mut Self {
+                (*node).next
+            }
+        
+            unsafe fn set_next(node: *mut Self, next: *mut Self) {
+                (*node).next = next;
+            }
+        }
+    """, checkWarn = false)
 }

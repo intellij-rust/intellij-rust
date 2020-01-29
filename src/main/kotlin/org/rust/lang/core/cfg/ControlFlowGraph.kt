@@ -11,7 +11,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.type
-import org.rust.lang.utils.Edge
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph
 import org.rust.lang.utils.PresentableNodeData
@@ -63,7 +62,6 @@ sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
 class CFGEdgeData(val exitingScopes: List<RsElement>)
 
 typealias CFGNode = Node<CFGNodeData, CFGEdgeData>
-typealias CFGEdge = Edge<CFGNodeData, CFGEdgeData>
 
 class ControlFlowGraph private constructor(
     val owner: RsElement,
@@ -71,8 +69,7 @@ class ControlFlowGraph private constructor(
     val body: RsBlock,
     val regionScopeTree: ScopeTree,
     val entry: CFGNode,
-    val exit: CFGNode,
-    val termination: CFGNode
+    val exit: CFGNode
 ) {
     companion object {
         fun buildFor(body: RsBlock, regionScopeTree: ScopeTree): ControlFlowGraph {
@@ -87,10 +84,12 @@ class ControlFlowGraph private constructor(
             cfgBuilder.addContainedEdge(bodyExit, fnExit)
             cfgBuilder.addContainedEdge(fnExit, termination)
 
-            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit, termination)
+            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit)
         }
     }
 
+    // TODO: Implement dead code elimination
+    @Suppress("unused")
     fun isNodeReachable(item: RsElement) = graph.depthFirstTraversal(entry).any { it.data.element == item }
 
     fun buildLocalIndex(): HashMap<RsElement, MutableList<CFGNode>> {

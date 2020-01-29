@@ -34,6 +34,8 @@ class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveDa
         guaranteeAssignmentValid(assignmentElement, assigneeCmt, mode)
     }
 
+    override fun useElement(element: RsElement, cmt: Cmt) {}
+
     /** Guarantees that [cmt] is assignable, or reports an error */
     private fun guaranteeAssignmentValid(assignment: RsElement, cmt: Cmt, mode: MutateMode) {
         // `loanPath` may be null with e.g. `*foo() = 5`
