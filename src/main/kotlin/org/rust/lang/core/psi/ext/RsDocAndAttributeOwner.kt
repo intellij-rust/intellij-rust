@@ -105,6 +105,11 @@ class QueryAttributes(
         return attrs.any()
     }
 
+    fun hasAttribute(regex: Regex): Boolean {
+        val attrs = attrsByText(regex)
+        return attrs.any()
+    }
+
     fun hasAnyOfOuterAttributes(vararg attributes: String): Boolean {
         val outerAttrList = (psi as? RsOuterAttributeOwner)?.outerAttrList ?: return false
         return outerAttrList.any { it.metaItem.name in attributes }
@@ -176,6 +181,14 @@ class QueryAttributes(
      * Get a sequence of all attributes named [name]
      */
     private fun attrsByName(name: String): Sequence<RsMetaItem> = metaItems.filter { it.name == name }
+
+    /**
+     * Get a sequence of all attributes that match the given [regex]
+     */
+    private fun attrsByText(regex: Regex): Sequence<RsMetaItem> = metaItems.filter {
+        val text = it.text ?: return@filter false
+        text.matches(regex)
+    }
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"

@@ -201,6 +201,36 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
         fn has_icon() { assert(true) } // - Test has_icon
     """)
 
+    fun `test simple custom test attribute`() = doTestByText("""
+        #[custom_test]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test custom test attribute with path`() = doTestByText("""
+        #[tokio::test]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test custom test attribute with parameters`() = doTestByText("""
+        #[tokio::test(threaded_scheduler)]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test custom test attribute with underscore`() = doTestByText("""
+        #[my_tokio::test(threaded_scheduler)]
+        fn has_icon() { assert(true) } // - Test has_icon
+    """)
+
+    fun `test ignore attributes with irrelevant test 1`() = doTestByText("""
+        #[cfg(test)]
+        fn has_icon() { assert(true) }
+    """)
+
+    fun `test ignore attributes with irrelevant test 2`() = doTestByText("""
+        #[cfg(not(test))]
+        fn has_icon() { assert(true) }
+    """)
+
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {
         val element = PsiFileFactory.getInstance(project)
             .createFileFromText("main.rs", RsFileType, code)
