@@ -155,8 +155,15 @@ class RsDefaultValueBuilder(
         return addedFields
     }
 
+    private fun getName(fieldDecl: RsFieldDecl): String? {
+        return when (fieldDecl) {
+            is RsNamedFieldDecl -> fieldDecl.identifier.text
+            else -> fieldDecl.name
+        }
+    }
+
     private fun findLocalBinding(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
-        val name = fieldDecl.name ?: return null
+        val name = getName(fieldDecl) ?: return null
         val type = fieldDecl.typeReference?.type ?: return null
 
         val binding = bindings[name] ?: return null
@@ -233,7 +240,7 @@ class RsDefaultValueBuilder(
     }
 
     private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
-        val fieldName = fieldDecl.name ?: return null
+        val fieldName = getName(fieldDecl) ?: return null
         val fieldType = fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
@@ -243,7 +250,7 @@ class RsDefaultValueBuilder(
         fun getVisibleBindings(place: RsElement): Map<String, RsPatBinding> {
             val bindings = HashMap<String, RsPatBinding>()
             processLocalVariables(place) { variable ->
-                variable.name?.let {
+                variable.identifier.text?.let {
                     bindings[it] = variable
                 }
             }

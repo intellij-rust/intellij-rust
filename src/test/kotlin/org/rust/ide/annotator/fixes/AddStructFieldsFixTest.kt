@@ -659,6 +659,38 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test keyword field`() = checkBothQuickFix("""
+        struct S { r#type: i32 }
+
+        fn main() {
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#type: i32 }
+
+        fn main() {
+            S { r#type: 0/*caret*/ };
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test keyword field local variable`() = checkBothQuickFix("""
+        struct S { r#type: i32 }
+
+        fn main() {
+            let r#type: i32 = 0;
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#type: i32 }
+
+        fn main() {
+            let r#type: i32 = 0;
+            S { r#type };
+        }
+    """)
+
     private fun checkBothQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkFixByText("Add missing fields", before, after)
         checkFixByText("Recursively add missing fields", before, after)
