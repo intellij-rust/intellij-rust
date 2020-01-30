@@ -51,7 +51,7 @@ open class RsCamelCaseNamingInspection(
     elementTitle: String = elementType
 ) : RsNamingInspection(elementType, "a camel", elementTitle) {
 
-    override val lint: RsLint = RsLint.NonCamelCaseTypes
+    override fun getLint(element: PsiElement): RsLint = RsLint.NonCamelCaseTypes
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
@@ -90,7 +90,7 @@ open class RsCamelCaseNamingInspection(
  */
 open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "a snake") {
 
-    override val lint: RsLint = RsLint.NonSnakeCase
+    override fun getLint(element: PsiElement): RsLint = RsLint.NonSnakeCase
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
@@ -106,7 +106,7 @@ open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection
  */
 open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection(elementType, "an upper") {
 
-    override val lint: RsLint = RsLint.NonUpperCaseGlobals
+    override fun getLint(element: PsiElement): RsLint = RsLint.NonUpperCaseGlobals
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')

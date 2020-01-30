@@ -18,25 +18,27 @@ import org.rust.lang.core.psi.ext.*
 
 abstract class RsLintInspection : RsLocalInspectionTool() {
 
-    protected abstract val lint: RsLint
+    protected abstract fun getLint(element: PsiElement): RsLint?
 
     override fun isSuppressedFor(element: PsiElement): Boolean {
         if (super.isSuppressedFor(element)) return true
-        return lint.levelFor(element) == RsLintLevel.ALLOW
+        return getLint(element)?.levelFor(element) == RsLintLevel.ALLOW
     }
 
     // TODO: fix quick fix order in UI
     override fun getBatchSuppressActions(element: PsiElement?): Array<SuppressQuickFix> {
         val fixes = super.getBatchSuppressActions(element).toMutableList()
         if (element == null) return fixes.toTypedArray()
-        element.ancestors.forEach {
-            val action = when (it) {
+        val lint = getLint(element) ?: return fixes.toTypedArray()
+
+        for (ancestor in element.ancestors) {
+            val action = when (ancestor) {
                 is RsLetDecl,
                 is RsFieldDecl,
                 is RsEnumVariant,
                 is RsItemElement,
                 is RsFile -> {
-                    var target = when (it) {
+                    var target = when (ancestor) {
                         is RsLetDecl -> "statement"
                         is RsFieldDecl -> "field"
                         is RsEnumVariant -> "enum variant"
@@ -53,17 +55,17 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
                         else -> null
                     }
                     if (target != null) {
-                        val name = (it as? PsiNamedElement)?.name
+                        val name = (ancestor as? PsiNamedElement)?.name
                         if (name != null) {
                             target += " $name"
                         }
-                        RsSuppressQuickFix(it as RsDocAndAttributeOwner, lint, target)
+                        RsSuppressQuickFix(ancestor as RsDocAndAttributeOwner, lint, target)
                     } else {
                         null
                     }
                 }
-                is RsExprStmt-> {
-                    val expr = it.expr
+                is RsExprStmt -> {
+                    val expr = ancestor.expr
                     if (expr is RsOuterAttributeOwner) RsSuppressQuickFix(expr, lint, "statement") else null
                 }
                 else -> null

@@ -19,6 +19,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test straightforward`() = testCFG("""
@@ -80,6 +81,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         y += x;
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test if`() = testCFG("""
@@ -95,6 +97,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test if else`() = testCFG("""
@@ -110,6 +113,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        Termination
         false
         2
         BLOCK
@@ -135,6 +139,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test if let else`() = testCFG("""
@@ -154,6 +159,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        Termination
         2
         BLOCK
     """)
@@ -178,6 +184,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         IF;
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test if else with unreachable`() = testCFG("""
@@ -201,6 +208,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x > 0 && x < 10
         return
         Exit
+        Termination
         return
     """)
 
@@ -219,6 +227,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x += 1
         x += 1;
         BLOCK
+        Termination
     """)
 
     fun `test while`() = testCFG("""
@@ -243,6 +252,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         x
         1
         x += 1
@@ -270,6 +280,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         op1
         op1;
         cond2
@@ -298,6 +309,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         op1
         op1;
         Dummy
@@ -322,6 +334,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         op1
         op1;
         cond2
@@ -347,6 +360,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         x
         x
         Dummy
@@ -368,6 +382,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         WHILE
         BLOCK
         Exit
+        Termination
         s
         s
         A(s)
@@ -410,6 +425,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         let y = 2;
         BLOCK
         Exit
+        Termination
         x
         1
         x += 1
@@ -446,6 +462,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         y;
         BLOCK
         Exit
+        Termination
         i
         i
         0
@@ -488,6 +505,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         y;
         BLOCK
         Exit
+        Termination
         x
         x
         op1
@@ -536,6 +554,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         let y = 0;
         BLOCK
         Exit
+        Termination
         x
         x
         E::B(x)
@@ -590,6 +609,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         let y = 0;
         BLOCK
         Exit
+        Termination
         E::B
         Dummy
         return
@@ -608,6 +628,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x.foo(a, b)
         Dummy
         Exit
+        Termination
         x.foo(a, b)?
         x.foo(a, b)?;
         y
@@ -621,6 +642,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         fn main() {
             let x = S { data1: 42, data2: 24 };
             let S { data1: a, data2: b } = s;
+            let S { data1, data2 } = x;
             let (x, (y, z)) = (1, (2, 3));
             [0, 1 + a];
         }
@@ -635,10 +657,19 @@ class RsControlFlowGraphTest : RsTestBase() {
         s
         a
         a
+        data1: a
         b
         b
+        data2: b
         S { data1: a, data2: b }
         let S { data1: a, data2: b } = s;
+        x
+        data1
+        data1
+        data2
+        data2
+        S { data1, data2 }
+        let S { data1, data2 } = x;
         1
         2
         3
@@ -661,6 +692,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         [0, 1 + a];
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test noreturn simple`() = testCFG("""
@@ -677,6 +709,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         true
         noreturn
         noreturn()
+        Termination
         IF
         IF;
         42
@@ -701,6 +734,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         1
         noreturn
         noreturn()
+        Termination
         IF
         IF;
         42
@@ -729,6 +763,8 @@ class RsControlFlowGraphTest : RsTestBase() {
         42;
         BLOCK
         Exit
+        Termination
+        panic!()
     """)
 
     fun `test panic macro call outside stmt`() = testCFG("""
@@ -748,8 +784,10 @@ class RsControlFlowGraphTest : RsTestBase() {
         MATCH;
         BLOCK
         Exit
+        Termination
         false
         Dummy
+        panic!()
     """)
 
     fun `test macro call outside stmt`() = testCFG("""
@@ -769,6 +807,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         MATCH;
         BLOCK
         Exit
+        Termination
         E::B
         Dummy
         some_macro!()
@@ -787,6 +826,24 @@ class RsControlFlowGraphTest : RsTestBase() {
         S { x };
         BLOCK
         Exit
+        Termination
+    """)
+
+    fun `test struct literal dot dot syntax`() = testCFG("""
+        struct S { x: i32, y: i32 }
+        
+        fn main() {
+            S { x, ..s };
+        }
+    """, """
+        Entry
+        x
+        s
+        S { x, ..s }
+        S { x, ..s };
+        BLOCK
+        Exit
+        Termination
     """)
 
     fun `test lambda expr`() = testCFG("""
@@ -806,6 +863,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         let f = |x: i32| { x + 1 };
         BLOCK
         Exit
+        Termination
     """)
 
     fun `test arbitrary macro call`() = testCFG("""
@@ -823,7 +881,75 @@ class RsControlFlowGraphTest : RsTestBase() {
         x + y
         BLOCK
         Exit
+        Termination
     """)
+
+    fun `test println! macro call`() = testCFG("""
+        fn main() {
+            println!("{} {}", x, y);
+        }
+    """, """
+        Entry
+        "{} {}"
+        x
+        y
+        println!("{} {}", x, y)
+        println!("{} {}", x, y);
+        BLOCK
+        Exit
+        Termination
+    """)
+
+    fun `test vec! macro call`() = testCFG("""
+        fn main() {
+            vec![ S { x }, s1 ];
+        }
+    """, """
+        Entry
+        x
+        S { x }
+        s1
+        vec![ S { x }, s1 ]
+        vec![ S { x }, s1 ];
+        BLOCK
+        Exit
+        Termination
+    """)
+
+    fun `test assert_eq! macro call`() = testCFG("""
+        fn main() {
+            assert_eq!(x, y);
+        }
+    """, """
+        Entry
+        x
+        y
+        assert_eq!(x, y)
+        assert_eq!(x, y);
+        BLOCK
+        Exit
+        Termination
+    """)
+
+    fun `test panic in lambda expr`() = testCFG("""
+        fn foo() {
+            let f = || { panic!() };
+            1;
+        }
+    """, """
+        Entry
+        panic!()
+        Termination
+        || { panic!() }
+        f
+        f
+        let f = || { panic!() };
+        1
+        1;
+        BLOCK
+        Exit
+    """)
+
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)

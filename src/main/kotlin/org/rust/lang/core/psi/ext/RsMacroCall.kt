@@ -77,7 +77,7 @@ private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
     CONCAT_MACRO_ARGUMENT, ENV_MACRO_ARGUMENT
 )
 
-private val RsMacroCall.macroArgumentElement: RsElement?
+val RsMacroCall.macroArgumentElement: RsElement?
     get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
 
 private val RsExpr.value: String? get() {

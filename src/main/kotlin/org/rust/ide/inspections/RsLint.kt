@@ -19,7 +19,8 @@ enum class RsLint(
     NonSnakeCase("non_snake_case", "bad_style"),
     NonCamelCaseTypes("non_camel_case_types", "bad_style"),
     NonUpperCaseGlobals("non_upper_case_globals", "bad_style"),
-    Deprecated("deprecated");
+    Deprecated("deprecated"),
+    UnusedVariables("unused_variables", "unused");
 
     /**
      * Returns the level of the lint for the given PSI element.

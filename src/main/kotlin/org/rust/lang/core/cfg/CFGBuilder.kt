@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.cfg
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
@@ -21,7 +22,8 @@ class CFGBuilder(
     private val regionScopeTree: ScopeTree,
     val graph: Graph<CFGNodeData, CFGEdgeData>,
     val entry: CFGNode,
-    val exit: CFGNode
+    val exit: CFGNode,
+    val termination: CFGNode
 ) : RsVisitor() {
     data class BlockScope(val blockExpr: RsBlockExpr, val breakNode: CFGNode)
 
@@ -53,8 +55,12 @@ class CFGBuilder(
     private fun finishWithAstNode(element: RsElement, vararg preds: CFGNode) =
         finishWith { addAstNode(element, *preds) }
 
-    private fun finishWithUnreachableNode() =
+    private fun finishWithUnreachableNode(end: CFGNode? = null) {
+        if (end != null) {
+            addTerminationEdge(end)
+        }
         finishWith { addUnreachableNode() }
+    }
 
     private inline fun withLoopScope(loopScope: LoopScope, callable: () -> Unit) {
         loopScopes.push(loopScope)
@@ -91,6 +97,11 @@ class CFGBuilder(
     private fun addReturningEdge(fromNode: CFGNode) {
         val data = CFGEdgeData(loopScopes.map { it.loop })
         graph.addEdge(fromNode, exit, data)
+    }
+
+    private fun addTerminationEdge(fromNode: CFGNode) {
+        val data = CFGEdgeData(loopScopes.map { it.loop })
+        graph.addEdge(fromNode, termination, data)
     }
 
     private fun addExitingEdge(fromExpr: RsExpr, fromNode: CFGNode, targetScope: Scope, toNode: CFGNode) {
@@ -172,6 +183,7 @@ class CFGBuilder(
         val funcOrReceiverExit = process(funcOrReceiver, pred)
         val callExit = straightLine(callExpr, funcOrReceiverExit, args)
         return if (callExpr.type is TyNever) {
+            addTerminationEdge(callExit)
             addUnreachableNode()
         } else {
             callExit
@@ -227,12 +239,65 @@ class CFGBuilder(
     override fun visitPathExpr(pathExpr: RsPathExpr) =
         finishWithAstNode(pathExpr, pred)
 
+    override fun visitMacroBodyIdent(macroBodyIdent: RsMacroBodyIdent) =
+        finishWithAstNode(macroBodyIdent, pred)
+
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
+        val macroCallExit = process(macroExpr.macroCall, pred)
+
         if (macroExpr.type is TyNever) {
-            finishWith { addUnreachableNode() }
+            finishWithUnreachableNode(macroCallExit)
         } else {
-            finishWithAstNode(macroExpr, pred)
+            finishWith(macroCallExit)
         }
+    }
+
+    override fun visitMacroCall(macroCall: RsMacroCall) {
+        val subExprsExit = when (val argument = macroCall.macroArgumentElement) {
+            is RsExprMacroArgument -> argument.expr?.let { process(it, pred) }
+            is RsIncludeMacroArgument -> argument.expr?.let { process(it, pred) }
+
+            is RsConcatMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            is RsEnvMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            is RsVecMacroArgument -> argument.exprList.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+
+            is RsFormatMacroArgument -> {
+                argument.formatMacroArgList.map { it.expr }.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+
+            is RsLogMacroArgument -> {
+                listOfNotNull(argument.expr)
+                    .plus(argument.formatMacroArgList.map { it.expr })
+                    .fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+            is RsAssertMacroArgument -> {
+                listOfNotNull(argument.expr)
+                    .plus(argument.formatMacroArgList.map { it.expr })
+                    .fold(pred) { acc, subExpr -> process(subExpr, acc) }
+            }
+
+            is RsMacroArgument -> {
+                val expansion = macroCall.expansion
+                val expandedElementsExit = expansion?.elements?.fold(pred) { pred, element -> process(element, pred) }
+                expandedElementsExit
+            }
+
+            null -> null
+
+            else -> error("unreachable")
+        }
+
+        val subElementsExit = subExprsExit ?: run {
+            val subPathsIdents = PsiTreeUtil.findChildrenOfAnyType(
+                macroCall,
+                true,
+                RsPathExpr::class.java,
+                RsMacroBodyIdent::class.java
+            )
+            subPathsIdents.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+        }
+
+        finishWithAstNode(macroCall, subElementsExit)
     }
 
     override fun visitRangeExpr(rangeExpr: RsRangeExpr) =
@@ -244,8 +309,20 @@ class CFGBuilder(
     override fun visitPatTupleStruct(patTupleStruct: RsPatTupleStruct) =
         finishWith { processSubPats(patTupleStruct, patTupleStruct.patList) }
 
-    override fun visitPatStruct(patStruct: RsPatStruct) =
-        finishWith { processSubPats(patStruct, patStruct.patFieldList.mapNotNull { it.patFieldFull?.pat }) }
+    override fun visitPatStruct(patStruct: RsPatStruct) {
+        val patFieldsExit = patStruct.patFieldList.fold(pred) { acc, patField -> process(patField, acc) }
+        finishWithAstNode(patStruct, patFieldsExit)
+    }
+
+    override fun visitPatField(patField: RsPatField) {
+        val patFieldFull = patField.patFieldFull
+        val subPatExit = if (patFieldFull != null) {
+            process(patFieldFull.pat, pred)
+        } else {
+            process(patField.patBinding, pred)
+        }
+        finishWithAstNode(patField, subPatExit)
+    }
 
     override fun visitPatSlice(patSlice: RsPatSlice) =
         finishWith { processSubPats(patSlice, patSlice.patList) }
@@ -368,6 +445,7 @@ class CFGBuilder(
             addContainedEdge(bodyExit, loopBack)
         }
 
+        addTerminationEdge(loopBack)
         finishWith(exprExit)
     }
 
@@ -423,24 +501,24 @@ class CFGBuilder(
         val valueExit = process(retExpr.expr, pred)
         val returnExit = addAstNode(retExpr, valueExit)
         addReturningEdge(returnExit)
-        finishWith { addUnreachableNode() }
+        finishWithUnreachableNode()
     }
 
     override fun visitBreakExpr(breakExpr: RsBreakExpr) {
         val exprExit = process(breakExpr.expr, pred)
         val (targetScope, breakDestination) = findScopeEdge(breakExpr, breakExpr.label, Break)
-            ?: return finishWithUnreachableNode()
+            ?: return finishWithUnreachableNode(exprExit)
         val breakExit = addAstNode(breakExpr, exprExit)
         addExitingEdge(breakExpr, breakExit, targetScope, breakDestination)
-        finishWithUnreachableNode()
+        finishWithUnreachableNode(breakExit)
     }
 
     override fun visitContExpr(contExpr: RsContExpr) {
-        val (targetScope, contDestination) = findScopeEdge(contExpr, contExpr.label, Continue)
-            ?: return finishWithUnreachableNode()
         val contExit = addAstNode(contExpr, pred)
+        val (targetScope, contDestination) = findScopeEdge(contExpr, contExpr.label, Continue)
+            ?: return finishWithUnreachableNode(contExit)
         addExitingEdge(contExpr, contExit, targetScope, contDestination)
-        finishWithUnreachableNode()
+        finishWithUnreachableNode(contExit)
     }
 
     override fun visitArrayExpr(arrayExpr: RsArrayExpr) =
@@ -459,7 +537,8 @@ class CFGBuilder(
         finishWith { straightLine(tupleExpr, pred, tupleExpr.exprList) }
 
     override fun visitStructLiteral(structLiteral: RsStructLiteral) {
-        val subExprs = structLiteral.structLiteralBody.structLiteralFieldList.map { it.expr ?: it }
+        val structLiteralBody = structLiteral.structLiteralBody
+        val subExprs = structLiteralBody.structLiteralFieldList.map { it.expr ?: it }.plus(structLiteralBody.expr)
         val subExprsExit = subExprs.fold(pred) { acc, subExpr -> process(subExpr, acc) }
         finishWithAstNode(structLiteral, subExprsExit)
     }
@@ -526,17 +605,28 @@ class CFGBuilder(
     override fun visitParenExpr(parenExpr: RsParenExpr) = parenExpr.expr.accept(this)
 
     override fun visitTryExpr(tryExpr: RsTryExpr) {
-        val exprExit = addAstNode(tryExpr)
-        val expr = process(tryExpr.expr, pred)
-        val checkExpr = addDummyNode(expr)
+        val tryExprExit = addAstNode(tryExpr)
+        val exprExit = process(tryExpr.expr, pred)
+        val checkExpr = addDummyNode(exprExit)
         addReturningEdge(checkExpr)
-        addContainedEdge(expr, exprExit)
-        finishWith(exprExit)
+        addContainedEdge(exprExit, tryExprExit)
+        finishWith(tryExprExit)
     }
 
+    //
+    //     [pred] -----
+    //       |        |
+    //       v 1      |
+    //    [expr]      |
+    //       |        |
+    //       v 3      |
+    // [lambdaExpr] <-+
+    //
     override fun visitLambdaExpr(lambdaExpr: RsLambdaExpr) {
         val exprExit = process(lambdaExpr.expr, pred)
-        finishWithAstNode(lambdaExpr, exprExit)
+        val lambdaExprExit = addAstNode(lambdaExpr, exprExit)
+        addContainedEdge(pred, lambdaExprExit)
+        finishWith(lambdaExprExit)
     }
 
     override fun visitElement(element: RsElement) = finishWith(pred)

@@ -5,7 +5,8 @@
 
 package org.rust.lang.core
 
-import org.rust.lang.core.cfg.CFGEdge
+import org.rust.lang.core.FlowDirection.Backward
+import org.rust.lang.core.FlowDirection.Forward
 import org.rust.lang.core.cfg.CFGNode
 import org.rust.lang.core.cfg.ControlFlowGraph
 import org.rust.lang.core.psi.ext.RsElement
@@ -13,10 +14,13 @@ import java.util.*
 
 enum class EntryOrExit { Entry, Exit }
 
+enum class FlowDirection { Forward, Backward }
+
 class DataFlowContext<O : DataFlowOperator>(
     private val cfg: ControlFlowGraph,
     private val oper: O,
-    private val bitsPerElement: Int
+    private val bitsPerElement: Int,
+    private val flowDirection: FlowDirection
 ) {
     private val wordsPerElement: Int = (bitsPerElement + BITS_PER_INT - 1) / BITS_PER_INT
     private val gens: MutableList<Int> // TODO: use something like bit array to improve performance
@@ -87,6 +91,7 @@ class DataFlowContext<O : DataFlowOperator>(
         return nodes.all { eachBitForNode(EntryOrExit.Entry, it, predicate) }
     }
 
+    @Suppress("SameParameterValue")
     private fun eachBitForNode(e: EntryOrExit, node: CFGNode, predicate: (Int) -> Boolean): Boolean {
         if (bitsPerElement == 0) return true
 
@@ -99,6 +104,7 @@ class DataFlowContext<O : DataFlowOperator>(
         return eachBit(slice, predicate)
     }
 
+    @Suppress("unused")
     fun eachGenBit(element: RsElement, predicate: (Int) -> Boolean): Boolean {
         if (!hasBitSetForElement(element)) return true
         if (bitsPerElement == 0) return true
@@ -157,11 +163,14 @@ class DataFlowContext<O : DataFlowOperator>(
     fun propagate() {
         if (bitsPerElement == 0) return
 
-        val propagationContext = PropagationContext(this, true)
-        val nodesInPostOrder = cfg.graph.nodesInPostOrder(cfg.entry)
+        val propagationContext = PropagationContext(this, true, flowDirection)
+        val orderedNodes = when (flowDirection) {
+            Forward -> cfg.graph.nodesInPostOrder(cfg.entry).asReversed() // walking in reverse post-order
+            Backward -> cfg.graph.nodesInPostOrder(cfg.entry) // walking in post-order
+        }
         while (propagationContext.changed) {
             propagationContext.changed = false
-            propagationContext.walkCfg(nodesInPostOrder)
+            propagationContext.walkCfg(orderedNodes)
         }
     }
 
@@ -169,27 +178,39 @@ class DataFlowContext<O : DataFlowOperator>(
         private const val BITS_PER_INT: Int = 32
     }
 
-    private class PropagationContext<O : DataFlowOperator>(val dataFlowContext: DataFlowContext<O>, var changed: Boolean) {
+    private class PropagationContext<O : DataFlowOperator>(
+        val dataFlowContext: DataFlowContext<O>,
+        var changed: Boolean,
+        val flowDirection: FlowDirection
+    ) {
         val graph = dataFlowContext.cfg.graph
 
-        fun walkCfg(nodesInPostOrder: List<CFGNode>) {
-            // walking in reverse post-order
-            nodesInPostOrder.asReversed().forEach { node ->
+        fun walkCfg(orderedNodes: List<CFGNode>) {
+            for (node in orderedNodes) {
                 val (start, end) = dataFlowContext.getRange(node)
                 val onEntry = dataFlowContext.onEntry.subList(start, end)
                 val result = dataFlowContext.applyGenKill(node, onEntry)
-                propagateBitsIntoGraphSuccessorsOf(result, node)
+                when (flowDirection) {
+                    Forward -> propagateBitsIntoGraphSuccessorsOf(result, node)
+                    Backward -> propagateBitsIntoGraphPredecessorsOf(result, node)
+                }
             }
         }
 
-        private fun propagateBitsIntoGraphSuccessorsOf(predBits: List<Int>, node: CFGNode) =
-            graph.outgoingEdges(node).forEach {
-                propagateBitsIntoEntrySetFor(predBits, it)
+        private fun propagateBitsIntoGraphSuccessorsOf(predBits: List<Int>, node: CFGNode) {
+            for (edge in graph.outgoingEdges(node)) {
+                propagateBitsIntoEntrySetFor(predBits, edge.target)
             }
+        }
 
-        private fun propagateBitsIntoEntrySetFor(predBits: List<Int>, edge: CFGEdge) {
-            val target = edge.target
-            val (start, end) = dataFlowContext.getRange(target)
+        private fun propagateBitsIntoGraphPredecessorsOf(predBits: List<Int>, node: CFGNode) {
+            for (edge in graph.incomingEdges(node)) {
+                propagateBitsIntoEntrySetFor(predBits, edge.source)
+            }
+        }
+
+        private fun propagateBitsIntoEntrySetFor(predBits: List<Int>, node: CFGNode) {
+            val (start, end) = dataFlowContext.getRange(node)
             val onEntry = dataFlowContext.onEntry.subList(start, end)
             val changed = dataFlowContext.oper.bitwise(onEntry, predBits)
             if (changed) {

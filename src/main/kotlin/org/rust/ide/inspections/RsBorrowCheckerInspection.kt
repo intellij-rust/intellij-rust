@@ -52,22 +52,30 @@ class RsBorrowCheckerInspection : RsLocalInspectionTool() {
         }
 
     private fun registerProblem(holder: RsProblemsHolder, expr: RsExpr, nameExpr: RsExpr) {
-        val fix = AddMutableFix.createIfCompatible(nameExpr)
-        holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", fix)
+        if (expr.isPhysical && nameExpr.isPhysical) {
+            val fix = AddMutableFix.createIfCompatible(nameExpr)
+            holder.registerProblem(expr, "Cannot borrow immutable local variable `${nameExpr.text}` as mutable", fix)
+        }
     }
 
     private fun registerUseOfMovedValueProblem(holder: RsProblemsHolder, use: RsElement) {
-        val fix = DeriveCopyFix.createIfCompatible(use)
-        holder.registerProblem(use, "Use of moved value", fix)
+        if (use.isPhysical) {
+            val fix = DeriveCopyFix.createIfCompatible(use)
+            holder.registerProblem(use, "Use of moved value", fix)
+        }
     }
 
     private fun registerMoveProblem(holder: RsProblemsHolder, element: RsElement) {
-        holder.registerProblem(element, "Cannot move")
+        if (element.isPhysical) {
+            holder.registerProblem(element, "Cannot move")
+        }
     }
 
     private fun registerUseOfUninitializedVariableProblem(holder: RsProblemsHolder, use: RsElement) {
-        val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
-        holder.registerProblem(use, "Use of possibly uninitialized variable", fix)
+        if (use.isPhysical) {
+            val fix = InitializeWithDefaultValueFix.createIfCompatible(use)
+            holder.registerProblem(use, "Use of possibly uninitialized variable", fix)
+        }
     }
 
     private fun checkMethodRequiresMutable(receiver: RsExpr, fn: RsFunction): Boolean {

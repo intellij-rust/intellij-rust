@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
+import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.types.GatherLivenessContext
 import org.rust.lang.core.types.borrowck.ConsumeMode.Copy
 import org.rust.lang.core.types.borrowck.ConsumeMode.Move
 import org.rust.lang.core.types.borrowck.MatchMode.*
@@ -46,6 +48,8 @@ interface Delegate {
 
     /** The path at [assigneeCmt] is being assigned to */
     fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode)
+
+    fun useElement(element: RsElement, cmt: Cmt)
 }
 
 sealed class ConsumeMode {
@@ -136,23 +140,60 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         walkExpr(expr)
     }
 
+    private fun usePath(pathExpr: RsPathExpr) {
+        val cmt = mc.processExpr(pathExpr)
+        delegate.useElement(pathExpr, cmt)
+    }
+
+    private fun useAllPaths(element: RsElement) {
+        (element as? RsPathExpr)?.let { usePath(it) }
+        for (path in element.descendantsOfType<RsPathExpr>()) {
+            usePath(path)
+        }
+    }
+
+    private fun useMacroBodyIdent(ident: RsMacroBodyIdent) {
+        val declaration = ident.referenceName
+            ?.let { ident.findInScope(it, VALUES) } as? RsPatBinding
+            ?: return
+
+        val mutability = declaration.mutability
+        val type = declaration.type
+        val cmt = Cmt(
+            ident,
+            Local(declaration),
+            MutabilityCategory.from(mutability),
+            type
+        )
+        delegate.useElement(ident, cmt)
+    }
+
+    private fun useAllMacroBodyIdents(element: RsElement) {
+        val idents = element.descendantsOfType<RsMacroBodyIdent>()
+        for (ident in idents) {
+            useMacroBodyIdent(ident)
+        }
+    }
+
     private fun mutateExpr(assignmentExpr: RsExpr, expr: RsExpr, mode: MutateMode) {
         val cmt = mc.processExpr(expr)
         delegate.mutate(assignmentExpr, cmt, mode)
         walkExpr(expr)
     }
 
-    private fun selectFromExpr(expr: RsExpr) =
+    private fun selectFromExpr(expr: RsExpr) {
         walkExpr(expr)
+        useAllPaths(expr)
+    }
 
     private fun walkExpr(expr: RsExpr) {
         when (expr) {
             is RsUnaryExpr -> {
                 val base = expr.expr ?: return
-                if (expr.mul != null) {
-                    selectFromExpr(base)
-                } else if (expr.and == null) {
-                    consumeExpr(base)
+                when {
+                    expr.mul != null -> selectFromExpr(base) // `*foo`
+                    expr.and != null -> selectFromExpr(base) // `&foo`
+                    else -> consumeExpr(base) // `-foo`, `!foo`, ...
                 }
             }
 
@@ -164,6 +205,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 if (fieldLookup != null) {
                     selectFromExpr(base)
                 } else if (methodCall != null) {
+                    selectFromExpr(base)
                     consumeExprs(methodCall.valueArgumentList.exprList)
                 }
             }
@@ -197,6 +239,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 val discriminant = expr.expr ?: return
                 val discriminantCmt = mc.processExpr(discriminant)
 
+                selectFromExpr(discriminant)
+
                 for (arm in expr.arms) {
                     val mode = armMoveMode(discriminantCmt, arm).matchMode
                     walkArm(discriminantCmt, arm, mode)
@@ -227,8 +271,8 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 val left = expr.left
                 val right = expr.right ?: return
                 when (expr.binaryOp.operatorType) {
-                    is AssignmentOp -> mutateExpr(expr, left, MutateMode.JustWrite)
                     is ArithmeticAssignmentOp -> mutateExpr(expr, left, MutateMode.WriteAndRead)
+                    is AssignmentOp -> mutateExpr(expr, left, MutateMode.JustWrite)
                     else -> consumeExpr(left)
                 }
                 consumeExpr(right)
@@ -244,12 +288,65 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
             is RsCastExpr -> consumeExpr(expr.expr)
 
-            is RsParenExpr -> consumeExpr(expr.expr)
+            is RsParenExpr -> when (expr.parent) {
+                is RsDotExpr -> walkExpr(expr.expr)
+                else -> consumeExpr(expr.expr)
+            }
+
+            is RsTryExpr -> walkExpr(expr.expr)
+
+            is RsMacroExpr -> walkMacroCall(expr.macroCall)
+
+            is RsPathExpr -> usePath(expr)
+
+            is RsRangeExpr -> expr.exprList.forEach(::walkExpr)
         }
     }
 
     private fun walkCallee(callee: RsExpr) {
-        if (callee.type is TyFunction) consumeExpr(callee)
+        when (callee.type) {
+            is TyFunction -> consumeExpr(callee)
+            else -> useAllPaths(callee)
+        }
+    }
+
+    private fun walkMacroCall(macroCall: RsMacroCall) {
+        when (val argument = macroCall.macroArgumentElement) {
+            is RsExprMacroArgument -> argument.expr?.let(::walkExpr)
+            is RsIncludeMacroArgument -> argument.expr?.let(::walkExpr)
+
+            is RsConcatMacroArgument -> argument.exprList.forEach(::walkExpr)
+            is RsEnvMacroArgument -> argument.exprList.forEach(::walkExpr)
+            is RsVecMacroArgument -> argument.exprList.forEach(::walkExpr)
+
+            is RsFormatMacroArgument -> {
+                argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+            }
+            is RsLogMacroArgument -> {
+                argument.expr?.let(::walkExpr)
+                argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+            }
+            is RsAssertMacroArgument -> {
+                argument.expr?.let(::walkExpr)
+                argument.formatMacroArgList.map { it.expr }.forEach(::walkExpr)
+            }
+
+            is RsMacroArgument -> {
+                val expansion = macroCall.expansion
+                if (expansion != null) {
+                    for (expandedElement in expansion.elements) {
+                        walk(expandedElement)
+                    }
+                } else {
+                    useAllPaths(macroCall)
+                    useAllMacroBodyIdents(macroCall)
+                }
+            }
+
+            null -> useAllMacroBodyIdents(macroCall)
+
+            else -> error("unreachable")
+        }
     }
 
     private fun walkStmt(stmt: RsStmt) {
@@ -285,14 +382,19 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     private fun walkBlock(block: RsBlock) {
         val (expandedStmts, tailExpr) = block.expandedStmtsAndTailExpr
         for (element in expandedStmts) {
-            when (element) {
-                is RsStmt -> walkStmt(element)
-                is RsExpr -> walkExpr(element)
-            }
+            walk(element)
         }
 
         if (tailExpr != null) {
             consumeExpr(tailExpr)
+        }
+    }
+
+    private fun walk(element: RsElement) {
+        when (element) {
+            is RsStmt -> walkStmt(element)
+            is RsExpr -> walkExpr(element)
+            is RsMacroCall -> walkMacroCall(element)
         }
     }
 
@@ -373,8 +475,9 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
             // It is also a borrow or copy/move of the value being matched.
             if (binding.kind is BindByValue) {
-                // In case of NonConsumingMatch (e.g. `for x in xs {}`), the pat should not be consumed as copy/move
-                if (matchMode != NonConsumingMatch) {
+                // In case of NonConsumingMatch (e.g. `for x in xs {}`), the pat should not be consumed as copy/move,
+                // but should be consumed as usage
+                if (matchMode != NonConsumingMatch || delegate is GatherLivenessContext) {
                     delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
                 }
             }
