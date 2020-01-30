@@ -134,7 +134,7 @@ class RsTypeInferenceWalker(
         else -> false
     }
 
-    private fun RsExpr.inferType(expected: Ty? = null): Ty {
+    private fun RsExpr.inferType(expected: Ty? = null, needs: Needs = Needs.None): Ty {
         ProgressManager.checkCanceled()
         if (ctx.isTypeInferred(this)) error("Trying to infer expression type twice")
 
@@ -149,11 +149,11 @@ class RsTypeInferenceWalker(
             is RsPathExpr -> inferPathExprType(this)
             is RsStructLiteral -> inferStructLiteralType(this, expected)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
-            is RsParenExpr -> this.expr.inferType(expected)
+            is RsParenExpr -> this.expr.inferType(expected, needs)
             is RsUnitExpr -> TyUnit
             is RsCastExpr -> inferCastExprType(this)
             is RsCallExpr -> inferCallExprType(this, expected)
-            is RsDotExpr -> inferDotExprType(this, expected)
+            is RsDotExpr -> inferDotExprType(this, expected, needs)
             is RsLitExpr -> inferLitExprType(this, expected)
             is RsBlockExpr -> inferBlockExprType(this, expected)
             is RsIfExpr -> inferIfExprType(this, expected)
@@ -161,12 +161,12 @@ class RsTypeInferenceWalker(
             is RsWhileExpr -> inferWhileExprType(this)
             is RsForExpr -> inferForExprType(this)
             is RsMatchExpr -> inferMatchExprType(this, expected)
-            is RsUnaryExpr -> inferUnaryExprType(this, expected)
+            is RsUnaryExpr -> inferUnaryExprType(this, expected, needs)
             is RsBinaryExpr -> inferBinaryExprType(this)
             is RsTryExpr -> inferTryExprType(this)
             is RsArrayExpr -> inferArrayType(this, expected)
             is RsRangeExpr -> inferRangeType(this)
-            is RsIndexExpr -> inferIndexExprType(this)
+            is RsIndexExpr -> inferIndexExprType(this, needs)
             is RsMacroExpr -> inferMacroExprType(this, expected)
             is RsLambdaExpr -> inferLambdaExprType(this, expected)
             is RsYieldExpr -> inferYieldExprType(this)
@@ -180,8 +180,8 @@ class RsTypeInferenceWalker(
         return ty
     }
 
-    private fun RsExpr.inferTypeCoercableTo(expected: Ty): Ty {
-        val inferred = inferType(expected)
+    private fun RsExpr.inferTypeCoercableTo(expected: Ty, needs: Needs = Needs.None): Ty {
+        val inferred = inferType(expected, needs)
         return if (coerce(this, inferred, expected)) expected else inferred
     }
 
@@ -747,8 +747,8 @@ class RsTypeInferenceWalker(
         return raw.substitute(field.selfTy.typeParameterValues).foldWith(associatedTypeNormalizer)
     }
 
-    private fun inferDotExprType(expr: RsDotExpr, expected: Ty?): Ty {
-        val receiver = resolveTypeVarsWithObligations(expr.expr.inferType())
+    private fun inferDotExprType(expr: RsDotExpr, expected: Ty?, needs: Needs): Ty {
+        val receiver = resolveTypeVarsWithObligations(expr.expr.inferType(needs = needs))
         val methodCall = expr.methodCall
         val fieldLookup = expr.fieldLookup
         return when {
@@ -818,14 +818,14 @@ class RsTypeInferenceWalker(
         return getMoreCompleteType(arms.mapNotNull { it.expr?.let(ctx::getExprType) })
     }
 
-    private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Ty?): Ty {
+    private fun inferUnaryExprType(expr: RsUnaryExpr, expected: Ty?, needs: Needs): Ty {
         val innerExpr = expr.expr ?: return TyUnknown
         return when (expr.operatorType) {
             UnaryOperator.REF -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE)
             UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
-                val base = resolveTypeVarsWithObligations(innerExpr.inferType())
+                val base = resolveTypeVarsWithObligations(innerExpr.inferType(needs = needs))
                 val deref = lookup.deref(base)
                 if (deref == null && base != TyUnknown) {
                     ctx.addDiagnostic(RsDiagnostic.DerefError(expr, base))
@@ -841,8 +841,9 @@ class RsTypeInferenceWalker(
         }
     }
 
+    // TODO infer the actual lifetime
     private fun inferRefType(expr: RsExpr, expected: Ty?, mutable: Mutability): Ty =
-        TyReference(expr.inferType((expected as? TyReference)?.referenced), mutable) // TODO infer the actual lifetime
+        TyReference(expr.inferType((expected as? TyReference)?.referenced, Needs.maybeMutPlace(mutable)), mutable)
 
     private fun inferIfExprType(expr: RsIfExpr, expected: Ty?): Ty {
         expr.condition?.inferTypes()
@@ -872,8 +873,9 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferBinaryExprType(expr: RsBinaryExpr): Ty {
-        val lhsType = resolveTypeVarsWithObligations(expr.left.inferType())
         val op = expr.operatorType
+        val lhsNeeds = if (op is AssignmentOp) Needs.MutPlace else Needs.None
+        val lhsType = resolveTypeVarsWithObligations(expr.left.inferType(needs = lhsNeeds))
         val (rhsType, retTy) = when (op) {
             is BoolOp -> {
                 if (op is OverloadableBinaryOperator) {
@@ -1019,14 +1021,14 @@ class RsTypeInferenceWalker(
         return items.findRangeTy(rangeName, indexType)
     }
 
-    private fun inferIndexExprType(expr: RsIndexExpr): Ty {
+    private fun inferIndexExprType(expr: RsIndexExpr, needs: Needs): Ty {
         fun isArrayToSlice(prevType: Ty?, type: Ty?): Boolean =
             prevType is TyArray && type is TySlice
 
         val containerExpr = expr.containerExpr ?: return TyUnknown
         val indexExpr = expr.indexExpr ?: return TyUnknown
 
-        val containerType = containerExpr.inferType()
+        val containerType = containerExpr.inferType(needs = needs)
         val indexType = ctx.resolveTypeVarsIfPossible(indexExpr.inferType())
 
         if (indexType is TyReference) {
@@ -1311,6 +1313,27 @@ class RsTypeInferenceWalker(
         val outputType = futureTrait.findAssociatedType("Output") ?: return TyUnknown
         val selection = lookup.selectProjection(TraitRef(this, futureTrait.withSubst()), outputType)
         return selection.ok()?.register() ?: TyUnknown
+    }
+}
+
+/**
+ * Specifies whether an expression needs mutable a mutable place or not. For
+ * example, `*x` expr in `*x = 1;` needs a mutable place but in `a = *x;` is not.
+ */
+private enum class Needs {
+    MutPlace,
+    None;
+
+    fun toMutability(): Mutability = when (this) {
+        MutPlace -> Mutability.MUTABLE
+        None -> Mutability.IMMUTABLE
+    }
+
+    companion object {
+        fun maybeMutPlace(mutability: Mutability): Needs = when (mutability) {
+            Mutability.MUTABLE -> Needs.MutPlace
+            Mutability.IMMUTABLE -> Needs.None
+        }
     }
 }
 
