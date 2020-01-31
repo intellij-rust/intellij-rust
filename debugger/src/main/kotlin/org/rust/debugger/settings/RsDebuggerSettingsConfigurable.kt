@@ -7,11 +7,16 @@ package org.rust.debugger.settings
 
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.ui.components.Label
+import com.intellij.ui.layout.Cell
+import com.intellij.ui.layout.CellBuilder
+import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 class RsDebuggerSettingsConfigurable(
     private val settings: RsDebuggerSettings
@@ -31,7 +36,7 @@ class RsDebuggerSettingsConfigurable(
     override fun createComponent(): JComponent = panel {
         row("LLDB renderers:") { lldbRenderers() }
         row("GDB renderers:") { gdbRenderers() }
-        row { label("Changing these options will affect next debug session", gapLeft = 4, style = SMALL) }
+        row { smallLabelWithGap("Changing these options will affect next debug session") }
     }
 
     override fun isModified(): Boolean =
