@@ -334,11 +334,8 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-        // TODO: temporary solution until native debug plugin for 2020.1 is not published
-        if (platformVersion == 193) {
-            if (baseIDE == "idea") {
-                setPlugins(nativeDebugPlugin)
-            }
+        if (baseIDE == "idea") {
+            setPlugins(nativeDebugPlugin)
         } else {
             version = clionVersion
         }
