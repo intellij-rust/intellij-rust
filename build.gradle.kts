@@ -171,12 +171,9 @@ project(":plugin") {
         val plugins = mutableListOf(
             project(":intellij-toml"),
             "IntelliLang",
+            graziePlugin,
             psiViewerPlugin
         )
-        // TODO: temporary solution until grazie plugin for 2020.1 is not published
-        if (platformVersion < 201) {
-            plugins += graziePlugin
-        }
         if (baseIDE == "idea") {
             plugins += "copyright"
             plugins += "coverage"
@@ -334,11 +331,8 @@ project(":clion") {
 
 project(":debugger") {
     intellij {
-        // TODO: temporary solution until native debug plugin for 2020.1 is not published
-        if (platformVersion == 193) {
-            if (baseIDE == "idea") {
-                setPlugins(nativeDebugPlugin)
-            }
+        if (baseIDE == "idea") {
+            setPlugins(nativeDebugPlugin)
         } else {
             version = clionVersion
         }
@@ -429,10 +423,7 @@ project(":coverage") {
 
 project(":grazie") {
     intellij {
-        // TODO: temporary solution until grazie plugin for 2020.1 is not published
-        if (platformVersion < 201) {
-            setPlugins(graziePlugin)
-        }
+        setPlugins(graziePlugin)
     }
     dependencies {
         compile(project(":"))

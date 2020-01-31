@@ -57,6 +57,7 @@ import org.rust.stdext.waitForWithCheckCanceled
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.*
+import java.util.function.BiConsumer
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
@@ -652,7 +653,7 @@ private class MacroExpansionServiceImplInner(
 /** Inspired by [BackgroundTaskQueue] */
 private class MacroExpansionTaskQueue(val project: Project) {
     private val processor = QueueProcessor<ContinuableRunnable>(
-        PairConsumer { obj, t -> obj.run(t) },
+        QueueConsumer(),
         true,
         ThreadToUse.AWT,
         project.disposed
@@ -715,6 +716,12 @@ private class MacroExpansionTaskQueue(val project: Project) {
 
     private interface ContinuableRunnable {
         fun run(continuation: Runnable)
+    }
+
+    // BACKCOMPAT: 2019.3. get rid of [PairConsumer] implementation
+    private class QueueConsumer : PairConsumer<ContinuableRunnable, Runnable>, BiConsumer<ContinuableRunnable, Runnable> {
+        override fun consume(s: ContinuableRunnable, t: Runnable) = accept(s, t)
+        override fun accept(t: ContinuableRunnable, u: Runnable) = t.run(u)
     }
 
     private class BackgroundableTaskData(
