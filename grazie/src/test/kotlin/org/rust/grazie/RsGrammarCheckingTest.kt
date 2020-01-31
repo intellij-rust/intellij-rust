@@ -5,18 +5,9 @@
 
 package org.rust.grazie
 
-import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.GrazieInspection
-import com.intellij.grazie.jlanguage.LangDetector
 import org.rust.ide.annotator.RsAnnotationTestFixture
-import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
-
-    override fun setUp() {
-        super.setUp()
-        LangDetector.init(GrazieConfig.get(), project)
-    }
+class RsGrammarCheckingTest : RsGrammarCheckingTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture =
         RsAnnotationTestFixture(myFixture, inspectionClasses = listOf(inspectionClass), baseFileName = "lib.rs")
