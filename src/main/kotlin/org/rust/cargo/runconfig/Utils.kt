@@ -8,7 +8,7 @@ package org.rust.cargo.runconfig
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.filters.Filter
-import com.intellij.execution.impl.ExecutionManagerImpl
+import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
@@ -62,7 +62,7 @@ fun Project.buildProject() {
 
     // Initialize run content manager
     ApplicationManager.getApplication().invokeAndWait {
-        ExecutionManagerImpl.getInstance(this).contentManager
+        RunContentManager.getInstance(this)
     }
 
     for (cargoProject in cargoProjects.allProjects) {

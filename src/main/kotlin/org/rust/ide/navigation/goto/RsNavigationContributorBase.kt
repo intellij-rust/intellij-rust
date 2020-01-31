@@ -5,8 +5,6 @@
 
 package org.rust.ide.navigation.goto
 
-import com.intellij.navigation.ChooseByNameContributorEx
-import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -30,10 +28,9 @@ import java.util.*
 abstract class RsNavigationContributorBase<T> protected constructor(
     private val indexKey: StubIndexKey<String, T>,
     private val clazz: Class<T>
-) : ChooseByNameContributorEx,
-    GotoClassContributor where T : NavigationItem, T : RsNamedElement {
+) : NavigationContributorBase<T>() where T : NavigationItem, T : RsNamedElement {
 
-    override fun processNames(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?) {
+    override fun processNamesInner(processor: Processor<String>, scope: GlobalSearchScope, filter: IdFilter?) {
         checkFilter(filter)
         StubIndex.getInstance().processAllKeys(
             indexKey,
@@ -43,7 +40,7 @@ abstract class RsNavigationContributorBase<T> protected constructor(
         )
     }
 
-    override fun processElementsWithName(name: String, processor: Processor<NavigationItem>, parameters: FindSymbolParameters) {
+    override fun processElementsWithNameInner(name: String, processor: Processor<NavigationItem>, parameters: FindSymbolParameters) {
         checkFilter(parameters.idFilter)
         val originScope = parameters.searchScope
         StubIndex.getInstance().processElements(

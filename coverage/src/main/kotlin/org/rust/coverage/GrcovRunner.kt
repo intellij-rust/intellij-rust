@@ -15,7 +15,6 @@ import com.intellij.execution.configurations.coverage.CoverageEnabledConfigurati
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.runners.DefaultProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
@@ -28,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CargoConstants.ProjectLayout
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
@@ -38,7 +38,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.stdext.toPath
 import java.io.File
 
-class GrcovRunner : DefaultProgramRunner() {
+class GrcovRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
