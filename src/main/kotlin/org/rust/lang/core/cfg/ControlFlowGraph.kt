@@ -138,6 +138,8 @@ private class ExitPointVisitor(
     private val sink: (ExitPoint) -> Unit
 ) : RsVisitor() {
     var inTry = 0
+    var inEndLoop = 0
+    var outerLoopLabel: String? = null
 
     override fun visitElement(element: RsElement) = element.acceptChildren(this)
 
@@ -170,11 +172,34 @@ private class ExitPointVisitor(
         if (macroExpr.type == TyNever) sink(ExitPoint.DivergingExpr(macroExpr))
     }
 
+    override fun visitBreakExpr(breakExpr: RsBreakExpr) {
+        when (inEndLoop) {
+            0 -> return
+            1 -> sink(ExitPoint.TailExpr(breakExpr))
+            else -> {
+                val label = breakExpr.label ?: return
+                if (label.referenceName == outerLoopLabel) {
+                    sink(ExitPoint.TailExpr(breakExpr))
+                }
+            }
+        }
+    }
+
     override fun visitExpr(expr: RsExpr) {
         when (expr) {
             is RsIfExpr,
             is RsBlockExpr,
             is RsMatchExpr -> expr.acceptChildren(this)
+            is RsLoopExpr ->
+                if (expr.isInTailPosition || inEndLoop >= 1) {
+                    if (inEndLoop == 0) outerLoopLabel = expr.labelDecl?.name
+                    inEndLoop += 1
+                    expr.acceptChildren(this)
+                    inEndLoop -= 1
+                    if (inEndLoop == 0) outerLoopLabel = null
+                } else {
+                    expr.acceptChildren(this)
+                }
             else -> {
                 if (expr.isInTailPosition) sink(ExitPoint.TailExpr(expr)) else expr.acceptChildren(this)
             }
@@ -188,7 +213,7 @@ private class ExitPointVisitor(
         if (block.stmtList.lastOrNull() != exprStmt) return
 
         val parent = block.parent
-        if (isTailStatement(parent, exprStmt)) {
+        if (isTailStatement(parent, exprStmt) && inEndLoop == 0) {
             sink(ExitPoint.TailStatement(exprStmt))
         }
     }
@@ -202,7 +227,11 @@ private class ExitPointVisitor(
                 when (ancestor) {
                     is RsFunction, is RsLambdaExpr -> return true
                     is RsStmt, is RsCondition, is RsMatchArmGuard, is RsPat -> return false
-                    else -> if (ancestor is RsExpr && ancestor.parent is RsMatchExpr) return false
+                    else -> {
+                        val parent = ancestor.parent
+                        if ((ancestor is RsExpr && parent is RsMatchExpr) || parent is RsLoopExpr)
+                            return false
+                    }
                 }
             }
             return false
