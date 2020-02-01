@@ -358,6 +358,33 @@ class RsStructureViewTest : RsTestBase() {
          Foo<T> for Bar<F> where T: Clone, F: Ord
     """)
 
+    fun `test ?Sized in impl`() = doTest("""
+        struct A<T> { }
+        trait Bar<T> {}
+
+        impl<T: ?Sized> A<T> {
+            pub fn aaa() {}
+        }
+        impl<T> A<T> where T:Clone + ?Sized {
+            pub fn aaa() {}
+        }
+        impl<T:?Sized> A<T> where T:Clone {
+            pub fn aaa() {}
+        }
+        impl<T: ?Sized,F: ?Sized> Bar<F> for A<T> {}
+    """, """
+        -main.rs
+         A
+         Bar
+         -A<T> where T: ?Sized
+          aaa()
+         -A<T> where T: Clone + ?Sized
+          aaa()
+         -A<T> where T: ?Sized + Clone
+          aaa()
+         Bar<F> for A<T> where T: ?Sized, F: ?Sized
+    """)
+
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()

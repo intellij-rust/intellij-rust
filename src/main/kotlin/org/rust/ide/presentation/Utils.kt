@@ -83,7 +83,10 @@ private fun presentableName(psi: RsElement): String? {
 private fun typeParameterBounds(impl: RsImplItem): String {
     val allBounds = impl.typeParameters.mapNotNull { param ->
         val name = param.name ?: return@mapNotNull null
-        val bounds = param.bounds.mapNotNull { it.bound.traitRef?.path?.referenceName }
+        val bounds = param.bounds.mapNotNull inner@{
+            val bound = it.bound.traitRef?.path?.referenceName ?: return@inner null
+            if (it.hasQ) "?$bound" else bound
+        }
         if (bounds.isNotEmpty()) bounds.joinToString(prefix = "$name: ", separator = " + ") else null
     }
     return if (allBounds.isNotEmpty()) allBounds.joinToString(prefix = " where ", separator = ", ") else ""
