@@ -14,8 +14,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
 import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.RsElementTypes.Q
-import org.rust.lang.core.psi.RsElementTypes.RETURN
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
@@ -24,7 +23,7 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
 
         val createHandler: (PsiElement) -> RsHighlightExitPointsHandler? = { element ->
             val elementType = element.elementType
-            if (elementType == RETURN || (elementType == Q && element.parent is RsTryExpr)) {
+            if (elementType == RETURN || (elementType == Q && element.parent is RsTryExpr) || elementType == BREAK) {
                 RsHighlightExitPointsHandler(editor, file, element)
             } else null
         }
@@ -42,12 +41,13 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
     }
 
     override fun computeUsages(targets: MutableList<PsiElement>?) {
+        val usages = mutableListOf<PsiElement>()
         val sink: (ExitPoint) -> Unit = { exitPoint ->
             when (exitPoint) {
-                is ExitPoint.Return -> addOccurrence(exitPoint.e)
-                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) addOccurrence(exitPoint.e.q) else addOccurrence(exitPoint.e)
-                is ExitPoint.DivergingExpr -> addOccurrence(exitPoint.e)
-                is ExitPoint.TailExpr -> addOccurrence(exitPoint.e)
+                is ExitPoint.Return -> usages.add(exitPoint.e)
+                is ExitPoint.TryExpr -> if (exitPoint.e is RsTryExpr) usages.add(exitPoint.e.q) else usages.add(exitPoint.e)
+                is ExitPoint.DivergingExpr -> usages.add(exitPoint.e)
+                is ExitPoint.TailExpr -> usages.add(exitPoint.e)
                 is ExitPoint.TailStatement -> Unit
             }
         }
@@ -65,6 +65,11 @@ private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var ta
                 ExitPoint.process(ancestor.expr, sink)
                 break
             }
+        }
+
+        // highlight only if target inside exit point
+        if (usages.any { target.ancestors.contains(it) }) {
+            usages.forEach(this::addOccurrence)
         }
     }
 }
