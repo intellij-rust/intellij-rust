@@ -469,7 +469,7 @@ class RsInferenceContext(
             ty1 is TyAdt && ty2 is TyAdt && ty1.item == ty2.item -> {
                 combinePairs(ty1.typeArguments.zip(ty2.typeArguments))
             }
-            ty1 is TyTraitObject && ty2 is TyTraitObject && ty1.trait == ty2.trait -> CoerceResult.Ok
+            ty1 is TyTraitObject && ty2 is TyTraitObject && combineBoundElements(ty1.trait, ty2.trait) -> CoerceResult.Ok
             ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> CoerceResult.Ok
             ty1 is TyNever || ty2 is TyNever -> CoerceResult.Ok
             else -> CoerceResult.Mismatch(ty1, ty2)
