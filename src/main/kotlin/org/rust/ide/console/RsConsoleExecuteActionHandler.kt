@@ -13,8 +13,7 @@ import com.intellij.execution.process.ProcessHandler
 class RsConsoleExecuteActionHandler(
     processHandler: ProcessHandler,
     private val consoleRunner: RsConsoleRunner,
-    private val consoleCommunication: RsConsoleCommunication,
-    private val consoleView: RsConsoleView
+    private val consoleCommunication: RsConsoleCommunication
 ) : ProcessBackedConsoleExecuteActionHandler(processHandler, false) {
 
     var isEnabled: Boolean = false
@@ -22,8 +21,9 @@ class RsConsoleExecuteActionHandler(
     override fun processLine(line: String) {
         val entry = CommandHistory.Entry(line)
         consoleRunner.commandHistory.addEntry(entry)
-        consoleView.updateCodeFragmentContext()
-        super.processLine(line)
+
+        val lineEscaped = line.replace("\n", "\u2028")
+        super.processLine(lineEscaped)
     }
 
     override fun runExecuteAction(console: LanguageConsoleView) {

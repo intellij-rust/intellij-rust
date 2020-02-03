@@ -16,7 +16,11 @@ class Evcxr(private val evcxrExecutable: Path) {
             .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
             .withConsoleMode(true)
             .withExePath(evcxrExecutable.systemIndependentPath)
-            .withParameters("--disable-readline")
+            .withParameters(
+                "--ide-mode",
+                "--disable-readline",
+                "--opt", "0"
+            )
             .withWorkDirectory(workingDirectory)
             .withCharset(Charsets.UTF_8) as PtyCommandLine
 }
