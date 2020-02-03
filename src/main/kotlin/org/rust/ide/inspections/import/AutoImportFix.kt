@@ -18,7 +18,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
-import org.rust.ide.search.RsWithMacrosScope
+import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -218,7 +218,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             val superMods = LinkedHashSet(scope.containingMod.superMods)
             val attributes = scope.stdlibAttributes
 
-            val searchScope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project))
+            val searchScope = RsWithMacrosProjectScope(project)
             return traitsToImport
                 .asSequence()
                 .map { QualifiedNamedItem.ExplicitItem(it) }
@@ -666,7 +666,7 @@ data class ImportContext private constructor(
             project = project,
             mod = path.containingMod,
             superMods = LinkedHashSet(path.containingMod.superMods),
-            scope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project)),
+            scope = RsWithMacrosProjectScope(project),
             pathParsingMode = path.pathParsingMode,
             attributes = path.stdlibAttributes,
             namespaceFilter = path.namespaceFilter(isCompletion)
@@ -676,7 +676,7 @@ data class ImportContext private constructor(
             project = project,
             mod = element.containingMod,
             superMods = LinkedHashSet(element.containingMod.superMods),
-            scope = RsWithMacrosScope(project, GlobalSearchScope.allScope(project)),
+            scope = RsWithMacrosProjectScope(project),
             pathParsingMode = PathParsingMode.TYPE,
             attributes = element.stdlibAttributes,
             namespaceFilter = { true }
