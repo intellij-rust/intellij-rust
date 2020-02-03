@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
 import kotlin.streams.toList
 import kotlin.system.measureNanoTime
-import kotlin.system.measureTimeMillis
 
 abstract class MacroExpansionTaskBase(
     project: Project,
@@ -91,8 +90,8 @@ abstract class MacroExpansionTaskBase(
         try {
             submitExpansionTask()
 
-            MACRO_LOG.trace("Awaiting")
-            val millis = measureNanoTime {
+            MACRO_LOG.debug("Awaiting")
+            val duration = measureNanoTime {
                 // 50ms - default progress bar update interval. See [ProgressDialog.UPDATE_INTERVAL]
                 while (!sync.await(50, TimeUnit.MILLISECONDS)) {
                     indicator.fraction = calcProgress(
@@ -111,7 +110,7 @@ abstract class MacroExpansionTaskBase(
                     }
                 }
             }
-            MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
+            MACRO_LOG.info("Task completed! ${totalExpanded.get()} total calls, millis: " + duration / 1_000_000)
         } finally {
             RsResolveCache.getInstance(project).endExpandingMacros()
             // Return all non expanded files to storage.
@@ -148,7 +147,7 @@ abstract class MacroExpansionTaskBase(
                 do {
                     extractableList = expansionSteps.nextOrNull()
                     val step = currentStep.incrementAndGet()
-                    MACRO_LOG.trace("Expansion step: $step")
+                    MACRO_LOG.debug("Expansion step: $step")
                     stepModificationTracker.incModificationCount()
                 } while (extractableList != null && extractableList.isEmpty())
                 extractableList
@@ -193,7 +192,7 @@ abstract class MacroExpansionTaskBase(
 
             movePendingFileToStep(pending, currentStep.get())
             pendingFiles = pending.toList()
-            MACRO_LOG.trace("Pending files: ${pendingFiles.size}")
+            MACRO_LOG.debug("Pending files: ${pendingFiles.size}")
 
             val stages2 = stages1.parallelStream().unordered().map { stage1 ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {

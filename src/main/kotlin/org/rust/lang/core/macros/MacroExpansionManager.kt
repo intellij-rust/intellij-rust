@@ -93,7 +93,7 @@ inline fun <T> MacroExpansionManager.withExpansionState(
     }
 }
 
-val MACRO_LOG = Logger.getInstance("rust.macros")
+val MACRO_LOG = Logger.getInstance("org.rust.macros")
 private const val RUST_EXPANDED_MACROS = "rust_expanded_macros"
 
 fun getBaseMacroExpansionDir(): Path =
@@ -536,7 +536,7 @@ private class MacroExpansionServiceImplInner(
         get() = expansionMode is MacroExpansionMode.New
 
     private fun processUnprocessedMacros() {
-        MACRO_LOG.trace("processUnprocessedMacros")
+        MACRO_LOG.info("processUnprocessedMacros")
         if (!isExpansionModeNew) return
         class ProcessUnprocessedMacrosTask : MacroExpansionTaskBase(
             project,
@@ -556,7 +556,7 @@ private class MacroExpansionServiceImplInner(
 
                 val calls = runReadActionInSmartMode(project) {
                     val calls = RsMacroCallIndex.getMacroCalls(project, scope)
-                    MACRO_LOG.debug("Macros to expand: ${calls.size}")
+                    MACRO_LOG.info("Macros to expand: ${calls.size}")
                     calls.groupBy { it.containingFile.virtualFile }
 
                 }
@@ -571,7 +571,7 @@ private class MacroExpansionServiceImplInner(
     }
 
     private fun processChangedMacros(workspaceOnly: Boolean) {
-        MACRO_LOG.trace("processChangedMacros")
+        MACRO_LOG.info("processChangedMacros")
         if (!isExpansionModeNew) return
 
         // Fixes inplace rename when the renamed element is referenced from a macro call body
