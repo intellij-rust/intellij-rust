@@ -32,11 +32,8 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             var result: RsModDeclItem? = null
 
-            val scope = if (project.macroExpansionManager.isResolvingMacro) {
-                GlobalSearchScope.allScope(project)
-            } else {
-                RsWithMacrosProjectScope(project)
-            }
+            val scope = project.macroExpansionManager.expansionState?.expandedSearchScope
+                ?: RsWithMacrosProjectScope(project)
             StubIndex.getInstance().processElements(
                 KEY, key, project, scope, RsModDeclItem::class.java
             ) { modDecl ->

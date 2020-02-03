@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
@@ -35,7 +36,6 @@ import org.rust.stdext.HashCode
 import org.rust.stdext.executeSequentially
 import org.rust.stdext.nextOrNull
 import org.rust.stdext.supplyAsync
-import java.nio.file.Path
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -46,7 +46,8 @@ abstract class MacroExpansionTaskBase(
     project: Project,
     private val storage: ExpandedMacroStorage,
     private val pool: Executor,
-    private val realFsExpansionContentRoot: Path
+    private val realFsExpansionContentRoot: VirtualFile,
+    private val stepModificationTracker: SimpleModificationTracker
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false) {
     private val transactionExecutor = TransactionExecutor(project)
     private val expander = MacroExpander(project)
@@ -100,7 +101,7 @@ abstract class MacroExpansionTaskBase(
                     // forever)
                     if (project.isDisposed) break
 
-                    // Enter heavy process mode only if at least one macros is not up-to-date
+                    // Enter heavy process mode only if at least one macro is not up-to-date
                     if (heavyProcessToken == null && heavyProcessRequested) {
                         heavyProcessToken = HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros")
                     }
@@ -139,7 +140,9 @@ abstract class MacroExpansionTaskBase(
                 var extractableList: List<Extractable>?
                 do {
                     extractableList = expansionSteps.nextOrNull()
-                    currentStep.incrementAndGet()
+                    val step = currentStep.incrementAndGet()
+                    MACRO_LOG.trace("Expansion step: $step")
+                    stepModificationTracker.incModificationCount()
                 } while (extractableList != null && extractableList.isEmpty())
                 extractableList
             }
@@ -194,7 +197,7 @@ abstract class MacroExpansionTaskBase(
                 // We can cancel task if the project is disposed b/c after project reopen storage consistency will be
                 // re-checked
                 val stages3fs = stages2.chunked(VFS_BATCH_SIZE).map { stages2c ->
-                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
+                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot.pathAsPath)
                     val stages3 = stages2c.map { stage2 ->
                         if (project.isDisposed) throw ProcessCanceledException()
                         val result = stage2.writeExpansionToFs(fs, currentStep.get())

@@ -42,7 +42,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         }
 
         fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
-            val cacheKey = if (project.macroExpansionManager.isResolvingMacro) EXPORTED_MACROS_KEY else EXPORTED_KEY
+            val cacheKey = if (project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
             return CachedValuesManager.getManager(project).getCachedValue(project, cacheKey, {
                 val result = HashMap<RsMod, MutableList<RsMacro>>()
                 val keys = StubIndex.getInstance().getAllKeys(KEY, project)
