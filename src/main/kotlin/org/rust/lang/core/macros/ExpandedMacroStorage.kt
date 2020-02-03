@@ -66,7 +66,7 @@ class ExpandedMacroStorage(val project: Project) {
     private fun deserialize(sfs: List<SourceFile>) {
         for (sf in sfs) {
             sourceFiles.put(sf.fileId, sf)
-            getOrPutStagedList(sf).add(sf)
+            getOrPutStagedList(sf.depthNotSync).add(sf)
             sf.forEachInfoNotSync { if (it.fileId > 0) expandedFileToInfo.put(it.fileId, it) }
         }
     }
@@ -320,6 +320,9 @@ class SourceFile(
     private val fileUrl: String get() = file.url
     val fileId: Int get() = file.fileId
     val project: Project get() = storage.project
+
+    // Used only for deserialization
+    val depthNotSync: Int get() = _depth
 
     var depth: Int
         get() {
