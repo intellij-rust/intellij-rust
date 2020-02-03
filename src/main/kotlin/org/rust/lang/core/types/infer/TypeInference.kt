@@ -35,9 +35,10 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
 }
 
 sealed class Adjustment(open val target: Ty): TypeFoldable<Adjustment> {
+    override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
+
     class Deref(target: Ty) : Adjustment(target) {
         override fun superFoldWith(folder: TypeFolder): Adjustment = Deref(target.foldWith(folder))
-        override fun superVisitWith(visitor: TypeVisitor): Boolean = target.visitWith(visitor)
     }
 
     class BorrowReference(
@@ -50,6 +51,10 @@ sealed class Adjustment(open val target: Ty): TypeFoldable<Adjustment> {
     }
 
 //    class BorrowPointer(target: Ty, val mutability: Mutability) : Adjustment(target)
+
+    class Unsize(override val target: TyReference) : Adjustment(target){
+        override fun superFoldWith(folder: TypeFolder): Adjustment = Unsize(target.foldWith(folder) as TyReference)
+    }
 }
 
 interface RsInferenceData {
@@ -294,6 +299,9 @@ class RsInferenceContext(
     override fun getExprAdjustments(expr: RsElement): List<Adjustment> {
         return adjustments[expr] ?: emptyList()
     }
+
+    fun getExprAdjustmentsMut(expr: RsElement): MutableList<Adjustment>? =
+        adjustments[expr]
 
     override fun getExprType(expr: RsExpr): Ty {
         return exprTypes[expr] ?: TyUnknown

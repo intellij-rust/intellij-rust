@@ -11,11 +11,14 @@ import com.intellij.util.containers.isNullOrEmpty
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsStubLiteralKind
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
+import org.rust.lang.core.types.ty.Mutability.MUTABLE
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.evaluation.ExprValue
 import org.rust.lang.utils.evaluation.RsConstExprEvaluator
@@ -115,10 +118,14 @@ class RsTypeInferenceWalker(
             val explicitTy = psi.typeReference?.type
                 ?.let { normalizeAssociatedTypesIn(it) }
             val expr = psi.expr
+            val pat = psi.pat
             // We need to know type before coercion to correctly identify if expr is always diverging
             // so we can't call `inferTypeCoercableTo` directly here
             val (inferredTy, coercedInferredTy) = if (expr != null) {
-                val inferredTy = expr.inferType(explicitTy)
+                val patHasRefMut = pat?.descendantsOfTypeOrSelf<RsPatIdent>().orEmpty()
+                    .any { (it.patBinding.kind as? BindByReference)?.mutability == MUTABLE }
+                val initializerNeeds = if (patHasRefMut) Needs.MutPlace else Needs.None
+                val inferredTy = expr.inferType(explicitTy, needs = initializerNeeds)
                 val coercedTy = if (explicitTy != null && coerce(expr, inferredTy, explicitTy)) {
                     explicitTy
                 } else {
@@ -128,7 +135,7 @@ class RsTypeInferenceWalker(
             } else {
                 TyUnknown to TyInfer.TyVar()
             }
-            psi.pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(coercedInferredTy))
+            pat?.extractBindings(explicitTy ?: resolveTypeVarsWithObligations(coercedInferredTy))
             inferredTy == TyNever
         }
         is RsExprStmt -> psi.expr.inferType() == TyNever
@@ -568,11 +575,11 @@ class RsTypeInferenceWalker(
         return calleeType.retType
     }
 
-    private fun inferMethodCallExprType(receiver: Ty, methodCall: RsMethodCall, expected: Ty?): Ty {
+    private fun inferMethodCallExprType(receiverTy: Ty, methodCall: RsMethodCall, expected: Ty?): Ty {
         val argExprs = methodCall.valueArgumentList.exprList
         val callee = run {
-            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiver, methodCall)
-            val callee = pickSingleMethod(receiver, variants, methodCall)
+            val variants = resolveMethodCallReferenceWithReceiverType(lookup, receiverTy, methodCall)
+            val callee = pickSingleMethod(receiverTy, variants, methodCall)
             // If we failed to resolve ambiguity just write the all possible methods
             val variantsForDisplay = callee?.let { listOf(it.toMethodResolveVariant()) } ?: variants
             ctx.writeResolvedMethod(methodCall, variantsForDisplay)
@@ -585,9 +592,13 @@ class RsTypeInferenceWalker(
             return methodType.retType
         }
 
-        ctx.addDerefAdjustments(methodCall.receiver, callee.derefChain)
+        val receiver = methodCall.receiver
+        ctx.addDerefAdjustments(receiver, callee.derefChain)
         if (callee.borrow != null) {
-            ctx.addAdjustment(methodCall.receiver, Adjustment.BorrowReference(callee.methodSelfTy as TyReference))
+            ctx.addAdjustment(receiver, Adjustment.BorrowReference(callee.methodSelfTy as TyReference))
+            if (callee.borrow == MUTABLE) {
+                convertPlaceDerefsToMutable(receiver)
+            }
         }
 
         inferConstArgumentTypes(callee.element.constParameters, methodCall.constArguments)
@@ -670,7 +681,7 @@ class RsTypeInferenceWalker(
                 pick(ty, derefChain, null)
                     // TODO do something with lifetimes
                     .notEmptyOrLet { pick(TyReference(ty, Mutability.IMMUTABLE), derefChain, Mutability.IMMUTABLE) }
-                    .notEmptyOrLet { pick(TyReference(ty, Mutability.MUTABLE), derefChain, Mutability.MUTABLE) }
+                    .notEmptyOrLet { pick(TyReference(ty, MUTABLE), derefChain, MUTABLE) }
                     .takeIf { it.isNotEmpty() }
             }.firstOrNull()
                 ?: list.singleOrNull()?.let { listOf(MethodPick.from(it)) }
@@ -704,6 +715,50 @@ class RsTypeInferenceWalker(
                         first.isValid
                     )
                 }
+            }
+        }
+    }
+
+    // Rustc's `convert_place_derefs_to_mutable`
+    private fun convertPlaceDerefsToMutable(receiver: RsExpr) {
+        val exprs = mutableListOf(receiver)
+
+        loop@ while (true) {
+            exprs += when (val expr = exprs.last()) {
+                is RsIndexExpr -> expr.containerExpr
+                is RsUnaryExpr -> if (expr.isDereference) expr.expr else null
+                is RsDotExpr -> if (expr.fieldLookup != null) expr.expr else null
+                else -> null
+            } ?: break@loop
+        }
+
+        for (expr in exprs.asReversed()) {
+//                val adjustments = ctx.getExprAdjustments(expr)
+//                for (adjustment in adjustments) {
+//                    if (adjustment is Adjustment.Deref) {
+//
+//                    }
+//                }
+
+            val base = when (expr) {
+                is RsIndexExpr -> expr.containerExpr
+                is RsUnaryExpr -> if (expr.isDereference) expr.expr else null
+                else -> null
+            } ?: continue
+
+            val baseAdjustments = ctx.getExprAdjustmentsMut(base) ?: continue
+
+            baseAdjustments.forEachIndexed { i, adjustment ->
+                if (adjustment is Adjustment.BorrowReference && adjustment.mutability == IMMUTABLE) {
+                    baseAdjustments[i] = Adjustment.BorrowReference(adjustment.target.copy(mutability = MUTABLE))
+                }
+            }
+
+            val lastAdjustment = baseAdjustments.lastOrNull()
+            if (lastAdjustment is Adjustment.Unsize &&
+                baseAdjustments.getOrNull(baseAdjustments.lastIndex - 1) is Adjustment.BorrowReference) {
+                baseAdjustments[baseAdjustments.lastIndex] =
+                    Adjustment.Unsize(lastAdjustment.target.copy(mutability = MUTABLE))
             }
         }
     }
@@ -848,7 +903,7 @@ class RsTypeInferenceWalker(
         val innerExpr = expr.expr ?: return TyUnknown
         return when (expr.operatorType) {
             UnaryOperator.REF -> inferRefType(innerExpr, expected, Mutability.IMMUTABLE)
-            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, Mutability.MUTABLE)
+            UnaryOperator.REF_MUT -> inferRefType(innerExpr, expected, MUTABLE)
             UnaryOperator.DEREF -> {
                 // expectation must NOT be used for deref
                 val base = resolveTypeVarsWithObligations(innerExpr.inferType(needs = needs))
@@ -933,7 +988,7 @@ class RsTypeInferenceWalker(
                 enforceOverloadedBinopTypes(lhsType, rhsTypeVar, op)
                 val rhsType = resolveTypeVarsWithObligations(expr.right?.inferTypeCoercableTo(rhsTypeVar) ?: TyUnknown)
 
-                val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, Mutability.MUTABLE))
+                val lhsAdjustment = Adjustment.BorrowReference(TyReference(lhsType, MUTABLE))
                 ctx.addAdjustment(expr.left, lhsAdjustment)
 
                 rhsType to TyUnit
@@ -1051,36 +1106,33 @@ class RsTypeInferenceWalker(
         fun isArrayToSlice(prevType: Ty?, type: Ty?): Boolean =
             prevType is TyArray && type is TySlice
 
-        val containerExpr = expr.containerExpr ?: return TyUnknown
+        val containerExpr = expr.containerExpr
         val indexExpr = expr.indexExpr ?: return TyUnknown
 
         val containerType = containerExpr.inferType(needs = needs)
         val indexType = ctx.resolveTypeVarsIfPossible(indexExpr.inferType())
 
         val derefSequence = mutableListOf<Ty>()
+        var arrayToSlice: Ty? = null
         val result = lookup.coercionSequence(containerType).withPrevious().mapIndexedNotNull { i, (type, prevType) ->
-            if (i != 0 && !isArrayToSlice(prevType, type)) {
-                derefSequence += type
+            if (i != 0) {
+                if (isArrayToSlice(prevType, type)) {
+                    arrayToSlice = type
+                } else {
+                    derefSequence += type
+                }
             }
             lookup.findIndexOutputType(type, indexType)?.register()
         }.firstOrNull() ?: TyUnknown
 
         if (result != TyUnknown) {
             val requiredMutability = needs.toMutability()
-            val lastTy = derefSequence.lastOrNull() ?: containerType
-            val prevTy = derefSequence.getOrNull(derefSequence.size - 2) ?: containerType
-            when {
-                lastTy is TyArray -> {
-                    ctx.addDerefAdjustments(containerExpr, derefSequence)
-                }
-                prevTy is TyReference && prevTy.mutability == requiredMutability -> {
-                    if (derefSequence.size > 1) {
-                        ctx.addDerefAdjustments(containerExpr, derefSequence.dropLast(1))
-                    }
-                }
-                else -> {
-                    ctx.addDerefAdjustments(containerExpr, derefSequence)
-                    ctx.addAdjustment(containerExpr, Adjustment.BorrowReference(TyReference(lastTy, requiredMutability)))
+            val adjustedTy = derefSequence.lastOrNull() ?: containerType
+            ctx.addDerefAdjustments(containerExpr, derefSequence)
+            if (!isBuiltinIndex(adjustedTy, ctx.resolveTypeVarsIfPossible(indexType))) {
+                ctx.addAdjustment(containerExpr, Adjustment.BorrowReference(TyReference(adjustedTy, requiredMutability)))
+                arrayToSlice?.let {
+                    ctx.addAdjustment(containerExpr, Adjustment.Unsize(TyReference(it, requiredMutability)))
                 }
             }
         }
@@ -1358,13 +1410,13 @@ private enum class Needs {
     None;
 
     fun toMutability(): Mutability = when (this) {
-        MutPlace -> Mutability.MUTABLE
+        MutPlace -> MUTABLE
         None -> Mutability.IMMUTABLE
     }
 
     companion object {
         fun maybeMutPlace(mutability: Mutability): Needs = when (mutability) {
-            Mutability.MUTABLE -> Needs.MutPlace
+            MUTABLE -> Needs.MutPlace
             Mutability.IMMUTABLE -> Needs.None
         }
     }
@@ -1452,3 +1504,6 @@ private fun KnownItems.makeFuture(outputTy: Ty): Ty {
     val boundFuture = futureTrait.substAssocType("Output", outputTy)
     return TyAnon(null, listOf(boundFuture))
 }
+
+fun isBuiltinIndex(baseType: Ty, indexType: Ty) =
+    (baseType is TyArray || baseType is TySlice) && indexType == TyInteger.USize

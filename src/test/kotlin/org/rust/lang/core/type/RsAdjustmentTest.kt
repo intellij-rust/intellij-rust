@@ -202,61 +202,12 @@ class RsAdjustmentTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test index expr borrow`() = testExpr("""
-        fn main() {
-            let v = Vec::<i32>::new();
-            v[0];
-        } //^ borrow(&Vec<i32>)
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test index expr without adjustments`() = testExpr("""
-        fn main() {
-            let v = &Vec::<i32>::new();
-            v[0];
-        } //^
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test index expr deref`() = testExpr("""
-        fn main() {
-            let v = &&Vec::<i32>::new();
-            v[0];
-        } //^ deref(&Vec<i32>)
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test index expr deref 2`() = testExpr("""
-        fn main() {
-            let v = &&&Vec::<i32>::new();
-            v[0];
-        } //^ deref(&&Vec<i32>), deref(&Vec<i32>)
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test index expr deref borrow`() = testExpr("""
-        fn main() {
-            let mut a = Vec::<i32>::new();
-            let v = &mut a;
-            v[0];
-        } //^ deref(Vec<i32>), borrow(&Vec<i32>)
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test assign index expr borrow mut`() = testExpr("""
-        fn main() {
-            let mut v = Vec::<i32>::new();
-            v[0] = 1;
-        } //^ borrow(&mut Vec<i32>)
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test assign index expr without adjustments`() = testExpr("""
         fn main() {
             let mut a = Vec::<i32>::new();
             let v = &mut a;
             v[0] = 1;
-        } //^
+        } //^ deref(Vec<i32>), borrow(&mut Vec<i32>)
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
@@ -283,6 +234,151 @@ class RsAdjustmentTest : RsTestBase() {
         } //^ deref([i32; 3])
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test array index expr with range`() = testExpr("""
+        fn main() {
+            let a = &[1, 2, 3];
+            a[..];
+        } //^ deref([i32; 3]), borrow(&[i32; 3]), unsize(&[i32])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 1`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            buf[0] = 1;
+        }  //^ deref([u8])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 2`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            (buf[0]) = 1;
+        }   //^ deref([u8])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 3`() = testExpr("""
+        fn f(buf: &mut [&mut [u8]]) {
+            buf[0][0] = 1;
+        }  //^ deref([&mut [u8]])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 1`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            let _ = &mut (buf[0]);
+        }                //^ deref([u8])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 2`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            let ref mut a = (buf[0]);
+        }                   //^ deref([u8])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 3`() = testExpr("""
+        struct S;
+        impl S { fn foo(&mut self) {} }
+        fn f(buf: &mut [S]) {
+            buf[0].foo();
+        }  //^ deref([S])
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 4`() = testExpr("""
+        fn main() {
+            let mut a = [1, 2, 3];
+            let b = a[..].get_mut(1);
+        }         //^ borrow(&mut [i32; 3]), unsize(&mut [i32])
+    """)
+
+    @Language("Rust")
+    private val indexable = """
+        #[lang = "index"]
+        pub trait Index<Idx> { type Output; }
+        #[lang = "index_mut"]
+        pub trait IndexMut<Idx>: Index<Idx> {}
+
+        struct Indexable<T>;
+
+        impl<T> Index<usize> for Indexable<T> { type Output = T; }
+        impl<T> IndexMut<usize> for Indexable<T> {}
+    """.trimIndent()
+
+    fun `test overloaded index assign 1`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            buf[0] = 1;
+        }  //^ deref(Indexable<u8>), borrow(&mut Indexable<u8>)
+    """)
+
+    fun `test overloaded index assign 2`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            (buf[0]) = 1;
+        }   //^ deref(Indexable<u8>), borrow(&mut Indexable<u8>)
+    """)
+
+    fun `test overloaded index assign 3`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<&mut Indexable<u8>>) {
+            buf[0][0] = 1;
+        }  //^ deref(Indexable<&mut Indexable<u8>>), borrow(&mut Indexable<&mut Indexable<u8>>)
+    """)
+
+    fun `test overloaded index assign 4`() = testExpr("""
+        $indexable
+        fn f(mut buf: Indexable<u8>) {
+            buf[0] = 1;
+        }   //^ borrow(&mut Indexable<u8>)
+    """)
+
+    fun `test overloaded index mut 1`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            let _ = &mut (buf[0]);
+        }                //^ deref(Indexable<u8>), borrow(&mut Indexable<u8>)
+    """)
+
+    fun `test overloaded index mut 2`() = testExpr("""
+        $indexable
+        fn f(buf: &mut Indexable<u8>) {
+            let ref mut a = (buf[0]);
+        }                   //^ deref(Indexable<u8>), borrow(&mut Indexable<u8>)
+    """)
+
+    fun `test overloaded index with &mut method call`() = testExpr("""
+        $indexable
+        struct S;
+        impl S { fn foo(&mut self) {} }
+        fn f(buf: &mut Indexable<S>) {
+            buf[0].foo();
+        }  //^ deref(Indexable<S>), borrow(&mut Indexable<S>)
+    """)
+
+    fun `test overloaded index 1`() = testExpr("""
+        $indexable
+        fn f(buf: Indexable<u8>) {
+            buf[0];
+        }  //^ borrow(&Indexable<u8>)
+    """)
+
+    fun `test overloaded index 2`() = testExpr("""
+        $indexable
+        fn f(buf: &Indexable<u8>) {
+            buf[0];
+        }  //^ deref(Indexable<u8>), borrow(&Indexable<u8>)
+    """)
+
+    fun `test overloaded index 3`() = testExpr("""
+        $indexable
+        fn f(buf: &&Indexable<u8>) {
+            buf[0];
+        }  //^ deref(&Indexable<u8>), deref(Indexable<u8>), borrow(&Indexable<u8>)
+    """)
+
     private fun testExpr(@Language("Rust") code: String) {
         InlineFile(code)
         val (expr, expectedAdjustments) = findElementAndDataInEditor<RsExpr>()
@@ -305,6 +401,7 @@ class RsAdjustmentTest : RsTestBase() {
             when (it) {
                 is Adjustment.Deref -> "deref(${it.target})"
                 is Adjustment.BorrowReference -> "borrow(${it.target})"
+                is Adjustment.Unsize -> "unsize(${it.target})"
             }
         }
         assertEquals(expectedAdjustments, adjustmentsStr)
