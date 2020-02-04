@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.TaskInfo
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.TimerUtil
 
 /**
  * [BackgroundableProcessIndicator] has a method [BackgroundableProcessIndicator.setDelayInMillis] to postpone
@@ -32,9 +32,7 @@ class DelayedBackgroundableProcessIndicator(task: Task.Backgroundable, delay: In
     private var isFinishCalled = false
 
     init {
-        // BACKCOMPAT: 2019.2
-        @Suppress("DEPRECATION")
-        val timer = UIUtil.createNamedTimer("DelayedBackgroundableProcessIndicator timer", delay) {
+        val timer = TimerUtil.createNamedTimer("DelayedBackgroundableProcessIndicator timer", delay) {
             ApplicationManager.getApplication().invokeLater({
                 if (isRunning && !isFinishCalled) {
                     background()

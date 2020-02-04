@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.2
-@file:Suppress("DEPRECATION")
-
 package org.rust.debugger.runconfig
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -14,7 +11,7 @@ import com.jetbrains.cidr.execution.Installer
 import com.jetbrains.cidr.execution.RunParameters
 import com.jetbrains.cidr.execution.TrivialInstaller
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
-import com.jetbrains.cidr.execution.debugger.backend.LLDBDriverConfiguration
+import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriverConfiguration
 import org.rust.cargo.project.model.CargoProject
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 

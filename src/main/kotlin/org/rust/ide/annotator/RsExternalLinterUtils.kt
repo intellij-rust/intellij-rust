@@ -158,9 +158,7 @@ fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
     val disposable = Disposer.newDisposable("Dispose on PSI change")
     connect(disposable).subscribe(
         PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
-        // BACKCOMPAT: 2019.2
-        @Suppress("DEPRECATION")
-        object : AnyPsiChangeListener.Adapter() {
+        object : AnyPsiChangeListener {
             override fun beforePsiChanged(isPhysical: Boolean) {
                 Disposer.dispose(disposable)
             }
