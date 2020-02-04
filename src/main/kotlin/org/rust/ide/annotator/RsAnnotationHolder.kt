@@ -11,6 +11,8 @@ import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.psi.PsiElement
 import org.rust.ide.utils.isEnabledByCfg
 
+// BACKCOMPAT: 2019.3
+@Suppress("DEPRECATION")
 class RsAnnotationHolder(val holder: AnnotationHolder) {
     fun createErrorAnnotation(element: PsiElement, message: String?): Annotation? =
         if (element.isEnabledByCfg) holder.createErrorAnnotation(element, message) else null

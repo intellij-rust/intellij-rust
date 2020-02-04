@@ -36,6 +36,8 @@ class RsDoctestAnnotator : AnnotatorBase() {
 
         val startOffset = element.startOffset
         findDoctestInjectableRanges(element).flatten().forEach {
+            // BACKCOMPAT: 2019.3
+            @Suppress("DEPRECATION")
             holder.createAnnotation(HighlightSeverity.INFORMATION, it.shiftRight(startOffset), null)
                 .textAttributes = EditorColors.INJECTED_LANGUAGE_FRAGMENT
         }

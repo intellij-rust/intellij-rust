@@ -12,6 +12,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 
+// BACKCOMPAT: 2019.3
+@Suppress("DEPRECATION")
 class RsLiteralAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (element !is RsLitExpr) return

@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator
 
-import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
@@ -65,6 +64,8 @@ class RsExpressionAnnotator : AnnotatorBase() {
 
                 val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
                 if (structNameRange != null) {
+                    // BACKCOMPAT: 2019.3
+                    @Suppress("DEPRECATION")
                     val annotation = holder.holder.createErrorAnnotation(structNameRange, "Some fields are missing")
                     annotation.registerFix(AddStructFieldsFix(literal), body.parent.textRange)
                     annotation.registerFix(AddStructFieldsFix(literal, recursive = true), body.parent.textRange)

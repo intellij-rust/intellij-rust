@@ -12,6 +12,8 @@ import com.intellij.usages.impl.rules.UsageTypeProviderEx
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.*
 
+// BACKCOMPAT: 2019.3
+@Suppress("DEPRECATION")
 object RsUsageTypeProvider : UsageTypeProviderEx {
     // Instantiate each UsageType only once, so that the equality check in UsageTypeGroup.equals() works correctly
     private val IMPL = UsageType("impl")

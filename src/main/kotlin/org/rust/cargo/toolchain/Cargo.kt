@@ -145,11 +145,15 @@ class Cargo(private val cargoExecutable: Path) {
         val processOutput = CargoCommandLine("check", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
 
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         val parser = JsonParser()
         val messages = mutableMapOf<PackageId, BuildScriptMessage>()
 
         for (line in processOutput.stdoutLines) {
             val jsonObject = try {
+                // BACKCOMPAT: 2019.3
+                @Suppress("DEPRECATION")
                 parser.parse(line).asJsonObject
             } catch (ignore: JsonSyntaxException){
                 continue

@@ -62,6 +62,8 @@ class RsHighlightingMutableAnnotator : AnnotatorBase() {
 
     private fun addHighlightingAnnotation(holder: AnnotationHolder, target: PsiElement, key: RsColor) {
         val annotationSeverity = if (isUnitTestMode) key.testSeverity else MUTABLE_HIGHLIGHTING
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         holder.createAnnotation(annotationSeverity, target.textRange, null).textAttributes = key.textAttributesKey
     }
 
