@@ -16,10 +16,7 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.TransactionGuard
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,7 +27,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.MessageCategory
-import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -155,7 +151,7 @@ class RsConsoleRunner(project: Project) :
                         }
                     } catch (e: Exception) {
                         LOG.warn("Error running console", e)
-                        UIUtil.invokeAndWaitIfNeeded(Runnable { showErrorsInConsole(e) })
+                        invokeAndWaitIfNeeded { showErrorsInConsole(e) }
                     }
                 }
             })
@@ -163,9 +159,9 @@ class RsConsoleRunner(project: Project) :
     }
 
     override fun initAndRun() {
-        UIUtil.invokeAndWaitIfNeeded(Runnable {
+        invokeAndWaitIfNeeded {
             super.initAndRun()
-        })
+        }
     }
 
     override fun createProcessHandler(process: Process): OSProcessHandler =
