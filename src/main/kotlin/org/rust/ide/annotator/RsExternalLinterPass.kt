@@ -11,8 +11,8 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -114,7 +114,7 @@ class RsExternalLinterPass(
 
     private fun doFinish(highlights: List<HighlightInfo>) {
         val document = document ?: return
-        ApplicationManager.getApplication().invokeLater({
+        invokeLater(ModalityState.stateForComponent(editor.component)) {
             if (Disposer.isDisposed(disposable)) return@invokeLater
             UpdateHighlightersUtil.setHighlightersToEditor(
                 myProject,
@@ -126,7 +126,7 @@ class RsExternalLinterPass(
                 id
             )
             DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.markFileUpToDate(document, id)
-        }, ModalityState.stateForComponent(editor.component))
+        }
     }
 
     private val highlights: List<HighlightInfo>

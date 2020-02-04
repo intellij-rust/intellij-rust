@@ -6,8 +6,8 @@
 package org.rust.openapiext
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -34,11 +34,11 @@ class UiDebouncer(
         alarm.cancelAllRequests()
         alarm.addRequest({
             val r = onPooledThread()
-            ApplicationManager.getApplication().invokeLater({
+            invokeLater(ModalityState.any()) {
                 if (!Disposer.isDisposed(parentDisposable)) {
                     onUiThread(r)
                 }
-            }, ModalityState.any())
+            }
         }, delayMillis)
     }
 }

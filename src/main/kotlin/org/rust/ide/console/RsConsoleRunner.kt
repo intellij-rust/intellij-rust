@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
 import com.intellij.openapi.progress.ProgressIndicator
@@ -195,7 +196,7 @@ class RsConsoleRunner(project: Project) :
     }
 
     private fun connect() {
-        ApplicationManager.getApplication().invokeLater {
+        invokeLater {
             consoleView.executeActionHandler = consoleExecuteActionHandler
 
             consoleExecuteActionHandler.isEnabled = true

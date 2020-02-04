@@ -21,7 +21,7 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -143,7 +143,7 @@ abstract class RsAsyncRunner(
 
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 
-        ApplicationManager.getApplication().invokeLater {
+        invokeLater {
             if (!checkToolchainConfigured(project)) {
                 promise.setResult(null)
                 return@invokeLater

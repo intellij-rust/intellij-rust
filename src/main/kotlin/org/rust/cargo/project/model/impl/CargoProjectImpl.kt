@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -247,7 +248,7 @@ open class CargoProjectsServiceImpl(
         // instead of `modifyProjects` for this reason
         projects.updateSync { _ -> loaded }
             .whenComplete { _, _ ->
-                ApplicationManager.getApplication().invokeLater { refreshAllProjects() }
+                invokeLater { refreshAllProjects() }
             }
     }
 

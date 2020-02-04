@@ -5,8 +5,8 @@
 
 package org.rust.debugger
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiLanguageInjectionHost
@@ -41,9 +41,9 @@ class RsBackendConsoleInjectionHelper : BackendConsoleInjectionHelper {
 
             override fun stackFrameChanged() {
                 val file = document?.virtualFile ?: return
-                ApplicationManager.getApplication().invokeLater({
+                invokeLater(ModalityState.NON_MODAL) {
                     PsiDocumentManager.getInstance(session.project).reparseFiles(setOf(file), true)
-                }, ModalityState.NON_MODAL)
+                }
             }
 
             override fun sessionStopped() {
