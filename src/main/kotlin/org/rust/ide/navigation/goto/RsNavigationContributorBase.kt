@@ -6,9 +6,9 @@
 package org.rust.ide.navigation.goto
 
 import com.intellij.navigation.NavigationItem
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isInternal
 import com.intellij.psi.search.EverythingGlobalScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -95,7 +95,7 @@ private val LOG = Logger.getInstance(RsNavigationContributorBase::class.java)
  * (in the internal mode only) to catch the situation when it will become non null.
  */
 private fun checkFilter(filter: IdFilter?) {
-    if (ApplicationManager.getApplication().isInternal && filter != null) {
+    if (isInternal && filter != null) {
         LOG.error("IdFilter is supposed to be null", Throwable())
     }
 }
