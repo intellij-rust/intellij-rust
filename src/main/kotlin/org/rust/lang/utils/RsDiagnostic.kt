@@ -1227,6 +1227,8 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
         element.textRange
     }
 
+    // BACKCOMPAT: 2019.3
+    @Suppress("DEPRECATION")
     val ann = holder.createAnnotation(
         prepared.severity.toHighlightSeverity(),
         textRange,

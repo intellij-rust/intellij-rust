@@ -3,19 +3,16 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.2
-@file:Suppress("DEPRECATION", "UnstableApiUsage")
-
 package org.rust.lang.core
 
-import com.intellij.core.CoreASTFactory
+import com.intellij.lang.DefaultASTFactoryImpl
 import com.intellij.psi.impl.source.tree.LeafElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.core.psi.RsDocCommentImpl
 
-class RsASTFactory : CoreASTFactory() {
+class RsASTFactory : DefaultASTFactoryImpl() {
     override fun createComment(type: IElementType, text: CharSequence): LeafElement {
         return if (type in RS_DOC_COMMENTS) RsDocCommentImpl(type, text) else PsiCommentImpl(type, text)
     }

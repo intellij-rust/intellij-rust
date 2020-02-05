@@ -33,7 +33,6 @@ object RsDebugRunnerUtils {
                 override fun start(session: XDebugSession): XDebugProcess =
                     RsLocalDebugProcess(runParameters, session, state.consoleBuilder).apply {
                         ProcessTerminatedListener.attach(processHandler, environment.project)
-                        setupDebugSession(state)
                         start()
                     }
 

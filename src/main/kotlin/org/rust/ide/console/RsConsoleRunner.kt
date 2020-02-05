@@ -97,6 +97,8 @@ class RsConsoleRunner(project: Project) :
 
     fun run(requestEditorFocus: Boolean) {
         if (Cargo.checkNeedInstallEvcxr(project)) return
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         TransactionGuard.submitTransaction(project, Runnable { saveAllDocuments() })
 
         ApplicationManager.getApplication().executeOnPooledThread {

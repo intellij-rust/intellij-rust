@@ -120,6 +120,8 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
     private fun AnnotationHolder.createUnsafeAnnotation(textRange: TextRange, message: String) {
         val color = RsColor.UNSAFE_CODE
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         createAnnotation(severity, textRange, message).textAttributes = color.textAttributesKey
     }
 }

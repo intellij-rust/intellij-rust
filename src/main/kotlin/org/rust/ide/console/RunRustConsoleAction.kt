@@ -22,6 +22,8 @@ class RunRustConsoleAction : DumbAwareAction() {
             ?: return showBalloonWithoutProject("Project not found", NotificationType.ERROR)
 
         val runner = RsConsoleRunner(project)
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) })
     }
 }

@@ -3,21 +3,18 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.2
-@file:Suppress("DEPRECATION")
-
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.testFramework.PlatformTestCase
+import com.intellij.testFramework.HeavyPlatformTestCase
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.ANSI_24_BIT_COLOR_FORMAT
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.ANSI_8_BIT_COLOR_FORMAT
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.CSI
 
-class RsAnsiEscapeDecoderTest : PlatformTestCase() {
+class RsAnsiEscapeDecoderTest : HeavyPlatformTestCase() {
 
     fun `test standard 24-bit colors foreground`() = check(
         ColoredText(

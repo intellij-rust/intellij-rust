@@ -23,6 +23,8 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
         val isEdition2018 = element.isEdition2018
         val isIdentifier = element.elementType == IDENTIFIER
         val isEnabledByCfg = element.isEnabledByCfg
+        // BACKCOMPAT: 2019.3
+        @Suppress("DEPRECATION")
         when {
             isEdition2018 && isIdentifier && isNameIdentifier(element) ->
                 holder.createErrorAnnotation(element, "`${element.text}` is reserved keyword in Edition 2018")

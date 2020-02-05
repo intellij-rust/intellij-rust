@@ -112,6 +112,8 @@ object CargoBuildManager {
             }
 
             if (!isHeadlessEnvironment) {
+                // BACKCOMPAT: 2019.3
+                @Suppress("DEPRECATION")
                 val buildToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD)
                 buildToolWindow?.setAvailable(true, null)
                 buildToolWindow?.show(null)
@@ -182,6 +184,8 @@ object CargoBuildManager {
                 return@executeOnPooledThread
             }
 
+            // BACKCOMPAT: 2019.3
+            @Suppress("DEPRECATION")
             TransactionGuard.submitTransaction(context.project, Runnable {
                 synchronized(processCreationLock) {
                     if (context.indicator.isCanceled) {
