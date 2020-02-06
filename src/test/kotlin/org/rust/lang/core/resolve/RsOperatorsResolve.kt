@@ -100,6 +100,29 @@ class RsOperatorsResolve : RsResolveTestBase() {
         """
     }
 
+    // let a = 4 - &5; is a valid expression in rust for primitive types, implemented by src/libcore/internal_macros.rs:21
+    fun `test raw and reference operations`() = testWithAllOps(ArithmeticOp.values()) { traitName, itemName, fnName, sign ->
+        """
+        #[lang = "$itemName"]
+        pub trait $traitName<Rhs=Self> {
+            fn $fnName(&mut self, rhs: Rhs);
+        }
+
+        struct Foo;
+        struct Bar;
+
+        impl $traitName<Bar> for Foo {
+            fn $fnName(&mut self, rhs: Bar) { unimplemented!() }
+             //X
+        }
+
+        fn foo(lhs: Foo, rhs: Bar) {
+            lhs $sign &rhs;
+              //^
+        }
+    """
+    }
+
     private inline fun testWithAllOps(operators: List<OverloadableBinaryOperator>,
                                       codeGenerator: (String, String, String, String) -> String) {
         for ((traitName, itemName, fnName, sign) in operators) {
