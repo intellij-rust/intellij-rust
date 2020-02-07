@@ -207,6 +207,7 @@ change. Common tags are:
   * ACT for actions
   * DBG for debugger
   * LI for language injections
+  * REPL for REPL integration
 
 
   * CARGO for cargo-related changes
