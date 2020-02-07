@@ -39,7 +39,7 @@ val Ty.insertionSafeTextWithLifetimes: String
     get() = TypeRenderer.INSERTION_SAFE_WITH_LIFETIMES.render(this)
 
 val Ty.textWithAliasNames: String
-    @TestOnly get() = TypeRenderer.WITH_ALIASES.render(this)
+    get() = TypeRenderer.WITH_ALIASES.render(this)
 
 fun tyToString(ty: Ty): String = TypeRenderer.DEFAULT.render(ty)
 
