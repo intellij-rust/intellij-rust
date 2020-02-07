@@ -1070,7 +1070,7 @@
         <action id="Rust.ConsoleREPL"
                 class="org.rust.ide.console.RunRustConsoleAction"
                 text="Rust REPL"
-                icon="AllIcons.Debugger.Console">
+                icon="/icons/repl.svg">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
