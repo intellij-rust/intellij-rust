@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.FileViewProvider
@@ -76,11 +77,17 @@ class RsFile(
         get() {
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
+
+            val state = project.macroExpansionManager.expansionState
             // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-            val key = if (project.macroExpansionManager.isResolvingMacro) CACHED_DATA_MACROS_KEY else CACHED_DATA_KEY
+            val (key, cacheDependency) = if (state != null) {
+                CACHED_DATA_MACROS_KEY to state.stepModificationTracker
+            } else {
+                CACHED_DATA_KEY to ModificationTracker.NEVER_CHANGED
+            }
             return CachedValuesManager.getCachedValue(this, key) {
                 val value = recursionGuard(Pair(key, this), Computable { doGetCachedData() }) ?: EMPTY_CACHED_DATA
-                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker)
+                CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker, cacheDependency)
             }
         }
 
@@ -172,12 +179,19 @@ class RsFile(
         // to store references to PSI inside `CachedValueProvider` other than
         // the key PSI element
         val originalFile = originalFile as? RsFile ?: return null
+
+        val state = project.macroExpansionManager.expansionState
         // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-        val key = if (project.macroExpansionManager.isResolvingMacro) MOD_DECL_MACROS_KEY else MOD_DECL_KEY
+        val (key, cacheDependency) = if (state != null) {
+            MOD_DECL_MACROS_KEY to state.stepModificationTracker
+        } else {
+            MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
+        }
         return CachedValuesManager.getCachedValue(originalFile, key) {
             CachedValueProvider.Result.create(
                 RsModulesIndex.getDeclarationFor(originalFile),
-                originalFile.rustStructureOrAnyPsiModificationTracker
+                originalFile.rustStructureOrAnyPsiModificationTracker,
+                cacheDependency
             )
         }
     }

@@ -49,6 +49,8 @@ import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
 import java.util.zip.DeflaterOutputStream
 import java.util.zip.InflaterInputStream
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 import kotlin.concurrent.withLock
 
 class ExpandedMacroStorage(val project: Project) {
@@ -64,7 +66,7 @@ class ExpandedMacroStorage(val project: Project) {
     private fun deserialize(sfs: List<SourceFile>) {
         for (sf in sfs) {
             sourceFiles.put(sf.fileId, sf)
-            getOrPutStagedList(sf).add(sf)
+            getOrPutStagedList(sf.depthNotSync).add(sf)
             sf.forEachInfoNotSync { if (it.fileId > 0) expandedFileToInfo.put(it.fileId, it) }
         }
     }
@@ -83,10 +85,14 @@ class ExpandedMacroStorage(val project: Project) {
     }
 
     private fun getOrPutStagedList(sf: SourceFile): MutableList<SourceFile> {
-        var list = stepped[sf.depth]
+        return getOrPutStagedList(sf.depth)
+    }
+
+    private fun getOrPutStagedList(step: Int): MutableList<SourceFile> {
+        var list = stepped[step]
         if (list == null) {
             list = mutableListOf()
-            stepped[sf.depth] = list
+            stepped[step] = list
         }
         return list
     }
@@ -111,15 +117,20 @@ class ExpandedMacroStorage(val project: Project) {
         return stepped.asSequence().withIndex().map { (i, step) ->
             // Release memory. [map] contains prefetched calls only for the first step, so clear it on the second step
             if (i == 1) map.clear()
+            step?.map { sf -> Extractable(sf, workspaceOnly, map[sf]) }.orEmpty()
+        }
+    }
 
-            step?.map { sf ->
-                object : Extractable {
-                    override fun extract(): List<Pipeline.Stage1ResolveAndExpand> {
-                        val calls = if (sf.depth == 0) map[sf] else null
-                        return sf.extract(workspaceOnly, calls)
-                    }
-                }
-            } ?: emptyList()
+    fun moveSourceFilesToStep(files: Collection<SourceFile>, step: Int) {
+        checkWriteAccessAllowed()
+        val groupedByStep = files.groupBy { it.depth }
+
+        for ((currentStep, group) in groupedByStep) {
+            stepped[currentStep]?.removeAll(group.toHashSet())
+            group.forEach {
+                it.depth = step
+            }
+            getOrPutStagedList(step).addAll(group)
         }
     }
 
@@ -219,7 +230,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     companion object {
         private val LOG = Logger.getInstance(ExpandedMacroStorage::class.java)
-        private const val STORAGE_VERSION = 8
+        private const val STORAGE_VERSION = 9
         const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
         fun load(project: Project, dataFile: Path): ExpandedMacroStorage? {
@@ -300,7 +311,7 @@ class ExpandedMacroStorage(val project: Project) {
 class SourceFile(
     val storage: ExpandedMacroStorage,
     val file: VirtualFile,
-    val depth: Int,
+    private var _depth: Int,
     private var _modificationStamp: Long = FRESH_FLAG,
     private val _infos: MutableList<ExpandedMacroInfoImpl> = mutableListOf()
 ) {
@@ -309,6 +320,19 @@ class SourceFile(
     private val fileUrl: String get() = file.url
     val fileId: Int get() = file.fileId
     val project: Project get() = storage.project
+
+    // Used only for deserialization
+    val depthNotSync: Int get() = _depth
+
+    var depth: Int
+        get() {
+            assertSync()
+            return _depth
+        }
+        set(value) {
+            assertSync()
+            _depth = value
+        }
 
     private var modificationStamp: Long
         get() {
@@ -467,7 +491,7 @@ class SourceFile(
         infos.remove(info) // No synchronization needed in the write action
     }
 
-    fun extract(workspaceOnly: Boolean, calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand> {
+    fun extract(workspaceOnly: Boolean, calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand>? {
         if (workspaceOnly && !isBelongToWorkspace) {
             // very hot path; the condition should be as fast as possible
             return emptyList()
@@ -476,13 +500,13 @@ class SourceFile(
         return extract(calls)
     }
 
-    private fun extract(calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand> {
+    private fun extract(calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand>? {
         checkReadAccessAllowed() // Needed to access PSI
         checkIsSmartMode(project)
 
+        val isExpansionFile = project.macroExpansionManager.isExpansionFile(file)
         val isIndexedFile = file.isValid && (
-            FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) ||
-                project.macroExpansionManager.isExpansionFile(file))
+            FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) || isExpansionFile)
 
         val stages1 = if (!isIndexedFile) {
             // The file is now outside of the project, so we should not access it.
@@ -492,6 +516,12 @@ class SourceFile(
                 info.makeInvalidationPipeline()
             }
         } else {
+            // If project file doesn't have crate root
+            // we shouldn't try to expand its macro calls
+            if (!isExpansionFile) {
+                val psiFile = loadPsi()
+                if (psiFile != null && psiFile.crateRoot == null) return null
+            }
             matchRefs(MakePipeline(), calls)
         }
         return stages1.takeIf { it.isNotEmpty() } ?: listOf(RemoveSourceFileIfEmptyPipeline(this))

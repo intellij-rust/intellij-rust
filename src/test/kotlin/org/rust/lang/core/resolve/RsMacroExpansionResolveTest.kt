@@ -519,4 +519,26 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             foo().bar();
         }       //^
     """)
+
+    fun `test resolve module under macro chain`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! if_std {
+            ($ i:item) => (
+                $ i
+            )
+        }
+        if_std! { pub mod foo; }
+        fn main() {
+            let a = foo::bar::baz::Baz;
+                                  //^ foo/bar/baz.rs
+        }
+    //- foo/mod.rs
+        if_std! { pub mod bar; }
+    //- foo/bar/mod.rs
+        if_std! { pub mod baz; }
+    //- foo/bar/baz.rs
+        if_std! {
+            pub struct Baz;
+        }
+    """)
 }

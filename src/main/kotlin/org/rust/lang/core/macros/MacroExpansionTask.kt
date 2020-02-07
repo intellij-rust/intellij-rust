@@ -16,10 +16,14 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.GlobalSearchScopes
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMembers
@@ -31,11 +35,7 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.*
-import org.rust.stdext.HashCode
-import org.rust.stdext.executeSequentially
-import org.rust.stdext.nextOrNull
-import org.rust.stdext.supplyAsync
-import java.nio.file.Path
+import org.rust.stdext.*
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -46,20 +46,24 @@ abstract class MacroExpansionTaskBase(
     project: Project,
     private val storage: ExpandedMacroStorage,
     private val pool: Executor,
-    private val realFsExpansionContentRoot: Path
+    private val realFsExpansionContentRoot: VirtualFile,
+    private val stepModificationTracker: SimpleModificationTracker
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false) {
     private val transactionExecutor = TransactionExecutor(project)
     private val expander = MacroExpander(project)
     private val sync = CountDownLatch(1)
     private val estimateStages = AtomicInteger()
     private val doneStages = AtomicInteger()
-    private val currentStep = AtomicInteger()
+    private val currentStep = AtomicInteger(-1)
     private val totalExpanded = AtomicInteger()
     private lateinit var realTaskIndicator: ProgressIndicator
     private lateinit var subTaskIndicator: ProgressIndicator
     private lateinit var expansionSteps: Iterator<List<Extractable>>
     @Volatile
     private var heavyProcessRequested = false
+
+    @Volatile
+    private var pendingFiles: List<Extractable> = emptyList()
 
     override fun run(indicator: ProgressIndicator) {
         checkReadAccessNotAllowed()
@@ -86,12 +90,12 @@ abstract class MacroExpansionTaskBase(
         try {
             submitExpansionTask()
 
-            MACRO_LOG.trace("Awaiting")
-            val millis = measureNanoTime {
+            MACRO_LOG.debug("Awaiting")
+            val duration = measureNanoTime {
                 // 50ms - default progress bar update interval. See [ProgressDialog.UPDATE_INTERVAL]
                 while (!sync.await(50, TimeUnit.MILLISECONDS)) {
                     indicator.fraction = calcProgress(
-                        currentStep.get(),
+                        currentStep.get() + 1,
                         doneStages.get().toDouble() / max(estimateStages.get(), 1)
                     )
 
@@ -100,15 +104,18 @@ abstract class MacroExpansionTaskBase(
                     // forever)
                     if (project.isDisposed) break
 
-                    // Enter heavy process mode only if at least one macros is not up-to-date
+                    // Enter heavy process mode only if at least one macro is not up-to-date
                     if (heavyProcessToken == null && heavyProcessRequested) {
                         heavyProcessToken = HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros")
                     }
                 }
             }
-            MACRO_LOG.trace("Task completed! ${totalExpanded.get()} total calls, millis: " + millis / 1_000_000)
+            MACRO_LOG.info("Task completed! ${totalExpanded.get()} total calls, millis: " + duration / 1_000_000)
         } finally {
             RsResolveCache.getInstance(project).endExpandingMacros()
+            // Return all non expanded files to storage.
+            // Otherwise, we will lose them until full re-expand
+            movePendingFileToStep(pendingFiles, 0)
             heavyProcessToken?.let {
                 it.finish()
                 // Restart `DaemonCodeAnalyzer` after releasing `HeavyProcessLatch`. Used instead of
@@ -139,7 +146,9 @@ abstract class MacroExpansionTaskBase(
                 var extractableList: List<Extractable>?
                 do {
                     extractableList = expansionSteps.nextOrNull()
-                    currentStep.incrementAndGet()
+                    val step = currentStep.incrementAndGet()
+                    MACRO_LOG.debug("Expansion step: $step")
+                    stepModificationTracker.incModificationCount()
                 } while (extractableList != null && extractableList.isEmpty())
                 extractableList
             }
@@ -150,30 +159,48 @@ abstract class MacroExpansionTaskBase(
             return
         }
 
-        realTaskIndicator.text = "Expanding Rust macros. Step " + currentStep.get() + "/$DEFAULT_RECURSION_LIMIT"
+        realTaskIndicator.text = "Expanding Rust macros. Step " + (currentStep.get() + 1) + "/$DEFAULT_RECURSION_LIMIT"
         estimateStages.set(0)
         doneStages.set(0)
+
+        val scope = createExpandedSearchScope()
+        val expansionState = MacroExpansionManager.ExpansionState(scope, stepModificationTracker)
 
         // All subsequent parallelStream tasks are executed on the same [pool]
         supplyAsync(pool) {
             realTaskIndicator.text2 = "Expanding macros"
 
-            val stages1 = extractableList.chunked(100).parallelStream().unordered().flatMap { extractable ->
+            val pending = ContainerUtil.newConcurrentSet<Extractable>()
+            val stages1 = (extractableList + pendingFiles).chunked(100).parallelStream().unordered().flatMap { extractable ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode because rebind can be performed
                     runReadActionInSmartMode(project) {
-                        extractable.flatMap { it.extract() }
+                        project.macroExpansionManager.withExpansionState(expansionState) {
+                            extractable.flatMap {
+                                val extracted = it.extract()
+                                if (extracted == null) {
+                                    pending.add(it)
+                                }
+                                extracted.orEmpty()
+                            }
+                        }
                     }
                 }
                 estimateStages.addAndGet(result.size * Pipeline.STAGES)
                 result.stream()
             }.toList()
 
+            movePendingFileToStep(pending, currentStep.get())
+            pendingFiles = pending.toList()
+            MACRO_LOG.debug("Pending files: ${pendingFiles.size}")
+
             val stages2 = stages1.parallelStream().unordered().map { stage1 ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode to resolve macros
                     runReadActionInSmartMode(project) {
-                        stage1.expand(project, expander)
+                        project.macroExpansionManager.withExpansionState(expansionState) {
+                            stage1.expand(project, expander)
+                        }
                     }
                 }
                 doneStages.addAndGet(if (result is EmptyPipeline) Pipeline.STAGES else 1)
@@ -194,10 +221,10 @@ abstract class MacroExpansionTaskBase(
                 // We can cancel task if the project is disposed b/c after project reopen storage consistency will be
                 // re-checked
                 val stages3fs = stages2.chunked(VFS_BATCH_SIZE).map { stages2c ->
-                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot)
+                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot.pathAsPath)
                     val stages3 = stages2c.map { stage2 ->
                         if (project.isDisposed) throw ProcessCanceledException()
-                        val result = stage2.writeExpansionToFs(fs)
+                        val result = stage2.writeExpansionToFs(fs, currentStep.get())
                         doneStages.incrementAndGet()
                         result
                     }
@@ -256,6 +283,28 @@ abstract class MacroExpansionTaskBase(
         }
     }
 
+    private fun movePendingFileToStep(newPendingFiles: Collection<Extractable>, step: Int) {
+        val processedFiles = pendingFiles - newPendingFiles
+
+        val duration = measureNanoTime {
+            if (processedFiles.isEmpty()) return@measureNanoTime
+            // TODO: split [processedFiles] into chunks to reduce UI freezes (if needed)
+            WriteAction.runAndWait<Nothing> {
+                storage.moveSourceFilesToStep(processedFiles.map { it.sf }, step)
+            }
+        }
+        MACRO_LOG.debug("Moving of pending files to step $step: ${duration / 1000} μs")
+    }
+
+    private fun createExpandedSearchScope(): GlobalSearchScope {
+        val step = currentStep.get()
+        val expansionDirs = (0 until step).mapNotNull {
+            realFsExpansionContentRoot.findChild(it.toString())
+        }
+        val expansionScope = GlobalSearchScopes.directoriesScope(project, true, *expansionDirs.toTypedArray())
+        return GlobalSearchScope.allScope(project).uniteWith(expansionScope)
+    }
+
     protected abstract fun getMacrosToExpand(): Sequence<List<Extractable>>
 
     open fun canEat(other: MacroExpansionTaskBase): Boolean = false
@@ -270,8 +319,10 @@ abstract class MacroExpansionTaskBase(
     }
 }
 
-interface Extractable {
-    fun extract(): List<Pipeline.Stage1ResolveAndExpand>
+class Extractable(val sf: SourceFile, private val workspaceOnly: Boolean, private val calls: List<RsMacroCall>?) {
+    fun extract(): List<Pipeline.Stage1ResolveAndExpand>? {
+        return sf.extract(workspaceOnly, calls)
+    }
 }
 
 object Pipeline {
@@ -283,7 +334,7 @@ object Pipeline {
     }
 
     interface Stage2WriteToFs {
-        fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Stage3SaveToStorage
+        fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Stage3SaveToStorage
     }
 
     interface Stage3SaveToStorage {
@@ -292,7 +343,7 @@ object Pipeline {
 }
 
 object EmptyPipeline : Pipeline.Stage2WriteToFs, Pipeline.Stage3SaveToStorage {
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {}
 }
 
@@ -302,7 +353,7 @@ object InvalidationPipeline {
     }
 
     class Stage2(val info: ExpandedMacroInfo) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val expansionFile = info.expansionFile
             if (expansionFile != null && expansionFile.isValid) {
                 fs.deleteFile(fs.resolve(expansionFile))
@@ -324,7 +375,7 @@ class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Sta
                                                                     Pipeline.Stage3SaveToStorage {
 
     override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {
         checkWriteAccessAllowed()
         storage.removeSourceFileIfEmpty(sf)
@@ -396,7 +447,7 @@ object ExpansionPipeline {
         private val expansionText: String,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             val file = if (oldExpansionFile != null) {
                 check(oldExpansionFile.isValid) { "VirtualFile is not valid ${oldExpansionFile.url}" }
@@ -404,7 +455,7 @@ object ExpansionPipeline {
                 fs.writeFile(file, expansionText)
                 file
             } else {
-                fs.createFileWithContent(expansionText)
+                fs.createFileWithContent(expansionText, stepNumber)
             }
             return Stage3(info, callHash, defHash, file, ranges)
         }
@@ -417,7 +468,7 @@ object ExpansionPipeline {
         private val oldExpansionFile: VirtualFile,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val file = fs.resolve(oldExpansionFile)
             return Stage3(info, callHash, defHash, file, ranges)
         }
@@ -428,7 +479,7 @@ object ExpansionPipeline {
         private val callHash: HashCode?,
         private val defHash: HashCode?
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 fs.deleteFile(fs.resolve(oldExpansionFile))

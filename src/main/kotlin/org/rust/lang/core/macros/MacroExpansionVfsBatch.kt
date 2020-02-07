@@ -27,7 +27,7 @@ interface MacroExpansionVfsBatch {
 
     fun resolve(file: VirtualFile): Path
 
-    fun createFileWithContent(content: String): Path
+    fun createFileWithContent(content: String, stepNumber: Int): Path
     fun deleteFile(file: Path)
     fun writeFile(file: Path, content: String)
 
@@ -42,13 +42,14 @@ class LocalFsMacroExpansionVfsBatch(
     override fun resolve(file: VirtualFile): MacroExpansionVfsBatch.Path =
         PathImpl.VFile(file)
 
-    override fun createFileWithContent(content: String): MacroExpansionVfsBatch.Path =
-        PathImpl.NioPath(createFileInternal(content))
+    override fun createFileWithContent(content: String, stepNumber: Int): MacroExpansionVfsBatch.Path =
+        PathImpl.NioPath(createFileInternal(content, stepNumber))
 
-    private fun createFileInternal(content: String): Path {
-        val name = RandomStringUtils.random(16, "0123456789abcdifghijklmnopqrstuvwxyz")
+    private fun createFileInternal(content: String, stepNumber: Int): Path {
+        val name = RandomStringUtils.random(16, "0123456789abcdefghijklmnopqrstuvwxyz")
         return batch.run {
             realFsExpansionContentRoot
+                .getOrCreateDirectory(stepNumber.toString())
                 .getOrCreateDirectory(name[0].toString())
                 .getOrCreateDirectory(name[1].toString())
                 .createFile(name.substring(2) + ".rs", content)

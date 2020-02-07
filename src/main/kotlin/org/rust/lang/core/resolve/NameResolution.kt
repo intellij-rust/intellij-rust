@@ -757,9 +757,7 @@ fun processMacrosExportedByCrateName(context: RsElement, crateName: String, proc
 }
 
 fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolveProcessor): Boolean {
-    val result = context.project.macroExpansionManager.withResolvingMacro {
-        MacroResolver.processMacrosInLexicalOrderUpward(context, processor)
-    }
+    val result = MacroResolver.processMacrosInLexicalOrderUpward(context, processor)
     if (result) return true
 
     val prelude = context.contextOrSelf<RsElement>()?.findDependencyCrateRoot(STD) ?: return false
@@ -970,7 +968,7 @@ private fun exportedMacrosAsScopeEntries(scope: RsFile): List<ScopeEntry> {
         LOG.warn("`${scope.virtualFile}` should be crate root")
         return emptyList()
     }
-    val cacheKey = if (scope.project.macroExpansionManager.isResolvingMacro) EXPORTED_MACROS_KEY else EXPORTED_KEY
+    val cacheKey = if (scope.project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
     return CachedValuesManager.getCachedValue(scope, cacheKey) {
         val macros = exportedMacrosInternal(scope)
         CachedValueProvider.Result.create(macros, scope.rustStructureOrAnyPsiModificationTracker)
