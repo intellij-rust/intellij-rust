@@ -161,9 +161,7 @@ class GenerateConstructorTest : RsTestBase() {
                 return all.filter { it.text in selected }
             }
         }) {
-            checkByText(code.trimIndent(), expected.trimIndent()) {
-                myFixture.performEditorAction("Rust.GenerateConstructor")
-            }
+            checkEditorAction(code, expected, "Rust.GenerateConstructor")
         }
     }
 }

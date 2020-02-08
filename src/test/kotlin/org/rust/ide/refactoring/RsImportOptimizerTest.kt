@@ -387,9 +387,6 @@ class RsImportOptimizerTest: RsTestBase() {
         mod ccc {}
     """)
 
-    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) {
-        checkByText(code.trimIndent(), excepted.trimIndent()) {
-            myFixture.performEditorAction("OptimizeImports")
-        }
-    }
+    private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
+        checkEditorAction(code, excepted, "OptimizeImports")
 }

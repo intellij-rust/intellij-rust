@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.PsiTreeUtil
@@ -208,6 +209,23 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         InlineFile(before)
         action()
         myFixture.checkResult(replaceCaretMarker(after))
+    }
+
+    protected fun checkEditorAction(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        actionId: String,
+        trimIndent: Boolean = true,
+        testmark: Testmark? = null
+    ) {
+        fun String.trimIndentIfNeeded(): String = if (trimIndent) trimIndent() else this
+
+        val action = {
+            checkByText(before.trimIndentIfNeeded(), after.trimIndentIfNeeded()) {
+                myFixture.performEditorAction(actionId)
+            }
+        }
+        testmark?.checkHit { action() } ?: action()
     }
 
     protected fun openFileInEditor(path: String) {

@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring
 
 import com.intellij.openapiext.Testmark
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
@@ -275,49 +274,28 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
-
-    private fun doTest(
-        @Language("Rust") before: String,
-        expressions: List<String>,
-        target: Int,
-        @Language("Rust") after: String,
-        replaceAll: Boolean = false
-    ) {
-        checkByText(before, after) {
-            doIntroduce(expressions, target, replaceAll)
-        }
-    }
-
     private fun doTest(
         @Language("Rust") before: String,
         expressions: List<String>,
         target: Int,
         @Language("Rust") after: String,
         replaceAll: Boolean = false,
-        mark: Testmark
+        mark: Testmark? = null
     ) {
-        checkByText(before, after) {
-            mark.checkHit {
-                doIntroduce(expressions, target, replaceAll)
-            }
-        }
-    }
-
-    private fun doIntroduce(expressions: List<String>, target: Int, replaceAll: Boolean) {
         var shownTargetChooser = false
         withMockTargetExpressionChooser(object : ExtractExpressionUi {
             override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
                 shownTargetChooser = true
-                TestCase.assertEquals(exprs.map { it.text }, expressions)
+                assertEquals(exprs.map { it.text }, expressions)
                 return exprs[target]
             }
 
             override fun chooseOccurrences(expr: RsExpr, occurrences: List<RsExpr>): List<RsExpr> =
                 if (replaceAll) occurrences else listOf(expr)
         }) {
-            myFixture.performEditorAction("IntroduceVariable")
-            if (expressions.isNotEmpty() && !shownTargetChooser) {
-                error("Didn't shown chooser")
+            checkEditorAction(before, after, "IntroduceVariable", testmark = mark)
+            check(expressions.isEmpty() || shownTargetChooser) {
+                "Chooser isn't shown"
             }
         }
     }

@@ -4,7 +4,6 @@
  */
 package org.rust.ide.refactoring
 
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsExpr
@@ -269,20 +268,11 @@ class RsIntroduceParameterTest : RsTestBase() {
         @Language("Rust") after: String,
         replaceAll: Boolean = false
     ) {
-        checkByText(before, after) {
-            doIntroduce(expressions, exprTarget, methodTarget, replaceAll)
-        }
-    }
-
-    private fun doIntroduce(expressions: List<String>,
-                            exprTarget: Int,
-                            methodTarget: Int,
-                            replaceAll: Boolean) {
         var shownTargetChooser = false
         withMockTargetExpressionChooser(object : ExtractExpressionUi {
             override fun chooseTarget(exprs: List<RsExpr>): RsExpr {
                 shownTargetChooser = true
-                TestCase.assertEquals(exprs.map { it.text }, expressions)
+                assertEquals(exprs.map { it.text }, expressions)
                 return exprs[exprTarget]
             }
 
@@ -293,9 +283,10 @@ class RsIntroduceParameterTest : RsTestBase() {
                 return methods[methodTarget]
             }
         }) {
-            myFixture.performEditorAction("IntroduceParameter")
-            if (expressions.isNotEmpty() && !shownTargetChooser) {
-                error("Didn't shown chooser")
+
+            checkEditorAction(before, after, "IntroduceParameter")
+            check(expressions.isEmpty() || shownTargetChooser) {
+                "Chooser isn't shown"
             }
         }
     }

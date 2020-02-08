@@ -13,9 +13,7 @@ import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
 
-
 class RsExtractFunctionTest : RsTestBase() {
-    override val dataPath = "org/rust/lang/refactoring/fixtures/extract_function/"
 
     fun `test extract a function without parameters and a return value`() = doTest("""
             fn main() {
@@ -1005,9 +1003,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 callback()
             }
         }) {
-            checkByText(code, excepted) {
-                myFixture.performEditorAction("ExtractMethod")
-            }
+            checkEditorAction(code, excepted, "ExtractMethod", trimIndent = false)
         }
     }
 }

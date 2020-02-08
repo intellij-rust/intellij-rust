@@ -38,11 +38,6 @@ abstract class RsStatementUpDownMoverTestBase : RsTestBase() {
         actionId: String,
         testmark: Testmark? = null
     ) {
-        val action = {
-            checkByText(before.trimIndent() + "\n", after.trimIndent() + "\n") {
-                myFixture.performEditorAction(actionId)
-            }
-        }
-        testmark?.checkHit(action) ?: action()
+        checkEditorAction(before.trimIndent() + "\n", after.trimIndent() + "\n", actionId, false, testmark)
     }
 }

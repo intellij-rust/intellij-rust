@@ -6,7 +6,6 @@
 package org.rust.ide.commenter
 
 import com.intellij.openapi.actionSystem.IdeActions
-import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 class RsCommenterTest : RsTestBase() {
@@ -120,12 +119,4 @@ class RsCommenterTest : RsTestBase() {
         //    x * 2
         }<caret>
     """, IdeActions.ACTION_COMMENT_LINE)
-
-    private fun checkEditorAction(
-        @Language("Rust") before: String,
-        @Language("Rust") after: String,
-        actionId: String
-    ) {
-        checkByText(before.trimIndent(), after.trimIndent()) { myFixture.performEditorAction(actionId) }
-    }
 }
