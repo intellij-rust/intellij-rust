@@ -10,6 +10,7 @@ import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
@@ -32,49 +33,49 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
         when (settingsType) {
             BLANK_LINES_SETTINGS -> {
                 consumer.showStandardOptions(
-                    "KEEP_LINE_BREAKS",
-                    "KEEP_BLANK_LINES_IN_DECLARATIONS",
-                    "KEEP_BLANK_LINES_IN_CODE")
+                    BlankLinesOption.KEEP_BLANK_LINES_IN_DECLARATIONS.name,
+                    BlankLinesOption.KEEP_BLANK_LINES_IN_CODE.name)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
                     "Between declarations:",
-                    CodeStyleSettingsCustomizable.BLANK_LINES)
+                    BLANK_LINES)
             }
 
             SPACING_SETTINGS -> {
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "SPACE_AROUND_ASSOC_TYPE_BINDING",
                     "Around associated type bindings",
-                    CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS)
+                    SPACES_IN_TYPE_PARAMETERS)
             }
 
             WRAPPING_AND_BRACES_SETTINGS -> {
                 consumer.showStandardOptions(
-                    "RIGHT_MARGIN",
-                    "ALIGN_MULTILINE_CHAINED_METHODS",
-                    "ALIGN_MULTILINE_PARAMETERS",
-                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS")
+                    WrappingOrBraceOption.KEEP_LINE_BREAKS.name,
+                    WrappingOrBraceOption.RIGHT_MARGIN.name,
+                    WrappingOrBraceOption.ALIGN_MULTILINE_CHAINED_METHODS.name,
+                    WrappingOrBraceOption.ALIGN_MULTILINE_PARAMETERS.name,
+                    WrappingOrBraceOption.ALIGN_MULTILINE_PARAMETERS_IN_CALLS.name)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALLOW_ONE_LINE_MATCH",
                     "Match expressions in one line",
-                    CodeStyleSettingsCustomizable.WRAPPING_KEEP)
+                    WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "PRESERVE_PUNCTUATION",
                     "Punctuation",
-                    CodeStyleSettingsCustomizable.WRAPPING_KEEP)
+                    WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE",
                     "Align return type to function parameters",
-                    CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+                    WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_CLAUSE",
                     "Align where clause to function parameters",
-                    CodeStyleSettingsCustomizable.WRAPPING_METHOD_PARAMETERS)
+                    WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_TYPE_PARAMS",
@@ -103,25 +104,28 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
 
             COMMENTER_SETTINGS -> {
                 consumer.showStandardOptions(
-                    CodeStyleSettingsCustomizable.CommenterOption.LINE_COMMENT_AT_FIRST_COLUMN.name,
-                    CodeStyleSettingsCustomizable.CommenterOption.LINE_COMMENT_ADD_SPACE.name,
-                    CodeStyleSettingsCustomizable.CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name)
+                    CommenterOption.LINE_COMMENT_AT_FIRST_COLUMN.name,
+                    CommenterOption.LINE_COMMENT_ADD_SPACE.name,
+                    CommenterOption.BLOCK_COMMENT_AT_FIRST_COLUMN.name)
             }
         }
     }
 
     override fun getIndentOptionsEditor(): IndentOptionsEditor? = SmartIndentOptionsEditor()
 
-    override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
-        CommonCodeStyleSettings(language).apply {
-            RIGHT_MARGIN = 100
-            ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-            initIndentOptions().apply {
-                // FIXME(mkaput): It's a hack
-                // Nobody else does this and still somehow achieve similar effect
-                CONTINUATION_INDENT_SIZE = INDENT_SIZE
-            }
-        }
+    override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: CommonCodeStyleSettings.IndentOptions) {
+        commonSettings.RIGHT_MARGIN = 100
+        commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+
+        // Make default behavior consistent with rustfmt
+        commonSettings.LINE_COMMENT_AT_FIRST_COLUMN = false
+        commonSettings.LINE_COMMENT_ADD_SPACE = true
+        commonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN = false
+
+        // FIXME(mkaput): It's a hack
+        // Nobody else does this and still somehow achieve similar effect
+        indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.INDENT_SIZE
+    }
 }
 
 private fun sample(@org.intellij.lang.annotations.Language("Rust") code: String) = code.trim()

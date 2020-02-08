@@ -11,9 +11,7 @@ import org.rust.RsTestBase
 
 abstract class RsJoinLinesHandlerTestBase : RsTestBase() {
     protected fun doTestRaw(before: String, after: String) {
-        checkByText(before, after) {
-            myFixture.performEditorAction(IdeActions.ACTION_EDITOR_JOIN_LINES)
-        }
+        checkEditorAction(before, after, IdeActions.ACTION_EDITOR_JOIN_LINES, false)
     }
 
     protected fun doTest(

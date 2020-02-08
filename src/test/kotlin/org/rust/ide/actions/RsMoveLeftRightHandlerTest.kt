@@ -193,12 +193,8 @@ class RsMoveLeftRightHandlerTest : RsTestBase() {
     }
 
     private fun doMoveLeftTest(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkByText(before, after) {
-            myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_LEFT)
-        }
+        checkEditorAction(before, after, IdeActions.MOVE_ELEMENT_LEFT)
 
     private fun doMoveRightTest(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkByText(before, after) {
-            myFixture.performEditorAction(IdeActions.MOVE_ELEMENT_RIGHT)
-        }
+        checkEditorAction(before, after, IdeActions.MOVE_ELEMENT_RIGHT)
 }

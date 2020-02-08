@@ -333,7 +333,6 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
-        myFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
-    }
+    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
+        checkEditorAction(before, after, ACTION_GOTO_TYPE_DECLARATION)
 }

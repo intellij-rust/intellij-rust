@@ -79,7 +79,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             x: i32,
             y: i32,
         }
-        
+
         fn main() {
             let origin = Point { x: 0, y: 0 }/*caret*/
         }
@@ -88,7 +88,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             x: i32,
             y: i32,
         }
-        
+
         fn main() {
             let origin = Point { x: 0, y: 0 };
             /*caret*/
@@ -99,7 +99,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn f() -> i32 {
             return 42;
         }
-        
+
         fn main() {
             let x = f(/*caret*/
         }
@@ -107,7 +107,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn f() -> i32 {
             return 42;
         }
-        
+
         fn main() {
             let x = f();
             /*caret*/
@@ -205,7 +205,6 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
-        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT)
-    }
+    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
+        checkEditorAction(before, after, IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT)
 }

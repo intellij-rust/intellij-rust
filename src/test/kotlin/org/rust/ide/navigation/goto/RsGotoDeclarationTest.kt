@@ -136,7 +136,6 @@ class RsGotoDeclarationTest : RsTestBase() {
         }
     """)
 
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) = checkByText(before, after) {
-        myFixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
-    }
+    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
+        checkEditorAction(before, after, IdeActions.ACTION_GOTO_DECLARATION)
 }
