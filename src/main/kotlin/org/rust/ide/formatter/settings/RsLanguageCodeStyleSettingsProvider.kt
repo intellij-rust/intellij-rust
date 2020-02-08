@@ -112,16 +112,19 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
 
     override fun getIndentOptionsEditor(): IndentOptionsEditor? = SmartIndentOptionsEditor()
 
-    override fun getDefaultCommonSettings(): CommonCodeStyleSettings =
-        CommonCodeStyleSettings(language).apply {
-            RIGHT_MARGIN = 100
-            ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
-            initIndentOptions().apply {
-                // FIXME(mkaput): It's a hack
-                // Nobody else does this and still somehow achieve similar effect
-                CONTINUATION_INDENT_SIZE = INDENT_SIZE
-            }
-        }
+    override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: CommonCodeStyleSettings.IndentOptions) {
+        commonSettings.RIGHT_MARGIN = 100
+        commonSettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true
+
+        // Make default behavior consistent with rustfmt
+        commonSettings.LINE_COMMENT_AT_FIRST_COLUMN = false
+        commonSettings.LINE_COMMENT_ADD_SPACE = true
+        commonSettings.BLOCK_COMMENT_AT_FIRST_COLUMN = false
+
+        // FIXME(mkaput): It's a hack
+        // Nobody else does this and still somehow achieve similar effect
+        indentOptions.CONTINUATION_INDENT_SIZE = indentOptions.INDENT_SIZE
+    }
 }
 
 private fun sample(@org.intellij.lang.annotations.Language("Rust") code: String) = code.trim()

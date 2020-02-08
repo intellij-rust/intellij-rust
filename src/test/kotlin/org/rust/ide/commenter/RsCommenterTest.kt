@@ -15,8 +15,8 @@ class RsCommenterTest : RsTestBase() {
             x * 2
         }
     """, """
-        //fn double(x: i32) -> i32 {
-            x<caret> * 2
+        // fn double(x: i32) -> i32 {
+            x <caret>* 2
         }
     """, IdeActions.ACTION_COMMENT_LINE)
 
@@ -25,8 +25,8 @@ class RsCommenterTest : RsTestBase() {
             x</selection> * 2
         }
     """, """
-        //fn doub<selection>le(x: i32) -> i32 {
-        //    x</selection> * 2
+        // fn doub<selection>le(x: i32) -> i32 {
+        //     x</selection> * 2
         }
     """, IdeActions.ACTION_COMMENT_LINE)
 
@@ -50,6 +50,26 @@ class RsCommenterTest : RsTestBase() {
         }
     """, IdeActions.ACTION_COMMENT_BLOCK)
 
+    fun `test multi line block proper indent`() = checkEditorAction("""
+        fn fib(x: i32) -> i32 {
+        <selection>    match x {
+                0 => 1,
+                1 => 1,
+                _ => fib(x - 2) + fib(x - 1)
+            }
+        </selection>}
+    """, """
+        fn fib(x: i32) -> i32 {
+            /*
+            match x {
+                0 => 1,
+                1 => 1,
+                _ => fib(x - 2) + fib(x - 1)
+            }
+            */
+        }
+    """, IdeActions.ACTION_COMMENT_BLOCK)
+
     fun `test single line uncomment`() = checkEditorAction("""
         //fn d<caret>ouble(x: i32) -> i32 {
         //    x * 2
@@ -62,7 +82,7 @@ class RsCommenterTest : RsTestBase() {
 
     fun `test multi line uncomment`() = checkEditorAction("""
         //fn doub<selection>le(x: i32) -> i32 {
-        //    x</selection> * 2
+        //     x</selection> * 2
         }
     """, """
         fn doub<selection>le(x: i32) -> i32 {
@@ -95,8 +115,8 @@ class RsCommenterTest : RsTestBase() {
         //     x * 2
         }
     """, """
-         fn double(x: i32) -> i32 {
-        //   <caret>  x * 2
+        fn double(x: i32) -> i32 {
+        //  <caret>   x * 2
         }
     """, IdeActions.ACTION_COMMENT_LINE)
 
@@ -116,7 +136,7 @@ class RsCommenterTest : RsTestBase() {
         }
     """, """
         fn double(x: i32) -> i32 {
-        //    x * 2
+            // x * 2
         }<caret>
     """, IdeActions.ACTION_COMMENT_LINE)
 }
