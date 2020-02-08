@@ -100,6 +100,13 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                     "Other")
 
             }
+
+            COMMENTER_SETTINGS -> {
+                consumer.showStandardOptions(
+                    "LINE_COMMENT_AT_FIRST_COLUMN",
+                    "LINE_COMMENT_ADD_SPACE",
+                    "BLOCK_COMMENT_AT_FIRST_COLUMN");
+            }
         }
     }
 
