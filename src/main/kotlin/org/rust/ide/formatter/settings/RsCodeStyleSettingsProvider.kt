@@ -26,12 +26,12 @@ class RsCodeStyleSettingsProvider : CodeStyleSettingsProvider() {
     private class RsCodeStyleMainPanel(currentSettings: CodeStyleSettings, settings: CodeStyleSettings) :
         TabbedLanguageCodeStylePanel(RsLanguage, currentSettings, settings) {
 
-        override fun initTabs(settings: CodeStyleSettings?) {
+        override fun initTabs(settings: CodeStyleSettings) {
             addIndentOptionsTab(settings)
             addSpacesTab(settings)
             addWrappingAndBracesTab(settings)
             addBlankLinesTab(settings)
-            addTab(GenerationCodeStylePanel(settings!!, RsLanguage))
+            addTab(GenerationCodeStylePanel(settings, RsLanguage))
         }
     }
 }
