@@ -198,6 +198,32 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun isPathMode(b: PsiBuilder, level: Int, mode: PathParsingMode): Boolean =
         mode == getPathMod(b.flags)
 
+    // !("union" identifier | "async" fn) identifier | self | super | 'Self' | crate
+    @JvmStatic
+    fun parsePathIdent(b: PsiBuilder, level: Int): Boolean {
+        val tokenType = b.tokenType
+        val result = when (tokenType) {
+            SELF, SUPER, CSELF, CRATE -> true
+            IDENTIFIER -> {
+                val tokenText = b.tokenText
+                !(tokenText == "union" && b.lookAhead(1) == IDENTIFIER || tokenText == "async" && b.lookAhead(1) == FN)
+            }
+            else -> {
+                // error message
+                val consumed = consumeToken(b, IDENTIFIER) || consumeToken(b, SELF) ||
+                    consumeToken(b, SUPER) || consumeToken(b, CSELF) || consumeToken(b, CRATE)
+                check(!consumed)
+                false
+            }
+        }
+
+        if (result) {
+            consumeToken(b, tokenType)
+        }
+
+        return result
+    }
+
     @JvmStatic
     fun unpairedToken(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
