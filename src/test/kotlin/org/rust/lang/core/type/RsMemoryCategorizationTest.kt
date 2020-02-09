@@ -71,6 +71,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test immutable array`() = testExpr("""
         fn main() {
             let a: [i32; 3] = [0; 3];
@@ -79,6 +80,7 @@ class RsMemoryCategorizationTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test mutable array`() = testExpr("""
         fn main() {
             let mut a: [i32; 3] = [0; 3];
@@ -86,6 +88,56 @@ class RsMemoryCategorizationTest : RsTestBase() {
              //^ Index, Inherited
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            (buf[0]);
+                 //^ Deref, Immutable
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 1`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            buf[0] = 1;
+               //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 2`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            (buf[0]) = 1;
+                //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice assign 3`() = testExpr("""
+        fn f(buf: &mut [&mut [u8]]) {
+            buf[0][0] = 1;
+               //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 4`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            let _ = &mut (buf[0]);
+                       //^ Deref, Declared
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test slice mut 5`() = testExpr("""
+        fn f(buf: &mut [u8]) {
+            let ref mut a = (buf[0]);
+                          //^ Deref, Declared
+        }
+    """)
+
+    // TODO test let ref mut, &mut
 
     fun `test immutable struct`() = testExpr("""
         struct Foo { a: i32 }
@@ -236,14 +288,6 @@ class RsMemoryCategorizationTest : RsTestBase() {
         fn main() {
           (|mut x: i32| x + 1);
                       //^ Local, Declared
-        }
-    """)
-
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test array`() = testExpr("""
-        fn f(buf: &mut [u8]) {
-            (buf[0]);
-                 //^ Index, Inherited
         }
     """)
 
