@@ -20,20 +20,27 @@ class Timings(
     private val valuesTotal: LinkedHashMap<String, Long> = LinkedHashMap(),
     private val invokes: MutableMap<String, Long> = mutableMapOf()
 ) {
-    fun <T> measure(name: String, f: () -> T): T {
+    fun <T: Any> measure(name: String, f: () -> T): T {
         check(name !in valuesTotal)
         return measureInternal(name, f)
     }
 
-    fun <T> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
+    fun <T: Any> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
 
-    private fun <T> measureInternal(name: String, f: () -> T): T {
+    private fun <T: Any> measureInternal(name: String, f: () -> T): T {
         var result: T? = null
         val time = measureTimeMillis { result = f() }
         valuesTotal.merge(name, time, Long::plus)
         invokes.merge(name, 1, Long::plus)
-        @Suppress("UNCHECKED_CAST")
-        return result as T
+        return result!!
+    }
+
+    fun <T: Any> measureSum(name: String, f: () -> T): T {
+        var result: T? = null
+        val time = measureTimeMillis { result = f() }
+        valuesTotal.merge(name, time, Long::plus)
+        invokes.put(name, 1)
+        return result!!
     }
 
     fun values(): Map<String, Long> {
