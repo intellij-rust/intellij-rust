@@ -13,7 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.executeState
 import com.intellij.execution.ui.RunContentDescriptor
-import java.util.function.Function
+import org.jetbrains.concurrency.resolvedPromise
 
 abstract class RsDefaultProgramRunnerBase : ProgramRunner<RunnerSettings> {
 
@@ -35,8 +35,8 @@ abstract class RsDefaultProgramRunnerBase : ProgramRunner<RunnerSettings> {
         state: RunProfileState
     ) {
         @Suppress("UnstableApiUsage")
-        ExecutionManager.getInstance(environment.project).startRunProfile(environment, Function {
-            doExecute(it, environment)
-        })
+        ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
+            resolvedPromise(doExecute(state, environment))
+        }
     }
 }
