@@ -16,6 +16,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve.ref.advancedDeepResolve
 import org.rust.openapiext.recursionGuard
 import org.rust.stdext.intersects
 import java.util.*
@@ -27,6 +28,14 @@ fun processItemOrEnumVariantDeclarations(
     withPrivateImports: Boolean = false
 ): Boolean {
     when (scope) {
+        // https://github.com/rust-lang/rfcs/blob/master/text/2338-type-alias-enum-variants.md
+        is RsTypeAlias -> {
+            val (item, subst) = (scope.typeReference?.typeElement as? RsBaseType)
+                ?.path?.reference?.advancedDeepResolve() ?: return false
+            if (item is RsEnumItem) {
+                if (processAllWithSubst(item.variants, subst, processor)) return true
+            }
+        }
         is RsEnumItem -> {
             if (processAll(scope.variants, processor)) return true
         }

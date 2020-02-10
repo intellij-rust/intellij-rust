@@ -578,15 +578,13 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    // Enum variants behind an alias are not resolved
-    // https://github.com/rust-lang/rust/issues/26264
-    // https://github.com/rust-lang/rfcs/issues/2218
     fun `test enum variant with alias`() = checkByCode("""
         enum E { A }
+               //X
         type T1 = E;
         fn main() {
             let _ = T1::A;
-        }             //^ unresolved
+        }             //^
     """)
 
     fun `test local fn`() = checkByCode("""
