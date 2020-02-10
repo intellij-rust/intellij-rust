@@ -47,7 +47,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     }
 
-
     fun `test not available outside of impl`() {
         InlineFile("""
             trait T { fn f1(); }
@@ -94,8 +93,35 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
-    // TODO: Support type aliases
     fun `test import unresolved types`() = doTest("""
+        use a::T;
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, R)", true, true)
+    ), """
+        use a::{T, R};
+        mod a {
+            pub struct R;
+            pub trait T {
+                fn f() -> (R, R);
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, R) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    fun `test import unresolved type aliases`() = doTest("""
         use a::T;
         mod a {
             pub struct R;
@@ -109,7 +135,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """, listOf(
         ImplementMemberSelection("f() -> (R, U)", true, true)
     ), """
-        use a::{T, R};
+        use a::{T, R, U};
         mod a {
             pub struct R;
             pub type U = R;
@@ -119,7 +145,31 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            fn f() -> (R, R) {
+            fn f() -> (R, U) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    fun `test support type aliases`() = doTest("""
+        pub struct R;
+        pub type U = R;
+        pub trait T {
+            fn f() -> (R, U);
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> (R, U)", true, true)
+    ), """
+        pub struct R;
+        pub type U = R;
+        pub trait T {
+            fn f() -> (R, U);
+        }
+        struct S;
+        impl T for S {
+            fn f() -> (R, U) {
                 <selection>unimplemented!()</selection>
             }
         }
@@ -452,23 +502,23 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         const C2: &'b S<'b> = unimplemented!();
 
-        fn f3(_: &'b S<'b>) -> &'b S<'b> {
+        fn f3(_: &'b A<'a>) -> &'b A<'a> {
             unimplemented!()
         }
 
-        const C3: &'b S<'b> = unimplemented!();
+        const C3: &'b A<'a> = unimplemented!();
 
-        fn f4(_: &'b S<'static>) -> &'b S<'static> {
+        fn f4(_: &'b B) -> &'b B {
             unimplemented!()
         }
 
-        const C4: &'b S<'static> = unimplemented!();
+        const C4: &'b B = unimplemented!();
 
-        fn f5(_: &'b S<'_>) -> &'b S<'_> {
+        fn f5(_: &'b C) -> &'b C {
             unimplemented!()
         }
 
-        const C5: &'b S<'_> = unimplemented!();
+        const C5: &'b C = unimplemented!();
 
         fn f6(_: &'b D<'b, D<'b, D<'b, S<'b>>>>) -> &'b D<'b, D<'b, D<'b, S<'b>>>> {
             unimplemented!()

@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import com.intellij.util.LocalTimeCounter
 import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.presentation.insertionSafeTextWithAliasesAndLifetimes
 import org.rust.ide.presentation.insertionSafeTextWithLifetimes
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionContext
@@ -499,7 +500,7 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).insertionSafeTextWithLifetimes
+    type.substitute(subst).insertionSafeTextWithAliasesAndLifetimes
 
 private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
     if (isExplicitType) {

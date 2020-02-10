@@ -46,6 +46,7 @@ import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindowIfNeeded
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -62,7 +63,6 @@ import org.rust.stdext.joinAll
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
 
@@ -83,6 +83,12 @@ open class CargoProjectsServiceImpl(
             subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
                 override fun toolchainChanged() {
                     refreshAllProjects()
+                }
+            })
+
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
+                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                    initializeToolWindowIfNeeded(project)
                 }
             })
         }
