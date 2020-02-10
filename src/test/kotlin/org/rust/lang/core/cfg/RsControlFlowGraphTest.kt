@@ -9,6 +9,7 @@ import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.types.regions.getRegionScopeTree
 
@@ -815,7 +816,7 @@ class RsControlFlowGraphTest : RsTestBase() {
 
     fun `test shorthand struct literal`() = testCFG("""
         struct S { x: i32 }
-        
+
         fn foo(x: i32) {
             S { x };
         }
@@ -831,7 +832,7 @@ class RsControlFlowGraphTest : RsTestBase() {
 
     fun `test struct literal dot dot syntax`() = testCFG("""
         struct S { x: i32, y: i32 }
-        
+
         fn main() {
             S { x, ..s };
         }

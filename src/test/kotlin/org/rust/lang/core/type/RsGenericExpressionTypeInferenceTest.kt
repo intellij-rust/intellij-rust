@@ -510,6 +510,31 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ S<u8>
     """)
 
+    fun `test enum with alias 1`() = testExpr("""
+        enum Foo<T, U> {
+            A(T),
+            B(U)
+        }
+        type Baz = Foo<i32, u8>;
+        fn main() {
+            let a = Baz::A(123);
+            a;
+        } //^ Foo<i32, u8>
+    """)
+
+    fun `test enum with alias 2`() = testExpr("""
+        enum Foo<T, U> {
+            A(T),
+            B(U)
+        }
+        type Bar<T> = Foo<T, u8>;
+        type Baz = Bar<i32>;
+        fn main() {
+            let a = Baz::A(123);
+            a;
+        } //^ Foo<i32, u8>
+    """)
+
     fun `test generic struct arg`() = testExpr("""
         struct Foo<F>(F);
         fn foo<T>(xs: Foo<T>) -> T { unimplemented!() }

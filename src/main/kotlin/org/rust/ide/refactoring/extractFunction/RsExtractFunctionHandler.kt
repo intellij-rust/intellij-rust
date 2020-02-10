@@ -19,6 +19,7 @@ import com.intellij.usageView.UsageInfo
 import org.rust.ide.refactoring.RsRenameProcessor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
+import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.valueParameters
 

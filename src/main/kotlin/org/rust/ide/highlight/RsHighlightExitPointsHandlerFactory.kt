@@ -16,10 +16,7 @@ import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.Q
 import org.rust.lang.core.psi.RsElementTypes.RETURN
-import org.rust.lang.core.psi.ext.ancestors
-import org.rust.lang.core.psi.ext.elementType
-import org.rust.lang.core.psi.ext.isAsync
-import org.rust.lang.core.psi.ext.isTry
+import org.rust.lang.core.psi.ext.*
 
 class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {

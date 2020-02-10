@@ -24,6 +24,9 @@ import javax.swing.Icon
 
 private val FUNCTION_TEST_REGEX = Regex("""^[\w:]*test.*""")
 
+val RsFunction.block: RsBlock? get() = PsiTreeUtil.getChildOfType(this, RsBlock::class.java)
+val RsFunction.stubOnlyBlock: RsBlock? get() = PsiTreeUtil.getStubChildOfType(this, RsBlock::class.java)
+
 val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTrait
 val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait
 
@@ -31,14 +34,20 @@ val RsFunction.isTest: Boolean
     get() {
         val stub = greenStub
         return stub?.isTest
-            ?: (queryAttributes.hasAttribute(FUNCTION_TEST_REGEX) || queryAttributes.hasAtomAttribute("quickcheck"))
+            ?: (queryAttributes.isTest)
     }
+
+val QueryAttributes.isTest
+    get() = hasAttribute(FUNCTION_TEST_REGEX) || hasAtomAttribute("quickcheck")
 
 val RsFunction.isBench: Boolean
     get() {
         val stub = greenStub
-        return stub?.isBench ?: queryAttributes.hasAtomAttribute("bench")
+        return stub?.isBench ?: queryAttributes.isBench
     }
+
+val QueryAttributes.isBench
+    get() = hasAtomAttribute("bench")
 
 val RsFunction.isConst: Boolean
     get() {
@@ -145,7 +154,7 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 
     final override val innerAttrList: List<RsInnerAttr>
-        get() = block?.innerAttrList.orEmpty()
+        get() = stubOnlyBlock?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon = when (owner) {
         is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->

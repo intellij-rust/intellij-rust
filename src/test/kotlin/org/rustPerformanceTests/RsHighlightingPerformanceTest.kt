@@ -12,6 +12,7 @@ import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.stdext.Timings
 import org.rust.stdext.repeatBenchmark
