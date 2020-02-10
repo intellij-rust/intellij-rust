@@ -172,9 +172,10 @@ MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExpr | MetaItemWithoutTT )>>
 // Paths
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private PathIdent ::= !("union" identifier | "async" fn) identifier | self | super | 'Self' | crate
+// private PathIdent ::= !("union" identifier | "async" fn) identifier | self | super | 'Self' | crate
+private PathIdent ::= <<parsePathIdent>>
 
-fake Path ::= (Path '::' | '::' | TypeQual)? PathIdent PathTypeArguments? {
+fake Path ::= (Path '::' | '::' | TypeQual)? (identifier | self | super | 'Self' | crate) PathTypeArguments? {
   implements = [ "org.rust.lang.core.psi.ext.RsPathReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPathImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPathStub"
