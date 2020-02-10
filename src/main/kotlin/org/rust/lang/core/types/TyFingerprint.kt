@@ -6,10 +6,7 @@
 package org.rust.lang.core.types
 
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsBaseTypeKind
-import org.rust.lang.core.psi.ext.isPointer
-import org.rust.lang.core.psi.ext.kind
-import org.rust.lang.core.psi.ext.typeElement
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.*
 import java.io.DataInput
 import java.io.DataOutput
@@ -53,6 +50,11 @@ data class TyFingerprint constructor(
                 }
                 is RsArrayType -> TyFingerprint("[T]")
                 is RsFnPointerType -> TyFingerprint("fn()")
+                is RsTraitType -> if (!type.isImpl) {
+                    TyFingerprint("dyn T")
+                } else {
+                    return emptyList()
+                }
                 else -> return emptyList()
             }
             return listOf(fingerprint)
@@ -66,6 +68,7 @@ data class TyFingerprint constructor(
             is TyTuple -> TyFingerprint("(tuple)")
             is TyPrimitive -> TyFingerprint(type.toString())
             is TyFunction -> TyFingerprint("fn()")
+            is TyTraitObject -> TyFingerprint("dyn T")
             is TyInfer.IntVar -> ANY_INTEGER_FINGERPRINT
             is TyInfer.FloatVar -> ANY_FLOAT_FINGERPRINT
             else -> null

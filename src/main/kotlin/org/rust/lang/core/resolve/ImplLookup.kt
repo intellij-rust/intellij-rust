@@ -242,8 +242,10 @@ class ImplLookup(
     private fun rawFindImplsAndTraits(ty: Ty): List<TraitImplSource> {
         val implsAndTraits = mutableListOf<TraitImplSource>()
         when (ty) {
-            is TyTraitObject ->
+            is TyTraitObject -> {
                 ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
+                findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+            }
             is TyFunction -> {
                 findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
                 implsAndTraits += fnTraits.map { TraitImplSource.Object(it) }
@@ -398,7 +400,11 @@ class ImplLookup(
             val isAppropriateImpl = ctx.canCombineTypes(formalSelfTy, selfTy) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
-                (cachedImpl.isInherent || cachedImpl.implementedTrait != null)
+                (cachedImpl.isInherent || cachedImpl.implementedTrait != null) &&
+                // ignore blanket implementations for trait objects for now because
+                // both trait objects and trait bounds are represented here as TyTraitObject
+                // but they should be treated differently in terms of applicable impls
+                (selfTy !is TyTraitObject || type !is TyTypeParameter)
             isAppropriateImpl && processor(cachedImpl)
         }
     }
