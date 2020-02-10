@@ -424,7 +424,7 @@ class RsTypeInferenceWalker(
                         val traitRef = TraitRef(selfTy, boundTrait)
                         fulfill.registerPredicateObligation(Obligation(Predicate.Trait(traitRef)))
                         when (scopeEntry.source) {
-                            is TraitImplSource.Object, is TraitImplSource.Collapsed -> {
+                            is TraitImplSource.Trait, is TraitImplSource.Collapsed -> {
                                 ctx.registerPathRefinement(pathExpr, traitRef)
                             }
                         }

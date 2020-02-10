@@ -137,6 +137,12 @@ sealed class TraitImplSource {
      */
     data class Collapsed(override val value: RsTraitItem) : TraitImplSource()
 
+    /**
+     * A trait is directly referenced in UFCS path `TraitName::foo`, an impl should be selected
+     * during type inference
+     */
+    data class Trait(override val value: RsTraitItem) : TraitImplSource()
+
     /** A trait impl hardcoded in Intellij-Rust. Mostly it's something defined with a macro in stdlib */
     data class Hardcoded(override val value: RsTraitItem) : TraitImplSource()
 }

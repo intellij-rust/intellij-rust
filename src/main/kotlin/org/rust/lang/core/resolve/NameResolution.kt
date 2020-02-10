@@ -402,10 +402,17 @@ private fun processQualifiedPathResolveVariants(
     if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = isSuperChain)) {
         return true
     }
-    if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
-        val baseTy = if (base is RsImplItem && qualifier.hasCself) {
-            // impl S { fn foo() { Self::bar() } }
-            base.typeReference?.type ?: TyUnknown
+
+    if (base is RsTraitItem && parent !is RsUseSpeck && !qualifier.hasCself) {
+        if (processTraitRelativePath(BoundElement(base, subst), ns, processor)) return true
+    } else if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
+        val baseTy = if (qualifier.hasCself) {
+            when (base) {
+                // impl S { fn foo() { Self::bar() } }
+                is RsImplItem -> base.typeReference?.type ?: TyUnknown
+                is RsTraitItem -> TyTypeParameter.self(base)
+                else -> TyUnknown
+            }
         } else {
             val realSubst = if (qualifier.typeArgumentList != null) {
                 // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
@@ -563,6 +570,28 @@ private fun processTypeQualifiedPathResolveVariants(
         emptySubstitution
     }
     if (processAssociatedItemsWithSelfSubst(lookup, baseTy, ns, selfSubst, shadowingProcessor)) return true
+    return false
+}
+
+/** `TraitName::foo` */
+private fun processTraitRelativePath(
+    baseBoundTrait: BoundElement<RsTraitItem>,
+    ns: Set<Namespace>,
+    processor: RsResolveProcessor
+): Boolean {
+    for (boundTrait in baseBoundTrait.flattenHierarchy) {
+        val trait = boundTrait.element
+        val source = TraitImplSource.Trait(trait)
+        for (item in trait.members?.expandedMembers.orEmpty()) {
+            val itemNs = when (item) {
+                is RsTypeAlias -> Namespace.Types
+                else -> Namespace.Values // RsFunction, RsConstant
+            }
+            if (itemNs !in ns) continue
+            val name = item.name ?: continue
+            if (processor(AssocItemScopeEntry(name, item, boundTrait.subst, TyUnknown, source))) return true
+        }
+    }
     return false
 }
 

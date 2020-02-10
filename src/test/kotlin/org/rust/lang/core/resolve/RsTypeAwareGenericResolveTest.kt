@@ -218,6 +218,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test UFCS assoc function call on self trait from bound for Self`() = checkByCode("""
+        trait Foo {
+            fn foo() {}
+        }    //X
+        trait Bar {
+            fn bar() where Self: Foo {
+                Self::foo();
+            }        //^
+        }
+    """)
+
     fun `test Result unwrap`() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 
@@ -1053,7 +1064,7 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                              //X
         impl Foo<Y> for S { fn foo(_: Y) {} }
         impl Unknown<Z> for S { fn foo(_: Z) {} }
-        
+
         fn main() {
             S::foo(X);
         }    //^
