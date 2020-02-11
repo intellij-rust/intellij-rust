@@ -25,7 +25,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             default fn def() {}
             extern "C" fn ext_fn() {}
 
-            default <error descr="Default associated function `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub() {}
+            <error descr="Default associated function `def_pub` cannot have the `pub` qualifier">pub</error> default fn def_pub() {}
             fn no_body()<error descr="Associated function `no_body` must have a body">;</error>
             fn anon_param(<error descr="Associated function `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
             fn var_foo(a: bool, <error descr="Associated function `var_foo` cannot be variadic">...</error>) {}
@@ -42,7 +42,7 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             default fn def(&self) {}
             extern "C" fn ext_m(&self) {}
 
-            default <error descr="Default method `def_pub` cannot have the `pub` qualifier">pub</error> fn def_pub(&self) {}
+            <error descr="Default method `def_pub` cannot have the `pub` qualifier">pub</error> default fn def_pub(&self) {}
             fn no_body(&self)<error descr="Method `no_body` must have a body">;</error>
             fn anon_param(&self, <error descr="Method `anon_param` cannot have anonymous parameters">u8</error>, a: i16) {}
             fn var_foo(&self, a: bool, <error descr="Method `var_foo` cannot be variadic">...</error>) {}
