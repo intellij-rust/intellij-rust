@@ -446,9 +446,8 @@ RetType ::= '->' TypeReferenceNoImplicitTraitType {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-Function ::= OuterAttr*
+Function ::= AttrsAndVis
              default_?
-             Vis?
              async? const? unsafe? ExternAbi?
              fn identifier
              TypeParameterList?
@@ -538,7 +537,7 @@ BindingMode ::= ref mut? | mut
 
 OrPats ::= '|'? Pat ('|' Pat)*
 
-Constant ::= OuterAttr* default_? Vis? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
+Constant ::= AttrsAndVis default_? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
   pin = 5
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
@@ -923,7 +922,7 @@ private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
 
 private TraitType_upper ::= ('+' Polybound)+
 
-TypeAlias ::= OuterAttr* default_? Vis? TYPE_KW identifier
+TypeAlias ::= AttrsAndVis default_? TYPE_KW identifier
               [ TypeParameterList WhereClause? | WhereClause | TypeParamBounds ]
               [ '=' TypeReference ] ';' {
   pin = 'identifier'
