@@ -7,10 +7,7 @@ package org.rust.ide.presentation
 
 import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.ext.RsGenericDeclaration
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.lifetimeParameters
-import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.regions.ReStatic
@@ -84,13 +81,7 @@ private data class TypeRenderer(
         }
 
         return when (ty) {
-            is TyFunction -> buildString {
-                ty.paramTypes.joinTo(this, ", ", "fn(", ")", transform = render)
-                if (ty.retType != TyUnit) {
-                    append(" -> ")
-                    append(render(ty.retType))
-                }
-            }
+            is TyFunction -> formatFnLike("fn", ty.paramTypes, ty.retType, render)
             is TySlice -> "[${render(ty.elementType)}]"
 
             is TyTuple -> ty.types.joinToString(", ", "(", ")", transform = render)
@@ -148,9 +139,32 @@ private data class TypeRenderer(
     private fun render(region: Region): String =
         if (region == ReUnknown) unknownLifetime else region.toString()
 
+    private fun formatFnLike(fnType: String, paramTypes: List<Ty>, retType: Ty, render: (Ty) -> String): String =
+        buildString {
+            paramTypes.joinTo(this, ", ", "$fnType(", ")", transform = render)
+            if (retType != TyUnit) {
+                append(" -> ")
+                append(render(retType))
+            }
+        }
+
     private fun formatTrait(trait: BoundElement<RsTraitItem>, render: (Ty) -> String): String = buildString {
-        append(trait.element.name ?: return anonymous)
-        if (includeTypeArguments) append(formatTraitGenerics(trait, render))
+        val name = trait.element.name ?: return anonymous
+        if (trait.element.langAttribute in listOf("fn", "fn_once", "fn_mut")) {
+            val paramTypes = trait.element.typeParameters
+                .singleOrNull()
+                ?.let { trait.subst[it] as? TyTuple }
+                ?.types
+                ?: return unknown
+            val retType = trait.assoc.entries
+                .find { it.key.name == "Output" }
+                ?.value
+                ?: TyUnit
+            append(formatFnLike(name, paramTypes, retType, render))
+        } else {
+            append(name)
+            if (includeTypeArguments) append(formatTraitGenerics(trait, render))
+        }
     }
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {

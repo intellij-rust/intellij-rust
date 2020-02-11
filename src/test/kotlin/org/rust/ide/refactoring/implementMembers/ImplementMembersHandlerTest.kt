@@ -825,6 +825,31 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test Fn type`() = doTest("""
+        struct Foo;
+        struct Bar;
+        trait Baz {
+            fn baz(&self) -> Box<Fn(i32, i32) -> i32>;
+        }
+
+        impl Baz for Foo {
+            /*caret*/
+        }
+    """, listOf(ImplementMemberSelection("baz(&self) -> Box<Fn(i32, i32) -> i32>", true, isSelected = true)), """
+        struct Foo;
+        struct Bar;
+        trait Baz {
+            fn baz(&self) -> Box<Fn(i32, i32) -> i32>;
+        }
+
+        impl Baz for Foo {
+            fn baz(&self) -> Box<Fn(i32, i32) -> i32> {
+                unimplemented!()
+            }
+        }
+    """)
+
     fun `test pointer self type`() = doTest("""
         struct Foo;
         struct Bar;
