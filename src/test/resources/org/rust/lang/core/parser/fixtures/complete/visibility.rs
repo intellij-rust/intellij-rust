@@ -12,3 +12,6 @@ mod a {
     }
 }
 crate struct S9;
+
+struct S10(crate ::S1); // path `crate::S1`
+struct S11(crate S1); // vis `crate`
