@@ -218,6 +218,17 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test UFCS assoc function call on self trait from bound for Self`() = checkByCode("""
+        trait Foo {
+            fn foo() {}
+        }    //X
+        trait Bar {
+            fn bar() where Self: Foo {
+                Self::foo();
+            }        //^
+        }
+    """)
+
     fun `test Result unwrap`() = checkByCode("""
         enum Result<T, E> { Ok(T), Err(E)}
 
@@ -1053,9 +1064,30 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
                              //X
         impl Foo<Y> for S { fn foo(_: Y) {} }
         impl Unknown<Z> for S { fn foo(_: Z) {} }
-        
+
         fn main() {
             S::foo(X);
         }    //^
+    """)
+
+    fun `test generic trait object inherent impl`() = checkByCode("""
+        trait Foo<T>{}
+        impl<T> dyn Foo<T>{
+            fn foo(&self){}
+        }    //X
+        fn foo(a: &dyn Foo<i32>){
+            a.foo()
+        }   //^
+    """)
+
+    fun `test impl for type parameter resolved for trait object`() = checkByCode("""
+        trait Foo {}
+        trait Bar { fn bar(&self); }
+        impl<T: ?Sized> Bar for T {
+            fn bar(&self) {}
+        }    //X
+        fn foo(a: &dyn Foo) {
+            (*a).bar()
+        }      //^
     """)
 }

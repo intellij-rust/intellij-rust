@@ -1711,4 +1711,16 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             s;
         } //^ S<u8, <unknown>>
     """)
+
+    fun `test UFCS explicit trait type parameter`() = testExpr("""
+        struct S;
+        trait Foo<T> { fn foo(_: Self) -> T; }
+        impl Foo<i32> for S { fn foo(_: Self) -> i32 { unimplemented!() } }
+        impl Foo<u32> for S { fn foo(_: Self) -> u32 { unimplemented!() } }
+        fn main() {
+            let a = Foo::<i32>::foo(S);
+            let b = Foo::<u32>::foo(S);
+            (a, b);
+        } //^ (i32, u32)
+    """)
 }
