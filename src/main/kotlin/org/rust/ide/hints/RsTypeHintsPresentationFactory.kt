@@ -85,22 +85,25 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
         val typeDeclaration = alias ?: type.item
         val typeNamePresentation = factory.psiSingleReference(text(adtName)) { typeDeclaration }
 
-        val typeArguments = mutableListOf<Ty>()
-        for ((argument, parameter) in type.typeArguments.zip(type.item.typeParameters)) {
+        val typeArguments = alias?.typeParameters?.map { (aliasedBy.subst[it] ?: TyUnknown) to it }
+            ?: type.typeArguments.zip(type.item.typeParameters)
+
+        val userVisibleTypeArguments = mutableListOf<Ty>()
+        for ((argument, parameter) in typeArguments) {
             if (!showObviousTypes && isDefaultTypeParameter(argument, parameter)) {
                 // don't show default types
                 continue
             }
-            typeArguments.add(argument)
+            userVisibleTypeArguments.add(argument)
         }
 
-        if (typeArguments.isNotEmpty()) {
+        if (userVisibleTypeArguments.isNotEmpty()) {
             val collapsible = factory.collapsible(
                 prefix = text("<"),
                 collapsed = text(PLACEHOLDER),
-                expanded = { parametersHint(typeArguments, level + 1) },
+                expanded = { parametersHint(userVisibleTypeArguments, level + 1) },
                 suffix = text(">"),
-                startWithPlaceholder = checkSize(level, typeArguments.size)
+                startWithPlaceholder = checkSize(level, userVisibleTypeArguments.size)
             )
             return listOf(typeNamePresentation, collapsible).join()
         }
