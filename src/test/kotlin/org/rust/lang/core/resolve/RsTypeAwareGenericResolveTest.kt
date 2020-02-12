@@ -1069,4 +1069,25 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             S::foo(X);
         }    //^
     """)
+
+    fun `test generic trait object inherent impl`() = checkByCode("""
+        trait Foo<T>{}
+        impl<T> dyn Foo<T>{
+            fn foo(&self){}
+        }    //X
+        fn foo(a: &dyn Foo<i32>){
+            a.foo()
+        }   //^
+    """)
+
+    fun `test impl for type parameter resolved for trait object`() = checkByCode("""
+        trait Foo {}
+        trait Bar { fn bar(&self); }
+        impl<T: ?Sized> Bar for T {
+            fn bar(&self) {}
+        }    //X
+        fn foo(a: &dyn Foo) {
+            (*a).bar()
+        }      //^
+    """)
 }

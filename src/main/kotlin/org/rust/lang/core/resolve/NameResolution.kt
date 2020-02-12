@@ -1175,6 +1175,7 @@ private fun processAssociatedItems(
 
     for (traitOrImpl in lookup.findImplsAndTraits(type)) {
         val isInherentImpl = traitOrImpl is TraitImplSource.ExplicitImpl && traitOrImpl.isInherent
+            || traitOrImpl is TraitImplSource.Object
 
         for (member in traitOrImpl.implAndTraitExpandedMembers) {
             if (!nsFilter(member)) continue

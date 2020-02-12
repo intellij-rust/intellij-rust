@@ -57,6 +57,14 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }   //^
     """)
 
+    fun `test trait object inherent impl`() = doTest("""
+        trait Foo { fn foo(&self){} }
+        impl dyn Foo { fn foo(&self){} }
+        fn foo(a: &dyn Foo){
+            a.foo()
+        }   //^
+    """)
+
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code)
         val ref = findElementInEditor<RsReferenceElement>().reference

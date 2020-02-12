@@ -215,4 +215,15 @@ class RsTypeAwareCompletionTest : RsCompletionTestBase() {
         struct S;
         fn main() { let a: <S as Tr>::Item/*caret*/; }
     """)
+
+    fun `test impl for 'Sized' type parameter is not completed for trait object`() = checkNotContainsCompletion("bar", """
+        trait Foo { fn foo(&self); fn foo2(&self); }
+        trait Bar { fn bar(&self); }
+        impl<T> Bar for T {
+            fn bar(&self) {}
+        }
+        fn foo(a: &dyn Foo) {
+            (*a)./*caret*/
+        }
+    """)
 }

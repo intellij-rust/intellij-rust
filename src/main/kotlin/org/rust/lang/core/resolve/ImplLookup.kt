@@ -407,10 +407,9 @@ class ImplLookup(
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
                 (cachedImpl.isInherent || cachedImpl.implementedTrait != null) &&
-                // ignore blanket implementations for trait objects for now because
-                // both trait objects and trait bounds are represented here as TyTraitObject
-                // but they should be treated differently in terms of applicable impls
-                (selfTy !is TyTraitObject || type !is TyTypeParameter)
+                // Ignore `Sized` blanket implementations for trait objects.
+                // TODO remove it after support of completion results filtering by `Sized` trait
+                (selfTy !is TyTraitObject || type !is TyTypeParameter || !type.isSized)
             isAppropriateImpl && processor(cachedImpl)
         }
     }
