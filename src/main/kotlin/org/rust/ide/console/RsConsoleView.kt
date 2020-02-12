@@ -35,6 +35,7 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
         // Mark editor as console one, to prevent autopopup completion
         historyViewer.putUserData(ConsoleViewUtil.EDITOR_IS_CONSOLE_HISTORY_VIEW, true)
         super.setPrompt(PROMPT)
+        consolePromptDecorator.indentPrompt = INDENT_PROMPT
         setUpdateFoldingsEnabled(false)
     }
 
@@ -77,6 +78,7 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
 
     companion object {
         const val PROMPT: String = ">> "
+        const val INDENT_PROMPT: String = ".. "
         const val VIRTUAL_FILE_NAME: String = "IntellijRustRepl.rs"
         private val RUST_CONSOLE_KEY: Key<Boolean> = Key("RS_CONSOLE_KEY")
     }

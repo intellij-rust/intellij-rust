@@ -7,6 +7,7 @@ package org.rust.ide.console
 
 import com.intellij.execution.actions.EOFAction
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.console.ConsoleHistoryController
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
@@ -46,8 +47,6 @@ class RsConsoleRunner(project: Project) :
     private lateinit var commandLine: GeneralCommandLine
     private lateinit var consoleCommunication: RsConsoleCommunication
 
-    val commandHistory: CommandHistory = CommandHistory()
-
     override fun getConsoleExecuteActionHandler(): RsConsoleExecuteActionHandler {
         return super.getConsoleExecuteActionHandler() as RsConsoleExecuteActionHandler
     }
@@ -59,12 +58,6 @@ class RsConsoleRunner(project: Project) :
     override fun createConsoleView(): RsConsoleView {
         val consoleView = RsConsoleView(project)
         consoleCommunication = RsConsoleCommunication(consoleView)
-
-        val consoleEditor = consoleView.consoleEditor
-        val historyKeyListener = HistoryKeyListener(project, consoleEditor, commandHistory)
-        consoleEditor.contentComponent.addKeyListener(historyKeyListener)
-        commandHistory.listeners.add(historyKeyListener)
-
         return consoleView
     }
 
@@ -112,7 +105,8 @@ class RsConsoleRunner(project: Project) :
         val outputActions = listOf<AnAction>(
             SoftWrapAction(consoleView),
             ScrollToTheEndToolbarAction(consoleView.editor),
-            PrintAction(consoleView)
+            PrintAction(consoleView),
+            ConsoleHistoryController.getController(consoleView)!!.browseHistory
         )
         outputActionGroup.addAll(outputActions)
 
@@ -212,8 +206,9 @@ class RsConsoleRunner(project: Project) :
 
     override fun createExecuteActionHandler(): RsConsoleExecuteActionHandler {
         val consoleExecuteActionHandler =
-            RsConsoleExecuteActionHandler(processHandler!!, this, consoleCommunication)
+            RsConsoleExecuteActionHandler(processHandler!!, consoleCommunication)
         consoleExecuteActionHandler.isEnabled = false
+        ConsoleHistoryController(RsConsoleRootType.instance, "", consoleView).install()
         return consoleExecuteActionHandler
     }
 
