@@ -1723,4 +1723,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             (a, b);
         } //^ (i32, u32)
     """)
+
+    fun `test trait bounds normalization`() = testExpr("""
+        struct X;
+        trait Foo<T> {  }
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item; }
+        fn bar<A: Bar<Item=B>, B>(b: B) where A::Item: Foo<X> {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
 }
