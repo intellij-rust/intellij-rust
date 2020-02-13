@@ -289,8 +289,7 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
         }
     """)
 
-    fun `test don't show default type in adt`() = checkByText(
-        """
+    fun `test don't show default type in adt`() = checkByText("""
         struct MyType;
         struct S<A, B = MyType> { x: A, y: B }
 
@@ -298,19 +297,56 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
             let a = S { x: 42, y: MyType };
             let b/*hint text="[:  [S [< i32 >]]]"*/ = a;
         }
-    """
-    )
+    """)
 
-    fun `test don't show default type in anon type`() = checkByText(
-        """
+    fun `test don't show default type in anon type`() = checkByText("""
         struct MyType;
         trait MyTrait<A, B = MyType> {}
 
         fn foo(x: impl MyTrait<i32>) {
             let y/*hint text="[:  [impl  [MyTrait [< i32 >]] ]]"*/ = x;
         }
-    """
-    )
+    """)
+
+    fun `test type alias 1`() = checkByText("""
+        struct S;
+        type V = S;
+        fn foo(x: V) {
+            let y/*hint text="[:  V]"*/ = x;
+        }
+    """)
+
+    fun `test type alias 2`() = checkByText("""
+        struct S<T>;
+        type V = S<i32>;
+        fn foo(x: V) {
+            let y/*hint text="[:  V]"*/ = x;
+        }
+    """)
+
+    fun `test type alias with type params`() = checkByText("""
+        struct S<T>;
+        type V<T> = S<(T, T)>;
+        fn foo(x: V<i32>) {
+            let y/*hint text="[:  [V [< i32 >]]]"*/ = x;
+        }
+    """)
+
+    fun `test type alias with default generic type param 1`() = checkByText("""
+        struct S<T>;
+        type V<T, V = i32> = S<(T, V)>;
+        fn foo(x: V<u8>) {
+            let y/*hint text="[:  [V [< u8 >]]]"*/ = x;
+        }
+    """)
+
+    fun `test type alias with default generic type param 2`() = checkByText("""
+        struct S<T>;
+        type V<T, V = i32> = S<(T, V)>;
+        fn foo(x: V<u8, f32>) {
+            let y/*hint text="[:  [V [< [u8 ,  f32] >]]]"*/ = x;
+        }
+    """)
 
     private fun checkByText(@Language("Rust") code: String) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
