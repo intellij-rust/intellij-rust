@@ -163,20 +163,38 @@ data class ParamEnv(val callerBounds: List<TraitRef>) {
         val EMPTY: ParamEnv = ParamEnv(emptyList())
         val LEGACY: ParamEnv = ParamEnv(emptyList())
 
-        fun buildFor(decl: RsGenericDeclaration): ParamEnv = ParamEnv(buildList {
-            addAll(decl.bounds)
-            if (decl is RsAbstractable) {
-                when (val owner = decl.owner) {
-                    is RsAbstractableOwner.Trait -> {
-                        add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
-                        addAll(owner.trait.bounds)
-                    }
-                    is RsAbstractableOwner.Impl -> {
-                        addAll(owner.impl.bounds)
+        fun buildFor(decl: RsGenericDeclaration): ParamEnv {
+            val rawBounds = buildList<TraitRef> {
+                addAll(decl.bounds)
+                if (decl is RsAbstractable) {
+                    when (val owner = decl.owner) {
+                        is RsAbstractableOwner.Trait -> {
+                            add(TraitRef(TyTypeParameter.self(), owner.trait.withDefaultSubst()))
+                            addAll(owner.trait.bounds)
+                        }
+                        is RsAbstractableOwner.Impl -> {
+                            addAll(owner.impl.bounds)
+                        }
                     }
                 }
             }
-        })
+
+            when (rawBounds.size) {
+                0 -> return EMPTY
+                1 -> return ParamEnv(rawBounds)
+            }
+
+            val lookup = ImplLookup(decl.project, decl.cargoProject, decl.knownItems, ParamEnv(rawBounds))
+            val ctx = lookup.ctx
+            val bounds2 = rawBounds.map {
+                val (bound, obligations) = ctx.normalizeAssociatedTypesIn(it)
+                obligations.forEach(ctx.fulfill::registerPredicateObligation)
+                bound
+            }
+            ctx.fulfill.selectWherePossible()
+
+            return ParamEnv(bounds2.map { ctx.fullyResolve(it) })
+        }
     }
 }
 

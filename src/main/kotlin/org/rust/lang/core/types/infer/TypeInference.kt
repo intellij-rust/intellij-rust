@@ -510,7 +510,7 @@ class RsInferenceContext(
         return ty.foldTyInferWith(this::shallowResolve)
     }
 
-    private fun <T : TypeFoldable<T>> fullyResolve(ty: T): T {
+    fun <T : TypeFoldable<T>> fullyResolve(ty: T): T {
         fun go(ty: Ty): Ty {
             if (ty !is TyInfer) return ty
 

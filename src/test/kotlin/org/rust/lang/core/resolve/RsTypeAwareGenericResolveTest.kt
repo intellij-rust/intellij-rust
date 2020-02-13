@@ -1090,4 +1090,13 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             (*a).bar()
         }      //^
     """)
+
+    fun `test trait bounds normalization`() = checkByCode("""
+        trait Foo { fn foo(&self) {} }
+                     //X
+        trait Bar { type Item; }
+        fn foo<A: Bar<Item=B>, B>(b: B) where A::Item: Foo {
+            b.foo()
+        }   //^
+    """)
 }
