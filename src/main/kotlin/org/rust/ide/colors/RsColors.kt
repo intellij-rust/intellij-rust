@@ -52,6 +52,7 @@ enum class RsColor(humanName: String, default: TextAttributesKey? = null) {
     STRING("Literals//Strings//String", Default.STRING),
     VALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Valid", Default.VALID_STRING_ESCAPE),
     INVALID_STRING_ESCAPE("Literals//Strings//Escape sequence//Invalid", Default.INVALID_STRING_ESCAPE),
+    FORMAT_SPECIFIER("Literals//Strings//Format specifier in string argument", Default.VALID_STRING_ESCAPE),
 
     BLOCK_COMMENT("Comments//Block comment", Default.BLOCK_COMMENT),
     EOL_COMMENT("Comments//Line comment", Default.LINE_COMMENT),
