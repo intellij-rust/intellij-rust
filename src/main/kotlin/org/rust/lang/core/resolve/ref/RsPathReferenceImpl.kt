@@ -12,12 +12,12 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.regions.ReEarlyBound
-import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildMap
@@ -108,9 +108,19 @@ fun resolvePathRaw(path: RsPath, lookup: ImplLookup? = null): List<ScopeEntry> {
     }
 }
 
-fun resolvePath(path: RsPath, lookup: ImplLookup? = null): List<BoundElement<RsElement>> {
+private fun filterIncompatibleImpls(lookup: ImplLookup, processor: RsResolveProcessor): RsResolveProcessor =
+    fun(e): Boolean {
+        val assoc = e as? AssocItemScopeEntry ?: return processor(e)
+        if (assoc.selfTy.containsTyOfClass(TyUnknown::class.java)) return processor(e)
+        return if (lookup.ctx.canEvaluateBounds(assoc.source, assoc.selfTy))
+            processor(e)
+        else
+            false
+    }
+
+fun resolvePath(path: RsPath, lookup: ImplLookup = ImplLookup.relativeTo(path)): List<BoundElement<RsElement>> {
     val result = collectPathResolveVariants(path.referenceName) {
-        processPathResolveVariants(lookup, path, false, it)
+        processPathResolveVariants(lookup, path, false, filterIncompatibleImpls(lookup, it))
     }
 
     return when (result.size) {

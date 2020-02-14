@@ -38,6 +38,7 @@ import org.rust.lang.core.types.infer.hasTyInfer
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
+import org.rust.openapiext.escaped
 import org.rust.stdext.buildList
 import org.rust.stdext.buildMap
 
@@ -474,6 +475,26 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             return "Explicit calls to `drop` are forbidden. Use `std::mem::drop` instead"
+        }
+    }
+
+    class TypeParamCountMismatchError(
+        element: PsiElement,
+        private val fn: RsFunction,
+        private val traitName: String,
+        private val paramsCount: Int,
+        private val superParamsCount: Int
+    ) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0049,
+            errorText()
+        )
+
+        private fun errorText(): String {
+            val fnName = escapeString(fn.name)
+            val traitNameS = escapeString(traitName)
+            return "Method `$fnName` has $paramsCount type ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitNameS` has $superParamsCount"
         }
     }
 
@@ -989,6 +1010,36 @@ sealed class RsDiagnostic(
         }
     }
 
+    class IncompatibleImplType(
+        element: PsiElement,
+        expectedTy: Ty,
+        actualTy: Ty
+    ) : RsDiagnostic(element) {
+        private val description = "Expected <b>`${expectedTy}`</b>, found <b>`${actualTy}`</b>\n" +
+            if (expectedTy is TyTypeParameter && actualTy is TyTypeParameter) {
+                "Note: a type parameter was expected, but a different one was found"
+            } else {
+                ""
+            }
+
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0053,
+            errorText(),
+            description.escaped
+        )
+
+        private fun errorText(): String {
+            val elType = when (element) {
+                is RsValueParameter -> "Argument"
+                is RsSelfParameter -> "Self"
+                else -> "Return"
+            }
+
+            return "$elType type is incompatible with declared in trait"
+        }
+    }
+
     class ImplForNonAdtError(
         element: PsiElement
     ) : RsDiagnostic(element) {
@@ -1182,7 +1233,7 @@ sealed class RsDiagnostic(
 }
 
 enum class RsErrorCode {
-    E0004, E0023, E0026, E0027, E0040, E0046, E0050, E0060, E0061, E0069, E0081, E0084,
+    E0004, E0023, E0026, E0027, E0040, E0046, E0049, E0050, E0053, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0379, E0384,
