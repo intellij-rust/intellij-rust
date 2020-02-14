@@ -251,6 +251,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                     is TraitImplSource.Hardcoded -> source.value
 
                     is TraitImplSource.TraitBound -> return null
+                    is TraitImplSource.ProjectionBound -> return null
                     is TraitImplSource.Object -> return null
                     is TraitImplSource.Trait -> return null
                 }

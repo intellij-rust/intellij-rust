@@ -124,6 +124,23 @@ sealed class TraitImplSource {
     /** T: Trait */
     data class TraitBound(override val value: RsTraitItem) : TraitImplSource()
 
+    /**
+     * Like [TraitBound], but this is a bound for an associated type projection defined at the trait
+     * of the associated type.
+     * ```
+     * trait Foo where Self::Assoc: Bar {
+     *     type Assoc;            //^ the bound
+     * }
+     * ```
+     * or
+     * ```
+     * trait Foo {
+     *     type Assoc: Bar;
+     * }             //^ the bound
+     * ```
+     */
+    data class ProjectionBound(override val value: RsTraitItem) : TraitImplSource()
+
     /** Trait is implemented for item via ```#[derive]``` attribute. */
     data class Derived(override val value: RsTraitItem) : TraitImplSource()
 
@@ -277,6 +294,15 @@ class ImplLookup(
             is TyAnon -> {
                 ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
                 RsImplIndex.findFreeImpls(project) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
+            }
+            is TyProjection -> {
+                val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
+                for (bound in ty.trait.element.bounds) {
+                    if (ctx.probe { ctx.combineTypes(bound.selfTy.substitute(subst), ty) }.isOk) {
+                        implsAndTraits += TraitImplSource.ProjectionBound(bound.trait.element)
+                    }
+                }
+
             }
             is TyUnknown -> Unit
             else -> {
@@ -556,6 +582,15 @@ class ImplLookup(
                     .map { SelectionCandidate.TypeParameter(it) }
                     .forEach(::add)
                 if (ref.selfTy is TyTypeParameter) return@buildList
+                if (ref.selfTy is TyProjection) {
+                    val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
+                    for (bound in ref.selfTy.trait.element.bounds) {
+                        if (ctx.probe { ctx.combineTraitRefs(bound.substitute(subst), ref) }) {
+                            add(SelectionCandidate.Projection(bound))
+                        }
+                    }
+                    return@buildList
+                }
                 assembleImplCandidates(ref) { add(it); false }
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
@@ -645,6 +680,12 @@ class ImplLookup(
                 testAssert { !candidate.bound.containsTyOfClass(TyInfer::class.java) }
                 ctx.combineBoundElements(candidate.bound, ref.trait)
                 Selection(candidate.bound.element, emptyList())
+            }
+            is SelectionCandidate.Projection -> {
+                ref.selfTy as TyProjection
+                val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
+                ctx.combineTraitRefs(ref, candidate.bound.substitute(subst))
+                Selection(ref.trait.element, emptyList())
             }
             SelectionCandidate.TraitObject -> {
                 val traits = when (ref.selfTy) {
@@ -918,6 +959,7 @@ private sealed class SelectionCandidate {
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()
     object Closure : SelectionCandidate()
+    class Projection(val bound: TraitRef) : SelectionCandidate()
 }
 
 private fun prepareSubstAndTraitRefRaw(
