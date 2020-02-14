@@ -155,27 +155,21 @@ class RsDefaultValueBuilder(
         return addedFields
     }
 
-    private fun getName(fieldDecl: RsFieldDecl): String? {
-        return when (fieldDecl) {
-            is RsNamedFieldDecl -> fieldDecl.identifier.text
-            else -> fieldDecl.name
-        }
-    }
-
     private fun findLocalBinding(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
-        val name = getName(fieldDecl) ?: return null
+        val name = fieldDecl.name ?: return null
         val type = fieldDecl.typeReference?.type ?: return null
 
         val binding = bindings[name] ?: return null
+        val escapedName = escapeFieldName(fieldDecl) ?: return null
         return when {
             type == binding.type -> {
-                val field = psiFactory.createStructLiteralField(name, psiFactory.createExpression(name))
+                val field = psiFactory.createStructLiteralField(escapedName, psiFactory.createExpression(escapedName))
                 RsFieldInitShorthandInspection.applyShorthandInit(field)
                 field
             }
             isRefContainer(type, binding.type) -> {
-                val expr = buildReference(type, psiFactory.createExpression(name))
-                psiFactory.createStructLiteralField(name, expr)
+                val expr = buildReference(type, psiFactory.createExpression(escapedName))
+                psiFactory.createStructLiteralField(escapedName, expr)
             }
             else -> null
         }
@@ -239,8 +233,18 @@ class RsDefaultValueBuilder(
         return null
     }
 
+    private fun escapeFieldName(fieldDecl: RsFieldDecl): String? {
+        val name = fieldDecl.name ?: return null
+
+        // Tuple structs field names are integers and we don't want to escape them
+        return if (name.all { it.isDigit() }) {
+            name
+        }
+        else fieldDecl.name?.escapeIdentifierIfNeeded()
+    }
+
     private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
-        val fieldName = getName(fieldDecl) ?: return null
+        val fieldName = escapeFieldName(fieldDecl) ?: return null
         val fieldType = fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
@@ -250,7 +254,7 @@ class RsDefaultValueBuilder(
         fun getVisibleBindings(place: RsElement): Map<String, RsPatBinding> {
             val bindings = HashMap<String, RsPatBinding>()
             processLocalVariables(place) { variable ->
-                variable.identifier.text?.let {
+                variable.name?.let {
                     bindings[it] = variable
                 }
             }

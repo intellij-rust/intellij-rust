@@ -659,8 +659,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test keyword field`() = checkBothQuickFix("""
+    fun `test raw identifier field`() = checkBothQuickFix("""
         struct S { r#type: i32 }
 
         fn main() {
@@ -674,8 +673,7 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         }
     """)
 
-    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test keyword field local variable`() = checkBothQuickFix("""
+    fun `test raw identifier field local variable`() = checkBothQuickFix("""
         struct S { r#type: i32 }
 
         fn main() {
@@ -688,6 +686,24 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         fn main() {
             let r#type: i32 = 0;
             S { r#type };
+        }
+    """)
+
+    fun `test raw identifier field unnecessary escape`() = checkBothQuickFix("""
+        struct S { r#foo: i32, bar: i32 }
+
+        fn main() {
+            let foo: i32 = 0;
+            let r#bar: i32 = 0;
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#foo: i32, bar: i32 }
+
+        fn main() {
+            let foo: i32 = 0;
+            let r#bar: i32 = 0;
+            S { foo, bar };
         }
     """)
 
