@@ -20,12 +20,7 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
     RsIcons.RUST
 ) {
     init {
-        addFactory(object : ConfigurationFactory(this) {
-            override fun createTemplateConfiguration(project: Project): RunConfiguration =
-                CargoCommandConfiguration(project, "Cargo", this)
-
-            override fun isConfigurationSingletonByDefault(): Boolean = true
-        })
+        addFactory(CargoConfigurationFactory(this))
     }
 
     val factory: ConfigurationFactory get() = configurationFactories.single()
@@ -37,5 +32,18 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
     companion object {
         fun getInstance(): CargoCommandConfigurationType =
             ConfigurationTypeUtil.findConfigurationType(CargoCommandConfigurationType::class.java)
+    }
+}
+
+class CargoConfigurationFactory(type: CargoCommandConfigurationType) : ConfigurationFactory(type) {
+
+    override fun getId(): String = ID
+
+    override fun createTemplateConfiguration(project: Project): RunConfiguration {
+        return CargoCommandConfiguration(project, "Cargo", this)
+    }
+
+    companion object {
+        const val ID: String = "Cargo"
     }
 }
