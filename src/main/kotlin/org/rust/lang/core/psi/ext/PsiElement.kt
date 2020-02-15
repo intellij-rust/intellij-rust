@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SmartList
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsReplCodeFragment
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.findDescendantsWithMacrosOfAnyType
 
@@ -207,7 +208,14 @@ inline fun <reified T : PsiElement> PsiElement.descendantsWithMacrosOfType(): Co
  * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].
  */
 val PsiElement.contextualFile: PsiFile
-    get() = contextOrSelf() ?: error("Element outside of file: $text")
+    get() {
+        val file = contextOrSelf<PsiFile>() ?: error("Element outside of file: $text")
+        return if (file is RsReplCodeFragment) {
+            file.context.contextualFile
+        } else {
+            file
+        }
+    }
 
 /**
  * Finds first sibling that is neither comment, nor whitespace before given element.
