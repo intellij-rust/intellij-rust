@@ -532,6 +532,35 @@ class ImplementMembersHandlerTest : RsTestBase() {
     }
     """)
 
+    fun `test implement items with raw identifiers`() = doTest("""
+        trait T {
+            fn r#type();
+            type r#const;
+            const r#pub: i32;
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("type()", true),
+        ImplementMemberSelection("const", true),
+        ImplementMemberSelection("pub: i32", true)
+    ), """
+        trait T {
+            fn r#type();
+            type r#const;
+            const r#pub: i32;
+        }
+        struct S;
+        impl T for S {
+            fn r#type() {
+                <selection>unimplemented!()</selection>
+            }
+
+            type r#const = ();
+            const r#pub: i32 = unimplemented!();
+        }
+    """)
+
     fun `test do not implement methods already present`() = doTest("""
         trait T {
             fn f1();
