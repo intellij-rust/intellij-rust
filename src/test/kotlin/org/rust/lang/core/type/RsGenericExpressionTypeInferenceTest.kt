@@ -1767,4 +1767,15 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             (a, b);
         } //^ (X, X)
     """)
+
+    fun `test assoc type bound selection 4`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item: Foo<X>; }
+        fn bar<T: Bar>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
 }

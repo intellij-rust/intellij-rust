@@ -804,7 +804,12 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
         val selfTy = TyTypeParameter.named(it)
         it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
     }
-    return (bounds + whereBounds).toList()
+    val assocTypeBounds = if (this is RsTraitItem) {
+        expandedMembers.types.asSequence().flatMap { it.typeParamBounds?.polyboundList.toTraitRefs(it.declaredType) }
+    } else {
+        emptySequence()
+    }
+    return (bounds + whereBounds + assocTypeBounds).toList()
 }
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
