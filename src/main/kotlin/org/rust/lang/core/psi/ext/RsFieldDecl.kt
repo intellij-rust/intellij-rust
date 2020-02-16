@@ -9,6 +9,8 @@ import org.rust.lang.core.psi.RsTypeReference
 
 val RsFieldDecl.parentStruct: RsFieldsOwner? get() = stubAncestorStrict()
 
+val RsFieldDecl.escapedName: String? get() = (this as? RsNamedElement)?.escapedName ?: name
+
 interface RsFieldDecl : RsOuterAttributeOwner, RsVisibilityOwner {
     val typeReference: RsTypeReference?
 }

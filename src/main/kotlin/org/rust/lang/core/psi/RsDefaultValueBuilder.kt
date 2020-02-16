@@ -160,7 +160,7 @@ class RsDefaultValueBuilder(
         val type = fieldDecl.typeReference?.type ?: return null
 
         val binding = bindings[name] ?: return null
-        val escapedName = escapeFieldName(fieldDecl) ?: return null
+        val escapedName = fieldDecl.escapedName ?: return null
         return when {
             type == binding.type -> {
                 val field = psiFactory.createStructLiteralField(escapedName, psiFactory.createExpression(escapedName))
@@ -233,18 +233,8 @@ class RsDefaultValueBuilder(
         return null
     }
 
-    private fun escapeFieldName(fieldDecl: RsFieldDecl): String? {
-        val name = fieldDecl.name ?: return null
-
-        // Tuple structs field names are integers and we don't want to escape them
-        return if (name.all { it.isDigit() }) {
-            name
-        }
-        else fieldDecl.name?.escapeIdentifierIfNeeded()
-    }
-
     private fun specializedCreateStructLiteralField(fieldDecl: RsFieldDecl, bindings: Map<String, RsPatBinding>): RsStructLiteralField? {
-        val fieldName = escapeFieldName(fieldDecl) ?: return null
+        val fieldName = fieldDecl.escapedName ?: return null
         val fieldType = fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
