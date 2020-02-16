@@ -659,6 +659,54 @@ class AddStructFieldsFixTest : RsAnnotatorTestBase(RsExpressionAnnotator::class)
         }
     """)
 
+    fun `test raw identifier field`() = checkBothQuickFix("""
+        struct S { r#type: i32 }
+
+        fn main() {
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#type: i32 }
+
+        fn main() {
+            S { r#type: 0/*caret*/ };
+        }
+    """)
+
+    fun `test raw identifier field local variable`() = checkBothQuickFix("""
+        struct S { r#type: i32 }
+
+        fn main() {
+            let r#type: i32 = 0;
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#type: i32 }
+
+        fn main() {
+            let r#type: i32 = 0;
+            S { r#type };
+        }
+    """)
+
+    fun `test raw identifier field unnecessary escape`() = checkBothQuickFix("""
+        struct S { r#foo: i32, bar: i32 }
+
+        fn main() {
+            let foo: i32 = 0;
+            let r#bar: i32 = 0;
+            <error>S</error> { /*caret*/ };
+        }
+    """, """
+        struct S { r#foo: i32, bar: i32 }
+
+        fn main() {
+            let foo: i32 = 0;
+            let r#bar: i32 = 0;
+            S { foo, bar };
+        }
+    """)
+
     private fun checkBothQuickFix(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkFixByText("Add missing fields", before, after)
         checkFixByText("Recursively add missing fields", before, after)
