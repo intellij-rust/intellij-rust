@@ -1455,7 +1455,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     fun `test import trait associated constant`() = checkAutoImportFixByText("""
         mod foo {
             pub trait Foo {
-                const C: i32; 
+                const C: i32;
             }
 
             impl<T> Foo for T {
@@ -1471,7 +1471,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         mod foo {
             pub trait Foo {
-                const C: i32; 
+                const C: i32;
             }
 
             impl<T> Foo for T {
@@ -2266,6 +2266,46 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         fn main() {
             let f = Foo/*caret*/;
+        }
+    """)
+
+    fun `test import trait for bound (type-related path)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo { fn foo(&self) {} }
+        }
+        struct S<T>(T);
+        fn foo<T>(a: S<T>) where S<T>: foo::Foo {
+            <error descr="Unresolved reference: `foo`"><S<T>>::foo/*caret*/</error>(&a);
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo { fn foo(&self) {} }
+        }
+        struct S<T>(T);
+        fn foo<T>(a: S<T>) where S<T>: foo::Foo {
+            <S<T>>::foo(&a);
+        }
+    """)
+
+    fun `test import trait for bound (method call)`() = checkAutoImportFixByText("""
+        mod foo {
+            pub trait Foo { fn foo(&self) {} }
+        }
+        struct S<T>(T);
+        fn foo<T>(a: S<T>) where S<T>: foo::Foo {
+            a.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
+        }
+    """, """
+        use foo::Foo;
+
+        mod foo {
+            pub trait Foo { fn foo(&self) {} }
+        }
+        struct S<T>(T);
+        fn foo<T>(a: S<T>) where S<T>: foo::Foo {
+            a.foo();
         }
     """)
 
