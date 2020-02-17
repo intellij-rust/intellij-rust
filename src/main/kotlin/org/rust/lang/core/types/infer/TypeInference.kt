@@ -452,6 +452,9 @@ class RsInferenceContext(
             ty1 === ty2 -> CoerceResult.Ok
             ty1 is TyPrimitive && ty2 is TyPrimitive && ty1 == ty2 -> CoerceResult.Ok
             ty1 is TyTypeParameter && ty2 is TyTypeParameter && ty1 == ty2 -> CoerceResult.Ok
+            ty1 is TyProjection && ty2 is TyProjection && ty1.target == ty2.target && combineBoundElements(ty1.trait, ty2.trait) -> {
+                combineTypes(ty1.type, ty2.type)
+            }
             ty1 is TyReference && ty2 is TyReference && ty1.mutability == ty2.mutability -> {
                 combineTypes(ty1.referenced, ty2.referenced)
             }
@@ -741,6 +744,14 @@ class RsInferenceContext(
         is TraitImplSource.TraitBound -> lookup.getEnvBoundTransitivelyFor(callee.selfTy)
             .find { it.element == source.value }?.subst ?: emptySubstitution
 
+        is TraitImplSource.ProjectionBound -> {
+            val ty = callee.selfTy as TyProjection
+            val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
+            val bound = ty.trait.element.bounds
+                .find { it.trait.element == source.value && probe { combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
+            bound?.trait?.subst?.substituteInValues(subst) ?: emptySubstitution
+        }
+
         is TraitImplSource.Derived -> emptySubstitution
 
         is TraitImplSource.Object -> when (val selfTy = callee.selfTy) {
@@ -793,7 +804,12 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
         val selfTy = TyTypeParameter.named(it)
         it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
     }
-    return (bounds + whereBounds).toList()
+    val assocTypeBounds = if (this is RsTraitItem) {
+        expandedMembers.types.asSequence().flatMap { it.typeParamBounds?.polyboundList.toTraitRefs(it.declaredType) }
+    } else {
+        emptySequence()
+    }
+    return (bounds + whereBounds + assocTypeBounds).toList()
 }
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()

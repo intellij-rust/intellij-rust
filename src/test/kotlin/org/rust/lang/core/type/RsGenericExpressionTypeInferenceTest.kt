@@ -1734,4 +1734,48 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test assoc type bound selection 1`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar where Self::Item: Foo<X> { type Item; }
+        fn bar<T: Bar>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    fun `test assoc type bound selection 2`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar<T> where Self::Item: Foo<T> { type Item; }
+        fn bar<T: Bar<X>>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    fun `test assoc type bound selection 3`() = testExpr("""
+        struct X;
+        trait Foo<T> { fn foo(&self) -> T; }
+        trait Bar<T> where Self::Item: Foo<T> { type Item; }
+        fn bar<T: Bar<X>>(_: T, b: T::Item) {
+            let a = b.foo();
+            let b = Foo::foo(&b);
+            (a, b);
+        } //^ (X, X)
+    """)
+
+    fun `test assoc type bound selection 4`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item: Foo<X>; }
+        fn bar<T: Bar>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
 }
