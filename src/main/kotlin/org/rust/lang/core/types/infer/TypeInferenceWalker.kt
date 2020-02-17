@@ -624,7 +624,7 @@ class RsTypeInferenceWalker(
             val traitToCallee = hashMapOf<RsTraitItem, MutableList<T>>()
             val filtered = mutableListOf<T>()
             for (callee in list) {
-                val trait = callee.source.impl?.traitRef?.resolveToTrait()
+                val trait = callee.source.requiredTraitInScope
                 if (trait != null) {
                     traitToCallee.getOrPut(trait) { mutableListOf() }.add(callee)
                 } else {

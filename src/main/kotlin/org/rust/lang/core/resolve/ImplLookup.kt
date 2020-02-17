@@ -111,6 +111,16 @@ sealed class TraitImplSource {
 
     open val isInherent: Boolean get() = false
 
+    val requiredTraitInScope: RsTraitItem?
+        get() {
+            if (isInherent) return null
+
+            return when (this) {
+                is ExplicitImpl -> implementedTrait?.element
+                else -> value as RsTraitItem
+            }
+        }
+
     val impl: RsImplItem?
         get() = (this as? ExplicitImpl)?.value
 

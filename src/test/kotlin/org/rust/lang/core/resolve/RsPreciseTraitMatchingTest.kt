@@ -473,4 +473,60 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             t.foo()
         }    //^
     """)
+
+    fun `test trait in scope wins for trait bounds (type-related path) 1`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        impl<T> Bar for S<T> {}
+        fn foo<T>(a: S<T>) where S<T>: a::Foo {
+            <S<T>>::foo(&a);
+        }         //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (type-related path) 2`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        fn foo<T>(a: S<T>)
+            where S<T>: a::Foo,
+                  S<T>: a::Bar,
+        {
+            <S<T>>::foo(&a);
+        }         //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (method call) 1`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        impl<T> Bar for S<T> {}
+        fn foo<T>(a: S<T>) where S<T>: a::Foo {
+            a.foo();
+        }   //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (method call) 2`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        fn foo<T>(a: S<T>)
+            where S<T>: a::Foo,
+                  S<T>: a::Bar,
+        {
+            a.foo();
+        }   //^
+    """)
 }
