@@ -9,13 +9,13 @@ import com.intellij.application.options.editor.CodeFoldingOptionsProvider
 import com.intellij.openapi.options.BeanConfigurable
 
 class RsCodeFoldingOptionsProvider :
-    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.instance),
+    BeanConfigurable<RsCodeFoldingSettings>(RsCodeFoldingSettings.instance, "Rust"),
     CodeFoldingOptionsProvider {
 
     init {
         val settings = instance
         if (settings != null) {
-            checkBox("Rust one-line methods", settings::collapsibleOneLineMethods)
+            checkBox("One-line methods", settings::collapsibleOneLineMethods)
         }
     }
 }
