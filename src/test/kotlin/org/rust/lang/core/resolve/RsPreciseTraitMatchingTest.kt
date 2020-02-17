@@ -446,4 +446,31 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             let a = S::C;
         }            //^
     """)
+
+    fun `test bound for type parameter wins over blanket impl (type-related path)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            T::foo(&t);
+        }    //^
+    """)
+
+    fun `test bound for type parameter wins over blanket impl (UFCS path)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            <T as Foo>::foo(&t);
+        }             //^
+    """)
+
+    fun `test bound for type parameter wins over blanket impl (method call)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            t.foo()
+        }    //^
+    """)
 }

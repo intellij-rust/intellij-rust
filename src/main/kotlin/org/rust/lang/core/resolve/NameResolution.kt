@@ -1181,8 +1181,7 @@ private fun processAssociatedItems(
     val visitedInherent = mutableSetOf<String>()
 
     for (traitOrImpl in lookup.findImplsAndTraits(type)) {
-        val isInherentImpl = traitOrImpl is TraitImplSource.ExplicitImpl && traitOrImpl.isInherent
-            || traitOrImpl is TraitImplSource.Object
+        val isInherent = traitOrImpl.isInherent
 
         for (member in traitOrImpl.implAndTraitExpandedMembers) {
             if (!nsFilter(member)) continue
@@ -1190,7 +1189,7 @@ private fun processAssociatedItems(
 
             // In Rust, inherent impl members (`impl Foo {}`) wins over trait impl members (`impl T for Foo {}`).
             // Note that `findImplsAndTraits` returns ordered sequence: inherent impls are placed to the head
-            if (isInherentImpl) {
+            if (isInherent) {
                 visitedInherent.add(name)
             } else if (name in visitedInherent) {
                 continue

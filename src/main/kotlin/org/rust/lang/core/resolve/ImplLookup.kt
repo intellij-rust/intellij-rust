@@ -109,20 +109,22 @@ sealed class TraitImplSource {
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overridden by the impl */
     open val implAndTraitExpandedMembers: List<RsAbstractable> get() = value.members?.expandedMembers.orEmpty()
 
+    open val isInherent: Boolean get() = false
+
     val impl: RsImplItem?
         get() = (this as? ExplicitImpl)?.value
 
     /** An impl block, directly defined in the code */
     data class ExplicitImpl(private val cachedImpl: RsCachedImplItem) : TraitImplSource() {
         override val value: RsImplItem get() = cachedImpl.impl
-        val isInherent: Boolean get() = cachedImpl.isInherent
+        override val isInherent: Boolean get() = cachedImpl.isInherent
         override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
         override val implAndTraitExpandedMembers: List<RsAbstractable> get() = cachedImpl.implAndTraitExpandedMembers
         val type: Ty? get() = cachedImpl.typeAndGenerics?.first
     }
 
     /** T: Trait */
-    data class TraitBound(override val value: RsTraitItem) : TraitImplSource()
+    data class TraitBound(override val value: RsTraitItem, override val isInherent: Boolean) : TraitImplSource()
 
     /**
      * Like [TraitBound], but this is a bound for an associated type projection defined at the trait
@@ -145,7 +147,9 @@ sealed class TraitImplSource {
     data class Derived(override val value: RsTraitItem) : TraitImplSource()
 
     /** dyn/impl Trait or a closure */
-    data class Object(override val value: RsTraitItem) : TraitImplSource()
+    data class Object(override val value: RsTraitItem) : TraitImplSource() {
+        override val isInherent: Boolean get() = true
+    }
 
     /**
      * Used only as a result of method pick. It means that method is resolved to multiple impls of the same trait
@@ -277,7 +281,11 @@ class ImplLookup(
     /** Resulting sequence is ordered: inherent impls are placed to the head */
     fun findImplsAndTraits(ty: Ty): Sequence<TraitImplSource> {
         val cached = findImplsAndTraitsCache.getOrPut(freshen(ty)) { rawFindImplsAndTraits(ty) }
-        return cached.asSequence() + getEnvBoundTransitivelyFor(ty).map { TraitImplSource.TraitBound(it.element) }
+
+        val isInherentBounds = ty is TyTypeParameter
+        val envBounds = getEnvBoundTransitivelyFor(ty)
+            .map { TraitImplSource.TraitBound(it.element, isInherent = isInherentBounds) }
+        return if (isInherentBounds) envBounds + cached.asSequence() else cached.asSequence() + envBounds
     }
 
     private fun rawFindImplsAndTraits(ty: Ty): List<TraitImplSource> {
@@ -312,7 +320,7 @@ class ImplLookup(
             }
         }
         // Place inherent impls to the head of the list
-        implsAndTraits.sortBy { !(it is TraitImplSource.ExplicitImpl && it.isInherent) }
+        implsAndTraits.sortBy { !it.isInherent }
         testAssert { implsAndTraits.distinct().size == implsAndTraits.size }
         return implsAndTraits
     }
