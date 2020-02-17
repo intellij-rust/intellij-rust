@@ -222,9 +222,9 @@ class RsPsiFactory(
         val body = members.joinToString(separator = "\n", transform = {
             when (it) {
                 is RsConstant ->
-                    "    const ${it.nameLikeElement.text}: ${it.typeReference?.substAndGetText(subst)} = unimplemented!();"
+                    "    const ${it.nameLikeElement.text}: ${it.typeReference.substAndGetText(subst)} = unimplemented!();"
                 is RsTypeAlias ->
-                    "    type ${it.name} = ();"
+                    "    type ${it.escapedName} = ();"
                 is RsFunction ->
                     "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
                 else ->
@@ -482,7 +482,7 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
     val unsafe = if (isUnsafe) "unsafe " else ""
     // We can't simply take a substring of original method declaration
     // because of anonymous parameters.
-    val name = name ?: return null
+    val name = escapedName ?: return null
     val generics = typeParameterList?.text ?: ""
 
     val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
