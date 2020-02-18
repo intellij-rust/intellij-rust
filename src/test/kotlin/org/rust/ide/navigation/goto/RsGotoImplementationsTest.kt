@@ -14,6 +14,7 @@ class RsGotoImplementationsTest : RsTestBase() {
         trait T/*caret*/{
             fn test(&self);
         }
+        /// docs
         impl T for (){
             fn test(&self) {}
         }
@@ -21,7 +22,8 @@ class RsGotoImplementationsTest : RsTestBase() {
         trait T{
             fn test(&self);
         }
-        /*caret*/impl T for (){
+        /// docs
+        impl T for /*caret*/(){
             fn test(&self) {}
         }
     """)

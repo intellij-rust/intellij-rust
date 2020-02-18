@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.startOffset
 
 class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>() {
     override fun getText() = "Add impl block"
@@ -30,6 +31,6 @@ class AddImplIntention : RsElementBaseIntentionAction<AddImplIntention.Context>(
 
         impl = ctx.type.parent.addAfter(impl, ctx.type) as RsImplItem
 
-        editor.caretModel.moveToOffset(impl.textOffset + impl.textLength - 1)
+        editor.caretModel.moveToOffset(impl.impl.startOffset + impl.textLength - 1)
     }
 }

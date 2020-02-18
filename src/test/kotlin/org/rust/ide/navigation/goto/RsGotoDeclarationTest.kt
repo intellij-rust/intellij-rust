@@ -136,6 +136,20 @@ class RsGotoDeclarationTest : RsTestBase() {
         }
     """)
 
+    fun `test Self type in impl`() = doTest("""
+        struct S;
+        /// docs
+        impl S {
+            fn foo() -> Self/*caret*/ { unimplemented!() }
+        }
+    """, """
+        struct S;
+        /// docs
+        impl /*caret*/S {
+            fn foo() -> Self { unimplemented!() }
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_GOTO_DECLARATION)
 }
