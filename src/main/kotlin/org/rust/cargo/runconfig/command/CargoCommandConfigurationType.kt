@@ -44,6 +44,6 @@ class CargoConfigurationFactory(type: CargoCommandConfigurationType) : Configura
     }
 
     companion object {
-        const val ID: String = "Cargo"
+        const val ID: String = "Cargo Command"
     }
 }
