@@ -3021,4 +3021,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         const _: i32 = 1;
         const _: i32 = 1;
     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test no E0603 for module with multiple declarations under cfg attributes`() = checkByFileTree("""
+    //- lib.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        #[cfg(intellij_rust)]
+        pub mod foo;
+    //- foo.rs
+        pub fn foo() {}
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo::bar;/*caret*/
+    """)
 }

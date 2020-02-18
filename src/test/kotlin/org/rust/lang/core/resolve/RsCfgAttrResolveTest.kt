@@ -7,6 +7,8 @@ package org.rust.lang.core.resolve
 
 import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsCfgAttrResolveTest : RsResolveTestBase() {
@@ -72,12 +74,12 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             pub fn bar() {}
                  //X
         }
-        
+
         #[cfg(not(intellij_rust))]
         mod my {
             pub fn bar() {}
         }
-        
+
         fn t() {
             my::bar();
               //^
@@ -85,16 +87,16 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test use item with cfg`() = checkByCode(""" 
+    fun `test use item with cfg`() = checkByCode("""
         mod my {
             pub fn bar() {}
                  //X
             pub fn baz() {}
         }
-        
+
         #[cfg(intellij_rust)]
         use my::bar as quux;
-        
+
         #[cfg(not(intellij_rust))]
         use my::baz as quux;
 
@@ -106,18 +108,18 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test macro expansion with cfg`() = checkByCode(""" 
+    fun `test macro expansion with cfg`() = checkByCode("""
         struct S { x: i32 }
                  //X
-                 
+
         macro_rules! my_macro {
             ($ t:ty) => { fn foobar() -> $ t {} };
         }
 
         #[cfg(intellij_rust)]
         my_macro!(S);
-      
-      
+
+
         #[cfg(not(intellij_rust))]
         my_macro!(i32);
 
@@ -128,7 +130,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test extern crate with cfg`() = stubOnlyResolve(""" 
+    fun `test extern crate with cfg`() = stubOnlyResolve("""
     //- main.rs
         #[cfg(intellij_rust)]
         extern crate test_package;
@@ -143,7 +145,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test impl`() = checkByCode(""" 
+    fun `test impl`() = checkByCode("""
         struct S;
         #[cfg(intellij_rust)]
         impl S { fn foo(&self) {} }
@@ -156,7 +158,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test impl in inline mod with cfg`() = checkByCode(""" 
+    fun `test impl in inline mod with cfg`() = checkByCode("""
         struct S;
         #[cfg(intellij_rust)]
         mod foo {
@@ -173,29 +175,29 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test impl in non-inline mod with cfg`() = stubOnlyResolve(""" 
+    fun `test impl in non-inline mod with cfg`() = stubOnlyResolve("""
     //- bar.rs
         impl super::S { fn foo(&self) {} }
     //- baz.rs
         impl super::S { fn foo(&self) {} }
     //- lib.rs
         struct S;
-        
+
         #[cfg(intellij_rust)]
         #[path = "bar.rs"]
         mod foo;
-        
+
         #[cfg(not(intellij_rust))]
         #[path = "baz.rs"]
         mod foo;
-        
+
         fn main() {
             S.foo()
         }   //^ bar.rs
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test impl in function body with cfg`() = checkByCode(""" 
+    fun `test impl in function body with cfg`() = checkByCode("""
         struct S;
         #[cfg(intellij_rust)]
         fn foo() {
@@ -213,7 +215,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test impl expanded from macro with cfg`() = checkByCode(""" 
+    fun `test impl expanded from macro with cfg`() = checkByCode("""
         macro_rules! same {
             ($ i:item) => { $ i };
         }
@@ -234,7 +236,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test cfg inside macros`() = checkByCode(""" 
+    fun `test cfg inside macros`() = checkByCode("""
         macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
         as_is! {
             #[cfg(not(intellij_rust))]
@@ -256,7 +258,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     @ExpandMacros
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test cfg on macros inside macros`() = checkByCode(""" 
+    fun `test cfg on macros inside macros`() = checkByCode("""
         macro_rules! as_is { ($($ i:item)*) => { $($ i)* } }
         as_is! {
             #[cfg(not(intellij_rust))]
@@ -271,5 +273,22 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         fn main() {
             foo();
         }  //^
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test super mod with mod declaration with cfg`() = stubOnlyResolve("""
+    //- foo.rs
+        use super::bar;
+                 //^ lib.rs
+    //- lib.rs
+        #[cfg(intellij_rust)]
+        mod foo;
+        fn bar() {}
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn bar() {}
      """)
 }
