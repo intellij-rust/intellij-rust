@@ -528,7 +528,11 @@ task("makeReleaseBranch") {
 
 task("makeRelease") {
     doLast {
-        val newChangelog = commitChangelog()
+        val website = "../intellij-rust.github.io"
+        val newChangelog = File("$website/_posts").listFiles()
+            .orEmpty()
+            .map { it.name }
+            .max()!!
         val newChangelogPath = newChangelog
             .replace(".markdown", "")
             .replaceFirst("-", "/").replaceFirst("-", "/").replaceFirst("-", "/")
@@ -553,25 +557,6 @@ task("makeRelease") {
         "git checkout master".execute()
 //        commitNightly()
     }
-}
-
-fun commitChangelog(): String {
-    val website = "../intellij-rust.github.io"
-    val lastPost = File("$website/_posts").listFiles()
-        .map { it.name }
-        .sorted()
-        .last()
-    val postNumber = lastPost.substringAfterLast("-").substringBefore(".").toInt()
-    "python3 changelog.py -c".execute(website)
-    "git add _posts/$lastPost".execute(website)
-    listOf("git", "commit", "-m", "Changelog $postNumber").execute(website)
-    println()
-    "git show HEAD".execute(website)
-    println("Does ^^ look right? Answer `yes` to push changes\n")
-    val yes = readLine()!!.trim() == "yes"
-    if (!yes) error("Human says no")
-    "git push".execute(website)
-    return lastPost
 }
 
 fun commitNightly() {
