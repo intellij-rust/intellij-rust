@@ -5,11 +5,12 @@
 
 package org.rust.ide.console
 
-import com.intellij.execution.Executor
+import com.intellij.execution.actions.EOFAction
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.execution.ui.actions.CloseAction
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -18,11 +19,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.GuiUtils
+import com.intellij.ui.JBColor
+import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.MessageCategory
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.model.cargoProjects
@@ -32,6 +37,7 @@ import org.rust.cargo.toolchain.Cargo
 import org.rust.openapiext.saveAllDocuments
 import java.awt.BorderLayout
 import java.nio.charset.StandardCharsets
+import javax.swing.BorderFactory
 import javax.swing.JPanel
 
 class RsConsoleRunner(project: Project) :
@@ -62,17 +68,59 @@ class RsConsoleRunner(project: Project) :
         return consoleView
     }
 
-    override fun fillToolBarActions(
-        toolbarActions: DefaultActionGroup,
-        defaultExecutor: Executor,
-        contentDescriptor: RunContentDescriptor
-    ): MutableList<AnAction> {
-        val actionList = arrayListOf<AnAction>(
+    override fun createContentDescriptorAndActions() {
+        val actionManager = ActionManager.getInstance()
+
+        val runActionGroup = DefaultActionGroup()
+        val runToolbar = actionManager.createActionToolbar("RustConsoleRunner", runActionGroup, false)
+
+        val outputActionGroup = DefaultActionGroup()
+        val outputToolbar = actionManager.createActionToolbar("RustConsoleRunner", outputActionGroup, false).apply {
+            val emptyBorderSize = component.border.getBorderInsets(component).left
+            val outsideBorder = BorderFactory.createMatteBorder(0, 1, 0, 0, JBColor.border())
+            val insideBorder = JBEmptyBorder(emptyBorderSize)
+            component.border = BorderFactory.createCompoundBorder(outsideBorder, insideBorder)
+        }
+
+        val actionsPanel = JPanel(BorderLayout()).apply {
+            add(runToolbar.component, BorderLayout.WEST)
+            add(outputToolbar.component, BorderLayout.CENTER)
+        }
+
+        val mainPanel = JPanel(BorderLayout()).apply {
+            add(actionsPanel, BorderLayout.WEST)
+            add(consoleView.component, BorderLayout.CENTER)
+            runToolbar.setTargetComponent(this)
+            outputToolbar.setTargetComponent(this)
+        }
+
+        val title = constructConsoleTitle(consoleTitle)
+        val contentDescriptor = RunContentDescriptor(consoleView, processHandler, mainPanel, title, consoleIcon).apply {
+            setFocusComputable { consoleView.consoleEditor.contentComponent }
+            isAutoFocusContent = isAutoFocusContent
+            Disposer.register(project, this)
+        }
+
+        val runActions = listOf(
+            RestartAction(this),
             createConsoleExecAction(consoleExecuteActionHandler),
-            RestartAction(this)
+            StopAction(processHandler!!),
+            CloseAction(executor, contentDescriptor, project)
         )
-        toolbarActions.addAll(actionList)
-        return actionList
+        runActionGroup.addAll(runActions)
+
+        val outputActions = listOf<AnAction>(
+            SoftWrapAction(consoleView),
+            ScrollToTheEndToolbarAction(consoleView.editor),
+            PrintAction(consoleView)
+        )
+        outputActionGroup.addAll(outputActions)
+
+        val actions = outputActions + runActions + EOFAction()
+        registerActionShortcuts(actions, consoleView.consoleEditor.component)
+        registerActionShortcuts(actions, mainPanel)
+
+        showConsole(executor, contentDescriptor)
     }
 
     fun runSync(requestEditorFocus: Boolean) {
