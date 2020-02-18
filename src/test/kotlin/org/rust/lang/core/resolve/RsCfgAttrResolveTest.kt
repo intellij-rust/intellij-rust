@@ -291,4 +291,158 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         mod foo;
         fn bar() {}
      """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test macro definition with cfg`() = checkByCode("""
+        #[cfg(intellij_rust)]
+        macro_rules! foo { () -> {} }
+                   //X
+        #[cfg(not(intellij_rust))]
+        macro_rules! foo { () -> {} }
+
+        foo!();
+        //^
+     """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test macro in inline mod with cfg`() = checkByCode("""
+        #[macro_use]
+        #[cfg(intellij_rust)]
+        mod foo {
+            macro_rules! bar { () -> {} }
+        }               //X
+        #[macro_use]
+        #[cfg(not(intellij_rust))]
+        mod foo {
+            macro_rules! bar { () -> {} }
+        }
+        bar!();
+        //^
+     """)
+
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test macro in extracted mod with cfg`() = stubOnlyResolve("""
+    //- foo.rs
+        macro_rules! foo { () -> {} }
+    //- bar.rs
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        #[macro_use]
+        #[cfg(intellij_rust)]
+        mod foo;
+        #[macro_use]
+        #[cfg(not(intellij_rust))]
+        mod bar;
+        foo!();
+        //^ foo.rs
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test exported macro with cfg`() = stubOnlyResolve("""
+    //- lib.rs
+        mod foo;
+        mod bar;
+    //- foo.rs
+        #[cfg(intellij_rust)]
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- bar.rs
+        #[cfg(not(intellij_rust))]
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        foo!();
+        //^ foo.rs
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test exported macro in mod with cfg`() = stubOnlyResolve("""
+    //- lib.rs
+        #[cfg(intellij_rust)]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        mod bar;
+    //- foo.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- bar.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        foo!();
+        //^ foo.rs
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test exported macro with cfg on "extern crate" 1`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        #[macro_use]
+        #[cfg(intellij_rust)]
+        extern crate test_package as lib;
+        #[macro_use]
+        #[cfg(not(intellij_rust))]
+        extern crate dep_lib_target as lib;
+        foo!();
+        //^ lib.rs
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test exported macro with cfg on "extern crate" 2`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        #[cfg(intellij_rust)]
+        extern crate test_package as lib;
+        #[cfg(not(intellij_rust))]
+        extern crate dep_lib_target as lib;
+        use lib::foo;
+        foo!();
+        //^ lib.rs
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test exported macro with cfg on use item`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        extern crate test_package;
+        extern crate dep_lib_target;
+        #[cfg(intellij_rust)]
+        use test_package::foo;
+        #[cfg(not(intellij_rust))]
+        use dep_lib_target::foo;
+        foo!();
+        //^ lib.rs
+     """)
 }
