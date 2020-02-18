@@ -12,12 +12,14 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.PathUtil
+import com.intellij.util.SmartList
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.RsConstants
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.pathAttribute
+import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
 
@@ -30,7 +32,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
             val key = key(mod) ?: return null
             val project = mod.project
 
-            var result: RsModDeclItem? = null
+            val result = SmartList<RsModDeclItem>()
 
             val scope = project.macroExpansionManager.expansionState?.expandedSearchScope
                 ?: RsWithMacrosProjectScope(project)
@@ -38,14 +40,12 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
                 KEY, key, project, scope, RsModDeclItem::class.java
             ) { modDecl ->
                 if (modDecl.reference.resolve() == mod) {
-                    result = modDecl
-                    false
-                } else {
-                    true
+                    result += modDecl
                 }
+                true
             }
 
-            return result
+            return result.firstOrNull { it.isValidProjectMember } ?: result.firstOrNull()
         }
 
 
