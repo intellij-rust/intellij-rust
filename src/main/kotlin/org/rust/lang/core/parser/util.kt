@@ -20,11 +20,9 @@ fun Project.createRustPsiBuilder(text: CharSequence): PsiBuilder {
 
 inline fun <T> PsiBuilder.probe(action: () -> T): T {
     val mark = mark()
-    try {
-        return action()
-    } finally {
-        mark.rollbackTo()
-    }
+    val result = action()
+    mark.rollbackTo()
+    return result
 }
 
 fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
