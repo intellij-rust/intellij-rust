@@ -13,11 +13,14 @@ import com.intellij.execution.ui.ObservableConsoleView
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.JBSplitter
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsReplCodeFragment
 import org.rust.openapiext.toPsiFile
+import java.awt.BorderLayout
 import javax.swing.JComponent
 
 class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FILE_NAME, RsLanguage),
@@ -28,6 +31,8 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
     private val initialized: ActionCallback = ActionCallback()
     val codeFragment: RsReplCodeFragment? = virtualFile.toPsiFile(project) as? RsReplCodeFragment
     private val codeFragmentContext: RsConsoleCodeFragmentContext = RsConsoleCodeFragmentContext()
+    private var variablesView: RsConsoleVariablesView? = null
+    private val options: RsConsoleOptions = RsConsoleOptions.getInstance(project)
 
     init {
         val virtualFile = virtualFile
@@ -73,7 +78,62 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
         if (codeFragment != null) {
             codeFragmentContext.addToContext(lastCommandContext)
             codeFragmentContext.updateContext(project, codeFragment)
+            variablesView?.rebuild()
         }
+    }
+
+    val isShowVariables: Boolean
+        get() = options.showVariables
+
+    fun updateVariables(state: Boolean) {
+        if (options.showVariables == state) return
+        options.showVariables = state
+        if (state) {
+            showVariables()
+        } else {
+            hideVariables()
+        }
+    }
+
+    private fun showVariables() {
+        variablesView = RsConsoleVariablesView(project, codeFragmentContext)
+
+        val console = getComponent(0)
+        removeAll()
+        val splitter = JBSplitter(false, 2f / 3).apply {
+            firstComponent = console as JComponent
+            secondComponent = variablesView
+            isShowDividerControls = true
+            setHonorComponentsMinimumSize(true)
+        }
+        add(splitter, BorderLayout.CENTER)
+        validate()
+        repaint()
+    }
+
+    private fun hideVariables() {
+        val splitter = getComponent(0)
+        val variablesView = variablesView
+        if (variablesView != null && splitter is JBSplitter) {
+            removeAll()
+            Disposer.dispose(variablesView)
+            this.variablesView = null
+            add(splitter.firstComponent, BorderLayout.CENTER)
+            validate()
+            repaint()
+        }
+    }
+
+    fun initVariablesWindow() {
+        if (options.showVariables) {
+            showVariables()
+        }
+    }
+
+    override fun dispose() {
+        super.dispose()
+        variablesView?.let { Disposer.dispose(it) }
+        variablesView = null
     }
 
     companion object {
