@@ -109,7 +109,7 @@ FILE
             RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
               PsiElement(identifier)('quux')
               PsiElement(:)(':')
-              PsiErrorElement:<any expr> expected, got ','
+              PsiErrorElement:<expr> expected, got ','
                 <empty list>
             PsiWhiteSpace(' ')
             PsiElement(,)(',')

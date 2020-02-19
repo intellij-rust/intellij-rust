@@ -1,0 +1,25 @@
+FILE
+  RsFunctionImpl(FUNCTION)
+    PsiElement(fn)('fn')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('foo')
+    RsValueParameterListImpl(VALUE_PARAMETER_LIST)
+      PsiElement(()('(')
+      PsiElement())(')')
+    PsiWhiteSpace(' ')
+    RsBlockImpl(BLOCK)
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      RsLitExprImpl(LIT_EXPR)
+        PsiElement(INTEGER_LITERAL)('2')
+        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
+          <empty list>
+      PsiWhiteSpace('\n    ')
+      RsLetDeclImpl(LET_DECL)
+        PsiElement(let)('let')
+        PsiErrorElement:<pattern> expected, got ';'
+          <empty list>
+        PsiWhiteSpace(' ')
+        PsiElement(;)(';')
+      PsiWhiteSpace('\n')
+      PsiElement(})('}')

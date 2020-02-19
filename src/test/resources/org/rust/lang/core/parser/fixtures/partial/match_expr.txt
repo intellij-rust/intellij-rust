@@ -28,7 +28,7 @@ FILE
                     PsiElement(identifier)('x')
               PsiWhiteSpace(' ')
               PsiElement(=>)('=>')
-              PsiErrorElement:<stmt mode expr> expected, got ';'
+              PsiErrorElement:<expr> expected, got ';'
                 <empty list>
               PsiElement(;)(';')
             PsiWhiteSpace('\n        ')
