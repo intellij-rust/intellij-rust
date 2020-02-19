@@ -12,6 +12,7 @@ import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.inference
 
 fun getPresentation(psi: RsElement): ItemPresentation {
     val location = run {
@@ -43,6 +44,9 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
             }
             is RsNamedFieldDecl -> {
                 psi.typeReference?.let { append(": ${it.getStubOnlyText()}") }
+            }
+            is RsPatBinding -> {
+                psi.inference?.let { append(": ${it.getBindingType(psi)}") }
             }
             is RsEnumVariant -> {
                 val fields = psi.tupleFields
