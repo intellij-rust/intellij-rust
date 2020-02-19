@@ -32,7 +32,7 @@ FILE
             RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
               <empty list>
             PsiElement())(')')
-        PsiErrorElement:'&', '(', ';', <add bin op>, <assign bin op>, <comp bin op>, <mul bin op>, <rel comp bin op>, '[', '^', '|' or '}' expected, got 'let'
+        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)

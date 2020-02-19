@@ -2005,7 +2005,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn drop(&mut self) {}
         }
         // E0120 should not be triggered
-        impl Drop for<error descr="'..' or <type reference> expected, got '{'"> </error>{}
+        impl Drop for<error descr="'..' or <type> expected, got '{'"> </error>{}
     """)
 
     fun `test impl for struct E0120`() = checkErrors("""

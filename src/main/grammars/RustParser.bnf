@@ -227,17 +227,34 @@ private AssocTypeBindingBound ::=  ':' TypeBounds { pin = 1 }
 //    a::b<T,U>::c<V,W>
 //    std::Fn(V) -> W
 //    std::Fn(V)
-TypePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'TYPE' PathImpl>>>> { elementType = Path }
-TypePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'TYPE' PathImpl>>>> { elementType = Path }
+TypePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'TYPE' PathImpl>>>> {
+  elementType = Path
+  name = "path"
+}
+
+TypePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'TYPE' PathImpl>>>> {
+  elementType = Path
+  name = "path"
+}
 
 // Paths without type arguments, for use declarations:
 //     a::b::c
-PathWithoutTypeArgs ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPE_ARGS' PathImpl>>>> { elementType = Path }
+PathWithoutTypeArgs ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPE_ARGS' PathImpl>>>> {
+  elementType = Path
+  name = "path"
+}
 
 // Paths for expressions:
 //     a::b::<T,U>::c
-ValuePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'VALUE' PathImpl>>>> { elementType = Path }
-ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl>>>> { elementType = Path }
+ValuePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'VALUE' PathImpl>>>> {
+  elementType = Path
+  name = "path"
+}
+
+ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl>>>> {
+  elementType = Path
+  name = "path"
+}
 
 // Path semantically constrained to resolve to a trait
 TraitRef ::= TypePathGenericArgsNoTypeQual {
@@ -245,6 +262,7 @@ TraitRef ::= TypePathGenericArgsNoTypeQual {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  name = "trait"
 }
 
 
@@ -293,7 +311,9 @@ private Item ::= Constant
                | ExternCrateItem
                | Macro
                | Macro2
-               | ItemLikeMacroCall
+               | ItemLikeMacroCall {
+  name = "item"
+}
 
 private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
@@ -488,6 +508,7 @@ Pat ::= PatWild
       | PatRange
       | PatBox {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
+  name = "pattern"
 }
 
 private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
@@ -845,10 +866,18 @@ TypeReference ::= TypeReferenceInner {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  name = "type"
 }
 
-TypeReferenceNoImplicitTraitType ::= TypeReferenceNoImplicitTraitTypeInner { elementType = TypeReference }
-ScalarTypeReference ::= ScalarTypeReferenceInner { elementType = TypeReference }
+TypeReferenceNoImplicitTraitType ::= TypeReferenceNoImplicitTraitTypeInner {
+  elementType = TypeReference
+  name = "type"
+}
+
+ScalarTypeReference ::= ScalarTypeReferenceInner {
+  elementType = TypeReference
+  name = "type"
+}
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   implements = [ "org.rust.lang.core.psi.ext.RsTypeElement" "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
@@ -992,10 +1021,22 @@ private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...
   | yield | "async" | "try"
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
-AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> { elementType = Expr }
-StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> { elementType = Expr }
-StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> { elementType = Expr }
+NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> {
+  elementType = Expr
+  name = "expr"
+}
+AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> {
+  elementType = Expr
+  name = "expr"
+}
+StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> {
+  elementType = Expr
+  name = "expr"
+}
+StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> {
+  elementType = Expr
+  name = "expr"
+}
 
 BlockExpr ::= OuterAttr* [ (unsafe | asyncBlock move? | try) &'{' ] LabelDecl? SimpleBlock {
   implements = [ "org.rust.lang.core.psi.ext.RsLabeledExpression"
@@ -1036,7 +1077,7 @@ fake BinaryOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=
 }
 
 AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
-AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
+AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%=' { name = "operator" }
 
 CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> CompBinOp StmtModeExprOff
 RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> RelCompBinOp StmtModeExprOff
@@ -1044,11 +1085,11 @@ BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
 AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> AddBinOp StmtModeExprOff
 MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> MulBinOp StmtModeExprOff
 
-CompBinOp        ::= '==' | '!='
-RelCompBinOp     ::= (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq)
-BitShiftBinOp    ::= ltlt | gtgt
-AddBinOp         ::= '+' | '-'
-MulBinOp         ::= '*' | '/' | '%'
+CompBinOp        ::= '==' | '!=' { name = "operator" }
+RelCompBinOp     ::= (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq) { name = "operator" }
+BitShiftBinOp    ::= ltlt | gtgt { name = "operator" }
+AddBinOp         ::= '+' | '-' { name = "operator" }
+MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
 BoolOrBinExpr    ::= Expr !<<isCompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
@@ -1057,11 +1098,11 @@ BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp StmtModeE
 BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp StmtModeExprOff
 BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> BitXorBinOp StmtModeExprOff
 
-BoolOrBinOp      ::= oror
-BoolAndBinOp     ::= andand
-BitOrBinOp       ::= '|'
-BitAndBinOp      ::= '&'
-BitXorBinOp      ::= '^'
+BoolOrBinOp      ::= oror { name = "operator" }
+BoolAndBinOp     ::= andand { name = "operator" }
+BitOrBinOp       ::= '|' { name = "operator" }
+BitAndBinOp      ::= '&' { name = "operator" }
+BitXorBinOp      ::= '^' { name = "operator" }
 
 CastExpr ::= Expr (as | ':')  ScalarTypeReference {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
