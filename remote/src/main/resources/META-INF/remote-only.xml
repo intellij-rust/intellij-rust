@@ -1,0 +1,44 @@
+<idea-plugin>
+    <extensionPoints>
+        <extensionPoint qualifiedName="org.rust.remote.rustHelperScriptProvider"
+                        interface="org.rust.remote.RsHelperScriptProvider"/>
+        <extensionPoint qualifiedName="org.rust.remote.remoteProcessManager"
+                        interface="org.rust.remote.RsRemoteProcessManager"/>
+        <extensionPoint qualifiedName="org.rust.remote.toolchain.ui.customConfigProvider"
+                        interface="org.rust.remote.toolchain.ui.RsProjectConfigComponentProvider"/>
+        <extensionPoint qualifiedName="org.rust.remote.projectSynchronizerProvider"
+                        interface="org.rust.remote.RsProjectSynchronizerProvider"/>
+    </extensionPoints>
+
+    <extensions defaultExtensionNs="org.rust.remote">
+        <remoteToolchainManager
+                implementation="org.rust.remote.RsRemoteInterpreterManagerImpl"/>
+        <remoteProcessManager
+                implementation="org.rust.remote.RsRemoteSshProcessManager"/>
+        <toolchain.ui.customConfigProvider
+                implementation="org.rust.remote.toolchain.ui.RsPathMappingsComponentProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="org.rust">
+        <config.toolchainFormProvider
+                implementation="org.rust.remote.toolchain.ui.RsRemoteInterpreterFormProvider"/>
+        <remote.phpHelperScriptProvider
+                implementation="org.rust.remote.toolchain.RsInfoHelperScriptProvider"/>
+        <composer.execProvider
+                implementation="org.rust.remote.composer.ComposerRemoteInterpreterExecutionProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="RemoteRun">
+        <sshConnectionProvider implementation="org.rust.remote.RsSshConnectionProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <analyzeStacktraceFilter implementation="org.rust.remote.filters.RsRemoteErrorMessageFilter"/>
+        <analyzeStacktraceFilter implementation="org.rust.remote.filters.RsRemoteRsUnitFilter"/>
+        <pathMacroFilter implementation="org.rust.remote.RsInterpreterMacroFilter"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.jetbrains.plugins.remotesdk">
+        <usagesProvider implementation="org.rust.remote.RsSdkUsagesProvider"/>
+    </extensions>
+</idea-plugin>

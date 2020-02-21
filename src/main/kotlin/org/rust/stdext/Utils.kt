@@ -7,6 +7,7 @@
 package org.rust.stdext
 
 import com.intellij.openapi.vfs.VirtualFile
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -21,3 +22,6 @@ inline fun <T> VirtualFile.applyWithSymlink(f: (VirtualFile) -> T?): T? {
 }
 
 fun String.toPath(): Path = Paths.get(this)
+
+val File.isNotEmptyDirectory: Boolean
+    get() = exists() && isDirectory && list()?.isEmpty()?.not() ?: false

@@ -27,6 +27,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
@@ -52,6 +53,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
+import javax.swing.SwingUtilities
 import kotlin.reflect.KProperty
 
 fun <T> Project.runWriteCommandAction(command: () -> T): T {
@@ -282,6 +284,15 @@ fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
     @Suppress("UNCHECKED_CAST")
     return result ?: (null as T)
 }
+
+fun <T> ProgressManager.runUnderProgress(title: String, code: () -> T): T =
+    if (SwingUtilities.isEventDispatchThread()) {
+        run(object : Task.WithResult<T, Exception>(null, title, false) {
+            override fun compute(indicator: ProgressIndicator) = code()
+        })
+    } else {
+        code()
+    }
 
 fun <T : PsiElement> T.createSmartPointer(): SmartPsiElementPointer<T> =
     SmartPointerManager.getInstance(project).createSmartPsiElementPointer(this)

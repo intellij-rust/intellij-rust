@@ -12,5 +12,8 @@ include(
     "intelliLang",
     "duplicates",
     "grazie",
+//    "remote",
+//    "docker",
+//    "wsl",
     "intellij-toml"
 )

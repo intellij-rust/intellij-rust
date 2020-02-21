@@ -1,0 +1,28 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <troubleInfoCollector implementation="com.jetbrains.php.remote.docker.DockerTroubleInfoCollector"/>
+
+        <remote.credentialsLanguageContribution
+                implementation="com.intellij.docker.remote.php.DockerCredentialsPhpContribution"/>
+        <remote.credentialsLanguageContribution
+                implementation="com.intellij.docker.remote.php.DockerComposeCredentialsPhpContributor"/>
+
+        <docker.remote.dockerCredentialsEditorLanguageContribution
+                implementation="com.jetbrains.php.remote.docker.DockerCredentialsEditorPhpContribution"/>
+        <docker.remote.dockerComposeCredentialsEditorLanguageContribution
+                implementation="com.jetbrains.php.remote.docker.compose.DockerComposeCredentialsEditorPhpContribution"/>
+
+        <projectService serviceImplementation="com.jetbrains.php.remote.docker.PhpDockerContainerSettingsManager"/>
+        <remote.pathMappingProvider
+                implementation="com.jetbrains.php.remote.docker.PhpDockerPathMappingsProvider"/>
+        <remote.pathMappingProvider
+                implementation="com.jetbrains.php.remote.docker.compose.PhpDockerComposePathMappingsProvider"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="com.jetbrains.php.remote">
+        <remoteProcessManager
+                implementation="com.jetbrains.php.remote.docker.PhpDockerRemoteProcessManager"/>
+        <interpreter.ui.customConfigProvider
+                implementation="com.jetbrains.php.remote.docker.ui.PhpDockerContainerComponentProvider"/>
+    </extensions>
+</idea-plugin>

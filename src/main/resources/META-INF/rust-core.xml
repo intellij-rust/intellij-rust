@@ -10,6 +10,11 @@
         <!-- Project Creation -->
         <projectOpenProcessor id="Cargo" implementation="org.rust.cargo.project.CargoProjectOpenProcessor"/>
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
+        <directoryProjectConfigurator implementation="org.rust.ide.sdk.RsSdkConfigurator" id="sdk"
+                                      order="after PlatformProjectConfigurator"/>
+
+        <!-- SDK -->
+        <sdkType implementation="org.rust.ide.sdk.RsSdkType"/>
 
         <!-- File-type Factory -->
 
@@ -777,6 +782,11 @@
                              groupId="language"
                              id="language.rust"/>
 
+        <projectConfigurable instance="org.rust.cargo.project.configurable.RsActiveSdkModuleConfigurable"
+                             displayName="Toolchain"
+                             parentId="language.rust"
+                             id="language.rust.toolchain"/>
+
         <projectConfigurable instance="org.rust.cargo.project.configurable.CargoConfigurable"
                              displayName="Cargo"
                              parentId="language.rust"
@@ -883,6 +893,18 @@
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"/>
+        <extensionPoint qualifiedName="org.rust.rustSdkComparator"
+                        interface="org.rust.ide.sdk.RsSdkComparator" />
+        <extensionPoint qualifiedName="org.rust.rustAddSdkProvider"
+                        interface="org.rust.ide.sdk.add.RsAddSdkProvider"/>
+        <extensionPoint qualifiedName="org.rust.remoteSdkValidator"
+                        interface="org.rust.ide.sdk.remote.RsRemoteSdkValidator"/>
+        <extensionPoint qualifiedName="org.rust.remoteSdkEditor"
+                        interface="org.rust.ide.sdk.remote.RsRemoteSdkEditor"/>
+        <extensionPoint qualifiedName="org.rust.remoteProcessStarterManager"
+                        interface="org.rust.cargo.runconfig.remote.RsRemoteProcessStarterManager"/>
+        <extensionPoint qualifiedName="org.rust.packageManagerProvider"
+                        interface="org.rust.ide.packaging.RsPackageManagerProvider"/>
     </extensionPoints>
 
     <application-components>

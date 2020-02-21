@@ -199,6 +199,9 @@ project(":plugin") {
         compile(project(":intelliLang"))
         compile(project(":duplicates"))
         compile(project(":grazie"))
+//        compile(project(":remote"))
+//        compile(project(":docker"))
+//        compile(project(":wsl"))
     }
 
     tasks {
@@ -450,6 +453,45 @@ project(":grazie") {
         testCompile(project(":common", "testOutput"))
     }
 }
+
+//project(":remote") {
+//    intellij {
+//        setPlugins("webDeployment", "remote-run")
+//    }
+//    dependencies {
+//        compile(project(":"))
+//        compile(project(":common"))
+//        testCompile(project(":", "testOutput"))
+//        testCompile(project(":common", "testOutput"))
+//    }
+//}
+
+//project(":docker") {
+//    intellij {
+//        setPlugins("Docker")
+//    }
+//    dependencies {
+//        compile(project(":"))
+//        compile(project(":common"))
+//        compile(project(":remote"))
+//        testCompile(project(":", "testOutput"))
+//        testCompile(project(":common", "testOutput"))
+//    }
+//}
+
+//project(":wsl") {
+//    intellij {
+//        version = ideaVersion
+//        setPlugins("webDeployment", "remote-run", "WSL")
+//    }
+//    dependencies {
+//        compile(project(":"))
+//        compile(project(":common"))
+//        compile(project(":remote"))
+//        testCompile(project(":", "testOutput"))
+//        testCompile(project(":common", "testOutput"))
+//    }
+//}
 
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
