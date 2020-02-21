@@ -19,21 +19,24 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.IconUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.cargo.project.model.impl.CargoProjectsServiceImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
+import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.findCargoProject
-import org.toml.lang.psi.TomlFile
-import org.toml.lang.psi.TomlKey
-import org.toml.lang.psi.TomlTable
-import org.toml.lang.psi.TomlTableHeader
+import org.toml.lang.psi.*
+import java.awt.Color
 import java.awt.event.MouseEvent
+import java.awt.image.RGBImageFilter
 
 class CargoFeatureLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
@@ -41,36 +44,41 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
     override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         if (!tomlPluginIsAbiCompatible()) return
 
-        for (element in elements) {
-            if (element !is TomlTable) continue
+        val firstElement = elements.firstOrNull() ?: return
+        val file = firstElement.containingFile as? TomlFile ?: return
+        if (!file.name.equals(CARGO_TOML, ignoreCase = true)) return
+        val cargoProject = file.findCargoProject() as? CargoProjectImpl ?: return
+        val cargoPackage = file.findCargoPackage() ?: return
+        val cargoPackageOrigin = cargoPackage.origin
 
-            val file = element.containingFile as? TomlFile ?: continue
-            if (file.name.toLowerCase() != "cargo.toml") continue
-            val cargoProject = file.findCargoProject() as? CargoProjectImpl ?: continue
-            val cargoPackage = file.findCargoPackage() ?: continue
+        val project = firstElement.project
+        val cargoProjectsService = project.cargoProjects as CargoProjectsServiceImpl
+        val features = cargoPackage.featureStates
 
-            val project = element.project
-            val cargoProjectsService = project.cargoProjects as CargoProjectsServiceImpl
-            val features = cargoPackage.features.state
-
-            val lastName = element.header.names.lastOrNull() ?: continue
-            if (!lastName.isFeaturesKey) continue
-
-            for (entry in element.entries) {
-                val featureName = entry.key.text
-                val featureLineMarkerInfo = genFeatureLineMarkerInfo(
-                    entry.key,
+        loop@ for (element in elements) {
+            val parent = element.parent
+            if (parent is TomlKey) {
+                val key = parent
+                val keyValue = key.parent as? TomlKeyValue ?: continue@loop
+                val table = keyValue.parent as? TomlTable ?: continue@loop
+                if (!table.header.isFeatureListHeader) continue@loop
+                val featureName = key.text
+                if ("." in featureName) continue@loop
+                result += genFeatureLineMarkerInfo(
+                    key,
                     featureName,
                     features[featureName],
                     cargoProject,
                     cargoProjectsService,
                     cargoPackage
                 )
-                result.add(featureLineMarkerInfo)
             }
-
-            val settingsLineMarkerInfo = genSettingsLineMarkerInfo(element.header, cargoProjectsService)
-            result.add(settingsLineMarkerInfo)
+            if (element.elementType == TomlElementTypes.L_BRACKET && cargoPackageOrigin == WORKSPACE) {
+                val header = parent as? TomlTableHeader ?: continue@loop
+                if (!header.isFeatureListHeader) continue@loop
+                val settingsLineMarkerInfo = genSettingsLineMarkerInfo(header, cargoProjectsService)
+                result.add(settingsLineMarkerInfo)
+            }
         }
     }
 
@@ -85,18 +93,16 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
         val anchor = element.firstChild
         val icon = when (featureState) {
             FeatureState.Enabled -> RsIcons.FEATURE_CHECKED_MARK
-            FeatureState.Disabled -> RsIcons.FEATURE_UNCHECKED_MARK
-            null -> RsIcons.FEATURE_UNCHECKED_MARK
+            FeatureState.Disabled, null -> RsIcons.FEATURE_UNCHECKED_MARK
         }
 
         val toggleFeature = {
-            val oldState = cargoPackage.features.state.getOrDefault(name, FeatureState.Disabled).toBoolean()
+            val oldState = cargoPackage.featureStates.getOrDefault(name, FeatureState.Disabled).toBoolean()
             val newState = !oldState
             val tomlFile = element.containingFile as TomlFile
             val tomlDoc = PsiDocumentManager.getInstance(cargoProject.project).getDocument(tomlFile)
             val isDocUnsaved = tomlDoc?.let { FileDocumentManager.getInstance().isDocumentUnsaved(it) } ?: true
-            val pkgRootDir = cargoPackage.rootDirectory.toString()
-            cargoProjectsService.updateFeature(cargoProject, pkgRootDir, name, newState, isDocUnsaved)
+            cargoProjectsService.updateFeature(cargoProject, cargoPackage, name, newState, isDocUnsaved)
         }
 
         return when (cargoPackage.origin) {
@@ -112,8 +118,14 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
             else -> LineMarkerInfo(
                 anchor,
                 anchor.textRange,
-                icon,
-                null,
+                // TODO extract to a constant
+                IconUtil.filterIcon(icon, { object : RGBImageFilter() {
+                    override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+                        val color = Color(rgb, true)
+                        return ColorUtil.toAlpha(color, (color.alpha / 2.2).toInt()).rgb
+                    }
+                } }, null),
+                { "Feature `$name` is $featureState" },
                 null,
                 Alignment.LEFT
             )
@@ -128,6 +140,7 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
         val icon = RsIcons.FEATURES_SETTINGS
 
         val configure = { e: MouseEvent, element: PsiElement ->
+            // TODO а зачем тут по второму разу все проверять? Нельзя в замыкание?
             val file = element.containingFile as? TomlFile
             if (file != null && file.name.toLowerCase() == "cargo.toml") {
                 val cargoProject = file.findCargoProject() as? CargoProjectImpl
@@ -185,7 +198,7 @@ private class FeaturesSettingsCheckboxAction(
 
     override fun actionPerformed(e: AnActionEvent) {
         val pkgRootDir = cargoPackage.rootDirectory.toString()
-        cargoProjectsService.updateAllFeatures(cargoProject, pkgRootDir, selectAll)
+//        cargoProjectsService.updateAllFeatures(cargoProject, pkgRootDir, selectAll)
 
         runWriteAction {
             DaemonCodeAnalyzer.getInstance(cargoProject.project).restart()

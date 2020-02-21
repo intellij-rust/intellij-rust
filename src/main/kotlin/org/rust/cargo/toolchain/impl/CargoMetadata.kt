@@ -11,16 +11,15 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
-import org.rust.cargo.project.workspace.*
-import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
-import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.BuildScriptMessage
+import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*
 
@@ -275,10 +274,9 @@ object CargoMetadata {
                 }
 
                 val defaultFeatures = resolveNode?.features?.toSet().orEmpty()
-                val featuresGraph = FeatureGraph.buildFor(pkg.features, defaultFeatures)
 
                 val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
-                pkg.clean(fs, pkg.id in members, variables, featuresGraph, buildScriptMessage)
+                pkg.clean(fs, pkg.id in members, variables, pkg.features, defaultFeatures, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
@@ -296,7 +294,8 @@ object CargoMetadata {
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         variables: PackageVariables,
-        features: FeatureGraph,
+        features: Map<String, List<String>>,
+        defaultFeatures: Set<String>,
         buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
@@ -322,6 +321,7 @@ object CargoMetadata {
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
             edition = edition.cleanEdition(),
             features = features,
+            defaultFeatures = defaultFeatures,
             cfgOptions = cfgOptions,
             env = env,
             outDirUrl = outDir?.url

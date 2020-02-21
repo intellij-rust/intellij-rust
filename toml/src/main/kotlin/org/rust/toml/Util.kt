@@ -57,6 +57,9 @@ val TomlKey.isFeaturesKey: Boolean
 val TomlTableHeader.isDependencyListHeader: Boolean
     get() = names.lastOrNull()?.isDependencyKey == true
 
+val TomlTableHeader.isFeatureListHeader: Boolean
+    get() = names.lastOrNull()?.isFeaturesKey == true
+
 /** Inserts `=` between key and value if missed and wraps inserted string with quotes if needed */
 class StringValueInsertionHandler(private val keyValue: TomlKeyValue) : InsertHandler<LookupElement> {
     override fun handleInsert(context: InsertionContext, item: LookupElement) {
