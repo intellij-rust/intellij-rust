@@ -6,7 +6,7 @@
 package org.rust.grazie
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.ide.GrazieInspection
+import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.testFramework.PlatformTestUtil
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.lang.RsLanguage

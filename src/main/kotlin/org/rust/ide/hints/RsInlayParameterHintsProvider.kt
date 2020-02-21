@@ -17,7 +17,7 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
 
     override fun getDefaultBlackList(): Set<String> = emptySet()
 
-    override fun getHintInfo(element: PsiElement?): HintInfo? = null
+    override fun getHintInfo(element: PsiElement): HintInfo? = null
 
     override fun getParameterHints(element: PsiElement): List<InlayInfo> {
         val resolved = RsPlainHint.resolve(element) ?: return emptyList()
