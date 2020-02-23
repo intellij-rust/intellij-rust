@@ -162,6 +162,14 @@ class RsPsiFactory(
             .blockFields!!
     }
 
+    fun createTupleFields(fields: List<BlockField>): RsTupleFields {
+        val fieldsText = fields.joinToString(separator = ", ") {
+            "${"pub".iff(it.pub)}${it.type.insertionSafeTextWithLifetimes}"
+        }
+        return createStruct("struct S($fieldsText)")
+            .tupleFields!!
+    }
+
     fun createEnum(text: String): RsEnumItem =
         createFromText(text)
             ?: error("Failed to create enum from text: `$text`")
