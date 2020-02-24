@@ -15,9 +15,7 @@ import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyTuple
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildList
 
@@ -111,6 +109,7 @@ class RsExtractFunctionConfig private constructor(
     val returnValue: ReturnValue? = null,
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
+    val isAsync: Boolean = false,
     var parameters: List<Parameter>
 ) {
     val valueParameters: List<Parameter>
@@ -135,6 +134,9 @@ class RsExtractFunctionConfig private constructor(
     private fun signature(isOriginal: Boolean): String = buildString {
         if (visibilityLevelPublic) {
             append("pub ")
+        }
+        if (isAsync) {
+            append("async ")
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
         if (returnValue != null) {
@@ -257,11 +259,37 @@ class RsExtractFunctionConfig private constructor(
                 }
             }
 
+            var isAsync = false
+            if (fn.isAsync) {
+                val visitor = object : RsRecursiveVisitor() {
+                    override fun visitFieldLookup(o: RsFieldLookup) {
+                        if (o.isAsync) {
+                            isAsync = true
+                        }
+                    }
+                    // stop recursive propagation, we want to ignore awaits in async blocks and async closures
+                    override fun visitBlockExpr(o: RsBlockExpr) {
+                        if (!o.isAsync) {
+                            super.visitBlockExpr(o)
+                        }
+                    }
+                    override fun visitLambdaExpr(o: RsLambdaExpr) {
+                        if (!o.isAsync) {
+                            super.visitLambdaExpr(o)
+                        }
+                    }
+                }
+                for (element in elements) {
+                    element.accept(visitor)
+                }
+            }
+
             return RsExtractFunctionConfig(
                 fn,
                 elements,
                 returnValue = returnValue,
-                parameters = parameters
+                parameters = parameters,
+                isAsync = isAsync
             )
         }
     }

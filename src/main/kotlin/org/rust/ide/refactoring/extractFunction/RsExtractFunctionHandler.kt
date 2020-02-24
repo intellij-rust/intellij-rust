@@ -110,6 +110,9 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             }
             "${if (type != null) "$type::" else ""}${config.name}(${config.argumentsText})"
         }
+        if (config.isAsync) {
+            stmt += ".await"
+        }
         val element = if (config.returnValue == null || config.returnValue.exprText != null) {
             stmt += ";"
             psiFactory.createStatement(stmt)
