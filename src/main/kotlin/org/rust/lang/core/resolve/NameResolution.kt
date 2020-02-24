@@ -920,14 +920,14 @@ private class MacroResolvingVisitor(
     }
 
     override fun visitModItem(item: RsModItem) {
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.isEnabledByCfg) {
             val elements = visibleMacros(item)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
         }
     }
 
     override fun visitModDeclItem(item: RsModDeclItem) {
-        if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
+        if (missingMacroUse.hitOnFalse(item.hasMacroUse) && item.isEnabledByCfg) {
             val mod = item.reference.resolve() as? RsMod ?: return
             val elements = visibleMacros(mod)
             visitorResult = processAll(if (reverse) elements.asReversed() else elements, processor)
@@ -935,6 +935,7 @@ private class MacroResolvingVisitor(
     }
 
     override fun visitExternCrateItem(item: RsExternCrateItem) {
+        if (!item.isEnabledByCfg) return
         val mod = item.reference.resolve() as? RsFile ?: return
         if (missingMacroUse.hitOnFalse(item.hasMacroUse)) {
             // If extern crate has `#[macro_use]` attribute
@@ -954,6 +955,7 @@ private class MacroResolvingVisitor(
     }
 
     override fun visitUseItem(item: RsUseItem) {
+        // Cfg attributes are evaluated later
         useItems += item
     }
 
@@ -1021,6 +1023,7 @@ private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
 
         val externCrates = scope.stubChildrenOfType<RsExternCrateItem>()
         for (item in externCrates) {
+            if (!item.isEnabledByCfg) continue
             val reexportedMacros = reexportedMacros(item)
             if (reexportedMacros != null) {
                 addAll(reexportedMacros.toScopeEntries())
@@ -1090,10 +1093,14 @@ private fun collectMacrosImportedWithUseItem(
     // macro resolve and so be slow and incorrect).
     // We assume that macro can only be imported by 2-segment path (`foo::bar`), where the first segment
     // is a name of the crate (may be aliased) and the second segment is the name of the macro.
-    return buildList {
-        val root = useItem.useSpeck ?: return@buildList
+    val root = useItem.useSpeck ?: return emptyList()
+    val twoSegmentPaths = collect2segmentPaths(root)
 
-        for ((crateName, macroName) in collect2segmentPaths(root)) {
+    // Check cfg only if there are paths we interested in
+    if (twoSegmentPaths.isEmpty() || !useItem.isEnabledByCfg) return emptyList()
+
+    return buildList {
+        for ((crateName, macroName) in twoSegmentPaths) {
             val crateRoot = exportingMacrosCrates[crateName] as? RsFile
                 ?: findDependencyCrateByName(useItem, crateName)
                 ?: continue

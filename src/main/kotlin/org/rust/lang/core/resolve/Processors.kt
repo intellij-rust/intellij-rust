@@ -114,8 +114,11 @@ fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Un
     var result: RsElement? = null
     f { e ->
         if (e.name == referenceName) {
-            result = e.element
-            return@f result != null
+            val element = e.element
+            if (element != null && (element !is RsDocAndAttributeOwner || element.isEnabledByCfg)) {
+                result = element
+                return@f true
+            }
         }
         false
     }

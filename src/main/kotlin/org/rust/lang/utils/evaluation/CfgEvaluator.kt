@@ -95,7 +95,7 @@ class CfgEvaluator(
         name in packageOptions.nameOptions -> True
         // TODO: convert whitelist to blacklist and merge options with packageOption
         name in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
-        name == "test" && origin == PackageOrigin.STDLIB -> False
+        (name == "test" || name == "bootstrap") && origin == PackageOrigin.STDLIB -> False
         name == CfgOptions.TEST && isUnitTestMode -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
         else -> Unknown
     }
