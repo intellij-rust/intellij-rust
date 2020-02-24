@@ -14,6 +14,10 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
 
 val CI = System.getenv("CI") != null
 val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
@@ -34,6 +38,17 @@ val isAtLeast193 = platformVersion >= 193
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
+
+val httpClient: OkHttpClient by lazy { OkHttpClient() }
+
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.squareup.okhttp3:okhttp:4.4.0")
+    }
+}
 
 plugins {
     idea
@@ -557,6 +572,25 @@ task("makeRelease") {
         "git checkout master".execute()
 //        commitNightly()
     }
+}
+
+task("makeNightlyRelease") {
+    doLast {
+        sendReleaseEvent("nightly-release")
+    }
+}
+
+fun sendReleaseEvent(eventName: String) {
+    val contentType = "application/json; charset=utf-8".toMediaType()
+    val body = """{"event_type": "$eventName"}""".toRequestBody(contentType)
+    val request = Request.Builder()
+        .url("https://api.github.com/repos/intellij-rust/intellij-rust/dispatches")
+        .header("Authorization", "token ${prop("githubToken")}")
+        .header("Accept", "application/vnd.github.v3+json")
+        .post(body)
+        .build()
+    val response = httpClient.newCall(request).execute()
+    println("Response code: ${response.code}")
 }
 
 fun commitNightly() {
