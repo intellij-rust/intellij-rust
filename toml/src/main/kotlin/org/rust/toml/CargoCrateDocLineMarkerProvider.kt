@@ -10,7 +10,9 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 import org.rust.ide.icons.RsIcons
+import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
@@ -20,35 +22,33 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 
     override fun collectSlowLineMarkers(elements: MutableList<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
         if (!tomlPluginIsAbiCompatible()) return
-        for (el in elements) {
-            val file = el.containingFile
-            if (file.name.toLowerCase() != "cargo.toml") continue
-            if (el !is TomlTable) continue
-            result += annotateTable(el)
+        val firstElement = elements.firstOrNull() ?: return
+        val file = firstElement.containingFile
+        if (!file.name.equals(CARGO_TOML, ignoreCase = true)) return
+
+        loop@ for (element in elements) {
+            val parent = element.parent
+            if (parent is TomlKey) {
+                val key = parent
+                val keyValue = key.parent as? TomlKeyValue ?: continue@loop
+                val table = keyValue.parent as? TomlTable ?: continue@loop
+                if (!table.header.isDependencyListHeader) continue@loop
+                if (key.firstChild?.nextSibling != null) continue@loop
+                val pkgName = keyValue.crateName
+                val pkgVersion = keyValue.version ?: continue@loop
+                result += genLineMarkerInfo(element, pkgName, pkgVersion)
+            } else if (element.elementType == TomlElementTypes.L_BRACKET) {
+                val header = parent as? TomlTableHeader ?: continue@loop
+                val names = header.names
+                if (names.getOrNull(names.size - 2)?.isDependencyKey != true) continue@loop
+                val table = parent.parent as? TomlTable ?: continue@loop
+                val version = table.entries.find { it.name == "version" }?.value?.stringValue ?: continue@loop
+                result += genLineMarkerInfo(element, names.last().text, version)
+            }
         }
     }
 
-    private fun annotateTable(el: TomlTable): Collection<LineMarkerInfo<PsiElement>> {
-        val names = el.header.names
-        val test = names.getOrNull(names.size - 2)
-        val lastName = names.lastOrNull() ?: return emptyList()
-        if (test?.isDependencyKey == true) {
-            val version = el.entries.find { it.name == "version" }?.value?.stringValue
-            val lineMarkerInfo = genLineMarkerInfo(el.header.names.first(), lastName.text, version) ?: return emptyList()
-            return listOf(lineMarkerInfo)
-        }
-        if (!lastName.isDependencyKey) return emptyList()
-        return el.entries.mapNotNull {
-            val pkgName = it.crateName
-            val pkgVersion = it.version
-            genLineMarkerInfo(it.key, pkgName, pkgVersion)
-        }
-    }
-
-    private fun genLineMarkerInfo(element: TomlKey, name: String, version: String?): LineMarkerInfo<PsiElement>? {
-        @Suppress("NAME_SHADOWING")
-        val version = version ?: return null
-        val anchor = element.bareKey
+    private fun genLineMarkerInfo(anchor: PsiElement, name: String, version: String): LineMarkerInfo<PsiElement> {
         return LineMarkerInfo(
             anchor,
             anchor.textRange,
@@ -59,7 +59,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 
     }
 }
-private val TomlKey.bareKey get() = firstChild
+
 private val TomlKeyValue.name get() = key.text
 private val TomlKeyValue.crateName: String
     get() {
