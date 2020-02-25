@@ -206,10 +206,10 @@ TypeArgumentList ::= TypeArgumentListImpl {
 }
 ColonTypeArgumentList ::= &'::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
-private TypeArgumentListImpl ::= '::'? '<' !'=' ( <<list_element Lifetime>>*
-                                                  <<list_element (!(identifier ('='|':')) !'>' TypeReference)>>*
-                                                  <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
-                                                  <<list_element AssocTypeBinding>>*) '>' { pin = 3 }
+private TypeArgumentListImpl ::= '::'? '<' !'=' <<list_element AnyTypeArgument>>* '>' { pin = 3 }
+private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | ConstArgument
+private ConstArgument ::= (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)
+
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
@@ -1546,4 +1546,4 @@ private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
-private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }
+private meta list_element ::= !'>' <<param>> (',' | &'>') { pin = 2 }
