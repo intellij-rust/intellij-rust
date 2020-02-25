@@ -407,9 +407,9 @@ LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
+LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)* { pin = 1 }
 
-TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
+TypeParameter ::= OuterAttr* identifier TypeParamBounds? DefaultTypeParameterType? {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -417,6 +417,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private DefaultTypeParameterType ::= '=' TypeReference { pin = 1 }
 
 ConstParameter ::= OuterAttr* const identifier TypeAscription {
   pin = 2
