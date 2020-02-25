@@ -70,10 +70,10 @@ private class LifetimeRemover : RsVisitor() {
     }
 
     override fun visitRefLikeType(refLike: RsRefLikeType) {
-        visitTypeReference(refLike.typeReference)
+        refLike.typeReference?.let { visitTypeReference(it) }
         if (refLike.isRef && refLike.lifetime != null) {
             val ref = RsPsiFactory(refLike.project)
-                .createReferenceType(refLike.typeReference.text, refLike.mutability.isMut)
+                .createReferenceType(refLike.typeReference?.text ?: "", refLike.mutability.isMut)
             refLike.replace(ref)
         }
     }

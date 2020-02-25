@@ -439,7 +439,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
         is RsTupleType -> typeElement.typeReferenceList.joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }
         is RsArrayType -> {
             buffer += "["
-            typeElement.typeReference.generateDocumentation(buffer)
+            typeElement.typeReference?.generateDocumentation(buffer)
             if (!typeElement.isSlice) {
                 buffer += "; "
                 buffer.append(typeElement.arraySize ?: "<unknown>")
@@ -457,7 +457,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
                 buffer += "*"
                 buffer += if (typeElement.mutability.isMut) "mut " else "const "
             }
-            typeElement.typeReference.generateDocumentation(buffer)
+            typeElement.typeReference?.generateDocumentation(buffer)
         }
         is RsFnPointerType -> {
             // TODO: handle abi

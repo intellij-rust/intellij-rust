@@ -22,6 +22,7 @@ import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.ty.Mutability
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
@@ -155,8 +156,8 @@ private fun RsPsiFactory.createTraitMembers(members: Collection<RsAbstractable>,
         when (it) {
             is RsConstant -> {
                 val initialValue = RsDefaultValueBuilder(it.knownItems, it.containingMod, this, true)
-                    .buildFor(it.typeReference.type.substitute(subst), emptyMap())
-                "    const ${it.nameLikeElement.text}: ${it.typeReference.substAndGetText(subst)} = ${initialValue.text};"
+                    .buildFor(it.typeReference?.type?.substitute(subst) ?: TyUnknown, emptyMap())
+                "    const ${it.nameLikeElement.text}: ${it.typeReference?.substAndGetText(subst) ?: "_"} = ${initialValue.text};"
             }
             is RsTypeAlias ->
                 "    type ${it.escapedName} = ();"

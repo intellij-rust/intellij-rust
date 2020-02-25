@@ -456,6 +456,7 @@ WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypePar
 }
 
 ForLifetimes ::= for '<' LifetimesParams '>' {
+  pin = 2
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -563,7 +564,7 @@ BindingMode ::= ref mut? | mut
 OrPats ::= '|'? Pat ('|' Pat)*
 
 Constant ::= AttrsAndVis default_? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
-  pin = 5
+  pin = 4
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -829,7 +830,7 @@ TraitAlias ::= AttrsAndVis trait identifier TypeParameterList? '=' TraitAliasBou
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private TypeAscription ::= ':' TypeReference
+private TypeAscription ::= ':' TypeReference { pin = 1 }
 
 private TypeReferenceInner ::= ArrayType
                                | RefLikeType
@@ -880,6 +881,7 @@ ScalarTypeReference ::= ScalarTypeReferenceInner {
 }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
+  pin = 1
   implements = [ "org.rust.lang.core.psi.ext.RsTypeElement" "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsArrayTypeStub"
@@ -887,6 +889,7 @@ ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
 }
 
 RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
+  pin = 1
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsRefLikeTypeStub"
@@ -922,6 +925,7 @@ Bound ::= Lifetime | TraitRef {
 }
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
+  pin = 1
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -948,7 +952,7 @@ fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {
 }
 
 ExplicitTraitType ::= ExplicitTraitTypeInner { elementType = TraitType }
-private ExplicitTraitTypeInner ::= (impl | dyn) Polybound ('+' Polybound)*
+private ExplicitTraitTypeInner ::= (impl | dyn) Polybound ('+' Polybound)* { pin = 1 }
 
 ImplicitTraitType ::= ImplicitTraitTypeInner { elementType = TraitType }
 private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
