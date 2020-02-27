@@ -1,5 +1,5 @@
 <configurations>
-  <configuration name="Run hello" class="CargoCommandConfiguration">
+  <configuration name="Run hello" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="channel" value="NIGHTLY" />
     <option name="command" value="run --package test-package --bin hello" />
     <option name="allFeatures" value="true" />
@@ -10,5 +10,8 @@
     <envs>
       <env name="FOO" value="BAR" />
     </envs>
+    <method v="2">
+      <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+    </method>
   </configuration>
 </configurations>
