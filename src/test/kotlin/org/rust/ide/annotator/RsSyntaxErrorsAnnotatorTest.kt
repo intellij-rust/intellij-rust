@@ -244,6 +244,26 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn foo<T, <error descr="Lifetime parameters must be declared prior to type parameters">'a</error>>(bar: &'a T) {}
     """)
 
+    fun `test type arguments order`() = checkErrors("""
+        type A1 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
+
+        type A2 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>,
+                      <error descr="Lifetime arguments must be declared prior to type arguments">'e</error>>;
+
+        type A3 = B<C=D, <error descr="Type arguments must be declared prior to associated type bindings">E</error>>;
+
+        type A4 = B<C=D, <error descr="Type arguments must be declared prior to associated type bindings">E</error>,
+                         <error descr="Type arguments must be declared prior to associated type bindings">F</error>>;
+
+        type A3 = B<C=D, <error descr="Lifetime arguments must be declared prior to associated type bindings">'e</error>>;
+
+        type A4 = B<C=D, <error descr="Lifetime arguments must be declared prior to associated type bindings">'e</error>,
+                         <error descr="Lifetime arguments must be declared prior to associated type bindings">'f</error>>;
+
+        type A5 = B<1, <error descr="Type arguments must be declared prior to const arguments">C</error>,
+                         <error descr="Lifetime arguments must be declared prior to const arguments">'d</error>>;
+    """)
+
     fun `test default type parameters in impl`() = checkErrors("""
         struct S<T=String>{ f: T }
         impl<T=<error descr="Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">String</error>> S<T> {}

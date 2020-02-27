@@ -14,6 +14,7 @@ import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.SubstituteTextFix
@@ -22,7 +23,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import org.rust.openapiext.forEachChild
 import java.lang.Integer.max
+import kotlin.reflect.KClass
 
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
@@ -34,6 +37,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
+            is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
         }
     }
 }
@@ -214,6 +218,38 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
         if (e.textOffset > startOfTypeParams) {
             holder.createErrorAnnotation(e, "Lifetime parameters must be declared prior to type parameters")
         }
+    }
+}
+
+private fun checkTypeArgumentList(holder: AnnotationHolder, args: RsTypeArgumentList) {
+    var kind = TypeArgumentKind.LIFETIME
+    args.forEachChild { child ->
+        val newKind = TypeArgumentKind.forType(child) ?: return@forEachChild
+        if (newKind.canStandAfter(kind)) {
+            kind = newKind
+        } else {
+            val newStateName = newKind.argumentNameCapitalized
+            holder.createErrorAnnotation(child, "$newStateName must be declared prior to ${kind.argumentName}")
+        }
+    }
+}
+
+private enum class TypeArgumentKind(private val elementClass: KClass<*>, val argumentName: String) {
+    LIFETIME(RsLifetime::class, "lifetime arguments"),
+    TYPE(RsTypeReference::class, "type arguments"),
+    CONST(RsExpr::class, "const arguments"),
+    ASSOC(RsAssocTypeBinding::class, "associated type bindings");
+
+    val argumentNameCapitalized: String
+        get() = StringUtil.capitalize(argumentName)
+
+    fun canStandAfter(prevArgument: TypeArgumentKind): Boolean =
+        ordinal >= prevArgument.ordinal
+
+    companion object {
+        private val VALUES = values()
+        fun forType(seekingElement: PsiElement): TypeArgumentKind? =
+            VALUES.find { it.elementClass.isInstance(seekingElement) }
     }
 }
 
