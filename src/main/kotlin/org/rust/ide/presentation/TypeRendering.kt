@@ -32,6 +32,9 @@ val Ty.insertionSafeText: String
 val Ty.insertionSafeTextWithAliases: String
     get() = TypeRenderer.INSERTION_SAFE_WITH_ALIASES.render(this)
 
+val Ty.insertionSafeTextWithAliasesWithoutTypes: String
+    get() = TypeRenderer.INSERTION_SAFE_WITH_ALIASES_WITHOUT_TYPES.render(this)
+
 val Ty.insertionSafeTextWithLifetimes: String
     get() = TypeRenderer.INSERTION_SAFE_WITH_LIFETIMES.render(this)
 
@@ -233,6 +236,7 @@ private data class TypeRenderer(
             float = "_"
         )
         val INSERTION_SAFE_WITH_ALIASES = INSERTION_SAFE.copy(useAliasNames = true)
+        val INSERTION_SAFE_WITH_ALIASES_WITHOUT_TYPES: TypeRenderer = TypeRenderer(useAliasNames = true, includeTypeArguments = false)
         val INSERTION_SAFE_WITH_LIFETIMES: TypeRenderer = INSERTION_SAFE.copy(includeLifetimeArguments = true)
         val INSERTION_SAFE_WITH_ALIASES_AND_LIFETIMES = INSERTION_SAFE.copy(useAliasNames = true, includeLifetimeArguments = true)
         val WITH_ALIASES: TypeRenderer = TypeRenderer(useAliasNames = true)
