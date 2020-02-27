@@ -27,6 +27,8 @@ FILE
           <empty list>
       PsiWhiteSpace('\n    ')
       PsiElement(identifier)('bar')
+      PsiErrorElement:'!' or '::' expected, got 'fn'
+        <empty list>
       PsiWhiteSpace('\n    ')
       RsFunctionImpl(FUNCTION)
         PsiElement(fn)('fn')

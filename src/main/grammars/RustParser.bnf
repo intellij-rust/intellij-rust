@@ -657,7 +657,7 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
+ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* Items '}' {
   pin = 3
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
@@ -666,8 +666,6 @@ ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private ForeignDecl ::= Constant | Function | TypeAlias
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -795,19 +793,12 @@ ImplItem ::= AttrsAndVis default_? unsafe? impl TypeParameterList? ( TraitImpl |
 private TraitImpl ::= '!'? TraitRef for ('..' | TypeReference)  { pin = 3 }
 private InherentImpl ::= TypeReference !for
 
-Members ::= '{' InnerAttr* Member* '}' {
+Members ::= '{' InnerAttr* Items '}' {
   pin = 1
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private Member ::= !'}' ( Function | Constant | TypeAlias | ItemLikeMacroCall ) {
-  pin = 1
-  recoverWhile = Member_recover
-}
-private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default"
- | "async" | '}')
 
 TraitAliasBounds ::= TypeBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"

@@ -733,9 +733,9 @@ fun processBinaryOpVariants(element: RsBinaryOp, operator: OverloadableBinaryOpe
     val lhsType = binaryExpr.left.type
     val lookup = ImplLookup.relativeTo(element)
     val function = lookup.findOverloadedOpImpl(lhsType, rhsType, operator)
-        ?.members
-        ?.functionList
-        ?.find { it.name == operator.fnName }
+        ?.expandedMembers.orEmpty()
+        .functions
+        .find { it.name == operator.fnName }
         ?: return false
     return processor(function)
 }

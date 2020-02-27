@@ -55,7 +55,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         }
 
     private fun doGetAssociatedTypesTransitively(): List<RsTypeAlias> {
-        val implAliases = members?.typeAliasList.orEmpty()
+        val implAliases = expandedMembers.types
         val traitAliases = implementedTrait?.associatedTypesTransitively ?: emptyList()
         return implAliases + traitAliases.filter { trAl -> implAliases.find { it.name == trAl.name } == null }
     }

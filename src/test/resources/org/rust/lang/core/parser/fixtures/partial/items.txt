@@ -6,5 +6,5 @@ FILE
       PsiElement(STRING_LITERAL)('"C"')
     PsiWhiteSpace(' ')
     PsiElement({)('{')
-    PsiErrorElement:'#', <constant>, <function>, <type alias> or '}' expected
+    PsiErrorElement:'#' or '}' expected
       <empty list>

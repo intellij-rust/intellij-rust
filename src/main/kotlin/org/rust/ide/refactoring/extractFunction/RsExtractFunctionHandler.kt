@@ -18,10 +18,7 @@ import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.usageView.UsageInfo
 import org.rust.ide.refactoring.RsRenameProcessor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.block
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.ext.valueParameters
+import org.rust.lang.core.psi.ext.*
 
 class RsExtractFunctionHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
@@ -64,7 +61,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 val impl = psiFactory.createImpl(type.text, listOf(function))
                 val newImpl = parent.addAfter(impl, parent.addAfter(beforeNewline, owner.impl)) as? RsImplItem
                 parent.addAfter(afterNewline, newImpl)
-                newImpl?.members?.functionList?.singleOrNull()
+                newImpl?.members?.childOfType<RsFunction>()
             }
             else -> {
                 val newline = psiParserFacade.createWhiteSpaceFromText("\n\n")

@@ -57,7 +57,7 @@ val BoundElement<RsTraitItem>.flattenHierarchy: Collection<BoundElement<RsTraitI
 }
 
 val BoundElement<RsTraitItem>.associatedTypesTransitively: Collection<RsTypeAlias>
-    get() = flattenHierarchy.flatMap { it.element.members?.typeAliasList.orEmpty() }
+    get() = flattenHierarchy.flatMap { it.element.expandedMembers.types }
 
 fun RsTraitItem.findAssociatedType(name: String): RsTypeAlias? =
     associatedTypesTransitively.find { it.name == name }

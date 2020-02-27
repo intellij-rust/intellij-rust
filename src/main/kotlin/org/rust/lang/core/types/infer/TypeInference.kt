@@ -270,14 +270,14 @@ class RsInferenceContext(
             val variant = resolvedPaths[path]?.firstOrNull() ?: continue
             val fnName = (variant.element as? RsFunction)?.name
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
-            val fn = impl.members?.functionList?.find { it.name == fnName } ?: continue
+            val fn = impl.expandedMembers.functions.find { it.name == fnName } ?: continue
             val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(project, impl))
             resolvedPaths[path] = listOf(ResolvedPath.AssocItem(fn, source))
         }
         for ((call, traitRef) in methodRefinements) {
             val variant = resolvedMethods[call]?.firstOrNull() ?: continue
             val impl = lookup.select(resolveTypeVarsIfPossible(traitRef)).ok()?.impl as? RsImplItem ?: continue
-            val fn = impl.members?.functionList?.find { it.name == variant.name } ?: continue
+            val fn = impl.expandedMembers.functions.find { it.name == variant.name } ?: continue
             val source = TraitImplSource.ExplicitImpl(RsCachedImplItem.forImpl(project, impl))
             resolvedMethods[call] = listOf(variant.copy(element = fn, source = source))
         }
