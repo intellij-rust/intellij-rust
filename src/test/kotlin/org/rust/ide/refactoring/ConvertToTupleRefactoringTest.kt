@@ -45,7 +45,7 @@ class ConvertToTupleRefactoringTest : RsTestBase() {
         }
     """)
 
-    fun `test convert stuct literal`() = doAvailableTest("""
+    fun `test convert struct literal`() = doAvailableTest("""
         struct Test{/*caret*/
             pub a:usize,
             b:i32
@@ -115,11 +115,36 @@ class ConvertToTupleRefactoringTest : RsTestBase() {
         }
     """)
 
-    protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
+    fun `test convert function call`() = doAvailableTest("""
+        struct S {
+            /*caret*/a: u32
+        }
+        impl S {
+            fn new(v: u32) -> S {
+                S { a: v }
+            }
+        }
+
+        fn main() {
+            let s = S::new(0);
+        }
+    """, """
+        struct S(u32);
+
+        impl S {
+            fn new(v: u32) -> S {
+                S(v)
+            }
+        }
+
+        fn main() {
+            let s = S::new(0);
+        }
+    """)
+
+    private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
         myFixture.testAction(RsConvertToTupleAction())
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
-
-
 }

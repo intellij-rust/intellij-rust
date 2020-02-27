@@ -9,13 +9,15 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsFieldsOwner
+import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 
 class RsConvertToNamedFieldsProcessor(
     project: Project,
@@ -107,6 +109,11 @@ class RsConvertToNamedFieldsProcessor(
                     val callExpr = usageParent
                         .ancestorOrSelf<RsCallExpr>(RsValueArgumentList::class.java)
                         ?: continue@loop
+
+                    // we only want to convert constructors
+                    if ((callExpr.expr as? RsPathExpr)?.path != element) {
+                        continue@loop
+                    }
                     val values = callExpr.valueArgumentList.exprList
                     val text = "let a = ${callExpr.expr.text}" +
                         values.zip(newNames)
@@ -146,5 +153,4 @@ class RsConvertToNamedFieldsProcessor(
     override fun getRefactoringId(): String? {
         return "refactoring.convertToNamedFields"
     }
-
 }

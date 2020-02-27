@@ -125,7 +125,64 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """)
 
-    protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
+    // https://github.com/intellij-rust/intellij-rust/issues/5017
+    fun `test convert function call`() = doAvailableTest("""
+        struct S(/*caret*/u32);
+        impl S {
+            fn new(v: u32) -> S {
+                S(v)
+            }
+        }
+
+        fn main() {
+            let s = S::new(0);
+        }
+    """, """
+        struct S { _0: u32 }
+
+        impl S {
+            fn new(v: u32) -> S {
+                S { _0: v }
+            }
+        }
+
+        fn main() {
+            let s = S::new(0);
+        }
+    """)
+
+    fun `test convert function call in mod`() = doAvailableTest("""
+        mod nested {
+            pub struct S(/*caret*/pub u32);
+            impl S {
+                pub fn new(v: u32) -> S {
+                    S(v)
+                }
+            }
+        }
+
+        fn main() {
+            let s1 = nested::S(1);
+            let s2 = nested::S::new(0);
+        }
+    """, """
+        mod nested {
+            pub struct S { pub _0: u32 }
+
+            impl S {
+                pub fn new(v: u32) -> S {
+                    S { _0: v }
+                }
+            }
+        }
+
+        fn main() {
+            let s1 = nested::S { _0: 1 };
+            let s2 = nested::S::new(0);
+        }
+    """)
+
+    private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
         myFixture.testAction(RsConvertToNamedFieldsAction())
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
