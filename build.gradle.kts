@@ -198,16 +198,16 @@ project(":plugin") {
     }
 
     dependencies {
-        compile(project(":"))
-        compile(project(":idea"))
-        compile(project(":clion"))
-        compile(project(":debugger"))
-        compile(project(":toml"))
-        compile(project(":copyright"))
-        compile(project(":coverage"))
-        compile(project(":intelliLang"))
-        compile(project(":duplicates"))
-        compile(project(":grazie"))
+        implementation(project(":"))
+        implementation(project(":idea"))
+        implementation(project(":clion"))
+        implementation(project(":debugger"))
+        implementation(project(":toml"))
+        implementation(project(":copyright"))
+        implementation(project(":coverage"))
+        implementation(project(":intelliLang"))
+        implementation(project(":duplicates"))
+        implementation(project(":grazie"))
     }
 
     tasks {
@@ -264,12 +264,12 @@ project(":") {
     val testOutput = configurations.create("testOutput")
 
     dependencies {
-        compile(project(":common"))
-        compile("org.jetbrains:markdown:0.1.30") {
+        implementation(project(":common"))
+        implementation("org.jetbrains:markdown:0.1.30") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
-        testCompile(project(":common", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
@@ -324,10 +324,10 @@ project(":idea") {
         setPlugins("java")
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -336,11 +336,11 @@ project(":clion") {
         version = clionVersion
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        compile(project(":debugger"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        implementation(project(":debugger"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -353,69 +353,56 @@ project(":debugger") {
         }
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":toml") {
     intellij {
-        if (baseIDE == "idea") {
-            setPlugins(project(":intellij-toml"), "java")
-        } else {
-            setPlugins(project(":intellij-toml"))
-        }
+        setPlugins(project(":intellij-toml"))
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":intelliLang") {
     intellij {
-        if (baseIDE == "idea") {
-            setPlugins("IntelliLang", "java")
-        } else {
-            setPlugins("IntelliLang")
-        }
+        setPlugins("IntelliLang")
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":copyright") {
     intellij {
         version = ideaVersion
-        setPlugins("copyright", "java")
+        setPlugins("copyright")
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":duplicates") {
-    intellij {
-        if (baseIDE == "idea") {
-            setPlugins("java")
-        }
-    }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -429,10 +416,10 @@ project(":coverage") {
         }
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
@@ -441,25 +428,19 @@ project(":grazie") {
         setPlugins(graziePlugin)
     }
     dependencies {
-        compile(project(":"))
-        compile(project(":common"))
-        testCompile(project(":", "testOutput"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
     }
 }
 
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
 
-    intellij {
-        if (baseIDE == "idea") {
-            setPlugins("java")
-        }
-    }
-
     dependencies {
-        compile(project(":common"))
-        testCompile(project(":common", "testOutput"))
+        implementation(project(":common"))
+        testImplementation(project(":common", "testOutput"))
     }
 
     val generateTomlLexer = task<GenerateLexer>("generateTomlLexer") {
