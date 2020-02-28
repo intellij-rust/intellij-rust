@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.producers
 import com.intellij.execution.RunManager
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY
 import com.intellij.openapi.module.Module
@@ -80,18 +81,13 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
     }
 
     protected fun check(configurationContext: ConfigurationContext) {
-        val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configuration }
-
-        val serialized = configurations.map { config ->
-            Element("configuration").apply {
-                setAttribute("name", config.name)
-                setAttribute("class", config.javaClass.simpleName)
-                config.writeExternal(this)
-            }
-        }
+        val configurations = configurationContext.configurationsFromContext.orEmpty().map { it.configurationSettings }
 
         val root = Element("configurations")
-        serialized.forEach { root.addContent(it) }
+        configurations.forEach {
+            val content = (it as RunnerAndConfigurationSettingsImpl).writeScheme()
+            root.addContent(content)
+        }
 
         assertSameLinesWithFile("$testDataPath/${getTestName(true)}.xml", root.toXmlString())
     }

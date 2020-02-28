@@ -1,5 +1,5 @@
 <configurations>
-  <configuration name="Test foo" class="CargoCommandConfiguration">
+  <configuration name="Test foo" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
     <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --lib &quot;&quot;" />
     <option name="allFeatures" value="false" />
@@ -8,5 +8,8 @@
     <option name="backtrace" value="SHORT" />
     <option name="workingDirectory" value="file:///my-crate" />
     <envs />
+    <method v="2">
+      <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
+    </method>
   </configuration>
 </configurations>
