@@ -658,6 +658,7 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
 }
 
 ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
+  pin = 3
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]

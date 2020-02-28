@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
  */
 class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
 
+    fun `test items`() = doTest(true)
     fun `test fn`() = doTest(true)
     fun `test use item`() = doTest(true)
     fun `test shifts`() = doTest(true)
