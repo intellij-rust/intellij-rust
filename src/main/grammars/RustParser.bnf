@@ -1229,22 +1229,19 @@ UnitExpr ::= OuterAttr* '(' ')' {
 }
 
 fake TupleExpr ::= '(' AnyExpr+ ')' {
+  pin = 2
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 fake ParenExpr ::= '(' AnyExpr ')' {
+  pin = 2
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-// XXX: without the `pin`, upper rules won't work, GK can change element type
-// of the frame only if it already has some type
-// https://github.com/JetBrains/Grammar-Kit/blob/d716ade658c1f8e1f84bd0d61764c9949a7df5f2/src/org/intellij/grammar/parser/GeneratedParserUtilBase.java#L656
-TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ParenExprUpper) {
+TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ')') {
   pin = 2
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementType = ParenExpr
 }
-upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr }
-upper ParenExprUpper ::= ')' { elementType = ParenExpr }
+upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { pin = 1 elementType = TupleExpr }
 
 ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' {
   pin = 2
@@ -1509,12 +1506,11 @@ Stmt ::= LetDecl | EmptyStmt | never ';' {
   mixin = "org.rust.lang.core.psi.ext.RsStmtMixin"
 }
 
-ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper) {
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+ExprStmtOrLastExpr ::= StmtModeExpr (&'}' | ExprStmtUpper) {
+  elementType = Expr
 }
 
-upper ExprStmtUpper ::= ';' | () <<isBlock>> !('}') { elementType = ExprStmt }
-upper LastExprUpper ::= () &'}' { elementType = Expr pin = 1 }
+upper ExprStmtUpper ::= () (';' | <<isBlock>>) { pin = 1 elementType = ExprStmt }
 
 fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
 

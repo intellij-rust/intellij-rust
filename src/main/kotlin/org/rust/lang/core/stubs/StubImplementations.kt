@@ -256,7 +256,6 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "CAST_EXPR" -> RsExprStubType("CAST_EXPR", ::RsCastExprImpl)
     "CONT_EXPR" -> RsExprStubType("CONT_EXPR", ::RsContExprImpl)
     "DOT_EXPR" -> RsExprStubType("DOT_EXPR", ::RsDotExprImpl)
-    "EXPR_STMT_OR_LAST_EXPR" -> RsExprStubType("EXPR_STMT_OR_LAST_EXPR", ::RsExprStmtOrLastExprImpl)
     "FOR_EXPR" -> RsExprStubType("FOR_EXPR", ::RsForExprImpl)
     "IF_EXPR" -> RsExprStubType("IF_EXPR", ::RsIfExprImpl)
     "INDEX_EXPR" -> RsExprStubType("INDEX_EXPR", ::RsIndexExprImpl)
@@ -273,7 +272,6 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "STRUCT_LITERAL" -> RsExprStubType("STRUCT_LITERAL", ::RsStructLiteralImpl)
     "TRY_EXPR" -> RsExprStubType("TRY_EXPR", ::RsTryExprImpl)
     "TUPLE_EXPR" -> RsExprStubType("TUPLE_EXPR", ::RsTupleExprImpl)
-    "TUPLE_OR_PAREN_EXPR" -> RsExprStubType("TUPLE_OR_PAREN_EXPR", ::RsTupleOrParenExprImpl)
     "UNARY_EXPR" -> RsUnaryExprStub.Type
     "UNIT_EXPR" -> RsExprStubType("UNIT_EXPR", ::RsUnitExprImpl)
     "WHILE_EXPR" -> RsExprStubType("WHILE_EXPR", ::RsWhileExprImpl)
