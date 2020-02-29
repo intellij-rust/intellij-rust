@@ -11,7 +11,6 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsForeignModItem
 import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.stubs.RsPlaceholderStub
 
 abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStub>,
@@ -22,9 +21,6 @@ abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = stubChildrenOfType()
-
-    override val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
 
     override val visibility: RsVisibility get() = RsVisibility.Private // visibility does not affect foreign mods

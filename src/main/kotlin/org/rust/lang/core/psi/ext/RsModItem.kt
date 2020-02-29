@@ -13,7 +13,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsModItem
-import org.rust.lang.core.psi.RsOuterAttr
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsModItemStub
 import javax.swing.Icon
@@ -41,9 +40,6 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override val isCrateRoot: Boolean = false
 
     override val innerAttrList: List<RsInnerAttr>
-        get() = stubChildrenOfType()
-
-    override val outerAttrList: List<RsOuterAttr>
         get() = stubChildrenOfType()
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)

@@ -44,7 +44,9 @@ interface RsInnerAttributeOwner : RsDocAndAttributeOwner {
  * ```
  */
 interface RsOuterAttributeOwner : RsDocAndAttributeOwner {
+    @JvmDefault
     val outerAttrList: List<RsOuterAttr>
+        get() = stubChildrenOfType()
 }
 
 /**

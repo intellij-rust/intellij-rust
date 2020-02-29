@@ -43,10 +43,15 @@ object RustParserUtil : GeneratedParserUtilBase() {
         NO_TYPE_ARGS
     }
     enum class BinaryMode { ON, OFF }
-    enum class MacroCallParsingMode(val semicolon: Boolean, val pin: Boolean, val forbidExprSpecialMacros: Boolean) {
-        ITEM(semicolon = true, pin = true, forbidExprSpecialMacros = false),
-        BLOCK(semicolon = true, pin = false, forbidExprSpecialMacros = true),
-        EXPR(semicolon = false, pin = true, forbidExprSpecialMacros = false)
+    enum class MacroCallParsingMode(
+        val attrsAndVis: Boolean,
+        val semicolon: Boolean,
+        val pin: Boolean,
+        val forbidExprSpecialMacros: Boolean
+    ) {
+        ITEM(attrsAndVis = false, semicolon = true, pin = true, forbidExprSpecialMacros = false),
+        BLOCK(attrsAndVis = true, semicolon = true, pin = false, forbidExprSpecialMacros = true),
+        EXPR(attrsAndVis = true, semicolon = false, pin = true, forbidExprSpecialMacros = false)
     }
 
     private val FLAGS: Key<Int> = Key("RustParserUtil.FLAGS")
@@ -368,7 +373,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
 
     @JvmStatic
     fun parseMacroCall(b: PsiBuilder, level: Int, mode: MacroCallParsingMode): Boolean {
-        if (!RustParser.AttrsAndVis(b, level + 1)) return false
+        if (mode.attrsAndVis && !RustParser.AttrsAndVis(b, level + 1)) return false
 
         val macroName = lookupSimpleMacroName(b)
         if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false

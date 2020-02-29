@@ -14,10 +14,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.isTupleStruct
-import org.rust.lang.core.psi.ext.namedFields
-import org.rust.lang.core.psi.ext.positionalFields
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.type
@@ -161,4 +158,4 @@ data class ConstructorArgument(
 }
 
 private val RsImplItem.isSuitableForConstructor: Boolean
-    get() = this.traitRef == null && this.members?.functionList?.find { it.name == "new" } == null
+    get() = this.traitRef == null && this.members?.childrenOfType<RsFunction>()?.find { it.name == "new" } == null
