@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
@@ -31,22 +32,25 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
     override fun canProcessElement(element: PsiElement): Boolean = element is RsNamedElement
 
     override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo>, listener: RefactoringElementListener?) {
+        val psiFactory = RsPsiFactory(element.project)
         if (element is RsPatBinding) {
-            usages
-                .filter {
-                    val usageElement = it.element
-                    usageElement is RsStructLiteralField && usageElement.colon == null
+            usages.forEach {
+                val field = it.element?.ancestorOrSelf<RsStructLiteralField>(RsBlock::class.java) ?: return@forEach
+                when {
+                    field.colon == null -> {
+                        val newPatField = psiFactory.createStructLiteralField(element.text, newName)
+                        field.replace(newPatField)
+                    }
+                    field.referenceName == newName && field.expr is RsPathExpr -> {
+                        field.expr?.delete()
+                        field.colon?.delete()
+                    }
                 }
-                .forEach {
-                    val newPatField = RsPsiFactory(element.project)
-                        .createStructLiteralField(element.text, newName)
-                    it.element!!.replace(newPatField)
-                }
+            }
         }
 
         val newRenameElement = if (element is RsPatBinding && element.parent.parent is RsPatStruct) {
-            val newPatField = RsPsiFactory(element.project)
-                .createPatFieldFull(element.identifier.text, element.text)
+            val newPatField = psiFactory.createPatFieldFull(element.identifier.text, element.text)
             element.replace(newPatField).descendantOfTypeStrict<RsPatBinding>()!!
         } else element
         super.renameElement(newRenameElement, newName, usages, listener)
