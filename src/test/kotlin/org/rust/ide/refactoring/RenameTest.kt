@@ -519,6 +519,90 @@ class RenameTest : RsTestBase() {
         foo! { type T = Spam; }
     """)
 
+    fun `test use initialization shorthand after rename`() = doTest("value", """
+        struct Foo {
+            value: u32
+        }
+        fn bar(/*caret*/foo: u32) -> Foo {
+            Foo {
+                value: foo
+            }
+        }
+    """, """
+        struct Foo {
+            value: u32
+        }
+        fn bar(value: u32) -> Foo {
+            Foo {
+                value
+            }
+        }
+    """)
+
+    fun `test use initialization shorthand after rename with comment`() = doTest("value", """
+        struct Foo {
+            value: u32
+        }
+        fn bar(/*caret*/foo: u32) -> Foo {
+            Foo {
+                value: /* comment */ foo
+            }
+        }
+    """, """
+        struct Foo {
+            value: u32
+        }
+        fn bar(value: u32) -> Foo {
+            Foo {
+                value /* comment */
+            }
+        }
+    """)
+
+    fun `test can't use initialization shorthand after rename`() = doTest("bar", """
+        struct Foo {
+            value: u32
+        }
+        fn bar(/*caret*/foo: u32) -> Foo {
+            Foo {
+                value: foo
+            }
+        }
+    """, """
+        struct Foo {
+            value: u32
+        }
+        fn bar(bar: u32) -> Foo {
+            Foo {
+                value: bar
+            }
+        }
+    """)
+
+    fun `test can't use initialization shorthand after rename 2`() = doTest("value", """
+        struct Foo {
+            value: u32,
+        }
+
+        fn bar(/*caret*/bar: u32) -> Foo {
+            Foo {
+                value: foo(bar),
+            }
+        }
+        fn foo(value: u32) -> u32 { unimplemented!() }
+    """, """
+        struct Foo {
+            value: u32,
+        }
+
+        fn bar(value: u32) -> Foo {
+            Foo {
+                value: foo(value),
+            }
+        }
+        fn foo(value: u32) -> u32 { unimplemented!() }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
