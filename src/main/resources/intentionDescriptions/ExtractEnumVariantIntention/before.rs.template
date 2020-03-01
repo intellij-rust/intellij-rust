@@ -1,0 +1,3 @@
+enum A {
+    Variant1 { name: String, id: usize, }
+}
