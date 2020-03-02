@@ -21,10 +21,7 @@ import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.ty.Mutability
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.ty.Mutability.MUTABLE
@@ -218,28 +215,14 @@ class RsPsiFactory(
         return createFromText(text) ?: error("Failed to create mod item with name: `$modName` from text: `$modText`")
     }
 
-    fun createMembers(members: Collection<RsAbstractable>, subst: Substitution = emptySubstitution): RsMembers {
-        val body = members.joinToString(separator = "\n", transform = {
-            when (it) {
-                is RsConstant ->
-                    "    const ${it.nameLikeElement.text}: ${it.typeReference.substAndGetText(subst)} = unimplemented!();"
-                is RsTypeAlias ->
-                    "    type ${it.escapedName} = ();"
-                is RsFunction ->
-                    "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
-                else ->
-                    error("Unknown trait member")
-            }
-        })
-
-        val text = "impl T for S {$body}"
-        return createFromText(text) ?: error("Failed to create an impl from text: `$text`")
-    }
-
     fun createTraitMethodMember(text: String): RsFunction {
         val members: RsMembers = createFromText("trait Foo { $text }")
             ?: error("Failed to create an method member from text: `$text`")
         return members.functionList.first()
+    }
+
+    fun createMembers(text: String): RsMembers {
+        return createFromText("impl T for S {$text}") ?: error("Failed to create members from text: `$text`")
     }
 
     fun createInherentImplItem(name: String, typeParameterList: RsTypeParameterList?, whereClause: RsWhereClause?): RsImplItem {
@@ -477,48 +460,10 @@ class RsPsiFactory(
             ?: error("Failed to create trait type")
 }
 
-private fun RsFunction.getSignatureText(subst: Substitution): String? {
-    val async = if (isAsync) "async " else ""
-    val unsafe = if (isUnsafe) "unsafe " else ""
-    // We can't simply take a substring of original method declaration
-    // because of anonymous parameters.
-    val name = escapedName ?: return null
-    val generics = typeParameterList?.text ?: ""
-
-    val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
-    val valueArguments = valueParameters.map {
-        // fix possible anon parameter
-        "${it.pat?.text ?: "_"}: ${it.typeReference?.substAndGetText(subst) ?: "()"}"
-    }
-    val allArguments = selfArgument + valueArguments
-
-    val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
-    val where = whereClause?.text ?: ""
-    return "${async}${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
-}
-
 private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
     type.substitute(subst).insertionSafeTextWithAliasesAndLifetimes
-
-private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
-    if (isExplicitType) {
-        buildString {
-            append(self.text)
-            append(colon!!.text)
-            val type = typeReference?.substAndGetText(subst)
-            append(type)
-        }
-    } else {
-        buildString {
-            append(and?.text ?: "")
-            val region = lifetime.resolve().substitute(subst)
-            if (region != ReUnknown) append("$region ")
-            if (mutability == MUTABLE) append("mut ")
-            append(self.text)
-        }
-    }
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {

@@ -15,7 +15,14 @@ import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromEl
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.infer.resolve
+import org.rust.lang.core.types.infer.substitute
+import org.rust.lang.core.types.regions.ReUnknown
+import org.rust.lang.core.types.ty.Mutability
+import org.rust.lang.core.types.type
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.checkWriteAccessNotAllowed
@@ -55,7 +62,7 @@ private fun insertNewTraitMembers(
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
-    val templateImpl = RsPsiFactory(existingMembers.project).createMembers(selected, trait.subst)
+    val templateImpl = RsPsiFactory(existingMembers.project).createTraitMembers(selected, trait.subst)
 
     val traitMembers = trait.element.expandedMembers
     val newMembers = templateImpl.childrenOfType<RsAbstractable>()
@@ -142,3 +149,61 @@ private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiEle
     val extraLineCount = Math.max(0, 2 - lineCount)
     return RsPsiFactory(left.project).createWhitespace("\n".repeat(extraLineCount))
 }
+
+private fun RsPsiFactory.createTraitMembers(members: Collection<RsAbstractable>, subst: Substitution): RsMembers {
+    val body = members.joinToString(separator = "\n", transform = {
+        when (it) {
+            is RsConstant -> {
+                val initialValue = RsDefaultValueBuilder(it.knownItems, it.containingMod, this, true)
+                    .buildFor(it.typeReference.type.substitute(subst), emptyMap())
+                "    const ${it.nameLikeElement.text}: ${it.typeReference.substAndGetText(subst)} = ${initialValue.text};"
+            }
+            is RsTypeAlias ->
+                "    type ${it.escapedName} = ();"
+            is RsFunction ->
+                "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
+            else ->
+                error("Unknown trait member")
+        }
+    })
+
+    return createMembers(body)
+}
+
+private fun RsFunction.getSignatureText(subst: Substitution): String? {
+    val async = if (isAsync) "async " else ""
+    val unsafe = if (isUnsafe) "unsafe " else ""
+    // We can't simply take a substring of original method declaration
+    // because of anonymous parameters.
+    val name = escapedName ?: return null
+    val generics = typeParameterList?.text ?: ""
+
+    val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
+    val valueArguments = valueParameters.map {
+        // fix possible anon parameter
+        "${it.pat?.text ?: "_"}: ${it.typeReference?.substAndGetText(subst) ?: "()"}"
+    }
+    val allArguments = selfArgument + valueArguments
+
+    val ret = retType?.typeReference?.substAndGetText(subst)?.let { "-> $it " } ?: ""
+    val where = whereClause?.text ?: ""
+    return "${async}${unsafe}fn $name$generics(${allArguments.joinToString(",")}) $ret$where"
+}
+
+private fun RsSelfParameter.substAndGetText(subst: Substitution): String =
+    if (isExplicitType) {
+        buildString {
+            append(self.text)
+            append(colon!!.text)
+            val type = typeReference?.substAndGetText(subst)
+            append(type)
+        }
+    } else {
+        buildString {
+            append(and?.text ?: "")
+            val region = lifetime.resolve().substitute(subst)
+            if (region != ReUnknown) append("$region ")
+            if (mutability == Mutability.MUTABLE) append("mut ")
+            append(self.text)
+        }
+    }
