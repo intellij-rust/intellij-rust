@@ -4,7 +4,7 @@ on:
     repository_dispatch:
         types: nightly-release
     schedule:
-        - cron: '0 3 * * *'
+        - cron: '0 2 * * *'
 
 jobs:
     generate-build-number:
