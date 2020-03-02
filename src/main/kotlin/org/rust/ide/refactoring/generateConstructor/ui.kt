@@ -14,12 +14,14 @@ import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.types.Substitution
 
 private var MOCK: StructMemberChooserUi? = null
 
 fun showConstructorArgumentsChooser(
     project: Project,
-    structItem: RsStructItem
+    structItem: RsStructItem,
+    substitution: Substitution
 ): List<ConstructorArgument>? {
     val chooser = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockStructMemberChooserUi`")
@@ -27,7 +29,7 @@ fun showConstructorArgumentsChooser(
         DialogStructMemberChooserUi
     }
     val base = MemberChooserObjectBase(structItem.name, structItem.getIcon(0))
-    val arguments = ConstructorArgument.fromStruct(structItem).map { RsStructMemberChooserObject(base, it) }
+    val arguments = ConstructorArgument.fromStruct(structItem, substitution).map { RsStructMemberChooserObject(base, it) }
     return chooser.selectMembers(project, arguments)?.map { it.member }
 }
 
