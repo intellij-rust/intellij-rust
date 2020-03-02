@@ -340,8 +340,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         struct S;
         impl T for S {
-            const C1: i32 = <selection>unimplemented!()</selection>;
-            const C4: &'static str = unimplemented!();
+            const C1: i32 = <selection>0</selection>;
+            const C4: &'static str = "";
         }
     """)
 
@@ -379,7 +379,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             type T1 = ();
-            const C1: i32 = unimplemented!();
+            const C1: i32 = 0;
         }
     """)
 
@@ -416,19 +416,19 @@ class ImplementMembersHandlerTest : RsTestBase() {
                 <selection>unimplemented!()</selection>
             }
 
-            const C1: u8 = unimplemented!();
+            const C1: u8 = 0;
 
             fn f2(_: u16) -> u16 {
                 unimplemented!()
             }
 
-            const C2: u16 = unimplemented!();
+            const C2: u16 = 0;
 
             fn f3(_: u32) -> u32 {
                 unimplemented!()
             }
 
-            const C3: u32 = unimplemented!();
+            const C3: u32 = 0;
         }
     """)
 
@@ -494,37 +494,37 @@ class ImplementMembersHandlerTest : RsTestBase() {
             <selection>unimplemented!()</selection>
         }
 
-        const C1: &'b str = unimplemented!();
+        const C1: &'b str = "";
 
         fn f2(_: &'b S<'b>) -> &'b S<'b> {
             unimplemented!()
         }
 
-        const C2: &'b S<'b> = unimplemented!();
+        const C2: &'b S<'b> = &S { x: "" };
 
         fn f3(_: &'b A<'a>) -> &'b A<'a> {
             unimplemented!()
         }
 
-        const C3: &'b A<'a> = unimplemented!();
+        const C3: &'b A<'a> = &S { x: "" };
 
         fn f4(_: &'b B) -> &'b B {
             unimplemented!()
         }
 
-        const C4: &'b B = unimplemented!();
+        const C4: &'b B = &S { x: "" };
 
         fn f5(_: &'b C) -> &'b C {
             unimplemented!()
         }
 
-        const C5: &'b C = unimplemented!();
+        const C5: &'b C = &S { x: "" };
 
         fn f6(_: &'b D<'b, D<'b, D<'b, S<'b>>>>) -> &'b D<'b, D<'b, D<'b, S<'b>>>> {
             unimplemented!()
         }
 
-        const C6: &'b D<'b, D<'b, D<'b, S<'b>>>> = unimplemented!();
+        const C6: &'b D<'b, D<'b, D<'b, S<'b>>>> = &D { x: &() };
 
         fn f7(&self) -> &str {
             unimplemented!()
@@ -557,7 +557,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             type r#const = ();
-            const r#pub: i32 = unimplemented!();
+            const r#pub: i32 = 0;
         }
     """)
 
@@ -590,7 +590,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
         }
     """)
-
 
     fun `test do not implement methods already present #2`() = doTest("""
         trait T {
@@ -655,7 +654,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
 
             type T1 = u32;
-            const C1: i32 = unimplemented!();
+            const C1: i32 = 0;
 
             fn f2() {}
 
@@ -699,7 +698,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
                 <selection>unimplemented!()</selection>
             }
 
-            const C1: i32 = unimplemented!();
+            const C1: i32 = 0;
             type T2 = ();
         }
     """)
