@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -12,7 +13,7 @@ import org.rust.ide.refactoring.generateConstructor.RsStructMemberChooserObject
 import org.rust.ide.refactoring.generateConstructor.StructMemberChooserUi
 import org.rust.ide.refactoring.generateConstructor.withMockStructMemberChooserUi
 
-class GenerateConstructorTest : RsTestBase() {
+class GenerateConstructorActionTest : RsTestBase() {
 
     fun `test generic struct`() = doTest("""
         struct S<T> {
@@ -147,6 +148,88 @@ class GenerateConstructorTest : RsTestBase() {
         }
     """)
 
+    fun `test generate all fields on impl`() = doTest("""
+        struct S {
+            n: i32,
+            m: i64,
+        }
+
+        impl S {
+            /*caret*/
+        }
+    """, listOf(
+        ConstructorArgumentsSelection("n: i32", true),
+        ConstructorArgumentsSelection("m: i64", true)
+    ), """
+        struct S {
+            n: i32,
+            m: i64,
+        }
+
+        impl S {
+            pub fn new(n: i32, m: i64) -> Self {
+                S { n, m }
+            }
+        }
+    """)
+
+    fun `test not available when new method exists`() = checkNotAvailable("""
+        struct S {
+            n: i32,
+            m: i64,
+        }
+
+        impl S {
+            pub fn new() {}
+            /*caret*/
+        }
+    """)
+
+    fun `test not available on trait impl`() = checkNotAvailable("""
+        trait T { fn foo() }
+
+        struct S {
+            n: i32,
+            m: i64,
+        }
+
+        impl T for S {
+            /*caret*/
+        }
+    """)
+
+    fun `test take type parameters from impl block`() = doTest("""
+        struct S<T>(T);
+
+        impl S<i32> {
+            /*caret*/
+        }
+    """, listOf(ConstructorArgumentsSelection("field0: i32", true)), """
+        struct S<T>(T);
+
+        impl S<i32> {
+            pub fn new(field0: i32) -> Self {
+                S(field0)
+            }
+        }
+    """)
+
+    fun `test take lifetimes from impl block`() = doTest("""
+        struct S<'a, T>(&'a T);
+
+        impl <'a> S<'a, i32> {
+            /*caret*/
+        }
+    """, listOf(ConstructorArgumentsSelection("field0: &'a i32", true)), """
+        struct S<'a, T>(&'a T);
+
+        impl <'a> S<'a, i32> {
+            pub fn new(field0: &'a i32) -> Self {
+                S(field0)
+            }
+        }
+    """)
+
     private data class ConstructorArgumentsSelection(val member: String, val isSelected: Boolean)
 
     private fun doTest(
@@ -156,12 +239,25 @@ class GenerateConstructorTest : RsTestBase() {
     ) {
         withMockStructMemberChooserUi(object : StructMemberChooserUi {
             override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
-                assertEquals(all.map { it.text }, chooser.map { it.member })
+                assertEquals(chooser.map { it.member }, all.map { it.text })
                 val selected = chooser.filter { it.isSelected }.map { it.member }
                 return all.filter { it.text in selected }
             }
         }) {
             checkEditorAction(code, expected, "Rust.GenerateConstructor")
+        }
+    }
+
+    private fun checkNotAvailable(@Language("Rust") code: String) {
+        InlineFile(code)
+
+        withMockStructMemberChooserUi(object : StructMemberChooserUi {
+            override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
+                error("unreachable")
+            }
+        }) {
+            val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("Rust.GenerateConstructor"))
+            check(!presentation.isEnabled)
         }
     }
 }
