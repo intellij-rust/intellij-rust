@@ -1,4 +1,4 @@
-name: IntelliJ Rust Check
+name: check
 
 on: push
 
