@@ -47,6 +47,10 @@ abstract class RsMacroImplMixin : RsStubbedNamedElementImpl<RsMacroStub>,
     }
 }
 
+/** "macro_rules" identifier of `macro_rules! foo {}`; guaranteed to be non-null by the grammar */
+val RsMacro.macroRules: PsiElement
+    get() = node.findChildByType(RsElementTypes.IDENTIFIER)!!.psi
+
 val RsMacro.macroBody: RsMacroBody?
     get() = childOfType()
 

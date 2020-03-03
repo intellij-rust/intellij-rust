@@ -297,13 +297,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
             else -> {
                 val itemType = when (element) {
-                    is RsMod, is RsModDeclItem -> "Module"
-                    is RsConstant -> "Constant"
-                    is RsFunction -> "Function"
-                    is RsStructItem -> "Struct"
-                    is RsEnumItem -> "Enum"
-                    is RsTraitItem -> "Trait"
-                    is RsTypeAlias -> "Type alias"
+                    is RsItemElement -> element.itemKindName.capitalize()
                     else -> "Item"
                 }
 

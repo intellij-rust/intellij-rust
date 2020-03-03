@@ -24,21 +24,48 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import org.rust.openapiext.forEachChild
+import org.rust.stdext.pluralize
 import java.lang.Integer.max
 import kotlin.reflect.KClass
 
 class RsSyntaxErrorsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         when (element) {
-            is RsFunction -> checkFunction(holder, element)
-            is RsStructItem -> checkStructItem(holder, element)
-            is RsTypeAlias -> checkTypeAlias(holder, element)
-            is RsConstant -> checkConstant(holder, element)
+            is RsItemElement -> {
+                checkItem(holder, element)
+                when (element) {
+                    is RsFunction -> checkFunction(holder, element)
+                    is RsStructItem -> checkStructItem(holder, element)
+                    is RsTypeAlias -> checkTypeAlias(holder, element)
+                    is RsConstant -> checkConstant(holder, element)
+                }
+            }
+            is RsMacro -> checkMacro(holder, element)
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
             is RsTypeArgumentList -> checkTypeArgumentList(holder, element)
         }
+    }
+}
+
+private fun checkItem(holder: AnnotationHolder, item: RsItemElement) {
+    if (item !is RsAbstractable) {
+        checkItemOrMacro(item, item.itemKindName.pluralize().capitalize(), item.itemDefKeyword, holder)
+    }
+}
+
+private fun checkMacro(holder: AnnotationHolder, element: RsMacro) =
+    checkItemOrMacro(element, "Macros", element.macroRules, holder)
+
+private fun checkItemOrMacro(item: RsElement, itemName: String, highlightElement: PsiElement, holder: AnnotationHolder) {
+    val parent = item.context
+    val owner = if (parent is RsMembers) parent.context else parent
+    if (owner is RsItemElement && (owner is RsForeignModItem || owner is RsTraitOrImpl)) {
+        holder.createErrorAnnotation(
+            highlightElement,
+            "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}"
+        )
     }
 }
 
