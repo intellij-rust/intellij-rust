@@ -29,6 +29,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
@@ -47,7 +49,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 192
+        override fun getStubVersion(): Int = 193
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {
