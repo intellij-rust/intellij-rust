@@ -93,7 +93,7 @@
 
     generateTokenAccessors=true
 
-    consumeTokenMethod("(.*_recover)|(.*Expr)|BinAssignOp") = "consumeTokenFast"
+    consumeTokenMethod("((?!.*_with_recover).*_recover)|(.*_first)|(.*Expr)") = "consumeTokenFast"
 }
 
 // This is the grammar of the Rust language which is used by Grammar Kit
