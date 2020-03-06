@@ -159,7 +159,7 @@ fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
 //   ~~~~~~~~~~~~~
 // #![crate_type = "lib"]
 //    ~~~~~~~~~~~~~~~~~~
-MetaItemWithoutTT ::= identifier [ '=' LitExpr | MetaItemArgs ] { elementType = MetaItem }
+MetaItemWithoutTT ::= identifier [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
 
 // #[some::path]
 //   ~~~~~~~~~~
@@ -171,7 +171,7 @@ MetaItemWithoutTT ::= identifier [ '=' LitExpr | MetaItemArgs ] { elementType = 
 //        ~~~~~~~~~~~~~~~~~~~~~~~
 MetaItemWithTT ::= CompactTT { elementType = MetaItem }
 
-MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExpr | MetaItemWithoutTT )>> ] ')' |  MetaItemWithTT ')' ) {
+MetaItemArgs ::= '(' ( [ <<comma_separated_list (LitExprWithoutAttrs | MetaItemWithoutTT )>> ] ')' |  MetaItemWithTT ')' ) {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -524,7 +524,7 @@ Pat ::= PatWild
   name = "pattern"
 }
 
-private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | LitExpr  | box | '-' | ref | mut
+private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken | box | '-' | ref | mut
 
 
 PatBox ::= box Pat
@@ -1026,7 +1026,7 @@ Expr ::= RetExpr
 }
 
 private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...' | '..=' | true | false | box | QUOTE_IDENTIFIER
-  | '-' | '*' | '!' | '&' | static | move | LitExpr | while | if | for | continue | break  | loop | match | unsafe
+  | '-' | '*' | '!' | '&' | static | move | AnyLitToken | while | if | for | continue | break  | loop | match | unsafe
   | yield | "async" | "try"
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
@@ -1293,17 +1293,21 @@ MethodCall ::= identifier ColonTypeArgumentList? ValueArgumentList {
   mixin = "org.rust.lang.core.psi.ext.RsMethodCallImplMixin"
 }
 
-LitExpr ::= OuterAttr*
-  (STRING_LITERAL | BYTE_STRING_LITERAL
-  | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
-  | CHAR_LITERAL | BYTE_LITERAL
-  | INTEGER_LITERAL | FLOAT_LITERAL
-  | BOOL_LITERAL) {
+LitExpr ::= OuterAttr* AnyLitToken {
  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
  implements = [ "com.intellij.psi.PsiLanguageInjectionHost"
                 "com.intellij.psi.ContributedReferenceHost"
                 "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
  mixin = "org.rust.lang.core.psi.ext.RsLitExprMixin"
+}
+LitExprWithoutAttrs ::= AnyLitToken { elementType = LitExpr }
+
+private AnyLitToken ::= STRING_LITERAL | BYTE_STRING_LITERAL
+                      | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL
+                      | CHAR_LITERAL | BYTE_LITERAL
+                      | INTEGER_LITERAL | FLOAT_LITERAL
+                      | BOOL_LITERAL {
+  consumeTokenMethod = "consumeTokenFast"
 }
 
 YieldExpr ::= OuterAttr* yield Expr? {
