@@ -65,15 +65,26 @@
         UNDERSCORE  =  '_'
         DOLLAR      =  '$'
 
-        MACRO_KW  = 'macro'
-        CSELF     = 'Self'
-        TYPE_KW   = 'type'
+        // Contextual tokens
+        GTGTEQ    = ">>="
+        GTGT      = ">>"
+        GTEQ      = ">="
+        LTLTEQ    = "<<="
+        LTLT      = "<<"
+        LTEQ      = "<="
+        OROR      = "||"
+        ANDAND    = "&&"
+
         UNION     = 'union_kw'
         DEFAULT   = 'default_kw'
         AUTO      = 'auto_kw'
         DYN       = 'dyn_kw'
         ASYNC     = 'async_kw'
         TRY       = 'try_kw'
+
+        MACRO_KW  = 'macro'
+        CSELF     = 'Self'
+        TYPE_KW   = 'type'
 
         SHEBANG_LINE = 'shebang_line'
         RESERVED_KEYWORD = 'reserved_keyword'
@@ -1062,12 +1073,12 @@ fake BinaryExpr ::= Expr BinaryOp Expr {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-fake BinaryOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
+fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%='
                 | '==' | '!='
-                | '<' | '>' | lteq | gteq
-                | ltlt | gtgt
+                | '<' | '>' | '<=' | '>='
+                | '<<' | '>>'
                 | '+' | '-' | '*' | '/' | '%'
-                | oror | andand | '|' | '&' | '^' {
+                | '||' | '&&' | '|' | '&' | '^' {
   implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsBinaryOpImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsBinaryOpStub"
@@ -1084,7 +1095,7 @@ AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> AddBinOp StmtModeExprOff
 MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> MulBinOp StmtModeExprOff
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
-RelCompBinOp     ::= (!('<<' | '<=') '<' | !('>>' | '>=')  '>' | lteq | gteq) { name = "operator" }
+RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt '>' { name = "operator" }
 BitShiftBinOp    ::= ltlt | gtgt { name = "operator" }
 AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
@@ -1529,14 +1540,14 @@ EmptyStmt ::= ';' { extends = Stmt }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Keep in sync with `collapsedTokenType`
-private gtgteq ::= <<gtgteqImpl>>  | never GTGTEQ { name = ">>=" }
-private gtgt   ::= <<gtgtImpl>>    | never GTGT   { name = ">>" }
-private gteq   ::= <<gteqImpl>>    | never GTEQ   { name = ">=" }
-private ltlteq ::= <<ltlteqImpl>>  | never LTLTEQ { name = "<<=" }
-private ltlt   ::= <<ltltImpl>>    | never LTLT   { name = "<<" }
-private lteq   ::= <<lteqImpl>>    | never LTEQ   { name = "<=" }
-private oror   ::= <<ororImpl>>    | never OROR   { name = "||" }
-private andand ::= <<andandImpl>>  | never ANDAND { name = "&&" }
+private gtgteq ::= <<gtgteqImpl>>
+private gtgt   ::= <<gtgtImpl>>
+private gteq   ::= <<gteqImpl>>
+private ltlteq ::= <<ltlteqImpl>>
+private ltlt   ::= <<ltltImpl>>
+private lteq   ::= <<lteqImpl>>
+private oror   ::= <<ororImpl>>
+private andand ::= <<andandImpl>>
 
 private never ::= !()
 
