@@ -17,7 +17,6 @@
 
     parserImports=[
       'static org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*'
-      'static org.rust.lang.core.parser.RustParserUtil.BinaryMode.*'
     ]
 
     tokens = [
@@ -227,31 +226,31 @@ private AssocTypeBindingBound ::=  ':' TypeBounds { pin = 1 }
 //    a::b<T,U>::c<V,W>
 //    std::Fn(V) -> W
 //    std::Fn(V)
-TypePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'TYPE' PathImpl>>>> {
+TypePathGenericArgs ::= <<pathMode 'TYPE' 'TypeQualsMode.ON' PathImpl>> {
   elementType = Path
   name = "path"
 }
 
-TypePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'TYPE' PathImpl>>>> {
+TypePathGenericArgsNoTypeQual ::= <<pathMode 'TYPE' 'TypeQualsMode.OFF' PathImpl>> {
   elementType = Path
   name = "path"
 }
 
 // Paths without type arguments, for use declarations:
 //     a::b::c
-PathWithoutTypeArgs ::= <<typeQuals 'OFF' <<pathMode 'NO_TYPE_ARGS' PathImpl>>>> {
+PathWithoutTypeArgs ::= <<pathMode 'NO_TYPE_ARGS' 'TypeQualsMode.OFF' PathImpl>> {
   elementType = Path
   name = "path"
 }
 
 // Paths for expressions:
 //     a::b::<T,U>::c
-ValuePathGenericArgs ::= <<typeQuals 'ON' <<pathMode 'VALUE' PathImpl>>>> {
+ValuePathGenericArgs ::= <<pathMode 'VALUE' 'TypeQualsMode.ON' PathImpl>> {
   elementType = Path
   name = "path"
 }
 
-ValuePathGenericArgsNoTypeQual ::= <<typeQuals 'OFF' <<pathMode 'VALUE' PathImpl>>>> {
+ValuePathGenericArgsNoTypeQual ::= <<pathMode 'VALUE' 'TypeQualsMode.OFF' PathImpl>> {
   elementType = Path
   name = "path"
 }
@@ -1020,19 +1019,19 @@ private Expr_first ::= return | '|' | Path_first | '{' | '[' | '(' | '..' | '...
   | yield | "async" | "try"
 
 // https://github.com/rust-lang/rfcs/blob/master/text/0092-struct-grammar.md
-NoStructLitExpr ::= <<structLiterals 'OFF' <<stmtMode 'OFF' Expr>> >> {
+NoStructLitExpr ::= <<exprMode 'StructLiteralsMode.OFF' 'StmtMode.OFF' Expr>> {
   elementType = Expr
   name = "expr"
 }
-AnyExpr ::= <<structLiterals 'ON' <<stmtMode 'OFF' Expr>> >> {
+AnyExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.OFF' Expr>> {
   elementType = Expr
   name = "expr"
 }
-StmtModeExpr ::= <<structLiterals 'ON' <<stmtMode 'ON' Expr>> >> {
+StmtModeExpr ::= <<exprMode 'StructLiteralsMode.ON' 'StmtMode.ON' Expr>> {
   elementType = Expr
   name = "expr"
 }
-StmtModeExprOff ::= <<stmtMode 'OFF' Expr>> {
+StmtModeExprOff ::= <<stmtMode 'StmtMode.OFF' Expr>> {
   elementType = Expr
   name = "expr"
 }

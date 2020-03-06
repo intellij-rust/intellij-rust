@@ -42,7 +42,29 @@ object RustParserUtil : GeneratedParserUtilBase() {
          */
         NO_TYPE_ARGS
     }
-    enum class BinaryMode { ON, OFF }
+
+    enum class TypeQualsMode { ON, OFF }
+
+    enum class StructLiteralsMode { ON, OFF }
+
+    /**
+     * Controls the difference between
+     *
+     *     ```
+     *     // bit and
+     *     let _ = {1} & x;
+     *     ```
+     * and
+     *
+     *     ```
+     *     // two statements: block expression {1} and unary reference expression &x
+     *     {1} & x;
+     *     ```
+     *
+     * See `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
+     */
+    enum class StmtMode { ON, OFF }
+
     enum class MacroCallParsingMode(
         val attrsAndVis: Boolean,
         val semicolon: Boolean,
@@ -59,14 +81,17 @@ object RustParserUtil : GeneratedParserUtilBase() {
         get() = getUserData(FLAGS) ?: DEFAULT_FLAGS
         set(value) = putUserData(FLAGS, value)
 
-    private fun PsiBuilder.withFlag(flag: Int, mode: BinaryMode, block: PsiBuilder.() -> Boolean): Boolean {
+    private inline fun PsiBuilder.withFlag(flag: Int, mode: Boolean, block: PsiBuilder.() -> Boolean): Boolean {
         val oldFlags = flags
-        val newFlags = BitUtil.set(oldFlags, flag, mode == BinaryMode.ON)
+        val newFlags = BitUtil.set(oldFlags, flag, mode)
         flags = newFlags
         val result = block()
         flags = oldFlags
         return result
     }
+
+    private fun Int.setFlag(flag: Int, mode: Boolean): Int =
+        BitUtil.set(this, flag, mode)
 
 
     private val STRUCT_ALLOWED: Int = makeBitMask(1)
@@ -151,32 +176,26 @@ object RustParserUtil : GeneratedParserUtilBase() {
         b.tokenType != LBRACE || checkStructAllowed(b, level)
 
     @JvmStatic
-    fun structLiterals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withFlag(STRUCT_ALLOWED, mode) { parser.parse(this, level) }
+    fun stmtMode(b: PsiBuilder, level: Int, mode: StmtMode, parser: Parser): Boolean =
+        b.withFlag(STMT_EXPR_MODE, mode == StmtMode.ON) { parser.parse(this, level) }
 
     @JvmStatic
-    fun typeQuals(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withFlag(TYPE_QUAL_ALLOWED, mode) { parser.parse(this, level) }
-
-    /**
-     * Controls the difference between
-     *
-     *     ```
-     *     // bit and
-     *     let _ = {1} & x;
-     *     ```
-     * and
-     *
-     *     ```
-     *     // two statements: block expression {1} and unary reference expression &x
-     *     {1} & x;
-     *     ```
-     *
-     * See `Restrictions::RESTRICTION_STMT_EXPR` in libsyntax
-     */
-    @JvmStatic
-    fun stmtMode(b: PsiBuilder, level: Int, mode: BinaryMode, parser: Parser): Boolean =
-        b.withFlag(STMT_EXPR_MODE, mode) { parser.parse(this, level) }
+    fun exprMode(
+        b: PsiBuilder,
+        level: Int,
+        structLiterals: StructLiteralsMode,
+        stmtMode: StmtMode,
+        parser: Parser
+    ): Boolean {
+        val oldFlags = b.flags
+        val newFlags = oldFlags
+            .setFlag(STRUCT_ALLOWED, structLiterals == StructLiteralsMode.ON)
+            .setFlag(STMT_EXPR_MODE, stmtMode == StmtMode.ON)
+        b.flags = newFlags
+        val result = parser.parse(b, level)
+        b.flags = oldFlags
+        return result
+    }
 
     @JvmStatic
     fun isCompleteBlockExpr(b: PsiBuilder, level: Int): Boolean =
@@ -189,9 +208,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     @JvmStatic
-    fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, parser: Parser): Boolean {
+    fun pathMode(b: PsiBuilder, level: Int, mode: PathParsingMode, typeQualsMode: TypeQualsMode, parser: Parser): Boolean {
         val oldFlags = b.flags
-        val newFlags = setPathMod(oldFlags, mode)
+        val newFlags = setPathMod(BitUtil.set(oldFlags, TYPE_QUAL_ALLOWED, typeQualsMode == TypeQualsMode.ON), mode)
         b.flags = newFlags
         check(getPathMod(b.flags) == mode)
         val result = parser.parse(b, level)
