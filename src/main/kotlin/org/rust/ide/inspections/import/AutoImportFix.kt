@@ -480,7 +480,7 @@ private tailrec fun RsPath.superPath(): RsPath {
 }
 
 private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
-    is RsTypeElement -> { e ->
+    is RsTypeReference -> { e ->
         when (e) {
             is RsEnumItem,
             is RsStructItem,

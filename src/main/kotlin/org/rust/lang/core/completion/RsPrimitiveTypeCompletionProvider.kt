@@ -30,7 +30,7 @@ object RsPrimitiveTypeCompletionProvider : RsCompletionProvider() {
     }
 
     override val elementPattern: ElementPattern<PsiElement> get() = PlatformPatterns.psiElement()
-        .withSuperParent<RsTypeReference>(3)
+        .withSuperParent<RsTypeReference>(2)
         .with("FirstChild") { e -> e.prevSibling == null }
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {

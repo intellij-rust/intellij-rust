@@ -49,7 +49,7 @@ class GenerateConstructorHandler : LanguageCodeInsightActionHandler {
             // This is just a best effort filter that doesn't consider all impl blocks of the struct.
             if (!impl.isSuitableForConstructor) return null
 
-            val structRef = impl.typeReference?.baseType?.path?.reference?.resolve() as? RsStructItem ?: return null
+            val structRef = (impl.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() as? RsStructItem ?: return null
             Context(structRef, impl)
         }
     }

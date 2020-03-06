@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.tokenSetOf
+import org.rust.lang.core.stubs.RsBaseTypeStub
 
 val RsBaseType.name: String? get() = path?.referenceName
 
@@ -31,7 +32,7 @@ private val RS_BASE_TYPE_KINDS = tokenSetOf(LPAREN, EXCL, UNDERSCORE, PATH)
 
 val RsBaseType.stubKind: RsBaseTypeStubKind get() {
     val stub = greenStub
-    if (stub != null) return stub.kind
+    if (stub is RsBaseTypeStub) return stub.kind
 
     val child = node.findChildByType(RS_BASE_TYPE_KINDS)
     return when (child?.elementType) {

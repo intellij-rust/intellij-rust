@@ -8,10 +8,12 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsRefLikeType
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.isRef
+import org.rust.lang.core.psi.ext.mutability
 
 /**
  * Set reference mutable
@@ -34,13 +36,13 @@ open class SetMutableIntention : RsElementBaseIntentionAction<SetMutableIntentio
 
     data class Context(
         val refType: RsRefLikeType,
-        val baseType: RsTypeElement
+        val baseType: RsTypeReference
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val refType = element.ancestorStrict<RsRefLikeType>() ?: return null
         if (!refType.isRef) return null
-        val baseType = refType.typeReference?.typeElement ?: return null
+        val baseType = refType.typeReference ?: return null
         if (refType.mutability.isMut == mutable) return null
         return Context(refType, baseType)
 

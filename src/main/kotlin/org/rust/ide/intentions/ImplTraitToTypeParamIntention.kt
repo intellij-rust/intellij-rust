@@ -64,7 +64,7 @@ class ImplTraitToTypeParamIntention : RsElementBaseIntentionAction<ImplTraitToTy
             typeParameter,
             typeParameterList.gt)
             as RsTypeParameter
-        val newArgType = argType.parent.replace(psiFactory.createType(typeParameterName))
+        val newArgType = argType.replace(psiFactory.createType(typeParameterName))
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
 

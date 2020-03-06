@@ -38,6 +38,22 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test type in parens`() = testType("""
+        struct S;
+        fn main() {
+            let _: ((S));
+                 //^ S
+        }
+    """)
+
+    fun `test type of unclosed paren`() = testType("""
+        struct S;
+        fn main() {
+            let _: (;
+                 //^ <unknown>
+        }
+    """)
+
     // TODO `<S as T>::Assoc` should be unified to `S`
     fun `test qualified path`() = testType("""
         trait T {

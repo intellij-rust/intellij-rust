@@ -36,9 +36,8 @@ class RsStubTest : RsTestBase() {
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
             RET_TYPE:RsPlaceholderStub
-              TYPE_REFERENCE:RsPlaceholderStub
-                BASE_TYPE:RsBaseTypeStub
-                  PATH:RsPathStub
+              BASE_TYPE:RsBaseTypeStub
+                PATH:RsPathStub
     """)
 
     fun `test expression is not stubbed inside function tail expr`() = doTest("""
@@ -48,9 +47,8 @@ class RsStubTest : RsTestBase() {
           FUNCTION:RsFunctionStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
             RET_TYPE:RsPlaceholderStub
-              TYPE_REFERENCE:RsPlaceholderStub
-                BASE_TYPE:RsBaseTypeStub
-                  PATH:RsPathStub
+              BASE_TYPE:RsBaseTypeStub
+                PATH:RsPathStub
     """)
 
     fun `test lifetime is stubbed inside function signature`() = doTest("""
@@ -62,16 +60,13 @@ class RsStubTest : RsTestBase() {
               LIFETIME_PARAMETER:RsLifetimeParameterStub
             VALUE_PARAMETER_LIST:RsPlaceholderStub
               VALUE_PARAMETER:RsValueParameterStub
-                TYPE_REFERENCE:RsPlaceholderStub
-                  REF_LIKE_TYPE:RsRefLikeTypeStub
-                    LIFETIME:RsLifetimeStub
-                    TYPE_REFERENCE:RsPlaceholderStub
-                      BASE_TYPE:RsBaseTypeStub
-                        PATH:RsPathStub
+                REF_LIKE_TYPE:RsRefLikeTypeStub
+                  LIFETIME:RsLifetimeStub
+                  BASE_TYPE:RsBaseTypeStub
+                    PATH:RsPathStub
             RET_TYPE:RsPlaceholderStub
-              TYPE_REFERENCE:RsPlaceholderStub
-                BASE_TYPE:RsBaseTypeStub
-                  PATH:RsPathStub
+              BASE_TYPE:RsBaseTypeStub
+                PATH:RsPathStub
     """)
 
     fun `test literal is not stubbed inside closure tail expr`() = doTest("""
@@ -99,9 +94,8 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           CONSTANT:RsConstantStub
-            TYPE_REFERENCE:RsPlaceholderStub
-              BASE_TYPE:RsBaseTypeStub
-                PATH:RsPathStub
+            BASE_TYPE:RsBaseTypeStub
+              PATH:RsPathStub
             LIT_EXPR:RsLitExprStub
     """)
 
@@ -110,9 +104,8 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           CONSTANT:RsConstantStub
-            TYPE_REFERENCE:RsPlaceholderStub
-              BASE_TYPE:RsBaseTypeStub
-                PATH:RsPathStub
+            BASE_TYPE:RsBaseTypeStub
+              PATH:RsPathStub
             BINARY_EXPR:RsPlaceholderStub
               LIT_EXPR:RsLitExprStub
               BINARY_OP:RsBinaryOpStub
@@ -124,12 +117,10 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           TYPE_ALIAS:RsTypeAliasStub
-            TYPE_REFERENCE:RsPlaceholderStub
-              ARRAY_TYPE:RsArrayTypeStub
-                TYPE_REFERENCE:RsPlaceholderStub
-                  BASE_TYPE:RsBaseTypeStub
-                    PATH:RsPathStub
-                LIT_EXPR:RsLitExprStub
+            ARRAY_TYPE:RsArrayTypeStub
+              BASE_TYPE:RsBaseTypeStub
+                PATH:RsPathStub
+              LIT_EXPR:RsLitExprStub
     """)
 
     fun `test expression is stubbed inside array type`() = doTest("""
@@ -137,15 +128,13 @@ class RsStubTest : RsTestBase() {
     """, """
         RsFileStub
           TYPE_ALIAS:RsTypeAliasStub
-            TYPE_REFERENCE:RsPlaceholderStub
-              ARRAY_TYPE:RsArrayTypeStub
-                TYPE_REFERENCE:RsPlaceholderStub
-                  BASE_TYPE:RsBaseTypeStub
-                    PATH:RsPathStub
-                BINARY_EXPR:RsPlaceholderStub
-                  LIT_EXPR:RsLitExprStub
-                  BINARY_OP:RsBinaryOpStub
-                  LIT_EXPR:RsLitExprStub
+            ARRAY_TYPE:RsArrayTypeStub
+              BASE_TYPE:RsBaseTypeStub
+                PATH:RsPathStub
+              BINARY_EXPR:RsPlaceholderStub
+                LIT_EXPR:RsLitExprStub
+                BINARY_OP:RsBinaryOpStub
+                LIT_EXPR:RsLitExprStub
     """)
 
     fun `test function block is stubbed if contains item`() = doTest("""

@@ -22,8 +22,9 @@ import org.rust.lang.utils.evaluation.tryEvaluate
 
 
 // Keep in sync with TyFingerprint-create
-fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
-    return when (val type = ref.typeElement) {
+fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Region? = null): Ty {
+    return when (type) {
+        is RsParenType -> type.typeReference?.let { inferTypeReferenceType(it, defaultTraitObjectRegion) } ?: TyUnknown
         is RsTupleType -> TyTuple(type.typeReferenceList.map { inferTypeReferenceType(it) })
 
         is RsBaseType -> when (val kind = type.kind) {
