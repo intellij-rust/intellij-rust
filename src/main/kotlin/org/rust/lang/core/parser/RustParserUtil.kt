@@ -202,6 +202,10 @@ object RustParserUtil : GeneratedParserUtilBase() {
         isBlock(b, level) && BitUtil.isSet(b.flags, STMT_EXPR_MODE)
 
     @JvmStatic
+    fun isIncompleteBlockExpr(b: PsiBuilder, level: Int): Boolean =
+        !isCompleteBlockExpr(b, level)
+
+    @JvmStatic
     fun isBlock(b: PsiBuilder, level: Int): Boolean {
         val m = b.latestDoneMarker ?: return false
         return m.tokenType in RS_BLOCK_LIKE_EXPRESSIONS || m.isBracedMacro(b)

@@ -1088,11 +1088,11 @@ fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' 
 AssignBinExpr ::= Expr AssignBinOp Expr    { rightAssociative = true }
 AssignBinOp ::= gtgteq | ltlteq | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' | '/=' | '%=' { name = "operator" }
 
-CompBinExpr      ::= Expr !<<isCompleteBlockExpr>> CompBinOp StmtModeExprOff
-RelCompBinExpr   ::= Expr !<<isCompleteBlockExpr>> RelCompBinOp StmtModeExprOff
-BitShiftBinExpr  ::= Expr !<<isCompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
-AddBinExpr       ::= Expr !<<isCompleteBlockExpr>> AddBinOp StmtModeExprOff
-MulBinExpr       ::= Expr !<<isCompleteBlockExpr>> MulBinOp StmtModeExprOff
+CompBinExpr      ::= Expr <<isIncompleteBlockExpr>> CompBinOp StmtModeExprOff
+RelCompBinExpr   ::= Expr <<isIncompleteBlockExpr>> RelCompBinOp StmtModeExprOff
+BitShiftBinExpr  ::= Expr <<isIncompleteBlockExpr>> BitShiftBinOp StmtModeExprOff
+AddBinExpr       ::= Expr <<isIncompleteBlockExpr>> AddBinOp StmtModeExprOff
+MulBinExpr       ::= Expr <<isIncompleteBlockExpr>> MulBinOp StmtModeExprOff
 
 CompBinOp        ::= '==' | '!=' { name = "operator" }
 RelCompBinOp     ::= lteq | gteq | !ltlt '<' | !gtgt '>' { name = "operator" }
@@ -1101,11 +1101,11 @@ AddBinOp         ::= '+' | '-' { name = "operator" }
 MulBinOp         ::= '*' | '/' | '%' { name = "operator" }
 
 // <expr> | <expr> has higher priority than <expr> || <expr>
-BoolOrBinExpr    ::= Expr !<<isCompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
-BoolAndBinExpr   ::= Expr !<<isCompleteBlockExpr>> BoolAndBinOp StmtModeExprOff
+BoolOrBinExpr    ::= Expr <<isIncompleteBlockExpr>> BoolOrBinOp StmtModeExprOff
+BoolAndBinExpr   ::= Expr <<isIncompleteBlockExpr>> BoolAndBinOp StmtModeExprOff
 BitOrBinExpr     ::= Expr !(<<isCompleteBlockExpr>> | oror) BitOrBinOp StmtModeExprOff
 BitAndBinExpr    ::= Expr !(<<isCompleteBlockExpr>> | andand) BitAndBinOp StmtModeExprOff
-BitXorBinExpr    ::= Expr !<<isCompleteBlockExpr>> BitXorBinOp StmtModeExprOff
+BitXorBinExpr    ::= Expr <<isIncompleteBlockExpr>> BitXorBinOp StmtModeExprOff
 
 BoolOrBinOp      ::= oror { name = "operator" }
 BoolAndBinOp     ::= andand { name = "operator" }
