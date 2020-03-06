@@ -1397,10 +1397,10 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait Bar where Self: Sized {
             fn foo() -> (Self, Self) { unimplemented!() }
         }
-        // TODO
-//        trait Baz {
-//            fn foo() -> (Self, Self) where Self: Sized { unimplemented!() }
-//        }
+        trait Baz {
+            fn foo(&self) -> (Self, Self) where Self:Sized { unimplemented!() }
+            fn bar(&self) -> <error descr="the trait bound `(Self, Self): std::marker::Sized` is not satisfied [E0277]">(Self, Self)</error> { unimplemented!() }
+        }
     """)
 
     @MockRustcVersion("1.27.1")
