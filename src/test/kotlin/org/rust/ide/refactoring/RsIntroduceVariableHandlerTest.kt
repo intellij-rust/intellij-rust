@@ -136,8 +136,8 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
     """, listOf("String::new()", "&mut String::new()", "file.read_to_string(&mut String::new())"), 0, """
         fn read_file() -> Result<String, Error> {
             let file = File::open("res/input.txt")?;
-            let mut string = String::new();
 
+            let mut string = String::new();
             file.read_to_string(&mut string)
         }
     """)
@@ -201,8 +201,8 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
             let i2 = 1;
             let i3 = 1;
             let (i, x) = (1, 2);
-            let i4 = 3;
 
+            let i4 = 3;
             let z = i4 + 4;
             let w = x + 5;
         }
@@ -271,6 +271,34 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         fn main() {
             let i2 = 3;
             let x = i1 + i() + i2 + 5;
+        }
+    """)
+
+    fun `test first anchor inside block`() = doTest("""
+        fn main() {
+            let x1 = if true { { 7 } } else { 0 };
+            let x2 = /*caret*/7;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let i = 7;
+            let x1 = if true { { i } } else { 0 };
+            let x2 = i;
+        }
+    """, replaceAll = true)
+
+    fun `test newline before anchor`() = doTest("""
+        fn main() {
+            const C: i32 = 1;
+
+            let x = /*caret*/7;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            const C: i32 = 1;
+
+            let i = 7;
+            let x = i;
         }
     """)
 
