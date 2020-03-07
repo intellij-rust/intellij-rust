@@ -206,10 +206,10 @@ TypeArgumentList ::= TypeArgumentListImpl {
 }
 ColonTypeArgumentList ::= &'::' TypeArgumentListImpl { elementType = TypeArgumentList }
 
-private TypeArgumentListImpl ::= '::'? '<' !'=' ( <<list_element Lifetime>>*
-                                                  <<list_element (!(identifier ('='|':')) !'>' TypeReference)>>*
-                                                  <<list_element (!'>' (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr))>>*
-                                                  <<list_element AssocTypeBinding>>*) '>' { pin = 3 }
+private TypeArgumentListImpl ::= '::'? '<' !'=' <<list_element AnyTypeArgument>>* '>' { pin = 3 }
+private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | ConstArgument
+private ConstArgument ::= (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)
+
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsReferenceElement" ]
@@ -295,7 +295,8 @@ private try ::= <<tryKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
-// Note: don't forget to add new item element types to [org.rust.lang.core.psi.RS_ITEMS]
+// Note: don't forget to add new item element types to [org.rust.lang.core.psi.RS_ITEMS], and to
+// `itemKindName` & `itemDefKeyword` in `RsItemElement.kt`
 private Item ::= Constant
                | TypeAlias
                | Function
@@ -407,9 +408,9 @@ LifetimeParameter ::= OuterAttr* QUOTE_IDENTIFIER LifetimeParamBounds? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)*
+LifetimeParamBounds ::= ':' Lifetime ('+' Lifetime)* { pin = 1 }
 
-TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
+TypeParameter ::= OuterAttr* identifier TypeParamBounds? DefaultTypeParameterType? {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
@@ -417,6 +418,7 @@ TypeParameter ::= OuterAttr* identifier TypeParamBounds? [ '=' TypeReference ] {
   stubClass = "org.rust.lang.core.stubs.RsTypeParameterStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private DefaultTypeParameterType ::= '=' TypeReference { pin = 1 }
 
 ConstParameter ::= OuterAttr* const identifier TypeAscription {
   pin = 2
@@ -456,6 +458,7 @@ WherePred ::= Lifetime LifetimeParamBounds | ForLifetimes? TypeReference TypePar
 }
 
 ForLifetimes ::= for '<' LifetimesParams '>' {
+  pin = 2
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -563,7 +566,7 @@ BindingMode ::= ref mut? | mut
 OrPats ::= '|'? Pat ('|' Pat)*
 
 Constant ::= AttrsAndVis default_? (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
-  pin = 5
+  pin = 4
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
@@ -655,7 +658,8 @@ ModDeclItem ::= AttrsAndVis mod identifier ';' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
+ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* Items '}' {
+  pin = 3
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
@@ -663,8 +667,6 @@ ForeignModItem ::= AttrsAndVis ExternAbi '{' InnerAttr* ForeignDecl* '}' {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private ForeignDecl ::= Constant | Function | TypeAlias
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -792,19 +794,12 @@ ImplItem ::= AttrsAndVis default_? unsafe? impl TypeParameterList? ( TraitImpl |
 private TraitImpl ::= '!'? TraitRef for ('..' | TypeReference)  { pin = 3 }
 private InherentImpl ::= TypeReference !for
 
-Members ::= '{' InnerAttr* Member* '}' {
+Members ::= '{' InnerAttr* Items '}' {
   pin = 1
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-
-private Member ::= !'}' ( Function | Constant | TypeAlias | ItemLikeMacroCall ) {
-  pin = 1
-  recoverWhile = Member_recover
-}
-private Member_recover ::=  !('#' | Vis | extern | const | static | unsafe | fn | (identifier '!') | TYPE_KW | "default"
- | "async" | '}')
 
 TraitAliasBounds ::= TypeBounds {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -829,7 +824,7 @@ TraitAlias ::= AttrsAndVis trait identifier TypeParameterList? '=' TraitAliasBou
 // Types
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-private TypeAscription ::= ':' TypeReference
+private TypeAscription ::= ':' TypeReference { pin = 1 }
 
 private TypeReferenceInner ::= ArrayType
                                | RefLikeType
@@ -880,6 +875,7 @@ ScalarTypeReference ::= ScalarTypeReferenceInner {
 }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
+  pin = 1
   implements = [ "org.rust.lang.core.psi.ext.RsTypeElement" "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsArrayTypeStub"
@@ -887,6 +883,7 @@ ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
 }
 
 RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
+  pin = 1
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsRefLikeTypeStub"
@@ -922,6 +919,7 @@ Bound ::= Lifetime | TraitRef {
 }
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
+  pin = 1
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
@@ -948,7 +946,7 @@ fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {
 }
 
 ExplicitTraitType ::= ExplicitTraitTypeInner { elementType = TraitType }
-private ExplicitTraitTypeInner ::= (impl | dyn) Polybound ('+' Polybound)*
+private ExplicitTraitTypeInner ::= (impl | dyn) Polybound ('+' Polybound)* { pin = 1 }
 
 ImplicitTraitType ::= ImplicitTraitTypeInner { elementType = TraitType }
 private ImplicitTraitTypeInner ::= Polybound ('+' Polybound)+
@@ -1229,22 +1227,19 @@ UnitExpr ::= OuterAttr* '(' ')' {
 }
 
 fake TupleExpr ::= '(' AnyExpr+ ')' {
+  pin = 2
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 fake ParenExpr ::= '(' AnyExpr ')' {
+  pin = 2
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-// XXX: without the `pin`, upper rules won't work, GK can change element type
-// of the frame only if it already has some type
-// https://github.com/JetBrains/Grammar-Kit/blob/d716ade658c1f8e1f84bd0d61764c9949a7df5f2/src/org/intellij/grammar/parser/GeneratedParserUtilBase.java#L656
-TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ParenExprUpper) {
+TupleOrParenExpr ::= OuterAttr* '(' AnyExpr (TupleExprUpper | ')') {
   pin = 2
-  implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+  elementType = ParenExpr
 }
-upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { elementType = TupleExpr }
-upper ParenExprUpper ::= ')' { elementType = ParenExpr }
+upper TupleExprUpper ::= ',' [ AnyExpr (',' AnyExpr)* ','? ] ')' { pin = 1 elementType = TupleExpr }
 
 ArrayExpr ::= OuterAttr* '[' ArrayInitializer ']' {
   pin = 2
@@ -1509,12 +1504,11 @@ Stmt ::= LetDecl | EmptyStmt | never ';' {
   mixin = "org.rust.lang.core.psi.ext.RsStmtMixin"
 }
 
-ExprStmtOrLastExpr ::= StmtModeExpr (ExprStmtUpper | LastExprUpper) {
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+ExprStmtOrLastExpr ::= StmtModeExpr (&'}' | ExprStmtUpper) {
+  elementType = Expr
 }
 
-upper ExprStmtUpper ::= ';' | () <<isBlock>> !('}') { elementType = ExprStmt }
-upper LastExprUpper ::= () &'}' { elementType = Expr pin = 1 }
+upper ExprStmtUpper ::= () (';' | <<isBlock>>) { pin = 1 elementType = ExprStmt }
 
 fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
 
@@ -1545,4 +1539,4 @@ private never ::= !()
 
 // Trailing commas are allowed
 private meta comma_separated_list ::= <<param>> ( ',' <<param>> )* ','?
-private meta list_element ::= <<param>> !'+' (',' | &'>') { pin = 2 }
+private meta list_element ::= !'>' <<param>> (',' | &'>') { pin = 2 }

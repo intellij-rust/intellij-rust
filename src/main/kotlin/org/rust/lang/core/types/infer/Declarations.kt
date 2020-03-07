@@ -68,15 +68,19 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
             when {
                 type.isRef -> {
                     val refRegion = type.lifetime.resolve()
-                    TyReference(inferTypeReferenceType(base, refRegion), type.mutability, refRegion)
+                    val baseTy = if (base != null) inferTypeReferenceType(base, refRegion) else TyUnknown
+                    TyReference(baseTy, type.mutability, refRegion)
                 }
-                type.isPointer -> TyPointer(inferTypeReferenceType(base, ReStatic), type.mutability)
+                type.isPointer -> {
+                    val baseTy = if (base != null) inferTypeReferenceType(base, ReStatic) else TyUnknown
+                    TyPointer(baseTy, type.mutability)
+                }
                 else -> TyUnknown
             }
         }
 
         is RsArrayType -> {
-            val componentType = type.typeReference.type
+            val componentType = type.typeReference?.type ?: TyUnknown
             if (type.isSlice) {
                 TySlice(componentType)
             } else {

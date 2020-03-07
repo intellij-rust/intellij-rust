@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile
  */
 class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
 
+    fun `test items`() = doTest(true)
     fun `test fn`() = doTest(true)
     fun `test use item`() = doTest(true)
     fun `test shifts`() = doTest(true)
@@ -28,6 +29,7 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
     fun `test require commas`() = doTest(true)
     fun `test macros`() = doTest(true)
     fun `test exprs`() = doTest(true)
+    fun `test bounds`() = doTest(true)
 
     override fun checkResult(targetDataName: String, file: PsiFile) {
         check(hasError(file)) {

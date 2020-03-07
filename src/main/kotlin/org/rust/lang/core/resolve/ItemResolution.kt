@@ -88,7 +88,11 @@ fun processItemDeclarations(
                 if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
 
             is RsForeignModItem -> if (Namespace.Values in ns) {
-                if (processAll(item.functionList, processor) || processAll(item.constantList, processor)) return true
+                for (child in item.stubChildrenOfType<RsNamedElement>()) {
+                    if (child is RsFunction || child is RsConstant) {
+                        if (processor(child)) return true
+                    }
+                }
             }
 
             is RsExternCrateItem -> {

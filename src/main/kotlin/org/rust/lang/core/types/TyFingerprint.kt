@@ -45,7 +45,7 @@ data class TyFingerprint constructor(
                     if (type.isPointer) {
                         TyFingerprint("*T")
                     } else {
-                        return create(type.typeReference, typeParameters)
+                        return type.typeReference?.let { create(it, typeParameters) } ?: emptyList()
                     }
                 }
                 is RsArrayType -> TyFingerprint("[T]")

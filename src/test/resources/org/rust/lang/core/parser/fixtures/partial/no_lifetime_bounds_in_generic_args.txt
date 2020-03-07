@@ -10,16 +10,17 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RsPathExprImpl(PATH_EXPR)
-        RsPathImpl(PATH)
-          PsiElement(identifier)('foo')
-          RsTypeArgumentListImpl(TYPE_ARGUMENT_LIST)
-            PsiElement(::)('::')
-            PsiElement(<)('<')
-            RsLifetimeImpl(LIFETIME)
-              PsiElement(QUOTE_IDENTIFIER)(''static')
-            PsiErrorElement:'#', ',', '-', '::', <block expr>, <type>, '>', QUOTE_IDENTIFIER, identifier or '{' expected, got ':'
-              <empty list>
+      RsExprStmtImpl(EXPR_STMT)
+        RsPathExprImpl(PATH_EXPR)
+          RsPathImpl(PATH)
+            PsiElement(identifier)('foo')
+            RsTypeArgumentListImpl(TYPE_ARGUMENT_LIST)
+              PsiElement(::)('::')
+              PsiElement(<)('<')
+              RsLifetimeImpl(LIFETIME)
+                PsiElement(QUOTE_IDENTIFIER)(''static')
+              PsiErrorElement:'#', '+', ',', '-', '::', <block expr>, <type>, '>', QUOTE_IDENTIFIER, identifier or '{' expected, got ':'
+                <empty list>
       PsiElement(:)(':')
       PsiWhiteSpace(' ')
       PsiElement(QUOTE_IDENTIFIER)(''static')

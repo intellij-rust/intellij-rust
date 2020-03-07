@@ -18,8 +18,7 @@ class RsStatementUpDownMover : RsLineMover() {
         RsElementTypes.STMT,
         RsElementTypes.EXPR_STMT,
         RsElementTypes.EMPTY_STMT,
-        RsElementTypes.LET_DECL,
-        RsElementTypes.EXPR_STMT_OR_LAST_EXPR
+        RsElementTypes.LET_DECL
     )
 
     private val PsiElement.isBlockExpr: Boolean

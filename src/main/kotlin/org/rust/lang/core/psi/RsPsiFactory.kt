@@ -216,9 +216,8 @@ class RsPsiFactory(
     }
 
     fun createTraitMethodMember(text: String): RsFunction {
-        val members: RsMembers = createFromText("trait Foo { $text }")
-            ?: error("Failed to create an method member from text: `$text`")
-        return members.functionList.first()
+        return createFromText<RsFunction>("trait Foo { $text }")
+            ?: error("Failed to create a method member from text: `$text`")
     }
 
     fun createMembers(text: String): RsMembers {

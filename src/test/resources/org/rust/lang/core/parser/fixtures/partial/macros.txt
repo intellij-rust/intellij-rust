@@ -22,17 +22,18 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      RsMacroExprImpl(MACRO_EXPR)
-        RsMacroCallImpl(MACRO_CALL)
-          RsPathImpl(PATH)
-            PsiElement(identifier)('foo')
-          PsiElement(!)('!')
-          RsMacroArgumentImpl(MACRO_ARGUMENT)
-            PsiElement(()('(')
-            RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-              <empty list>
-            PsiElement())(')')
-        PsiErrorElement:'(', ';', <operator>, '[' or '}' expected, got 'let'
+      RsExprStmtImpl(EXPR_STMT)
+        RsMacroExprImpl(MACRO_EXPR)
+          RsMacroCallImpl(MACRO_CALL)
+            RsPathImpl(PATH)
+              PsiElement(identifier)('foo')
+            PsiElement(!)('!')
+            RsMacroArgumentImpl(MACRO_ARGUMENT)
+              PsiElement(()('(')
+              RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
+                <empty list>
+              PsiElement())(')')
+        PsiErrorElement:'(', ';', <operator> or '[' expected, got 'let'
           <empty list>
       PsiWhiteSpace('\n    ')
       RsLetDeclImpl(LET_DECL)

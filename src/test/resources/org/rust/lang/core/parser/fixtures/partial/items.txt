@@ -1,0 +1,10 @@
+FILE
+  RsForeignModItemImpl(FOREIGN_MOD_ITEM)
+    RsExternAbiImpl(EXTERN_ABI)
+      PsiElement(extern)('extern')
+      PsiWhiteSpace(' ')
+      PsiElement(STRING_LITERAL)('"C"')
+    PsiWhiteSpace(' ')
+    PsiElement({)('{')
+    PsiErrorElement:'#' or '}' expected
+      <empty list>

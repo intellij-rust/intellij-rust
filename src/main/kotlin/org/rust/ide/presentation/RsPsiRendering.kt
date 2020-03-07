@@ -95,12 +95,12 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Subst
                 }
                 if (type.mutability.isMut) append("mut ")
             }
-            appendTypeReference(type.typeReference, subst, renderLifetimes)
+            type.typeReference?.let { appendTypeReference(it, subst, renderLifetimes) }
         }
 
         is RsArrayType -> {
             append("[")
-            appendTypeReference(type.typeReference, subst, renderLifetimes)
+            type.typeReference?.let { appendTypeReference(it, subst, renderLifetimes) }
             if (!type.isSlice) {
                 append("; ")
                 append(type.arraySize) // may trigger resolve
