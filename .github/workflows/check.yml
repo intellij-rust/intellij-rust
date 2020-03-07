@@ -6,6 +6,7 @@ jobs:
     build:
         runs-on: ubuntu-16.04
         strategy:
+            fail-fast: false
             matrix:
                 rust-version: [ 1.28.0, 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
