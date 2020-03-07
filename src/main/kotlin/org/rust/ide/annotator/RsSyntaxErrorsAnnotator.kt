@@ -41,6 +41,7 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
                 }
             }
             is RsMacro -> checkMacro(holder, element)
+            is RsMacroCall -> checkMacroCall(holder, element)
             is RsValueParameterList -> checkValueParameterList(holder, element)
             is RsValueParameter -> checkValueParameter(holder, element)
             is RsTypeParameterList -> checkTypeParameterList(holder, element)
@@ -50,23 +51,39 @@ class RsSyntaxErrorsAnnotator : AnnotatorBase() {
 }
 
 private fun checkItem(holder: AnnotationHolder, item: RsItemElement) {
-    if (item !is RsAbstractable) {
-        checkItemOrMacro(item, item.itemKindName.pluralize().capitalize(), item.itemDefKeyword, holder)
-    }
+    checkItemOrMacro(item, item.itemKindName.pluralize().capitalize(), item.itemDefKeyword, holder)
 }
 
 private fun checkMacro(holder: AnnotationHolder, element: RsMacro) =
     checkItemOrMacro(element, "Macros", element.macroRules, holder)
 
 private fun checkItemOrMacro(item: RsElement, itemName: String, highlightElement: PsiElement, holder: AnnotationHolder) {
-    val parent = item.context
-    val owner = if (parent is RsMembers) parent.context else parent
-    if (owner is RsItemElement && (owner is RsForeignModItem || owner is RsTraitOrImpl)) {
-        holder.createErrorAnnotation(
-            highlightElement,
-            "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}"
-        )
+    if (item !is RsAbstractable) {
+        val parent = item.context
+        val owner = if (parent is RsMembers) parent.context else parent
+        if (owner is RsItemElement && (owner is RsForeignModItem || owner is RsTraitOrImpl)) {
+            holder.createErrorAnnotation(
+                highlightElement,
+                "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}"
+            )
+        }
     }
+
+    if (item !is RsAbstractable && item !is RsTraitOrImpl) {
+        denyDefaultKeyword(item, holder, itemName)
+    }
+}
+
+private fun denyDefaultKeyword(item: RsElement, holder: AnnotationHolder, itemName: String) {
+    deny(
+        item.node.findChildByType(RsElementTypes.DEFAULT)?.psi,
+        holder,
+        "$itemName cannot have the `default` qualifier"
+    )
+}
+
+private fun checkMacroCall(holder: AnnotationHolder, element: RsMacroCall) {
+    denyDefaultKeyword(element, holder, "Macro invocations")
 }
 
 private fun checkFunction(holder: AnnotationHolder, fn: RsFunction) {
