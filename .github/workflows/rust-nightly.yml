@@ -27,6 +27,7 @@ jobs:
         needs: generate-build-number
         runs-on: ubuntu-16.04
         strategy:
+            fail-fast: true
             matrix:
                 platform-version: [ 193, 201 ]
         steps:
