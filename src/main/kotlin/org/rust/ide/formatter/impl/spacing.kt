@@ -196,6 +196,12 @@ fun Block.computeSpacing(child1: Block?, child2: Block, ctx: RsFmtContext): Spac
 
                 keepLineBreaks = ctx.commonSettings.KEEP_LINE_BREAKS,
                 keepBlankLines = ctx.commonSettings.KEEP_BLANK_LINES_IN_DECLARATIONS)
+
+        // Format blank lines between items (e.g. inside function)
+            ncPsi1 is RsItemElement
+                && (ncPsi2 is RsItemElement || ncPsi2.isStmtOrExpr)
+                && node2.firstChildNode !is PsiComment
+            -> return lineBreak(1)
         }
     }
     return ctx.spacingBuilder.getSpacing(this, child1, child2)
