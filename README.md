@@ -54,7 +54,7 @@ issues or missing functionality that you would want to see. Check out
 [CONTRIBUTING.md] to learn how to set up the project and [ARCHITECTURE.md] to
 understand the high-level structure of the codebase. If you are not sure where to start, consider the issues tagged with [help wanted].
 
-[intellij-rust.github.io]: https://intellij-rust.github.io/docs/
+[intellij-rust.github.io]: https://intellij-rust.github.io/
 [website]: https://intellij-rust.github.io/docs/faq.html
 [help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
