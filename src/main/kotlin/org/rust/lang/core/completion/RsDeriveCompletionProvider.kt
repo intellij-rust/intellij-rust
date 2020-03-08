@@ -6,26 +6,27 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PlatformPatterns.psiElement
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.multiple
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.withDefaultSubst
+import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownDerivableTrait
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.withDependencies
 import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.with
 
 object RsDeriveCompletionProvider : RsCompletionProvider() {
 
@@ -36,6 +37,7 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
                                 context: ProcessingContext,
                                 result: CompletionResultSet) {
 
+        // TODO: use `processDeriveTraitResolveVariants` to share code between name resolution and completion
         val owner = parameters.position.ancestorStrict<RsStructOrEnumItemElement>()
             ?: return
         val ownerType = owner.declaredType
@@ -67,26 +69,14 @@ object RsDeriveCompletionProvider : RsCompletionProvider() {
             }
     }
 
-    override val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<out PsiElement>
         get() {
-
-            val deriveAttr = psiElement(META_ITEM)
-                .withParent(psiElement(OUTER_ATTR))
-                .with(object : PatternCondition<PsiElement>("derive") {
-                    // `withFirstChild` does not handle leaf elements.
-                    // See a note in [com.intellij.psi.PsiElement.getChildren]
-                    override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean =
-                        t.firstChild.text == "derive"
-                })
-
-            val traitMetaItem = psiElement(META_ITEM)
-                .withParent(
-                    psiElement(META_ITEM_ARGS)
-                        .withParent(deriveAttr)
-                )
-
-            return psiElement()
+            return PlatformPatterns.psiElement()
                 .withLanguage(RsLanguage)
-                .inside(traitMetaItem)
+                // avoid completion in non primitive path like `derive[std::/*caret*/]`
+                .withParent(psiElement<RsPath>()
+                    .with("PrimitivePath") { path -> path.path == null }
+                    .withParent(RsPsiPattern.derivedTraitMetaItem)
+                )
         }
 }

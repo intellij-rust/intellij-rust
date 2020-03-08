@@ -123,4 +123,9 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
         #[derive(Ser/*caret*/)]
         struct S;
     """)
+
+    fun `test no completion in non primitive path`() = checkNoCompletion("""
+        #[derive(std::marker::Clo/*caret*/)]
+        struct S;
+    """)
 }

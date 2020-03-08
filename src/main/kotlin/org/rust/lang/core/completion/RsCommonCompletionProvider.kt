@@ -87,27 +87,37 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                 is RsModDeclItem -> processModDeclResolveVariants(element, it)
                 is RsPatBinding -> processPatBindingResolveVariants(element, true, it)
                 is RsStructLiteralField -> processStructLiteralFieldResolveVariants(element, true, it)
+                is RsPath -> processPathVariants(element, processedPathNames, it)
+            }
+        }
+    }
 
-                is RsPath -> if (element.parent !is RsMacroCall) {
-                    val lookup = ImplLookup.relativeTo(element)
-                    processPathResolveVariants(
-                        lookup,
+    private fun processPathVariants(
+        element: RsPath,
+        processedPathNames: MutableSet<String>,
+        processor: RsResolveProcessor
+    ) {
+        when (element.parent) {
+            is RsMacroCall -> processMacroCallPathResolveVariants(element, true, processor)
+            // Handled by [RsDeriveCompletionProvider]
+            is RsMetaItem -> return
+            else -> {
+                val lookup = ImplLookup.relativeTo(element)
+                processPathResolveVariants(
+                    lookup,
+                    element,
+                    true,
+                    filterAssocTypes(
                         element,
-                        true,
-                        filterAssocTypes(
-                            element,
-                            filterCompletionVariantsByVisibility(
-                                filterPathCompletionVariantsByTraitBounds(
-                                    addProcessedPathName(it, processedPathNames),
-                                    lookup
-                                ),
-                                element.containingMod
-                            )
+                        filterCompletionVariantsByVisibility(
+                            filterPathCompletionVariantsByTraitBounds(
+                                addProcessedPathName(processor, processedPathNames),
+                                lookup
+                            ),
+                            element.containingMod
                         )
                     )
-                } else {
-                    processMacroCallPathResolveVariants(element, true, it)
-                }
+                )
             }
         }
     }
@@ -158,6 +168,8 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             actualPosition.parent as? RsPath ?: return
         }
         if (TyPrimitive.fromPath(path) != null) return
+        // TODO: implement special rules paths in meta items
+        if (path.parent is RsMetaItem) return
         Testmarks.pathCompletionFromIndex.hit()
 
         val project = parameters.originalFile.project
