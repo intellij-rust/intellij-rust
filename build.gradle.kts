@@ -33,8 +33,9 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val isAtLeast193 = platformVersion >= 193
+val isAtLeast201 = platformVersion >= 201
 
+val intelliLangPlugin = if (isAtLeast201) "platform-langInjection" else "IntelliLang"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -101,12 +102,6 @@ allprojects {
             buildSearchableOptions {
                 enabled = prop("enableBuildSearchableOptions").toBoolean()
             }
-        }
-    }
-
-    grammarKit {
-        if (!isAtLeast193) {
-            grammarKitRelease = "2019.1"
         }
     }
 
@@ -185,7 +180,7 @@ project(":plugin") {
         pluginName = "intellij-rust"
         val plugins = mutableListOf(
             project(":intellij-toml"),
-            "IntelliLang",
+            intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin
         )
@@ -374,7 +369,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        setPlugins("IntelliLang")
+        setPlugins(intelliLangPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -408,9 +403,6 @@ project(":duplicates") {
 
 project(":coverage") {
     intellij {
-        if (!isAtLeast193) {
-            version = ideaVersion
-        }
         if (baseIDE == "idea") {
             setPlugins("coverage")
         }

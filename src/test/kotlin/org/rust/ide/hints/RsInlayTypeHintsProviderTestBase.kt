@@ -5,7 +5,6 @@
 
 package org.rust.ide.hints
 
-import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
@@ -14,7 +13,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsMethodCall
 
-class RsInlayTypeHintsProviderTest : RsTestBase() {
+abstract class RsInlayTypeHintsProviderTestBase : RsTestBase() {
     fun `test simple`() = checkByText("""
         fn main() {
             let s/*hint text="[:  i32]"*/ = 42;
@@ -108,7 +107,7 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
         struct S;
         fn with_s<F: Fn(S)>(f: F) {}
         fn main() {
-            with_s(|s: S| s.bar())
+            with_s(|s: S| s.bar());
             with_s(|_| ())
         }
     """)
@@ -350,12 +349,11 @@ class RsInlayTypeHintsProviderTest : RsTestBase() {
 
     private fun checkByText(@Language("Rust") code: String) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
-
-        myFixture.testInlays(
-            { (it.renderer as PresentationRenderer).presentation.toString() },
-            { it.renderer is PresentationRenderer }
-        )
+        checkInlays()
     }
+
+    // BACKCOMPAT: 2019.3. Inline it
+    protected abstract fun checkInlays()
 
     companion object {
         private val HINT_COMMENT_PATTERN = Regex("""/\*(hint.*?)\*/""")
