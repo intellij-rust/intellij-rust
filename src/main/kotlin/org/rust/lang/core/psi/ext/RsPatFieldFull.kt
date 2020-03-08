@@ -28,9 +28,6 @@ abstract class RsPatFieldFullImplMixin(node: ASTNode) : RsElementImpl(node), RsP
         override fun resolveInner(): List<RsElement> =
             collectResolveVariants(element.referenceName) { processStructPatternFieldResolveVariants(element, it) }
 
-        override val RsPatFieldFull.referenceAnchor: PsiElement?
-            get() = referenceNameElement
-
         override val cacheDependency: ResolveCacheDependency
             get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
     }

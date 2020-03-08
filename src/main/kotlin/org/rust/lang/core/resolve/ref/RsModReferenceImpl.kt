@@ -14,10 +14,7 @@ import org.rust.lang.core.resolve.processModDeclResolveVariants
 
 class RsModReferenceImpl(
     modDecl: RsModDeclItem
-) : RsReferenceCached<RsModDeclItem>(modDecl),
-    RsReference {
-
-    override val RsModDeclItem.referenceAnchor: PsiElement get() = identifier
+) : RsReferenceCached<RsModDeclItem>(modDecl) {
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processModDeclResolveVariants(element, it) }

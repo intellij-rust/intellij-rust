@@ -31,8 +31,6 @@ class RsPathReferenceImpl(
 ) : RsReferenceBase<RsPath>(element),
     RsPathReference {
 
-    override val RsPath.referenceAnchor: PsiElement get() = referenceNameElement
-
     override fun isReferenceTo(target: PsiElement): Boolean {
         if (target is RsFieldDecl) return false
 

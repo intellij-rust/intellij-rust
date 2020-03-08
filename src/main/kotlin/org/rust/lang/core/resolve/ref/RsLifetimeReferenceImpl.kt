@@ -14,10 +14,7 @@ import org.rust.lang.core.resolve.processLifetimeResolveVariants
 
 class RsLifetimeReferenceImpl(
     element: RsLifetime
-) : RsReferenceCached<RsLifetime>(element),
-    RsReference {
-
-    override val RsLifetime.referenceAnchor: PsiElement get() = quoteIdentifier
+) : RsReferenceCached<RsLifetime>(element) {
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 

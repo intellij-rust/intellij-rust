@@ -15,10 +15,7 @@ import org.rust.lang.core.resolve.processStructLiteralFieldResolveVariants
 
 class RsStructLiteralFieldReferenceImpl(
     field: RsStructLiteralField
-) : RsReferenceCached<RsStructLiteralField>(field),
-    RsReference {
-
-    override val RsStructLiteralField.referenceAnchor: PsiElement get() = referenceNameElement
+) : RsReferenceCached<RsStructLiteralField>(field) {
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 

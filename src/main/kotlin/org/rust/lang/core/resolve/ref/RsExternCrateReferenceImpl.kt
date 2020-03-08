@@ -14,10 +14,7 @@ import org.rust.lang.core.resolve.processExternCrateResolveVariants
 
 class RsExternCrateReferenceImpl(
     externCrate: RsExternCrateItem
-) : RsReferenceCached<RsExternCrateItem>(externCrate),
-    RsReference {
-
-    override val RsExternCrateItem.referenceAnchor: PsiElement get() = referenceNameElement
+) : RsReferenceCached<RsExternCrateItem>(externCrate) {
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processExternCrateResolveVariants(element, false, it) }

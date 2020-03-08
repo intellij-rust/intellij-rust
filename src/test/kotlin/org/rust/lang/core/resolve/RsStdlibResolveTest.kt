@@ -399,23 +399,28 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
     fun `test resolve derive traits`() {
         val traitToPath = mapOf(
-            "Clone" to "clone.rs",
-            "Copy" to "marker.rs",
-            "Debug" to "fmt/mod.rs",
-            "Default" to "default.rs",
-            "Eq" to "cmp.rs",
-            "Hash" to "hash/mod.rs",
-            "Ord" to "cmp.rs",
-            "PartialEq" to "cmp.rs",
-            "PartialOrd" to "cmp.rs"
+            "std::marker::Clone" to "clone.rs",
+            "std::marker::Copy" to "marker.rs",
+            "std::fmt::Debug" to "fmt/mod.rs",
+            "std::default::Default" to "default.rs",
+            "std::cmp::Eq" to "cmp.rs",
+            "std::hash::Hash" to "hash/mod.rs",
+            "std::cmp::Ord" to "cmp.rs",
+            "std::cmp::PartialEq" to "cmp.rs",
+            "std::cmp::PartialOrd" to "cmp.rs"
         )
-        for ((trait, path) in traitToPath) {
-            stubOnlyResolve("""
-            //- main.rs
-                #[derive($trait)]
-                        //^ ...libcore/$path
-                struct Foo;
-            """)
+        for ((traitPath, path) in traitToPath) {
+            fun check(trait: String) {
+                stubOnlyResolve("""
+                //- main.rs
+                    #[derive($trait)]
+                           ${" ".repeat(trait.length - 1)}//^ ...libcore/$path
+                    struct Foo;
+                """)
+            }
+
+            check(traitPath.substringAfterLast("::"))
+            check(traitPath)
         }
     }
 
@@ -446,6 +451,17 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn bar(foo: Foo) {
             let x = foo.clone();
                          //^ ...libcore/clone.rs
+        }
+    """)
+
+    fun `test derivable trait method with fully qualified name`() = stubOnlyResolve("""
+    //- main.rs
+        #[derive(std::default::Default)]
+        struct Foo(i32);
+
+        fn main() {
+            let foo = Foo::default();
+                          //^ ...libcore/default.rs
         }
     """)
 

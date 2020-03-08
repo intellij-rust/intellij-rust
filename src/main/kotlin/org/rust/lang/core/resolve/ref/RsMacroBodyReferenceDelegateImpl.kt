@@ -15,8 +15,6 @@ import org.rust.lang.core.psi.ext.ancestors
 class RsMacroBodyReferenceDelegateImpl(
     element: RsReferenceElementBase
 ) : RsReferenceBase<RsReferenceElementBase>(element) {
-    override val RsReferenceElementBase.referenceAnchor: PsiElement?
-        get() = element.referenceNameElement
 
     private val delegates: List<RsReference>
         get() {

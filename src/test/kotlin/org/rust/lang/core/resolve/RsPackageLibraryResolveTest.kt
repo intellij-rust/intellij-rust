@@ -563,7 +563,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         //- dep-proc-macro/lib.rs
             #[proc_macro]
             pub fn example_proc_macro_1(item: TokenStream) -> TokenStream { item }
-    
+
             #[proc_macro]
             pub fn example_proc_macro_2(item: TokenStream) -> TokenStream { example_proc_macro_1(item) }
                                                                             //^ dep-proc-macro/lib.rs
@@ -577,7 +577,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         //- dep-proc-macro/lib.rs
             #[proc_macro]
             pub fn example_proc_macro_1(item: TokenStream) -> TokenStream { item }
-        
+
             mod foo {
                 use super::example_proc_macro_1;
                 pub fn proc_macro_user(item: TokenStream) -> TokenStream { example_proc_macro_1(item) }
@@ -689,17 +689,15 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     // FIXME
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test resolve custom derive proc macro from derive attribute with full path`() = expect<IllegalStateException>{
-        stubOnlyResolve("""
-        //- dep-proc-macro/lib.rs
-            #[proc_macro_derive(ProcMacroName)]
-            pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
-        //- lib.rs
-            #[derive(dep_proc_macro::ProcMacroName)]
-                      //^ dep-proc-macro/lib.rs
-            struct S;
-        """)
-    }
+    fun `test resolve custom derive proc macro from derive attribute with full path`() = stubOnlyResolve("""
+    //- dep-proc-macro/lib.rs
+        #[proc_macro_derive(ProcMacroName)]
+        pub fn example_proc_macro(item: TokenStream) -> TokenStream { item }
+    //- lib.rs
+        #[derive(dep_proc_macro::ProcMacroName)]
+                  //^ dep-proc-macro/lib.rs
+        struct S;
+    """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve bang proc macro reexported from lib to main from use item`() = stubOnlyResolve("""
@@ -728,7 +726,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- main.rs
         use test_package::example_proc_macro;
-        
+
         example_proc_macro!();
                     //^ dep-proc-macro/lib.rs
     """)
@@ -745,7 +743,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- main.rs
         use test_package::ProcMacroName;
-                         //^ dep-proc-macro/lib.rs 
+                         //^ dep-proc-macro/lib.rs
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -760,7 +758,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- main.rs
         use test_package::ProcMacroName;
-        
+
         #[derive(ProcMacroName)]
                  //^ dep-proc-macro/lib.rs
         struct S;
@@ -778,7 +776,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- main.rs
         use test_package::example_proc_macro;
-                             //^ dep-proc-macro/lib.rs 
+                             //^ dep-proc-macro/lib.rs
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -793,7 +791,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
     //- main.rs
         use test_package::example_proc_macro;
-        
+
         #[example_proc_macro]
                  //^ dep-proc-macro/lib.rs
         struct S;
@@ -925,7 +923,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub extern crate trans_lib;
     //- lib.rs
         extern crate dep_lib_target;
-        
+
         fn foo(foo: dep_lib_target::trans_lib::Foo) {}
                                               //^ trans-lib/lib.rs
     """)
@@ -942,7 +940,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
             pub use crate::foo::{S1, S2};
             pub use crate::bar::*; // `bar` may exists or may not
         }
-        
+
         pub use self::prelude::*;
     //- main.rs
         use test_package::{S1, S2};
@@ -960,7 +958,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         pub use trans_lib;
     //- lib.rs
         use dep_lib_target::trans_lib::Foo;
-        
+
         type T = Foo;
                //^ trans-lib/lib.rs
     """)

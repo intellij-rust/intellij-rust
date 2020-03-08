@@ -16,8 +16,6 @@ import org.rust.lang.core.resolve.processAssocTypeVariants
 class RsAssocTypeBindingReferenceImpl(
     element: RsAssocTypeBinding
 ) : RsReferenceCached<RsAssocTypeBinding>(element) {
-    override val RsAssocTypeBinding.referenceAnchor: PsiElement
-        get() = referenceNameElement
 
     override fun resolveInner(): List<RsElement> =
         collectResolveVariants(element.referenceName) { processAssocTypeVariants(element, it) }
