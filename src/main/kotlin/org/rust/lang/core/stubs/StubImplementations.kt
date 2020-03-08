@@ -49,7 +49,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 195
+        private const val STUB_VERSION = 196
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1381,27 +1381,23 @@ class RsInnerAttrStub(
 
 class RsMetaItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val name: String?,
     val hasEq: Boolean
 ) : StubBase<RsMetaItem>(parent, elementType) {
     object Type : RsStubElementType<RsMetaItemStub, RsMetaItem>("META_ITEM") {
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun createStub(psi: RsMetaItem, parentStub: StubElement<*>?): RsMetaItemStub =
-            RsMetaItemStub(parentStub, this, psi.name, psi.eq != null)
+            RsMetaItemStub(parentStub, this, psi.eq != null)
 
         override fun createPsi(stub: RsMetaItemStub): RsMetaItem = RsMetaItemImpl(stub, this)
 
         override fun serialize(stub: RsMetaItemStub, dataStream: StubOutputStream) =
             with(dataStream) {
-                writeName(stub.name)
                 writeBoolean(stub.hasEq)
             }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
-            RsMetaItemStub(parentStub, this,
-                dataStream.readNameAsString(),
-                dataStream.readBoolean())
+            RsMetaItemStub(parentStub, this, dataStream.readBoolean())
     }
 }
 

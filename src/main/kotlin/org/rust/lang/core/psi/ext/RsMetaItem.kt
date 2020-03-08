@@ -17,9 +17,14 @@ import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.deriveReference
 import org.rust.lang.core.stubs.RsMetaItemStub
 
+/**
+ * Returns identifier name if path inside meta item consists only of this identifier.
+ * Otherwise, returns `null`
+ */
 val RsMetaItem.name: String? get() {
-    val stub = greenStub
-    return if (stub != null) stub.name else identifier?.unescapedText
+    val path = path ?: return null
+    if (path.hasColonColon) return null
+    return path.referenceName
 }
 
 val RsMetaItem.value: String? get() = litExpr?.stringValue
@@ -35,7 +40,7 @@ abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>, RsMet
 
     constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override val referenceNameElement: PsiElement? get() = identifier
+    override val referenceNameElement: PsiElement? get() = null
 
     override val referenceName: String? get() = name
 

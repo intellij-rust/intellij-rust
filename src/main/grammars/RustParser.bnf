@@ -146,7 +146,7 @@ OuterAttr ::= '#'     '[' AttrUpper {
 private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'
 private OuterAttr_first ::= '#'
 
-fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
+fake MetaItem ::= Path [ '=' LitExpr | MetaItemArgs ] | CompactTT {
   implements = [ "org.rust.lang.core.psi.ext.RsWeakReferenceElement"
                  "com.intellij.psi.ContributedReferenceHost" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
@@ -160,10 +160,10 @@ fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
 //   ~~~~~~~~~~~~~
 // #![crate_type = "lib"]
 //    ~~~~~~~~~~~~~~~~~~
-MetaItemWithoutTT ::= identifier [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
-
 // #[some::path]
 //   ~~~~~~~~~~
+MetaItemWithoutTT ::= PathWithoutTypeArgs [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
+
 // #[assert_instr(add_a.b)]
 //                ~~~~~~~
 // #[attr(value = C)]

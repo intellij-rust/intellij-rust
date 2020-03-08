@@ -184,6 +184,7 @@ class RsStubTest : RsTestBase() {
             BLOCK:RsPlaceholderStub
               INNER_ATTR:RsInnerAttrStub
                 META_ITEM:RsMetaItemStub
+                  PATH:RsPathStub
     """)
 
     fun `test nested block is stubbed if contains items`() = doTest("""
