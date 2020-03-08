@@ -34,6 +34,11 @@ val PsiElement.contexts: Sequence<PsiElement>
         if (it is PsiFile) null else it.context
     }
 
+fun PsiElement.superParent(level: Int): PsiElement? {
+    require(level > 0)
+    return ancestors.drop(level).firstOrNull()
+}
+
 val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>>
     get() {
         val parent = this.parent ?: return emptySequence()

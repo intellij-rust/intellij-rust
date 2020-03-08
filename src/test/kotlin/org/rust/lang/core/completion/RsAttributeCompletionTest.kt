@@ -6,60 +6,95 @@
 package org.rust.lang.core.completion
 
 class RsAttributeCompletionTest : RsCompletionTestBase() {
-    fun `test derive on struct`() = @Suppress("DEPRECATION") checkSingleCompletion("derive", """
+    fun `test derive on struct`() = doSingleCompletion("""
         #[der/*caret*/]
+        struct Bar;
+    """, """
+        #[derive(/*caret*/)]
         struct Bar;
     """)
 
-    fun `test warn on trait`() = @Suppress("DEPRECATION") checkSingleCompletion("warn", """
+    fun `test warn on trait`() = doSingleCompletion("""
         #[war/*caret*/]
+        trait Bar {}
+    """, """
+        #[warn(/*caret*/)]
         trait Bar {}
     """)
 
-    fun `test inline on fn`() = @Suppress("DEPRECATION") checkSingleCompletion("inline", """
+    fun `test inline on fn`() = doSingleCompletion("""
         #[inl/*caret*/]
         fn foo() {}
-    """)
-
-    fun `test allow on fn`() = @Suppress("DEPRECATION") checkSingleCompletion("allow", """
-        #[all/*caret*/]
+    """, """
+        #[inline/*caret*/]
         fn foo() {}
     """)
 
-    fun `test simd on tuple struct`() = @Suppress("DEPRECATION") checkSingleCompletion("simd", """
+    fun `test allow on fn`() = doSingleCompletion("""
+        #[all/*caret*/]
+        fn foo() {}
+    """, """
+        #[allow(/*caret*/)]
+        fn foo() {}
+    """)
+
+    fun `test simd on tuple struct`() = doSingleCompletion("""
         #[si/*caret*/]
+        struct Bar(u8, u8);
+    """, """
+        #[simd/*caret*/]
         struct Bar(u8, u8);
     """)
 
-    fun `test allow on static`() = @Suppress("DEPRECATION") checkSingleCompletion("allow", """
+    fun `test allow on static`() = doSingleCompletion("""
         #[allo/*caret*/]
+        static BAR: u8 = 1;
+    """, """
+        #[allow(/*caret*/)]
         static BAR: u8 = 1;
     """)
 
-    fun `test thread local on static mut`() = @Suppress("DEPRECATION") checkSingleCompletion("thread_local", """
+    fun `test thread local on static mut`() = doSingleCompletion("""
         #[thre/*caret*/]
+        static mut BAR: u8 = 1;
+    """, """
+        #[thread_local/*caret*/]
         static mut BAR: u8 = 1;
     """)
 
-    fun `test deny on enum`() = @Suppress("DEPRECATION") checkSingleCompletion("deny", """
+    fun `test deny on enum`() = doSingleCompletion("""
         #[den/*caret*/]
+        enum Foo {
+            BAR,
+            BAZ
+        }
+    """, """
+        #[deny(/*caret*/)]
         enum Foo {
             BAR,
             BAZ
         }
     """)
 
-    fun `test no mangle on enum`() = @Suppress("DEPRECATION") checkSingleCompletion("no_mangle", """
+    fun `test no mangle on enum`() = doSingleCompletion("""
         #[no_ma/*caret*/]
+        mod foo {}
+    """, """
+        #[no_mangle/*caret*/]
         mod foo {}
     """)
 
-    fun `test outer deny on file`() = @Suppress("DEPRECATION") checkSingleCompletion("deny", """
+    fun `test outer deny on file`() = doSingleCompletion("""
         #![den/*caret*/]
+    """, """
+        #![deny(/*caret*/)]
     """)
 
-    fun `test macro use on mod`() = @Suppress("DEPRECATION") checkSingleCompletion("macro_use", """
+    fun `test macro use on mod`() = doSingleCompletion("""
         #[macr/*caret*/]
+        mod foo {}
+    """, """
+        #[macro_use/*caret*/]
         mod foo {}
     """)
 
@@ -71,41 +106,67 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         mod foo;
     """)
 
-    fun `test outer warn on mod`() = @Suppress("DEPRECATION") checkSingleCompletion("warn", """
+    fun `test outer warn on mod`() = doSingleCompletion("""
         mod foo {
             #![war/*caret*/]
         }
+    """, """
+        mod foo {
+            #![warn(/*caret*/)]
+        }
     """)
 
-    fun `test export name on trait impl method`() = @Suppress("DEPRECATION") checkSingleCompletion("allow", """
+    fun `test export name on trait impl method`() = doSingleCompletion("""
         struct HasDrop;
         impl Drop for HasDrop {
             #[allo/*caret*/]
             fn drop(&mut self) {}
         }
+    """, """
+        struct HasDrop;
+        impl Drop for HasDrop {
+            #[allow(/*caret*/)]
+            fn drop(&mut self) {}
+        }
     """)
 
-    fun `test linked from on extern block`() = @Suppress("DEPRECATION") checkSingleCompletion("linked_from", """
+    fun `test linked from on extern block`() = doSingleCompletion("""
         #[linke/*caret*/]
         extern {
             fn bar(baz: size_t) -> size_t;
         }
-    """)
-
-    fun `test linkage on extern block decl`() = @Suppress("DEPRECATION") checkSingleCompletion("linkage", """
+    """, """
+        #[linked_from/*caret*/]
         extern {
-            #[linka/*caret*/]
             fn bar(baz: size_t) -> size_t;
         }
     """)
 
-    fun `test no link on extern crate`() = @Suppress("DEPRECATION") checkSingleCompletion("no_link", """
+    fun `test linkage on extern block decl`() = doSingleCompletion("""
+        extern {
+            #[linka/*caret*/]
+            fn bar(baz: size_t) -> size_t;
+        }
+    """, """
+        extern {
+            #[linkage/*caret*/]
+            fn bar(baz: size_t) -> size_t;
+        }
+    """)
+
+    fun `test no link on extern crate`() = doSingleCompletion("""
         #[no_l/*caret*/]
+        extern crate bar;
+    """, """
+        #[no_link/*caret*/]
         extern crate bar;
     """)
 
-    fun `test macro export on macro`() = @Suppress("DEPRECATION") checkSingleCompletion("macro_export", """
+    fun `test macro export on macro`() = doSingleCompletion("""
         #[macr/*caret*/]
+        macro_rules! bar {}
+    """, """
+        #[macro_export/*caret*/]
         macro_rules! bar {}
     """)
 
@@ -118,7 +179,16 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         #![cf/*caret*/]
     """)
 
-    fun `test deprecated`() = @Suppress("DEPRECATION") checkSingleCompletion("deprecated", """
+    fun `test deprecated`() = doSingleCompletion("""
+        #[dep/*caret*/]
+        mod foo {}
+    """, """
+        #[deprecated/*caret*/]
+        mod foo {}
+    """)
+
+    fun `test do not complete existing attributes`() = checkNoCompletion("""
+        #[deprecated]
         #[dep/*caret*/]
         mod foo {}
     """)
