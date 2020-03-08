@@ -12,13 +12,18 @@ import com.intellij.psi.impl.cache.impl.todo.LexerBasedTodoIndexer
 import com.intellij.psi.search.UsageSearchContext
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.lexer.RsLexer
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RsElementTypes.EXCL
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 
 class RsTodoIndexer : LexerBasedTodoIndexer() {
-    override fun getVersion(): Int = 2
+    override fun getVersion(): Int = RustParserDefinition.LEXER_VERSION + VERSION
     override fun createLexer(consumer: OccurrenceConsumer): Lexer = RsFilterLexer(consumer)
+
+    companion object {
+        private const val VERSION = 2
+    }
 }
 
 private class RsFilterLexer(consumer: OccurrenceConsumer) : BaseFilterLexer(RsLexer(), consumer) {

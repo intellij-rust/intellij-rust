@@ -25,6 +25,7 @@ import com.intellij.util.io.DataInputOutputUtil.writeNullable
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.lexer.RsLexer
 import org.rust.lang.core.parser.RustParser
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
@@ -48,8 +49,10 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
+        private const val STUB_VERSION = 193
+
         // Bump this number if Stub structure changes
-        override fun getStubVersion(): Int = 193
+        override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
 
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {

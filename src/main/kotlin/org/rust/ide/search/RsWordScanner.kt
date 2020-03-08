@@ -8,6 +8,7 @@ package org.rust.ide.search
 import com.intellij.lang.cacheBuilder.DefaultWordsScanner
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.lexer.RsLexer
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RsElementTypes.*
 
@@ -16,4 +17,6 @@ class RsWordScanner : DefaultWordsScanner(
     TokenSet.create(IDENTIFIER),
     RS_COMMENTS,
     TokenSet.create(STRING_LITERAL)
-)
+) {
+    override fun getVersion(): Int = RustParserDefinition.LEXER_VERSION
+}
