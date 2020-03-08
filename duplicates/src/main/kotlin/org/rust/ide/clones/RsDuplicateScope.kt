@@ -21,6 +21,7 @@ import com.jetbrains.clones.core.NodeHash
 import com.jetbrains.clones.core.longHash
 import com.jetbrains.clones.core.nodeListHash
 import com.jetbrains.clones.languagescope.common.DuplicateScopeBase
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RS_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -34,6 +35,8 @@ class RsDuplicateScope : DuplicateScopeBase() {
      * Used as a DuplicateScope id in settings serialization
      */
     override val languageName: String = "Rust"
+
+    override fun getIndexVersion(): Int = RustParserDefinition.PARSER_VERSION + VERSION
 
     /**
      * @return true if [file] should be analyzed
@@ -150,6 +153,9 @@ class RsDuplicateScope : DuplicateScopeBase() {
     }
 
     companion object {
+
+        private val VERSION: Int = 1
+
         private val NOISE = TokenSet.orSet(RS_COMMENTS, tokenSetOf(
             TokenType.WHITE_SPACE,
             // Ignore trailing commas

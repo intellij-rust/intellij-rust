@@ -85,5 +85,15 @@ class RustParserDefinition : ParserDefinition {
         @JvmField val OUTER_BLOCK_DOC_COMMENT = RsTokenType("<OUTER_BLOCK_DOC_COMMENT>")
         @JvmField val INNER_EOL_DOC_COMMENT = RsTokenType("<INNER_EOL_DOC_COMMENT>")
         @JvmField val OUTER_EOL_DOC_COMMENT = RsTokenType("<OUTER_EOL_DOC_COMMENT>")
+
+        /**
+         * Should be increased after any change of lexer rules
+         */
+        const val LEXER_VERSION: Int = 2
+
+        /**
+         * Should be increased after any change of parser rules
+         */
+        const val PARSER_VERSION: Int = LEXER_VERSION + 1
     }
 }
