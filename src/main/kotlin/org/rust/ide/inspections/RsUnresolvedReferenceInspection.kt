@@ -14,10 +14,12 @@ import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.inspections.import.ImportCandidate
 import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.endOffsetInParent
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 import javax.swing.JComponent
@@ -32,6 +34,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
         object : RsVisitor() {
             override fun visitPath(path: RsPath) {
                 if (path.parent is RsPath) return
+                // Don't show unresolved reference error in attributes for now
+                if (path.ancestorStrict<RsMetaItem>() != null) return
                 val (basePath, candidates) = AutoImportFix.findApplicableContext(holder.project, path) ?: return
                 if (candidates.isEmpty() && ignoreWithoutQuickFix) return
 
