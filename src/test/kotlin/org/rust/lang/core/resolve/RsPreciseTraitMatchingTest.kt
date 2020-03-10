@@ -446,4 +446,87 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             let a = S::C;
         }            //^
     """)
+
+    fun `test bound for type parameter wins over blanket impl (type-related path)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            T::foo(&t);
+        }    //^
+    """)
+
+    fun `test bound for type parameter wins over blanket impl (UFCS path)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            <T as Foo>::foo(&t);
+        }             //^
+    """)
+
+    fun `test bound for type parameter wins over blanket impl (method call)`() = checkByCode("""
+        trait Foo { fn foo(&self); }
+                     //X
+        impl<T> Foo for T { fn foo(&self) {} }
+        fn asd<T: Foo>(t: T) {
+            t.foo()
+        }    //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (type-related path) 1`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        impl<T> Bar for S<T> {}
+        fn foo<T>(a: S<T>) where S<T>: a::Foo {
+            <S<T>>::foo(&a);
+        }         //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (type-related path) 2`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        fn foo<T>(a: S<T>)
+            where S<T>: a::Foo,
+                  S<T>: a::Bar,
+        {
+            <S<T>>::foo(&a);
+        }         //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (method call) 1`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        impl<T> Bar for S<T> {}
+        fn foo<T>(a: S<T>) where S<T>: a::Foo {
+            a.foo();
+        }   //^
+    """)
+
+    fun `test trait in scope wins for trait bounds (method call) 2`() = checkByCode("""
+        mod a {
+            pub trait Foo { fn foo(&self) {} }
+            pub trait Bar { fn foo(&self) {} }
+        }                    //X
+        struct S<T>(T);
+        use a::Bar;
+        fn foo<T>(a: S<T>)
+            where S<T>: a::Foo,
+                  S<T>: a::Bar,
+        {
+            a.foo();
+        }   //^
+    """)
 }

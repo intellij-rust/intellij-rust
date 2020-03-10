@@ -241,22 +241,8 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
             sources: List<TraitImplSource>
         ): List<RsTraitItem>? {
             val traits = sources.mapNotNull { source ->
-                val trait = when (source) {
-                    is TraitImplSource.ExplicitImpl -> {
-                        if (source.isInherent) return null
-                        source.implementedTrait?.element ?: return@mapNotNull null
-                    }
-                    is TraitImplSource.Derived -> source.value
-                    is TraitImplSource.Collapsed -> source.value
-                    is TraitImplSource.Hardcoded -> source.value
-
-                    is TraitImplSource.TraitBound -> return null
-                    is TraitImplSource.ProjectionBound -> return null
-                    is TraitImplSource.Object -> return null
-                    is TraitImplSource.Trait -> return null
-                }
-
-                trait
+                if (source.isInherent) return null
+                source.requiredTraitInScope
             }
             return if (traits.filterInScope(scope).isNotEmpty()) null else traits
         }
