@@ -1322,7 +1322,7 @@ private fun processLexicalDeclarations(
                 val letDecls = mutableListOf<RsLetDecl>()
                 val stmts = when (scope) {
                     is RsBlock -> scope.expandedStmtsAndTailExpr.first
-                    is RsReplCodeFragment -> scope.stmts.toList()
+                    is RsReplCodeFragment -> scope.stmts
                     else -> emptyList()  // unreachable
                 }
                 for (stmt in stmts) {

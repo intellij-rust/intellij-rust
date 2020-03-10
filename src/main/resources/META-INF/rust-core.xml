@@ -878,6 +878,11 @@
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
 
+        <!-- REPL Console -->
+
+        <consoleHistoryModelProvider implementation="org.rust.ide.console.RsConsoleHistoryModelProvider"/>
+        <scratch.rootType implementation="org.rust.ide.console.RsConsoleRootType"/>
+
     </extensions>
 
     <extensionPoints>

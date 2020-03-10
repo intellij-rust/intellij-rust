@@ -12,16 +12,12 @@ import com.intellij.execution.process.ProcessHandler
 
 class RsConsoleExecuteActionHandler(
     processHandler: ProcessHandler,
-    private val consoleRunner: RsConsoleRunner,
     private val consoleCommunication: RsConsoleCommunication
 ) : ProcessBackedConsoleExecuteActionHandler(processHandler, false) {
 
     var isEnabled: Boolean = false
 
     override fun processLine(line: String) {
-        val entry = CommandHistory.Entry(line)
-        consoleRunner.commandHistory.addEntry(entry)
-
         val lineEscaped = line.replace("\n", "\u2028")
         super.processLine(lineEscaped)
     }
