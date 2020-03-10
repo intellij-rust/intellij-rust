@@ -14,7 +14,6 @@ class Evcxr(private val evcxrExecutable: Path) {
     fun createCommandLine(workingDirectory: File): PtyCommandLine =
         PtyCommandLine()
             .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
-            .withConsoleMode(true)
             .withExePath(evcxrExecutable.systemIndependentPath)
             .withParameters(
                 "--ide-mode",
