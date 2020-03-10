@@ -15,9 +15,15 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     )
 
     fun `test generic type`() = doAvailableTest(
-        """struct A<T>(T);fn main() { let var/*caret*/ = A(42); } """,
-        """struct A<T>(T);fn main() { let var: A<i32> = A(42); } """
+        """struct A<T>(T); fn main() { let var/*caret*/ = A(42); } """,
+        """struct A<T>(T); fn main() { let var: A<i32> = A(42); } """
     )
+
+    fun `test type with const generic`() = doAvailableTest(
+        """struct A<const N: usize>; fn main() { let var/*caret*/ = A::<1>; } """,
+        """struct A<const N: usize>; fn main() { let var: A<1> = A::<1>; } """
+    )
+
     fun `test complex pattern`() = doAvailableTest(
         """ fn main() { let (a, b)/*caret*/ = (1, 2); } """,
         """ fn main() { let (a, b): (i32, i32) = (1, 2); } """
@@ -52,7 +58,11 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
     )
 
     fun `test generic type with not inferred type`() = doUnavailableTest(
-        """struct A<T>(T);fn main() { let var/*caret*/ = A(a); } """
+        """struct A<T>(T); fn main() { let var/*caret*/ = A(a); } """
+    )
+
+    fun `test generic type with not inferred const generic`() = doUnavailableTest(
+        """struct A<const N: usize>; fn main() { let var/*caret*/ = A; } """
     )
 
     fun `test anon type`() = doUnavailableTest("""

@@ -37,9 +37,18 @@ val RsBlock.expandedStmtsAndTailExpr: Pair<List<RsExpandedElement>, RsExpr?>
 
 private val RsBlock.stmtsAndMacros: Sequence<RsElement>
     get() {
-        val parentItem = contextStrict<RsItemElement>()
         val stub = greenStub
-        return if (stub != null && parentItem is RsConstant && parentItem.isConst) {
+
+        fun isConstant(): Boolean {
+            val parentItem = contextStrict<RsItemElement>()
+            return parentItem is RsConstant && parentItem.isConst
+        }
+
+        fun isConstExpr(): Boolean {
+            return contextStrict<RsTypeArgumentList>() != null
+        }
+
+        return if (stub != null && (isConstant() || isConstExpr())) {
             stub.childrenStubs.asSequence().map { it.psi }
         } else {
             childrenWithLeaves

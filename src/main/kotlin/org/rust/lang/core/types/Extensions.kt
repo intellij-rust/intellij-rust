@@ -42,9 +42,10 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
 
         // CachedValueProvider.Result can accept a ModificationTracker as a dependency, so the
         // cached value will be invalidated if the modification counter is incremented.
-        this is RsModificationTrackerOwner -> Result.create(value, structureModificationTracker, modificationTracker)
-
-        else -> Result.create(value, structureModificationTracker)
+        else -> {
+            val modificationTracker = contextOrSelf<RsModificationTrackerOwner>()?.modificationTracker
+            Result.create(value, listOfNotNull(structureModificationTracker, modificationTracker))
+        }
     }
 }
 

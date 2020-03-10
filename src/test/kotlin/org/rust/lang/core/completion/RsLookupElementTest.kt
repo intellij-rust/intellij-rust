@@ -279,6 +279,23 @@ class RsLookupElementTest : RsTestBase() {
         }
     """, tailText = "(x: i32) of T<i32>", typeText = "i32")
 
+    fun `test const generic function`() = checkProvider("""
+        struct S<const N: usize>(i32);
+        
+        trait T<const M: usize> {
+            fn foo();
+        }
+        
+        impl <const K: usize> T<{ K }> for S<{ K }> {
+            fn foo() {}
+        }
+        
+        fn main() {
+            S::<1>::foo;
+                   //^
+        }
+    """, tailText = "() of T<1>", typeText = "()")
+
     private fun check(
         @Language("Rust") code: String,
         tailText: String? = null,

@@ -10,7 +10,10 @@ import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.constParameters
 import org.rust.lang.core.psi.ext.typeParameters
+import org.rust.lang.core.types.consts.Const
+import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.TypeFoldable
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
@@ -51,10 +54,15 @@ data class BoundElement<out E : RsElement>(
             assoc.mapValues { (_, value) -> value.foldWith(folder) }
         )
 
-    override fun superVisitWith(visitor: TypeVisitor): Boolean = assoc.values.any { visitor.visitTy(it) } ||
-        subst.types.any { it.visitWith(visitor) } || subst.regions.any { it.visitWith(visitor) }
-
+    override fun superVisitWith(visitor: TypeVisitor): Boolean =
+        assoc.values.any { visitor.visitTy(it) } ||
+            subst.types.any { it.visitWith(visitor) } ||
+            subst.regions.any { it.visitWith(visitor) } ||
+            subst.consts.any { it.visitWith(visitor) }
 }
 
 val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
     get() = element.typeParameters.map { subst[it] ?: TyTypeParameter.named(it) }
+
+val BoundElement<RsGenericDeclaration>.positionalConstArguments: List<Const>
+    get() = element.constParameters.map { subst[it] ?: CtConstParameter(it) }

@@ -31,12 +31,12 @@ import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.asLong
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
-import org.rust.lang.utils.evaluation.ExprValue
-import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.lang.utils.evaluation.evaluate
 
 class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
@@ -128,9 +128,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val declarationFieldsAmount = declaration.fields.size
         val bodyFieldsAmount = patTupleStruct.patList.size
         if (bodyFieldsAmount < declarationFieldsAmount && patTupleStruct.patRest == null) {
-            RsDiagnostic.MissingFieldsInTuplePattern(patTupleStruct, declaration, declarationFieldsAmount, bodyFieldsAmount).addToHolder(holder)
+            RsDiagnostic.MissingFieldsInTuplePattern(
+                patTupleStruct,
+                declaration,
+                declarationFieldsAmount,
+                bodyFieldsAmount
+            ).addToHolder(holder)
         } else if (bodyFieldsAmount > declarationFieldsAmount) {
-            RsDiagnostic.ExtraFieldInTupleStructPattern(patTupleStruct, bodyFieldsAmount, declarationFieldsAmount).addToHolder(holder)
+            RsDiagnostic.ExtraFieldInTupleStructPattern(patTupleStruct, bodyFieldsAmount, declarationFieldsAmount)
+                .addToHolder(holder)
         }
     }
 
@@ -205,12 +211,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val indexToVariantMap = hashMapOf<Long, VariantInfo>()
         for (variant in o.enumVariantList) {
             val expr = variant.variantDiscriminant?.expr
-            val int = if (expr != null) {
-                val result = RsConstExprEvaluator.evaluate(expr, reprType) as? ExprValue.Integer
-                result?.value ?: return
-            } else {
-                null
-            }
+            val int = if (expr != null) expr.evaluate(reprType).asLong() ?: return else null
             val idx = int ?: discrCounter
             discrCounter = idx + 1
 
@@ -290,19 +291,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val error = when {
             element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
-                RsDiagnostic.StructFieldAccessError(ref, ref.referenceName, structName,
-                    MakePublicFix.createIfCompatible(element, element.name, withinOneCrate))
+                RsDiagnostic.StructFieldAccessError(
+                    ref, ref.referenceName, structName,
+                    MakePublicFix.createIfCompatible(element, element.name, withinOneCrate)
+                )
             }
-            ref is RsMethodCall -> RsDiagnostic.AccessError(ref.identifier, RsErrorCode.E0624, "Method",
-                MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
+            ref is RsMethodCall -> RsDiagnostic.AccessError(
+                ref.identifier, RsErrorCode.E0624, "Method",
+                MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate)
+            )
             else -> {
                 val itemType = when (element) {
                     is RsItemElement -> element.itemKindName.capitalize()
                     else -> "Item"
                 }
 
-                RsDiagnostic.AccessError(ref, RsErrorCode.E0603, itemType,
-                    MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate))
+                RsDiagnostic.AccessError(
+                    ref, RsErrorCode.E0603, itemType,
+                    MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate)
+                )
             }
         }
         error.addToHolder(holder)
@@ -327,7 +334,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (type.underscore == null) return
         val owner = type.owner.parent
         if ((owner is RsValueParameter && owner.parent.parent is RsFunction)
-            || (owner is RsRetType && owner.parent is RsFunction) || owner is RsConstant) {
+            || (owner is RsRetType && owner.parent is RsFunction) || owner is RsConstant
+        ) {
             RsDiagnostic.TypePlaceholderForbiddenError(type).addToHolder(holder)
         }
     }
@@ -348,7 +356,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
-            holder.createErrorAnnotation(path.referenceNameElement, "Invalid path: self and super are allowed only at the beginning")
+            holder.createErrorAnnotation(
+                path.referenceNameElement,
+                "Invalid path: self and super are allowed only at the beginning"
+            )
             return
         }
 
@@ -539,7 +550,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0120: Drop can be only implemented by structs and enums
-    private fun checkImplDropForNonAdtError(holder: RsAnnotationHolder, impl: RsImplItem, traitRef: RsTraitRef, trait: RsTraitItem) {
+    private fun checkImplDropForNonAdtError(
+        holder: RsAnnotationHolder,
+        impl: RsImplItem,
+        traitRef: RsTraitRef,
+        trait: RsTraitItem
+    ) {
         if (trait != trait.knownItems.Drop) return
 
         if (impl.typeReference?.type is TyAdt?) return
@@ -559,7 +575,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     // E0184: Cannot implement both Copy and Drop
-    private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, self: Ty, element: PsiElement, trait: RsTraitItem) {
+    private fun checkImplBothCopyAndDrop(
+        holder: RsAnnotationHolder,
+        self: Ty,
+        element: PsiElement,
+        trait: RsTraitItem
+    ) {
         val oppositeTrait = when (trait) {
             trait.knownItems.Drop -> trait.knownItems.Copy
             trait.knownItems.Copy -> trait.knownItems.Drop
@@ -685,7 +706,11 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[0].typeReference ?: params[0], 0)
                         .addToHolder(holder)
                 }
-                if (params[1].typeReference?.type != TyPointer(TyPointer(TyInteger.U8, Mutability.IMMUTABLE), Mutability.IMMUTABLE)) {
+                if (params[1].typeReference?.type != TyPointer(
+                        TyPointer(TyInteger.U8, Mutability.IMMUTABLE),
+                        Mutability.IMMUTABLE
+                    )
+                ) {
                     RsDiagnostic.InvalidStartAttrError.InvalidParam(params[1].typeReference ?: params[1], 1)
                         .addToHolder(holder)
                 }
@@ -771,8 +796,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val dotdoteq = range.dotdoteq ?: range.dotdotdot ?: return
         if (dotdoteq == range.dotdotdot) {
             // rustc doesn't have an error code for this ("error: unexpected token: `...`")
-            holder.createErrorAnnotation(dotdoteq,
-                "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range")
+            holder.createErrorAnnotation(
+                dotdoteq,
+                "`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range"
+            )
             return
         }
         val expr = range.exprList.singleOrNull() ?: return
@@ -844,7 +871,12 @@ private fun RsExpr?.isComparisonBinaryExpr(): Boolean {
     return op is ComparisonOp || op is EqualityOp
 }
 
-private fun checkDuplicates(holder: RsAnnotationHolder, element: RsNameIdentifierOwner, scope: PsiElement = element.parent, recursively: Boolean = false) {
+private fun checkDuplicates(
+    holder: RsAnnotationHolder,
+    element: RsNameIdentifierOwner,
+    scope: PsiElement = element.parent,
+    recursively: Boolean = false
+) {
     if (element.isCfgUnknown) return
     val owner = if (scope is RsMembers) scope.parent else scope
     val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(scope, recursively)
@@ -897,7 +929,10 @@ private fun PsiElement.nameOrImportedName(): String? =
         else -> null
     }
 
-private fun AnnotationSession.duplicatesByNamespace(owner: PsiElement, recursively: Boolean): Map<Namespace, Set<PsiElement>> {
+private fun AnnotationSession.duplicatesByNamespace(
+    owner: PsiElement,
+    recursively: Boolean
+): Map<Namespace, Set<PsiElement>> {
     if (owner.parent is RsFnPointerType) return emptyMap()
 
     fun PsiElement.namespaced(): Sequence<Pair<Namespace, PsiElement>> =

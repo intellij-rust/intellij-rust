@@ -11,9 +11,12 @@ const val HAS_TY_INFER_MASK: TypeFlags = 1
 const val HAS_TY_TYPE_PARAMETER_MASK: TypeFlags = 2
 const val HAS_TY_PROJECTION_MASK: TypeFlags = 4
 const val HAS_RE_EARLY_BOUND_MASK: TypeFlags = 8
+const val HAS_CT_INFER_MASK: TypeFlags = 16
+const val HAS_CT_PARAMETER_MASK: TypeFlags = 32
+const val HAS_CT_UNEVALUATED_MASK: TypeFlags = 64
 
 /**
- * An entity in the Rust type system, which can be one of several kinds (only types and lifetimes for now).
+ * An entity in the Rust type system, which can be one of several kinds (only types, lifetimes and constants for now).
  */
 interface Kind {
     val flags: TypeFlags

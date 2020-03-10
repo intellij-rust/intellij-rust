@@ -13,6 +13,9 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
 import org.rust.lang.core.types.*
+import org.rust.lang.core.types.consts.CtConstParameter
+import org.rust.lang.core.types.consts.CtInferVar
+import org.rust.lang.core.types.consts.FreshCtInferVar
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
@@ -443,8 +446,11 @@ class ImplLookup(
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
         return RsImplIndex.findPotentialImpls(project, selfTy) { cachedImpl ->
-            val (type, generics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
-            val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
+            val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
+            val subst = Substitution(
+                typeSubst = generics.associateWith { ctx.typeVarForParam(it) },
+                constSubst = constGenerics.associateWith { ctx.constVarForParam(it) }
+            )
             // TODO: take into account the lifetimes (?)
             val formalSelfTy = type.substitute(subst)
             val isAppropriateImpl = ctx.canCombineTypes(formalSelfTy, selfTy) &&
@@ -538,18 +544,23 @@ class ImplLookup(
      * ` S<A, B, A> == S<B, A, B>`
      */
     private fun <T : TypeFoldable<T>> freshen(ty: T): T {
-        var counter = 0
-        val map = HashMap<TyInfer, FreshTyInfer>()
+        val tyMap = hashMapOf<TyInfer, FreshTyInfer>()
+        val constMap = hashMapOf<CtInferVar, FreshCtInferVar>()
 
-        return ty.foldTyInferWith {
-            map.getOrPut(it) {
-                when (it) {
-                    is TyInfer.TyVar -> FreshTyInfer.TyVar(counter++)
-                    is TyInfer.IntVar -> FreshTyInfer.IntVar(counter++)
-                    is TyInfer.FloatVar -> FreshTyInfer.FloatVar(counter++)
+        var counter = 0
+        return ty
+            .foldTyInferWith {
+                tyMap.getOrPut(it) {
+                    when (it) {
+                        is TyInfer.TyVar -> FreshTyInfer.TyVar(counter++)
+                        is TyInfer.IntVar -> FreshTyInfer.IntVar(counter++)
+                        is TyInfer.FloatVar -> FreshTyInfer.FloatVar(counter++)
+                    }
                 }
             }
-        }
+            .foldCtInferWith {
+                constMap.getOrPut(it) { FreshCtInferVar(counter++) }
+            }
     }
 
     private fun canEvaluateObligations(ref: TraitRef, candidate: SelectionCandidate, recursionDepth: Int): Boolean {
@@ -599,7 +610,10 @@ class ImplLookup(
                         ?.let { add(SelectionCandidate.TraitObject) }
                 }
                 getHardcodedImpls(ref.selfTy).filter { be ->
-                    be.element == element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
+                    be.element == element && ctx.probe {
+                        ctx.combineTypePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk &&
+                            ctx.combineConstPairs(be.subst.zipConstValues(ref.trait.subst)).isOk
+                    }
                 }.forEach { add(SelectionCandidate.HardcodedImpl) }
             }
         }
@@ -615,9 +629,9 @@ class ImplLookup(
     private fun RsCachedImplItem.trySelectCandidate(ref: TraitRef): SelectionCandidate? {
         val formalTraitRef = implementedTrait ?: return null
         if (formalTraitRef.element != ref.trait.element) return null
-        val (formalSelfTy, generics) = typeAndGenerics ?: return null
+        val (formalSelfTy, generics, constGenerics) = typeAndGenerics ?: return null
         val (_, implTraitRef) =
-            prepareSubstAndTraitRefRaw(ctx, generics, formalSelfTy, formalTraitRef, ref.selfTy)
+            prepareSubstAndTraitRefRaw(ctx, generics, constGenerics, formalSelfTy, formalTraitRef, ref.selfTy)
         if (!ctx.probe { ctx.combineTraitRefs(implTraitRef, ref) }) return null
         return SelectionCandidate.Impl(impl, formalSelfTy, formalTraitRef)
     }
@@ -657,7 +671,9 @@ class ImplLookup(
                 val (subst, preparedRef) = candidate.prepareSubstAndTraitRef(ctx, ref.selfTy)
                 ctx.combineTraitRefs(ref, preparedRef)
                 // pre-resolve type vars to simplify caching of already inferred obligation on fulfillment
-                val candidateSubst = subst.mapTypeValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) } +
+                val candidateSubst = subst
+                    .mapTypeValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) }
+                    .mapConstValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) } +
                     mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst()
                 val obligations = ctx.instantiateBounds(candidate.impl.bounds, candidateSubst, newRecDepth).toList()
                 Selection(candidate.impl, obligations, candidateSubst)
@@ -700,7 +716,10 @@ class ImplLookup(
             }
             is SelectionCandidate.HardcodedImpl -> {
                 val impl = getHardcodedImpls(ref.selfTy).first { be ->
-                    be.element == ref.trait.element && ctx.probe { ctx.combinePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk }
+                    be.element == ref.trait.element && ctx.probe {
+                        ctx.combineTypePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk &&
+                            ctx.combineConstPairs(be.subst.zipConstValues(ref.trait.subst)).isOk
+                    }
                 }
                 ctx.combineBoundElements(impl, ref.trait)
                 val obligations = getHardcodedImplPredicates(ref.selfTy, impl).map { Obligation(newRecDepth, it) }
@@ -950,7 +969,7 @@ private sealed class SelectionCandidate {
         val formalTrait: BoundElement<RsTraitItem>
     ) : SelectionCandidate() {
         fun prepareSubstAndTraitRef(ctx: RsInferenceContext, selfTy: Ty): Pair<Substitution, TraitRef> =
-            prepareSubstAndTraitRefRaw(ctx, impl.generics, formalSelfTy, formalTrait, selfTy)
+            prepareSubstAndTraitRefRaw(ctx, impl.generics, impl.constGenerics, formalSelfTy, formalTrait, selfTy)
     }
 
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
@@ -958,6 +977,7 @@ private sealed class SelectionCandidate {
     object TraitObject : SelectionCandidate()
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()
+
     object Closure : SelectionCandidate()
     class Projection(val bound: TraitRef) : SelectionCandidate()
 }
@@ -965,11 +985,15 @@ private sealed class SelectionCandidate {
 private fun prepareSubstAndTraitRefRaw(
     ctx: RsInferenceContext,
     generics: List<TyTypeParameter>,
+    constGenerics: List<CtConstParameter>,
     formalSelfTy: Ty,
     formalTrait: BoundElement<RsTraitItem>,
     selfTy: Ty
 ): Pair<Substitution, TraitRef> {
-    val subst = generics.associateWith { ctx.typeVarForParam(it) }.toTypeSubst()
+    val subst = Substitution(
+        typeSubst = generics.associateWith { ctx.typeVarForParam(it) },
+        constSubst = constGenerics.associateWith { ctx.constVarForParam(it) }
+    )
     val boundSubst = formalTrait.substitute(subst).subst.mapTypeValues { (k, v) ->
         if (k == v && k.parameter is TyTypeParameter.Named) {
             // Default type parameter values `trait Tr<T=Foo> {}`

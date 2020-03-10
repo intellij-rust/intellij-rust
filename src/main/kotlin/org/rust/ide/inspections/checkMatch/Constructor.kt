@@ -13,21 +13,21 @@ import org.rust.lang.core.psi.ext.fieldTypes
 import org.rust.lang.core.psi.ext.size
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.utils.evaluation.ExprValue
+import org.rust.lang.utils.evaluation.ConstExpr.Value
 
 sealed class Constructor {
 
     /** The constructor of all patterns that don't vary by constructor, e.g. struct patterns and fixed-length arrays */
     object Single : Constructor() {
-        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean = true
+        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean = true
     }
 
     /** Enum variants */
     data class Variant(val variant: RsEnumVariant) : Constructor()
 
     /** Literal values */
-    data class ConstantValue(val value: ExprValue) : Constructor() {
-        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean =
+    data class ConstantValue(val value: Value<*>) : Constructor() {
+        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean =
             if (included) {
                 value >= from && value <= to
             } else {
@@ -36,8 +36,9 @@ sealed class Constructor {
     }
 
     /** Ranges of literal values (`2..=5` and `2..5`) */
-    data class ConstantRange(val start: ExprValue, val end: ExprValue, val includeEnd: Boolean = false) : Constructor() {
-        override fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean =
+    data class ConstantRange(val start: Value<*>, val end: Value<*>, val includeEnd: Boolean = false) :
+        Constructor() {
+        override fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean =
             if (includeEnd) {
                 ((end < to) || (included && to == end)) && (start >= from)
             } else {
@@ -68,7 +69,7 @@ sealed class Constructor {
         else -> 0
     }
 
-    open fun coveredByRange(from: ExprValue, to: ExprValue, included: Boolean): Boolean = false
+    open fun coveredByRange(from: Value<*>, to: Value<*>, included: Boolean): Boolean = false
 
     fun subTypes(type: Ty): List<Ty> = when (type) {
         is TyTuple -> type.types
@@ -94,7 +95,7 @@ sealed class Constructor {
     companion object {
         fun allConstructors(ty: Ty): List<Constructor> =
             when {
-                ty is TyBool -> listOf(true, false).map { ConstantValue(ExprValue.Bool(it)) }
+                ty is TyBool -> listOf(true, false).map { ConstantValue(Value.Bool(it)) }
 
                 ty is TyAdt && ty.item is RsEnumItem -> ty.item.variants.map { Variant(it) }
 
@@ -107,13 +108,13 @@ sealed class Constructor {
     }
 }
 
-private operator fun ExprValue.compareTo(other: ExprValue): Int {
+private operator fun Value<*>.compareTo(other: Value<*>): Int {
     return when {
-        this is ExprValue.Bool && other is ExprValue.Bool -> value.compareTo(other.value)
-        this is ExprValue.Integer && other is ExprValue.Integer -> value.compareTo(other.value)
-        this is ExprValue.Float && other is ExprValue.Float -> value.compareTo(other.value)
-        this is ExprValue.Str && other is ExprValue.Str -> value.compareTo(other.value)
-        this is ExprValue.Char && other is ExprValue.Char -> value.compareTo(other.value)
+        this is Value.Bool && other is Value.Bool -> value.compareTo(other.value)
+        this is Value.Integer && other is Value.Integer -> value.compareTo(other.value)
+        this is Value.Float && other is Value.Float -> value.compareTo(other.value)
+        this is Value.Str && other is Value.Str -> value.compareTo(other.value)
+        this is Value.Char && other is Value.Char -> value.compareTo(other.value)
         else -> throw CheckMatchException("Comparison of incompatible types: $javaClass and ${other.javaClass}")
     }
 }

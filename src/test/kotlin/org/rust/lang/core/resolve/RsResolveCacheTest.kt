@@ -207,6 +207,18 @@ class RsResolveCacheTest : RsTestBase() {
         //^
     """, "\b2")
 
+    fun `test edit const expr`() = checkResolvedToXY("""
+        struct S<const N: usize>;
+        fn foo<
+            const N1: usize,
+            //X
+            const N2: usize
+            //Y
+        >() {
+            let _: S<{ N1/*caret*/ }>;
+        }             //^
+    """, "\b2")
+
     private fun checkResolvedToXY(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
 

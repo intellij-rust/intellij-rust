@@ -581,4 +581,136 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
             }
         }
     """)
+
+    fun `test trait impl for const generic 1`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = [0];
+            s.foo()
+            //^ bar.rs
+        }
+
+    //- bar.rs
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl T for [i32; 1] {
+            fn foo(&self) {}
+        }
+    """)
+
+    fun `test trait impl for const generic 2`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = [0, 1];
+            s.foo()
+            //^ unresolved
+        }
+
+    //- bar.rs
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl T for [i32; 1] {
+            fn foo(&self) {}
+        }
+    """)
+
+    fun `test trait impl for const generic 3`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = [0];
+            s.foo()
+            //^ bar.rs
+        }
+
+    //- bar.rs
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl <const N: usize> T for [i32; N] {
+            fn foo(&self) {}
+        }
+    """)
+
+    fun `test trait impl const generic 4`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = bar::S::<0>;
+            s.foo()
+            //^ bar.rs
+        }
+
+    //- bar.rs
+        pub struct S<const N: usize>;
+        
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl T for S<{ 0 }> {
+            fn foo(&self) {}
+        }
+    """)
+
+    fun `test trait impl const generic 5`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = bar::S::<1>;
+            s.foo()
+            //^ unresolved
+        }
+
+    //- bar.rs
+        pub struct S<const N: usize>;
+        
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl T for S<{ 0 }> {
+            fn foo(&self) {}
+        }
+    """)
+
+    fun `test trait impl const generic 6`() = stubOnlyResolve("""
+    //- main.rs
+        #![feature(const_generics)]
+        mod bar;
+        use bar::T;
+        fn main() {
+            let s = bar::S::<0>;
+            s.foo()
+            //^ bar.rs
+        }
+
+    //- bar.rs
+        pub struct S<const N: usize>;
+        
+        pub trait T {
+            fn foo(&self);
+        }
+        
+        impl <const N: usize> T for S<{ N }> {
+            fn foo(&self) {}
+        }
+    """)
 }

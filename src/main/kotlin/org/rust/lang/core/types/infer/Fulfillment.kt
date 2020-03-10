@@ -171,7 +171,7 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 
     private fun processPredicate(pendingObligation: PendingPredicateObligation): ProcessPredicateResult {
         val (obligation, stalledOn) = pendingObligation
-        if (!stalledOn.isEmpty()) {
+        if (stalledOn.isNotEmpty()) {
             val nothingChanged = stalledOn.all {
                 val resolvedTy = ctx.shallowResolve(it)
                 resolvedTy == it

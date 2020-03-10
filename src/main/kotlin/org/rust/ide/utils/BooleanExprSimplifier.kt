@@ -8,9 +8,9 @@ package org.rust.ide.utils
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.consts.asBool
 import org.rust.lang.core.types.ty.TyBool
-import org.rust.lang.utils.evaluation.ExprValue
-import org.rust.lang.utils.evaluation.RsConstExprEvaluator
+import org.rust.lang.utils.evaluation.evaluate
 import org.rust.lang.utils.negate
 
 class BooleanExprSimplifier(val project: Project) {
@@ -109,7 +109,6 @@ class BooleanExprSimplifier(val project: Project) {
 
         private fun canBeEvaluated(expr: RsExpr): Boolean = eval(expr) != null
 
-        private fun eval(expr: RsExpr): Boolean? =
-            (RsConstExprEvaluator.evaluate(expr, TyBool, null) as? ExprValue.Bool)?.value
+        private fun eval(expr: RsExpr): Boolean? = expr.evaluate(TyBool, resolver = null).asBool()
     }
 }
