@@ -208,9 +208,6 @@ val RsDocAndAttributeOwner.isCfgUnknown: Boolean
     get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
 private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
-    // TODO: get rid of this registry key when cfg support is done
-    if (!isUnitTestMode && !isFeatureEnabled(RsExperiments.CFG_ATTRIBUTES_SUPPORT)) return ThreeValuedLogic.True
-
     // TODO: add cfg to RsFile's stub and remove this line
     if (this is RsFile) return ThreeValuedLogic.True
 

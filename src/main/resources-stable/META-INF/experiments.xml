@@ -3,9 +3,6 @@
         <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="0">
             <description>Enable Cargo tasks to use Build Tool Window</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.lang.cfg.attributes" percentOfUsers="100">
-            <description>Enable Rust cfg attributes support</description>
-        </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.fetch.out.dir" percentOfUsers="0">
             <description>Fetch `OUT_DIR` environment variable value. It's needed to make proper name resolution for code included via `include` macro</description>
         </experimentalFeature>
