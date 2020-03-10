@@ -36,7 +36,7 @@ FILE
                 PsiElement(identifier)('x')
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
-              PsiElement(GTGT)('>>')
+              PsiElement(>>)('>>')
             PsiErrorElement:<expr> expected, got '='
               <empty list>
           PsiWhiteSpace(' ')
@@ -60,7 +60,7 @@ FILE
               <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)
-            PsiElement(GTEQ)('>=')
+            PsiElement(>=)('>=')
           PsiWhiteSpace(' ')
           RsLitExprImpl(LIT_EXPR)
             PsiElement(INTEGER_LITERAL)('1')
@@ -111,7 +111,7 @@ FILE
                 PsiElement(identifier)('x')
             PsiWhiteSpace(' ')
             RsBinaryOpImpl(BINARY_OP)
-              PsiElement(LTLT)('<<')
+              PsiElement(<<)('<<')
             PsiErrorElement:<expr> expected, got '='
               <empty list>
           PsiWhiteSpace(' ')
@@ -135,7 +135,7 @@ FILE
               <empty list>
           PsiWhiteSpace(' ')
           RsBinaryOpImpl(BINARY_OP)
-            PsiElement(LTEQ)('<=')
+            PsiElement(<=)('<=')
           PsiWhiteSpace(' ')
           RsLitExprImpl(LIT_EXPR)
             PsiElement(INTEGER_LITERAL)('1')

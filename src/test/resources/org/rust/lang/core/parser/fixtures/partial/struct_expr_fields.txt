@@ -95,7 +95,7 @@ FILE
             PsiWhiteSpace('\n        ')
             RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
               PsiElement(identifier)('bar')
-            PsiErrorElement:':' expected, got 'baz'
+            PsiErrorElement:',', ':' or '}' expected, got 'baz'
               <empty list>
             PsiWhiteSpace('\n        ')
             RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)

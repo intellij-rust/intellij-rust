@@ -50,7 +50,7 @@ enum class FragmentKind(private val kind: String) {
                 Pat -> RustParser.Pat(adaptBuilder, 0)
                 Stmt -> parseStatement(adaptBuilder)
                 Block -> RustParser.SimpleBlock(adaptBuilder, 0)
-                Item -> parseItem(adaptBuilder)
+                Item -> RustParser.Item(adaptBuilder, 0)
                 Meta -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
                 Vis -> parseVis(adaptBuilder)
                 Tt -> RustParser.TT(adaptBuilder, 0)
@@ -75,9 +75,6 @@ enum class FragmentKind(private val kind: String) {
     private fun parseStatement(b: PsiBuilder): Boolean =
         RustParser.LetDecl(b, 0) || RustParser.Expr(b, 0, -1)
 
-    private fun parseItem(b: PsiBuilder): Boolean =
-        parseItemFns.any { it(b, 0) }
-
     private fun parseVis(b: PsiBuilder): Boolean {
         RustParser.Vis(b, 0)
         return true // Vis can be empty
@@ -95,21 +92,5 @@ enum class FragmentKind(private val kind: String) {
          * but rustc's macro parser treats them as identifiers
          */
         private val IDENTIFIER_TOKENS = TokenSet.orSet(tokenSetOf(RsElementTypes.IDENTIFIER), RS_KEYWORDS)
-
-        private val parseItemFns = listOf(
-            RustParser::Constant,
-            RustParser::TypeAlias,
-            RustParser::Function,
-            RustParser::TraitItem,
-            RustParser::ImplItem,
-            RustParser::ModItem,
-            RustParser::ModDeclItem,
-            RustParser::ForeignModItem,
-            RustParser::StructItem,
-            RustParser::EnumItem,
-            RustParser::UseItem,
-            RustParser::ExternCrateItem,
-            RustParser::ItemLikeMacroCall
-        )
     }
 }

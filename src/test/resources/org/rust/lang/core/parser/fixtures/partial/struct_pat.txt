@@ -32,10 +32,11 @@ FILE
       RsLetDeclImpl(LET_DECL)
         PsiElement(let)('let')
         PsiWhiteSpace(' ')
-        RsPatIdentImpl(PAT_IDENT)
-          RsPatBindingImpl(PAT_BINDING)
-            PsiElement(identifier)('S')
-      PsiErrorElement:'!', '(', ':', '::', ';', '=', '@' or '{' expected, got '{'
+        RsPatConstImpl(PAT_CONST)
+          RsPathExprImpl(PATH_EXPR)
+            RsPathImpl(PATH)
+              PsiElement(identifier)('S')
+      PsiErrorElement:'!', '(', ':', '::', ';', '=' or '{' expected, got '{'
         <empty list>
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)

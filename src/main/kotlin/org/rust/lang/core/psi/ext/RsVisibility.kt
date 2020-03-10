@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.psi.*
 import javax.swing.Icon
@@ -14,7 +15,9 @@ interface RsVisible : RsElement {
 }
 
 interface RsVisibilityOwner : RsVisible {
+    @JvmDefault
     val vis: RsVis?
+        get() = PsiTreeUtil.getStubChildOfType(this, RsVis::class.java)
 
     @JvmDefault
     override val visibility: RsVisibility

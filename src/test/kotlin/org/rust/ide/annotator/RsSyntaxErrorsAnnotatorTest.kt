@@ -334,4 +334,18 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
             <error descr="Macros are not allowed inside a foreign module">macro</error> j() {}
         }
     """)
+
+    fun `test 'default' keyword`() = checkErrors("""
+        <error descr="Structs cannot have the `default` qualifier">default</error> struct A;
+        <error descr="Unions cannot have the `default` qualifier">default</error> union B {}
+        <error descr="Modules cannot have the `default` qualifier">default</error> mod c {}
+        <error descr="Modules cannot have the `default` qualifier">default</error> mod d;
+        <error descr="Enums cannot have the `default` qualifier">default</error> enum E {}
+        <error descr="Use items cannot have the `default` qualifier">default</error> use A;
+        <error descr="Foreign modules cannot have the `default` qualifier">default</error> extern "C" {}
+        <error descr="Extern crates cannot have the `default` qualifier">default</error> extern crate H;
+        <error descr="Macros cannot have the `default` qualifier">default</error> macro_rules! i {}
+        <error descr="Macros cannot have the `default` qualifier">default</error> macro j() {}
+        <error descr="Macro invocations cannot have the `default` qualifier">default</error> foo!();
+    """)
 }
