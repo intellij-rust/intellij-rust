@@ -10,6 +10,7 @@ import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
 import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.regions.ScopeTree
 import org.rust.lang.core.types.ty.TyNever
@@ -43,6 +44,7 @@ class CFGBuilder(
     private val pred: CFGNode get() = preds.peek()
     private val loopScopes: Deque<LoopScope> = ArrayDeque()
     private val breakableBlockScopes: Deque<BlockScope> = ArrayDeque()
+    private var nestedMacroCallsCount: Int = 0
 
     private inline fun finishWith(callable: () -> CFGNode) {
         result = callable()
@@ -253,6 +255,12 @@ class CFGBuilder(
     }
 
     override fun visitMacroCall(macroCall: RsMacroCall) {
+        if (nestedMacroCallsCount > DEFAULT_RECURSION_LIMIT) {
+            finishWithUnreachableNode(addAstNode(macroCall, pred))
+            return
+        }
+        nestedMacroCallsCount++
+
         val subExprsExit = when (val argument = macroCall.macroArgumentElement) {
             is RsExprMacroArgument -> argument.expr?.let { process(it, pred) }
             is RsIncludeMacroArgument -> argument.expr?.let { process(it, pred) }
@@ -286,6 +294,8 @@ class CFGBuilder(
 
             else -> error("unreachable")
         }
+
+        nestedMacroCallsCount--
 
         val subElementsExit = subExprsExit ?: run {
             val subPathsIdents = PsiTreeUtil.findChildrenOfAnyType(
