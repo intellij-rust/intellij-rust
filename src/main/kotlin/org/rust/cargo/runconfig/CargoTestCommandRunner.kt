@@ -16,7 +16,7 @@ import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
@@ -67,7 +67,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
             } else {
                 buildProcessHandler.addProcessListener(object : ProcessAdapter() {
                     override fun processTerminated(event: ProcessEvent) {
-                        ApplicationManager.getApplication().invokeLater {
+                        invokeLater {
                             exitCode.setResult(buildProcessHandler.exitCode)
                         }
                     }

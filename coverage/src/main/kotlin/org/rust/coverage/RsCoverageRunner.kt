@@ -8,9 +8,9 @@ package org.rust.coverage
 import com.intellij.coverage.CoverageEngine
 import com.intellij.coverage.CoverageRunner
 import com.intellij.coverage.CoverageSuite
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapiext.isDispatchThread
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import org.rust.coverage.LcovCoverageReport.Serialization.readLcov
@@ -30,7 +30,7 @@ class RsCoverageRunner : CoverageRunner() {
     override fun loadCoverageData(sessionDataFile: File, baseCoverageSuite: CoverageSuite?): ProjectData? {
         if (baseCoverageSuite !is RsCoverageSuite) return null
         return try {
-            if (ApplicationManager.getApplication().isDispatchThread) {
+            if (isDispatchThread) {
                 baseCoverageSuite.project.computeWithCancelableProgress("Loading Coverage Data...") {
                     readProjectData(sessionDataFile, baseCoverageSuite)
                 }

@@ -6,15 +6,18 @@
 package org.rust.ide.intentions.addFmtStringArgument
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.isExprOrStmtContext
-import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
+import org.rust.lang.core.psi.RsExpressionCodeFragment
+import org.rust.lang.core.psi.RsLitExpr
+import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWriteCommandAction
 
@@ -55,7 +58,7 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
 
         val codeFragment = RsExpressionCodeFragment(project, CODE_FRAGMENT_TEXT, macroCallExpr)
 
-        if (ApplicationManager.getApplication().isUnitTestMode) {
+        if (isUnitTestMode) {
             addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)
         } else {
             RsAddFmtStringArgumentPopup.show(editor, project, codeFragment) {

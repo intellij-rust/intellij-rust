@@ -5,11 +5,11 @@
 
 package org.rust.ide.notifications
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapiext.isDispatchThread
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
 import org.rust.cargo.project.model.*
@@ -35,7 +35,7 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
         editor: FileEditor,
         project: Project
     ): RsEditorNotificationPanel? {
-        if (isUnitTestMode && !ApplicationManager.getApplication().isDispatchThread) return null
+        if (isUnitTestMode && !isDispatchThread) return null
         if (!(file.isRustFile || file.isCargoToml) || isNotificationDisabled(file)) return null
 
         val cargoProjects = project.cargoProjects

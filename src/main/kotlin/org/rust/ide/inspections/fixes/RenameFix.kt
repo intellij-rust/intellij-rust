@@ -6,7 +6,7 @@
 package org.rust.ide.inspections.fixes
 
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -28,7 +28,7 @@ class RenameFix(
     override fun getFamilyName() = "Rename element"
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
-        ApplicationManager.getApplication().invokeLater {
+        invokeLater {
             RefactoringFactory.getInstance(project).createRename(startElement, newName).run()
         }
 }

@@ -6,7 +6,6 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.AccessToken
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -20,6 +19,7 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.openapiext.isDispatchThread
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
@@ -248,7 +248,7 @@ abstract class MacroExpansionTaskBase(
             // This callback will be executed regardless of success or exceptional result
             if (success != null) {
                 // Success
-                if (ApplicationManager.getApplication().isDispatchThread) {
+                if (isDispatchThread) {
                     pool.execute(::runNextStep)
                 } else {
                     runNextStep()

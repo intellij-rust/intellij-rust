@@ -5,10 +5,9 @@
 
 package org.rust.ide.console
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.ui.GuiUtils
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
@@ -27,11 +26,11 @@ class RsConsoleCodeFragmentContext {
     fun updateContext(project: Project, codeFragment: RsReplCodeFragment) {
         val allCommandsText = getAllCommandsText()
 
-        GuiUtils.invokeLaterIfNeeded({
-            ApplicationManager.getApplication().runWriteAction {
+        runInEdt {
+            runWriteAction {
                 codeFragment.context = createContext(project, codeFragment.crateRoot as RsFile?, allCommandsText)
             }
-        }, ModalityState.defaultModalityState())
+        }
     }
 
     private fun getAllCommandsText(): String {

@@ -5,7 +5,7 @@
 
 package org.rust.openapiext
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.progress.PerformInBackgroundOption
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.TaskInfo
@@ -33,11 +33,11 @@ class DelayedBackgroundableProcessIndicator(task: Task.Backgroundable, delay: In
 
     init {
         val timer = TimerUtil.createNamedTimer("DelayedBackgroundableProcessIndicator timer", delay) {
-            ApplicationManager.getApplication().invokeLater({
+            invokeLater(modalityState) {
                 if (isRunning && !isFinishCalled) {
                     background()
                 }
-            }, modalityState)
+            }
         }
         timer.isRepeats = false
         timer.start()

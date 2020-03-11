@@ -16,11 +16,11 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.isDispatchThread
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
@@ -417,7 +417,7 @@ class Cargo(private val cargoExecutable: Path) {
                 return !installed
             }
 
-            val needInstall = if (ApplicationManager.getApplication().isDispatchThread) {
+            val needInstall = if (isDispatchThread) {
                 project.computeWithCancelableProgress("Checking if $crateName is installed...", ::isNotInstalled)
             } else {
                 isNotInstalled()

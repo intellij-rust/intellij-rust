@@ -11,7 +11,7 @@ import com.intellij.execution.filters.Filter
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
@@ -61,7 +61,7 @@ fun Project.buildProject() {
     }
 
     // Initialize run content manager
-    ApplicationManager.getApplication().invokeAndWait {
+    invokeAndWaitIfNeeded {
         RunContentManager.getInstance(this)
     }
 

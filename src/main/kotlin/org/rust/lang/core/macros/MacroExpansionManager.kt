@@ -24,6 +24,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.*
 import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.isDispatchThread
 import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
@@ -836,7 +837,7 @@ private class MacroExpansionTaskQueue(val project: Project) {
 
     fun ensureUpToDate() {
         check(isUnitTestMode)
-        if (ApplicationManager.getApplication().isDispatchThread && !processor.isEmpty) {
+        if (isDispatchThread && !processor.isEmpty) {
             checkWriteAccessNotAllowed()
             if (isProcessingUpdates) return
             isProcessingUpdates = true

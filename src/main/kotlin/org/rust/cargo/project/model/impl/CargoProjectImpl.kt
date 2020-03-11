@@ -9,7 +9,8 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -214,7 +215,7 @@ open class CargoProjectsServiceImpl(
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
             .thenApply { projects ->
-                ApplicationManager.getApplication().invokeAndWait {
+                invokeAndWaitIfNeeded {
                     runWriteAction {
                         directoryIndex.resetIndex()
                         ProjectRootManagerEx.getInstanceEx(project)
@@ -247,7 +248,7 @@ open class CargoProjectsServiceImpl(
         // instead of `modifyProjects` for this reason
         projects.updateSync { _ -> loaded }
             .whenComplete { _, _ ->
-                ApplicationManager.getApplication().invokeLater { refreshAllProjects() }
+                invokeLater { refreshAllProjects() }
             }
     }
 
@@ -418,7 +419,7 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Compl
 }
 
 private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject>) {
-    ApplicationManager.getApplication().invokeAndWait {
+    invokeAndWaitIfNeeded {
         runWriteAction {
             if (project.isDisposed) return@runWriteAction
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {

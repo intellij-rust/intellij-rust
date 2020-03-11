@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapiext.isInternal
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.StatusText
@@ -174,8 +176,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
     }
 
     private fun deleteFile(file: File) {
-        val application = ApplicationManager.getApplication()
-        if (!application.isUnitTestMode && !application.isInternal) {
+        if (!isUnitTestMode && !isInternal) {
             FileUtil.delete(file)
         }
     }

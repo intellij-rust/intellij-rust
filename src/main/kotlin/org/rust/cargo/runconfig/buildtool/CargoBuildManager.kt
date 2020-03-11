@@ -19,6 +19,7 @@ import com.intellij.execution.runners.ProgramRunner
 import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -262,7 +263,7 @@ object CargoBuildManager {
         if (messageType === MessageType.ERROR) {
             MessageView.SERVICE.getInstance(project) // register ToolWindowId.MESSAGES_WINDOW
             val manager = ToolWindowManager.getInstance(project)
-            ApplicationManager.getApplication().invokeLater {
+            invokeLater {
                 manager.notifyByBalloon(ToolWindowId.MESSAGES_WINDOW, messageType, notificationContent)
             }
         }

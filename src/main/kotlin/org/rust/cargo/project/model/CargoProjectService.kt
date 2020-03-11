@@ -7,7 +7,7 @@ package org.rust.cargo.project.model
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -133,7 +133,7 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
 
 private fun discoverToolchain(project: Project) {
     val toolchain = RustToolchain.suggest() ?: return
-    ApplicationManager.getApplication().invokeLater {
+    invokeLater {
         if (project.isDisposed) return@invokeLater
 
         val oldToolchain = project.rustSettings.toolchain
