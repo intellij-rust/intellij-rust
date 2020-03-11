@@ -17,6 +17,9 @@ import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsModItemStub
 import javax.swing.Icon
 
+val RsModItem.hasMacroUse: Boolean get() =
+    greenStub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")
+
 abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
                                     RsModItem {
 
@@ -46,6 +49,3 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
-
-val RsModItem.hasMacroUse: Boolean get() =
-    queryAttributes.hasAttribute("macro_use")

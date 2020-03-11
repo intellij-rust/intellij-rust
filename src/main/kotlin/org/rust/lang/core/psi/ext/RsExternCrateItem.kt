@@ -20,7 +20,7 @@ import org.rust.lang.core.stubs.RsExternCrateItemStub
 val RsExternCrateItem.nameWithAlias: String get() = alias?.name ?: referenceName
 
 val RsExternCrateItem.hasMacroUse: Boolean get() =
-    queryAttributes.hasAttribute("macro_use")
+    greenStub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")
 
 abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCrateItemStub>,
                                             RsExternCrateItem {

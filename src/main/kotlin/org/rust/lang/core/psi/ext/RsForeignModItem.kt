@@ -11,14 +11,14 @@ import com.intellij.psi.stubs.IStubElementType
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsForeignModItem
 import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.stubs.RsPlaceholderStub
+import org.rust.lang.core.stubs.RsForeignModStub
 
-abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsPlaceholderStub>,
+abstract class RsForeignModItemImplMixin : RsStubbedElementImpl<RsForeignModStub>,
                                            RsForeignModItem {
 
     constructor(node: ASTNode) : super(node)
 
-    constructor(stub: RsPlaceholderStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
+    constructor(stub: RsForeignModStub, elementType: IStubElementType<*, *>) : super(stub, elementType)
 
     override val innerAttrList: List<RsInnerAttr>
         get() = stubChildrenOfType()
