@@ -1552,6 +1552,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.41.0")
+    fun `test raw address of feature E0658 1`() = checkErrors("""
+        fn main() {
+            let mut x = 0;
+            let _ = &<error descr="`raw address of` syntax is experimental [E0658]">raw</error> const x;
+            let _ = &<error descr="`raw address of` syntax is experimental [E0658]">raw</error> mut x;
+        }
+    """)
+
+    @MockRustcVersion("1.41.0-nightly")
+    fun `test raw address of feature E0658 2`() = checkErrors("""
+        #![feature(raw_ref_op)]
+
+        fn main() {
+            let mut x = 0;
+            let _ = &raw const x;
+            let _ = &raw mut x;
+        }
+    """)
+
     @MockRustcVersion("1.0.0")
     fun `test box pattern feature E0658 1`() = checkErrors("""
         struct S { x: Box<i32> }
