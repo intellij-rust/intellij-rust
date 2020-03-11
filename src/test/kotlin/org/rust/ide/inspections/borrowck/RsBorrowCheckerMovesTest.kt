@@ -616,4 +616,17 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             }
         }
     """, checkWarn = false)
+
+    fun `test infinitely recursive macro call`() = checkByText("""
+        macro_rules! infinite_macro {
+            ($ e:expr) => { infinite_macro!($ e) };
+        }
+        
+        struct S;
+        
+        fn main() {
+            let x = S;
+            infinite_macro!(x);
+        }
+    """, checkWarn = false)
 }
