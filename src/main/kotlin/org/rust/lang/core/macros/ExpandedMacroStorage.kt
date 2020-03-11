@@ -7,7 +7,6 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -42,15 +41,9 @@ import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.FileNotFoundException
+import java.io.IOException
 import java.lang.ref.WeakReference
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantLock
-import java.util.zip.DeflaterOutputStream
-import java.util.zip.InflaterInputStream
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 import kotlin.concurrent.withLock
 
 class ExpandedMacroStorage(val project: Project) {
@@ -63,7 +56,7 @@ class ExpandedMacroStorage(val project: Project) {
     val isEmpty: Boolean get() = sourceFiles.isEmpty
     val modificationTracker: ModificationTracker get() = _modificationTracker
 
-    private fun deserialize(sfs: List<SourceFile>) {
+    fun deserialize(sfs: List<SourceFile>) {
         for (sf in sfs) {
             sourceFiles.put(sf.fileId, sf)
             getOrPutStagedList(sf.depthNotSync).add(sf)
@@ -230,49 +223,49 @@ class ExpandedMacroStorage(val project: Project) {
 
     companion object {
         private val LOG = Logger.getInstance(ExpandedMacroStorage::class.java)
-        private const val STORAGE_VERSION = 9
-        const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
-        fun load(project: Project, dataFile: Path): ExpandedMacroStorage? {
-            return try {
-                DataInputStream(InflaterInputStream(Files.newInputStream(dataFile))).use { data ->
-                    if (data.readInt() != STORAGE_VERSION) return null
-                    if (data.readInt() != MacroExpander.EXPANDER_VERSION) return null
-                    if (data.readInt() != RsFileStub.Type.stubVersion) return null
-                    if (data.readInt() != RANGE_MAP_ATTRIBUTE_VERSION) return null
+        fun saveStorage(storage: ExpandedMacroStorage, data: DataOutputStream) {
+            data.writeInt(STORAGE_VERSION)
+            data.writeInt(MacroExpander.EXPANDER_VERSION)
+            data.writeInt(RsFileStub.Type.stubVersion)
+            data.writeInt(RANGE_MAP_ATTRIBUTE_VERSION)
 
-                    val sourceFilesSize = data.readInt()
-                    val serSourceFiles = ArrayList<SerializedSourceFile>(sourceFilesSize)
-
-                    val storage = ExpandedMacroStorage(project)
-                    for (i in 0 until sourceFilesSize) {
-                        serSourceFiles += SerializedSourceFile.readFrom(data)
-                    }
-                    val sourceFiles = runReadAction { serSourceFiles.mapNotNull { it.toSourceFile(storage) } }
-                    storage.deserialize(sourceFiles)
-                    storage
-                }
-            } catch (e: FileNotFoundException) {
-                null
-            } catch (e: java.nio.file.NoSuchFileException) {
-                null
-            } catch (e: Exception) {
-                LOG.warn(e)
-                null
-            }
+            data.writeInt(storage.sourceFiles.size())
+            storage.sourceFiles.forEachValue { it.writeTo(data); true }
         }
+    }
+}
 
-        fun saveStorage(storage: ExpandedMacroStorage, dataFile: Path) {
-            Files.createDirectories(dataFile.parent)
-            DataOutputStream(DeflaterOutputStream(Files.newOutputStream(dataFile))).use { data ->
-                data.writeInt(STORAGE_VERSION)
-                data.writeInt(MacroExpander.EXPANDER_VERSION)
-                data.writeInt(RsFileStub.Type.stubVersion)
-                data.writeInt(RANGE_MAP_ATTRIBUTE_VERSION)
+private const val STORAGE_VERSION = 10
+private const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
-                data.writeInt(storage.sourceFiles.size())
-                storage.sourceFiles.forEachValue { it.writeTo(data); true }
+class SerializedExpandedMacroStorage private constructor(
+    private val serSourceFiles: List<SerializedSourceFile>
+) {
+    fun deserializeInReadAction(project: Project): ExpandedMacroStorage {
+        checkReadAccessAllowed()
+        val storage = ExpandedMacroStorage(project)
+        val sourceFiles = serSourceFiles.mapNotNull { it.toSourceFile(storage) }
+        storage.deserialize(sourceFiles)
+        return storage
+    }
+
+    companion object {
+
+        @Throws(IOException::class)
+        fun load(data: DataInputStream): SerializedExpandedMacroStorage? {
+            if (data.readInt() != STORAGE_VERSION) return null
+            if (data.readInt() != MacroExpander.EXPANDER_VERSION) return null
+            if (data.readInt() != RsFileStub.Type.stubVersion) return null
+            if (data.readInt() != RANGE_MAP_ATTRIBUTE_VERSION) return null
+
+            val sourceFilesSize = data.readInt()
+            val serSourceFiles = ArrayList<SerializedSourceFile>(sourceFilesSize)
+
+            for (i in 0 until sourceFilesSize) {
+                serSourceFiles += SerializedSourceFile.readFrom(data)
             }
+            return SerializedExpandedMacroStorage(serSourceFiles)
         }
     }
 }
@@ -744,7 +737,7 @@ class SourceFile(
         }
     }
 
-    private fun markForRebind() = sync {
+    fun markForRebind() = sync {
         if (modificationStamp != FRESH_FLAG) modificationStamp = FORCE_RELINK_FLAG
     }
 
@@ -794,6 +787,9 @@ private data class SerializedSourceFile(
         )
 
         serInfos.mapNotNullTo(infos) { it.toExpandedMacroInfo(sf) }
+        if (infos.size != serInfos.size) {
+            sf.markForRebind()
+        }
         return sf
     }
 
@@ -882,7 +878,11 @@ private data class SerializedExpandedMacroInfo(
     val stubIndex: Int
 ) {
     fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfoImpl? {
-        val file = expansionFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
+        val file = if (expansionFileUrl != null) {
+            VirtualFileManager.getInstance().findFileByUrl(expansionFileUrl) ?: return null
+        } else {
+            null
+        }
         return ExpandedMacroInfoImpl(
             sourceFile,
             file,
@@ -964,7 +964,7 @@ private val VirtualFile.fileId: Int
 private val MACRO_RANGE_MAP_CACHE_KEY: Key<WeakReference<RangeMap>> = Key.create("MACRO_RANGE_MAP_CACHE_KEY")
 private val RANGE_MAP_ATTRIBUTE = FileAttribute(
     "org.rust.macro.RangeMap",
-    ExpandedMacroStorage.RANGE_MAP_ATTRIBUTE_VERSION,
+    RANGE_MAP_ATTRIBUTE_VERSION,
     /*fixedSize = */ true // don't allocate extra space for each record
 )
 

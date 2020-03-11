@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.lang.core.psi.RsMacroCall
@@ -35,7 +34,10 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.*
-import org.rust.stdext.*
+import org.rust.stdext.HashCode
+import org.rust.stdext.executeSequentially
+import org.rust.stdext.nextOrNull
+import org.rust.stdext.supplyAsync
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -46,7 +48,8 @@ abstract class MacroExpansionTaskBase(
     project: Project,
     private val storage: ExpandedMacroStorage,
     private val pool: Executor,
-    private val realFsExpansionContentRoot: VirtualFile,
+    private val vfsBatchFactory: () -> MacroExpansionVfsBatch,
+    private val createExpandedSearchScope: (Int) -> GlobalSearchScope,
     private val stepModificationTracker: SimpleModificationTracker
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false) {
     private val transactionExecutor = TransactionExecutor(project)
@@ -163,7 +166,7 @@ abstract class MacroExpansionTaskBase(
         estimateStages.set(0)
         doneStages.set(0)
 
-        val scope = createExpandedSearchScope()
+        val scope = createExpandedSearchScope(currentStep.get())
         val expansionState = MacroExpansionManager.ExpansionState(scope, stepModificationTracker)
 
         // All subsequent parallelStream tasks are executed on the same [pool]
@@ -220,27 +223,22 @@ abstract class MacroExpansionTaskBase(
                 //  the storage, so if we created some files, we must add them to the storage, or they will be leaked.
                 // We can cancel task if the project is disposed b/c after project reopen storage consistency will be
                 // re-checked
-                val stages3fs = stages2.chunked(VFS_BATCH_SIZE).map { stages2c ->
-                    val fs = LocalFsMacroExpansionVfsBatch(realFsExpansionContentRoot.pathAsPath)
-                    val stages3 = stages2c.map { stage2 ->
-                        if (project.isDisposed) throw ProcessCanceledException()
-                        val result = stage2.writeExpansionToFs(fs, currentStep.get())
-                        doneStages.incrementAndGet()
-                        result
-                    }
-                    stages3 to fs
-                }
 
                 // Note that if project is disposed, this task will not be executed or may be executed partially
-                executeSequentially(transactionExecutor, stages3fs) { (stages3, fs) ->
+                executeSequentially(transactionExecutor, stages2.chunked(VFS_BATCH_SIZE)) { stages2c ->
                     runWriteAction {
-                        fs.applyToVfs()
+                        val batch = vfsBatchFactory()
+                        val stages3 = stages2c.map { stage2 ->
+                            val result = stage2.writeExpansionToFs(batch, currentStep.get())
+                            result
+                        }
+                        batch.applyToVfs()
                         for (stage3 in stages3) {
                             stage3.save(storage)
-                            doneStages.incrementAndGet()
                         }
+                        doneStages.addAndGet(stages3.size * 2)
                     }
-                    totalExpanded.addAndGet(stages3.size)
+                    totalExpanded.addAndGet(stages2c.size)
                     Unit
                 }.thenApply { Unit }
             } else {
@@ -296,15 +294,6 @@ abstract class MacroExpansionTaskBase(
         MACRO_LOG.debug("Moving of pending files to step $step: ${duration / 1000} μs")
     }
 
-    private fun createExpandedSearchScope(): GlobalSearchScope {
-        val step = currentStep.get()
-        val expansionDirs = (0 until step).mapNotNull {
-            realFsExpansionContentRoot.findChild(it.toString())
-        }
-        val expansionScope = GlobalSearchScopes.directoriesScope(project, true, *expansionDirs.toTypedArray())
-        return GlobalSearchScope.allScope(project).uniteWith(expansionScope)
-    }
-
     protected abstract fun getMacrosToExpand(): Sequence<List<Extractable>>
 
     open fun canEat(other: MacroExpansionTaskBase): Boolean = false
@@ -315,7 +304,7 @@ abstract class MacroExpansionTaskBase(
         /**
          * Higher values leads to better throughput (overall expansion time), but worse latency (UI freezes)
          */
-        private const val VFS_BATCH_SIZE = 50
+        private const val VFS_BATCH_SIZE = 200
     }
 }
 
@@ -334,7 +323,7 @@ object Pipeline {
     }
 
     interface Stage2WriteToFs {
-        fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Stage3SaveToStorage
+        fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Stage3SaveToStorage
     }
 
     interface Stage3SaveToStorage {
@@ -343,7 +332,7 @@ object Pipeline {
 }
 
 object EmptyPipeline : Pipeline.Stage2WriteToFs, Pipeline.Stage3SaveToStorage {
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {}
 }
 
@@ -353,10 +342,10 @@ object InvalidationPipeline {
     }
 
     class Stage2(val info: ExpandedMacroInfo) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val expansionFile = info.expansionFile
             if (expansionFile != null && expansionFile.isValid) {
-                fs.deleteFile(fs.resolve(expansionFile))
+                batch.deleteFile(batch.resolve(expansionFile))
             }
             return Stage3(info)
         }
@@ -375,7 +364,7 @@ class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Sta
                                                                     Pipeline.Stage3SaveToStorage {
 
     override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
-    override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
+    override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {
         checkWriteAccessAllowed()
         storage.removeSourceFileIfEmpty(sf)
@@ -447,15 +436,15 @@ object ExpansionPipeline {
         private val expansionText: String,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             val file = if (oldExpansionFile != null) {
                 check(oldExpansionFile.isValid) { "VirtualFile is not valid ${oldExpansionFile.url}" }
-                val file = fs.resolve(oldExpansionFile)
-                fs.writeFile(file, expansionText)
+                val file = batch.resolve(oldExpansionFile)
+                batch.writeFile(file, expansionText)
                 file
             } else {
-                fs.createFileWithContent(expansionText, stepNumber)
+                batch.createFileWithContent(expansionText, stepNumber)
             }
             return Stage3(info, callHash, defHash, file, ranges)
         }
@@ -468,8 +457,8 @@ object ExpansionPipeline {
         private val oldExpansionFile: VirtualFile,
         private val ranges: RangeMap
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
-            val file = fs.resolve(oldExpansionFile)
+        override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
+            val file = batch.resolve(oldExpansionFile)
             return Stage3(info, callHash, defHash, file, ranges)
         }
     }
@@ -479,10 +468,10 @@ object ExpansionPipeline {
         private val callHash: HashCode?,
         private val defHash: HashCode?
     ) : Pipeline.Stage2WriteToFs {
-        override fun writeExpansionToFs(fs: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
+        override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
-                fs.deleteFile(fs.resolve(oldExpansionFile))
+                batch.deleteFile(batch.resolve(oldExpansionFile))
             }
             return Stage3(info, callHash, defHash, null, null)
         }
