@@ -352,11 +352,13 @@ class RsPsiFactory(
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
 
-    fun createFunction(
-        text: String
-    ): RsFunction =
+    fun createFunction(text: String): RsFunction =
         createFromText(text)
-            ?: error("Failed to create function element: text")
+            ?: error("Failed to create function element: $text")
+
+    fun createRetType(ty: String): RsRetType =
+        createFromText("fn foo() -> $ty {}")
+            ?: error("Failed to create function return type: $ty")
 
     fun createImpl(name: String, functions: List<RsFunction>): RsImplItem =
         createFromText("impl $name {\n${functions.joinToString(separator = "\n", transform = { it.text })}\n}")
