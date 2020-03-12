@@ -45,6 +45,8 @@ import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.RustProjectSettingsService
+import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
+import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindowIfNeeded
@@ -81,9 +83,11 @@ open class CargoProjectsServiceImpl(
                 refreshAllProjects()
             }))
 
-            subscribe(RustProjectSettingsService.TOOLCHAIN_TOPIC, object : RustProjectSettingsService.ToolchainListener {
-                override fun toolchainChanged() {
-                    refreshAllProjects()
+            subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
+                override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
+                    if (e.affectsCargoMetadata) {
+                        refreshAllProjects()
+                    }
                 }
             })
 

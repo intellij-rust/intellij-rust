@@ -5,18 +5,21 @@
 
 package org.rust.cargo.project.settings.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.serializeObjectInto
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
-import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
-import org.rust.cargo.project.settings.RustProjectSettingsService.State
+import org.rust.cargo.project.settings.RustProjectSettingsService.*
+import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 
@@ -60,11 +63,11 @@ class RustProjectSettingsServiceImpl(
     }
 
     override fun modify(action: (State) -> Unit) {
-        val copy = state.copy()
-        action(copy)
-        if (state != copy) {
-            state = copy.copy()
-            notifyToolchainChanged()
+        val newState = state.copy().also(action)
+        if (state != newState) {
+            val oldState = state
+            state = newState.copy()
+            notifySettingsChanged(oldState, newState)
         }
     }
 
@@ -72,7 +75,16 @@ class RustProjectSettingsServiceImpl(
         ShowSettingsUtil.getInstance().editConfigurable(project, RsProjectConfigurable(project))
     }
 
-    private fun notifyToolchainChanged() {
-        project.messageBus.syncPublisher(RustProjectSettingsService.TOOLCHAIN_TOPIC).toolchainChanged()
+    private fun notifySettingsChanged(oldState: State, newState: State) {
+        val event = RustSettingsChangedEvent(oldState, newState)
+        project.messageBus.syncPublisher(RUST_SETTINGS_TOPIC).rustSettingsChanged(event)
+
+        if (event.isChanged(State::doctestInjectionEnabled)) {
+            // flush injection cache
+            (PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl).incCounter()
+        }
+        if (event.affectsHighlighting) {
+            DaemonCodeAnalyzer.getInstance(project).restart()
+        }
     }
 }

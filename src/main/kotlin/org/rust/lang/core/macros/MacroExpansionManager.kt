@@ -555,14 +555,28 @@ private class MacroExpansionServiceImplInner(
 
         connect.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
             override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
-                if (!isExpansionModeNew) {
-                    cleanMacrosDirectory()
+                settingsChanged()
+            }
+        })
+
+        connect.subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustProjectSettingsService.RustSettingsListener {
+            override fun rustSettingsChanged(e: RustProjectSettingsService.RustSettingsChangedEvent) {
+                if (!e.affectsCargoMetadata) { // if affect cargo metadata, will be invoked by CARGO_PROJECTS_TOPIC
+                    if (e.isChanged(RustProjectSettingsService.State::macroExpansionEngine)) {
+                        settingsChanged()
+                    }
                 }
-                processUnprocessedMacros()
             }
         })
 
         connect.subscribe(RUST_PSI_CHANGE_TOPIC, treeChangeListener)
+    }
+
+    fun settingsChanged() {
+        if (!isExpansionModeNew) {
+            cleanMacrosDirectory()
+        }
+        processUnprocessedMacros()
     }
 
     private enum class ChangedMacrosScope { NONE, WORKSPACE, ALL }
