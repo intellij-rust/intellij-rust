@@ -9,6 +9,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.GatherLivenessContext
 import org.rust.lang.core.types.borrowck.ConsumeMode.Copy
@@ -110,6 +111,8 @@ enum class MutateMode {
 }
 
 class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCategorizationContext) {
+    private var nestedMacroCallsCount: Int = 0
+
     fun consumeBody(body: RsBlock) {
         val function = body.parent as? RsFunction ?: return
 
@@ -311,6 +314,11 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
     }
 
     private fun walkMacroCall(macroCall: RsMacroCall) {
+        if (nestedMacroCallsCount > DEFAULT_RECURSION_LIMIT) {
+            return
+        }
+        nestedMacroCallsCount++
+
         when (val argument = macroCall.macroArgumentElement) {
             is RsExprMacroArgument -> argument.expr?.let(::walkExpr)
             is RsIncludeMacroArgument -> argument.expr?.let(::walkExpr)
@@ -347,6 +355,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
             else -> error("unreachable")
         }
+        nestedMacroCallsCount--
     }
 
     private fun walkStmt(stmt: RsStmt) {

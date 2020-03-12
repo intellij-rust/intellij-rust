@@ -951,6 +951,23 @@ class RsControlFlowGraphTest : RsTestBase() {
         Exit
     """)
 
+    fun `test infinitely recursive macro call`() = testCFG("""
+        macro_rules! infinite_macro {
+            () => { infinite_macro!() };
+        }
+        fn foo() {
+            1;
+            infinite_macro!();
+            2;
+        }
+    """, """
+        Entry
+        1
+        1;
+        infinite_macro ! ( )
+        Termination
+    """)
+
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
