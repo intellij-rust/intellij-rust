@@ -450,10 +450,10 @@ private class MacroExpansionServiceImplInner(
                     })
                 }
                 if (toDelete.isNotEmpty()) {
-                    val batch = EventBasedVfsBatch()
-                    toDelete.forEach { batch.deleteFile(it.path) }
+                    val batch = VfsBatch()
+                    toDelete.forEach { batch.deleteFile(it) }
                     WriteAction.runAndWait<Throwable> {
-                        batch.applyToVfs()
+                        batch.applyToVfs(async = false)
                     }
                 }
             }
