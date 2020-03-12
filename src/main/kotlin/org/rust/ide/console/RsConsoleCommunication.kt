@@ -54,7 +54,16 @@ class RsConsoleCommunication(private val consoleView: RsConsoleView) {
     }
 
     companion object {
-        const val SUCCESS_EXECUTION_MARKER: String = "\u0001"
-        const val FAILED_EXECUTION_MARKER: String = "\u0002"
+        /**
+         * \u0091 and \u0092 are C1 control codes (https://en.wikipedia.org/wiki/C0_and_C1_control_codes#C1_control_codes_for_general_use)
+         * with names "Private Use 1" and "Private Use 2"
+         * and meaning
+         *     "Reserved for a function without standardized meaning for private use as required,
+         *      subject to the prior agreement of the sender and the recipient of the data."
+         * so they are ideal for our purpose
+         */
+        // BACKCOMPAT: Evcxr 0.4.6. Remove \u0001 and \u0002
+        val SUCCESS_EXECUTION_MARKER: Regex = Regex("[\u0091\u0001]")
+        val FAILED_EXECUTION_MARKER: Regex = Regex("[\u0092\u0002]")
     }
 }
