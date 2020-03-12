@@ -35,6 +35,8 @@ fn dyn_multiple_bound(b: &mut dyn Bar + Baz) {}
 
 fn parenthesized_dyn_multiple_bound(b: &mut dyn (Bar) + (Baz)) {}
 
+fn lifetime_bound_on_Fn_returning_reference<'b, F, Z: 'b>() where F: Fn() -> &'b Z + 'static {}
+
 fn assoc_type_bounds1<T: Foo<Item: Bar>>(t: T) {}
 fn assoc_type_bounds2<T: Foo<Item: Bar+Baz>>(t: T) {}
 fn assoc_type_bounds3<T: Foo<Item1: Bar, Item2 = ()>>(t: T) {}

@@ -854,7 +854,7 @@ private TypeReferenceInner ::= ArrayType
                                | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
 
 private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
-                               | RefLikeType
+                               | RefLikeTypeNoImplicitTrait
                                | FnPointerType
                                // External rule to find the difference between `(T)` and `(T,)`
                                | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
@@ -897,7 +897,9 @@ ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-RefLikeType ::= ( '&' Lifetime? mut? | '*' [ const | mut ] ) TypeReference {
+private RefLikeStart ::= ( '&' Lifetime? mut? | '*' [ const | mut ] )
+RefLikeTypeNoImplicitTrait ::= RefLikeStart TypeReferenceNoImplicitTraitType { elementType = RefLikeType }
+RefLikeType ::= RefLikeStart TypeReference {
   pin = 1
   implements = "org.rust.lang.core.psi.ext.RsTypeElement"
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
