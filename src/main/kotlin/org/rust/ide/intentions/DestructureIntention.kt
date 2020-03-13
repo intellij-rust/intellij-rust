@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
+import org.rust.ide.presentation.insertionSafeTextWithAliasesWithoutTypes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
@@ -22,7 +23,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     override fun getFamilyName(): String = text
 
     sealed class Context(val patIdent: RsPatIdent) {
-        class Struct(patIdent: RsPatIdent, val struct: RsStructItem) : Context(patIdent)
+        class Struct(patIdent: RsPatIdent, val struct: RsStructItem, val type: TyAdt) : Context(patIdent)
         class Tuple(patIdent: RsPatIdent, val tuple: TyTuple) : Context(patIdent)
     }
 
@@ -33,7 +34,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
                 val struct = ty.item as? RsStructItem ?: return null
                 val mod = element.contextStrict<RsMod>() ?: return null
                 if (!struct.canBeInstantiatedIn(mod)) return null
-                Context.Struct(patIdent, struct)
+                Context.Struct(patIdent, struct, ty)
             }
             is TyTuple -> Context.Tuple(patIdent, ty)
             else -> null
@@ -42,21 +43,23 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         when (ctx) {
-            is Context.Struct -> handleStruct(project, editor, ctx.patIdent, ctx.struct)
+            is Context.Struct -> handleStruct(project, editor, ctx.patIdent, ctx.struct, ctx.type)
             is Context.Tuple -> handleTuple(project, editor, ctx.patIdent, ctx.tuple.types.size)
         }
     }
 
-    private fun handleStruct(project: Project, editor: Editor, patIdent: RsPatIdent, struct: RsStructItem) {
+    private fun handleStruct(project: Project, editor: Editor, patIdent: RsPatIdent, struct: RsStructItem, type: TyAdt) {
         val factory = RsPsiFactory(project)
+
+        val typeName = type.insertionSafeTextWithAliasesWithoutTypes
         val patStruct = if (struct.isTupleStruct) {
-            factory.createPatTupleStruct(struct)
+            factory.createPatTupleStruct(struct, typeName)
         } else {
-            factory.createPatStruct(struct)
+            factory.createPatStruct(struct, typeName)
         }
         val newPatStruct = patIdent.replace(patStruct) as? RsPat ?: return
 
-        importTypeReferencesFromTy(newPatStruct, struct.declaredType)
+        importTypeReferencesFromTy(newPatStruct, type, true)
 
         if (newPatStruct !is RsPatTupleStruct) return
         if (struct.positionalFields.isNotEmpty()) {

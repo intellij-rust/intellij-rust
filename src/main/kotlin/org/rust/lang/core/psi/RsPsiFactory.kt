@@ -391,16 +391,16 @@ class RsPsiFactory(
             }
         """) ?: error("Failed to create pat field")
 
-    fun createPatStruct(struct: RsStructItem): RsPatStruct {
-        val structName = struct.name ?: error("Failed to create pat struct")
+    fun createPatStruct(struct: RsStructItem, name: String? = null): RsPatStruct {
+        val structName = name ?: struct.name ?: error("Failed to create pat struct")
         val pad = if (struct.namedFields.isEmpty()) "" else " "
         val body = struct.namedFields
             .joinToString(separator = ", ", prefix = " {$pad", postfix = "$pad}") { it.name ?: "_" }
         return createFromText("fn f($structName$body: $structName) {}") ?: error("Failed to create pat struct")
     }
 
-    fun createPatTupleStruct(struct: RsStructItem): RsPatTupleStruct {
-        val structName = struct.name ?: error("Failed to create pat tuple struct")
+    fun createPatTupleStruct(struct: RsStructItem, name: String? = null): RsPatTupleStruct {
+        val structName = name ?: struct.name ?: error("Failed to create pat tuple struct")
         val body = struct.positionalFields
             .joinToString(separator = ", ", prefix = "(", postfix = ")") { "_${it.name}" }
         return createFromText("fn f($structName$body: $structName) {}") ?: error("Failed to create pat tuple struct")
