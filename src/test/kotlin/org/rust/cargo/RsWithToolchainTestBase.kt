@@ -68,6 +68,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     override fun tearDown() {
         rustupFixture.tearDown()
         super.tearDown()
+        checkMacroExpansionFileSystemAfterTest()
     }
 
     protected fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
