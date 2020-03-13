@@ -142,6 +142,7 @@ allprojects {
         }
 
         tasks.withType<Test>().configureEach {
+            jvmArgs = listOf("-Xmx2g", "-XX:-OmitStackTraceInFastThrow")
             // We need to prevent the platform-specific shared JNA library to loading from the system library paths,
             // because otherwise it can lead to compatibility issues.
             // Also note that IDEA does the same thing at startup, and not only for tests.
