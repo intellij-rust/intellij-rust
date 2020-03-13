@@ -391,7 +391,7 @@ private class MacroExpansionServiceImplInner(
         val expansionsDirVi = expansionsDirVi ?: return
 
         // See [MacroExpansionFileSystem] docs for explanation of what happens here
-        MacroExpansionFileSystem.getInstance().refreshFiles(listOf(expansionsDirVi), true, true) {
+        MacroExpansionFileSystem.getInstance().refreshFiles(listOf(expansionsDirVi), /*async =*/!isUnitTestMode, true) {
             MacroExpansionFileSystem.getInstance().makeDummy(path)
         }
     }

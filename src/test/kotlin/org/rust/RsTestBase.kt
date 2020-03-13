@@ -78,6 +78,8 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         } catch (e: Exception) {
             if (e.javaClass.simpleName != "DisposalException") throw e
         }
+
+        checkMacroExpansionFileSystemAfterTest()
     }
 
     private fun setupMockRustcVersion() {
