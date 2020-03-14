@@ -12,7 +12,7 @@ fun checkMacroExpansionFileSystemAfterTest() {
     val vfs = MacroExpansionFileSystem.getInstance()
     val rootPath = "/$MACRO_EXPANSION_VFS_ROOT"
     if (vfs.exists(rootPath)) {
-        val incorrectFilePaths = vfs.getDirectory(rootPath).copyChildren()
+        val incorrectFilePaths = vfs.getDirectory(rootPath)?.copyChildren().orEmpty()
             .filter { it !is MacroExpansionFileSystem.FSItem.FSDir.DummyDir }
             .map { rootPath + "/" + it.name }
 
@@ -23,7 +23,7 @@ fun checkMacroExpansionFileSystemAfterTest() {
             error("$incorrectFilePaths are not dummy dirs")
         }
     }
-    val incorrectFilePaths = vfs.getDirectory("/").copyChildren()
+    val incorrectFilePaths = vfs.getDirectory("/")?.copyChildren().orEmpty()
         .filter { it.name != MACRO_EXPANSION_VFS_ROOT }
         .map { "/" + it.name }
 

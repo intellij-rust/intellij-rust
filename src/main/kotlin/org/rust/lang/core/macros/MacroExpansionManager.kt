@@ -323,12 +323,11 @@ private object MacroExpansionFileSystemRootsLoader {
     }
 
     fun saveProjectDirs() {
-        val rem = MacroExpansionFileSystem.getInstance().getDirectory("/$MACRO_EXPANSION_VFS_ROOT")
-            as? MacroExpansionFileSystem.FSItem.FSDir ?: return
+        val root = MacroExpansionFileSystem.getInstance().getDirectory("/$MACRO_EXPANSION_VFS_ROOT") ?: return
         val dataFile = getProjectListDataFile()
         Files.createDirectories(dataFile.parent)
         dataFile.newDeflaterDataOutputStream().use { data ->
-            val children = rem.copyChildren()
+            val children = root.copyChildren()
             data.writeInt(children.size)
             for (dir in children) {
                 data.writeUTF(dir.name)
@@ -380,7 +379,11 @@ private class MacroExpansionServiceImplInner(
         Files.createDirectories(dataFile.parent)
         dataFile.newDeflaterDataOutputStream().use { data ->
             ExpandedMacroStorage.saveStorage(storage, data)
-            MacroExpansionFileSystem.writeFSItem(data, MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath))
+            val dirToSave = MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath) ?: run {
+                MACRO_LOG.warn("Expansion directory does not exist when saving the component: ${dirs.expansionDirPath}")
+                MacroExpansionFileSystem.FSItem.FSDir(null, dirs.projectDirName)
+            }
+            MacroExpansionFileSystem.writeFSItem(data, dirToSave)
         }
         MacroExpansionFileSystemRootsLoader.saveProjectDirs()
         return dirs.projectDirName

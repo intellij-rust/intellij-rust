@@ -370,11 +370,11 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
     }
 
     fun makeDummy(path: String) {
-        setDirectory(path, getDirectory(path).dummy())
+        getDirectory(path)?.let { setDirectory(path, it.dummy()) }
     }
 
-    fun getDirectory(path: String): FSDir {
-        return convert(path) as? FSDir ?: throw FileNotFoundException(path)
+    fun getDirectory(path: String): FSDir? {
+        return convert(path) as? FSDir
     }
 
     fun deleteFile(path: String) {
