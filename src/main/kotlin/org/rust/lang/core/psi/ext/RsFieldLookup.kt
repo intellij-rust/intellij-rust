@@ -17,3 +17,5 @@ abstract class RsFieldLookupImplMixin(node: ASTNode) : RsElementImpl(node), RsFi
     override fun getReference(): RsReference = RsFieldLookupReferenceImpl(this)
 }
 
+val RsFieldLookup.isAsync: Boolean
+    get() = this.text == "await"

@@ -6,9 +6,11 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.refactoring.extractFunction.ExtractFunctionUi
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionConfig
 import org.rust.ide.refactoring.extractFunction.withMockExtractFunctionUi
@@ -607,7 +609,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 bar(a, b, c, d)
             }
 
-            fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) -> () {
+            fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
                 a;
                 b;
                 c;
@@ -669,7 +671,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 bar(t, u)
             }
 
-            fn bar<T, U>(t: T, u: U) -> () where T: Trait1 + Trait2, U: Trait3 {
+            fn bar<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
                 t;
                 u;
                 println!("test")
@@ -989,6 +991,100 @@ class RsExtractFunctionTest : RsTestBase() {
         }
     """, false, "bar", listOf("a")
     )
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract async function with await`() = doTest("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        async fn foo() {
+            <selection>async { () }.await</selection>
+        }
+    """, """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        async fn foo() {
+            bar().await
+        }
+
+        async fn bar() {
+            async { () }.await
+        }
+    """, false, "bar"
+    )
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract async function with nested await`() = doTest("""
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        struct S;
+        struct W(S);
+        impl S {
+            async fn foo(&self) -> (u32, u32) { (0, 0) }
+        }
+
+        async fn foo() -> u32 {
+            let w = W(S);
+            <selection>w.0.foo().await.0</selection>
+        }
+    """, """
+        #[lang = "core::future::future::Future"]
+        trait Future { type Output; }
+
+        struct S;
+        struct W(S);
+        impl S {
+            async fn foo(&self) -> (u32, u32) { (0, 0) }
+        }
+
+        async fn foo() -> u32 {
+            let w = W(S);
+            bar(w).await
+        }
+
+        async fn bar(w: W) -> u32 {
+            w.0.foo().await.0
+        }
+    """, false, "bar"
+    )
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract sync function with await inside block`() = doTest("""
+        async fn foo() {
+            <selection>async { async { () }.await };</selection>
+        }
+    """, """
+        async fn foo() {
+            bar();
+        }
+
+        fn bar() {
+            async { async { () }.await };
+        }
+    """,
+        false,
+        "bar")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extract sync function with await inside closure`() = doTest("""
+        #![feature(async_closure)]
+        async fn foo() {
+            let x = <selection>async || foo().await</selection>;
+        }
+    """, """
+        #![feature(async_closure)]
+        async fn foo() {
+            let x = bar();
+        }
+
+        fn bar() -> fn() -> _ {
+            async || foo().await
+        }
+    """,
+        false,
+        "bar")
 
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
