@@ -15,7 +15,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.RsMandatoryReferenceElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.descendantOfTypeStrict
 
@@ -65,7 +65,7 @@ class RsConvertToNamedFieldsProcessor(
                 is RsDotExpr,
                 is RsStructLiteralBody,
                 is RsPatField -> {
-                    val nameElement = (element as RsReferenceElement).referenceNameElement
+                    val nameElement = (element as RsMandatoryReferenceElement).referenceNameElement
                     nameElement.replace(rsPsiFactory.createIdentifier((usage as MyUsageInfo).fieldName!!))
                 }
                 is RsPatTupleStruct -> {

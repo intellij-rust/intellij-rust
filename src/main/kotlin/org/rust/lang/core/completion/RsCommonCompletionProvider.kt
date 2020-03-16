@@ -258,7 +258,7 @@ private fun filterAssocTypes(
 ): RsResolveProcessor {
     val qualifier = path.path
     val allAssocItemsAllowed =
-        qualifier == null || qualifier.hasCself || qualifier.reference.resolve() is RsTypeParameter
+        qualifier == null || qualifier.hasCself || qualifier.reference?.resolve() is RsTypeParameter
     return if (allAssocItemsAllowed) processor else fun(it: ScopeEntry): Boolean {
         if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) return false
         return processor(it)

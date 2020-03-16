@@ -34,7 +34,7 @@ fun inferTypeReferenceType(ref: RsTypeReference, defaultTraitObjectRegion: Regio
                 val path = kind.path
                 val primitiveType = TyPrimitive.fromPath(path)
                 if (primitiveType != null) return primitiveType
-                val boundElement = path.reference.advancedResolve() ?: return TyUnknown
+                val boundElement = path.reference?.advancedResolve() ?: return TyUnknown
                 val (target, subst) = boundElement
 
                 when {

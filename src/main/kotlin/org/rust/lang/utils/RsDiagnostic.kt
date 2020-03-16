@@ -836,7 +836,7 @@ sealed class RsDiagnostic(
     }
 
     class UndeclaredLabelError(
-        element: RsReferenceElement
+        element: RsMandatoryReferenceElement
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,

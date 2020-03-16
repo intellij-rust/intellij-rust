@@ -37,7 +37,7 @@ class RsRainbowVisitor : RainbowVisitor() {
         }
 
         for (path in function.descendantsOfType<RsPath>()) {
-            val target = path.reference.resolve() as? RsPatBinding ?: continue
+            val target = path.reference?.resolve() as? RsPatBinding ?: continue
             val colorTag = bindingToUniqueName[target] ?: return
             addInfo(path.referenceNameElement, colorTag)
         }

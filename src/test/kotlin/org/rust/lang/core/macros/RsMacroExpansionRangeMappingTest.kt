@@ -187,7 +187,7 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
     private fun checkOffset(@Language("Rust") code: String, refiner: (RsElement) -> PsiElement = { it }) {
         InlineFile(code).withCaret()
         val ref = findElementInEditor<RsReferenceElement>("^")
-        val resolved = ref.reference.resolve() ?: error("Failed to resolve ${ref.text}")
+        val resolved = ref.reference?.resolve() ?: error("Failed to resolve ${ref.text}")
         val elementInExpansion = refiner(resolved)
         check(elementInExpansion.isExpandedFromMacro) { "Must resolve to macro expansion" }
         val elementInCallBody = elementInExpansion.findElementExpandedFrom()
@@ -206,7 +206,7 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
     private fun checkNotFound(@Language("Rust") code: String, refiner: (RsElement) -> PsiElement = { it }) {
         InlineFile(code)
         val ref = findElementInEditor<RsReferenceElement>("^")
-        val resolved = ref.reference.resolve() ?: error("Failed to resolve ${ref.text}")
+        val resolved = ref.reference?.resolve() ?: error("Failed to resolve ${ref.text}")
         val elementInExpansion = refiner(resolved)
         check(elementInExpansion.isExpandedFromMacro) { "Must resolve to macro expansion" }
         val elementInCallBody = elementInExpansion.findElementExpandedFrom()

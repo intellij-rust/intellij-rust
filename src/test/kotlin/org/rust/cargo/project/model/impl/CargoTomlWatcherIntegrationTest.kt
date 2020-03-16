@@ -61,7 +61,7 @@ class CargoTomlWatcherIntegrationTest : RsWithToolchainTestBase() {
 
 
         runWithInvocationEventsDispatching("Failed to resolve the reference") {
-            p.findElementInFile<RsPath>("src/main.rs").reference.resolve() != null
+            p.findElementInFile<RsPath>("src/main.rs").reference?.resolve() != null
         }
     }
 }

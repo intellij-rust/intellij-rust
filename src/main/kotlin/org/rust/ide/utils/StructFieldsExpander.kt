@@ -22,7 +22,7 @@ fun addMissingFieldsToStructLiteral(
     structLiteral: RsStructLiteral,
     recursive: Boolean = false
 ) {
-    val declaration = structLiteral.path.reference.deepResolve() as? RsFieldsOwner ?: return
+    val declaration = structLiteral.path.reference?.deepResolve() as? RsFieldsOwner ?: return
     val body = structLiteral.structLiteralBody
     val fieldsToAdd = calculateMissingFields(body, declaration)
     val defaultValueBuilder = RsDefaultValueBuilder(declaration.knownItems, body.containingMod, factory, recursive)
@@ -36,7 +36,7 @@ fun addMissingFieldsToStructLiteral(
 }
 
 fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
-    val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
+    val declaration = patStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
     val hasTrailingComma = patStruct.rbrace.getPrevNonCommentSibling()?.elementType == RsElementTypes.COMMA
     patStruct.patRest?.delete()
     val existingFields = patStruct.patFieldList
@@ -68,7 +68,7 @@ fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
 }
 
 fun expandTupleStructFields(factory: RsPsiFactory, editor: Editor?, patTuple: RsPatTupleStruct) {
-    val declaration = patTuple.path.reference.deepResolve() as? RsFieldsOwner ?: return
+    val declaration = patTuple.path.reference?.deepResolve() as? RsFieldsOwner ?: return
     val hasTrailingComma = patTuple.rparen.getPrevNonCommentSibling()?.elementType == RsElementTypes.COMMA
     val bodyFields = patTuple.childrenOfType<RsPatIdent>()
     val missingFieldsAmount = declaration.fields.size - bodyFields.size

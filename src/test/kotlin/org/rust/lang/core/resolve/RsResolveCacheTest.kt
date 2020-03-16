@@ -10,7 +10,7 @@ import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.resolve.ref.RsResolveCache.Testmarks
 
 class RsResolveCacheTest : RsTestBase() {
@@ -222,7 +222,7 @@ class RsResolveCacheTest : RsTestBase() {
     private fun checkResolvedToXY(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
 
-        val (refElement, _, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
+        val (refElement, _, offset) = findElementWithDataAndOffsetInEditor<RsReferenceElement>("^")
 
         refElement.checkResolvedTo("X", offset)
 
@@ -240,7 +240,7 @@ class RsResolveCacheTest : RsTestBase() {
     private fun checkResolvedAndThenUnresolved(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
 
-        val (refElement, _, offset) = findElementWithDataAndOffsetInEditor<RsWeakReferenceElement>("^")
+        val (refElement, _, offset) = findElementWithDataAndOffsetInEditor<RsReferenceElement>("^")
 
         refElement.checkResolvedTo("X", offset)
 
@@ -251,7 +251,7 @@ class RsResolveCacheTest : RsTestBase() {
         check(refElement.reference!!.resolve() == null)
     }
 
-    private fun RsWeakReferenceElement.checkResolvedTo(marker: String, offset: Int) {
+    private fun RsReferenceElement.checkResolvedTo(marker: String, offset: Int) {
         val resolved = checkedResolve(offset)
         val target = findElementInEditor<RsNamedElement>(marker)
 

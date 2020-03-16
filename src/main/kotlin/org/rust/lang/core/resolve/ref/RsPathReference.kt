@@ -15,7 +15,3 @@ interface RsPathReference : RsReference {
     fun advancedResolve(): BoundElement<RsElement>? =
         resolve()?.let { BoundElement(it) }
 }
-
-class RsEmptyPathReference(element: RsPath) : RsReferenceBase<RsPath>(element), RsPathReference {
-    override fun multiResolve(): List<RsElement> = emptyList()
-}

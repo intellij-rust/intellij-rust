@@ -124,7 +124,7 @@ fun processStructLiteralFieldResolveVariants(
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val resolved = field.parentStructLiteral.path.reference.deepResolve()
+    val resolved = field.parentStructLiteral.path.reference?.deepResolve()
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     if (processFieldDeclarations(structOrEnumVariant, processor)) return true
     if (!isCompletion && field.expr == null) {
@@ -137,7 +137,7 @@ fun processStructPatternFieldResolveVariants(
     field: RsPatFieldFull,
     processor: RsResolveProcessor
 ): Boolean {
-    val resolved = field.parentStructPattern.path.reference.deepResolve()
+    val resolved = field.parentStructPattern.path.reference?.deepResolve()
     val resolvedStruct = resolved as? RsFieldsOwner ?: return false
     return processFieldDeclarations(resolvedStruct, processor)
 }
@@ -365,7 +365,7 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val (base, subst) = qualifier.reference.advancedResolve() ?: run {
+    val (base, subst) = qualifier.reference?.advancedResolve() ?: run {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
             if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType, null)) return true
@@ -614,7 +614,7 @@ private fun processTraitRelativePath(
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     if (binding.parent is RsPatField) {
         val parentPat = binding.parent.parent as RsPatStruct
-        val patStruct = parentPat.path.reference.resolve()
+        val patStruct = parentPat.path.reference?.resolve()
         if (patStruct is RsFieldsOwner && processFieldDeclarations(patStruct, processor)) return true
     }
 
@@ -710,7 +710,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
 
     val el = pkg.targets.asSequence()
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(parts[1], it) }
-        .mapNotNull { it.reference.resolve() }
+        .mapNotNull { it.reference?.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
     return el to pkg

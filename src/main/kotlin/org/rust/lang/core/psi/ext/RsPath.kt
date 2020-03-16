@@ -92,7 +92,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsPathReference {
+    override fun getReference(): RsPathReference? {
         return when (val parent = parent) {
             is RsMacroCall -> RsMacroPathReferenceImpl(this)
             is RsMetaItem -> when {
@@ -100,7 +100,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
                 // FIXME: We assume that attribute proc macros are used only as top level attributes
                 // (so we ignore the fact that attribute proc macro can be nested inside `cfg_attr`)
                 RsPsiPattern.nonStdOuterAttributeMetaItem.accepts(parent) -> RsAttributeProcMacroReferenceImpl(this)
-                else -> RsEmptyPathReference(this)
+                else -> null
             }
             else -> RsPathReferenceImpl(this)
         }

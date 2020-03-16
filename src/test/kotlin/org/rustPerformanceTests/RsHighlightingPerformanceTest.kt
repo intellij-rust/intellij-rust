@@ -55,7 +55,7 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
         }
 
         timings.measure("resolve") {
-            refs.forEach { it.reference.resolve() }
+            refs.forEach { it.reference?.resolve() }
         }
         timings.measure("highlighting") {
             myFixture.doHighlighting()
@@ -66,7 +66,7 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
         }
 
         timings.measure("resolve_cached") {
-            refs.forEach { it.reference.resolve() }
+            refs.forEach { it.reference?.resolve() }
         }
 
         myFixture.file.descendantsOfType<RsFunction>()
@@ -78,7 +78,7 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
                 PsiDocumentManager.getInstance(project).commitAllDocuments() // process PSI modification events
 
                 timings.measureAverage("resolve_after_typing") {
-                    refs.forEach { it.reference.resolve() }
+                    refs.forEach { it.reference?.resolve() }
                 }
             }
 

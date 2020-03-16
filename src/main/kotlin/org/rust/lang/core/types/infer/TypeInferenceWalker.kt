@@ -517,7 +517,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferStructLiteralType(expr: RsStructLiteral, expected: Ty?): Ty {
-        val boundElement = expr.path.reference.advancedDeepResolve()
+        val boundElement = expr.path.reference?.advancedDeepResolve()
 
         if (boundElement == null) {
             for (field in expr.structLiteralBody.structLiteralFieldList) {

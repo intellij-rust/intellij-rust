@@ -25,7 +25,7 @@ class RsExpressionAnnotator : AnnotatorBase() {
         val rsHolder = RsAnnotationHolder(holder)
         element.accept(RedundantParenthesisVisitor(rsHolder))
         if (element is RsStructLiteral) {
-            val decl = element.path.reference.deepResolve() as? RsFieldsOwner
+            val decl = element.path.reference?.deepResolve() as? RsFieldsOwner
             if (decl != null) {
                 checkStructLiteral(rsHolder, decl, element)
             }
@@ -116,7 +116,7 @@ private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder
     }
 }
 
-private fun <T : RsReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T> {
+private fun <T : RsMandatoryReferenceElement> Collection<T>.findDuplicateReferences(): Collection<T> {
     val names = HashSet<String>(size)
     val result = SmartList<T>()
     for (item in this) {

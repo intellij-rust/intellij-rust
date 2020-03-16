@@ -109,7 +109,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkRsPatStruct(holder: RsAnnotationHolder, patStruct: RsPatStruct) {
-        val declaration = patStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
+        val declaration = patStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
         val declarationFieldNames = declaration.fields.map { it.name }
         val bodyFields = patStruct.patFieldList
         val extraFields = bodyFields.filter { it.kind.fieldName !in declarationFieldNames }
@@ -124,7 +124,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkRsPatTupleStruct(holder: RsAnnotationHolder, patTupleStruct: RsPatTupleStruct) {
-        val declaration = patTupleStruct.path.reference.deepResolve() as? RsFieldsOwner ?: return
+        val declaration = patTupleStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
         val declarationFieldsAmount = declaration.fields.size
         val bodyFieldsAmount = patTupleStruct.patList.size
         if (bodyFieldsAmount < declarationFieldsAmount && patTupleStruct.patRest == null) {
@@ -231,15 +231,14 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkCallExpr(holder: RsAnnotationHolder, o: RsCallExpr) {
         val path = (o.expr as? RsPathExpr)?.path ?: return
         checkNotCallingDrop(o, holder)
-        val deepResolve = path.reference.deepResolve()
-        val owner = deepResolve as? RsFieldsOwner ?: return
+        val owner = path.reference?.deepResolve() as? RsFieldsOwner ?: return
         if (owner.tupleFields == null && !owner.implLookup.isAnyFn(owner.asTy())) {
             RsDiagnostic.ExpectedFunction(o).addToHolder(holder)
         }
     }
 
     private fun checkTraitRef(holder: RsAnnotationHolder, o: RsTraitRef) {
-        val item = o.path.reference.resolve() as? RsItemElement ?: return
+        val item = o.path.reference?.resolve() as? RsItemElement ?: return
         if (item !is RsTraitItem) {
             RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
         }
@@ -281,7 +280,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: RsAnnotationHolder) {
-        var element = ref.reference.resolve() as? RsVisible ?: return
+        val reference = ref.reference ?: return
+        val referenceName = ref.referenceName ?: return
+        var element = reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
         if (element.isVisibleFrom(oMod)) return
         val withinOneCrate = element.crateRoot == o.crateRoot
@@ -292,13 +293,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
                 RsDiagnostic.StructFieldAccessError(
-                    ref, ref.referenceName, structName,
+                    ref, referenceName, structName,
                     MakePublicFix.createIfCompatible(element, element.name, withinOneCrate)
                 )
             }
             ref is RsMethodCall -> RsDiagnostic.AccessError(
                 ref.identifier, RsErrorCode.E0624, "Method",
-                MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate)
+                MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
             )
             else -> {
                 val itemType = when (element) {
@@ -308,7 +309,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
                 RsDiagnostic.AccessError(
                     ref, RsErrorCode.E0603, itemType,
-                    MakePublicFix.createIfCompatible(element, ref.referenceName, withinOneCrate)
+                    MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
                 )
             }
         }
@@ -316,9 +317,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkUnstableAttribute(ref: RsReferenceElement, holder: RsAnnotationHolder) {
-        val startElement = ref.referenceNameElement.takeIf { it.elementType == IDENTIFIER } ?: return
+        val startElement = ref.referenceNameElement?.takeIf { it.elementType == IDENTIFIER } ?: return
         if (ref.containingCargoPackage?.origin == PackageOrigin.STDLIB) return
-        val element = ref.reference.resolve() as? RsOuterAttributeOwner ?: return
+        val element = ref.reference?.resolve() as? RsOuterAttributeOwner ?: return
         for (attr in element.queryAttributes.unstableAttributes) {
             val metaItems = attr.metaItemArgs?.metaItemList ?: continue
             val featureName = metaItems.singleOrNull { it.name == "feature" }?.value ?: continue
@@ -870,7 +871,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         return field.parent.parent is RsEnumVariant
     }
 
-    private fun hasResolve(el: RsReferenceElement): Boolean =
+    private fun hasResolve(el: RsMandatoryReferenceElement): Boolean =
         !(el.reference.resolve() != null || el.reference.multiResolve().size > 1)
 }
 
@@ -1012,7 +1013,7 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
 
 private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
-    val el = path.reference.resolve()
+    val el = path.reference?.resolve()
     return when (el) {
         is RsFieldsOwner -> Pair(el.fields.size, false)
         is RsFunction -> {

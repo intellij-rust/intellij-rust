@@ -477,7 +477,7 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
 }
 
 private fun RsPath.isLinkNeeded(): Boolean {
-    val element = reference.resolve()
+    val element = reference?.resolve()
     // If it'll find out that links for type parameters are useful
     // just check element for null
     return !(element == null || element is RsTypeParameter)

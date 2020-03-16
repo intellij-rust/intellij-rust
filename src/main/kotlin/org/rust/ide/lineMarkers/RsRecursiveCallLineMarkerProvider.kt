@@ -36,7 +36,7 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                 parent is RsPath && el == parent.identifier -> {
                     val expr = parent.parent as? RsPathExpr
                     val call = expr?.parent as? RsCallExpr
-                    expr != null && call != null && call.expr == expr && parent.reference.isRecursive
+                    expr != null && call != null && call.expr == expr && parent.reference?.isRecursive == true
                 }
                 else -> false
             }

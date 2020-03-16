@@ -69,7 +69,7 @@ private val RsPat.kind: PatternKind
         is RsPatTup -> PatternKind.Leaf(patList.map { it.lower })
 
         is RsPatStruct -> {
-            val item = path.reference.resolve() as? RsFieldsOwner
+            val item = path.reference?.resolve() as? RsFieldsOwner
                 ?: throw CheckMatchException("Can't resolve ${path.text}")
 
             val subPatterns = mutableListOf<Pattern>()
@@ -91,7 +91,7 @@ private val RsPat.kind: PatternKind
         }
 
         is RsPatTupleStruct -> {
-            val item = path.reference.resolve() ?: throw CheckMatchException("Can't resolve ${path.text}")
+            val item = path.reference?.resolve() ?: throw CheckMatchException("Can't resolve ${path.text}")
             val subPatterns = patList.map { it.lower }
 
             getLeafOrVariant(item, subPatterns)
@@ -101,7 +101,9 @@ private val RsPat.kind: PatternKind
             val ty = expr.type
             if (ty is TyAdt) {
                 if (ty.item is RsEnumItem) {
-                    val variant = (expr as RsPathExpr).path.reference.resolve() as RsEnumVariant
+                    val path = (expr as RsPathExpr).path
+                    val variant = path.reference?.resolve() as? RsEnumVariant
+                        ?: throw CheckMatchException("Can't resolve ${path.text}")
                     PatternKind.Variant(ty.item, variant, emptyList())
                 } else {
                     throw CheckMatchException("Unresolved constant")

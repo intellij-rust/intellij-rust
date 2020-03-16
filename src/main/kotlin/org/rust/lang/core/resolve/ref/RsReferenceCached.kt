@@ -8,9 +8,9 @@ package org.rust.lang.core.resolve.ref
 import com.intellij.psi.PsiElementResolveResult
 import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 
-abstract class RsReferenceCached<T : RsWeakReferenceElement>(
+abstract class RsReferenceCached<T : RsReferenceElement>(
     element: T
 ) : RsReferenceBase<T>(element) {
 
@@ -29,8 +29,8 @@ abstract class RsReferenceCached<T : RsWeakReferenceElement>(
 
     protected open val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 
-    private object Resolver : (RsWeakReferenceElement) -> List<PsiElementResolveResult> {
-        override fun invoke(ref: RsWeakReferenceElement): List<PsiElementResolveResult> {
+    private object Resolver : (RsReferenceElement) -> List<PsiElementResolveResult> {
+        override fun invoke(ref: RsReferenceElement): List<PsiElementResolveResult> {
             return (ref.reference as RsReferenceCached<*>).resolveInner().map { PsiElementResolveResult(it) }
         }
     }

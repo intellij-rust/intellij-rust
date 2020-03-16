@@ -94,11 +94,11 @@ val RsDotExpr.expectedType: Ty?
 
 val RsExpr.declaration: RsElement?
     get() = when (this) {
-        is RsPathExpr -> path.reference.resolve()
+        is RsPathExpr -> path.reference?.resolve()
         is RsDotExpr -> expr.declaration
         is RsCallExpr -> expr.declaration
         is RsIndexExpr -> containerExpr?.declaration
-        is RsStructLiteral -> path.reference.resolve()
+        is RsStructLiteral -> path.reference?.resolve()
         else -> null
     }
 

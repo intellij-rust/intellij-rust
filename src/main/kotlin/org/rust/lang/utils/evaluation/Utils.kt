@@ -11,7 +11,7 @@ import org.rust.lang.core.types.infer.RsInferenceContext
 
 class PathExprResolver(resolver: (RsPathExpr) -> RsElement?): (RsPathExpr) -> RsElement? by resolver {
     companion object {
-        val default: PathExprResolver = PathExprResolver { it.path.reference.resolve() }
+        val default: PathExprResolver = PathExprResolver { it.path.reference?.resolve() }
 
         fun fromContext(ctx: RsInferenceContext): PathExprResolver =
             PathExprResolver { ctx.getResolvedPath(it).singleOrNull()?.element }

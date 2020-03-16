@@ -29,7 +29,7 @@ import com.intellij.util.messages.MessageBus
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
-import org.rust.lang.core.psi.ext.RsWeakReferenceElement
+import org.rust.lang.core.psi.ext.RsReferenceElement
 import org.rust.lang.core.psi.ext.ancestors
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
 import java.lang.ref.ReferenceQueue
@@ -186,11 +186,11 @@ class RsResolveCache(messageBus: MessageBus) {
         // element is changed, we should remove it (and its ancestors) from the
         // global cache
 
-        val referenceElement = element.parent as? RsWeakReferenceElement ?: return
+        val referenceElement = element.parent as? RsReferenceElement ?: return
         val referenceNameElement = referenceElement.referenceNameElement ?: return
         if (referenceNameElement == element) {
             Testmarks.removeChangedElement.hit()
-            referenceElement.ancestors.filter { it is RsWeakReferenceElement }.forEach {
+            referenceElement.ancestors.filter { it is RsReferenceElement }.forEach {
                 rustStructureDependentCache.remove(it)
             }
         }

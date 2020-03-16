@@ -33,7 +33,7 @@ val RsPat.isIrrefutable: Boolean
     }
 
 private val RsPath.isIrrefutable: Boolean
-    get() = when (val item = reference.deepResolve()) {
+    get() = when (val item = reference?.deepResolve()) {
         is RsStructItem -> true
         is RsEnumVariant -> item.parentEnum.enumBody?.enumVariantList?.size == 1
         else -> false

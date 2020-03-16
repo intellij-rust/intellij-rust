@@ -116,7 +116,10 @@ fun processItemDeclarations(
             }
             continue
         }
-        if (processMultiResolveWithNs(name, ns, path.reference, processor)) return true
+        val pathReference = path.reference
+        if (pathReference != null) {
+            if (processMultiResolveWithNs(name, ns, pathReference, processor)) return true
+        }
     }
 
     if (withPrivateImports && Namespace.Types in ns && scope is RsFile && !isEdition2018 && scope.isCrateRoot) {
@@ -194,9 +197,9 @@ fun processItemDeclarations(
             // BACKCOMPAT 2019.1
             val rootQualifier = generateSequence(basePath) { it.qualifier }.drop(1).lastOrNull()
             if (rootQualifier != null) {
-                guard.doPreventingRecursion(rootQualifier, false) { basePath.reference.resolve() }
+                guard.doPreventingRecursion(rootQualifier, false) { basePath.reference?.resolve() }
             } else {
-                basePath.reference.resolve()
+                basePath.reference?.resolve()
             }
         } else {
             speck.crateRoot

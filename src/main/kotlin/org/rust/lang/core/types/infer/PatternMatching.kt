@@ -56,7 +56,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         is RsPatTupleStruct -> {
             val (expected, bm) = type.stripReferences(defBm)
             fcx.writePatTy(this, expected)
-            val item = path.reference.resolve() as? RsFieldsOwner
+            val item = path.reference?.resolve() as? RsFieldsOwner
                 ?: ((expected as? TyAdt)?.item as? RsStructItem)
                 ?: return
 
@@ -73,7 +73,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         is RsPatStruct -> {
             val (expected, mut) = type.stripReferences(defBm)
             fcx.writePatTy(this, expected)
-            val item = path.reference.resolve() as? RsFieldsOwner
+            val item = path.reference?.resolve() as? RsFieldsOwner
                 ?: ((expected as? TyAdt)?.item as? RsStructItem)
                 ?: return
 

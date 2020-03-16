@@ -69,7 +69,7 @@ class CreateStructFieldFromConstructorFix(
         }
 
         private fun RsStructLiteralField.resolveToStructItem(): RsStructItem? {
-            return parentStructLiteral.path.reference.resolve() as? RsStructItem
+            return parentStructLiteral.path.reference?.resolve() as? RsStructItem
         }
 
         private fun RsStructLiteralField.inferFieldTy(): Ty? {
