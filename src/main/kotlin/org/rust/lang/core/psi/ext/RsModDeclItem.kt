@@ -28,7 +28,7 @@ fun RsModDeclItem.getOrCreateModuleFile(): PsiFile? {
 }
 
 val RsModDeclItem.isLocal: Boolean
-    get() = greenStub?.isLocal ?: (ancestorStrict<RsBlock>() != null)
+    get() = ancestorStrict<RsBlock>() != null
 
 
 //TODO: use explicit path if present.
@@ -42,6 +42,9 @@ private val RsModDeclItem.implicitPaths: List<String> get() {
 }
 
 val RsModDeclItem.pathAttribute: String? get() = queryAttributes.lookupStringValueForKey("path")
+
+val RsModDeclItem.hasMacroUse: Boolean get() =
+    greenStub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")
 
 abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemStub>,
                                         RsModDeclItem {
@@ -64,6 +67,3 @@ abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemS
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
-
-val RsModDeclItem.hasMacroUse: Boolean get() =
-    stub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")

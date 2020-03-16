@@ -5,14 +5,13 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.openapiext.isUnitTestMode
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
-import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.stubs.RsAttributeOwnerStub
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
-import org.rust.openapiext.isFeatureEnabled
 
 interface RsDocAndAttributeOwner : RsElement, NavigatablePsiElement
 
@@ -70,11 +69,23 @@ data class Attribute(val name: String, val argText: String? = null) {
     val text: String get() = if (argText == null) name else "$name($argText)"
 }
 
+inline val RsDocAndAttributeOwner.attributeStub: RsAttributeOwnerStub?
+    get() = (this as? StubBasedPsiElementBase<*>)?.greenStub as? RsAttributeOwnerStub
+
 /**
  * Returns [QueryAttributes] for given PSI element.
  */
 val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
-    get() = QueryAttributes(this)
+    get() {
+        val stub = attributeStub
+        return if (stub?.hasAttrs == false) {
+            QueryAttributes.EMPTY
+        } else {
+            val attributes: Sequence<RsAttr> = (this as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().asSequence() +
+                (this as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().asSequence()
+            QueryAttributes(attributes)
+        }
+    }
 
 /**
  * Allows for easy querying [RsDocAndAttributeOwner] for specific attributes.
@@ -82,24 +93,14 @@ val RsDocAndAttributeOwner.queryAttributes: QueryAttributes
  * **Do not instantiate directly**, use [RsDocAndAttributeOwner.queryAttributes] instead.
  */
 class QueryAttributes(
-    private val psi: RsDocAndAttributeOwner,
-    private val attributes: Sequence<RsAttr> = (psi as? RsInnerAttributeOwner)?.innerAttrList.orEmpty().asSequence() +
-        (psi as? RsOuterAttributeOwner)?.outerAttrList.orEmpty().asSequence()
+    private val attributes: Sequence<RsAttr>
 ) {
-
     // #[doc(hidden)]
     val isDocHidden: Boolean get() = hasAttributeWithArg("doc", "hidden")
 
     // #[cfg(test)], #[cfg(target_has_atomic = "ptr")], #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
-    fun hasCfgAttr(): Boolean {
-        if (psi is RsFunction) {
-            val stub = psi.greenStub
-            if (stub != null) return stub.isCfg
-        }
-        // TODO: We probably want this optimization also for other items that we query regularly
-
-        return hasAttribute("cfg")
-    }
+    fun hasCfgAttr(): Boolean =
+        hasAttribute("cfg")
 
     // `#[attributeName]`, `#[attributeName(arg)]`, `#[attributeName = "Xxx"]`
     fun hasAttribute(attributeName: String): Boolean {
@@ -112,10 +113,8 @@ class QueryAttributes(
         return attrs.any()
     }
 
-    fun hasAnyOfOuterAttributes(vararg attributes: String): Boolean {
-        val outerAttrList = (psi as? RsOuterAttributeOwner)?.outerAttrList ?: return false
-        return outerAttrList.any { it.metaItem.name in attributes }
-    }
+    fun hasAnyOfAttributes(vararg names: String): Boolean =
+        attributes.any { it.metaItem.name in names }
 
     // `#[attributeName]`
     fun hasAtomAttribute(attributeName: String): Boolean {
@@ -194,6 +193,10 @@ class QueryAttributes(
 
     override fun toString(): String =
         "QueryAttributes(${attributes.joinToString { it.text }})"
+
+    companion object {
+        val EMPTY: QueryAttributes = QueryAttributes(emptySequence())
+    }
 }
 
 /**
@@ -208,14 +211,12 @@ val RsDocAndAttributeOwner.isCfgUnknown: Boolean
     get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
 private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
-    // TODO: get rid of this registry key when cfg support is done
-    if (!isUnitTestMode && !isFeatureEnabled(RsExperiments.CFG_ATTRIBUTES_SUPPORT)) return ThreeValuedLogic.True
-
     // TODO: add cfg to RsFile's stub and remove this line
     if (this is RsFile) return ThreeValuedLogic.True
 
-    if (!queryAttributes.hasCfgAttr()) return ThreeValuedLogic.True
-    val cfgAttributes = queryAttributes.cfgAttributes.takeIf { it.any() } ?: return ThreeValuedLogic.True
+    if (attributeStub?.hasCfg == false) return ThreeValuedLogic.True
+
+    val cfgAttributes = queryAttributes.cfgAttributes
 
     // TODO: When we open both cargo projects for an application and a library,
     // this will return the library as containing package.

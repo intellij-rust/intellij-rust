@@ -135,7 +135,10 @@ val RsFunction.isCustomDeriveProcMacroDef: Boolean
     get() = queryAttributes.hasAttribute("proc_macro_derive")
 
 val RsFunction.isProcMacroDef: Boolean
-    get() = queryAttributes.hasAnyOfOuterAttributes(
+    get() = greenStub?.isProcMacroDef ?: (queryAttributes.isProcMacroDef)
+
+val QueryAttributes.isProcMacroDef
+    get() = hasAnyOfAttributes(
         "proc_macro",
         "proc_macro_attribute",
         "proc_macro_derive"
