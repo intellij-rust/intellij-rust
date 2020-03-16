@@ -81,6 +81,7 @@
         DYN       = 'dyn_kw'
         ASYNC     = 'async_kw'
         TRY       = 'try_kw'
+        RAW       = 'raw_kw'
 
         MACRO_KW  = 'macro'
         CSELF     = 'Self'
@@ -302,6 +303,7 @@ private dyn ::= <<dynKeyword>>
 private async ::= <<asyncKeyword>>
 private asyncBlock ::= <<asyncBlockKeyword>>
 private try ::= <<tryKeyword>>
+private raw ::= <<rawKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
 
@@ -1127,7 +1129,7 @@ TryExpr ::= Expr '?' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' mut?) Expr {
+UnaryExpr ::= OuterAttr* (box | '-' | '*' | '!' | '&' [raw (mut | const) | mut]) Expr {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }

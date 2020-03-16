@@ -596,8 +596,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkUnary(holder: RsAnnotationHolder, o: RsUnaryExpr) {
-        val box = o.box ?: return
-        BOX_SYNTAX.check(holder, box, "`box` expression syntax")
+        val box = o.box
+        if (box != null) {
+            BOX_SYNTAX.check(holder, box, "`box` expression syntax")
+        }
+
+        val raw = o.raw
+        if (raw != null) {
+            RAW_REF_OP.check(holder, raw, "`raw address of` syntax")
+        }
     }
 
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
