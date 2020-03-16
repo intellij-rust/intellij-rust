@@ -484,4 +484,14 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         }
     """)
     }
+
+    fun `test unresolved nested macro`() = checkByText("""
+        macro_rules! my_macro {
+            ($ e:expr) => { unresolved!(e) };
+        }
+        
+        fn foo(x: i32) {
+            my_macro!(x);
+        }
+    """)
 }

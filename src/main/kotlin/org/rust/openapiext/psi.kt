@@ -7,13 +7,14 @@ package org.rust.openapiext
 
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor
 import com.intellij.psi.impl.source.tree.CompositeElement
 import com.intellij.psi.search.PsiElementProcessor
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.RsWithMacroExpansionsRecursiveElementWalkingVisitor
 import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 
 
 /**
@@ -30,7 +31,7 @@ inline fun PsiElement.forEachChild(action: (PsiElement) -> Unit) {
     }
 }
 
-/** Behaves like [PsiTreeUtil.findChildOfAnyType], but also collects elements expanded from macros */
+/** Behaves like [PsiTreeUtil.findChildrenOfAnyType], but also collects elements expanded from macros */
 fun <T : PsiElement> findDescendantsWithMacrosOfAnyType(
     element: PsiElement?,
     strict: Boolean,
@@ -68,17 +69,41 @@ fun processElementsWithMacros(element: PsiElement, processor: PsiElementProcesso
         return true
     }
 
-    var result = true
-    element.accept(object : RsWithMacroExpansionsRecursiveElementWalkingVisitor() {
-        override fun visitElement(element: PsiElement) {
-            if (processor.execute(element)) {
-                super.visitElement(element)
-            } else {
-                stopWalking()
-                result = false
-            }
-        }
-    })
+    val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor)
+    element.accept(visitor)
 
-    return result
+    return visitor.result
+}
+
+private class RsWithMacrosRecursiveElementWalkingVisitor(
+    private val processor: PsiElementProcessor<PsiElement>,
+    private val nestedMacroDepth: Int = 0
+) : PsiRecursiveElementWalkingVisitor() {
+
+    var result: Boolean = true
+        private set
+
+    override fun visitElement(element: PsiElement) {
+        if (processor.execute(element)) {
+            if (element is RsMacroCall && element.macroArgument != null) {
+                processMacro(element)
+            } else {
+                super.visitElement(element)
+            }
+        } else {
+            stopWalking()
+            result = false
+        }
+    }
+
+    private fun processMacro(element: RsMacroCall) {
+        if (nestedMacroDepth > DEFAULT_RECURSION_LIMIT) {
+            return
+        }
+        val expansion = element.expansion ?: return
+        for (expandedElement in expansion.elements) {
+            val visitor = RsWithMacrosRecursiveElementWalkingVisitor(processor, nestedMacroDepth + 1)
+            expandedElement.accept(visitor)
+        }
+    }
 }
