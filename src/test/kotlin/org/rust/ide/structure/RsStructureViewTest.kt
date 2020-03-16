@@ -11,6 +11,7 @@ import com.intellij.ui.RowIcon
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.ide.console.RsConsoleView
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.ext.RsElement
 
@@ -385,6 +386,56 @@ class RsStructureViewTest : RsTestBase() {
          Bar<F> for A<T> where T: ?Sized, F: ?Sized
     """)
 
+    fun `test console variables basic`() = doTestForREPL("""
+        let var1 = 1;
+        let var2: u32 = 2;
+        let var3 = "3";
+    """, """
+        -null
+         var1: i32
+         var2: u32
+         var3: &str
+    """)
+
+    fun `test console variables destructuring tuples and arrays`() = doTestForREPL("""
+        let (var1, (var2, var3)) = (1i32, (2u32, "3"));
+        let [var4, var5] = [1, 2];
+    """, """
+        -null
+         var1: i32
+         var2: u32
+         var3: &str
+         var4: i32
+         var5: i32
+    """)
+
+    fun `test console variables destructuring struct`() = doTestForREPL("""
+        struct Struct1 { foo: u32 }
+        struct Struct2 { field1: u16, field2: Struct1 }
+        let struct2 = Struct2 { field1: 1, field2: Struct1 { foo: 0 } };
+        let Struct2 { field1: var1, field2: Struct1 { foo } } = struct2;
+    """, """
+        -null
+         -Struct1
+          foo: u32
+         -Struct2
+          field1: u16
+          field2: Struct1
+         struct2: Struct2
+         var1: u16
+         foo: u32
+    """)
+
+    fun `test console variables destructuring enum`() = doTestForREPL("""
+        enum E { Variant(u8) }
+        let var1 @ E::Variant(..) = E::Variant(1);
+    """, """
+        -null
+         -E
+          Variant(u8)
+         var1: E
+    """)
+
     private fun doPresentationDataTest(@Language("Rust") code: String, expectedPresentableText: String, isPublic: Boolean) {
         myFixture.configureByText("main.rs", code)
         val psi = myFixture.file.children.mapNotNull { it as? RsElement }.first()
@@ -401,12 +452,14 @@ class RsStructureViewTest : RsTestBase() {
         }
     }
 
-    private fun doTest(@Language("Rust") code: String, expected: String) {
+    private fun doTest(@Language("Rust") code: String, expected: String, fileName: String = "main.rs") {
         val normExpected = expected.trimIndent() + "\n"
-        myFixture.configureByText("main.rs", code)
+        myFixture.configureByText(fileName, code)
         myFixture.testStructureView {
             expandAll(it.tree)
             assertTreeEqual(it.tree, normExpected)
         }
     }
+
+    private fun doTestForREPL(code: String, expected: String) = doTest(code, expected, RsConsoleView.VIRTUAL_FILE_NAME)
 }

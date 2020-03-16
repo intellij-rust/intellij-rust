@@ -57,7 +57,11 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {
                 TreeUtil.ensureParsed(file.node) // profiler hint
-                return RsFileStub(file as RsFile)
+                return when (file) {
+                    // for tests related to rust console
+                    is RsReplCodeFragment -> RsFileStub(null, RsFile.Attributes.NONE)
+                    else -> RsFileStub(file as RsFile)
+                }
             }
 
             override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, child: ASTNode): Boolean {
