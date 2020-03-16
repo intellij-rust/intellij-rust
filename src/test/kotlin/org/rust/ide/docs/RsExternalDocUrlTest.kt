@@ -26,6 +26,12 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html#associatedconstant.BAR")
 
+    fun `test item with restricted visibility`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub(crate) enum Foo { V1, V2 }
+                      //^
+    """, null)
+
     fun `test private item`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         struct Foo;
@@ -39,6 +45,34 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
                        //^
         }
     """, null)
+
+    fun `test method in private trait`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        trait Foo {
+            fn foo(&self);
+              //^
+        }
+    """, null)
+
+    fun `test private method`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+        impl Foo {
+            fn foo(&self) {}
+              //^
+        }
+    """, null)
+
+    fun `test public method in private module`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub struct Foo;
+        mod bar {
+            impl crate::Foo {
+                pub fn foo(&self) {}
+                      //^
+            }
+        }
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html#method.foo")
 
     fun `test doc hidden`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs

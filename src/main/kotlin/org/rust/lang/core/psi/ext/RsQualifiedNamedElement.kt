@@ -57,7 +57,7 @@ data class RsQualifiedName private constructor(
         val item = childItem ?: parentItem
 
         // If it's link to crate, try to find the corresponding `lib.rs` file
-        if (item.type == RsQualifiedName.ParentItemType.CRATE) {
+        if (item.type == CRATE) {
             return findCrateRoot(item, psiManager, context)
         }
 
@@ -68,7 +68,7 @@ data class RsQualifiedName private constructor(
         // if any variant has the same `RsQualifiedName`
         var result = lookupInIndex(project, RsNamedElementIndex.KEY) { element ->
             if (element !is RsQualifiedNamedElement) return@lookupInIndex null
-            val candidate = if (element is RsModDeclItem && item.type == RsQualifiedName.ParentItemType.MOD) {
+            val candidate = if (element is RsModDeclItem && item.type == MOD) {
                 element.reference.resolve() as? RsMod ?: return@lookupInIndex null
             } else {
                 element
@@ -148,7 +148,7 @@ data class RsQualifiedName private constructor(
             if (segments.size < 2) return null
 
             val (parentItem, childItem) = if (segments.size == 2 && segments[1] == "index.html") {
-                Item(segments[0], ParentItemType.CRATE) to null
+                Item(segments[0], CRATE) to null
             } else {
                 // Last segment contains info about item type and name
                 // and it should have the following structure:
@@ -207,7 +207,8 @@ data class RsQualifiedName private constructor(
             val modSegments = if (parentItem.type == PRIMITIVE || parentItem.type == MACRO) {
                 listOf()
             } else {
-                val mod = element as? RsMod ?: element.containingMod
+                val parentElement = parentItem.element ?: return null
+                val mod = parentElement as? RsMod ?: parentElement.containingMod
                 mod.superMods
                     .asReversed()
                     .drop(1)
@@ -240,7 +241,7 @@ data class RsQualifiedName private constructor(
         @JvmStatic
         fun from(path: RsPath): RsQualifiedName? {
             val primitiveType = TyPrimitive.fromPath(path) ?: return null
-            return RsQualifiedName(STD, emptyList(), Item(primitiveType.name, PRIMITIVE), null)
+            return RsQualifiedName(STD, emptyList(), Item.primitive(primitiveType.name), null)
         }
 
         private fun RsQualifiedNamedElement.toItems(): Pair<Item, Item?>? {
@@ -274,25 +275,25 @@ data class RsQualifiedName private constructor(
 
         private fun RsTypeReference.toParentItem(): Item? {
             return when (val type = typeElement) {
-                is RsTupleType -> Item("tuple", PRIMITIVE)
-                is RsFnPointerType -> Item("fn", PRIMITIVE)
-                is RsArrayType -> Item(if (type.isSlice) "slice" else "array", PRIMITIVE)
+                is RsTupleType -> Item.primitive("tuple")
+                is RsFnPointerType -> Item.primitive("fn")
+                is RsArrayType -> Item.primitive(if (type.isSlice) "slice" else "array")
                 is RsRefLikeType -> {
                     when {
-                        type.isRef -> Item("reference", PRIMITIVE)
-                        type.isPointer -> Item("pointer", PRIMITIVE)
+                        type.isRef -> Item.primitive("reference")
+                        type.isPointer -> Item.primitive("pointer")
                         else -> null
                     }
 
                 }
                 is RsBaseType -> when (val kind = type.kind) {
-                    RsBaseTypeKind.Unit -> Item("unit", PRIMITIVE)
-                    RsBaseTypeKind.Never -> Item("never", PRIMITIVE)
+                    RsBaseTypeKind.Unit -> Item.primitive("unit")
+                    RsBaseTypeKind.Never -> Item.primitive("never")
                     RsBaseTypeKind.Underscore -> return null
                     is RsBaseTypeKind.Path -> {
                         val path = kind.path
                         val primitiveType = TyPrimitive.fromPath(path)
-                        if (primitiveType != null) return Item(primitiveType.name, PRIMITIVE)
+                        if (primitiveType != null) return Item.primitive(primitiveType.name)
                         (path.reference.resolve() as? RsQualifiedNamedElement)?.toParentItem()
                     }
                 }
@@ -313,14 +314,14 @@ data class RsQualifiedName private constructor(
                 is RsMod -> {
                     if (isCrateRoot) {
                         val crateName = containingCargoTarget?.normName ?: return null
-                        return Item(crateName, CRATE)
+                        return Item(crateName, CRATE, this)
                     }
                     MOD
                 }
                 is RsModDeclItem -> MOD
                 else -> error("Unexpected type: `$this`")
             }
-            return Item(name, itemType)
+            return Item(name, itemType, this)
         }
 
         private fun RsQualifiedNamedElement.toChildItem(): Item? {
@@ -333,12 +334,34 @@ data class RsQualifiedName private constructor(
                 is RsFunction -> if (isAbstract) TYMETHOD else METHOD
                 else -> return null
             }
-            return Item(name, type)
+            return Item(name, type, this)
         }
     }
 
-    data class Item(val name: String, val type: ItemType) {
+    class Item(val name: String, val type: ItemType, val element: RsElement? = null) {
         override fun toString(): String = "$type.$name"
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Item
+
+            if (name != other.name) return false
+            if (type != other.type) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = name.hashCode()
+            result = 31 * result + type.hashCode()
+            return result
+        }
+
+        companion object {
+            fun primitive(name: String): Item = Item(name, PRIMITIVE)
+        }
     }
 
     interface ItemType
