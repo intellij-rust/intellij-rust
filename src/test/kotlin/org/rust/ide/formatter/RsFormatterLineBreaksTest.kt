@@ -157,6 +157,35 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
         }
     """)
 
+    fun `test line breaks between items in function`() = doTextTest("""
+        fn test1() {
+            use mod1; use mod2; const C: i32 = 1; let foo = 1;
+        }
+
+        fn test2() {
+            // comments should be kept on same line
+            use mod1;  // m1
+            use mod2;  // m2
+            const C1: i32 = 1;  // c1
+            const C2: i32 = 1;  // c2
+        }
+    """, """
+        fn test1() {
+            use mod1;
+            use mod2;
+            const C: i32 = 1;
+            let foo = 1;
+        }
+
+        fn test2() {
+            // comments should be kept on same line
+            use mod1;  // m1
+            use mod2;  // m2
+            const C1: i32 = 1;  // c1
+            const C2: i32 = 1;  // c2
+        }
+    """)
+
     fun `test blocks`() = doTextTest("""
         fn main() {
             let foo = { foo(123, 456,
