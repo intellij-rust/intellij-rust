@@ -609,7 +609,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 bar(a, b, c, d)
             }
 
-            fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) -> () {
+            fn bar<A, B, C, D>(a: A, b: B, c: Option<C>, d: Option<D>) {
                 a;
                 b;
                 c;
@@ -671,7 +671,7 @@ class RsExtractFunctionTest : RsTestBase() {
                 bar(t, u)
             }
 
-            fn bar<T, U>(t: T, u: U) -> () where T: Trait1 + Trait2, U: Trait3 {
+            fn bar<T, U>(t: T, u: U) where T: Trait1 + Trait2, U: Trait3 {
                 t;
                 u;
                 println!("test")
@@ -1008,7 +1008,7 @@ class RsExtractFunctionTest : RsTestBase() {
             bar().await
         }
 
-        async fn bar() -> () {
+        async fn bar() {
             async { () }.await
         }
     """, false, "bar"

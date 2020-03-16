@@ -139,7 +139,7 @@ class RsExtractFunctionConfig private constructor(
             append("async ")
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
-        if (returnValue != null) {
+        if (returnValue != null && returnValue.type !is TyUnit) {
             append(" -> ${returnValue.type.insertionSafeText}")
         }
         append(whereClausesText)
