@@ -165,11 +165,18 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         // private items don't have external documentation
         if (this is RsVisible) {
             if (this is RsAbstractable) {
-                val owner = owner
-                // items in
-                if ((!owner.isImplOrTrait || owner.isInherentImpl) && !isPublic) return false
+                when (val owner = owner) {
+                    is RsAbstractableOwner.Trait -> return owner.trait.hasExternalDocumentation
+                    is RsAbstractableOwner.Impl -> {
+                        return if (owner.isInherent)  {
+                            visibility == RsVisibility.Public
+                        } else {
+                            owner.impl.traitRef?.resolveToTrait()?.hasExternalDocumentation == true
+                        }
+                    }
+                }
             } else {
-                if (!isPublic) return false
+                if (visibility != RsVisibility.Public) return false
             }
         }
 
