@@ -56,8 +56,7 @@ object CargoMetadata {
         /**
          * Path to workspace root folder. Can be null for old cargo version
          */
-        // BACKCOMPAT: Rust 1.23: use not nullable type here
-        val workspace_root: String?
+        val workspace_root: String
     )
 
 
