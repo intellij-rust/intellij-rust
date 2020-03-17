@@ -17,13 +17,12 @@ import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     override fun getDebuggerDriverConfiguration(project: Project): DebuggerDriverConfiguration? {
         val toolchains = CPPToolchains.getInstance()
-        if (!SystemInfo.isWindows) {
-            return toolchains.defaultToolchain?.createDriverConfiguration(project)
-        }
+        val toolchain = if (!SystemInfo.isWindows) {
+            toolchains.defaultToolchain
+        } else {
+            toolchains.toolchains.firstOrNull { it.toolSetKind == CPPToolSet.Kind.MINGW }
+        } ?: return null
 
-        // In case that WSL is the default toolchain, we should find MinGW manually.
-        return toolchains.toolchains
-            .firstOrNull { it.toolSetKind == CPPToolSet.Kind.MINGW }
-            ?.createDriverConfiguration(project)
+        return createDriverConfiguration(project, CPPEnvironment(toolchain))
     }
 }
