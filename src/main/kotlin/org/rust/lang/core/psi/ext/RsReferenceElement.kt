@@ -23,14 +23,14 @@ interface RsReferenceElementBase : RsElement {
 /**
  * Marks an element that optionally can have a reference.
  */
-interface RsWeakReferenceElement : RsReferenceElementBase {
+interface RsReferenceElement : RsReferenceElementBase {
     override fun getReference(): RsReference?
 }
 
 /**
  * Marks an element that has a reference.
  */
-interface RsReferenceElement : RsWeakReferenceElement {
+interface RsMandatoryReferenceElement : RsReferenceElement {
 
     override val referenceNameElement: PsiElement
 

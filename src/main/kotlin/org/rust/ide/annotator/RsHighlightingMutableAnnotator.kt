@@ -26,7 +26,7 @@ class RsHighlightingMutableAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val ref = when (element) {
-            is RsPath -> element.reference.resolve() ?: return
+            is RsPath -> element.reference?.resolve() ?: return
             is RsSelfParameter -> element
             is RsPatBinding -> element
             else -> return

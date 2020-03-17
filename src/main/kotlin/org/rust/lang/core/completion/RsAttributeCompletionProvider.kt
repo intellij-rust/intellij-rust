@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.RsPsiPattern.onAnyItem
 import org.rust.lang.core.RsPsiPattern.onCrate
 import org.rust.lang.core.RsPsiPattern.onDropFn
@@ -37,12 +38,14 @@ import org.rust.lang.core.or
 import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.superParent
 import org.rust.lang.core.psiElement
 
-object AttributeCompletionProvider : RsCompletionProvider() {
+object RsAttributeCompletionProvider : RsCompletionProvider() {
 
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
 
@@ -69,7 +72,7 @@ object AttributeCompletionProvider : RsCompletionProvider() {
                                 context: ProcessingContext,
                                 result: CompletionResultSet) {
 
-        val elem = parameters.position.parent?.parent?.parent
+        val elem = parameters.position.superParent(RsPsiPattern.META_ITEM_IDENTIFIER_DEPTH)
 
         val suggestions = attributes
             .filter { it.appliesTo.accepts(parameters.position) && elem.attrMetaItems.none { item -> item == it.name } }
@@ -87,7 +90,7 @@ object AttributeCompletionProvider : RsCompletionProvider() {
 
             return psiElement()
                 .withLanguage(RsLanguage)
-                .withParent(metaItemElem)
+                .withParent(psiElement<RsPath>().withParent(metaItemElem))
         }
 
     private fun createLookupElement(name: String): LookupElement =

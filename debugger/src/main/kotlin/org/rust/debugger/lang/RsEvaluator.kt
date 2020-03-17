@@ -33,7 +33,7 @@ class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
 
     private fun findSuitableExpression(file: PsiFile, offset: Int): PsiElement? {
         val pathExpr = file.findElementAt(offset)?.ancestorOrSelf<RsPathExpr>() ?: return null
-        val resolved = pathExpr.path.reference.resolve()
+        val resolved = pathExpr.path.reference?.resolve()
         return if (resolved is RsPatBinding) pathExpr else null
     }
 

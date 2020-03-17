@@ -14,10 +14,7 @@ import org.rust.lang.core.resolve.processLabelResolveVariants
 
 class RsLabelReferenceImpl(
     element: RsLabel
-) : RsReferenceCached<RsLabel>(element),
-    RsReference {
-
-    override val RsLabel.referenceAnchor: PsiElement get() = quoteIdentifier
+) : RsReferenceCached<RsLabel>(element) {
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
 

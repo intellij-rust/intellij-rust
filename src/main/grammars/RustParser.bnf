@@ -146,10 +146,8 @@ OuterAttr ::= '#'     '[' AttrUpper {
 private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'
 private OuterAttr_first ::= '#'
 
-fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
-  implements = [ "org.rust.lang.core.psi.ext.RsWeakReferenceElement"
-                 "com.intellij.psi.ContributedReferenceHost" ]
-  mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
+fake MetaItem ::= Path [ '=' LitExpr | MetaItemArgs ] | CompactTT {
+  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
@@ -160,10 +158,10 @@ fake MetaItem ::= identifier [ '=' LitExpr | MetaItemArgs ] | CompactTT {
 //   ~~~~~~~~~~~~~
 // #![crate_type = "lib"]
 //    ~~~~~~~~~~~~~~~~~~
-MetaItemWithoutTT ::= identifier [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
-
 // #[some::path]
 //   ~~~~~~~~~~
+MetaItemWithoutTT ::= PathWithoutTypeArgs [ '=' LitExprWithoutAttrs | MetaItemArgs ] { elementType = MetaItem }
+
 // #[assert_instr(add_a.b)]
 //                ~~~~~~~
 // #[attr(value = C)]
@@ -223,7 +221,7 @@ private ConstArgument ::= (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)
 
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+                 "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsAssocTypeBindingMixin"
   stubClass = "org.rust.lang.core.stubs.RsAssocTypeBindingStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -342,7 +340,7 @@ private Items ::= Item_with_recover*
 
 Lifetime ::= QUOTE_IDENTIFIER {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+                 "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsLifetimeImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsLifetimeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -562,7 +560,7 @@ PatRest ::= '..'
 
 PatBinding ::= BindingMode? identifier !ForbiddenPatBindingLast {
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+                 "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatBindingImplMixin"
 }
 
@@ -571,7 +569,7 @@ private ForbiddenPatBindingLast ::= '...' | '::' | '..=' | '..' | '<' | '(' | '{
 }
 
 PatFieldFull ::= (identifier | INTEGER_LITERAL ) ':' Pat {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsPatFieldFullImplMixin"
 }
 
@@ -642,7 +640,7 @@ Alias ::= as ('_' | identifier) {
 upper ExternCrateItem ::= extern crate (identifier | self) Alias? ';' {
   pin = 3
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsExternCrateItemImplMixin"
@@ -665,7 +663,7 @@ upper ModItem ::= mod identifier '{' InnerAttr* Items '}' {
 upper ModDeclItem ::= mod identifier ';' {
   pin = 'identifier' // make sure `ModDeclItem` goes **after** `ModItem`
   name = ""
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsItemElement" ]
@@ -1087,7 +1085,7 @@ fake BinaryOp ::= '>>=' | '<<=' | '|=' | '^=' | '&=' | '=' | '+=' | '-=' | '*=' 
                 | '<<' | '>>'
                 | '+' | '-' | '*' | '/' | '%'
                 | '||' | '&&' | '|' | '&' | '^' {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsBinaryOpImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsBinaryOpStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
@@ -1147,7 +1145,7 @@ StructLiteral ::= <<checkStructAllowed>> OuterAttr* ValuePathGenericArgsNoTypeQu
 StructLiteralBody ::= '{' StructLiteralField_with_recover* ('..'  AnyExpr)? '}' { pin = 1 }
 
 StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) StructLiteralFieldSuffix? {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsStructLiteralFieldImplMixin"
 }
@@ -1210,7 +1208,7 @@ LabelDecl ::= QUOTE_IDENTIFIER ':' {
   mixin = "org.rust.lang.core.psi.ext.RsLabelDeclImplMixin"
 }
 Label ::= QUOTE_IDENTIFIER {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsLabelImplMixin"
 }
 
@@ -1372,7 +1370,7 @@ MacroExpansionContents ::=
   (MacroExpansion | MacroReference | MacroExpansionReferenceGroup | <<unpairedToken>>)*
 
 MacroReference ::= '$' MetaVarIdentifier {
-  implements = [ "org.rust.lang.core.psi.ext.RsReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroReferenceImplMixin"
 }
 MacroExpansionReferenceGroup ::= '$' '(' MacroExpansionContents ')' MacroExpansionGroupSeparator? ('*' | '+' | '?') { pin = 2 }

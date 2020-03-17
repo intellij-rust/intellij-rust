@@ -36,7 +36,7 @@ class RsLivenessInspection : RsLintInspection() {
                 // Don't analyze functions with unresolved struct literals, e.g.:
                 // let x = 1;
                 // S { x }
-                if (func.descendantsWithMacrosOfType<RsStructLiteral>().any { it.path.reference.resolve() == null }) return
+                if (func.descendantsWithMacrosOfType<RsStructLiteral>().any { it.path.reference?.resolve() == null }) return
 
                 val liveness = func.liveness ?: return
 

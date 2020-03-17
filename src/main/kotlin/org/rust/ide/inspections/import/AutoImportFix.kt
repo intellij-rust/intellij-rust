@@ -90,10 +90,10 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         const val NAME = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
+            val reference = path.reference ?: return null
             val basePath = path.basePath()
 
-            val isBasePathResolved = TyPrimitive.fromPath(basePath) != null ||
-                basePath.reference.multiResolve().isNotEmpty()
+            val isBasePathResolved = TyPrimitive.fromPath(basePath) != null || reference.multiResolve().isNotEmpty()
 
             if (isBasePathResolved) {
                 // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
@@ -321,7 +321,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 info.usePath,
                 externCrateName
             ) ?: return false
-            val element = path.reference.deepResolve() as? RsQualifiedNamedElement ?: return false
+            val element = path.reference?.deepResolve() as? RsQualifiedNamedElement ?: return false
             if (!context.namespaceFilter(element)) return false
 
             // Looks like it's useless to access trait associated types directly (i.e. `Trait::Type`),

@@ -15,7 +15,7 @@ class RsCodeFragmentFactoryTest : RsTestBase() {
         InlineFile("mod foo { struct S; }")
         val target = project.cargoProjects.allProjects.single().workspace!!.packages.single().targets.first()
         val path = RsCodeFragmentFactory(project).createCrateRelativePath("foo::S", target)
-        val declaration = path!!.reference.resolve()
+        val declaration = path!!.reference!!.resolve()
         check((declaration as RsStructItem).name == "S")
     }
 
@@ -29,7 +29,7 @@ class RsCodeFragmentFactoryTest : RsTestBase() {
         """)
         val loop = findElementInEditor<RsLoopExpr>()
         val path = RsCodeFragmentFactory(project).createPath("x", loop)
-        val declaration = path!!.reference.resolve()
+        val declaration = path!!.reference!!.resolve()
         check((declaration as RsPatBinding).name == "x")
     }
 }

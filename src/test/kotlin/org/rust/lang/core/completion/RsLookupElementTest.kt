@@ -16,10 +16,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsTupleFieldDecl
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsMethodOrField
-import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.RsReferenceElement
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.SimpleScopeEntry
 import org.rust.lang.core.types.implLookup
 
@@ -281,15 +278,15 @@ class RsLookupElementTest : RsTestBase() {
 
     fun `test const generic function`() = checkProvider("""
         struct S<const N: usize>(i32);
-        
+
         trait T<const M: usize> {
             fn foo();
         }
-        
+
         impl <const K: usize> T<{ K }> for S<{ K }> {
             fn foo() {}
         }
-        
+
         fn main() {
             S::<1>::foo;
                    //^

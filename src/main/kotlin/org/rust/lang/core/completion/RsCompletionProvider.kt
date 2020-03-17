@@ -11,5 +11,5 @@ import com.intellij.patterns.ElementPattern
 import com.intellij.psi.PsiElement
 
 abstract class RsCompletionProvider : CompletionProvider<CompletionParameters>() {
-    abstract val elementPattern: ElementPattern<PsiElement>
+    abstract val elementPattern: ElementPattern<out PsiElement>
 }

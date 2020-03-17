@@ -70,7 +70,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         buildProject()
 
         runWithInvocationEventsDispatching("Failed to resolve the reference") {
-            testProject.findElementInFile<RsPath>("src/main.rs").reference.resolve() != null
+            testProject.findElementInFile<RsPath>("src/main.rs").reference?.resolve() != null
         }
     }
 
@@ -116,7 +116,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         buildProject()
 
         runWithInvocationEventsDispatching("Failed to resolve the reference") {
-            testProject.findElementInFile<RsPath>("src/main.rs").reference.resolve() != null
+            testProject.findElementInFile<RsPath>("src/main.rs").reference?.resolve() != null
         }
     }
 
@@ -196,7 +196,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         buildProject()
 
         runWithInvocationEventsDispatching("Failed to resolve the reference") {
-            testProject.findElementInFile<RsPath>("intellij-rust-test-1/src/lib.rs").reference.resolve() != null
+            testProject.findElementInFile<RsPath>("intellij-rust-test-1/src/lib.rs").reference?.resolve() != null
         }
     }
 
@@ -223,7 +223,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
         buildProject()
         runWithInvocationEventsDispatching("Failed to resolve the reference") {
-            testProject.findElementInFile<RsPath>("src/lib.rs").reference.resolve() != null
+            testProject.findElementInFile<RsPath>("src/lib.rs").reference?.resolve() != null
         }
     }
 

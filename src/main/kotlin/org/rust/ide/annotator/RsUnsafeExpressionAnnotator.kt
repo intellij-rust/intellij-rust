@@ -79,7 +79,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
 
     fun checkCall(element: RsCallExpr, holder: RsAnnotationHolder) {
         val path = (element.expr as? RsPathExpr)?.path ?: return
-        val fn = path.reference.resolve() as? RsFunction ?: return
+        val fn = path.reference?.resolve() as? RsFunction ?: return
 
         if (fn.isActuallyUnsafe) {
             annotateUnsafeCall(element, holder)
@@ -87,7 +87,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
     }
 
     fun checkPathExpr(expr: RsPathExpr, holder: RsAnnotationHolder) {
-        val constant = expr.path.reference.resolve() as? RsConstant ?: return
+        val constant = expr.path.reference?.resolve() as? RsConstant ?: return
         annotateUnsafeStaticRef(expr, constant, holder)
     }
 

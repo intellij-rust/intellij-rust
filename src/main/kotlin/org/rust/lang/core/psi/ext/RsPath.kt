@@ -9,12 +9,11 @@ import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
-import org.rust.lang.core.resolve.ref.RsPathReference
-import org.rust.lang.core.resolve.ref.RsPathReferenceImpl
+import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsPathStub
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
@@ -93,8 +92,19 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
 
     constructor(stub: RsPathStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getReference(): RsPathReference =
-        if (parent is RsMacroCall) RsMacroPathReferenceImpl(this) else RsPathReferenceImpl(this)
+    override fun getReference(): RsPathReference? {
+        return when (val parent = parent) {
+            is RsMacroCall -> RsMacroPathReferenceImpl(this)
+            is RsMetaItem -> when {
+                RsPsiPattern.derivedTraitMetaItem.accepts(parent) -> RsDeriveTraitReferenceImpl(this)
+                // FIXME: We assume that attribute proc macros are used only as top level attributes
+                // (so we ignore the fact that attribute proc macro can be nested inside `cfg_attr`)
+                RsPsiPattern.nonStdOuterAttributeMetaItem.accepts(parent) -> RsAttributeProcMacroReferenceImpl(this)
+                else -> null
+            }
+            else -> RsPathReferenceImpl(this)
+        }
+    }
 
     override val referenceNameElement: PsiElement
         get() = checkNotNull(identifier ?: self ?: `super` ?: cself ?: crate) {

@@ -23,7 +23,7 @@ class RsDeprecationInspection : RsLintInspection() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
         override fun visitElement(ref: RsElement) {
             // item is non-inline module declaration or not reference element
-            if (ref is RsModDeclItem || ref !is RsWeakReferenceElement) return
+            if (ref is RsModDeclItem || ref !is RsReferenceElement) return
 
             val original = ref.reference?.resolve() ?: return
             val identifier = ref.referenceNameElement ?: return

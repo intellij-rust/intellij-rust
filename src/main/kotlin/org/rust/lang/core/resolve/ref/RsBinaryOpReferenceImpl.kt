@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.resolve.ref
 
-import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryOp
 import org.rust.lang.core.psi.ext.OverloadableBinaryOperator
 import org.rust.lang.core.psi.ext.RsElement
@@ -15,10 +14,7 @@ import org.rust.lang.core.resolve.processBinaryOpVariants
 
 class RsBinaryOpReferenceImpl(
     element: RsBinaryOp
-) : RsReferenceCached<RsBinaryOp>(element),
-    RsReference {
-
-    override val RsBinaryOp.referenceAnchor: PsiElement get() = referenceNameElement
+) : RsReferenceCached<RsBinaryOp>(element) {
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
 

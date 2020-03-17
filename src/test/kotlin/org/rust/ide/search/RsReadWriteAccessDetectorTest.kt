@@ -84,7 +84,8 @@ class RsReadWriteAccessDetectorTest : RsTestBase() {
     private fun doTest(@Language("Rust") code: String) {
         InlineFile(code.trimIndent())
         val (element, data) = findElementAndDataInEditor<RsReferenceElement>()
-        val definition = element.reference.resolve() ?: error("Element not resolved")
+        val reference = element.reference ?: error("Failed to get reference for `${element.text}`")
+        val definition = reference.resolve() ?: error("Element not resolved")
         val detector = RsReadWriteAccessDetector()
         check(detector.isReadWriteAccessible(definition))
 
@@ -94,7 +95,7 @@ class RsReadWriteAccessDetectorTest : RsTestBase() {
             "read_write" -> ReadWriteAccessDetector.Access.ReadWrite
             else -> error("Unknown access type: $data")
         }
-        val actualAccess = detector.getReferenceAccess(definition, element.reference)
+        val actualAccess = detector.getReferenceAccess(definition, reference)
         assertEquals(expectedAccess, actualAccess)
     }
 }

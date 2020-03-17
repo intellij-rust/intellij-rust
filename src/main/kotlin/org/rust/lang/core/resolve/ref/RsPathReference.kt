@@ -12,5 +12,6 @@ import org.rust.lang.core.types.BoundElement
 interface RsPathReference : RsReference {
     override fun getElement(): RsPath
 
-    fun advancedResolve(): BoundElement<RsElement>?
+    fun advancedResolve(): BoundElement<RsElement>? =
+        resolve()?.let { BoundElement(it) }
 }

@@ -30,7 +30,7 @@ abstract class RsReferenceBase<T : RsReferenceElementBase>(
     override fun multiResolve(incompleteCode: Boolean): Array<out ResolveResult> =
         multiResolve().map { PsiElementResolveResult(it) }.toTypedArray()
 
-    abstract val T.referenceAnchor: PsiElement?
+    open val T.referenceAnchor: PsiElement? get() = referenceNameElement
 
     final override fun getRangeInElement(): TextRange = super.getRangeInElement()
 

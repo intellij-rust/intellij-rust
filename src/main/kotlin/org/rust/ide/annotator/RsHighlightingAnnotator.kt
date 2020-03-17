@@ -101,8 +101,9 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         if (element is RsExternCrateItem && element.self != null) return null
 
         val parent = element.parent
+        val reference = element.reference
         val isPrimitiveType = element is RsPath && TyPrimitive.fromPath(element) != null &&
-            (parent is RsBaseType || parent is RsPath && element.reference.multiResolve().isEmpty())
+            (parent is RsBaseType || parent is RsPath && reference != null && reference.multiResolve().isEmpty())
 
         return when {
             isPrimitiveType -> RsColor.PRIMITIVE_TYPE
@@ -110,7 +111,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             element is RsMethodCall -> RsColor.METHOD_CALL
             element is RsFieldLookup && element.identifier?.text == "await" && element.isEdition2018 -> RsColor.KEYWORD
             element is RsPath && element.isCall() -> {
-                val ref = element.reference.resolve() ?: return null
+                val ref = reference?.resolve() ?: return null
                 if (ref is RsFunction) {
                     when {
                         ref.isAssocFn -> RsColor.ASSOC_FUNCTION_CALL
@@ -123,7 +124,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             }
             element is RsPath && parent is RsTraitRef -> RsColor.TRAIT
             else -> {
-                val ref = element.reference.resolve() ?: return null
+                val ref = reference?.resolve() ?: return null
                 // Highlight the element dependent on what it's referencing.
                 colorFor(ref)
             }

@@ -8,7 +8,7 @@ package org.rust.lang.core.psi.ext
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsExpr
 
-interface RsMethodOrField : RsReferenceElement
+interface RsMethodOrField : RsMandatoryReferenceElement
 
 val RsMethodOrField.parentDotExpr: RsDotExpr get() = parent as RsDotExpr
 val RsMethodOrField.receiver: RsExpr get() = parentDotExpr.expr

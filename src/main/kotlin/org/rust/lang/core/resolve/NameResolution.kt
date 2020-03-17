@@ -124,7 +124,7 @@ fun processStructLiteralFieldResolveVariants(
     isCompletion: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val resolved = field.parentStructLiteral.path.reference.deepResolve()
+    val resolved = field.parentStructLiteral.path.reference?.deepResolve()
     val structOrEnumVariant = resolved as? RsFieldsOwner ?: return false
     if (processFieldDeclarations(structOrEnumVariant, processor)) return true
     if (!isCompletion && field.expr == null) {
@@ -137,7 +137,7 @@ fun processStructPatternFieldResolveVariants(
     field: RsPatFieldFull,
     processor: RsResolveProcessor
 ): Boolean {
-    val resolved = field.parentStructPattern.path.reference.deepResolve()
+    val resolved = field.parentStructPattern.path.reference?.deepResolve()
     val resolvedStruct = resolved as? RsFieldsOwner ?: return false
     return processFieldDeclarations(resolvedStruct, processor)
 }
@@ -365,7 +365,7 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val (base, subst) = qualifier.reference.advancedResolve() ?: run {
+    val (base, subst) = qualifier.reference?.advancedResolve() ?: run {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
             if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType, null)) return true
@@ -614,7 +614,7 @@ private fun processTraitRelativePath(
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     if (binding.parent is RsPatField) {
         val parentPat = binding.parent.parent as RsPatStruct
-        val patStruct = parentPat.path.reference.resolve()
+        val patStruct = parentPat.path.reference?.resolve()
         if (patStruct is RsFieldsOwner && processFieldDeclarations(patStruct, processor)) return true
     }
 
@@ -710,7 +710,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
 
     val el = pkg.targets.asSequence()
         .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(parts[1], it) }
-        .mapNotNull { it.reference.resolve() }
+        .mapNotNull { it.reference?.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
     return el to pkg
@@ -727,11 +727,12 @@ fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolvePro
 /**
  * Attribute macro can only be resolved to its definition.
  */
-fun processAttributeProcMacroResolveVariants(element: RsMetaItem, processor: RsResolveProcessor): Boolean =
+fun processAttributeProcMacroResolveVariants(element: RsPath, processor: RsResolveProcessor): Boolean =
     processNestedScopesUpwards(element, MACROS, processor)
 
-fun processDeriveTraitResolveVariants(element: RsMetaItem, traitName: String, processor: RsResolveProcessor): Boolean {
+fun processDeriveTraitResolveVariants(element: RsPath, traitName: String, processor: RsResolveProcessor): Boolean {
     processNestedScopesUpwards(element, MACROS, processor)
+    // FIXME: support custom items with the same name as known derivable traits (i.e. `foo::bar::Clone`)
     val knownDerive = KNOWN_DERIVABLE_TRAITS[traitName]?.findTrait(element.knownItems)
     return if (knownDerive != null) {
         processor(knownDerive)

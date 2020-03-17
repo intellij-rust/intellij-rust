@@ -19,10 +19,7 @@ import org.rust.lang.core.types.ty.Ty
 
 class RsMethodCallReferenceImpl(
     element: RsMethodCall
-) : RsReferenceBase<RsMethodCall>(element),
-    RsReference {
-
-    override val RsMethodCall.referenceAnchor: PsiElement get() = referenceNameElement
+) : RsReferenceBase<RsMethodCall>(element) {
 
     override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedMethod(element)?.map { it.element } ?: emptyList()
@@ -33,10 +30,7 @@ class RsMethodCallReferenceImpl(
 
 class RsFieldLookupReferenceImpl(
     element: RsFieldLookup
-) : RsReferenceBase<RsFieldLookup>(element),
-    RsReference {
-
-    override val RsFieldLookup.referenceAnchor: PsiElement get() = referenceNameElement
+) : RsReferenceBase<RsFieldLookup>(element) {
 
     override fun multiResolve(): List<RsElement> =
         element.inference?.getResolvedField(element) ?: emptyList()

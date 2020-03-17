@@ -62,7 +62,7 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected fun stubOnlyResolve(
         @Language("Rust") code: String,
         resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
-    ) = stubOnlyResolve<RsWeakReferenceElement>(fileTreeFromText(code), resolveFileProducer)
+    ) = stubOnlyResolve<RsReferenceElement>(fileTreeFromText(code), resolveFileProducer)
 
     protected fun stubOnlyResolve(
         @Language("Rust") code: String,

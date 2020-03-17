@@ -126,7 +126,7 @@ val RsMacroCall.bodyHash: HashCode?
     }
 
 fun RsMacroCall.resolveToMacro(): RsMacro? =
-    path.reference.resolve() as? RsMacro
+    path.reference?.resolve() as? RsMacro
 
 val RsMacroCall.expansion: MacroExpansion?
     get() = CachedValuesManager.getCachedValue(this) {

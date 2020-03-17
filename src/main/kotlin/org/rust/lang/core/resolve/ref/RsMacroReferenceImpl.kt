@@ -12,10 +12,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.resolve.collectResolveVariants
 import org.rust.lang.core.resolve.processMacroReferenceVariants
 
-
 class RsMacroReferenceImpl(pattern: RsMacroReference) : RsReferenceCached<RsMacroReference>(pattern) {
-    override val RsMacroReference.referenceAnchor: PsiElement
-        get() = referenceNameElement
 
     override val cacheDependency: ResolveCacheDependency get() = ResolveCacheDependency.LOCAL
 
