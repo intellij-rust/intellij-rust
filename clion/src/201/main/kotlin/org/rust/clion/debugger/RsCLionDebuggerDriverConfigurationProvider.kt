@@ -6,15 +6,24 @@
 package org.rust.clion.debugger
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.jetbrains.cidr.cpp.toolchains.CPPEnvironment
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
+import com.jetbrains.cidr.cpp.toolchains.CPPToolSet
 import com.jetbrains.cidr.cpp.toolchains.createDriverConfiguration
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriverConfiguration
 import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 
 class RsCLionDebuggerDriverConfigurationProvider : RsDebuggerDriverConfigurationProvider {
     override fun getDebuggerDriverConfiguration(project: Project): DebuggerDriverConfiguration? {
-        val toolchain = CPPToolchains.getInstance().defaultToolchain ?: return null
-        return createDriverConfiguration(project, CPPEnvironment(toolchain))
+        val toolchains = CPPToolchains.getInstance()
+        if (!SystemInfo.isWindows) {
+            return toolchains.defaultToolchain?.createDriverConfiguration(project)
+        }
+
+        // In case that WSL is the default toolchain, we should find MinGW manually.
+        return toolchains.toolchains
+            .firstOrNull { it.toolSetKind == CPPToolSet.Kind.MINGW }
+            ?.createDriverConfiguration(project)
     }
 }
