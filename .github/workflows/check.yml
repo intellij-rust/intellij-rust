@@ -30,13 +30,18 @@ jobs:
               with:
                   java-version: 1.8
 
-            - name: Set up environment
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: ${{ matrix.rust-version }}
+                  components: rust-src, rustfmt, clippy
+                  default: true
+
+            - name: Check environment
               run: |
-                curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.rust-version }} -y
-                export PATH=$HOME/.cargo/bin:$PATH
-                rustup component add rust-src
-                if [ "${{ matrix.rust-version }}" != "1.28.0" ]; then rustup component add clippy-preview; fi # BACKCOMPAT: Rust 1.28.0
-                rustup component add rustfmt-preview
+                rustc --version
+                rustup component list --installed
 
             - name: Check license
               run: ./check-license.sh
