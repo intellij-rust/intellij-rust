@@ -19,6 +19,7 @@ import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.consts.CtUnknown
+import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.evaluation.ConstExpr
@@ -295,9 +296,9 @@ class RsTypeInferenceWalker(
                 if (stubKind.isByte) {
                     val size = stubKind.value?.length?.toLong()
                     val const = size?.let { ConstExpr.Value.Integer(it, TyInteger.USize).toConst() } ?: CtUnknown
-                    TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE)
+                    TyReference(TyArray(TyInteger.U8, const), Mutability.IMMUTABLE, ReStatic)
                 } else {
-                    TyReference(TyStr, Mutability.IMMUTABLE)
+                    TyReference(TyStr, Mutability.IMMUTABLE, ReStatic)
                 }
             }
             is RsStubLiteralKind.Integer -> {

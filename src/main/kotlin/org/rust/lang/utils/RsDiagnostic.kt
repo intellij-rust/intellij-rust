@@ -129,6 +129,12 @@ sealed class RsDiagnostic(
                                 add(ConvertToMutStrFix(element))
                             }
                         }
+
+                        val retFix = ChangeReturnTypeFix.createIfCompatible(element, actualTy)
+                        if (retFix != null) {
+                            add(retFix)
+                        }
+
                         val derefsRefsToExpected = derefRefPathFromActualToExpected(lookup, element)
                         if (derefsRefsToExpected != null) {
                             add(ConvertToTyWithDerefsRefsFix(element, expectedTy, derefsRefsToExpected))
