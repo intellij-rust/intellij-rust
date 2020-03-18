@@ -31,6 +31,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
@@ -78,10 +79,12 @@ open class CargoProjectsServiceImpl(
 ) : CargoProjectsService, PersistentStateComponent<Element> {
     init {
         with(project.messageBus.connect()) {
-            subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
-                if (!project.rustSettings.autoUpdateEnabled) return
-                refreshAllProjects()
-            }))
+            if (!isUnitTestMode) {
+                subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
+                    if (!project.rustSettings.autoUpdateEnabled) return
+                    refreshAllProjects()
+                }))
+            }
 
             subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustSettingsListener {
                 override fun rustSettingsChanged(e: RustSettingsChangedEvent) {
@@ -215,6 +218,7 @@ open class CargoProjectsServiceImpl(
      * [allProjects] contains fresh projects.
      */
     protected fun modifyProjects(
+        makeRootsChange: Boolean = true,
         f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
@@ -222,8 +226,13 @@ open class CargoProjectsServiceImpl(
                 invokeAndWaitIfNeeded {
                     runWriteAction {
                         directoryIndex.resetIndex()
-                        ProjectRootManagerEx.getInstanceEx(project)
-                            .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                        // In unit tests roots change is done by the test framework in most cases
+                        if (makeRootsChange) {
+                            ProjectRootManagerEx.getInstanceEx(project)
+                                .makeRootsChange(EmptyRunnable.getInstance(), false, true)
+                        } else {
+                            check(isUnitTestMode)
+                        }
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
                             .cargoProjectsUpdated(projects)
                         initialized = true

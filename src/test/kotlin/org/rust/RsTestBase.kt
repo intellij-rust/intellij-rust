@@ -72,13 +72,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     }
 
     override fun tearDown() {
-        // FIXME: fix TraceableDisposable.DisposalException on 192 platform
-        try {
-            super.tearDown()
-        } catch (e: Exception) {
-            if (e.javaClass.simpleName != "DisposalException") throw e
-        }
-
+        super.tearDown()
         checkMacroExpansionFileSystemAfterTest()
     }
 
@@ -86,12 +80,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         val annotation = findAnnotationInstance<MockRustcVersion>() ?: return
         val (semVer, channel) = parse(annotation.rustcVersion)
         val rustcInfo = RustcInfo("", RustcVersion(semVer, "", channel))
-        project.testCargoProjects.setRustcInfo(rustcInfo)
+        project.testCargoProjects.setRustcInfo(rustcInfo, testRootDisposable)
     }
 
     private fun setupMockEdition() {
         val edition = findAnnotationInstance<MockEdition>()?.edition ?: CargoWorkspace.Edition.EDITION_2015
-        project.testCargoProjects.setEdition(edition)
+        project.testCargoProjects.setEdition(edition, testRootDisposable)
     }
 
     private fun setupMockCfgOptions() {
@@ -157,12 +151,12 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         }
 
     private fun runTestEdition2015() {
-        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015)
+        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015, testRootDisposable)
         super.runTest()
     }
 
     private fun runTestEdition2018() {
-        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018)
+        project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018, testRootDisposable)
         super.runTest()
     }
 

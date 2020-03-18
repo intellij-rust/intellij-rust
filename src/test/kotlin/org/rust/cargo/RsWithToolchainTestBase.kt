@@ -88,11 +88,11 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         action: () -> Boolean
     ) {
         for (retries in 0..1000) {
-            Thread.sleep(10)
             UIUtil.dispatchAllInvocationEvents()
             if (action()) {
                 return
             }
+            Thread.sleep(10)
         }
         error(errorMessage)
     }

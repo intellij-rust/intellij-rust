@@ -5,14 +5,18 @@
 
 package org.rust.cargo.project.model.impl
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.rustPsiManager
 import org.rust.openapiext.pathAsPath
+import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
@@ -29,15 +33,39 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     @TestOnly
-    fun setRustcInfo(rustcInfo: RustcInfo) {
+    fun setRustcInfo(rustcInfo: RustcInfo, parentDisposable: Disposable) {
+        val oldValues = mutableMapOf<Path, RustcInfo?>()
+
         modifyProjectsSync { projects ->
-            val updatedProjects = projects.map { it.copy(rustcInfo = rustcInfo, rustcInfoStatus = CargoProject.UpdateStatus.UpToDate) }
+            projects.forEach { oldValues[it.manifest] = it.rustcInfo }
+            val updatedProjects = projects.map {
+                it.copy(rustcInfo = rustcInfo, rustcInfoStatus = CargoProject.UpdateStatus.UpToDate)
+            }
             CompletableFuture.completedFuture(updatedProjects)
         }
+
+        Disposer.register(parentDisposable, Disposable {
+            modifyProjectsSync { projects ->
+                val updatedProjects = projects.map {
+                    it.copy(rustcInfo = oldValues[it.manifest], rustcInfoStatus = CargoProject.UpdateStatus.UpToDate)
+                }
+                CompletableFuture.completedFuture(updatedProjects)
+            }
+        })
     }
 
     @TestOnly
-    fun setEdition(edition: CargoWorkspace.Edition) {
+    fun setEdition(edition: CargoWorkspace.Edition, parentDisposable: Disposable) {
+        if (edition == CargoWorkspace.Edition.EDITION_2015) return
+
+        setEditionInner(edition)
+
+        Disposer.register(parentDisposable, Disposable {
+            setEditionInner(CargoWorkspace.Edition.EDITION_2015)
+        })
+    }
+
+    private fun setEditionInner(edition: CargoWorkspace.Edition) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { project ->
                 val ws = project.workspace?.withEdition(edition)
@@ -45,6 +73,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
             }
             CompletableFuture.completedFuture(updatedProjects)
         }
+        project.rustPsiManager.incRustStructureModificationCount()
     }
 
     @TestOnly
@@ -59,7 +88,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     private fun modifyProjectsSync(f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>) {
-        modifyProjects(f).get(1, TimeUnit.MINUTES) ?: error("Timeout when refreshing a test Cargo project")
+        modifyProjects(makeRootsChange = false, f = f).get(1, TimeUnit.MINUTES) ?: error("Timeout when refreshing a test Cargo project")
     }
 
     @TestOnly
