@@ -299,6 +299,30 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
         fn foo<'a>(_: impl Iterator<Item = &'a ()>) {}
     """)
 
+    fun `test allow`() = checkByText("""
+        <weak_warning>fn foo1<'a>(_: &'a str)</weak_warning> {}
+        
+        #[allow(clippy::needless_lifetimes)]
+        fn foo2<'a>(_: &'a str) {}
+        
+        #[allow(clippy::complexity)]
+        fn foo3<'a>(_: &'a str) {}
+        
+        #[allow(clippy::all)]
+        fn foo4<'a>(_: &'a str) {}
+        
+        #[allow(clippy)]
+        fn foo5<'a>(_: &'a str) {}
+    """)
+
+    fun `test global allow`() = checkByText("""
+        #![allow(clippy::needless_lifetimes)]
+        
+        fn foo1<'a>(_: &'a str) {}
+
+        fn foo2<'a>(_: &'a str) {}
+    """)
+
     private fun doTest(
         @Language("Rust") text: String
     ) = checkFixIsUnavailable(FIX_NAME, text, checkWeakWarn = true)

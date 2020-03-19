@@ -7,6 +7,7 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.ReferenceLifetime.*
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
 import org.rust.lang.core.psi.*
@@ -22,7 +23,10 @@ import org.rust.stdext.chain
  * Checks for lifetime annotations which can be removed by relying on lifetime elision.
  * Corresponds to needless_lifetimes lint from Rust Clippy.
  */
-class RsNeedlessLifetimesInspection : RsLocalInspectionTool() {
+class RsNeedlessLifetimesInspection : RsLintInspection() {
+
+    override fun getLint(element: PsiElement): RsLint = RsLint.NeedlessLifetimes
+
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitFunction(fn: RsFunction) {
             if (couldUseElision(fn)) registerProblem(holder, fn)

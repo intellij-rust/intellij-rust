@@ -18,6 +18,13 @@ val RsMetaItem.name: String? get() {
     return path.referenceName
 }
 
+val RsMetaItem.id: String?
+    get() = generateSequence(path) { it.path }
+        .asIterable()
+        .reversed()
+        .takeIf { it.isNotEmpty() }
+        ?.joinToString("::") { it.referenceName }
+
 val RsMetaItem.value: String? get() = litExpr?.stringValue
 
 val RsMetaItem.hasEq: Boolean get() = greenStub?.hasEq ?: (eq != null)
