@@ -2494,6 +2494,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.42.0")
+    fun `test const trait impl E0658 1`() = checkErrors("""
+        struct S;
+        trait T {}
+        impl <error descr="const trait impls is experimental [E0658]">const</error> S {}
+        impl <error descr="const trait impls is experimental [E0658]">const</error> T for S {}
+    """)
+
+    @MockRustcVersion("1.42.0-nightly")
+    fun `test const trait impl E0658 2`() = checkErrors("""
+        #![feature(const_trait_impl)]
+        struct S;
+        trait T {}
+        impl const S {} // TODO: inherent impls cannot be `const`
+        impl const T for S {}
+    """)
+
     @MockRustcVersion("1.34.0")
     fun `test const generics E0658 1`() = checkErrors("""
         fn f<<error descr="const generics is experimental [E0658]">const C: i32</error>>() {}

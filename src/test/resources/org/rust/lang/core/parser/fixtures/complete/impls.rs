@@ -50,4 +50,4 @@ impl<T: fmt::Display + ?Sized> ToString for T {
     pub default type T1 = i32;
 }
 
-default unsafe impl X for X {}
+default unsafe impl<T> const X for X {}
