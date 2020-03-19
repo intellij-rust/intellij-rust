@@ -16,6 +16,8 @@ import org.rust.lang.core.FeatureState.ACTIVE
 
 // no-tracking-issue-start
 
+// Allows using `rustc_*` attributes (RFC 572).
+val RUSTC_ATTRS = CompilerFeature("rustc_attrs", ACTIVE, "1.0.0")
 // Allows using compiler's own crates.
 val RUSTC_PRIVATE = CompilerFeature("rustc_private", ACTIVE, "1.0.0")
 // Allows using the `rust-intrinsic`'s "ABI".
@@ -38,8 +40,6 @@ val ALLOW_INTERNAL_UNSAFE = CompilerFeature("allow_internal_unsafe", ACTIVE, "1.
 
 // Allows using `#[link_name="llvm.*"]`.
 val LINK_LLVM_INTRINSICS = CompilerFeature("link_llvm_intrinsics", ACTIVE, "1.0.0")
-// Allows using `rustc_*` attributes (RFC 572).
-val RUSTC_ATTRS = CompilerFeature("rustc_attrs", ACTIVE, "1.0.0")
 // Allows using the `box $expr` syntax.
 val BOX_SYNTAX = CompilerFeature("box_syntax", ACTIVE, "1.0.0")
 // Allows using `#[main]` to replace the entrypoint `#[lang = "start"]` calls.
@@ -84,8 +84,6 @@ val NEEDS_PANIC_RUNTIME = CompilerFeature("needs_panic_runtime", ACTIVE, "1.10.0
 val COMPILER_BUILTINS = CompilerFeature("compiler_builtins", ACTIVE, "1.13.0")
 // Allows using the `unadjusted` ABI; perma-unstable.
 val ABI_UNADJUSTED = CompilerFeature("abi_unadjusted", ACTIVE, "1.16.0")
-// Allows identifying crates that contain sanitizer runtimes.
-val SANITIZER_RUNTIME = CompilerFeature("sanitizer_runtime", ACTIVE, "1.17.0")
 // Used to identify crates that contain the profiler runtime.
 val PROFILER_RUNTIME = CompilerFeature("profiler_runtime", ACTIVE, "1.18.0")
 // Allows using the `thiscall` ABI.
@@ -94,6 +92,9 @@ val ABI_THISCALL = CompilerFeature("abi_thiscall", ACTIVE, "1.19.0")
 val ALLOCATOR_INTERNALS = CompilerFeature("allocator_internals", ACTIVE, "1.20.0")
 // Added for testing E0705; perma-unstable.
 val TEST_2018_FEATURE = CompilerFeature("test_2018_feature", ACTIVE, "1.31.0")
+// Allows `#[repr(no_niche)]` (an implementation detail of `rustc`,
+// it is not on path for eventual stabilization).
+val NO_NICHE = CompilerFeature("no_niche", ACTIVE, "1.42.0")
 // no-tracking-issue-end
 
 // -------------------------------------------------------------------------
@@ -144,8 +145,6 @@ val THREAD_LOCAL = CompilerFeature("thread_local", ACTIVE, "1.0.0")
 val SIMD_FFI = CompilerFeature("simd_ffi", ACTIVE, "1.0.0")
 // Allows using non lexical lifetimes (RFC 2094).
 val NLL = CompilerFeature("nll", ACTIVE, "1.0.0")
-// Allows using slice patterns.
-val SLICE_PATTERNS = CompilerFeature("slice_patterns", ACTIVE, "1.0.0")
 // Allows the definition of `const` functions with some advanced features.
 val CONST_FN = CompilerFeature("const_fn", ACTIVE, "1.2.0")
 // Allows associated type defaults.
@@ -162,8 +161,6 @@ val PLATFORM_INTRINSICS = CompilerFeature("platform_intrinsics", ACTIVE, "1.4.0"
 //
 // Permits specifying whether a function should permit unwinding or abort on unwind.
 val UNWIND_ATTRIBUTES = CompilerFeature("unwind_attributes", ACTIVE, "1.4.0")
-// Allows `#[no_debug]`.
-val NO_DEBUG = CompilerFeature("no_debug", ACTIVE, "1.5.0")
 // Allows attributes on expressions and non-item statements.
 val STMT_EXPR_ATTRIBUTES = CompilerFeature("stmt_expr_attributes", ACTIVE, "1.6.0")
 // Allows the use of type ascription in expressions.
@@ -172,6 +169,10 @@ val TYPE_ASCRIPTION = CompilerFeature("type_ascription", ACTIVE, "1.6.0")
 val CFG_TARGET_THREAD_LOCAL = CompilerFeature("cfg_target_thread_local", ACTIVE, "1.7.0")
 // Allows specialization of implementations (RFC 1210).
 val SPECIALIZATION = CompilerFeature("specialization", ACTIVE, "1.7.0")
+// A minimal, sound subset of specialization intended to be used by the
+// standard library until the soundness issues with specialization
+// are fixed.
+val MIN_SPECIALIZATION = CompilerFeature("min_specialization", ACTIVE, "1.7.0")
 // Allows using `#[naked]` on functions.
 val NAKED_FUNCTIONS = CompilerFeature("naked_functions", ACTIVE, "1.9.0")
 // Allows `cfg(target_has_atomic = "...")`.
@@ -203,8 +204,6 @@ val ABI_MSP430_INTERRUPT = CompilerFeature("abi_msp430_interrupt", ACTIVE, "1.16
 val DECL_MACRO = CompilerFeature("decl_macro", ACTIVE, "1.17.0")
 // Allows `extern "x86-interrupt" fn()`.
 val ABI_X86_INTERRUPT = CompilerFeature("abi_x86_interrupt", ACTIVE, "1.17.0")
-// Allows overlapping impls of marker traits.
-val OVERLAPPING_MARKER_TRAITS = CompilerFeature("overlapping_marker_traits", ACTIVE, "1.18.0")
 // Allows a test to fail without failing the whole suite.
 val ALLOW_FAIL = CompilerFeature("allow_fail", ACTIVE, "1.19.0")
 // Allows unsized tuple coercion.
@@ -215,8 +214,6 @@ val GENERATORS = CompilerFeature("generators", ACTIVE, "1.21.0")
 val DOC_CFG = CompilerFeature("doc_cfg", ACTIVE, "1.21.0")
 // Allows `#[doc(masked)]`.
 val DOC_MASKED = CompilerFeature("doc_masked", ACTIVE, "1.21.0")
-// Allows `#[doc(spotlight)]`.
-val DOC_SPOTLIGHT = CompilerFeature("doc_spotlight", ACTIVE, "1.22.0")
 // Allows `#[doc(include = "some-file")]`.
 val EXTERNAL_DOC = CompilerFeature("external_doc", ACTIVE, "1.22.0")
 // Allows using `crate` as visibility modifier, synonymous with `pub(crate)`.
@@ -231,7 +228,7 @@ val IN_BAND_LIFETIMES = CompilerFeature("in_band_lifetimes", ACTIVE, "1.23.0")
 val GENERIC_ASSOCIATED_TYPES = CompilerFeature("generic_associated_types", ACTIVE, "1.23.0")
 // Allows defining `trait X = A + B;` alias items.
 val TRAIT_ALIAS = CompilerFeature("trait_alias", ACTIVE, "1.24.0")
-// Allows infering `'static` outlives requirements (RFC 2093).
+// Allows inferring `'static` outlives requirements (RFC 2093).
 val INFER_STATIC_OUTLIVES_REQUIREMENTS = CompilerFeature("infer_static_outlives_requirements", ACTIVE, "1.26.0")
 // Allows accessing fields of unions inside `const` functions.
 val CONST_FN_UNION = CompilerFeature("const_fn_union", ACTIVE, "1.27.0")
@@ -286,8 +283,6 @@ val C_VARIADIC = CompilerFeature("c_variadic", ACTIVE, "1.34.0")
 val ASSOCIATED_TYPE_BOUNDS = CompilerFeature("associated_type_bounds", ACTIVE, "1.34.0")
 // Allows `if/while p && let q = r && ...` chains.
 val LET_CHAINS = CompilerFeature("let_chains", ACTIVE, "1.37.0")
-// Allows #[repr(transparent)] on enums (RFC 2645).
-val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACTIVE, "1.37.0")
 // Allows #[repr(transparent)] on unions (RFC 2645).
 val TRANSPARENT_UNIONS = CompilerFeature("transparent_unions", ACTIVE, "1.37.0")
 // Allows explicit discriminants on non-unit enum variants.
@@ -327,10 +322,26 @@ val REGISTER_TOOL = CompilerFeature("register_tool", ACTIVE, "1.41.0")
 val CONST_IF_MATCH = CompilerFeature("const_if_match", ACTIVE, "1.41.0")
 // Allows the use of `#[cfg(sanitize = "option")]`; set when -Zsanitizer is used.
 val CFG_SANITIZE = CompilerFeature("cfg_sanitize", ACTIVE, "1.41.0")
+// Allows using `..X`, `..=X`, `...X`, and `X..` as a pattern.
+val HALF_OPEN_RANGE_PATTERNS = CompilerFeature("half_open_range_patterns", ACTIVE, "1.41.0")
 // Allows using `&mut` in constant functions.
 val CONST_MUT_REFS = CompilerFeature("const_mut_refs", ACTIVE, "1.41.0")
 // Allows the use of `loop` and `while` in constants.
 val CONST_LOOP = CompilerFeature("const_loop", ACTIVE, "1.41.0")
+// Allows bindings in the subpattern of a binding pattern.
+// For example, you can write `x @ Some(y)`.
+val BINDINGS_AFTER_AT = CompilerFeature("bindings_after_at", ACTIVE, "1.41.0")
+// Allows patterns with concurrent by-move and by-ref bindings.
+// For example, you can write `Foo(a, ref b)` where `a` is by-move and `b` is by-ref.
+val MOVE_REF_PATTERN = CompilerFeature("move_ref_pattern", ACTIVE, "1.42.0")
+// Allows `impl const Trait for T` syntax.
+val CONST_TRAIT_IMPL = CompilerFeature("const_trait_impl", ACTIVE, "1.42.0")
+// Allows `T: ?const Trait` syntax in bounds.
+val CONST_TRAIT_BOUND_OPT_OUT = CompilerFeature("const_trait_bound_opt_out", ACTIVE, "1.42.0")
+// Allows the use of `no_sanitize` attribute.
+val NO_SANITIZE = CompilerFeature("no_sanitize", ACTIVE, "1.42.0")
+// Allows limiting the evaluation steps of const expressions
+val CONST_EVAL_LIMIT = CompilerFeature("const_eval_limit", ACTIVE, "1.43.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -563,3 +574,7 @@ val CFG_DOCTEST = CompilerFeature("cfg_doctest", ACCEPTED, "1.40.0")
 // Allows relaxing the coherence rules such that
 // `impl<T> ForeignTrait<LocalType> for ForeignType<T>` is permitted.
 val RE_REBALANCE_COHERENCE = CompilerFeature("re_rebalance_coherence", ACCEPTED, "1.41.0")
+// Allows #[repr(transparent)] on univariant enums (RFC 2645).
+val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACCEPTED, "1.42.0")
+// Allows using subslice patterns, `[a, .., b]` and `[a, xs @ .., b]`.
+val SLICE_PATTERNS = CompilerFeature("slice_patterns", ACCEPTED, "1.42.0")
