@@ -798,6 +798,9 @@ private class MacroExpansionServiceImplInner(
 
         setupListeners(disposable)
 
+        // TODO this causes flaky tests. Expanding should be triggered by an actual code change
+        processUnprocessedMacros()
+
         return disposable
     }
 

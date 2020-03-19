@@ -7,7 +7,9 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.reference.SoftReference
+import com.intellij.psi.util.CachedValue
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -18,18 +20,21 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
 import org.rust.lang.core.psi.ext.cargoProject
+import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
-import org.rust.openapiext.getOrPutSoft
 import java.util.*
 
-private val KNOWN_ITEMS_KEY: Key<SoftReference<KnownItems>> = Key.create("KNOWN_ITEMS_KEY")
+private val KNOWN_ITEMS_KEY: Key<CachedValue<KnownItems>> = Key.create("KNOWN_ITEMS_KEY")
 private val DUMMY_KNOWN_ITEMS = KnownItems(DummyKnownItemsLookup)
 
 val CargoProject.knownItems: KnownItems
-    get() = getOrPutSoft(KNOWN_ITEMS_KEY) {
-        val workspace = workspace ?: return@getOrPutSoft DUMMY_KNOWN_ITEMS
-        KnownItems(RealKnownItemsLookup(project, workspace))
-    }
+    get() = CachedValuesManager.getManager(project).getCachedValue(this, KNOWN_ITEMS_KEY, {
+        val items = run {
+            val workspace = workspace ?: return@run DUMMY_KNOWN_ITEMS
+            KnownItems(RealKnownItemsLookup(project, workspace))
+        }
+        CachedValueProvider.Result(items, project.rustStructureModificationTracker)
+    }, false)
 
 val RsElement.knownItems: KnownItems
     get() = cargoProject?.knownItems ?: DUMMY_KNOWN_ITEMS
