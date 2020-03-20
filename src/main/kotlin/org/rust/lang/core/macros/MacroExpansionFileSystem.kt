@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.ArrayUtil
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtilRt
@@ -125,12 +126,12 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
         }
     }
 
-    private fun convert(path: String): FSItem? {
-        val segments = StringUtil.split(path, "/")
-
+    private fun convert(path: String, mkdirs: Boolean = false): FSItem? {
         var file: FSItem = root
-        for (segment in segments) {
-            file = (file as? FSDir)?.findChild(segment) ?: return null
+        for (segment in StringUtil.split(path, "/")) {
+            if (file !is FSDir) return null
+            file = file.findChild(segment)
+                ?: if (mkdirs) file.addChildDir(segment) else return null
         }
 
         return file
@@ -275,6 +276,7 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
             ) : FSDir(parent, name, timestamp) {
                 override val children: MutableList<FSItem>
                     get() {
+                        if (isUnitTestMode) error("DummyDir should not be touched!")
                         parent?.removeChild(name, bump = false)
                         return mutableListOf()
                     }
@@ -326,9 +328,9 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
         return pathStart to filename
     }
 
-    fun createFileWithContent(path: String, content: String) {
+    fun createFileWithContent(path: String, content: String, mkdirs: Boolean = false) {
         val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName) ?: throw FileNotFoundException(parentName)
+        val parent = convert(parentName, mkdirs) ?: throw FileNotFoundException(parentName)
         check(parent is FSDir)
         val item = parent.addChildFile(name)
         item.setContent(content.toByteArray())

@@ -7,7 +7,6 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -35,7 +34,6 @@ import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
-import org.rust.stdext.executeSequentially
 import org.rust.stdext.nextOrNull
 import org.rust.stdext.supplyAsync
 import java.util.concurrent.*
@@ -206,7 +204,7 @@ abstract class MacroExpansionTaskBase(
                         }
                     }
                 }
-                doneStages.addAndGet(if (result is EmptyPipeline) Pipeline.STAGES else 1)
+                doneStages.addAndGet(if (result is EmptyPipeline) Pipeline.STAGES else 2)
 
                 // Enter heavy process mode only if at least one macros is not up-to-date
                 if (result !is EmptyPipeline) {
@@ -224,23 +222,24 @@ abstract class MacroExpansionTaskBase(
                 // We can cancel task if the project is disposed b/c after project reopen storage consistency will be
                 // re-checked
 
-                // Note that if project is disposed, this task will not be executed or may be executed partially
-                executeSequentially(transactionExecutor, stages2.chunked(VFS_BATCH_SIZE)) { stages2c ->
-                    runWriteAction {
-                        val batch = vfsBatchFactory()
-                        val stages3 = stages2c.map { stage2 ->
-                            val result = stage2.writeExpansionToFs(batch, currentStep.get())
-                            result
-                        }
-                        batch.applyToVfs()
-                        for (stage3 in stages3) {
-                            stage3.save(storage)
-                        }
-                        doneStages.addAndGet(stages3.size * 2)
+                val batch = vfsBatchFactory()
+                val stages3 = stages2.map { stage2 ->
+                    val result = stage2.writeExpansionToFs(batch, currentStep.get())
+                    doneStages.incrementAndGet()
+                    result
+                }
+                totalExpanded.addAndGet(stages3.size)
+
+                val future = CompletableFuture<Unit>()
+                batch.applyToVfs(true, Runnable {
+                    // we're in write action
+                    for (stage3 in stages3) {
+                        stage3.save(storage)
                     }
-                    totalExpanded.addAndGet(stages2c.size)
-                    Unit
-                }.thenApply { Unit }
+                    future.complete(Unit)
+                })
+
+                future
             } else {
                 CompletableFuture.completedFuture(Unit)
             }
@@ -345,7 +344,7 @@ object InvalidationPipeline {
         override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val expansionFile = info.expansionFile
             if (expansionFile != null && expansionFile.isValid) {
-                batch.deleteFile(batch.resolve(expansionFile))
+                batch.deleteFile(expansionFile)
             }
             return Stage3(info)
         }
@@ -440,9 +439,7 @@ object ExpansionPipeline {
             val oldExpansionFile = info.expansionFile
             val file = if (oldExpansionFile != null) {
                 check(oldExpansionFile.isValid) { "VirtualFile is not valid ${oldExpansionFile.url}" }
-                val file = batch.resolve(oldExpansionFile)
-                batch.writeFile(file, expansionText)
-                file
+                batch.writeFile(oldExpansionFile, expansionText)
             } else {
                 batch.createFileWithContent(expansionText, stepNumber)
             }
@@ -471,7 +468,7 @@ object ExpansionPipeline {
         override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
-                batch.deleteFile(batch.resolve(oldExpansionFile))
+                batch.deleteFile(oldExpansionFile)
             }
             return Stage3(info, callHash, defHash, null, null)
         }
