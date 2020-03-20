@@ -746,6 +746,18 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ i32
     """)
 
+    fun `test infer generic argument from trait bound (aliased impl)`() = testExpr("""
+        struct S<X>(X);
+        type Alias<X> = S<X>;
+        trait Tr<Y> { fn foo(&self) -> Y; }
+        impl<Z> Tr<Z> for Alias<Z> { fn foo(&self) -> Z { unimplemented!() } }
+        fn bar<A, B: Tr<A>>(b: B) -> A { b.foo() }
+        fn main() {
+            let a = bar(S(1));
+            a;
+        } //^ i32
+    """)
+
     fun `test infer complex generic argument from trait bound`() = testExpr("""
         struct S<A>(A);
         trait Tr<B> { fn foo(&self) -> B; }

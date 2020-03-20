@@ -12,6 +12,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsImplIndex
+import org.rust.lang.core.resolve.indexes.RsTypeAliasIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtInferVar
@@ -463,15 +464,14 @@ class ImplLookup(
     }
 
     private fun findExplicitImpls(selfTy: Ty, processor: RsProcessor<RsCachedImplItem>): Boolean {
-        return RsImplIndex.findPotentialImpls(project, selfTy) { cachedImpl ->
+        return processTyFingerprintsWithAliases(selfTy) { tyFingerprint ->
+            findExplicitImplsWithoutAliases(selfTy, tyFingerprint, processor)
+        }
+    }
+    private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
+        return RsImplIndex.findPotentialImpls(project, tyf) { cachedImpl ->
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
-            val subst = Substitution(
-                typeSubst = generics.associateWith { ctx.typeVarForParam(it) },
-                constSubst = constGenerics.associateWith { ctx.constVarForParam(it) }
-            )
-            // TODO: take into account the lifetimes (?)
-            val formalSelfTy = type.substitute(subst)
-            val isAppropriateImpl = ctx.canCombineTypes(formalSelfTy, selfTy) &&
+            val isAppropriateImpl = canCombineTypes(selfTy, type, generics, constGenerics) &&
                 // Check that trait is resolved if it's not an inherent impl; checking it after types because
                 // we assume that unresolved trait is a rare case
                 (cachedImpl.isInherent || cachedImpl.implementedTrait != null) &&
@@ -480,6 +480,38 @@ class ImplLookup(
                 (selfTy !is TyTraitObject || type !is TyTypeParameter || !type.isSized)
             isAppropriateImpl && processor(cachedImpl)
         }
+    }
+
+    private fun processTyFingerprintsWithAliases(selfTy: Ty, processor: RsProcessor<TyFingerprint>): Boolean {
+        val fingerprint = TyFingerprint.create(selfTy)
+        if (fingerprint != null) {
+            val set = mutableSetOf(fingerprint)
+            if (processor(fingerprint)) return true
+            val result = RsTypeAliasIndex.findPotentialAliases(project, fingerprint) {
+                val name = it.name ?: return@findPotentialAliases false
+                val aliasFingerprint = TyFingerprint(name)
+                val isAppropriateAlias = set.add(aliasFingerprint) &&
+                    canCombineTypes(selfTy, it.declaredType, it.generics, it.constGenerics)
+                isAppropriateAlias && processor(aliasFingerprint)
+            }
+            if (result) return true
+        }
+        return processor(TyFingerprint.TYPE_PARAMETER_FINGERPRINT)
+    }
+
+    private fun canCombineTypes(
+        ty1: Ty,
+        ty2: Ty,
+        genericsForTy2: List<TyTypeParameter>,
+        constGenericsForTy2: List<CtConstParameter>
+    ): Boolean {
+        val subst = Substitution(
+            typeSubst = genericsForTy2.associateWith { ctx.typeVarForParam(it) },
+            constSubst = constGenericsForTy2.associateWith { ctx.constVarForParam(it) }
+        )
+        // TODO: take into account the lifetimes (?)
+        val ty2subst = ty2.substitute(subst)
+        return ctx.canCombineTypes(ty2subst, ty1)
     }
 
     /**
@@ -638,7 +670,13 @@ class ImplLookup(
     }
 
     private fun assembleImplCandidates(ref: TraitRef, processor: RsProcessor<SelectionCandidate>): Boolean {
-        return RsImplIndex.findPotentialImpls(project, ref.selfTy) {
+        return processTyFingerprintsWithAliases(ref.selfTy) { tyFingerprint ->
+            assembleImplCandidatesWithoutAliases(ref, tyFingerprint, processor)
+        }
+    }
+
+    private fun assembleImplCandidatesWithoutAliases(ref: TraitRef, tyf: TyFingerprint, processor: RsProcessor<SelectionCandidate>): Boolean {
+        return RsImplIndex.findPotentialImpls(project, tyf) {
             val candidate = it.trySelectCandidate(ref)
             candidate != null && processor(candidate)
         }
