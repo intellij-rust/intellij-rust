@@ -48,6 +48,7 @@ val httpClient: OkHttpClient by lazy { OkHttpClient() }
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
     }
     dependencies {
         classpath("com.squareup.okhttp3:okhttp:4.4.0")
@@ -80,6 +81,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter()
         maven("https://dl.bintray.com/jetbrains/markdown")
     }
 
