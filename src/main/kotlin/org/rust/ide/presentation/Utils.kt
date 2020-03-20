@@ -116,7 +116,7 @@ fun breadcrumbName(e: RsElement): String? {
         is RsImplItem -> {
             val typeName = run {
                 val typeReference = e.typeReference
-                (typeReference?.typeElement as? RsBaseType)?.path?.let { lastComponentWithoutGenerics(it) }
+                (typeReference?.skipParens() as? RsBaseType)?.path?.let { lastComponentWithoutGenerics(it) }
                     ?: typeReference?.text
                     ?: return null
             }

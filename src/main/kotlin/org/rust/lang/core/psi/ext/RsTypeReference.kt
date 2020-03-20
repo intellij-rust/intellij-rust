@@ -13,16 +13,14 @@ import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 
 
-val RsTypeReference.typeElement: RsTypeReference
-    get() = unwrapParens()
-
-private tailrec fun RsTypeReference.unwrapParens(): RsTypeReference {
-    return if (this !is RsParenType) {
-        this
-    } else {
-        val typeReference = typeReference ?: return this
-        typeReference.unwrapParens()
-    }
+/**
+ * Any type can be wrapped into parens, e.g. `let a: (i32) = 1;` Such type is parsed as [RsParenType].
+ * This method unwraps any number of parens around the type.
+ */
+tailrec fun RsTypeReference.skipParens(): RsTypeReference {
+    if (this !is RsParenType) return this
+    val typeReference = typeReference ?: return this
+    return typeReference.skipParens()
 }
 
 val RsTypeReference.owner: RsTypeReference

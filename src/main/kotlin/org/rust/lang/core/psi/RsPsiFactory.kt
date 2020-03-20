@@ -203,7 +203,7 @@ class RsPsiFactory(
     }
 
     fun createReferenceType(innerTypeText: String, mutable: Boolean): RsRefLikeType =
-        createType("&${if (mutable) "mut " else ""}$innerTypeText").typeElement as RsRefLikeType
+        createType("&${if (mutable) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
         createFromText("mod $modName;")

@@ -82,7 +82,7 @@ fun RsTraitItem.searchForImplementations(): Query<RsImplItem> {
 private val RsTraitItem.superTraits: Sequence<BoundElement<RsTraitItem>> get() {
     // trait Foo where Self: Bar {}
     val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
-        .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.hasCself == true }
+        .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.hasCself == true }
         .flatMap { it.typeParamBounds?.polyboundList.orEmpty().asSequence() }
     // trait Foo: Bar {}
     val bounds = typeParamBounds?.polyboundList.orEmpty().asSequence() + whereBounds

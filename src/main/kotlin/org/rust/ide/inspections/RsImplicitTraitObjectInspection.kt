@@ -12,7 +12,7 @@ import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.dyn
 import org.rust.lang.core.psi.ext.isEdition2018
-import org.rust.lang.core.psi.ext.typeElement
+import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.resolve.ref.deepResolve
 
 class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
@@ -21,8 +21,8 @@ class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
             override fun visitTypeReference(typeReference: RsTypeReference) {
                 if (!typeReference.isEdition2018) return
 
-                val traitType = typeReference.typeElement as? RsTraitType
-                val baseTypePath = (typeReference.typeElement as? RsBaseType)?.path
+                val traitType = typeReference.skipParens() as? RsTraitType
+                val baseTypePath = (typeReference.skipParens() as? RsBaseType)?.path
                 val isTraitType = traitType != null || baseTypePath?.reference?.deepResolve() is RsTraitItem
                 val isSelf = baseTypePath?.cself != null
                 val hasDyn = traitType?.dyn != null
@@ -37,7 +37,7 @@ class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
 
                         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
                             val target = descriptor.psiElement as RsTypeReference
-                            val typeElement = target.typeElement
+                            val typeElement = target.skipParens()
                             val traitText = (typeElement as? RsBaseType)?.path?.text ?: (typeElement as RsTraitType).text
                             val new = RsPsiFactory(project).createDynTraitType(traitText)
                             target.replace(new)

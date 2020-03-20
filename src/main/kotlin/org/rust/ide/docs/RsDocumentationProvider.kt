@@ -429,7 +429,7 @@ private fun generatePathDocumentation(element: RsPath, buffer: StringBuilder) {
 }
 
 private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer: StringBuilder) {
-    when (val typeElement = element.typeElement) {
+    when (val typeElement = element.skipParens()) {
         is RsBaseType -> when (val kind = typeElement.kind) {
             RsBaseTypeKind.Unit -> buffer += "()"
             RsBaseTypeKind.Never -> buffer += "!"

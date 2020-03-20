@@ -28,7 +28,7 @@ data class TyFingerprint constructor(
 
         // Keep in sync with Declarations-inferTypeReferenceType
         fun create(ref: RsTypeReference, typeParameters: List<String>): List<TyFingerprint> {
-            val fingerprint = when (val type = ref.typeElement) {
+            val fingerprint = when (val type = ref.skipParens()) {
                 is RsTupleType -> TyFingerprint("(tuple)")
                 is RsBaseType -> when (val kind = type.kind) {
                     RsBaseTypeKind.Unit -> TyFingerprint("()")

@@ -29,7 +29,7 @@ class MoveTypeConstraintToParameterListIntention : RsElementBaseIntentionAction<
         val types = typeParameterList.typeParameterList
         if (wherePredList.any {
                 it.lifetime?.reference?.resolve() !in lifetimes &&
-                    (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() !in types
+                    (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() !in types
             }) return null
         return whereClause
     }
