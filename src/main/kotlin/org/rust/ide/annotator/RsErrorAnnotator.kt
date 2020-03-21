@@ -498,6 +498,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkImpl(holder: RsAnnotationHolder, impl: RsImplItem) {
         checkImplForNonAdtError(holder, impl)
+        checkConstTraitImpl(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait() ?: return
         checkForbiddenImpl(holder, traitRef, trait)
@@ -542,6 +543,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    private fun checkConstTraitImpl(holder: RsAnnotationHolder, impl: RsImplItem) {
+        val const = impl.const ?: return
+        CONST_TRAIT_IMPL.check(holder, const, "const trait impls")
+    }
 
     // E0322: Explicit impls for the `Sized` trait are not permitted
     // E0328: Explicit impls for the `Unsized` trait are not permitted
