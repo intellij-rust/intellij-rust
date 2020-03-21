@@ -1077,6 +1077,17 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test attempted to construct struct which has a private field E0451`() = checkErrors("""
+        mod some_module {
+            pub struct Foo {
+                x: u32,
+            }
+        }
+        fn main() {
+            let f = some_module::Foo { <error descr="Field `x` of struct `some_module::Foo` is private [E0451]">x: 0</error> };
+        }
+    """)
+
     fun `test attempted to access a private field on a struct E0616`() = checkErrors("""
         mod some_module {
             pub struct Foo {
