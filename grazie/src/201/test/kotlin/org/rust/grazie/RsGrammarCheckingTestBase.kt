@@ -7,9 +7,10 @@ package org.rust.grazie
 
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
+import com.intellij.grazie.ide.language.LanguageGrammarChecking
+import com.intellij.grazie.jlanguage.Lang
 import com.intellij.testFramework.PlatformTestUtil
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.lang.RsLanguage
 
 // BACKCOMPAT: 2019.3. Inline
 abstract class RsGrammarCheckingTestBase : RsInspectionsTestBase(GrazieInspection::class) {
@@ -21,11 +22,20 @@ abstract class RsGrammarCheckingTestBase : RsInspectionsTestBase(GrazieInspectio
 
     override fun setUp() {
         super.setUp()
-        if (RsLanguage.id !in GrazieConfig.get().enabledProgrammingLanguages) {
+        val strategy = LanguageGrammarChecking.getStrategies().first { it is RsGrammarCheckingStrategy }
+        val currentState = GrazieConfig.get()
+        if (strategy.getID() !in currentState.enabledGrammarStrategies || currentState.enabledLanguages != enabledLanguages) {
             GrazieConfig.update { state ->
-                state.copy(enabledProgrammingLanguages = state.enabledProgrammingLanguages + RsLanguage.id)
+                state.copy(
+                    enabledGrammarStrategies = state.enabledGrammarStrategies + strategy.getID(),
+                    enabledLanguages = enabledLanguages
+                )
             }
             PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         }
+    }
+
+    companion object {
+        val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH)
     }
 }
