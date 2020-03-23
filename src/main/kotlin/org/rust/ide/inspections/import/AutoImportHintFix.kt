@@ -19,11 +19,12 @@ import org.rust.lang.core.psi.ext.endOffset
 
 class AutoImportHintFix(
     element: RsElement,
+    type: AutoImportFix.Type,
     private val hint: String,
     private val multiple: Boolean
 ) : LocalQuickFixOnPsiElement(element), HintAction, HighPriorityAction {
 
-    private val delegate: AutoImportFix = AutoImportFix(element)
+    private val delegate: AutoImportFix = AutoImportFix(element, type)
 
     override fun getFamilyName(): String = delegate.familyName
     override fun getText(): String = delegate.name

@@ -13,11 +13,11 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
     fun `test import item from std crate`() = checkAutoImportFixByText("""
-        fn foo<T: <error descr="Unresolved reference: `io`">io::Read/*caret*/</error>>(t: T) {}
+        fn foo<T: <error descr="Unresolved reference: `io`">io/*caret*/</error>::Read>(t: T) {}
     """, """
         use std::io;
 
-        fn foo<T: io::Read/*caret*/>(t: T) {}
+        fn foo<T: io/*caret*/::Read>(t: T) {}
     """, AutoImportFix.Testmarks.autoInjectedStdCrate)
 
     fun `test import item from not std crate`() = checkAutoImportFixByFileTree("""
@@ -96,7 +96,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
     fun `test import reexported item from stdlib`() = checkAutoImportFixByText("""
         fn main() {
-            let mutex = <error descr="Unresolved reference: `Mutex`">Mutex/*caret*/::new</error>(Vec::new());
+            let mutex = <error descr="Unresolved reference: `Mutex`">Mutex/*caret*/</error>::new(Vec::new());
         }
     """, """
         use std::sync::Mutex;
@@ -157,7 +157,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         #![no_std]
 
         fn main() {
-            let x = <error descr="Unresolved reference: `Rc`">Rc::new/*caret*/</error>(123);
+            let x = <error descr="Unresolved reference: `Rc`">Rc/*caret*/</error>::new(123);
         }
     """, """
         #![no_std]
@@ -167,7 +167,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use alloc::rc::Rc;
 
         fn main() {
-            let x = Rc::new/*caret*/(123);
+            let x = Rc/*caret*/::new(123);
         }
     """)
 
@@ -458,13 +458,13 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
     fun `test import HashMap`() = checkAutoImportFixByText("""
         fn main() {
-            let a = <error descr="Unresolved reference: `HashMap`">HashMap::new</error>/*caret*/();
+            let a = <error descr="Unresolved reference: `HashMap`">HashMap</error>/*caret*/::new();
         }
     """, """
         use std::collections::HashMap;
 
         fn main() {
-            let a = HashMap::new/*caret*/();
+            let a = HashMap/*caret*/::new();
         }
     """)
 
@@ -472,7 +472,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         #[derive(Debug)]
         pub struct S;
         fn main() {
-            <error descr="Unresolved reference: `fmt`">S::fmt/*caret*/</error>(&S, panic!(""));
+            S::<error descr="Unresolved reference: `fmt`">fmt/*caret*/</error>(&S, panic!(""));
         }
     """, """
         use std::fmt::Debug;
@@ -611,7 +611,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            <error descr="Unresolved reference: `Foo`">Foo::fmt/*caret*/</error>();
+            <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::fmt();
         }
     """, """
         use foo::Foo;
@@ -622,7 +622,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            Foo::fmt/*caret*/();
+            Foo/*caret*/::fmt();
         }
     """)
 }

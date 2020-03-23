@@ -18,6 +18,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
@@ -39,7 +40,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.runWriteCommandAction
 
-class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), HighPriorityAction {
+class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixOnPsiElement(element), HighPriorityAction {
 
     private var isConsumed: Boolean = false
 
@@ -54,11 +55,11 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
     fun invoke(project: Project) {
         val element = startElement as? RsElement ?: return
-        val (_, candidates) = when (element) {
-            is RsPath -> findApplicableContext(project, element) ?: return
-            is RsMethodCall -> findApplicableContext(project, element) ?: return
-            else -> return
-        }
+        val candidates = when (type) {
+            GENERAL_PATH -> findApplicableContext(project, element as RsPath)?.candidates
+            ASSOC_ITEM_PATH -> findApplicableContextForAssocItemPath(project, element as RsPath)?.candidates
+            METHOD -> findApplicableContext(project, element as RsMethodCall)?.candidates
+        } ?: return
 
         if (candidates.size == 1) {
             project.runWriteCommandAction {
@@ -90,52 +91,47 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
         const val NAME = "Import"
 
         fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
-            val reference = path.reference ?: return null
-            val isPathResolved = TyPrimitive.fromPath(path) != null || reference.multiResolve().isNotEmpty()
+            if (path.reference == null) return null
 
-            if (isPathResolved) {
-                // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from
-                // the view of the rust compiler. Specifically we resolve associated items even if corresponding
-                // trait is not in the scope, so here we suggest importing such traits
-
-                return findApplicableContextForAssocItemPath(path, project)
-            }
+            val basePath = path.basePath()
+            if (!basePath.isUnresolved) return null
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
                 Testmarks.pathInUseItem.hit()
-                return Context(path, emptyList())
+                return null
             }
 
-            val isNameInScope = path.hasInScope(path.referenceName, TYPES_N_VALUES)
+            val isNameInScope = path.hasInScope(basePath.referenceName, TYPES_N_VALUES)
             if (isNameInScope) {
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
                 // It's possible for incorrect or incomplete code like "let map = HashMap"
                 Testmarks.nameInScope.hit()
-                return Context(path, emptyList())
+                return null
             }
 
+            val superPath = path.superPath()
             val candidates = getImportCandidates(
                 ImportContext.from(project, path, false),
-                path.referenceName,
-                path.text
+                basePath.referenceName,
+                superPath.text
             ) {
-                true
+                superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }.toList()
 
-            return Context(path, candidates)
+            return Context(basePath, GENERAL_PATH, candidates)
         }
 
         fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
-            if (results.isEmpty()) return Context(Unit, emptyList())
+            if (results.isEmpty()) return Context(Unit, METHOD, emptyList())
             val candidates = getImportCandidates(project, methodCall, results)?.toList() ?: return null
-            return Context(Unit, candidates)
+            return Context(Unit, METHOD, candidates)
         }
 
         /** Import traits for type-related UFCS method calls and assoc items */
-        private fun findApplicableContextForAssocItemPath(path: RsPath, project: Project): Context<RsPath>? {
+        fun findApplicableContextForAssocItemPath(project: Project, path: RsPath): Context<RsPath>? {
             val parent = path.parent as? RsPathExpr ?: return null
             val resolved = path.inference?.getResolvedPath(parent) ?: return null
             val sources = resolved.map {
@@ -143,7 +139,7 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
                 it.source
             }
             val candidates = getTraitImportCandidates(project, path, sources)?.toList() ?: return null
-            return Context(path, candidates)
+            return Context(path, ASSOC_ITEM_PATH, candidates)
         }
 
         /**
@@ -414,8 +410,15 @@ class AutoImportFix(element: RsElement) : LocalQuickFixOnPsiElement(element), Hi
 
     data class Context<T>(
         val data: T,
+        val type: Type,
         val candidates: List<ImportCandidate>
     )
+
+    enum class Type {
+        GENERAL_PATH,
+        ASSOC_ITEM_PATH,
+        METHOD
+    }
 
     object Testmarks {
         val autoInjectedStdCrate = Testmark("autoInjectedStdCrate")
@@ -470,6 +473,12 @@ sealed class ImportInfo {
 }
 
 data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo)
+
+/** For `Foo::bar` in `Foo::bar::baz::quux` returns `Foo::bar::baz::quux` */
+private tailrec fun RsPath.superPath(): RsPath {
+    val parent = context
+    return if (parent is RsPath) parent.superPath() else this
+}
 
 private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
     is RsTypeElement -> { e ->
