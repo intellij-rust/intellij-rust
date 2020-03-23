@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.stubs.RsPathStub
+import org.rust.lang.core.types.ty.TyPrimitive
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
 
@@ -79,6 +80,12 @@ fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = wh
     is RsPathCodeFragment -> parent.ns
     else -> TYPES_N_VALUES
 }
+
+val RsPath.isUnresolved: Boolean
+    get() {
+        val reference = reference ?: return false
+        return TyPrimitive.fromPath(this) == null && reference.multiResolve().isEmpty()
+    }
 
 val RsPath.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeList.orEmpty()
 

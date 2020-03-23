@@ -39,7 +39,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            <error descr="Unresolved reference: `Foo`">Foo::A/*caret*/</error>;
+            <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::A;
         }
     """, """
         use foo::Foo;
@@ -49,7 +49,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            Foo::A/*caret*/;
+            Foo/*caret*/::A;
         }
     """)
 
@@ -118,7 +118,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            <error descr="Unresolved reference: `Foo`">Foo::foo/*caret*/</error>();
+            <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::foo();
         }
     """, """
         use foo::Foo;
@@ -131,7 +131,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            Foo::foo/*caret*/();
+            Foo/*caret*/::foo();
         }
     """)
 
@@ -180,7 +180,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let f = <error descr="Unresolved reference: `Foo`">Foo::/*caret*/<i32>::bar</error>();
+            let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32>::bar();
         }
     """, """
         use foo::Foo;
@@ -193,7 +193,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let f = Foo::/*caret*/<i32>::bar();
+            let f = Foo/*caret*/::<i32>::bar();
         }
     """)
 
@@ -226,7 +226,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let <error descr="Unresolved reference: `Foo`">Foo::/*caret*/<i32>::bar</error>(x) = ();
+            let <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>::<i32>::bar(x) = ();
         }
     """, """
         use foo::Foo;
@@ -239,7 +239,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let Foo::/*caret*/<i32>::bar(x) = ();
+            let Foo/*caret*/::<i32>::bar(x) = ();
         }
     """)
 
@@ -251,7 +251,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let f = <error descr="Unresolved reference: `bar`">bar/*caret*/::foo_bar</error>();
+            let f = <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """, """
         use foo::bar;
@@ -462,7 +462,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub mod bar;
         }
         fn main() {
-            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """, """
         //- main.rs
@@ -472,7 +472,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             pub mod bar;
         }
         fn main() {
-            bar::foo_bar/*caret*/();
+            bar/*caret*/::foo_bar();
         }
     """)
 
@@ -520,7 +520,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """, """
         use foo2::bar;
@@ -536,7 +536,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            bar::foo_bar/*caret*/();
+            bar/*caret*/::foo_bar();
         }
     """)
 
@@ -559,7 +559,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `bar`">bar::foo_bar/*caret*/</error>();
+            <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::foo_bar();
         }
     """)
 
@@ -570,7 +570,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::bar();
         }
     """)
 
@@ -581,7 +581,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::bar();
         }
     """, """
         use foo::Bar;
@@ -603,7 +603,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `Bar`">Bar::bar/*caret*/</error>();
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::bar();
         }
     """, """
         use foo::Bar;
@@ -614,7 +614,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            Bar::bar();
+            Bar/*caret*/::bar();
         }
     """)
 
@@ -625,7 +625,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `Bar`">Bar::BAR/*caret*/</error>();
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::BAR();
         }
     """)
 
@@ -636,7 +636,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            <error descr="Unresolved reference: `Bar`">Bar::C/*caret*/</error>;
+            <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::C;
         }
     """, """
         use foo::Bar;
@@ -647,7 +647,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            Bar::C/*caret*/;
+            Bar/*caret*/::C;
         }
     """)
 
@@ -658,7 +658,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
             }
         }
         fn main() {
-            let _: <error descr="Unresolved reference: `Bar`">Bar::Item/*caret*/</error>;
+            let _: <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>::Item;
         }
     """)
 
@@ -839,15 +839,11 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """)
 
     fun `test do not import path in use item`() = checkAutoImportFixIsUnavailable("""
-        mod foo {
-            pub struct Foo;
-        }
-
         mod bar {
             pub struct Bar;
         }
 
-        use foo::{Foo, <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>};
+        use <error descr="Unresolved reference: `Bar`">Bar/*caret*/</error>;
     """, AutoImportFix.Testmarks.pathInUseItem)
 
     fun `test multiple import`() = checkAutoImportFixByTextWithMultipleChoice("""
@@ -1366,7 +1362,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = <error descr="Unresolved reference: `foo`">i32::foo/*caret*/</error>(123);
+            let x = i32::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
         use foo::Foo;
@@ -1399,7 +1395,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
         struct S;
         fn main() {
-            let x = <error descr="Unresolved reference: `foo`">S::foo/*caret*/</error>(123);
+            let x = S::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
         use foo::Foo;
@@ -1432,7 +1428,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = <error descr="Unresolved reference: `foo`"><i32>::foo/*caret*/</error>(123);
+            let x = <i32>::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
         use foo::Foo;
@@ -1464,7 +1460,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = <error descr="Unresolved reference: `C`">i32::C/*caret*/</error>(123);
+            let x = i32::<error descr="Unresolved reference: `C`">C/*caret*/</error>(123);
         }
     """, """
         use foo::Foo;
@@ -1494,7 +1490,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = <error descr="Unresolved reference: `foo`">i32::foo/*caret*/</error>(123);
+            let x = i32::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(123);
         }
     """, """
         use foo::Foo;
@@ -1523,7 +1519,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = <error descr="Unresolved reference: `S`">S::foo/*caret*/</error>();
+            let x = <error descr="Unresolved reference: `S`">S/*caret*/</error>::foo();
         }
     """, """
         use foo::S;
@@ -1538,7 +1534,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
 
         fn main() {
-            let x = S::foo/*caret*/();
+            let x = S/*caret*/::foo();
         }
     """)
 
@@ -2275,7 +2271,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
         struct S<T>(T);
         fn foo<T>(a: S<T>) where S<T>: foo::Foo {
-            <error descr="Unresolved reference: `foo`"><S<T>>::foo/*caret*/</error>(&a);
+            <S<T>>::<error descr="Unresolved reference: `foo`">foo/*caret*/</error>(&a);
         }
     """, """
         use foo::Foo;
@@ -2285,7 +2281,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         }
         struct S<T>(T);
         fn foo<T>(a: S<T>) where S<T>: foo::Foo {
-            <S<T>>::foo(&a);
+            <S<T>>::foo/*caret*/(&a);
         }
     """)
 
