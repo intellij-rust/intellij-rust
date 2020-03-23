@@ -93,7 +93,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
 
     fun `test outer doc comment`() {
         // fixme on 2020.1
-        if (ApplicationInfo.getInstance().build > BuildNumber.fromString("193")) return
+        if (ApplicationInfo.getInstance().build > BuildNumber.fromString("193")!!) return
         doTest("""
             /// Hello<caret>
             /// Docs
@@ -106,7 +106,7 @@ class RsJoinLinesHandlerTest : RsJoinLinesHandlerTestBase() {
 
     fun `test inner doc comment`() {
         // fixme on 2020.1
-        if (ApplicationInfo.getInstance().build > BuildNumber.fromString("193")) return
+        if (ApplicationInfo.getInstance().build > BuildNumber.fromString("193")!!) return
         doTest("""
             //! Hello<caret>
             //! Docs

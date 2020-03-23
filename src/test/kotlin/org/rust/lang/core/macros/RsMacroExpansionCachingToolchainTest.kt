@@ -38,7 +38,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
 
     override fun runTest() {
         // fixme on 2020.1
-        if (ApplicationInfo.getInstance().build <= BuildNumber.fromString("193")) {
+        if (ApplicationInfo.getInstance().build <= BuildNumber.fromString("193")!!) {
             super.runTest()
         } else {
             System.err.println("ApplySuggestionFixTest is temporarily disabled for 201.* builds")
