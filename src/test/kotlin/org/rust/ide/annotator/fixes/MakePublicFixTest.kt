@@ -435,21 +435,43 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test make struct field public`() = checkFixByText("Make `baz` public", """
+    fun `test make struct field public (from field lookup)`() = checkFixByText("Make `baz` public", """
+        mod foo {
+            pub(crate) struct Bar { baz: i32 }
+            impl Bar {
+                pub(crate) fn new() -> Bar { Bar { baz: 0 } }
+            }
+        }
+        fn main() {
+            let foo = foo::Bar::new();
+            foo.<error>baz/*caret*/</error>;
+        }
+    """, """
+        mod foo {
+            pub(crate) struct Bar { pub(crate) baz: i32 }
+            impl Bar {
+                pub(crate) fn new() -> Bar { Bar { baz: 0 } }
+            }
+        }
+        fn main() {
+            let foo = foo::Bar::new();
+            foo.baz/*caret*/;
+        }
+    """)
+
+    fun `test make struct field public (from struct literal)`() = checkFixByText("Make `baz` public", """
         mod foo {
             pub(crate) struct Bar { baz: i32 }
         }
         fn main() {
-            let foo = foo::Bar{ baz: 1 };
-            foo.<error>baz/*caret*/</error>;
+            let foo = foo::Bar { <error>baz/*caret*/: 1</error> };
         }
     """, """
         mod foo {
             pub(crate) struct Bar { pub(crate) baz: i32 }
         }
         fn main() {
-            let foo = foo::Bar{ baz: 1 };
-            foo.baz/*caret*/;
+            let foo = foo::Bar { baz: 1 };
         }
     """)
 

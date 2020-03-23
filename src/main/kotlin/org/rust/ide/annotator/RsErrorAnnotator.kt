@@ -95,6 +95,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitVariadic(o: RsVariadic) = checkParamAttrs(holder, o)
             override fun visitPatStruct(o: RsPatStruct) = checkRsPatStruct(holder, o)
             override fun visitPatTupleStruct(o: RsPatTupleStruct) = checkRsPatTupleStruct(holder, o)
+            override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, holder)
         }
 
         element.accept(visitor)
