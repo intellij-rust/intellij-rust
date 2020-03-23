@@ -71,9 +71,9 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             }
         }
 
-    private fun <T> RsProblemsHolder.registerProblem(
+    private fun RsProblemsHolder.registerProblem(
         element: RsReferenceElement,
-        context: AutoImportFix.Context<T>?
+        context: AutoImportFix.Context?
     ) {
         val candidates = context?.candidates
         if (candidates.isNullOrEmpty() && ignoreWithoutQuickFix) return

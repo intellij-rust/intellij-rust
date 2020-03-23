@@ -55,10 +55,10 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
 
     fun invoke(project: Project) {
         val element = startElement as? RsElement ?: return
-        val candidates = when (type) {
-            GENERAL_PATH -> findApplicableContext(project, element as RsPath)?.candidates
-            ASSOC_ITEM_PATH -> findApplicableContextForAssocItemPath(project, element as RsPath)?.candidates
-            METHOD -> findApplicableContext(project, element as RsMethodCall)?.candidates
+        val (_, candidates) = when (type) {
+            GENERAL_PATH -> findApplicableContext(project, element as RsPath)
+            ASSOC_ITEM_PATH -> findApplicableContextForAssocItemPath(project, element as RsPath)
+            METHOD -> findApplicableContext(project, element as RsMethodCall)
         } ?: return
 
         if (candidates.size == 1) {
@@ -90,7 +90,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
 
         const val NAME = "Import"
 
-        fun findApplicableContext(project: Project, path: RsPath): Context<RsPath>? {
+        fun findApplicableContext(project: Project, path: RsPath): Context? {
             if (path.reference == null) return null
 
             val basePath = path.basePath()
@@ -120,18 +120,18 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }.toList()
 
-            return Context(basePath, GENERAL_PATH, candidates)
+            return Context(GENERAL_PATH, candidates)
         }
 
-        fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context<Unit>? {
+        fun findApplicableContext(project: Project, methodCall: RsMethodCall): Context? {
             val results = methodCall.inference?.getResolvedMethod(methodCall) ?: emptyList()
-            if (results.isEmpty()) return Context(Unit, METHOD, emptyList())
+            if (results.isEmpty()) return Context(METHOD, emptyList())
             val candidates = getImportCandidates(project, methodCall, results)?.toList() ?: return null
-            return Context(Unit, METHOD, candidates)
+            return Context(METHOD, candidates)
         }
 
         /** Import traits for type-related UFCS method calls and assoc items */
-        fun findApplicableContextForAssocItemPath(project: Project, path: RsPath): Context<RsPath>? {
+        fun findApplicableContextForAssocItemPath(project: Project, path: RsPath): Context? {
             val parent = path.parent as? RsPathExpr ?: return null
             val resolved = path.inference?.getResolvedPath(parent) ?: return null
             val sources = resolved.map {
@@ -139,7 +139,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 it.source
             }
             val candidates = getTraitImportCandidates(project, path, sources)?.toList() ?: return null
-            return Context(path, ASSOC_ITEM_PATH, candidates)
+            return Context(ASSOC_ITEM_PATH, candidates)
         }
 
         /**
@@ -408,8 +408,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         }
     }
 
-    data class Context<T>(
-        val data: T,
+    data class Context(
         val type: Type,
         val candidates: List<ImportCandidate>
     )
