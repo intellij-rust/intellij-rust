@@ -73,7 +73,7 @@ sealed class RsDiagnostic(
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
-                    } else  if (element is RsElement) {
+                    } else if (element is RsElement) {
                         val (lookup, items) = element.implLookupAndKnownItems
                         if (isFromActualImplForExpected(items, lookup)) {
                             add(ConvertToTyUsingFromTraitFix(element, expectedTy))
@@ -1162,12 +1162,12 @@ sealed class RsDiagnostic(
         }
     }
 
-    class ExtraFieldInStructPattern(private val extraField: RsPatField) : RsDiagnostic(extraField) {
+    class ExtraFieldInStructPattern(private val extraField: RsPatField, private val kindName: String) : RsDiagnostic(extraField) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,
                 E0026,
-                "Extra field found in the struct pattern: `${extraField.kind.fieldName}`"
+                "Extra field found in the $kindName pattern: `${extraField.kind.fieldName}`"
             )
         }
     }
@@ -1182,6 +1182,26 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0023,
                 "Extra fields found in the tuple struct pattern: expected $expectedAmount, found $extraFieldsAmount"
+            )
+        }
+    }
+
+    class MissingFieldsInUnionPattern(pat: RsPat) : RsDiagnostic(pat) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                null,
+                "Union patterns requires a field"
+            )
+        }
+    }
+
+    class TooManyFieldsInUnionPattern(pat: RsPat) : RsDiagnostic(pat) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                null,
+                "Union patterns should have exactly one field"
             )
         }
     }
@@ -1209,7 +1229,7 @@ enum class Severity {
 
 class PreparedAnnotation(
     val severity: Severity,
-    val errorCode: RsErrorCode,
+    val errorCode: RsErrorCode?,
     val header: String,
     val description: String = "",
     val fixes: List<LocalQuickFix> = emptyList()
@@ -1289,11 +1309,19 @@ private fun Severity.toHighlightSeverity(): HighlightSeverity = when (this) {
     ERROR, UNKNOWN_SYMBOL -> HighlightSeverity.ERROR
 }
 
-private fun simpleHeader(error: RsErrorCode, description: String): String =
-    "$description [${error.code}]"
+private fun simpleHeader(error: RsErrorCode?, description: String): String =
+    if (error == null) {
+        description
+    } else {
+        "$description [${error.code}]"
+    }
 
-private fun htmlHeader(error: RsErrorCode, description: String): String =
-    "$description [<a href='${error.infoUrl}'>${error.code}</a>]"
+private fun htmlHeader(error: RsErrorCode?, description: String): String =
+    if (error == null) {
+        description
+    } else {
+        "$description [<a href='${error.infoUrl}'>${error.code}</a>]"
+    }
 
 private fun pluralise(count: Int, singular: String, plural: String): String =
     if (count == 1) singular else plural

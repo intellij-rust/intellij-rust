@@ -59,7 +59,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitLifetime(o: RsLifetime) = checkLifetime(holder, o)
             override fun visitModDeclItem(o: RsModDeclItem) = checkModDecl(holder, o)
             override fun visitModItem(o: RsModItem) = checkDuplicates(holder, o)
-            override fun visitUseSpeck(o: RsUseSpeck) = checkUseSpeck(holder,o)
+            override fun visitUseSpeck(o: RsUseSpeck) = checkUseSpeck(holder, o)
             override fun visitPatBox(o: RsPatBox) = checkPatBox(holder, o)
             override fun visitPatField(o: RsPatField) = checkPatField(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
@@ -115,13 +115,24 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val declarationFieldNames = declaration.fields.map { it.name }
         val bodyFields = patStruct.patFieldList
         val extraFields = bodyFields.filter { it.kind.fieldName !in declarationFieldNames }
-        val bodyFieldNames = bodyFields.map { it.kind.fieldName }
-        val missingFields = declaration.fields.filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
-        extraFields.forEach {
-            RsDiagnostic.ExtraFieldInStructPattern(it).addToHolder(holder)
-        }
-        if (missingFields.isNotEmpty() && patStruct.patRest == null) {
-            RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)
+
+        if (declaration is RsStructItem && declaration.kind == RsStructKind.UNION) {
+            extraFields.forEach { RsDiagnostic.ExtraFieldInStructPattern(it, "union").addToHolder(holder) }
+
+            if (bodyFields.isEmpty()) {
+                RsDiagnostic.MissingFieldsInUnionPattern(patStruct).addToHolder(holder)
+            } else if (bodyFields.size > 1) {
+                RsDiagnostic.TooManyFieldsInUnionPattern(patStruct).addToHolder(holder)
+            }
+        } else {
+            extraFields.forEach { RsDiagnostic.ExtraFieldInStructPattern(it, "struct").addToHolder(holder) }
+
+            val bodyFieldNames = bodyFields.map { it.kind.fieldName }
+            val missingFields = declaration.fields.filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
+
+            if (missingFields.isNotEmpty() && patStruct.patRest == null) {
+                RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)
+            }
         }
     }
 
