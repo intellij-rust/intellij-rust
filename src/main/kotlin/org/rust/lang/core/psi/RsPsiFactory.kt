@@ -159,6 +159,17 @@ class RsPsiFactory(
             .blockFields!!
     }
 
+    data class TupleField(val visibility: RsVis?, val type: Ty)
+
+    fun createTupleFields(fields: List<TupleField>): RsTupleFields {
+        fun addSpace(t: String?) = if (t != null) { "$t " } else { "" }
+
+        val fieldsText = fields.joinToString(separator = ", ") {
+            "${addSpace(it.visibility?.text)}${it.type.insertionSafeTextWithLifetimes}"
+        }
+        return createFromText("struct S($fieldsText)") ?: error("Failed to create struct")
+    }
+
     fun createEnum(text: String): RsEnumItem =
         createFromText(text)
             ?: error("Failed to create enum from text: `$text`")
@@ -393,6 +404,14 @@ class RsPsiFactory(
             }
         """) ?: error("Failed to create pat field")
 
+    fun createPatStruct(name: String, pats: List<RsPatField>, patRest: RsPatRest?): RsPatStruct {
+        val pad = if (pats.isEmpty()) "" else " "
+        val items = pats.map { it.text } + listOfNotNull(patRest?.text)
+        val body = items
+            .joinToString(separator = ", ", prefix = " {$pad", postfix = "$pad}")
+        return createFromText("fn f($name$body: $name) {}") ?: error("Failed to create pat struct")
+    }
+
     fun createPatStruct(struct: RsStructItem, name: String? = null): RsPatStruct {
         val structName = name ?: struct.name ?: error("Failed to create pat struct")
         val pad = if (struct.namedFields.isEmpty()) "" else " "
@@ -406,6 +425,11 @@ class RsPsiFactory(
         val body = struct.positionalFields
             .joinToString(separator = ", ", prefix = "(", postfix = ")") { "_${it.name}" }
         return createFromText("fn f($structName$body: $structName) {}") ?: error("Failed to create pat tuple struct")
+    }
+
+    fun createPatTupleStruct(name: String, pats: List<RsPat>): RsPatTupleStruct {
+        val patsText = pats.joinToString(", ", prefix = "(", postfix = ")") { it.text }
+        return createFromText("fn f($name${patsText}: $name) {}") ?: error("Failed to create pat tuple struct")
     }
 
     fun createPatTuple(fieldNum: Int): RsPatTup {
@@ -451,6 +475,9 @@ class RsPsiFactory(
     fun createVisRestriction(pathText: String): RsVisRestriction =
         createFromText<RsFunction>("pub(in $pathText) fn foo() {}")?.vis?.visRestriction
             ?: error("Failed to create vis restriction element")
+
+    fun createVis(text: String): RsVis =
+        createFromText("$text fn foo() {}") ?: error("Failed to create vis")
 
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E

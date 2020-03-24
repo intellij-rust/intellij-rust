@@ -1,0 +1,5 @@
+struct Variant1 { name: String, id: usize }
+
+enum A {
+     Variant1(Variant1)
+}
