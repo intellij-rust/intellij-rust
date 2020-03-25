@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
@@ -20,8 +21,13 @@ class AddWildcardArmFix(match: RsMatchExpr) : LocalQuickFixOnPsiElement(match) {
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val oldMatchBody = (startElement as? RsMatchExpr)?.matchBody ?: return
+        val rsPsiFactory = RsPsiFactory(project)
 
-        val newArm = RsPsiFactory(project).createMatchBody(listOf(Pattern.Wild)).matchArmList.first()
+        val lastMatchArm = oldMatchBody.matchArmList.last()
+        if (lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
+            lastMatchArm.add(rsPsiFactory.createComma())
+
+        val newArm = rsPsiFactory.createMatchBody(listOf(Pattern.Wild)).matchArmList.first()
         oldMatchBody.addBefore(newArm, oldMatchBody.rbrace)
     }
 }
