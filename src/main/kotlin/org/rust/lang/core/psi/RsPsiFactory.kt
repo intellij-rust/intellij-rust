@@ -135,6 +135,9 @@ class RsPsiFactory(
     fun createStructLiteral(name: String): RsStructLiteral =
         createExpressionOfType("$name { }")
 
+    fun createStructLiteral(name: String, fields: String): RsStructLiteral =
+        createExpressionOfType("$name $fields")
+
     fun createStructLiteralField(name: String, value: String): RsStructLiteralField {
         return createExpressionOfType<RsStructLiteral>("S { $name: $value }")
             .structLiteralBody
@@ -444,6 +447,9 @@ class RsPsiFactory(
 
     fun createFunctionCall(functionName: String, arguments: Iterable<RsExpr>): RsCallExpr =
         createExpressionOfType("$functionName(${arguments.joinToString { it.text }})")
+
+    fun createFunctionCall(functionName: String, arguments: String): RsCallExpr =
+        createExpressionOfType("$functionName(${arguments})")
 
     fun createAssocFunctionCall(typeText: String, methodNameText: String, arguments: Iterable<RsExpr>): RsCallExpr {
         val isCorrectTypePath = tryCreatePath(typeText) != null
