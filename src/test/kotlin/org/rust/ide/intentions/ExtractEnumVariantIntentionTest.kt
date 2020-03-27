@@ -280,7 +280,7 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
         }
     """)
 
-    fun `test replace usage tuple`() = doAvailableTest("""
+    fun `test replace usage tuple in pattern`() = doAvailableTest("""
         enum A {
             /*caret*/V1(u32, bool, i32)
         }
@@ -316,7 +316,7 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
         }
     """)
 
-    fun `test replace usage struct`() = doAvailableTest("""
+    fun `test replace usage struct in pattern`() = doAvailableTest("""
         enum A {
             /*caret*/V1 { x: u32, y: bool, z: i32 }
         }
@@ -349,6 +349,56 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
             if let Option::Some(A::V1(V1 { ref mut x, ref y, z })) = b {
 
             }
+        }
+    """)
+
+    fun `test replace usage struct`() = doAvailableTest("""
+        enum E {
+            /*caret*/V1 { x: i32, y: u32, z: u32 },
+            V2
+        }
+
+        fn foo() {
+            let z = 5;
+            let v = E::V1 { x: 42, y: 50, z };
+            let v = E::V1 { x: 42, y: 50 /* comment */, z: 3 };
+        }
+    """, """
+        struct /*caret*/V1 { x: i32, y: u32, z: u32 }
+
+        enum E {
+            V1(V1),
+            V2
+        }
+
+        fn foo() {
+            let z = 5;
+            let v = E::V1(V1 { x: 42, y: 50, z });
+            let v = E::V1(V1 { x: 42, y: 50 /* comment */, z: 3 });
+        }
+    """)
+
+    fun `test replace usage tuple`() = doAvailableTest("""
+        enum E {
+            /*caret*/V1(i32, u32),
+            V2
+        }
+
+        fn foo() {
+            let v = E::V1(1, 2);
+            let v = E::V1(1, /*comment*/ 2);
+        }
+    """, """
+        struct /*caret*/V1(i32, u32);
+
+        enum E {
+            V1(V1),
+            V2
+        }
+
+        fn foo() {
+            let v = E::V1(V1(1, 2));
+            let v = E::V1(V1(1, /*comment*/ 2));
         }
     """)
 }
