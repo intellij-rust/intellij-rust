@@ -13,7 +13,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.util.UserDataHolderEx
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
@@ -152,12 +151,12 @@ private fun discoverToolchain(project: Project) {
 }
 
 fun ContentEntry.setup(contentRoot: VirtualFile) {
-    val makeVfsUrl = { dirName: String -> FileUtil.join(contentRoot.url, dirName) }
-    CargoConstants.ProjectLayout.sources.map(makeVfsUrl).forEach {
+    val makeVfsUrl = { dirName: String -> contentRoot.findChild(dirName)?.url }
+    CargoConstants.ProjectLayout.sources.mapNotNull(makeVfsUrl).forEach {
         addSourceFolder(it, /* test = */ false)
     }
-    CargoConstants.ProjectLayout.tests.map(makeVfsUrl).forEach {
+    CargoConstants.ProjectLayout.tests.mapNotNull(makeVfsUrl).forEach {
         addSourceFolder(it, /* test = */ true)
     }
-    addExcludeFolder(makeVfsUrl(CargoConstants.ProjectLayout.target))
+    makeVfsUrl(CargoConstants.ProjectLayout.target)?.let(::addExcludeFolder)
 }
