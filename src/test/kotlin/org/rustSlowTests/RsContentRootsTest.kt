@@ -64,6 +64,31 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
         check(projectFolders)
     }
 
+    fun `test do not add non existing roots`() {
+        val project = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+            dir("src") {
+                rust("main.rs", "")
+            }
+            dir("tests") {}
+            dir("target") {}
+        }
+
+        val projectFolders = listOf(
+            ProjectFolder.Source(project.findFile("src"), false),
+            ProjectFolder.Source(project.findFile("tests"), true),
+            ProjectFolder.Excluded(project.findFile("target"))
+        )
+
+        check(projectFolders)
+    }
+
+
     fun `test workspace without root package`() {
         val project = buildProject {
             toml("Cargo.toml", """
@@ -106,7 +131,7 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
 
         val projectFolders = listOf(
             ProjectFolder.Excluded(project.findFile("target")),
-            
+
             ProjectFolder.Source(project.findFile("package1/src"), false),
             ProjectFolder.Source(project.findFile("package1/examples"), false),
             ProjectFolder.Source(project.findFile("package1/tests"), true),
@@ -126,9 +151,13 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
 
     private fun check(projectFolders: List<ProjectFolder>) {
         ModuleRootModificationUtil.updateModel(myModule) { model ->
-            val contentEntry = model.contentEntries.firstOrNull() ?: error("")
-            val sourceFiles = contentEntry.sourceFolders.associateBy { it.file }
-            val excludedFiles = contentEntry.excludeFolders.associateBy { it.file }
+            val contentEntry = model.contentEntries.firstOrNull() ?: error("Can't find any content entry")
+            val sourceFiles = contentEntry.sourceFolders.associateBy {
+                it.file ?: error("Can't find file with `${it.url}`")
+            }
+            val excludedFiles = contentEntry.excludeFolders.associateBy {
+                it.file ?: error("Can't find file with `${it.url}`")
+            }
 
             for (projectFolder in projectFolders) {
                 when (projectFolder) {
