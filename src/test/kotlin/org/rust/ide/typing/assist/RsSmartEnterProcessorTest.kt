@@ -24,6 +24,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             /*caret*/
         }
     """)
+
     fun `test fix nested method call`() = doTest("""
         fn double(x: i32) -> i32 {
         /*caret*/double(double(x
@@ -202,6 +203,112 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 /*caret*/
                 1
             };
+        }
+    """)
+
+    fun `test empty expression in match`() = doTest("""
+        fn main() {
+            let a = true;
+            match a {
+                true =>/*caret*/
+            }
+        }
+    ""","""
+        fn main() {
+            let a = true;
+            match a {
+                true =>,
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test call expression in match`() = doTest("""
+        fn test() {}
+
+        fn main() {
+            let a = true;
+            match a {
+                true => test()/*caret*/
+            }
+        }
+    ""","""
+        fn test() {}
+
+        fn main() {
+            let a = true;
+            match a {
+                true => test(),
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test dot expression in match`() = doTest("""
+        fn main() {
+            let a = true;
+            match a {
+                true => "test".as_bytes()/*caret*/
+            }
+        }
+    ""","""
+        fn main() {
+            let a = true;
+            match a {
+                true => "test".as_bytes(),
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test unit expression in match`() = doTest("""
+        fn main() {
+            let a = true;
+            match a {
+                true => ()/*caret*/
+            }
+        }
+    ""","""
+        fn main() {
+            let a = true;
+            match a {
+                true => (),
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test macro expression in match`() = doTest("""
+        fn main() {
+            let a = true;
+            match a {
+                true => println!("test")/*caret*/
+            }
+        }
+    ""","""
+        fn main() {
+            let a = true;
+            match a {
+                true => println!("test"),
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test block expression in match`() = doTest("""
+        fn main() {
+            let a = true;
+            match a {
+                true => {}/*caret*/
+            }
+        }
+    ""","""
+        fn main() {
+            let a = true;
+            match a {
+                true => {}
+                /*caret*/
+            }
         }
     """)
 
