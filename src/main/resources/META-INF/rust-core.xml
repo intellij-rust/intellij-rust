@@ -884,6 +884,8 @@
 
         <!-- REPL Console -->
 
+        <projectService serviceImplementation="org.rust.ide.console.RsConsoleOptions"/>
+
         <consoleHistoryModelProvider implementation="org.rust.ide.console.RsConsoleHistoryModelProvider"/>
         <scratch.rootType implementation="org.rust.ide.console.RsConsoleRootType"/>
 

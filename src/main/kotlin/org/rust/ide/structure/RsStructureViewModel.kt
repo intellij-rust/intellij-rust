@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
-class RsStructureViewModel(editor: Editor?, file: RsFile)
+class RsStructureViewModel(editor: Editor?, file: RsFileBase)
     : StructureViewModelBase(file, editor, RsStructureViewElement(file)),
       StructureViewModel.ElementInfoProvider {
 
@@ -61,6 +61,7 @@ private class RsStructureViewElement(
                 is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
+                is RsReplCodeFragment -> psi.namedElements + psi.getVariablesDeclarations()
                 else -> emptyList()
             }
         }
@@ -95,4 +96,16 @@ private class RsStructureViewElement(
                 }
             }
         }
+}
+
+private fun RsReplCodeFragment.getVariablesDeclarations(): Collection<RsPatBinding> {
+    val variables = mutableMapOf<String, RsPatBinding>()
+    for (letDecl in childrenOfType<RsLetDecl>()) {
+        val pat = letDecl.pat ?: continue
+        for (patBinding in pat.descendantsOfType<RsPatBinding>()) {
+            val name = patBinding.name ?: continue
+            variables[name] = patBinding
+        }
+    }
+    return variables.values
 }

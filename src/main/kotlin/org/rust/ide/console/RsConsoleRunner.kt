@@ -102,7 +102,8 @@ class RsConsoleRunner(project: Project) :
             SoftWrapAction(consoleView),
             ScrollToTheEndToolbarAction(consoleView.editor),
             PrintAction(consoleView),
-            ConsoleHistoryController.getController(consoleView)!!.browseHistory
+            ConsoleHistoryController.getController(consoleView)!!.browseHistory,
+            ShowVariablesAction(consoleView)
         )
         outputActionGroup.addAll(outputActions)
 
@@ -192,6 +193,7 @@ class RsConsoleRunner(project: Project) :
 
     private fun connect() {
         invokeLater {
+            consoleView.initVariablesWindow()
             consoleView.executeActionHandler = consoleExecuteActionHandler
 
             consoleExecuteActionHandler.isEnabled = true

@@ -33,7 +33,7 @@ class RsConsoleCodeFragmentContext {
         }
     }
 
-    private fun getAllCommandsText(): String {
+    fun getAllCommandsText(): String {
         val topLevelElementsText = topLevelElements.values.joinToString("\n")
         return topLevelElementsText + "\n" + allCommandsText
     }
