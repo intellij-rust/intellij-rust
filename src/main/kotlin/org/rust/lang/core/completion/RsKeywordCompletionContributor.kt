@@ -36,9 +36,9 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
     init {
         extend(CompletionType.BASIC, declarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "impl", "mod", "pub", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, pubDeclarationPattern(),
-            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "unsafe", "use"))
+            RsKeywordCompletionProvider("const", "enum", "extern", "fn", "mod", "static", "struct", "trait", "type", "union", "unsafe", "use"))
         extend(CompletionType.BASIC, externDeclarationPattern(),
             RsKeywordCompletionProvider("crate", "fn"))
         extend(CompletionType.BASIC, unsafeDeclarationPattern(),

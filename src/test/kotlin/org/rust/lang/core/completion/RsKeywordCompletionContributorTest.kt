@@ -739,6 +739,23 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test union`() = checkCompletion("union",
+        "unio/*caret*/",
+        "union /*caret*/"
+    )
+
+    fun `test pub union`() = checkCompletion("union",
+        "pub unio/*caret*/",
+        "pub union /*caret*/"
+    )
+
+    fun `test no union in expr`() = checkNoCompletion("""
+        fn foo() {
+            let x = 42 + unio/*caret*/;
+        }
+    """)
+
+
     private fun checkCompletion(
         lookupStrings: List<String>,
         @Language("Rust") before: String,
