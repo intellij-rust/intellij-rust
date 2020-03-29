@@ -44,6 +44,9 @@ fun RsVisible.isVisibleFrom(mod: RsMod): Boolean {
     if (mod.superMods.contains(elementMod)) return true
     if (mod is RsFile && mod.originalFile == elementMod) return true
 
+    // Enum variants in a pub enum are public by default
+    if (this is RsNamedFieldDecl && parent.parent is RsEnumVariant) return true
+
     val members = this.context as? RsMembers ?: return false
     val parent = members.context ?: return true
     return when {
