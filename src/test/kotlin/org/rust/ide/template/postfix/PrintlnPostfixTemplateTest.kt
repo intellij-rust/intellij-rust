@@ -58,7 +58,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
     """, """
        fn main() {
            let s = "Arbitrary string";
-           println!("{:?}", s);/*caret*/
+           println!("{}", s);/*caret*/
        }
     """)
 
@@ -82,7 +82,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
     """, """
        fn main() {
            let s = r#"Arbitrary string"#;
-           println!("{:?}", s);/*caret*/
+           println!("{}", s);/*caret*/
        }
     """)
 
@@ -350,7 +350,7 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
         use std::fmt::Display;
 
         fn test<T>(variable: T) where T: Debug + Display {
-            println!("{:?}", variable);/*caret*/
+            println!("{}", variable);/*caret*/
         }
     """)
 }
