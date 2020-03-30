@@ -202,7 +202,20 @@ private class TupleVariant(val fields: RsTupleFields) : VariantElement(fields) {
     }
 
     override fun replaceUsage(element: PsiElement, name: String) {
-        val parent = element.ancestorStrict<RsPatTupleStruct>() ?: return
+        if (replaceTuplePattern(element, name)) return
+        replaceTupleCall(element, name)
+    }
+
+    private fun replaceTupleCall(element: PsiElement, name: String): Boolean {
+        val parent = element.ancestorStrict<RsCallExpr>() ?: return false
+        val call = factory.createFunctionCall(name, parent.valueArgumentList.text.trim('(', ')'))
+        val binding = factory.createFunctionCall(element.text, listOf(call))
+        parent.replace(binding)
+        return true
+    }
+
+    private fun replaceTuplePattern(element: PsiElement, name: String): Boolean {
+        val parent = element.ancestorStrict<RsPatTupleStruct>() ?: return false
         val binding = factory.createPatTupleStruct(name, parent.patList)
 
         for (pat in parent.patList) {
@@ -213,6 +226,7 @@ private class TupleVariant(val fields: RsTupleFields) : VariantElement(fields) {
             }
         }
         parent.addAfter(binding, parent.lparen)
+        return true
     }
 }
 
@@ -228,11 +242,25 @@ private class StructVariant(val fields: RsBlockFields) : VariantElement(fields) 
     }
 
     override fun replaceUsage(element: PsiElement, name: String) {
-        val parent = element.ancestorStrict<RsPatStruct>() ?: return
+        if (replaceStructPattern(element, name)) return
+        replaceStructLiteral(element, name)
+    }
+
+    private fun replaceStructPattern(element: PsiElement, name: String): Boolean {
+        val parent = element.ancestorStrict<RsPatStruct>() ?: return false
         val path = parent.path
         val binding = factory.createPatStruct(name, parent.patFieldList, parent.patRest)
         val newPat = factory.createPatTupleStruct(path.text, listOf(binding))
         parent.replace(newPat)
+        return true
+    }
+
+    private fun replaceStructLiteral(element: PsiElement, name: String): Boolean {
+        val parent = element.ancestorStrict<RsStructLiteral>() ?: return false
+        val literal = factory.createStructLiteral(name, parent.structLiteralBody.text)
+        val binding = factory.createFunctionCall(element.text, listOf(literal))
+        parent.replace(binding)
+        return true
     }
 }
 
