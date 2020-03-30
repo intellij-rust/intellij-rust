@@ -70,7 +70,7 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
@@ -91,7 +91,7 @@ private class ExpressionReplacer(
 
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         if (nameElem != null) {
-            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable", emptyArray())
+            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }
