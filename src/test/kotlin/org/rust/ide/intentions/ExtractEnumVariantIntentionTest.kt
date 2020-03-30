@@ -6,6 +6,9 @@
 package org.rust.ide.intentions
 
 class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIntention()) {
+
+    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
+
     fun `test not available on empty variant`() = doUnavailableTest("""
         enum A {
             /*caret*/V1
