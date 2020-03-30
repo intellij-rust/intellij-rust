@@ -53,6 +53,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         val (ifStmt, target, matchArms, elseBody) = ctx
         val item = (target.type as? TyAdt)?.item as? RsEnumItem
         val optionOrResultPats = matchArms.flatMap { it.orPats.patList }.filter(RsPat::isPossibleOptionOrResultVariant)
+        val isIrrefutable = matchArms.all { it.orPats.patList.all { pat -> pat?.isIrrefutable ?: false } }
         val generatedCode = buildString {
             append("match ")
             append(target.text)
@@ -63,7 +64,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
                 append(" => ")
                 append(it.body.text)
             }
-            if (elseBody != null || item == null || !allOptionOrResultVariantsCovered(item, optionOrResultPats)) {
+            if (elseBody != null || (!isIrrefutable && (item == null || !allOptionOrResultVariantsCovered(item, optionOrResultPats)))) {
                 append('\n')
                 append(missingBranch(item, optionOrResultPats))
                 append(" => ")
