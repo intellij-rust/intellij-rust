@@ -8,18 +8,18 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                rust-version: [ 1.28.0, 1.41.0, nightly-2019-12-19 ]
+                rust-version: [ 1.32.0, 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 193, 201 ]
                 # Unfortunately, we have to exclude unnecessary tasks because `include` cannot add new tasks to matrix
                 exclude:
-                    -   rust-version: 1.28.0
+                    -   rust-version: 1.32.0
                         base-ide: clion
                         platform-version: 193
-                    -   rust-version: 1.28.0
+                    -   rust-version: 1.32.0
                         base-ide: idea
                         platform-version: 201
-                    -   rust-version: 1.28.0
+                    -   rust-version: 1.32.0
                         base-ide: clion
                         platform-version: 201
         steps:
@@ -30,13 +30,18 @@ jobs:
               with:
                   java-version: 1.8
 
-            - name: Set up environment
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: ${{ matrix.rust-version }}
+                  components: rust-src, rustfmt, clippy
+                  default: true
+
+            - name: Check environment
               run: |
-                curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain ${{ matrix.rust-version }} -y
-                export PATH=$HOME/.cargo/bin:$PATH
-                rustup component add rust-src
-                if [ "${{ matrix.rust-version }}" != "1.28.0" ]; then rustup component add clippy-preview; fi # BACKCOMPAT: Rust 1.28.0
-                rustup component add rustfmt-preview
+                rustc --version
+                rustup component list --installed
 
             - name: Check license
               run: ./check-license.sh
