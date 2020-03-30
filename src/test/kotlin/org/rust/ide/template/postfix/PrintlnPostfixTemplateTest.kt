@@ -20,6 +20,84 @@ class PrintlnPostfixTemplateTests : RsPostfixTemplateTest(PrintlnPostfixTemplate
        }
     """)
 
+    fun `test byte string`() = doTest("""
+       fn main() {
+           b"Arbitrary string".println/*caret*/
+       }
+    """, """
+       fn main() {
+           println!("{:?}", b"Arbitrary string");/*caret*/
+       }
+    """)
+
+    fun `test raw string`() = doTest("""
+       fn main() {
+           r#"Arbitrary string"#.println/*caret*/
+       }
+    """, """
+       fn main() {
+           println!(r#"Arbitrary string"#);/*caret*/
+       }
+    """)
+
+    fun `test raw byte string`() = doTest("""
+       fn main() {
+           br#"Arbitrary string"#.println/*caret*/
+       }
+    """, """
+       fn main() {
+           println!("{:?}", br#"Arbitrary string"#);/*caret*/
+       }
+    """)
+
+    fun `test string variable`() = doTest("""
+       fn main() {
+           let s = "Arbitrary string";
+           s.println/*caret*/
+       }
+    """, """
+       fn main() {
+           let s = "Arbitrary string";
+           println!("{:?}", s);/*caret*/
+       }
+    """)
+
+    fun `test byte string variable`() = doTest("""
+       fn main() {
+           let s = b"Arbitrary string";
+           s.println/*caret*/
+       }
+    """, """
+       fn main() {
+           let s = b"Arbitrary string";
+           println!("{:?}", s);/*caret*/
+       }
+    """)
+
+    fun `test raw string variable`() = doTest("""
+       fn main() {
+           let s = r#"Arbitrary string"#;
+           s.println/*caret*/
+       }
+    """, """
+       fn main() {
+           let s = r#"Arbitrary string"#;
+           println!("{:?}", s);/*caret*/
+       }
+    """)
+
+    fun `test raw byte string variable`() = doTest("""
+       fn main() {
+           let s = br#"Arbitrary string"#;
+           s.println/*caret*/
+       }
+    """, """
+       fn main() {
+           let s = br#"Arbitrary string"#;
+           println!("{:?}", s);/*caret*/
+       }
+    """)
+
     fun `test method returning Debug`() = doTest("""
         #[derive(Debug)]
         enum E { A }

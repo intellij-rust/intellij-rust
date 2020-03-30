@@ -33,10 +33,13 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         Debug("{:?}");
 
         companion object {
-            fun fromExpr(expr: RsExpr): Fmt = when {
-                (expr.type as? TyReference)?.referenced is TyStr -> Fmt.None
-                expr.isDebug -> Fmt.Debug
-                else -> Fmt.Display
+            fun fromExpr(expr: RsExpr): Fmt {
+                val kind = (expr as? RsLitExpr)?.kind
+                return when {
+                    kind is RsLiteralKind.String && !kind.isByte -> None
+                    expr.isDebug -> Debug
+                    else -> Display
+                }
             }
         }
     }
