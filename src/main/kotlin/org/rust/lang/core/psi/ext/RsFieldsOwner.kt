@@ -29,7 +29,7 @@ val RsFieldsOwner.positionalFields: List<RsTupleFieldDecl>
     get() = tupleFields?.tupleFieldDeclList?.filter { it.isEnabledByCfg }.orEmpty()
 
 /**
- * If some field of a struct/enum is private (not visible from [mod]),
+ * If some field of a struct is private (not visible from [mod]),
  * it isn't possible to instantiate it at [mod] anyhow.
  * ```
  * mod foo {
