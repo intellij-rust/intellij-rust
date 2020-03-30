@@ -110,7 +110,7 @@ private class ParamIntroducer(
         documentManager.doPostponedOperationsAndUnblockDocument(editor.document)
 
         if (newParameter != null) {
-            RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter", emptyArray())
+            RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter")
                 .performInplaceRefactoring(suggestedNames.all)
         }
     }

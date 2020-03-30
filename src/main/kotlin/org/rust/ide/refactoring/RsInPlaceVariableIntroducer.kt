@@ -16,5 +16,5 @@ class RsInPlaceVariableIntroducer(
     editor: Editor,
     project: Project,
     title: String,
-    occurrences: Array<PsiElement>
+    occurrences: Array<PsiElement> = emptyArray()
 ) : InplaceVariableIntroducer<PsiElement>(elementToRename, editor, project, title, occurrences, null)
