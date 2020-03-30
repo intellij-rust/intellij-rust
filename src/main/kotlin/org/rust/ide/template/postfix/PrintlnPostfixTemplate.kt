@@ -37,8 +37,8 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
                 val kind = (expr as? RsLitExpr)?.kind
                 return when {
                     kind is RsLiteralKind.String && !kind.isByte -> None
-                    expr.isDebug -> Debug
-                    else -> Display
+                    expr.isDisplay -> Display
+                    else -> Debug
                 }
             }
         }
