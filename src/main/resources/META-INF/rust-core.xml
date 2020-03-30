@@ -757,10 +757,10 @@
             <className>org.rust.ide.intentions.AddStructFieldsLiteralRecursiveIntention</className>
             <category>Rust</category>
         </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.ExtractEnumVariantIntention</className>
-            <category>Rust</category>
-        </intentionAction>
+<!--        <intentionAction>-->
+<!--            <className>org.rust.ide.intentions.ExtractEnumVariantIntention</className>-->
+<!--            <category>Rust</category>-->
+<!--        </intentionAction>-->
 
         <!-- Run Configurations -->
 
