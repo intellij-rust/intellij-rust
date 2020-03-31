@@ -38,7 +38,7 @@ object RsImportHelper {
         importElements(context, toImport)
     }
 
-    private fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {
+    fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {
         if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return
         val importContext = ImportContext.from(context.project, context)
         for (element in elements) {

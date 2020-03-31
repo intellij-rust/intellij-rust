@@ -152,25 +152,22 @@ class RsPsiFactory(
         return structLiteralField
     }
 
-    data class BlockField(val pub: Boolean, val name: String, val type: Ty)
+    data class BlockField(val name: String, val type: Ty, val addPub: Boolean)
+
+    data class TupleField(val type: Ty, val addPub: Boolean)
 
     fun createBlockFields(fields: List<BlockField>): RsBlockFields {
         val fieldsText = fields.joinToString(separator = ",\n") {
-            "${"pub".iff(it.pub)}${it.name}: ${it.type.insertionSafeTextWithLifetimes}"
+            "${"pub".iff(it.addPub)}${it.name}: ${it.type.insertionSafeTextWithLifetimes}"
         }
-        return createStruct("struct S { $fieldsText }")
-            .blockFields!!
+        return createFromText("struct S { $fieldsText }")  ?: error("Failed to create block fields")
     }
 
-    data class TupleField(val visibility: RsVis?, val type: Ty)
-
     fun createTupleFields(fields: List<TupleField>): RsTupleFields {
-        fun addSpace(t: String?) = if (t != null) { "$t " } else { "" }
-
         val fieldsText = fields.joinToString(separator = ", ") {
-            "${addSpace(it.visibility?.text)}${it.type.insertionSafeTextWithLifetimes}"
+            "${"pub".iff(it.addPub)}${it.type.insertionSafeTextWithLifetimes}"
         }
-        return createFromText("struct S($fieldsText)") ?: error("Failed to create struct")
+        return createFromText("struct S($fieldsText)") ?: error("Failed to create tuple fields")
     }
 
     fun createEnum(text: String): RsEnumItem =
