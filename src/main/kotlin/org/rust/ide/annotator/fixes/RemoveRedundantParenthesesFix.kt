@@ -18,6 +18,9 @@ class RemoveRedundantParenthesesFix(element: RsParenExpr) : LocalQuickFixAndInte
     override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-        (startElement as? RsParenExpr)?.replace(startElement.expr)
+        if (startElement is RsParenExpr) {
+            val wrapped = startElement.expr ?: return
+            startElement.replace(wrapped)
+        }
     }
 }

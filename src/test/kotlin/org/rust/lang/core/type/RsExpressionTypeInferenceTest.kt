@@ -1445,4 +1445,12 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ i32
         }
     """)
+
+    fun `test unclosed paren`() = testExpr("""
+        fn main() {
+            let a = (;
+            a;
+          //^ <unknown>
+        }
+    """)
 }

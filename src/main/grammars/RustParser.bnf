@@ -1228,7 +1228,7 @@ fake TupleExpr ::= '(' AnyExpr+ ')' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 fake ParenExpr ::= '(' AnyExpr ')' {
-  pin = 2
+  pin = 1
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

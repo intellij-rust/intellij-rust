@@ -291,8 +291,10 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
         }
     }
 
-    private fun processParenExpr(parenExpr: RsParenExpr): Cmt =
-        processExpr(parenExpr.expr)
+    private fun processParenExpr(parenExpr: RsParenExpr): Cmt {
+        val wrapped = parenExpr.expr
+        return if (wrapped != null) processExpr(wrapped) else processRvalue(parenExpr)
+    }
 
     private fun processDeref(expr: RsExpr, baseCmt: Cmt): Cmt {
         val baseType = baseCmt.ty

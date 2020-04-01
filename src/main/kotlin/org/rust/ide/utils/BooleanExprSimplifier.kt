@@ -56,8 +56,13 @@ class BooleanExprSimplifier(val project: Project) {
             }
 
             is RsParenExpr -> {
-                val interiorSimplified = simplify(expr.expr)
-                interiorSimplified?.let { factory.createExpression("(${it.text})") }
+                val wrapped = expr.expr
+                if (wrapped != null) {
+                    val interiorSimplified = simplify(wrapped)
+                    interiorSimplified?.let { factory.createExpression("(${it.text})") }
+                } else {
+                    null
+                }
             }
 
             else -> null
@@ -92,7 +97,10 @@ class BooleanExprSimplifier(val project: Project) {
                     }
                 }
 
-                is RsParenExpr -> return canBeSimplified(expr.expr)
+                is RsParenExpr -> {
+                    val wrapped = expr.expr
+                    return wrapped != null && canBeSimplified(wrapped)
+                }
 
                 is RsUnaryExpr -> {
                     if (expr.operatorType != UnaryOperator.NOT) {

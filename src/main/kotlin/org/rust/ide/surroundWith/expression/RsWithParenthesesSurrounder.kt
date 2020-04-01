@@ -21,7 +21,7 @@ class RsWithParenthesesSurrounder : RsExpressionSurrounderBase<RsParenExpr>() {
         RsPsiFactory(project).createExpression("(a)") as RsParenExpr
 
     override fun getWrappedExpression(expression: RsParenExpr): RsExpr =
-        expression.expr
+        expression.expr!!
 
     override fun isApplicable(expression: RsExpr): Boolean = true
 

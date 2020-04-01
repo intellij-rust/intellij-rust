@@ -24,7 +24,7 @@ class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
         RsPsiFactory(project).createExpression("!(a)") as RsUnaryExpr
 
     override fun getWrappedExpression(expression: RsUnaryExpr): RsExpr =
-        (expression.expr as RsParenExpr).expr
+        (expression.expr as RsParenExpr).expr!!
 
     override fun isApplicable(expression: RsExpr): Boolean =
         expression.type == TyBool
