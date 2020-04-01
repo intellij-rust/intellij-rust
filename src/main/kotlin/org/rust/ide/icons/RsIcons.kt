@@ -74,6 +74,10 @@ object RsIcons {
     val IMPLEMENTING_METHOD = AllIcons.Gutter.ImplementingMethod!!
     val OVERRIDING_METHOD = AllIcons.Gutter.OverridingMethod!!
     val RECURSIVE_CALL = AllIcons.Gutter.RecursiveMethod!!
+
+    // Repl
+
+    val REPL = IconLoader.getIcon("/icons/repl.svg")
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RsIcons.FINAL_MARK)
