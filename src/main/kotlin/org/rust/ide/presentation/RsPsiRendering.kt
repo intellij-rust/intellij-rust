@@ -82,7 +82,7 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Subst
         return
     }
 
-    when (val type = ref.typeElement) {
+    when (val type = ref.skipParens()) {
         is RsTupleType ->
             type.typeReferenceList.joinToWithBuffer(this, ", ", "(", ")") {
                 it.appendTypeReference(this, subst, renderLifetimes)

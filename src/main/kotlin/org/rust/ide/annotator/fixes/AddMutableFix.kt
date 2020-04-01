@@ -52,7 +52,7 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
     when (binding) {
         is RsPatBinding -> {
             val parameter = binding.ancestorStrict<RsValueParameter>()
-            val type = parameter?.typeReference?.typeElement
+            val type = parameter?.typeReference?.skipParens()
             if (type is RsRefLikeType) {
                 val typeReference = type.typeReference ?: return
                 val newParameterExpr = RsPsiFactory(project)

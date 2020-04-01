@@ -52,7 +52,7 @@ private fun <T> RsInferenceContextOwner.createResult(value: T): Result<T> {
 val RsTypeReference.type: Ty
     get() = inferTypeReferenceType(this)
 
-val RsTypeElement.lifetimeElidable: Boolean
+val RsTypeReference.lifetimeElidable: Boolean
     get() {
         val typeOwner = owner.parent
 

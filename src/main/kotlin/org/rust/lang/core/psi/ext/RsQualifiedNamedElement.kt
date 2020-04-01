@@ -274,7 +274,7 @@ data class RsQualifiedName private constructor(
         }
 
         private fun RsTypeReference.toParentItem(): Item? {
-            return when (val type = typeElement) {
+            return when (val type = skipParens()) {
                 is RsTupleType -> Item.primitive("tuple")
                 is RsFnPointerType -> Item.primitive("fn")
                 is RsArrayType -> Item.primitive(if (type.isSlice) "slice" else "array")

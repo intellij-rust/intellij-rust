@@ -48,19 +48,12 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         val refinedElement = element?.findExpansionElements()?.firstOrNull()?.parent ?: element
         val parent = refinedElement?.goUp<RsPath>() ?: return null
-        if (parent is RsBaseType) {
-            return when (val context = parent.goUp<RsBaseType>()) {
-                is RsTypeReference -> {
-                    when (context.parent) {
-                        is RsImplItem -> IMPL
-                        else -> TYPE_REFERENCE
-                    }
-                }
-                else -> null
+        return when (parent) {
+            is RsBaseType -> when (parent.parent) {
+                is RsImplItem -> IMPL
+                else -> TYPE_REFERENCE
             }
-        }
-        if (parent is RsPathExpr) {
-            return when (parent.goUp<RsPathExpr>()) {
+            is RsPathExpr -> when (parent.goUp<RsPathExpr>()) {
                 is RsDotExpr -> DOT_EXPR
                 is RsCallExpr -> FUNCTION_CALL
                 is RsValueArgumentList -> ARGUMENT
@@ -68,8 +61,6 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
                 is RsExpr -> EXPR
                 else -> null
             }
-        }
-        return when (parent) {
             is RsUseSpeck -> USE
             is RsStructLiteral -> INIT_STRUCT
             is RsStructLiteralField -> INIT_FIELD

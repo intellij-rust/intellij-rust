@@ -540,7 +540,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkImplForNonAdtError(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.`for` != null) return
         val typeRef = impl.typeReference ?: return
-        if (typeRef.traitType != null) return
+        if (typeRef.skipParens() is RsTraitType) return
         val type = typeRef.type
         if (impl.queryAttributes.langAttribute != null) {
             // There are some special rules for #[lang] items, see:

@@ -30,7 +30,7 @@ fun processItemOrEnumVariantDeclarations(
     when (scope) {
         // https://github.com/rust-lang/rfcs/blob/master/text/2338-type-alias-enum-variants.md
         is RsTypeAlias -> {
-            val (item, subst) = (scope.typeReference?.typeElement as? RsBaseType)
+            val (item, subst) = (scope.typeReference?.skipParens() as? RsBaseType)
                 ?.path?.reference?.advancedDeepResolve() ?: return false
             if (item is RsEnumItem) {
                 if (processAllWithSubst(item.variants, subst, processor)) return true

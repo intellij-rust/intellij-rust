@@ -39,7 +39,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
 
         // return type
-        val retType = ctx.retType?.typeReference?.typeElement as? RsRefLikeType ?: return
+        val retType = ctx.retType?.typeReference?.skipParens() as? RsRefLikeType ?: return
 
         if ((ctx.selfParameter != null) || (ctx.allRefArgs.drop(1).none())) {
             retType.replace(createRefType(project, retType, ctx.allRefArgs.first().lifetime!!.text))
@@ -58,7 +58,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     }
 
     private fun createRefType(project: Project, origin: RsRefLikeType, lifeTimeName: String): RsRefLikeType =
-        RsPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")).typeElement as RsRefLikeType
+        RsPsiFactory(project).createType(origin.text.replaceFirst("&", "&$lifeTimeName ")) as RsRefLikeType
 
     private fun createParam(project: Project, origin: PsiElement, lifeTimeName: String): PsiElement =
         RsPsiFactory(project).createMethodParam(origin.text.replaceFirst("&", "&$lifeTimeName "))
@@ -67,7 +67,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val selfAfg: List<PsiElement> = listOfNotNull(selfParameter)
         val params: List<PsiElement> = valueParameters
             .filter { param ->
-                val type = param.typeReference?.typeElement
+                val type = param.typeReference?.skipParens()
                 type is RsRefLikeType && type.isRef
             }
         return selfAfg + params
@@ -76,7 +76,7 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
     private val PsiElement.lifetime: RsLifetime? get() =
     when (this) {
         is RsSelfParameter -> lifetime
-        is RsValueParameter -> (typeReference?.typeElement as? RsRefLikeType)?.lifetime
+        is RsValueParameter -> (typeReference?.skipParens() as? RsRefLikeType)?.lifetime
         else -> null
     }
 }

@@ -101,6 +101,7 @@
     extraRoot(".*CodeFragmentElement")=true
 
     extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest)") = Pat
+    extends("(Array|RefLike|Tuple|Paren|FnPointer|Base|Macro|ForIn|Trait)Type") = TypeReference
 
     generateTokenAccessors=true
 
@@ -841,59 +842,48 @@ upper TraitAlias ::= trait identifier TypeParameterList? '=' TraitAliasBounds? W
 
 private TypeAscription ::= ':' TypeReference { pin = 1 }
 
-private TypeReferenceInner ::= ArrayType
-                               | RefLikeType
-                               | FnPointerType
-                               // External rule to find the difference between `(T)` and `(T,)`
-                               | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
-                               | ExplicitTraitType
-                               | TrivialBaseType
-                               // External rule to find the difference between `T` and `T+T`
-                               | <<baseOrTraitType TypePathGenericArgs ImplicitTraitType TraitType_upper>>
-                               | MacroType
-                               | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
-
-private TypeReferenceNoImplicitTraitTypeInner ::= ArrayType
-                               | RefLikeTypeNoImplicitTrait
-                               | FnPointerType
-                               // External rule to find the difference between `(T)` and `(T,)`
-                               | <<tupleOrParenType TypeReferenceInner TupleType_upper>>
-                               | ExplicitTraitType
-                               | BaseType !'!'
-                               | MacroType
-                               | ForInType // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
-
-private ScalarTypeReferenceInner ::= ArrayType
-                                   | RefLikeType
-                                   | FnPointerType
-                                   | <<tupleOrParenType ScalarTypeReferenceInner TupleType_upper>>
-                                   | MacroType
-                                   | BaseType
-                                   | ForInType
-
-TypeReference ::= TypeReferenceInner {
+TypeReference ::= ArrayType
+                | RefLikeType
+                | FnPointerType
+                | TupleOrParenType
+                | ExplicitTraitType
+                | TrivialBaseType
+                // External rule to find the difference between `T` and `T+T`
+                | <<baseOrTraitType TypePathGenericArgs ImplicitTraitType TraitType_upper>>
+                | MacroType
+                | ForInType { // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
   implements = "org.rust.lang.core.macros.RsExpandedElement"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+  stubClass = "com.intellij.psi.stubs.StubBase"
   mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
-  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   name = "type"
 }
 
-TypeReferenceNoImplicitTraitType ::= TypeReferenceNoImplicitTraitTypeInner {
+TypeReferenceNoImplicitTraitType ::= ArrayType
+                                   | RefLikeTypeNoImplicitTrait
+                                   | FnPointerType
+                                   | TupleOrParenType
+                                   | ExplicitTraitType
+                                   | BaseType !'!'
+                                   | MacroType
+                                   | ForInType { // FIXME O(2^n) for types like `for<'a> A<for<'b> B<for<'c> C<...>>>`
   elementType = TypeReference
   name = "type"
 }
 
-ScalarTypeReference ::= ScalarTypeReferenceInner {
+ScalarTypeReference ::= ArrayType
+                      | RefLikeType
+                      | FnPointerType
+                      | TupleOrParenType
+                      | MacroType
+                      | BaseType
+                      | ForInType {
   elementType = TypeReference
   name = "type"
 }
 
 ArrayType ::= '[' TypeReference [';' AnyExpr] ']' {
   pin = 1
-  implements = [ "org.rust.lang.core.psi.ext.RsTypeElement" "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsArrayTypeStub"
+  implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -901,33 +891,32 @@ private RefLikeStart ::= ( '&' Lifetime? mut? | '*' [ const | mut ] )
 RefLikeTypeNoImplicitTrait ::= RefLikeStart TypeReferenceNoImplicitTraitType { elementType = RefLikeType }
 RefLikeType ::= RefLikeStart TypeReference {
   pin = 1
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsRefLikeTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 FnPointerType ::= [ unsafe? ExternAbi? ] fn FnTypeParameters RetType? {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 MacroType ::= ExprLikeMacroCall {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleType ::= '(' [ <<comma_separated_list TypeReference>> ] ')' {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
+fake TupleType ::= '(' [ <<comma_separated_list TypeReference>> ] ')' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-private TupleType_upper ::= (',' TypeReference)* ','? ')'
+
+fake ParenType ::= '(' TypeReference ')' {
+  pin = 1
+  elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
+}
+
+TupleOrParenType ::= '(' !')' TypeReference (TupleType_upper | ')') {
+  pin = 2
+  elementType = ParenType
+}
+
+upper TupleType_upper ::= ',' [ TypeReference (',' TypeReference)* ','? ] ')' { pin = 1 elementType = TupleType }
 
 Bound ::= Lifetime | TraitRef {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -937,17 +926,11 @@ Bound ::= Lifetime | TraitRef {
 
 ForInType ::= ForLifetimes (FnPointerType | TraitRef) {
   pin = 1
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
 BaseType ::= TrivialBaseTypeInner | TypePathGenericArgs {
-  implements = [ "org.rust.lang.core.psi.ext.RsTypeElement"
-                 "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsBaseTypeStub"
+  implements = [ "org.rust.lang.core.psi.ext.RsInferenceContextOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
@@ -956,9 +939,6 @@ private TrivialBaseTypeInner ::= '(' ')' | '_' | '!'
 
 // `impl Trait` or `dyn Trait` or `Trait+'a`
 fake TraitType ::= ExplicitTraitTypeInner | ImplicitTraitTypeInner {
-  implements = "org.rust.lang.core.psi.ext.RsTypeElement"
-  extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
-  stubClass = "org.rust.lang.core.stubs.RsTraitTypeStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 

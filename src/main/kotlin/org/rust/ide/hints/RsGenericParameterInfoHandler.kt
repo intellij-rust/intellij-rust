@@ -105,7 +105,7 @@ private fun secondLine(params: List<RsTypeParameter>): HintLine? {
     val wherePreds = owner?.whereClause?.wherePredList.orEmpty()
         // retain specific preds
         .filterNot {
-            params.contains((it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve())
+            params.contains((it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve())
         }
     val splited = wherePreds.map { it.text }
     return if (splited.isNotEmpty()) {

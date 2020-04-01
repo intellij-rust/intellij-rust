@@ -480,7 +480,7 @@ private fun processUnqualifiedPathResolveVariants(
 ): Boolean {
     if (isCompletion) {
         // Complete possible associated types in a case like `Trait</*caret*/>`
-        val possibleTypeArgs = parent?.parent?.parent
+        val possibleTypeArgs = parent?.parent
         if (possibleTypeArgs is RsTypeArgumentList) {
             val trait = (possibleTypeArgs.parent as? RsPath)?.reference?.resolve() as? RsTraitItem
             if (trait != null && processAssocTypeVariants(trait, processor)) return true

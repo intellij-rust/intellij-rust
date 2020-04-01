@@ -62,7 +62,7 @@ private abstract class ConstExprBuilder<T : Ty, V> {
                     else -> null
                 }
 
-                val typeElementPath = (typeReference?.typeElement as? RsBaseType)?.path ?: return null
+                val typeElementPath = (typeReference?.skipParens() as? RsBaseType)?.path ?: return null
                 if (TyPrimitive.fromPath(typeElementPath) != expectedTy) return null
 
                 when (element) {

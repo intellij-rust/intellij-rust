@@ -25,7 +25,7 @@ val RsTypeParameter.bounds: List<RsPolybound> get() {
     val owner = parent?.parent as? RsGenericDeclaration
     val whereBounds =
         owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.typeElement as? RsBaseType)?.path?.reference?.resolve() == this }
+            .filter { (it.typeReference?.skipParens() as? RsBaseType)?.path?.reference?.resolve() == this }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
 
     return typeParamBounds?.polyboundList.orEmpty() + whereBounds
@@ -41,7 +41,7 @@ val RsTypeParameter.isSized: Boolean get() {
     val owner = parent?.parent as? RsGenericDeclaration
     val whereBounds =
         owner?.whereClause?.wherePredList.orEmpty()
-            .filter { (it.typeReference?.typeElement as? RsBaseType)?.name == name }
+            .filter { (it.typeReference?.skipParens() as? RsBaseType)?.name == name }
             .flatMap { it.typeParamBounds?.polyboundList.orEmpty() }
     val bounds = typeParamBounds?.polyboundList.orEmpty() + whereBounds
     return bounds.none { it.q != null }

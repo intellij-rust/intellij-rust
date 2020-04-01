@@ -43,10 +43,9 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsBaseTypeImpl(BASE_TYPE)
-        PsiElement(()('(')
-        PsiElement())(')')
+    RsBaseTypeImpl(BASE_TYPE)
+      PsiElement(()('(')
+      PsiElement())(')')
     PsiErrorElement:';' expected, got '+'
       <empty list>
   PsiWhiteSpace(' ')
@@ -106,11 +105,10 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsArrayTypeImpl(ARRAY_TYPE)
-        PsiElement([)('[')
-        PsiErrorElement:<type> expected, got 'type'
-          <empty list>
+    RsArrayTypeImpl(ARRAY_TYPE)
+      PsiElement([)('[')
+      PsiErrorElement:<type> expected, got 'type'
+        <empty list>
   PsiWhiteSpace('\n')
   RsTypeAliasImpl(TYPE_ALIAS)
     PsiElement(type)('type')
@@ -119,11 +117,10 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsRefLikeTypeImpl(REF_LIKE_TYPE)
-        PsiElement(&)('&')
-        PsiErrorElement:<type>, QUOTE_IDENTIFIER or mut expected, got ';'
-          <empty list>
+    RsRefLikeTypeImpl(REF_LIKE_TYPE)
+      PsiElement(&)('&')
+      PsiErrorElement:<type>, QUOTE_IDENTIFIER or mut expected, got ';'
+        <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsTypeAliasImpl(TYPE_ALIAS)
@@ -133,11 +130,10 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsRefLikeTypeImpl(REF_LIKE_TYPE)
-        PsiElement(*)('*')
-        PsiErrorElement:<type>, const or mut expected, got ';'
-          <empty list>
+    RsRefLikeTypeImpl(REF_LIKE_TYPE)
+      PsiElement(*)('*')
+      PsiErrorElement:<type>, const or mut expected, got ';'
+        <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsTypeAliasImpl(TYPE_ALIAS)
@@ -147,13 +143,12 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsFnPointerTypeImpl(FN_POINTER_TYPE)
-        PsiElement(fn)('fn')
-        RsValueParameterListImpl(VALUE_PARAMETER_LIST)
-          PsiElement(()('(')
-          PsiErrorElement:')' or <anon parameter> expected, got ';'
-            <empty list>
+    RsFnPointerTypeImpl(FN_POINTER_TYPE)
+      PsiElement(fn)('fn')
+      RsValueParameterListImpl(VALUE_PARAMETER_LIST)
+        PsiElement(()('(')
+        PsiErrorElement:')' or <anon parameter> expected, got ';'
+          <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsTypeAliasImpl(TYPE_ALIAS)
@@ -163,11 +158,10 @@ FILE
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
     PsiWhiteSpace(' ')
-    RsTypeReferenceImpl(TYPE_REFERENCE)
-      RsForInTypeImpl(FOR_IN_TYPE)
-        RsForLifetimesImpl(FOR_LIFETIMES)
-          PsiElement(for)('for')
-          PsiElement(<)('<')
-          PsiErrorElement:<bound>, <lifetime parameter> or '>' expected, got ';'
-            <empty list>
+    RsForInTypeImpl(FOR_IN_TYPE)
+      RsForLifetimesImpl(FOR_LIFETIMES)
+        PsiElement(for)('for')
+        PsiElement(<)('<')
+        PsiErrorElement:<bound>, <lifetime parameter> or '>' expected, got ';'
+          <empty list>
     PsiElement(;)(';')

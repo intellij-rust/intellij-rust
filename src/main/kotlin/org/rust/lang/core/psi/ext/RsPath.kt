@@ -64,7 +64,7 @@ val RsPath.qualifier: RsPath?
     }
 
 fun RsPath.allowedNamespaces(isCompletion: Boolean = false): Set<Namespace> = when (val parent = parent) {
-    is RsPath, is RsTypeElement, is RsTraitRef, is RsStructLiteral, is RsPatStruct -> TYPES
+    is RsPath, is RsTypeReference, is RsTraitRef, is RsStructLiteral, is RsPatStruct -> TYPES
     is RsUseSpeck -> when {
         // use foo::bar::{self, baz};
         //     ~~~~~~~~
