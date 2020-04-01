@@ -5,8 +5,8 @@
 
 package org.rust.ide.console
 
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.psi.*
@@ -26,7 +26,7 @@ class RsConsoleCodeFragmentContext {
     fun updateContext(project: Project, codeFragment: RsReplCodeFragment) {
         val allCommandsText = getAllCommandsText()
 
-        runInEdt {
+        DumbService.getInstance(project).smartInvokeLater {
             runWriteAction {
                 codeFragment.context = createContext(project, codeFragment.crateRoot as RsFile?, allCommandsText)
             }
