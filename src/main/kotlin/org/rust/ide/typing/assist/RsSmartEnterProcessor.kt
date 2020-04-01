@@ -13,6 +13,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
+import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.ancestors
 
 /**
@@ -23,10 +24,13 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
     init {
         addFixers(
             MethodCallFixer(),
-            SemicolonFixer())
+            SemicolonFixer(),
+            CommaFixer()
+        )
 
         addEnterProcessors(
-            PlainEnterProcessor())
+            PlainEnterProcessor()
+        )
     }
 
     override fun getStatementAtCaret(editor: Editor, psiFile: PsiFile): PsiElement? {
@@ -36,7 +40,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             val elementType = each.node.elementType
             when {
                 elementType == LBRACE || elementType == RBRACE -> continue@loop
-                each.parent is RsBlock -> return each
+                each is RsMatchArm || each.parent is RsBlock -> return each
             }
         }
         return null
