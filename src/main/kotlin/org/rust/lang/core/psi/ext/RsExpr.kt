@@ -249,8 +249,14 @@ abstract class RsExprMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsExpr {
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 }
 
-tailrec fun unwrapParenExprs(expr: RsExpr): RsExpr =
-    if (expr is RsParenExpr) unwrapParenExprs(expr.expr) else expr
+tailrec fun unwrapParenExprs(expr: RsExpr): RsExpr {
+    return if (expr is RsParenExpr) {
+        val wrapped = expr.expr ?: return expr
+        unwrapParenExprs(wrapped)
+    } else {
+        expr
+    }
+}
 
 val RsExpr.isAssignBinaryExpr: Boolean
     get() = this is RsBinaryExpr && this.operatorType is AssignmentOp

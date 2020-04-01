@@ -163,7 +163,7 @@ class RsTypeInferenceWalker(
             is RsPathExpr -> inferPathExprType(this)
             is RsStructLiteral -> inferStructLiteralType(this, expected)
             is RsTupleExpr -> inferRsTupleExprType(this, expected)
-            is RsParenExpr -> this.expr.inferType(expected)
+            is RsParenExpr -> expr?.inferType(expected) ?: TyUnknown
             is RsUnitExpr -> TyUnit
             is RsCastExpr -> inferCastExprType(this)
             is RsCallExpr -> inferCallExprType(this, expected)

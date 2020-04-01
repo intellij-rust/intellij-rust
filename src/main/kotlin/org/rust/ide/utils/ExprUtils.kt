@@ -8,6 +8,7 @@ package org.rust.ide.utils
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.LogicOp
 import org.rust.lang.core.psi.ext.operatorType
+import org.rust.lang.core.psi.ext.unwrapParenExprs
 
 /**
  * Returns `true` if all elements are `true`, `false` if there exists
@@ -51,7 +52,7 @@ fun RsExpr.isPure(): Boolean? {
         }
         is RsTupleExpr -> exprList.allMaybe(RsExpr::isPure)
         is RsDotExpr -> if (methodCall != null) null else expr.isPure()
-        is RsParenExpr -> expr.isPure()
+        is RsParenExpr -> expr?.isPure() == true
         is RsBreakExpr, is RsContExpr, is RsRetExpr, is RsTryExpr -> false   // Changes execution flow
         is RsPathExpr, is RsLitExpr, is RsUnitExpr -> true
 
@@ -94,10 +95,5 @@ fun RsExpr.skipParenExprUp(): RsExpr {
  *
  * @return a child expression without parentheses.
  */
-fun RsCondition.skipParenExprDown(): RsExpr {
-    var child = this.expr
-    while (child is RsParenExpr) {
-        child = child.expr
-    }
-    return child
-}
+fun RsCondition.skipParenExprDown(): RsExpr =
+    unwrapParenExprs(expr)
