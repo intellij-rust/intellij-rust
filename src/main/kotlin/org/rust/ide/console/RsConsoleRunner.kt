@@ -31,10 +31,12 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Cargo
+import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.saveAllDocuments
 import java.awt.BorderLayout
 import java.nio.charset.StandardCharsets
 import javax.swing.BorderFactory
+import javax.swing.Icon
 import javax.swing.JPanel
 
 class RsConsoleRunner(project: Project) :
@@ -250,6 +252,10 @@ class RsConsoleRunner(project: Project) :
         val contentDescriptor = RunContentDescriptor(null, processHandler, panel, "Error running console")
 
         showConsole(executor, contentDescriptor)
+    }
+
+    override fun getConsoleIcon(): Icon {
+        return RsIcons.REPL
     }
 
     companion object {
