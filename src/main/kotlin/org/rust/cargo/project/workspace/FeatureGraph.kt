@@ -39,21 +39,77 @@ class FeatureGraph private constructor(
     private val graph: WorkspaceFeaturesGraph,
     private val featureToNode: Map<PackageFeature, FeatureNode>
 ) {
-//    val state: Map<CargoWorkspace.Package, Map<String, FeatureState>>
-//        get() = buildMap {
-//            graph.forEachNode {
-//                put(it.data., it.data.state)
-//            }
-//        }
+    fun view(f: FeaturesView.() -> Unit): MutableMap<PackageFeature, FeatureState> =
+        FeaturesView().apply(f).state
 
-//    val names: List<String> = buildList {
-//        graph.forEachNode { add(it.data.name) }
-//    }
+    fun viewFlat(f: FeaturesView.() -> Unit): MutableMap<String, MutableMap<String, FeatureState>> =
+        FeaturesView().apply(f).stateFlat
 
-    fun updater(): FeatureGraphUpdater = FeatureGraphUpdater(graph, featureToNode)
+    inner class FeaturesView {
+        val state: MutableMap<PackageFeature, FeatureState> = hashMapOf()
+
+        val stateFlat: MutableMap<String, MutableMap<String, FeatureState>>
+            get() {
+                val map: MutableMap<String, MutableMap<String, FeatureState>> = hashMapOf()
+                for ((feature, state) in state) {
+                    map.getOrPut(feature.pkg.rootDirectory.toString()) { hashMapOf() }[feature.name] = state
+                }
+                return map
+            }
+
+        init {
+            for (feature in featureToNode.keys) {
+                state[feature] = FeatureState.Disabled
+            }
+        }
+
+        fun syncWithUserOverridden(userOverriddenFeatures: Map<PackageFeature, Boolean>) {
+            for ((feature, state) in userOverriddenFeatures) {
+                val node = featureToNode[feature] ?: return
+                when (state) {
+                    true -> enableFeatureTransitively(node)
+                    false -> disableFeatureTransitively(node)
+                }
+            }
+        }
+
+        fun updateFeature(feature: PackageFeature, state: FeatureState) {
+            val node = featureToNode[feature] ?: return
+            when (state) {
+                FeatureState.Enabled -> enableFeatureTransitively(node)
+                FeatureState.Disabled -> disableFeatureTransitively(node)
+            }
+        }
+
+        private fun enableFeatureTransitively(node: FeatureNode) {
+            enableFeature(node)
+
+            for (edge in graph.incomingEdges(node)) {
+                val dependency = edge.source
+                enableFeatureTransitively(dependency)
+            }
+        }
+
+        private fun disableFeatureTransitively(node: FeatureNode) {
+            disableFeature(node)
+
+            for (edge in graph.outgoingEdges(node)) {
+                val dependant = edge.target
+                disableFeatureTransitively(dependant)
+            }
+        }
+
+        private fun enableFeature(node: FeatureNode) {
+            state[node.data] = FeatureState.Enabled
+        }
+
+        private fun disableFeature(node: FeatureNode) {
+            state[node.data] = FeatureState.Disabled
+        }
+    }
 
     companion object {
-        fun buildFor(features: Map<PackageFeature, List<PackageFeature>>, defaultFeatures: Set<PackageFeature>): FeatureGraph {
+        fun buildFor(features: Map<PackageFeature, List<PackageFeature>>): FeatureGraph {
             val graph = PresentableGraph<PackageFeature, Unit>()
             val featureToNode = hashMapOf<PackageFeature, FeatureNode>()
 
@@ -84,70 +140,5 @@ class FeatureGraph private constructor(
 
         val Empty: FeatureGraph
             get() = FeatureGraph(WorkspaceFeaturesGraph(), emptyMap())
-    }
-}
-
-class FeatureGraphUpdater(
-    private val features: WorkspaceFeaturesGraph,
-    private val featureToNode: Map<PackageFeature, FeatureNode>
-) {
-    val featuresState: MutableMap<PackageFeature, FeatureState> = hashMapOf()
-    val featuresStateFlat: MutableMap<String, MutableMap<String, FeatureState>>
-        get() {
-            val map: MutableMap<String, MutableMap<String, FeatureState>> = hashMapOf()
-            for ((feature, state) in featuresState) {
-                map.getOrPut(feature.pkg.rootDirectory.toString()) { hashMapOf() }[feature.name] = state
-            }
-            return map
-        }
-
-    init {
-        for (feature in featureToNode.keys) {
-            featuresState[feature] = FeatureState.Disabled
-        }
-    }
-
-    fun updateFeatures(userOverriddenFeatures: Map<PackageFeature, Boolean>) {
-        for ((feature, state) in userOverriddenFeatures) {
-            val node = featureToNode[feature] ?: return
-            when (state) {
-                true -> enableFeatureTransitively(node)
-                false -> disableFeatureTransitively(node)
-            }
-        }
-    }
-
-    fun updateFeature(feature: PackageFeature, state: FeatureState) {
-        val node = featureToNode[feature] ?: return
-        when (state) {
-            FeatureState.Enabled -> enableFeatureTransitively(node)
-            FeatureState.Disabled -> disableFeatureTransitively(node)
-        }
-    }
-
-    private fun enableFeatureTransitively(node: FeatureNode) {
-        enableFeature(node)
-
-        for (edge in features.incomingEdges(node)) {
-            val dependency = edge.source
-            enableFeatureTransitively(dependency)
-        }
-    }
-
-    private fun disableFeatureTransitively(node: FeatureNode) {
-        disableFeature(node)
-
-        for (edge in features.outgoingEdges(node)) {
-            val dependant = edge.target
-            disableFeatureTransitively(dependant)
-        }
-    }
-
-    private fun enableFeature(node: FeatureNode) {
-        featuresState[node.data] = FeatureState.Enabled
-    }
-
-    private fun disableFeature(node: FeatureNode) {
-        featuresState[node.data] = FeatureState.Disabled
     }
 }

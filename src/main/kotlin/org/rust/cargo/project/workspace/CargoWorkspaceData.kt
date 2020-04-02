@@ -9,6 +9,8 @@ import org.rust.cargo.CfgOptions
 
 typealias PackageId = String
 
+typealias PackageRoot = String
+
 /**
  * A POD-style representation of [CargoWorkspace] used as an intermediate representation
  * between `cargo metadata` JSON and [CargoWorkspace] object graph.

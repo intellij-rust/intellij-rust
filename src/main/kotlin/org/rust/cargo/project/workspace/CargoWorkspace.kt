@@ -49,7 +49,7 @@ interface CargoWorkspace {
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
-    fun withOverriddenFeatures(userOverriddenFeatures: Map<String, Set<String>>): CargoWorkspace
+    fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Set<String>>): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
@@ -99,6 +99,7 @@ interface CargoWorkspace {
     /** See docs for [CargoProjectsService] */
     interface Target {
         val name: String
+
         // target name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val normName: String get() = name.replace('-', '_')
@@ -161,7 +162,7 @@ private class WorkspaceImpl(
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>,
     override val cfgOptions: CfgOptions,
-    val featuresState: Map<String, Map<String, FeatureState>>
+    val featuresState: Map<String, Map<String, FeatureState>> // rootDirectory -> (feature, state)
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
@@ -206,14 +207,14 @@ private class WorkspaceImpl(
                         else -> null
                     }
                 }
-                featureMap.put(feature, mappedDeps)
+                featureMap[feature] = mappedDeps
 
                 if (featureName in pkg.defaultFeatures) {
                     defaultFeatures += feature
                 }
             }
         }
-        FeatureGraph.buildFor(featureMap, defaultFeatures)
+        FeatureGraph.buildFor(featureMap)
     }
 
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
@@ -273,28 +274,26 @@ private class WorkspaceImpl(
         return this
     }
 
-    override fun withOverriddenFeatures(userOverriddenFeatures: Map<String, Set<String>>): CargoWorkspace {
-        val updater = features.updater()
+    override fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Set<String>>): CargoWorkspace {
+        fun flatten(features: Map<PackageRoot, Set<String>>): Map<PackageFeature, Boolean> =
+            features.mapNotNull { (packageRootDirectoryPath, features) ->
+                val pkg = packages.find { it.rootDirectory.toString() == packageRootDirectoryPath }
+                    ?: return@mapNotNull null
+                pkg to features
+            }.flatMap { (pkg, features) ->
+                features.map { featureName -> pkg.findFeature(featureName) to true }
+            }.toMap()
 
-        updater.updateFeatures(mapUserOverriddenFeatures(userOverriddenFeatures))
-
+        val newState = features.viewFlat {
+            syncWithUserOverridden(flatten(userOverriddenFeatures))
+        }
         return WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { it.asPackageData() },
             cfgOptions,
-            updater.featuresStateFlat
+            newState
         ).withDependenciesOf(this)
-    }
-
-    private fun mapUserOverriddenFeatures(userOverriddenFeatures: Map<String, Set<String>>): Map<PackageFeature, Boolean> {
-        return userOverriddenFeatures.mapNotNull { (packageRootDirectoryPath, features) ->
-            val pkg = packages.find { it.rootDirectory.toString() == packageRootDirectoryPath }
-                ?: return@mapNotNull null
-            pkg to features
-        }.flatMap { (pkg, features) ->
-            features.map { featureName -> pkg.findFeature(featureName) to true }
-        }.toMap()
     }
 
     @TestOnly
@@ -333,8 +332,7 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions,
-                mutableMapOf())
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions, mutableMapOf())
 
             // Fill package dependencies
             run {

@@ -119,12 +119,14 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
                 anchor,
                 anchor.textRange,
                 // TODO extract to a constant
-                IconUtil.filterIcon(icon, { object : RGBImageFilter() {
-                    override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
-                        val color = Color(rgb, true)
-                        return ColorUtil.toAlpha(color, (color.alpha / 2.2).toInt()).rgb
+                IconUtil.filterIcon(icon, {
+                    object : RGBImageFilter() {
+                        override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+                            val color = Color(rgb, true)
+                            return ColorUtil.toAlpha(color, (color.alpha / 2.2).toInt()).rgb
+                        }
                     }
-                } }, null),
+                }, null),
                 { "Feature `$name` is $featureState" },
                 null,
                 Alignment.LEFT
