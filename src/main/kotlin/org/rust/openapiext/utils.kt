@@ -219,6 +219,14 @@ fun <T> Project.computeWithCancelableProgress(title: String, supplier: () -> T):
     return ProgressManager.getInstance().runProcessWithProgressSynchronously<T, Exception>(supplier, title, true, this)
 }
 
+fun Project.runWithCancelableProgress(title: String, process: () -> Unit): Boolean {
+    if (isUnitTestMode) {
+        process()
+        return true
+    }
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, true, this)
+}
+
 inline fun <T> UserDataHolderEx.getOrPut(key: Key<T>, defaultValue: () -> T): T =
     getUserData(key) ?: putUserDataIfAbsent(key, defaultValue())
 

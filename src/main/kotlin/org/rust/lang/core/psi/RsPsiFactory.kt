@@ -488,9 +488,14 @@ class RsPsiFactory(
             }
         else expr
 
-    fun createVisRestriction(pathText: String): RsVisRestriction =
-        createFromText<RsFunction>("pub(in $pathText) fn foo() {}")?.vis?.visRestriction
+    fun createVisRestriction(pathText: String): RsVisRestriction {
+        val inPrefix = when (pathText) {
+            "crate", "super", "self" -> ""
+            else -> "in "
+        }
+        return createFromText<RsFunction>("pub($inPrefix$pathText) fn foo() {}")?.vis?.visRestriction
             ?: error("Failed to create vis restriction element")
+    }
 
     fun createVis(text: String): RsVis =
         createFromText("$text fn foo() {}") ?: error("Failed to create vis")

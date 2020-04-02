@@ -9,7 +9,7 @@
         <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="0">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.ide.refactoring.move" percentOfUsers="0">
+        <experimentalFeature id="org.rust.ide.refactoring.move" percentOfUsers="100">
             <description>Move refactoring</description>
         </experimentalFeature>
     </extensions>

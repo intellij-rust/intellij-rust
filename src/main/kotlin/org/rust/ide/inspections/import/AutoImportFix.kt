@@ -34,7 +34,6 @@ import org.rust.lang.core.types.infer.TypeVisitor
 import org.rust.lang.core.types.infer.type
 import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 import org.rust.openapiext.checkWriteAccessAllowed
@@ -585,7 +584,7 @@ private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: Str
     }
 }
 
-private fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
+fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     val useItem = psiFactory.createUseItem(usePath)
     if (tryGroupWithOtherUseItems(psiFactory, useItem)) return
     val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
@@ -693,7 +692,7 @@ private val RsPath.pathParsingMode: PathParsingMode
 private val RsElement.stdlibAttributes: RsFile.Attributes
     get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr && it !is RsVis }
-private val <T : RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
+val <T : RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
 private val CargoWorkspace.Target.isStd: Boolean
     get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD
