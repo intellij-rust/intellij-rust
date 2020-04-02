@@ -10,6 +10,8 @@ import com.intellij.psi.PsiDirectory
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.RsModDeclItem
+import org.rust.lang.core.psi.RsModItem
 import org.rust.openapiext.findFileByMaybeRelativePath
 import java.util.*
 
@@ -81,3 +83,19 @@ val RsMod.superMods: List<RsMod> get() {
         .takeWhile { visited.add(it) }
         .toList()
 }
+
+fun RsMod.hasChildModules(): Boolean =
+    expandedItemsExceptImplsAndUses.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }
+
+private val RsMod.childModules: List<RsMod>
+    get() = expandedItemsExceptImplsAndUses
+        .mapNotNull {
+            when (it) {
+                is RsModDeclItem -> it.reference.resolve() as? RsMod
+                is RsModItem -> it
+                else -> null
+            }
+        }
+
+fun RsMod.getChildModule(name: String): RsMod? =
+    childModules.find { it.name == name }

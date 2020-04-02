@@ -905,6 +905,15 @@
         <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
                      description="Enable Rust cfg attributes support"/>
 
+        <!-- Move refactoring -->
+
+        <!--
+            `before kotlin.moveFilesOrDirectories` is needed because otherwise
+            incorrect handler can be used: https://youtrack.jetbrains.com/issue/IDEA-237769
+        -->
+        <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler"
+                                 order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
+
     </extensions>
 
     <extensionPoints>
