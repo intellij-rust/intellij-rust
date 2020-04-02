@@ -10,10 +10,10 @@ import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.ArrayUtil
-import com.intellij.util.IncorrectOperationException
 import com.intellij.util.PathUtilRt
 import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.readFSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.Companion.writeFSItem
@@ -79,7 +79,7 @@ import java.io.*
  * 2. when some project "foo" is closed, "/rust_expanded_macros/foo" should be replaced with
  *   a dummy directory using [makeDummy].
  */
-class MacroExpansionFileSystem : LocalFileSystemBase() {
+class MacroExpansionFileSystem : NewVirtualFileSystem() {
     private val root: FSDir = FSDir(null, "/")
 
     override fun getProtocol(): String = PROTOCOL
@@ -87,6 +87,12 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
     override fun normalize(path: String): String = path
     override fun getCanonicallyCasedName(file: VirtualFile): String = file.name
     override fun isCaseSensitive(): Boolean = true
+    override fun isReadOnly(): Boolean = false
+    override fun getRank(): Int = 1
+    override fun refresh(asynchronous: Boolean) = VfsImplUtil.refresh(this, asynchronous)
+    override fun refreshAndFindFileByPath(path: String): VirtualFile? = VfsImplUtil.refreshAndFindFileByPath(this, path)
+    override fun findFileByPath(path: String): VirtualFile? = VfsImplUtil.findFileByPath(this, path)
+    override fun findFileByPathIfCached(path: String): VirtualFile? = VfsImplUtil.findFileByPathIfCached(this, path)
 
     override fun isValidName(name: String): Boolean =
         PathUtilRt.isValidFileName(name, PathUtilRt.Platform.UNIX, false, null)
@@ -194,12 +200,6 @@ class MacroExpansionFileSystem : LocalFileSystemBase() {
         val item = convert(file) ?: return null
         val length = ((item as? FSFile)?.length ?: 0).toLong()
         return FileAttributes(item is FSDir, false, false, false, length, item.timestamp, true)
-    }
-
-    override fun replaceWatchedRoots(watchRequests: Collection<WatchRequest>,
-                                     recursiveRoots: Collection<String>?,
-                                     flatRoots: Collection<String>?): Set<WatchRequest> {
-        throw IncorrectOperationException()
     }
 
     sealed class FSItem {
