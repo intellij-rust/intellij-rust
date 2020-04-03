@@ -893,6 +893,8 @@
 
         <registryKey key="org.rust.lang.type.alias.threshold" defaultValue="10" restartRequired="false"
                      description="Maximum number of type aliases to take into account during `impl`s search"/>
+        <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
+                     description="Enable Rust cfg attributes support"/>
 
     </extensions>
 

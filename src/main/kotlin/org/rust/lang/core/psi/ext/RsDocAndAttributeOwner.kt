@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.extapi.psi.StubBasedPsiElementBase
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
@@ -211,6 +212,8 @@ val RsDocAndAttributeOwner.isCfgUnknown: Boolean
     get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
 private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
+    if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return ThreeValuedLogic.True
+
     // TODO: add cfg to RsFile's stub and remove this line
     if (this is RsFile) return ThreeValuedLogic.True
 
@@ -226,3 +229,5 @@ private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
     val features = pkg.features.associate { it.name to it.state }
     return CfgEvaluator(pkg.workspace.cfgOptions, pkg.cfgOptions, features, pkg.origin).evaluate(cfgAttributes)
 }
+
+private val CFG_ATTRIBUTES_ENABLED_KEY = Registry.get("org.rust.lang.cfg.attributes")
