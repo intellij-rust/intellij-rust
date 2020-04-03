@@ -39,6 +39,7 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
         if (!(file.isRustFile || file.isCargoToml) || isNotificationDisabled(file)) return null
 
         val cargoProjects = project.cargoProjects
+        if (!cargoProjects.initialized) return null
         if (!cargoProjects.hasAtLeastOneValidProject) {
             return createNoCargoProjectsPanel(file)
         }

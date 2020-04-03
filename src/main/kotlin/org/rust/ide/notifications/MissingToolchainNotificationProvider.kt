@@ -72,6 +72,8 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
         val cargoProjects = project.cargoProjects
 
+        if (!cargoProjects.initialized) return null
+
         val workspace = cargoProjects.findProjectForFile(file)?.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it

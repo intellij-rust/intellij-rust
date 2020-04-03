@@ -46,6 +46,9 @@ class DetachedFileNotificationProvider(project: Project) : RsNotificationProvide
         if (file.isNotRustFile || isNotificationDisabled(file)) return null
 
         val cargoProjects = project.cargoProjects
+
+        if (!cargoProjects.initialized) return null
+
         // Handled by [MissingToolchainNotificationProvider]
         if (cargoProjects.findProjectForFile(file) == null) return null
 
