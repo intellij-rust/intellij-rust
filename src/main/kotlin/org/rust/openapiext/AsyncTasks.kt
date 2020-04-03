@@ -5,10 +5,10 @@
 
 package org.rust.openapiext
 
-import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import org.rust.RsTask
 import java.util.concurrent.CompletableFuture
 
 @kotlin.Suppress("unused")
@@ -23,10 +23,14 @@ interface AsyncTaskCtx<T> {
     fun ok(value: T) = TaskResult.Ok(value)
 }
 
-fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String,
-                     task: AsyncTaskCtx<T>.() -> TaskResult<T>): CompletableFuture<TaskResult<T>> {
+fun <T> runAsyncTask(
+    project: Project,
+    enqueue: (Task.Backgroundable) -> Unit,
+    title: String,
+    task: AsyncTaskCtx<T>.() -> TaskResult<T>
+): CompletableFuture<TaskResult<T>> {
     val fut = CompletableFuture<TaskResult<T>>()
-    queue.run(object : Task.Backgroundable(project, title) {
+    enqueue(object : Task.Backgroundable(project, title), RsTask {
         override fun run(indicator: ProgressIndicator) {
             val ctx = object : AsyncTaskCtx<T> {
                 override val progress: ProgressIndicator get() = indicator
@@ -37,6 +41,12 @@ fun <T> runAsyncTask(project: Project, queue: BackgroundTaskQueue, title: String
         override fun onThrowable(error: Throwable) {
             fut.completeExceptionally(error)
         }
+
+        override val taskType: RsTask.TaskType
+            get() = RsTask.TaskType.CARGO_SYNC
+
+        override val runSyncInUnitTests: Boolean
+            get() = true
     })
     return fut
 }

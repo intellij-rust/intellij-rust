@@ -19,7 +19,6 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.progress.BackgroundTaskQueue
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -67,6 +66,7 @@ import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.joinAll
+import org.rust.taskQueue
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
@@ -104,14 +104,6 @@ open class CargoProjectsServiceImpl(
             })
         }
     }
-
-    /**
-     * While in theory Cargo and rustup are concurrency-safe, in practice
-     * it's better to serialize their execution, and this queue does
-     * exactly that. Not that [AsyncValue] [projects] also provides
-     * serialization grantees, so this queue is no strictly necessary.
-     */
-    val taskQueue = BackgroundTaskQueue(project, "Cargo update")
 
     /**
      * The heart of the plugin Project model. Care must be taken to ensure
@@ -375,7 +367,7 @@ data class CargoProjectImpl(
             return CompletableFuture.completedFuture(withStdlib(result))
         }
 
-        return fetchStdlib(project, projectService.taskQueue, rustup).thenApply(this::withStdlib)
+        return fetchStdlib(project, rustup).thenApply(this::withStdlib)
     }
 
     // Checks that the project is https://github.com/rust-lang/rust
@@ -400,7 +392,7 @@ data class CargoProjectImpl(
                 "Can't update Cargo project, no Rust toolchain"
             )))
 
-        return fetchCargoWorkspace(project, projectService.taskQueue, toolchain, workingDirectory)
+        return fetchCargoWorkspace(project, toolchain, workingDirectory)
             .thenApply(this::withWorkspace)
     }
 
@@ -415,7 +407,7 @@ data class CargoProjectImpl(
                 "Can't get rustc info, no Rust toolchain"
             )))
 
-        return fetchRustcInfo(project, projectService.taskQueue, toolchain, workingDirectory)
+        return fetchRustcInfo(project, toolchain, workingDirectory)
             .thenApply(this::withRustcInfo)
     }
 
@@ -522,10 +514,9 @@ private fun VirtualFile.setupContentRoots(packageModule: Module, setup: ContentE
 
 private fun fetchStdlib(
     project: Project,
-    queue: BackgroundTaskQueue,
     rustup: Rustup
 ): CompletableFuture<TaskResult<StandardLibrary>> {
-    return runAsyncTask(project, queue, "Getting Rust stdlib") {
+    return runAsyncTask(project, project.taskQueue::run, "Getting Rust stdlib") {
         progress.isIndeterminate = true
         when (val download = rustup.downloadStdlib()) {
             is DownloadResult.Ok -> {
@@ -547,11 +538,10 @@ private fun fetchStdlib(
 
 private fun fetchCargoWorkspace(
     project: Project,
-    queue: BackgroundTaskQueue,
     toolchain: RustToolchain,
     projectDirectory: Path
 ): CompletableFuture<TaskResult<CargoWorkspace>> {
-    return runAsyncTask(project, queue, "Updating cargo") {
+    return runAsyncTask(project, project.taskQueue::run, "Updating cargo") {
         progress.isIndeterminate = true
         if (!toolchain.looksLikeValidToolchain()) {
             return@runAsyncTask err(
@@ -588,11 +578,10 @@ private fun fetchCargoWorkspace(
 
 private fun fetchRustcInfo(
     project: Project,
-    queue: BackgroundTaskQueue,
     toolchain: RustToolchain,
     projectDirectory: Path
 ): CompletableFuture<TaskResult<RustcInfo>> {
-    return runAsyncTask(project, queue, "Getting toolchain version") {
+    return runAsyncTask(project, project.taskQueue::run, "Getting toolchain version") {
         progress.isIndeterminate = true
         if (!toolchain.looksLikeValidToolchain()) {
             return@runAsyncTask err(

@@ -13,9 +13,8 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
-import com.intellij.openapi.progress.impl.ProgressManagerImpl
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -23,8 +22,6 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.isDispatchThread
-import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -32,9 +29,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.util.PairConsumer
-import com.intellij.util.concurrency.QueueProcessor
-import com.intellij.util.concurrency.QueueProcessor.ThreadToUse
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexableFileSet
 import com.intellij.util.io.*
@@ -42,6 +36,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
+import org.rust.RsTask
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
@@ -54,6 +49,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.openapiext.*
 import org.rust.stdext.*
+import org.rust.taskQueue
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -61,7 +57,6 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
-import java.util.function.BiConsumer
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
@@ -411,8 +406,6 @@ private class MacroExpansionServiceImplInner(
     @Volatile
     private var lastSavedStorageModCount: Long = storage.modificationTracker.modificationCount
 
-    private val taskQueue = MacroExpansionTaskQueue(project)
-
     /**
      * We must use a separate pool because:
      * 1. [ForkJoinPool.commonPool] is heavily used by the platform
@@ -476,7 +469,7 @@ private class MacroExpansionServiceImplInner(
     private var performConsistencyCheckBeforeTask: Boolean = true
 
     private fun submitTask(task: Task.Backgroundable) {
-        taskQueue.run(task)
+        project.taskQueue.run(task)
     }
 
     @Synchronized
@@ -497,7 +490,7 @@ private class MacroExpansionServiceImplInner(
 
     private fun cleanMacrosDirectoryAndStorage() {
         performConsistencyCheckBeforeTask = false
-        submitTask(object : Task.Backgroundable(project, "Cleaning outdated macros", false) {
+        submitTask(object : Task.Backgroundable(project, "Cleaning outdated macros", false), RsTask {
             override fun run(indicator: ProgressIndicator) {
                 checkReadAccessNotAllowed()
                 val vfs = MacroExpansionFileSystem.getInstance()
@@ -514,6 +507,9 @@ private class MacroExpansionServiceImplInner(
                     }
                 }
             }
+
+            override val taskType: RsTask.TaskType
+                get() = RsTask.TaskType.MACROS_CLEAR
         })
     }
 
@@ -614,14 +610,6 @@ private class MacroExpansionServiceImplInner(
         val treeChangeListener = ChangedMacroUpdater()
         PsiManager.getInstance(project).addPsiTreeChangeListener(treeChangeListener, disposable)
         ApplicationManager.getApplication().addApplicationListener(treeChangeListener, disposable)
-
-        if (isUnitTestMode) {
-            ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
-                override fun afterWriteActionFinished(action: Any) {
-                    ensureUpToDate()
-                }
-            }, disposable)
-        }
 
         registerIndexableSet(disposable)
 
@@ -829,9 +817,7 @@ private class MacroExpansionServiceImplInner(
                 return storage.makeExpansionTask(calls)
             }
 
-            override fun canEat(other: MacroExpansionTaskBase): Boolean = true // eat everything
-
-            override val isProgressBarDelayed: Boolean get() = false
+            override val taskType: RsTask.TaskType get() = RsTask.TaskType.MACROS_UNPROCESSED
         }
         submitTask(ProcessUnprocessedMacrosTask())
     }
@@ -856,9 +842,10 @@ private class MacroExpansionServiceImplInner(
                 return runReadAction { storage.makeValidationTask(workspaceOnly) }
             }
 
-            override fun canEat(other: MacroExpansionTaskBase): Boolean {
-                return other is ProcessModifiedMacrosTask && (other.workspaceOnly || !workspaceOnly)
-            }
+            override val taskType: RsTask.TaskType
+                get() = if (workspaceOnly) RsTask.TaskType.MACROS_WORKSPACE else RsTask.TaskType.MACROS_FULL
+
+            override val progressBarShowDelay: Int get() = 2000
         }
 
         val task = ProcessModifiedMacrosTask(workspaceOnly)
@@ -873,11 +860,6 @@ private class MacroExpansionServiceImplInner(
         }
 
         return false
-    }
-
-    private fun ensureUpToDate() {
-        check(isUnitTestMode)
-        taskQueue.ensureUpToDate()
     }
 
     fun getExpansionFor(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
@@ -939,6 +921,29 @@ private class MacroExpansionServiceImplInner(
 
         setupListeners(disposable)
 
+        ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
+            private var isProcessingUpdates = false
+
+            override fun afterWriteActionFinished(action: Any) {
+                awaitAllTasksFinish()
+            }
+
+            private fun awaitAllTasksFinish() {
+                check(isUnitTestMode)
+                checkWriteAccessNotAllowed()
+                val taskQueue = project.taskQueue
+                if (!taskQueue.isEmpty) {
+                    if (isProcessingUpdates) return
+                    isProcessingUpdates = true
+                    while (!taskQueue.isEmpty && !project.isDisposed) {
+                        LaterInvocator.dispatchPendingFlushes()
+                        Thread.sleep(10)
+                    }
+                    isProcessingUpdates = false
+                }
+            }
+        }, disposable)
+
         // TODO this causes flaky tests. Expanding should be triggered by an actual code change
         processUnprocessedMacros()
 
@@ -948,7 +953,7 @@ private class MacroExpansionServiceImplInner(
     private fun disposeUnitTest(saveCacheOnDispose: Boolean) {
         check(isUnitTestMode)
 
-        taskQueue.cancelAll()
+        project.taskQueue.cancelTasks(RsTask.TaskType.MACROS_CLEAR)
 
         if (saveCacheOnDispose) {
             runBlocking {
@@ -974,147 +979,6 @@ class MacroExpansionManagerWaker : CargoProjectsService.CargoProjectsListener {
         if (projects.isNotEmpty()) {
             service.project.macroExpansionManager
         }
-    }
-}
-
-/** Inspired by [BackgroundTaskQueue] */
-private class MacroExpansionTaskQueue(val project: Project) {
-    private val processor = QueueProcessor<ContinuableRunnable>(
-        QueueConsumer(),
-        true,
-        ThreadToUse.AWT,
-        project.disposed
-    )
-
-    // Guarded by self object monitor (@Synchronized)
-    private val cancelableTasks: MutableList<BackgroundableTaskData> = mutableListOf()
-
-    @Synchronized
-    fun run(task: MacroExpansionTaskBase) {
-        cancelableTasks.removeIf {
-            if (it.task is MacroExpansionTaskBase && task.canEat(it.task)) {
-                it.cancel()
-                true
-            } else {
-                false
-            }
-        }
-        val data = BackgroundableTaskData(task, ::onFinish)
-        cancelableTasks += data
-        processor.add(data)
-    }
-
-    fun run(task: Task.Backgroundable) {
-        if (task is MacroExpansionTaskBase) {
-            run(task as MacroExpansionTaskBase)
-        } else {
-            processor.add(BackgroundableTaskData(task) {})
-        }
-    }
-
-    fun runSimple(runnable: () -> Unit) {
-        processor.add(SimpleTaskData(runnable))
-    }
-
-    private var isProcessingUpdates = false
-
-    fun ensureUpToDate() {
-        check(isUnitTestMode)
-        if (isDispatchThread && !processor.isEmpty) {
-            checkWriteAccessNotAllowed()
-            if (isProcessingUpdates) return
-            isProcessingUpdates = true
-            while (!processor.isEmpty && !project.isDisposed) {
-                LaterInvocator.dispatchPendingFlushes()
-                Thread.sleep(10)
-            }
-            isProcessingUpdates = false
-        }
-    }
-
-    @Synchronized
-    fun cancelAll() {
-        for (task in cancelableTasks) {
-            task.cancel()
-        }
-        cancelableTasks.clear()
-    }
-
-    @Synchronized
-    private fun onFinish(data: BackgroundableTaskData) {
-        cancelableTasks.remove(data)
-    }
-
-    private interface ContinuableRunnable {
-        fun run(continuation: Runnable)
-    }
-
-    // BACKCOMPAT: 2019.3. get rid of [PairConsumer] implementation
-    private class QueueConsumer : PairConsumer<ContinuableRunnable, Runnable>, BiConsumer<ContinuableRunnable, Runnable> {
-        override fun consume(s: ContinuableRunnable, t: Runnable) = accept(s, t)
-        override fun accept(t: ContinuableRunnable, u: Runnable) = t.run(u)
-    }
-
-    private class BackgroundableTaskData(
-        val task: Task.Backgroundable,
-        val onFinish: (BackgroundableTaskData) -> Unit
-    ) : ContinuableRunnable {
-        private var state: State = State.Pending
-
-        @Synchronized
-        override fun run(continuation: Runnable) {
-            // BackgroundableProcessIndicator should be created from EDT
-            checkIsDispatchThread()
-            if (state != State.Pending) {
-                continuation.run()
-                return
-            }
-
-            val indicator = when {
-                isHeadlessEnvironment -> EmptyProgressIndicator()
-                task is MacroExpansionTaskBase && task.isProgressBarDelayed -> DelayedBackgroundableProcessIndicator(task, 2000)
-                else -> BackgroundableProcessIndicator(task)
-            }
-
-            state = State.Running(indicator)
-
-            val pm = ProgressManager.getInstance() as ProgressManagerImpl
-            pm.runProcessWithProgressAsynchronously(
-                task,
-                indicator,
-                {
-                    onFinish(this)
-                    continuation.run()
-                },
-                ModalityState.NON_MODAL
-            )
-        }
-
-        @Synchronized
-        fun cancel() {
-            when (val state = state) {
-                State.Pending -> this.state = State.Canceled
-                is State.Running -> state.indicator.cancel()
-                State.Canceled -> Unit
-            }
-        }
-
-        private sealed class State {
-            object Pending : State()
-            object Canceled : State()
-            data class Running(val indicator: ProgressIndicator) : State()
-        }
-    }
-
-    private class SimpleTaskData(val task: () -> Unit) : ContinuableRunnable {
-        override fun run(continuation: Runnable) {
-            try {
-                task()
-            } finally {
-                continuation.run()
-            }
-        }
-
     }
 }
 

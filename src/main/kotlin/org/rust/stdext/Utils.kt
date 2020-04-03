@@ -18,6 +18,20 @@ import java.nio.file.Paths
 @Suppress("NOTHING_TO_INLINE")
 inline fun <T> typeAscription(t: T): T = t
 
+/**
+ * Just a way to force exhaustiveness analysis for Kotlin's `when` expression.
+ *
+ * Use it like this:
+ * ```
+ * when (foo) {
+ *     is Bar -> {}
+ *     is Baz -> {}
+ * }.exhaustive // ensure `Bar` and `Baz` are the only variants of `foo`
+ * ```
+ */
+val <T> T.exhaustive: T
+    inline get() = this
+
 inline fun <T> VirtualFile.applyWithSymlink(f: (VirtualFile) -> T?): T? {
     return f(this) ?: f(canonicalFile ?: return null)
 }
