@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.*
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isDispatchThread
 import com.intellij.openapiext.isHeadlessEnvironment
@@ -394,9 +395,9 @@ private class MacroExpansionServiceImplInner(
         val expansionsDirVi = expansionsDirVi ?: return
 
         // See [MacroExpansionFileSystem] docs for explanation of what happens here
-        MacroExpansionFileSystem.getInstance().refreshFiles(listOf(expansionsDirVi), /*async =*/!isUnitTestMode, true) {
+        RefreshQueue.getInstance().refresh(/*async = */ !isUnitTestMode, /*recursive = */ true, {
             MacroExpansionFileSystem.getInstance().makeDummy(path)
-        }
+        }, listOf(expansionsDirVi))
     }
 
     private fun cleanMacrosDirectory() {
@@ -771,7 +772,7 @@ private class MacroExpansionServiceImplInner(
             return expandMacroOld(call)
         }
 
-        if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem !is LocalFileSystem) {
+        if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem?.isSupportedFs != true) {
             return expandMacroToMemoryFile(call, storeRangeMap = true)
         }
 
@@ -997,6 +998,9 @@ private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.
 private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
+
+private val VirtualFileSystem.isSupportedFs: Boolean
+    get() = this is LocalFileSystem || this is MacroExpansionFileSystem
 
 enum class MacroExpansionScope {
     ALL, WORKSPACE, NONE
