@@ -34,18 +34,22 @@ interface CargoWorkspace {
 
     val cfgOptions: CfgOptions
 
+    val features: FeatureGraph
+
     /**
      * Flatten list of packages including workspace members, dependencies, transitive dependencies
      * and stdlib. Use `packages.filter { it.origin == PackageOrigin.WORKSPACE }` to
      * obtain workspace members.
      */
     val packages: Collection<Package>
+
     fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
+    fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Set<String>>): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
 
     @TestOnly
@@ -74,7 +78,7 @@ interface CargoWorkspace {
 
         val cfgOptions: CfgOptions
 
-        val features: Collection<Feature>
+        val featureDeps: Map<String, List<String>>
 
         val workspace: CargoWorkspace
 
@@ -84,6 +88,10 @@ interface CargoWorkspace {
 
         val outDir: VirtualFile?
 
+        val featureState: Map<String, FeatureState>
+
+        fun findFeature(name: String): PackageFeature
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
@@ -91,6 +99,7 @@ interface CargoWorkspace {
     /** See docs for [CargoProjectsService] */
     interface Target {
         val name: String
+
         // target name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val normName: String get() = name.replace('-', '_')
@@ -141,16 +150,6 @@ interface CargoWorkspace {
         EDITION_2015("2015"), EDITION_2018("2018")
     }
 
-    class Feature(
-        val name: String,
-        val state: FeatureState
-    )
-
-    enum class FeatureState {
-        Enabled,
-        Disabled
-    }
-
     companion object {
         fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): CargoWorkspace =
             WorkspaceImpl.deserialize(manifestPath, data, cfgOptions)
@@ -162,7 +161,8 @@ private class WorkspaceImpl(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>,
-    override val cfgOptions: CfgOptions
+    override val cfgOptions: CfgOptions,
+    val featuresState: Map<String, Map<String, FeatureState>> // rootDirectory -> (feature, state)
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
@@ -180,6 +180,35 @@ private class WorkspaceImpl(
             pkg.env,
             pkg.outDirUrl
         )
+    }
+
+    override val features: FeatureGraph by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        // TODO deduplicate PackageFeature
+        val packageFeatureDeps = hashMapOf<PackageFeature, List<PackageFeature>>()
+
+        for (pkg in packages) {
+            val featureDeps = pkg.featureDeps
+            for ((feature, deps) in featureDeps) {
+                val packageFeature = pkg.findFeature(feature)
+                val mappedDeps = deps.mapNotNull { dep ->
+                    when {
+                        dep in deps -> pkg.findFeature(dep)
+                        "/" in dep -> {
+                            val (crateName, name) = dep.split('/')
+                            val depCrate = pkg.findDependency(crateName)?.pkg ?: return@mapNotNull null
+                            if (name in depCrate.featureDeps) {
+                                depCrate.findFeature(name)
+                            } else {
+                                null
+                            }
+                        }
+                        else -> null
+                    }
+                }
+                packageFeatureDeps[packageFeature] = mappedDeps
+            }
+        }
+        FeatureGraph.buildFor(packageFeatureDeps)
     }
 
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
@@ -201,7 +230,8 @@ private class WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             packages.map { it.asPackageData() } + stdlib.crates.map { it.asPackageData(rustcInfo) },
-            cfgOptions
+            cfgOptions,
+            featuresState
         )
 
         run {
@@ -238,6 +268,29 @@ private class WorkspaceImpl(
         return this
     }
 
+    override fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Set<String>>): CargoWorkspace {
+
+        fun flatten(features: Map<PackageRoot, Set<String>>): Map<PackageFeature, Boolean> =
+            features.mapNotNull { (packageRootDirectoryPath, features) ->
+                val pkg = packages.find { it.rootDirectory.toString() == packageRootDirectoryPath }
+                    ?: return@mapNotNull null
+                pkg to features
+            }.flatMap { (pkg, features) ->
+                features.map { featureName -> pkg.findFeature(featureName) to true }
+            }.toMap()
+
+        val featuresState = features.applyFlat {
+            syncWith(flatten(userOverriddenFeatures))
+        }
+        return WorkspaceImpl(
+            manifestPath,
+            workspaceRootPath,
+            packages.map { it.asPackageData() },
+            cfgOptions,
+            featuresState
+        ).withDependenciesOf(this)
+    }
+
     @TestOnly
     override fun withEdition(edition: CargoWorkspace.Edition): CargoWorkspace = WorkspaceImpl(
         manifestPath,
@@ -247,7 +300,8 @@ private class WorkspaceImpl(
             val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
             pkg.asPackageData(packageEdition)
         },
-        cfgOptions
+        cfgOptions,
+        featuresState
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -255,7 +309,8 @@ private class WorkspaceImpl(
         manifestPath,
         workspaceRootPath,
         packages.map { it.asPackageData() },
-        cfgOptions
+        cfgOptions,
+        featuresState
     ).withDependenciesOf(this)
 
     override fun toString(): String {
@@ -272,7 +327,8 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions)
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions, mutableMapOf())
+
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }
@@ -312,7 +368,7 @@ private class PackageImpl(
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
     override val cfgOptions: CfgOptions,
-    override val features: Collection<CargoWorkspace.Feature>,
+    override val featureDeps: Map<String, List<String>>,
     override val env: Map<String, String>,
     val outDirUrl: String?
 ) : CargoWorkspace.Package {
@@ -335,6 +391,12 @@ private class PackageImpl(
     override val dependencies: MutableList<DependencyImpl> = ArrayList()
 
     override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
+
+    override val featureState: Map<String, FeatureState>
+        get() = workspace.featuresState[rootDirectory.toString()] ?: emptyMap()
+
+    override fun findFeature(name: String): PackageFeature =
+        PackageFeature(this, name)
 
     override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl', outDirUrl='$outDirUrl')"
 }
@@ -379,7 +441,7 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         source = source,
         origin = origin,
         edition = edition ?: this.edition,
-        features = features,
+        features = featureDeps,
         cfgOptions = cfgOptions,
         env = env,
         outDirUrl = outDirUrl
@@ -414,7 +476,7 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
         source = null,
         origin = PackageOrigin.STDLIB,
         edition = edition,
-        features = emptyList(),
+        features = emptyMap(),
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null

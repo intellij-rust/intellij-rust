@@ -25,7 +25,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
-        val testProject = CargoProjectImpl(manifest, this, ws, null, rustcInfo,
+        val testProject = CargoProjectImpl(manifest, this, emptyMap(), ws, null, rustcInfo,
             workspaceStatus = CargoProject.UpdateStatus.UpToDate,
             rustcInfoStatus = if (rustcInfo != null) CargoProject.UpdateStatus.UpToDate else CargoProject.UpdateStatus.NeedsUpdate)
         testProject.setRootDir(rootDir)

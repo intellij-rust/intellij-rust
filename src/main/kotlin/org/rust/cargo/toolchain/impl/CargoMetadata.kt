@@ -273,16 +273,8 @@ object CargoMetadata {
                     LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
                 }
 
-                val enabledFeatures = resolveNode?.features?.toSet().orEmpty()
-                val features = pkg.features.keys.map { feature ->
-                    val state = when {
-                        enabledFeatures.contains(feature) -> CargoWorkspace.FeatureState.Enabled
-                        else -> CargoWorkspace.FeatureState.Disabled
-                    }
-                    CargoWorkspace.Feature(feature, state)
-                }
                 val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
-                pkg.clean(fs, pkg.id in members, variables, features, buildScriptMessage)
+                pkg.clean(fs, pkg.id in members, variables, pkg.features, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
@@ -300,7 +292,7 @@ object CargoMetadata {
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         variables: PackageVariables,
-        features: List<CargoWorkspace.Feature>,
+        features: Map<String, List<String>>,
         buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
