@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="org.rust.debugger.RsDebuggerToolchainService"/>
+    </extensions>
+</idea-plugin>

@@ -18,4 +18,6 @@
     <extensions defaultExtensionNs="com.intellij">
         <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
     </extensions>
+
+    <xi:include href="/META-INF/platform-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

@@ -5,7 +5,12 @@
 
 package org.rust.debugger.settings
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.SimpleConfigurable
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
@@ -16,8 +21,9 @@ import org.rust.debugger.LLDBRenderers
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     var lldbRenderers: LLDBRenderers = LLDBRenderers.DEFAULT
-
     var gdbRenderers: GDBRenderers = GDBRenderers.DEFAULT
+
+    var lldbPath: String? = null
 
     override fun getState(): RsDebuggerSettings = this
 
@@ -26,18 +32,56 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     }
 
     override fun createConfigurables(category: DebuggerSettingsCategory): Collection<Configurable> {
-        return if (category == DebuggerSettingsCategory.DATA_VIEWS) {
-            listOf(RsDebuggerSettingsConfigurable(this))
-        } else {
-            listOf()
+        val configurable = when (category) {
+            DebuggerSettingsCategory.DATA_VIEWS -> createDataViewConfigurable()
+            DebuggerSettingsCategory.GENERAL -> if (needToShowToolchainSettings) createToolchainConfigurable() else null
+            else -> null
+        }
+        return listOfNotNull(configurable)
+    }
+
+    private fun createDataViewConfigurable(): Configurable {
+        return SimpleConfigurable.create(
+            DATA_VIEW_ID,
+            "Rust",
+            RsDebuggerDataViewConfigurableUi::class.java,
+            ::getInstance
+        )
+    }
+
+    private fun createToolchainConfigurable(): Configurable {
+        return SimpleConfigurable.create(
+            TOOLCHAIN_ID,
+            "Rust",
+            RsDebuggerToolchainConfigurableUi::class.java,
+            ::getInstance
+        )
+    }
+
+    override fun isTargetedToProduct(configurable: Configurable): Boolean {
+        if (configurable !is SearchableConfigurable) return false
+        return when (configurable.id) {
+            TOOLCHAIN_ID -> needToShowToolchainSettings
+            DATA_VIEW_ID -> true
+            else -> false
         }
     }
 
-    override fun isTargetedToProduct(configurable: Configurable): Boolean =
-        PlatformUtils.isCLion() && configurable.displayName == RsDebuggerSettingsConfigurable.DISPLAY_NAME
+    private val needToShowToolchainSettings: Boolean
+        get() {
+            // BACKCOMPAT: 2019.3
+            return !PlatformUtils.isCLion() &&
+                ApplicationInfo.getInstance().build >= BUILD_201 &&
+                (SystemInfo.isLinux || SystemInfo.isMac)
+        }
 
     companion object {
         @JvmStatic
         fun getInstance(): RsDebuggerSettings = getInstance(RsDebuggerSettings::class.java)
+
+        const val TOOLCHAIN_ID: String = "Debugger.Rust.Toolchain"
+        const val DATA_VIEW_ID: String = "Debugger.Rust.DataView"
+
+        private val BUILD_201: BuildNumber = BuildNumber.fromString("201")!!
     }
 }

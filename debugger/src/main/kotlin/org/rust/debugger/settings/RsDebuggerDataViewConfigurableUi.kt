@@ -5,22 +5,15 @@
 
 package org.rust.debugger.settings
 
-import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.ui.components.Label
-import com.intellij.ui.layout.Cell
-import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
-import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
+import com.intellij.util.PlatformUtils
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import javax.swing.JComponent
-import javax.swing.JLabel
 
-class RsDebuggerSettingsConfigurable(
-    private val settings: RsDebuggerSettings
-) : SearchableConfigurable {
+class RsDebuggerDataViewConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
 
     private val lldbRenderers = ComboBox<LLDBRenderers>().apply {
         LLDBRenderers.values().forEach { addItem(it) }
@@ -30,29 +23,25 @@ class RsDebuggerSettingsConfigurable(
         GDBRenderers.values().forEach { addItem(it) }
     }
 
-    override fun getId(): String = "Debugger.Rust"
-    override fun getDisplayName(): String = DISPLAY_NAME
-
-    override fun createComponent(): JComponent = panel {
-        row("LLDB renderers:") { lldbRenderers() }
-        row("GDB renderers:") { gdbRenderers() }
-        row { smallLabelWithGap("Changing these options will affect next debug session") }
-    }
-
-    override fun isModified(): Boolean =
+    override fun isModified(settings: RsDebuggerSettings): Boolean =
         lldbRenderers.selectedIndex != settings.lldbRenderers.ordinal || gdbRenderers.selectedIndex != settings.gdbRenderers.ordinal
 
-    override fun apply() {
+    override fun apply(settings: RsDebuggerSettings) {
         settings.lldbRenderers = LLDBRenderers.fromIndex(lldbRenderers.selectedIndex)
         settings.gdbRenderers = GDBRenderers.fromIndex(gdbRenderers.selectedIndex)
     }
 
-    override fun reset() {
+    override fun reset(settings: RsDebuggerSettings) {
         lldbRenderers.selectedIndex = settings.lldbRenderers.ordinal
         gdbRenderers.selectedIndex = settings.gdbRenderers.ordinal
     }
 
-    companion object {
-        const val DISPLAY_NAME: String = "Rust"
+    override fun getComponent(): JComponent = panel {
+        row("LLDB renderers:") { lldbRenderers() }
+        // GDB support is available only in CLion for now
+        if (PlatformUtils.isCLion()) {
+            row("GDB renderers:") { gdbRenderers() }
+        }
+        row { smallLabelWithGap("Changing these options will affect next debug session") }
     }
 }
