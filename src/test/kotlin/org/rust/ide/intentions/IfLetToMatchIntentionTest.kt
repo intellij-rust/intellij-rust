@@ -636,4 +636,50 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
             }
         }
     """)
+
+    fun `test irrefutable pattern`() = doAvailableTest("""
+        struct Id(u32);
+        struct S { a: Id, b: u32 }
+        fn foo(s: S) {
+            if let S { a: Id(ref name), .. } = s/*caret*/ {
+                let _x = name;
+            }
+        }
+    """, """
+        struct Id(u32);
+        struct S { a: Id, b: u32 }
+        fn foo(s: S) {
+            match s {
+                S { a: Id(ref name), .. } => {
+                    let _x = name;
+                }
+            }
+        }
+    """)
+
+    fun `test irrefutable pattern with else`() = doAvailableTest("""
+        struct Id(u32);
+        struct S { a: Id, b: u32 }
+        fn foo(s: S) {
+            if let S { a: Id(ref name), .. } = s/*caret*/ {
+                let _x = name;
+            }
+            else {
+                let _y = 0;
+            }
+        }
+    """, """
+        struct Id(u32);
+        struct S { a: Id, b: u32 }
+        fn foo(s: S) {
+            match s {
+                S { a: Id(ref name), .. } => {
+                    let _x = name;
+                }
+                _ => {
+                    let _y = 0;
+                }
+            }
+        }
+    """)
 }
