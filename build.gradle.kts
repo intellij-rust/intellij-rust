@@ -188,9 +188,12 @@ project(":plugin") {
             psiViewerPlugin
         )
         if (baseIDE == "idea") {
-            plugins += "copyright"
-            plugins += "coverage"
-            plugins += "java"
+            plugins += listOf(
+                "copyright",
+                "coverage",
+                "java",
+                nativeDebugPlugin
+            )
         }
         setPlugins(*plugins.toTypedArray())
     }
