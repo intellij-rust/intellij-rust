@@ -71,6 +71,45 @@ abstract class RsInlayTypeHintsProviderTestBase : RsTestBase() {
         }
     """)
 
+    fun `test type placeholder`() = checkByText("""
+        fn main() {
+            let a: _/*hint text="[:  i32]"*/ = 42;
+        }
+    """)
+
+    fun `test type generic parameter placeholder`() = checkByText("""
+        struct S<T>{ x: T }
+
+        fn main() {
+            let a: S<_/*hint text="[:  [& str]]"*/> = S { x: "foo" };
+        }
+    """)
+
+    fun `test type inner generic parameter placeholder`() = checkByText("""
+        struct S<T>{ x: T }
+        struct F<U, E> { y: U, z: E }
+
+        fn main() {
+            let a: S<F<i32, _/*hint text="[:  f64]"*/>> = S { x: F { z: 4.2 } };
+        }
+    """)
+
+    fun `test type generic tuple destructuring placeholder`() = checkByText("""
+        struct S<T> (T, T);
+
+        fn main() {
+            let (xs, ys): (S<_/*hint text="[:  i32]"*/>, S<_/*hint text="[:  bool]"*/>) = (S(1, 2), S(true, false));
+        }
+    """)
+
+    fun `test type generic struct destructuring placeholder`() = checkByText("""
+        struct F<T> { x: T, y: T }
+
+        fn main() {
+            let F { x, y }: F<_/*hint text="[:  f64]"*/> = F { x: 1.0, y: 2.0 };
+        }
+    """)
+
 
     fun `test smart should not annotate tuples`() = checkByText("""
         enum Option<T> {
