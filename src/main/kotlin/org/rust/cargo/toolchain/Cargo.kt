@@ -18,6 +18,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isDispatchThread
@@ -360,7 +361,10 @@ class Cargo(private val cargoExecutable: Path) {
             }
             environmentVariables.configureCommandLine(cmdLine, true)
             return if (emulateTerminal) {
-                PtyCommandLine(cmdLine).withConsoleMode(false)
+                if (!SystemInfo.isWindows) {
+                    cmdLine.environment["TERM"] = "xterm-256color"
+                }
+                PtyCommandLine(cmdLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
             } else {
                 cmdLine
             }
