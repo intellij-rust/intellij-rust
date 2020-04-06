@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
@@ -26,6 +27,7 @@ import org.rust.debugger.RsDebuggerToolchainService.BinaryInfo.Companion.LLDB_FR
 import org.rust.debugger.RsDebuggerToolchainService.BinaryInfo.Companion.LLDB_FRONTEND
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.openapiext.plugin
+import org.rust.stdext.toPath
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -204,7 +206,10 @@ class RsDebuggerToolchainService {
         const val RUST_DEBUGGER_GROUP_ID = "Rust Debugger"
 
         private fun downloadPath(): String = PathManager.getTempPath()
-        private fun lldbPath(): String = plugin().pluginPath.resolve("lldb").toString()
+        private fun lldbPath(): String {
+            val basePath = if (isUnitTestMode) PathManager.getTempPath().toPath() else plugin().pluginPath
+            return basePath.resolve("lldb").toString()
+        }
 
         fun getInstance(): RsDebuggerToolchainService = service()
     }
