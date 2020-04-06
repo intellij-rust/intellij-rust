@@ -36,9 +36,6 @@ val baseVersion = when (baseIDE) {
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
-val isAtLeast201 = platformVersion >= 201
-
-val intelliLangPlugin = if (isAtLeast201) "platform-langInjection" else "IntelliLang"
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
@@ -186,7 +183,7 @@ project(":plugin") {
         pluginName = "intellij-rust"
         val plugins = mutableListOf(
             project(":intellij-toml"),
-            intelliLangPlugin,
+            "IntelliLang",
             graziePlugin,
             psiViewerPlugin
         )
@@ -375,7 +372,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        setPlugins(intelliLangPlugin)
+        setPlugins("IntelliLang")
     }
     dependencies {
         implementation(project(":"))

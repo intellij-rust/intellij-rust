@@ -101,6 +101,8 @@ const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
 fun getBaseMacroDir(): Path =
     Paths.get(PathManager.getSystemPath()).resolve("intellij-rust").resolve("macros")
 
+// BACKCOMPAT: 2019.3
+@Suppress("DEPRECATION")
 @State(name = "MacroExpansionManager", storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE),
     Storage("misc.xml", deprecated = true)

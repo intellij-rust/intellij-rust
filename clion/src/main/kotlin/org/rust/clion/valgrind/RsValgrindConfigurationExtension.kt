@@ -168,6 +168,8 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
             override fun processTerminated(event: ProcessEvent) {
                 application.invokeLater({
                     tree.setPaintBusy(false)
+                    // BACKCOMPAT: 2019.3
+                    @Suppress("DEPRECATION")
                     tree.emptyText.text = StatusText.DEFAULT_EMPTY_TEXT
                     outputPanel.setExportContent(accumulator.toString())
                 }, expiredCondition)

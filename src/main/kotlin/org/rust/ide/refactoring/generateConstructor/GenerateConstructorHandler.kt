@@ -140,7 +140,7 @@ data class ConstructorArgument(
 
         private fun fromTupleList(tupleFieldList: List<RsTupleFieldDecl>, substitution: Substitution): List<ConstructorArgument> {
             return tupleFieldList.mapIndexed { index, tupleField ->
-                val typeName = tupleField.typeReference.substAndGetText(substitution) ?: "()"
+                val typeName = tupleField.typeReference.substAndGetText(substitution)
                 ConstructorArgument("field$index", "()", typeName)
             }
         }

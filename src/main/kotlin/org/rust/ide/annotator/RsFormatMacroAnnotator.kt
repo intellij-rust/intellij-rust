@@ -47,6 +47,8 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         fun AnnotationHolder.highlightArgument(range: IntRange?, color: RsColor = RsColor.IDENTIFIER) {
             if (range != null && !range.isEmpty()) {
+                // BACKCOMPAT: 2019.3
+                @Suppress("DEPRECATION")
                 createAnnotation(
                     HighlightSeverity.INFORMATION,
                     range.toSourceRange(),
@@ -60,10 +62,14 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
         for (arg in arguments) {
             currentOffset = 0
             val textRange = arg.range.toSourceRange()
+            // BACKCOMPAT: 2019.3
+            @Suppress("DEPRECATION")
             holder.createAnnotation(highlightSeverity, textRange, null)
                 .textAttributes = key.textAttributesKey
 
             if (arg.groups[3] != null) {
+                // BACKCOMPAT: 2019.3
+                @Suppress("DEPRECATION")
                 holder.createErrorAnnotation(
                     arg.range.toSourceRange(),
                     "Invalid format string: unmatched '}'"
@@ -78,6 +84,8 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
                 if (!arg.groups[1]!!.value.endsWith("}")) {
                     val possibleEnd = matchResult.value.length - 1
+                    // BACKCOMPAT: 2019.3
+                    @Suppress("DEPRECATION")
                     holder.createErrorAnnotation(
                         (possibleEnd..possibleEnd).toSourceRange(),
                         "Invalid format string: } expected.\nIf you intended to print `{` symbol, you can escape it using `{{`"
@@ -87,6 +95,8 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
                 val validParsedEnd = matchResult.range.last + 1
                 if (validParsedEnd != inside.value.length) {
+                    // BACKCOMPAT: 2019.3
+                    @Suppress("DEPRECATION")
                     holder.createErrorAnnotation(
                         (validParsedEnd until inside.value.length).toSourceRange(),
                         "Invalid format string"

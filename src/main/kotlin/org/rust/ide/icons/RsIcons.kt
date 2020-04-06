@@ -18,6 +18,8 @@ import javax.swing.Icon
  * The order of properties matters in this class. When conflating an icon from simple elements,
  * make sure that all those elements are declared above to the icon.
  */
+// BACKCOMPAT: 2019.3
+@Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
 object RsIcons {
     // Logos
 

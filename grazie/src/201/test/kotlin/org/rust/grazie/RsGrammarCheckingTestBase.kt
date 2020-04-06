@@ -15,11 +15,6 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 // BACKCOMPAT: 2019.3. Inline
 abstract class RsGrammarCheckingTestBase : RsInspectionsTestBase(GrazieInspection::class) {
 
-    // TODO: enable this tests after issue with resources will be fixed
-    override fun shouldRunTest(): Boolean {
-        return false
-    }
-
     override fun setUp() {
         super.setUp()
         val strategy = LanguageGrammarChecking.getStrategies().first { it is RsGrammarCheckingStrategy }

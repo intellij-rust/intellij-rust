@@ -261,7 +261,10 @@ open class CargoProjectsServiceImpl(
         // instead of `modifyProjects` for this reason
         projects.updateSync { _ -> loaded }
             .whenComplete { _, _ ->
-                invokeLater { refreshAllProjects() }
+                invokeLater {
+                    if (project.isDisposed) return@invokeLater
+                    refreshAllProjects()
+                }
             }
     }
 
