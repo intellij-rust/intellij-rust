@@ -682,4 +682,40 @@ class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
             }
         }
     """)
+
+    fun `test irrefutable single variant enum`() = doAvailableTest("""
+        enum V { V1 }
+        fn foo(v: V) {
+            if let V::V1 = v/*caret*/ {
+                println!("hello");
+            }
+        }
+    """, """
+        enum V { V1 }
+        fn foo(v: V) {
+            match v {
+                V::V1 => {
+                    println!("hello");
+                }
+            }
+        }
+    """)
+
+    fun `test irrefutable struct`() = doAvailableTest("""
+        struct S;
+        fn foo(s: S) {
+            if let S = s/*caret*/ {
+                println!("hello");
+            }
+        }
+    """, """
+        struct S;
+        fn foo(s: S) {
+            match s {
+                S => {
+                    println!("hello");
+                }
+            }
+        }
+    """)
 }
