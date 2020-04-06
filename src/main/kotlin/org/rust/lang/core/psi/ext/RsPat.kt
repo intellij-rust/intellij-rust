@@ -26,7 +26,9 @@ val RsPat.isIrrefutable: Boolean
             pat.path.isIrrefutable && pat.patList.all { it.isIrrefutable }
         is RsPatIdent ->
             pat.patBinding.isIrrefutable
-        is RsPatConst, is RsPatRange ->
+        is RsPatConst ->
+            (pat.expr as? RsPathExpr)?.path?.isIrrefutable ?: false
+        is RsPatRange ->
             false
         else ->
             true
