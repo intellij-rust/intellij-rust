@@ -111,6 +111,9 @@ object RsImportHelper {
                     is TyAdt -> {
                         val alias = ty.aliasedBy?.element.takeIf { useAliases } as? RsQualifiedNamedElement
                         result += alias ?: ty.item
+                        if (alias != null) {
+                            return true
+                        }
                     }
                     is TyAnon -> result += ty.traits.map { it.element }
                     is TyTraitObject -> result += ty.trait.element

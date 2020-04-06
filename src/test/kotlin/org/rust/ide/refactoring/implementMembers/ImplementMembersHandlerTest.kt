@@ -151,6 +151,40 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test don't import type alias inner type`() = doTest("""
+        use a::T;
+        mod a {
+            pub struct A;
+            pub struct B;
+            pub struct R<T1, T2>(T1, T2);
+            pub type U<P> = R<P, B>;
+            pub trait T<P> {
+                fn f() -> U<P>;
+            }
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("f() -> U<P>", true, true)
+    ), """
+        use a::{T, U};
+        mod a {
+            pub struct A;
+            pub struct B;
+            pub struct R<T1, T2>(T1, T2);
+            pub type U<P> = R<P, B>;
+            pub trait T<P> {
+                fn f() -> U<P>;
+            }
+        }
+        struct S;
+        impl T for S {
+            fn f() -> U<P> {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
     fun `test support type aliases`() = doTest("""
         pub struct R;
         pub type U = R;
