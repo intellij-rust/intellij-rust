@@ -5,11 +5,9 @@
 
 package org.rust.debugger.settings
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.SimpleConfigurable
-import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.XmlSerializerUtil
@@ -49,13 +47,8 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
         )
     }
 
-    private fun createToolchainConfigurable(): Configurable {
-        return SimpleConfigurable.create(
-            TOOLCHAIN_ID,
-            "Rust",
-            RsDebuggerToolchainConfigurableUi::class.java,
-            ::getInstance
-        )
+    private fun createToolchainConfigurable(): Configurable? {
+        return createDebuggerToolchainConfigurable()
     }
 
     override fun isTargetedToProduct(configurable: Configurable): Boolean {
@@ -69,10 +62,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     private val needToShowToolchainSettings: Boolean
         get() {
-            // BACKCOMPAT: 2019.3
-            return !PlatformUtils.isCLion() &&
-                ApplicationInfo.getInstance().build >= BUILD_201 &&
-                (SystemInfo.isLinux || SystemInfo.isMac)
+            return !PlatformUtils.isCLion() && (SystemInfo.isLinux || SystemInfo.isMac)
         }
 
     companion object {
@@ -81,7 +71,5 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
         const val TOOLCHAIN_ID: String = "Debugger.Rust.Toolchain"
         const val DATA_VIEW_ID: String = "Debugger.Rust.DataView"
-
-        private val BUILD_201: BuildNumber = BuildNumber.fromString("201")!!
     }
 }

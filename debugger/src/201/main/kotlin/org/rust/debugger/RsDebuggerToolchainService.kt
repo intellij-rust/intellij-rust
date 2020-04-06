@@ -33,8 +33,8 @@ import java.util.*
 
 class RsDebuggerToolchainService {
 
-    fun getLLDBStatus(): LLDBStatus {
-        val lldbDirPath = RsDebuggerSettings.getInstance().lldbPath ?: return LLDBStatus.NeedToDownload
+    fun getLLDBStatus(lldbPath: String? = RsDebuggerSettings.getInstance().lldbPath): LLDBStatus {
+        if (lldbPath.isNullOrEmpty()) return LLDBStatus.NeedToDownload
 
         val (frameworkPath, frontendPath) = when {
             SystemInfo.isMac -> "LLDB.framework" to "LLDBFrontend"
@@ -46,8 +46,8 @@ class RsDebuggerToolchainService {
             else -> return LLDBStatus.Unavailable
         }
 
-        val frameworkFile = File(FileUtil.join(lldbDirPath, LLDB_FRAMEWORK.dirName, frameworkPath))
-        val frontendFile = File(FileUtil.join(lldbDirPath, LLDB_FRONTEND.dirName, frontendPath))
+        val frameworkFile = File(FileUtil.join(lldbPath, LLDB_FRAMEWORK.dirName, frameworkPath))
+        val frontendFile = File(FileUtil.join(lldbPath, LLDB_FRONTEND.dirName, frontendPath))
         if (!frameworkFile.exists() || !frontendFile.exists()) return LLDBStatus.NeedToDownload
 
         val versions = loadLLDBVersions()

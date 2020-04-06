@@ -10,10 +10,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.panel
-import com.intellij.util.ui.UIUtil
-import org.rust.debugger.downloadDebugger
+import org.rust.debugger.RsDebuggerToolchainService
+import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import org.rust.openapiext.pathToDirectoryTextField
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
 
@@ -21,12 +22,12 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
         ApplicationManager.getApplication().invokeLater(::update)
     }
 
-    private val downloadLink = Link("Download", style = UIUtil.ComponentStyle.SMALL) {
-        downloadDebugger(
+    private val downloadLink: JLabel = Link("Download") {
+        RsDebuggerToolchainService.getInstance().downloadDebugger(
             onSuccess = { lldbPathField.text = it.absolutePath },
             onFailure = {}
         )
-    }
+    } as JLabel
 
     private val lldbPathField = pathToDirectoryTextField(
         this,
@@ -59,6 +60,15 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
     override fun dispose() {}
 
     private fun update() {
-        downloadLink.isVisible = lldbPathField.text.isEmpty()
+        @Suppress("MoveVariableDeclarationIntoWhen")
+        val status = RsDebuggerToolchainService.getInstance().getLLDBStatus(lldbPathField.text)
+        val (text, isVisible) = when (status) {
+            LLDBStatus.Unavailable -> error("Unreachable")
+            LLDBStatus.NeedToDownload -> "Download" to true
+            LLDBStatus.NeedToUpdate -> "Update" to true
+            is LLDBStatus.Binaries -> "" to false
+        }
+        downloadLink.text = text
+        downloadLink.isVisible = isVisible
     }
 }
