@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.3. Use `FileTypeStatisticProvider` instead
+@file:Suppress("DEPRECATION")
+
 package org.rust.ide.update
 
 import com.intellij.ide.util.PropertiesComponent

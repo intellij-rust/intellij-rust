@@ -132,6 +132,8 @@ class CargoToolWindow(
                 if (window != null) return
                 for (bean in ToolWindowEP.EP_NAME.extensionList) {
                     if (ID == bean.id) {
+                        // BACKCOMPAT: 2019.3
+                        @Suppress("DEPRECATION")
                         manager.initToolWindow(bean)
                     }
                 }

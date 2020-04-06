@@ -7,8 +7,8 @@ package org.rust.ide.refactoring.introduceParameter
 import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.ide.refactoring.MOCK
@@ -40,7 +40,7 @@ fun showEnclosingFunctionsChooser(editor: Editor,
         .setItemChosenCallback { method ->
             callback(method)
         }
-        .addListener(object : JBPopupAdapter() {
+        .addListener(object : JBPopupListener {
             override fun onClosed(event: LightweightWindowEvent) {
                 highlighter.getAndSet(null).dropHighlight()
             }

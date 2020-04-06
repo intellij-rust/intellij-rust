@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+// BACKCOMPAT: 2019.3
+@file:Suppress("DEPRECATION")
+
 package org.rust.cargo
 
 import com.intellij.AppTopics

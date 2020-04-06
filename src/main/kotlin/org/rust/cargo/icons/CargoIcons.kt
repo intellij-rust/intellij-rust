@@ -8,6 +8,8 @@ package org.rust.cargo.icons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 
+// BACKCOMPAT: 2019.3
+@Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
 object CargoIcons {
     val ICON = IconLoader.getIcon("/icons/cargo.png")
     val LOCK_ICON = IconLoader.getIcon("/icons/cargo-lock.png")

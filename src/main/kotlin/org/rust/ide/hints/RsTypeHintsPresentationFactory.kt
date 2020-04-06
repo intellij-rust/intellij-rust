@@ -21,6 +21,8 @@ import org.rust.lang.core.types.type
 
 class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, private val showObviousTypes: Boolean) {
 
+    // BACKCOMPAT: 2019.3
+    @Suppress("DEPRECATION")
     fun typeHint(type: Ty): InlayPresentation = factory.roundWithBackground(
         listOf(text(": "), hint(type, 1)).join()
     )
