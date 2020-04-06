@@ -227,7 +227,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.41.0-nightly")
+    @MinRustcVersion("1.41.0")
     fun `test include with build script info`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """
@@ -250,7 +250,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/lib.rs")
     }
 
-    @MinRustcVersion("1.41.0-nightly")
+    @MinRustcVersion("1.41.0")
     fun `test do not run build-plan if build script info is enough`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             Cargo.Testmarks.fetchBuildPlan.checkNotHit {
