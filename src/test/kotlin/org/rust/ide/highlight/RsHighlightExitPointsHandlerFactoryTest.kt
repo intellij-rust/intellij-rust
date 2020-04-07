@@ -272,6 +272,37 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """)
 
+    fun `test loop as return on exit break`() = doTest("""
+        fn main() -> i32 {
+            let a = loop { break 0; };
+            return 1;
+            'outer: loop {
+                break/*caret*/ 2;
+                return 3;
+                loop {
+                    break 5;
+                    break 'outer 4;
+                }
+                6
+            }
+        }
+    """, "return 1", "break 2", "return 3", "break 'outer 4")
+
+    fun `test loop as return on not exit break`() = doTest("""
+        fn main() -> i32 {
+            return 1;
+            'outer: loop {
+                break 2;
+                return 3;
+                loop {
+                    break/*caret*/ 5;
+                    break 'outer 4;
+                }
+                6
+            }
+        }
+    """)
+
     private fun doTest(@Language("Rust") check: String, vararg usages: String) {
         InlineFile(check)
         HighlightUsagesHandler.invoke(myFixture.project, myFixture.editor, myFixture.file)

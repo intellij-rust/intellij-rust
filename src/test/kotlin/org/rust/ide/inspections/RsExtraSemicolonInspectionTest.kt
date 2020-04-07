@@ -40,6 +40,13 @@ class RsExtraSemicolonInspectionTest : RsInspectionsTestBase(RsExtraSemicolonIns
         }
     """)
 
+    fun `test not applicable in loop`() = checkByText("""
+        fn test() {}
+        fn a() -> i32 {
+            loop { test(); }
+        }
+    """)
+
     fun `test fix`() = checkFixByText("Remove semicolon", """
         fn foo() -> i32 {
             let x = 92;
