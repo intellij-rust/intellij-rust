@@ -8,6 +8,8 @@
 package org.rust.lang.core.resolve.ref
 
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -43,7 +45,8 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * See [RsPsiManager.rustStructureModificationTracker].
  */
-class RsResolveCache(messageBus: MessageBus) {
+@Service
+class RsResolveCache(project: Project): Disposable {
     /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
     private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
@@ -61,7 +64,7 @@ class RsResolveCache(messageBus: MessageBus) {
         get() = _macroCache.getOrCreateMap()
 
     init {
-        val connection = messageBus.connect()
+        val connection = project.messageBus.connect(this)
         connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
             override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) =
                 onRustStructureChanged(file)
@@ -78,6 +81,8 @@ class RsResolveCache(messageBus: MessageBus) {
                 onRustPsiChanged(element)
         })
     }
+
+    override fun dispose() {}
 
     /**
      * Retrieve a cached value by [key] or compute a new value by [resolver].
