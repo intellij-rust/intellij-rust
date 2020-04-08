@@ -7,7 +7,11 @@ package org.rust.ide.icons
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.LayeredIcon
+import com.intellij.util.IconUtil
+import java.awt.Color
+import java.awt.image.RGBImageFilter
 import javax.swing.Icon
 
 /**
@@ -33,6 +37,11 @@ object RsIcons {
     val STATIC_MARK = AllIcons.Nodes.StaticMark
     val TEST_MARK = AllIcons.Nodes.JunitTestMark
     val DOCS_MARK = IconLoader.getIcon("/icons/docsrs.svg")
+    val FEATURE_CHECKED_MARK = AllIcons.Diff.GutterCheckBoxSelected
+    val FEATURE_UNCHECKED_MARK = AllIcons.Diff.GutterCheckBox
+    val FEATURE_CHECKED_MARK_GRAYED = FEATURE_CHECKED_MARK.grayed()
+    val FEATURE_UNCHECKED_MARK_GRAYED = FEATURE_UNCHECKED_MARK.grayed()
+    val FEATURES_SETTINGS = AllIcons.General.Settings
 
     // Source code elements
 
@@ -100,3 +109,13 @@ fun Icon.multiple(): Icon {
     compoundIcon.setIcon(this, 1, 0, 0)
     return compoundIcon
 }
+
+fun Icon.grayed(): Icon =
+    IconUtil.filterIcon(this, {
+        object : RGBImageFilter() {
+            override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+                val color = Color(rgb, true)
+                return ColorUtil.toAlpha(color, (color.alpha / 2.2).toInt()).rgb
+            }
+        }
+    }, null)
