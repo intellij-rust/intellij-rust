@@ -3,15 +3,12 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.3
-@file:Suppress("DEPRECATION")
-
 package org.rust.cargo
 
-import com.intellij.AppTopics
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseComponent
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.guessProjectForFile
@@ -28,16 +25,10 @@ import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.checkIsDispatchThread
 import org.rust.openapiext.virtualFile
 
-class RustfmtWatcher : BaseComponent {
+@Service
+class RustfmtWatcher {
     private val documentsToReformatLater: MutableSet<Document> = ContainerUtil.newConcurrentSet()
     private var isSuppressed: Boolean = false
-
-    override fun initComponent() {
-        ApplicationManager.getApplication()
-            .messageBus
-            .connect()
-            .subscribe(AppTopics.FILE_DOCUMENT_SYNC, RustfmtListener())
-    }
 
     fun withoutReformatting(action: () -> Unit) {
         val oldStatus = isSuppressed
@@ -57,29 +48,33 @@ class RustfmtWatcher : BaseComponent {
         return documentsToReformatLater.add(document)
     }
 
-    private inner class RustfmtListener : FileDocumentManagerListener {
+    private class RustfmtListener : FileDocumentManagerListener {
 
         override fun beforeAllDocumentsSaving() {
-            val documentsToReformat = HashSet(documentsToReformatLater)
+            val documentsToReformatLater = getInstanceIfCreated()?.documentsToReformatLater
+                ?: return
+            val documentsToReformat = documentsToReformatLater.toList()
             documentsToReformatLater.clear()
             documentsToReformat.groupBy(::findCargoProject).forEach(::reformatDocuments)
         }
 
         override fun beforeDocumentSaving(document: Document) {
+            val isSuppressed = getInstanceIfCreated()?.isSuppressed == true
             if (!isSuppressed) {
                 reformatDocuments(findCargoProject(document), listOf(document))
             }
         }
 
         override fun unsavedDocumentsDropped() {
-            documentsToReformatLater.clear()
+            getInstanceIfCreated()?.documentsToReformatLater?.clear()
         }
     }
 
     companion object {
 
-        fun getInstance(): RustfmtWatcher =
-            ApplicationManager.getApplication().getComponent(RustfmtWatcher::class.java)
+        fun getInstance(): RustfmtWatcher = service()
+
+        private fun getInstanceIfCreated(): RustfmtWatcher? = serviceIfCreated()
 
         private fun findCargoProject(document: Document): CargoProject? {
             val file = document.virtualFile ?: return null

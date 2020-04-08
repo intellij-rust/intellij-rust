@@ -894,6 +894,10 @@
         <consoleHistoryModelProvider implementation="org.rust.ide.console.RsConsoleHistoryModelProvider"/>
         <scratch.rootType implementation="org.rust.ide.console.RsConsoleRootType"/>
 
+        <!-- Listeners -->
+
+        <fileDocumentManagerListener implementation="org.rust.cargo.RustfmtWatcher$RustfmtListener"/>
+
         <!-- Registry keys -->
 
         <registryKey key="org.rust.lang.type.alias.threshold" defaultValue="10" restartRequired="false"
@@ -911,9 +915,6 @@
     <application-components>
         <component>
             <implementation-class>org.rust.ide.update.UpdateComponent</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.rust.cargo.RustfmtWatcher</implementation-class>
         </component>
         <component>
             <implementation-class>org.rust.ide.todo.RsTodoApplicationComponent</implementation-class>
