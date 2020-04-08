@@ -9,6 +9,9 @@ import org.rust.cargo.CfgOptions
 
 typealias PackageId = String
 
+/** Refers to [org.rust.cargo.project.workspace.PackageImpl.rootDirectory] */
+typealias PackageRoot = String
+
 /**
  * A POD-style representation of [CargoWorkspace] used as an intermediate representation
  * between `cargo metadata` JSON and [CargoWorkspace] object graph.
@@ -30,7 +33,8 @@ data class CargoWorkspaceData(
         val source: String?,
         val origin: PackageOrigin,
         val edition: CargoWorkspace.Edition,
-        val features: Collection<CargoWorkspace.Feature>,
+        val features: Map<String, List<String>>,
+        val defaultFeatures: Set<String>,
         val cfgOptions: CfgOptions,
         val env: Map<String, String>,
         val outDirUrl: String?

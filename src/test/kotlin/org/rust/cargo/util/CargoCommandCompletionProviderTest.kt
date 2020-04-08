@@ -123,7 +123,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             source = null,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition,
-            features = emptyList(),
+            features = emptyMap(),
+            defaultFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
             outDirUrl = null

@@ -310,17 +310,13 @@ object CargoMetadata {
                 if (resolveNode == null) {
                     LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
                 }
-
-                val enabledFeatures = resolveNode?.features?.toSet().orEmpty()
-                val features = pkg.features.keys.map { feature ->
-                    val state = when {
-                        enabledFeatures.contains(feature) -> CargoWorkspace.FeatureState.Enabled
-                        else -> CargoWorkspace.FeatureState.Disabled
-                    }
-                    CargoWorkspace.Feature(feature, state)
-                }
+                //TODO: Maybe run `cargo metadata --no-default-features`?
+                // E.g. not to enable `dep/foo` feature when `foo` is disabled:
+                // - [ ] foo = ["dep/foo"]
+                // Currently, `dep/foo` will be improperly enabled because `foo` is Cargo-enabled by default
+                val defaultFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
                 val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
-                pkg.clean(fs, pkg.id in members, variables, features, buildScriptMessage)
+                pkg.clean(fs, pkg.id in members, variables, pkg.features, defaultFeatures, buildScriptMessage)
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
@@ -342,7 +338,8 @@ object CargoMetadata {
         fs: LocalFileSystem,
         isWorkspaceMember: Boolean,
         variables: PackageVariables,
-        features: List<CargoWorkspace.Feature>,
+        features: Map<String, List<String>>,
+        defaultFeatures: Set<String>,
         buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
         val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
@@ -368,6 +365,7 @@ object CargoMetadata {
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition.cleanEdition(),
             features = features,
+            defaultFeatures = defaultFeatures,
             cfgOptions = cfgOptions,
             env = env,
             outDirUrl = outDir?.url
