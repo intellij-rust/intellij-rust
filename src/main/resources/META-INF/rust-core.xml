@@ -178,6 +178,8 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCfgDisabledCodeAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
+        <highlightingPassFactory implementation="org.rust.ide.annotator.RsHighlightingPassFactoryRegistrar"/>
+
         <!-- Line Marker Providers -->
 
         <codeInsight.lineMarkerProvider language="Rust"
@@ -922,9 +924,6 @@
         <component>
             <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
             <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.rust.ide.annotator.RsExternalLinterPassFactory</implementation-class>
         </component>
         <component>
             <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
