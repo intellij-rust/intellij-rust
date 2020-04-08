@@ -124,6 +124,7 @@ class PresentableGraph<N : PresentableNodeData, E> : Graph<N, E>() {
      * Creates graph description written in the DOT language.
      * Usage: copy the output into `cfg.dot` file and run `dot -Tpng cfg.dot -o cfg.png`
      */
+    @Suppress("unused")
     fun createDotDescription(): String =
         buildString {
             append("digraph {\n")

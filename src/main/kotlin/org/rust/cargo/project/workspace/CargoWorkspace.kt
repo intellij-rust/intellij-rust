@@ -7,11 +7,15 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapiext.isInternal
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
+import org.rust.cargo.project.model.impl.UserDisabledFeatures
+import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.cargo.util.StdLibType
@@ -41,13 +45,17 @@ interface CargoWorkspace {
      * obtain workspace members.
      */
     val packages: Collection<Package>
+
+    val featureGraph: FeatureGraph
+
     fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
-    val hasStandardLibrary: Boolean get() = packages.any { it.origin == PackageOrigin.STDLIB }
+    fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace
+    val hasStandardLibrary: Boolean get() = packages.any { it.origin == STDLIB }
 
     @TestOnly
     fun withEdition(edition: Edition): CargoWorkspace
@@ -76,7 +84,7 @@ interface CargoWorkspace {
 
         val cfgOptions: CfgOptions
 
-        val features: Collection<Feature>
+        val features: Set<PackageFeature>
 
         val workspace: CargoWorkspace
 
@@ -85,6 +93,8 @@ interface CargoWorkspace {
         val env: Map<String, String>
 
         val outDir: VirtualFile?
+
+        val featureState: Map<FeatureName, FeatureState>
 
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
@@ -107,12 +117,26 @@ interface CargoWorkspace {
         val edition: Edition
 
         val doctest: Boolean
+
+        /** See [org.rust.cargo.toolchain.impl.CargoMetadata.Target.required_features] */
+        val requiredFeatures: List<String>
     }
 
     interface Dependency {
         val pkg: Package
         val name: String
         val depKinds: List<DepKindInfo>
+
+        /**
+         * Consider Cargo.toml:
+         * ```
+         * [dependencies.foo]
+         * version = "*"
+         * features = ["bar", "baz"]
+         * ```
+         * For dependency `foo`, features `bar` and `baz` are considered "required"
+         */
+        val requiredFeatures: Set<String>
     }
 
     data class DepKindInfo(
@@ -120,17 +144,17 @@ interface CargoWorkspace {
         val target: String? = null
     )
 
-    enum class DepKind {
+    enum class DepKind(val cargoName: String?) {
         // For old Cargo versions prior to `1.41.0`
-        Unclassified,
+        Unclassified(null),
 
-        Stdlib,
+        Stdlib("stdlib?"),
         // [dependencies]
-        Normal,
+        Normal(null),
         // [dev-dependencies]
-        Development,
+        Development("dev"),
         // [build-dependencies]
-        Build
+        Build("build")
     }
 
     sealed class TargetKind(val name: String) {
@@ -162,16 +186,6 @@ interface CargoWorkspace {
         EDITION_2015("2015"), EDITION_2018("2018")
     }
 
-    data class Feature(
-        val name: String,
-        val state: FeatureState
-    )
-
-    enum class FeatureState {
-        Enabled,
-        Disabled
-    }
-
     companion object {
         fun deserialize(manifestPath: Path, data: CargoWorkspaceData, cfgOptions: CfgOptions): CargoWorkspace =
             WorkspaceImpl.deserialize(manifestPath, data, cfgOptions)
@@ -183,7 +197,8 @@ private class WorkspaceImpl(
     override val manifestPath: Path,
     override val workspaceRootPath: Path?,
     packagesData: Collection<CargoWorkspaceData.Package>,
-    override val cfgOptions: CfgOptions
+    override val cfgOptions: CfgOptions,
+    val featuresState: Map<PackageRoot, Map<FeatureName, FeatureState>>
 ) : CargoWorkspace {
     override val packages: List<PackageImpl> = packagesData.map { pkg ->
         PackageImpl(
@@ -198,9 +213,48 @@ private class WorkspaceImpl(
             pkg.edition,
             pkg.cfgOptions,
             pkg.features,
+            pkg.enabledFeatures,
             pkg.env,
             pkg.outDirUrl
         )
+    }
+
+    override val featureGraph: FeatureGraph by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        val wrappedFeatures = hashMapOf<PackageFeature, List<PackageFeature>>()
+
+        for (pkg in packages) {
+            val pkgFeatures = pkg.rawFeatures
+            for (packageFeature in pkg.features) {
+                if (packageFeature in wrappedFeatures) continue
+                val deps = pkgFeatures[packageFeature.name] ?: continue
+
+                val wrappedDeps = deps.flatMap { featureDep ->
+                    when {
+                        featureDep in pkgFeatures -> listOf(PackageFeature(pkg, featureDep))
+                        "/" in featureDep -> {
+                            val (crateName, name) = featureDep.split('/', limit = 2)
+
+                            // Features are linked by a `Package` name, not by dependency name
+                            val dep = pkg.dependencies.find { it.pkg.name == crateName }
+                                ?: return@flatMap emptyList()
+
+                            if (name in dep.pkg.rawFeatures) {
+                                if (dep.isOptional) {
+                                    listOf(PackageFeature(pkg, dep.pkg.name), PackageFeature(dep.pkg, name))
+                                } else {
+                                    listOf(PackageFeature(dep.pkg, name))
+                                }
+                            } else {
+                                emptyList()
+                            }
+                        }
+                        else -> emptyList()
+                    }
+                }
+                wrappedFeatures[packageFeature] = wrappedDeps
+            }
+        }
+        FeatureGraph.buildFor(wrappedFeatures)
     }
 
     val targetByCrateRootUrl = packages.flatMap { it.targets }.associateBy { it.crateRootUrl }
@@ -239,20 +293,21 @@ private class WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
             newPackagesData,
-            cfgOptions
+            cfgOptions,
+            featuresState
         )
 
         run {
             val oldIdToPackage = packages.associateBy { it.id }
             val newIdToPackage = result.packages.associateBy { it.id }
-            val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }
+            val stdlibDependencies = result.packages.filter { it.origin == STDLIB }
                 .map { DependencyImpl(it, depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Stdlib))) }
             newIdToPackage.forEach { (id, pkg) ->
                 val stdCrate = stdAll[id]
                 if (stdCrate == null) {
-                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name, depKinds) ->
-                        val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
-                        DependencyImpl(dependencyPackage, name, depKinds)
+                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { dep ->
+                        val dependencyPackage = newIdToPackage[dep.pkg.id] ?: return@mapNotNull null
+                        dep.withPackage(dependencyPackage)
                     })
                     val explicitDeps = pkg.dependencies.map { it.name }.toSet()
                     pkg.dependencies.addAll(stdlibDependencies.filter { it.name !in explicitDeps && it.pkg.id !in stdInternalDeps })
@@ -273,12 +328,82 @@ private class WorkspaceImpl(
         val otherIdToPackage = other.packages.associateBy { it.id }
         val thisIdToPackage = packages.associateBy { it.id }
         thisIdToPackage.forEach { (id, pkg) ->
-            pkg.dependencies.addAll(otherIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name, depKinds) ->
-                val dependencyPackage = thisIdToPackage[pkg.id] ?: return@mapNotNull null
-                DependencyImpl(dependencyPackage, name, depKinds)
+            pkg.dependencies.addAll(otherIdToPackage[id]?.dependencies.orEmpty().mapNotNull { dep ->
+                val dependencyPackage = thisIdToPackage[dep.pkg.id] ?: return@mapNotNull null
+                dep.withPackage(dependencyPackage)
             })
         }
         return this
+    }
+
+    override fun withDisabledFeatures(userDisabledFeatures: UserDisabledFeatures): CargoWorkspace {
+        checkFeaturesInference()
+        val featuresState = inferFeatureState(userDisabledFeatures).associateByPackageRoot()
+
+        return WorkspaceImpl(
+            manifestPath,
+            workspaceRootPath,
+            packages.map { it.asPackageData() },
+            cfgOptions,
+            featuresState
+        ).withDependenciesOf(this)
+    }
+
+    /**
+     * Infers a state of each Cargo feature of each package in the workspace (including dependencies!).
+     *
+     * Initial state: all [DEPENDENCY] packages features are disabled, all [WORKSPACE] packages features are enabled,
+     * excluding [userDisabledFeatures] features.
+     * Then we enable [DEPENDENCY] packages features transitively based on the initial state and features dependencies
+     */
+    private fun inferFeatureState(userDisabledFeatures: UserDisabledFeatures): Map<PackageFeature, FeatureState> {
+        // Calculate features that should be enabled in the workspace, all by default (if `userDisabledFeatures` is empty)
+        val workspaceFeatureState = featureGraph.apply(defaultState = FeatureState.Enabled) {
+            disableAll(userDisabledFeatures.getDisabledFeatures(packages))
+        }
+
+        return featureGraph.apply(defaultState = FeatureState.Disabled) {
+            for (pkg in packages) {
+                // Enable remained workspace features (transitively)
+                if (pkg.origin == WORKSPACE || pkg.origin == STDLIB) {
+                    for (feature in pkg.features) {
+                        if (workspaceFeatureState[feature] == FeatureState.Enabled) {
+                            enable(feature)
+                        }
+                    }
+                }
+
+                // Also, enable features specified in dependencies configuration. Consider `Cargo.toml`:
+                // ```
+                // [dependency]
+                // foo = { version = "*", feature = ["bar", "baz"] }
+                //                                 #^ enable these features
+                // ```
+                // Here features `bar` and `baz` in package `foo` should be enabled, but only if the
+                // package `foo` is not a workspace member. Otherwise its features are controlled by
+                // a user (and enabled by default)
+                for (dependency in pkg.dependencies) {
+                    if (dependency.pkg.origin == WORKSPACE || dependency.pkg.origin == STDLIB) continue
+                    if (dependency.areDefaultFeaturesEnabled) {
+                        enable(PackageFeature(dependency.pkg, "default"))
+                    }
+                    enableAll(dependency.requiredFeatures.map { PackageFeature(dependency.pkg, it) })
+                }
+            }
+        }
+    }
+
+    /** A kind of test for [inferFeatureState]: check that our features inference works the same way as Cargo's */
+    private fun checkFeaturesInference() {
+        if (!isUnitTestMode && !isInternal) return
+        val enabledByCargo = packages.flatMap { pkg ->
+            pkg.cargoEnabledFeatures.map { PackageFeature(pkg, it) }
+        }
+        for ((feature, state) in inferFeatureState(UserDisabledFeatures.EMPTY)) {
+            if (feature in enabledByCargo != state.isEnabled) {
+                error("Feature ${feature.name} in package ${feature.pkg.name} should be ${!state}, but it is $state")
+            }
+        }
     }
 
     @TestOnly
@@ -287,10 +412,11 @@ private class WorkspaceImpl(
         workspaceRootPath,
         packages.map { pkg ->
             // Currently, stdlib doesn't use 2018 edition
-            val packageEdition = if (pkg.origin == PackageOrigin.STDLIB) pkg.edition else edition
+            val packageEdition = if (pkg.origin == STDLIB) pkg.edition else edition
             pkg.asPackageData(packageEdition)
         },
-        cfgOptions
+        cfgOptions,
+        featuresState
     ).withDependenciesOf(this)
 
     @TestOnly
@@ -298,7 +424,8 @@ private class WorkspaceImpl(
         manifestPath,
         workspaceRootPath,
         packages.map { it.asPackageData() },
-        cfgOptions
+        cfgOptions,
+        featuresState
     ).withDependenciesOf(this)
 
     override fun toString(): String {
@@ -315,16 +442,37 @@ private class WorkspaceImpl(
             // handle cycles here.
 
             val workspaceRootPath = data.workspaceRoot?.let { Paths.get(it) }
-            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions)
+            val result = WorkspaceImpl(manifestPath, workspaceRootPath, data.packages, cfgOptions, emptyMap())
+
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }
                 idToPackage.forEach { (id, pkg) ->
-                    val deps = data.dependencies[id].orEmpty()
-                    pkg.dependencies.addAll(deps.mapNotNull { (id, name, depKinds) ->
-                        val dependencyPackage = idToPackage[id] ?: return@mapNotNull null
-                        DependencyImpl(dependencyPackage, name, depKinds)
-                    })
+                    val pkgDeps = data.dependencies[id].orEmpty()
+                    val pkgRawDeps = data.rawDependencies[id].orEmpty()
+                    pkg.dependencies += pkgDeps.mapNotNull { dep ->
+                        val dependencyPackage = idToPackage[dep.id] ?: return@mapNotNull null
+
+                        // There can be multiple appropriate raw dependencies because a dependency can be mentioned
+                        // in `Cargo.toml` in different sections, e.g. [dev-dependencies] and [build-dependencies]
+                        val rawDeps = pkgRawDeps.filter { rawDep ->
+                            rawDep.name == dependencyPackage.name && dep.depKinds.any {
+                                it.kind == CargoWorkspace.DepKind.Unclassified ||
+                                    it.target == rawDep.target && it.kind.cargoName == rawDep.kind
+                            }
+                        }
+
+                        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
+
+                        DependencyImpl(
+                            dependencyPackage,
+                            depName,
+                            dep.depKinds,
+                            rawDeps.any { it.optional },
+                            rawDeps.any { it.uses_default_features },
+                            rawDeps.flatMap { it.features }.toSet()
+                        )
+                    }
                 }
             }
 
@@ -347,7 +495,9 @@ private class PackageImpl(
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
     override val cfgOptions: CfgOptions,
-    override val features: Collection<CargoWorkspace.Feature>,
+    /** See [org.rust.cargo.toolchain.impl.CargoMetadata.Package.features] */
+    val rawFeatures: Map<FeatureName, List<FeatureDep>>,
+    val cargoEnabledFeatures: Set<FeatureName>,
     override val env: Map<String, String>,
     val outDirUrl: String?
 ) : CargoWorkspace.Package {
@@ -358,7 +508,8 @@ private class PackageImpl(
             name = it.name,
             kind = it.kind,
             edition = it.edition,
-            doctest = it.doctest
+            doctest = it.doctest,
+            requiredFeatures = it.requiredFeatures
         )
     }
 
@@ -371,6 +522,11 @@ private class PackageImpl(
 
     override val outDir: VirtualFile? by CachedVirtualFile(outDirUrl)
 
+    override val features: Set<PackageFeature> = rawFeatures.keys.mapToSet { PackageFeature(this, it) }
+
+    override val featureState: Map<FeatureName, FeatureState>
+        get() = workspace.featuresState[rootDirectory] ?: emptyMap()
+
     override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl', outDirUrl='$outDirUrl')"
 }
 
@@ -381,7 +537,8 @@ private class TargetImpl(
     override val name: String,
     override val kind: CargoWorkspace.TargetKind,
     override val edition: CargoWorkspace.Edition,
-    override val doctest: Boolean
+    override val doctest: Boolean,
+    override val requiredFeatures: List<FeatureName>
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
@@ -391,14 +548,16 @@ private class TargetImpl(
 
 private class DependencyImpl(
     override val pkg: PackageImpl,
-    name: String? = null,
-    override val depKinds: List<CargoWorkspace.DepKindInfo>
+    override val name: String = pkg.libTarget?.normName ?: pkg.normName,
+    override val depKinds: List<CargoWorkspace.DepKindInfo>,
+    val isOptional: Boolean = false,
+    val areDefaultFeaturesEnabled: Boolean = true,
+    override val requiredFeatures: Set<String> = emptySet()
 ) : CargoWorkspace.Dependency {
-    override val name: String = name ?: (pkg.targets.find { it.kind.isLib }?.normName ?: pkg.normName)
+    fun withPackage(newPkg: PackageImpl): DependencyImpl =
+        DependencyImpl(newPkg, name, depKinds, isOptional, areDefaultFeaturesEnabled, requiredFeatures)
 
-    operator fun component1(): PackageImpl = pkg
-    operator fun component2(): String = name
-    operator fun component3(): List<CargoWorkspace.DepKindInfo> = depKinds
+    override fun toString(): String = name
 }
 
 /**
@@ -434,13 +593,15 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
                 name = it.name,
                 kind = it.kind,
                 edition = edition ?: it.edition,
-                doctest = it.doctest
+                doctest = it.doctest,
+                requiredFeatures = it.requiredFeatures
             )
         },
         source = source,
         origin = origin,
         edition = edition ?: this.edition,
-        features = features,
+        features = rawFeatures,
+        enabledFeatures = cargoEnabledFeatures,
         cfgOptions = cfgOptions,
         env = env,
         outDirUrl = outDirUrl
@@ -470,12 +631,14 @@ private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): Cargo
             name = name,
             kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
             edition = edition,
-            doctest = true
+            doctest = true,
+            requiredFeatures = emptyList()
         )),
         source = null,
-        origin = PackageOrigin.STDLIB,
+        origin = STDLIB,
         edition = edition,
-        features = emptyList(),
+        features = emptyMap(),
+        enabledFeatures = emptySet(),
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
