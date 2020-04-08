@@ -8,7 +8,7 @@ package org.rust.lang.utils.evaluation
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
-import org.rust.cargo.project.workspace.CargoWorkspace.FeatureState
+import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
@@ -108,8 +108,8 @@ class CfgEvaluator(
     }
 
     private fun evaluateFeature(name: String): ThreeValuedLogic {
-        if (origin == PackageOrigin.WORKSPACE || origin == PackageOrigin.STDLIB) {
-            // Currently evaluates only dependency features
+        if (origin == PackageOrigin.STDLIB) {
+            // We don't have info about std features
             return Unknown
         }
 

@@ -15,6 +15,7 @@
       <w>decl</w>
       <w>demangle</w>
       <w>dep</w>
+      <w>deps</w>
       <w>dereferenced</w>
       <w>destructure</w>
       <w>env</w>

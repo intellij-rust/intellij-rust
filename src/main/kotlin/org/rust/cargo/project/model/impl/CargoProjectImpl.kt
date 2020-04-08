@@ -5,15 +5,13 @@
 
 package org.rust.cargo.project.model.impl
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.*
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
@@ -49,22 +47,15 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsCh
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
-import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.project.workspace.additionalRoots
+import org.rust.cargo.project.workspace.*
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.CachedVirtualFile
-import org.rust.openapiext.TaskResult
-import org.rust.openapiext.modules
-import org.rust.openapiext.pathAsPath
-import org.rust.stdext.AsyncValue
-import org.rust.stdext.applyWithSymlink
+import org.rust.openapiext.*
+import org.rust.stdext.*
 import org.rust.taskQueue
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -217,6 +208,93 @@ open class CargoProjectsServiceImpl(
             .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
 
     /**
+     * Modifies [CargoProject.userDisabledFeatures] that eventually affects [CargoWorkspace.Package.featureState].
+     * Note that [CargoProject] is immutable object, so [cargoProject] instance is not mutated by [modifyFeatures]
+     * invocation. Instead, new [CargoProject] instance is created and replaces this instance in
+     * [CargoProjectsService.allProjects].
+     *
+     * Here we only modify [CargoProject.userDisabledFeatures]. The final feature state
+     * is inferred in [WorkspaceImpl.inferFeatureState].
+     *
+     * See tests in `CargoFeaturesModificationTest`
+     */
+    override fun modifyFeatures(cargoProject: CargoProject, features: Set<PackageFeature>, newState: FeatureState) {
+        modifyProjectFeatures(cargoProject) { workspace, userDisabledFeatures ->
+            val packagesByRoots = workspace.packages.associateBy { it.rootDirectory }
+            val actualFeatures = features.mapNotNullToSet { f ->
+                packagesByRoots[f.pkg.rootDirectory]?.let { PackageFeature(it, f.name) }
+            }
+            when (newState) {
+                FeatureState.Disabled -> {
+                    // When a user disables a feature, all we have to do is add it into `userDisabledFeatures`.
+                    // The state of dependant features will be inferred in `WorkspaceImpl.inferFeatureState`
+                    for (feature in actualFeatures) {
+                        userDisabledFeatures.setFeatureState(feature, FeatureState.Disabled)
+                    }
+                }
+                FeatureState.Enabled -> {
+                    // But when disables, we should ensure `userDisabledFeatures` state is consistent.
+                    //
+                    // For example, consider such a case:
+                    // (let [x] mean the feature was enabled automatically (by default),
+                    // [d] – disabled because of presence in `userDisabledFeatures`,
+                    // [ ] – disabled automatically because of dependency on [d] feature)
+                    //
+                    // [x] f1 = ["f3"]
+                    // [x] f2 = ["f3"]
+                    // [x] f3 = []
+                    //
+                    // Then a user disables `f3`:
+                    // [ ] f1 = ["f3"]
+                    // [ ] f2 = ["f3"]
+                    // [d] f3 = []
+                    // `f1` and `f2` disabled automatically because they depend on `f3`.
+                    //
+                    // Then a user enables `f1`, and this is our case!
+                    // [x] f1 = ["f3"]
+                    // [d] f2 = ["f3"]
+                    // [x] f3 = []
+                    // To enable `f1`, `f3` should be removed from `userDisabledFeatures` (because `f1`
+                    // depends on `f3`). But if we just remove `f3` from `userDisabledFeatures`, `f2` will
+                    // also become enabled, but we don't want it! So we have to remove `f3` and add `f2`
+
+                    workspace.featureGraph.apply(defaultState = FeatureState.Enabled) {
+                        disableAll(userDisabledFeatures.getDisabledFeatures(workspace.packages))
+                        enableAll(actualFeatures)
+                    }.forEach { (feature, state) ->
+                        if (feature.pkg.origin == PackageOrigin.WORKSPACE) {
+                            userDisabledFeatures.setFeatureState(feature, state)
+                        }
+                    }
+                }
+            }.exhaustive
+        }
+    }
+
+    private fun modifyProjectFeatures(
+        cargoProject: CargoProject,
+        action: (CargoWorkspace, MutableUserDisabledFeatures) -> Unit
+    ) {
+        modifyProjectsLite { projects ->
+            val oldProject = projects.singleOrNull { it.manifest == cargoProject.manifest }
+                ?: return@modifyProjectsLite projects
+
+            val workspace = oldProject.workspace ?: return@modifyProjectsLite projects
+
+            val userDisabledFeatures = oldProject.userDisabledFeatures.toMutable()
+
+            action(workspace, userDisabledFeatures)
+
+            val newProject = oldProject.copy(userDisabledFeatures = userDisabledFeatures)
+            val newProjects = projects.toMutableList()
+
+            // This can't fail because we got `oldProject` from `projects` few lines above
+            newProjects[newProjects.indexOf(oldProject)] = newProject
+            newProjects
+        }
+    }
+
+    /**
      * All modifications to project model except for low-level `loadState` should
      * go through this method: it makes sure that when we update various IDEA listeners,
      * [allProjects] contains fresh projects.
@@ -249,6 +327,23 @@ open class CargoProjectsServiceImpl(
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
                             .cargoProjectsUpdated(this, projects)
                         initialized = true
+                    }
+                }
+
+                projects
+            }
+
+    protected fun modifyProjectsLite(
+        f: (List<CargoProjectImpl>) -> List<CargoProjectImpl>
+    ): CompletableFuture<List<CargoProjectImpl>> =
+        projects.updateSync(f)
+            .thenApply { projects ->
+                invokeAndWaitIfNeeded {
+                    runWriteAction {
+                        directoryIndex.resetIndex()
+                        project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
+                            .cargoProjectsUpdated(this, projects)
+                        DaemonCodeAnalyzer.getInstance(project).restart()
                     }
                 }
 
@@ -288,10 +383,20 @@ open class CargoProjectsServiceImpl(
     }
 
     override fun loadState(state: Element) {
-        // [loaded] is non-empty here. Otherwise, [noStateLoaded] is called instead of [loadState]
-        val loaded = state.getChildren("cargoProject")
-            .mapNotNull { it.getAttributeValue("FILE") }
-            .map { CargoProjectImpl(Paths.get(it), this) }
+        // [cargoProjects] is non-empty here. Otherwise, [noStateLoaded] is called instead of [loadState]
+        val cargoProjects = state.getChildren("cargoProject")
+        val loaded = mutableListOf<CargoProjectImpl>()
+
+        val userDisabledFeaturesMap = project.service<UserDisabledFeaturesHolder>()
+            .takeLoadedUserDisabledFeatures()
+
+        for (cargoProject in cargoProjects) {
+            val file = cargoProject.getAttributeValue("FILE")
+            val manifest = Paths.get(file)
+            val userDisabledFeatures = userDisabledFeaturesMap[manifest] ?: UserDisabledFeatures.EMPTY
+            val newProject = CargoProjectImpl(manifest, this, userDisabledFeatures)
+            loaded.add(newProject)
+        }
 
         // Wake the macro expansion service as soon as possible.
         project.macroExpansionManager
@@ -299,7 +404,7 @@ open class CargoProjectsServiceImpl(
         // Refresh projects via `invokeLater` to avoid model modifications
         // while the project is being opened. Use `updateSync` directly
         // instead of `modifyProjects` for this reason
-        projects.updateSync { _ -> loaded }
+        projects.updateSync { loaded }
             .whenComplete { _, _ ->
                 invokeLater {
                     if (project.isDisposed) return@invokeLater
@@ -320,6 +425,9 @@ open class CargoProjectsServiceImpl(
         // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
 
         initialized = true // No lock required b/c it's service init time
+
+        // Should be initialized with this service because it stores a part of cargo projects data
+        project.service<UserDisabledFeaturesHolder>()
     }
 
     override fun toString(): String =
@@ -329,6 +437,7 @@ open class CargoProjectsServiceImpl(
 data class CargoProjectImpl(
     override val manifest: Path,
     private val projectService: CargoProjectsServiceImpl,
+    override val userDisabledFeatures: UserDisabledFeatures = UserDisabledFeatures.EMPTY,
     private val rawWorkspace: CargoWorkspace? = null,
     private val stdlib: StandardLibrary? = null,
     override val rustcInfo: RustcInfo? = null,
@@ -342,6 +451,7 @@ data class CargoProjectImpl(
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy rawWorkspace
         rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
+            .withDisabledFeatures(userDisabledFeatures)
     }
 
     override val presentableName: String by lazy {
@@ -382,7 +492,11 @@ data class CargoProjectImpl(
     }
 
     fun withWorkspace(result: TaskResult<CargoWorkspace>): CargoProjectImpl = when (result) {
-        is TaskResult.Ok -> copy(rawWorkspace = result.value, workspaceStatus = UpdateStatus.UpToDate)
+        is TaskResult.Ok -> copy(
+            rawWorkspace = result.value,
+            workspaceStatus = UpdateStatus.UpToDate,
+            userDisabledFeatures = userDisabledFeatures.retain(result.value.packages)
+        )
         is TaskResult.Err -> copy(workspaceStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 

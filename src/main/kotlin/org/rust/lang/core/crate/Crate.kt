@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.RsFile
 import java.util.*
@@ -33,7 +34,7 @@ interface Crate {
     val origin: PackageOrigin
 
     val cfgOptions: CfgOptions
-    val features: Collection<CargoWorkspace.Feature>
+    val features: Map<String, FeatureState>
 
     /** A map of compile-time environment variables, needed for `env!("FOO")` macros expansion */
     val env: Map<String, String>
