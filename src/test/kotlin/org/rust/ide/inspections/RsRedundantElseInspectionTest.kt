@@ -10,7 +10,7 @@ package org.rust.ide.inspections
  */
 class RsRedundantElseInspectionTest : RsInspectionsTestBase(RsRedundantElseInspection::class) {
 
-    fun `test simple`() = checkFixByText("Remove `else`", """
+    fun `test variable binding`() = checkFixByText("Remove `else`", """
         fn main() {
             let a = 5;
             if let x = a {
@@ -135,6 +135,15 @@ class RsRedundantElseInspectionTest : RsInspectionsTestBase(RsRedundantElseInspe
                 if a > 5 {
                 } else if a <= 5 {
                 }
+            }
+        }
+    """)
+
+    fun `test boolean constant`() = checkByText("""
+        fn main() {
+            if true {
+            } <warning descr="Redundant `else`">else</warning> {
+                let a = 5;
             }
         }
     """)

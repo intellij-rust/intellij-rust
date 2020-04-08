@@ -5,17 +5,17 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.psi.RsCondition
 import org.rust.lang.core.psi.RsElseBranch
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.endOffsetInParent
 import org.rust.lang.core.psi.ext.isIrrefutable
 import org.rust.lang.core.psi.ext.leftSiblings
 import org.rust.lang.core.psi.ext.rangeWithPrevSpace
+import org.rust.lang.core.types.consts.asBool
+import org.rust.lang.utils.evaluation.evaluate
 
 /**
  * Detects redundant `else` statements preceded by an irrefutable pattern.
@@ -27,12 +27,12 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitElseBranch(expr: RsElseBranch) {
-                if (!expr.isRedundant()) return
+                if (!expr.isRedundant) return
 
                 val elseExpr = expr.`else`
                 holder.registerProblem(
                     expr,
-                    TextRange(elseExpr.startOffsetInParent, elseExpr.endOffsetInParent),
+                    elseExpr.textRangeInParent,
                     "Redundant `else`",
                     SubstituteTextFix.delete(
                         "Remove `else`",
@@ -43,17 +43,23 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
             }
         }
 
-    private fun RsElseBranch.isRedundant(): Boolean {
-        val set = mutableSetOf<RsCondition>()
-        var candidate: PsiElement = this
+    companion object {
+        private val RsElseBranch.isRedundant: Boolean
+            get() {
+                val set = mutableSetOf<RsCondition>()
+                var candidate: PsiElement = this
 
-        while (candidate is RsElseBranch || candidate is RsIfExpr) {
-            candidate.leftSiblings.filterIsInstance<RsCondition>().forEach { set.add(it) }
-            candidate = candidate.parent
-        }
+                while (candidate is RsElseBranch || candidate is RsIfExpr) {
+                    candidate.leftSiblings.filterIsInstance<RsCondition>().forEach { set.add(it) }
+                    candidate = candidate.parent
+                }
 
-        return set.any {
-            it.orPats?.patList?.all { pat -> pat?.isIrrefutable ?: false } ?: false
-        }
+                return set.any { it.isRedundant }
+            }
+        private val RsCondition.isRedundant: Boolean
+            get() {
+                val patList = orPats?.patList
+                return patList?.all { pat -> pat?.isIrrefutable ?: false } ?: (this.expr.evaluate().asBool() ?: false)
+            }
     }
 }
