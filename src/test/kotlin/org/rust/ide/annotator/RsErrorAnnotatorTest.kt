@@ -2560,7 +2560,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
             let (x, ..) = (1, 2);
             let (x, xs @ ..) = (1, 2); // TODO: `..` patterns are not allowed here
-            
+
             let [(x, ..)] = [(1, 2)];
             let [(x, xs @ ..)] = [(1, 2)]; // TODO: `..` patterns are not allowed here
         }
@@ -3120,5 +3120,54 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- main.rs
         extern crate test_package;
         use test_package::foo::bar;/*caret*/
+    """)
+
+    fun `test for union pattern missing fields`() = checkErrors("""
+        union TestUnion { i: i32, f: f32 }
+
+        fn test_fun(tu: TestUnion) {
+            unsafe {
+                match tu {
+                    TestUnion { i: i32 } => {}
+                    <error descr="Union patterns requires a field">TestUnion { }</error> => {}
+                }
+            }
+        }
+    """)
+
+    fun `test too many union pattern fields`() = checkErrors("""
+        union TestUnion { i: i32, f: f32 }
+
+        fn test_fun(tu: TestUnion) {
+            unsafe {
+                match tu {
+                    <error descr="Union patterns should have exactly one field">TestUnion { i, f }</error> => {}
+                }
+            }
+        }
+    """)
+
+    fun `test for fields that do not exist in the union pattern`() = checkErrors("""
+        union TestUnion { i: i32, f: f32 }
+
+        fn test_fun(tu: TestUnion) {
+            unsafe {
+                match tu {
+                    TestUnion { <error descr="Extra field found in the union pattern: `x` [E0026]">x</error> } => {}
+                }
+            }
+        }
+    """)
+
+    fun `test for union pattern with too many and non-existent fields`() = checkErrors("""
+        union TestUnion { i: i32, f: f32 }
+
+        fn test_fun(tu: TestUnion) {
+            unsafe {
+                match tu {
+                    <error descr="Union patterns should have exactly one field">TestUnion { i, f, <error descr="Extra field found in the union pattern: `x` [E0026]">x</error> }</error> => {}
+                }
+            }
+        }
     """)
 }

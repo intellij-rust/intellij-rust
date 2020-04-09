@@ -66,7 +66,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
             error(
                 errors.joinToString("\n", "Detected errors during type inference: \n") {
                     "\tAt `${it.first.text}` (line ${it.first.lineNumber}) " +
-                        "${it.second.errorCode.code} ${it.second.header} | ${it.second.description}"
+                        "${it.second.errorCode?.code} ${it.second.header} | ${it.second.description}"
                 }
             )
         }
