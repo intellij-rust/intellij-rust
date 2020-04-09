@@ -8,6 +8,7 @@ package org.rust.ide.console
 import com.intellij.execution.actions.EOFAction
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.console.ConsoleHistoryController
+import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.runners.AbstractConsoleRunnerWithHistory
 import com.intellij.execution.ui.RunContentDescriptor
@@ -15,10 +16,12 @@ import com.intellij.execution.ui.actions.CloseAction
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -114,6 +117,19 @@ class RsConsoleRunner(project: Project) :
         registerActionShortcuts(actions, mainPanel)
 
         showConsole(executor, contentDescriptor)
+    }
+
+    override fun createConsoleExecAction(consoleExecuteActionHandler: ProcessBackedConsoleExecuteActionHandler): AnAction {
+        val consoleEditor = consoleView.consoleEditor
+
+        val executeAction = super.createConsoleExecAction(consoleExecuteActionHandler)
+        executeAction.registerCustomShortcutSet(CommonShortcuts.CTRL_ENTER, consoleEditor.component)
+
+        val actionShortcutText = KeymapUtil.getFirstKeyboardShortcutText(executeAction)
+        consoleEditor.setPlaceholder("<$actionShortcutText> to execute")
+        consoleEditor.setShowPlaceholderWhenFocused(true)
+
+        return executeAction
     }
 
     fun runSync(requestEditorFocus: Boolean) {
