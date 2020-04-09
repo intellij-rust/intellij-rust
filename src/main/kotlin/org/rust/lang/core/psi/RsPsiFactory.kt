@@ -494,7 +494,7 @@ class RsPsiFactory(
             ?: error("Failed to create trait type")
 }
 
-private fun String.iff(cond: Boolean) = if (cond) this + " " else " "
+private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
     type.substitute(subst).insertionSafeTextWithAliasesAndLifetimes

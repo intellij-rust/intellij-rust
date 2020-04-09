@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
+import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.type
@@ -22,8 +23,13 @@ class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : Loc
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val oldMatchBody = (startElement as? RsMatchExpr)?.matchBody ?: return
+        val rsPsiFactory = RsPsiFactory(project)
 
-        val newArms = RsPsiFactory(project).createMatchBody(patterns, oldMatchBody).matchArmList
+        val lastMatchArm = oldMatchBody.matchArmList.last()
+        if (lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
+            lastMatchArm.add(rsPsiFactory.createComma())
+
+        val newArms = rsPsiFactory.createMatchBody(patterns, oldMatchBody).matchArmList
         for (arm in newArms) {
             oldMatchBody.addBefore(arm, oldMatchBody.rbrace)
         }
