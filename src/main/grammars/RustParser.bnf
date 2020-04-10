@@ -126,7 +126,7 @@ StatementCodeFragmentElement ::= Stmt?
 TypeReferenceCodeFragmentElement ::= TypeReference?
 ValuePathCodeFragmentElement ::= ValuePathGenericArgs?
 TypePathCodeFragmentElement ::= TypePathGenericArgs?
-ReplCodeFragmentElement ::= (Item | Stmt)* Expr?
+ReplCodeFragmentElement ::= ReplBlockElement*
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Attributes
@@ -1524,6 +1524,20 @@ LetDecl ::= OuterAttr* let Pat TypeAscription? [ '=' AnyExpr ] ';' {
 
 EmptyStmt ::= ';' { extends = Stmt }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// REPL
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+// copy of BlockElement without '}'
+private ReplBlockElement ::= (BlockElementMacro | BlockElementMacroCall | ReplExprStmtOrLastExpr | Stmt | Item) {
+  pin = 1
+  recoverWhile = ReplBlockElement_recover
+}
+private ReplBlockElement_recover ::= !(Item_first | Expr_first | let | ';')
+
+ReplExprStmtOrLastExpr ::= StmtModeExpr (&<<eof>> | ExprStmtUpper) {
+  elementType = Expr
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Utils
