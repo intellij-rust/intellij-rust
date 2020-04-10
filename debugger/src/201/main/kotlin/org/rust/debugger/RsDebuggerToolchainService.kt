@@ -10,6 +10,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -18,21 +19,20 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBBinUrlProvider
-import org.rust.debugger.RsDebuggerToolchainService.BinaryInfo.Companion.LLDB_FRAMEWORK
-import org.rust.debugger.RsDebuggerToolchainService.BinaryInfo.Companion.LLDB_FRONTEND
 import org.rust.debugger.settings.RsDebuggerSettings
-import org.rust.openapiext.plugin
-import org.rust.stdext.toPath
+import org.rust.openapiext.pluginDirInSystem
 import java.io.File
 import java.io.IOException
 import java.net.URL
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
+@Service
 class RsDebuggerToolchainService {
 
     fun getLLDBStatus(lldbPath: String? = RsDebuggerSettings.getInstance().lldbPath): LLDBStatus {
@@ -48,8 +48,8 @@ class RsDebuggerToolchainService {
             else -> return LLDBStatus.Unavailable
         }
 
-        val frameworkFile = File(FileUtil.join(lldbPath, LLDB_FRAMEWORK.dirName, frameworkPath))
-        val frontendFile = File(FileUtil.join(lldbPath, LLDB_FRONTEND.dirName, frontendPath))
+        val frameworkFile = File(FileUtil.join(lldbPath, frameworkPath))
+        val frontendFile = File(FileUtil.join(lldbPath, frontendPath))
         if (!frameworkFile.exists() || !frontendFile.exists()) return LLDBStatus.NeedToDownload
 
         val versions = loadLLDBVersions()
@@ -58,8 +58,8 @@ class RsDebuggerToolchainService {
         val lldbFrameworkVersion = fileNameWithoutExtension(lldbFrameworkUrl.toString())
         val lldbFrontendVersion = fileNameWithoutExtension(lldbFrontendUrl.toString())
 
-        if (versions[LLDB_FRAMEWORK.propertyName] != lldbFrameworkVersion ||
-            versions[LLDB_FRONTEND.propertyName] != lldbFrontendVersion) return LLDBStatus.NeedToUpdate
+        if (versions[LLDB_FRAMEWORK_PROPERTY_NAME] != lldbFrameworkVersion ||
+            versions[LLDB_FRONTEND_PROPERTY_NAME] != lldbFrontendVersion) return LLDBStatus.NeedToUpdate
 
         return LLDBStatus.Binaries(frameworkFile, frontendFile)
     }
@@ -126,37 +126,36 @@ class RsDebuggerToolchainService {
     private fun downloadAndUnarchive(lldbFrameworkUrl: String, lldbFrontendUrl: String): File {
         val service = DownloadableFileService.getInstance()
 
-        val lldbDir = File(lldbPath())
-        if (!lldbDir.exists()) {
-            lldbDir.mkdirs()
-        }
+        val lldbDir = lldbPath().toFile()
 
         val versions = loadLLDBVersions()
         val descriptions = mutableListOf<DownloadableFileDescription>()
+        var cleanDebuggerDir = false
 
-        fun addFileDescriptorIfNeeded(info: BinaryInfo, url: String) {
-            val version = versions[info.propertyName]?.toString()
+        fun addFileDescriptorIfNeeded(propertyName: String, url: String) {
+            val version = versions[propertyName]?.toString()
             if (version != fileNameWithoutExtension(url)) {
-                if (version != null) {
-                    File(lldbDir, info.dirName).deleteRecursively()
-                }
                 descriptions += service.createFileDescription(url)
+                cleanDebuggerDir = true
             }
         }
 
-        addFileDescriptorIfNeeded(LLDB_FRAMEWORK, lldbFrameworkUrl)
-        addFileDescriptorIfNeeded(LLDB_FRONTEND, lldbFrontendUrl)
+        addFileDescriptorIfNeeded(LLDB_FRAMEWORK_PROPERTY_NAME, lldbFrameworkUrl)
+        addFileDescriptorIfNeeded(LLDB_FRONTEND_PROPERTY_NAME, lldbFrontendUrl)
+
+        if (cleanDebuggerDir) {
+            lldbDir.deleteRecursively()
+        }
 
         val downloader = service.createDownloader(descriptions, "Debugger downloading")
-        val downloadDirectory = File(downloadPath())
+        val downloadDirectory = downloadPath().toFile()
         val downloadResults = downloader.download(downloadDirectory)
 
         for (result in downloadResults) {
             val downloadUrl = result.second.downloadUrl
-            val (propertyName, dirName) = if (downloadUrl == lldbFrameworkUrl) LLDB_FRAMEWORK else LLDB_FRONTEND
+            val propertyName = if (downloadUrl == lldbFrameworkUrl) LLDB_FRAMEWORK_PROPERTY_NAME else LLDB_FRONTEND_PROPERTY_NAME
             val archiveFile = result.first
-            val dstDir = File(lldbDir, dirName)
-            Unarchiver.unarchive(archiveFile, dstDir)
+            Unarchiver.unarchive(archiveFile, lldbDir)
             archiveFile.delete()
             versions[propertyName] = fileNameWithoutExtension(downloadUrl)
         }
@@ -177,7 +176,7 @@ class RsDebuggerToolchainService {
 
     private fun loadLLDBVersions(): Properties {
         val versions = Properties()
-        val versionsFile = File(lldbPath(), LLDB_VERSIONS)
+        val versionsFile = lldbPath().resolve(LLDB_VERSIONS).toFile()
 
         if (versionsFile.exists()) {
             try {
@@ -192,7 +191,7 @@ class RsDebuggerToolchainService {
 
     private fun saveLLDBVersions(versions: Properties) {
         try {
-            versions.store(File(lldbPath(), LLDB_VERSIONS).bufferedWriter(), "")
+            versions.store(lldbPath().resolve(LLDB_VERSIONS).toFile().bufferedWriter(), "")
         } catch (e: IOException) {
             LOG.warn("Failed to save `$LLDB_VERSIONS`")
         }
@@ -203,13 +202,13 @@ class RsDebuggerToolchainService {
 
         private const val LLDB_VERSIONS: String = "versions.properties"
 
+        private const val LLDB_FRONTEND_PROPERTY_NAME = "lldbFrontend"
+        private const val LLDB_FRAMEWORK_PROPERTY_NAME = "lldbFramework"
+
         const val RUST_DEBUGGER_GROUP_ID = "Rust Debugger"
 
-        private fun downloadPath(): String = PathManager.getTempPath()
-        private fun lldbPath(): String {
-            val basePath = if (isUnitTestMode) PathManager.getTempPath().toPath() else plugin().pluginPath
-            return basePath.resolve("lldb").toString()
-        }
+        private fun downloadPath(): Path = Paths.get(PathManager.getTempPath())
+        private fun lldbPath(): Path = pluginDirInSystem().resolve("lldb")
 
         fun getInstance(): RsDebuggerToolchainService = service()
     }
@@ -234,13 +233,6 @@ class RsDebuggerToolchainService {
                     ?: error("Unexpected archive type: $archivePath")
                 unarchiver.createDecompressor(archivePath).extract(dst)
             }
-        }
-    }
-
-    private data class BinaryInfo(val propertyName: String, val dirName: String) {
-        companion object {
-            val LLDB_FRAMEWORK = BinaryInfo("lldb", "framework")
-            val LLDB_FRONTEND = BinaryInfo("lldbFrontend", "frontend")
         }
     }
 

@@ -26,14 +26,8 @@ class RsDebuggerDriverConfigurationProviderImpl : RsDebuggerDriverConfigurationP
 private class RsLLDBDriverConfiguration(
     private val binaries: LLDBStatus.Binaries
 ) : LLDBDriverConfiguration() {
-
     override fun getDriverName(): String = "Rust LLDB"
-
-    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File {
-        return binaries.frameworkFile
-    }
-
-    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File {
-        return binaries.frontendFile
-    }
+    override fun useSTLRenderers(): Boolean = false
+    override fun getLLDBFrameworkFile(architectureType: ArchitectureType): File = binaries.frameworkFile
+    override fun getLLDBFrontendFile(architectureType: ArchitectureType): File = binaries.frontendFile
 }

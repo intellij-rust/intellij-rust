@@ -18,10 +18,6 @@ import javax.swing.JLabel
 
 class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
 
-    init {
-        ApplicationManager.getApplication().invokeLater(::update)
-    }
-
     private val downloadLink: JLabel = Link("Download") {
         RsDebuggerToolchainService.getInstance().downloadDebugger(
             onSuccess = { lldbPathField.text = it.absolutePath },
@@ -31,10 +27,9 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
 
     private val lldbPathField = pathToDirectoryTextField(
         this,
-        RsDebuggerSettings.getInstance().lldbPath.orEmpty(),
+        "Select LLDB directory path",
         onTextChanged = ::update
     ).apply {
-        text = RsDebuggerSettings.getInstance().lldbPath.orEmpty()
         isEditable = false
     }
 
@@ -51,6 +46,8 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
     }
 
     override fun getComponent(): JComponent {
+        lldbPathField.text = RsDebuggerSettings.getInstance().lldbPath.orEmpty()
+        update()
         return panel {
             row("LLDB path:") { lldbPathField() }
             row("") { downloadLink() }

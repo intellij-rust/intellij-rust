@@ -109,7 +109,7 @@ val MACRO_LOG = Logger.getInstance("org.rust.macros")
 const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
 
 fun getBaseMacroDir(): Path =
-    Paths.get(PathManager.getSystemPath()).resolve("intellij-rust").resolve("macros")
+    pluginDirInSystem().resolve("macros")
 
 @State(name = "MacroExpansionManager", storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED),
