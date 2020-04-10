@@ -353,10 +353,13 @@ data class CargoProjectImpl(
 
     // Checks that the project is https://github.com/rust-lang/rust
     private fun doesProjectLooksLikeRustc(): Boolean {
-        val workspace = workspace
-        return workspace?.findPackage(AutoInjectedCrates.STD) != null &&
+        val workspace = workspace ?: return false
+        // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
+        // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
+        val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")
+        return workspace.findPackage(AutoInjectedCrates.STD) != null &&
             workspace.findPackage(AutoInjectedCrates.CORE) != null &&
-            workspace.findPackage("rustc") != null
+            possiblePackages.any { workspace.findPackage(it) != null }
     }
 
     private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
