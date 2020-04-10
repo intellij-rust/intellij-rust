@@ -249,13 +249,18 @@ open class CargoProjectsServiceImpl(
             cargoProjectElement.setAttribute("FILE", cargoProject.manifest.systemIndependentPath)
             state.addContent(cargoProjectElement)
         }
+
+        // Note that if [state] is empty (there are no cargo projects), [noStateLoaded] will be called on the next load
+
         return state
     }
 
     override fun loadState(state: Element) {
+        // [loaded] is non-empty here. Otherwise, [noStateLoaded] is called instead of [loadState]
         val loaded = state.getChildren("cargoProject")
             .mapNotNull { it.getAttributeValue("FILE") }
             .map { CargoProjectImpl(Paths.get(it), this) }
+
         // Refresh projects via `invokeLater` to avoid model modifications
         // while the project is being opened. Use `updateSync` directly
         // instead of `modifyProjects` for this reason
@@ -268,12 +273,18 @@ open class CargoProjectsServiceImpl(
             }
     }
 
+    /**
+     * Note that [noStateLoaded] is called not only during the first service creation, but on any
+     * service load if [getState] returned empty state during previous save (i.e. there are no cargo project)
+     */
     override fun noStateLoaded() {
         // Do nothing: in theory, we might try to do [discoverAndRefresh]
         // here, but the `RustToolchain` is most likely not ready.
         //
         // So the actual "Let's guess a project model if it is not imported
         // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
+
+        initialized = true // No lock required b/c it's service init time
     }
 
     override fun toString(): String =
