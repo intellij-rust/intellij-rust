@@ -323,6 +323,11 @@
                          implementationClass="org.rust.ide.inspections.RsMissingElseInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Missing else"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsRedundantElseInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Dropping reference"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsDropRefInspection"/>
