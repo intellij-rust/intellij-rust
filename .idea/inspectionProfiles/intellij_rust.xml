@@ -1,0 +1,8 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="intellij-rust" />
+    <inspection_tool class="PluginXmlDynamicPlugin" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="highlightNonDynamicEPUsages" value="true" />
+    </inspection_tool>
+  </profile>
+</component>
