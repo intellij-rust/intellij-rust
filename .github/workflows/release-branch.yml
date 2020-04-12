@@ -1,0 +1,24 @@
+name: release branch
+
+on:
+    repository_dispatch:
+        types: release-branch
+
+jobs:
+    make-release-branch:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Set up git user
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+
+            - name: Make release branch
+              run: python scripts/make_release_branch.py --token ${{ secrets.GITHUB_TOKEN }}
