@@ -39,6 +39,7 @@ before_script:
   - rustup component add rust-src
   - rustup component add clippy
   - rustup component add rustfmt
+  - if [ ! $RUST_VERSION \< "1.40.0" ]; then cargo install evcxr_repl; fi # BACKCOMPAT: Rust 1.39.0
   - ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
   - ./check-license.sh
   - ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon

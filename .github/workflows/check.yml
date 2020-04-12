@@ -42,6 +42,7 @@ jobs:
               run: |
                 rustc --version
                 rustup component list --installed
+                if [ ! "${{ matrix.rust-version }}" \< "1.40.0" ]; then cargo install evcxr_repl; fi # BACKCOMPAT: Rust 1.39.0
 
             - name: Check license
               run: ./check-license.sh
