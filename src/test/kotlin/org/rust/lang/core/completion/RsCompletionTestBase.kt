@@ -68,14 +68,14 @@ abstract class RsCompletionTestBase : RsTestBase() {
     ) = completionFixture.doSingleCompletionByFileTree(before, after)
 
     protected fun checkContainsCompletion(
-        text: String,
+        variant: String,
         @Language("Rust") code: String
-    ) = completionFixture.checkContainsCompletion(text, code)
+    ) = completionFixture.checkContainsCompletion(code, variant)
 
     protected fun checkNotContainsCompletion(
-        text: String,
+        variant: String,
         @Language("Rust") code: String
-    ) = completionFixture.checkNotContainsCompletion(text, code)
+    ) = completionFixture.checkNotContainsCompletion(code, variant)
 
     protected fun checkNoCompletion(@Language("Rust") code: String) = completionFixture.checkNoCompletion(code)
 

@@ -11,7 +11,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
 
     """, """
         /*caret*/
-    """, arrayOf(
+    """, listOf(
         "let",
         "fn",
         "struct",
@@ -24,7 +24,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let var2 = var1 + 1;
     """, """
         let x = var/*caret*/
-    """, arrayOf(
+    """, listOf(
         "var1",
         "var2"
     ))
@@ -34,14 +34,14 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
     """, """
         let x = frobn/*caret*/
     """, """
-        let x = frobnicate
+        let x = frobnicate/*caret*/
     """)
 
     fun `test methods (type from prelude)`() = checkContainsCompletion("""
         let var1 = Some(1);
     """, """
         let x = var1./*caret*/
-    """, arrayOf(
+    """, listOf(
         "unwrap",
         "map",
         "and_then"
@@ -53,7 +53,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
     """, """
         let x = foo.frobn/*caret*/
     """, """
-        let x = foo.frobnicate
+        let x = foo.frobnicate/*caret*/
     """)
 
     fun `test functions`() = checkSingleCompletion("""
@@ -61,7 +61,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
     """, """
         frobn/*caret*/
     """, """
-        frobnicate()
+        frobnicate()/*caret*/
     """)
 
     fun `test variables with dependant types`() = checkSingleCompletion("""
@@ -72,14 +72,14 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
     """, """
         foo1.fie/*caret*/
     """, """
-        foo1.field1
+        foo1.field1/*caret*/
     """)
 
     fun `test variables with unspecified type`() = checkContainsCompletion("""
         let s = "foo";
     """, """
         s./*caret*/
-    """, arrayOf(
+    """, listOf(
         "len",
         "chars"
     ))
@@ -88,7 +88,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let v = Vec::<i32>::new();
     """, """
         v.i/*caret*/
-    """, arrayOf(
+    """, listOf(
         "insert",
         "is_empty",
         "index"
