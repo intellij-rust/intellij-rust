@@ -16,6 +16,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.progress.BackgroundTaskQueue
@@ -60,6 +61,7 @@ import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
+import org.rust.lang.RsFileType
 import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.applyWithSymlink
@@ -225,6 +227,16 @@ open class CargoProjectsServiceImpl(
             .thenApply { projects ->
                 invokeAndWaitIfNeeded {
                     runWriteAction {
+                        if (projects.isNotEmpty()) {
+                            // Android RenderScript (from Android plugin) files has the same extension (.rs) as Rust files.
+                            // In some cases, IDEA determines `*.rs` files have RenderScript file type instead of Rust one
+                            // that leads any code insight features don't work in Rust projects.
+                            // See https://youtrack.jetbrains.com/issue/IDEA-237376
+                            //
+                            // It's a hack to provide proper mapping when we are sure that it's Rust project
+                            FileTypeManager.getInstance().associateExtension(RsFileType, RsFileType.defaultExtension)
+                        }
+
                         directoryIndex.resetIndex()
                         // In unit tests roots change is done by the test framework in most cases
                         if (makeRootsChange) {
