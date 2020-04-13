@@ -1086,6 +1086,30 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "bar")
 
+    fun `test extract a function with empty lines`() = doTest("""
+        fn main() {
+            <selection>println!("a");
+
+
+            // comment
+            println!("b");</selection>
+        }
+    """, """
+        fn main() {
+            foo();
+        }
+
+        fn foo() {
+            println!("a");
+
+
+            // comment
+            println!("b");
+        }
+    """,
+        false,
+        "foo")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
