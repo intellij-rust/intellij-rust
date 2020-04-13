@@ -164,4 +164,14 @@ class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplic
             }
             fn main() { let var: HashMap<i32, i32, RandomState> = foo(); }
     """)
+
+    fun `test ref pat`() = doAvailableTest(
+        """ fn main() { let ref var/*caret*/ = 42; } """,
+        """ fn main() { let ref var: i32 = 42; } """
+    )
+
+    fun `test ref mut pat`() = doAvailableTest(
+        """ fn main() { let ref mut var/*caret*/ = 42; } """,
+        """ fn main() { let ref mut var: i32 = 42; } """
+    )
 }

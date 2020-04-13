@@ -11,18 +11,18 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.ide.presentation.insertionSafeTextWithAliases
 import org.rust.lang.core.psi.RsLetDecl
+import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.kind
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.types.consts.CtInferVar
 import org.rust.lang.core.types.consts.CtUnevaluated
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.containsConstOfClass
 import org.rust.lang.core.types.infer.containsTyOfClass
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAnon
-import org.rust.lang.core.types.ty.TyInfer
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 
@@ -37,11 +37,19 @@ class SpecifyTypeExplicitlyIntention : RsElementBaseIntentionAction<SpecifyTypeE
         val initializer = letDecl.expr
         if (initializer != null && element.startOffset >= initializer.startOffset - 1) return null
         val pat = letDecl.pat ?: return null
-        val type = pat.type
-        if (type.containsTyOfClass(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java)
-            || type.containsConstOfClass(CtUnknown::class.java, CtInferVar::class.java, CtUnevaluated::class.java)) {
+        val patType = pat.type
+        if (patType.containsTyOfClass(TyUnknown::class.java, TyInfer::class.java, TyAnon::class.java)
+            || patType.containsConstOfClass(CtUnknown::class.java, CtInferVar::class.java, CtUnevaluated::class.java)) {
             return null
         }
+
+        // let ref x = 1; // `i32` should be inserted instead of `&i32`
+        val type = if (pat is RsPatIdent && pat.patBinding.kind is BindByReference && patType is TyReference) {
+            patType.referenced
+        } else {
+            patType
+        }
+
         return Context(type, letDecl)
     }
 
