@@ -5,14 +5,19 @@
 
 package org.rust.lang.core.types.infer
 
+import com.intellij.openapiext.Testmark
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.resolve.ref.resolvePath
+import org.rust.lang.core.types.consts.Const
+import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.ty.Mutability.IMMUTABLE
 import org.rust.lang.core.types.type
+import org.rust.lang.utils.evaluation.ConstExpr
+import org.rust.lang.utils.evaluation.toConst
 
 fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBindingModeKind = BindByValue(IMMUTABLE)) {
     when (this) {
@@ -105,12 +110,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         is RsPatSlice -> {
             val (expected, bm) = type.stripReferences(defBm)
             fcx.writePatTy(this, expected)
-            val elementType = when (expected) {
-                is TyArray -> expected.base
-                is TySlice -> expected.elementType
-                else -> TyUnknown
-            }
-            patList.forEach { it.extractBindings(fcx, elementType, bm) }
+            inferSlicePatsTypes(fcx, patList, bm, expected)
         }
         is RsPatBox -> {
             val (expected, bm) = type.stripReferences(defBm)
@@ -123,6 +123,45 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
         else -> {
             // not yet handled
         }
+    }
+}
+
+private val RsPat.isRest: Boolean
+    get() = this is RsPatRest || this is RsPatIdent && pat is RsPatRest
+
+private fun inferSlicePatsTypes(
+    fcx: RsTypeInferenceWalker,
+    patList: List<RsPat>,
+    bm: RsBindingModeKind,
+    sliceType: Ty
+) {
+    fun calcRestSize(arrayTy: TyArray): Const {
+        val arraySize = arrayTy.size ?: return CtUnknown
+
+        val patRestCount = patList.count { it.isRest }
+        if (patRestCount != 1) {
+            PatternMatchingTestMarks.multipleRestPats.hit()
+            return CtUnknown
+        }
+
+        val restSize = arraySize - patList.size.toLong() + 1
+        if (restSize < 0) {
+            PatternMatchingTestMarks.negativeRestSize.hit()
+            return CtUnknown
+        }
+
+        return ConstExpr.Value.Integer(restSize, TyInteger.USize).toConst()
+    }
+
+    val (elementType, restType) = when (sliceType) {
+        is TyArray -> sliceType.base to sliceType.copy(const = calcRestSize(sliceType))
+        is TySlice -> sliceType.elementType to sliceType
+        else -> TyUnknown to TyUnknown
+    }
+
+    for (pat in patList) {
+        val patType = if (pat.isRest) restType else elementType
+        pat.extractBindings(fcx, patType, bm)
     }
 }
 
@@ -139,7 +178,7 @@ private fun inferTupleFieldsTypes(
     var firstPatRestIndex = Int.MAX_VALUE
     var lastPatRestIndex = -1
     for ((index, pat) in patList.withIndex()) {
-        if (pat is RsPatRest) {
+        if (pat.isRest) {
             firstPatRestIndex = minOf(firstPatRestIndex, index)
             lastPatRestIndex = maxOf(lastPatRestIndex, index)
         }
@@ -180,4 +219,9 @@ private fun Ty.stripReferences(defBm: RsBindingModeKind): Pair<Ty, RsBindingMode
         ty = ty.referenced
     }
     return ty to bm
+}
+
+object PatternMatchingTestMarks {
+    val multipleRestPats = Testmark("multipleRestPats")
+    val negativeRestSize = Testmark("negativeRestSize")
 }

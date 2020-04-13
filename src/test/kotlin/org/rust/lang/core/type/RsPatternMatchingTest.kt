@@ -7,6 +7,7 @@ package org.rust.lang.core.type
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.types.infer.PatternMatchingTestMarks
 
 class RsPatternMatchingTest : RsTypificationTestBase() {
     fun `test if let pattern`() = testExpr("""
@@ -201,6 +202,89 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
           //^ (S, <unknown>, W)
         }
     """)
+
+    fun `test let array rest pat`() = testExpr("""
+        struct S;
+        fn main() {
+            let [x, xs @ ..] = [S, S, S];
+            (x, xs);
+          //^ (S, [S; 2])
+        }
+    """)
+
+    fun `test let slice rest pat`() = testExpr("""
+         struct S;
+        fn main() {
+            let slice: &[S] = &[S, S, S];
+            let [x, xs @ ..] = slice;
+            (x, xs);
+          //^ (&S, &[S])
+        }
+    """)
+
+    fun `test let array ref rest pat`() = testExpr("""
+        struct S;
+        fn main() {
+            let [ref x, ref xs @ ..] = [S, S, S];
+            (x, xs);
+          //^ (&S, &[S; 2])
+        }
+    """)
+
+    fun `test let slice ref rest pat`() = testExpr("""
+        struct S;
+        fn main() {
+            let slice: &[S] = &[S, S, S];
+            let [ref x, ref xs @ ..] = slice;
+            (x, xs);
+          //^ (&S, &[S])
+        }
+    """)
+
+    fun `test let array rest pat without binding`() = testExpr("""
+        struct S;
+        fn main() {
+            let [x, ..] = [S, S, S];
+            x;
+          //^ S
+        }
+    """)
+
+    fun `test let array rest pat in front`() = testExpr("""
+        struct S;
+        fn main() {
+            let [xs @ .., x] = [S, S, S];
+            (xs, x);
+          //^ ([S; 2], S)
+        }
+    """)
+
+    fun `test let array rest pat in middle`() = testExpr("""
+        struct S;
+        fn main() {
+            let [x1, xs @ .., x2] = [S, S, S];
+            (x1, xs, x2);
+          //^ (S, [S; 1], S)
+        }
+    """)
+
+    fun `test let array too few elements for rest pat`() = testExpr("""
+        struct S;
+        fn main() {
+            let [x1, x2, x3, x4, xs @ ..] = [S, S, S];
+            (x1, x2, x3, x4, xs);
+          //^ (S, S, S, S, [S; <unknown>])
+        }
+    """, PatternMatchingTestMarks.negativeRestSize)
+
+    fun `test let array multiple rest pats`() = testExpr("""
+        struct S;
+        fn main() {
+            let [x1, xs1 @ .., x2, xs2 @ .., x3] = [S, S, S, S, S];
+            (x1, xs1, x2, xs2, x3);
+          //^ (S, [S; <unknown>], S, [S; <unknown>], S)
+        }
+    """, PatternMatchingTestMarks.multipleRestPats)
 
     fun `test struct pattern`() = testExpr("""
         struct S;
@@ -629,7 +713,7 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
                 Some(n) => {
                     n;
                   //^ <unknown>
-                },
+                }
                 _ => {}
             };
         }
