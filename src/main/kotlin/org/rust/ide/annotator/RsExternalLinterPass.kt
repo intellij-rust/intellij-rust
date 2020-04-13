@@ -7,6 +7,7 @@ package org.rust.ide.annotator
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
+import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.*
 import com.intellij.lang.annotation.AnnotationSession
@@ -170,6 +171,12 @@ class RsExternalLinterPassFactory(
     override fun getPassId(): Int = myPassId
 
     fun scheduleExternalActivity(update: Update) = externalLinterQueue.queue(update)
+
+    class Registrar: TextEditorHighlightingPassFactoryRegistrar {
+        override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
+            RsExternalLinterPassFactory(project, registrar)
+        }
+    }
 
     companion object {
         private const val TIME_SPAN: Int = 300
