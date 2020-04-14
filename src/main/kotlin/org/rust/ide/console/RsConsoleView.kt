@@ -82,6 +82,11 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
         }
     }
 
+    fun removeBorders() {
+        historyViewer.setBorder(null)
+        consoleEditor.setBorder(null)
+    }
+
     val isShowVariables: Boolean
         get() = options.showVariables
 

@@ -211,6 +211,7 @@ class RsConsoleRunner(project: Project) :
 
     private fun connect() {
         invokeLater {
+            consoleView.removeBorders()
             consoleView.initVariablesWindow()
             consoleView.executeActionHandler = consoleExecuteActionHandler
 
