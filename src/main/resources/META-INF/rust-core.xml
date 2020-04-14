@@ -178,6 +178,8 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCfgDisabledCodeAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
+        <highlightingPassFactory implementation="org.rust.ide.annotator.RsHighlightingPassFactoryRegistrar"/>
+
         <!-- Line Marker Providers -->
 
         <codeInsight.lineMarkerProvider language="Rust"
@@ -878,8 +880,6 @@
         <multiHostInjector implementation="org.rust.ide.injected.RsDoctestLanguageInjector"/>
 
 
-        <projectService serviceImplementation="org.rust.lang.core.resolve.ref.RsResolveCache"/>
-
         <!-- Macro expansion service -->
 
         <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
@@ -893,6 +893,10 @@
 
         <consoleHistoryModelProvider implementation="org.rust.ide.console.RsConsoleHistoryModelProvider"/>
         <scratch.rootType implementation="org.rust.ide.console.RsConsoleRootType"/>
+
+        <!-- Listeners -->
+
+        <fileDocumentManagerListener implementation="org.rust.cargo.RustfmtWatcher$RustfmtListener"/>
 
         <!-- Registry keys -->
 
@@ -913,9 +917,6 @@
             <implementation-class>org.rust.ide.update.UpdateComponent</implementation-class>
         </component>
         <component>
-            <implementation-class>org.rust.cargo.RustfmtWatcher</implementation-class>
-        </component>
-        <component>
             <implementation-class>org.rust.ide.todo.RsTodoApplicationComponent</implementation-class>
         </component>
     </application-components>
@@ -924,9 +925,6 @@
         <component>
             <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
             <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
-        </component>
-        <component>
-            <implementation-class>org.rust.ide.annotator.RsExternalLinterPassFactory</implementation-class>
         </component>
         <component>
             <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
