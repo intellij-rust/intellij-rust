@@ -68,7 +68,7 @@ class RsEvcxrTest : RsWithToolchainTestBase() {
             RsConsoleCommunication.FAILED_EXECUTION_MARKER
         }
         val markerReceived = scanner.nextChar().toString()
-        check(markerReceived.matches(markerExpected))
+        assertEquals(markerExpected, markerReceived)
 
         expectInput(scanner, promptColored)
     }

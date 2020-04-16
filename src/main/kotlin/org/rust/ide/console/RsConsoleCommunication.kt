@@ -62,8 +62,7 @@ class RsConsoleCommunication(private val consoleView: RsConsoleView) {
          *      subject to the prior agreement of the sender and the recipient of the data."
          * so they are ideal for our purpose
          */
-        // BACKCOMPAT: Evcxr 0.4.6. Remove \u0001 and \u0002
-        val SUCCESS_EXECUTION_MARKER: Regex = Regex("[\u0091\u0001]")
-        val FAILED_EXECUTION_MARKER: Regex = Regex("[\u0092\u0002]")
+        const val SUCCESS_EXECUTION_MARKER: String = "\u0091"
+        const val FAILED_EXECUTION_MARKER: String = "\u0092"
     }
 }
