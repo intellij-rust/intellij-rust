@@ -47,7 +47,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
                 })
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     updateAllNotifications()
                 }
             })

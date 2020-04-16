@@ -26,7 +26,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.isTopLevelExpansion
-import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsPsiManager.Companion.isIgnorePsiEvents
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -134,8 +134,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
                 if (isIgnorePsiEvents(file)) return
 
                 val isWhitespaceOrComment = element is PsiComment || element is PsiWhiteSpace
-                if (isWhitespaceOrComment &&
-                    project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) {
+                if (isWhitespaceOrComment && !isMacroExpansionModeNew) {
                     // Whitespace/comment changes are meaningful if new macro expansion engine is used
                     return
                 }
@@ -179,7 +178,7 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         val isStructureModification = owner == null || !owner.incModificationCount(psi)
 
         if (!isStructureModification && owner is RsMacroCall &&
-            (project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New || !owner.isTopLevelExpansion)) {
+            (!isMacroExpansionModeNew || !owner.isTopLevelExpansion)) {
             return updateModificationCount(file, owner, isChildrenChange = false, isWhitespaceOrComment = false)
         }
 
@@ -188,6 +187,9 @@ class RsPsiManagerImpl(val project: Project) : ProjectComponent, RsPsiManager {
         }
         project.messageBus.syncPublisher(RUST_PSI_CHANGE_TOPIC).rustPsiChanged(file, psi, isStructureModification)
     }
+
+    private val isMacroExpansionModeNew
+        get() = project.macroExpansionManagerIfCreated?.macroExpansionMode is MacroExpansionMode.New
 
     override fun incRustStructureModificationCount() =
         incRustStructureModificationCount(null, null)

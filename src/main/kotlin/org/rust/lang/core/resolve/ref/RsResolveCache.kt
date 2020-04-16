@@ -27,8 +27,7 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.messages.MessageBus
-import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.MacroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
 import org.rust.lang.core.psi.ext.RsReferenceElement
@@ -171,7 +170,7 @@ class RsResolveCache(project: Project): Disposable {
         _rustStructureDependentCache.set(null)
         if (file != null && _macroCache.get() != null) {
             val viFile = file.virtualFile
-            if (viFile != null && !file.project.macroExpansionManager.isExpansionFile(viFile)) {
+            if (viFile != null && !MacroExpansionManager.isExpansionFile(viFile)) {
                 // Invalidate cache only on changes OUTSIDE of expansion files
                 _macroCache.set(null)
             }

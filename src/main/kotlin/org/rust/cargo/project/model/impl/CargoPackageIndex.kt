@@ -30,7 +30,7 @@ class CargoPackageIndex(
         project.messageBus.connect(project).subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, this)
     }
 
-    override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+    override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
         checkWriteAccessAllowed()
         resetIndex()
         val disposable = Disposer.newDisposable("CargoPackageIndexDisposable")

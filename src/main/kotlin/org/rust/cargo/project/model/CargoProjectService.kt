@@ -33,6 +33,7 @@ import java.util.concurrent.CompletableFuture
  * for more details.
  */
 interface CargoProjectsService {
+    val project: Project
     val allProjects: Collection<CargoProject>
     val hasAtLeastOneValidProject: Boolean
     val initialized: Boolean
@@ -57,7 +58,7 @@ interface CargoProjectsService {
     }
 
     interface CargoProjectsListener {
-        fun cargoProjectsUpdated(projects: Collection<CargoProject>)
+        fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>)
     }
 }
 

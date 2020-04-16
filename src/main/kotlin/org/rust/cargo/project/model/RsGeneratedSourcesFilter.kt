@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.MacroExpansionManager
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
-import org.rust.lang.core.macros.macroExpansionManager
 
 class RsGeneratedSourcesFilter : GeneratedSourcesFilter() {
     override fun isGeneratedSource(file: VirtualFile, project: Project): Boolean {
-        return project.macroExpansionManager.isExpansionFile(file) || project.cargoProjects.isGeneratedFile(file)
+        return MacroExpansionManager.isExpansionFile(file) || project.cargoProjects.isGeneratedFile(file)
     }
 
     override fun getOriginalElements(element: PsiElement): List<PsiElement> {

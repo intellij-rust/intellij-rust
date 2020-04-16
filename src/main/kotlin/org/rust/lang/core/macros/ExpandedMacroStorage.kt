@@ -497,7 +497,7 @@ class SourceFile(
         checkReadAccessAllowed() // Needed to access PSI
         checkIsSmartMode(project)
 
-        val isExpansionFile = project.macroExpansionManager.isExpansionFile(file)
+        val isExpansionFile = MacroExpansionManager.isExpansionFile(file)
         val isIndexedFile = file.isValid && (
             FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) || isExpansionFile)
 

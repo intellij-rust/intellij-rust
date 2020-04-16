@@ -147,7 +147,7 @@ class AttachCargoProjectActionTest : RsWithToolchainTestBase() {
         if (shouldBeEnabled) {
             val latch = CountDownLatch(1)
             project.messageBus.connect().subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     latch.countDown()
                 }
             })

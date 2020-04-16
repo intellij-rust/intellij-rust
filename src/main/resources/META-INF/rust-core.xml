@@ -880,6 +880,8 @@
 
         <!-- Macro expansion service -->
 
+        <projectService serviceInterface="org.rust.lang.core.macros.MacroExpansionManager"
+                        serviceImplementation="org.rust.lang.core.macros.MacroExpansionManagerImpl"/>
         <indexedRootsProvider implementation="org.rust.lang.core.macros.RsIndexableSetContributor"/>
         <writingAccessProvider implementation="org.rust.lang.core.macros.RsMacroExpansionWritingAccessProvider"/>
         <cachesInvalidator implementation="org.rust.lang.core.macros.RsMacroExpansionCachesInvalidator"/>
@@ -925,11 +927,12 @@
             <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
             <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
         </component>
-        <component>
-            <interface-class>org.rust.lang.core.macros.MacroExpansionManager</interface-class>
-            <implementation-class>org.rust.lang.core.macros.MacroExpansionManagerImpl</implementation-class>
-        </component>
     </project-components>
+
+    <projectListeners>
+        <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"
+                  topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
+    </projectListeners>
 
     <actions>
         <action id="Rust.NewRustFile"

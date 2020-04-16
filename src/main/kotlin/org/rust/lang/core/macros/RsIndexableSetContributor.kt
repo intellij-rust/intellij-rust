@@ -13,5 +13,5 @@ class RsIndexableSetContributor : IndexableSetContributor() {
     override fun getAdditionalRootsToIndex(): Set<VirtualFile> = emptySet()
 
     override fun getAdditionalProjectRootsToIndex(project: Project): Set<VirtualFile> =
-        listOfNotNull(project.macroExpansionManager.indexableDirectory).toSet()
+        listOfNotNull(project.macroExpansionManagerIfCreated?.indexableDirectory).toSet()
 }
