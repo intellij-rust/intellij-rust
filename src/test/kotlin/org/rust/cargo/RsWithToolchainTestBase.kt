@@ -24,6 +24,8 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
 
     open val dataPath: String = ""
 
+    open val disableMissedCacheAssertions: Boolean get() = true
+
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
 
     protected fun FileTree.create(): TestProject =
@@ -62,7 +64,9 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         super.setUp()
         rustupFixture = RustupTestFixture(project)
         rustupFixture.setUp()
-        disableMissedCacheAssertions(testRootDisposable)
+        if (disableMissedCacheAssertions) {
+            disableMissedCacheAssertions(testRootDisposable)
+        }
     }
 
     override fun tearDown() {

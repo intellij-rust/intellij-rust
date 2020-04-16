@@ -818,6 +818,8 @@ private class MacroExpansionServiceImplInner(
             dirs.dataFile.delete()
         }
         dispose()
+        pool.shutdownNow()
+        pool.awaitTermination(5, TimeUnit.SECONDS)
     }
 }
 
