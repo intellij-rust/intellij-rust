@@ -37,10 +37,10 @@ import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.concurrency.QueueProcessor.ThreadToUse
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexableFileSet
-import com.intellij.util.io.createDirectories
-import com.intellij.util.io.createFile
-import com.intellij.util.io.delete
-import com.intellij.util.io.exists
+import com.intellij.util.io.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -128,6 +128,7 @@ class MacroExpansionManagerImpl(
     val project: Project
 ) : MacroExpansionManager,
     PersistentStateComponent<MacroExpansionManagerImpl.PersistentState>,
+    com.intellij.configurationStore.SettingsSavingComponent,
     Disposable {
 
     data class PersistentState(var directoryName: String? = null)
@@ -141,8 +142,11 @@ class MacroExpansionManagerImpl(
     private var isDisposed: Boolean = false
 
     override fun getState(): PersistentState {
-        inner?.save()
         return PersistentState(dirs?.projectDirName)
+    }
+
+    override suspend fun save() {
+        inner?.save()
     }
 
     override fun loadState(state: PersistentState) {
@@ -404,6 +408,8 @@ private class MacroExpansionServiceImplInner(
     private val storage: ExpandedMacroStorage,
     val expansionsDirVi: VirtualFile
 ) {
+    @Volatile
+    private var lastSavedStorageModCount: Long = storage.modificationTracker.modificationCount
 
     private val taskQueue = MacroExpansionTaskQueue(project)
 
@@ -433,18 +439,30 @@ private class MacroExpansionServiceImplInner(
         return VfsUtil.isAncestor(expansionsDirVi, file, true)
     }
 
-    fun save() {
-        // TODO async
-        Files.createDirectories(dataFile.parent)
-        dataFile.newDeflaterDataOutputStream().use { data ->
-            ExpandedMacroStorage.saveStorage(storage, data)
-            val dirToSave = MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath) ?: run {
-                MACRO_LOG.warn("Expansion directory does not exist when saving the component: ${dirs.expansionDirPath}")
-                MacroExpansionFileSystem.FSItem.FSDir(null, dirs.projectDirName)
+    suspend fun save() {
+        if (lastSavedStorageModCount == storage.modificationTracker.modificationCount) return
+
+        withContext(Dispatchers.IO) { // ensure dispatcher knows we are doing blocking IO
+            // Using a buffer to avoid IO in the read action
+            // BACKCOMPAT: 2020.1 use async read action and extract `runReadAction` from `withContext`
+            val (buffer, modCount) = runReadAction {
+                val buffer = ChunkedByteArrayOutputStream(1024*1024) // average stdlib storage size
+                DataOutputStream(buffer).use { data ->
+                    ExpandedMacroStorage.saveStorage(storage, data)
+                    val dirToSave = MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath) ?: run {
+                        MACRO_LOG.warn("Expansion directory does not exist when saving the component: ${dirs.expansionDirPath}")
+                        MacroExpansionFileSystem.FSItem.FSDir(null, dirs.projectDirName)
+                    }
+                    MacroExpansionFileSystem.writeFSItem(data, dirToSave)
+                }
+                buffer to storage.modificationTracker.modificationCount
             }
-            MacroExpansionFileSystem.writeFSItem(data, dirToSave)
+
+            Files.createDirectories(dataFile.parent)
+            dataFile.newDeflaterDataOutputStream().use { it.writeStream(buffer.toInputStream()) }
+            MacroExpansionFileSystemRootsLoader.saveProjectDirs()
+            lastSavedStorageModCount = modCount
         }
-        MacroExpansionFileSystemRootsLoader.saveProjectDirs()
     }
 
     fun dispose() {
@@ -933,7 +951,9 @@ private class MacroExpansionServiceImplInner(
         taskQueue.cancelAll()
 
         if (saveCacheOnDispose) {
-            save()
+            runBlocking {
+                save()
+            }
         } else {
             dirs.dataFile.delete()
         }

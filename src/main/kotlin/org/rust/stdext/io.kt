@@ -5,10 +5,11 @@
 
 package org.rust.stdext
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataInputOutputUtil
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.IOException
+import java.io.*
+
+typealias ChunkedByteArrayOutputStream = org.apache.commons.io.output.ByteArrayOutputStream
 
 @Throws(IOException::class)
 fun DataInput.readVarInt(): Int =
@@ -17,3 +18,7 @@ fun DataInput.readVarInt(): Int =
 @Throws(IOException::class)
 fun DataOutput.writeVarInt(value: Int): Unit =
     DataInputOutputUtil.writeINT(this, value)
+
+@Throws(IOException::class)
+fun OutputStream.writeStream(input: InputStream): Unit =
+    FileUtil.copy(input, this)
