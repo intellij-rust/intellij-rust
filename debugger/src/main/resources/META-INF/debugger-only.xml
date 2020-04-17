@@ -3,7 +3,8 @@
 
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"
-                        interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"/>
+                        interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"
+                        dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="cidr.debugger">
