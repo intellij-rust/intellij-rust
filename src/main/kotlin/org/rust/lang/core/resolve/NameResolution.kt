@@ -1344,7 +1344,7 @@ private fun processLexicalDeclarations(
                 val letDecls = mutableListOf<RsLetDecl>()
                 val stmts = when (scope) {
                     is RsBlock -> scope.expandedStmtsAndTailExpr.first
-                    is RsReplCodeFragment -> scope.stmts
+                    is RsReplCodeFragment -> scope.expandedStmtsAndTailExpr.first
                     else -> emptyList()  // unreachable
                 }
                 for (stmt in stmts) {
@@ -1484,7 +1484,7 @@ inline fun processWithShadowing(
     }
 }
 
-private fun findPrelude(element: RsElement): RsFile? {
+fun findPrelude(element: RsElement): RsFile? {
     val crateRoot = element.crateRoot as? RsFile ?: return null
     val cargoPackage = crateRoot.containingCargoPackage
     val isStdlib = cargoPackage?.origin == PackageOrigin.STDLIB && !element.isDoctestInjection

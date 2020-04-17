@@ -5,6 +5,9 @@
 
 package org.rust.ide.console
 
+import org.rust.MockEdition
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
+
 class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
 
     fun `test initial completion`() = checkContainsCompletion("""
@@ -120,5 +123,123 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
     """, variants = listOf(
         "var1",
         "var2"
+    ))
+
+    fun `test child module without import`() = checkSingleCompletion("""
+        mod mod1 { pub fn frobnicate() {} }
+    """, """
+        mod1::frobn/*caret*/
+    """, """
+        mod1::frobnicate()/*caret*/
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test child module with import`() = checkSingleCompletion("""
+        mod mod1 { pub fn frobnicate() {} }
+        use mod1::frobnicate;
+    """, """
+        frobn/*caret*/
+    """, """
+        frobnicate()/*caret*/
+    """)
+
+    fun `test imports 1`() = checkContainsCompletion("""
+        use std::collections;
+    """, """
+        collections::/*caret*/
+    """, variants = listOf(
+        "HashMap",
+        "BTreeSet"
+    ))
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test imports 2`() = checkContainsCompletion("""
+        use std::collections;
+    """, """
+        use collections::hash_map;
+    """, """
+        hash_map::/*caret*/
+    """, variants = listOf(
+        "HashMap",
+        "Iter"
+    ))
+
+    fun `test import f32 1`() = checkContainsCompletion("""
+        use std::f32;
+    """, """
+        f32::consts::/*caret*/
+    """, variants = listOf(
+        "PI",
+        "E"
+    ))
+
+    fun `test import f32 2`() = checkContainsCompletion("""
+        let foo = f32::log2(2f32);
+    """, """
+        use std::f32;
+    """, """
+        foo./*caret*/
+    """, variants = listOf(
+        "sin",
+        "cos",
+        "log"
+    ))
+
+    fun `test redefine function`() = checkContainsCompletion("""
+        fn foo() -> Option<i32> { Some(1) }
+        let var = foo();
+    """, """
+        fn foo() {}
+    """, """
+        var./*caret*/
+    """, variants = listOf(
+        "unwrap",
+        "expect"
+    ))
+
+    fun `test redefine function 2`() = checkContainsCompletion("""
+        fn foo() -> i32 { 1 }
+    """, """
+        fn foo() -> Option<i32> { Some(1) }
+    """, """
+        foo()./*caret*/
+    """, variants = listOf(
+        "unwrap",
+        "expect"
+    ))
+
+    fun `test redefine struct`() = checkContainsCompletion("""
+        struct Foo { field1: i32, field2: i32 }
+        let var1 = Foo { field1: 0, field2: 0 };
+    """, """
+        struct Bar { field3: i32 }
+    """, """
+        struct Foo { field4: i32 }
+    """, """
+        var1./*caret*/
+    """, variants = listOf(
+        "field1",
+        "field2"
+    ))
+
+    fun `test redefine struct from prelude`() = checkContainsCompletion("""
+        let foo = Some(1);
+    """, """
+        struct Some(i32, i32);
+    """, """
+        foo./*caret*/
+    """, variants = listOf(
+        "unwrap",
+        "expect"
+    ))
+
+    fun `test last expression is RsBlock`() = checkContainsCompletion("""
+        fn func1() {}
+        fn func2() {}
+    """, """
+        { func/*caret*/ }
+    """, variants = listOf(
+        "func1",
+        "func2"
     ))
 }

@@ -61,7 +61,7 @@ private class RsStructureViewElement(
                 is RsStructItem -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsEnumVariant -> psi.blockFields?.namedFieldDeclList.orEmpty()
                 is RsFunction -> psi.block?.let { extractItems(it) }.orEmpty()
-                is RsReplCodeFragment -> psi.namedElements + psi.getVariablesDeclarations()
+                is RsReplCodeFragment -> psi.namedElementsUnique.values + psi.getVariablesDeclarations()
                 else -> emptyList()
             }
         }
