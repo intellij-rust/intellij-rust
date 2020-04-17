@@ -51,13 +51,21 @@ class RsFormatterTest : RsFormatterTestBase() {
 
         pub ( super ) struct S2;
 
-        pub ( in foo :: bar ) struct S3;
+        pub ( in foo :: bar )struct S3;
+
+        struct S4(pub(i32, i32));
+
+        struct Foo<'a>(pub(crate)     &'a i32);
     """, """
         pub(crate) struct S1;
 
         pub(super) struct S2;
 
         pub(in foo::bar) struct S3;
+
+        struct S4(pub (i32, i32));
+
+        struct Foo<'a>(pub(crate) &'a i32);
     """)
 
     fun `test align incomplete chain`() = doTextTest("""
