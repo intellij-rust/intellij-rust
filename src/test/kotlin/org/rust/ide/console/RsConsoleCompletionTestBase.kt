@@ -26,20 +26,21 @@ abstract class RsConsoleCompletionTestBase : RsTestBase() {
         super.tearDown()
     }
 
-    protected fun checkContainsCompletion(previousLines: String, lastLine: String, variants: List<String>) {
-        val previousLinesTrimmed = previousLines.trimIndent()
-        val lastLineTrimmed = lastLine.trimIndent()
+    protected fun checkContainsCompletion(vararg commands: String, variants: List<String>) {
+        val previousCommands = commands.slice(0 until commands.size - 1)
+        val lastCommand = commands.last()
 
-        completionFixture.checkContainsCompletion(Before(previousLinesTrimmed, lastLineTrimmed), variants)
-        if (previousLines.isBlank()) return
+        completionFixture.checkContainsCompletion(Before(previousCommands, lastCommand), variants)
 
-        val lastLines = previousLinesTrimmed + lastLineTrimmed
-        completionFixture.checkContainsCompletion(Before("", lastLines), variants)
-        completionFixture.checkContainsCompletion(Before("", "if true { $lastLines }"), variants)
-        completionFixture.checkContainsCompletion(Before("", "fn main() { $lastLines }"), variants)
+        if (previousCommands.size == 1) {
+            val allCommands = previousCommands[0] + lastCommand
+            completionFixture.checkContainsCompletion(Before(listOf(""), allCommands), variants)
+            completionFixture.checkContainsCompletion(Before(listOf(""), "if true { $allCommands }"), variants)
+            completionFixture.checkContainsCompletion(Before(listOf(""), "fn main() { $allCommands }"), variants)
+        }
     }
 
-    protected fun checkSingleCompletion(previousLines: String, lastLineBefore: String, lastLineAfter: String) {
-        completionFixture.doSingleCompletion(Before(previousLines, lastLineBefore), lastLineAfter)
+    protected fun checkSingleCompletion(previousCommands: String, lastCommandBefore: String, lastCommandAfter: String) {
+        completionFixture.doSingleCompletion(Before(listOf(previousCommands), lastCommandBefore), lastCommandAfter)
     }
 }

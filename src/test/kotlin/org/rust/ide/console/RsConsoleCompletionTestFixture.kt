@@ -16,18 +16,19 @@ import org.rust.lang.core.psi.RsReplCodeFragment
 class RsConsoleCompletionTestFixture(fixture: CodeInsightTestFixture) : RsCompletionTestFixtureBase<Before>(fixture) {
 
     override fun prepare(code: Before) {
-        val (previousLines, lastLine) = code
+        val (previousCommands, lastCommand) = code
+        val previousCommandsTrimmed = previousCommands.map { it.trimIndent() }
 
         // create main.rs file, which will be used as crate root
         InlineFile(myFixture, "", "main.rs")
 
-        InlineFile(myFixture, lastLine.trimIndent(), RsConsoleView.VIRTUAL_FILE_NAME).withCaret()
+        InlineFile(myFixture, lastCommand.trimIndent(), RsConsoleView.VIRTUAL_FILE_NAME).withCaret()
 
         val codeFragment = myFixture.file as RsReplCodeFragment
         val crateRoot = codeFragment.crateRoot as RsFile?
-        codeFragment.context = RsConsoleCodeFragmentContext.createContext(myFixture.project, crateRoot, previousLines.trimIndent())
+        codeFragment.context = RsConsoleCodeFragmentContext.createContext(myFixture.project, crateRoot, previousCommandsTrimmed)
         assertNotNull(codeFragment.crateRoot)
     }
 
-    data class Before(val previousLines: String, val lastLine: String)
+    data class Before(val previousCommands: List<String>, val lastCommand: String)
 }

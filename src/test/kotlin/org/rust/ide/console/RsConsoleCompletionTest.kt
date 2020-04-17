@@ -11,7 +11,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
 
     """, """
         /*caret*/
-    """, listOf(
+    """, variants = listOf(
         "let",
         "fn",
         "struct",
@@ -24,7 +24,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let var2 = var1 + 1;
     """, """
         let x = var/*caret*/
-    """, listOf(
+    """, variants = listOf(
         "var1",
         "var2"
     ))
@@ -41,7 +41,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let var1 = Some(1);
     """, """
         let x = var1./*caret*/
-    """, listOf(
+    """, variants = listOf(
         "unwrap",
         "map",
         "and_then"
@@ -79,7 +79,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let s = "foo";
     """, """
         s./*caret*/
-    """, listOf(
+    """, variants = listOf(
         "len",
         "chars"
     ))
@@ -88,7 +88,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         let v = Vec::<i32>::new();
     """, """
         v.i/*caret*/
-    """, listOf(
+    """, variants = listOf(
         "insert",
         "is_empty",
         "index"
@@ -117,7 +117,7 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
             }
         }
         nop();
-    """, listOf(
+    """, variants = listOf(
         "var1",
         "var2"
     ))
