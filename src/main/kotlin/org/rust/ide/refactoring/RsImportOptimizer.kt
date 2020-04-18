@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.formatter.processors.asTrivial
+import org.rust.lang.core.psi.ext.asTrivial
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
