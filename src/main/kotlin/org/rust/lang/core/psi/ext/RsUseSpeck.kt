@@ -30,6 +30,13 @@ val RsUseSpeck.nameInScope: String? get() {
     return baseName
 }
 
+val RsUseSpeck.isIdentifier: Boolean
+    get() {
+        val path = path
+        if (!(path != null && path == firstChild && path == lastChild)) return false
+        return (path.identifier != null && path.path == null && path.coloncolon == null)
+    }
+
 fun RsUseSpeck.forEachLeafSpeck(consumer: (RsUseSpeck) -> Unit) {
     val group = useGroup
     if (group == null) consumer(this) else group.useSpeckList.forEach { it.forEachLeafSpeck(consumer) }

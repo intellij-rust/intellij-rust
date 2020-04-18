@@ -249,6 +249,103 @@ class RsImportOptimizerTest: RsTestBase() {
         fn main() {}
     """)
 
+    fun `test remove braces if single import with alias`() = doTest("""
+        use getopts::{A as B};
+
+        fn main() {}
+    """, """
+        use getopts::A as B;
+
+        fn main() {}
+    """)
+
+    fun `test remove braces if single import with alias and comma`() = doTest("""
+        use getopts::{A as B,};
+
+        fn main() {}
+    """, """
+        use getopts::A as B;
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if single import with alias with left comment`() = checkNotChanged("""
+        use getopts::{/*comment*/A as B};
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if single import with alias with right comment`() = checkNotChanged("""
+        use getopts::{A as B/*comment*/};
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if single import with alias with inner left comment`() = checkNotChanged("""
+        use getopts::{A /*comment*/as B};
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if single import with alias with inner right comment`() = checkNotChanged("""
+        use getopts::{A as /*comment*/ B};
+
+        fn main() {}
+    """)
+
+    fun `test remove braces if single import with extra comma`() = doTest("""
+        use getopts::{optopt,};
+
+        fn main() {}
+    """, """
+        use getopts::optopt;
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if import with left comment`() = checkNotChanged("""
+        use getopts::{/*comment*/optopt};
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces if import with right comment`() = checkNotChanged("""
+        use getopts::{optopt/*comment*/};
+
+        fn main() {}
+    """)
+
+    fun `test wont remove braces if multi import`() = checkNotChanged("""
+        use getopts::{optarg, optopt};
+
+        fn main() {}
+    """)
+
+    fun `test won't remove braces for single self`() = checkNotChanged("""
+        use getopts::{self};
+
+        fn main() {}
+    """)
+
+    fun `test remove braces with multiple imports`() = doTest("""
+        use getopts::{optopt};
+        use getopts::{A as B};
+        use std::io::{self, Read, Write};
+        use std::Vec::{Vec};
+        use std::Vec::{Vec,};
+
+
+        fn main() {}
+    """, """
+        use getopts::optopt;
+        use getopts::A as B;
+        use std::io::{self, Read, Write};
+        use std::Vec::Vec;
+        use std::Vec::Vec;
+
+        fn main() {}
+    """)
+
     fun `test do not move use items from test mod`() = doTest("""
         use std::io::Read;
 
@@ -389,4 +486,6 @@ class RsImportOptimizerTest: RsTestBase() {
 
     private fun doTest(@Language("Rust") code: String, @Language("Rust") excepted: String) =
         checkEditorAction(code, excepted, "OptimizeImports")
+
+    private fun checkNotChanged(@Language("Rust") code: String) = doTest(code, code)
 }

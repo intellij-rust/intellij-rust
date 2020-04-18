@@ -37,6 +37,7 @@ import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
+import kotlin.reflect.KMutableProperty0
 
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
@@ -354,6 +355,16 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     protected open fun configureByFileTree(text: String): TestProject {
         return fileTreeFromText(text).createAndOpenFileWithCaretMarker()
+    }
+
+    protected inline fun <T> withOptionValue(optionProperty: KMutableProperty0<T>, value: T, action: () -> Unit) {
+        val oldValue = optionProperty.get()
+        optionProperty.set(value)
+        try {
+            action()
+        } finally {
+            optionProperty.set(oldValue)
+        }
     }
 
     companion object {
