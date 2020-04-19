@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.QueueProcessor.ThreadToUse
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexableFileSet
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.createFile
 import com.intellij.util.io.delete
 import com.intellij.util.io.exists
 import org.jetbrains.annotations.TestOnly
@@ -52,10 +53,7 @@ import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.openapiext.*
-import org.rust.stdext.ThreadLocalDelegate
-import org.rust.stdext.newDeflaterDataOutputStream
-import org.rust.stdext.newInflaterDataInputStream
-import org.rust.stdext.randomLowercaseAlphabetic
+import org.rust.stdext.*
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -88,6 +86,11 @@ interface MacroExpansionManager {
         @JvmStatic
         fun isExpansionFile(file: VirtualFile): Boolean =
             file.fileSystem == MacroExpansionFileSystem.getInstance()
+
+        @JvmStatic
+        fun invalidateCaches() {
+            getCorruptionMarkerFile().createFile()
+        }
     }
 }
 
@@ -107,9 +110,13 @@ inline fun <T> MacroExpansionManager.withExpansionState(
 val MACRO_LOG = Logger.getInstance("org.rust.macros")
 // The path is visible in indexation progress
 const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
+private const val CORRUPTION_MARKER_NAME = "corruption.marker"
 
 fun getBaseMacroDir(): Path =
     pluginDirInSystem().resolve("macros")
+
+private fun getCorruptionMarkerFile(): Path =
+    getBaseMacroDir().resolve(CORRUPTION_MARKER_NAME)
 
 @State(name = "MacroExpansionManager", storages = [
     Storage(StoragePathMacros.WORKSPACE_FILE, roamingType = RoamingType.DISABLED),
@@ -287,6 +294,7 @@ private class MacroExpansionServiceBuilder private constructor(
     companion object {
         fun prepare(dirs: Dirs): MacroExpansionServiceBuilder {
             val dataFile = dirs.dataFile
+            checkInvalidatedStorage()
             MacroExpansionFileSystemRootsLoader.loadProjectDirs()
             val loaded = load(dataFile)
 
@@ -319,6 +327,12 @@ private class MacroExpansionServiceBuilder private constructor(
             } catch (e: Exception) {
                 MACRO_LOG.warn(e)
                 null
+            }
+        }
+
+        private fun checkInvalidatedStorage() {
+            if (getCorruptionMarkerFile().exists()) {
+                getBaseMacroDir().cleanDirectory()
             }
         }
     }
