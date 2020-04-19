@@ -139,4 +139,12 @@ class RsCommenterTest : RsTestBase() {
             // x * 2
         }<caret>
     """, IdeActions.ACTION_COMMENT_LINE)
+
+    fun `test complete block comment`() = checkEditorAction("""
+        /*<caret>
+    """, """
+        /*
+        <caret>
+         */
+    """, IdeActions.ACTION_EDITOR_ENTER)
 }
