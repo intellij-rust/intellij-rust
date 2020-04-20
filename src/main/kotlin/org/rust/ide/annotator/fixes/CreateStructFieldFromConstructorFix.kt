@@ -53,7 +53,7 @@ class CreateStructFieldFromConstructorFix(
     }
 
     private fun RsPsiFactory.createBlockFields(pub: Boolean, name: String, type: Ty): RsBlockFields {
-        return createBlockFields(listOf(RsPsiFactory.BlockField(pub, name, type)))
+        return createBlockFields(listOf(RsPsiFactory.BlockField(name, type, pub)))
     }
 
     companion object {

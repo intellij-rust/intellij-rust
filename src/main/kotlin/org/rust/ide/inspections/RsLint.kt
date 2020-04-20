@@ -13,14 +13,15 @@ import org.rust.lang.core.psi.ext.*
  */
 enum class RsLint(
     val id: String,
-    val groupId: String? = null,
+    val groupIds: List<String> = emptyList(),
     val defaultLevel: RsLintLevel = RsLintLevel.WARN
 ) {
-    NonSnakeCase("non_snake_case", "bad_style"),
-    NonCamelCaseTypes("non_camel_case_types", "bad_style"),
-    NonUpperCaseGlobals("non_upper_case_globals", "bad_style"),
+    NonSnakeCase("non_snake_case", listOf("bad_style")),
+    NonCamelCaseTypes("non_camel_case_types", listOf("bad_style")),
+    NonUpperCaseGlobals("non_upper_case_globals", listOf("bad_style")),
     Deprecated("deprecated"),
-    UnusedVariables("unused_variables", "unused");
+    UnusedVariables("unused_variables", listOf("unused")),
+    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"));
 
     /**
      * Returns the level of the lint for the given PSI element.
@@ -30,7 +31,7 @@ enum class RsLint(
     private fun explicitLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsDocAndAttributeOwner>()
         .flatMap { it.queryAttributes.metaItems }
-        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.name == id || it.name == groupId } }
+        .filter { it.metaItemArgs?.metaItemList.orEmpty().any { it.id == id || it.id in groupIds } }
         .mapNotNull { it.name?.let { RsLintLevel.valueForId(it) } }
         .firstOrNull()
 
