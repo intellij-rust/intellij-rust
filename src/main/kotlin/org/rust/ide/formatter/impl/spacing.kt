@@ -82,6 +82,7 @@ fun createSpacingBuilder(commonSettings: CommonCodeStyleSettings, rustSettings: 
     val sb2 = sb1
         //== items
         .before(VIS_RESTRICTION).spaces(0) // pub(crate)
+        .after(VIS).spaces(1)
         .between(VALUE_PARAMETER_LIST, RET_TYPE).spacing(1, 1, 0, true, 0)
         .before(WHERE_CLAUSE).spacing(1, 1, 0, true, 0)
         .beforeInside(LBRACE, FLAT_BRACE_BLOCKS).spaces(1)
