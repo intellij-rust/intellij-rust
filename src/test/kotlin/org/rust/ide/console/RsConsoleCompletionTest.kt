@@ -93,4 +93,32 @@ class RsConsoleCompletionTest : RsConsoleCompletionTestBase() {
         "is_empty",
         "index"
     ))
+
+    fun `test after statement`() = checkSingleCompletion("""
+        fn nop() {}
+        let frobnicate = 1;
+    """, """
+        nop();
+        let x = frobn/*caret*/
+    """, """
+        nop();
+        let x = frobnicate/*caret*/
+    """)
+
+    fun `test nested`() = checkContainsCompletion("""
+        fn nop() {}
+        let var1 = 1;
+        let var2 = 2;
+    """, """
+        nop();
+        if true {
+            for i in 0..10 {
+                let x = var/*caret*/
+            }
+        }
+        nop();
+    """, listOf(
+        "var1",
+        "var2"
+    ))
 }

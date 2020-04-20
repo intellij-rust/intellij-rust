@@ -8,8 +8,8 @@ package org.rust.cargo.project.toolwindow
 import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -41,6 +41,7 @@ class CargoToolWindowFactory : ToolWindowFactory, Condition<Project>, DumbAware 
     }
 
     override fun value(project: Project): Boolean {
+        if (CargoToolWindow.isRegistered(project)) return false
         val cargoProjects = project.cargoProjects
         return cargoProjects.hasAtLeastOneValidProject || cargoProjects.suggestManifests().any()
     }
@@ -125,11 +126,9 @@ class CargoToolWindow(
 
         private val LOG: Logger = Logger.getInstance(CargoToolWindow::class.java)
 
-        fun initializeToolWindowIfNeeded(project: Project) {
+        fun initializeToolWindow(project: Project) {
             try {
                 val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
-                val window = manager.getToolWindow(ID)
-                if (window != null) return
                 for (bean in ToolWindowEP.EP_NAME.extensionList) {
                     if (ID == bean.id) {
                         // BACKCOMPAT: 2019.3
@@ -140,6 +139,11 @@ class CargoToolWindow(
             } catch (e: Exception) {
                 LOG.error("Unable to initialize $ID tool window", e)
             }
+        }
+
+        fun isRegistered(project: Project): Boolean {
+            val manager = ToolWindowManager.getInstance(project) ?: return false
+            return manager.getToolWindow(ID) != null
         }
     }
 }

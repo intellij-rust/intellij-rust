@@ -51,7 +51,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsCh
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindowIfNeeded
+import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
@@ -98,7 +98,7 @@ open class CargoProjectsServiceImpl(
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
                 override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
-                    initializeToolWindowIfNeeded(project)
+                    initializeToolWindow(project)
                 }
             })
         }
