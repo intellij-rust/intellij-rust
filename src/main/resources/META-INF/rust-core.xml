@@ -907,7 +907,8 @@
 
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
-                        interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"/>
+                        interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
+                        dynamic="true"/>
     </extensionPoints>
 
     <application-components>
