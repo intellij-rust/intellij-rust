@@ -10,12 +10,16 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.siblings
 import org.rust.ide.presentation.insertionSafeText
 import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyTuple
+import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 import org.rust.stdext.buildList
 
@@ -155,12 +159,18 @@ class RsExtractFunctionConfig private constructor(
                 val unselectedParamsTexts = parameters
                     .filter { !it.isSelected }
                     .map { "let ${it.name}: ${it.type} ;\n" }
-                val elementsTexts = elements.map { it.text }
+                val elementsText = if (elements.isNotEmpty()) {
+                    val last = elements.last()
+                    val allElements = elements.first().siblings().takeWhile { it != last } + last
+                    allElements.joinToString(separator = "") { it.text }
+                } else {
+                    ""
+                }
                 val returnExprText = returnValue?.exprText.orEmpty()
 
                 val bodyContent = buildList<String> {
                     addAll(unselectedParamsTexts)
-                    addAll(elementsTexts)
+                    add(elementsText)
                     if (returnExprText.isNotEmpty()) {
                         add(returnExprText)
                     }
