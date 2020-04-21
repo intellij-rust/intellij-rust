@@ -30,7 +30,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.expandedFrom
-import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.stubs.RsFileStub
@@ -78,7 +78,7 @@ class RsFile(
             val originalFile = originalFile
             if (originalFile != this) return (originalFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
-            val state = project.macroExpansionManager.expansionState
+            val state = project.macroExpansionManagerIfCreated?.expansionState
             // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
             val (key, cacheDependency) = if (state != null) {
                 CACHED_DATA_MACROS_KEY to state.stepModificationTracker
@@ -180,7 +180,7 @@ class RsFile(
         // the key PSI element
         val originalFile = originalFile as? RsFile ?: return null
 
-        val state = project.macroExpansionManager.expansionState
+        val state = project.macroExpansionManagerIfCreated?.expansionState
         // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
         val (key, cacheDependency) = if (state != null) {
             MOD_DECL_MACROS_KEY to state.stepModificationTracker

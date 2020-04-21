@@ -91,7 +91,7 @@ class CargoToolWindow(
     init {
         with(project.messageBus.connect()) {
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     invokeLater {
                         projectStructure.updateCargoProjects(projects.sortedBy { it.manifest })
                     }

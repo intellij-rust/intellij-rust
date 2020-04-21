@@ -62,6 +62,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.*
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.applyWithSymlink
@@ -77,7 +78,7 @@ import java.util.concurrent.atomic.AtomicReference
     Storage("misc.xml", deprecated = true)
 ])
 open class CargoProjectsServiceImpl(
-    val project: Project
+    final override val project: Project
 ) : CargoProjectsService, PersistentStateComponent<Element> {
     init {
         with(project.messageBus.connect()) {
@@ -97,7 +98,7 @@ open class CargoProjectsServiceImpl(
             })
 
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(projects: Collection<CargoProject>) {
+                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     initializeToolWindow(project)
                 }
             })
@@ -246,7 +247,7 @@ open class CargoProjectsServiceImpl(
                             check(isUnitTestMode)
                         }
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
-                            .cargoProjectsUpdated(projects)
+                            .cargoProjectsUpdated(this, projects)
                         initialized = true
                     }
                 }
@@ -272,6 +273,9 @@ open class CargoProjectsServiceImpl(
         val loaded = state.getChildren("cargoProject")
             .mapNotNull { it.getAttributeValue("FILE") }
             .map { CargoProjectImpl(Paths.get(it), this) }
+
+        // Wake the macro expansion service as soon as possible.
+        project.macroExpansionManager
 
         // Refresh projects via `invokeLater` to avoid model modifications
         // while the project is being opened. Use `updateSync` directly

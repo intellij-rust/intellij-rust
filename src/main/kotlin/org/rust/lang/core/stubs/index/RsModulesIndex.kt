@@ -6,7 +6,6 @@
 package org.rust.lang.core.stubs.index
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
@@ -15,7 +14,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.RsConstants
-import org.rust.lang.core.macros.macroExpansionManager
+import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.pathAttribute
@@ -34,7 +33,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             val result = SmartList<RsModDeclItem>()
 
-            val scope = project.macroExpansionManager.expansionState?.expandedSearchScope
+            val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope
                 ?: RsWithMacrosProjectScope(project)
             StubIndex.getInstance().processElements(
                 KEY, key, project, scope, RsModDeclItem::class.java
