@@ -162,7 +162,8 @@ class RsDebugProcessConfigurationHelper(
             "^(core::(\\w+::)+)Cell<.+>$",
             "^(core::(\\w+::)+)Ref<.+>$",
             "^(core::(\\w+::)+)RefMut<.+>$",
-            "^(core::(\\w+::)+)RefCell<.+>$"
+            "^(core::(\\w+::)+)RefCell<.+>$",
+            "^core::num::NonZero.+$"
         )
     }
 }
