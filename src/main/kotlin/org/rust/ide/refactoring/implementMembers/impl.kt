@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromElements
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -41,7 +42,7 @@ fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     if (chosen.isEmpty()) return
     runWriteAction {
         // Non-null was checked by `findMembersToImplement`.
-        insertNewTraitMembers(chosen, impl.members!!, trait, editor)
+        insertNewTraitMembers(chosen, impl, trait, editor)
     }
 }
 
@@ -56,20 +57,21 @@ private fun findMembersToImplement(impl: RsImplItem): Pair<TraitImplementationIn
 
 private fun insertNewTraitMembers(
     selected: Collection<RsAbstractable>,
-    existingMembers: RsMembers,
+    impl: RsImplItem,
     trait: BoundElement<RsTraitItem>,
     editor: Editor?
 ) {
     checkWriteAccessAllowed()
     if (selected.isEmpty()) return
 
-    val templateImpl = RsPsiFactory(existingMembers.project).createTraitMembers(selected, trait.subst)
+    val templateImpl = RsPsiFactory(impl.project).createTraitMembers(selected, trait, impl)
 
     val traitMembers = trait.element.expandedMembers
     val newMembers = templateImpl.childrenOfType<RsAbstractable>()
 
     // [1] First, check if the order of the existingMembers already implemented
     // matches the order of existingMembers in the trait declaration.
+    val existingMembers = impl.members!!
     val existingMembersWithPosInTrait = existingMembers.expandedMembers.map { existingMember ->
         Pair(existingMember, traitMembers.indexOfFirst {
             it.elementType == existingMember.elementType && it.name == existingMember.name
@@ -151,7 +153,12 @@ private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiEle
     return RsPsiFactory(left.project).createWhitespace("\n".repeat(extraLineCount))
 }
 
-private fun RsPsiFactory.createTraitMembers(members: Collection<RsAbstractable>, subst: Substitution): RsMembers {
+private fun RsPsiFactory.createTraitMembers(
+    members: Collection<RsAbstractable>,
+    trait: BoundElement<RsTraitItem>,
+    impl: RsImplItem
+): RsMembers {
+    val subst = trait.subst
     val body = members.joinToString(separator = "\n", transform = {
         when (it) {
             is RsConstant -> {
@@ -162,7 +169,7 @@ private fun RsPsiFactory.createTraitMembers(members: Collection<RsAbstractable>,
             is RsTypeAlias ->
                 "    type ${it.escapedName} = ();"
             is RsFunction ->
-                "    ${it.getSignatureText(subst) ?: ""}{\n        unimplemented!()\n    }"
+                "    ${it.getSignatureText(subst, trait, impl) ?: ""}{\n        unimplemented!()\n    }"
             else ->
                 error("Unknown trait member")
         }
@@ -171,7 +178,11 @@ private fun RsPsiFactory.createTraitMembers(members: Collection<RsAbstractable>,
     return createMembers(body)
 }
 
-private fun RsFunction.getSignatureText(subst: Substitution): String? {
+private fun RsFunction.getSignatureText(
+    subst: Substitution,
+    trait: BoundElement<RsTraitItem>,
+    impl: RsImplItem
+): String? {
     val async = if (isAsync) "async " else ""
     val unsafe = if (isUnsafe) "unsafe " else ""
     // We can't simply take a substring of original method declaration
@@ -180,9 +191,22 @@ private fun RsFunction.getSignatureText(subst: Substitution): String? {
     val generics = typeParameterList?.text ?: ""
 
     val selfArgument = listOfNotNull(selfParameter?.substAndGetText(subst))
+    val typeParameters = trait.element.typeParameters.mapIndexed { index, typeParameter ->
+        typeParameter.identifier.text to (index to typeParameter)
+    }.toMap()
+    val typeArguments = impl.traitRef?.path?.typeArguments.orEmpty()
     val valueArguments = valueParameters.map {
+        val fnPointerType= when (val typeReference = it.typeReference) {
+            is RsFnPointerType -> typeReference
+            is RsBaseType -> {
+                val (index, typeParameter) = typeParameters[typeReference.type.shortPresentableText] ?: (-1 to null)
+                (typeArguments.getOrNull(index) ?: typeParameter?.typeReference) as? RsFnPointerType
+            }
+            else -> null
+        }
+        val extern = fnPointerType?.externAbi?.extern?.text?.let { text -> "$text " } ?: ""
         // fix possible anon parameter
-        "${it.pat?.text ?: "_"}: ${it.typeReference?.substAndGetText(subst) ?: "()"}"
+        "${it.pat?.text ?: "_"}: $extern${it.typeReference?.substAndGetText(subst) ?: "()"}"
     }
     val allArguments = selfArgument + valueArguments
 

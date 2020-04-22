@@ -209,6 +209,86 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test support extern keyword`() = doTest("""
+        trait T {
+            fn call(handler: extern fn(flag: bool));
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("call(handler: extern fn(flag: bool))", true, true)
+    ), """
+        trait T {
+            fn call(handler: extern fn(flag: bool));
+        }
+        struct S;
+        impl T for S {
+            fn call(handler: extern fn(bool)) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    fun `test support extern keyword 2`() = doTest("""
+        trait T<X, Y, Z> {
+            fn call(z: Z, x: X, y: Y);
+        }
+        struct S;
+        impl T<fn(), extern fn(), fn(bool)> for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("call(z: Z, x: X, y: Y)", true, true)
+    ), """
+        trait T<X, Y, Z> {
+            fn call(z: Z, x: X, y: Y);
+        }
+        struct S;
+        impl T<fn(), extern fn(), fn(bool)> for S {
+            fn call(z: fn(bool), x: fn(), y: extern fn()) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    fun `test support extern keyword 3`() = doTest("""
+        trait T<P = extern fn()> {
+            fn call(handler: P);
+        }
+        struct S;
+        impl T for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("call(handler: P)", true, true)
+    ), """
+        trait T<P = extern fn()> {
+            fn call(handler: P);
+        }
+        struct S;
+        impl T for S {
+            fn call(handler: extern fn()) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    fun `test support extern keyword 4`() = doTest("""
+        trait T<P = extern fn()> {
+            fn call(handler: P);
+        }
+        struct S;
+        impl T<extern fn(bool)> for S {/*caret*/}
+    """, listOf(
+        ImplementMemberSelection("call(handler: P)", true, true)
+    ), """
+        trait T<P = extern fn()> {
+            fn call(handler: P);
+        }
+        struct S;
+        impl T<extern fn(bool)> for S {
+            fn call(handler: extern fn(bool)) {
+                <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
     fun `test implement unsafe methods`() = doTest("""
         trait T {
             unsafe fn f1();
