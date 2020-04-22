@@ -1,21 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
-    <depends>com.intellij.modules.cidr.debugger</depends>
-
-    <extensionPoints>
-        <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"
-                        interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"
-                        dynamic="true"/>
-    </extensionPoints>
-
-    <extensions defaultExtensionNs="cidr.debugger">
-        <languageSupport language="Rust" implementationClass="org.rust.debugger.lang.RsDebuggerLanguageSupport"/>
-        <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
-        <lineBreakpointFileTypesProvider implementation="org.rust.debugger.RsLineBreakpointFileTypesProvider"/>
-        <debugProcessConfigurator implementation="org.rust.debugger.runconfig.RsDebugProcessConfigurator"/>
-        <backendConsoleInjectionHelper implementation="org.rust.debugger.RsBackendConsoleInjectionHelper"/>
-    </extensions>
-
-    <extensions defaultExtensionNs="com.intellij">
-        <xdebugger.settings implementation="org.rust.debugger.settings.RsDebuggerSettings"/>
-    </extensions>
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="/META-INF/core-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="/META-INF/platform-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

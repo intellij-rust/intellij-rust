@@ -1,0 +1,8 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+    <xi:include href="/META-INF/debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <xdebugger.breakpointType implementation="com.jetbrains.cidr.execution.debugger.breakpoints.CidrLineBreakpointType"/>
+        <xdebugger.breakpointType implementation="com.jetbrains.cidr.execution.debugger.breakpoints.CidrExceptionBreakpointType"/>
+    </extensions>
+</idea-plugin>
