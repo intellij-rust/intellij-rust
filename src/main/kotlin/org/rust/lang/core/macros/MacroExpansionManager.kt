@@ -933,7 +933,11 @@ private class MacroExpansionTaskQueue(val project: Project) {
     }
 
     fun run(task: Task.Backgroundable) {
-        processor.add(BackgroundableTaskData(task) {})
+        if (task is MacroExpansionTaskBase) {
+            run(task as MacroExpansionTaskBase)
+        } else {
+            processor.add(BackgroundableTaskData(task) {})
+        }
     }
 
     fun runSimple(runnable: () -> Unit) {
