@@ -26,7 +26,7 @@ interface RsExpandedElement : RsElement {
 
     companion object {
         fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
-            psi.expandedFrom?.let { return it.context }
+            psi.project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi)?.let { return it }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             val parent = psi.stubParent
             if (parent is RsFile && !isIndexAccessForbidden) {

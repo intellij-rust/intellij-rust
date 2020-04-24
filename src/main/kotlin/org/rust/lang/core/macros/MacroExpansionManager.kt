@@ -69,6 +69,8 @@ interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
     fun getExpansionFor(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?>
     fun getExpandedFrom(element: RsExpandedElement): RsMacroCall?
+    /** Optimized equivalent for `getExpandedFrom(element)?.context` */
+    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
     fun reexpand()
 
@@ -196,11 +198,23 @@ class MacroExpansionManagerImpl(
 
     override fun getExpandedFrom(element: RsExpandedElement): RsMacroCall? {
         // For in-memory expansions
-        element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it as RsMacroCall }
+        element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it }
 
         val inner = inner
         return if (inner != null && inner.isExpansionModeNew) {
             inner.getExpandedFrom(element)
+        } else {
+            null
+        }
+    }
+
+    override fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement? {
+        // For in-memory expansions
+        element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it.context }
+
+        val inner = inner
+        return if (inner != null && inner.isExpansionModeNew) {
+            inner.getContextOfMacroCallExpandedFrom(element)
         } else {
             null
         }
@@ -863,6 +877,30 @@ private class MacroExpansionServiceImplInner(
         return null
     }
 
+    /** Optimized equivalent for `getExpandedFrom(element)?.context` */
+    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement? {
+        checkReadAccessAllowed()
+        var parentVirtualFile = (element.stubParent as? RsFile)?.virtualFile ?: return null
+        if (parentVirtualFile !is VirtualFileWithId) return null
+        while (true) {
+            val info = storage.getInfoForExpandedFile(parentVirtualFile) ?: return null
+            val macroCall = info.getMacroCall() ?: return null
+            val macroCallContainingFile = info.sourceFile.file
+            if (MacroExpansionManager.isExpansionFile(macroCallContainingFile)) {
+                val parent = macroCall.stubParent
+                if (parent is RsFile) {
+                    check(parent.virtualFile == macroCallContainingFile)
+                    parentVirtualFile = macroCallContainingFile
+                    // continue
+                } else {
+                    return parent
+                }
+            } else {
+                return macroCall.context
+            }
+        }
+    }
+
     @TestOnly
     fun setupForUnitTests(saveCacheOnDispose: Boolean): Disposable {
         val disposable = Disposable { disposeUnitTest(saveCacheOnDispose) }
@@ -1083,7 +1121,7 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
 private fun nullExpansionResult(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> =
     CachedValueProvider.Result.create(null, call.rustStructureOrAnyPsiModificationTracker, call.modificationTracker)
 
-private val RS_EXPANSION_MACRO_CALL = Key.create<RsElement>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
+private val RS_EXPANSION_MACRO_CALL = Key.create<RsMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
 private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
