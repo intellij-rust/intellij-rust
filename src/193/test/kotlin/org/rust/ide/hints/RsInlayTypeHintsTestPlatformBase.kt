@@ -5,10 +5,11 @@
 
 package org.rust.ide.hints
 
+import org.rust.RsTestBase
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 
-class RsInlayTypeHintsProviderTest : RsInlayTypeHintsProviderTestBase() {
-    override fun checkInlays() {
+abstract class RsInlayTypeHintsTestPlatformBase: RsTestBase() {
+    protected fun checkInlays() {
         myFixture.testInlays(
             { (it.renderer as PresentationRenderer).presentation.toString() },
             { it.renderer is PresentationRenderer }
