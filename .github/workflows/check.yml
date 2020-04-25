@@ -12,17 +12,20 @@ jobs:
               run: ./check-license.sh
 
     build:
-        runs-on: ubuntu-16.04
         strategy:
             fail-fast: false
             matrix:
+                os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 193, 201 ]
                 include:
-                    - rust-version: 1.32.0
+                    - os: ubuntu-latest
+                      rust-version: 1.32.0
                       base-ide: idea
                       platform-version: 193
+
+        runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@v1
 
@@ -40,7 +43,7 @@ jobs:
                   default: true
 
             - name: Install evcxr
-              if: matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
+              if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
               uses: actions-rs/cargo@v1
               with:
                   command: install
@@ -59,12 +62,12 @@ jobs:
                   echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
 
             - name: Build & check plugin
-              run: |
-                export RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
-                ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
-                ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
-                ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
-                ./gradlew check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
 
             - name: Check bundled Rust formatters
-              run: ./gradlew runPrettyPrintersTests --no-daemon
+              if: matrix.os != 'windows-latest'
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: runPrettyPrintersTests --no-daemon
