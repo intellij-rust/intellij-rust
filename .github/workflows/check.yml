@@ -61,7 +61,17 @@ jobs:
                   echo "::set-env name=ORG_GRADLE_PROJECT_baseIDE::${{ matrix.base-ide }}"
                   echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
 
-            - name: Build & check plugin
+            - name: Download
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :resolveDependencies -Pkotlin.incremental=false --no-daemon
+
+            - name: Build
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: assemble testClasses -Pkotlin.incremental=false --no-daemon
+
+            - name: Check
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
