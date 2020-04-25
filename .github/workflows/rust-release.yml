@@ -8,7 +8,7 @@ on:
 
 jobs:
     generate-build-number:
-        runs-on: ubuntu-16.04
+        runs-on: ubuntu-latest
         steps:
             - name: Generate build number
               uses: einaregilsson/build-number@v2
@@ -24,7 +24,7 @@ jobs:
                   path: BUILD_NUMBER
 
     get-release-branch:
-        runs-on: ubuntu-16.04
+        runs-on: ubuntu-latest
         outputs:
             release-branch: ${{ steps.get-release-branch.outputs.release-branch }}
         steps:
@@ -42,7 +42,7 @@ jobs:
                   echo "::set-output name=release-branch::$branch"
 
     update-changelog-link:
-        runs-on: ubuntu-16.04
+        runs-on: ubuntu-latest
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -64,7 +64,7 @@ jobs:
               run: python scripts/update-changelog-link.py --token ${{ secrets.GITHUB_TOKEN }}
 
     get-channel:
-        runs-on: ubuntu-16.04
+        runs-on: ubuntu-latest
         outputs:
             channel: ${{ steps.get-channel.outputs.channel }}
         steps:
@@ -79,7 +79,7 @@ jobs:
 
     build:
         needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel ]
-        runs-on: ubuntu-16.04
+        runs-on: ubuntu-latest
         strategy:
             fail-fast: true
             matrix:
