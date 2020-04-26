@@ -323,7 +323,7 @@
                          implementationClass="org.rust.ide.inspections.RsMissingElseInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Missing else"
+                         displayName="Redundant else"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsRedundantElseInspection"/>
 
