@@ -1,21 +1,6 @@
 import argparse
-import os
-import re
-import subprocess
 
-
-def git_command(*args):
-    subprocess.run(["git"] + list(args), check=True)
-
-
-def env(key: str) -> str:
-    value = os.getenv(key)
-    if value is None:
-        raise Exception(f"{key} is not set")
-    return value
-
-
-patchVersionRe = r"patchVersion=(\d+)"
+from common import get_patch_version, inc_patch_version, GRADLE_PROPERTIES, git_command, construct_repository_url
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -23,23 +8,16 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    actor = env("GITHUB_ACTOR")
-    repo = env("GITHUB_REPOSITORY")
+    repo_url = construct_repository_url(args.token)
 
-    repo_url = f"https://{actor}:{args.token}@github.com/{repo}.git"
+    patch_version = get_patch_version()
 
-    with open("gradle.properties") as properties:
-        text = properties.read()
-    patchVersion = int(re.search(patchVersionRe, text).group(1))
+    release_branch = f"release-{patch_version}"
+    git_command("branch", release_branch)
+    git_command("push", repo_url, release_branch)
 
-    releaseBranch = f"release-{patchVersion}"
-    git_command("branch", releaseBranch)
-    git_command("push", repo_url, releaseBranch)
+    inc_patch_version()
 
-    newText = re.sub(patchVersionRe, f"patchVersion={patchVersion + 1}", text)
-    with open("gradle.properties", mode="w") as properties:
-        properties.write(newText)
-
-    git_command("add", "gradle.properties")
+    git_command("add", GRADLE_PROPERTIES)
     git_command("commit", "-m", ":arrow_up: patch version")
     git_command("push", repo_url, "master")

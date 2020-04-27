@@ -1,0 +1,115 @@
+name: rust release
+
+on:
+    repository_dispatch:
+        types: [ stable-release, beta-release ]
+    schedule:
+        - cron: '0 3 * * *'
+
+jobs:
+    generate-build-number:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Generate build number
+              uses: einaregilsson/build-number@v2
+              id: buildnumber
+              with:
+                  token: ${{ secrets.github_token }}
+                  prefix: rust
+
+            - name: Upload build number
+              uses: actions/upload-artifact@v1
+              with:
+                  name: BUILD_NUMBER
+                  path: BUILD_NUMBER
+
+    get-release-branch:
+        runs-on: ubuntu-latest
+        outputs:
+            release-branch: ${{ steps.get-release-branch.outputs.release-branch }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - id: get-release-branch
+              run: |
+                  branch=$(python scripts/get_release_branch.py)
+                  echo "::set-output name=release-branch::$branch"
+
+    update-changelog-link:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - run: git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Set up git user
+              run: |
+                  git config --local user.email "action@github.com"
+                  git config --local user.name "GitHub Action"
+
+            - name: Update changelog link
+              if: github.event_name == 'repository_dispatch' && github.event.action == 'stable-release'
+              run: python scripts/update-changelog-link.py --token ${{ secrets.GITHUB_TOKEN }}
+
+    get-channel:
+        runs-on: ubuntu-latest
+        outputs:
+            channel: ${{ steps.get-channel.outputs.channel }}
+        steps:
+            - id: get-channel
+              run: |
+                if ${{ github.event_name == 'repository_dispatch' && github.event.action == 'stable-release' }}
+                then
+                  echo "::set-output name=channel::stable"
+                else
+                  echo "::set-output name=channel::beta"
+                fi
+
+    build:
+        needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel ]
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: true
+            matrix:
+                platform-version: [ 193, 201 ]
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.get-release-branch.outputs.release-branch }}
+
+            - name: Download build number
+              uses: actions/download-artifact@v1
+              with:
+                  name: BUILD_NUMBER
+
+            - name: Restore build number
+              id: buildnumber
+              uses: einaregilsson/build-number@v2
+
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                  java-version: 1.8
+
+            - name: Build & publish
+              env:
+                  CI: true
+                  ORG_GRADLE_PROJECT_buildNumber: ${{ steps.buildnumber.outputs.build_number }}
+                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+                  ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
+                  ORG_GRADLE_PROJECT_publishChannel: ${{ needs.get-channel.outputs.channel }}
+                  ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
+              run: ./gradlew :plugin:buildPlugin :plugin:publishPlugin
