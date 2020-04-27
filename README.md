@@ -30,18 +30,20 @@ Unstable master branch builds can be downloaded from [TeamCity].
 The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.3, with the following differences in the sets of the available features:
 
 
-|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate, [PyCharm] Professional, other commercial IDEs |
-|------------------------|---|---|---|
-| Language support       | + | + | + |
-| Cargo support          | + | + | + |
-| Code coverage          | + | + | + |
-| Debugger               | - | + | - |
-| Profiler               | - | + | - |
-| Valgrind Memcheck      | - | + | - |
-| [Detecting duplicates] | - | + | + |
+|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate (commercial) | [PyCharm] Professional, [GoLand], other commercial IDEs |
+|------------------------|---|---|---|---|
+| Language support       | + | + | + | + |
+| Cargo support          | + | + | + | + |
+| Code coverage          | + | + | + | + |
+| Debugger               | - | + | +** | - |
+| Profiler               | - | + | - | - |
+| Valgrind Memcheck      | - | + | - | - |
+| [Detecting duplicates] | - | + | + | + |
 
 
 \* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
+
+\** Available since 2020.1. [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin is required 
 
 ## TOML
 
@@ -92,5 +94,6 @@ understand the high-level structure of the codebase. If you are not sure where t
 [IntelliJ IDEA]: https://www.jetbrains.com/idea/
 [CLion]: https://www.jetbrains.com/clion/
 [PyCharm]: https://www.jetbrains.com/pycharm/
+[GoLand]: https://www.jetbrains.com/go/
 [PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education
 [Detecting duplicates]: https://www.jetbrains.com/help/idea/analyzing-duplicates.html
