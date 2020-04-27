@@ -172,7 +172,7 @@ val Project.dependencyCachePath get(): String {
     return cachePath.absolutePath
 }
 
-val channelSuffix = if (channel.isBlank()) "" else "-$channel"
+val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
 val patchVersion = prop("patchVersion").toInt()
 
