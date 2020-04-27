@@ -21,20 +21,21 @@ git clone https://github.com/intellij-rust/intellij-rust.git
 cd intellij-rust
 ```
 
+## Building & Running
 
-## Building
+Run `RunIDEA` or `RunCLion` run configuration to build and launch development IDE (IntelliJ IDEA or CLion respectively) with the plugin.
 
 We use gradle with [gradle-intellij](https://github.com/JetBrains/gradle-intellij-plugin) plugin to build the plugin.
 It comes with a wrapper script (`gradlew` in the root of the repository) which downloads appropriate version of gradle
 automatically as long as you have JDK installed.
 
-Common tasks are
+Common Gradle tasks are:
 
   - `./gradlew :plugin:buildPlugin` -- fully build plugin and create an archive at
-    `plugin/build/distributions` which can be installed into IntelliJ IDEA via `Install
-    plugin from disk...` action found in `Settings > Plugins`.
+  `plugin/build/distributions` which can be installed into your IDE via `Install plugin from disk...` action found in `Settings > Plugins`.
 
-  - `./gradlew :plugin:runIde` -- run a development IDE with the plugin installed.
+  - `./gradlew :plugin:runIde` -- run a development IDE with the plugin installed. Can run IntelliJ IDEA or CLion.
+  The particular IDE depends on `baseIDE` property in `gradle.properties`.
 
   - `./gradlew :test` -- more than five thousands tests. We love tests!
 
@@ -43,78 +44,25 @@ plugins for Rust and TOML, which are organized as gradle subprojects. Running
 `./gradlew :task` executes the task only for root module (core module of Rust plugin), `./gradlew :intellij-toml:task` will run
 the task for TOML module and `./gradlew task` will do for all modules.
 
-### Modules
 
-Rust plugin sources are divided into several modules. Almost all modules (except root, `common` and `plugin` ones) support
-some functionality in particular IDE or integrate with another plugin. Like debugging in CLion or
-integration with `TOML` plugin.
+## Development in IntelliJ IDEA
 
-The main goal is to separate code that can be compiled only with specific dependencies
-(IDEA, CLion or another plugin) from each other. It helps to avoid accidental using
-of code from wrong optional dependency.
-Also, it allows us to compile and run tests of core module with different platforms
-like IDEA and CLion.
-
-The current Rust plugin modules:
-* `:` - root/core module
-* `:common` - shares common code between Rust and Toml plugins
-* `:plugin` - module to build/run/publish Rust plugin
-* `:idea` - contains code available only in IDEA
-* `:clion` - contains code available only in CLion
-* `:debugger` - debugger related code
-* `:toml` - integration with TOML plugin
-* `:intelliLang` - integration with [intelliLang](https://github.com/JetBrains/intellij-community/tree/master/plugins/IntelliLang) plugin
-* `:copyright` - integration with [copyright](https://github.com/JetBrains/intellij-community/tree/master/plugins/copyright) plugin
-* `:duplicates` - support `Duplicated code fragment` inspection
-* `:coverage` - integration with [coverage](https://github.com/JetBrains/intellij-community/tree/master/plugins/coverage-common) plugin
-* `:grazie` - integration with [grazie](https://plugins.jetbrains.com/plugin/12175-grazie) plugin 
-
-If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
-
-### Platform versions
-
-We usually support the latest release platform version and EAPs of next version.
-But sometimes there are not compatible changes in new platform version.
-To avoid creating several parallel vcs branches for each version, we have separate
-folders for each version to keep platform dependent code.
-
-For example, current platform version is 181, next version is 182 
-and `org.rust.ide.navigation.goto.RsImplsSearch` should have separate implementations
-for each version. Then project source code structure will be
-
-     +-- src
-     |   +-- 181/kotlin
-     |       +-- org/rust/ide/navigation/goto
-     |           +-- RsImplsSearch.kt
-     |   +-- 182/kotlin
-     |       +-- org/rust/ide/navigation/goto
-     |           +-- RsImplsSearch.kt
-     |   +-- main/kotlin
-     |       +-- other platfrom independent code
-     
-Of course, only one batch of platform dependent code will be used in compilation.
-To change platform version which you use for compilation, 
-i.e. change IDEA and CLion dependencies and platform dependent code,
-you need to modify `platformVersion` property in `gradle.properties` file.       
-
-## Development in Intellij IDEA
-
-You can get the latest Intellij IDEA Community Edition
+You can get the latest IntelliJ IDEA Community Edition
 [here](https://www.jetbrains.com/idea/download/), it is free.
 
 Import the plugin project as you would do with any other gradle based project.
 For example, <kbd>Ctrl + Shift + A</kbd>, `Import project` and select `build.gradle.kts` from
 the root directory of the plugin.
 
-There are `Test`, `Run` and `Generate Parser` run configurations for the most
+There are `Test`, `RunIDEA`, `RunCLion` and `Generate Parser` run configurations for the most
 common tasks. However, try executing `./gradlew :test` first, to download all
 necessary dependencies and launch all code generation tasks. Unfortunately
 during import IDEA may delete `.idea/runConfigurations`, just revert changes in
 the directory if this happens.
 
 You might want to install the following plugins:
-  - Grammar-Kit to get highlighting for the files with BNFish grammar.
-  - PsiViewer to view the AST of Rust files right in the IDE.
+  - [Grammar-Kit](https://plugins.jetbrains.com/plugin/6606-grammar-kit) to get highlighting for the files with BNFish grammar.
+  - [PsiViewer](https://plugins.jetbrains.com/plugin/227-psiviewer) to view the AST of Rust files right in the IDE.
 
 
 # Contributing
@@ -218,6 +166,64 @@ change. Common tags are:
 
 Try to keep the summary line of a commit message under 50 characters.
 
+# Project structure
+
+Rust plugin sources are divided into several modules. Almost all modules (except root, `common` and `plugin` ones) support
+some functionality in particular IDE or integrate with another plugin. Like debugging in CLion or
+integration with `TOML` plugin.
+
+The main goal is to separate code that can be compiled only with specific dependencies
+(IDEA, CLion or another plugin) from each other. It helps to avoid accidental using
+of code from wrong optional dependency.
+Also, it allows us to compile and run tests of core module with different platforms
+like IDEA and CLion.
+
+The current Rust plugin modules:
+* `:` - root/core module
+* `:common` - shares common code between Rust and Toml plugins
+* `:plugin` - module to build/run/publish Rust plugin
+* `:idea` - contains code available only in IDEA
+* `:clion` - contains code available only in CLion
+* `:debugger` - debugger related code
+* `:toml` - integration with TOML plugin
+* `:intelliLang` - integration with [intelliLang](https://github.com/JetBrains/intellij-community/tree/master/plugins/IntelliLang) plugin
+* `:copyright` - integration with [copyright](https://github.com/JetBrains/intellij-community/tree/master/plugins/copyright) plugin
+* `:duplicates` - support `Duplicated code fragment` inspection
+* `:coverage` - integration with [coverage](https://github.com/JetBrains/intellij-community/tree/master/plugins/coverage-common) plugin
+* `:grazie` - integration with [grazie](https://plugins.jetbrains.com/plugin/12175-grazie) plugin 
+
+If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
+
+### Platform versions
+
+You can build the plugin for different major platform versions.
+We usually support the latest release platform version and EAPs of the next one.
+But each plugin artifact is compatible only with single major version.
+`platformVersion` property in `gradle.properties` is used to specify major version the plugin artifact will be compatible with. 
+Supported values are the same as platform [branch numbers](https://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html#intellij-platform-based-products-of-recent-ide-versions).
+  
+
+#### Source code for different platform versions
+
+Sometimes there are not compatible changes in new platform version.
+To avoid creating several parallel vcs branches for each version, we have separate
+folders for each version to keep platform dependent code.
+
+For example, current platform version is 181, next version is 182 
+and `org.rust.ide.navigation.goto.RsImplsSearch` should have separate implementations
+for each version. Then project source code structure will be
+
+     +-- src
+     |   +-- 181/kotlin
+     |       +-- org/rust/ide/navigation/goto
+     |           +-- RsImplsSearch.kt
+     |   +-- 182/kotlin
+     |       +-- org/rust/ide/navigation/goto
+     |           +-- RsImplsSearch.kt
+     |   +-- main/kotlin
+     |       +-- other platfrom independent code
+     
+Of course, only one batch of platform dependent code will be used in compilation.   
 
 # Testing
 
