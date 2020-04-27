@@ -29,12 +29,12 @@ class RsExtractEnumVariantProcessor(project: Project,
         val project = ctx.project
         val factory = RsPsiFactory(project)
         val element = createElement(ctx, factory)
-        val references = ReferencesSearch.search(ctx)
 
         val name = ctx.name ?: return
         val occurrences = mutableListOf<RsReferenceElement>()
-        for (usage in references) {
-            val occurrence = element.replaceUsage(usage.element, name) as? RsReferenceElement ?: continue
+        for (usage in usages) {
+            val reference = usage.element ?: continue
+            val occurrence = element.replaceUsage(reference, name) as? RsReferenceElement ?: continue
             occurrences.add(occurrence)
         }
 
