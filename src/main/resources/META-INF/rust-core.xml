@@ -985,6 +985,13 @@
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
+        <action id="Rust.RsExtractEnumVariant"
+                class="org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction"
+                text="Extract Enum Variant"
+                description="Extract a single enum variant into a separate struct">
+            <add-to-group group-id="RefactoringMenu"/>
+        </action>
+
         <action id="Rust.ShowSingleStepMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction"
                 text="Show Expanded Macro">

@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions
+package org.rust.ide.refactoring
 
-class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIntention()) {
+import org.intellij.lang.annotations.Language
+import org.rust.RsTestBase
+import org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction
 
+class RsExtractEnumVariantTest : RsTestBase() {
     fun `test not available on empty variant`() = doUnavailableTest("""
         enum A {
             /*caret*/V1
@@ -426,7 +429,7 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
                 V2
             }
         }
-        
+
         fn main() {
             let _ = E::V1 { x: 0, y: 1 };
         }
@@ -441,7 +444,7 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
                 V2
             }
         }
-        
+
         fn main() {
             let _ = E::V1(V1 { x: 0, y: 1 });
         }
@@ -450,7 +453,7 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
     // TODO: fix
     fun `test don't import generated struct if its name already in scope`() = doAvailableTest("""
         use a::E;
-        
+
         struct V1;
 
         mod a {
@@ -459,13 +462,13 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
                 V2
             }
         }
-        
+
         fn main() {
             let _ = E::V1 { x: 0, y: 1 };
         }
     """, """
         use a::E;
-        
+
         struct V1;
 
         mod a {
@@ -476,9 +479,20 @@ class ExtractEnumVariantIntentionTest : RsIntentionTestBase(ExtractEnumVariantIn
                 V2
             }
         }
-        
+
         fn main() {
             let _ = E::V1(V1 { x: 0, y: 1 });
         }
     """)
+
+    private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
+        InlineFile(before.trimIndent()).withCaret()
+        myFixture.testAction(RsExtractEnumVariantAction())
+        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+    }
+
+    private fun doUnavailableTest(@Language("Rust") code: String) {
+        InlineFile(code.trimIndent()).withCaret()
+        check(!myFixture.testAction(RsExtractEnumVariantAction()).isEnabled)
+    }
 }
