@@ -14,6 +14,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
@@ -49,7 +50,7 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
         if (project.isDisposed) return
 
         if (!project.isBuildToolWindowEnabled) {
-            project.buildProject()
+            invokeLater { project.buildProject() }
             return
         }
 

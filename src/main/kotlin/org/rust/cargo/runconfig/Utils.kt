@@ -25,6 +25,7 @@ import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.run
+import org.rust.openapiext.checkIsDispatchThread
 import org.rust.stdext.buildList
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
@@ -48,6 +49,7 @@ fun RunManager.createCargoCommandRunConfiguration(cargoCommandLine: CargoCommand
 val Project.hasCargoProject: Boolean get() = cargoProjects.allProjects.isNotEmpty()
 
 fun Project.buildProject() {
+    checkIsDispatchThread()
     val arguments = buildList<String> {
         val settings = rustSettings
         add("--all")
@@ -61,9 +63,7 @@ fun Project.buildProject() {
     }
 
     // Initialize run content manager
-    invokeAndWaitIfNeeded {
-        RunContentManager.getInstance(this)
-    }
+    RunContentManager.getInstance(this)
 
     for (cargoProject in cargoProjects.allProjects) {
         CargoCommandLine.forProject(cargoProject, "build", arguments).run(cargoProject, saveConfiguration = false)
