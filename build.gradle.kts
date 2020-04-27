@@ -94,6 +94,7 @@ allprojects {
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = dependencyCachePath
+        sandboxDirectory = "$buildDir/$baseIDE-sandbox-$platformVersion"
 
         tasks {
             withType<PatchPluginXmlTask> {
@@ -239,14 +240,6 @@ project(":plugin") {
         withType<PublishTask> {
             token(prop("publishToken"))
             channels(channel)
-        }
-    }
-
-    task("configureCLion") {
-        doLast {
-            intellij {
-                sandboxDirectory = "${project.buildDir.absolutePath}${File.separator}clion-sandbox"
-            }
         }
     }
 }
