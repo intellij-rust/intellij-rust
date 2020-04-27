@@ -18,7 +18,7 @@ if __name__ == '__main__':
     today = date.today()
     version = get_patch_version() - 1
     new_text = re.sub(r"https://intellij-rust\.github\.io/.*\.html",
-                      f"https://intellij-rust.github.io/{today.year}/{today.month}/{today.day}/changelog-{version}.html",
+                      f"https://intellij-rust.github.io/{today.year}/{today.month:02d}/{today.day:02d}/changelog-{version}.html",
                       text)
     with (open(PLUGIN_XML, mode="w")) as f:
         f.write(new_text)
