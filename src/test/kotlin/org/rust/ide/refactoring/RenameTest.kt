@@ -6,9 +6,12 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.EmptyDescriptor
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.openapiext.toPsiDirectory
 
 class RenameTest : RsTestBase() {
     fun `test function`() = doTest("spam", """
@@ -263,6 +266,13 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(file, "bar")
     }
 
+    @ProjectDescriptor(EmptyDescriptor::class)
+    fun `test do not invoke rename refactoring for directory outside of cargo project`() {
+        val dir = myFixture.tempDirFixture.findOrCreateDir("dir").toPsiDirectory(project)!!
+        RsDirectoryRenameProcessor.Testmarks.rustDirRenameHandler.checkNotHit {
+            myFixture.renameElement(dir, "dir2")
+        }
+    }
 
     fun `test rename file to keyword`() = checkByDirectory("""
     //- main.rs
