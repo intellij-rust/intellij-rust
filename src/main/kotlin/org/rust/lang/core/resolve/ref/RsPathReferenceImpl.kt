@@ -96,6 +96,39 @@ class RsPathReferenceImpl(
             .map { it.foldTyInferWith { if (it is TyInfer.TyVar) TyInfer.TyVar(it.origin) else it } }
     }
 
+    override fun bindToElement(target: PsiElement): PsiElement {
+        if (target is RsMod) {
+            bindToMod(target)?.let { return it }
+        }
+
+        return super.bindToElement(target)
+    }
+
+    private fun bindToMod(target: RsMod): PsiElement? {
+        if (!element.isEdition2018) return null
+        var targetPath = target.qualifiedNameRelativeTo(element.containingMod) ?: return null
+
+        // consider old target (`element.reference.resolve()`) was `bar1::bar2::bar3::bar4::foo`
+        // and old path (`element`) was `bar1::bar3::bar4::foo` (`bar1` reexports everything from `bar2`)
+        // and new target is `bar1::bar2::bar3::baz::foo`
+        // then we want to reuse `bar1::bar3` part of old path
+        // so that new path will be `bar1::bar3::baz::foo` and not `bar1::bar2::bar3::baz::foo`
+        for (pathPrefix in generateSequence(element) { it.path }) {
+            val mod = pathPrefix.reference?.resolve() as? RsMod
+            if (mod != null && target.superMods.contains(mod)) {
+                val modFullPath = mod.qualifiedNameRelativeTo(element.containingMod)
+                val modShortPath = pathPrefix.text
+                if (modFullPath != null && targetPath.startsWith(modFullPath)) {
+                    targetPath = targetPath.replaceFirst(modFullPath, modShortPath)
+                }
+                break
+            }
+        }
+
+        val elementNew = RsPsiFactory(element.project).tryCreatePath(targetPath) ?: return null
+        return element.replace(elementNew)
+    }
+
     private object Resolver : (RsPath) -> List<BoundElement<RsElement>> {
         override fun invoke(element: RsPath): List<BoundElement<RsElement>> {
             return resolvePath(element)
