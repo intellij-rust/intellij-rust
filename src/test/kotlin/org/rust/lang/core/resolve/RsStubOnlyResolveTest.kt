@@ -31,7 +31,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
 
     //- inner/child.rs
-        fn foo() {}
+        pub fn foo() {}
     """)
 
     fun `test mod decl`() = stubOnlyResolve("""
@@ -57,7 +57,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         fn main() {}
 
     //- bar.rs
-        struct Bar {}
+        pub struct Bar {}
     """)
 
     fun `test mod decl path`() = stubOnlyResolve("""
@@ -138,7 +138,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub mod foobar;
 
     //- foo.rs
-        fn quux() {}
+        pub fn quux() {}
     """)
 
     fun `test mod relative 2`() = stubOnlyResolve("""
@@ -286,7 +286,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
                            //^ foo/baz.rs
         }
     //- foo/baz.rs
-        fn foo() {}
+        pub fn foo() {}
     """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
 
     fun `test path inside inline module in mod rs`() = stubOnlyResolve("""
@@ -303,7 +303,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
                            //^ foo/bar/qwe.rs
         }
     //- foo/bar/qwe.rs
-        fn baz() {}
+        pub fn baz() {}
     """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
 
     fun `test path inside inline module in non crate root`() = stubOnlyResolve("""
@@ -418,7 +418,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     //- foo.rs
         struct S(Bar);
         struct Bar;
-        impl Bar { fn bar(self) {} }
+        impl Bar { pub fn bar(self) {} }
     """)
 
     fun `test method call`() = stubOnlyResolve("""
@@ -457,7 +457,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         enum S { X }
 
         impl S {
-            fn foo(&self) { }
+            pub fn foo(&self) { }
         }
     """)
 
@@ -597,7 +597,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl T for [i32; 1] {
             fn foo(&self) {}
         }
@@ -618,7 +618,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl T for [i32; 1] {
             fn foo(&self) {}
         }
@@ -639,7 +639,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl <const N: usize> T for [i32; N] {
             fn foo(&self) {}
         }
@@ -658,11 +658,11 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     //- bar.rs
         pub struct S<const N: usize>;
-        
+
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl T for S<{ 0 }> {
             fn foo(&self) {}
         }
@@ -681,11 +681,11 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     //- bar.rs
         pub struct S<const N: usize>;
-        
+
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl T for S<{ 0 }> {
             fn foo(&self) {}
         }
@@ -704,11 +704,11 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
 
     //- bar.rs
         pub struct S<const N: usize>;
-        
+
         pub trait T {
             fn foo(&self);
         }
-        
+
         impl <const N: usize> T for S<{ N }> {
             fn foo(&self) {}
         }

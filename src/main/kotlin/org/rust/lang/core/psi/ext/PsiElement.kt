@@ -29,6 +29,11 @@ val PsiElement.ancestors: Sequence<PsiElement>
         if (it is PsiFile) null else it.parent
     }
 
+val PsiElement.stubAncestors: Sequence<PsiElement>
+    get() = generateSequence(this) {
+        if (it is PsiFile) null else it.stubParent
+    }
+
 val PsiElement.contexts: Sequence<PsiElement>
     get() = generateSequence(this) {
         if (it is PsiFile) null else it.context

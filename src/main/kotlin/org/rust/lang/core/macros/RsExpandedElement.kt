@@ -67,7 +67,7 @@ fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
 }
 
 fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
-    return ancestors
+    return stubAncestors
         .filterIsInstance<RsExpandedElement>()
         .mapNotNull { it.expandedFrom }
         .firstOrNull()
