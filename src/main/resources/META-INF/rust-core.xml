@@ -989,7 +989,7 @@
                 class="org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction"
                 text="Extract Enum Variant"
                 description="Extract a single enum variant into a separate struct">
-            <add-to-group group-id="RefactoringMenu"/>
+            <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
         </action>
 
         <action id="Rust.ShowSingleStepMacroExpansionAction"

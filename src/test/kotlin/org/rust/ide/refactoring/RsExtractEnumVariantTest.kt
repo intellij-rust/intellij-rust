@@ -486,9 +486,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
     """)
 
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before.trimIndent()).withCaret()
-        myFixture.testAction(RsExtractEnumVariantAction())
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+        checkEditorAction(before, after, "Rust.RsExtractEnumVariant")
     }
 
     private fun doUnavailableTest(@Language("Rust") code: String) {
