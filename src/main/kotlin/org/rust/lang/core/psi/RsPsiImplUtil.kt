@@ -101,7 +101,7 @@ object RsPsiImplUtil {
             is RsVisibility.Restricted -> visibility.inMod
         }
 
-        if (!restrictedMod.hasChildFiles()) return localOrMacroSearchScope(containingMod)
+        if (!restrictedMod.hasChildFiles()) return localOrMacroSearchScope(restrictedMod)
 
         // TODO restrict scope to [restrictedMod]. We can't use `DirectoryScope` b/c file from any
         //   directory can be included via `#[path]` attribute or `include!()` macro.
