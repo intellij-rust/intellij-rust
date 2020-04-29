@@ -240,6 +240,16 @@ class RsFindUsagesTest : RsTestBase() {
         """)
     }
 
+    // https://github.com/intellij-rust/intellij-rust/issues/5265
+    fun `test issue 5265`() = doTestByText("""
+        mod foo {
+            pub(crate) enum Foo { Bar { x: i32 } }
+        }                       //^
+        fn main() {
+            let _ = foo::Foo::Bar { x: 123 }; // - init struct
+        }
+    """)
+
     private fun doTestByText(@Language("Rust") code: String) {
         InlineFile(code)
 

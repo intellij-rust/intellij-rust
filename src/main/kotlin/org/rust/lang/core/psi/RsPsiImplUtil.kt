@@ -10,6 +10,7 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.macros.findMacroCallExpandedFrom
+import org.rust.lang.core.macros.isExpandedFromIncludeMacro
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -100,10 +101,10 @@ object RsPsiImplUtil {
             is RsVisibility.Restricted -> visibility.inMod
         }
 
-        if (!restrictedMod.hasChildModules()) return localOrMacroSearchScope(containingMod)
+        if (!restrictedMod.hasChildFiles()) return localOrMacroSearchScope(restrictedMod)
 
         // TODO restrict scope to [restrictedMod]. We can't use `DirectoryScope` b/c file from any
-        //   directory can be included via `#[path]` attribute.
+        //   directory can be included via `#[path]` attribute or `include!()` macro.
         return null
     }
 
@@ -117,5 +118,8 @@ object RsPsiImplUtil {
         LocalSearchScope(scope.findMacroCallExpandedFrom() ?: scope)
 }
 
-private fun RsMod.hasChildModules(): Boolean =
-    expandedItemsExceptImplsAndUses.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }
+// TODO support local modules, e.g. `fn foo() { #[path = "baz.rs"] mod bar; }`
+private fun RsMod.hasChildFiles(): Boolean =
+    expandedItemsExceptImplsAndUses.any {
+        it is RsModDeclItem || it is RsModItem && it.hasChildFiles() || it.isExpandedFromIncludeMacro
+    }

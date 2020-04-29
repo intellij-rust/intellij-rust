@@ -177,9 +177,9 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test impl in non-inline mod with cfg`() = stubOnlyResolve("""
     //- bar.rs
-        impl super::S { fn foo(&self) {} }
+        impl super::S { pub fn foo(&self) {} }
     //- baz.rs
-        impl super::S { fn foo(&self) {} }
+        impl super::S { pub fn foo(&self) {} }
     //- lib.rs
         struct S;
 

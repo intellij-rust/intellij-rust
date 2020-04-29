@@ -97,7 +97,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
                                                 //^ aux.rs
 
     //- aux.rs
-        trait T {
+        pub trait T {
             fn virtual_function(&self) {}
         }
     """)
@@ -144,7 +144,7 @@ class RsTypeAwareResolveTest : RsResolveTestBase() {
         }
 
     //- aux.rs
-        struct S { x: f32 }
+        pub struct S { pub x: f32 }
     """)
 
     fun `test tuple field expr`() = checkByCode("""

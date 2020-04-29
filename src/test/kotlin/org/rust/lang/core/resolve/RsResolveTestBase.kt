@@ -16,6 +16,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 
@@ -138,5 +139,16 @@ fun PsiElement.checkedResolve(offset: Int): PsiElement {
         "Incorrect `isReferenceTo` implementation in `${reference.javaClass.name}`"
     }
 
+    checkSearchScope(this, resolved)
+
     return resolved
+}
+
+private fun checkSearchScope(referenceElement: PsiElement, resolvedTo: PsiElement) {
+    if (resolvedTo.isExpandedFromMacro) return
+    val virtualFile = referenceElement.containingFile.virtualFile ?: return
+    check(resolvedTo.useScope.contains(virtualFile)) {
+        "Incorrect `getUseScope` implementation in `${resolvedTo.javaClass.name}`;" +
+            "also this can means that `pub` visibility is missed somewhere in the test"
+    }
 }

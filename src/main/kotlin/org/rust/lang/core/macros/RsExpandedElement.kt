@@ -67,7 +67,7 @@ fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
 }
 
 fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
-    return ancestors
+    return stubAncestors
         .filterIsInstance<RsExpandedElement>()
         .mapNotNull { it.expandedFrom }
         .firstOrNull()
@@ -75,6 +75,12 @@ fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
 
 val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
+
+val PsiElement.isExpandedFromIncludeMacro: Boolean
+    get() {
+        val parent = stubParent
+        return parent is RsFile && RsIncludeMacroIndex.getIncludingMod(parent) != null
+    }
 
 private data class MacroCallAndOffset(val call: RsMacroCall, val absoluteOffset: Int)
 

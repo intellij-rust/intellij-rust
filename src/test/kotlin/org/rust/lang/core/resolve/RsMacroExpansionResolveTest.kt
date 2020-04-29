@@ -336,7 +336,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     fun `test expand macro inside stubbed file`() = stubOnlyResolve("""
     //- bar.rs
         pub struct S;
-        impl S { fn bar(&self) {} }
+        impl S { pub fn bar(&self) {} }
         foo!();
     //- main.rs
         macro_rules! foo {
