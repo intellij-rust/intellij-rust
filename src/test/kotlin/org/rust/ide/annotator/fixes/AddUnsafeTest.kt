@@ -146,4 +146,30 @@ class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
             unsafe { foo(); }
         }
     """)
+
+    fun `test left-hand side assignment`() = checkFixByText("Surround with unsafe block", """
+        fn test() {
+            let buffer = 0xb00000 as *mut u8;
+            <error>*buffer/*caret*/</error> = 5;
+        }
+    """, """
+        fn test() {
+            let buffer = 0xb00000 as *mut u8;
+            unsafe { *buffer = 5; }
+        }
+    """)
+
+    fun `test nested left-hand side assignment`() = checkFixByText("Surround with unsafe block", """
+        extern "C" { fn foo() -> *mut u8; }
+
+        fn test() {
+            <error>*<error>foo()/*caret*/</error></error> = 5;
+        }
+    """, """
+        extern "C" { fn foo() -> *mut u8; }
+
+        fn test() {
+            unsafe { *foo() = 5; }
+        }
+    """)
 }
