@@ -485,6 +485,42 @@ class RsExtractEnumVariantTest : RsTestBase() {
         }
     """)
 
+    fun `test keep supported attributes`() = doAvailableTest("""
+        #[derive(Debug, Clone)]
+        #[repr(C)]
+        pub enum E {
+            /*caret*/V1 { x: i32, y: i32 },
+            V2
+        }
+    """, """
+        #[derive(Debug, Clone)]
+        #[repr(C)]
+        pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+
+        #[derive(Debug, Clone)]
+        #[repr(C)]
+        pub enum E {
+            V1(V1),
+            V2
+        }
+    """)
+
+    fun `test ignore unsupported attributes`() = doAvailableTest("""
+        #[attr]
+        pub enum E {
+            /*caret*/V1 { x: i32, y: i32 },
+            V2
+        }
+    """, """
+        pub struct /*caret*/V1 { pub x: i32, pub y: i32 }
+
+        #[attr]
+        pub enum E {
+            V1(V1),
+            V2
+        }
+    """)
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         checkEditorAction(before, after, "Rust.RsExtractEnumVariant")
     }

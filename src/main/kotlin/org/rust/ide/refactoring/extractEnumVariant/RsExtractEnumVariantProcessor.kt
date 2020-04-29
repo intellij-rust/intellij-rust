@@ -54,9 +54,17 @@ class RsExtractEnumVariantProcessor(
         val parameters = filterTypeParameters(element.typeReferences, enum.typeParameterList)
         val typeParametersText = parameters.format()
         val whereClause = buildWhereClause(enum.whereClause, parameters)
+        val attributes = findTransitiveAttributes(enum, TRANSITIVE_ATTRIBUTES)
 
-        val struct = element.createStruct(enum.vis?.text, name, typeParametersText, whereClause)
+        val struct = element.createStruct(
+            enum.vis?.text,
+            name,
+            typeParametersText,
+            whereClause,
+            attributes.map { it.text }
+        )
         val inserted = enum.parent.addBefore(struct, enum) as RsStructItem
+
         for (occurrence in occurrences) {
             if (occurrence.reference?.resolve() == null) {
                 RsImportHelper.importElements(occurrence, setOf(inserted))
@@ -85,20 +93,31 @@ class RsExtractEnumVariantProcessor(
     override fun getRefactoringId(): String? {
         return "refactoring.extractEnumVariant"
     }
+
+    companion object {
+        val TRANSITIVE_ATTRIBUTES = setOf("derive", "repr")
+    }
 }
 
 
 private sealed class VariantElement(val toBeReplaced: PsiElement, val factory: RsPsiFactory) {
     abstract val typeReferences: List<RsTypeReference>
 
-    fun createStruct(vis: String?, name: String, typeParameters: String, whereClause: String): RsStructItem {
+    fun createStruct(
+        vis: String?,
+        name: String,
+        typeParameters: String,
+        whereClause: String,
+        attributes: List<String>
+    ): RsStructItem {
         val formattedVis = if (vis == null) "" else "$vis "
         val fieldsText = addPubToFields(toBeReplaced, factory).text
         val text = when (this) {
             is TupleVariant -> "${formattedVis}struct $name$typeParameters$fieldsText$whereClause;"
             is StructVariant -> "${formattedVis}struct $name$typeParameters$whereClause$fieldsText"
         }
-        return factory.createStruct(text)
+        val textWithAttributes = "${attributes.joinToString(separator = "\n")}\n$text"
+        return factory.createStruct(textWithAttributes)
     }
 
     abstract fun replaceUsage(element: PsiElement, name: String): PsiElement?
@@ -404,3 +423,6 @@ private fun createLifetimePredicate(
 
 private fun hasTypeParameter(ref: RsTypeReference, map: Map<String, RsTypeParameter>): Boolean =
     HasTypeParameterVisitor(map, ref).visitTy(ref.type)
+
+private fun findTransitiveAttributes(enum: RsEnumItem, supportedAttributes: Set<String>): List<RsOuterAttr> =
+    enum.outerAttrList.filter { it.metaItem.name in supportedAttributes }
