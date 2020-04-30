@@ -1110,6 +1110,50 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
+    fun `test extract a function with unset default type parameter`() = doTest("""
+        struct S<R, T=u32>(r: R, t: T);
+
+        fn main() {
+            let s: S<u32> = S(1u32, 2u32);
+            <selection>println!(s)</selection>;
+        }
+    """, """
+        struct S<R, T=u32>(r: R, t: T);
+
+        fn main() {
+            let s: S<u32> = S(1u32, 2u32);
+            foo(s);
+        }
+
+        fn foo(s: S<u32>) {
+            println!(s)
+        }
+    """,
+        false,
+        "foo")
+
+    fun `test extract a function with set default type parameter`() = doTest("""
+        struct S<R, T=u32>(r: R, t: T);
+
+        fn main() {
+            let s: S<u32, bool> = S(1u32, true);
+            <selection>println!(s)</selection>;
+        }
+    """, """
+        struct S<R, T=u32>(r: R, t: T);
+
+        fn main() {
+            let s: S<u32, bool> = S(1u32, true);
+            foo(s);
+        }
+
+        fn foo(s: S<u32, bool>) {
+            println!(s)
+        }
+    """,
+        false,
+        "foo")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,
