@@ -41,19 +41,20 @@ class ReturnValue(val exprText: String?, val type: Ty) {
 class Parameter private constructor(
     var name: String,
     val type: Ty? = null,
-    val reference: Reference = Reference.NONE,
-    isMutableValue: Boolean = false,
+    private val isReference: Boolean = false,
+    var isMutable: Boolean = false,
+    private val requiresMut: Boolean = false,
     var isSelected: Boolean = true
 ) {
-    enum class Reference(val text: String) {
-        MUTABLE("&mut "), IMMUTABLE("& "), NONE("")
-    }
-
     /** Original name of the parameter (parameter renaming does not affect it) */
     private val originalName = name
 
-    private val mutText: String = if (isMutableValue) "mut " else ""
-    private val referenceText: String = reference.text
+    private val mutText: String
+        get() = if (isMutable && (!isReference || requiresMut)) "mut " else ""
+    private val referenceText: String
+        get() = if (isReference) {
+            if (isMutable) { "&mut " } else { "&" }
+        } else { "" }
     private val typeText: String = type?.renderInsertionSafe(skipUnchangedDefaultTypeArguments = true).orEmpty()
 
     val originalParameterText: String
@@ -71,12 +72,17 @@ class Parameter private constructor(
     companion object {
         private fun direct(value: RsPatBinding, requiredBorrowing: Boolean, requiredMutableValue: Boolean): Parameter {
             val reference = when {
-                requiredMutableValue -> if (requiredBorrowing) Reference.MUTABLE else Reference.NONE
-                value.mutability.isMut -> Reference.MUTABLE
-                requiredBorrowing -> Reference.IMMUTABLE
-                else -> Reference.NONE
+                requiredMutableValue -> requiredBorrowing
+                value.mutability.isMut -> true
+                requiredBorrowing -> true
+                else -> false
             }
-            return Parameter(value.referenceName, value.type, reference, requiredMutableValue)
+            val mutable = when {
+                requiredMutableValue -> true
+                value.mutability.isMut -> true
+                else -> false
+            }
+            return Parameter(value.referenceName, value.type, reference, mutable, requiredMutableValue)
         }
 
         fun self(name: String): Parameter =
