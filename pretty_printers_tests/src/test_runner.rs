@@ -123,11 +123,6 @@ impl<'test> GDBTestRunner<'test> {
 
 impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
     fn run(&self) -> TestResult {
-        let compile_result = compile_test(self.src_path);
-        if !compile_result.status.success() {
-            return TestResult::Err(String::from("Compilation failed!"));
-        }
-
         let prefixes = if self.config.native_rust {
             static PREFIXES: &'static [&'static str] = &["gdb", "gdbr"];
             PREFIXES
@@ -147,6 +142,11 @@ impl<'test> TestRunner<'test> for GDBTestRunner<'test> {
             DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
             DebuggerCommands::Err(reason) => return TestResult::Err(reason),
         };
+
+        let compile_result = compile_test(self.src_path);
+        if !compile_result.status.success() {
+            return TestResult::Err(String::from("Compilation failed!"));
+        }
 
         let exe_file = Path::new("./").join(BINARY);
 
@@ -227,11 +227,6 @@ impl<'test> LLDBTestRunner<'test> {
 
 impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
     fn run(&self) -> TestResult {
-        let compile_result = compile_test(self.src_path);
-        if !compile_result.status.success() {
-            return TestResult::Err(String::from("Compilation failed!"));
-        }
-
         let prefixes = if self.config.native_rust {
             static PREFIXES: &'static [&'static str] = &["lldb", "lldbr"];
             PREFIXES
@@ -251,6 +246,11 @@ impl<'test> TestRunner<'test> for LLDBTestRunner<'test> {
             DebuggerCommands::Skip(reason) => return TestResult::Skipped(reason),
             DebuggerCommands::Err(reason) => return TestResult::Err(reason),
         };
+
+        let compile_result = compile_test(self.src_path);
+        if !compile_result.status.success() {
+            return TestResult::Err(String::from("Compilation failed!"));
+        }
 
         // Write debugger script:
         // We don't want to hang when calling `quit` while the process is still running
