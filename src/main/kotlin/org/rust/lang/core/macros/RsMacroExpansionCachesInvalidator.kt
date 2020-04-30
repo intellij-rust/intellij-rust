@@ -6,14 +6,13 @@
 package org.rust.lang.core.macros
 
 import com.intellij.ide.caches.CachesInvalidator
-import com.intellij.util.io.delete
 
 class RsMacroExpansionCachesInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
         try {
-            getBaseMacroDir().delete()
-        } catch (ignored: Exception) {
-
+            MacroExpansionManager.invalidateCaches()
+        } catch (e: Exception) {
+            MACRO_LOG.warn(e)
         }
     }
 
