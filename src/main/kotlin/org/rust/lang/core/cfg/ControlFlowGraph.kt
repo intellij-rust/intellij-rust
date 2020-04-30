@@ -164,6 +164,8 @@ private class ExitPointVisitor(
     }
 
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
+        super.visitMacroExpr(macroExpr)
+
         val macroCall = macroExpr.macroCall
         if (macroCall.macroName == "try"
             && macroCall.exprMacroArgument != null

@@ -94,6 +94,18 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "return 1", "test()")
 
+    fun `test highlight last macro call as return`() = doTest("""
+        macro_rules! test {
+            () => { () }
+        }
+        fn main() {
+            if true {
+                /*caret*/return;
+            }
+            test!()
+        }
+    """, "return", "test!()")
+
     fun `test highlight should not highlight inner function`() = doTest("""
         fn main() {
             fn bar() {
