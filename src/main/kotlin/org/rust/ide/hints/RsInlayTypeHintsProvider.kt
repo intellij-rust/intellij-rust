@@ -24,7 +24,10 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.walk
 import org.rust.lang.core.types.type
+import org.rust.stdext.dequeOf
+import org.rust.stdext.nextOrNull
 import javax.swing.JPanel
 
 class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Settings> {
@@ -35,7 +38,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
     override val previewText: String
         get() = """
             struct Foo<T1, T2, T3> { x: T1, y: T2, z: T3 }
-            
+
             fn main() {
                 let foo = Foo { x: 1, y: "abc", z: true };
             }
@@ -45,11 +48,13 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
         val showForVariables = "Show for variables"
         val showForLambdas = "Show for closures"
         val showForIterators = "Show for iterators"
+        val showForPlaceholders = "Show for type placeholders"
         val showObviousTypes = "Show obvious types"
 
         private val varField = CheckBox(showForVariables)
         private val lambdaField = CheckBox(showForLambdas)
         private val iteratorField = CheckBox(showForIterators)
+        private val placeholderField = CheckBox(showForPlaceholders)
         private val obviousTypesField = CheckBox(showObviousTypes)
 
         override fun createComponent(listener: ChangeListener): JPanel {
@@ -59,6 +64,8 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             lambdaField.addItemListener { handleChange(listener) }
             iteratorField.isSelected = settings.showForIterators
             iteratorField.addItemListener { handleChange(listener) }
+            placeholderField.isSelected = settings.showForPlaceholders
+            placeholderField.addItemListener { handleChange(listener) }
             obviousTypesField.isSelected = settings.showObviousTypes
             obviousTypesField.addItemListener { handleChange(listener) }
 
@@ -66,6 +73,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                 row { varField(pushX) }
                 row { lambdaField(pushX) }
                 row { iteratorField(pushX) }
+                row { placeholderField(pushX) }
                 row { obviousTypesField(pushX) }
             }
             panel.border = JBUI.Borders.empty(5)
@@ -76,6 +84,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             settings.showForVariables = varField.isSelected
             settings.showForLambdas = lambdaField.isSelected
             settings.showForIterators = iteratorField.isSelected
+            settings.showForPlaceholders  = placeholderField.isSelected
             settings.showObviousTypes = obviousTypesField.isSelected
             listener.settingsChanged()
         }
@@ -109,7 +118,12 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             private fun presentVariable(element: RsElement) {
                 when (element) {
                     is RsLetDecl -> {
+                        if (settings.showForPlaceholders) {
+                            presentTypePlaceholders(element)
+                        }
+
                         if (element.typeReference != null) return
+
                         val pat = element.pat ?: return
                         presentTypeForPat(pat, element.expr)
                     }
@@ -123,6 +137,19 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                             presentTypeForPat(pat, element.expr)
                         }
                     }
+                }
+            }
+
+            private fun presentTypePlaceholders(declaration: RsLetDecl) {
+                val types = declaration.pat?.type?.walk()?.asSequence() ?: return
+                val typeElements = declaration.descendantsOfType<RsTypeReference>().asSequence()
+
+                for ((type, typeElement) in types.zip(typeElements)) {
+                    if (typeElement !is RsBaseType || typeElement.underscore == null) continue
+
+                    val presentation = typeHintsFactory.typeHint(type)
+                    val finalPresentation = presentation.withDisableAction(declaration.project)
+                    sink.addInlineElement(typeElement.endOffset, false, finalPresentation)
                 }
             }
 
@@ -173,6 +200,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
         var showForVariables: Boolean = true,
         var showForLambdas: Boolean = true,
         var showForIterators: Boolean = true,
+        var showForPlaceholders: Boolean = true,
         var showObviousTypes: Boolean = false
     )
 
