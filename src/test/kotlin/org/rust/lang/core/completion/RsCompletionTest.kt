@@ -877,4 +877,28 @@ class RsCompletionTest : RsCompletionTestBase() {
             Foo.foo()/*caret*/
         }
     """)
+
+    fun `test complete type parameters on tuple struct`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() { let x: Frob/*caret*/ }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() { let x: Frobnicate</*caret*/> }
+    """)
+
+    fun `test move cursor if angle brackets already exist`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() { let x: Frob/*caret*/<> }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() { let x: Frobnicate</*caret*/> }
+    """)
+
+    fun `test don't complete type arguments in expression context`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() { let x = Frob/*caret*/ }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() { let x = Frobnicate/*caret*/ }
+    """)
 }

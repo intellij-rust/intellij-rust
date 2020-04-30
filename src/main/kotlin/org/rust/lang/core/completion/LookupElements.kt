@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -223,6 +224,11 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         if (element is RsNameIdentifierOwner && !RsNamesValidator.isIdentifier(scopeName) && scopeName !in CAN_NOT_BE_ESCAPED) {
             document.insertString(startOffset, RS_RAW_PREFIX)
         }
+
+        if (element is RsGenericDeclaration) {
+            addAngleBrackets(element, document, context)
+        }
+
         when (element) {
 
             is RsMod -> {
@@ -308,6 +314,19 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     }
 }
 
+private fun addAngleBrackets(element: RsGenericDeclaration, document: Document, context: InsertionContext) {
+    if (element.typeParameters.isEmpty()) return
+
+    // do not complete angle brackets if not in type place
+    if (context.getElementOfType<RsPathExpr>() != null) return
+
+    if (!context.alreadyHasAngleBrackets)
+    {
+        document.insertString(context.selectionEndOffset, "<>")
+    }
+    EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+}
+
 inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
     PsiTreeUtil.findElementOfClassAtOffset(file, tailOffset - 1, T::class.java, strict)
 
@@ -316,6 +335,9 @@ private val InsertionContext.isInUseGroup: Boolean
 
 val InsertionContext.alreadyHasCallParens: Boolean
     get() = nextCharIs('(')
+
+private val InsertionContext.alreadyHasAngleBrackets: Boolean
+    get() = nextCharIs('<')
 
 private val InsertionContext.alreadyHasStructBraces: Boolean
     get() = nextCharIs('{')
