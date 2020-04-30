@@ -96,6 +96,10 @@ val Ty.isSelf: Boolean
 
 fun Ty.walk(): TypeIterator = TypeIterator(this)
 
+/**
+ * Iterator that walks `root` and any types reachable from
+ * `root`, in depth-first order.
+ */
 class TypeIterator(root: Ty) : Iterator<Ty> {
     private val stack: Deque<Ty> = dequeOf(root)
     private var lastSubtreeSize: Int = 0
@@ -103,7 +107,7 @@ class TypeIterator(root: Ty) : Iterator<Ty> {
     override fun hasNext(): Boolean = stack.isNotEmpty()
 
     override fun next(): Ty {
-        val ty = stack.removeFirst()
+        val ty = stack.pop()
         lastSubtreeSize = stack.size
         pushSubTypes(stack, ty)
         return ty
@@ -111,7 +115,7 @@ class TypeIterator(root: Ty) : Iterator<Ty> {
 
     fun skipCurrentSubtree() {
         while (stack.size > lastSubtreeSize) {
-            stack.removeLast()
+            stack.pop()
         }
     }
 }
@@ -123,26 +127,31 @@ fun Ty.walkShallow(): Iterator<Ty> {
 }
 
 private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
+    // Types on the stack are pushed in reverse order so as to
+    // maintain a pre-order traversal. It is like the
+    // natural order one would expect — the order of the
+    // types as they are written.
+
     when (parentTy) {
         is TyAdt ->
-            stack.addAll(parentTy.typeArguments)
+            parentTy.typeArguments.asReversed().forEach(stack::push)
         is TyAnon, is TyProjection ->
-            stack.addAll(parentTy.typeParameterValues.types)
+            parentTy.typeParameterValues.types.reversed().forEach(stack::push)
         is TyArray ->
-            stack.add(parentTy.base)
+            stack.push(parentTy.base)
         is TyPointer ->
-            stack.add(parentTy.referenced)
+            stack.push(parentTy.referenced)
         is TyReference ->
-            stack.add(parentTy.referenced)
+            stack.push(parentTy.referenced)
         is TySlice ->
-            stack.add(parentTy.elementType)
+            stack.push(parentTy.elementType)
         is TyTraitObject ->
-            stack.addAll(parentTy.trait.subst.types)
+            parentTy.trait.subst.types.reversed().forEach(stack::push)
         is TyTuple ->
-            stack.addAll(parentTy.types)
+            parentTy.types.asReversed().forEach(stack::push)
         is TyFunction -> {
-            stack.addAll(parentTy.paramTypes)
-            stack.add(parentTy.retType)
+            stack.push(parentTy.retType)
+            parentTy.paramTypes.asReversed().forEach(stack::push)
         }
     }
 }
