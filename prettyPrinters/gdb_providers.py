@@ -211,6 +211,17 @@ class StdRefCellProvider:
         yield ("borrow", self.borrow)
 
 
+class StdNonZeroNumberProvider:
+    def __init__(self, valobj):
+        fields = valobj.type.fields()
+        assert len(fields) == 1
+        field = list(fields)[0]
+        self.value = str(valobj[field.name])
+
+    def to_string(self):
+        return self.value
+
+
 # Yield each key (and optionally value) from a BoxedNode.
 def children_of_node(boxed_node, height, want_values):
     def cast_to_internal(node):

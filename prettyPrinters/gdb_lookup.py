@@ -3,7 +3,6 @@ import gdb
 from gdb_providers import *
 from rust_types import *
 
-
 def register_printers(objfile):
     objfile.pretty_printers.append(lookup)
 
@@ -85,5 +84,8 @@ def lookup(valobj):
         return StdRefProvider(valobj)
     if rust_type == RustType.STD_REF_CELL:
         return StdRefCellProvider(valobj)
+
+    if rust_type == RustType.STD_NONZERO_NUMBER:
+        return StdNonZeroNumberProvider(valobj)
 
     return None
