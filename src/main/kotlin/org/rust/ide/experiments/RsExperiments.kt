@@ -9,4 +9,5 @@ object RsExperiments {
     const val BUILD_TOOL_WINDOW = "org.rust.cargo.build.tool.window"
     const val FETCH_OUT_DIR = "org.rust.cargo.fetch.out.dir"
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
+    const val MOVE_REFACTORING = "org.rust.ide.refactoring.move"
 }
