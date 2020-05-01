@@ -22,7 +22,11 @@ interface Kind {
     val flags: TypeFlags
 }
 
-fun mergeFlags(kinds: Collection<Kind>): TypeFlags = kinds.fold(0) { a, b -> a or b.flags }
+fun mergeFlags(kinds: Collection<Kind>): TypeFlags =
+    kinds.fold(0) { a, b -> a or b.flags }
 
-fun mergeFlags(element: BoundElement<*>): TypeFlags =
+fun mergeElementFlags(element: BoundElement<*>): TypeFlags =
     mergeFlags(element.subst.kinds) or mergeFlags(element.assoc.values)
+
+fun mergeElementFlags(elements: Collection<BoundElement<*>>): TypeFlags =
+    elements.fold(0) { acc, element -> acc or mergeElementFlags(element) }

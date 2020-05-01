@@ -478,7 +478,9 @@ class RsInferenceContext(
                 combineTypePairs(ty1.typeArguments.zip(ty2.typeArguments))
                     .and { combineConstPairs(ty1.constArguments.zip(ty2.constArguments)) }
             }
-            ty1 is TyTraitObject && ty2 is TyTraitObject && combineBoundElements(ty1.trait, ty2.trait) -> CoerceResult.Ok
+            ty1 is TyTraitObject && ty2 is TyTraitObject &&
+                // TODO: Use all trait bounds
+                combineBoundElements(ty1.traits.first(), ty2.traits.first()) -> CoerceResult.Ok
             ty1 is TyAnon && ty2 is TyAnon && ty1.definition != null && ty1.definition == ty2.definition -> CoerceResult.Ok
             ty1 is TyNever || ty2 is TyNever -> CoerceResult.Ok
             else -> CoerceResult.TypeMismatch(ty1, ty2)
@@ -849,7 +851,7 @@ class RsInferenceContext(
         is TraitImplSource.Object -> when (val selfTy = callee.selfTy) {
             is TyAnon -> selfTy.getTraitBoundsTransitively()
                 .find { it.element == source.value }?.subst ?: emptySubstitution
-            is TyTraitObject -> selfTy.trait.flattenHierarchy
+            is TyTraitObject -> selfTy.getTraitBoundsTransitively()
                 .find { it.element == source.value }?.subst ?: emptySubstitution
             else -> emptySubstitution
         }

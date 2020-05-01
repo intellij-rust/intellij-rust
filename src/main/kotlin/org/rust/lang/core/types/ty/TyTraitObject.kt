@@ -7,13 +7,15 @@ package org.rust.lang.core.types.ty
 
 import com.intellij.codeInsight.completion.CompletionUtil
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.ext.flattenHierarchy
 import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.core.psi.ext.withDefaultSubst
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.mergeFlags
+import org.rust.lang.core.types.mergeElementFlags
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 
@@ -23,36 +25,45 @@ import org.rust.lang.core.types.regions.Region
  * only the latter are ty.
  */
 class TyTraitObject(
-    val trait: BoundElement<RsTraitItem>,
+    val traits: List<BoundElement<RsTraitItem>>,
     val region: Region = ReUnknown
-) : Ty(mergeFlags(trait) or region.flags) {
+) : Ty(mergeElementFlags(traits) or region.flags) {
+
+    init {
+        require(traits.isNotEmpty()) {
+            "Can't construct TyTraitObject from empty list of trait bounds"
+        }
+    }
 
     val typeArguments: List<Ty>
-        get() = trait.element.typeParameters.map { typeParameterValues[it] ?: TyUnknown }
+        get() = traits.flatMap { it.element.typeParameters }.map { typeParameterValues[it] ?: TyUnknown }
 
     override val typeParameterValues: Substitution
-        get() = trait.subst
+        get() = traits.map { it.subst }.fold(emptySubstitution) { a, b -> a + b }
 
     override fun superFoldWith(folder: TypeFolder): TyTraitObject =
-        TyTraitObject(trait.foldWith(folder), region.foldWith(folder))
+        TyTraitObject(traits.map { it.foldWith(folder) }, region.foldWith(folder))
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =
-        trait.visitWith(visitor) || region.visitWith(visitor)
+        traits.any { it.visitWith(visitor) } || region.visitWith(visitor)
+
+    fun getTraitBoundsTransitively(): Collection<BoundElement<RsTraitItem>> =
+        traits.flatMap { it.flattenHierarchy }
 
     override fun equals(other: Any?): Boolean = when {
         this === other -> true
         javaClass != other?.javaClass -> false
         other !is TyTraitObject -> false
-        trait != other.trait -> false
+        traits != other.traits -> false
         else -> true
     }
 
-    override fun hashCode(): Int = trait.hashCode()
+    override fun hashCode(): Int = traits.hashCode()
 
     companion object {
         fun valueOf(trait: RsTraitItem): TyTraitObject {
             val item = CompletionUtil.getOriginalOrSelf(trait)
-            return TyTraitObject(item.withDefaultSubst())
+            return TyTraitObject(listOf(item.withDefaultSubst()))
         }
     }
 }

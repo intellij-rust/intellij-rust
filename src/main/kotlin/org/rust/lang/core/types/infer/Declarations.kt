@@ -53,7 +53,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
                         }
                     }
                     target is RsTraitItem -> {
-                        TyTraitObject(boundElement.downcast()!!, defaultTraitObjectRegion ?: ReUnknown)
+                        TyTraitObject(listOfNotNull(boundElement.downcast()), defaultTraitObjectRegion ?: ReUnknown)
                     }
                     target is RsTypeDeclarationElement -> {
                         val ty = target.declaredType
@@ -102,15 +102,11 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
 
         is RsTraitType -> {
             val traitBounds = type.polyboundList.mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
+            if (type.isImpl) return TyAnon(type, traitBounds)
+            if (traitBounds.isEmpty()) return TyUnknown
             val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
-            if (type.isImpl) {
-                TyAnon(type, traitBounds)
-            } else {  // TODO: use all bounds
-                TyTraitObject(
-                    traitBounds.firstOrNull() ?: return TyUnknown,
-                    lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic
-                )
-            }
+            val regionBound = lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic
+            TyTraitObject(traitBounds, regionBound)
         }
 
         else -> TyUnknown
@@ -152,6 +148,6 @@ private fun <T : TypeFoldable<T>> TypeFoldable<T>.substituteWithTraitObjectRegio
             1 -> bounds.single().substitute(subst)
             else -> ReUnknown
         }
-        return TyTraitObject(ty.trait, region)
+        return TyTraitObject(ty.traits, region)
     }
 }).tryEvaluate()

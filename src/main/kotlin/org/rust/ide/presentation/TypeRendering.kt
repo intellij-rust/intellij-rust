@@ -5,7 +5,6 @@
 
 package org.rust.ide.presentation
 
-import org.jetbrains.annotations.TestOnly
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
@@ -124,7 +123,7 @@ private data class TypeRenderer(
                 }
                 append(ty.target.name)
             }
-            is TyTraitObject -> formatTrait(ty.trait, render)
+            is TyTraitObject -> ty.traits.joinToString("+", "dyn ") { formatTrait(it, render) }
             is TyAnon -> ty.traits.joinToString("+", "impl ") { formatTrait(it, render) }
             is TyAdt -> buildString {
                 if (useAliasNames && ty.aliasedBy != null) {

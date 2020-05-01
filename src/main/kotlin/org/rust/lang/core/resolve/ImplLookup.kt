@@ -306,7 +306,7 @@ class ImplLookup(
         val implsAndTraits = mutableListOf<TraitImplSource>()
         when (ty) {
             is TyTraitObject -> {
-                ty.trait.flattenHierarchy.mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
+                ty.getTraitBoundsTransitively().mapTo(implsAndTraits) { TraitImplSource.Object(it.element) }
                 findExplicitImpls(ty) { implsAndTraits += TraitImplSource.ExplicitImpl(it); false }
             }
             is TyFunction -> {
@@ -656,7 +656,7 @@ class ImplLookup(
                 addAll(assembleDerivedCandidates(ref))
                 if (ref.selfTy is TyFunction && element in fnTraits) add(SelectionCandidate.Closure)
                 if (ref.selfTy is TyTraitObject) {
-                    ref.selfTy.trait.flattenHierarchy.find { it.element == ref.trait.element }
+                    ref.selfTy.getTraitBoundsTransitively().find { it.element == ref.trait.element }
                         ?.let { add(SelectionCandidate.TraitObject) }
                 }
                 getHardcodedImpls(ref.selfTy).filter { be ->
@@ -761,7 +761,7 @@ class ImplLookup(
             }
             SelectionCandidate.TraitObject -> {
                 val traits = when (ref.selfTy) {
-                    is TyTraitObject -> ref.selfTy.trait.flattenHierarchy
+                    is TyTraitObject -> ref.selfTy.getTraitBoundsTransitively()
                     is TyAnon -> ref.selfTy.getTraitBoundsTransitively()
                     else -> error("unreachable")
                 }
@@ -874,7 +874,7 @@ class ImplLookup(
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         return when (selfTy) {
             is TyTypeParameter -> lookupAssocTypeInBounds(getEnvBoundTransitivelyFor(selfTy), res.impl, assocType)
-            is TyTraitObject -> selfTy.trait.assoc[assocType]
+            is TyTraitObject -> lookupAssocTypeInBounds(selfTy.getTraitBoundsTransitively().asSequence(), res.impl, assocType)
             else -> {
                 lookupAssocTypeInSelection(res, assocType)
                     ?: lookupAssocTypeInBounds(getHardcodedImpls(selfTy).asSequence(), res.impl, assocType)

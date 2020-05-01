@@ -1065,26 +1065,52 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test trait object type`() = doTest("""
+        struct Foo;
+        trait A {}
+        trait B {}
+        trait Bar {
+            fn bar(&self) -> &dyn A + B;
+        }
+
+        impl Bar for Foo {
+            /*caret*/
+        }
+    """, listOf(ImplementMemberSelection("bar(&self) -> &dyn A + B", true, isSelected = true)), """
+        struct Foo;
+        trait A {}
+        trait B {}
+        trait Bar {
+            fn bar(&self) -> &dyn A + B;
+        }
+
+        impl Bar for Foo {
+            fn bar(&self) -> &dyn A + B {
+                unimplemented!()
+            }
+        }
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test Fn type`() = doTest("""
         struct Foo;
         struct Bar;
         trait Baz {
-            fn baz(&self) -> Box<Fn(i32, i32) -> i32>;
+            fn baz(&self) -> Box<dyn Fn(i32, i32) -> i32>;
         }
 
         impl Baz for Foo {
             /*caret*/
         }
-    """, listOf(ImplementMemberSelection("baz(&self) -> Box<Fn(i32, i32) -> i32>", true, isSelected = true)), """
+    """, listOf(ImplementMemberSelection("baz(&self) -> Box<dyn Fn(i32, i32) -> i32>", true, isSelected = true)), """
         struct Foo;
         struct Bar;
         trait Baz {
-            fn baz(&self) -> Box<Fn(i32, i32) -> i32>;
+            fn baz(&self) -> Box<dyn Fn(i32, i32) -> i32>;
         }
 
         impl Baz for Foo {
-            fn baz(&self) -> Box<Fn(i32, i32) -> i32> {
+            fn baz(&self) -> Box<dyn Fn(i32, i32) -> i32> {
                 unimplemented!()
             }
         }
