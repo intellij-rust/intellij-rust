@@ -135,7 +135,7 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
     when (parentTy) {
         is TyAdt ->
             parentTy.typeArguments.asReversed().forEach(stack::push)
-        is TyAnon, is TyProjection ->
+        is TyAnon, is TyTraitObject, is TyProjection ->
             parentTy.typeParameterValues.types.reversed().forEach(stack::push)
         is TyArray ->
             stack.push(parentTy.base)
@@ -145,8 +145,6 @@ private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
             stack.push(parentTy.referenced)
         is TySlice ->
             stack.push(parentTy.elementType)
-        is TyTraitObject ->
-            parentTy.trait.subst.types.reversed().forEach(stack::push)
         is TyTuple ->
             parentTy.types.asReversed().forEach(stack::push)
         is TyFunction -> {

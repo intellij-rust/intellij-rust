@@ -267,19 +267,19 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
     fun `test generic trait object`() = testType("""
         trait Trait<A> {}
         fn foo(_: &Trait<u8>) { unimplemented!() }
-                  //^ Trait<u8>
+                  //^ dyn Trait<u8>
     """)
 
     fun `test generic 'dyn Trait' trait object`() = testType("""
         trait Trait<A> {}
         fn foo(_: &dyn Trait<u8>) { unimplemented!() }
-                  //^ Trait<u8>
+                  //^ dyn Trait<u8>
     """)
 
     fun `test trait object with bound associated type`() = testType("""
         trait Trait { type Item; }
         fn foo(_: &Trait<Item=u8>) { unimplemented!() }
-                  //^ Trait<Item=u8>
+                  //^ dyn Trait<Item=u8>
     """)
 
     fun `test impl Trait`() = testType("""

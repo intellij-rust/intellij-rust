@@ -15,7 +15,7 @@ import org.rust.lang.core.types.HAS_TY_PROJECTION_MASK
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.mergeFlags
+import org.rust.lang.core.types.mergeElementFlags
 
 /**
  * Represents projection of an associated type.
@@ -39,7 +39,7 @@ data class TyProjection private constructor(
     val type: Ty,
     val trait: BoundElement<RsTraitItem>,
     val target: RsTypeAlias
-): Ty(type.flags or mergeFlags(trait) or HAS_TY_PROJECTION_MASK) {
+): Ty(type.flags or mergeElementFlags(trait) or HAS_TY_PROJECTION_MASK) {
 
     /**
      * Extracts the underlying trait reference from this projection.

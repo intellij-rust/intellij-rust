@@ -44,20 +44,20 @@ class RsExpressionTypeProviderTest : RsTestBase() {
             type Item = ();
         }
 
-        fn foo(c: Trait<Item=u32>) {
+        fn foo(c: dyn Trait<Item=u32>) {
             let /*caret*/b = c;
         }
-    """, "Trait<Item=u32>")
+    """, "dyn Trait<Item=u32>")
 
     fun `test associated generic type`() = doTest("""
         trait Trait {
             type Item = ();
         }
 
-        fn foo<T>(c: Trait<Item=T>) {
+        fn foo<T>(c: dyn Trait<Item=T>) {
             let /*caret*/b = c;
         }
-    """, "Trait<Item=T>")
+    """, "dyn Trait<Item=T>")
 
     fun `test aliased type`() = doTest("""
         struct S<T> { t: T }

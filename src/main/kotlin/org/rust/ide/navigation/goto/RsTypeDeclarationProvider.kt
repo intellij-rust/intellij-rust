@@ -38,7 +38,7 @@ class RsTypeDeclarationProvider : TypeDeclarationProvider {
     private tailrec fun Ty.baseTypeDeclaration(): RsElement? {
         return when (this) {
             is TyAdt -> item
-            is TyTraitObject -> trait.element
+            is TyTraitObject -> traits.firstOrNull()?.element
             is TyTypeParameter -> {
                 when (parameter) {
                     is TyTypeParameter.Named -> parameter.parameter

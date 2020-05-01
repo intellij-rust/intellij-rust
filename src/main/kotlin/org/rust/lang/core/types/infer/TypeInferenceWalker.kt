@@ -1245,7 +1245,7 @@ class RsTypeInferenceWalker(
                     .find { it.trait.selfTy == expected && it.trait.trait.element in listOf(items.Fn, items.FnMut, items.FnOnce) }
                     ?.let { lookup.asTyFunction(it.trait.trait) }
             }
-            is TyTraitObject -> lookup.asTyFunction(expected.trait)
+            is TyTraitObject -> lookup.asTyFunction(expected.traits.first()) // TODO: Use all trait bounds
             is TyFunction -> expected
             is TyAnon -> {
                 val trait = expected.traits.find { it.element in listOf(items.Fn, items.FnMut, items.FnOnce) }

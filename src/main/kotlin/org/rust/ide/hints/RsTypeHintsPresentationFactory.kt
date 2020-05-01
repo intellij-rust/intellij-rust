@@ -187,7 +187,7 @@ class RsTypeHintsPresentationFactory(private val factory: PresentationFactory, p
         factory.collapsible(
             prefix = text("dyn "),
             collapsed = text(PLACEHOLDER),
-            expanded = { traitItemTypeHint(type.trait, level, true) },
+            expanded = { type.traits.map { traitItemTypeHint(it, level + 1, true) }.join("+") },
             suffix = text(""),
             startWithPlaceholder = checkSize(level, 1)
         )

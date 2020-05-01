@@ -12,7 +12,7 @@ import org.rust.lang.core.psi.ext.isImpl
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.mergeFlags
+import org.rust.lang.core.types.mergeElementFlags
 
 /**
  * Represents "impl Trait".
@@ -20,7 +20,7 @@ import org.rust.lang.core.types.mergeFlags
 data class TyAnon(
     val definition: RsTraitType?,
     val traits: List<BoundElement<RsTraitItem>>
-) : Ty(traits.fold(0) { acc, trait -> acc or mergeFlags(trait) }) {
+) : Ty(mergeElementFlags(traits)) {
 
     init {
         require(definition == null || definition.isImpl) {

@@ -116,7 +116,7 @@ object RsImportHelper {
                         }
                     }
                     is TyAnon -> result += ty.traits.map { it.element }
-                    is TyTraitObject -> result += ty.trait.element
+                    is TyTraitObject -> result += ty.traits.map { it.element }
                     is TyProjection -> {
                         result += ty.trait.element
                         result += ty.target
