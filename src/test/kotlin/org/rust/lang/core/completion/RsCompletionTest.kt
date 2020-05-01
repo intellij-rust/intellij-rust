@@ -877,4 +877,98 @@ class RsCompletionTest : RsCompletionTestBase() {
             Foo.foo()/*caret*/
         }
     """)
+
+    fun `test complete type parameters in let binding`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x: Frob/*caret*/
+        }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x: Frobnicate</*caret*/>
+        }
+    """)
+
+    fun `test complete type parameters in parameter`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn foo(a: Frob/*caret*/) {}
+    """, """
+        struct Frobnicate<T>(T);
+        fn foo(a: Frobnicate</*caret*/>) {}
+    """)
+
+    fun `test complete type parameters in generic function call`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn gen<T>(t: T) {}
+        fn foo() {
+            gen::<Frob/*caret*/
+        }
+    """, """
+        struct Frobnicate<T>(T);
+        fn gen<T>(t: T) {}
+        fn foo() {
+            gen::<Frobnicate</*caret*/>
+        }
+    """)
+
+    fun `test move cursor if angle brackets already exist`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x: Frob/*caret*/<>
+        }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x: Frobnicate</*caret*/>
+        }
+    """)
+
+    fun `test don't complete type arguments in expression context 1`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x = Frob/*caret*/
+        }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() {
+            let x = Frobnicate/*caret*/
+        }
+    """)
+
+    fun `test don't complete type arguments in expression context 2`() = doSingleCompletion("""
+        struct Frobnicate<T>(T);
+        fn main() {
+            if (Frob/*caret*/
+        }
+    """, """
+        struct Frobnicate<T>(T);
+        fn main() {
+            if (Frobnicate/*caret*/
+        }
+    """)
+
+    fun `test don't complete type arguments in use item`() = doSingleCompletion("""
+        mod a {
+            pub struct Frobnicate<T>(T);
+        }
+        use a::Frob/*caret*/
+    """, """
+        mod a {
+            pub struct Frobnicate<T>(T);
+        }
+        use a::Frobnicate;/*caret*/
+    """)
+
+    fun `test don't complete type arguments if all type parameters have a default`() = doSingleCompletion("""
+        struct Frobnicate<T=u32,R=i32>(T, R);
+        fn main() {
+            let x: Frob/*caret*/
+        }
+    """, """
+        struct Frobnicate<T=u32,R=i32>(T, R);
+        fn main() {
+            let x: Frobnicate/*caret*/
+        }
+    """)
 }
