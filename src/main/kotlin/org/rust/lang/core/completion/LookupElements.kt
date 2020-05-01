@@ -322,8 +322,7 @@ private fun addAngleBrackets(element: RsGenericDeclaration, document: Document, 
     val path = context.getElementOfType<RsPath>()
     if (path == null || path.parent !is RsTypeReference) return
 
-    if (!context.alreadyHasAngleBrackets)
-    {
+    if (!context.alreadyHasAngleBrackets) {
         document.insertString(context.selectionEndOffset, "<>")
     }
     EditorModificationUtil.moveCaretRelatively(context.editor, 1)
