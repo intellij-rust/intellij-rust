@@ -315,10 +315,12 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
 }
 
 private fun addAngleBrackets(element: RsGenericDeclaration, document: Document, context: InsertionContext) {
-    if (element.typeParameters.isEmpty()) return
+    // complete only types that have at least one type parameter without a default
+    if (element.typeParameters.all { it.typeReference != null }) return
 
-    // do not complete angle brackets if not in type place
-    if (context.getElementOfType<RsPathExpr>() != null) return
+    // complete angle brackets only in a type context
+    val path = context.getElementOfType<RsPath>()
+    if (path == null || path.parent !is RsTypeReference) return
 
     if (!context.alreadyHasAngleBrackets)
     {
