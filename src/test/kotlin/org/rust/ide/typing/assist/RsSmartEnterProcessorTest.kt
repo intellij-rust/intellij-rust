@@ -300,6 +300,19 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """)
 
+    fun `test empty line`() = doTest("""
+        fn main() {
+            let a = 123;
+            /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 123;
+            
+            /*caret*/
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
         checkEditorAction(before, after, IdeActions.ACTION_EDITOR_COMPLETE_STATEMENT)
 }
