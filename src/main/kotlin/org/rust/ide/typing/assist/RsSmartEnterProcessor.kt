@@ -29,6 +29,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         )
 
         addEnterProcessors(
+            AfterSemicolonEnterProcessor(),
             PlainEnterProcessor()
         )
     }
@@ -50,7 +51,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         return true
     }
 
-    private inner class PlainEnterProcessor : FixEnterProcessor() {
+    private class PlainEnterProcessor : FixEnterProcessor() {
         override fun doEnter(atCaret: PsiElement, file: PsiFile, editor: Editor, modified: Boolean): Boolean {
             plainEnter(editor)
             return true
