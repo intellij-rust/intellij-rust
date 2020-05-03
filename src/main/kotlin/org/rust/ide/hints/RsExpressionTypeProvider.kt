@@ -9,7 +9,7 @@ import com.intellij.lang.ExpressionTypeProvider
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
-import org.rust.ide.presentation.textWithAliasNames
+import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
 import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
@@ -36,7 +36,7 @@ class RsExpressionTypeProvider : ExpressionTypeProvider<PsiElement>() {
 
     override fun getInformationHint(element: PsiElement): String {
         val type = getType(element)
-        return type.textWithAliasNames.escaped
+        return type.render(useAliasNames = true).escaped
     }
 
     private fun getType(element: PsiElement): Ty = when (element) {

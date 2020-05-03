@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.types.ty
 
-import org.rust.ide.presentation.tyToString
+import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.fields
 import org.rust.lang.core.resolve.ImplLookup
@@ -43,7 +43,7 @@ abstract class Ty(override val flags: TypeFlags = 0) : Kind, TypeFoldable<Ty> {
     /**
      * User visible string representation of a type
      */
-    final override fun toString(): String = tyToString(this)
+    final override fun toString(): String = render()
 }
 
 enum class Mutability {

@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.presentation.tyToStringWithoutTypeArgs
+import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.types.ty.Ty
@@ -33,7 +33,7 @@ class ConvertToTyUsingFromTraitFix(expr: PsiElement, val ty: Ty) : LocalQuickFix
         if (startElement !is RsExpr) return
 
         val newElement = RsPsiFactory(project).createAssocFunctionCall(
-            tyToStringWithoutTypeArgs(ty),
+            ty.render(includeTypeArguments = false),
             "from",
             listOf(startElement)
         )
