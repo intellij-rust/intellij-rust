@@ -189,7 +189,6 @@ project(":plugin") {
         if (baseIDE == "idea") {
             plugins += listOf(
                 "copyright",
-                "coverage",
                 "java",
                 nativeDebugPlugin
             )
@@ -407,11 +406,6 @@ project(":duplicates") {
 }
 
 project(":coverage") {
-    intellij {
-        if (baseIDE == "idea") {
-            setPlugins("coverage")
-        }
-    }
     dependencies {
         implementation(project(":"))
         implementation(project(":common"))
