@@ -7,6 +7,7 @@ package org.rust.ide.typing.assist
 
 import com.intellij.lang.SmartEnterProcessorWithFixers
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
@@ -29,6 +30,7 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         )
 
         addEnterProcessors(
+            AfterSemicolonEnterProcessor(),
             PlainEnterProcessor()
         )
     }
@@ -50,7 +52,11 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         return true
     }
 
-    private inner class PlainEnterProcessor : FixEnterProcessor() {
+    override fun processDefaultEnter(project: Project, editor: Editor, file: PsiFile) {
+        plainEnter(editor)
+    }
+
+    private class PlainEnterProcessor : FixEnterProcessor() {
         override fun doEnter(atCaret: PsiElement, file: PsiFile, editor: Editor, modified: Boolean): Boolean {
             plainEnter(editor)
             return true

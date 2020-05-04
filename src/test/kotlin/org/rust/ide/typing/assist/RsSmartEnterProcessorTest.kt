@@ -20,8 +20,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """, """
         fn f() -> i32 {
-            f();
-            /*caret*/
+            f();/*caret*/
         }
     """)
 
@@ -32,8 +31,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """, """
         fn double(x: i32) -> i32 {
-            double(double(x));
-            /*caret*/
+            double(double(x));/*caret*/
             double(x)
         }
     """)
@@ -44,8 +42,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """, """
         fn f(s: String) -> String {
-            f(f(f("((")));
-            /*caret*/
+            f(f(f("((")));/*caret*/
         }
     """)
 
@@ -59,8 +56,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn f(s: String) -> String {
             f("");
             f(
-                f("(("));
-            /*caret*/
+                f("(("));/*caret*/
         }
     """)
 
@@ -70,8 +66,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """, """
         fn f(x: i32) -> i32 {
-            f(f(x));
-            /*caret*/
+            f(f(x));/*caret*/
         }
     """)
 
@@ -91,8 +86,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
 
         fn main() {
-            let origin = Point { x: 0, y: 0 };
-            /*caret*/
+            let origin = Point { x: 0, y: 0 };/*caret*/
         }
     """)
 
@@ -110,8 +104,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
 
         fn main() {
-            let x = f();
-            /*caret*/
+            let x = f();/*caret*/
         }
     """)
 
@@ -127,8 +120,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
             let version_req = match version {
                 Some(v) => try!(VersionReq::parse(v)),
                 None => VersionReq::any()
-            };
-            /*caret*/
+            };/*caret*/
         }
     """)
 
@@ -139,8 +131,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         }
     """, """
         fn f(s: String) {
-            f();
-            /*caret*/
+            f();/*caret*/
             let x = 5;
         }
     """)
@@ -167,8 +158,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
 
             println!()
 
-            println!();
-            /*caret*/
+            println!();/*caret*/
 
             let b = {
                 1
@@ -186,8 +176,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
         fn main() {
             let a = {
                 1
-            };
-            /*caret*/
+            };/*caret*/
         }
     """)
 
@@ -200,9 +189,8 @@ class RsSmartEnterProcessorTest : RsTestBase() {
     """, """
         fn main() {
             let a = {
-                /*caret*/
                 1
-            };
+            };/*caret*/
         }
     """)
 
@@ -309,6 +297,19 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => {}
                 /*caret*/
             }
+        }
+    """)
+
+    fun `test empty line`() = doTest("""
+        fn main() {
+            let a = 123;
+            /*caret*/
+        }
+    """, """
+        fn main() {
+            let a = 123;
+            
+            /*caret*/
         }
     """)
 
