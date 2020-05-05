@@ -1,6 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RunCLion" type="GradleRunConfiguration" factoryName="Gradle">
-    <log_file alias="idea.log" path="$PROJECT_DIR$/plugin/build/clion-sandbox/system/log/idea.log" />
+    <log_file alias="idea-201.log" path="$PROJECT_DIR$/plugin/build/clion-sandbox-201/system/log/idea.log" />
+    <log_file alias="idea-193.log" path="$PROJECT_DIR$/plugin/build/clion-sandbox-193/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
@@ -11,13 +12,12 @@
       </option>
       <option name="taskNames">
         <list>
-          <option value=":plugin:configureCLion" />
           <option value=":plugin:runIde" />
         </list>
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+    <GradleScriptDebugEnabled>false</GradleScriptDebugEnabled>
     <method v="2" />
   </configuration>
 </component>
