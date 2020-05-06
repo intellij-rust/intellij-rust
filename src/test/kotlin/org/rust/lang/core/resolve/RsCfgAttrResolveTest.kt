@@ -197,6 +197,34 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
+    fun `test impl in non-inline mod with cfg 2`() = stubOnlyResolve("""
+    //- bar1.rs
+        impl super::super::S { pub fn foo(&self) {} }
+    //- baz1.rs
+        impl super::super::S { pub fn foo(&self) {} }
+    //- bar.rs
+        #[path = "bar1.rs"]
+        mod bar1;
+    //- baz.rs
+        #[path = "baz1.rs"]
+        mod baz1;
+    //- lib.rs
+        struct S;
+
+        #[cfg(intellij_rust)]
+        #[path = "bar.rs"]
+        mod foo;
+
+        #[cfg(not(intellij_rust))]
+        #[path = "baz.rs"]
+        mod foo;
+
+        fn main() {
+            S.foo()
+        }   //^ bar1.rs
+     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test impl in function body with cfg`() = checkByCode("""
         struct S;
         #[cfg(intellij_rust)]
