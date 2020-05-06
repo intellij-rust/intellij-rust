@@ -9,7 +9,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
-import org.rust.ide.presentation.insertionSafeTextWithAliasesWithoutTypes
+import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyAdt
@@ -51,7 +51,7 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     private fun handleStruct(project: Project, editor: Editor, patIdent: RsPatIdent, struct: RsStructItem, type: TyAdt) {
         val factory = RsPsiFactory(project)
 
-        val typeName = type.insertionSafeTextWithAliasesWithoutTypes
+        val typeName = type.render(includeTypeArguments = false, useAliasNames = true)
         val patStruct = if (struct.isTupleStruct) {
             factory.createPatTupleStruct(struct, typeName)
         } else {

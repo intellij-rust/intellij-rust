@@ -13,7 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.rust.ide.presentation.insertionSafeText
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -27,7 +27,7 @@ import org.rust.openapiext.runWriteCommandAction
  */
 fun checkTypeIsExtractable(expr: RsExpr): Boolean {
     val psiFactory = RsPsiFactory(expr.project)
-    val typeRef = psiFactory.tryCreateType(expr.type.insertionSafeText) ?: return false
+    val typeRef = psiFactory.tryCreateType(expr.type.renderInsertionSafe()) ?: return false
     return typeRef.type !is TyUnit && typeRef.type !is TyNever
 }
 
@@ -82,7 +82,7 @@ private class ParamIntroducer(
     fun replaceExpressions(function: RsFunction, exprs: List<RsExpr>, replaceForTrait: Boolean = true) {
         if (exprs.isEmpty()) return
         val expr = exprs.first()
-        val typeRef = psiFactory.tryCreateType(expr.type.insertionSafeText) ?: return
+        val typeRef = psiFactory.tryCreateType(expr.type.renderInsertionSafe()) ?: return
 
         val suggestedNames = expr.suggestedNames()
 

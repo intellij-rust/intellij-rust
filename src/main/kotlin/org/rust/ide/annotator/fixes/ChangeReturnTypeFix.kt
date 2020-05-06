@@ -13,8 +13,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
-import org.rust.ide.presentation.insertionSafeTextWithAliasesAndLifetimes
-import org.rust.ide.presentation.textWithAliasNames
+import org.rust.ide.presentation.render
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory
@@ -36,7 +36,7 @@ class ChangeReturnTypeFix(element: RsElement, private val actualTy: Ty) : LocalQ
             is RsLambdaExpr -> " of closure" to ""
             else -> "" to ""
         }
-        return "Change return type$item$name to '${actualTy.textWithAliasNames}'"
+        return "Change return type$item$name to '${actualTy.render(useAliasNames = true)}'"
     }
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
@@ -54,7 +54,8 @@ class ChangeReturnTypeFix(element: RsElement, private val actualTy: Ty) : LocalQ
         }
 
         val psiFactory = RsPsiFactory(project)
-        val retType = psiFactory.createRetType(actualTy.insertionSafeTextWithAliasesAndLifetimes)
+        val text = actualTy.renderInsertionSafe(includeLifetimeArguments = true, useAliasNames = true)
+        val retType = psiFactory.createRetType(text)
 
         if (oldRetType != null) {
             oldRetType.replace(retType)

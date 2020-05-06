@@ -6,8 +6,8 @@
 package org.rust.lang.core.type
 
 import org.intellij.lang.annotations.Language
-import org.rust.ide.presentation.insertionSafeTextWithLifetimes
-import org.rust.ide.presentation.textWithAliasNames
+import org.rust.ide.presentation.render
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.type.RsTypeResolvingTest.RenderMode.*
 import org.rust.lang.core.types.type
@@ -436,8 +436,8 @@ class RsTypeResolvingTest : RsTypificationTestBase() {
         val ty = typeAtCaret.type
         val renderedTy = when (renderMode) {
             DEFAULT -> ty.toString()
-            WITH_LIFETIMES -> ty.insertionSafeTextWithLifetimes
-            WITH_ALIAS_NAMES -> ty.textWithAliasNames
+            WITH_LIFETIMES -> ty.renderInsertionSafe(includeLifetimeArguments = true)
+            WITH_ALIAS_NAMES -> ty.render(useAliasNames = true)
         }
         check(renderedTy == expectedType) {
             "$renderedTy != $expectedType"

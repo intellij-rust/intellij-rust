@@ -11,7 +11,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.siblings
-import org.rust.ide.presentation.insertionSafeText
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.findStatementsOrExprInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -54,7 +54,7 @@ class Parameter private constructor(
 
     private val mutText: String = if (isMutableValue) "mut " else ""
     private val referenceText: String = reference.text
-    private val typeText: String = type?.insertionSafeText.orEmpty()
+    private val typeText: String = type?.renderInsertionSafe().orEmpty()
 
     val originalParameterText: String
         get() = if (type != null) "$mutText$originalName: $referenceText$typeText" else originalName
@@ -144,7 +144,7 @@ class RsExtractFunctionConfig private constructor(
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
         if (returnValue != null && returnValue.type !is TyUnit) {
-            append(" -> ${returnValue.type.insertionSafeText}")
+            append(" -> ${returnValue.type.renderInsertionSafe()}")
         }
         append(whereClausesText)
     }

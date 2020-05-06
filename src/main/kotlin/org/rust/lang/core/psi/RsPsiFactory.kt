@@ -11,8 +11,7 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
 import com.intellij.util.LocalTimeCounter
 import org.rust.ide.inspections.checkMatch.Pattern
-import org.rust.ide.presentation.insertionSafeTextWithAliasesAndLifetimes
-import org.rust.ide.presentation.insertionSafeTextWithLifetimes
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.macros.prepareExpandedTextForParsing
@@ -158,14 +157,16 @@ class RsPsiFactory(
 
     fun createBlockFields(fields: List<BlockField>): RsBlockFields {
         val fieldsText = fields.joinToString(separator = ",\n") {
-            "${"pub".iff(it.addPub)}${it.name}: ${it.type.insertionSafeTextWithLifetimes}"
+            val typeText = it.type.renderInsertionSafe(includeLifetimeArguments = true)
+            "${"pub".iff(it.addPub)}${it.name}: $typeText"
         }
         return createFromText("struct S { $fieldsText }")  ?: error("Failed to create block fields")
     }
 
     fun createTupleFields(fields: List<TupleField>): RsTupleFields {
         val fieldsText = fields.joinToString(separator = ", ") {
-            "${"pub".iff(it.addPub)}${it.type.insertionSafeTextWithLifetimes}"
+            val typeText = it.type.renderInsertionSafe(includeLifetimeArguments = true)
+            "${"pub".iff(it.addPub)}$typeText"
         }
         return createFromText("struct S($fieldsText)") ?: error("Failed to create tuple fields")
     }
@@ -494,7 +495,7 @@ class RsPsiFactory(
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).insertionSafeTextWithAliasesAndLifetimes
+    type.substitute(subst).renderInsertionSafe(includeLifetimeArguments = true, useAliasNames = true)
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {

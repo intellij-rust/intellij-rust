@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.presentation.tyToStringWithoutTypeArgs
+import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.types.TraitRef
@@ -93,7 +93,7 @@ abstract class ConvertToTyUsingTryTraitAndUnpackFix(
 
 private const val TRY_FROM_TRAIT = "TryFrom"
 private val TRY_FROM_CALL_MAKER: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr) -> RsExpr =
-    { rsPsiFactory, startElement -> rsPsiFactory.createAssocFunctionCall(tyToStringWithoutTypeArgs(ty), "try_from", listOf(startElement)) }
+    { rsPsiFactory, startElement -> rsPsiFactory.createAssocFunctionCall(ty.render(includeTypeArguments = false), "try_from", listOf(startElement)) }
 
 /**
  * For the given `expr` converts it to the type `Result<ty, _>` with `ty::try_from(expr)`.
