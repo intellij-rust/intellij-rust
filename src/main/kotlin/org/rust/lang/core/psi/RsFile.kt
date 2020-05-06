@@ -97,7 +97,8 @@ class RsFile(
         val declaration = declaration
         if (declaration != null) {
             val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
-            return (file as? RsFile)?.cachedData?.copy(isDeeplyEnabledByCfg = isEnabledByCfg) ?: EMPTY_CACHED_DATA
+            val parentCachedData = (file as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
+            return parentCachedData.copy(isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg && isEnabledByCfg)
         }
 
         val possibleCrateRoot = this
