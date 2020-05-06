@@ -27,8 +27,8 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
     override fun getKey(): StubIndexKey<String, RsModDeclItem> = KEY
 
     companion object {
-        fun getDeclarationFor(mod: RsFile): RsModDeclItem? {
-            val key = key(mod) ?: return null
+        fun getDeclarationsFor(mod: RsFile): List<RsModDeclItem> {
+            val key = key(mod) ?: return emptyList()
             val project = mod.project
 
             val result = SmartList<RsModDeclItem>()
@@ -44,7 +44,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
                 true
             }
 
-            return result.firstOrNull { it.isValidProjectMember } ?: result.firstOrNull()
+            return result.filter { it.isValidProjectMember }.takeIf { it.isNotEmpty() } ?: result
         }
 
 

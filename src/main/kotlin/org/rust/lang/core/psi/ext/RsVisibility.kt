@@ -33,6 +33,10 @@ fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =
         icon.addVisibilityIcon(isPublic)
 
 fun RsVisible.isVisibleFrom(mod: RsMod): Boolean {
+    // XXX: this hack fixes false-positive "E0603 module is private" for modules with multiple
+    // declarations. It produces false-negatives, see
+    if (this is RsFile && declarations.size > 1) return true
+
     val elementMod = when (val visibility = visibility) {
         RsVisibility.Public -> return true
         RsVisibility.Private -> (if (this is RsMod) this.`super` else containingMod) ?: return true

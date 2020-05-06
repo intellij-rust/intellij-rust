@@ -175,11 +175,13 @@ class RsFile(
             return Attributes.NONE
         }
 
-    val declaration: RsModDeclItem? get() {
+    val declaration: RsModDeclItem? get() = declarations.firstOrNull()
+
+    val declarations: List<RsModDeclItem> get() {
         // XXX: without this we'll close over `thisFile`, and it's verboten
         // to store references to PSI inside `CachedValueProvider` other than
         // the key PSI element
-        val originalFile = originalFile as? RsFile ?: return null
+        val originalFile = originalFile as? RsFile ?: return emptyList()
 
         val state = project.macroExpansionManagerIfCreated?.expansionState
         // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
@@ -190,7 +192,7 @@ class RsFile(
         }
         return CachedValuesManager.getCachedValue(originalFile, key) {
             CachedValueProvider.Result.create(
-                RsModulesIndex.getDeclarationFor(originalFile),
+                RsModulesIndex.getDeclarationsFor(originalFile),
                 originalFile.rustStructureOrAnyPsiModificationTracker,
                 cacheDependency
             )
@@ -226,8 +228,8 @@ val PsiFile.rustFile: RsFile? get() = this as? RsFile
 val VirtualFile.isNotRustFile: Boolean get() = !isRustFile
 val VirtualFile.isRustFile: Boolean get() = fileType == RsFileType
 
-private val MOD_DECL_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_KEY")
-private val MOD_DECL_MACROS_KEY: Key<CachedValue<RsModDeclItem?>> = Key.create("MOD_DECL_MACROS_KEY")
+private val MOD_DECL_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_KEY")
+private val MOD_DECL_MACROS_KEY: Key<CachedValue<List<RsModDeclItem>>> = Key.create("MOD_DECL_MACROS_KEY")
 
 private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_KEY")
 private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
