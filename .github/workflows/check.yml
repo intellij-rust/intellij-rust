@@ -9,25 +9,29 @@ on:
     pull_request:
 
 jobs:
+    check-license:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v2
+
+            - name: Check license
+              run: ./check-license.sh
+
     build:
-        runs-on: ubuntu-16.04
         strategy:
             fail-fast: false
             matrix:
-                rust-version: [ 1.32.0, 1.41.0, nightly-2019-12-19 ]
+                os: [ ubuntu-latest, windows-latest ]
+                rust-version: [ 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 193, 201 ]
-                # Unfortunately, we have to exclude unnecessary tasks because `include` cannot add new tasks to matrix
-                exclude:
-                    -   rust-version: 1.32.0
-                        base-ide: clion
-                        platform-version: 193
-                    -   rust-version: 1.32.0
-                        base-ide: idea
-                        platform-version: 201
-                    -   rust-version: 1.32.0
-                        base-ide: clion
-                        platform-version: 201
+                include:
+                    - os: ubuntu-latest
+                      rust-version: 1.32.0
+                      base-ide: idea
+                      platform-version: 193
+
+        runs-on: ${{ matrix.os }}
         steps:
             - uses: actions/checkout@v1
 
@@ -44,29 +48,42 @@ jobs:
                   components: rust-src, rustfmt, clippy
                   default: true
 
+            - name: Install evcxr
+              if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
+              uses: actions-rs/cargo@v1
+              with:
+                  command: install
+                  args: evcxr_repl
+
             - name: Check environment
               run: |
-                rustc --version
-                rustup component list --installed
-                if [ ! "${{ matrix.rust-version }}" \< "1.40.0" ]; then cargo install evcxr_repl; fi # BACKCOMPAT: Rust 1.39.0
+                  rustc --version
+                  rustup component list --installed
+                  cargo install --list
 
-            - name: Check license
-              run: ./check-license.sh
-
-            - name: Build & check plugin
-              env:
-                  CI: true
-                  ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
-                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+            - name: Set up env variables
+              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                export RUST_SRC_WITH_SYMLINK=$HOME/.rust-src
-                ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
-                ./gradlew :resolveDependencies -Pkotlin.incremental=false --no-daemon
-                ./gradlew assemble testClasses -Pkotlin.incremental=false --no-daemon
-                ./gradlew check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
+                  echo "::set-env name=ORG_GRADLE_PROJECT_baseIDE::${{ matrix.base-ide }}"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
+
+            - name: Download
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :resolveDependencies -Pkotlin.incremental=false --no-daemon
+
+            - name: Build
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: assemble testClasses -Pkotlin.incremental=false --no-daemon
+
+            - name: Check
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
 
             - name: Check bundled Rust formatters
-              env:
-                  CI: true
-                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
-              run: ./gradlew runPrettyPrintersTests --no-daemon
+              if: matrix.os != 'windows-latest'
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: runPrettyPrintersTests --no-daemon
