@@ -3108,16 +3108,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     fun `test no E0603 for module with multiple declarations`() = checkDontTouchAstInOtherFiles("""
-        //- main.rs
-            mod foo;
-            mod bar;
-            mod baz;
-            use foo::S; // error was here
-        //- foo.rs
-            pub struct S;
-        //- bar.rs
-            #[path = "foo.rs"] mod foo1;
-        """)
+    //- main.rs
+        mod foo;
+        mod bar;
+        use foo::S; // error was here
+    //- foo.rs
+        pub struct S;
+    //- bar.rs
+        #[path = "foo.rs"] mod foo1;
+    """)
 
     fun `test E0603 for module with multiple declarations`() = checkDontTouchAstInOtherFiles("""
     //- main.rs
