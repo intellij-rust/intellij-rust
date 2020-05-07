@@ -13,93 +13,53 @@ import org.rust.lang.RsLanguage
 
 class RsGotoSuperHandlerTest : RsTestBase() {
     fun `test module from function`() = checkNavigation("""
-        mod foo {
+        mod /*caret_after*/foo {
             mod bar {
-                fn foo() { /*caret*/ }
-            }
-        }
-    """, """
-        mod /*caret*/foo {
-            mod bar {
-                fn foo() {  }
+                fn foo() { /*caret_before*/ }
             }
         }
     """)
 
     fun `test method declaration from impl`() = checkNavigation("""
         trait T {
-            fn foo(); // <- should go here
+            fn /*caret_after*/foo(); // <- should go here
         }
         impl T for () {
-            fn foo/*caret*/() {}
-        }
-    """, """
-        trait T {
-            fn /*caret*/foo(); // <- should go here
-        }
-        impl T for () {
-            fn foo() {}
+            fn foo/*caret_before*/() {}
         }
     """)
 
     fun `test constant declaration from impl`() = checkNavigation("""
         trait T {
-            const Z: u32; // <- should go here
+            const /*caret_after*/Z: u32; // <- should go here
         }
         impl T for () {
-            const /*caret*/Z: u32 = 1;
-        }
-    """, """
-        trait T {
-            const /*caret*/Z: u32; // <- should go here
-        }
-        impl T for () {
-            const Z: u32 = 1;
+            const /*caret_before*/Z: u32 = 1;
         }
     """)
 
     fun `test type alias declaration from impl`() = checkNavigation("""
         trait T {
-             type Z; // <- should go here
+             type /*caret_after*/Z; // <- should go here
         }
         impl T for () {
-            type /*caret*/Z = ();
-        }
-    """, """
-        trait T {
-             type /*caret*/Z; // <- should go here
-        }
-        impl T for () {
-            type Z = ();
+            type /*caret_before*/Z = ();
         }
     """)
 
     fun `test module from method definition`() = checkNavigation("""
-        mod foo {
+        mod /*caret_after*/foo {
             mod bar {
                 struct S;
-                impl S { fn foo(&self) { /*caret*/} }
-            }
-        }
-    """, """
-        mod /*caret*/foo {
-            mod bar {
-                struct S;
-                impl S { fn foo(&self) { } }
+                impl S { fn foo(&self) { /*caret_before*/} }
             }
         }
     """)
 
     fun `test module from method in trait`() = checkNavigation("""
-        mod foo {
+        mod /*caret_after*/foo {
             mod bar {
-                trait T { fn foo(&self) { /*caret*/} }
-            }
-        }
-    """, """
-        mod /*caret*/foo {
-            mod bar {
-                trait T { fn foo(&self) { } }
+                trait T { fn foo(&self) { /*caret_before*/} }
             }
         }
     """)
@@ -142,16 +102,20 @@ class RsGotoSuperHandlerTest : RsTestBase() {
     // Navigation from a crate root to Cargo.toml is tested in `CargoTomlGotoSuperHandlerTest`
 
     private fun checkNavigationInFiles(@Language("Rust") fileTreeText: String, expected: String) {
-        fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
-        val target = gotoSuperTarget(myFixture.file)
-        assertEquals(expected.trimIndent(), target?.text)
+        checkMultiNavigationInFiles(fileTreeText, expected)
     }
 
-    private fun checkNavigation(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before)
+    private fun checkMultiNavigationInFiles(@Language("Rust") fileTreeText: String, vararg expected: String) {
+        fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
+        val target = gotoSuperTarget(myFixture.file)
+        assertEquals(expected.toList().map { it.trimIndent() }.sorted(), target.map { it.text }.sorted())
+    }
+
+    private fun checkNavigation(@Language("Rust") code: String) {
+        InlineFile(code.replace("/*caret_before*/", "<caret>").replace("/*caret_after*/", ""))
         val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RsLanguage)
             ?: error("GotoSuperHandler for Rust was not found.")
         handler.invoke(project, myFixture.editor, myFixture.file)
-        myFixture.checkResult(replaceCaretMarker(after))
+        myFixture.checkResult(code.replace("/*caret_after*/", "<caret>").replace("/*caret_before*/", ""))
     }
 }
