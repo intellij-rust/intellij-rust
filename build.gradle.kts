@@ -55,7 +55,8 @@ buildscript {
 plugins {
     idea
     kotlin("jvm") version "1.3.72"
-    id("org.jetbrains.intellij") version "0.4.19"
+    // TODO: update it to latest version after updating IDEA to 2020.1.2
+    id("org.jetbrains.intellij") version "0.4.16"
     id("org.jetbrains.grammarkit") version "2020.1.2"
     id("net.saliman.properties") version "1.4.6"
 }
