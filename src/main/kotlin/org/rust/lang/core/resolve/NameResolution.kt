@@ -18,6 +18,7 @@ import com.intellij.openapiext.hitOnFalse
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
@@ -168,10 +169,12 @@ fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, p
  *      https://github.com/rust-lang-nursery/reference/blob/master/src/items/modules.md
  */
 fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolveProcessor): Boolean {
+    val psiMgr = PsiManager.getInstance(modDecl.project)
     val containingMod = modDecl.containingMod
 
     val ownedDirectory = containingMod.getOwnedDirectory()
     val contextualFile = modDecl.contextualFile
+    val originalFileOriginal = contextualFile.originalFile.virtualFile
     val inModRs = contextualFile.name == RsConstants.MOD_RS_FILE
     val inCrateRoot = lazy(LazyThreadSafetyMode.NONE) { containingMod.isCrateRoot }
 
@@ -189,7 +192,7 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
         } ?: return false
         val vFile = dir.virtualFile.findFileByRelativePath(FileUtil.toSystemIndependentName(explicitPath))
             ?: return false
-        val mod = vFile.toPsiFile(modDecl.project)?.rustFile ?: return false
+        val mod = psiMgr.findFile(vFile)?.rustFile ?: return false
 
         val name = modDecl.name ?: return false
         return processor(name, mod)
@@ -197,24 +200,26 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
     if (ownedDirectory == null) return false
     if (modDecl.isLocal) return false
 
-    fun fileName(file: PsiFile): String {
-        val fileName = FileUtil.getNameWithoutExtension(file.name)
-        val modDeclName = modDecl.referenceName
+    val modDeclName = modDecl.referenceName
+
+    fun fileName(rawName: String): String {
+        val fileName = FileUtil.getNameWithoutExtension(rawName)
         // Handle case-insensitive filesystem (windows)
-        return if (modDeclName.toLowerCase() == fileName.toLowerCase()) modDeclName else fileName
+        return if (modDeclName.equals(fileName, ignoreCase = true)) modDeclName else fileName
     }
 
-    for (file in ownedDirectory.files) {
-        if (file == contextualFile.originalFile || file.name == RsConstants.MOD_RS_FILE) continue
-        val mod = file.rustFile ?: continue
-        val name = fileName(file)
-        if (processor(name, mod)) return true
+    val (dirs, files) = ownedDirectory.virtualFile.children.partition { it.isDirectory }
+
+    for (vFile in files) {
+        val rawFileName = vFile.name
+        if (vFile == originalFileOriginal || rawFileName == RsConstants.MOD_RS_FILE) continue
+        if (processor.lazy(fileName(rawFileName)) { psiMgr.findFile(vFile)?.rustFile }) return true
     }
 
-    for (d in ownedDirectory.subdirectories) {
-        val mod = d.findFile(RsConstants.MOD_RS_FILE)?.rustFile
+    for (vDir in dirs) {
+        val mod = vDir.findChild(RsConstants.MOD_RS_FILE)
         if (mod != null) {
-            if (processor(d.name, mod)) return true
+            if (processor.lazy(vDir.name) { psiMgr.findFile(mod)?.rustFile }) return true
         }
 
         // We shouldn't search possible module files in subdirectories
@@ -233,12 +238,12 @@ fun processModDeclResolveVariants(modDecl: RsModDeclItem, processor: RsResolvePr
             continue
         }
 
-        if (d.name == containingMod.modName) {
-            for (file in d.files) {
-                if (file.name == RsConstants.MOD_RS_FILE) continue
-                val rustFile = file.rustFile ?: continue
-                val fileName = fileName(file)
-                if (processor(fileName, rustFile)) return true
+        if (vDir.name == containingMod.modName) {
+            for (vFile in vDir.children) {
+                if (vFile.isDirectory) continue
+                val rawFileName = vFile.name
+                if (rawFileName == RsConstants.MOD_RS_FILE) continue
+                if (processor.lazy(fileName(rawFileName)) { psiMgr.findFile(vFile)?.rustFile }) return true
             }
         }
     }
