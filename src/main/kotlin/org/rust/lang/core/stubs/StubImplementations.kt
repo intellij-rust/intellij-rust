@@ -49,7 +49,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 196
+        private const val STUB_VERSION = 197
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -311,7 +311,7 @@ abstract class RsAttributeOwnerStubBase<T: RsElement>(
 
 class RsExternCrateItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?,
+    override val name: String,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsExternCrateItem>(parent, elementType),
     RsNamedStub {
@@ -320,7 +320,7 @@ class RsExternCrateItemStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsExternCrateItemStub(parentStub, this,
-                dataStream.readNameAsString(),
+                dataStream.readNameAsString()!!,
                 dataStream.readUnsignedByte()
             )
 
@@ -334,7 +334,7 @@ class RsExternCrateItemStub(
             RsExternCrateItemImpl(stub, this)
 
         override fun createStub(psi: RsExternCrateItem, parentStub: StubElement<*>?) =
-            RsExternCrateItemStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
+            RsExternCrateItemStub(parentStub, this, psi.referenceName, RsAttributeOwnerStub.extractFlags(psi))
 
         override fun indexStub(stub: RsExternCrateItemStub, sink: IndexSink) = sink.indexExternCrate(stub)
     }
