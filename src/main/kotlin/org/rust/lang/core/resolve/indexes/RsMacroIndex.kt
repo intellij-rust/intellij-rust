@@ -7,7 +7,6 @@ package org.rust.lang.core.resolve.indexes
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
@@ -23,7 +22,6 @@ import org.rust.lang.core.psi.ext.hasMacroExport
 import org.rust.lang.core.psi.ext.isRustcDocOnlyMacro
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.psi.rustStructureModificationTracker
-import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroStub
 import org.rust.openapiext.getElements
@@ -38,8 +36,12 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         private val KEY: StubIndexKey<String, RsMacro> =
             StubIndexKey.createIndexKey("org.rust.lang.core.resolve.indexes.RsMacroIndex")
 
+        private const val SINGLE_KEY = "#"
+
         fun index(stub: RsMacroStub, sink: IndexSink) {
-            stub.name?.let { sink.occurrence(KEY, it) }
+            if (stub.name != null && (stub.psi.hasMacroExport || stub.psi.isRustcDocOnlyMacro)) {
+                sink.occurrence(KEY, SINGLE_KEY)
+            }
         }
 
         fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
@@ -50,9 +52,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
                 for (key in keys) {
                     val elements = getElements(KEY, key, project, GlobalSearchScope.allScope(project))
                     for (element in elements) {
-                        val condition = element.hasMacroExport || element.isRustcDocOnlyMacro
-                        if (NameResolutionTestmarks.missingMacroExport.hitOnFalse(condition)
-                            && element.isValidProjectMember) {
+                        if (element.isValidProjectMember) {
                             val crateRoot = element.crateRoot ?: continue
                             result.getOrPut(crateRoot, ::ArrayList) += element
                         }

@@ -1548,7 +1548,6 @@ fun isSuperChain(path: RsPath): Boolean {
 
 object NameResolutionTestmarks {
     val shadowingStdCrates = Testmark("shadowingStdCrates")
-    val missingMacroExport = Testmark("missingMacroExport")
     val missingMacroUse = Testmark("missingMacroUse")
     val processSelfCrateExportedMacros = Testmark("processSelfCrateExportedMacros")
     val dollarCrateMagicIdentifier = Testmark("dollarCrateMagicIdentifier")
