@@ -744,7 +744,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                         f.write_all(text).unwrap()
                     }
                 """)
-            }
+            }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../gen/hello.rs")
         }
     }
 
@@ -786,7 +786,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                         ).unwrap();
                     }
                 """)
-            }
+            }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../hello.rs")
         }
     }
 
