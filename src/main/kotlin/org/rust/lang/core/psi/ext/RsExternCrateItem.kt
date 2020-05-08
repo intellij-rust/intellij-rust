@@ -37,6 +37,10 @@ abstract class RsExternCrateItemImplMixin : RsStubbedNamedElementImpl<RsExternCr
 
     override val referenceName: String get() = greenStub?.name ?: super.referenceName
 
+    override fun getName(): String? = referenceName
+
+    override fun getNameIdentifier(): PsiElement? = referenceNameElement
+
     override fun getIcon(flags: Int) = RsIcons.CRATE
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
