@@ -5,12 +5,22 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.openapi.project.DumbServiceImpl
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
+
+    override fun setUp() {
+        super.setUp()
+        DumbServiceImpl.getInstance(project).isDumb = true
+    }
+
+    override fun tearDown() {
+        DumbServiceImpl.getInstance(project).isDumb = false
+        super.tearDown()
+    }
+
     fun `test break in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
         fn foo() {
             for _ in 0..4 {
@@ -321,14 +331,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         pub us/*caret*/
     """)
 
-    fun `test use self`() = @Suppress("DEPRECATION") checkSingleCompletion("self::", """
-        use se/*caret*/
-    """)
-
-    fun `test use super`() = @Suppress("DEPRECATION") checkSingleCompletion("super::", """
-        mod m { use su/*caret*/ }
-    """)
-
     fun `test else`() = checkCompletion("else", """
         fn main() {
             if true { } /*caret*/
@@ -518,82 +520,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (anon)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (adt)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test postfix await 2018 (anon)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo().await/*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test postfix await 2018 (adt)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo().await/*caret*/;
-        }
-    """)
-
     fun `test const parameter first`() = checkCompletion("const",
         "fn foo</*caret*/>() {}",
         "fn foo<const /*caret*/>() {}"
@@ -764,18 +690,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         for (lookupString in lookupStrings) {
             checkCompletion(lookupString, before, after.replace("/*lookup*/", lookupString))
         }
-    }
-
-    private fun checkCompletion(
-        lookupString: String,
-        @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) = checkByText(before, after) {
-        val items = myFixture.completeBasic()
-            ?: return@checkByText // single completion was inserted
-        val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
-        myFixture.lookup.currentItem = lookupItem
-        myFixture.type('\n')
     }
 
     companion object {

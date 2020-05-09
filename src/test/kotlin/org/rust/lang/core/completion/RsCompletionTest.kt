@@ -126,6 +126,18 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test use self`() = doSingleCompletion("""
+        use se/*caret*/
+    """, """
+        use self::/*caret*/
+    """)
+
+    fun `test use super`() = doSingleCompletion("""
+        mod m { use su/*caret*/ }
+    """, """
+        mod m { use super::/*caret*/ }
+    """)
+
     fun `test use glob`() = doSingleCompletion("""
         mod foo { pub fn quux() {} }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
+import org.intellij.lang.annotations.Language
 import org.rust.*
 
 abstract class RsCompletionTestFixtureBase<IN>(
@@ -60,6 +61,18 @@ abstract class RsCompletionTestFixtureBase<IN>(
         })
         executeSoloCompletion()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
+    }
+
+    fun checkCompletion(
+        lookupString: String,
+        before: IN,
+        @Language("Rust") after: String
+    ) = checkByText(before, after.trimIndent()) {
+        val items = myFixture.completeBasic()
+            ?: return@checkByText // single completion was inserted
+        val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
+        myFixture.lookup.currentItem = lookupItem
+        myFixture.type('\n')
     }
 
     fun checkNoCompletion(code: IN) {
