@@ -3107,6 +3107,38 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         const _: i32 = 1;
     """)
 
+    fun `test no E0603 for module with multiple declarations`() = checkDontTouchAstInOtherFiles("""
+    //- main.rs
+        mod foo;
+        mod bar;
+        use foo::S; // error was here
+    //- foo.rs
+        pub struct S;
+    //- bar.rs
+        #[path = "foo.rs"] mod foo1;
+    """)
+
+    fun `test E0603 for module with multiple declarations`() = checkDontTouchAstInOtherFiles("""
+    //- main.rs
+        use crate::foo::bar::x; // TODO no error here although compiler produces it
+
+        mod foo {
+            mod bar;
+        }
+
+        fn main() {}
+
+    //- lib.rs
+        use crate::foo::bar::x;
+
+        mod foo {
+            pub mod bar;
+        }
+
+    //- foo/bar.rs
+        pub fn x() {}
+    """)
+
     @MockAdditionalCfgOptions("intellij_rust")
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test no E0603 for module with multiple declarations under cfg attributes`() = checkByFileTree("""
