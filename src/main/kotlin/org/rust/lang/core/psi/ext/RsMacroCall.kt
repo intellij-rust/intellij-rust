@@ -113,8 +113,7 @@ private val RsExpr.value: String? get() {
 fun RsMacroCall.findIncludingFile(): RsFile? {
     if (macroName != "include") return null
     val path = includeMacroArgument?.expr?.value ?: return null
-    // TODO: it doesn't work if `include!()` macro call comes from other macro
-    val file = containingFile?.originalFile?.virtualFile ?: return null
+    val file = (findMacroCallExpandedFrom() ?: this).containingFile?.originalFile?.virtualFile ?: return null
     return file.parent?.findFileByMaybeRelativePath(path)?.toPsiFile(project)?.rustFile
 }
 

@@ -135,34 +135,55 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     """)
 
     @ExpandMacros
-    fun `test include macro in macro 1`() = expect<IllegalStateException> {
-        checkResolve("""
-        //- lib.rs
-            macro_rules! foo {
-                () => { include!("bar.rs") };
-            }
-            struct Foo;
-            foo!();
-        //- bar.rs
-            fn foo(x: Foo) {}
-                     //^ lib.rs
-        """)
-    }
+    fun `test include macro in macro 1`() = checkResolve("""
+    //- lib.rs
+        macro_rules! generate_include {
+            ($ package: tt) => {
+                include!($ package);
+            };
+        }
+        generate_include!("bar.rs");
+        pub struct Foo;
+    //- bar.rs
+        pub fn foo(x: Foo) {}
+                    //^ lib.rs
+    """)
+
+    fun `test include macro in macro 2`() = checkResolve("""
+    //- lib.rs
+        macro_rules! generate_include {
+            ($ package: tt) => {
+                include!($ package);
+            };
+        }
+        generate_include!("bar.rs");
+        pub fn foo(x: Foo) {}
+                     //^ bar.rs
+    //- bar.rs
+        pub struct Foo;
+    """)
 
     @ExpandMacros
-    fun `test include macro in macro 2`() = expect<IllegalStateException> {
-        checkResolve("""
-        //- lib.rs
-            macro_rules! foo {
-                () => { include!("bar.rs") };
-            }
-            foo!();
-            fn foo(x: Foo) {}
-                      //^ lib.rs
-        //- bar.rs
-            struct Foo;
-        """)
-    }
+    fun `test include macro in macro 3`() = checkResolve("""
+    //- lib.rs
+        macro_rules! generate_include {
+            ($ package: tt) => {
+                include!($ package);
+            };
+        }
+        macro_rules! generate_generate_include {
+            ($ mod: ident, $ package: tt) => {
+                pub mod $ mod {
+                    generate_include!($ package);
+                }
+            };
+        }
+        generate_generate_include!(bar, "bar.rs");
+        pub fn foo(x: bar::Foo) {}
+                          //^ bar.rs
+    //- bar.rs
+        pub struct Foo;
+    """)
 
     fun `test concat in include 1`() = checkResolve("""
         //- main.rs
