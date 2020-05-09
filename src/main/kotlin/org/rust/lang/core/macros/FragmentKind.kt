@@ -9,8 +9,12 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParser
+import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.psi.RS_KEYWORDS
+import org.rust.lang.core.psi.RS_LITERALS
 import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
+import org.rust.lang.core.psi.RsElementTypes.TT
 import org.rust.lang.core.psi.tokenSetOf
 
 enum class FragmentKind(private val kind: String) {
@@ -29,48 +33,24 @@ enum class FragmentKind(private val kind: String) {
     Lifetime("lifetime");
 
     fun parse(builder: PsiBuilder): Boolean {
-        return if (this == Ident) {
-            parseIdentifier(builder)
-        } else {
-            // we use similar logic as in org.rust.lang.core.parser.RustParser#parseLight
-            val root = RsElementTypes.FUNCTION
-            val adaptBuilder = GeneratedParserUtilBase.adapt_builder_(
-                root,
-                builder,
-                RustParser(),
-                RustParser.EXTENDS_SETS_
-            )
-            val marker = GeneratedParserUtilBase
-                .enter_section_(adaptBuilder, 0, 0, null)
-
-            val parsed = when (this) {
-                Path -> RustParser.TypePathGenericArgsNoTypeQual(adaptBuilder, 0)
-                Expr -> RustParser.Expr(adaptBuilder, 0, -1)
-                Ty -> RustParser.TypeReference(adaptBuilder, 0)
-                Pat -> RustParser.Pat(adaptBuilder, 0)
-                Stmt -> parseStatement(adaptBuilder)
-                Block -> RustParser.SimpleBlock(adaptBuilder, 0)
-                Item -> RustParser.Item(adaptBuilder, 0)
-                Meta -> RustParser.MetaItemWithoutTT(adaptBuilder, 0)
-                Vis -> parseVis(adaptBuilder)
-                Tt -> RustParser.TT(adaptBuilder, 0)
-                Lifetime -> RustParser.Lifetime(adaptBuilder, 0)
-                Literal -> RustParser.LitExpr(adaptBuilder, 0)
-                Ident -> false // impossible
-            }
-            GeneratedParserUtilBase.exit_section_(adaptBuilder, 0, marker, null, parsed, true) { _, _ -> false }
-            parsed
+        return when (this) {
+            Ident -> parseIdentifier(builder)
+            Path -> RustParser.TypePathGenericArgsNoTypeQual(builder, 0)
+            Expr -> RustParser.Expr(builder, 0, -1)
+            Ty -> RustParser.TypeReference(builder, 0)
+            Pat -> RustParser.Pat(builder, 0)
+            Stmt -> parseStatement(builder)
+            Block -> RustParserUtil.parseCodeBlockLazy(builder, 0)
+            Item -> RustParser.Item(builder, 0)
+            Meta -> RustParser.MetaItemWithoutTT(builder, 0)
+            Vis -> parseVis(builder)
+            Tt -> parseTT(builder)
+            Lifetime -> GeneratedParserUtilBase.consumeTokenFast(builder, QUOTE_IDENTIFIER)
+            Literal -> parseLiteral(builder)
         }
     }
 
-    private fun parseIdentifier(b: PsiBuilder): Boolean {
-        return if (b.tokenType in IDENTIFIER_TOKENS) {
-            b.advanceLexer()
-            true
-        } else {
-            false
-        }
-    }
+    private fun parseIdentifier(b: PsiBuilder): Boolean = b.consumeToken(IDENTIFIER_TOKENS)
 
     private fun parseStatement(b: PsiBuilder): Boolean =
         RustParser.LetDecl(b, 0) || RustParser.Expr(b, 0, -1)
@@ -78,6 +58,21 @@ enum class FragmentKind(private val kind: String) {
     private fun parseVis(b: PsiBuilder): Boolean {
         RustParser.Vis(b, 0)
         return true // Vis can be empty
+    }
+
+    private fun parseTT(b: PsiBuilder): Boolean {
+        return RustParserUtil.unpairedToken(b, 0) || RustParserUtil.parseTokenTreeLazy(b, 0, TT)
+    }
+
+    private fun parseLiteral(b: PsiBuilder): Boolean = b.consumeToken(RS_LITERALS)
+
+    private fun PsiBuilder.consumeToken(tokenSet: TokenSet): Boolean {
+        return if (tokenType in tokenSet) {
+            advanceLexer()
+            true
+        } else {
+            false
+        }
     }
 
     companion object {

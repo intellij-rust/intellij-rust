@@ -19,7 +19,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
-import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import org.rust.lang.core.parser.rawLookupText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -124,7 +124,7 @@ class MacroExpander(val project: Project) {
         def: RsMacro,
         call: RsMacroCall
     ): Triple<RsMacroCase, MacroSubstitution, RangeMap>? {
-        val (macroCallBody, ranges) = project.createRustPsiBuilder(call.macroBody ?: return null).lowerDocComments()
+        val (macroCallBody, ranges) = project.createAdaptedRustPsiBuilder(call.macroBody ?: return null).lowerDocComments()
         macroCallBody.eof() // skip whitespace
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
@@ -175,7 +175,7 @@ class MacroExpander(val project: Project) {
             }
         }
 
-        return this@MacroExpander.project.createRustPsiBuilder(sb) to RangeMap.from(ranges)
+        return this@MacroExpander.project.createAdaptedRustPsiBuilder(sb) to RangeMap.from(ranges)
     }
 
     private fun PsiBuilder.hasDocComments(): Boolean {
@@ -278,7 +278,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 4
+        const val EXPANDER_VERSION = 5
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
