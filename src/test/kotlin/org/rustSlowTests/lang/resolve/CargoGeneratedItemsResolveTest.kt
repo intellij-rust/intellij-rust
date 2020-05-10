@@ -744,7 +744,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                         f.write_all(text).unwrap()
                     }
                 """)
-            }
+            }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../gen/hello.rs")
         }
     }
 
@@ -786,8 +786,33 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                         ).unwrap();
                     }
                 """)
-            }
+            }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../hello.rs")
         }
+    }
+
+    @MinRustcVersion("1.32.0")
+    fun `test do not fail on compilation error`() = withEnabledEvaluateBuildScriptsFeature {
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    pub mod bar;
+                    fn main() {
+                        println!("{}", bar::message());
+                                            //^
+                    }
+                """)
+                rust("bar.rs", """
+                    pub fn message() -> String { } // compilation error
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/bar.rs")
     }
 
     private fun withEnabledFetchOutDirFeature(action: () -> Unit) =

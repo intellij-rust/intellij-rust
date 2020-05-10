@@ -143,8 +143,14 @@ class Cargo(private val cargoExecutable: Path) {
     ): BuildScriptsInfo? {
         if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
-        val processOutput = CargoCommandLine("check", projectDirectory, additionalArgs)
-            .execute(owner, listener = listener)
+        val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs)
+
+        val processOutput = try {
+            commandLine.execute(owner, listener = listener)
+        } catch (e: ExecutionException) {
+            LOG.warn(e)
+            return null
+        }
 
         // BACKCOMPAT: 2019.3
         @Suppress("DEPRECATION")
