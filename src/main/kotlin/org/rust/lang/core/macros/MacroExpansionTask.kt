@@ -23,6 +23,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
+import org.rust.RsTask
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.RsMod
@@ -49,7 +50,8 @@ abstract class MacroExpansionTaskBase(
     private val vfsBatchFactory: () -> MacroExpansionVfsBatch,
     private val createExpandedSearchScope: (Int) -> GlobalSearchScope,
     private val stepModificationTracker: SimpleModificationTracker
-) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false) {
+) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
+    RsTask {
     private val transactionExecutor = TransactionExecutor(project)
     private val expander = MacroExpander(project)
     private val sync = CountDownLatch(1)
@@ -295,9 +297,8 @@ abstract class MacroExpansionTaskBase(
 
     protected abstract fun getMacrosToExpand(): Sequence<List<Extractable>>
 
-    open fun canEat(other: MacroExpansionTaskBase): Boolean = false
-
-    open val isProgressBarDelayed: Boolean get() = true
+    override val waitForSmartMode: Boolean
+        get() = true
 
     companion object {
         /**
