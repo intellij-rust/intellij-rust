@@ -97,27 +97,43 @@ private sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val look
     val range: TextRange = matchInfo.range
 
     // normal parameter which will be formatted
-    class Value(matchInfo: ParameterMatchInfo, lookup: ParameterLookup, val type: String, val typeRange: TextRange)
-        : FormatParameter(matchInfo, lookup) {
-        fun requiredTrait(knownItems: KnownItems): RsTraitItem? {
-            return when (this.type) {
-                "" -> knownItems.Display
-                "?", "x?", "X?" -> knownItems.Debug
-                "o" -> knownItems.Octal
-                "x" -> knownItems.LowerHex
-                "X" -> knownItems.UpperHex
-                "p" -> knownItems.Pointer
-                "b" -> knownItems.Binary
-                "e" -> knownItems.LowerExp
-                "E" -> knownItems.UpperExp
-                else -> return null
-            }
-        }
+    class Value(
+        matchInfo: ParameterMatchInfo,
+        lookup: ParameterLookup,
+        val typeStr: String,
+        val typeRange: TextRange
+    ) : FormatParameter(matchInfo, lookup) {
+        val type: FormatTraitType? = FormatTraitType.forString(typeStr)
     }
 
     // width or precision formatting specifier
     class Specifier(matchInfo: ParameterMatchInfo, lookup: ParameterLookup, val specifier: String)
         : FormatParameter(matchInfo, lookup)
+}
+
+private enum class FormatTraitType(
+    private val resolver: (KnownItems) -> RsTraitItem?,
+    vararg val names: String
+) {
+    Display(KnownItems::Display, ""),
+    Debug(KnownItems::Debug, "?", "x?", "X?"),
+    Octal(KnownItems::Octal, "o"),
+    LowerHex(KnownItems::LowerHex, "x"),
+    UpperHex(KnownItems::UpperHex, "X"),
+    Pointer(KnownItems::Pointer, "p"),
+    Binary(KnownItems::Binary, "b"),
+    LowerExp(KnownItems::LowerExp, "e"),
+    UpperExp(KnownItems::UpperExp, "E");
+
+    fun resolveTrait(knownItems: KnownItems): RsTraitItem? = resolver(knownItems)
+
+    companion object {
+        private val nameToTraitMap: Map<String, FormatTraitType> =
+            values().flatMap { trait -> trait.names.map { it to trait } }.toMap()
+
+        fun forString(name: String): FormatTraitType? =
+            nameToTraitMap[name]
+    }
 }
 
 private data class FormatContext(
@@ -363,8 +379,8 @@ private fun checkParameter(parameter: FormatParameter, ctx: FormatContext): List
     }
 
     if (errors.isEmpty() && parameter is FormatParameter.Value) {
-        if (parameter.requiredTrait(ctx.knownItems) == null) {
-            errors.add(ErrorAnnotation(parameter.typeRange, "Unknown format trait `${parameter.type}`"))
+        if (parameter.type == null) {
+            errors.add(ErrorAnnotation(parameter.typeRange, "Unknown format trait `${parameter.typeStr}`"))
         }
     }
 
@@ -392,7 +408,7 @@ private fun findParameters(argument: RsFormatMacroArg, position: Int, ctx: Forma
 }
 
 private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: FormatParameter.Value): ErrorAnnotation? {
-    val requiredTrait = parameter.requiredTrait(argument.knownItems) ?: return null
+    val requiredTrait = parameter.type?.resolveTrait(argument.knownItems) ?: return null
 
     val expr = argument.expr
     if (!expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
