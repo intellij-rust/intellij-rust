@@ -5,10 +5,13 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 
 /**
  * Inspection that detects the E0107 error.
@@ -36,47 +39,48 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
             else -> return
         }
         if (declaration !is RsGenericDeclaration) return
-        val nArguments = actualArguments?.typeReferenceList?.size ?: 0
+        val actualArgs = actualArguments?.typeReferenceList?.size ?: 0
 
         val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size
             ?: 0
         val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
 
-        val data = when (o) {
-            is RsBaseType -> checkBaseType(nArguments, expectedRequiredParams, expectedTotalParams)
-            is RsMethodCall, is RsCallExpr -> checkFunctionCall(nArguments, expectedRequiredParams, expectedTotalParams)
+        val errorText = when (o) {
+            is RsBaseType -> checkBaseType(actualArgs, expectedRequiredParams, expectedTotalParams)
+            is RsMethodCall, is RsCallExpr -> checkFunctionCall(actualArgs, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
 
-        val problemText = "Wrong number of type arguments: expected ${data.expectedText}, found $nArguments [${data.code}]"
-        if (data.fix) {
-            holder.registerProblem(o, problemText, RemoveTypeArguments())
-        } else {
-            holder.registerProblem(o, problemText)
-        }
+        val problemText = "Wrong number of type arguments: expected ${errorText}, found $actualArgs"
+        val fixes = getFixes(actualArgs, expectedTotalParams)
+        RsDiagnostic.WrongNumberOfTypeArguments(o, problemText, fixes).addToHolder(holder)
     }
+}
 
-    data class ProblemData(val expectedText: String, val code: String, val fix: Boolean)
-
-    private fun checkBaseType(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
-        val (code, expectedText) = when {
-            actualArgs > expectedTotalParams ->
-                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            actualArgs < expectedRequiredParams ->
-                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            else -> null
-        } ?: return null
-        return ProblemData(expectedText, code, expectedTotalParams == 0)
+private fun checkBaseType(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): String? {
+    return when {
+        actualArgs > expectedTotalParams ->
+            if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams"
+        actualArgs < expectedRequiredParams ->
+            if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams"
+        else -> null
     }
+}
 
-    private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
-        val (code, expectedText) = when {
-            actualArgs > expectedTotalParams ->
-                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            actualArgs in 1 until expectedTotalParams ->
-                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            else -> null
-        } ?: return null
-        return ProblemData(expectedText, code, expectedTotalParams == 0)
+private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): String? {
+    return when {
+        actualArgs > expectedTotalParams ->
+            if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams"
+        actualArgs in 1 until expectedTotalParams ->
+            if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams"
+        else -> null
     }
+}
+
+private fun getFixes(actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> {
+    val fixes = mutableListOf<LocalQuickFix>()
+    if (expectedTotalParams == 0 && actualArgs > 0) {
+        fixes.add(RemoveTypeArguments())
+    }
+    return fixes
 }
