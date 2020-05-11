@@ -17,6 +17,7 @@ import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.ReUnknown
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.type
 import org.rust.stdext.withPrevious
 
 private const val MAX_SHORT_TYPE_LEN = 50
@@ -31,7 +32,8 @@ fun Ty.render(
     float: String = "{float}",
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
-    useAliasNames: Boolean = false
+    useAliasNames: Boolean = false,
+    skipUnchangedDefaultTypeArguments: Boolean = false
 ): String = TypeRenderer(
     unknown = unknown,
     anonymous = anonymous,
@@ -41,14 +43,16 @@ fun Ty.render(
     float = float,
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
-    useAliasNames = useAliasNames
+    useAliasNames = useAliasNames,
+    skipUnchangedDefaultTypeArguments = skipUnchangedDefaultTypeArguments
 ).render(this, level)
 
 fun Ty.renderInsertionSafe(
     level: Int = Int.MAX_VALUE,
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
-    useAliasNames: Boolean = false
+    useAliasNames: Boolean = false,
+    skipUnchangedDefaultTypeArguments: Boolean = false
 ): String = TypeRenderer(
     unknown = "_",
     anonymous = "_",
@@ -58,7 +62,8 @@ fun Ty.renderInsertionSafe(
     float = "_",
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
-    useAliasNames = useAliasNames
+    useAliasNames = useAliasNames,
+    skipUnchangedDefaultTypeArguments = skipUnchangedDefaultTypeArguments
 ).render(this, level)
 
 val Ty.shortPresentableText: String
@@ -78,7 +83,8 @@ private data class TypeRenderer(
     val float: String,
     val includeTypeArguments: Boolean,
     val includeLifetimeArguments: Boolean,
-    val useAliasNames: Boolean
+    val useAliasNames: Boolean,
+    val skipUnchangedDefaultTypeArguments: Boolean
 ) {
     fun render(ty: Ty, level: Int): String {
         require(level >= 0)
@@ -198,7 +204,16 @@ private data class TypeRenderer(
     }
 
     private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
-        val typeArgumentNames = adt.typeArguments.map(render)
+        val typeArguments = adt.typeArguments
+
+        val typeArgumentNames = if (skipUnchangedDefaultTypeArguments) {
+            adt.item.typeParameters.zip(typeArguments).filter { (param, argument) ->
+                param.typeReference == null || param.typeReference?.type != argument
+            }.map { (_, argument) -> render(argument) }
+        } else {
+            typeArguments.map(render)
+        }
+
         val regionArgumentNames = if (includeLifetimeArguments) adt.regionArguments.map { render(it) } else emptyList()
         val constArgumentNames = adt.constArguments.map { render(it, wrapParameterInBraces = true) }
         val generics = regionArgumentNames + typeArgumentNames + constArgumentNames

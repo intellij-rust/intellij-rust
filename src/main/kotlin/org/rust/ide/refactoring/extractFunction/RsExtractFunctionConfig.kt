@@ -54,7 +54,7 @@ class Parameter private constructor(
 
     private val mutText: String = if (isMutableValue) "mut " else ""
     private val referenceText: String = reference.text
-    private val typeText: String = type?.renderInsertionSafe().orEmpty()
+    private val typeText: String = type?.renderInsertionSafe(skipUnchangedDefaultTypeArguments = true).orEmpty()
 
     val originalParameterText: String
         get() = if (type != null) "$mutText$originalName: $referenceText$typeText" else originalName
