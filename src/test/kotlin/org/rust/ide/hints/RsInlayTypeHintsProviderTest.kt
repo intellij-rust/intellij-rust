@@ -6,14 +6,12 @@
 package org.rust.ide.hints
 
 import com.intellij.openapi.vfs.VirtualFileFilter
-import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsMethodCall
 
-abstract class RsInlayTypeHintsProviderTestBase : RsTestBase() {
+class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase() {
     fun `test simple`() = checkByText("""
         fn main() {
             let s/*hint text="[:  i32]"*/ = 42;
@@ -172,9 +170,9 @@ abstract class RsInlayTypeHintsProviderTestBase : RsTestBase() {
         fn main() {
             let s: S<(), ()> = unimplemented!();
             let foo/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/ = s
-                .wrap(|x: i32| x)
-                .wrap(|x: i32| x)
-                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
+                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
+                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
                 .wrap(|x: i32| x);
         }
     """)
@@ -385,16 +383,4 @@ abstract class RsInlayTypeHintsProviderTestBase : RsTestBase() {
             let y/*hint text="[:  [V [< [u8 ,  f32] >]]]"*/ = x;
         }
     """)
-
-    private fun checkByText(@Language("Rust") code: String) {
-        InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
-        checkInlays()
-    }
-
-    // BACKCOMPAT: 2019.3. Inline it
-    protected abstract fun checkInlays()
-
-    companion object {
-        private val HINT_COMMENT_PATTERN = Regex("""/\*(hint.*?)\*/""")
-    }
 }

@@ -145,6 +145,7 @@
         <codeInsight.parameterNameHints language="Rust"
                                         implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
         <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsInlayTypeHintsProvider"/>
+        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsChainMethodTypeHintsProvider"/>
 
         <declarationRangeHandler key="org.rust.lang.core.psi.RsStructItem"
                                  implementationClass="org.rust.ide.hints.RsStructItemDeclarationRangeHandler"/>

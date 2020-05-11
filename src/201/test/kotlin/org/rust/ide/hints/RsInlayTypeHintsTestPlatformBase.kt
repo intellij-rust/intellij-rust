@@ -5,12 +5,12 @@
 
 package org.rust.ide.hints
 
+import org.rust.RsTestBase
 import com.intellij.codeInsight.hints.LinearOrderInlayRenderer
 
-// BACKOMPAT: 2019.3. Merge it with RsInlayTypeHintsProviderTestBase
-class RsInlayTypeHintsProviderTest : RsInlayTypeHintsProviderTestBase() {
-
-    override fun checkInlays() {
+// BACKCOMPAT: 2019.3.
+abstract class RsInlayTypeHintsTestPlatformBase : RsTestBase() {
+    protected fun checkInlays() {
         myFixture.testInlays(
             { (it.renderer as LinearOrderInlayRenderer<*>).toString() },
             { it.renderer is LinearOrderInlayRenderer<*> }
