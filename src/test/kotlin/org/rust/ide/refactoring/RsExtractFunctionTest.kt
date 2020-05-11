@@ -1111,14 +1111,14 @@ class RsExtractFunctionTest : RsTestBase() {
         "foo")
 
     fun `test extract a function with unset default type parameter`() = doTest("""
-        struct S<R, T=u32>(r: R, t: T);
+        struct S<R, T=u32>(R, T);
 
         fn main() {
             let s: S<u32> = S(1u32, 2u32);
             <selection>println!(s)</selection>;
         }
     """, """
-        struct S<R, T=u32>(r: R, t: T);
+        struct S<R, T=u32>(R, T);
 
         fn main() {
             let s: S<u32> = S(1u32, 2u32);
@@ -1133,14 +1133,14 @@ class RsExtractFunctionTest : RsTestBase() {
         "foo")
 
     fun `test extract a function with set default type parameter`() = doTest("""
-        struct S<R, T=u32>(r: R, t: T);
+        struct S<R, T=u32>(R, T);
 
         fn main() {
             let s: S<u32, bool> = S(1u32, true);
             <selection>println!(s)</selection>;
         }
     """, """
-        struct S<R, T=u32>(r: R, t: T);
+        struct S<R, T=u32>(R, T);
 
         fn main() {
             let s: S<u32, bool> = S(1u32, true);
