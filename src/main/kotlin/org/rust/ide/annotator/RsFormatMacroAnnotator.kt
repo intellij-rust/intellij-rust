@@ -13,6 +13,7 @@ import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ide.colors.RsColor
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -59,7 +60,9 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         highlightParametersInside(parseCtx, holder)
 
-        if (!isUnitTestMode && element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+        val suppressTraitErrors = !isUnitTestMode &&
+            (element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New
+                || element.isDoctestInjection)
 
         val parameters = buildParameters(parseCtx)
         val arguments = macroArgs
@@ -71,6 +74,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
         annotations += checkArguments(ctx)
 
         for (annotation in annotations) {
+            if (suppressTraitErrors && annotation.isTraitError) continue
             // BACKCOMPAT: 2019.3
             @Suppress("DEPRECATION")
             holder.createErrorAnnotation(annotation.range, annotation.error)
@@ -93,27 +97,43 @@ private sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val look
     val range: TextRange = matchInfo.range
 
     // normal parameter which will be formatted
-    class Value(matchInfo: ParameterMatchInfo, lookup: ParameterLookup, val type: String, val typeRange: TextRange)
-        : FormatParameter(matchInfo, lookup) {
-        fun requiredTrait(knownItems: KnownItems): RsTraitItem? {
-            return when (this.type) {
-                "" -> knownItems.Display
-                "?", "x?", "X?" -> knownItems.Debug
-                "o" -> knownItems.Octal
-                "x" -> knownItems.LowerHex
-                "X" -> knownItems.UpperHex
-                "p" -> knownItems.Pointer
-                "b" -> knownItems.Binary
-                "e" -> knownItems.LowerExp
-                "E" -> knownItems.UpperExp
-                else -> return null
-            }
-        }
+    class Value(
+        matchInfo: ParameterMatchInfo,
+        lookup: ParameterLookup,
+        val typeStr: String,
+        val typeRange: TextRange
+    ) : FormatParameter(matchInfo, lookup) {
+        val type: FormatTraitType? = FormatTraitType.forString(typeStr)
     }
 
     // width or precision formatting specifier
     class Specifier(matchInfo: ParameterMatchInfo, lookup: ParameterLookup, val specifier: String)
         : FormatParameter(matchInfo, lookup)
+}
+
+private enum class FormatTraitType(
+    private val resolver: (KnownItems) -> RsTraitItem?,
+    vararg val names: String
+) {
+    Display(KnownItems::Display, ""),
+    Debug(KnownItems::Debug, "?", "x?", "X?"),
+    Octal(KnownItems::Octal, "o"),
+    LowerHex(KnownItems::LowerHex, "x"),
+    UpperHex(KnownItems::UpperHex, "X"),
+    Pointer(KnownItems::Pointer, "p"),
+    Binary(KnownItems::Binary, "b"),
+    LowerExp(KnownItems::LowerExp, "e"),
+    UpperExp(KnownItems::UpperExp, "E");
+
+    fun resolveTrait(knownItems: KnownItems): RsTraitItem? = resolver(knownItems)
+
+    companion object {
+        private val nameToTraitMap: Map<String, FormatTraitType> =
+            values().flatMap { trait -> trait.names.map { it to trait } }.toMap()
+
+        fun forString(name: String): FormatTraitType? =
+            nameToTraitMap[name]
+    }
 }
 
 private data class FormatContext(
@@ -149,7 +169,7 @@ private data class ParseContext(val sourceMap: IntArray, val offset: Int, val pa
             .shiftRight(offset)
 }
 
-private data class ErrorAnnotation(val range: TextRange, val error: String)
+private data class ErrorAnnotation(val range: TextRange, val error: String, val isTraitError: Boolean = false)
 
 private val formatParser = Regex("""\{\{|}}|(\{([^}]*)}?)|(})""")
 
@@ -359,8 +379,8 @@ private fun checkParameter(parameter: FormatParameter, ctx: FormatContext): List
     }
 
     if (errors.isEmpty() && parameter is FormatParameter.Value) {
-        if (parameter.requiredTrait(ctx.knownItems) == null) {
-            errors.add(ErrorAnnotation(parameter.typeRange, "Unknown format trait `${parameter.type}`"))
+        if (parameter.type == null) {
+            errors.add(ErrorAnnotation(parameter.typeRange, "Unknown format trait `${parameter.typeStr}`"))
         }
     }
 
@@ -388,11 +408,16 @@ private fun findParameters(argument: RsFormatMacroArg, position: Int, ctx: Forma
 }
 
 private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: FormatParameter.Value): ErrorAnnotation? {
-    val requiredTrait = parameter.requiredTrait(argument.knownItems) ?: return null
+    val requiredTrait = parameter.type?.resolveTrait(argument.knownItems) ?: return null
 
     val expr = argument.expr
     if (!expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
-        return ErrorAnnotation(argument.textRange, "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}` (required by ${parameter.matchInfo.text})")
+        return ErrorAnnotation(
+            argument.textRange,
+            "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}`" +
+                " (required by ${parameter.matchInfo.text})",
+            isTraitError = true
+        )
     }
     return null
 }
