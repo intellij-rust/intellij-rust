@@ -13,6 +13,7 @@ import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ide.colors.RsColor
+import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -59,7 +60,9 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         highlightParametersInside(parseCtx, holder)
 
-        if (!isUnitTestMode && element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+        val suppressTraitErrors = !isUnitTestMode &&
+            (element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New
+                || element.isDoctestInjection)
 
         val parameters = buildParameters(parseCtx)
         val arguments = macroArgs
@@ -71,6 +74,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
         annotations += checkArguments(ctx)
 
         for (annotation in annotations) {
+            if (suppressTraitErrors && annotation.isTraitError) continue
             // BACKCOMPAT: 2019.3
             @Suppress("DEPRECATION")
             holder.createErrorAnnotation(annotation.range, annotation.error)
@@ -149,7 +153,7 @@ private data class ParseContext(val sourceMap: IntArray, val offset: Int, val pa
             .shiftRight(offset)
 }
 
-private data class ErrorAnnotation(val range: TextRange, val error: String)
+private data class ErrorAnnotation(val range: TextRange, val error: String, val isTraitError: Boolean = false)
 
 private val formatParser = Regex("""\{\{|}}|(\{([^}]*)}?)|(})""")
 
@@ -392,7 +396,12 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
 
     val expr = argument.expr
     if (!expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
-        return ErrorAnnotation(argument.textRange, "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}` (required by ${parameter.matchInfo.text})")
+        return ErrorAnnotation(
+            argument.textRange,
+            "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}`" +
+                " (required by ${parameter.matchInfo.text})",
+            isTraitError = true
+        )
     }
     return null
 }
