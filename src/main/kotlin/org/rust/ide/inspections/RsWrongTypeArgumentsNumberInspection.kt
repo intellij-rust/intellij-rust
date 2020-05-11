@@ -5,16 +5,15 @@
 
 package org.rust.ide.inspections
 
-import org.rust.ide.inspections.fixes.RemoveTypeParameter
+import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
 
 /**
- * Inspection that detects E0243/E0244/E0087/E0089/E0035/E0036 errors.
+ * Inspection that detects the E0107 error.
  */
-class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
-
+class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
@@ -30,33 +29,28 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
 
     private fun checkMethod(holder: RsProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = when (o) {
-            is RsMethodCall ->
-                o.typeArgumentList to o.reference.resolve()
-
+            is RsMethodCall -> o.typeArgumentList to o.reference.resolve()
             is RsCallExpr ->
                 (o.expr as? RsPathExpr)?.path?.typeArgumentList to (o.expr as? RsPathExpr)?.path?.reference?.resolve()
-
-            is RsBaseType ->
-                o.path?.typeArgumentList to o.path?.reference?.resolve()
-
+            is RsBaseType -> o.path?.typeArgumentList to o.path?.reference?.resolve()
             else -> return
         }
         if (declaration !is RsGenericDeclaration) return
         val nArguments = actualArguments?.typeReferenceList?.size ?: 0
 
-        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size ?: 0
+        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size
+            ?: 0
         val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
 
-        val data = when(o) {
+        val data = when (o) {
             is RsBaseType -> checkBaseType(nArguments, expectedRequiredParams, expectedTotalParams)
-            is RsMethodCall -> checkMethodCall(nArguments, expectedRequiredParams, expectedTotalParams)
-            is RsCallExpr -> checkCallExpr(nArguments, expectedRequiredParams, expectedTotalParams)
+            is RsMethodCall, is RsCallExpr -> checkFunctionCall(nArguments, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
 
-        val problemText = "Wrong number of type parameters: expected ${data.expectedText}, found $nArguments [${data.code}]"
+        val problemText = "Wrong number of type arguments: expected ${data.expectedText}, found $nArguments [${data.code}]"
         if (data.fix) {
-            holder.registerProblem(o, problemText, RemoveTypeParameter())
+            holder.registerProblem(o, problemText, RemoveTypeArguments())
         } else {
             holder.registerProblem(o, problemText)
         }
@@ -66,34 +60,23 @@ class RsWrongTypeParametersNumberInspection : RsLocalInspectionTool() {
 
     private fun checkBaseType(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
         val (code, expectedText) = when {
+            actualArgs > expectedTotalParams ->
+                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
             actualArgs < expectedRequiredParams ->
-                ("E0243" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
-            actualArgs > expectedTotalParams ->
-                ("E0244" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
             else -> null
         } ?: return null
         return ProblemData(expectedText, code, expectedTotalParams == 0)
     }
 
-    private fun checkMethodCall(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
+    private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
         val (code, expectedText) = when {
-            actualArgs != 0 && expectedTotalParams == 0 ->
-                ("E0035" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedRequiredParams" else "$expectedTotalParams")
             actualArgs > expectedTotalParams ->
-                ("E0036" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
+            actualArgs in 1 until expectedTotalParams ->
+                ("E0107" to if (expectedRequiredParams != expectedTotalParams) "at least $expectedRequiredParams" else "$expectedTotalParams")
             else -> null
         } ?: return null
         return ProblemData(expectedText, code, expectedTotalParams == 0)
-
-    }
-
-    private fun checkCallExpr(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): ProblemData? {
-        val (code, expectedText) = when {
-            actualArgs > expectedTotalParams ->
-                ("E0087" to if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams")
-            else -> null
-        } ?: return null
-        return ProblemData(expectedText, code, expectedTotalParams == 0)
-
     }
 }
