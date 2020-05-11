@@ -5,32 +5,66 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.util.BuildNumber
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
 class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
-    fun `test break in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+
+    override fun setUp() {
+        super.setUp()
+        if (isAtLeast201) {
+            DumbServiceImpl.getInstance(project).isDumb = true
+        }
+    }
+
+    override fun tearDown() {
+        if (isAtLeast201) {
+            DumbServiceImpl.getInstance(project).isDumb = false
+        }
+        super.tearDown()
+    }
+
+    fun `test break in for loop`() = checkCompletion("break", """
         fn foo() {
             for _ in 0..4 {
                 bre/*caret*/
             }
         }
+    """, """
+        fn foo() {
+            for _ in 0..4 {
+                break/*caret*/
+            }
+        }
     """)
 
-    fun `test break in loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+    fun `test break in loop`() = checkCompletion("break", """
         fn foo() {
             loop {
                 br/*caret*/
             }
         }
+    """, """
+        fn foo() {
+            loop {
+                break/*caret*/
+            }
+        }
     """)
 
-    fun `test break in while loop`() = @Suppress("DEPRECATION") checkSingleCompletion("break", """
+    fun `test break in while loop`() = checkCompletion("break", """
         fn foo() {
             while true {
                 brea/*caret*/
+            }
+        }
+    """, """
+        fn foo() {
+            while true {
+                break/*caret*/
             }
         }
     """)
@@ -57,70 +91,116 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test continue in for loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in for loop`() = checkCompletion("continue", """
         fn foo() {
             for _ in 0..4 {
                 cont/*caret*/
             }
         }
+    """, """
+        fn foo() {
+            for _ in 0..4 {
+                continue/*caret*/
+            }
+        }
     """)
 
-    fun `test continue in loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in loop`() = checkCompletion("continue", """
         fn foo() {
             loop {
                 cont/*caret*/
             }
         }
+    """, """
+        fn foo() {
+            loop {
+                continue/*caret*/
+            }
+        }
     """)
 
-    fun `test continue in while loop`() = @Suppress("DEPRECATION") checkSingleCompletion("continue", """
+    fun `test continue in while loop`() = checkCompletion("continue", """
         fn foo() {
             while true {
                 conti/*caret*/
             }
         }
+    """, """
+        fn foo() {
+            while true {
+                continue/*caret*/
+            }
+        }
     """)
 
-    fun `test const`() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
+    fun `test const`() = checkCompletion("const", """
         con/*caret*/
+    """, """
+        const /*caret*/
     """)
 
-    fun `test pub const`() = @Suppress("DEPRECATION") checkSingleCompletion("const", """
+    fun `test pub const`() = checkCompletion("const", """
         pub con/*caret*/
+    """, """
+        pub const /*caret*/
     """)
 
-    fun `test enum`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum`() = checkCompletion("enum", """
         enu/*caret*/
+    """, """
+        enum /*caret*/
     """)
 
-    fun `test enum at the file very beginning`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", "enu/*caret*/")
+    fun `test enum at the file very beginning`() = checkCompletion("enum",
+        "enu/*caret*/",
+        "enum /*caret*/"
+    )
 
-    fun `test pub enum`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test pub enum`() = checkCompletion("enum", """
         pub enu/*caret*/
+    """, """
+        pub enum /*caret*/
     """)
 
-    fun `test enum within mod`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within mod`() = checkCompletion("enum", """
         mod foo {
             en/*caret*/
         }
-    """)
-
-    fun `test enum within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
-        fn foo() {
-            en/*caret*/
+    """, """
+        mod foo {
+            enum /*caret*/
         }
     """)
 
-    fun `test enum within fn nested block`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within fn`() = checkCompletion("enum", """
+        fn foo() {
+            en/*caret*/
+        }
+    """, """
+        fn foo() {
+            enum /*caret*/
+        }
+    """)
+
+    fun `test enum within fn nested block`() = checkCompletion("enum", """
         fn foo() {{
             en/*caret*/
         }}
+    """, """
+        fn foo() {{
+            enum /*caret*/
+        }}
     """)
 
-    fun `test enum within fn after other stmt`() = @Suppress("DEPRECATION") checkSingleCompletion("enum", """
+    fun `test enum within fn after other stmt`() = checkCompletion("enum", """
         fn foo() {
             let _ = 10;
             en/*caret*/
+        }
+    """, """
+        fn foo() {
+            let _ = 10;
+            enum /*caret*/
         }
     """)
 
@@ -140,24 +220,34 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         mod en/*caret*/
     """)
 
-    fun `test extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test extern`() = checkCompletion("extern", """
         ext/*caret*/
+    """, """
+        extern /*caret*/
     """)
 
-    fun `test pub extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test pub extern`() = checkCompletion("extern", """
         pub ext/*caret*/
+    """, """
+        pub extern /*caret*/
     """)
 
-    fun `test unsafe extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test unsafe extern`() = checkCompletion("extern", """
         unsafe ext/*caret*/
+    """, """
+        unsafe extern /*caret*/
     """)
 
-    fun `test pub unsafe extern`() = @Suppress("DEPRECATION") checkSingleCompletion("extern", """
+    fun `test pub unsafe extern`() = checkCompletion("extern", """
         pub unsafe ext/*caret*/
+    """, """
+        pub unsafe extern /*caret*/
     """)
 
-    fun `test extern crate`() = @Suppress("DEPRECATION") checkSingleCompletion("crate", """
+    fun `test extern crate`() = checkCompletion("crate", """
         extern cr/*caret*/
+    """, """
+        extern crate /*caret*/
     """)
 
     fun `test crate not applied at file beginning`() = checkNoCompletion("crat/*caret*/")
@@ -174,40 +264,63 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         pub f/*caret*/
     """)
 
-    fun `test extern fn`() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
+    fun `test extern fn`() = checkCompletion("fn", """
         extern f/*caret*/
+    """, """
+        extern fn /*caret*/
     """)
 
-    fun `test unsafe fn`() = @Suppress("DEPRECATION") checkSingleCompletion("fn", """
+    fun `test unsafe fn`() = checkCompletion("fn", """
         unsafe f/*caret*/
+    """, """
+        unsafe fn /*caret*/
     """)
 
-    fun `test impl`() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
+    fun `test impl`() = checkCompletion("impl", """
         imp/*caret*/
+    """, """
+        impl /*caret*/
     """)
 
-    fun `test unsafe impl`() = @Suppress("DEPRECATION") checkSingleCompletion("impl", """
+    fun `test unsafe impl`() = checkCompletion("impl", """
         unsafe im/*caret*/
+    """, """
+        unsafe impl /*caret*/
     """)
 
-    fun `test let within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within fn`() = checkCompletion("let", """
         fn main() {
             let a = 12;
             le/*caret*/
         }
+    """, """
+        fn main() {
+            let a = 12;
+            let /*caret*/
+        }
     """)
 
-    fun `test let within assoc fn`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within assoc fn`() = checkCompletion("let", """
         struct Foo;
         impl Foo {
             fn shutdown() { le/*caret*/ }
         }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn shutdown() { let /*caret*/ }
+        }
     """)
 
-    fun `test let within method`() = @Suppress("DEPRECATION") checkSingleCompletion("let", """
+    fun `test let within method`() = checkCompletion("let", """
         struct Foo;
         impl Foo {
             fn calc(&self) { le/*caret*/ }
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn calc(&self) { let /*caret*/ }
         }
     """)
 
@@ -219,37 +332,59 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test mod`() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
+    fun `test mod`() = checkCompletion("mod", """
         mo/*caret*/
+    """, """
+        mod /*caret*/
     """)
 
-    fun `test pub mod`() = @Suppress("DEPRECATION") checkSingleCompletion("mod", """
+    fun `test pub mod`() = checkCompletion("mod", """
         pub mo/*caret*/
+    """, """
+        pub mod /*caret*/
     """)
 
-    fun `test mut`() = @Suppress("DEPRECATION") checkSingleCompletion("mut", """
+    fun `test mut`() = checkCompletion("mut", """
         fn main() {
-            let m/*caret*/
+            let mu/*caret*/
+        }
+    """, """
+        fn main() {
+            let mut /*caret*/
         }
     """)
 
-    fun `test return within fn`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within fn`() = checkCompletion("return", """
         fn main() {
             re/*caret*/
         }
+    """, """
+        fn main() {
+            return;/*caret*/
+        }
     """)
 
-    fun `test return within assoc fn`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within assoc fn`() = checkCompletion("return", """
         struct Foo;
         impl Foo {
             fn shutdown() { retu/*caret*/ }
         }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn shutdown() { return;/*caret*/ }
+        }
     """)
 
-    fun `test return within method`() = @Suppress("DEPRECATION") checkSingleCompletion("return", """
+    fun `test return within method`() = checkCompletion("return", """
         struct Foo;
         impl Foo {
             fn print(&self) { retu/*caret*/ }
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            fn print(&self) { return;/*caret*/ }
         }
     """)
 
@@ -269,64 +404,82 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         const retu/*caret*/
     """)
 
-    fun `test static`() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
+    fun `test static`() = checkCompletion("static", """
         sta/*caret*/
+    """, """
+        static /*caret*/
     """)
 
-    fun `test pub static`() = @Suppress("DEPRECATION") checkSingleCompletion("static", """
+    fun `test pub static`() = checkCompletion("static", """
         pub stat/*caret*/
+    """, """
+        pub static /*caret*/
     """)
 
-    fun `test struct`() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
+    fun `test struct`() = checkCompletion("struct", """
         str/*caret*/
+    """, """
+        struct /*caret*/
     """)
 
-    fun `test pub struct`() = @Suppress("DEPRECATION") checkSingleCompletion("struct", """
+    fun `test pub struct`() = checkCompletion("struct", """
         pub str/*caret*/
+    """, """
+        pub struct /*caret*/
     """)
 
-    fun `test trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test trait`() = checkCompletion("trait", """
         tra/*caret*/
+    """, """
+        trait /*caret*/
     """)
 
-    fun `test pub trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test pub trait`() = checkCompletion("trait", """
         pub tra/*caret*/
+    """, """
+        pub trait /*caret*/
     """)
 
-    fun `test unsafe trait`() = @Suppress("DEPRECATION") checkSingleCompletion("trait", """
+    fun `test unsafe trait`() = checkCompletion("trait", """
         unsafe tra/*caret*/
+    """, """
+        unsafe trait /*caret*/
     """)
 
-    fun `test type`() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
+    fun `test type`() = checkCompletion("type", """
         typ/*caret*/
+    """, """
+        type /*caret*/
     """)
 
-    fun `test pub type`() = @Suppress("DEPRECATION") checkSingleCompletion("type", """
+    fun `test pub type`() = checkCompletion("type", """
         pub typ/*caret*/
+    """, """
+        pub type /*caret*/
     """)
 
-    fun `test unsafe`() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
+    fun `test unsafe`() = checkCompletion("unsafe", """
         uns/*caret*/
+    """, """
+        unsafe /*caret*/
     """)
 
-    fun `test pub unsafe`() = @Suppress("DEPRECATION") checkSingleCompletion("unsafe", """
+    fun `test pub unsafe`() = checkCompletion("unsafe", """
         pub unsa/*caret*/
+    """, """
+        pub unsafe /*caret*/
     """)
 
-    fun `test use`() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
+    fun `test use`() = checkCompletion("use", """
         us/*caret*/
+    """, """
+        use /*caret*/
     """)
 
-    fun `test pub use`() = @Suppress("DEPRECATION") checkSingleCompletion("use", """
+    fun `test pub use`() = checkCompletion("use", """
         pub us/*caret*/
-    """)
-
-    fun `test use self`() = @Suppress("DEPRECATION") checkSingleCompletion("self::", """
-        use se/*caret*/
-    """)
-
-    fun `test use super`() = @Suppress("DEPRECATION") checkSingleCompletion("super::", """
-        mod m { use su/*caret*/ }
+    """, """
+        pub use /*caret*/
     """)
 
     fun `test else`() = checkCompletion("else", """
@@ -364,12 +517,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         "fn foo() -> i32 { return /*caret*/}"
     )
 
-    fun `test where in generic function`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic function`() = checkCompletion("where", """
         fn foo<T>(t: T) whe/*caret*/
+    """, """
+        fn foo<T>(t: T) where /*caret*/
     """)
 
-    fun `test where in generic function with ret type`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic function with ret type`() = checkCompletion("where", """
         fn foo<T>(t: T) -> i32 whe/*caret*/
+    """, """
+        fn foo<T>(t: T) -> i32 where /*caret*/
     """)
 
     fun `test where in not generic function`() = checkNoCompletion("""
@@ -380,40 +537,56 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         fn foo() -> i32 whe/*caret*/
     """)
 
-    fun `test where in trait method`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in trait method`() = checkCompletion("where", """
         trait Foo {
             fn foo() whe/*caret*/
         }
-    """)
-
-    fun `test where in method`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
-        impl Foo {
-            fn foo() whe/*caret*/
+    """, """
+        trait Foo {
+            fn foo() where /*caret*/
         }
     """)
 
-    fun `test where in generic struct`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
-        struct Foo<T> whe/*caret*/
+    fun `test where in method`() = checkCompletion("where", """
+        impl Foo {
+            fn foo() whe/*caret*/
+        }
+    """, """
+        impl Foo {
+            fn foo() where /*caret*/
+        }
     """)
 
-    fun `test where in generic tuple struct`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic struct`() = checkCompletion("where", """
+        struct Foo<T> whe/*caret*/
+    """, """
+        struct Foo<T> where /*caret*/
+    """)
+
+    fun `test where in generic tuple struct`() = checkCompletion("where", """
         struct Foo<T>(T) whe/*caret*/
+    """, """
+        struct Foo<T>(T) where /*caret*/
     """)
 
     fun `test where in not generic struct`() = checkNoCompletion("""
         struct Foo whe/*caret*/
     """)
 
-    fun `test where in generic enum`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic enum`() = checkCompletion("where", """
         enum Foo<T> whe/*caret*/
+    """, """
+        enum Foo<T> where /*caret*/
     """)
 
     fun `test where in not generic enum`() = checkNoCompletion("""
         enum Foo whe/*caret*/
     """)
 
-    fun `test where in generic type alias`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic type alias`() = checkCompletion("where", """
         type Foo<T> whe/*caret*/
+    """, """
+        type Foo<T> where /*caret*/
     """)
 
     fun `test where in not generic type alias`() = checkNoCompletion("""
@@ -432,20 +605,28 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test where in trait`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in trait`() = checkCompletion("where", """
         trait Foo whe/*caret*/
+    """, """
+        trait Foo where /*caret*/
     """)
 
-    fun `test where in generic trait`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in generic trait`() = checkCompletion("where", """
         trait Foo<T> whe/*caret*/
+    """, """
+        trait Foo<T> where /*caret*/
     """)
 
-    fun `test where in impl`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in impl`() = checkCompletion("where", """
         impl Foo whe/*caret*/
+    """, """
+        impl Foo where /*caret*/
     """)
 
-    fun `test where in trait impl`() = @Suppress("DEPRECATION") checkSingleCompletion("where", """
+    fun `test where in trait impl`() = checkCompletion("where", """
         impl<T> Foo<T> for Bar whe/*caret*/
+    """, """
+        impl<T> Foo<T> for Bar where /*caret*/
     """)
 
     fun `test if|match in start of statement`() = checkCompletion(CONDITION_KEYWORDS, """
@@ -515,82 +696,6 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     """, """
         fn main() {
             let /*caret*/
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (anon)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
-    fun `test postfix await 2015 (adt)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test postfix await 2018 (anon)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        fn foo() -> impl Future<Output=i32> { unimplemented!() }
-        fn main() {
-            foo().await/*caret*/;
-        }
-    """)
-
-    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test postfix await 2018 (adt)`() = checkCompletion("await", """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo()./*caret*/;
-        }
-    """, """
-        #[lang = "core::future::future::Future"]
-        trait Future { type Output; }
-        struct S;
-        impl Future for S { type Output = i32; }
-        fn foo() -> S { unimplemented!() }
-        fn main() {
-            foo().await/*caret*/;
         }
     """)
 
@@ -700,11 +805,11 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
     fun `test unsafe fn in impl`() = checkCompletion("fn", """
         impl Foo {
             unsafe f/*caret*/
-        }    
+        }
     """, """
         impl Foo {
             unsafe fn /*caret*/
-        }    
+        }
     """)
 
     fun `test pub member keyword in inherent impl`() = checkCompletion(MEMBERS_KEYWORDS, """
@@ -755,6 +860,18 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    // Smart mode is used for not completion tests to disable additional results
+    // from language agnostic `com.intellij.codeInsight.completion.WordCompletionContributor`
+    override fun checkNoCompletion(@Language("Rust") code: String) {
+        val dumbService = DumbServiceImpl.getInstance(project)
+        val oldValue = dumbService.isDumb
+        try {
+            dumbService.isDumb = false
+            super.checkNoCompletion(code)
+        } finally {
+            dumbService.isDumb = oldValue
+        }
+    }
 
     private fun checkCompletion(
         lookupStrings: List<String>,
@@ -766,19 +883,16 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     }
 
-    private fun checkCompletion(
-        lookupString: String,
-        @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) = checkByText(before, after) {
-        val items = myFixture.completeBasic()
-            ?: return@checkByText // single completion was inserted
-        val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
-        myFixture.lookup.currentItem = lookupItem
-        myFixture.type('\n')
-    }
-
     companion object {
         private val MEMBERS_KEYWORDS = listOf("fn", "type", "const", "unsafe")
+
+        // BACKCOMPAT: 2019.3
+        private val BUILD: BuildNumber = BuildNumber.fromString("201")!!
+
+        // Platform completion code doesn't insert dummy identifier because of `WordCompletionContributor` (it's enabled only in dumb mode).
+        // It leads to different PSI for completion and out psi patterns don't work.
+        // Fixed in 2020.1 in platform
+        private val isAtLeast201: Boolean
+            get() = ApplicationInfo.getInstance().build >= BUILD
     }
 }

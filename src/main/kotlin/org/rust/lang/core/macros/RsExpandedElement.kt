@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -26,10 +27,11 @@ interface RsExpandedElement : RsElement {
 
     companion object {
         fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
-            psi.project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi)?.let { return it }
+            val project = psi.project
+            project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi)?.let { return it }
             psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             val parent = psi.stubParent
-            if (parent is RsFile && !isIndexAccessForbidden) {
+            if (parent is RsFile && !isIndexAccessForbidden && !DumbService.isDumb(project)) {
                 RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
             }
             return parent
