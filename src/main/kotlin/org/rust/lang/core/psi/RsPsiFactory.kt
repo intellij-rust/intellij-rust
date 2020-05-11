@@ -160,7 +160,7 @@ class RsPsiFactory(
             val typeText = it.type.renderInsertionSafe(includeLifetimeArguments = true)
             "${"pub".iff(it.addPub)}${it.name}: $typeText"
         }
-        return createFromText("struct S { $fieldsText }")  ?: error("Failed to create block fields")
+        return createFromText("struct S { $fieldsText }") ?: error("Failed to create block fields")
     }
 
     fun createTupleFields(fields: List<TupleField>): RsTupleFields {
@@ -327,6 +327,10 @@ class RsPsiFactory(
         return createExpressionOfType<RsMatchExpr>("match x { $arms }").matchBody
             ?: error("Failed to create match body from patterns: `$arms`")
     }
+
+    fun createConstant(name: String, expr: RsExpr): RsConstant =
+        createFromText("const $name: ${expr.type.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)} = ${expr.text};")
+            ?: error("Failed to create constant $name from ${expr.text} ")
 
     private inline fun <reified T : RsElement> createFromText(code: CharSequence): T? =
         createFile(code).descendantOfTypeStrict()

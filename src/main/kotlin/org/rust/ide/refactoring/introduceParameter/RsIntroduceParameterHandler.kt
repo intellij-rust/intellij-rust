@@ -40,6 +40,6 @@ class RsIntroduceParameterHandler : RefactoringActionHandler {
     }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-        //this doesn't get called form the editor.
+        //this doesn't get called from the editor.
     }
 }
