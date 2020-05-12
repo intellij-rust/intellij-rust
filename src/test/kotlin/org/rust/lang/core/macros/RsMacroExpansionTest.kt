@@ -85,6 +85,17 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { let a = bar::<u8>::baz::<u8>; }
     """)
 
+    fun `test type-like path`() = doTest("""
+        macro_rules! foo {
+            ($ i:path) => {
+                struct Foo<F: $ i> { inner: F }
+            }
+        }
+        foo! { Bar<Baz> }
+    """, """
+        struct Foo<F: Bar<Baz>> { inner: F }
+    """)
+
     fun `test expr`() = doTest("""
         macro_rules! foo {
             ($ i:expr) => ( fn bar() { $ i; } )
