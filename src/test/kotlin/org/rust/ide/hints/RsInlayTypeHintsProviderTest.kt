@@ -11,7 +11,7 @@ import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsMethodCall
 
-class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase() {
+class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsProvider::class) {
     fun `test simple`() = checkByText("""
         fn main() {
             let s/*hint text="[:  i32]"*/ = 42;
@@ -170,9 +170,9 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase() {
         fn main() {
             let s: S<(), ()> = unimplemented!();
             let foo/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/ = s
-                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
-                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
-                .wrap(|x: i32| x)/*hint text="[:  [S [< [[[fn( … )] [ →  … ]] ,  [S [< … >]]] >]]]"*/
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
+                .wrap(|x: i32| x)
                 .wrap(|x: i32| x);
         }
     """)

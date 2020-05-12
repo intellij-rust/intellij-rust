@@ -11,7 +11,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsLanguage
 
-class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase() {
+class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMethodTypeHintsProvider::class) {
     private val types = """
         struct A;
         struct B;

@@ -5,9 +5,28 @@
 
 package org.rust.ide.hints
 
+import com.intellij.codeInsight.hints.InlayHintsProvider
+import com.intellij.codeInsight.hints.InlayHintsProviderExtension
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import org.intellij.lang.annotations.Language
+import org.rust.lang.RsLanguage
+import kotlin.reflect.KClass
 
-abstract class RsInlayTypeHintsTestBase : RsInlayTypeHintsTestPlatformBase() {
+@Suppress("UnstableApiUsage")
+abstract class RsInlayTypeHintsTestBase(
+    private val providerClass: KClass<out InlayHintsProvider<*>>
+) : RsInlayTypeHintsTestPlatformBase() {
+
+    override fun setUp() {
+        super.setUp()
+        changeHintsProviderStatuses { it::class == providerClass }
+    }
+
+    override fun tearDown() {
+        changeHintsProviderStatuses { true }
+        super.tearDown()
+    }
+
     protected fun checkByText(@Language("Rust") code: String) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
         checkInlays()
@@ -15,5 +34,12 @@ abstract class RsInlayTypeHintsTestBase : RsInlayTypeHintsTestPlatformBase() {
 
     companion object {
         private val HINT_COMMENT_PATTERN = Regex("""/\*(hint.*?)\*/""")
+
+        private fun changeHintsProviderStatuses(statusGetter: (InlayHintsProvider<*>) -> Boolean) {
+            val settings = InlayHintsSettings.instance()
+            InlayHintsProviderExtension.findProviders()
+                .filter { it.language == RsLanguage }
+                .forEach { settings.changeHintTypeStatus(it.provider.key, it.language, statusGetter(it.provider)) }
+        }
     }
 }
