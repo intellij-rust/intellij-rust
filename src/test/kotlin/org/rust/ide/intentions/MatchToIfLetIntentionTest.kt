@@ -302,24 +302,34 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
         fn main() {
             let x = [1, 2];
             match x {/*caret*/
-                [1, ..] => println!("42"),
+                [f] => println!("42"),
                 _ => {}
             }
         }
     """, """
         fn main() {
             let x = [1, 2];
-            if let [1, ..] = x {
+            if let [f] = x {
                 println!("42")
             }
         }
     """)
 
-    fun `test unavailable with slice`() = doUnavailableTest("""
+    fun `test unavailable with slice 1`() = doUnavailableTest("""
         fn main() {
             let x = [1, 2];
             match x {/*caret*/
-                [f, ..] => println!("42"),
+                [..] => println!("42"),
+                _ => {}
+            }
+        }
+    """)
+
+    fun `test unavailable with slice 2`() = doUnavailableTest("""
+        fn main() {
+            let x = [1, 2];
+            match x {/*caret*/
+                [f @ ..] => println!("42"),
                 _ => {}
             }
         }
