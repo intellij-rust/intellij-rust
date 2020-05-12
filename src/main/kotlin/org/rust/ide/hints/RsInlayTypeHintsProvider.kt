@@ -26,8 +26,6 @@ import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.walk
 import org.rust.lang.core.types.type
-import org.rust.stdext.dequeOf
-import org.rust.stdext.nextOrNull
 import javax.swing.JPanel
 
 class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Settings> {
@@ -47,7 +45,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
         val showForVariables = "Show for variables"
         val showForLambdas = "Show for closures"
-        val showForIterators = "Show for iterators"
+        val showForIterators = "Show for loop variables"
         val showForPlaceholders = "Show for type placeholders"
         val showObviousTypes = "Show obvious types"
 
@@ -95,7 +93,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
     override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? =
         object : FactoryInlayHintsCollector(editor) {
 
-            val typeHintsFactory = RsTypeHintsPresentationFactory(factory, settings.showObviousTypes)
+            val typeHintsFactory = RsTypeHintsPresentationFactory(null, factory, settings.showObviousTypes)
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (file.project.service<DumbService>().isDumb) return true

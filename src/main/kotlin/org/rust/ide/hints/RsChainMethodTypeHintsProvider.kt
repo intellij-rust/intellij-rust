@@ -24,6 +24,7 @@ import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.parentDotExpr
@@ -41,13 +42,17 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
         private val consecutiveField = CheckBox("Show same consecutive types")
+        private val iteratorSpecialCase = CheckBox("Show iterators as `impl Iterator<...>`")
 
         override fun createComponent(listener: ChangeListener): JPanel {
             consecutiveField.isSelected = settings.showSameConsecutiveTypes
             consecutiveField.addItemListener { handleChange(listener) }
+            iteratorSpecialCase.isSelected = settings.iteratorSpecialCase
+            iteratorSpecialCase.addItemListener { handleChange(listener) }
 
             val panel = panel {
                 row { consecutiveField(pushX) }
+                row { iteratorSpecialCase(pushX) }
             }
             panel.border = JBUI.Borders.empty(5)
             return panel
@@ -55,6 +60,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
 
         private fun handleChange(listener: ChangeListener) {
             settings.showSameConsecutiveTypes = consecutiveField.isSelected
+            settings.iteratorSpecialCase = iteratorSpecialCase.isSelected
             listener.settingsChanged()
         }
     }
@@ -64,7 +70,11 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
     override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? =
         object : FactoryInlayHintsCollector(editor) {
 
-            val typeHintsFactory = RsTypeHintsPresentationFactory(factory, true)
+            val typeHintsFactory = RsTypeHintsPresentationFactory(
+                if (settings.iteratorSpecialCase) file as? RsElement else null,
+                factory,
+                true
+            )
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (DumbService.isDumb(element.project)) return true
@@ -101,7 +111,10 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
         }, left = 1
     )
 
-    data class Settings(var showSameConsecutiveTypes: Boolean = true)
+    data class Settings(
+        var showSameConsecutiveTypes: Boolean = true,
+        var iteratorSpecialCase: Boolean = true
+    )
 
     companion object {
         val KEY: SettingsKey<Settings> = SettingsKey("chain-method.hints")

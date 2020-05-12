@@ -854,10 +854,10 @@ class ImplLookup(
         assocType: RsTypeAlias,
         recursionDepth: Int = 0
     ): SelectionResult<TyWithObligations<Ty>?> {
-        return selectStrict(ref, recursionDepth).map {
-            lookupAssociatedType(ref.selfTy, it, assocType)
+        return selectStrict(ref, recursionDepth).map { selection ->
+            lookupAssociatedType(ref.selfTy, selection, assocType)
                 ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
-                ?.withObligations(it.nestedObligations)
+                ?.withObligations(selection.nestedObligations)
         }
     }
 
@@ -870,6 +870,24 @@ class ImplLookup(
             .map { selectProjectionStrict(TraitRef(it, ref.trait), assocType, recursionDepth) }
             .firstOrNull { it.isOk() }
             ?: SelectionResult.Err
+
+    fun selectAllProjectionsStrict(ref: TraitRef): Map<RsTypeAlias, Ty>? = ctx.probe {
+        val selection = select(ref).ok() ?: return@probe null
+        val assocValues = ref.trait.element.associatedTypesTransitively.associateWith { assocType ->
+            lookupAssociatedType(ref.selfTy, selection, assocType)
+                ?.let { ctx.normalizeAssociatedTypesIn(it) }
+                ?.withObligations(selection.nestedObligations)
+                ?: TyWithObligations(TyUnknown)
+        }
+        val fulfill = FulfillmentContext(ctx, this)
+        assocValues.values.flatMap { it.obligations }.forEach(fulfill::registerPredicateObligation)
+
+        if (fulfill.selectUntilError()) {
+            assocValues.mapValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v.value) }
+        } else {
+            null
+        }
+    }
 
     private fun lookupAssociatedType(selfTy: Ty, res: Selection, assocType: RsTypeAlias): Ty? {
         return when (selfTy) {
