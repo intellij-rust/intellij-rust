@@ -383,4 +383,11 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
             let y/*hint text="[:  [V [< [u8 ,  f32] >]]]"*/ = x;
         }
     """)
+
+//    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+//    fun `test iterator special case`() = checkByText("""
+//        fn main() {
+//            let xs/*hint text="[:  [impl  [Iterator [< [Item = i32] >]] ]]"*/ = vec![1,2,3].into_iter();
+//        }
+//    """)
 }
