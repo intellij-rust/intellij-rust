@@ -116,10 +116,13 @@ class RsTypeInferenceWalker(
     }
 
     fun inferReplCodeFragment(element: RsReplCodeFragment) {
-        for (stmt in element.stmts) {
-            processStatement(stmt)
+        val (expandedStmts, tailExpr) = element.expandedStmtsAndTailExpr
+        for (stmt in expandedStmts) {
+            if (stmt is RsStmt) {
+                processStatement(stmt)
+            }
         }
-        element.tailExpr?.inferType()
+        tailExpr?.inferType()
     }
 
     // returns true if expr is always diverging

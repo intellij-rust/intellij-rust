@@ -30,7 +30,7 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
 
     private val initialized: ActionCallback = ActionCallback()
     val codeFragment: RsReplCodeFragment? = virtualFile.toPsiFile(project) as? RsReplCodeFragment
-    private val codeFragmentContext: RsConsoleCodeFragmentContext = RsConsoleCodeFragmentContext()
+    private val codeFragmentContext: RsConsoleCodeFragmentContext = RsConsoleCodeFragmentContext(codeFragment)
     private var variablesView: RsConsoleVariablesView? = null
     private val options: RsConsoleOptions = RsConsoleOptions.getInstance(project)
 
@@ -77,7 +77,7 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
     fun addToContext(lastCommandContext: RsConsoleOneCommandContext) {
         if (codeFragment != null) {
             codeFragmentContext.addToContext(lastCommandContext)
-            codeFragmentContext.updateContext(project, codeFragment)
+            codeFragmentContext.updateContextAsync(project, codeFragment)
             variablesView?.rebuild()
         }
     }
