@@ -124,6 +124,53 @@ class RsRedundantElseInspectionTest : RsInspectionsTestBase(RsRedundantElseInspe
         }
     """)
 
+    fun `test slice 1`() = checkFixByText("Remove `else`", """
+        fn main() {
+            let vec = &[1, 2][..];
+            let single = if let &[..] = &vec {
+                Some(s)
+            } <warning descr="Redundant `else`"><caret>else</warning> {
+                None
+            };
+        }
+    """, """
+        fn main() {
+            let vec = &[1, 2][..];
+            let single = if let &[..] = &vec {
+                Some(s)
+            };
+        }
+    """)
+
+    fun `test slice 2`() = checkFixByText("Remove `else`", """
+        fn main() {
+            let vec = &[1, 2][..];
+            let single = if let &[s @ ..] = &vec {
+                Some(s)
+            } <warning descr="Redundant `else`"><caret>else</warning> {
+                None
+            };
+        }
+    """, """
+        fn main() {
+            let vec = &[1, 2][..];
+            let single = if let &[s @ ..] = &vec {
+                Some(s)
+            };
+        }
+    """)
+
+    fun `test irrefutable slice`() = checkByText("""
+        fn main() {
+            let vec = &[1, 2][..];
+            let single = if let &[s] = &vec {
+                Some(s)
+            } else {
+                None
+            };
+        }
+    """)
+
     fun `test nested condition`() = checkByText("""
         enum E { V1(u32), V2 }
 

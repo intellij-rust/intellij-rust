@@ -11,7 +11,11 @@ import org.rust.lang.core.resolve.ref.deepResolve
 val RsPat.isIrrefutable: Boolean
     get() = when (val pat = skipUnnecessaryTupDown()) {
         is RsPatSlice ->
-            pat.patList.all { it.isIrrefutable }
+            when (val nestedPat = pat.patList.singleOrNull()) {
+                is RsPatRest -> true
+                is RsPatIdent -> nestedPat.pat is RsPatRest
+                else -> false
+            }
         is RsPatTup ->
             pat.patList.all { it.isIrrefutable }
         is RsPatBox ->
