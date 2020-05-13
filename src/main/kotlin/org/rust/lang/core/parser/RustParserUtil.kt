@@ -597,7 +597,8 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun parseMacroBodyLazy(builder: PsiBuilder, level: Int): Boolean =
         parseTokenTreeLazy(builder, level, MACRO_BODY)
 
-    private fun parseTokenTreeLazy(builder: PsiBuilder, level: Int, tokenTypeToCollapse: IElementType): Boolean {
+    @JvmStatic
+    fun parseTokenTreeLazy(builder: PsiBuilder, level: Int, tokenTypeToCollapse: IElementType): Boolean {
         val firstToken = builder.tokenType
         if (firstToken == null || firstToken !in LEFT_BRACES) return false
         val rightBrace = MacroBraces.fromTokenOrFail(firstToken).closeToken

@@ -9,7 +9,7 @@ import com.intellij.lang.PsiBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.rust.lang.core.macros.MGNodeData.*
-import org.rust.lang.core.parser.createRustPsiBuilder
+import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import java.util.*
 import kotlin.math.min
 
@@ -42,7 +42,7 @@ class MacroGraphWalker(
         descriptor = state.descriptor
     }
 
-    private val builder = project.createRustPsiBuilder(callBody).also { it.eof() } // skip whitespace
+    private val builder = project.createAdaptedRustPsiBuilder(callBody).also { it.eof() } // skip whitespace
     private val processStack: Deque<State> = ArrayDeque()
     private var position: MacroGraphNode = graph.getNode(0)
     private var status: Status = Status.Active
