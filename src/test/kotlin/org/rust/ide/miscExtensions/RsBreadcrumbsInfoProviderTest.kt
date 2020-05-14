@@ -7,7 +7,6 @@ package org.rust.ide.miscExtensions
 
 import com.intellij.testFramework.UsefulTestCase
 import org.intellij.lang.annotations.Language
-import org.rust.MockRustcVersion
 import org.rust.RsTestBase
 import org.rust.ide.miscExtensions.RsBreadcrumbsInfoProvider.Companion.ellipsis
 import org.rust.lang.core.psi.ext.RsElement
@@ -15,9 +14,9 @@ import org.rust.lang.core.psi.ext.descendantsOfType
 
 class RsBreadcrumbsInfoProviderTest : RsTestBase() {
 
-    fun `test multiple line breadcrumbs`() = doMultipleLineAvailableTests("""
+    fun `test multiple line breadcrumbs`() = doWholeFileTextTest("""
         fn foo() {}
-        fn generic<T: Copy>() -> i32 { }
+        fn generic<T: Copy>() -> i32 {}
         struct Foo<'a> {}
         enum E<T> where T: Copy {}
         trait T {}
@@ -41,7 +40,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         TA
     """)
 
-    fun `test breadcrumbs`() = doAvailableTest("""
+    fun `test breadcrumbs`() = doTextTest("""
         fn main() {
             {
                 loop {
@@ -69,7 +68,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         Some(x) =>
     """)
 
-    fun `test if else breadcrumbs`() = doAvailableTest("""
+    fun `test if else breadcrumbs`() = doTextTest("""
         fn main() {
             if true {
             } else {
@@ -82,7 +81,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         else
     """)
 
-    fun `test if block breadcrumbs`() = doAvailableTest("""
+    fun `test if block breadcrumbs`() = doTextTest("""
        fn main() {
             if /*caret*/ { }
        }
@@ -91,7 +90,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         if {...}
     """)
 
-    fun `test while block breadcrumbs`() = doAvailableTest("""
+    fun `test while block breadcrumbs`() = doTextTest("""
         fn main() {
             while /*caret*/ {
 
@@ -102,7 +101,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         while {...}
     """)
 
-    fun `test empty for breadcrumbs`() = doAvailableTest("""
+    fun `test empty for breadcrumbs`() = doTextTest("""
         fn main() {
             for in /*caret*/{
 
@@ -113,7 +112,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         for {...}
     """)
 
-    fun `test lambda breadcrumbs`() = doAvailableTest("""
+    fun `test lambda breadcrumbs`() = doTextTest("""
        fn main() {
             |a| {/*caret*/};
        }
@@ -122,7 +121,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         |a| {...}
     """)
 
-    fun `test long if expr truncation`() = doAvailableTest("""
+    fun `test long if expr truncation`() = doTextTest("""
         fn main() {
             if 1 > 2 && 3 > 4 && 1 > 2 && 3 > 4 {
                 /*caret*/
@@ -133,7 +132,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         if 1 > 2 && 3 > 4 $ellipsis
     """)
 
-    fun `test long match expr truncation`() = doAvailableTest("""
+    fun `test long match expr truncation`() = doTextTest("""
         fn main() {
             match 1 > 2 && 3 > 4 && 1 > 2 && 3 > 4 {
                 /*caret*/
@@ -144,7 +143,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         match 1 > 2 && 3 > 4 $ellipsis
     """)
 
-    fun `test long for expr truncation`() = doAvailableTest("""
+    fun `test long for expr truncation`() = doTextTest("""
         fn main() {
             for _ in 0..000000000000000000002 {
                 /*caret*/
@@ -155,7 +154,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         for _ in 0..000000000000$ellipsis
     """)
 
-    fun `test block expr label`() = doAvailableTest("""
+    fun `test block expr label`() = doTextTest("""
         fn main (){
             let _ = 'block: {
                 for &v in container.iter() {
@@ -170,7 +169,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         'block: {...}
     """)
 
-    fun `test loop label`() = doAvailableTest("""
+    fun `test loop label`() = doTextTest("""
         fn main() {
             'one: loop {
                 /*caret*/
@@ -182,7 +181,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         'one: loop
     """)
 
-    fun `test for label`() = doAvailableTest("""
+    fun `test for label`() = doTextTest("""
         fn main() {
             'one: for _ in 1..2 {
                 /*caret*/
@@ -193,7 +192,7 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         'one: for _ in 1..2
     """)
 
-    fun `test while label`() = doAvailableTest("""
+    fun `test while label`() = doTextTest("""
         fn main() {
             'one: while false {
                 /*caret*/
@@ -204,28 +203,21 @@ class RsBreadcrumbsInfoProviderTest : RsTestBase() {
         'one: while false
     """)
 
-    private fun doMultipleLineAvailableTests(@Language("Rust") content: String, info: String) {
+    private fun doWholeFileTextTest(@Language("Rust") content: String, info: String) {
         InlineFile(content)
-
-        val provider = RsBreadcrumbsInfoProvider()
         val actual = myFixture.file.descendantsOfType<RsElement>()
-            .filter { provider.acceptElement(it) }
-            .joinToString(separator = "\n") { provider.getElementInfo(it) }
+            .map { it.text }
+            .mapNotNull {
+                InlineFile("/*caret*/$it")
+                myFixture.breadcrumbsAtCaret.firstOrNull()?.text
+            }.joinToString(separator = "\n")
 
         UsefulTestCase.assertSameLines(info.trimIndent(), actual)
     }
 
-    private fun doAvailableTest(@Language("Rust") content: String, info: String) {
+    private fun doTextTest(@Language("Rust") content: String, info: String) {
         InlineFile(content.trimIndent())
-
-        val element = myFixture.file.findElementAt(myFixture.caretOffset)!!
-        val provider = RsBreadcrumbsInfoProvider()
-        val elements = generateSequence(element) { provider.getParent(it) }
-            .filter { provider.acceptElement(it) }
-            .toList()
-            .asReversed()
-
-        val crumbs = elements.joinToString(separator = "\n") { provider.getElementInfo(it) }
+        val crumbs = myFixture.breadcrumbsAtCaret.joinToString(separator = "\n") { it.text }
         UsefulTestCase.assertSameLines(info.trimIndent(), crumbs)
     }
 }
