@@ -84,6 +84,18 @@ class RsIntroduceConstantTest : RsTestBase() {
         }
     """)
 
+    fun `test do not import at file scope`() = doTest("""
+        fn foo() {
+            let x = /*caret*/5;
+        }
+    """, listOf("fn foo", "file"), 1, """
+        const I: i32 = 5;
+
+        fn foo() {
+            let x = I;
+        }
+    """)
+
     fun `test module inside a function`() = doTest("""
         fn foo() {
             mod bar {

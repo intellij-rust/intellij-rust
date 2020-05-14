@@ -73,8 +73,10 @@ private fun replaceWithConstant(expr: RsExpr, occurrences: List<RsExpr>, candida
         context.addAfter(newline, inserted)
         val replaced = occurrences.map {
             val created = factory.createExpression(name)
-            val element = it.replace(created) as RsElement
-            RsImportHelper.importElements(element, setOf(inserted))
+            val element = it.replace(created) as RsPathExpr
+            if (element.path.reference?.resolve() == null) {
+                RsImportHelper.importElements(element, setOf(inserted))
+            }
             element
         }
         Pair(inserted, replaced.toList())
