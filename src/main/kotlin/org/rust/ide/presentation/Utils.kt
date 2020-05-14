@@ -103,30 +103,3 @@ val RsDocAndAttributeOwner.presentableQualifiedName: String?
         if (this is RsMod) return modName
         return name
     }
-
-fun breadcrumbName(e: RsElement): String? {
-    fun lastComponentWithoutGenerics(path: RsPath) = path.referenceName
-
-    return when (e) {
-        is RsMacro -> e.name?.let { "$it!" }
-
-        is RsModItem, is RsStructOrEnumItemElement, is RsTraitItem, is RsConstant, is RsTypeAlias ->
-            (e as RsNamedElement).name
-
-        is RsImplItem -> {
-            val typeName = run {
-                val typeReference = e.typeReference
-                (typeReference?.skipParens() as? RsBaseType)?.path?.let { lastComponentWithoutGenerics(it) }
-                    ?: typeReference?.text
-                    ?: return null
-            }
-
-            val traitName = e.traitRef?.path?.let { lastComponentWithoutGenerics(it) }
-            val start = if (traitName != null) "$traitName for" else "impl"
-            "$start $typeName"
-        }
-
-        is RsFunction -> e.name?.let { "$it()" }
-        else -> null
-    }
-}
