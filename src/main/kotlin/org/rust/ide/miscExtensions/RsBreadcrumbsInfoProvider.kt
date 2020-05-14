@@ -120,10 +120,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         override fun elementInfo(e: RsLoopExpr): String {
             return buildString {
-                if (e.labelDecl != null) {
-                    append(e.labelDecl?.text).append(' ')
-                }
-
+                appendLabelInfo(e.labelDecl)
                 append("loop")
             }
         }
@@ -134,10 +131,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         override fun elementInfo(e: RsForExpr): String {
             return buildString {
-                if (e.labelDecl != null) {
-                    append(e.labelDecl?.text).append(' ')
-                }
-
+                appendLabelInfo(e.labelDecl)
                 append("for")
 
                 if (e.block != null) {
@@ -159,10 +153,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         override fun elementInfo(e: RsWhileExpr): String {
             return buildString {
-                if (e.labelDecl != null) {
-                    append(e.labelDecl?.text).append(' ')
-                }
-
+                appendLabelInfo(e.labelDecl)
                 append("while")
 
                 val condition = e.condition
@@ -241,6 +232,12 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
             return if (length > maxLength)
                 "${substring(0, maxLength - ellipsis.length)}$ellipsis"
             else this
+        }
+
+        private fun StringBuilder.appendLabelInfo(labelDecl: RsLabelDecl?) {
+            if (labelDecl != null) {
+                append(labelDecl.text).append(' ')
+            }
         }
     }
 }
