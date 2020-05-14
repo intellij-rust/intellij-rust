@@ -389,4 +389,10 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("<FORMAT_SPECIFIER>{0:.*}</FORMAT_SPECIFIER>!", <error descr="Precision specifier must be of type `usize`">S</error>);
         }
     """)
+
+    fun `test ignore unknown types`() = checkErrors("""
+        fn main() {
+            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+        }
+    """)
 }
