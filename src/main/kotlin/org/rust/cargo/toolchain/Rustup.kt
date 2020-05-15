@@ -90,10 +90,10 @@ class Rustup(
     companion object {
 
         fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean =
-            checkNeedInstallComponent(project, cargoProjectDirectory, "clippy-preview")
+            checkNeedInstallComponent(project, cargoProjectDirectory, "clippy")
 
         fun checkNeedInstallRustfmt(project: Project, cargoProjectDirectory: Path): Boolean =
-            checkNeedInstallComponent(project, cargoProjectDirectory, "rustfmt-preview")
+            checkNeedInstallComponent(project, cargoProjectDirectory, "rustfmt")
 
         // We don't want to install the component if:
         // 1. It is already installed
