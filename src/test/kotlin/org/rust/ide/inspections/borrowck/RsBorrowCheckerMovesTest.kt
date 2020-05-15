@@ -642,6 +642,17 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     """, checkWarn = false)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move struct expr with base paren`() = checkByText("""
+        struct S { x: i32, y: i32 }
+
+        fn main() {
+            let s1 = S { x: 1, y: 2 };
+            let s2 = S { x: 10, ..(s1) };
+            s1;
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no move generic struct expr with base`() = checkByText("""
         struct S<T> { x: T, y: T }
 
