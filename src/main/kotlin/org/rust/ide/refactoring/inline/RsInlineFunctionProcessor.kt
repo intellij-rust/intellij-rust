@@ -5,9 +5,9 @@
 
 package org.rust.ide.refactoring.inline
 
-import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -19,6 +19,8 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
+import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.MultiMap
 import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
@@ -31,7 +33,9 @@ class RsInlineFunctionProcessor(
     private val ref: RsReference?,
     private val inlineThisOnly: Boolean,
     private val removeDefinition: Boolean,
-    private val factory: RsPsiFactory = RsPsiFactory(project)
+    private val factory: RsPsiFactory = RsPsiFactory(project),
+    private val logger: Logger = Logger.getInstance(RsInlineFunctionProcessor::class.java),
+    private var usagesAsReference: List<PsiReference> = emptyList()
 ) : BaseRefactoringProcessor(project) {
 
     override fun findUsages(): Array<UsageInfo> {
@@ -43,18 +47,63 @@ class RsInlineFunctionProcessor(
         val usages = mutableListOf<PsiReference>()
         usages.addAll(ReferencesSearch.search(function, projectScope).findAll())
 
-        val usagesAsReference = usages.filter {
+        usagesAsReference = usages.filter {
             it.element.ancestorOrSelf<RsCallExpr>() == null
                 && it.element.ancestorOrSelf<RsMethodCall>() == null
         }
 
-        if (usagesAsReference.isNotEmpty() && removeDefinition) {
-            throw IllegalArgumentException(
-                "Cannot remove function definition: function pointer inline is not supported")
-        }
-
         usages.removeAll(usagesAsReference)
         return usages.map(::UsageInfo).toTypedArray()
+    }
+
+    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+        val conflicts = MultiMap<PsiElement, String>()
+        refUsages.get().forEach { usage ->
+            val caller = usage.element?.ancestors?.filter { it is RsCallExpr || it is RsDotExpr }?.firstOrNull()
+            val exprAncestor = usage.element?.ancestorOrSelf<RsStmt>() ?: usage.element?.ancestorOrSelf<RsExpr>()
+            when {
+                exprAncestor == null -> {
+                    conflicts.putValue(usage.element, "Usage is not part of an expression")
+                    return@forEach
+                }
+                !exprAncestor.isWritable -> {
+                    conflicts.putValue(usage.element, "Usage is not writable")
+                    return@forEach
+                }
+                usagesAsReference.contains(usage.reference) && removeDefinition -> {
+                    conflicts.putValue(usage.element, "Usage with function pointer inline is't currently supported")
+                    return@forEach
+                }
+                caller == null -> {
+                    conflicts.putValue(usage.element, "Usage is not part of a caller expression")
+                    return@forEach
+                }
+                checkCallerConflicts(function, caller) != null -> {
+                    conflicts.putValue(caller, checkCallerConflicts(function, caller))
+                    return@forEach
+                }
+            }
+        }
+
+        return showConflicts(conflicts, refUsages.get())
+    }
+
+    private fun checkCallerConflicts(function: RsFunction, caller: PsiElement): String? {
+        val funcArguments = (function.copy() as RsFunction).valueParameters
+        val callArguments = when (caller) {
+            is RsCallExpr -> caller.valueArgumentList.exprList
+            is RsDotExpr -> {
+                val methodCall = caller.methodCall
+                    ?: return "Cannot inline field lookup"
+                methodCall.valueArgumentList.exprList
+            }
+            else -> return "Unknown caller expression type"
+        }
+
+        if (funcArguments.size != callArguments.size) {
+            return "Cannot inline function to references with mismatching arguments"
+        }
+        return null
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
@@ -116,59 +165,60 @@ class RsInlineFunctionProcessor(
     }
 
     private fun inlineWithLetBindingsAdded(ref: RsReference, function: RsFunction) {
-        val functionDup = function.copy() as RsFunction
-        val body = functionDup.block ?: throw IllegalArgumentException("Cannot inline an empty function")
-        replaceLastExprToStatement(body)
-        val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>()
-            ?: ref.element.ancestorOrSelf<RsExpr>() ?: throw IllegalArgumentException("Cannot inline reference without expression parent.")
-        val blockParent = enclosingStatement.ancestorOrSelf<RsBlock>()
-        val childContainingEnclosingStatement = if (blockParent?.children?.isNotEmpty() == true) {
-            blockParent.children.first { it.isAncestorOf(enclosingStatement) }
-        } else {
-            null
-        }
-        if (!enclosingStatement.isWritable) {
-            throw IllegalArgumentException("Cannot inline into a readonly statement")
-        }
-
-        val caller = ref.element.ancestors.filter { it is RsCallExpr || it is RsDotExpr }.firstOrNull()
-            ?: throw IllegalArgumentException("Cannot inline function without caller")
-
-        checkIfFuncArgumentsMatchCallArguments(functionDup, caller)
-
-        val funcScope = LocalSearchScope(body)
-
-        val selfParam = functionDup.selfParameter
-        replaceSelfParamWithExpr(selfParam, caller, funcScope)
-
-        val retExprInside = body.descendantsOfType<RsRetExpr>().firstOrNull()?.expr
-        if (retExprInside != null && body.stmtList.size == 1) {
-            caller.replace(retExprInside)
-            return
-        }
-        replaceCallerWithRetExpr(body, caller)
-
-        val leftSibling = enclosingStatement.leftSiblings.firstOrNull { it is RsStmt }
-        val rightSibling = enclosingStatement.rightSiblings.firstOrNull { it is RsStmt }
-        if (blockParent != null) {
-            if (enclosingStatement.isPhysical) {
-                body.children.filter { it.text != ";" }.forEach {
-                    enclosingStatement.addLeftSibling(it)
-                }
+        try {
+            val functionDup = function.copy() as RsFunction
+            val body = functionDup.block ?: throw IncorrectOperationException("Empty function bypassed preprocessing")
+            replaceLastExprToStatement(body)
+            val enclosingStatement = ref.element.ancestorOrSelf<RsStmt>()
+                ?: ref.element.ancestorOrSelf<RsExpr>()
+                ?: throw IncorrectOperationException(
+                    "Usage without expression parent bypassed preprocessing: ${ref.element.text}")
+            val blockParent = enclosingStatement.ancestorOrSelf<RsBlock>()
+            val childContainingEnclosingStatement = if (blockParent?.children?.isNotEmpty() == true) {
+                blockParent.children.first { it.isAncestorOf(enclosingStatement) }
             } else {
-                addFunctionBodyToCallerWithCorrectSpacing(leftSibling, rightSibling, blockParent, body, childContainingEnclosingStatement)
+                null
             }
 
-            blockParent.children.filter { it.text == ";" }.forEach { it.delete() }
-        }
-        enclosingStatement.addLeftSibling(factory.createNewline())
+            val caller = ref.element.ancestors.filter { it is RsCallExpr || it is RsDotExpr }.firstOrNull()
+                ?: throw IncorrectOperationException("Usage without caller expression parent bypassed preprocessing: ${ref.element.text}")
 
-        enclosingStatement.ancestorOrSelf<RsBlock>()?.let {
-            it.replace(CodeStyleManager.getInstance(project).reformat(it))
-        }
+            val funcScope = LocalSearchScope(body)
 
-        if (enclosingStatement.descendantsOfType<RsExpr>().isEmpty() || enclosingStatement.text == ";") {
-            enclosingStatement.delete()
+            val selfParam = functionDup.selfParameter
+            replaceSelfParamWithExpr(selfParam, caller, funcScope)
+
+            val retExprInside = body.descendantsOfType<RsRetExpr>().firstOrNull()?.expr
+            if (retExprInside != null && body.stmtList.size == 1) {
+                caller.replace(retExprInside)
+                return
+            }
+            replaceCallerWithRetExpr(body, caller)
+
+            val leftSibling = enclosingStatement.leftSiblings.firstOrNull { it is RsStmt }
+            val rightSibling = enclosingStatement.rightSiblings.firstOrNull { it is RsStmt }
+            if (blockParent != null) {
+                if (enclosingStatement.isPhysical) {
+                    body.children.filter { it.text != ";" }.forEach {
+                        enclosingStatement.addLeftSibling(it)
+                    }
+                } else {
+                    addFunctionBodyToCallerWithCorrectSpacing(leftSibling, rightSibling, blockParent, body, childContainingEnclosingStatement)
+                }
+
+                blockParent.children.filter { it.text == ";" }.forEach { it.delete() }
+            }
+            enclosingStatement.addLeftSibling(factory.createNewline())
+
+            enclosingStatement.ancestorOrSelf<RsBlock>()?.let {
+                it.replace(CodeStyleManager.getInstance(project).reformat(it))
+            }
+
+            if (enclosingStatement.descendantsOfType<RsExpr>().isEmpty() || enclosingStatement.text == ";") {
+                enclosingStatement.delete()
+            }
+        } catch (e: IncorrectOperationException) {
+            logger.error(e)
         }
     }
 
@@ -238,26 +288,6 @@ class RsInlineFunctionProcessor(
             ReferencesSearch.search(selfParam.navigationElement, funcScope).findAll().forEach {
                 it.element.ancestorOrSelf<RsExpr>()!!.replace(selfExpr)
             }
-        }
-    }
-
-    private fun checkIfFuncArgumentsMatchCallArguments(functionDup: RsFunction, caller: PsiElement) {
-        val funcArguments = functionDup.valueParameters
-        val callArguments = when (caller) {
-            is RsCallExpr -> {
-                caller.valueArgumentList.exprList
-            }
-            is RsDotExpr -> {
-                val methodCall = caller.methodCall
-                    ?: throw IllegalArgumentException("Cannot inline field lookup")
-                methodCall.valueArgumentList.exprList
-            }
-            else -> throw IllegalArgumentException("Unknown caller expression type")
-        }
-
-        if (funcArguments.size != callArguments.size) {
-            throw IllegalArgumentException(
-                "Cannot inline function to references with mismatching arguments")
         }
     }
 

@@ -17,6 +17,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineFunctionHandler : InlineActionHandler() {
@@ -47,6 +48,11 @@ class RsInlineFunctionHandler : InlineActionHandler() {
 
         if (reference != null && RsInlineFunctionProcessor.checkIfLoopCondition(function, reference.element)) {
             errorHint(project, editor, "cannot inline multiline function into \"while\" loop condition")
+            return
+        }
+
+        if (function.block == null) {
+            errorHint(project, editor,"Cannot inline an empty function")
             return
         }
 
