@@ -11,12 +11,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.inspections.import.RsImportHelper
 import org.rust.ide.refactoring.RsInPlaceVariableIntroducer
+import org.rust.ide.refactoring.findBinding
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.Const
@@ -33,9 +35,9 @@ class RsExtractEnumVariantProcessor(
     private val editor: Editor,
     private val ctx: RsEnumVariant
 ) : BaseRefactoringProcessor(project) {
-    override fun findUsages(): Array<UsageInfo> {
-        return ReferencesSearch.search(ctx).map { UsageInfo(it) }.toTypedArray()
-    }
+    override fun findUsages(): Array<UsageInfo> = ReferencesSearch.search(ctx).map {
+        UsageInfo(it)
+    }.toTypedArray()
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         val project = ctx.project
@@ -99,7 +101,6 @@ class RsExtractEnumVariantProcessor(
     }
 }
 
-
 private sealed class VariantElement(val toBeReplaced: PsiElement, val factory: RsPsiFactory) {
     abstract val typeReferences: List<RsTypeReference>
 
@@ -148,26 +149,36 @@ private sealed class VariantElement(val toBeReplaced: PsiElement, val factory: R
     }
 }
 
-private class TupleVariant(fields: RsTupleFields, factory: RsPsiFactory) : VariantElement(fields, factory) {
+private class TupleVariant(private val fields: RsTupleFields, factory: RsPsiFactory) : VariantElement(fields, factory) {
     override val typeReferences: List<RsTypeReference> = fields.tupleFieldDeclList.map { it.typeReference }
 
     override fun replaceUsage(element: PsiElement, name: String): PsiElement? {
-        val replacedUsage = when (val parent = PsiTreeUtil.getParentOfType(
-            element,
-            RsPatTupleStruct::class.java,
-            RsCallExpr::class.java
-        )) {
-            is RsPatTupleStruct -> {
-                val replacedParent = replaceTuplePattern(parent, name)
-                replacedParent.patList.firstOrNull()
+        val pathExpr = element.parent as? RsPathExpr
+        val replacedUsage = if (pathExpr != null) {
+            val call = when (val parent = pathExpr.parent) {
+                // constructor call
+                is RsCallExpr -> replaceTupleCall(parent, name)
+                // constructor reference
+                else -> replaceTupleConstructor(pathExpr, name)
             }
-            is RsCallExpr -> {
-                val replacedParent = replaceTupleCall(parent, name)
-                replacedParent.valueArgumentList.exprList.firstOrNull()
-            }
-            else -> null
+            call.valueArgumentList.exprList.firstOrNull()
+        } else {
+            val parent = element.parentOfType<RsPatTupleStruct>() ?: return null
+            val replacedParent = replaceTuplePattern(parent, name)
+            replacedParent.patList.firstOrNull()
         }
         return replacedUsage?.descendantOfTypeOrSelf<RsReferenceElement>()
+    }
+
+    private fun replaceTupleConstructor(element: RsPathExpr, name: String): RsCallExpr {
+        val args = (0 until fields.tupleFieldDeclList.size).map { "p$it" }
+        val argumentsText = args.joinToString(",")
+        val call = factory.createFunctionCall(name, argumentsText)
+        val binding = factory.createFunctionCall(element.path.text, listOf(call))
+
+        val lambda = factory.createExpression("|$argumentsText| ${binding.text}")
+        val replaced = element.replace(lambda) as RsLambdaExpr
+        return replaced.expr as RsCallExpr
     }
 
     private fun replaceTuplePattern(element: RsPatTupleStruct, name: String): RsPatTupleStruct {
