@@ -613,7 +613,8 @@ class CFGBuilder(
     }
 
     override fun visitParenExpr(parenExpr: RsParenExpr) {
-        parenExpr.expr?.accept(this)
+        val exprExit = process(parenExpr.expr, pred)
+        finishWithAstNode(parenExpr, exprExit)
     }
 
     override fun visitTryExpr(tryExpr: RsTryExpr) {

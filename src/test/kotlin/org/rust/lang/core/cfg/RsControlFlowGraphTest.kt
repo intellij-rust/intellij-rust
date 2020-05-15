@@ -26,6 +26,7 @@ class RsControlFlowGraphTest : RsTestBase() {
     fun `test straightforward`() = testCFG("""
         fn main() {
             let x = (1 + 2) as i32;
+            let x = (;
             let arr = [0, 5 * 7 + x];
             let mut y = -arr[x + 10];
             { y = 10; y += x; };
@@ -37,10 +38,15 @@ class RsControlFlowGraphTest : RsTestBase() {
         1
         2
         1 + 2
+        (1 + 2)
         (1 + 2) as i32
         x
         x
         let x = (1 + 2) as i32;
+        (
+        x
+        x
+        let x = (;
         0
         5
         7

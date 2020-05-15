@@ -293,10 +293,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
 
             is RsCastExpr -> consumeExpr(expr.expr)
 
-            is RsParenExpr -> when (expr.parent) {
-                is RsDotExpr -> expr.expr?.let { walkExpr(it) }
-                else -> expr.expr?.let { consumeExpr(it) }
-            }
+            is RsParenExpr -> expr.expr?.let { walkExpr(it) }
 
             is RsTryExpr -> walkExpr(expr.expr)
 
