@@ -164,12 +164,24 @@ private class ExitPointVisitor(
     }
 
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
+        super.visitMacroExpr(macroExpr)
+
         val macroCall = macroExpr.macroCall
         if (macroCall.macroName == "try"
             && macroCall.exprMacroArgument != null
             && inTry == 0) sink(ExitPoint.TryExpr(macroExpr))
 
-        if (macroExpr.type == TyNever) sink(ExitPoint.DivergingExpr(macroExpr))
+        macroExpr.markNeverTypeAsExit(sink)
+    }
+
+    override fun visitCallExpr(callExpr: RsCallExpr) {
+        super.visitCallExpr(callExpr)
+        callExpr.markNeverTypeAsExit(sink)
+    }
+
+    override fun visitDotExpr(dotExpr: RsDotExpr) {
+        super.visitDotExpr(dotExpr)
+        dotExpr.markNeverTypeAsExit(sink)
     }
 
     override fun visitBreakExpr(breakExpr: RsBreakExpr) {
@@ -236,4 +248,8 @@ private class ExitPointVisitor(
             }
             return false
         }
+}
+
+private fun RsExpr.markNeverTypeAsExit(sink: (ExitPoint) -> Unit) {
+    if (this.type == TyNever) sink(ExitPoint.DivergingExpr(this))
 }

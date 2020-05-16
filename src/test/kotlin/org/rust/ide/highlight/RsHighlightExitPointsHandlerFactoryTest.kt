@@ -42,6 +42,35 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
         }
     """, "panic!(\"test\")", "unimplemented!()", "return 0")
 
+    fun `test highlight diverging expressions as return`() = doTest("""
+        fn diverge() -> ! { unimplemented!() }
+
+        fn main() {
+            if true {
+                diverge();
+            }
+            /*caret*/return 0;
+        }
+    """, "diverge()", "return 0")
+
+    fun `test highlight diverging expressions as return 2`() = doTest("""
+        struct S;
+
+        impl S {
+           fn diverge(&self) -> ! { panic!() }
+        }
+
+        fn main() {
+           let s = S;
+
+           if true {
+              /*caret*/return;
+           }
+
+           s.diverge();
+        }
+    """, "return", "s.diverge()")
+
     fun `test highlight ? operator as return`() = doTest("""
         fn main() {
             if true {
@@ -93,6 +122,18 @@ class RsHighlightExitPointsHandlerFactoryTest : RsTestBase() {
             test()
         }
     """, "return 1", "test()")
+
+    fun `test highlight last macro call as return`() = doTest("""
+        macro_rules! test {
+            () => { () }
+        }
+        fn main() {
+            if true {
+                /*caret*/return;
+            }
+            test!()
+        }
+    """, "return", "test!()")
 
     fun `test highlight should not highlight inner function`() = doTest("""
         fn main() {
