@@ -5,8 +5,6 @@
 
 package org.rust.cargo.project.configurable
 
-import com.intellij.codeInsight.hints.InlayParameterHintsExtension
-import com.intellij.codeInsight.hints.Option
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
@@ -20,7 +18,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansion
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.ui.layout
-import org.rust.lang.RsLanguage
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.ComboBoxDelegate
 import org.rust.openapiext.pathAsPath
@@ -54,10 +51,6 @@ class RsProjectConfigurable(
     private val doctestInjectionCheckbox: JBCheckBox = JBCheckBox()
     private var doctestInjectionEnabled: Boolean by CheckboxDelegate(doctestInjectionCheckbox)
 
-    private val hintProvider = InlayParameterHintsExtension.forLanguage(RsLanguage)
-    private val hintCheckboxes: Map<String, JBCheckBox> =
-        hintProvider.supportedOptions.associate { it.id to JBCheckBox() }
-
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
     override fun createComponent(): JComponent = layout {
@@ -71,14 +64,6 @@ class RsProjectConfigurable(
             instead of raw console.
         """)
         row("Inject Rust language into documentation comments:", doctestInjectionCheckbox)
-        val supportedHintOptions = hintProvider.supportedOptions
-        if (supportedHintOptions.isNotEmpty()) {
-            block("Hints") {
-                for (option in supportedHintOptions) {
-                    row("${option.name}:", checkboxForOption(option))
-                }
-            }
-        }
     }
 
     override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
@@ -93,19 +78,11 @@ class RsProjectConfigurable(
         macroExpansionEngine = settings.macroExpansionEngine
         showTestToolWindow = settings.showTestToolWindow
         doctestInjectionEnabled = settings.doctestInjectionEnabled
-
-        for (option in hintProvider.supportedOptions) {
-            checkboxForOption(option).isSelected = option.get()
-        }
     }
 
     @Throws(ConfigurationException::class)
     override fun apply() {
         rustProjectSettings.validateSettings()
-
-        for (option in hintProvider.supportedOptions) {
-            option.set(checkboxForOption(option).isSelected)
-        }
 
         settings.modify {
             it.toolchain = rustProjectSettings.data.toolchain
@@ -118,13 +95,10 @@ class RsProjectConfigurable(
 
     override fun isModified(): Boolean {
         val data = rustProjectSettings.data
-        if (hintProvider.supportedOptions.any { checkboxForOption(it).isSelected != it.get() }) return true
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || macroExpansionEngine != settings.macroExpansionEngine
             || showTestToolWindow != settings.showTestToolWindow
             || doctestInjectionEnabled != settings.doctestInjectionEnabled
     }
-
-    private fun checkboxForOption(opt: Option): JBCheckBox = hintCheckboxes[opt.id]!!
 }
