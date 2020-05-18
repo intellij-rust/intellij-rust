@@ -391,8 +391,15 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
     """)
 
     fun `test ignore unknown types`() = checkErrors("""
+        struct G<T>(T);
+        impl<T> fmt::Display for G<T> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result { unimplemented!() }
+        }
+
         fn main() {
+            let g: G<S> = G(S);
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", g);
         }
     """)
 }

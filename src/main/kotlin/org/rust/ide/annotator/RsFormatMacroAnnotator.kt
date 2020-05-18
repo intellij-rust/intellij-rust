@@ -26,6 +26,7 @@ import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.stripReferences
@@ -412,7 +413,8 @@ private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: Form
     val requiredTrait = parameter.type?.resolveTrait(argument.knownItems) ?: return null
 
     val expr = argument.expr
-    if (expr.type != TyUnknown && !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
+    if (!expr.type.containsTyOfClass(TyUnknown::class.java) &&
+        !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
         return ErrorAnnotation(
             argument.textRange,
             "`${expr.type.render(useAliasNames = true)}` doesn't implement `${requiredTrait.name}`" +
