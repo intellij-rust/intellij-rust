@@ -28,6 +28,7 @@ import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.TyInteger
+import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.ty.stripReferences
 import org.rust.lang.core.types.type
@@ -409,11 +410,13 @@ private fun findParameters(argument: RsFormatMacroArg, position: Int, ctx: Forma
     }
 }
 
+private val IGNORED_FORMAT_TYPES = setOf(TyUnknown, TyNever)
+
 private fun checkParameterTraitMatch(argument: RsFormatMacroArg, parameter: FormatParameter.Value): ErrorAnnotation? {
     val requiredTrait = parameter.type?.resolveTrait(argument.knownItems) ?: return null
 
     val expr = argument.expr
-    if (!expr.type.containsTyOfClass(TyUnknown::class.java) &&
+    if (!IGNORED_FORMAT_TYPES.any { expr.type.containsTyOfClass(it::class.java) } &&
         !expr.implLookup.canSelectWithDeref(TraitRef(expr.type, requiredTrait.withSubst()))) {
         return ErrorAnnotation(
             argument.textRange,
