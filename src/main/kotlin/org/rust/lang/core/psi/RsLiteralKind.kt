@@ -82,13 +82,14 @@ sealed class RsLiteralKind(val node: ASTNode) {
             get() = offsets.openDelim == null || offsets.closeDelim == null
 
         override val value: kotlin.String? get() {
-            val rawValue = offsets.value?.substring(node.text)
-
             return if (node.elementType in RS_RAW_LITERALS)
                 rawValue
             else
                 rawValue?.unescapeRust(RsEscapesLexer.of(node.elementType))
         }
+
+        val rawValue: kotlin.String?
+            get() = offsets.value?.substring(node.text)
     }
 
     class Char(node: ASTNode, val isByte: kotlin.Boolean) : RsLiteralKind(node), RsLiteralWithSuffix, RsTextLiteral {

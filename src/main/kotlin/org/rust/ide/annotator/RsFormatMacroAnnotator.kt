@@ -191,8 +191,17 @@ private val formatParameterParser = Regex("""(?x) # enable comments
 
 private fun parseParameters(formatStr: RsLitExpr): ParseContext? {
     val literalKind = (formatStr.kind as? RsLiteralKind.String) ?: return null
+    if (literalKind.node.elementType in RS_BYTE_STRING_LITERALS) return null
+
     val rawTextRange = literalKind.offsets.value ?: return null
-    val (unescapedText, sourceMap, _) = parseRustStringCharacters(rawTextRange.substring(literalKind.node.text))
+    val text = literalKind.rawValue ?: return null
+    val (unescapedText, sourceMap) = if (literalKind.node.elementType == RsElementTypes.RAW_STRING_LITERAL) {
+        val map = text.indices.toList().toIntArray()
+        text to map
+    } else {
+        val (parsedText, map, _) = parseRustStringCharacters(text)
+        parsedText.toString() to map
+    }
 
     val arguments = formatParser.findAll(unescapedText)
     val parsed = arguments.map { arg ->
