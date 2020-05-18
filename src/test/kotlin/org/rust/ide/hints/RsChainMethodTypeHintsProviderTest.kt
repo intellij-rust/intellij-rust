@@ -112,6 +112,19 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test iterator special case`() = doTest("""
+        fn main() {
+            vec![1, 2, 3]
+                .into_iter()/*hint text="[:  [impl  [Iterator [< [Item = i32] >]] ]]"*/
+                .map(|x| x as u8)/*hint text="[:  [impl  [Iterator [< [Item = u8] >]] ]]"*/
+                .map(|x| x as u16)/*hint text="[:  [impl  [Iterator [< [Item = u16] >]] ]]"*/
+                .filter(|x| x % 2 == 0)/*hint text="[:  [impl  [Iterator [< [Item = u16] >]] ]]"*/
+                .for_each(|x| {})
+            ;
+        }
+    """)
+
     @Suppress("UnstableApiUsage")
     private fun doTest(@Language("Rust") code: String, showSameConsecutiveTypes: Boolean = true) {
         val service = InlayHintsSettings.instance()
