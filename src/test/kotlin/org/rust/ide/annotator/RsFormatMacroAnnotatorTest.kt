@@ -402,4 +402,12 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", g);
         }
     """)
+
+    fun `test ignore never type`() = checkErrors("""
+        fn never() -> ! { unimplemented!() }
+
+        fn main() {
+            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", never());
+        }
+    """)
 }
