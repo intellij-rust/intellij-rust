@@ -239,6 +239,18 @@ fun PsiElement?.getPrevNonCommentSibling(): PsiElement? =
 fun PsiElement?.getNextNonCommentSibling(): PsiElement? =
     PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java, PsiComment::class.java)
 
+/**
+ * Finds first sibling that is not whitespace before given element.
+ */
+fun PsiElement?.getPrevNonWhitespaceSibling(): PsiElement? =
+    PsiTreeUtil.skipSiblingsBackward(this, PsiWhiteSpace::class.java)
+
+/**
+ * Finds first sibling that is not whitespace after given element.
+ */
+fun PsiElement?.getNextNonWhitespaceSibling(): PsiElement? =
+    PsiTreeUtil.skipSiblingsForward(this, PsiWhiteSpace::class.java)
+
 fun PsiElement.isAncestorOf(child: PsiElement): Boolean =
     child.ancestors.contains(this)
 

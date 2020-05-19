@@ -580,6 +580,14 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.ReplaceLineCommentWithBlockCommentIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ReplaceBlockCommentWithLineCommentIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.AddCurlyBracesIntention</className>
             <category>Rust</category>
         </intentionAction>
