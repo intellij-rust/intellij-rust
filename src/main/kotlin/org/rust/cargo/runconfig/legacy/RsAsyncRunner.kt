@@ -71,10 +71,10 @@ abstract class RsAsyncRunner(
             if (cmdHasNoRun) commandLine else commandLine.prependArgument("--no-run")
         } else {
             commandLine.copy(command = "build", additionalArguments = commandArguments)
-        }
+        }.copy(emulateTerminal = false)
 
         val getRunCommand = { executablePath: Path ->
-            with(buildCommand) {
+            with(commandLine) {
                 Cargo.createGeneralCommandLine(
                     executablePath,
                     workingDirectory,
