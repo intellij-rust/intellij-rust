@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiParserFacade
@@ -13,6 +14,7 @@ import com.intellij.util.LocalTimeCounter
 import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.RsFileType
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionContext
 import org.rust.lang.core.macros.prepareExpandedTextForParsing
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
@@ -342,6 +344,12 @@ class RsPsiFactory(
     fun createPubCrateRestricted(): RsVis =
         createFromText("pub(crate) fn f() {}")
             ?: error("Failed to create `pub(crate)` element")
+
+    fun createBlockComment(text: String): PsiComment =
+        PsiParserFacade.SERVICE.getInstance(project).createBlockCommentFromText(RsLanguage, text)
+
+    fun createLineComment(text: String): PsiComment =
+        PsiParserFacade.SERVICE.getInstance(project).createLineCommentFromText(RsFileType, text)
 
     fun createComma(): PsiElement =
         createFromText<RsValueParameter>("fn f(_ : (), )")!!.nextSibling
