@@ -86,17 +86,17 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
         enum Person {
 
 
-            // An `enum` may either be `unit-like`,
+            /// An `enum` may either be `unit-like`,
             Skinny, Fat,
 
 
 
-            // like tuple structs,
+            /// like tuple structs,
             Height(i32), Weight(i32),
 
 
 
-            // or like structures.
+            /// or like structures.
             Info {
 
 
@@ -112,15 +112,15 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
         }
     """, """
         enum Person {
-            // An `enum` may either be `unit-like`,
+            /// An `enum` may either be `unit-like`,
             Skinny,
             Fat,
 
-            // like tuple structs,
+            /// like tuple structs,
             Height(i32),
             Weight(i32),
 
-            // or like structures.
+            /// or like structures.
             Info {
                 name: String,
 

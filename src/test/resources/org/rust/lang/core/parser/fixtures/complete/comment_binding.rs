@@ -82,3 +82,8 @@ fn foo() {}
 /// Non-doc comments after a doc comment do not matter.
 // Like this one!
 fn bar() {}
+
+
+// Non doc comment should not be attached
+// if there are no doc comments
+fn baz() {}

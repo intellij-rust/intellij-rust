@@ -57,9 +57,7 @@ class ReplaceLineCommentWithBlockCommentIntentionTest : RsIntentionTestBase(Repl
         }
     """)
 
-    // TODO: This does not work because EOL comments are children of `RsFunction` and `prevSibling` is `null`
-    fun `test convert multiple line comments with indent members`() = expect<AssertionError> {
-        doAvailableTest("""
+    fun `test convert multiple line comments with indent members`() = doAvailableTest("""
         trait Foo {
             // First
             // Second/*caret*/
@@ -74,5 +72,4 @@ class ReplaceLineCommentWithBlockCommentIntentionTest : RsIntentionTestBase(Repl
             /*caret*/fn foo() {}
         }
     """)
-    }
 }

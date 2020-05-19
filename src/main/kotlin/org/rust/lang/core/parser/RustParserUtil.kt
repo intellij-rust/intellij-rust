@@ -148,10 +148,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmField
     val ADJACENT_LINE_COMMENTS = WhitespacesAndCommentsBinder { tokens, _, getter ->
         var candidate = tokens.size
+        var containsDocComment = false
+
         for (i in 0 until tokens.size) {
             val token = tokens[i]
             if (OUTER_BLOCK_DOC_COMMENT == token || OUTER_EOL_DOC_COMMENT == token) {
                 candidate = minOf(candidate, i)
+                containsDocComment = true
                 break
             }
             if (EOL_COMMENT == token) {
@@ -161,7 +164,11 @@ object RustParserUtil : GeneratedParserUtilBase() {
                 candidate = tokens.size
             }
         }
-        candidate
+        if (containsDocComment) {
+            candidate
+        } else {
+            tokens.size
+        }
     }
 
     private val LEFT_BRACES = tokenSetOf(LPAREN, LBRACE, LBRACK)

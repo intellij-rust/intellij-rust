@@ -83,8 +83,7 @@ class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntentio
         }
     """, """
         enum E {
-            A,
-            // comment A
+            A, // comment A
             B,
             C // comment C
         }

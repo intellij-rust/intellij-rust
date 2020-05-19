@@ -23,6 +23,16 @@ class RsInspectionSuppressorTest : RsInspectionsTestBase(RsSelfConventionInspect
             //noinspection RsSelfConvention
             fn is_foo(self) { }
             fn is_bar(<warning>s<caret>elf</warning>) { }
+            
+            // comment1
+            //noinspection RsSelfConvention
+            // comment2
+            fn is_baz(self) { }
+            
+            // comment1
+            //noinspection RsSelfConvention
+            /// doc comment1
+            fn is_quux(self) { }
         }
 
         struct T;
