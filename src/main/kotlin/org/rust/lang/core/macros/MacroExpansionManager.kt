@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapiext.Testmark
@@ -439,7 +440,7 @@ private class MacroExpansionServiceImplInner(
             // Using a buffer to avoid IO in the read action
             // BACKCOMPAT: 2020.1 use async read action and extract `runReadAction` from `withContext`
             val (buffer, modCount) = runReadAction {
-                val buffer = ChunkedByteArrayOutputStream(1024*1024) // average stdlib storage size
+                val buffer = BufferExposingByteArrayOutputStream(1024*1024) // average stdlib storage size
                 DataOutputStream(buffer).use { data ->
                     ExpandedMacroStorage.saveStorage(storage, data)
                     val dirToSave = MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath) ?: run {
@@ -452,7 +453,7 @@ private class MacroExpansionServiceImplInner(
             }
 
             Files.createDirectories(dataFile.parent)
-            dataFile.newDeflaterDataOutputStream().use { it.writeStream(buffer.toInputStream()) }
+            dataFile.newDeflaterDataOutputStream().use { it.write(buffer.internalBuffer) }
             MacroExpansionFileSystemRootsLoader.saveProjectDirs()
             lastSavedStorageModCount = modCount
         }
