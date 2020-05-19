@@ -9,8 +9,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.DataInputOutputUtil
 import java.io.*
 
-typealias ChunkedByteArrayOutputStream = org.apache.commons.io.output.ByteArrayOutputStream
-
 @Throws(IOException::class)
 fun DataInput.readVarInt(): Int =
     DataInputOutputUtil.readINT(this)
