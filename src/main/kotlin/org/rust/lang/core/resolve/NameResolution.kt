@@ -614,7 +614,7 @@ private fun processTraitRelativePath(
 fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
     if (binding.parent is RsPatField) {
         val parentPat = binding.parent.parent as RsPatStruct
-        val patStruct = parentPat.path.reference?.resolve()
+        val patStruct = parentPat.path.reference?.deepResolve()
         if (patStruct is RsFieldsOwner && processFieldDeclarations(patStruct, processor)) return true
     }
 

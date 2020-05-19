@@ -1139,11 +1139,22 @@ class RsResolveTest : RsResolveTestBase() {
         }                     //^
     """)
 
-    fun `test pattern binding in let`() = checkByCode("""
+    fun `test pattern binding in let 1`() = checkByCode("""
         struct S { foo: i32 }
                   //X
         fn main() {
             let S { foo } = S { foo: 92 };
+                   //^
+            let x = foo;
+        }
+    """)
+
+    fun `test pattern binding in let 2`() = checkByCode("""
+        struct S { foo: i32 }
+                  //X
+        type A = S;
+        fn main() {
+            let A { foo } = A { foo: 92 };
                    //^
             let x = foo;
         }
