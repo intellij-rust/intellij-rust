@@ -55,9 +55,9 @@ jobs:
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
 
-            - name: Update changelog link
-              if: github.event_name == 'repository_dispatch' && github.event.action == 'stable-release'
-              run: python scripts/update-changelog-link.py --token ${{ secrets.GITHUB_TOKEN }}
+#            - name: Update changelog link
+#              if: github.event_name == 'repository_dispatch' && github.event.action == 'stable-release'
+#              run: python scripts/update-changelog-link.py --token ${{ secrets.GITHUB_TOKEN }}
 
     get-channel:
         runs-on: ubuntu-latest
