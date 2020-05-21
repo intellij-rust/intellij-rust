@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.IdeActions
 import org.rust.RsTestBase
 
 class RsCommenterTest : RsTestBase() {
-
     fun `test single line`() = checkEditorAction("""
         fn <caret>double(x: i32) -> i32 {
             x * 2
@@ -60,13 +59,11 @@ class RsCommenterTest : RsTestBase() {
         </selection>}
     """, """
         fn fib(x: i32) -> i32 {
-            /*
-            match x {
+            /*match x {
                 0 => 1,
                 1 => 1,
                 _ => fib(x - 2) + fib(x - 1)
-            }
-            */
+            }*/
         }
     """, IdeActions.ACTION_COMMENT_BLOCK)
 
@@ -110,7 +107,17 @@ class RsCommenterTest : RsTestBase() {
         }
     """, IdeActions.ACTION_COMMENT_BLOCK)
 
-    fun `test single line uncomment with space`() = checkEditorAction("""
+    fun `test single line uncomment with space before`() = checkEditorAction("""
+         //fn d<caret>ouble(x: i32) -> i32 {
+        //    x * 2
+        }
+    """, """
+         fn double(x: i32) -> i32 {
+        //   <caret> x * 2
+        }
+    """, IdeActions.ACTION_COMMENT_LINE, trimIndent = false)
+
+    fun `test single line uncomment with space after`() = checkEditorAction("""
         // fn d<caret>ouble(x: i32) -> i32 {
         //     x * 2
         }
@@ -120,15 +127,27 @@ class RsCommenterTest : RsTestBase() {
         }
     """, IdeActions.ACTION_COMMENT_LINE)
 
+    fun `test doc comment uncomment`() = checkEditorAction("""
+        /// doc<caret>
+        fn double(x: i32) -> i32 {
+            x * 2
+        }
+    """, """
+        doc
+        fn <caret>double(x: i32) -> i32 {
+            x * 2
+        }
+    """, IdeActions.ACTION_COMMENT_LINE)
+
     fun `test nested block comments`() = checkEditorAction("""
         fn double<selection>(x: i32/* foobar */) -> i32</selection> {
             x * 2
         }
     """, """
-        fn double<selection>/*(x: i32*//* foobar *//*) -> i32*/</selection> {
+        fn double<selection>/*(x: i32/* foobar */) -> i32*/</selection> {
             x * 2
         }
-    """, IdeActions.ACTION_COMMENT_BLOCK) // FIXME
+    """, IdeActions.ACTION_COMMENT_BLOCK)
 
     fun `test indented single line comment`() = checkEditorAction("""
         fn double(x: i32) -> i32 {
@@ -138,6 +157,16 @@ class RsCommenterTest : RsTestBase() {
         fn double(x: i32) -> i32 {
             // x * 2
         }<caret>
+    """, IdeActions.ACTION_COMMENT_LINE)
+
+    fun `test single line doc uncomment`() = checkEditorAction("""
+        ///
+        ///<caret>
+        ///
+    """, """
+        ///
+
+        <caret>///
     """, IdeActions.ACTION_COMMENT_LINE)
 
     fun `test complete block comment`() = checkEditorAction("""
