@@ -22,8 +22,11 @@ abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFiel
     override fun getIcon(flags: Int): Icon =
         iconWithVisibility(flags, RsIcons.FIELD)
 
-    // temporary solution.
-    override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
+    override val crateRelativePath: String?
+        get() {
+            val parent = parentStruct ?: return RsPsiImplUtil.crateRelativePath(this)
+            return RsPsiImplUtil.crateRelativePath(parent)?.plus("::$name")
+        }
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }

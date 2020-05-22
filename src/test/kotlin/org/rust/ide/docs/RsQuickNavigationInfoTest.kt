@@ -71,7 +71,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
             //^
         }
     """, """
-        test_package<br>impl <a href="psi_element://S">S</a>
+        test_package::S<br>impl <a href="psi_element://S">S</a>
         pub fn <b>consume</b>(self) -&gt; i32
     """)
 
@@ -83,7 +83,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        test_package<br>impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;
+        test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;
         pub fn <b>foo</b>(&amp;self)
     """)
 
@@ -96,7 +96,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        test_package<br>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         pub fn <b>foo</b>(&amp;self)
     """)
 
@@ -192,7 +192,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        test_package::Foo<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         fn <b>foo</b>()
     """)
 
@@ -206,7 +206,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        test_package<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;
+        test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;
         fn <b>foo</b>()
     """)
 
@@ -221,7 +221,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        test_package<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         fn <b>foo</b>()
     """)
 
@@ -446,7 +446,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        test_package::Foo<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;i32&gt;
     """)
 
@@ -461,7 +461,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        test_package<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;
+        test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;
     """)
 
@@ -476,7 +476,7 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        test_package<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;
     """)
 

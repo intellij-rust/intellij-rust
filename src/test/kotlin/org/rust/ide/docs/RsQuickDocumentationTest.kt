@@ -151,7 +151,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Foo">Foo</a>
         pub fn <b>foo</b>(&amp;self)</pre></div>
     """)
 
@@ -163,7 +163,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Foo">Foo</a>
         pub fn <b>foo</b>(&amp;self) -&gt; Self</pre></div>
     """)
 
@@ -175,7 +175,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Foo">Foo</a>&lt;T&gt;
         pub fn <b>foo</b>(&amp;self)</pre></div>
     """)
 
@@ -188,7 +188,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                   //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         pub fn <b>foo</b>(&amp;self)</pre></div>
     """)
 
@@ -401,7 +401,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;i32&gt;</pre></div>
     """)
 
@@ -416,7 +416,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre></div>
     """)
 
@@ -431,7 +431,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T&gt; <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>&lt;T&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         type <b>AssocType</b> = <a href="psi_element://Option">Option</a>&lt;T&gt;</pre></div>
     """)
 
@@ -518,7 +518,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         const <b>AWESOME</b>: u8 = 42</pre></div>
     """)
 
@@ -569,7 +569,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Trait">Trait</a> for <a href="psi_element://Foo">Foo</a>
         fn <b>foo</b>()</pre></div>
     """)
 
@@ -583,7 +583,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;
         fn <b>foo</b>()</pre></div>
     """)
 
@@ -598,7 +598,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
+        <div class='definition'><pre>test_package::Foo<br>impl&lt;T, F&gt; <a href="psi_element://Trait">Trait</a>&lt;T&gt; for <a href="psi_element://Foo">Foo</a>&lt;F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         fn <b>foo</b>()</pre></div>
     """)
 
@@ -888,7 +888,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                 //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo2">Foo2</a> for <a href="psi_element://S">S</a>
+        <div class='definition'><pre>test_package::S<br>impl <a href="psi_element://Foo2">Foo2</a> for <a href="psi_element://S">S</a>
         type <b>Bar</b> = &lt;Self as <a href="psi_element://Foo1">Foo1</a>&gt;::<a href="psi_element://&lt;Self as Foo1&gt;::Bar">Bar</a></pre></div>
     """)
 
@@ -982,7 +982,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
             fn bar(&self) {}
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a>
+        <div class='definition'><pre>test_package::Foo<br>impl <a href="psi_element://Foo">Foo</a>
         fn <b>foo</b>(&amp;self)</pre></div>
         <div class='content'><p><a href="psi_element://test_package/struct.Foo.html#method.bar"><code>Foo::bar</code></a></p></div>
     """)
@@ -1000,7 +1000,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
               //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a> for <a href="psi_element://Bar">Bar</a>
+        <div class='definition'><pre>test_package::Bar<br>impl <a href="psi_element://Foo">Foo</a> for <a href="psi_element://Bar">Bar</a>
         fn <b>foo</b>()</pre></div>
         <div class='content'><p>Impl doc</p></div>
     """)
@@ -1017,7 +1017,7 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
                //^
         }
     """, """
-        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Foo">Foo</a> for <a href="psi_element://Bar">Bar</a>
+        <div class='definition'><pre>test_package::Bar<br>impl <a href="psi_element://Foo">Foo</a> for <a href="psi_element://Bar">Bar</a>
         type <b>Baz</b> = ()</pre></div>
         <div class='content'><p>Trait doc</p></div>
     """)
