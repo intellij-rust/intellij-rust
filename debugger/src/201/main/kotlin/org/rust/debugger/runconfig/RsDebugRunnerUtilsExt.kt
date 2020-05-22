@@ -6,6 +6,7 @@
 package org.rust.debugger.runconfig
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
@@ -23,20 +24,37 @@ object RsDebugRunnerUtilsExt {
             is LLDBStatus.Binaries -> return true
         }
 
-        // TODO: add option to download/update debugger automatically
-        val option = Messages.showDialog(
+        val option = if (!RsDebuggerSettings.getInstance().downloadAutomatically) {
+            showDialog(project, message, action)
+        } else {
+            Messages.OK
+        }
+
+        if (option == Messages.OK) {
+            val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project);
+            if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
+                RsDebuggerSettings.getInstance().lldbPath = result.lldbDir.absolutePath
+                return true
+            }
+        }
+        return false
+    }
+
+    private fun showDialog(project: Project, message: String, action: String): Int {
+        return Messages.showDialog(
             project,
             message,
             RsDebugRunnerUtils.ERROR_MESSAGE_TITLE,
             arrayOf(action),
             Messages.OK,
-            Messages.getErrorIcon()
+            Messages.getErrorIcon(),
+            object : DialogWrapper.DoNotAskOption.Adapter() {
+                override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+                    if (exitCode == Messages.OK) {
+                        RsDebuggerSettings.getInstance().downloadAutomatically = isSelected
+                    }
+                }
+            }
         )
-        if (option == Messages.OK) {
-            RsDebuggerToolchainService.getInstance().downloadDebugger({
-                RsDebuggerSettings.getInstance().lldbPath = it.absolutePath
-            }, {})
-        }
-        return false
     }
 }

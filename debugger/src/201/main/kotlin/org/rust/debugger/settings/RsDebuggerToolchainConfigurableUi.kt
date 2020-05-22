@@ -6,8 +6,8 @@
 package org.rust.debugger.settings
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ConfigurableUi
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.panel
 import org.rust.debugger.RsDebuggerToolchainService
@@ -19,10 +19,10 @@ import javax.swing.JLabel
 class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
 
     private val downloadLink: JLabel = Link("Download") {
-        RsDebuggerToolchainService.getInstance().downloadDebugger(
-            onSuccess = { lldbPathField.text = it.absolutePath },
-            onFailure = {}
-        )
+        val result = RsDebuggerToolchainService.getInstance().downloadDebugger()
+        if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
+            lldbPathField.text = result.lldbDir.absolutePath
+        }
     } as JLabel
 
     private val lldbPathField = pathToDirectoryTextField(
@@ -33,16 +33,22 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
         isEditable = false
     }
 
+    private val downloadAutomaticallyCheckBox: JBCheckBox =
+        JBCheckBox("Download and update debugger automatically", RsDebuggerSettings.getInstance().downloadAutomatically)
+
     override fun isModified(settings: RsDebuggerSettings): Boolean {
-        return settings.lldbPath != lldbPathField.text
+        return settings.lldbPath != lldbPathField.text &&
+               settings.downloadAutomatically != downloadAutomaticallyCheckBox.isSelected
     }
 
     override fun reset(settings: RsDebuggerSettings) {
         lldbPathField.text = settings.lldbPath.orEmpty()
+        downloadAutomaticallyCheckBox.isSelected = settings.downloadAutomatically
     }
 
     override fun apply(settings: RsDebuggerSettings) {
         settings.lldbPath = lldbPathField.text
+        settings.downloadAutomatically = downloadAutomaticallyCheckBox.isSelected
     }
 
     override fun getComponent(): JComponent {
@@ -51,6 +57,7 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
         return panel {
             row("LLDB path:") { lldbPathField() }
             row("") { downloadLink() }
+            row { downloadAutomaticallyCheckBox() }
         }
     }
 
