@@ -22,6 +22,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     var gdbRenderers: GDBRenderers = GDBRenderers.DEFAULT
 
     var lldbPath: String? = null
+    var downloadAutomatically: Boolean = false
 
     override fun getState(): RsDebuggerSettings = this
 

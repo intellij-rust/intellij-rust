@@ -9,15 +9,13 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.download.DownloadableFileDescription
 import com.intellij.util.download.DownloadableFileService
@@ -64,46 +62,42 @@ class RsDebuggerToolchainService {
         return LLDBStatus.Binaries(frameworkFile, frontendFile)
     }
 
-    fun downloadDebugger(
-        onSuccess: (File) -> Unit,
-        onFailure: () -> Unit
-    ) {
-        val (lldbFrameworkUrl, lldbFrontendUrl) = lldbUrls ?: run {
-            runInEdt { onFailure() }
-            return
-        }
+    fun downloadDebugger(project: Project? = null): DownloadResult {
+        val result = ProgressManager.getInstance().runProcessWithProgressSynchronously(ThrowableComputable<DownloadResult, Nothing> {
+            downloadDebuggerSynchronously()
+        }, "Download debugger", true, project)
 
-        val task: Task.Backgroundable = object : Task.Backgroundable(null, "Download debugger") {
-            override fun shouldStartInBackground(): Boolean = false
-            override fun run(indicator: ProgressIndicator) {
-                try {
-                    val lldbDir = downloadAndUnarchive(lldbFrameworkUrl.toString(), lldbFrontendUrl.toString())
-                    runInEdt {
-                        Notifications.Bus.notify(Notification(
-                            RUST_DEBUGGER_GROUP_ID,
-                            "Debugger",
-                            "Debugger successfully downloaded",
-                            NotificationType.INFORMATION
-                        ))
-                        onSuccess(lldbDir)
-                    }
-                } catch (e: IOException) {
-                    LOG.warn("Can't download debugger", e)
-                    runInEdt {
-                        Notifications.Bus.notify(Notification(
-                            RUST_DEBUGGER_GROUP_ID,
-                            "Debugger",
-                            "Debugger downloading failed",
-                            NotificationType.ERROR
-                        ))
-                        onFailure()
-                    }
-                }
+        when (result) {
+            is DownloadResult.Ok -> {
+                Notifications.Bus.notify(Notification(
+                    RUST_DEBUGGER_GROUP_ID,
+                    "Debugger",
+                    "Debugger successfully downloaded",
+                    NotificationType.INFORMATION
+                ))
+            }
+            DownloadResult.Failed -> {
+                Notifications.Bus.notify(Notification(
+                    RUST_DEBUGGER_GROUP_ID,
+                    "Debugger",
+                    "Debugger downloading failed",
+                    NotificationType.ERROR
+                ))
             }
         }
-        val processIndicator = BackgroundableProcessIndicator(task)
-        processIndicator.isIndeterminate = false
-        ProgressManager.getInstance().runProcessWithProgressAsynchronously(task, processIndicator)
+
+        return result
+    }
+
+    private fun downloadDebuggerSynchronously(): DownloadResult {
+        val (lldbFrameworkUrl, lldbFrontendUrl) = lldbUrls ?: return DownloadResult.NoUrls
+        return try {
+            val lldbDir = downloadAndUnarchive(lldbFrameworkUrl.toString(), lldbFrontendUrl.toString())
+            DownloadResult.Ok(lldbDir)
+        } catch (e: IOException) {
+            LOG.warn("Can't download debugger", e)
+            DownloadResult.Failed
+        }
     }
 
     private val lldbUrls: Pair<URL, URL>?
@@ -234,6 +228,12 @@ class RsDebuggerToolchainService {
                 unarchiver.createDecompressor(archivePath).extract(dst)
             }
         }
+    }
+
+    sealed class DownloadResult {
+        class Ok(val lldbDir: File) : DownloadResult()
+        object NoUrls : DownloadResult()
+        object Failed : DownloadResult()
     }
 
     sealed class LLDBStatus {
