@@ -22,7 +22,11 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
 
-data class CommentHolder(val file: PsiFile) : CommenterDataHolder()
+data class CommentHolder(val file: PsiFile) : CommenterDataHolder() {
+    fun useSpaceAfterLineComment(): Boolean {
+        return CodeStyle.getLanguageSettings(file, RsLanguage).LINE_COMMENT_ADD_SPACE
+    }
+}
 
 class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingCommenter<CommentHolder> {
     // act like there are no doc comments, these are handled in `RsEnterInLineCommentHandler`
@@ -79,14 +83,14 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
     }
 
     override fun commentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
-        val addSpace = CodeStyle.getLanguageSettings(data.file, RsLanguage).LINE_COMMENT_ADD_SPACE
+        val addSpace = data.useSpaceAfterLineComment()
         document.insertString(offset, "//" + if (addSpace) " " else "")
     }
 
     override fun uncommentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
         val prefixLen = LINE_PREFIXES.find { CharArrayUtil.regionMatches(document.charsSequence, offset, it) }?.length
             ?: return
-        val hasSpace = CharArrayUtil.regionMatches(document.charsSequence, offset + prefixLen, " ")
+        val hasSpace = data.useSpaceAfterLineComment() && CharArrayUtil.regionMatches(document.charsSequence, offset + prefixLen, " ")
         document.deleteString(offset, offset + prefixLen + if (hasSpace) 1 else 0)
     }
 
