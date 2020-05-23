@@ -5,6 +5,7 @@
 
 package org.rust.ide.commenter
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.generation.CommenterDataHolder
 import com.intellij.codeInsight.generation.SelfManagingCommenter
 import com.intellij.codeInsight.generation.SelfManagingCommenterUtil
@@ -16,10 +17,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
-import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
-import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
-import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
 
@@ -64,12 +63,8 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
         endOffset: Int,
         document: Document,
         data: CommentHolder?
-    ): TextRange {
-        val sequence = document.charsSequence
-        val start = CharArrayUtil.shiftForward(sequence, startOffset, " \t\n")
-        val end = CharArrayUtil.shiftBackward(sequence, endOffset - 1, " \t\n")
-        return SelfManagingCommenterUtil.insertBlockComment(start, end + 1, document, blockCommentPrefix, blockCommentSuffix)
-    }
+    ): TextRange =
+        SelfManagingCommenterUtil.insertBlockComment(startOffset, endOffset, document, blockCommentPrefix, blockCommentSuffix)
 
     override fun uncommentBlockComment(
         startOffset: Int,
@@ -84,25 +79,18 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
     }
 
     override fun commentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
-        document.insertString(offset, "// ")
+        val addSpace = CodeStyle.getLanguageSettings(data.file, RsLanguage).LINE_COMMENT_ADD_SPACE
+        document.insertString(offset, "//" + if (addSpace) " " else "")
     }
 
     override fun uncommentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
-        val element = getStartLineComment(line, document, data.file) ?: return
-        val prefix = getEolCommentPrefix(element.tokenType) ?: return
-        val prefixWithSpace = "$prefix "
-        val length = if (element.text.startsWith(prefixWithSpace)) {
-            prefixWithSpace.length
-        } else {
-            prefix.length
-        }
-        document.deleteString(offset, offset + length)
+        val prefixLen = LINE_PREFIXES.find { CharArrayUtil.regionMatches(document.charsSequence, offset, it) }?.length
+            ?: return
+        val hasSpace = CharArrayUtil.regionMatches(document.charsSequence, offset + prefixLen, " ")
+        document.deleteString(offset, offset + prefixLen + if (hasSpace) 1 else 0)
     }
 
-    override fun getCommentPrefix(line: Int, document: Document, data: CommentHolder): String? {
-        val token = getStartLineComment(line, document, data.file)?.tokenType ?: return null
-        return getEolCommentPrefix(token)
-    }
+    override fun getCommentPrefix(line: Int, document: Document, data: CommentHolder): String? = lineCommentPrefix
 
     override fun createBlockCommentingState(
         selectionStart: Int,
@@ -119,6 +107,10 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
         file: PsiFile
     ): CommentHolder? =
         CommentHolder(file)
+
+    companion object {
+        private val LINE_PREFIXES = listOf(RsDocKind.OuterEol.prefix, RsDocKind.InnerEol.prefix, "//")
+    }
 }
 
 private fun getStartLineComment(line: Int, document: Document, file: PsiFile): PsiComment? {
@@ -129,12 +121,3 @@ private fun getStartLineComment(line: Int, document: Document, file: PsiFile): P
 
 private val PsiComment.isEolComment: Boolean
     get() = this.tokenType in RS_EOL_COMMENTS
-
-private fun getEolCommentPrefix(tokenType: IElementType): String? {
-    return when (tokenType) {
-        EOL_COMMENT -> "//"
-        INNER_EOL_DOC_COMMENT -> RsDocKind.InnerEol.prefix
-        OUTER_EOL_DOC_COMMENT -> RsDocKind.OuterEol.prefix
-        else -> null
-    }
-}
