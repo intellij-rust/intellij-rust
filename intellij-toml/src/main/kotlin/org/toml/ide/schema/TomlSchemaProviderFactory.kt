@@ -20,7 +20,7 @@ class TomlSchemaProviderFactory : JsonSchemaProviderFactory {
 }
 
 class TomlSchemaFileProvider : JsonSchemaFileProvider {
-    override fun getName(): String = "Example Toml Schema"
+    override fun getName(): String = "Example Toml Schema 1"
 
     override fun isAvailable(file: VirtualFile): Boolean = file.fileType == TomlFileType || file.name == "example.json"
 

@@ -42,12 +42,13 @@ object TomlJsonLikePsiWalker : JsonLikePsiWalker {
     }
 
     override fun findElementToCheck(element: PsiElement): PsiElement? {
-        return PsiTreeUtil.getParentOfType(element, TomlValue::class.java, TomlKeyValue::class.java, TomlKey::class.java)
+        return PsiTreeUtil.getParentOfType(element, TomlValue::class.java, TomlKey::class.java, TomlKeyValue::class.java)
     }
 
     override fun findPosition(element: PsiElement, forceLastTransition: Boolean): JsonPointerPosition? {
         val pos = JsonPointerPosition()
         var current = element
+
         while (current !is TomlFile) {
             val position = current
             current = position.parent

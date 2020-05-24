@@ -1,29 +1,149 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
-    "$id": "org.toml.example",
-    "title": "Toml Example",
-    "description": "Example description",
+    "$id": "com.jetbrains.edu.task",
+    "title": "Task Configuration",
+    "description": "Configuration file containing information about task",
     "properties": {
-        "name": {
-            "description": "Name",
-            "type": "string"
-        },
-        "version": {
-            "description": "Version",
-            "type": "string"
-        },
-        "edition": {
-            "description": "Edition",
+        "type": {
+            "description": "Task type",
             "type": "string",
-            "examples": [
-                "2018",
-                "2015"
+            "enum": [
+                "edu",
+                "theory",
+                "output",
+                "ide"
             ]
+        },
+        "custom_name": {
+            "description": "Custom name for the lesson if it differs from its folder name",
+            "type": "string"
+        },
+        "files": {
+            "description": "Files included in the task",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/file"
+            }
+        },
+        "feedback_link": {
+            "type": "string",
+            "description": "Custom link for learners to leave their feedback about the task (ex. Google Forms link)"
+        },
+        "solution_hidden": {
+            "description": "If solution is available for learners to peek and compare with their answer",
+            "type": "boolean"
         }
     },
-    "required": [
-        "name",
-        "version"
-    ],
-    "additionalProperties": false
+    "definitions": {
+        "option": {
+            "properties": {
+                "text": {
+                    "type": [
+                        "string",
+                        "number",
+                        "boolean"
+                    ],
+                    "description": "The text of the option"
+                },
+                "is_correct": {
+                    "type": "boolean",
+                    "description": "If the option is a part of the correct answer"
+                }
+            },
+            "required": [
+                "text",
+                "is_correct"
+            ],
+            "additionalProperties": false
+        },
+        "dependency": {
+            "properties": {
+                "section": {
+                    "type": "string",
+                    "description": "Section folder name if placeholder dependency is inside a section"
+                },
+                "lesson": {
+                    "type": "string",
+                    "description": "Lesson folder name"
+                },
+                "task": {
+                    "type": "string",
+                    "description": "Task folder name"
+                },
+                "file": {
+                    "type": "string",
+                    "description": "File path relative to the directory of the task"
+                },
+                "placeholder": {
+                    "type": "number",
+                    "description": "Placeholder index starting from 0",
+                    "minimum": 0
+                },
+                "is_visible": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "If placeholder is drawn in place of dependency"
+                }
+            },
+            "required": [
+                "lesson",
+                "task",
+                "file",
+                "placeholder"
+            ],
+            "additionalProperties": false
+        },
+        "placeholder": {
+            "properties": {
+                "offset": {
+                    "type": "number",
+                    "description": "Placeholder start offset",
+                    "minimum": 0
+                },
+                "length": {
+                    "type": "number",
+                    "description": "Placeholder length",
+                    "minimum": 0
+                },
+                "placeholder_text": {
+                    "type": "string",
+                    "description": "Text which will be shown to learner in place of the placeholder"
+                },
+                "dependency": {
+                    "$ref": "#/definitions/dependency"
+                }
+            },
+            "required": [
+                "offset",
+                "length",
+                "placeholder_text"
+            ],
+            "additionalProperties": false
+        },
+        "file": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "File path relative to the directory of the task"
+                },
+                "visible": {
+                    "type": "boolean",
+                    "description": "If the file is shown to learner or not"
+                },
+                "placeholders": {
+                    "description": "Answer placeholders",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/placeholder"
+                    }
+                }
+            },
+            "required": [
+                "name",
+                "visible"
+            ],
+            "additionalProperties": false
+        }
+    }
 }
