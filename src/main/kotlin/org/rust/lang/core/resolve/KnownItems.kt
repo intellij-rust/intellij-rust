@@ -79,6 +79,8 @@ class KnownItems(
     val RefCell: RsStructOrEnumItemElement? get() = findItem("core::cell::RefCell")
     val UnsafeCell: RsStructOrEnumItemElement? get() = findItem("core::cell::UnsafeCell")
     val Mutex: RsStructOrEnumItemElement? get() = findItem("std::sync::mutex::Mutex")
+    val Path: RsStructOrEnumItemElement? get() = findItem("std::path::Path")
+    val PathBuf: RsStructOrEnumItemElement? get() = findItem("std::path::PathBuf")
 
     val Iterator: RsTraitItem? get() = findItem("core::iter::Iterator")
     val IntoIterator: RsTraitItem? get() = findItem("core::iter::IntoIterator")
@@ -118,14 +120,18 @@ class KnownItems(
     val Clone: RsTraitItem? get() = findLangItem("clone")
     val Copy: RsTraitItem? get() = findLangItem("copy")
     val PartialEq: RsTraitItem? get() = findLangItem("eq")
+
     // `Eq` trait doesn't have its own lang attribute, so use `findItem` to find it
     val Eq: RsTraitItem? get() = findItem("core::cmp::Eq")
+
     // In some old versions of stdlib `PartialOrd` trait has a lang attribute with value "ord",
     // but in the new stdlib it is "partial_ord" ("ord" is used for "Ord" trait). So we try
     // "partial_ord", and on failure we resolve it by path
     val PartialOrd: RsTraitItem? get() = findLangItem("partial_ord") ?: findItem("core::cmp::PartialOrd")
+
     // Some old versions of stdlib contain `Ord` trait without lang attribute
     val Ord: RsTraitItem? get() = findItem("core::cmp::Ord")
+
     // Some stdlib versions don't have direct `#[lang="debug_trait"]` attribute on `Debug` trait.
     // In this case, fully qualified name search is used
     val Debug: RsTraitItem? get() = findLangItem("debug_trait") ?: findItem("core::fmt::Debug")
