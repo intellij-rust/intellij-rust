@@ -9,6 +9,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
@@ -254,12 +255,14 @@ class RsCommenterTest : RsTestBase() {
         fn foo() {}
     """, IdeActions.ACTION_COMMENT_LINE)
 
-    private fun checkOption(optionProperty: KMutableProperty0<Boolean>,
-                            @Language("Rust") before: String,
-                            @Language("Rust") afterOn: String,
-                            @Language("Rust") afterOff: String,
-                            actionId: String,
-                            trimIndent: Boolean = true) {
+    private fun checkOption(
+        optionProperty: KMutableProperty0<Boolean>,
+        @Language("Rust") before: String,
+        @Language("Rust") afterOn: String,
+        @Language("Rust") afterOff: String,
+        actionId: String,
+        trimIndent: Boolean = true
+    ) {
         val initialValue = optionProperty.get()
         optionProperty.set(true)
         try {
@@ -273,7 +276,7 @@ class RsCommenterTest : RsTestBase() {
         }
     }
 
-    private fun settings() = CodeStyle.getSettings(project).getCommonSettings(RsLanguage)
+    private fun settings(): CommonCodeStyleSettings = CodeStyle.getSettings(project).getCommonSettings(RsLanguage)
 
     /**
      * Resets [com.intellij.openapi.actionSystem.impl.ActionManagerImpl.myPrevPerformedActionId].
@@ -290,11 +293,8 @@ class RsCommenterTest : RsTestBase() {
     }
 
     override fun tearDown() {
-        try {
-            super.tearDown()
-        } finally {
-            ActionManager.getInstance().unregisterAction(EMPTY_ACTION_ID)
-        }
+        ActionManager.getInstance().unregisterAction(EMPTY_ACTION_ID)
+        super.tearDown()
     }
 
     companion object {
