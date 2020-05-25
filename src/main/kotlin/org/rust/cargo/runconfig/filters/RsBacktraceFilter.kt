@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.serviceContainer.NonInjectable
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -26,7 +27,7 @@ import java.util.regex.Pattern
  * - Turn source code links into hyperlinks.
  * - Dims function hash codes to reduce noise.
  */
-class RsBacktraceFilter(
+class RsBacktraceFilter @NonInjectable constructor(
     private val project: Project,
     private val cargoProjectDir: VirtualFile?,
     private val workspace: CargoWorkspace?

@@ -6,6 +6,7 @@
 package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.unscramble.AnalyzeStacktraceUtil
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -118,4 +119,9 @@ stack backtrace:
             """,
             "  6: dep_lib::foo",
             "  6: [dep_lib::foo -> lib.rs]")
+
+    fun `test backtrace filter can be safely created as extension`() {
+        val filter = AnalyzeStacktraceUtil.EP_NAME.getExtensions(project).find { it is RsBacktraceFilter }
+        check(filter != null)
+    }
 }
