@@ -6,6 +6,8 @@
 package org.rust.ide.commenter
 
 import com.intellij.application.options.CodeStyle
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -262,12 +264,40 @@ class RsCommenterTest : RsTestBase() {
         optionProperty.set(true)
         try {
             checkEditorAction(before, afterOn, actionId, trimIndent = trimIndent)
+            resetActionManagerState()
             optionProperty.set(false)
             checkEditorAction(before, afterOff, actionId, trimIndent = trimIndent)
+            resetActionManagerState()
         } finally {
             optionProperty.set(initialValue)
         }
     }
 
     private fun settings() = CodeStyle.getSettings(project).getCommonSettings(RsLanguage)
+
+    /**
+     * Resets [com.intellij.openapi.actionSystem.impl.ActionManagerImpl.myPrevPerformedActionId].
+     * Otherwise it affect [com.intellij.codeInsight.generation.CommentByLineCommentHandler.invoke]
+     * (see `startingNewLineComment` condition there).
+     */
+    private fun resetActionManagerState() {
+        myFixture.performEditorAction(EMPTY_ACTION_ID)
+    }
+
+    override fun setUp() {
+        super.setUp()
+        ActionManager.getInstance().registerAction(EMPTY_ACTION_ID, EmptyAction.createEmptyAction("empty", null, true))
+    }
+
+    override fun tearDown() {
+        try {
+            super.tearDown()
+        } finally {
+            ActionManager.getInstance().unregisterAction(EMPTY_ACTION_ID)
+        }
+    }
+
+    companion object {
+        private const val EMPTY_ACTION_ID = "!!!EmptyAction"
+    }
 }
