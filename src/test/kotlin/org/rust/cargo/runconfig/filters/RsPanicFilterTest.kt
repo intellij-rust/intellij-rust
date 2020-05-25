@@ -15,12 +15,12 @@ class RsPanicFilterTest : HighlightFilterTestBase() {
     fun `test one line`() =
         checkHighlights(filter,
             "thread 'main' panicked at 'something went wrong', src/main.rs:24",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24")
+            "thread 'main' panicked at 'something went wrong', [src/main.rs:24 -> main.rs]")
 
     fun `test one line with line separator`() =
         checkHighlights(filter,
             "thread 'main' panicked at 'something went wrong', src/main.rs:24\n",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24\n")
+            "thread 'main' panicked at 'something went wrong', [src/main.rs:24 -> main.rs]\n")
 
     fun `test full output`() =
         checkHighlights(filter,
@@ -29,6 +29,5 @@ class RsPanicFilterTest : HighlightFilterTestBase() {
     Finished debug [unoptimized + debuginfo] target(s) in 1.20 secs
      Running `target/debug/panics`
 thread 'main' panicked at 'something went wrong', src/main.rs:24""",
-            "thread 'main' panicked at 'something went wrong', [src/main.rs -> main.rs]:24", 4)
-
+            "thread 'main' panicked at 'something went wrong', [src/main.rs:24 -> main.rs]", 4)
 }
