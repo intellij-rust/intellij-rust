@@ -30,7 +30,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
         is RsBaseType -> when (val kind = type.kind) {
             RsBaseTypeKind.Unit -> TyUnit
             RsBaseTypeKind.Never -> TyNever
-            RsBaseTypeKind.Underscore -> TyInfer.TyVar()
+            RsBaseTypeKind.Underscore -> TyInfer.TyVar(type)
             is RsBaseTypeKind.Path -> {
                 val path = kind.path
                 val primitiveType = TyPrimitive.fromPath(path)

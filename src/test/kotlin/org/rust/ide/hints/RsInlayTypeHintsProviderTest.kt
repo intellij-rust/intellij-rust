@@ -108,6 +108,33 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
+    fun `test no placeholder hints in expression`() = checkByText("""
+        struct S<A, B> (A, B);
+
+        fn main() {
+            let a: S<i32, _/*hint text="[:  u8]"*/> = S::<_, u8>(1, 2);
+        }
+    """)
+
+    fun `test no placeholder hints if wrong types`() = checkByText("""
+        struct S1<T> (T);
+        struct S2<T> (T);
+
+        //noinspection RsTypeCheck
+        fn main() {
+            let a: S1<_> = S2(1);
+        }
+    """)
+
+    fun `test placeholder hint alias`() = checkByText("""
+        struct S<A, B> (A, B);
+        type T<C> = S<i32, C>;
+
+        fn main() {
+            let a: T<_/*hint text="[:  u8]"*/> = S::<_, u8>(1, 2);
+        }
+    """)
+
 
     fun `test smart should not annotate tuples`() = checkByText("""
         enum Option<T> {
