@@ -79,7 +79,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitExternCrateItem(o: RsExternCrateItem) = checkExternCrate(holder, o)
             override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(holder, o)
             override fun visitYieldExpr(o: RsYieldExpr) = checkYieldExpr(holder, o)
-            override fun visitArrayType(o: RsArrayType) = collectDiagnostics(holder, o)
+            override fun visitArrayType(o: RsArrayType) = checkArrayType(holder, o)
+            override fun visitArrayExpr(o: RsArrayExpr) = checkArrayExpr(holder, o)
             override fun visitVariantDiscriminant(o: RsVariantDiscriminant) = collectDiagnostics(holder, o)
             override fun visitPolybound(o: RsPolybound) = checkPolybound(holder, o)
             override fun visitTraitRef(o: RsTraitRef) = checkTraitRef(holder, o)
@@ -882,6 +883,34 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
         // If we got here, we aren't inside a loop expr so emit an error
         RsDiagnostic.LoopOnlyKeywordUsedOutsideOfLoopError(expr.operator).addToHolder(holder)
+    }
+
+    private fun checkArrayType(holder: RsAnnotationHolder, o: RsArrayType) {
+        collectDiagnostics(holder, o)
+        val sizeExpr = o.expr
+        if (sizeExpr != null && o.arraySize == null) {
+            checkArraySizeExpr(holder, sizeExpr)
+        }
+    }
+    private fun checkArrayExpr(holder: RsAnnotationHolder, o: RsArrayExpr) {
+        val sizeExpr = o.sizeExpr
+        if (sizeExpr != null) {
+            checkArraySizeExpr(holder, sizeExpr)
+        }
+    }
+
+    private fun checkArraySizeExpr(holder: RsAnnotationHolder, sizeExpr: RsExpr) {
+        sizeExpr.descendantsOfTypeOrSelf<RsPathExpr>().forEach { pathExpr ->
+            val ref = pathExpr.path.reference?.resolve()
+            if (ref != null && ref !is RsConstant && (ref as? RsFunction)?.isConst != true) {
+                val diagnostic = if (ref is RsPatBinding) {
+                    RsDiagnostic.NonConstantValueInConstantError(pathExpr)
+                } else {
+                    RsDiagnostic.NonConstantCallInConstantError(pathExpr)
+                }
+                diagnostic.addToHolder(holder)
+            }
+        }
     }
 
     private fun isInTraitImpl(o: RsVis): Boolean {
