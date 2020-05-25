@@ -12,6 +12,9 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.toml.StringValueInsertionHandler
+import org.rust.toml.crates.dependencyLine
+import org.rust.toml.crates.getCrateLastVersion
+import org.rust.toml.crates.searchCrate
 import org.rust.toml.getClosestKeyValueAncestor
 import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
