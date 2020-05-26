@@ -410,4 +410,14 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", never());
         }
     """)
+
+    fun `test do not highlight non stdlib macros`() = checkErrors("""
+        macro_rules! println {
+            ($ e:expr, $ i:ident) => {};
+        }
+        fn main() {
+            println!("Hello", x);
+            println!("{} Hello {}", x);
+        }
+    """)
 }

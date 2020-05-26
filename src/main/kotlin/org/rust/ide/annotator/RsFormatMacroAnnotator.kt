@@ -12,16 +12,14 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.colors.RsColor
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.descendantOfTypeStrict
-import org.rust.lang.core.psi.ext.macroName
-import org.rust.lang.core.psi.ext.startOffset
-import org.rust.lang.core.psi.ext.withSubst
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
@@ -40,6 +38,9 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         val macroPos = macroToFormatPos(formatMacro.macroName) ?: return
         val macroArgs = formatMacro.formatMacroArgument?.formatMacroArgList ?: return
+        val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return
+        if (macro.containingCargoPackage?.origin != PackageOrigin.STDLIB) return
+
         val formatStr = macroArgs
             .getOrNull(macroPos)
             ?.descendantOfTypeStrict<RsLitExpr>()
@@ -486,14 +487,14 @@ private fun checkArguments(ctx: FormatContext): List<ErrorAnnotation> {
 
 // TODO: handle log, tracing
 private fun macroToFormatPos(macro: String): Int? = when (macro) {
-    "println" -> 0
-    "print" -> 0
-    "eprintln" -> 0
-    "eprint" -> 0
-    "format" -> 0
-    "format_args" -> 0
+    "println",
+    "print",
+    "eprintln",
+    "eprint",
+    "format",
+    "format_args",
     "format_args_nl" -> 0
-    "write" -> 1
+    "write",
     "writeln" -> 1
     else -> null
 }
