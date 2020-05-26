@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.inline
+package org.rust.ide.refactoring.inlineFunction
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -15,12 +15,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
-import com.intellij.refactoring.RefactoringBundle
 import com.intellij.usageView.UsageInfo
-import com.intellij.usageView.UsageViewBundle
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
@@ -119,19 +118,7 @@ class RsInlineFunctionProcessor(
     override fun getCommandName(): String = "Inline function ${function.declaration}"
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
-        return object : UsageViewDescriptor {
-            override fun getCommentReferencesText(usagesCount: Int, filesCount: Int) =
-                RefactoringBundle.message("comments.elements.header",
-                    UsageViewBundle.getOccurencesString(usagesCount, filesCount))
-
-            override fun getCodeReferencesText(usagesCount: Int, filesCount: Int) =
-                RefactoringBundle.message("invocations.to.be.inlined",
-                    UsageViewBundle.getReferencesString(usagesCount, filesCount))
-
-            override fun getElements() = arrayOf(function)
-
-            override fun getProcessedElementsHeader() = "Function to inline"
-        }
+        return RsInlineUsageViewDescriptor(function, "Function to inline")
     }
 
     companion object {
