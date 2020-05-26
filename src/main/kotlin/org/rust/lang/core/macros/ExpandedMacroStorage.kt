@@ -236,7 +236,7 @@ class ExpandedMacroStorage(val project: Project) {
     }
 }
 
-private const val STORAGE_VERSION = 10
+private const val STORAGE_VERSION = 11
 private const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
 class SerializedExpandedMacroStorage private constructor(
