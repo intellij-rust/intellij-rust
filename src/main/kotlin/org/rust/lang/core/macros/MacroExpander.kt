@@ -154,7 +154,7 @@ class MacroExpander(val project: Project) {
 
         MacroExpansionMarks.docsLowering.hit()
 
-        val sb = StringBuffer((originalText.length * 1.1).toInt())
+        val sb = StringBuilder((originalText.length * 1.1).toInt())
         val ranges = SmartList<MappedTextRange>()
 
         var i = 0
