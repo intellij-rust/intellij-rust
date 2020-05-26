@@ -9,6 +9,7 @@ import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.EmptyAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
@@ -267,13 +268,22 @@ class RsCommenterTest : RsTestBase() {
         optionProperty.set(true)
         try {
             checkEditorAction(before, afterOn, actionId, trimIndent = trimIndent)
-            resetActionManagerState()
             optionProperty.set(false)
             checkEditorAction(before, afterOff, actionId, trimIndent = trimIndent)
-            resetActionManagerState()
         } finally {
             optionProperty.set(initialValue)
         }
+    }
+
+    override fun checkEditorAction(
+        before: String,
+        after: String,
+        actionId: String,
+        trimIndent: Boolean,
+        testmark: Testmark?
+    ) {
+        super.checkEditorAction(before, after, actionId, trimIndent, testmark)
+        resetActionManagerState()
     }
 
     private fun settings(): CommonCodeStyleSettings = CodeStyle.getSettings(project).getCommonSettings(RsLanguage)
