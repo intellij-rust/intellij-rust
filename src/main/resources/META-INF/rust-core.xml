@@ -931,6 +931,9 @@
         <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler"
                                  order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
 
+        <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveTopLevelItemsHandler"
+                                 order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
+
     </extensions>
 
     <extensionPoints>
