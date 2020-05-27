@@ -208,7 +208,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         myFixture.checkResult(replaceCaretMarker(after))
     }
 
-    protected fun checkEditorAction(
+    protected open fun checkEditorAction(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
         actionId: String,
