@@ -94,8 +94,14 @@ class RsMoveFilesOrDirectoriesDialog(
                 runDefaultProcessor()
             }
             else -> {
-                // here our processor will run
-                runDefaultProcessor()
+                RsMoveFilesOrDirectoriesProcessor(
+                    project2,
+                    elementsToMove,
+                    targetDirectory,
+                    newParentMod,
+                    moveCallback,
+                    doneCallback
+                ).run()
             }
         }
     }

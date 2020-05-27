@@ -38,7 +38,7 @@ class RsMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
         if (!isFeatureEnabled(RsExperiments.MOVE_REFACTORING)) return false
         if (!elements.all { it.canBeMoved() }) return false
 
-        // TODO: support move multiply files
+        // TODO: support move multiple files
         if (elements.size > 1) return false
 
         val adjustedTargetContainer = adjustTargetForMove(null, targetContainer)

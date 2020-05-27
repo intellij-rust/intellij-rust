@@ -179,21 +179,21 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         myFixture.checkResultByFile(after, ignoreTrailingWhitespace)
     }
 
-    protected fun checkByDirectory(action: () -> Unit) {
+    protected fun checkByDirectory(action: (VirtualFile) -> Unit) {
         val (before, after) = ("$testName/before" to "$testName/after")
 
         val targetPath = ""
         val beforeDir = myFixture.copyDirectoryToProject(before, targetPath)
 
-        action()
+        action(beforeDir)
 
         val afterDir = getVirtualFileByName("$testDataPath/$after")
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
-    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: () -> Unit) {
-        fileTreeFromText(before).create()
-        action()
+    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: (TestProject) -> Unit) {
+        val testProject = fileTreeFromText(before).create()
+        action(testProject)
         saveAllDocuments()
         fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
     }

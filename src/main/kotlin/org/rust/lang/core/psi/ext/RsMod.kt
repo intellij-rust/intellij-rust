@@ -99,3 +99,10 @@ private val RsMod.childModules: List<RsMod>
 
 fun RsMod.getChildModule(name: String): RsMod? =
     childModules.find { it.name == name }
+
+fun commonParentMod(mod1: RsMod, mod2: RsMod): RsMod? {
+    val superMods1 = mod1.superMods.asReversed()
+    val superMods2 = mod2.superMods.asReversed()
+    val superMods = superMods1 zip superMods2
+    return superMods.findLast { (superMod1, superMod2) -> superMod1 == superMod2 }?.first
+}
