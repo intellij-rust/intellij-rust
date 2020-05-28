@@ -55,7 +55,7 @@ private fun checkUselessArm(match: RsMatchExpr, holder: RsProblemsHolder) {
 
     for ((i, patterns) in matrix.withIndex()) {
         val armPat = armPats[i]
-        val useful = isUseful(seen, patterns, false)
+        val useful = isUseful(seen, patterns, false, match.crateRoot)
         if (!useful.isUseful) {
             val arm = armPat.ancestorStrict<RsMatchArm>() ?: return
 
@@ -90,7 +90,7 @@ private fun checkExhaustive(match: RsMatchExpr, holder: RsProblemsHolder) {
         .takeIf { it.type !is TyUnknown }
         ?: return
 
-    val useful = isUseful(matrix, listOf(Pattern.Wild), true)
+    val useful = isUseful(matrix, listOf(Pattern.Wild), true, match.crateRoot)
 
     /** if `_` pattern is useful, the match is not exhaustive */
     if (useful is UsefulWithWitness) {
@@ -100,9 +100,9 @@ private fun checkExhaustive(match: RsMatchExpr, holder: RsProblemsHolder) {
 }
 
 /** Use algorithm from 3.1 http://moscova.inria.fr/~maranget/papers/warn/warn004.html */
-private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boolean): Usefulness {
+private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boolean, crateRoot: RsMod?): Usefulness {
     fun expandConstructors(constructors: List<Constructor>, type: Ty): Usefulness = constructors
-        .map { isUsefulSpecialized(matrix, patterns, it, type, withWitness) }
+        .map { isUsefulSpecialized(matrix, patterns, it, type, withWitness, crateRoot) }
         .find { it.isUseful }
         ?: Useless
 
@@ -124,11 +124,11 @@ private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boole
     val missingConstructor = allConstructors.minus(usedConstructors)
 
     val isPrivatelyEmpty = allConstructors.isEmpty()
-    val isDeclaredNonExhaustive = (type as? TyAdt)?.item?.outerAttrList
-        ?.any { it.metaItem.name == "non_exhaustive" }
-        ?: false
+    val isDeclaredNonExhaustive = type is TyAdt &&
+        type.item.outerAttrList.any { it.metaItem.name == "non_exhaustive" }
+    val isInDifferentCrate = type is TyAdt && type.item.crateRoot != crateRoot
 
-    val isNonExhaustive = isPrivatelyEmpty || isDeclaredNonExhaustive
+    val isNonExhaustive = isPrivatelyEmpty || (isDeclaredNonExhaustive && isInDifferentCrate)
 
     if (missingConstructor.isEmpty() && !isNonExhaustive) {
         return expandConstructors(allConstructors, type)
@@ -143,7 +143,7 @@ private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boole
         }
     }
     val newPatterns = patterns.subList(1, patterns.size)
-    val res = isUseful(newMatrix, newPatterns, withWitness)
+    val res = isUseful(newMatrix, newPatterns, withWitness, crateRoot)
 
     if (res is UsefulWithWitness) {
         val newWitness = if (isNonExhaustive || usedConstructors.isEmpty()) {
@@ -167,12 +167,13 @@ private fun isUsefulSpecialized(
     patterns: List<Pattern>,
     constructor: Constructor,
     type: Ty,
-    withWitness: Boolean
+    withWitness: Boolean,
+    crateRoot: RsMod?
 ): Usefulness {
     val newPatterns = specializeRow(patterns, constructor, type) ?: return Useless
     val newMatrix = matrix.mapNotNull { specializeRow(it, constructor, type) }
 
-    return when (val useful = isUseful(newMatrix, newPatterns, withWitness)) {
+    return when (val useful = isUseful(newMatrix, newPatterns, withWitness, crateRoot)) {
         is UsefulWithWitness -> UsefulWithWitness(useful.witnesses.map { it.applyConstructor(constructor, type) })
         else -> useful
     }
