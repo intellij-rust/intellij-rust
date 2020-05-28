@@ -22,11 +22,13 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdve
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
 class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
+        if (profile !is CargoCommandConfiguration) return false
         if (!(SystemInfo.isMac || SystemInfo.isLinux)) return false
         if (!(PlatformUtils.isIdeaUltimate() || PlatformUtils.isRubyMine())) return false
         val id = PluginId.getId(NATIVE_DEBUG_PLUGIN_ID)
