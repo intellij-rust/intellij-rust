@@ -79,10 +79,21 @@ Release branches are used to build beta and stable plugin builds.
 
 Most of release actions can be done automatically via GitHub workflow. 
 There is `scripts/release-actions.py` script to trigger them.
-Syntax: `python scripts/release-actions.py --token github_token --command release_command`.
+Syntax: `python release-actions.py release_command --token github_token`.
+Alternatively, you can provide `IR_GITHUB_TOKEN` environment variable to provide github token.
+It allows you to omit `--token` option.
 
 See [instruction](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)
 how to create personal github token. Note, it should have `repo` scope.
+
+Note, we use [pipenv](https://pipenv.pypa.io/en/latest/) to manage python version, dependencies and virtual environment.
+See [instruction](https://pipenv.pypa.io/en/latest/install/#installing-pipenv) how to install it.
+To run any command, just execute the following:
+```
+cd scripts
+pipenv install # to install dependencies
+pipenv run python release-actions.py release_command --token github_token # to run script in virtual environment
+```
 
 Available commands:
 * `release-branch` - creates new release branch `release-%release_version%` from `master` one
@@ -95,6 +106,8 @@ Note, the corresponding workflow is triggered on schedule, so you don't usually 
 * `stable-release` - updates changelog link in `plugin/src/main/resources/META-INF/plugin.xml`, commits changes, 
 pushes into `master` and cherry-picks the corresponding changes into release branch.
 After that, it builds the plugin from release branch and publishes it into `stable` channel on [Marketplace].
+
+Note, each command may provide additional options. Add `--help` option to get actual option list.  
 
 Release notes live in [intellij-rust.github.io](https://github.com/intellij-rust/intellij-rust.github.io).
 To write notes, run `./changelog.py`. It goes thorough all pull requests from the corresponding milestone and 
