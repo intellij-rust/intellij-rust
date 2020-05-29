@@ -23,8 +23,10 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.declaration
+import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.infer.collectInferTys
+import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.ty.walk
 import org.rust.lang.core.types.type
 import javax.swing.JPanel
 
@@ -139,11 +141,24 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             }
 
             private fun presentTypePlaceholders(declaration: RsLetDecl) {
-                val types = declaration.pat?.type?.walk()?.asSequence() ?: return
-                val typeElements = declaration.descendantsOfType<RsTypeReference>().asSequence()
+                val inferredType = declaration.pat?.type ?: return
+                val formalType = declaration.typeReference?.type ?: return
+                val placeholders = formalType.collectInferTys()
+                    .mapNotNull {
+                        if (it is TyInfer.TyVar && it.origin is RsBaseType) {
+                            it to it.origin
+                        } else {
+                            null
+                        }
+                    }
 
-                for ((type, typeElement) in types.zip(typeElements)) {
-                    if (typeElement !is RsBaseType || typeElement.underscore == null) continue
+                val infer = declaration.implLookup.ctx
+                infer.combineTypes(inferredType, formalType)
+
+                for ((rawType, typeElement) in placeholders) {
+                    if (typeElement.underscore == null) continue
+                    val type = infer.resolveTypeVarsIfPossible(rawType)
+                    if (type is TyInfer || type is TyUnknown) continue
 
                     val presentation = typeHintsFactory.typeHint(type)
                     val finalPresentation = presentation.withDisableAction(declaration.project)

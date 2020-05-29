@@ -13,7 +13,7 @@ import org.rust.lang.core.types.infer.VarValue
 sealed class TyInfer : Ty(HAS_TY_INFER_MASK) {
     // Note these classes must NOT be `data` classes and must provide equality by identity
     class TyVar(
-        val origin: Ty? = null,
+        val origin: Any? = null,
         override var parent: NodeOrValue = VarValue(null, 0)
     ) : TyInfer(), Node
 
