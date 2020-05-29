@@ -2,10 +2,13 @@ import functools
 
 import click
 import requests
+from typing import Dict, Any, Optional
 
 
-def send_github_event(token: str, event_name: str):
-    payload = {"event_type": event_name}
+def send_github_event(token: str, event_name: str, client_payload: Optional[Dict[str, Any]] = None):
+    if client_payload is None:
+        client_payload = {}
+    payload = {"event_type": event_name, "client_payload": client_payload}
     headers = {"Authorization": f"token {token}",
                "Accept": "application/vnd.github.v3+json"}
     response = requests.post("https://api.github.com/repos/intellij-rust/intellij-rust/dispatches",
@@ -48,9 +51,10 @@ def beta_release(token: str):
 
 
 @cli.command(help="Build plugin and publish it to stable channel")
+@click.option("--update-changelog/--no-update-changelog", default=True, help="Update changelog link in plugin.xml")
 @token_option
-def stable_release(token: str):
-    send_github_event(token, "stable-release")
+def stable_release(token: str, update_changelog: bool):
+    send_github_event(token, "stable-release", {"update_changelog": update_changelog})
 
 
 cli.add_command(release_branch)
