@@ -1,4 +1,6 @@
-import argparse
+import functools
+
+import click
 import requests
 
 
@@ -12,12 +14,49 @@ def send_github_event(token: str, event_name: str):
     response.raise_for_status()
 
 
+@click.group()
+def cli():
+    pass
+
+
+def token_option(func):
+    @functools.wraps(func)
+    @click.option("-t", "--token", required=True, envvar="IR_GITHUB_TOKEN", show_envvar=True,
+                  help="GitHub token. Note, it should have `repo` scope.")
+    def wrapper(*args, **kwargs):
+        func(*args, **kwargs)
+
+    return wrapper
+
+
+@cli.command(help="Create release branch")
+@token_option
+def release_branch(token: str):
+    send_github_event(token, "release-branch")
+
+
+@cli.command(help="Build plugin and publish it to nightly channel")
+@token_option
+def nightly_release(token: str):
+    send_github_event(token, "nightly-release")
+
+
+@cli.command(help="Build plugin and publish it to beta channel")
+@token_option
+def beta_release(token: str):
+    send_github_event(token, "beta-release")
+
+
+@cli.command(help="Build plugin and publish it to stable channel")
+@token_option
+def stable_release(token: str):
+    send_github_event(token, "stable-release")
+
+
+cli.add_command(release_branch)
+cli.add_command(nightly_release)
+cli.add_command(beta_release)
+cli.add_command(stable_release)
+
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--command", choices=["release-branch", "nightly-release", "beta-release", "stable-release"],
-                        type=str, help="command", required=True)
-    parser.add_argument("--token", type=str, help="github token", required=True)
-
-    args = parser.parse_args()
-
-    send_github_event(args.token, args.command)
+    cli()
