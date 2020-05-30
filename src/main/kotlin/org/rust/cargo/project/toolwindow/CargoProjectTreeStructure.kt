@@ -48,7 +48,7 @@ class CargoProjectTreeStructure(
         abstract fun toTestString(): String
 
         class Root(private val cargoProjects: List<CargoProject>) : CargoSimpleNode(null) {
-            override fun buildChildren(): Array<SimpleNode> = cargoProjects.map { Project(it, this) }.toTypedArray()
+            override fun buildChildren(): Array<SimpleNode> = cargoProjects.map { Project(it, this) }.sortedBy { it.name }.toTypedArray()
             override fun getName(): String = ""
             override fun toTestString(): String = "Root"
         }
@@ -64,6 +64,7 @@ class CargoProjectTreeStructure(
                     ?.packages
                     ?.filter { it.origin == PackageOrigin.WORKSPACE }
                     .orEmpty()
+                    .sortedBy { it.name }
                     .partition { it.rootDirectory == cargoProject.workingDirectory }
                 val childrenNodes = mutableListOf<SimpleNode>()
                 ourPackage.mapTo(childrenNodes) { Targets(it.targets, this) }
@@ -112,7 +113,7 @@ class CargoProjectTreeStructure(
                 icon = CargoIcons.TARGETS
             }
 
-            override fun buildChildren(): Array<SimpleNode> = targets.map { Target(it, this) }.toTypedArray()
+            override fun buildChildren(): Array<SimpleNode> = targets.map { Target(it, this) }.sortedBy { it.name }.toTypedArray()
             override fun getName(): String = "targets"
             override fun toTestString(): String = "Targets"
         }
