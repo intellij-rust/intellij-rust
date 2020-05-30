@@ -124,10 +124,10 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         If you intended to print `{` symbol, you can escape it using `{{`"> </error>\
             rawc</FORMAT_SPECIFIER>"#);
             //~^^^ ERROR invalid format string
-            format!(r#"<FORMAT_SPECIFIER>{ \n
+            format!(r#"<FORMAT_SPECIFIER>{<error descr="Invalid format string: } expected.
+        If you intended to print `{` symbol, you can escape it using `{{`"> </error>\n
         \n
-           <error descr="Invalid format string: } expected.
-        If you intended to print `{` symbol, you can escape it using `{{`"> </error>rawd</FORMAT_SPECIFIER>"#);
+           rawd</FORMAT_SPECIFIER>"#);
             //~^^^ ERROR invalid format string
             format!("<FORMAT_SPECIFIER>{ \n
         \n
@@ -151,10 +151,10 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             c</FORMAT_SPECIFIER>"#);
             //~^^^ ERROR invalid format string
             format!(r#"
-        raw  <FORMAT_SPECIFIER>{ \n
+        raw  <FORMAT_SPECIFIER>{<error descr="Invalid format string: } expected.
+        If you intended to print `{` symbol, you can escape it using `{{`"> </error>\n
         \n
-           <error descr="Invalid format string: } expected.
-        If you intended to print `{` symbol, you can escape it using `{{`"> </error>d</FORMAT_SPECIFIER>"#);
+           d</FORMAT_SPECIFIER>"#);
             //~^^^ ERROR invalid format string
             format!("
           <FORMAT_SPECIFIER>{ \n
@@ -183,7 +183,7 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             //~^ ERROR incorrect unicode escape sequence
 
             // note: raw strings don't escape `\xFF` and `\u{FF}` sequences
-            println!(r#"<FORMAT_SPECIFIER>\x7B}</FORMAT_SPECIFIER>\u{8} <error descr="Invalid format string: } expected.
+            println!(r#"\x7B<error descr="Invalid format string: unmatched '}'">}</error>\u<FORMAT_SPECIFIER>{8}</FORMAT_SPECIFIER> <error descr="Invalid format string: } expected.
         If you intended to print `{` symbol, you can escape it using `{{`">{</error>"#, 1);
             //~^ ERROR invalid format string: unmatched `}` found
         }
@@ -418,6 +418,26 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         fn main() {
             println!("Hello", x);
             println!("{} Hello {}", x);
+        }
+    """)
+
+    fun `test raw format string`() = checkErrors("""
+        $implDisplayI32
+
+        fn main() {
+            println!(r"\<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>!", 1);
+            println!(r"\u<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>!", 1);
+            println!(r##"<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>
+
+            <error descr="Invalid reference to positional argument 1 (there is 1 argument)">{}</error>"##, 1);
+        }
+    """)
+
+    fun `test ignore byte format string`() = checkErrors("""
+        fn main() {
+            println!(b"format", 1);
+            println!(br"format", 1);
+            println!(br##"format"##, 1);
         }
     """)
 }
