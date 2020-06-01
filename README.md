@@ -27,7 +27,7 @@ Unstable master branch builds can be downloaded from [TeamCity].
 
 ## Compatible IDEs
 
-The plugin is compatible with all IntelliJ-based IDEs starting from the version 2019.3, with the following differences in the sets of the available features:
+The plugin is compatible with all IntelliJ-based IDEs starting from the version 2020.1, with the following differences in the sets of the available features:
 
 
 |                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate (commercial) | [PyCharm] Professional, [GoLand], other commercial IDEs |
@@ -43,7 +43,7 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 
 \* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
 
-\** Available since 2020.1. [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin is required 
+\** [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin is required 
 
 ## TOML
 
