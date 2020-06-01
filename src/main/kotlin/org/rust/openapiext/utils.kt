@@ -272,20 +272,6 @@ fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: 
 fun runWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit): Boolean =
     ProgressIndicatorUtils.runWithWriteActionPriority(action, indicator)
 
-fun submitTransaction(parentDisposable: Disposable, runnable: Runnable) {
-    ApplicationManager.getApplication().invokeLater(Runnable {
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        TransactionGuard.submitTransaction(parentDisposable, runnable)
-    }, ModalityState.any(), Conditions.alwaysFalse<Any>())
-}
-
-class TransactionExecutor(val project: Project) : Executor {
-    override fun execute(command: Runnable) {
-        submitTransaction(project, command)
-    }
-}
-
 fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
     var result: T? = null
     ProgressManager.getInstance().executeProcessUnderProgress({ result = action() }, indicator)

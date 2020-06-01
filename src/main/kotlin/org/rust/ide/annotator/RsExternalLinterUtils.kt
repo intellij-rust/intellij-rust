@@ -197,19 +197,12 @@ class RsExternalLinterResult(commandOutput: List<String>) {
     val messages: List<CargoTopMessage> = commandOutput.asSequence()
         .filter { MESSAGE_REGEX.matches(it) }
         .map { JsonReader(StringReader(it)).apply { isLenient = true } }
-        .map {
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            PARSER.parse(it)
-        }
+        .map { JsonParser.parseReader(it) }
         .filter { it.isJsonObject }
         .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }
         .toList()
 
     companion object {
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        private val PARSER = JsonParser()
         private val MESSAGE_REGEX = """\s*\{.*"message".*""".toRegex()
     }
 }

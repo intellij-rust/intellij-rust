@@ -49,7 +49,12 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
     }
 
     private fun createToolchainConfigurable(): Configurable? {
-        return createDebuggerToolchainConfigurable()
+        return SimpleConfigurable.create(
+            TOOLCHAIN_ID,
+            "Rust",
+            RsDebuggerToolchainConfigurableUi::class.java,
+            Companion::getInstance
+        )
     }
 
     override fun isTargetedToProduct(configurable: Configurable): Boolean {

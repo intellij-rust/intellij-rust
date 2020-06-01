@@ -113,11 +113,10 @@ object CargoBuildManager {
             }
 
             if (!isHeadlessEnvironment) {
-                // BACKCOMPAT: 2019.3
-                @Suppress("DEPRECATION")
-                val buildToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.BUILD)
-                buildToolWindow?.setAvailable(true, null)
-                buildToolWindow?.show(null)
+                @Suppress("UsePropertyAccessSyntax")
+                val buildToolWindow = BuildContentManager.getInstance(project).getOrCreateToolWindow()
+                buildToolWindow.setAvailable(true, null)
+                buildToolWindow.show(null)
             }
 
             processHandler = state.startProcess(emulateTerminal = true)

@@ -152,16 +152,11 @@ class Cargo(private val cargoExecutable: Path) {
             return null
         }
 
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        val parser = JsonParser()
         val messages = mutableMapOf<PackageId, BuildScriptMessage>()
 
         for (line in processOutput.stdoutLines) {
             val jsonObject = try {
-                // BACKCOMPAT: 2019.3
-                @Suppress("DEPRECATION")
-                parser.parse(line).asJsonObject
+                JsonParser.parseString(line).asJsonObject
             } catch (ignore: JsonSyntaxException){
                 continue
             }

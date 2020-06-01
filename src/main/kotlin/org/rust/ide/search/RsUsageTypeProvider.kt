@@ -12,36 +12,34 @@ import com.intellij.usages.impl.rules.UsageTypeProviderEx
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.psi.*
 
-// BACKCOMPAT: 2019.3
-@Suppress("DEPRECATION")
 object RsUsageTypeProvider : UsageTypeProviderEx {
     // Instantiate each UsageType only once, so that the equality check in UsageTypeGroup.equals() works correctly
-    private val IMPL = UsageType("impl")
+    private val IMPL = UsageType { "impl" }
 
-    private val TYPE_REFERENCE = UsageType("type reference")
-    private val TRAIT_REFERENCE = UsageType("trait reference")
+    private val TYPE_REFERENCE = UsageType { "type reference" }
+    private val TRAIT_REFERENCE = UsageType { "trait reference" }
 
-    private val EXPR = UsageType("expr")
-    private val DOT_EXPR = UsageType("dot expr")
+    private val EXPR = UsageType { "expr" }
+    private val DOT_EXPR = UsageType { "dot expr" }
 
-    private val FUNCTION_CALL = UsageType("function call")
-    private val METHOD_CALL = UsageType("method call")
-    private val ARGUMENT = UsageType("argument")
+    private val FUNCTION_CALL = UsageType { "function call" }
+    private val METHOD_CALL = UsageType { "method call" }
+    private val ARGUMENT = UsageType { "argument" }
 
-    private val MACRO_CALL = UsageType("macro call")
-    private val MACRO_ARGUMENT = UsageType("macro argument")
+    private val MACRO_CALL = UsageType { "macro call" }
+    private val MACRO_ARGUMENT = UsageType { "macro argument" }
 
-    private val INIT_STRUCT = UsageType("init struct")
-    private val INIT_FIELD = UsageType("init field")
+    private val INIT_STRUCT = UsageType { "init struct" }
+    private val INIT_FIELD = UsageType { "init field" }
 
-    private val PAT_BINDING = UsageType("variable binding")
+    private val PAT_BINDING = UsageType { "variable binding" }
 
-    private val FIELD = UsageType("field")
+    private val FIELD = UsageType { "field" }
 
-    private val META_ITEM = UsageType("meta item")
+    private val META_ITEM = UsageType { "meta item" }
 
-    private val USE = UsageType("use")
-    private val MOD = UsageType("mod")
+    private val USE = UsageType { "use" }
+    private val MOD = UsageType { "mod" }
 
     override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
 

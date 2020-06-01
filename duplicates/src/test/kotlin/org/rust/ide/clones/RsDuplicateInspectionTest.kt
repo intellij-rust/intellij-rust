@@ -3,16 +3,15 @@
  * found in the LICENSE file.
  */
 
-@file:Suppress("DEPRECATION")
-
 package org.rust.ide.clones
 
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.indexing.FileBasedIndex
 import com.jetbrains.clones.DuplicateInspection
+import com.jetbrains.clones.configuration.DuplicateIndexConfiguration
 import com.jetbrains.clones.configuration.DuplicateInspectionConfiguration
+import com.jetbrains.clones.configuration.DuplicateLanguageState
 import com.jetbrains.clones.index.HashFragmentIndex
-import com.jetbrains.clones.languagescope.common.CommonDuplicateIndexConfiguration
 import org.intellij.lang.annotations.Language
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -156,6 +155,7 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
         anonymizeFunctions: Boolean = false
     ) {
         configureIndex {
+            this as DuplicateLanguageState
             windowSize = 10
             this.anonymizeLiterals = anonymizeLiterals
             this.anonymizeIdentifiers = anonymizeIdentifiers
@@ -168,7 +168,7 @@ class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::cla
         checkByText(code, checkWeakWarn = true)
     }
 
-    private fun configureIndex(configure: CommonDuplicateIndexConfiguration.() -> Unit){
+    private fun configureIndex(configure: DuplicateIndexConfiguration.() -> Unit){
         indexState.configure()
         HashFragmentIndex.requestRebuild()
         @Suppress("UnstableApiUsage")

@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <programRunner implementation="org.rust.debugger.runconfig.RsDebugAdvertisingRunner"/>
-    </extensions>
-</idea-plugin>

@@ -168,9 +168,7 @@ private class RsBackgroundTaskQueue {
         fun run(continuation: Runnable)
     }
 
-    // BACKCOMPAT: 2019.3. get rid of [PairConsumer] implementation
-    private class QueueConsumer : PairConsumer<ContinuableRunnable, Runnable>, BiConsumer<ContinuableRunnable, Runnable> {
-        override fun consume(s: ContinuableRunnable, t: Runnable) = accept(s, t)
+    private class QueueConsumer : BiConsumer<ContinuableRunnable, Runnable> {
         override fun accept(t: ContinuableRunnable, u: Runnable) = t.run(u)
     }
 

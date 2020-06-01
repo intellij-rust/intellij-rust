@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-// BACKOMPAT: 2019.2
-@file:Suppress("DEPRECATION")
-
 package org.rust.ide.clones
 
 import com.intellij.lang.LighterAST
@@ -20,14 +17,14 @@ import com.jetbrains.clones.core.LighterAstNodeHashCache
 import com.jetbrains.clones.core.NodeHash
 import com.jetbrains.clones.core.longHash
 import com.jetbrains.clones.core.nodeListHash
-import com.jetbrains.clones.languagescope.common.DuplicateScopeBase
+import com.jetbrains.clones.languagescope.common.CommonDuplicateScope
 import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.RS_COMMENTS
 import org.rust.lang.core.psi.RS_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.tokenSetOf
 
-class RsDuplicateScope : DuplicateScopeBase() {
+class RsDuplicateScope : CommonDuplicateScope() {
 
     /**
      * Presentable language name displayed in settings window
@@ -154,7 +151,7 @@ class RsDuplicateScope : DuplicateScopeBase() {
 
     companion object {
 
-        private val VERSION: Int = 1
+        private const val VERSION: Int = 1
 
         private val NOISE = TokenSet.orSet(RS_COMMENTS, tokenSetOf(
             TokenType.WHITE_SPACE,

@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,7 +70,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)
         }
-        disableMissedCacheAssertions(testRootDisposable)
+        RecursionManager.disableMissedCacheAssertions(testRootDisposable)
     }
 
     override fun tearDown() {

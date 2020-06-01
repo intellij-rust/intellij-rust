@@ -39,16 +39,13 @@ abstract class RsExecutableRunner(
             getBuildConfiguration(profile) != null
     }
 
-    override fun execute(
-        environment: ExecutionEnvironment,
-        callback: ProgramRunner.Callback?,
-        state: RunProfileState
-    ) {
-        if (!checkToolchainSupported(environment.project, state as CargoRunStateBase)) return
+    override fun execute(environment: ExecutionEnvironment) {
+        val state = environment.state as CargoRunStateBase
+        if (!checkToolchainSupported(environment.project, state)) return
         if (!checkToolchainConfigured(environment.project)) return
         state.addCommandLinePatch(cargoCommonPatch)
         environment.putUserData(BINARIES, CompletableFuture())
-        super.execute(environment, callback, state)
+        super.execute(environment)
     }
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
