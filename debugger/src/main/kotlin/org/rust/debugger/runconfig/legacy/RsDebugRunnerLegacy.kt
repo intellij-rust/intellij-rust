@@ -8,7 +8,7 @@ package org.rust.debugger.runconfig.legacy
 import com.intellij.execution.configurations.RunProfile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import org.rust.debugger.runconfig.RsDebugRunnerUtilsExt
+import org.rust.debugger.runconfig.RsDebugRunnerUtils
 
 class RsDebugRunnerLegacy : RsDebugRunnerLegacyBase() {
 
@@ -18,5 +18,5 @@ class RsDebugRunnerLegacy : RsDebugRunnerLegacyBase() {
     }
 
     override fun checkToolchainConfigured(project: Project): Boolean =
-        RsDebugRunnerUtilsExt.checkToolchainConfigured(project)
+        RsDebugRunnerUtils.checkToolchainConfigured(project)
 }

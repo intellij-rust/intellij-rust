@@ -17,5 +17,5 @@ class RsDebugRunner : RsDebugRunnerBase() {
     }
 
     override fun checkToolchainConfigured(project: Project): Boolean =
-        RsDebugRunnerUtilsExt.checkToolchainConfigured(project)
+        RsDebugRunnerUtils.checkToolchainConfigured(project)
 }

@@ -24,9 +24,8 @@ import org.rust.clion.profiler.RsCachingStackElementReader
 import org.rust.lang.utils.RsDemangler
 
 
-// BACKCOMPAT: 2019.3. Make constructor private
 @Suppress("UnstableApiUsage")
-abstract class RsDTraceProfilerProcessBase protected constructor(
+class RsDTraceProfilerProcess private constructor(
     project: Project,
     targetProcess: AttachableTargetProcess,
     attachedTimestamp: Long,
@@ -43,8 +42,7 @@ abstract class RsDTraceProfilerProcessBase protected constructor(
         return FullDumpParser(NativeThread.Companion::fromId, cachingStackElementReader::parseStackElement)
     }
 
-    // BACKCOMPAT: 2019.3. Inline it
-    protected fun createDumpWriterInner(data: NewCallTreeOnlyProfilerData): ProfilerDumpWriter? {
+    override fun createDumpWriter(data: NewCallTreeOnlyProfilerData): ProfilerDumpWriter? {
         return CollapsedProfilerDumpWriter(data.builder, targetProcess.fullName, attachedTimestamp, { it.fullName() }, { it.name })
     }
 
@@ -71,7 +69,7 @@ abstract class RsDTraceProfilerProcessBase protected constructor(
             backgroundOption: PerformInBackgroundOption,
             timeoutInMilliseconds: Int,
             project: Project
-        ): Promise<RsDTraceProfilerProcessBase> {
+        ): Promise<RsDTraceProfilerProcess> {
             val settings = CPPProfilerSettings.instance.state
 
             // WARNING: Do not use such solution for other needs!

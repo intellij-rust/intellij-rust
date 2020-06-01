@@ -15,11 +15,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import org.intellij.lang.annotations.Language
 import org.jdom.Element
 import org.rust.RsTestBase
-import org.rust.TestApplicationManagerWrapper
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.impl.testCargoProjects
@@ -63,7 +63,7 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
     }
 
     protected fun checkOnFiles(vararg files: PsiElement) {
-        TestApplicationManagerWrapper.getInstance().setDataProvider(object : TestDataProvider(project) {
+        TestApplicationManager.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String): Any? =
                 if (PSI_ELEMENT_ARRAY.`is`(dataId)) files else super.getData(dataId)
         }, testRootDisposable)

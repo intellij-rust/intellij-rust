@@ -179,9 +179,7 @@ abstract class RsAsyncRunner(
                             result = output.stdoutLines
                                 .mapNotNull {
                                     try {
-                                        // BACKCOMPAT: 2019.3
-                                        @Suppress("DEPRECATION")
-                                        val jsonElement = PARSER.parse(it)
+                                        val jsonElement = JsonParser.parseString(it)
                                         val jsonObject = if (jsonElement.isJsonObject) {
                                             jsonElement.asJsonObject
                                         } else {
@@ -248,10 +246,6 @@ abstract class RsAsyncRunner(
     }
 
     companion object {
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        private val PARSER: JsonParser = JsonParser()
-
         class Binary(val path: Path)
 
         private sealed class BuildResult {

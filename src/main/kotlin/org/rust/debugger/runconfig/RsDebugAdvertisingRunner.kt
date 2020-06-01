@@ -6,10 +6,8 @@
 package org.rust.debugger.runconfig
 
 import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
@@ -37,11 +35,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         return plugin !in loadedPlugins || plugin?.isEnabled != true
     }
 
-    override fun execute(
-        environment: ExecutionEnvironment,
-        callback: ProgramRunner.Callback?,
-        state: RunProfileState
-    ) {
+    override fun execute(environment: ExecutionEnvironment) {
         val id = PluginId.getId(NATIVE_DEBUG_PLUGIN_ID)
         val plugin = PluginManagerCore.getPlugin(id)
         val pluginsState = InstalledPluginsState.getInstance()

@@ -7,10 +7,10 @@ package org.rust.ide.refactoring
 
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.psi.PsiElement
+import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import org.rust.FileTree
 import org.rust.RsTestBase
-import org.rust.TestApplicationManagerWrapper
 import org.rust.fileTree
 
 class RsDowngradeModuleToFileTest : RsTestBase() {
@@ -73,7 +73,7 @@ class RsDowngradeModuleToFileTest : RsTestBase() {
     }
 
     private fun testActionOnElement(element: PsiElement): Presentation {
-        TestApplicationManagerWrapper.getInstance().setDataProvider(object : TestDataProvider(project) {
+        TestApplicationManager.getInstance().setDataProvider(object : TestDataProvider(project) {
             override fun getData(dataId: String): Any? =
                 if (com.intellij.openapi.actionSystem.CommonDataKeys.PSI_ELEMENT.`is`(dataId)) element else super.getData(dataId)
         }, testRootDisposable)

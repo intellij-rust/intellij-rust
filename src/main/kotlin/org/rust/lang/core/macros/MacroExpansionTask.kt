@@ -52,7 +52,6 @@ abstract class MacroExpansionTaskBase(
     private val stepModificationTracker: SimpleModificationTracker
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
     RsTask {
-    private val transactionExecutor = TransactionExecutor(project)
     private val expander = MacroExpander(project)
     private val sync = CountDownLatch(1)
     private val estimateStages = AtomicInteger()

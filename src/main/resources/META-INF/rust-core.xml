@@ -1,7 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <depends>com.intellij.modules.lang</depends>
 
-    <xi:include href="/META-INF/platform-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="/META-INF/experiments.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -780,6 +779,7 @@
 
         <programRunner implementation="org.rust.cargo.runconfig.CargoCommandRunner"/>
         <programRunner implementation="org.rust.cargo.runconfig.CargoTestCommandRunner"/>
+        <programRunner implementation="org.rust.debugger.runconfig.RsDebugAdvertisingRunner"/>
 
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
 

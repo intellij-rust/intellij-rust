@@ -31,15 +31,15 @@ import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
 
 class RsMoveFilesOrDirectoriesDialog(
-    private val project2: Project,  // BACKCOMPAT: 2019.3 rename to project
+    project: Project,
     private val elementsToMove: Array<PsiElement>,
     initialTargetDirectory: PsiDirectory?,
     private val moveCallback: MoveCallback?
-) : MoveFilesOrDirectoriesDialog(project2, elementsToMove, initialTargetDirectory) {
+) : MoveFilesOrDirectoriesDialog(project, elementsToMove, initialTargetDirectory) {
 
     override fun performMove(targetDirectory: PsiDirectory) {
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project2, targetDirectory)) return
-        if (!CommonRefactoringUtil.checkReadOnlyStatus(project2, elementsToMove.toList(), true)) return
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, targetDirectory)) return
+        if (!CommonRefactoringUtil.checkReadOnlyStatus(project, elementsToMove.toList(), true)) return
 
         try {
             for (element in elementsToMove) {
@@ -54,7 +54,7 @@ class RsMoveFilesOrDirectoriesDialog(
 
             doPerformMove(targetDirectory, searchForReferences, doneCallback)
         } catch (e: IncorrectOperationException) {
-            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.message, "refactoring.moveFile", project2)
+            CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), e.message, "refactoring.moveFile", project)
         }
     }
 
@@ -62,7 +62,7 @@ class RsMoveFilesOrDirectoriesDialog(
     fun doPerformMove(targetDirectory: PsiDirectory, searchForReferences: Boolean, doneCallback: Runnable) {
         fun runDefaultProcessor() {
             MoveFilesOrDirectoriesProcessor(
-                project2,
+                project,
                 elementsToMove,
                 targetDirectory,
                 /* searchForReferences = */ false,
@@ -95,7 +95,7 @@ class RsMoveFilesOrDirectoriesDialog(
             }
             else -> {
                 RsMoveFilesOrDirectoriesProcessor(
-                    project2,
+                    project,
                     elementsToMove,
                     targetDirectory,
                     newParentMod,
@@ -110,8 +110,8 @@ class RsMoveFilesOrDirectoriesDialog(
         val result = showOkCancelDialog(
             "Move",
             "File will not be included in module tree after move. Continue?",
-            Messages.OK_BUTTON,
-            project = project2
+            Messages.getOkButton(),
+            project = project
         )
         return result == Messages.OK
     }

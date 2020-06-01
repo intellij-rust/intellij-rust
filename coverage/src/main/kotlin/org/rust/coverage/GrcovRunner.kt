@@ -51,16 +51,18 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
         return CoverageRunnerData()
     }
 
-    override fun execute(environment: ExecutionEnvironment, callback: ProgramRunner.Callback?, state: RunProfileState) {
+    override fun execute(environment: ExecutionEnvironment) {
+        val state = environment.state as CargoRunStateBase
+
         if (checkNeedInstallGrcov(environment.project)) return
 
-        (state as CargoRunStateBase).addCommandLinePatch(cargoCoveragePatch)
+        state.addCommandLinePatch(cargoCoveragePatch)
         environment.cargoPatches.add(cargoCoveragePatch)
 
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
 
-        super.execute(environment, callback, state)
+        super.execute(environment)
     }
 
     override fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {

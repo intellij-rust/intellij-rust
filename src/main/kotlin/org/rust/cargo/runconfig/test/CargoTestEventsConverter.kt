@@ -53,9 +53,7 @@ class CargoTestEventsConverter(
         val jsonObject = try {
             val escapedText = text.replace(DOCTEST_PATH_RE) { it.value.replace("\\", "\\\\") }
             val reader = JsonReader(StringReader(escapedText)).apply { isLenient = true }
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            PARSER.parse(reader).takeIf { it.isJsonObject }?.asJsonObject
+            JsonParser.parseReader(reader).takeIf { it.isJsonObject }?.asJsonObject
         } catch (e: JsonSyntaxException) {
             null
         } ?: return true
@@ -259,10 +257,6 @@ class CargoTestEventsConverter(
     }
 
     companion object {
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        private val PARSER: JsonParser = JsonParser()
-
         private const val TARGET_PATH_PART: String = "/target/"
 
         private const val ROOT_SUITE: String = "0"

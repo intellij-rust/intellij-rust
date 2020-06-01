@@ -286,19 +286,13 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
     companion object {
         const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
 
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        private val PARSER: JsonParser = JsonParser()
-
         private val PROGRESS_TOTAL_RE: Regex = """(\d+)/(\d+)""".toRegex()
 
         private val ERROR_OR_WARNING: List<MessageEvent.Kind> =
             listOf(MessageEvent.Kind.ERROR, MessageEvent.Kind.WARNING)
 
         private fun parseJsonObject(line: String): JsonObject? =
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            PARSER.parse(line).takeIf { it.isJsonObject }?.asJsonObject
+            JsonParser.parseString(line).takeIf { it.isJsonObject }?.asJsonObject
 
         private fun getMessageKind(kind: String): MessageEvent.Kind =
             when (kind) {

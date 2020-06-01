@@ -5,6 +5,7 @@
 
 package org.rust.cargo
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
@@ -65,7 +66,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         rustupFixture = RustupTestFixture(project)
         rustupFixture.setUp()
         if (disableMissedCacheAssertions) {
-            disableMissedCacheAssertions(testRootDisposable)
+            RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         }
     }
 

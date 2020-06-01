@@ -5,9 +5,7 @@
 
 package org.rust.lang.core.completion
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.DumbServiceImpl
-import com.intellij.openapi.util.BuildNumber
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.completion.RsKeywordCompletionContributor.Companion.CONDITION_KEYWORDS
 
@@ -15,15 +13,11 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
 
     override fun setUp() {
         super.setUp()
-        if (isAtLeast201) {
-            DumbServiceImpl.getInstance(project).isDumb = true
-        }
+        DumbServiceImpl.getInstance(project).isDumb = true
     }
 
     override fun tearDown() {
-        if (isAtLeast201) {
-            DumbServiceImpl.getInstance(project).isDumb = false
-        }
+        DumbServiceImpl.getInstance(project).isDumb = false
         super.tearDown()
     }
 
@@ -885,14 +879,5 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
 
     companion object {
         private val MEMBERS_KEYWORDS = listOf("fn", "type", "const", "unsafe")
-
-        // BACKCOMPAT: 2019.3
-        private val BUILD: BuildNumber = BuildNumber.fromString("201")!!
-
-        // Platform completion code doesn't insert dummy identifier because of `WordCompletionContributor` (it's enabled only in dumb mode).
-        // It leads to different PSI for completion and out psi patterns don't work.
-        // Fixed in 2020.1 in platform
-        private val isAtLeast201: Boolean
-            get() = ApplicationInfo.getInstance().build >= BUILD
     }
 }

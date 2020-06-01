@@ -18,25 +18,15 @@ import org.jetbrains.concurrency.resolvedPromise
 abstract class RsDefaultProgramRunnerBase : ProgramRunner<RunnerSettings> {
 
     @Throws(ExecutionException::class)
-    final override fun execute(environment: ExecutionEnvironment) {
+    override fun execute(environment: ExecutionEnvironment) {
         val state = environment.state ?: return
-        execute(environment, environment.callback, state)
-    }
-
-    protected open fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
-        return executeState(state, environment, this)
-    }
-
-    // BACKCOMPAT: 2019.3. merge it into [execute] method
-    @Throws(ExecutionException::class)
-    protected open fun execute(
-        environment: ExecutionEnvironment,
-        callback: ProgramRunner.Callback?,
-        state: RunProfileState
-    ) {
         @Suppress("UnstableApiUsage")
         ExecutionManager.getInstance(environment.project).startRunProfile(environment) {
             resolvedPromise(doExecute(state, environment))
         }
+    }
+
+    protected open fun doExecute(state: RunProfileState, environment: ExecutionEnvironment): RunContentDescriptor? {
+        return executeState(state, environment, this)
     }
 }

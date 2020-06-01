@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.layout.panel
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ui.UIUtil.ComponentStyle.SMALL
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
 import javax.swing.JComponent
@@ -42,6 +43,6 @@ class RsDebuggerDataViewConfigurableUi : ConfigurableUi<RsDebuggerSettings> {
         if (PlatformUtils.isCLion()) {
             row("GDB renderers:") { gdbRenderers() }
         }
-        row { smallLabelWithGap("Changing these options will affect next debug session") }
+        row { label("Changing these options will affect next debug session", style = SMALL).withLargeLeftGap() }
     }
 }
