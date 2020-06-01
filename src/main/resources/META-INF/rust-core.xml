@@ -107,6 +107,9 @@
 
         <indexPatternBuilder implementation="org.rust.ide.todo.RsTodoIndexPatternBuilder"/>
         <todoIndexer filetype="Rust" implementationClass="org.rust.ide.todo.RsTodoIndexer"/>
+        <indexPatternSearch
+            id="RsTodoSearcher"
+            implementation="org.rust.ide.todo.RsTodoSearcher"/>
 
         <!-- Smart Enter Processor -->
 
@@ -935,12 +938,6 @@
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
                         dynamic="true"/>
     </extensionPoints>
-
-    <application-components>
-        <component>
-            <implementation-class>org.rust.ide.todo.RsTodoApplicationComponent</implementation-class>
-        </component>
-    </application-components>
 
     <project-components>
         <component>
