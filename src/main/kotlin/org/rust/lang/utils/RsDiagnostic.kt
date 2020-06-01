@@ -22,6 +22,7 @@ import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
@@ -1205,6 +1206,17 @@ sealed class RsDiagnostic(
             )
         }
     }
+
+    class MainFunctionNotFound(file: RsFile, private val crateName: String) : RsDiagnostic(file) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0601,
+                "`main` function not found in crate `$crateName`",
+                fixes = listOf(AddMainFnFix(element))
+            )
+        }
+    }
 }
 
 enum class RsErrorCode {
@@ -1214,7 +1226,7 @@ enum class RsErrorCode {
     E0308, E0322, E0328, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0449, E0451, E0463,
     E0518, E0562, E0569, E0583, E0586, E0594,
-    E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
+    E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
     E0704, E0732;
 
     val code: String

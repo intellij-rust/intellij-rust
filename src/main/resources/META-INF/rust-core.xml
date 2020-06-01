@@ -535,6 +535,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsLivenessInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Main function not found"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsMainFunctionNotFoundInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
