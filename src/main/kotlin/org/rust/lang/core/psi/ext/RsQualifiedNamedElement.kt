@@ -32,21 +32,25 @@ val RsQualifiedNamedElement.qualifiedName: String?
         return "$cargoTarget$inCratePath"
     }
 
-fun RsQualifiedNamedElement.qualifiedNameRelativeTo(mod: RsMod): String? {
+fun RsQualifiedNamedElement.qualifiedNameRelativeTo(context: RsMod): String? {
     val crateRelativePath = crateRelativePath
-    if (mod.crateRoot != crateRoot || crateRelativePath == null) {
+    if (context.crateRoot != crateRoot || crateRelativePath == null) {
         return qualifiedName
     }
 
     check(crateRelativePath.isEmpty() || crateRelativePath.startsWith("::"))
     val absolutePath = "crate$crateRelativePath"
-    if (!containingMod.superMods.contains(mod)) return absolutePath
+    if (!containingMod.superMods.contains(context)) return absolutePath
+    return convertPathToRelativeIfPossible(context, absolutePath)
+}
 
-    val modPathPrefix = mod.crateRelativePath?.let { "$it::" } ?: return absolutePath
-    if (!crateRelativePath.startsWith(modPathPrefix)) return absolutePath
-    val relativePath = crateRelativePath.removePrefix(modPathPrefix)
+fun convertPathToRelativeIfPossible(context: RsMod, absolutePath: String): String {
+    val contextModPath = context.crateRelativePath ?: return absolutePath
+    val contextModPathPrefix = "crate$contextModPath::"
+    if (!absolutePath.startsWith(contextModPathPrefix)) return absolutePath
+    val relativePath = absolutePath.removePrefix(contextModPathPrefix)
 
-    val cargoWorkspace = cargoWorkspace ?: return relativePath
+    val cargoWorkspace = context.cargoWorkspace ?: return relativePath
     if (cargoWorkspace.packages.any { relativePath.startsWith("${it.normName}::") }) {
         return "self::$relativePath"
     }
