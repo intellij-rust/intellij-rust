@@ -129,7 +129,8 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
             ?: return null
         val target = sourceElement.containingCargoTarget ?: return null
         val configPath = sourceElement.crateRelativePath.configPath() ?: return null
-        return SingleItemTestConfig(commandName, configPath, target, sourceElement, originalElement)
+        return SingleItemTestConfig(commandName, configPath, target, sourceElement, originalElement,
+            isIgnoredTest(sourceElement))
     }
 
     private inline fun <reified T : PsiElement> findElement(base: PsiElement, climbUp: Boolean): T? {
@@ -139,6 +140,9 @@ abstract class CargoTestRunConfigurationProducerBase : CargoRunConfigurationProd
     }
 
     protected abstract fun isSuitable(element: PsiElement): Boolean
+
+    private fun isIgnoredTest(element: PsiElement): Boolean =
+        element is RsFunction && element.findOuterAttr("ignore") != null
 
     companion object {
         private val PsiDirectory.targets: List<RsFile>
@@ -172,11 +176,15 @@ interface TestConfig {
     val configurationName: String
     val sourceElement: PsiElement
     val originalElement: PsiElement get() = sourceElement
+    val isIgnored: Boolean get() = false
 
     fun cargoCommandLine(): CargoCommandLine {
         var commandLine = CargoCommandLine.forTargets(targets, commandName, listOf(path))
         if (exact) {
             commandLine = commandLine.withPositionalArgument("--exact")
+        }
+        if (isIgnored) {
+            commandLine = commandLine.withPositionalArgument("--ignored")
         }
         return commandLine
     }
@@ -211,7 +219,8 @@ private class SingleItemTestConfig(
     override val path: String,
     val target: CargoWorkspace.Target,
     override val sourceElement: RsElement,
-    override val originalElement: RsElement
+    override val originalElement: RsElement,
+    override val isIgnored: Boolean
 ) : TestConfig {
     override val exact: Boolean
         get() = sourceElement is RsFunction
