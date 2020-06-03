@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
@@ -52,6 +53,9 @@ abstract class MacroExpansionTaskBase(
     private val stepModificationTracker: SimpleModificationTracker
 ) : Task.Backgroundable(project, "Expanding Rust macros", /* canBeCancelled = */ false),
     RsTask {
+    private val resolveCache = RsResolveCache.getInstance(project)
+    private val dumbService = DumbService.getInstance(project)
+    private val macroExpansionManager = project.macroExpansionManager
     private val expander = MacroExpander(project)
     private val sync = CountDownLatch(1)
     private val estimateStages = AtomicInteger()
@@ -73,7 +77,7 @@ abstract class MacroExpansionTaskBase(
         indicator.isIndeterminate = false
         realTaskIndicator = indicator
 
-        expansionSteps = getMacrosToExpand().iterator()
+        expansionSteps = getMacrosToExpand(dumbService).iterator()
 
         if (indicator is ProgressIndicatorEx) {
             // [indicator] can be an instance of [BackgroundableProcessIndicator] class, which is thread
@@ -104,9 +108,12 @@ abstract class MacroExpansionTaskBase(
                     // If project is disposed, then queue will be disposed too, so we shouldn't await sub task finish
                     // (and sub task may not call `sync.countDown()`, so without this `break` we will be blocked
                     // forever)
-                    if (project.isDisposed) break
-
+                    if (project.isDisposed) {
+                        subTaskIndicator.cancel()
+                        break
+                    }
                     // Enter heavy process mode only if at least one macro is not up-to-date
+
                     if (heavyProcessToken == null && heavyProcessRequested) {
                         heavyProcessToken = HeavyProcessLatch.INSTANCE.processStarted("Expanding Rust macros")
                     }
@@ -114,7 +121,7 @@ abstract class MacroExpansionTaskBase(
             }
             MACRO_LOG.info("Task completed! ${totalExpanded.get()} total calls, millis: " + duration / 1_000_000)
         } finally {
-            RsResolveCache.getInstance(project).endExpandingMacros()
+            resolveCache.endExpandingMacros()
             // Return all non expanded files to storage.
             // Otherwise, we will lose them until full re-expand
             movePendingFileToStep(pendingFiles, 0)
@@ -144,7 +151,7 @@ abstract class MacroExpansionTaskBase(
         checkIsBackgroundThread()
         realTaskIndicator.text2 = "Waiting for index"
         val extractableList = executeUnderProgress(subTaskIndicator) {
-            runReadActionInSmartMode(project) {
+            runReadActionInSmartMode(dumbService) {
                 var extractableList: List<Extractable>?
                 do {
                     extractableList = expansionSteps.nextOrNull()
@@ -176,8 +183,8 @@ abstract class MacroExpansionTaskBase(
             val stages1 = (extractableList + pendingFiles).chunked(100).parallelStream().unordered().flatMap { extractable ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode because rebind can be performed
-                    runReadActionInSmartMode(project) {
-                        project.macroExpansionManager.withExpansionState(expansionState) {
+                    runReadActionInSmartMode(dumbService) {
+                        macroExpansionManager.withExpansionState(expansionState) {
                             extractable.flatMap {
                                 val extracted = it.extract()
                                 if (extracted == null) {
@@ -199,8 +206,8 @@ abstract class MacroExpansionTaskBase(
             val stages2 = stages1.parallelStream().unordered().map { stage1 ->
                 val result = executeUnderProgressWithWriteActionPriorityWithRetries(subTaskIndicator) {
                     // We need smart mode to resolve macros
-                    runReadActionInSmartMode(project) {
-                        project.macroExpansionManager.withExpansionState(expansionState) {
+                    runReadActionInSmartMode(dumbService) {
+                        macroExpansionManager.withExpansionState(expansionState) {
                             stage1.expand(project, expander)
                         }
                     }
@@ -234,6 +241,7 @@ abstract class MacroExpansionTaskBase(
                 val future = CompletableFuture<Unit>()
                 batch.applyToVfs(true, Runnable {
                     // we're in write action
+                    if (project.isDisposed) return@Runnable
                     for (stage3 in stages3) {
                         stage3.save(storage)
                     }
@@ -294,7 +302,7 @@ abstract class MacroExpansionTaskBase(
         MACRO_LOG.debug("Moving of pending files to step $step: ${duration / 1000} μs")
     }
 
-    protected abstract fun getMacrosToExpand(): Sequence<List<Extractable>>
+    protected abstract fun getMacrosToExpand(dumbService: DumbService): Sequence<List<Extractable>>
 
     override val waitForSmartMode: Boolean
         get() = true

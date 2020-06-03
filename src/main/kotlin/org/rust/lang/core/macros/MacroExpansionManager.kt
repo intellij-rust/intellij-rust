@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -800,7 +801,7 @@ private class MacroExpansionServiceImplInner(
             ::createExpandedSearchScope,
             stepModificationTracker
         ) {
-            override fun getMacrosToExpand(): Sequence<List<Extractable>> {
+            override fun getMacrosToExpand(dumbService: DumbService): Sequence<List<Extractable>> {
                 val mode = expansionMode
 
                 val scope = when (mode.toScope()) {
@@ -809,7 +810,7 @@ private class MacroExpansionServiceImplInner(
                     MacroExpansionScope.NONE -> return emptySequence() // GlobalSearchScope.EMPTY_SCOPE
                 }
 
-                val calls = runReadActionInSmartMode(project) {
+                val calls = runReadActionInSmartMode(dumbService) {
                     val calls = RsMacroCallIndex.getMacroCalls(project, scope)
                     MACRO_LOG.info("Macros to expand: ${calls.size}")
                     calls.groupBy { it.containingFile.virtualFile }
@@ -839,7 +840,7 @@ private class MacroExpansionServiceImplInner(
             ::createExpandedSearchScope,
             stepModificationTracker
         ) {
-            override fun getMacrosToExpand(): Sequence<List<Extractable>> {
+            override fun getMacrosToExpand(dumbService: DumbService): Sequence<List<Extractable>> {
                 return runReadAction { storage.makeValidationTask(workspaceOnly) }
             }
 

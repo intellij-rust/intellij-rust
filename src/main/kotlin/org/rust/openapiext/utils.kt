@@ -244,10 +244,10 @@ fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("
 
 val String.escaped: String get() = StringUtil.escapeXmlEntities(this)
 
-fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
+fun <T> runReadActionInSmartMode(dumbService: DumbService, action: () -> T): T {
     ProgressManager.checkCanceled()
-    if (project.isDisposed) throw ProcessCanceledException()
-    return DumbService.getInstance(project).runReadActionInSmartMode(Computable {
+    if (dumbService.project.isDisposed) throw ProcessCanceledException()
+    return dumbService.runReadActionInSmartMode(Computable {
         ProgressManager.checkCanceled()
         action()
     })
@@ -255,6 +255,7 @@ fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
 
 fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
     checkReadAccessNotAllowed()
+    indicator.checkCanceled()
     var result: T? = null
     do {
         val success = runWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {

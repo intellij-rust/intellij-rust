@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -96,7 +97,7 @@ class ExpandedMacroStorage(val project: Project) {
                 getOrCreateSourceFile(file) ?: error("Non-root source files are not supported")
             }
         }
-        return runReadActionInSmartMode(project) {
+        return runReadAction {
             makeValidationTask(false, v2)
         }
     }
