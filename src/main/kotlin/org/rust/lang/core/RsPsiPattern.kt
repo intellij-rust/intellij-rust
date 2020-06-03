@@ -8,7 +8,10 @@ package org.rust.lang.core
 import com.intellij.patterns.*
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
-import com.intellij.psi.*
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.*
@@ -127,11 +130,12 @@ object RsPsiPattern {
 
     val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RsTraitItem>()
 
-    val onDropFn: PsiElementPattern.Capture<PsiElement> get() {
-        val dropTraitRef = psiElement<RsTraitRef>().withText("Drop")
-        val implBlock = psiElement<RsImplItem>().withChild(dropTraitRef)
-        return psiElement().withSuperParent(6, implBlock)
-    }
+    val onDropFn: PsiElementPattern.Capture<PsiElement>
+        get() {
+            val dropTraitRef = psiElement<RsTraitRef>().withText("Drop")
+            val implBlock = psiElement<RsImplItem>().withChild(dropTraitRef)
+            return psiElement().withSuperParent(6, implBlock)
+        }
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
@@ -213,7 +217,7 @@ inline fun <reified I : PsiElement> PsiElementPattern.Capture<PsiElement>.withSu
     return this.withSuperParent(level, I::class.java)
 }
 
-inline infix fun <reified I : PsiElement> ElementPattern<I>.or(pattern: ElementPattern<I>): PsiElementPattern.Capture<PsiElement> {
+inline infix fun <reified I : PsiElement> ElementPattern<I>.or(pattern: ElementPattern<out I>): PsiElementPattern.Capture<PsiElement> {
     return psiElement().andOr(this, pattern)
 }
 

@@ -675,6 +675,178 @@ class RsCompletionTest : RsCompletionTestBase() {
        }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in path constructor 1`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        fn main() {
+            std::path::Path::new("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        fn main() {
+            std::path::Path::new("foo.rs/*caret*/");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in path constructor 2`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        use std::path::Path;
+        fn main() {
+            Path::new("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        use std::path::Path;
+        fn main() {
+            Path::new("foo.rs/*caret*/");
+        }
+    """)
+
+    // enable once name resolution of <Foo as Trait>::function is fixed
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test do not complete paths in path trait impl`() {
+        expect<IllegalStateException> {
+            checkNoCompletionByFileTree("""
+        //- main.rs
+            use std::path::Path;
+            trait Foo {
+                fn new(x: &str) -> i32;
+            }
+            impl Foo for Path {
+                fn new(x: &str) -> i32 {
+                    123
+                }
+            }
+            fn main() {
+                <Path as Foo>::new("fo/*caret*/");
+            }
+        //- foo.rs
+            pub struct Foo;
+        """)
+        }
+    }
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in pathbuf constructor`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        fn main() {
+            std::path::PathBuf::from("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        fn main() {
+            std::path::PathBuf::from("foo.rs/*caret*/");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in asref path`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        fn main() {
+            std::fs::canonicalize("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        fn main() {
+            std::fs::canonicalize("foo.rs/*caret*/");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in method call`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        struct Bar;
+        impl Bar {
+            fn foo<T: AsRef<std::path::Path>>(&self, path: T) {}
+        }
+
+        fn main() {
+            Bar.foo("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        struct Bar;
+        impl Bar {
+            fn foo<T: AsRef<std::path::Path>>(&self, path: T) {}
+        }
+
+        fn main() {
+            Bar.foo("foo.rs/*caret*/");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in ufcs call`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        struct Bar;
+        impl Bar {
+            fn foo<T: AsRef<std::path::Path>>(&self, path: T) {}
+        }
+
+        fn main() {
+            Bar::foo(&Bar, "fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        struct Bar;
+        impl Bar {
+            fn foo<T: AsRef<std::path::Path>>(&self, path: T) {}
+        }
+
+        fn main() {
+            Bar::foo(&Bar, "foo.rs/*caret*/");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test do not complete paths in self parameter of ufcs call`() = checkNoCompletionByFileTree("""
+    //- main.rs
+        struct Bar;
+        impl Bar {
+            fn foo<T: AsRef<std::path::Path>>(&self, path: T) {}
+        }
+
+        fn main() {
+            Bar::foo("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete paths in impl asref`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        fn foo(path: impl AsRef<std::path::Path>) {}
+
+        fn main() {
+            foo("fo/*caret*/");
+        }
+    //- foo.rs
+        pub struct Foo;
+    """, """
+        fn foo(path: impl AsRef<std::path::Path>) {}
+
+        fn main() {
+            foo("foo.rs/*caret*/");
+        }
+    """)
+
+    fun `test do not complete paths in string literal`() = checkNoCompletionByFileTree("""
+    //- main.rs
+        fn main() {
+            let s = "fo/*caret*/";
+        }
+    //- foo.rs
+        pub struct Foo;
+    """)
+
     fun `test complete paths in include macro`() = doSingleCompletionByFileTree("""
     //- main.rs
         include!("fo/*caret*/");
