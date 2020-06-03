@@ -279,14 +279,10 @@ TraitRef ::= TypePathGenericArgsNoTypeQual {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Items
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-Vis ::= crate | pub VisRestriction? {
+Vis ::= crate !'::' | pub VisRestriction? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsVisStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-}
-TupleFieldVis ::= crate !'::' | pub VisRestriction? {
-  elementType = Vis
-  name = "vis"
 }
 VisRestriction ::= '(' in? PathWithoutTypeArgs ')' {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
@@ -767,7 +763,7 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
 }
 private Field_recover ::= !('}' | ',')
 
-TupleFieldDecl ::= OuterAttr* TupleFieldVis? TypeReference {
+TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
   mixin = "org.rust.lang.core.psi.ext.RsTupleFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
