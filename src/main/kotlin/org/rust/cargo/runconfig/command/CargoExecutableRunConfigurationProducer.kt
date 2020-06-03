@@ -56,7 +56,7 @@ class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() 
     companion object {
         fun isMainFunction(fn: RsFunction): Boolean {
             val ws = fn.cargoWorkspace ?: return false
-            return fn.name == "main" && findBinaryTarget(ws, fn.containingFile.virtualFile) != null
+            return fn.parent is RsFile && fn.name == "main" && findBinaryTarget(ws, fn.containingFile.virtualFile) != null
         }
 
         private fun findBinaryTarget(location: Location<*>): ExecutableTarget? {
