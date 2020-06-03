@@ -40,9 +40,13 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
     """, """
         use foo::{bar, baz};
 
-        struct S1 { a: i32 }
+        struct S1 {
+            a: i32
+        }
 
-        struct S2 { a: i32 }
+        struct S2 {
+            a: i32,
+        }
 
         enum E {
             V { a: i32 }

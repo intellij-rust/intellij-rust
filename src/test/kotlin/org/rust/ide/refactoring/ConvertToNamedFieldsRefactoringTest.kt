@@ -138,7 +138,9 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
             let s = S::new(0);
         }
     """, """
-        struct S { _0: u32 }
+        struct S {
+            _0: u32
+        }
 
         impl S {
             fn new(v: u32) -> S {
@@ -167,7 +169,9 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """, """
         mod nested {
-            pub struct S { pub _0: u32 }
+            pub struct S {
+                pub _0: u32
+            }
 
             impl S {
                 pub fn new(v: u32) -> S {

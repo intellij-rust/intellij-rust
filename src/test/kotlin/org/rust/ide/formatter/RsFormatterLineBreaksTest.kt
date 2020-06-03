@@ -242,7 +242,9 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
                 92};
         }
     """, """
-        struct S1 { f: i32 }
+        struct S1 {
+            f: i32
+        }
 
         struct S2 {
             f: i32
