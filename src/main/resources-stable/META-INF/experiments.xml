@@ -12,5 +12,8 @@
         <experimentalFeature id="org.rust.ide.refactoring.move" percentOfUsers="0">
             <description>Move refactoring</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.macros.new.engine" percentOfUsers="0">
+            <description>Enables new macro expansion engine by default</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>
