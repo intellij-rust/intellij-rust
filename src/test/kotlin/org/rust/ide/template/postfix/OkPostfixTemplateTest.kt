@@ -8,12 +8,12 @@ package org.rust.ide.template.postfix
 class OkPostfixTemplateTest : RsPostfixTemplateTest(OkPostfixTemplate(RsPostfixTemplateProvider())) {
 
     fun `test expr`() = doTest("""
-        fn foo(slice: &[i32]) {
-            let first = slice[0].ok/*caret*/;
+        fn foo(number: i32) -> Result<i32, ()> {
+            number.ok/*caret*/
         }
     """, """
-        fn foo(slice: &[i32]) {
-            let first = Ok(slice[0])/*caret*/;
+        fn foo(number: i32) -> Result<i32, ()> {
+            Ok(number)
         }
     """)
 

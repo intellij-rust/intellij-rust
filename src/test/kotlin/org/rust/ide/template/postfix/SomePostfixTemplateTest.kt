@@ -8,12 +8,12 @@ package org.rust.ide.template.postfix
 class SomePostfixTemplateTest : RsPostfixTemplateTest(SomePostfixTemplate(RsPostfixTemplateProvider())) {
 
     fun `test expr`() = doTest("""
-        fn foo(slice: &[i32]) {
-            let first = slice[0].some/*caret*/;
+        fn foo(number: i32) -> Option<i32> {
+            number.some/*caret*/
         }
     """, """
-        fn foo(slice: &[i32]) {
-            let first = Some(slice[0])/*caret*/;
+        fn foo(number: i32) -> Option<i32> {
+            Some(number)
         }
     """)
 
