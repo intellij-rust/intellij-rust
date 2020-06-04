@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.impl.FileTypeOverrider
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 import org.rust.lang.RsFileType
 
 /**
@@ -18,7 +19,7 @@ import org.rust.lang.RsFileType
 @Suppress("UnstableApiUsage")
 class RsFileTypeOverriderForMacroExpansionFileSystem : FileTypeOverrider {
     override fun getOverriddenFileType(file: VirtualFile): FileType? {
-        return if (!file.isDirectory && file.fileSystem is MacroExpansionFileSystem) {
+        return if (file !is StubVirtualFile && !file.isDirectory && file.fileSystem is MacroExpansionFileSystem) {
             RsFileType
         } else {
             null
