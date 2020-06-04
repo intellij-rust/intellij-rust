@@ -30,7 +30,7 @@ interface RsPlainHint {
             values.find { it.isApplicable(element) }
 
         val values: Array<RsPlainHint> =
-            arrayOf(*RsPlainParameterHint.values(), *RsPlainTypeHint.values())
+            arrayOf(*RsPlainParameterHint.values())
     }
 }
 
