@@ -42,15 +42,18 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     """)
 
-    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5530
-    fun `test check doc comments`() = checkByText("""
-        ///
-        /// ```
-        /// let literal = "<TYPO>There is two apples</TYPO>";
-        /// for i in 1..10 {}
-        /// ```
-        pub fn foo() {}
-    """)
+    // https://github.com/intellij-rust/intellij-rust/issues/5530
+    @IgnoreInPlatform(201)
+    fun `test check doc comments`() = expect<AssertionError> {
+        checkByText("""
+            ///
+            /// ```
+            /// let literal = "<TYPO>There is two apples</TYPO>";
+            /// for i in 1..10 {}
+            /// ```
+            pub fn foo() {}
+        """)
+    }
 
     companion object {
         private val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH)
