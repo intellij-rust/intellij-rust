@@ -18,19 +18,22 @@ import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.*
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 class RsTypeHintsPresentationFactory(
     context: RsElement?,
     private val factory: PresentationFactory,
     private val showObviousTypes: Boolean
 ) {
-    private val lookup: ImplLookup?
-    private val iteratorTrait: BoundElement<RsTraitItem>?
-
-    init {
-        val (lookup1, items) = context?.implLookupAndKnownItems ?: null to null
-        lookup = lookup1
-        iteratorTrait = items?.Iterator?.let { BoundElement(it) }
+    // The object is usually created on EDT, but we shouldn't call slow implLookupAndKnownItems from EDT, so it's lazy
+    private val lookupAndIteratorTrait: Pair<ImplLookup, BoundElement<RsTraitItem>>? by lazy(PUBLICATION) {
+        val (lookup, items) = context?.implLookupAndKnownItems ?: null to null
+        val iterator = items?.Iterator?.let { BoundElement(it) }
+        if (lookup != null && iterator != null) {
+            lookup to iterator
+        } else {
+            null
+        }
     }
 
     // BACKCOMPAT: 2019.3
@@ -137,12 +140,11 @@ class RsTypeHintsPresentationFactory(
 
     /** Creates fake `impl Iterator<Item=...>` presentation if [type] implements `Iterator` trait */
     private fun tryIteratorHint(type: TyAdt, level: Int): InlayPresentation? {
-        if (iteratorTrait != null && lookup != null) {
-            val assoc = lookup.selectAllProjectionsStrict(TraitRef(type, iteratorTrait))
-            if (assoc != null) {
-                val element = iteratorTrait.copy(assoc = assoc)
-                return anonTypeHint(TyAnon(null, listOf(element)), level - 1)
-            }
+        val (lookup, iteratorTrait) = lookupAndIteratorTrait ?: return null
+        val assoc = lookup.selectAllProjectionsStrict(TraitRef(type, iteratorTrait))
+        if (assoc != null) {
+            val element = iteratorTrait.copy(assoc = assoc)
+            return anonTypeHint(TyAnon(null, listOf(element)), level - 1)
         }
         return null
     }
