@@ -15,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
@@ -58,6 +59,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.ForkJoinPool
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
+import kotlin.system.measureTimeMillis
 
 interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
@@ -495,9 +497,7 @@ private class MacroExpansionServiceImplInner(
             override fun run(indicator: ProgressIndicator) {
                 checkReadAccessNotAllowed()
                 val vfs = MacroExpansionFileSystem.getInstance()
-                if (vfs.exists(dirs.expansionDirPath)) {
-                    vfs.cleanDirectory(dirs.expansionDirPath)
-                }
+                vfs.cleanDirectoryIfExists(dirs.expansionDirPath)
                 vfs.createDirectoryIfNotExistsOrDummy(dirs.expansionDirPath)
                 dirs.dataFile.delete()
                 WriteAction.runAndWait<Throwable> {
@@ -520,9 +520,13 @@ private class MacroExpansionServiceImplInner(
             override fun run(indicator: ProgressIndicator) {
                 checkReadAccessNotAllowed()
 
-                refreshExpansionDirectory()
-                findAndDeleteLeakedExpansionFiles()
-                findAndRemoveInvalidExpandedMacroInfosFromStorage()
+                val duration = measureTimeMillis {
+                    refreshExpansionDirectory()
+                    findAndDeleteLeakedExpansionFiles()
+                    findAndRemoveInvalidExpandedMacroInfosFromStorage()
+                }
+
+                MACRO_LOG.info("Done consistency check in $duration ms")
             }
 
             private fun refreshExpansionDirectory() {
@@ -533,9 +537,9 @@ private class MacroExpansionServiceImplInner(
             private fun findAndDeleteLeakedExpansionFiles() {
                 val toDelete = mutableListOf<VirtualFile>()
                 runReadAction {
-                    VfsUtil.iterateChildrenRecursively(expansionsDirVi, null, ContentIterator {
-                        if (!it.isDirectory && storage.getInfoForExpandedFile(it) == null) {
-                            toDelete += it
+                    VfsUtil.iterateChildrenRecursively(expansionsDirVi, null, ContentIterator { file ->
+                        if (!file.isValidExpansionFile()) {
+                            toDelete += file
                         }
                         true
                     })
@@ -545,6 +549,26 @@ private class MacroExpansionServiceImplInner(
                     toDelete.forEach { batch.deleteFile(it) }
                     WriteAction.runAndWait<Throwable> {
                         batch.applyToVfs(async = false)
+                    }
+                }
+            }
+
+            private fun VirtualFile.isValidExpansionFile(): Boolean {
+                if (isDirectory) return true
+                val info = storage.getInfoForExpandedFile(this)
+                return if (info == null) {
+                    false
+                } else {
+                    when (val result = VfsInternals.getUpToDateContentHash(this)) {
+                        VfsInternals.ContentHashResult.Disabled -> true // Skip the check if hashes are disabled
+                        is VfsInternals.ContentHashResult.Ok -> {
+                            info.expansionFileHash == result.hash.getLeading64bits()
+                        }
+                        is VfsInternals.ContentHashResult.Err -> {
+                            // See `MacroExpansionFileSystem.contentsToByteArray`
+                            MACRO_LOG.warn(result.error)
+                            false
+                        }
                     }
                 }
             }
@@ -800,7 +824,7 @@ private class MacroExpansionServiceImplInner(
             ::createExpandedSearchScope,
             stepModificationTracker
         ) {
-            override fun getMacrosToExpand(): Sequence<List<Extractable>> {
+            override fun getMacrosToExpand(dumbService: DumbService): Sequence<List<Extractable>> {
                 val mode = expansionMode
 
                 val scope = when (mode.toScope()) {
@@ -809,7 +833,7 @@ private class MacroExpansionServiceImplInner(
                     MacroExpansionScope.NONE -> return emptySequence() // GlobalSearchScope.EMPTY_SCOPE
                 }
 
-                val calls = runReadActionInSmartMode(project) {
+                val calls = runReadActionInSmartMode(dumbService) {
                     val calls = RsMacroCallIndex.getMacroCalls(project, scope)
                     MACRO_LOG.info("Macros to expand: ${calls.size}")
                     calls.groupBy { it.containingFile.virtualFile }
@@ -839,7 +863,7 @@ private class MacroExpansionServiceImplInner(
             ::createExpandedSearchScope,
             stepModificationTracker
         ) {
-            override fun getMacrosToExpand(): Sequence<List<Extractable>> {
+            override fun getMacrosToExpand(dumbService: DumbService): Sequence<List<Extractable>> {
                 return runReadAction { storage.makeValidationTask(workspaceOnly) }
             }
 

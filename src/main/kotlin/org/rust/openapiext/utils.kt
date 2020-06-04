@@ -8,10 +8,11 @@ package org.rust.openapiext
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.Experiments
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -35,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -48,7 +50,6 @@ import org.rust.ide.annotator.RsExternalLinterPass
 import java.lang.reflect.Field
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
@@ -123,6 +124,9 @@ val Document.virtualFile: VirtualFile?
 
 val VirtualFile.document: Document?
     get() = FileDocumentManager.getInstance().getDocument(this)
+
+val VirtualFile.fileId: Int
+    get() = (this as VirtualFileWithId).id
 
 inline fun <Key, reified Psi : PsiElement> getElements(
     indexKey: StubIndexKey<Key, Psi>,
@@ -244,10 +248,10 @@ fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("
 
 val String.escaped: String get() = StringUtil.escapeXmlEntities(this)
 
-fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
+fun <T> runReadActionInSmartMode(dumbService: DumbService, action: () -> T): T {
     ProgressManager.checkCanceled()
-    if (project.isDisposed) throw ProcessCanceledException()
-    return DumbService.getInstance(project).runReadActionInSmartMode(Computable {
+    if (dumbService.project.isDisposed) throw ProcessCanceledException()
+    return dumbService.runReadActionInSmartMode(Computable {
         ProgressManager.checkCanceled()
         action()
     })
@@ -255,6 +259,7 @@ fun <T> runReadActionInSmartMode(project: Project, action: () -> T): T {
 
 fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
     checkReadAccessNotAllowed()
+    indicator.checkCanceled()
     var result: T? = null
     do {
         val success = runWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {

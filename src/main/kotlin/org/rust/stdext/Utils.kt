@@ -9,6 +9,8 @@ package org.rust.stdext
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.lang.RandomStringUtils
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -42,3 +44,6 @@ fun String.pluralize(): String = StringUtil.pluralize(this)
 
 fun randomLowercaseAlphabetic(length: Int): String =
     RandomStringUtils.random(length, "0123456789abcdefghijklmnopqrstuvwxyz")
+
+fun ByteArray.getLeading64bits(): Long =
+    ByteBuffer.wrap(this).also { it.order(ByteOrder.BIG_ENDIAN) }.getLong(0)

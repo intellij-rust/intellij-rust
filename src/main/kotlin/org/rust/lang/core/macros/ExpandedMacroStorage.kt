@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +17,6 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.FileAttribute
 import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
@@ -96,7 +96,7 @@ class ExpandedMacroStorage(val project: Project) {
                 getOrCreateSourceFile(file) ?: error("Non-root source files are not supported")
             }
         }
-        return runReadActionInSmartMode(project) {
+        return runReadAction {
             makeValidationTask(false, v2)
         }
     }
@@ -132,7 +132,8 @@ class ExpandedMacroStorage(val project: Project) {
         callHash: HashCode?,
         defHash: HashCode?,
         expansionFile: VirtualFile?,
-        ranges: RangeMap?
+        ranges: RangeMap?,
+        expansionTextHash: Long
     ): ExpandedMacroInfoImpl {
         checkWriteAccessAllowed()
         _modificationTracker.incModificationCount()
@@ -145,6 +146,7 @@ class ExpandedMacroStorage(val project: Project) {
             expansionFile,
             defHash,
             callHash,
+            expansionTextHash,
             oldInfo.macroCallStubIndex,
             oldInfo.macroCallStrongRef
         )
@@ -236,7 +238,7 @@ class ExpandedMacroStorage(val project: Project) {
     }
 }
 
-private const val STORAGE_VERSION = 11
+private const val STORAGE_VERSION = 12
 private const val RANGE_MAP_ATTRIBUTE_VERSION = 2
 
 class SerializedExpandedMacroStorage private constructor(
@@ -546,7 +548,7 @@ class SourceFile(
         val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
         val newInfos = calls.map { call ->
-            ExpandedMacroInfoImpl(this, null, null, call.bodyHash, call.calcStubIndex())
+            ExpandedMacroInfoImpl.newStubLinked(this, call)
         }
         switchToStubRefsInReadAction(RefKind.FRESH) { infos ->
             check(infos.isEmpty())
@@ -589,7 +591,7 @@ class SourceFile(
                 bindList += Pair(info, call.calcStubIndex())
             } else {
                 Testmarks.refsRecoverNotHit.hit()
-                infosToAdd += ExpandedMacroInfoImpl(this, null, null, call.bodyHash, call.calcStubIndex())
+                infosToAdd += ExpandedMacroInfoImpl.newStubLinked(this, call)
             }
         }
 
@@ -820,6 +822,7 @@ private tailrec fun SourceFile.findRootSourceFile(): SourceFile {
 interface ExpandedMacroInfo {
     val sourceFile: SourceFile
     val expansionFile: VirtualFile?
+    val expansionFileHash: Long
     fun getMacroCall(): RsMacroCall?
     fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean
     fun getExpansion(): MacroExpansion?
@@ -830,6 +833,7 @@ class ExpandedMacroInfoImpl(
     override val expansionFile: VirtualFile?,
     private val defHash: HashCode?,
     val callHash: HashCode?,
+    override val expansionFileHash: Long = 0,
     var macroCallStubIndex: Int = -1,
     var macroCallStrongRef: RsMacroCall? = null
 ) : ExpandedMacroInfo {
@@ -866,8 +870,14 @@ class ExpandedMacroInfoImpl(
             writeUTFNullable(expansionFileUrl)
             writeHashCodeNullable(defHash)
             writeHashCodeNullable(callHash)
+            writeLong(expansionFileHash)
             writeInt(macroCallStubIndex)
         }
+    }
+
+    companion object {
+        fun newStubLinked(sf: SourceFile, call: RsMacroCall): ExpandedMacroInfoImpl =
+            ExpandedMacroInfoImpl(sf, null, null, call.bodyHash, macroCallStubIndex = call.calcStubIndex())
     }
 }
 
@@ -875,6 +885,7 @@ private data class SerializedExpandedMacroInfo(
     val expansionFileUrl: String?,
     val callHash: HashCode?,
     val defHash: HashCode?,
+    val expansionFileHash: Long,
     val stubIndex: Int
 ) {
     fun toExpandedMacroInfo(sourceFile: SourceFile): ExpandedMacroInfoImpl? {
@@ -888,6 +899,7 @@ private data class SerializedExpandedMacroInfo(
             file,
             callHash,
             defHash,
+            expansionFileHash,
             stubIndex
         )
     }
@@ -898,6 +910,7 @@ private data class SerializedExpandedMacroInfo(
                 data.readUTFNullable(),
                 data.readHashCodeNullable(),
                 data.readHashCodeNullable(),
+                data.readLong(),
                 data.readInt()
             )
         }
@@ -957,8 +970,6 @@ private fun StubBasedPsiElement<*>.calcStubIndex(): Int {
     return index
 }
 
-private val VirtualFile.fileId: Int
-    get() = (this as VirtualFileWithId).id
 
 /** We use [WeakReference] because uncached [loadRangeMap] is quite cheap */
 private val MACRO_RANGE_MAP_CACHE_KEY: Key<WeakReference<RangeMap>> = Key.create("MACRO_RANGE_MAP_CACHE_KEY")
