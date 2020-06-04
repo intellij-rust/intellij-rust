@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapiext.isDispatchThread
@@ -36,8 +35,10 @@ import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
+import org.rust.stdext.getLeading64bits
 import org.rust.stdext.nextOrNull
 import org.rust.stdext.supplyAsync
+import java.io.IOException
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.max
@@ -265,6 +266,13 @@ abstract class MacroExpansionTaskBase(
                 when (val e = (t as? CompletionException)?.cause ?: t) {
                     null -> error("unreachable")
                     is ProcessCanceledException -> Unit // Task canceled
+                    is CorruptedExpansionStorageException, is MacroExpansionFileSystem.FSException -> {
+                        macroExpansionManager.reexpand()
+                        MACRO_LOG.warn(
+                            "Macro expansion storage is considered corrupted; full re-expansion is requested",
+                            e
+                        )
+                    }
                     else -> {
                         // Error
                         MACRO_LOG.error("Error during macro expansion", e)
@@ -391,6 +399,9 @@ object ExpansionPipeline {
             }
             val callHash = call.bodyHash
             val oldExpansionFile = info.expansionFile
+
+            if (oldExpansionFile != null && !oldExpansionFile.isValid) throw CorruptedExpansionStorageException()
+
             val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacro() }
                 ?: return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, null)
 
@@ -406,31 +417,29 @@ object ExpansionPipeline {
                 return nextStageFail(callHash, defHash)
             }
 
-            val expansionText = expansion.first.toString()
+            val expansionBytes = expansion.first.toString().toByteArray()
             val ranges = expansion.second
 
-            if (oldExpansionFile != null && oldExpansionFile.isValid) {
-                val oldExpansionText = VfsUtil.loadText(oldExpansionFile)
-                if (expansionText == oldExpansionText) {
+            val expansionBytesHash = VfsInternals.calculateContentHash(expansionBytes).getLeading64bits()
+
+            if (oldExpansionFile != null) {
+                val oldExpansionBytes = try {
+                    oldExpansionFile.contentsToByteArray()
+                } catch (e: IOException) {
+                    throw CorruptedExpansionStorageException(e)
+                }
+                if (expansionBytes.contentEquals(oldExpansionBytes)) {
                     // Expansion text isn't changed, but [callHash] or [defHash] or [ranges]
                     // are changed and should be updated
-                    return Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges)
+                    return Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges, expansionBytesHash)
                 }
             }
 
-            return nextStageOk(callHash, defHash, expansionText, ranges)
+            return Stage2Ok(info, callHash, defHash, expansionBytes, ranges, expansionBytesHash)
         }
 
         private fun nextStageFail(callHash: HashCode?, defHash: HashCode?): Pipeline.Stage2WriteToFs =
             Stage2Fail(info, callHash, defHash)
-
-        private fun nextStageOk(
-            callHash: HashCode?,
-            defHash: HashCode?,
-            expansionText: String,
-            ranges: RangeMap
-        ): Pipeline.Stage2WriteToFs =
-            Stage2Ok(info, callHash, defHash, expansionText, ranges)
 
         override fun toString(): String =
             "ExpansionPipeline.Stage1(call=${call.path.referenceName}!(${call.macroBody}))"
@@ -440,18 +449,19 @@ object ExpansionPipeline {
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
-        private val expansionText: String,
-        private val ranges: RangeMap
+        private val expansionBytes: ByteArray,
+        private val ranges: RangeMap,
+        private val expansionBytesHash: Long
     ) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val oldExpansionFile = info.expansionFile
             val file = if (oldExpansionFile != null) {
-                check(oldExpansionFile.isValid) { "VirtualFile is not valid ${oldExpansionFile.url}" }
-                batch.writeFile(oldExpansionFile, expansionText)
+                if (!oldExpansionFile.isValid) throw CorruptedExpansionStorageException()
+                batch.writeFile(oldExpansionFile, expansionBytes)
             } else {
-                batch.createFileWithContent(expansionText, stepNumber)
+                batch.createFileWithContent(expansionBytes, stepNumber)
             }
-            return Stage3(info, callHash, defHash, file, ranges)
+            return Stage3(info, callHash, defHash, file, ranges, expansionBytesHash)
         }
     }
 
@@ -460,11 +470,12 @@ object ExpansionPipeline {
         private val callHash: HashCode?,
         private val defHash: HashCode?,
         private val oldExpansionFile: VirtualFile,
-        private val ranges: RangeMap
+        private val ranges: RangeMap,
+        private val expansionBytesHash: Long
     ) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val file = batch.resolve(oldExpansionFile)
-            return Stage3(info, callHash, defHash, file, ranges)
+            return Stage3(info, callHash, defHash, file, ranges, expansionBytesHash)
         }
     }
 
@@ -478,7 +489,7 @@ object ExpansionPipeline {
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 batch.deleteFile(oldExpansionFile)
             }
-            return Stage3(info, callHash, defHash, null, null)
+            return Stage3(info, callHash, defHash, null, null, 0)
         }
     }
 
@@ -487,12 +498,15 @@ object ExpansionPipeline {
         private val callHash: HashCode?,
         private val defHash: HashCode?,
         private val expansionFile: MacroExpansionVfsBatch.Path?,
-        private val ranges: RangeMap?
+        private val ranges: RangeMap?,
+        private val expansionBytesHash: Long
     ) : Pipeline.Stage3SaveToStorage {
         override fun save(storage: ExpandedMacroStorage) {
             checkWriteAccessAllowed()
             val virtualFile = expansionFile?.toVirtualFile()
-            storage.addExpandedMacro(info, callHash, defHash, virtualFile, ranges)
+                // Optimization: skip charset guessing in `VirtualFileImpl.contentToByteArray()`
+                ?.also { it.setCharset(Charsets.UTF_8, null, false) }
+            storage.addExpandedMacro(info, callHash, defHash, virtualFile, ranges, expansionBytesHash)
             // If a document exists for expansion file (e.g. when AST tree is loaded), the changes in
             // a virtual file will not be committed to the PSI immediately. We have to commit it manually
             // to see the changes (or somehow wait for DocumentCommitThread, but it isn't possible for now)
@@ -504,6 +518,11 @@ object ExpansionPipeline {
             }
         }
     }
+}
+
+private class CorruptedExpansionStorageException: RuntimeException {
+    constructor(): super()
+    constructor(cause: Exception): super(cause)
 }
 
 val RsMacroCall.isTopLevelExpansion: Boolean

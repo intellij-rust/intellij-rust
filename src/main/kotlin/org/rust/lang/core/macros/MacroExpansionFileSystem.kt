@@ -21,6 +21,7 @@ import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem.FSDir
 import org.rust.lang.core.macros.MacroExpansionFileSystem.FSItem.FSFile
 import java.io.*
+import kotlin.math.max
 
 /**
  * An implementation of [com.intellij.openapi.vfs.VirtualFileSystem] used to store macro expansions.
@@ -174,8 +175,11 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     override fun contentsToByteArray(file: VirtualFile): ByteArray {
         val fsItem = convert(file) ?: throw FileNotFoundException(file.path + " (No such file or directory)")
         if (fsItem !is FSFile) throw FileNotFoundException(file.path + " (Is a directory)")
-        return fsItem.fetchAndRemoveContent()
-            ?: throw FileNotFoundException(file.path + " (Content is not provided)")
+        return fsItem.fetchAndRemoveContent() ?: run {
+            val e = FileNotFoundException(file.path + " (Content is not provided)")
+            MACRO_LOG.warn("The file content has already been fetched", e)
+            throw e
+        }
     }
 
     @Throws(IOException::class)
@@ -207,8 +211,8 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         abstract var name: String
         abstract var timestamp: Long
 
-        protected fun bumpTimestamp() {
-            timestamp = Math.min(currentTimestamp(), timestamp + 1)
+        fun bumpTimestamp() {
+            timestamp = max(currentTimestamp(), timestamp + 1)
         }
 
         override fun toString(): String = javaClass.simpleName + ": " + name
@@ -236,7 +240,9 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
                 if (override) {
                     children.removeIf { it.name == item.name }
                 } else {
-                    check(children.find { it.name == item.name } == null) { "File `${item.name}` already exists" }
+                    if (children.any { it.name == item.name }) {
+                        throw FSItemAlreadyExistsException("File `${item.name}` already exists")
+                    }
                 }
                 children.add(item)
                 if (bump) {
@@ -308,7 +314,6 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
             }
 
             @Synchronized
-            @Throws(FileNotFoundException::class)
             fun fetchAndRemoveContent(): ByteArray? {
                 val tmp = tempContent ?: run {
                     parent.removeChild(name, bump = true)
@@ -322,37 +327,41 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
     private fun splitFilenameAndParent(path: String): Pair<String, String> {
         val index = path.lastIndexOf('/')
-        check(index >= 0) { "$index" }
+        if (index < 0) throw IllegalPathException(path)
         val pathStart = path.substring(0, index)
         val filename = path.substring(index + 1)
         return pathStart to filename
     }
 
-    fun createFileWithContent(path: String, content: String, mkdirs: Boolean = false) {
+    @Throws(FSException::class)
+    fun createFileWithContent(path: String, content: ByteArray, mkdirs: Boolean = false) {
         val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName, mkdirs) ?: throw FileNotFoundException(parentName)
-        check(parent is FSDir)
+        val parent = convert(parentName, mkdirs) ?: throw FSItemNotFoundException(parentName)
+        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
         val item = parent.addChildFile(name)
-        item.setContent(content.toByteArray())
+        item.setContent(content)
     }
 
-    fun setFileContent(path: String, content: String) {
-        val item = convert(path) ?: throw FileNotFoundException(path)
-        check(item is FSFile)
-        item.setContent(content.toByteArray())
+    @Throws(FSException::class)
+    fun setFileContent(path: String, content: ByteArray) {
+        val item = convert(path) ?: throw FSItemNotFoundException(path)
+        if (item !is FSFile) throw FSItemIsADirectoryException(path)
+        item.setContent(content)
     }
 
+    @Throws(FSException::class)
     fun createDirectory(path: String) {
         val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName) ?: throw FileNotFoundException(parentName)
-        check(parent is FSDir)
+        val parent = convert(parentName) ?: throw FSItemNotFoundException(parentName)
+        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
         parent.addChildDir(name, bump = true)
     }
 
+    @Throws(FSException::class)
     fun createDirectoryIfNotExistsOrDummy(path: String) {
         val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName) ?: throw FileNotFoundException(parentName)
-        check(parent is FSDir)
+        val parent = convert(parentName) ?: throw FSItemNotFoundException(parentName)
+        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
         val child = parent.findChild(name)
         if (child == null || child is FSDir.DummyDir) {
             if (child is FSDir.DummyDir) {
@@ -362,10 +371,11 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         }
     }
 
+    @Throws(FSException::class)
     fun setDirectory(path: String, dir: FSDir, override: Boolean = true) {
         val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName) ?: throw FileNotFoundException(parentName)
-        check(parent is FSDir)
+        val parent = convert(parentName) ?: throw FSItemNotFoundException(parentName)
+        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
         dir.parent = parent
         dir.name = name
         parent.addChild(dir, bump = true, override = override)
@@ -382,18 +392,25 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     fun deleteFile(path: String) {
         val (parentName, name) = splitFilenameAndParent(path)
         val parent = convert(parentName) ?: return
-        check(parent is FSDir)
+        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
         parent.removeChild(name, bump = true)
     }
 
-    fun cleanDirectory(path: String, bump: Boolean = true) {
-        val dir = convert(path) ?: throw FileNotFoundException(path)
-        check(dir is FSDir)
+    fun cleanDirectoryIfExists(path: String, bump: Boolean = true) {
+        val dir = convert(path) ?: return
+        if (dir !is FSDir) throw FSItemIsNotADirectoryException(path)
         dir.clear(bump)
     }
 
     fun exists(path: String): Boolean = convert(path) != null
     fun isFile(path: String): Boolean = convert(path) is FSFile
+
+    open class FSException(path: String) : RuntimeException(path)
+    class FSItemNotFoundException(path: String) : FSException(path)
+    class FSItemIsNotADirectoryException(path: String) : FSException(path)
+    class FSItemIsADirectoryException(path: String) : FSException(path)
+    class FSItemAlreadyExistsException(path: String) : FSException(path)
+    class IllegalPathException(path: String) : FSException(path)
 
     companion object {
         private const val PROTOCOL: String = "rust_macros"

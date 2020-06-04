@@ -5,9 +5,9 @@
 
 package org.rust.stdext
 
+import com.intellij.util.io.DigestUtil
 import org.apache.commons.codec.binary.Hex
 import java.io.Serializable
-import java.security.MessageDigest
 
 /**
  * Abstracts byte array of cryptographic hash to provide appropriate equals/hashCode methods.
@@ -37,7 +37,7 @@ import java.security.MessageDigest
 
     companion object {
         const val ARRAY_LEN: Int = 20
-        private val SHA1 by ThreadLocalDelegate { MessageDigest.getInstance("SHA-1") }
+        private val SHA1 by ThreadLocalDelegate { DigestUtil.sha1() }
 
         fun compute(input: String): HashCode =
             HashCode(SHA1.digest(input.toByteArray()))
@@ -48,3 +48,5 @@ import java.security.MessageDigest
         }
     }
 }
+
+fun HashCode.getLeading64bits(): Long = toByteArray().getLeading64bits()

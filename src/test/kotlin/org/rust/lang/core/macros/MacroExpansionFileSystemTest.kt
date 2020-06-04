@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.rust.checkMacroExpansionFileSystemAfterTest
 
@@ -42,6 +43,42 @@ class MacroExpansionFileSystemTest : BasePlatformTestCase() {
         batch { deleteFile(foo) }
         assertNull(vfs.findFileByPath("/foo/baz.txt"))
         assertNull(vfs.findFileByPath("/foo"))
+    }
+
+    fun `test correct MUST_RELOAD_CONTENT value`() {
+        val realValue = PersistentFS::class.java.getDeclaredField("MUST_RELOAD_CONTENT")
+            .also { it.isAccessible = true }
+            .getInt(null)
+        assertEquals(VfsInternals.MUST_RELOAD_CONTENT, realValue)
+    }
+
+    fun `test vfs hash`() {
+        batch {
+            createFile("/foo", "bar.txt", "bar content")
+        }
+        val vfs = MacroExpansionFileSystem.getInstance()
+        val bar = vfs.findNonNullFileByPath("/foo/bar.txt")
+
+        assertEquals(
+            VfsInternals.calculateContentHash(bar.contentsToByteArray()),
+            VfsInternals.getContentHashIfStored(bar)
+        )
+
+        batch { writeFile(bar, "new bar content") }
+
+        assertTrue(VfsInternals.isMarkedForContentReload(bar))
+
+        VfsInternals.reloadFileIfNeeded(bar)
+
+        assertEquals(
+            VfsInternals.calculateContentHash("new bar content".toByteArray()),
+            VfsInternals.getContentHashIfStored(bar)
+        )
+
+        batch {
+            deleteFile(bar)
+            deleteFile(bar.parent)
+        }
     }
 
     override fun tearDown() {
