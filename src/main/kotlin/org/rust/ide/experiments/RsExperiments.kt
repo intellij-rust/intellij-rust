@@ -10,4 +10,5 @@ object RsExperiments {
     const val FETCH_OUT_DIR = "org.rust.cargo.fetch.out.dir"
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
     const val MOVE_REFACTORING = "org.rust.ide.refactoring.move"
+    const val MACROS_NEW_ENGINE = "org.rust.macros.new.engine"
 }
