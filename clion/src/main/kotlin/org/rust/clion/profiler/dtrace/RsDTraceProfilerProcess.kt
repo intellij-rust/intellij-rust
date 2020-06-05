@@ -17,7 +17,6 @@ import com.intellij.profiler.dtrace.cpuProfilerScript
 import com.intellij.profiler.model.NativeCall
 import com.intellij.profiler.model.NativeThread
 import com.intellij.profiler.sudo.SudoProcessHandler
-import com.intellij.profiler.ui.flamechart.NativeCallChartNodeRenderer
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.concurrency.Promise
 import org.rust.clion.profiler.RsCachingStackElementReader
@@ -47,7 +46,7 @@ class RsDTraceProfilerProcess private constructor(
     }
 
     override fun createProfilerData(builder: DummyCallTreeBuilder<BaseCallStackElement>): NewCallTreeOnlyProfilerData =
-        NewCallTreeOnlyProfilerData(builder, NativeCallChartNodeRenderer.INSTANCE)
+        NewCallTreeOnlyProfilerData(builder, NativeCallStackElementRenderer.INSTANCE)
 
     override fun postProcessData(builder: DummyCallTreeBuilder<BaseCallStackElement>): DummyCallTreeBuilder<BaseCallStackElement> {
         builder.mapTreeElements {

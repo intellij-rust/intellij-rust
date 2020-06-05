@@ -39,8 +39,7 @@ object VfsInternals {
     /** `null` means disabled hashing or invalid file */
     @VisibleForTesting
     fun getContentHashIfStored(file: VirtualFile): HashCode? =
-        (PersistentFS.getInstance() as PersistentFSImpl).getContentHashIfStored(file)
-            ?.let { HashCode.fromByteArray(it) }
+        file.getContentHashIfStored()?.let { HashCode.fromByteArray(it) }
 
     fun calculateContentHash(fileContent: ByteArray): HashCode =
         HashCode.fromByteArray(DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, fileContent))

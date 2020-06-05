@@ -33,14 +33,18 @@ class RsHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() 
 
 }
 
-private class RsHighlightExitPointsHandler(editor: Editor, file: PsiFile, var target: PsiElement) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
+private class RsHighlightExitPointsHandler(
+    editor: Editor,
+    file: PsiFile,
+    val target: PsiElement
+) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
     override fun getTargets() = listOf(target)
 
-    override fun selectTargets(targets: List<PsiElement>, selectionConsumer: Consumer<List<PsiElement>>) {
+    override fun selectTargets(targets: List<PsiElement>, selectionConsumer: ExitPointSelectionConsumer) {
         selectionConsumer.consume(targets)
     }
 
-    override fun computeUsages(targets: MutableList<PsiElement>?) {
+    override fun computeUsages(targets: List<PsiElement>) {
         val usages = mutableListOf<PsiElement>()
         val sink: (ExitPoint) -> Unit = { exitPoint ->
             when (exitPoint) {

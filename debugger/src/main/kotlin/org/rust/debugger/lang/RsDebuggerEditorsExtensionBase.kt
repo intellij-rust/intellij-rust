@@ -11,12 +11,11 @@ import com.intellij.psi.PsiFile
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.evaluation.EvaluationMode
 import com.jetbrains.cidr.execution.debugger.CidrDebuggerEditorsExtensionBase
-import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsExpressionCodeFragment
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-class RsDebuggerEditorsExtension : CidrDebuggerEditorsExtensionBase() {
+abstract class RsDebuggerEditorsExtensionBase : CidrDebuggerEditorsExtensionBase() {
     override fun getContext(project: Project, sourcePosition: XSourcePosition): PsiElement? =
         super.getContext(project, sourcePosition)?.ancestorOrSelf<RsElement>()
 
@@ -26,6 +25,4 @@ class RsDebuggerEditorsExtension : CidrDebuggerEditorsExtensionBase() {
         } else {
             super.createExpressionCodeFragment(project, text, context, mode)
         }
-
-    override fun getSupportedLanguage() = RsLanguage
 }
