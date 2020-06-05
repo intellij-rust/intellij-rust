@@ -332,4 +332,11 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             ?.toPsiDirectory(project)!!
         checkOnFiles(packageRoot)
     }
+
+    fun `test ignored test is run with ignored option`() {
+        testProject {
+            lib("foo", "src/lib.rs", "#[ignore] #[test] fn test_foo() { /*caret*/assert!(true); }").open()
+        }
+        checkOnLeaf()
+    }
 }
