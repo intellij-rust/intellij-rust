@@ -1,0 +1,3 @@
+fn foo(number: i32) -> Result<(), i32> {
+    Err(number)
+}

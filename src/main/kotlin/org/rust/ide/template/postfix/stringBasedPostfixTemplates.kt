@@ -122,6 +122,30 @@ class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) :
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
+class OkPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("ok", "Ok(expr)", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "Ok(${element.text})"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
+class SomePostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("some", "Some(expr)", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "Some(${element.text})"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
+class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) :
+    StringBasedPostfixTemplate("err", "Err(expr)", RsTopMostInScopeSelector(), provider) {
+
+    override fun getTemplateString(element: PsiElement): String = "Err(${element.text})"
+
+    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
+}
+
 private val RsExpr.isIntoIterator: Boolean
     get() = implLookup.isIntoIterator(type)
 

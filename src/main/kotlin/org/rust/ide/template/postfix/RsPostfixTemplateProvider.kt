@@ -33,7 +33,10 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         IterPostfixTemplate("iter", this),
         IterPostfixTemplate("for", this),
         PrintlnPostfixTemplate(this),
-        DbgPostfixTemplate(this)
+        DbgPostfixTemplate(this),
+        OkPostfixTemplate(this),
+        SomePostfixTemplate(this),
+        ErrPostfixTemplate(this)
     )
 
     override fun getTemplates(): Set<PostfixTemplate> = templates
