@@ -26,6 +26,15 @@ import org.rust.openapiext.checkWriteAccessAllowed
 class RsDowngradeModuleToFile : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean = elements.all { it.isDirectoryMod }
 
+    override fun isAvailableOnElementInEditorAndFile(
+        element: PsiElement,
+        editor: Editor,
+        file: PsiFile,
+        context: DataContext
+    ): Boolean {
+        return file.isDirectoryMod
+    }
+
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
     override fun isAvailableInEditorOnly(): Boolean = false
@@ -63,13 +72,14 @@ private fun contractModule(fileOrDirectory: PsiFileSystemItem) {
     dir.delete()
 }
 
-private val PsiElement.isDirectoryMod: Boolean get() {
-    return when (this) {
-        is RsFile -> name == RsConstants.MOD_RS_FILE && containingDirectory?.children?.size == 1
-        is PsiDirectory -> {
-            val child = children.singleOrNull()
-            child is RsFile && child.name == RsConstants.MOD_RS_FILE
+private val PsiElement.isDirectoryMod: Boolean
+    get() {
+        return when (this) {
+            is RsFile -> name == RsConstants.MOD_RS_FILE && containingDirectory?.children?.size == 1
+            is PsiDirectory -> {
+                val child = children.singleOrNull()
+                child is RsFile && child.name == RsConstants.MOD_RS_FILE
+            }
+            else -> false
         }
-        else -> false
     }
-}
