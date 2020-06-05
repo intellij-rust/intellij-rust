@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.parameter
 
 import org.intellij.lang.annotations.Language
 import org.rust.lang.core.psi.RsTypeArgumentList

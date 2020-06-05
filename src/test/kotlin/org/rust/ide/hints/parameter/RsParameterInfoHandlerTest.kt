@@ -3,8 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.parameter
 
+import org.rust.ide.hints.parameter.RsArgumentsDescription
+import org.rust.ide.hints.parameter.RsParameterInfoHandler
+import org.rust.ide.hints.parameter.RsParameterInfoHandlerTestBase
 import org.rust.lang.core.psi.RsValueArgumentList
 
 /**

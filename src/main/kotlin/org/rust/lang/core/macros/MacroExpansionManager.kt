@@ -462,6 +462,13 @@ private class MacroExpansionServiceImplInner(
     }
 
     fun dispose() {
+        // Can be invoked in heavy tests (e.g. RsRealProjectAnalysisTest)
+        if (!isUnitTestMode) {
+            releaseExpansionDirectory()
+        }
+    }
+
+    private fun releaseExpansionDirectory() {
         // TODO avoid refresh on plugin unload
         // See [MacroExpansionFileSystem] docs for explanation of what happens here
         RefreshQueue.getInstance().refresh(/*async = */ !isUnitTestMode, /*recursive = */ true, {
@@ -988,7 +995,7 @@ private class MacroExpansionServiceImplInner(
             dirs.dataFile.delete()
         }
 
-        dispose()
+        releaseExpansionDirectory()
         pool.shutdownNow()
         pool.awaitTermination(5, TimeUnit.SECONDS)
     }
