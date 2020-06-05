@@ -24,10 +24,10 @@ matrix:
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=201
     - name: clion-201/stable-rust
       env: RUST_VERSION=$CURRENT_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=201 ORG_GRADLE_PROJECT_baseIDE=clion
-    - name: idea-201/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=201
-    - name: clion-201/nightly-rust
-      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=201 ORG_GRADLE_PROJECT_baseIDE=clion
+    - name: idea-202/nightly-rust
+      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=202
+    - name: clion-202/nightly-rust
+      env: RUST_VERSION=$NIGHLY_RUST_VERSION ORG_GRADLE_PROJECT_platformVersion=202 ORG_GRADLE_PROJECT_baseIDE=clion
 
 install: true
 
