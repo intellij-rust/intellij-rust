@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.parameter
 
 import com.intellij.codeInsight.hints.HintInfo
 import com.intellij.codeInsight.hints.InlayInfo
@@ -20,9 +20,10 @@ import org.rust.lang.core.psi.ext.qualifiedName
 import org.rust.lang.core.psi.ext.selfParameter
 import org.rust.lang.core.psi.ext.valueParameters
 
+@Suppress("UnstableApiUsage")
 class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
     override fun getSupportedOptions(): List<Option> =
-        RsPlainHint.values.map { it.option } + RsPlainHint.SMART_HINTING
+        listOf(RsInlayParameterHints.enabledOption, RsInlayParameterHints.smartOption)
 
     override fun getDefaultBlackList(): Set<String> = emptySet()
 
@@ -35,9 +36,10 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
     }
 
     override fun getParameterHints(element: PsiElement): List<InlayInfo> {
-        val resolved = RsPlainHint.resolve(element) ?: return emptyList()
-        if (!resolved.enabled) return emptyList()
-        return resolved.provideHints(element)
+        if (RsInlayParameterHints.enabled) {
+            return RsInlayParameterHints.provideHints(element)
+        }
+        return emptyList()
     }
 
     override fun getInlayPresentation(inlayText: String): String = inlayText
@@ -56,14 +58,16 @@ class RsInlayParameterHintsProvider : InlayParameterHintsProvider {
     companion object {
         private fun resolve(call: RsCallExpr): HintInfo.MethodInfo? {
             val fn = (call.expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction ?: return null
-            return createMethodInfo(fn, fn.valueParameters.map { it.patText ?: "_" })
+            val parameters = fn.valueParameters.map { it.patText ?: "_" }
+            return createMethodInfo(fn, parameters)
         }
 
         private fun resolve(methodCall: RsMethodCall): HintInfo.MethodInfo? {
             val fn = methodCall.reference.resolve() as? RsFunction? ?: return null
-            return createMethodInfo(fn, listOfNotNull(fn.selfParameter?.name) + fn.valueParameters.map {
+            val parameters = listOfNotNull(fn.selfParameter?.name) + fn.valueParameters.map {
                 it.patText ?: "_"
-            })
+            }
+            return createMethodInfo(fn, parameters)
         }
 
         private fun createMethodInfo(function: RsFunction, parameters: List<String>): HintInfo.MethodInfo? {

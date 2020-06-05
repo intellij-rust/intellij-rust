@@ -140,14 +140,14 @@
 
         <!-- Hints -->
 
-        <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.RsExpressionTypeProvider"/>
-        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.RsParameterInfoHandler"/>
+        <codeInsight.typeInfo language="Rust" implementationClass="org.rust.ide.hints.type.RsExpressionTypeProvider"/>
+        <codeInsight.parameterInfo language="Rust" implementationClass="org.rust.ide.hints.parameter.RsParameterInfoHandler"/>
         <codeInsight.parameterInfo language="Rust"
-                                   implementationClass="org.rust.ide.hints.RsGenericParameterInfoHandler"/>
+                                   implementationClass="org.rust.ide.hints.parameter.RsGenericParameterInfoHandler"/>
         <codeInsight.parameterNameHints language="Rust"
-                                        implementationClass="org.rust.ide.hints.RsInlayParameterHintsProvider"/>
-        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsInlayTypeHintsProvider"/>
-        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.RsChainMethodTypeHintsProvider"/>
+                                        implementationClass="org.rust.ide.hints.parameter.RsInlayParameterHintsProvider"/>
+        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.type.RsInlayTypeHintsProvider"/>
+        <codeInsight.inlayProvider language="Rust" implementationClass="org.rust.ide.hints.type.RsChainMethodTypeHintsProvider"/>
 
         <declarationRangeHandler key="org.rust.lang.core.psi.RsStructItem"
                                  implementationClass="org.rust.ide.hints.RsStructItemDeclarationRangeHandler"/>

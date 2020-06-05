@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.type
 
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
@@ -20,6 +20,7 @@ import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.*
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
+@Suppress("UnstableApiUsage")
 class RsTypeHintsPresentationFactory(
     context: RsElement?,
     private val factory: PresentationFactory,

@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.type
 
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.fileTreeFromText
+import org.rust.ide.hints.parameter.RsInlayParameterHintsProvider
 import org.rust.lang.core.psi.RsMethodCall
 
 class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsProvider::class) {

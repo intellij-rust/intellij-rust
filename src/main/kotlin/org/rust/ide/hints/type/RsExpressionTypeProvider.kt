@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.type
 
 import com.intellij.lang.ExpressionTypeProvider
 import com.intellij.openapi.util.TextRange

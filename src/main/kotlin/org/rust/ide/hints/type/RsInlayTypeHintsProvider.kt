@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.hints
+package org.rust.ide.hints.type
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
@@ -30,6 +30,7 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.JPanel
 
+@Suppress("UnstableApiUsage")
 class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Settings> {
     override val key: SettingsKey<Settings> get() = KEY
 
@@ -84,7 +85,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             settings.showForVariables = varField.isSelected
             settings.showForLambdas = lambdaField.isSelected
             settings.showForIterators = iteratorField.isSelected
-            settings.showForPlaceholders  = placeholderField.isSelected
+            settings.showForPlaceholders = placeholderField.isSelected
             settings.showObviousTypes = obviousTypesField.isSelected
             listener.settingsChanged()
         }

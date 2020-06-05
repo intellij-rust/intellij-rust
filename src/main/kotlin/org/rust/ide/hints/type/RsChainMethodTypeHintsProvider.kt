@@ -4,7 +4,7 @@
  */
 @file:Suppress("UnstableApiUsage")
 
-package org.rust.ide.hints
+package org.rust.ide.hints.type
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
