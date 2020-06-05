@@ -7,6 +7,7 @@ package org.rust.ide.template.postfix
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.TextExpression
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsBinaryExpr
@@ -36,52 +37,44 @@ abstract class AssertPostfixTemplateBase(
 class AssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfixTemplateBase("assert", provider)
 class DebugAssertPostfixTemplate(provider: RsPostfixTemplateProvider) : AssertPostfixTemplateBase("debug_assert", provider)
 
-class LambdaPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("lambda", "|| expr", RsTopMostInScopeSelector(), provider) {
+/**
+ * Base class for postfix templates that just add prefix/suffix to expression text.
+ *
+ * Note, `example` param should contain `expr` substring
+ */
+abstract class SimpleExprPostfixTemplate(
+    name: String,
+    example: String,
+    provider: RsPostfixTemplateProvider,
+    selector: PostfixTemplateExpressionSelector = RsTopMostInScopeSelector()
+): StringBasedPostfixTemplate(name, example, selector, provider) {
 
-    override fun getTemplateString(element: PsiElement): String = "|| ${element.text}"
+    init {
+        require("expr" in example) {
+            "Template example should contain `expr`"
+        }
+    }
 
+    override fun getTemplateString(element: PsiElement): String = example.replace("expr", element.text)
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-class NotPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("not", "!expr", RsTopMostInScopeSelector(), provider) {
+class LambdaPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("lambda", "|| expr", provider)
 
-    override fun getTemplateString(element: PsiElement): String = "!${element.text}"
+class NotPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("not", "!expr", provider)
 
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
-
-class RefPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("ref", "&expr", RsTopMostInScopeSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "&${element.text}"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
-
-class RefmPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("refm", "&mut expr", RsTopMostInScopeSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "&mut ${element.text}"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
+class RefPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ref", "&expr", provider)
+class RefmPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("refm", "&mut expr", provider)
 
 class DerefPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate(
+    SimpleExprPostfixTemplate(
         "deref",
         "*expr",
+        provider,
         RsTopMostInScopeSelector {
             it.type is TyReference || it.type is TyPointer || it.implementsDeref
-        },
-        provider
-    ) {
-
-    override fun getTemplateString(element: PsiElement): String = "*${element.text}"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
+        }
+    )
 
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate("match", "match expr {...}", RsTopMostInScopeSelector(), provider) {
@@ -114,37 +107,11 @@ class IterPostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
     override fun getElementToRemove(expr: PsiElement): PsiElement = expr
 }
 
-class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("dbg", "dbg!(expr)", RsTopMostInScopeSelector(), provider) {
+class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("dbg", "dbg!(expr)", provider)
 
-    override fun getTemplateString(element: PsiElement): String = "dbg!(${element.text})"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
-
-class OkPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("ok", "Ok(expr)", RsTopMostInScopeSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "Ok(${element.text})"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
-
-class SomePostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("some", "Some(expr)", RsTopMostInScopeSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "Some(${element.text})"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
-
-class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("err", "Err(expr)", RsTopMostInScopeSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "Err(${element.text})"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-}
+class SomePostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("some", "Some(expr)", provider)
+class OkPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ok", "Ok(expr)", provider)
+class ErrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("err", "Err(expr)", provider)
 
 private val RsExpr.isIntoIterator: Boolean
     get() = implLookup.isIntoIterator(type)
