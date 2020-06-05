@@ -12,8 +12,6 @@
 | Stable       | [![Stable Build Status][stable-build-status-svg]][stable-build-status]       |
 | Beta         | [![Beta Build Status][beta-build-status-svg]][beta-build-status]             |
 | Nightly      | [![Nightly Build Status][nightly-build-status-svg]][nightly-build-status]    |
-| TeamCity     | [![TeamCity Build Status][teamcity-build-status-svg]][teamcity-build-status] |
-
 
 ## Installation & Usage
 
@@ -22,8 +20,6 @@ the [changelog](https://intellij-rust.github.io/thisweek/).
 
 If you want to jump straight in, open `Settings > Plugins > Marketplace` in your IDE,
 search for _Rust_ and install the plugin. To open an existing project, use **File | Open** and point to the directory containing `Cargo.toml`. For creating projects, use the **Rust** template. You can find more details in the [Quick Start Guide](https://intellij-rust.github.io/docs/quick-start.html). 
-
-Unstable master branch builds can be downloaded from [TeamCity].
 
 ## Compatible IDEs
 
@@ -61,7 +57,6 @@ understand the high-level structure of the codebase. If you are not sure where t
 [help wanted]: https://github.com/intellij-rust/intellij-rust/labels/help%20wanted
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [ARCHITECTURE.md]: ARCHITECTURE.md
-[TeamCity]: https://teamcity.jetbrains.com/guestAuth/repository/download/IntellijIdeaPlugins_Rust_192_TestIdea/.lastSuccessful/intellij-rust-0.2.104.{build.number}-192-dev.zip
 [intellij-toml]: intellij-toml/
 
 <!-- Badges -->
@@ -78,17 +73,14 @@ understand the high-level structure of the codebase. If you are not sure where t
 [appveyor-build-status]: https://ci.appveyor.com/project/intellij-rust/intellij-rust/branch/master
 [appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/xf8792c7p3637060?svg=true
 
-[teamcity-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_TestIdea&guest=1
-[teamcity-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_TestIdea/statusIcon.svg
+[stable-build-status]: https://github.com/intellij-rust/intellij-rust/actions?query=workflow%3A%22rust+release%22+event%3Arepository_dispatch
+[stable-build-status-svg]: https://github.com/intellij-rust/intellij-rust/workflows/rust%20release/badge.svg?event=repository_dispatch
 
-[stable-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadStable&guest=1
-[stable-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadStable/statusIcon.svg
+[beta-build-status]: https://github.com/intellij-rust/intellij-rust/actions?query=workflow%3A%22rust+release%22+event%3Aschedule
+[beta-build-status-svg]: https://github.com/intellij-rust/intellij-rust/workflows/rust%20release/badge.svg?event=schedule
 
-[beta-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadBeta&guest=1
-[beta-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadBeta/statusIcon.svg
-
-[nightly-build-status]: https://teamcity.jetbrains.com/viewType.html?buildTypeId=IntellijIdeaPlugins_Rust_192_UploadNightly&guest=1
-[nightly-build-status-svg]: https://teamcity.jetbrains.com/app/rest/builds/buildType:IntellijIdeaPlugins_Rust_192_UploadNightly/statusIcon.svg
+[nightly-build-status]: https://github.com/intellij-rust/intellij-rust/actions?query=workflow%3A%22rust+nightly%22
+[nightly-build-status-svg]: https://github.com/intellij-rust/intellij-rust/workflows/rust%20nightly/badge.svg
 
 
 [IntelliJ IDEA]: https://www.jetbrains.com/idea/
