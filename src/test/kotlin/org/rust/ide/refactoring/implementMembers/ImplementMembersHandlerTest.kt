@@ -163,7 +163,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
         }
         struct S;
-        impl T for S {/*caret*/}
+        impl T<i32> for S {/*caret*/}
     """, listOf(
         ImplementMemberSelection("f() -> U<P>", true, true)
     ), """
@@ -178,8 +178,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
             }
         }
         struct S;
-        impl T for S {
-            fn f() -> U<P> {
+        impl T<i32> for S {
+            fn f() -> U<i32> {
                 <selection>unimplemented!()</selection>
             }
         }
@@ -616,11 +616,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         const C2: &'b S<'b> = &S { x: "" };
 
-        fn f3(_: &'b A<'a>) -> &'b A<'a> {
+        fn f3(_: &'b A<'b>) -> &'b A<'b> {
             unimplemented!()
         }
 
-        const C3: &'b A<'a> = &S { x: "" };
+        const C3: &'b A<'b> = &S { x: "" };
 
         fn f4(_: &'b B) -> &'b B {
             unimplemented!()

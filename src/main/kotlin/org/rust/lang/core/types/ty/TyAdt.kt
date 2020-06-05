@@ -58,7 +58,7 @@ data class TyAdt private constructor(
             typeArguments.map { it.foldWith(folder) },
             regionArguments.map { it.foldWith(folder) },
             constArguments.map { it.foldWith(folder) },
-            aliasedBy
+            aliasedBy?.foldWith(folder)
         )
 
     override fun superVisitWith(visitor: TypeVisitor): Boolean =

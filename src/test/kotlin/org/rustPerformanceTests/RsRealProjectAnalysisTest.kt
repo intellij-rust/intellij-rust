@@ -33,9 +33,11 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
     fun `test analyze xi_editor`() = doTest(XI_EDITOR)
     fun `test analyze juniper`() = doTest(JUNIPER)
 
+    private val earlyTestRootDisposable = Disposer.newDisposable()
+
     private fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
         Disposer.register(
-            testRootDisposable,
+            earlyTestRootDisposable,
             project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
         )
         AnnotatorBase.enableAnnotator(RsErrorAnnotator::class.java, testRootDisposable)
@@ -86,6 +88,11 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
                 })
             }
         }
+    }
+
+    override fun tearDown() {
+        Disposer.dispose(earlyTestRootDisposable)
+        super.tearDown()
     }
 }
 
