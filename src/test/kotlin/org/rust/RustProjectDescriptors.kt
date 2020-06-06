@@ -27,6 +27,7 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.DownloadResult
 import java.nio.file.Paths
+import java.util.*
 
 object DefaultDescriptor : RustProjectDescriptorBase()
 
@@ -63,14 +64,18 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
             CargoWorkspaceData(packages, emptyMap()), CfgOptions.DEFAULT)
     }
 
-    protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = CargoWorkspaceData.Package(
+    protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
         id = "$name 0.0.1",
         contentRootUrl = contentRoot,
         name = name,
         version = "0.0.1",
         targets = listOf(
             Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true)
+            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true),
+            Target("$contentRoot/bin/a.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true),
+            Target("$contentRoot/bench/a.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true),
+            Target("$contentRoot/example/a.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true),
+            Target("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB)), edition = Edition.EDITION_2015, doctest = true)
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
@@ -124,10 +129,11 @@ open class WithCustomStdlibRustProjectDescriptor(
         StandardLibrary.fromPath(path)
     }
 
-    override val skipTestReason: String? get() {
-        if (stdlib == null) return "No stdlib"
-        return delegate.skipTestReason
-    }
+    override val skipTestReason: String?
+        get() {
+            if (stdlib == null) return "No stdlib"
+            return delegate.skipTestReason
+        }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace =
         delegate.testCargoProject(module, contentRoot).withStdlib(stdlib!!, CfgOptions.DEFAULT)
