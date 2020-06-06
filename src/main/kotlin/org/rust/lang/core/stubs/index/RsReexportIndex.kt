@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.ext.nameInScope
 import org.rust.lang.core.psi.ext.pathOrQualifier
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsUseSpeckStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
@@ -44,6 +45,7 @@ class RsReexportIndex : StringStubIndexExtension<RsUseSpeck>() {
             target: String,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
         ): Collection<RsUseSpeck> {
+            checkCommitIsNotInProgress(project)
             return getElements(KEY, target, project, scope)
         }
     }

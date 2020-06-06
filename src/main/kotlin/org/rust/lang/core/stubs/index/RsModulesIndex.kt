@@ -21,6 +21,7 @@ import org.rust.lang.core.psi.ext.pathAttribute
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 
 class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -30,6 +31,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
         fun getDeclarationsFor(mod: RsFile): List<RsModDeclItem> {
             val key = key(mod) ?: return emptyList()
             val project = mod.project
+            checkCommitIsNotInProgress(project)
 
             val result = SmartList<RsModDeclItem>()
 

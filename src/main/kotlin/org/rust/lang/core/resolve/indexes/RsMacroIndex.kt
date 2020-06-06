@@ -24,6 +24,7 @@ import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
@@ -45,6 +46,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         }
 
         fun allExportedMacros(project: Project): Map<RsMod, List<RsMacro>> {
+            checkCommitIsNotInProgress(project)
             val cacheKey = if (project.macroExpansionManager.expansionState != null) EXPORTED_MACROS_KEY else EXPORTED_KEY
             return CachedValuesManager.getManager(project).getCachedValue(project, cacheKey, {
                 val result = HashMap<RsMod, MutableList<RsMacro>>()

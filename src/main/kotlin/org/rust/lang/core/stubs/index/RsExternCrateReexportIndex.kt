@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.containingCargoTarget
 import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsExternCrateReexportIndex : StringStubIndexExtension<RsExternCrateItem>() {
@@ -36,6 +37,7 @@ class RsExternCrateReexportIndex : StringStubIndexExtension<RsExternCrateItem>()
         }
 
         fun findReexports(project: Project, crateRoot: RsMod): List<RsExternCrateItem> {
+            checkCommitIsNotInProgress(project)
             return CachedValuesManager.getCachedValue(crateRoot) {
                 val targetName = crateRoot.containingCargoTarget?.normName
                 val reexports = if (targetName != null) {

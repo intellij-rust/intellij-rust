@@ -8,7 +8,10 @@ package org.rust.lang.core.stubs.index
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
-import com.intellij.psi.stubs.*
+import com.intellij.psi.stubs.AbstractStubIndex
+import com.intellij.psi.stubs.IndexSink
+import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -17,9 +20,13 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.findIncludingFile
+import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.stringValue
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsMacroCallStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.recursionGuard
 import java.io.DataInput
 import java.io.DataOutput
@@ -71,6 +78,7 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
         private fun makeIndexLookup(key: IncludeMacroKey, file: RsFile): RsMod? {
             return recursionGuard(file, Computable {
                 val project = file.project
+                checkCommitIsNotInProgress(project)
 
                 var parentMod: RsMod? = null
                 val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope

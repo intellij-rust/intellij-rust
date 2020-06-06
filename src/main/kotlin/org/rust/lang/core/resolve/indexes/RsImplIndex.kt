@@ -18,6 +18,7 @@ import org.rust.lang.core.resolve.RsProcessor
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.TyFingerprint
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
@@ -40,6 +41,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             tyf: TyFingerprint,
             processor: RsProcessor<RsCachedImplItem>
         ): Boolean {
+            checkCommitIsNotInProgress(project)
             val impls = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
 
             // Note that `getElements` is intentionally used with intermediate collection instead of

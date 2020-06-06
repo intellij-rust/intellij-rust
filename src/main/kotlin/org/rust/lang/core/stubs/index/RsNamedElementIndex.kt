@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.stubs.RsFileStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
@@ -26,6 +27,7 @@ class RsNamedElementIndex : StringStubIndexExtension<RsNamedElement>() {
             target: String,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
         ): Collection<RsNamedElement> {
+            checkCommitIsNotInProgress(project)
             return getElements(KEY, target, project, scope)
         }
     }

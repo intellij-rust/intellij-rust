@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsInnerAttrStub
+import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
 
 class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
@@ -37,6 +38,7 @@ class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
         }
 
         fun getFeatureAttributes(project: Project, featureName: String): Collection<RsInnerAttr> {
+            checkCommitIsNotInProgress(project)
             return getElements(KEY, featureName, project, GlobalSearchScope.allScope(project))
         }
     }
