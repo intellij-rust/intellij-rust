@@ -39,7 +39,9 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 
 \* [IntelliJ IDEA] Community Edition, [PyCharm] Community Edition, [PyCharm Edu and IntelliJ IDEA Edu].
 
-\** [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin is required 
+\** Requires the
+[Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin. 
+Available on macOS and Linux, LLDB only.
 
 ## TOML
 
