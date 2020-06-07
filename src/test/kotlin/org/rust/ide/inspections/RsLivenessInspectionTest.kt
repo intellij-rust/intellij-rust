@@ -152,9 +152,9 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
 
     fun `test live variable match 3`() = checkByText("""
         enum E { A, B(i32) }
-        
+
         fn bar(_x: i32) {}
-        
+
         use E::*;
         fn foo(e: E) {
             let _ = match e {
@@ -164,7 +164,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
                     2
                 }
             };
-            
+
             let _ = match Config::default() {
                 Ok(cfg) => cfg,
                 Err(e) => {
@@ -239,7 +239,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             let x = 42;
             noreturn(x);
         }
-        
+
         fn noreturn(_a: i32) -> ! { panic!() }
     """)
 
@@ -306,7 +306,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
                     let <warning descr="Variable `y` is never used">y</warning> = x;
                     continue;
                 }
-    
+
                 return;
             }
         }
@@ -320,16 +320,16 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
 
     fun `test struct literal dots`() = checkByText("""
         pub struct S { x: i32, y: i32, z: i32 }
-        
+
         fn foo(a: i32) {
             S { x: 42, ..bar(a) };
         }
-        
-        fn bar(a: i32) -> S { 
-            S { 
-                x: 0, 
-                y: 1, 
-                z: a 
+
+        fn bar(a: i32) -> S {
+            S {
+                x: 0,
+                y: 1,
+                z: a
             }
         }
     """)
@@ -400,7 +400,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         impl FooBar {
             fn foo(&self, x: i32) {}
         }
-        
+
         #[allow(unused_variables)]
         fn bar(a: i32) { let x = 42; }
     """)
@@ -421,7 +421,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
 
     fun `test use struct field`() = checkByText("""
         struct S { x: i32, y: i32 }
-        
+
         fn foo(s: S) {
             s.x;
         }
@@ -429,7 +429,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
 
     fun `test use struct pat field`() = checkByText("""
         struct S { x: i32, y: i32 }
-        
+
         fn foo(s: S) {
             let S { x, <warning descr="Variable `y` is never used">y</warning> } = s;
             x;
@@ -461,7 +461,7 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         macro_rules! foo {
            ($($ t:tt)*) => { $($ t)* };
         }
-        
+
         fn foo(x: i32) {
             foo!(UnknownStruct { x });
         }
@@ -489,9 +489,30 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         macro_rules! my_macro {
             ($ e:expr) => { unresolved!(e) };
         }
-        
+
         fn foo(x: i32) {
             my_macro!(x);
+        }
+    """)
+
+    fun `test destructured struct variable`() = checkByText("""
+        struct S {
+            a: u32
+        }
+
+        fn foo() {
+            let S { a } = S { a: 0 };
+            a;
+        }
+    """)
+
+    fun `test destructured struct parameter`() = checkByText("""
+        struct S {
+            a: u32
+        }
+
+        fn foo(S { a }: S) {
+            a;
         }
     """)
 }

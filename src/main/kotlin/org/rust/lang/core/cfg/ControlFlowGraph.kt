@@ -102,6 +102,10 @@ class ControlFlowGraph private constructor(
                     table.getOrPut(binding, ::mutableListOf).add(entry)
                 }
 
+                override fun visitPatField(field: RsPatField) {
+                    field.acceptChildren(this)
+                }
+
                 override fun visitPat(pat: RsPat) {
                     pat.acceptChildren(this)
                 }
