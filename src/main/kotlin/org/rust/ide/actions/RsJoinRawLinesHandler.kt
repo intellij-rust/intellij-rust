@@ -9,6 +9,7 @@ import com.intellij.codeInsight.editorActions.JoinLinesHandlerDelegate.CANNOT_JO
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
@@ -23,10 +24,32 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         if (file !is RsFile) return CANNOT_JOIN
         if (start == 0) return CANNOT_JOIN
 
-        return tryJoinSingleExpressionBlock(file, start)
+        val tryJoinSingleExpressionBlock = tryJoinSingleExpressionBlock(file, start)
+        if (tryJoinSingleExpressionBlock != CANNOT_JOIN) return tryJoinSingleExpressionBlock
+
+        val leftPsi = file.findElementAt(start) ?: return CANNOT_JOIN
+        val rightPsi = file.findElementAt(end) ?: return CANNOT_JOIN
+
+        if (leftPsi != rightPsi) return CANNOT_JOIN
+
+        return when (leftPsi.elementType) {
+            RustParserDefinition.INNER_EOL_DOC_COMMENT, RustParserDefinition.OUTER_EOL_DOC_COMMENT ->
+                joinLineDocComment(document, start, end)
+
+            else -> CANNOT_JOIN
+        }
     }
 
-    fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {
+    // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles
+    // of documentation comments, so we handle this manually.
+    private fun joinLineDocComment(document: Document, start: Int, end: Int): Int {
+        val prefix = document.charsSequence.subSequence(end, end + 3).toString()
+        if (prefix != "///" && prefix != "//!") return CANNOT_JOIN
+        document.deleteString(start, end + prefix.length)
+        return start
+    }
+
+    private fun tryJoinSingleExpressionBlock(file: RsFile, start: Int): Int {
         val lbrace = file.findElementAt(start - 1)!!
         if (lbrace.elementType != LBRACE) return CANNOT_JOIN
 
