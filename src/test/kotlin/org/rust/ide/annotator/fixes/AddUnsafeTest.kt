@@ -79,7 +79,61 @@ class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
         }
     """)
 
-    fun `test wrap function with a unsafe block`() = checkFixByText("Surround with unsafe block", """
+    fun `test add unsafe inside for`() = checkFixByText("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        fn main() {
+            for i in 0..1 {
+                <error>foo()/*caret*/</error>;
+            }
+        }
+    """, """
+        unsafe fn foo() {}
+
+        unsafe fn main() {
+            for i in 0..1 {
+                foo();
+            }
+        }
+    """)
+
+    fun `test add unsafe inside loop`() = checkFixByText("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        fn main() {
+            loop {
+                <error>foo()/*caret*/</error>;
+            }
+        }
+    """, """
+        unsafe fn foo() {}
+
+        unsafe fn main() {
+            loop {
+                foo();
+            }
+        }
+    """)
+
+    fun `test add unsafe inside if`() = checkFixByText("Add unsafe to function", """
+        unsafe fn foo() {}
+
+        fn main() {
+            if true {
+                <error>foo()/*caret*/</error>;
+            }
+        }
+    """, """
+        unsafe fn foo() {}
+
+        unsafe fn main() {
+            if true {
+                foo();
+            }
+        }
+    """)
+
+    fun `test wrap function with an unsafe block`() = checkFixByText("Surround with unsafe block", """
         unsafe fn foo() {}
 
         fn main() {
@@ -93,7 +147,7 @@ class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
         }
     """)
 
-    fun `test wrap function with a unsafe block 2`() = checkFixByText("Surround with unsafe block", """
+    fun `test wrap function with an unsafe block 2`() = checkFixByText("Surround with unsafe block", """
         unsafe fn foo() {}
 
         fn main() {
@@ -107,7 +161,7 @@ class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
         }
     """)
 
-    fun `test wrap function with a unsafe block inline`() = checkFixByText("Surround with unsafe block", """
+    fun `test wrap function with an unsafe block inline`() = checkFixByText("Surround with unsafe block", """
         unsafe fn pi() -> f64 { 3.14 }
 
         fn main() {
