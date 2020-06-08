@@ -9,6 +9,7 @@ import com.intellij.TestCase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -123,6 +124,15 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         if (reason != null) {
             System.err.println("SKIP \"$name\": $reason")
             return
+        }
+
+        val ignoreAnnotation = findAnnotationInstance<IgnoreInPlatform>()
+        if (ignoreAnnotation != null) {
+            val majorPlatformVersion = ApplicationInfo.getInstance().build.baselineVersion
+            if (majorPlatformVersion in ignoreAnnotation.majorVersions) {
+                System.err.println("SKIP \"$name\": test is ignored for `$majorPlatformVersion` platform")
+                return
+            }
         }
 
         if (findAnnotationInstance<BothEditions>() != null) {
