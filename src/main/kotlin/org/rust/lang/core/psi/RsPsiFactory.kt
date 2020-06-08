@@ -205,8 +205,10 @@ class RsPsiFactory(
         createType("&${if (mutable) "mut " else ""}$innerTypeText").skipParens() as RsRefLikeType
 
     fun createModDeclItem(modName: String): RsModDeclItem =
+        tryCreateModDeclItem(modName) ?: error("Failed to create mod decl with name: `$modName`")
+
+    fun tryCreateModDeclItem(modName: String): RsModDeclItem? =
         createFromText("mod $modName;")
-            ?: error("Failed to create mod decl with name: `$modName`")
 
     fun createUseItem(text: String, visibility: String = ""): RsUseItem =
         createFromText("$visibility use $text;")
