@@ -6,7 +6,7 @@
     <option name="nocapture" value="false" />
     <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />
-    <option name="workingDirectory" value="file:///test" />
+    <option name="workingDirectory" value="file:///src" />
     <envs />
     <method v="2">
       <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />

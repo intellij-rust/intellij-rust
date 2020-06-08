@@ -5,13 +5,13 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.codeInsight.intention.IntentionManager
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 import org.rust.RsTestBase
 
 class RsIntentionDocumentationTest : RsTestBase() {
 
     fun `test intentions has documentation`() {
-        IntentionManager.EP_INTENTION_ACTIONS
+        IntentionManagerImpl.EP_INTENTION_ACTIONS
             .extensions
             .filter { it.category?.startsWith("Rust") == true }
             .forEach {

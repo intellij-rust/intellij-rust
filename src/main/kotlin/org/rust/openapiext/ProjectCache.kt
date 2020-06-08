@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import org.rust.lang.core.psi.rustStructureModificationTracker
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
 class ProjectCache<in T, R>(
@@ -33,7 +34,7 @@ class ProjectCache<in T, R>(
         val cache = CachedValuesManager.getManager(project)
             .getCachedValue(project, cacheKey, {
                 CachedValueProvider.Result.create(
-                    ContainerUtil.newConcurrentMap<T, R>(),
+                    ConcurrentHashMap<T, R>(),
                     dependencyGetter(project)
                 )
             }, false)

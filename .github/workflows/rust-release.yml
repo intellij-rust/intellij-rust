@@ -79,7 +79,7 @@ jobs:
         strategy:
             fail-fast: true
             matrix:
-                platform-version: [ 201 ]
+                platform-version: [ 201, 202 ]
         steps:
             - name: Checkout
               uses: actions/checkout@v2

@@ -43,9 +43,4 @@ class RsMethodLineSeparatorProvider : LineMarkerProvider {
             separatorPlacement = SeparatorPlacement.TOP
         }
     }
-
-    override fun collectSlowLineMarkers(
-        elements: List<PsiElement>,
-        result: MutableCollection<LineMarkerInfo<PsiElement>>
-    ) {}
 }

@@ -204,7 +204,7 @@ class RsBuildActionTest : CargoBuildTest() {
                     name = "second"
                     version = "0.1.0"
                     authors = []
-                    
+
                     [dependencies]
                     first = { path = "../first" }
                 """)

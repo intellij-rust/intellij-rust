@@ -15,6 +15,7 @@ import com.intellij.util.containers.WeakStringInterner
 import com.intellij.util.containers.stream
 import org.rust.clion.profiler.RsSymbolSearcher
 
+@Suppress("UnstableApiUsage")
 data class RsDTraceNavigatableNativeCall(private val nativeCall: NativeCall) : BaseCallStackElement() {
     override fun fullName(): String = nativeCall.fullName()
 

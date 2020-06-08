@@ -7,8 +7,7 @@ package org.rust.debugger
 
 import org.rust.openapiext.plugin
 
-
-val PP_PATH: String get() = plugin().path.resolve("prettyPrinters").path
+val PP_PATH: String get() = plugin().pluginPath.resolve("prettyPrinters").toString()
 const val LLDB_LOOKUP: String = "lldb_lookup"
 const val GDB_LOOKUP: String = "gdb_lookup"
 

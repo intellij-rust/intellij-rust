@@ -10,6 +10,7 @@ import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.testFramework.PlatformTestUtil
+import org.rust.IgnoreInPlatform
 import org.rust.ide.annotator.RsAnnotationTestFixture
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -41,6 +42,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     """)
 
+    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5530
     fun `test check doc comments`() = checkByText("""
         ///
         /// ```

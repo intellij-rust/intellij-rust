@@ -24,7 +24,7 @@ jobs:
                 os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 201 ]
+                platform-version: [ 201, 202 ]
                 # TODO: pass minimal supported versions of IDEs. See .travis.yml
                 include:
                     - os: ubuntu-latest

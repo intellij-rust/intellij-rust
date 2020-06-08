@@ -10,7 +10,6 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.containers.ContainerUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.CORE
@@ -23,6 +22,7 @@ import org.rust.lang.core.psi.ext.cargoProject
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 private val KNOWN_ITEMS_KEY: Key<CachedValue<KnownItems>> = Key.create("KNOWN_ITEMS_KEY")
 private val DUMMY_KNOWN_ITEMS = KnownItems(DummyKnownItemsLookup)
@@ -155,8 +155,8 @@ private class RealKnownItemsLookup(
     private val workspace: CargoWorkspace
 ) : KnownItemsLookup {
     // WE use Optional because ConcurrentHashMap doesn't allow null values
-    private val langItems: MutableMap<String, Optional<RsNamedElement>> = ContainerUtil.newConcurrentMap()
-    private val resolvedItems: MutableMap<String, Optional<RsNamedElement>> = ContainerUtil.newConcurrentMap()
+    private val langItems: MutableMap<String, Optional<RsNamedElement>> = ConcurrentHashMap()
+    private val resolvedItems: MutableMap<String, Optional<RsNamedElement>> = ConcurrentHashMap()
 
     override fun findLangItem(langAttribute: String, crateName: String): RsNamedElement? {
         return langItems.getOrPut(langAttribute) {

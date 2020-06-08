@@ -35,7 +35,4 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
             GutterIconRenderer.Alignment.LEFT
         )
     }
-
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<LineMarkerInfo<PsiElement>>) {
-    }
 }

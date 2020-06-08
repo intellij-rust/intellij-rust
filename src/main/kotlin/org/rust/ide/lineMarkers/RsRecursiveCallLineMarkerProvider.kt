@@ -25,8 +25,7 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>,
-                                        result: MutableCollection<LineMarkerInfo<PsiElement>>) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: SlowRunMarketResult) {
         val lines = HashSet<Int>()  // To prevent several markers on one line
 
         for (el in elements) {

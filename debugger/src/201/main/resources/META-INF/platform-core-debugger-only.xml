@@ -1,0 +1,5 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="cidr.debugger">
+        <editorsExtension implementation="org.rust.debugger.lang.RsDebuggerEditorsExtension"/>
+    </extensions>
+</idea-plugin>
