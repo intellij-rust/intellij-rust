@@ -6,15 +6,26 @@
 package org.rust.clion.debugger.runconfig.legacy
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.concurrency.AsyncPromise
-import org.rust.cargo.runconfig.CargoRunStateBase
-import org.rust.cargo.runconfig.legacy.RsAsyncRunner
+import org.rust.cargo.runconfig.BuildResult.ToolchainError
+import org.rust.cargo.runconfig.legacy.RsAsyncRunner.Companion.Binary
 import org.rust.clion.debugger.runconfig.RsCLionDebugRunnerUtils
-import org.rust.debugger.runconfig.RsDebugRunnerUtils.MSVC_IS_NOT_SUPPORTED_MESSAGE
 import org.rust.debugger.runconfig.legacy.RsDebugRunnerLegacyBase
 
 class RsCLionDebugRunnerLegacy : RsDebugRunnerLegacyBase() {
+
+    override fun checkToolchainSupported(host: String): ToolchainError? =
+        RsCLionDebugRunnerUtils.checkToolchainSupported(host)
+
     override fun checkToolchainConfigured(project: Project): Boolean =
         RsCLionDebugRunnerUtils.checkToolchainConfigured(project)
+
+    override fun processUnsupportedToolchain(
+        project: Project,
+        toolchainError: ToolchainError,
+        promise: AsyncPromise<Binary?>
+    ) {
+        RsCLionDebugRunnerUtils.processInvalidToolchain(project, toolchainError)
+        promise.setResult(null)
+    }
 }

@@ -326,3 +326,6 @@ fun runWithEnabledFeature(featureId: String, action: () -> Unit) {
         setFeatureEnabled(featureId, currentValue)
     }
 }
+
+// BACKCOMPAT: 2020.1
+val BUILD_202 = BuildNumber.fromString("202")!!
