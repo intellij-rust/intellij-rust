@@ -540,6 +540,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsMainFunctionNotFoundInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Detached file"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -856,7 +861,6 @@
         <!-- Notification Providers -->
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
-        <editorNotificationProvider implementation="org.rust.ide.notifications.DetachedFileNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
 
         <!-- Editor Tab Title Providers -->
