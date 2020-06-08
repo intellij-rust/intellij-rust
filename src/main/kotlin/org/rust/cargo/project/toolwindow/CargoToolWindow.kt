@@ -142,7 +142,7 @@ class CargoToolWindow(
         }
 
         fun isRegistered(project: Project): Boolean {
-            val manager = ToolWindowManager.getInstance(project) ?: return false
+            val manager = ToolWindowManager.getInstance(project)
             return manager.getToolWindow(ID) != null
         }
     }
