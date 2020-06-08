@@ -5,29 +5,37 @@
 
 package org.rust.clion.debugger.runconfig
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.SystemInfo
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchains
 import com.jetbrains.cidr.cpp.toolchains.CPPToolchainsConfigurable
-import org.rust.cargo.runconfig.CargoRunStateBase
+import com.jetbrains.cidr.toolchains.OSType
+import org.rust.cargo.runconfig.BuildResult.ToolchainError
+import org.rust.cargo.runconfig.BuildResult.ToolchainError.*
 import org.rust.debugger.runconfig.RsDebugRunnerUtils.ERROR_MESSAGE_TITLE
-import org.rust.debugger.runconfig.RsDebugRunnerUtils.MSVC_IS_NOT_SUPPORTED_MESSAGE
-import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.BUILD_202
 
 object RsCLionDebugRunnerUtils {
 
-    fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean {
-        if (!SystemInfo.isWindows) return true
-        val isMsvc = project.computeWithCancelableProgress("Checking if toolchain is supported...") {
-            "msvc" in state.rustVersion().rustc?.host.orEmpty()
+    fun checkToolchainSupported(host: String): ToolchainError? {
+        val toolSet = CPPToolchains.getInstance().defaultToolchain?.toolSet ?: return null
+        if (CPPToolchains.getInstance().osType == OSType.WIN) {
+            val isMSVCRustToolchain = "msvc" in host
+            val isGNURustToolchain = "gnu" in host
+
+            if (ApplicationInfo.getInstance().build < BUILD_202 && isMSVCRustToolchain) {
+                return UnsupportedMSVC
+            }
+            if (isGNURustToolchain && toolSet.isMSVC) {
+                return MSVCWithRustGNU
+            }
+            if (isMSVCRustToolchain && !toolSet.isMSVC) {
+                return GNUWithRustMSVC
+            }
         }
-        if (isMsvc) {
-            Messages.showErrorDialog(project, MSVC_IS_NOT_SUPPORTED_MESSAGE, ERROR_MESSAGE_TITLE)
-            return false
-        }
-        return true
+        return toolSet.isDebugSupportDisabled?.let { Other(it) }
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
@@ -35,23 +43,38 @@ object RsCLionDebugRunnerUtils {
         // TODO: Fix synchronous execution on EDT
         val toolchain = toolchains.defaultToolchain
         if (toolchain == null) {
-            val option = Messages.showDialog(
-                project,
-                "Debug toolchain is not configured.",
-                ERROR_MESSAGE_TITLE,
-                arrayOf("Configure"),
-                Messages.OK,
-                Messages.getErrorIcon()
-            )
-            if (option == Messages.OK) {
-                ShowSettingsUtil.getInstance().showSettingsDialog(
-                    project,
-                    CPPToolchainsConfigurable::class.java,
-                    null
-                )
-            }
+            showConfigureToolchainDialog(project, "Debug toolchain is not configured.")
             return false
         }
         return true
+    }
+
+    fun processInvalidToolchain(project: Project, toolchainError: ToolchainError) {
+        when (toolchainError) {
+            UnsupportedMSVC, UnsupportedGNU, is Other -> {
+                Messages.showErrorDialog(project, toolchainError.message, ERROR_MESSAGE_TITLE)
+            }
+            MSVCWithRustGNU, GNUWithRustMSVC -> {
+                showConfigureToolchainDialog(project, toolchainError.message)
+            }
+        }
+    }
+
+    private fun showConfigureToolchainDialog(project: Project, message: String) {
+        val option = Messages.showDialog(
+            project,
+            message,
+            ERROR_MESSAGE_TITLE,
+            arrayOf("Configure"),
+            Messages.OK,
+            Messages.getErrorIcon()
+        )
+        if (option == Messages.OK) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(
+                project,
+                CPPToolchainsConfigurable::class.java,
+                null
+            )
+        }
     }
 }

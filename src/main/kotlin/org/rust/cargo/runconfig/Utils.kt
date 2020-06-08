@@ -110,3 +110,15 @@ fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: 
         additionalArguments.add(formatJsonOption)
     }
 }
+
+sealed class BuildResult {
+    data class Binaries(val paths: List<String>) : BuildResult()
+    sealed class ToolchainError(val message: String) : BuildResult() {
+        // TODO: move into bundle
+        object UnsupportedMSVC : ToolchainError("MSVC toolchain is not supported. Please use GNU toolchain.")
+        object UnsupportedGNU : ToolchainError("GNU toolchain is not supported. Please use MSVC toolchain.")
+        object MSVCWithRustGNU : ToolchainError("MSVC debugger cannot be used with GNU Rust toolchain")
+        object GNUWithRustMSVC : ToolchainError("GNU debugger cannot be used with MSVC Rust toolchain")
+        class Other(message: String) : ToolchainError(message)
+    }
+}

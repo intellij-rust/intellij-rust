@@ -243,6 +243,12 @@ object CargoMetadata {
                 return if (executable != null) {
                     listOf(executable)
                 } else {
+                    /**
+                     * `.dSYM` and `.pdb` files are binaries, but they should not be used when starting debug session.
+                     * Without this filtering, CLion shows error message about several binaries
+                     * in case of disabled build tool window
+                     */
+                    // BACKCOMPAT: Cargo 0.34.0
                     filenames.filter { !it.endsWith(".dSYM") && !it.endsWith(".pdb") }
                 }
             }

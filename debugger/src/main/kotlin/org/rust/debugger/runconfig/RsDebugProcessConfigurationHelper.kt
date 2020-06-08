@@ -146,7 +146,13 @@ class RsDebugProcessConfigurationHelper(
     companion object {
         private val LOG: Logger = Logger.getInstance(RsDebugProcessConfigurationHelper::class.java)
 
-        /** Should be synchronized with `rust_types.py` */
+        /**
+         * Should be synchronized with `rust_types.py`
+         *
+         * `([a-z_]+::)+)` part is used instead of a specific path to make these regexes
+         * more immune to changes in Rust stdlib module structure. Note that `\w` metacharacter
+         * may be not supported by LLDB so it should not be used there
+         */
         private val RUST_STD_TYPES: List<String> = listOf(
             "^(alloc::([a-z_]+::)+)String$",
             "^&str$",

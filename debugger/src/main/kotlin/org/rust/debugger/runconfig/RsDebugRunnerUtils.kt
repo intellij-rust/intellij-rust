@@ -23,9 +23,8 @@ import org.rust.debugger.settings.RsDebuggerSettings
 
 object RsDebugRunnerUtils {
 
-    // TODO: move them into bundle
+    // TODO: move into bundle
     const val ERROR_MESSAGE_TITLE: String = "Unable to run debugger"
-    const val MSVC_IS_NOT_SUPPORTED_MESSAGE: String = "MSVC toolchain is not supported. Please use GNU toolchain."
 
     fun showRunContent(
         state: CargoRunStateBase,
@@ -62,7 +61,7 @@ object RsDebugRunnerUtils {
         }
 
         if (option == Messages.OK) {
-            val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project);
+            val result = RsDebuggerToolchainService.getInstance().downloadDebugger(project)
             if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
                 RsDebuggerSettings.getInstance().lldbPath = result.lldbDir.absolutePath
                 return true
@@ -75,7 +74,7 @@ object RsDebugRunnerUtils {
         return Messages.showDialog(
             project,
             message,
-            RsDebugRunnerUtils.ERROR_MESSAGE_TITLE,
+            ERROR_MESSAGE_TITLE,
             arrayOf(action),
             Messages.OK,
             Messages.getErrorIcon(),
