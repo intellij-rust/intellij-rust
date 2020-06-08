@@ -15,7 +15,7 @@ class AddMainFnFixTest : RsInspectionsTestBase(RsMainFunctionNotFoundInspection:
         <error descr="`main` function not found in crate `test-package` [E0601]"> /*caret*/ </error>
     """, """
     //- main.rs
-        /*caret*/fn main() {}
+        fn main() {/*caret*/}
     """)
 
     fun `test the fix in a custom bin`() = checkFixByFileTree("Add `fn main()`", """
@@ -23,7 +23,7 @@ class AddMainFnFixTest : RsInspectionsTestBase(RsMainFunctionNotFoundInspection:
         <error descr="`main` function not found in crate `test-package` [E0601]"> /*caret*/ </error>
     """, """
     //- bin/a.rs
-        /*caret*/fn main() {}
+        fn main() {/*caret*/}
     """)
 
     fun `test the fix in a custom example bin`() = checkFixByFileTree("Add `fn main()`", """
@@ -31,6 +31,6 @@ class AddMainFnFixTest : RsInspectionsTestBase(RsMainFunctionNotFoundInspection:
         <error descr="`main` function not found in crate `test-package` [E0601]"> /*caret*/ </error>
     """, """
     //- example/a.rs
-        /*caret*/fn main() {}
+        fn main() {/*caret*/}
     """)
 }
