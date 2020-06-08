@@ -148,21 +148,21 @@ class RsDebugProcessConfigurationHelper(
 
         /** Should be synchronized with `rust_types.py` */
         private val RUST_STD_TYPES: List<String> = listOf(
-            "^(alloc::(\\w+::)+)String$",
+            "^(alloc::([a-z_]+::)+)String$",
             "^&str$",
-            "^(std::ffi::(\\w+::)+)OsString$",
-            "^(alloc::(\\w+::)+)Vec<.+>$",
-            "^(alloc::(\\w+::)+)VecDeque<.+>$",
-            "^(alloc::(\\w+::)+)BTreeSet<.+>$",
-            "^(alloc::(\\w+::)+)BTreeMap<.+>$",
-            "^(std::collections::(\\w+::)+)HashMap<.+>$",
-            "^(std::collections::(\\w+::)+)HashSet<.+>$",
-            "^(alloc::(\\w+::)+)Rc<.+>$",
-            "^(alloc::(\\w+::)+)Arc<.+>$",
-            "^(core::(\\w+::)+)Cell<.+>$",
-            "^(core::(\\w+::)+)Ref<.+>$",
-            "^(core::(\\w+::)+)RefMut<.+>$",
-            "^(core::(\\w+::)+)RefCell<.+>$",
+            "^(std::ffi::([a-z_]+::)+)OsString$",
+            "^(alloc::([a-z_]+::)+)Vec<.+>$",
+            "^(alloc::([a-z_]+::)+)VecDeque<.+>$",
+            "^(alloc::([a-z_]+::)+)BTreeSet<.+>$",
+            "^(alloc::([a-z_]+::)+)BTreeMap<.+>$",
+            "^(std::collections::([a-z_]+::)+)HashMap<.+>$",
+            "^(std::collections::([a-z_]+::)+)HashSet<.+>$",
+            "^(alloc::([a-z_]+::)+)Rc<.+>$",
+            "^(alloc::([a-z_]+::)+)Arc<.+>$",
+            "^(core::([a-z_]+::)+)Cell<.+>$",
+            "^(core::([a-z_]+::)+)Ref<.+>$",
+            "^(core::([a-z_]+::)+)RefMut<.+>$",
+            "^(core::([a-z_]+::)+)RefCell<.+>$",
             "^core::num::NonZero.+$"
         )
     }
