@@ -221,8 +221,7 @@ private AnyTypeArgument ::= AssocTypeBinding | TypeReference | Lifetime | ConstA
 private ConstArgument ::= (BlockExpr | LitExpr | &('-' LitExpr) UnaryExpr)
 
 AssocTypeBinding ::= identifier (AssocTypeBindingType | AssocTypeBindingBound) {
-  implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
-                 "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
+  implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsAssocTypeBindingMixin"
   stubClass = "org.rust.lang.core.stubs.RsAssocTypeBindingStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"

@@ -19,7 +19,7 @@ import org.rust.lang.core.stubs.RsAssocTypeBindingStub
 val RsAssocTypeBinding.parentPath: RsPath?
     get() = ancestorStrict()
 
-abstract class RsAssocTypeBindingMixin : RsStubbedNamedElementImpl<RsAssocTypeBindingStub>,
+abstract class RsAssocTypeBindingMixin : RsStubbedElementImpl<RsAssocTypeBindingStub>,
                                          RsAssocTypeBinding {
 
     constructor(node: ASTNode) : super(node)
@@ -30,5 +30,5 @@ abstract class RsAssocTypeBindingMixin : RsStubbedNamedElementImpl<RsAssocTypeBi
 
     override val referenceNameElement: PsiElement get() = identifier
 
-    override val referenceName: String get() = greenStub?.name ?: super.referenceName
+    override val referenceName: String get() = greenStub?.referenceName ?: super.referenceName
 }
