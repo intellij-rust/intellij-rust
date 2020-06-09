@@ -1,5 +1,5 @@
 struct S {
-    foo: bool
+    foo: bool,
 }
 
 fn main() {

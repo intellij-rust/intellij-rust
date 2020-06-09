@@ -41,7 +41,7 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
         use foo::{bar, baz};
 
         struct S1 {
-            a: i32
+            a: i32,
         }
 
         struct S2 {

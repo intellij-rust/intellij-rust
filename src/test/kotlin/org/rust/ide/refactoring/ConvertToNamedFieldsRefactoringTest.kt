@@ -16,7 +16,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
     """, """
         struct Test {
             pub _0: usize,
-            _1: i32
+            _1: i32,
         }
     """)
 
@@ -36,10 +36,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """, """
         enum Test{
-            A {
-                _0: usize,
-                _1: i32
-            },
+            A { _0: usize, _1: i32 },
             B
         }
         fn main(){
@@ -59,7 +56,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
     """, """
         struct Test {
             pub _0: usize,
-            _1: i32
+            _1: i32,
         }
 
         fn main (){
@@ -81,7 +78,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
     """, """
         struct Test {
             pub _0: usize,
-            _1: i32
+            _1: i32,
         }
 
         fn main (){
@@ -108,7 +105,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
     """, """
         struct Test {
             pub _0: usize,
-            _1: i32
+            _1: i32,
         }
 
         fn main (){
@@ -139,7 +136,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """, """
         struct S {
-            _0: u32
+            _0: u32,
         }
 
         impl S {
@@ -170,7 +167,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
     """, """
         mod nested {
             pub struct S {
-                pub _0: u32
+                pub _0: u32,
             }
 
             impl S {
@@ -191,7 +188,9 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         struct Test/*caret*/<T>(T) where T: Trait ;
     """, """
         trait Trait {}
-        struct Test<T> where T: Trait { _0: T }
+        struct Test<T> where T: Trait {
+            _0: T,
+        }
     """)
 
     fun `test where clause (multiline)`() = doAvailableTest("""
@@ -208,7 +207,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
                 T2: Trait
         {
             _0: T1,
-            _1: T2
+            _1: T2,
         }
     """)
 

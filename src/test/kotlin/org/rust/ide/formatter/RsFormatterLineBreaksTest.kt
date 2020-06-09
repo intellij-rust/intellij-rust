@@ -243,15 +243,15 @@ class RsFormatterLineBreaksTest : RsFormatterTestBase() {
         }
     """, """
         struct S1 {
-            f: i32
+            f: i32,
         }
 
         struct S2 {
-            f: i32
+            f: i32,
         }
 
         struct S3 {
-            f: i32
+            f: i32,
         }
 
         enum E {

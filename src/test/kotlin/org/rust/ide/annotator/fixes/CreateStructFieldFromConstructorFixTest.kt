@@ -25,7 +25,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
     """, """
         struct S {
             foo: String,
-            bar: i32
+            bar: i32,
         }
 
         impl S {
@@ -52,7 +52,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
     """, """
         struct S {
             foo: String,
-            baz: i64
+            baz: i64,
         }
 
         impl S {
@@ -82,7 +82,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         struct S {
             foo: String,
             baz: i64,
-            bar: i32
+            bar: i32,
         }
 
         impl S {
@@ -107,7 +107,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """, """
         struct S {
-            foo: i32
+            foo: i32,
         }
 
         impl S {
@@ -132,7 +132,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """, """
         struct S {
-            foo: i32
+            foo: i32,
         }
 
         impl S {
@@ -155,7 +155,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """, """
         struct S {
-            foo: i32
+            foo: i32,
         }
 
         impl S {
@@ -176,7 +176,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """, """
         struct S {
-            foo: i32
+            foo: i32,
         }
 
         impl S {
@@ -202,7 +202,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
     """, """
         mod foo {
             pub struct S {
-                pub foo: i32
+                pub foo: i32,
             }
         }
 
@@ -230,7 +230,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
     """, """
         mod foo {
             pub struct S {
-                pub foo: i32
+                pub foo: i32,
             }
         }
 
@@ -255,7 +255,7 @@ class CreateStructFieldFromConstructorFixTest : RsAnnotatorTestBase(RsExpression
         }
     """, """
         struct S {
-            x: i32
+            x: i32,
         }
 
         impl S {

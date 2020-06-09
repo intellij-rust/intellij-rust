@@ -325,7 +325,7 @@ class RsFormatterTest : RsFormatterTestBase() {
 
         struct Foo<T> where T: for<'a,
                                    'b> Fn(i32) -> () {
-            a: T
+            a: T,
         }
     """, """
         struct Foo<T: A + B + 'c,
@@ -336,7 +336,7 @@ class RsFormatterTest : RsFormatterTestBase() {
 
         struct Foo<T> where T: for<'a,
             'b> Fn(i32) -> () {
-            a: T
+            a: T,
         }
     """)
 
