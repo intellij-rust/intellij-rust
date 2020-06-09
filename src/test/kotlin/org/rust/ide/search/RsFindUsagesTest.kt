@@ -10,7 +10,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -250,9 +253,36 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
+    fun `test mod decl`() = doTestByFileTree("""
+    //- main.rs
+        mod foo;
+           //^
+        use foo::bar; // - use
+    //- foo.rs
+        pub fn bar() {}
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test extern crate`() = doTestByFileTree("""
+    //- main.rs
+        extern crate test_package;
+                   //^
+        use test_package::bar; // - use
+    //- lib.rs
+        pub fn bar() {}
+    """)
+
     private fun doTestByText(@Language("Rust") code: String) {
         InlineFile(code)
+        doTest()
+    }
 
+    private fun doTestByFileTree(@Language("Rust") code: String) {
+        fileTreeFromText(code).createAndOpenFileWithCaretMarker()
+        doTest()
+    }
+
+    private fun doTest() {
         val (_, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
         val source = TargetElementUtil.getInstance().findTargetElement(
             myFixture.editor,
@@ -261,7 +291,7 @@ class RsFindUsagesTest : RsTestBase() {
         ) as? RsNamedElement ?: error("Element not found")
 
         val actual = markersActual(source)
-        val expected = markersFrom(code)
+        val expected = markersFrom(myFixture.file.text)
         assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
     }
 
