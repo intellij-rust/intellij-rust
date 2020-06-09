@@ -49,7 +49,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 198
+        private const val STUB_VERSION = 199
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1667,26 +1667,25 @@ private fun RsStubLiteralKind?.serialize(dataStream: StubOutputStream) {
 
 class RsAssocTypeBindingStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    override val name: String?
-) : StubBase<RsAssocTypeBinding>(parent, elementType),
-    RsNamedStub {
+    val referenceName: String
+) : StubBase<RsAssocTypeBinding>(parent, elementType) {
 
     object Type : RsStubElementType<RsAssocTypeBindingStub, RsAssocTypeBinding>("ASSOC_TYPE_BINDING") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsAssocTypeBindingStub(parentStub, this,
-                dataStream.readNameAsString()
+                dataStream.readNameAsString()!!
             )
 
         override fun serialize(stub: RsAssocTypeBindingStub, dataStream: StubOutputStream) =
             with(dataStream) {
-                writeName(stub.name)
+                writeName(stub.referenceName)
             }
 
         override fun createPsi(stub: RsAssocTypeBindingStub): RsAssocTypeBinding =
             RsAssocTypeBindingImpl(stub, this)
 
         override fun createStub(psi: RsAssocTypeBinding, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(parentStub, this, psi.identifier.text)
+            RsAssocTypeBindingStub(parentStub, this, psi.referenceName)
     }
 }
 
