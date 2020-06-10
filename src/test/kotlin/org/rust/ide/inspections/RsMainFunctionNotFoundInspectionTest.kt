@@ -15,6 +15,21 @@ class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctio
         <error descr="`main` function not found in crate `test-package` [E0601]"> /*caret*/ </error>
     """)
 
+    fun `test do not show if an error exists`() = checkByFileTree("""
+    //- main.rs
+        fn foo( <error>{</error>/*caret*/}
+        fn main<error>(</error>) {}
+    """)
+
+    fun `test show if a nested error exists`() = checkByFileTree("""
+    //- main.rs
+        <error descr="`main` function not found in crate `test-package` [E0601]">
+        fn foo() {
+            fn bar( <error>{</error>/*caret*/}
+        }<EOLError></EOLError>
+        </error>
+    """)
+
     fun `test has nested main function`() = checkByFileTree("""
     //- main.rs
         <error descr="`main` function not found in crate `test-package` [E0601]">fn foo() {
