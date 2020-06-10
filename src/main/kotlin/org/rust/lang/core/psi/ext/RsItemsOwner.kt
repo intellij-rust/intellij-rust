@@ -126,7 +126,14 @@ private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolea
 
 private val RsPath.isAtom: Boolean
     get() = when (kind) {
-        PathKind.IDENTIFIER -> qualifier == null
+        PathKind.IDENTIFIER -> {
+            val qual = qualifier
+            if (qual == null) {
+                true
+            } else {
+                qual.isAtom && qual.referenceName == referenceName
+            }
+        }
         PathKind.SELF -> qualifier?.isAtom == true
         else -> false
     }
