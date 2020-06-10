@@ -30,6 +30,11 @@
         <generatedSourcesFilter implementation="org.rust.cargo.project.model.RsGeneratedSourcesFilter"/>
         <writingAccessProvider implementation="org.rust.cargo.project.model.RsGeneratedSourcesWritingAccessProvider"/>
 
+        <!-- PSI managing -->
+
+        <projectService serviceInterface="org.rust.lang.core.psi.RsPsiManager"
+                        serviceImplementation="org.rust.lang.core.psi.RsPsiManagerImpl"/>
+
         <!-- Code insight settings -->
 
         <applicationService serviceImplementation="org.rust.ide.settings.RsCodeInsightSettings"/>
@@ -949,13 +954,6 @@
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
                         dynamic="true"/>
     </extensionPoints>
-
-    <project-components>
-        <component>
-            <interface-class>org.rust.lang.core.psi.RsPsiManager</interface-class>
-            <implementation-class>org.rust.lang.core.psi.RsPsiManagerImpl</implementation-class>
-        </component>
-    </project-components>
 
     <projectListeners>
         <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"

@@ -663,7 +663,7 @@ private class MacroExpansionServiceImplInner(
             }
         })
 
-        connect.subscribe(RUST_PSI_CHANGE_TOPIC, treeChangeListener)
+        project.rustPsiManager.subscribeRustPsiChange(connect, treeChangeListener)
     }
 
     /**
