@@ -996,6 +996,21 @@ sealed class RsDiagnostic(
         }
     }
 
+    class WrongNumberOfTypeArguments(
+        element: PsiElement,
+        private val errorText: String,
+        val fixes: List<LocalQuickFix> = emptyList()
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation {
+            return PreparedAnnotation(
+                ERROR,
+                E0107,
+                errorText,
+                fixes = fixes
+            )
+        }
+    }
+
     class ImplForNonAdtError(
         element: PsiElement
     ) : RsDiagnostic(element) {

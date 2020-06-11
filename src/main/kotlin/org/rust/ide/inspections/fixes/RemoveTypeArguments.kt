@@ -8,12 +8,15 @@ package org.rust.ide.inspections.fixes
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsMethodCall
+import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.RsElement
 
-class RemoveTypeParameter : LocalQuickFix {
+class RemoveTypeArguments : LocalQuickFix {
 
-    override fun getName() = "Remove all type parameters"
+    override fun getName() = "Remove all type arguments"
     override fun getFamilyName() = name
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
