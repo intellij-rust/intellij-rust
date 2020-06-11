@@ -91,14 +91,12 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
 
     private val environmentVariables = EnvironmentVariablesComponent()
     private val allFeatures = CheckBox("Use all features in tests", false)
-    private val nocapture = CheckBox("Show stdout/stderr in tests (and disable test tool window)", false)
     private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         channel.selectedIndex = configuration.channel.index
         command.text = configuration.command
         allFeatures.isSelected = configuration.allFeatures
-        nocapture.isSelected = configuration.nocapture
         emulateTerminal.isSelected = configuration.emulateTerminal
         backtraceMode.selectedIndex = configuration.backtrace.index
         workingDirectory.component.text = configuration.workingDirectory?.toString() ?: ""
@@ -119,7 +117,6 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         configuration.channel = configChannel
         configuration.command = command.text
         configuration.allFeatures = allFeatures.isSelected
-        configuration.nocapture = nocapture.isSelected
         configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.workingDirectory = currentWorkingDirectory
@@ -141,7 +138,6 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
         }
 
         row { allFeatures() }
-        row { nocapture() }
 
         if (!SystemInfo.isWindows) {
             row { emulateTerminal() }

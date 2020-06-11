@@ -47,7 +47,6 @@ class CargoCommandConfiguration(
     var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
     var allFeatures: Boolean = false
-    var nocapture: Boolean = false
     var emulateTerminal: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
@@ -67,7 +66,6 @@ class CargoCommandConfiguration(
         element.writeEnum("channel", channel)
         element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
-        element.writeBool("nocapture", nocapture)
         element.writeBool("emulateTerminal", emulateTerminal)
         element.writeEnum("backtrace", backtrace)
         element.writePath("workingDirectory", workingDirectory)
@@ -83,7 +81,6 @@ class CargoCommandConfiguration(
         element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
-        element.readBool("nocapture")?.let { nocapture = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         element.readPath("workingDirectory")?.let { workingDirectory = it }
@@ -94,7 +91,6 @@ class CargoCommandConfiguration(
         channel = cmd.channel
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         allFeatures = cmd.allFeatures
-        nocapture = cmd.nocapture
         emulateTerminal = cmd.emulateTerminal
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
@@ -113,17 +109,14 @@ class CargoCommandConfiguration(
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
         CargoCommandConfigurationEditor(project)
 
-    override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-        clean().ok?.let {
-            if (command.startsWith("test") &&
-                project.rustSettings.showTestToolWindow &&
-                !command.contains("--nocapture") &&
-                !nocapture) {
-                CargoTestRunState(environment, this, it)
-            } else {
-                CargoRunState(environment, this, it)
-            }
+    override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+        val config = clean().ok ?: return null
+        return if (command.startsWith("test") && !command.contains("--nocapture")) {
+            CargoTestRunState(environment, this, config)
+        } else {
+            CargoRunState(environment, this, config)
         }
+    }
 
     sealed class CleanConfiguration {
         class Ok(
@@ -133,7 +126,7 @@ class CargoCommandConfiguration(
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()
 
-        val ok: CleanConfiguration.Ok? get() = this as? Ok
+        val ok: Ok? get() = this as? Ok
 
         companion object {
             fun error(message: String) = Err(RuntimeConfigurationError(message))
@@ -156,7 +149,6 @@ class CargoCommandConfiguration(
                 channel,
                 env,
                 allFeatures,
-                nocapture,
                 emulateTerminal
             )
         }

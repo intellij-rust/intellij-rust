@@ -45,9 +45,6 @@ class RsProjectConfigurable(
         }
     private var macroExpansionEngine: MacroExpansionEngine by ComboBoxDelegate(macroExpansionEngineComboBox)
 
-    private val showTestToolWindowCheckbox: JBCheckBox = JBCheckBox()
-    private var showTestToolWindow: Boolean by CheckboxDelegate(showTestToolWindowCheckbox)
-
     private val doctestInjectionCheckbox: JBCheckBox = JBCheckBox()
     private var doctestInjectionEnabled: Boolean by CheckboxDelegate(doctestInjectionCheckbox)
 
@@ -58,10 +55,6 @@ class RsProjectConfigurable(
         row("Expand declarative macros:", macroExpansionEngineComboBox, """
             Allow plugin to process declarative macro invocations
             to extract information for name resolution and type inference.
-        """)
-        row("Show test tool window:", showTestToolWindowCheckbox, """
-            Show test results in run tool window when testing session begins
-            instead of raw console.
         """)
         row("Inject Rust language into documentation comments:", doctestInjectionCheckbox)
     }
@@ -76,7 +69,6 @@ class RsProjectConfigurable(
             explicitPathToStdlib = settings.explicitPathToStdlib
         )
         macroExpansionEngine = settings.macroExpansionEngine
-        showTestToolWindow = settings.showTestToolWindow
         doctestInjectionEnabled = settings.doctestInjectionEnabled
     }
 
@@ -88,7 +80,6 @@ class RsProjectConfigurable(
             it.toolchain = rustProjectSettings.data.toolchain
             it.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
             it.macroExpansionEngine = macroExpansionEngine
-            it.showTestToolWindow = showTestToolWindow
             it.doctestInjectionEnabled = doctestInjectionEnabled
         }
     }
@@ -98,7 +89,6 @@ class RsProjectConfigurable(
         return data.toolchain?.location != settings.toolchain?.location
             || data.explicitPathToStdlib != settings.explicitPathToStdlib
             || macroExpansionEngine != settings.macroExpansionEngine
-            || showTestToolWindow != settings.showTestToolWindow
             || doctestInjectionEnabled != settings.doctestInjectionEnabled
     }
 }

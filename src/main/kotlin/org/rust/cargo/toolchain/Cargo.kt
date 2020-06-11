@@ -322,9 +322,8 @@ class Cargo(private val cargoExecutable: Path) {
             val (pre, post) = commandLine.splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            if (commandLine.command == "test") {
-                if (commandLine.allFeatures && !pre.contains("--all-features")) pre.add("--all-features")
-                if (commandLine.nocapture && !pre.contains("--nocapture")) post.add(0, "--nocapture")
+            if (commandLine.command == "test" && commandLine.allFeatures && !pre.contains("--all-features")) {
+                pre.add("--all-features")
             }
 
             // Force colors

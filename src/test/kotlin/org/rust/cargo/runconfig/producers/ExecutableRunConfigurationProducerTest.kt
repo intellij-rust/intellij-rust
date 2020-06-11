@@ -54,7 +54,6 @@ class ExecutableRunConfigurationProducerTest : RunConfigurationProducerTestBase(
         modifyTemplateConfiguration {
             channel = RustChannel.NIGHTLY
             allFeatures = true
-            nocapture = true
             emulateTerminal = true
             backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
