@@ -431,14 +431,14 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         struct S { x: i32, y: i32 }
 
         fn foo(s: S) {
-            let S { x, <warning descr="Variable `y` is never used">y</warning> } = s;
+            let S { x, <warning descr="Binding `y` is never used">y</warning> } = s;
             x;
         }
     """)
 
     fun `test use binding from tuple`() = checkByText("""
         fn foo() {
-            let (x, <warning descr="Variable `y` is never used">y</warning>) = (1, 2);
+            let (x, <warning descr="Binding `y` is never used">y</warning>) = (1, 2);
             x;
         }
     """)

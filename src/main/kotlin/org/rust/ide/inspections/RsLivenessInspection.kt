@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
 import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.topLevelPattern
 import org.rust.lang.core.types.DeclarationKind
 import org.rust.lang.core.types.DeclarationKind.Parameter
 import org.rust.lang.core.types.DeclarationKind.Variable
@@ -61,9 +62,14 @@ class RsLivenessInspection : RsLintInspection() {
         // TODO: remove this check when multi-resolve for `RsOrPats` is implemented
         if (binding.ancestorStrict<RsOrPats>() != null) return
 
-        val message = when (kind) {
-            Parameter -> "Parameter `$name` is never used"
-            Variable -> "Variable `$name` is never used"
+        val isSimplePat = binding.topLevelPattern is RsPatIdent
+        val message = if (isSimplePat) {
+            when (kind) {
+                Parameter -> "Parameter `$name` is never used"
+                Variable -> "Variable `$name` is never used"
+            }
+        } else {
+            "Binding `$name` is never used"
         }
 
         holder.registerProblem(binding, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, RenameFix(binding, "_$name"))
