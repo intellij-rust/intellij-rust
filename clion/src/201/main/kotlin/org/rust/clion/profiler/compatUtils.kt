@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.clion.profiler.dtrace
+package org.rust.clion.profiler
+
+import com.intellij.util.containers.WeakStringInterner
 
 typealias NativeCallStackElementRenderer = com.intellij.profiler.ui.flamechart.NativeCallChartNodeRenderer
+typealias StringInterner = WeakStringInterner
