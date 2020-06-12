@@ -45,7 +45,6 @@ class RustProjectSettingsServiceImpl(
     override val compileAllTargets: Boolean get() = state.compileAllTargets
     override val useOffline: Boolean get() = state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = state.macroExpansionEngine
-    override val showTestToolWindow: Boolean get() = state.showTestToolWindow
     override val doctestInjectionEnabled: Boolean get() = state.doctestInjectionEnabled
     override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
     override val useSkipChildren: Boolean get() = state.useSkipChildren
