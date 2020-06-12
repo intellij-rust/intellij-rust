@@ -26,6 +26,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
             ok1: Foo1<u32>,
             ok2: Foo2<u32, bool>,
             ok3: Foo2to3<u8, u8>,
+            ok4: Foo2to3<u8, u8, u8>
         }
 
         struct Err {
@@ -103,7 +104,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
     """)
 
-    fun `test fix no type arguments struct`() = checkFixByText("Remove all type arguments", """
+    fun `test fix no type arguments struct`() = checkFixByText("Remove redundant type arguments", """
         struct Foo0;
         impl <error>Foo0/*caret*/<u8></error> {}
     """, """
@@ -111,7 +112,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         impl Foo0 {}
     """)
 
-    fun `test fix no type arguments method`() = checkFixByText("Remove all type arguments", """
+    fun `test fix no type arguments method`() = checkFixByText("Remove redundant type arguments", """
         struct Test;
 
         impl Test {
@@ -135,7 +136,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
     """)
 
-    fun `test fix no type function call`() = checkFixByText("Remove all type arguments", """
+    fun `test fix no type function call`() = checkFixByText("Remove redundant type arguments", """
         fn foo() {}
 
         fn main() {
@@ -161,6 +162,30 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         fn foo() {}
         fn main() {
             (foo)();
+        }
+    """)
+
+    fun `test fix struct with multiple type arguments`() = checkFixByText("Remove redundant type arguments", """
+        struct Foo<T, U> { t: T, u: U }
+        struct Err {
+            err1: <error descr="Wrong number of type arguments: expected 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
+        }
+    """, """
+        struct Foo<T, U> { t: T, u: U }
+        struct Err {
+            err1: Foo<u32, i32>,
+        }
+    """)
+
+    fun `test fix struct with default type arguments`() = checkFixByText("Remove redundant type arguments", """
+        struct Foo<T, U = i32> { t: T, u: U }
+        struct Err {
+            err1: <error descr="Wrong number of type arguments: expected at most 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
+        }
+    """, """
+        struct Foo<T, U = i32> { t: T, u: U }
+        struct Err {
+            err1: Foo<u32, i32>,
         }
     """)
 }
