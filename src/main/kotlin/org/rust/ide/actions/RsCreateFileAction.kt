@@ -17,7 +17,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.ide.icons.RsIcons
 
 
-class RsCreateFileAction : CreateFileFromTemplateAction(RsCreateFileAction.CAPTION, "", RsIcons.RUST_FILE),
+class RsCreateFileAction : CreateFileFromTemplateAction(CAPTION, "", RsIcons.RUST_FILE),
                            DumbAware {
 
     override fun getActionName(directory: PsiDirectory?, newName: String, templateName: String?): String = CAPTION
@@ -32,8 +32,7 @@ class RsCreateFileAction : CreateFileFromTemplateAction(RsCreateFileAction.CAPTI
         }
     }
 
-    override fun buildDialog(project: Project?, directory: PsiDirectory?,
-                             builder: CreateFileFromTemplateDialog.Builder) {
+    override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(CAPTION)
             .addKind("Empty File", RsIcons.RUST_FILE, "Rust File")
     }
