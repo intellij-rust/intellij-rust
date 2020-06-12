@@ -89,6 +89,9 @@ class RsPsiFactory(
     fun tryCreateExpression(text: CharSequence): RsExpr? =
         createFromText("fn main() { let _ = $text; }")
 
+    fun tryCreateExprStmt(text: CharSequence): RsExprStmt? =
+        createFromText("fn main() { $text; }")
+
     fun createTryExpression(expr: RsExpr): RsTryExpr {
         val newElement = createExpressionOfType<RsTryExpr>("a?")
         newElement.expr.replace(expr)
