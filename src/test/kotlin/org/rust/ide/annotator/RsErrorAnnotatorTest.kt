@@ -3202,4 +3202,102 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
     """)
+
+    fun `test E0435 non-constant in array type`() = checkErrors("""
+        fn main() {
+            let foo = 42;
+            let a: [u8; <error descr="A non-constant value was used in a constant expression [E0435]">foo</error>];
+        }
+    """)
+
+    fun `test E0435 non-constant in binary expr in array type`() = checkErrors("""
+        fn main() {
+            const A: usize = 1;
+            let b: usize = 1;
+            const C: usize = 1;
+            let d: usize = 1;
+            let a: [u8; A + <error descr="A non-constant value was used in a constant expression [E0435]">b</error> + C + <error descr="A non-constant value was used in a constant expression [E0435]">d</error>];
+        }
+    """)
+
+    fun `test E0435 non-constant in const function in array type`() = checkErrors("""
+        fn main() {
+            const fn foo(a: usize, b: usize) -> usize {
+                a + b
+            }
+            let bar: usize = 42;
+            let a: [u8; foo(1, <error descr="A non-constant value was used in a constant expression [E0435]">bar</error>)];
+        }
+    """)
+
+    fun `test E0435 non-constant in method call in array type`() = checkErrors("""
+        struct Foo { x: usize }
+
+        impl Foo {
+            fn bar(&self) -> usize {
+                self.x + self.x
+            }
+        }
+
+        fn main() {
+            let foo = Foo { x: 1 };
+            let a: [u8; <error descr="A non-constant value was used in a constant expression [E0435]">foo</error>.bar()];
+        }
+    """)
+
+    fun `test E0435 non-constant in array expr`() = checkErrors("""
+        fn main() {
+            let c = 100;
+            let _: [i32; 100] = [0; <error descr="A non-constant value was used in a constant expression [E0435]">c</error>];
+        }
+    """)
+
+    fun `test no E0435 literal in array type`() = checkErrors("""
+        fn main() {
+            let a: [u8; 42];
+        }
+    """)
+
+    fun `test no E0435 constant in array type`() = checkErrors("""
+        fn main() {
+            const C: usize = 42;
+            let a: [u8; C];
+        }
+    """)
+
+    fun `test no E0435 const function in array type`() = checkErrors("""
+        fn main() {
+            const fn foo(a: usize, b: usize) -> usize {
+                a + b
+            }
+            const BAR: usize = 42;
+            let a: [u8; foo(BAR, 1)];
+        }
+    """)
+
+    fun `test no E0435 constant in array expr`() = checkErrors("""
+        fn main() {
+            const C: usize = 100;
+            let _: [i32; 100] = [0; C];
+        }
+    """)
+
+    fun `test E0015 in array type`() = checkErrors("""
+        fn main() {
+            fn foo(a: usize, b: usize) -> usize {
+                a + b
+            }
+            let a: [u8; <error descr="Calls in constants are limited to constant functions, tuple structs and tuple variants [E0015]">foo</error>(1, 2)];
+        }
+    """)
+
+    fun `test E0015 and E0435 in array type`() = checkErrors("""
+        fn foo(a: usize, b: usize) -> usize {
+            a + b
+        }
+        fn main() {
+            let bar: usize = 42;
+            let a: [u8; <error descr="Calls in constants are limited to constant functions, tuple structs and tuple variants [E0015]">foo</error>(1, <error descr="A non-constant value was used in a constant expression [E0435]">bar</error>)];
+        }
+    """)
 }
