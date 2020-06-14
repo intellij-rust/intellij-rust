@@ -45,6 +45,8 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
             ?: 0
         val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
 
+        if (actualArgs == expectedTotalParams) return
+
         val errorText = when (o) {
             is RsBaseType -> checkBaseType(actualArgs, expectedRequiredParams, expectedTotalParams)
             is RsMethodCall, is RsCallExpr -> checkFunctionCall(actualArgs, expectedRequiredParams, expectedTotalParams)
@@ -53,6 +55,7 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
 
         val problemText = "Wrong number of type arguments: expected ${errorText}, found $actualArgs"
         val fixes = getFixes(actualArgs, expectedTotalParams)
+
         RsDiagnostic.WrongNumberOfTypeArguments(o, problemText, fixes).addToHolder(holder)
     }
 }
@@ -77,10 +80,8 @@ private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expe
     }
 }
 
-private fun getFixes(actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> {
-    val fixes = mutableListOf<LocalQuickFix>()
-    if (expectedTotalParams == 0 && actualArgs > 0) {
-        fixes.add(RemoveTypeArguments())
-    }
-    return fixes
-}
+private fun getFixes(actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> =
+    if (actualArgs > expectedTotalParams)
+        listOf(RemoveTypeArguments(expectedTotalParams, actualArgs))
+    else
+        emptyList()

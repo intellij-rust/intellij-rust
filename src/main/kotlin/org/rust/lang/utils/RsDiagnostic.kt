@@ -999,7 +999,7 @@ sealed class RsDiagnostic(
     class WrongNumberOfTypeArguments(
         element: PsiElement,
         private val errorText: String,
-        val fixes: List<LocalQuickFix> = emptyList()
+        private val fixes: List<LocalQuickFix>
     ) : RsDiagnostic(element) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
