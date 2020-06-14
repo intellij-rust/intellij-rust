@@ -100,7 +100,7 @@
 
     extraRoot(".*CodeFragmentElement")=true
 
-    extends("Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest)") = Pat
+    extends("(Pat(Wild|Ref|Tup|Slice|Macro|Struct|TupleStruct|Ident|Range|Box|Const|Rest))|(OrPat)") = Pat
     extends("(Array|RefLike|Tuple|Paren|FnPointer|Base|Macro|ForIn|Trait)Type") = TypeReference
 
     generateTokenAccessors=true
@@ -362,7 +362,7 @@ private FnParameter_with_recover ::= !')' FnParameter (',' | &')') {
 }
 private FnParameter_recover ::= !(Pat_first | OuterAttr_first | ')' | '...')
 
-LambdaParameter ::= OuterAttr* Pat TypeAscription?
+LambdaParameter ::= OuterAttr* SimplePat TypeAscription?
 AnonParameter ::= OuterAttr* [ RestrictedPat ':' ] TypeReference
 PathParameter ::= OuterAttr* TypeReference !'='
 
@@ -504,26 +504,32 @@ upper Function ::= async? const? unsafe? ExternAbi?
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-Pat ::= PatWild
-      | PatRest
-      | PatRef
-      | PatTup
-      | PatSlice
-      | PatIdent
-      | PatMacro
-      | PatStruct
-      | PatTupleStruct
-      | (PatConst !('..' | '...' | '..='))
-      | PatRange
-      | PatBox {
+private TopPat ::= &'|' OrPat | Pat { name = "pattern" }
+
+Pat ::= SimplePat OrPatLeft? {
   implements = "org.rust.lang.core.macros.RsExpandedElement"
   name = "pattern"
 }
 
+private SimplePat ::= PatWild
+                    | PatRest
+                    | PatRef
+                    | PatTup
+                    | PatSlice
+                    | PatIdent
+                    | PatMacro
+                    | PatStruct
+                    | PatTupleStruct
+                    | (PatConst !('..' | '...' | '..='))
+                    | PatRange
+                    | PatBox
+
+OrPat ::= '|'? SimplePat ('|' SimplePat)*
+left OrPatLeft ::= ('|' SimplePat)+ { elementType = OrPat }
+
 private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken | box | '-' | ref | mut
 
-
-PatBox ::= box Pat
+PatBox ::= box SimplePat
 
 // XXX(matklad): it is impossible to distinguish between nullary enum variants
 // and identifiers during parsing.
@@ -532,13 +538,13 @@ PatBox ::= box Pat
 //       None => { } // match enum variant
 //       Name => { } // bind Name to x
 //   }
-PatIdent ::= PatBinding [ '@' Pat ]
+PatIdent ::= PatBinding [ '@' SimplePat ]
 
 PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* PatRest? '}'
 PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
 
 // TODO: actual recover
-private Pat_with_recover ::= Pat (',' | &(')' | ']'))
+private Pat_with_recover ::= TopPat (',' | &(')' | ']'))
 private PatField_with_recover ::= PatField (',' | & '}')
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
@@ -549,7 +555,7 @@ PatSlice ::= '[' SeqPat ']'
 // NB: there are `[x, .. , y]`
 private SeqPat ::= Pat_with_recover*
 
-PatRef ::= '&' mut? Pat
+PatRef ::= '&' mut? SimplePat
 
 PatWild ::= '_'
 PatRest ::= '..'
@@ -572,8 +578,6 @@ PatFieldFull ::= (identifier | INTEGER_LITERAL ) ':' Pat {
 PatField ::= PatFieldFull | box? PatBinding
 
 BindingMode ::= ref mut? | mut
-
-OrPats ::= '|'? Pat ('|' Pat)*
 
 upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
   pin = 2
@@ -1146,7 +1150,7 @@ WhileExpr ::= OuterAttr* LabelDecl? while Condition SimpleBlock {
                  "org.rust.lang.core.psi.ext.RsLooplikeExpr" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-Condition ::= [ let OrPats '=' ] NoStructLitExpr
+Condition ::= [ let TopPat '=' ] NoStructLitExpr
 
 LoopExpr ::= OuterAttr* LabelDecl? loop SimpleBlock {
   pin = 'loop'
@@ -1193,7 +1197,7 @@ MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 MatchBody ::= '{' MatchArm* '}' { pin = 1 }
-MatchArm ::= OuterAttr* OrPats MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
+MatchArm ::= OuterAttr* TopPat MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   recoverWhile = MatchArm_recover
@@ -1513,7 +1517,7 @@ upper ExprStmtUpper ::= () (';' | <<isBlock>>) { pin = 1 elementType = ExprStmt 
 
 fake ExprStmt ::= AnyExpr ';'? { extends = Stmt }
 
-LetDecl ::= OuterAttr* let Pat TypeAscription? [ '=' AnyExpr ] ';' {
+LetDecl ::= OuterAttr* let TopPat TypeAscription? [ '=' AnyExpr ] ';' {
   extends = Stmt
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   pin = "let"

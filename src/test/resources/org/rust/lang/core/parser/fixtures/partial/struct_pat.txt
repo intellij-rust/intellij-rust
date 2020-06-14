@@ -35,7 +35,7 @@ FILE
           RsPathExprImpl(PATH_EXPR)
             RsPathImpl(PATH)
               PsiElement(identifier)('S')
-      PsiErrorElement:'!', '(', ':', '::', ';', '=' or '{' expected, got '{'
+      PsiErrorElement:'!', '(', ':', '::', ';', '=', '{' or '|' expected, got '{'
         <empty list>
       PsiWhiteSpace(' ')
       RsExprStmtImpl(EXPR_STMT)
