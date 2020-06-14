@@ -83,7 +83,7 @@ class RsPathReferenceImpl(
     override fun multiResolve(): List<RsElement> =
         advancedMultiResolve().map { it.element }
 
-    private fun advancedMultiResolve(): List<BoundElement<RsElement>> =
+    override fun advancedMultiResolve(): List<BoundElement<RsElement>> =
         (element.parent as? RsPathExpr)?.let { it.inference?.getResolvedPath(it)?.map { BoundElement(it.element) } }
             ?: advancedCachedMultiResolve()
 
