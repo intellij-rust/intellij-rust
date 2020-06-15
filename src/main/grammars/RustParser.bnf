@@ -1306,6 +1306,7 @@ upper Macro ::= "macro_rules" '!' identifier ShallowMacroBody <<macroSemicolon>>
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsMacroDefinitionBase"
                  "org.rust.lang.core.macros.RsExpandedElement"
                  "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   extends = "org.rust.lang.core.psi.ext.RsMacroImplMixin"
@@ -1356,7 +1357,8 @@ upper Macro2 ::= MACRO_KW identifier ( Macro2FunctionLikeBody | Macro2MatchLikeB
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsItemElement"
-                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement" ]
+                 "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
+                 "org.rust.lang.core.psi.ext.RsMacroDefinitionBase" ]
   extends = "org.rust.lang.core.psi.ext.RsMacro2ImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacro2Stub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
