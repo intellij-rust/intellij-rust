@@ -120,6 +120,12 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
                 pat.extractBindings(fcx, boxed, bm)
             }
         }
+        is RsOrPat -> {
+            for (pat in patList) {
+                pat.extractBindings(fcx, type, defBm)
+            }
+            fcx.writePatTy(this, type)
+        }
         else -> {
             // not yet handled
         }

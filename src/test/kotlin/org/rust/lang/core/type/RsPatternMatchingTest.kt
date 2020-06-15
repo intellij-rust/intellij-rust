@@ -18,10 +18,21 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test if let pattern with multiple patterns`() = testExpr("""
-        enum E { L(i32), R(i32) }
+    fun `test if let with or pattern 1`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
         fn foo(e: E) {
-            if let E::L(x) | E::R(x) = e {
+            if let E::L(x) | E::M(x) | E::R(x) = e {
+                x;
+              //^ i32
+            }
+        }
+    """)
+
+    fun `test if let with or pattern 2`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
+        enum Option { Ok(E), None }
+        fn foo(e: Option<E>) {
+            if let Option::Ok(E::L(x) | E::M(x) | E::R(x)) = e {
                 x;
               //^ i32
             }
@@ -38,10 +49,21 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
         }
     """)
 
-    fun `test while let pattern with multiple patterns`() = testExpr("""
-        enum E { L(i32), R(i32) }
+    fun `test while let with or pattern 1`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
         fn foo(e: E) {
-            while let E::L(x) | E::R(x) = e {
+            while let E::L(x) | E::M(x) | E::R(x)  = e {
+                x;
+              //^ i32
+            }
+        }
+    """)
+
+    fun `test while let with or pattern 2`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
+        enum Option { Ok, None }
+        fn foo(e: Option) {
+            while let Option::Ok(E::L(x) | E::M(x) | E::R(x)) = e {
                 x;
               //^ i32
             }
@@ -285,6 +307,25 @@ class RsPatternMatchingTest : RsTypificationTestBase() {
           //^ (S, [S; <unknown>], S, [S; <unknown>], S)
         }
     """, PatternMatchingTestMarks.multipleRestPats)
+
+    fun `test let or pattern 1`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
+        fn foo(e: E) {
+            let E::L(x) | E::M(x) | E::R(x) = e;
+            x;
+          //^ i32
+        }
+    """)
+
+    fun `test let or pattern 2`() = testExpr("""
+        enum E { L(i32), M(i32), R(i32) }
+        enum Option { Ok(E) }
+        fn foo(e: Option) {
+            let Option::Ok(E::L(x) | E::M(x) | E::R(x)) = e;
+            x;
+          //^ i32
+        }
+    """)
 
     fun `test struct pattern`() = testExpr("""
         struct S;

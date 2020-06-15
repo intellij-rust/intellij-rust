@@ -1263,28 +1263,32 @@ private fun processLexicalDeclarations(
     testAssert { cameFrom.context == scope }
 
     fun processPattern(pattern: RsPat, processor: RsResolveProcessor): Boolean {
+        if (Namespace.Values !in ns) return false
+        if (cameFrom == pattern) return false
+
+        val alreadyProcessedNames = hashSetOf<String>()
+
+        // Rust allows to defined several bindings in single pattern to the same name,
+        // but they all must bind the same variables, hence we can inspect only the first one.
+        // See https://github.com/rust-lang/rfcs/blob/master/text/2535-or-patterns.md
+        val patternProcessor: RsResolveProcessor = { e ->
+            if (e.name !in alreadyProcessedNames) {
+                alreadyProcessedNames += e.name
+                processor(e)
+            } else {
+                false
+            }
+        }
+
         val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
             .filter { (it.parent is RsPatField || !it.isReferenceToConstant) && hygieneFilter(it) }
-        return processAll(boundNames, processor)
-    }
-
-    fun processOrPats(orPats: RsOrPats, processor: RsResolveProcessor): Boolean {
-        if (Namespace.Values !in ns) return false
-        if (cameFrom == orPats) return false
-        val patList = orPats.patList
-        if (cameFrom in patList) return false
-        // Rust allows to defined several patterns in the single match arm and in if/while expr condition,
-        // but they all must bind the same variables, hence we can inspect
-        // only the first one.
-        val pat = patList.firstOrNull()
-        if (pat != null && processPattern(pat, processor)) return true
-        return false
+        return processAll(boundNames, patternProcessor)
     }
 
     fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
         if (condition == null || condition == cameFrom) return false
-        val orPats = condition.orPats ?: return false
-        return processOrPats(orPats, processor)
+        val pat = condition.pat ?: return false
+        return processPattern(pat, processor)
     }
 
     when (scope) {
@@ -1394,7 +1398,7 @@ private fun processLexicalDeclarations(
         }
 
         is RsMatchArm -> {
-            return processOrPats(scope.orPats, processor)
+            return processPattern(scope.pat, processor)
         }
     }
     return false

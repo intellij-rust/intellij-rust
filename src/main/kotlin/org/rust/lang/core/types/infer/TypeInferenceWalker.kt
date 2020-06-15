@@ -875,7 +875,7 @@ class RsTypeInferenceWalker(
         val matchingExprTy = resolveTypeVarsWithObligations(expr.expr?.inferType() ?: TyUnknown)
         val arms = expr.arms
         for (arm in arms) {
-            arm.orPats.extractBindings(matchingExprTy)
+            arm.pat.extractBindings(matchingExprTy)
             arm.expr?.inferType(expected)
             arm.matchArmGuard?.expr?.inferType(TyBool)
         }
@@ -922,15 +922,15 @@ class RsTypeInferenceWalker(
     }
 
     private fun RsCondition.inferTypes() {
-        val orPats = orPats
-        if (orPats != null) {
+        val pat = pat
+        if (pat != null) {
             // if let Some(a) = ... {}
             // if let V1(a) | V2(a) = ... {}
             // or
             // while let Some(a) = ... {}
             // while let V1(a) | V2(a) = ... {}
             val exprTy = resolveTypeVarsWithObligations(expr.inferType())
-            orPats.extractBindings(exprTy)
+            pat.extractBindings(exprTy)
         } else {
             expr.inferType(TyBool)
         }
@@ -1362,10 +1362,6 @@ class RsTypeInferenceWalker(
 
     private fun RsPat.extractBindings(ty: Ty) {
         extractBindings(this@RsTypeInferenceWalker, ty)
-    }
-
-    private fun RsOrPats.extractBindings(ty: Ty) {
-        patList.forEach { it.extractBindings(ty) }
     }
 
     fun writePatTy(psi: RsPat, ty: Ty): Unit =
