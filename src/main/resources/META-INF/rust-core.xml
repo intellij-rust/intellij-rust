@@ -865,7 +865,7 @@
 
         <!-- Editor Tab Title Providers -->
 
-        <editorTabTitleProvider implementation="org.rust.ide.miscExtensions.RsModTabTitleProvider"/>
+        <editorTabTitleProvider implementation="org.rust.ide.miscExtensions.RsFileTabTitleProvider"/>
 
         <!-- Refactoring -->
 
