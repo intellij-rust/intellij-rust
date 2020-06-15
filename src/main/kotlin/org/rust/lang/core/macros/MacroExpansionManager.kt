@@ -469,10 +469,11 @@ private class MacroExpansionServiceImplInner(
     }
 
     private fun releaseExpansionDirectory() {
-        // TODO avoid refresh on plugin unload
+        val vfs = MacroExpansionFileSystem.getInstanceOrNull() ?: return // null means plugin unloading
+
         // See [MacroExpansionFileSystem] docs for explanation of what happens here
         RefreshQueue.getInstance().refresh(/*async = */ !isUnitTestMode, /*recursive = */ true, {
-            MacroExpansionFileSystem.getInstance().makeDummy(dirs.expansionDirPath)
+            vfs.makeDummy(dirs.expansionDirPath)
         }, listOf(expansionsDirVi))
     }
 
@@ -663,7 +664,7 @@ private class MacroExpansionServiceImplInner(
             }
         })
 
-        connect.subscribe(RUST_PSI_CHANGE_TOPIC, treeChangeListener)
+        project.rustPsiManager.subscribeRustPsiChange(connect, treeChangeListener)
     }
 
     /**

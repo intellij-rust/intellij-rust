@@ -63,8 +63,9 @@ class RsResolveCache(project: Project): Disposable {
         get() = _macroCache.getOrCreateMap()
 
     init {
+        val rustPsiManager = project.rustPsiManager
         val connection = project.messageBus.connect(this)
-        connection.subscribe(RUST_STRUCTURE_CHANGE_TOPIC, object : RustStructureChangeListener {
+        rustPsiManager.subscribeRustStructureChange(connection, object : RustStructureChangeListener {
             override fun rustStructureChanged(file: PsiFile?, changedElement: PsiElement?) =
                 onRustStructureChanged(file)
         })
@@ -75,7 +76,7 @@ class RsResolveCache(project: Project): Disposable {
 
             override fun beforePsiChanged(isPhysical: Boolean) {}
         })
-        connection.subscribe(RUST_PSI_CHANGE_TOPIC, object : RustPsiChangeListener {
+        rustPsiManager.subscribeRustPsiChange(connection, object : RustPsiChangeListener {
             override fun rustPsiChanged(file: PsiFile, element: PsiElement, isStructureModification: Boolean) =
                 onRustPsiChanged(element)
         })

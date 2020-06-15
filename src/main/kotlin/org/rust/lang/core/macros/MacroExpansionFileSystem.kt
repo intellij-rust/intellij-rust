@@ -414,8 +414,14 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
     companion object {
         private const val PROTOCOL: String = "rust_macros"
+
         fun getInstance(): MacroExpansionFileSystem {
             return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as MacroExpansionFileSystem
+        }
+
+        /** null during the plugin unloading */
+        fun getInstanceOrNull(): MacroExpansionFileSystem? {
+            return VirtualFileManager.getInstance().getFileSystem(PROTOCOL) as? MacroExpansionFileSystem
         }
 
         @Throws(IOException::class)
