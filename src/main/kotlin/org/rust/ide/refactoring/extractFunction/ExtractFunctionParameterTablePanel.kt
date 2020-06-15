@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring.extractFunction
 
-import com.intellij.openapi.project.Project
 import com.intellij.refactoring.util.AbstractParameterTablePanel
 import com.intellij.refactoring.util.AbstractVariableData
 import com.intellij.ui.BooleanTableCellEditor
@@ -15,6 +14,10 @@ import com.intellij.util.ui.ColumnInfo
 class ParameterDataHolder(val parameter: Parameter, val onChange: () -> Unit) : AbstractVariableData() {
     fun changeName(name: String) {
         parameter.name = name
+        onChange()
+    }
+    fun changeMutability(mutable: Boolean) {
+        parameter.isMutable = mutable
         onChange()
     }
 }
@@ -45,20 +48,33 @@ class NameColumn(private val nameValidator: (String) -> Boolean) : ColumnInfo<Pa
     override fun isCellEditable(item: ParameterDataHolder): Boolean = true
 }
 
-class TypeColumn(val project: Project) : ColumnInfo<ParameterDataHolder, String>("Type") {
+class TypeColumn : ColumnInfo<ParameterDataHolder, String>("Type") {
     override fun valueOf(item: ParameterDataHolder): String =
         item.parameter.type?.toString() ?: "_"
 }
 
+class MutabilityColumn : ColumnInfo<ParameterDataHolder, Boolean>("Mutable") {
+    override fun valueOf(item: ParameterDataHolder): Boolean =
+        item.parameter.isMutable
+
+    override fun setValue(item: ParameterDataHolder, value: Boolean) {
+        item.changeMutability(value)
+    }
+
+    override fun isCellEditable(item: ParameterDataHolder): Boolean = true
+
+    override fun getColumnClass(): Class<*> = Boolean::class.java
+}
+
 class ExtractFunctionParameterTablePanel(
-    project: Project,
     nameValidator: (String) -> Boolean,
     private val config: RsExtractFunctionConfig,
     private val onChange: () -> Unit
 ) : AbstractParameterTablePanel<ParameterDataHolder>(
     ChooseColumn(),
     NameColumn(nameValidator),
-    TypeColumn(project)
+    TypeColumn(),
+    MutabilityColumn()
 ) {
     init {
         myTable.setDefaultRenderer(Boolean::class.java, BooleanTableCellRenderer())
