@@ -1155,4 +1155,32 @@ class RsCompletionTest : RsCompletionTestBase() {
             let x: Frobnicate/*caret*/
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete parentheses for Fn trait`() = checkCompletion("Fn", """
+        fn foo(f: &Fn/*caret*/) {}
+    """, """
+        fn foo(f: &Fn(/*caret*/)) {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete parentheses for FnMut trait`() = doSingleCompletion("""
+        fn foo(f: &FnMut/*caret*/) {}
+    """, """
+        fn foo(f: &FnMut(/*caret*/)) {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test complete parentheses for FnOnce trait`() = doSingleCompletion("""
+        fn foo(f: &FnOnce/*caret*/) {}
+    """, """
+        fn foo(f: &FnOnce(/*caret*/)) {}
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test move cursor if parentheses of Fn trait already exist`() = doSingleCompletion("""
+        fn foo(f: &FnOnce/*caret*/()) {}
+    """, """
+        fn foo(f: &FnOnce(/*caret*/)) {}
+    """)
 }

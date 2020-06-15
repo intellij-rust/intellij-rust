@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.AssocItemScopeEntryBase
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.ScopeEntry
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -226,7 +227,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
         }
 
         if (element is RsGenericDeclaration) {
-            addAngleBrackets(element, document, context)
+            addGenericTypeCompletion(element, document, context)
         }
 
         when (element) {
@@ -314,7 +315,7 @@ private fun appendSemicolon(context: InsertionContext, curUseItem: RsUseItem?) {
     }
 }
 
-private fun addAngleBrackets(element: RsGenericDeclaration, document: Document, context: InsertionContext) {
+private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Document, context: InsertionContext) {
     // complete only types that have at least one type parameter without a default
     if (element.typeParameters.all { it.typeReference != null }) return
 
@@ -322,9 +323,16 @@ private fun addAngleBrackets(element: RsGenericDeclaration, document: Document, 
     val path = context.getElementOfType<RsPath>()
     if (path == null || path.parent !is RsTypeReference) return
 
-    if (!context.alreadyHasAngleBrackets) {
-        document.insertString(context.selectionEndOffset, "<>")
+    if (element.isFnLikeTrait) {
+        if (!context.alreadyHasCallParens) {
+            document.insertString(context.selectionEndOffset, "()")
+        }
+    } else {
+        if (!context.alreadyHasAngleBrackets) {
+            document.insertString(context.selectionEndOffset, "<>")
+        }
     }
+
     EditorModificationUtil.moveCaretRelatively(context.editor, 1)
 }
 
@@ -342,6 +350,14 @@ private val InsertionContext.alreadyHasAngleBrackets: Boolean
 
 private val InsertionContext.alreadyHasStructBraces: Boolean
     get() = nextCharIs('{')
+
+private val RsElement.isFnLikeTrait: Boolean
+    get() {
+        val knownItems = knownItems
+        return this == knownItems.Fn ||
+            this == knownItems.FnMut ||
+            this == knownItems.FnOnce
+    }
 
 private fun RsFunction.getExtraTailText(subst: Substitution): String {
     val traitRef = stubAncestorStrict<RsImplItem>()?.traitRef ?: return ""
