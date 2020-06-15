@@ -5,8 +5,11 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.MinRustcVersion
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibCompletionTest : RsCompletionTestBase() {
@@ -80,6 +83,36 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         fn main() { std::stringif/*caret*/ }
     """, """
         fn main() { std::stringify!(/*caret*/) }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test complete "std" (edition 2018)`() = doSingleCompletion(
+        "use st/*caret*/",
+        "use std/*caret*/"
+    )
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test does not suggest core (edition 2018)`() = checkNoCompletion("""
+        use cor/*caret*/
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test suggest core if no_std (edition 2018)`() = doSingleCompletion(
+        "#![no_std] use cor/*caret*/",
+        "#![no_std] use core/*caret*/"
+    )
+
+    @MinRustcVersion("1.36.0")
+    @MockEdition(Edition.EDITION_2018)
+    fun `test does not suggest std if no_std (edition 2018)`() = doSingleCompletion(
+        "#![no_std] use st/*caret*/",
+        "#![no_std] use test/*caret*/"
+    )
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test does not suggest core if no_core (edition 2018)`() = checkNoCompletion("""
+        #![no_core]
+        use cor/*caret*/
     """)
 }
 

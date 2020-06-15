@@ -37,6 +37,7 @@ data class StdLibInfo (
 object AutoInjectedCrates {
     const val STD: String = "std"
     const val CORE: String = "core"
+    const val PROC_MACRO: String = "proc_macro"
     val stdlibCrates = listOf(
         // Roots
         StdLibInfo(STD, StdLibType.ROOT, dependencies = listOf("alloc_jemalloc", "alloc_system", "panic_abort", "rand",
@@ -47,7 +48,7 @@ object AutoInjectedCrates {
         StdLibInfo("collections", StdLibType.ROOT),
         StdLibInfo("libc", StdLibType.ROOT, srcDir = "liblibc/src"),
         StdLibInfo("panic_unwind", type = StdLibType.ROOT),
-        StdLibInfo("proc_macro", type = StdLibType.ROOT),
+        StdLibInfo(PROC_MACRO, type = StdLibType.ROOT),
         StdLibInfo("rustc_unicode", type = StdLibType.ROOT),
         StdLibInfo("std_unicode", type = StdLibType.ROOT),
         StdLibInfo("test", dependencies = listOf("getopts", "term"), type = StdLibType.ROOT),
