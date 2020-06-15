@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.getNextNonCommentSibling
-import org.rust.lang.core.psi.ext.isIrrefutable
 
 class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention.Context>() {
     override fun getText() = "Convert match statement to if let"
@@ -21,7 +20,7 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         val match: RsMatchExpr,
         val matchTarget: RsExpr,
         val nonVoidArm: RsMatchArm,
-        val orPats: RsOrPats
+        val pat: RsPat
     )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
@@ -32,22 +31,21 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
 
         val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
         if (nonVoidArm.matchArmGuard != null || nonVoidArm.outerAttrList.isNotEmpty()) return null
-        val orPats = nonVoidArm.orPats
+        val pat = nonVoidArm.pat
 
-        return Context(matchExpr, matchTarget, nonVoidArm, orPats)
+        return Context(matchExpr, matchTarget, nonVoidArm, pat)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val (matchExpr, matchTarget, arm, orPats) = ctx
+        val (matchExpr, matchTarget, arm, pat) = ctx
 
         var bodyText = arm.expr?.text ?: return
         if (arm.expr !is RsBlockExpr) {
             bodyText = "{\n$bodyText\n}"
         }
 
-        val rustIfLetExprElement =
-            RsPsiFactory(project).createExpression("if let ${orPats.text} = ${matchTarget.text} $bodyText")
-                as RsIfExpr
+        val exprText = "if let ${pat.text} = ${matchTarget.text} $bodyText"
+        val rustIfLetExprElement = RsPsiFactory(project).createExpression(exprText) as RsIfExpr
         matchExpr.replace(rustIfLetExprElement)
     }
 

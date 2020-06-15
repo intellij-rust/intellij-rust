@@ -13,6 +13,7 @@ import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.isIrrefutable
 import org.rust.lang.core.psi.ext.leftSiblings
+import org.rust.lang.core.psi.ext.patList
 import org.rust.lang.core.psi.ext.rangeWithPrevSpace
 import org.rust.lang.core.types.consts.asBool
 import org.rust.lang.utils.evaluation.evaluate
@@ -58,8 +59,7 @@ class RsRedundantElseInspection : RsLocalInspectionTool() {
             }
         private val RsCondition.isRedundant: Boolean
             get() {
-                val patList = orPats?.patList
-                return patList?.all { pat -> pat?.isIrrefutable ?: false } ?: (this.expr.evaluate().asBool() ?: false)
+                return patList?.all { pat -> pat.isIrrefutable } ?: (this.expr.evaluate().asBool() ?: false)
             }
     }
 }

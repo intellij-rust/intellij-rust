@@ -382,7 +382,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
         val init = condition.expr
         walkExpr(init)
         val initCmt = mc.processExpr(init)
-        for (pat in condition.patList) {
+        for (pat in condition.patList.orEmpty()) {
             walkIrrefutablePat(initCmt, pat)
         }
     }

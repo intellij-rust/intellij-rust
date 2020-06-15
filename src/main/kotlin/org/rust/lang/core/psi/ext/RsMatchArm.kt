@@ -6,6 +6,12 @@
 package org.rust.lang.core.psi.ext
 
 import org.rust.lang.core.psi.RsMatchArm
+import org.rust.lang.core.psi.RsOrPat
 import org.rust.lang.core.psi.RsPat
 
-val RsMatchArm.patList: List<RsPat> get() = orPats.patList
+@Deprecated("Support `RsOrPat`")
+val RsMatchArm.patList: List<RsPat>
+    get() {
+        val pat = pat
+        return if (pat is RsOrPat) pat.patList else listOf(pat)
+    }

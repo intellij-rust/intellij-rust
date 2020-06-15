@@ -710,16 +710,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkCondition(holder: RsAnnotationHolder, element: RsCondition) {
-        val patList = element.patList
-        val pat = patList.singleOrNull()
+        val pat = element.pat
         if (pat != null && pat.isIrrefutable) {
             IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
         }
-        if (patList.size > 1) {
+        if (pat is RsOrPat) {
             IF_WHILE_OR_PATTERNS.check(
                 holder,
-                patList.first(),
-                patList.last(),
+                pat.patList.first(),
+                pat.patList.last(),
                 "multiple patterns in `if let` and `while let` are unstable"
             )
         }
