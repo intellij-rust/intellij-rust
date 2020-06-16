@@ -5,10 +5,12 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ExpandMacros
+
 class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableInspection::class) {
     fun `test should annotate unused variable`() = checkByText("""
         fn main() {
-            let <warning>mut f</warning> = 10;
+            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = 10;
         }
     """)
 
@@ -18,16 +20,48 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test should not annotate self methods`() = checkByText("""
+    fun `test immutable arguments of mut self methods`() = checkByText("""
         struct Foo { foo: bool }
         impl Foo {
-            fn push(&mut self, test: i32) {
-            }
+            fn push(&mut self, test: i32) {}
         }
         fn foo() {
-            let <warning>mut t</warning> = 10;
+            let <warning descr="Variable `t` does not need to be mutable">mut t</warning> = 10;
             let mut f = Foo { foo: true };
             f.push(t);
+        }
+    """)
+
+    fun `test self methods`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = Foo;
+            f.bar();
+        }
+    """)
+
+    fun `test self methods with UFCS`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = Foo;
+            Foo::bar(&f);
+        }
+    """)
+
+    fun `test mut self methods with UFCS`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn bar(&mut self) {}
+        }
+        fn foo() {
+            let mut f = Foo;
+            Foo::bar(&mut f);
         }
     """)
 
@@ -40,7 +74,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test should annotate mutated parameter`() = checkByText("""
+    fun `test should annotate moved immutable argument`() = checkByText("""
         fn foo(i: i32) {
             println!("{:?}", i);
         }
@@ -51,7 +85,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test should not annotate mutated parameter`() = checkByText("""
+    fun `test should not annotate argument mutable reference`() = checkByText("""
         fn foo(i: &mut i32) {
             *i = 20;
         }
@@ -62,9 +96,9 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test first mut and second not mut`() = checkByText("""
+    fun `test variable redeclaration`() = checkByText("""
         fn main() {
-            let <warning>mut f</warning> = 10;
+            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = 10;
             let mut f = 10;
             f = 20;
         }
@@ -92,14 +126,15 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test should not annotate if macro after expr`() = checkByText("""
-        fn foo(a: &mut u32) { }
+    @ExpandMacros
+    fun `test should see through macro`() = checkByText("""
+        fn foo(a: &mut u32) {}
 
-        macro_rules! call_foo { () => { w = 20; } }
+        macro_rules! call_foo { (${'$'}x:expr) => { foo(&mut ${'$'}x); } }
 
         fn main() {
             let mut w = 10;
-            call_foo!();
+            call_foo!(w);
         }
     """)
 
@@ -110,7 +145,38 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
 
         fn main() {
             call_foo!();
-            let <warning>mut<caret> f</warning> = 10;
+            let <warning descr="Variable `f` does not need to be mutable">mut f</warning> = 10;
+        }
+    """)
+
+    fun `test immutable dereference 1`() = checkByText("""
+        fn main() {
+            let <warning descr="Variable `a` does not need to be mutable">mut a</warning> = &10;
+            let _ = *b;
+        }
+    """)
+
+    fun `test immutable dereference 2`() = checkByText("""
+        fn foo(a: &u32) -> &'static mut u32 { unreachable!() }
+
+        fn main() {
+            let <warning descr="Variable `a` does not need to be mutable">mut a</warning> = &10;
+            *foo(&a) = 5;
+        }
+    """)
+
+    fun `test mutable change`() = checkByText("""
+        fn main() {
+            let mut a = 10;
+            a = 5;
+        }
+    """)
+
+    fun `test mutable dereference`() = checkByText("""
+        fn main() {
+            let mut a = 0;
+            let <warning descr="Variable `b` does not need to be mutable">mut b</warning> = &mut a;
+            *b = 5;
         }
     """)
 
@@ -118,7 +184,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         fn foo(mut test: i32) {
             test = 10;
         }
-        fn foo2(<warning>mut<caret> test</warning>: i32) {
+        fn foo2(<warning descr="Variable `test` does not need to be mutable">mut/*caret*/ test</warning>: i32) {
         }
     """, """
         fn foo(mut test: i32) {
@@ -132,7 +198,7 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         fn main() {
             let mut f = 10;
             f = 20;
-            let <warning>mut<caret> f</warning> = 10;
+            let <warning descr="Variable `f` does not need to be mutable">mut/*caret*/ f</warning> = 10;
         }
     """, """
         fn main() {
@@ -142,11 +208,18 @@ class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableI
         }
     """)
 
-    fun `test function`() = checkByText("""
+    fun `test lambda expression`() = checkByText("""
         fn main() {
             let mut a = 10;
             let mut foo = || a = 20;
             foo();
+        }
+    """)
+
+    fun `test binary operation`() = checkByText("""
+        fn main() {
+            let <warning descr="Variable `a` does not need to be mutable">mut a</warning> = 10;
+            let _ = a + 1;
         }
     """)
 }
