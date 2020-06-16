@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 class RsVariableMutableInspectionTest : RsInspectionsTestBase(RsVariableMutableInspection::class) {
-
     fun `test should annotate unused variable`() = checkByText("""
         fn main() {
             let <warning>mut f</warning> = 10;
