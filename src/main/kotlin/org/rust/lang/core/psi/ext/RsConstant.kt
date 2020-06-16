@@ -55,7 +55,8 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
 
     override val isAbstract: Boolean get() = expr == null
 
-    override val crateRelativePath: String? get() = fullCrateRelativePath
+    override val crateRelativePath: String?
+        get() = fullCrateRelativePath
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 
