@@ -168,11 +168,11 @@ private fun <T : Ty> simplifyToInteger(expr: ConstExpr<T>): ConstExpr<T> {
 private fun Long.validValueOrNull(ty: TyInteger): Long? = takeIf { it in ty.validValuesRange }
 
 // It returns wrong values for large types like `i128` or `usize`, but looks like it's enough for real cases
-private val TyInteger.validValuesRange: LongRange
+val TyInteger.validValuesRange: LongRange
     get() = when (this) {
-        TyInteger.U8 -> LongRange(0, 1L shl 8)
-        TyInteger.U16 -> LongRange(0, 1L shl 16)
-        TyInteger.U32 -> LongRange(0, 1L shl 32)
+        TyInteger.U8 -> LongRange(0, (1L shl 8) - 1)
+        TyInteger.U16 -> LongRange(0, (1L shl 16) - 1)
+        TyInteger.U32 -> LongRange(0, (1L shl 32) - 1)
         TyInteger.U64 -> LongRange(0, Long.MAX_VALUE)
         TyInteger.U128 -> LongRange(0, Long.MAX_VALUE)
         TyInteger.USize -> LongRange(0, Long.MAX_VALUE)

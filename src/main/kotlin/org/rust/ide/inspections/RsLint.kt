@@ -43,7 +43,9 @@ enum class RsLint(
                 WARN -> ProblemHighlightType.WEAK_WARNING
                 else -> super.toHighlightingType(level)
             }
-    };
+    },
+
+    OverflowingLiterals("overflowing_literals", defaultLevel = DENY);
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {

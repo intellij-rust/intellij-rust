@@ -550,6 +550,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Integer overflow"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsIntegerOverflowInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
