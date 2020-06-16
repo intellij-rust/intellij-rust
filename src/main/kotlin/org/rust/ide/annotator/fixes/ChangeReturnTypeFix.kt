@@ -25,19 +25,21 @@ import org.rust.lang.core.types.ty.TyUnit
 
 
 class ChangeReturnTypeFix(element: RsElement, private val actualTy: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
-    override fun getFamilyName(): String = "Change return type"
-    override fun getText(): String {
-        val (item, name) = when (val callable = findCallableOwner(startElement)) {
-            is RsFunction -> {
-                val item = if (callable.owner.isImplOrTrait) " of method" else " of function"
-                val name = callable.name?.let { " '$it'" } ?: ""
-                item to name
+    private val _text: String = run {
+            val (item, name) = when (val callable = findCallableOwner(element)) {
+                is RsFunction -> {
+                    val item = if (callable.owner.isImplOrTrait) " of method" else " of function"
+                    val name = callable.name?.let { " '$it'" } ?: ""
+                    item to name
+                }
+                is RsLambdaExpr -> " of closure" to ""
+                else -> "" to ""
             }
-            is RsLambdaExpr -> " of closure" to ""
-            else -> "" to ""
+            "Change return type$item$name to '${actualTy.render(useAliasNames = true)}'"
         }
-        return "Change return type$item$name to '${actualTy.render(useAliasNames = true)}'"
-    }
+
+    override fun getText(): String = _text
+    override fun getFamilyName(): String = "Change return type"
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         val owner = findCallableOwner(startElement) ?: return
