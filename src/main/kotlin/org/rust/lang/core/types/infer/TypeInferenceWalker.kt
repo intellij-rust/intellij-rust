@@ -218,13 +218,7 @@ class RsTypeInferenceWalker(
             CoerceResult.Ok -> true
 
             is CoerceResult.TypeMismatch -> {
-                if (result.ty1.javaClass !in IGNORED_TYS && result.ty2.javaClass !in IGNORED_TYS
-                    && !(expected is TyReference && inferred is TyReference
-                        && (expected.containsTyOfClass(IGNORED_TYS) || inferred.containsTyOfClass(IGNORED_TYS)))
-                ) {
-                    reportTypeMismatch(element, expected, inferred)
-                }
-
+                checkTypeMismatch(result, element, inferred, expected)
                 false
             }
 
@@ -236,6 +230,18 @@ class RsTypeInferenceWalker(
                 false
             }
         }
+
+    private fun checkTypeMismatch(result: CoerceResult.TypeMismatch, element: RsElement, inferred: Ty, expected: Ty) {
+        if (result.ty1.javaClass in IGNORED_TYS || result.ty2.javaClass in IGNORED_TYS) return
+        if (expected is TyReference && inferred is TyReference &&
+            (expected.containsTyOfClass(IGNORED_TYS) || inferred.containsTyOfClass(IGNORED_TYS))) {
+            // report errors with unknown types when &mut is needed, but & is present
+            if (!(expected.mutability == Mutability.MUTABLE && inferred.mutability == Mutability.IMMUTABLE)) {
+                return
+            }
+        }
+        reportTypeMismatch(element, expected, inferred)
+    }
 
     // Another awful hack: check that inner expressions did not annotated as an error
     // to disallow annotation intersections. This should be done in a different way

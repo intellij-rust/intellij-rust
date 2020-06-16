@@ -291,7 +291,7 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
     fun `test no type mismatch E0308 on reference coecrion of partially unknown type`() = checkByText("""
         struct Bar;
         fn foo(a: &Bar) {}
-        
+
         fn main() {
             foo(&Unknown);
         }
@@ -315,6 +315,19 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
                 return <error>3.0</error>;
                 <error>"4"</error>
             };
+        }
+    """)
+
+    fun `test wrong ref mutability with unknown generic type`() = checkErrors("""
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn new() -> Self { unreachable!() }
+        }
+
+        fn foo(t: &mut S<u64>) {}
+        fn bar() {
+            let mut s = S::new();
+            foo(<error>&s</error>);
         }
     """)
 }
