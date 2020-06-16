@@ -23,11 +23,13 @@ import org.rust.lang.core.psi.ext.operatorType
 class RemoveRefFix private constructor(
     expr: RsUnaryExpr
 ) : LocalQuickFixOnPsiElement(expr) {
-    override fun getText() = when ((startElement as RsUnaryExpr).operatorType) {
+    private val _text: String = when (val operatorType = expr.operatorType) {
         UnaryOperator.REF -> "Remove &"
         UnaryOperator.REF_MUT -> "Remove &mut"
-        else -> error("unreachable")
+        else -> error("Illegal operator type: expected REF or REF_MUT, got $operatorType")
     }
+
+    override fun getText() = _text
     override fun getFamilyName() = "Remove reference"
 
     override fun invoke(project: Project, file: PsiFile, expr: PsiElement, endElement: PsiElement) {
