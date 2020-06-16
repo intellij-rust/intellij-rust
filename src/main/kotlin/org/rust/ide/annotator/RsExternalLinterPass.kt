@@ -68,6 +68,8 @@ class RsExternalLinterPass(
     }
 
     override fun doApplyInformationToEditor() {
+        if (file !is RsFile) return
+
         if (annotationInfo == null || !isAnnotationPassEnabled) {
             disposable = myProject
             doFinish(emptyList())
