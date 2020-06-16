@@ -4,3 +4,5 @@ fn test() <fold text='{...}'>{
 }</fold>
 
 awesome_invoke! <fold text='{...}'>{ }</fold>
+
+awesome_invoke! (} {);

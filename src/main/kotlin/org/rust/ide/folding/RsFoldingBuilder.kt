@@ -95,7 +95,12 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
 
         override fun visitModItem(o: RsModItem) = foldBetween(o, o.lbrace, o.rbrace)
 
-        override fun visitMacroArgument(o: RsMacroArgument) = foldBetween(o, o.lbrace, o.rbrace)
+        override fun visitMacroArgument(o: RsMacroArgument) {
+            val macroCall = o.parent as? RsMacroCall
+            if (macroCall?.bracesKind == MacroBraces.BRACES) {
+                foldBetween(o, o.lbrace, o.rbrace)
+            }
+        }
 
         override fun visitValueParameterList(o: RsValueParameterList) {
             if (o.valueParameterList.isEmpty()) return
