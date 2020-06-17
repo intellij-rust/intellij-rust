@@ -25,6 +25,7 @@ import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
+import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
@@ -105,13 +106,19 @@ sealed class RsDiagnostic(
                                 if (isTraitWithTySubstImplForActual(lookup, items.AsRef, expectedTy)) {
                                     add(ConvertToRefTyFix(element, expectedTy))
                                 }
-                            } else if (expectedTy.mutability == Mutability.MUTABLE && element is RsExpr && element.isMutable
-                                && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
-                                    add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
+                            } else if (expectedTy.mutability == Mutability.MUTABLE) {
+                                if (actualTy is TyReference && actualTy.mutability == Mutability.IMMUTABLE) {
+                                    add(ChangeRefToMutableFix(element))
                                 }
-                                if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
-                                    add(ConvertToMutTyFix(element, expectedTy))
+
+                                if (element is RsExpr && element.isMutable
+                                    && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
+                                    if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
+                                        add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
+                                    }
+                                    if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
+                                        add(ConvertToMutTyFix(element, expectedTy))
+                                    }
                                 }
                             }
                         } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
