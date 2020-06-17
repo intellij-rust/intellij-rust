@@ -50,9 +50,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         val errors = checkSyntaxErrors(parseCtx)
         for (error in errors) {
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            holder.createErrorAnnotation(error.range, error.error)
+            holder.newAnnotation(HighlightSeverity.ERROR, error.error).range(error.range).create()
         }
 
         highlightParametersOutside(parseCtx, holder)
@@ -79,9 +77,8 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         for (annotation in annotations) {
             if (suppressTraitErrors && annotation.isTraitError) continue
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            holder.createErrorAnnotation(annotation.range, annotation.error)
+
+            holder.newAnnotation(HighlightSeverity.ERROR, annotation.error).range(annotation.range).create()
         }
     }
 }
@@ -259,23 +256,17 @@ private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHold
     val highlightSeverity = if (isUnitTestMode) key.testSeverity else HighlightSeverity.INFORMATION
 
     for (parameter in ctx.parameters) {
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        holder.createAnnotation(highlightSeverity, ctx.toSourceRange(parameter.range), null)
-            .textAttributes = key.textAttributesKey
+        holder.newSilentAnnotation(highlightSeverity).range(ctx.toSourceRange(parameter.range)).textAttributes(key.textAttributesKey).create()
     }
 }
 
 private fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
     fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.IDENTIFIER) {
         if (range != null && !range.isEmpty()) {
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            holder.createAnnotation(
-                HighlightSeverity.INFORMATION,
-                ctx.toSourceRange(range, offset),
-                null
-            ).textAttributes = color.textAttributesKey
+            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                .range(ctx.toSourceRange(range, offset))
+                .textAttributes(color.textAttributesKey)
+                .create()
         }
     }
 

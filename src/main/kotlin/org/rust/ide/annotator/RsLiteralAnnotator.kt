@@ -8,12 +8,11 @@ package org.rust.ide.annotator
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.ASTNode
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 
-// BACKCOMPAT: 2019.3
-@Suppress("DEPRECATION")
 class RsLiteralAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (element !is RsLitExpr) return
@@ -26,13 +25,15 @@ class RsLiteralAnnotator : AnnotatorBase() {
                 val suffix = literal.suffix
                 val validSuffixes = literal.validSuffixes
                 if (!suffix.isNullOrEmpty() && suffix !in validSuffixes) {
-                    holder.createErrorAnnotation(element, if (validSuffixes.isNotEmpty()) {
-                        val validSuffixesStr = validSuffixes.map { "'$it'" }.joinToString()
+                    val message = if (validSuffixes.isNotEmpty()) {
+                        val validSuffixesStr = validSuffixes.joinToString { "'$it'" }
                         "invalid suffix '$suffix' for ${literal.node.displayName}; " +
                             "the suffix must be one of: $validSuffixesStr"
                     } else {
                         "${literal.node.displayName} with a suffix is invalid"
-                    })
+                    }
+
+                    holder.newAnnotation(HighlightSeverity.ERROR, message).create()
                 }
             }
 
@@ -47,12 +48,12 @@ class RsLiteralAnnotator : AnnotatorBase() {
                 value == null || value.isEmpty() -> "empty ${literal.node.displayName}"
                 value.codePointCount(0, value.length) > 1 -> "too many characters in ${literal.node.displayName}"
                 else -> null
-            }?.let { holder.createErrorAnnotation(element, it) }
+            }?.let { holder.newAnnotation(HighlightSeverity.ERROR, it).create() }
         }
 
         // Check delimiters
         if (literal is RsTextLiteral && literal.hasUnpairedQuotes) {
-            holder.createErrorAnnotation(element, "unclosed ${literal.node.displayName}")
+            holder.newAnnotation(HighlightSeverity.ERROR, "unclosed ${literal.node.displayName}").create()
         }
     }
 }

@@ -1303,34 +1303,32 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
         element.textRange
     }
 
-    // BACKCOMPAT: 2019.3
-    @Suppress("DEPRECATION")
-    val ann = holder.createAnnotation(
-        prepared.severity.toHighlightSeverity(),
-        textRange,
-        simpleHeader(prepared.errorCode, prepared.header),
-        "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>"
-    )
+    val message = simpleHeader(prepared.errorCode, prepared.header)
 
-    ann.highlightType = prepared.severity.toProblemHighlightType()
+    val annotationBuilder = holder.newAnnotation(prepared.severity.toHighlightSeverity(), message)
+        .tooltip("<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>")
+        .range(textRange)
+        .highlightType(prepared.severity.toProblemHighlightType())
 
     for (fix in prepared.fixes) {
         if (fix is IntentionAction) {
-            ann.registerFix(fix)
+            annotationBuilder.withFix(fix)
         } else {
             val descriptor = InspectionManager.getInstance(element.project)
                 .createProblemDescriptor(
                     element,
                     endElement ?: element,
-                    ann.message,
+                    message,
                     prepared.severity.toProblemHighlightType(),
                     true,
                     fix
                 )
 
-            ann.registerFix(fix, null, null, descriptor)
+            annotationBuilder.newLocalQuickFix(fix, descriptor).registerFix()
         }
     }
+
+    annotationBuilder.create()
 }
 
 fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {

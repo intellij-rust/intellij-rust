@@ -182,14 +182,15 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
         // We can't control what messages cargo generates, so we can't test them well.
         // Let's use special message for tests to distinguish annotation from external linter
         val annotationMessage = if (isUnitTestMode) TEST_MESSAGE else message.message
-        // BACKCOMPAT: 2019.3
-        @Suppress("DEPRECATION")
-        createAnnotation(message.severity, message.textRange, annotationMessage, message.htmlTooltip)
-            .apply {
-                problemGroup = ProblemGroup { annotationMessage }
-                setNeedsUpdateOnTyping(true)
-                message.quickFixes.forEach(::registerFix)
-            }
+        val annotationBuilder = newAnnotation(message.severity, annotationMessage)
+            .tooltip(message.htmlTooltip)
+            .range(message.textRange)
+            .problemGroup { annotationMessage }
+            .needsUpdateOnTyping(true)
+
+        message.quickFixes.forEach { f -> annotationBuilder.withFix(f) }
+
+        annotationBuilder.create()
     }
 }
 
