@@ -2510,6 +2510,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             where T: Fn() -> <error descr="`impl Trait` not allowed outside of function and inherent method return types [E0562]">impl Debug</error> {
         }
 
+        trait TraitAssoc {
+            type Item;
+        }
+
+        fn in_associated_type<T: TraitAssoc<Item=impl Debug>>() {}
+
         fn main() {
 //            let _in_local_variable: impl Fn() = || {};
             //~^ ERROR `impl Trait` not allowed outside of function and inherent method return types

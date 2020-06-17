@@ -158,6 +158,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (!traitType.isImpl) return
         val invalidContext = traitType
             .ancestors
+            .takeWhile { it !is RsAssocTypeBinding }
             .firstOrNull {
                 it !is RsTypeArgumentList && it.parent is RsPath ||
                     it !is RsMembers && it.parent is RsImplItem ||
