@@ -34,9 +34,11 @@ abstract class RsNamingInspection(
 
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
+
         holder.registerProblem(
             id,
             "$elementType `$name` should have $styleName case name such as `$suggestedName`",
+            getProblemHighlightType(id),
             *fixes)
     }
 
@@ -121,7 +123,7 @@ fun String.toSnakeCase(upper: Boolean): String {
     val result = StringBuilder(length + 3)     // 3 is a reasonable margin for growth when `_`s are added
     result.append(takeWhile { it == '_' || it == '\'' })    // Preserve prefix
     var firstPart = true
-    drop(result.length).splitToSequence('_').forEach pit@ { part ->
+    drop(result.length).splitToSequence('_').forEach pit@{ part ->
         if (part.isEmpty()) return@pit
         if (!firstPart) {
             result.append('_')

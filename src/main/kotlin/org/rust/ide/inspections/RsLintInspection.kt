@@ -7,12 +7,14 @@ package org.rust.ide.inspections
 
 import com.intellij.codeInspection.ContainerBasedSuppressQuickFix
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.SuppressQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
+import org.rust.ide.inspections.RsLintLevel.ALLOW
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -20,9 +22,12 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected abstract fun getLint(element: PsiElement): RsLint?
 
+    protected fun getProblemHighlightType(element: PsiElement): ProblemHighlightType =
+        getLint(element)?.getProblemHighlightType(element) ?: ProblemHighlightType.WARNING
+
     override fun isSuppressedFor(element: PsiElement): Boolean {
         if (super.isSuppressedFor(element)) return true
-        return getLint(element)?.levelFor(element) == RsLintLevel.ALLOW
+        return getLint(element)?.levelFor(element) == ALLOW
     }
 
     // TODO: fix quick fix order in UI

@@ -651,4 +651,11 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             { 0 };
         }
     """)
+
+    fun `test function internally deny`() = checkByText("""
+        fn foo() {
+            #[deny(unused_variables)]
+            let <error>test</error> = 1;
+        }
+    """)
 }

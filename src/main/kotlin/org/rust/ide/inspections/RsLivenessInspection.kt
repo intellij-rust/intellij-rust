@@ -46,7 +46,7 @@ class RsLivenessInspection : RsLintInspection() {
                 for (deadDeclaration in liveness.deadDeclarations) {
                     val name = deadDeclaration.binding.name ?: continue
                     if (name.startsWith("_")) continue
-                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind)
+                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind, getProblemHighlightType(deadDeclaration.binding))
                 }
             }
         }
@@ -55,7 +55,8 @@ class RsLivenessInspection : RsLintInspection() {
         holder: RsProblemsHolder,
         binding: RsPatBinding,
         name: String,
-        kind: DeclarationKind
+        kind: DeclarationKind,
+        highlightType: ProblemHighlightType
     ) {
         if (!binding.isPhysical) return
 
@@ -79,6 +80,6 @@ class RsLivenessInspection : RsLintInspection() {
             fixes.add(RemoveVariableFix(binding, name))
         }
 
-        holder.registerProblem(binding, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, *fixes.toTypedArray())
+        holder.registerProblem(binding, message, highlightType, *fixes.toTypedArray())
     }
 }

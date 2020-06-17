@@ -24,7 +24,12 @@ enum class RsLintLevel(
     /**
      * Compiler errors.
      */
-    DENY("deny");
+    DENY("deny"),
+
+    /**
+     * Compiler errors, but also forbids changing the lint level afterwards.
+     */
+    FORBID("forbid");
 
     companion object {
         fun valueForId(id: String) = values().firstOrNull { it.id == id }

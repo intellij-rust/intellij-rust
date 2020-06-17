@@ -29,7 +29,7 @@ class RsNeedlessLifetimesInspection : RsLintInspection() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitFunction(fn: RsFunction) {
-            if (couldUseElision(fn)) registerProblem(holder, fn)
+            if (couldUseElision(fn)) registerProblem(holder, fn, getProblemHighlightType(fn))
         }
     }
 }
@@ -234,11 +234,11 @@ private fun checkLifetimesUsedInBody(body: RsBlock?): Boolean {
     return checker.lifetimesUsedInBody
 }
 
-private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction) {
+private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction, highlightType: ProblemHighlightType) {
     holder.registerProblem(
         fn,
         "Explicit lifetimes given in parameter types where they could be elided",
-        ProblemHighlightType.WEAK_WARNING,
+        highlightType,
         TextRange(
             fn.fn.startOffsetInParent,
             fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent
