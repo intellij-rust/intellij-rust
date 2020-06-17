@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.util.DocumentUtil
 import com.intellij.util.containers.ContainerUtil
@@ -55,13 +56,27 @@ class RustfmtWatcher {
                 ?: return
             val documentsToReformat = documentsToReformatLater.toList()
             documentsToReformatLater.clear()
-            documentsToReformat.groupBy(::findCargoProject).forEach(::reformatDocuments)
+
+            for ((cargoProject, documents) in documentsToReformat.groupBy(::findCargoProject)) {
+                if (cargoProject == null) continue
+
+                if (DumbService.isDumb(cargoProject.project)) {
+                    documentsToReformatLater += documents
+                } else {
+                    reformatDocuments(cargoProject, documents)
+                }
+            }
         }
 
         override fun beforeDocumentSaving(document: Document) {
             val isSuppressed = getInstanceIfCreated()?.isSuppressed == true
             if (!isSuppressed) {
-                reformatDocuments(findCargoProject(document), listOf(document))
+                val cargoProject = findCargoProject(document) ?: return
+                if (DumbService.isDumb(cargoProject.project)) {
+                    getInstance().reformatDocumentLater(document)
+                } else {
+                    reformatDocuments(cargoProject, listOf(document))
+                }
             }
         }
 
@@ -82,8 +97,7 @@ class RustfmtWatcher {
             return project.cargoProjects.findProjectForFile(file)
         }
 
-        private fun reformatDocuments(cargoProject: CargoProject?, documents: List<Document>) {
-            if (cargoProject == null) return
+        private fun reformatDocuments(cargoProject: CargoProject, documents: List<Document>) {
             val project = cargoProject.project
             if (!project.rustSettings.runRustfmtOnSave) return
             val rustfmt = project.toolchain?.rustfmt() ?: return
