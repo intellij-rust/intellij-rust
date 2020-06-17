@@ -25,7 +25,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {
             override fun visitCallExpr(o: RsCallExpr) = checkCall(o, rsHolder)
-            override fun visitMethodCall(o: RsMethodCall) = checkMethodCall(o, rsHolder)
+            override fun visitDotExpr(o: RsDotExpr) = checkDotExpr(o, rsHolder)
             override fun visitPathExpr(o: RsPathExpr) = checkPathExpr(o, rsHolder)
             override fun visitUnaryExpr(o: RsUnaryExpr) = checkUnary(o, rsHolder)
         }
@@ -69,11 +69,13 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         }
     }
 
-    fun checkMethodCall(o: RsMethodCall, holder: RsAnnotationHolder) {
-        val fn = o.reference.resolve() as? RsFunction ?: return
+    fun checkDotExpr(o: RsDotExpr, holder: RsAnnotationHolder) {
+        o.methodCall?.let {
+            val fn = it.reference.resolve() as? RsFunction ?: return
 
-        if (fn.isActuallyUnsafe) {
-            annotateUnsafeCall(o.parentDotExpr, holder)
+            if (fn.isActuallyUnsafe) {
+                annotateUnsafeCall(o, holder)
+            }
         }
     }
 

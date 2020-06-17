@@ -701,6 +701,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         collectDiagnostics(holder, fn)
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
+
+        fn.innerAttrList.forEach { checkStartAttribute(holder, it) }
+        fn.outerAttrList.forEach { checkStartAttribute(holder, it) }
     }
 
     private fun collectDiagnostics(holder: RsAnnotationHolder, element: RsInferenceContextOwner) {
@@ -713,7 +716,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
-        checkStartAttribute(holder, attr)
+
+        if (attr.owner !is RsFunction)
+            checkStartAttribute(holder, attr)
     }
 
     // E0132: Invalid `start` attribute
