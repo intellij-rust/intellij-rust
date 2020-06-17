@@ -5,14 +5,15 @@
 
 package org.rust.ide.structure
 
+import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
-import com.intellij.psi.NavigatablePsiElement
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -42,19 +43,33 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase)
 }
 
 private class RsStructureViewElement(
-    val psi: RsElement
-) : StructureViewTreeElement, Navigatable by (psi as NavigatablePsiElement) {
+    psiArg: RsElement
+) : StructureViewTreeElement {
 
-    override fun getValue(): RsElement = psi
+    private val psiAnchor = TreeAnchorizer.getService().createAnchor(psiArg)
+    private val psi: RsElement? get() = TreeAnchorizer.getService().retrieveElement(psiAnchor) as? RsElement
 
-    override fun getPresentation(): ItemPresentation = getPresentationForStructure(psi)
+    override fun navigate(requestFocus: Boolean) {
+        (psi as? Navigatable)?.navigate(requestFocus)
+    }
+
+    override fun canNavigate(): Boolean = (psi as? Navigatable)?.canNavigate() == true
+
+    override fun canNavigateToSource(): Boolean = (psi as? Navigatable)?.canNavigateToSource() == true
+
+    override fun getValue(): RsElement? = psi
+
+    override fun getPresentation(): ItemPresentation {
+        return psi?.let { getPresentationForStructure(it) }
+            ?: PresentationData("", null, null, null)
+    }
 
     override fun getChildren(): Array<TreeElement> =
         childElements.map(::RsStructureViewElement).toTypedArray()
 
     private val childElements: List<RsElement>
         get() {
-            return when (psi) {
+            return when (val psi = psi) {
                 is RsEnumItem -> psi.variants
                 is RsTraitOrImpl -> psi.expandedMembers
                 is RsMod -> extractItems(psi)
