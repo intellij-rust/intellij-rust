@@ -566,7 +566,10 @@
 
         <!-- Live Templates -->
 
-        <defaultLiveTemplatesProvider implementation="org.rust.ide.template.RsLiveTemplatesProvider"/>
+        <defaultLiveTemplates file="org/rust/ide/liveTemplates/iterations"/>
+        <defaultLiveTemplates file="org/rust/ide/liveTemplates/output"/>
+        <defaultLiveTemplates file="org/rust/ide/liveTemplates/test"/>
+        <defaultLiveTemplates file="org/rust/ide/liveTemplates/other"/>
 
         <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Generic"/>
         <liveTemplateContext implementation="org.rust.ide.template.RsContextType$Statement"/>
