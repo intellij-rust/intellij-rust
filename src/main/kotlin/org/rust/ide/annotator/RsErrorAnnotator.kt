@@ -17,12 +17,15 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
+import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
 import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
+import org.rust.lang.core.macros.MacroExpansionMode
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
@@ -32,6 +35,8 @@ import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.ref.deepResolve
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.asLong
+import org.rust.lang.core.types.infer.containsTyOfClass
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.RsErrorCode
@@ -524,6 +529,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val trait = traitRef.resolveToTrait() ?: return
         checkForbiddenImpl(holder, traitRef, trait)
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
+        checkSuperTraitImplemented(holder, impl, trait)
         checkImplBothCopyAndDrop(holder, impl, trait)
         val traitName = trait.name ?: return
 
@@ -545,6 +551,31 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
             !impl.isUnsafe && !trait.isUnsafe && impl.excl == null && attrRequiringUnsafeImpl != null ->
                 RsDiagnostic.TraitMissingUnsafeImplAttributeError(traitRef, attrRequiringUnsafeImpl).addToHolder(holder)
+        }
+    }
+
+    private fun checkSuperTraitImplemented(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
+        if (impl.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+
+        val traitRef = impl.traitRef ?: return
+        val typeRef = impl.typeReference ?: return
+        val type = typeRef.type
+        val supertraits = trait.typeParamBounds?.polyboundList?.mapNotNull { it.bound } ?: return
+        val lookup = typeRef.implLookup
+
+        val selfSubst = mapOf(TyTypeParameter.self() to type).toTypeSubst()
+        val substitution = (impl.implementedTrait?.subst ?: emptySubstitution).substituteInValues(selfSubst) + selfSubst
+        for (bound in supertraits) {
+            val requiredTrait = bound.traitRef ?: continue
+            val boundTrait = requiredTrait.resolveToBoundTrait() ?: continue
+            val locallyBoundTrait = boundTrait.substitute(substitution)
+            if (locallyBoundTrait.containsTyOfClass(TyUnknown::class.java)) continue
+
+            val canSelect = lookup.canSelect(TraitRef(type, locallyBoundTrait))
+            if (!canSelect) {
+                val missingTrait = requiredTrait.getStubOnlyText(substitution)
+                RsDiagnostic.SuperTraitIsNotImplemented(traitRef, type, missingTrait).addToHolder(holder)
+            }
         }
     }
 
@@ -898,6 +929,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             checkArraySizeExpr(holder, sizeExpr)
         }
     }
+
     private fun checkArrayExpr(holder: RsAnnotationHolder, o: RsArrayExpr) {
         val sizeExpr = o.sizeExpr
         if (sizeExpr != null) {
