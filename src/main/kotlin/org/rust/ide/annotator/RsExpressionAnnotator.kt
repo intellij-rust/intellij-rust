@@ -8,6 +8,7 @@ package org.rust.ide.annotator
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
@@ -43,9 +44,11 @@ class RsExpressionAnnotator : AnnotatorBase() {
                 field.reference.multiResolve().none { it is RsFieldDecl }
             }
             .forEach { field ->
-                val annotation = holder.createErrorAnnotation(field.referenceNameElement, "No such field")
-                annotation?.highlightType = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL
-                CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotation?.registerFix(it) }
+                val annotationBuilder = holder.getErrorAnnotationBuilder(field.referenceNameElement, "No such field") ?: return@forEach
+
+                CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotationBuilder.withFix(it) }
+
+                annotationBuilder.highlightType(ProblemHighlightType.LIKE_UNKNOWN_SYMBOL).create()
             }
 
         for (field in body.structLiteralFieldList.findDuplicateReferences()) {
@@ -64,11 +67,11 @@ class RsExpressionAnnotator : AnnotatorBase() {
 
                 val structNameRange = literal.descendantOfTypeStrict<RsPath>()?.textRange
                 if (structNameRange != null) {
-                    // BACKCOMPAT: 2019.3
-                    @Suppress("DEPRECATION")
-                    val annotation = holder.holder.createErrorAnnotation(structNameRange, "Some fields are missing")
-                    annotation.registerFix(AddStructFieldsFix(literal), body.parent.textRange)
-                    annotation.registerFix(AddStructFieldsFix(literal, recursive = true), body.parent.textRange)
+                    holder.holder.newAnnotation(HighlightSeverity.ERROR, "Some fields are missing")
+                        .range(structNameRange)
+                        .newFix(AddStructFieldsFix(literal)).range(body.parent.textRange).registerFix()
+                        .newFix(AddStructFieldsFix(literal, recursive = true)).range(body.parent.textRange).registerFix()
+                        .create()
                 }
             }
         }
@@ -96,7 +99,7 @@ private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder
 
     private fun RsExpr?.warnIfParens(message: String) {
         if (this !is RsParenExpr || !canWarn(this)) return
-        holder.createWeakWarningAnnotation(this, message)?.registerFix(RemoveRedundantParenthesesFix(this))
+        holder.createWeakWarningAnnotation(this, message)?.newFix(RemoveRedundantParenthesesFix(this))?.registerFix()?.create()
     }
 
     private fun canWarn(expr: RsParenExpr): Boolean {

@@ -637,8 +637,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
-            val annotator = holder.createErrorAnnotation(o, "Chained comparison operator require parentheses")
-            annotator?.registerFix(AddTurbofishFix())
+            holder.getErrorAnnotationBuilder(o, "Chained comparison operator require parentheses")
+                ?.withFix(AddTurbofishFix())?.create()
         }
     }
 
@@ -658,8 +658,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // `::` is redundant only in types
         if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
         val annotation = holder.createWeakWarningAnnotation(coloncolon, "Redundant `::`") ?: return
-        annotation.highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL
-        annotation.registerFix(RemoveElementFix(coloncolon))
+        annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
+            .withFix(RemoveElementFix(coloncolon)).create()
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
@@ -701,6 +701,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         collectDiagnostics(holder, fn)
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
+
+        fn.innerAttrList.forEach { checkStartAttribute(holder, it) }
+        fn.outerAttrList.forEach { checkStartAttribute(holder, it) }
     }
 
     private fun collectDiagnostics(holder: RsAnnotationHolder, element: RsInferenceContextOwner) {
@@ -713,7 +716,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprForEmptyEnum(holder, attr)
-        checkStartAttribute(holder, attr)
+
+        if (attr.owner !is RsFunction)
+            checkStartAttribute(holder, attr)
     }
 
     // E0132: Invalid `start` attribute
@@ -751,7 +756,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 }
             }
             else ->
-                RsDiagnostic.InvalidStartAttrError.InvalidOwner(attr.metaItem.path?.referenceNameElement ?: attr.metaItem)
+                RsDiagnostic
+                    .InvalidStartAttrError.InvalidOwner(attr.metaItem.path?.referenceNameElement ?: attr.metaItem)
                     .addToHolder(holder)
         }
     }

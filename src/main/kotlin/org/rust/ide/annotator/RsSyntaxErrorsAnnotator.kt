@@ -3,16 +3,13 @@
  * found in the LICENSE file.
  */
 
-// BACKCOMPAT: 2019.3
-@file:Suppress("DEPRECATION")
-
 package org.rust.ide.annotator
 
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.ide.annotator.AnnotatorBase
-import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -62,10 +59,8 @@ private fun checkItemOrMacro(item: RsElement, itemName: String, highlightElement
         val parent = item.context
         val owner = if (parent is RsMembers) parent.context else parent
         if (owner is RsItemElement && (owner is RsForeignModItem || owner is RsTraitOrImpl)) {
-            holder.createErrorAnnotation(
-                highlightElement,
-                "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}"
-            )
+            holder.newAnnotation(HighlightSeverity.ERROR, "$itemName are not allowed inside ${owner.article} ${owner.itemKindName}")
+                .range(highlightElement).create()
         }
     }
 
@@ -203,7 +198,8 @@ private fun checkDot3Parameter(holder: AnnotationHolder, dot3: PsiElement?) {
     dot3.rightVisibleLeaves
         .first {
             if (it.text != ")") {
-                holder.createErrorAnnotation(it, "`...` must be last in argument list for variadic function")
+                holder.newAnnotation(HighlightSeverity.ERROR, "`...` must be last in argument list for variadic function")
+                    .range(it).create()
             }
             return
         }
@@ -220,8 +216,8 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
         is RsAbstractableOwner.Trait -> {
             denyType<RsPatTup>(param.pat, holder, "${fn.title} cannot have tuple parameters", param)
             if (param.pat == null) {
-                val annotation = holder
-                    .createWarningAnnotation(param, "Anonymous functions parameters are deprecated (RFC 1685)")
+                val message = "Anonymous functions parameters are deprecated (RFC 1685)"
+                val annotation = holder.newAnnotation(HighlightSeverity.WARNING, message)
 
                 val fix = SubstituteTextFix.replace(
                     "Add dummy parameter name",
@@ -230,9 +226,9 @@ private fun checkValueParameter(holder: AnnotationHolder, param: RsValueParamete
                     "_: ${param.text}"
                 )
                 val descriptor = InspectionManager.getInstance(param.project)
-                    .createProblemDescriptor(param, annotation.message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
+                    .createProblemDescriptor(param, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true)
 
-                annotation.registerFix(fix, null, null, descriptor)
+                annotation.newLocalQuickFix(fix, descriptor).registerFix().create()
             }
         }
     }
@@ -243,8 +239,9 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
         element.typeParameterList
             .mapNotNull { it.typeReference }
             .forEach {
-                holder.createErrorAnnotation(it,
+                holder.newAnnotation(HighlightSeverity.ERROR,
                     "Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions")
+                    .range(it).create()
             }
     } else {
         val lastNotDefaultIndex = max(element.typeParameterList.indexOfLast { it.typeReference == null }, 0)
@@ -252,7 +249,8 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
             .take(lastNotDefaultIndex)
             .filter { it.typeReference != null }
             .forEach {
-                holder.createErrorAnnotation(it, "Type parameters with a default must be trailing")
+                holder.newAnnotation(HighlightSeverity.ERROR, "Type parameters with a default must be trailing")
+                    .range(it).create()
             }
     }
     val lifetimeParams = element.lifetimeParameterList
@@ -260,7 +258,8 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
     val startOfTypeParams = element.typeParameterList.firstOrNull()?.textOffset ?: return
     for (e in lifetimeParams) {
         if (e.textOffset > startOfTypeParams) {
-            holder.createErrorAnnotation(e, "Lifetime parameters must be declared prior to type parameters")
+            holder.newAnnotation(HighlightSeverity.ERROR, "Lifetime parameters must be declared prior to type parameters")
+                .range(e).create()
         }
     }
 }
@@ -273,7 +272,9 @@ private fun checkTypeArgumentList(holder: AnnotationHolder, args: RsTypeArgument
             kind = newKind
         } else {
             val newStateName = newKind.argumentNameCapitalized
-            holder.createErrorAnnotation(child, "$newStateName must be declared prior to ${kind.argumentName}")
+
+            holder.newAnnotation(HighlightSeverity.ERROR, "$newStateName must be declared prior to ${kind.argumentName}")
+                .range(child).create()
         }
     }
 }
@@ -297,17 +298,26 @@ private enum class TypeArgumentKind(private val elementClass: KClass<*>, val arg
     }
 }
 
-private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
-    if (el != null) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: TextRange.EMPTY_RANGE, message)
+private fun require(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Unit? =
+    if (el != null || highlightElements.combinedRange == null) null
+    else {
+        holder.newAnnotation(HighlightSeverity.ERROR, message)
+            .range(highlightElements.combinedRange!!).create()
+    }
 
-private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
+private fun deny(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Unit? =
     if (el == null) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+    else {
+        holder.newAnnotation(HighlightSeverity.ERROR, message)
+            .range(highlightElements.combinedRange ?: el.textRange).create()
+    }
 
-private inline fun <reified T : RsElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Annotation? =
+private inline fun <reified T : RsElement> denyType(el: PsiElement?, holder: AnnotationHolder, message: String, vararg highlightElements: PsiElement?): Unit? =
     if (el !is T) null
-    else holder.createErrorAnnotation(highlightElements.combinedRange ?: el.textRange, message)
+    else {
+        holder.newAnnotation(HighlightSeverity.ERROR, message)
+            .range(highlightElements.combinedRange ?: el.textRange).create()
+    }
 
 private val Array<out PsiElement?>.combinedRange: TextRange?
     get() = if (isEmpty())

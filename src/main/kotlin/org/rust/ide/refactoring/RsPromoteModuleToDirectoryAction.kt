@@ -24,14 +24,22 @@ import org.rust.openapiext.checkWriteAccessAllowed
 
 class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
-        elements.all { it is RsFile && it.name != RsConstants.MOD_RS_FILE }
+        elements.all { it.isPromotable }
+
+    override fun isAvailableOnElementInEditorAndFile(
+        element: PsiElement,
+        editor: Editor,
+        file: PsiFile,
+        context: DataContext
+    ): Boolean {
+        return file.isPromotable
+    }
 
     override fun getHandler(dataContext: DataContext): RefactoringActionHandler = Handler
 
     override fun isAvailableInEditorOnly(): Boolean = false
 
     override fun isAvailableForLanguage(language: Language): Boolean = language.`is`(RsLanguage)
-
 
     private object Handler : RefactoringActionHandler {
         override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
@@ -59,3 +67,6 @@ class RsPromoteModuleToDirectoryAction : BaseRefactoringAction() {
         }
     }
 }
+
+private val PsiElement.isPromotable
+    get() = this is RsFile && this.name != RsConstants.MOD_RS_FILE
