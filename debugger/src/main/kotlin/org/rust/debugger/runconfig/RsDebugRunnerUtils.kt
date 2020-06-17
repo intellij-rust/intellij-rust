@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -17,9 +18,13 @@ import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugProcessConfiguratorStarter
 import com.intellij.xdebugger.impl.ui.XDebugSessionData
+import org.rust.cargo.runconfig.BuildResult.ToolchainError
+import org.rust.cargo.runconfig.BuildResult.ToolchainError.UnsupportedGNU
+import org.rust.cargo.runconfig.BuildResult.ToolchainError.UnsupportedMSVC
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.settings.RsDebuggerSettings
+import org.rust.openapiext.BUILD_202
 
 object RsDebugRunnerUtils {
 
@@ -43,6 +48,19 @@ object RsDebugRunnerUtils {
                 override fun configure(data: XDebugSessionData?) {}
             })
             .runContentDescriptor
+    }
+
+    @Suppress("UnnecessaryVariable")
+    fun checkToolchainSupported(host: String): ToolchainError? {
+        if (ApplicationInfo.getInstance().build < BUILD_202) {
+            return UnsupportedMSVC
+        }
+        val isGNURustToolchain = "gnu" in host
+        return if (isGNURustToolchain) {
+            UnsupportedGNU
+        } else {
+            null
+        }
     }
 
     fun checkToolchainConfigured(project: Project): Boolean {
