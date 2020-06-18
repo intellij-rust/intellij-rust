@@ -26,6 +26,7 @@ import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
@@ -942,6 +943,21 @@ sealed class RsDiagnostic(
             header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
             description = escapeString("`$ty` does not have a constant size known at compile-time"),
             fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
+        )
+    }
+
+    class SuperTraitIsNotImplemented(
+        element: RsTraitRef,
+        type: Ty,
+        private val missingTrait: String
+    ) : RsDiagnostic(element) {
+        private val typeText = type.shortPresentableText
+
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0277,
+            header = escapeString("the trait bound `$typeText: $missingTrait` is not satisfied"),
+            description = escapeString("the trait `$missingTrait` is not implemented for `$typeText`")
         )
     }
 

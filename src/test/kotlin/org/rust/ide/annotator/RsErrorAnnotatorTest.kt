@@ -1426,6 +1426,89 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 //        }
     """)
 
+    @ExpandMacros
+    fun `test supertrait is not implemented E0277 simple trait`() = checkErrors("""
+        trait A {}
+        trait B: A {}
+
+        struct S;
+
+        impl <error descr="the trait bound `S: A` is not satisfied [E0277]">B</error> for S {}
+    """)
+
+    @ExpandMacros
+    fun `test supertrait is not implemented E0277 multiple traits`() = checkErrors("""
+        trait A {}
+        trait B {}
+
+        trait C: A + B {}
+
+        struct S;
+
+        impl <error descr="the trait bound `S: B` is not satisfied [E0277]"><error descr="the trait bound `S: A` is not satisfied [E0277]">C</error></error> for S {}
+    """)
+
+    @ExpandMacros
+    fun `test supertrait is not implemented E0277 generic supertrait`() = checkErrors("""
+        trait A<T> {}
+        trait B: A<u32> {}
+        trait C<T>: A<T> {}
+
+        struct S1;
+        impl <error descr="the trait bound `S1: A&lt;u32&gt;` is not satisfied [E0277]">B</error> for S1 {}
+
+        struct S2;
+        impl A<bool> for S2 {}
+        impl <error descr="the trait bound `S2: A&lt;u32&gt;` is not satisfied [E0277]">B</error> for S2 {}
+
+        struct S3;
+        impl A<bool> for S3 {}
+        impl A<u32> for S3 {}
+        impl B for S3 {}
+
+        struct S4;
+        impl<T> <error descr="the trait bound `S4: A&lt;T&gt;` is not satisfied [E0277]">C<T></error> for S4 {}
+
+        struct S5;
+        impl A<u32> for S5 {}
+        impl<T> <error descr="the trait bound `S5: A&lt;T&gt;` is not satisfied [E0277]">C<T></error> for S5 {}
+
+        struct S6;
+        impl<T> A<T> for S6 {}
+        impl<T> C<T> for S6 {}
+
+        struct S7<T>(T);
+        impl<T> A<T> for S7<T> {}
+        impl<T> C<T> for S7<T> {}
+
+        struct S8;
+        impl A<bool> for S8 {}
+        impl <error descr="the trait bound `S8: A&lt;u32&gt;` is not satisfied [E0277]">C<u32></error> for S8 {}
+
+        struct S9;
+        impl A<u32> for S9 {}
+        impl C<u32> for S9 {}
+    """)
+
+    @ExpandMacros
+    fun `test supertrait is not implemented E0277 ignore unknown type`() = checkErrors("""
+        trait A<T> {}
+        trait B<T>: A<T> {}
+
+        struct S;
+        impl B<Foo> for S {}
+    """)
+
+    @ExpandMacros
+    fun `test supertrait is not implemented E0277 self substitution`() = checkErrors("""
+        trait Tr1<A=Self> {}
+        trait Tr2<A=Self> : Tr1<A> {}
+
+        struct S;
+        impl Tr1 for S {}
+        impl Tr2 for S {}
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
