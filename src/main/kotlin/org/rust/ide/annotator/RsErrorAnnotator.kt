@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
@@ -163,6 +164,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (!traitType.isImpl) return
         val invalidContext = traitType
             .ancestors
+            .takeWhile { !(it is RsAssocTypeBinding && it.parentOfType<RsTypeQual>() == null) }
             .firstOrNull {
                 it !is RsTypeArgumentList && it.parent is RsPath ||
                     it !is RsMembers && it.parent is RsImplItem ||
