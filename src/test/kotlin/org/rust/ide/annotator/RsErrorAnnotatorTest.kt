@@ -2756,6 +2756,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let x = 1<error descr="`...` syntax is deprecated. Use `..` for an exclusive range or `..=` for an inclusive range">...</error>;;
         }
     """)
+
     fun `test inclusive range with end E0586`() = checkErrors("""
         fn foo() {
             let x = 1..=2;
@@ -3388,5 +3389,65 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let bar: usize = 42;
             let a: [u8; <error descr="Calls in constants are limited to constant functions, tuple structs and tuple variants [E0015]">foo</error>(1, <error descr="A non-constant value was used in a constant expression [E0435]">bar</error>)];
         }
+    """)
+
+    fun `test E0517 placement repr C`() = checkErrors("""
+        #[repr(<error descr="C attribute should be applied to struct, enum, or union [E0517]">C</error>)]
+        type Test = i32;
+
+        #[repr(C)]
+        struct Test1(i32);
+
+        #[repr(C)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr transparent`() = checkErrors("""
+        #[repr(<error descr="transparent attribute should be applied to struct, enum, or union [E0517]">transparent</error>)]
+        type Test = i32;
+
+        #[repr(transparent)]
+        struct Test1(i32);
+
+        #[repr(transparent)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr align`() = checkErrors("""
+        #[repr(<error descr="align attribute should be applied to struct, enum, or union [E0517]">align(2)</error>)]
+        type Test = i32;
+
+        #[repr(align(2))]
+        struct Test1(i32);
+
+        #[repr(align(2))]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement repr primitive representations`() = checkErrors("""
+        #[repr(<error descr="u32 attribute should be applied to enum [E0517]">u32</error>)]
+        type Test = i32;
+
+        #[repr(<error descr="i32 attribute should be applied to enum [E0517]">i32</error>)]
+        struct Test1(i32);
+
+        #[repr(isize)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0517 placement packed`() = checkErrors("""
+        #[repr(<error descr="packed attribute should be applied to struct or union [E0517]">packed</error>)]
+        type Test = i32;
+
+        #[repr(packed)]
+        struct Test1(i32);
+
+        #[repr(<error descr="packed attribute should be applied to struct or union [E0517]">packed</error>)]
+        enum Test2 { AA }
+    """)
+
+    fun `test E0552 unrecognized repr`() = checkErrors("""
+        #[repr(<error descr="Unrecognized representation CD [E0552]">CD</error>)]
+        struct Test(i32);
     """)
 }

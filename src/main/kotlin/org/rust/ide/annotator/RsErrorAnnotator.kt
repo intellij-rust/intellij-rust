@@ -748,6 +748,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkAttr(holder: RsAnnotationHolder, attr: RsAttr) {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
+        checkReprAttribute(holder, attr)
         checkReprForEmptyEnum(holder, attr)
 
         if (attr.owner !is RsFunction)
@@ -802,6 +803,42 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // Not using `enum.variants` to avoid false positive for enum without body
         if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
             RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
+        }
+    }
+
+    private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
+        if (attr.metaItem.name != "repr") return
+
+        val owner = attr.owner ?: return
+
+        val reprArgs = attr.metaItem.metaItemArgs?.metaItemList.orEmpty()
+
+        check@ for (reprArg in reprArgs) {
+            val reprName = reprArg.name ?: continue
+
+            val errorText = when (reprName) {
+                "C", "transparent", "align" -> when (owner) {
+                    is RsStructItem, is RsEnumItem -> continue@check
+                    else -> "$reprName attribute should be applied to struct, enum, or union"
+                }
+
+                in TyInteger.NAMES -> when (owner) {
+                    is RsEnumItem -> continue@check
+                    else -> "$reprName attribute should be applied to enum"
+                }
+
+                "packed", "simd" -> when (owner) {
+                    is RsStructItem -> continue@check
+                    else -> "$reprName attribute should be applied to struct or union"
+                }
+
+                else -> {
+                    RsDiagnostic.UnrecognizedReprAttribute(reprArg, reprName).addToHolder(holder)
+                    continue@check
+                }
+            }
+
+            RsDiagnostic.ReprAttrUnsupportedItem(reprArg, errorText).addToHolder(holder)
         }
     }
 
