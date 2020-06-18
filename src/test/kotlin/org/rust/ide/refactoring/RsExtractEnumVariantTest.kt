@@ -450,6 +450,36 @@ class RsExtractEnumVariantTest : RsTestBase() {
         }
     """)
 
+    fun `test import generated tuple if needed`() = doAvailableTest("""
+        use a::E;
+
+        mod a {
+            pub enum E {
+                /*caret*/V1(i32, i32),
+                V2
+            }
+        }
+
+        fn main() {
+            let _ = E::V1(0, 1);
+        }
+    """, """
+        use a::{E, V1};
+
+        mod a {
+            pub struct /*caret*/V1(pub i32, pub i32);
+
+            pub enum E {
+                V1(V1),
+                V2
+            }
+        }
+
+        fn main() {
+            let _ = E::V1(V1(0, 1));
+        }
+    """)
+
     // TODO: fix
     fun `test don't import generated struct if its name already in scope`() = doAvailableTest("""
         use a::E;
@@ -518,6 +548,50 @@ class RsExtractEnumVariantTest : RsTestBase() {
         pub enum E {
             V1(V1),
             V2
+        }
+    """)
+
+    fun `test reference to tuple constructor`() = doAvailableTest("""
+        mod foo {
+            pub enum Foo { Bar/*caret*/(i32, u32) }
+        }
+
+        fn main() {
+            let ctr = foo::Foo::Bar;
+            let ctr2 = ctr;
+            let f = ctr2(0, 1);
+        }
+    """, """
+        use foo::Bar;
+
+        mod foo {
+            pub struct Bar(pub i32, pub u32);
+
+            pub enum Foo { Bar(Bar) }
+        }
+
+        fn main() {
+            let ctr = |p0, p1| foo::Foo::Bar(Bar(p0, p1));
+            let ctr2 = ctr;
+            let f = ctr2(0, 1);
+        }
+    """)
+
+    fun `test tuple constructor in a function call`() = doAvailableTest("""
+        enum Foo { Bar/*caret*/(i32) }
+        fn id<T>(x: T) -> T { x }
+
+        fn main() {
+            id(Foo::Bar)(42);
+        }
+    """, """
+        struct Bar(pub i32);
+
+        enum Foo { Bar(Bar) }
+        fn id<T>(x: T) -> T { x }
+
+        fn main() {
+            id(|p0| Foo::Bar(Bar(p0)))(42);
         }
     """)
 
