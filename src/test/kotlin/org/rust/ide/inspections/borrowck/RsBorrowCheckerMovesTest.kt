@@ -157,7 +157,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
 
     fun `test move else if`() = checkByText("""
         struct S;
-        
+
         fn main() {
             let x = S;
             if a {
@@ -605,12 +605,12 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             data: T,
             next: *mut Self,
         }
-        
+
         impl<T> Node<T> {
             unsafe fn next(node: *mut Self) -> *mut Self {
                 (*node).next
             }
-        
+
             unsafe fn set_next(node: *mut Self, next: *mut Self) {
                 (*node).next = next;
             }
@@ -621,9 +621,9 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         macro_rules! infinite_macro {
             ($ e:expr) => { infinite_macro!($ e) };
         }
-        
+
         struct S;
-        
+
         fn main() {
             let x = S;
             infinite_macro!(x);
@@ -666,7 +666,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     fun `test move generic struct expr with base`() = checkByText("""
         struct S<T> { x: T, y: T }
         struct R;
-        
+
         fn main() {
             let s1 = S { x: R, y: R };
             let s2 = S { x: R, ..s1 };
@@ -677,7 +677,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no move self struct expr with base`() = checkByText("""
         struct S { x: i32, y: i32 }
-        
+
         impl S {
             fn foo(&self) -> S {
                 S { x: 42, ..*self }
@@ -689,11 +689,23 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     fun `test no move self struct expr with complex base`() = checkByText("""
         struct A<T> { x: T }
         struct B<T> { a: A<T>, aa: i32 }
-        
+
         impl B<i32> {
             fn foo(&self) -> B<i32> {
                 B { a: A { x: 42 }, ..*self }
             }
         }
     """, checkWarn = false)
+
+    fun `test move destructured struct binding`() = checkByText("""
+        struct T(u32);
+        struct S { a: T, b: T }
+
+        fn consume(t: T) {}
+
+        fn foo(S { a, b }: S) {
+            consume(a);
+            consume(<error descr="Use of moved value">a</error>);
+        }
+    """)
 }
