@@ -512,7 +512,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class TooFewParamsError(
+    class IncorrectArgumentCountErrorVariadic(
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int
@@ -530,7 +530,7 @@ sealed class RsDiagnostic(
         }
     }
 
-    class TooManyParamsError(
+    class IncorrectArgumentCountError(
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int
