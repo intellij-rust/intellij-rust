@@ -431,14 +431,14 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         struct S { x: i32, y: i32 }
 
         fn foo(s: S) {
-            let S { x, <warning descr="Variable `y` is never used">y</warning> } = s;
+            let S { x, <warning descr="Binding `y` is never used">y</warning> } = s;
             x;
         }
     """)
 
     fun `test use binding from tuple`() = checkByText("""
         fn foo() {
-            let (x, <warning descr="Variable `y` is never used">y</warning>) = (1, 2);
+            let (x, <warning descr="Binding `y` is never used">y</warning>) = (1, 2);
             x;
         }
     """)
@@ -513,6 +513,142 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
 
         fn foo(S { a }: S) {
             a;
+        }
+    """)
+
+    fun `test no remove on struct field binding`() = checkFixIsUnavailable("Remove", """
+        struct S { a: u32, b: u32 }
+
+        fn foo() {
+            let S { <warning>a/*caret*/</warning>, b } = S { a: 0, b: 0 };
+            let _ = b;
+        }
+    """)
+
+    fun `test no remove on tuple binding`() = checkFixIsUnavailable("Remove", """
+        fn foo() {
+            let (<warning>a/*caret*/</warning>, b) = (1, 2);
+            let _ = b;
+        }
+    """)
+
+    fun `test remove empty variable`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>a/*caret*/</warning>;
+        }
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove empty mut variable`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>mut a/*caret*/</warning>;
+        }
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove empty ref variable`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>ref a/*caret*/</warning>;
+        }
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove variable with a literal`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>a/*caret*/</warning> = 5;
+        }
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove variable with a unit type`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>a/*caret*/</warning> = ();
+        }
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove variable with a path`() = checkFixByText("Remove variable `a`", """
+        struct S;
+        fn foo() {
+            let <warning>a/*caret*/</warning> = S;
+        }
+    """, """
+        struct S;
+        fn foo() {}
+    """)
+
+    fun `test remove variable with a nested expression without side effects`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let b = &5;
+            let <warning>a/*caret*/</warning> = (1 + *b, (3 * 4, -2));
+        }
+    """, """
+        fn foo() {
+            let b = &5;
+        }
+    """)
+
+    fun `test remove variable with a field access`() = checkFixByText("Remove variable `a`", """
+        struct S {
+            a: u32
+        }
+        fn foo() {
+            let s = S { a: 0 };
+            let <warning>a/*caret*/</warning> = s.a;
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+        fn foo() {
+            let s = S { a: 0 };
+        }
+    """)
+
+    fun `test remove variable with a method call`() = checkFixByText("Remove variable `a`", """
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            let s = S;
+            let <warning>a/*caret*/</warning> = s.bar();
+        }
+    """, """
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            let s = S;
+            s.bar();
+        }
+    """)
+
+    fun `test remove variable with a function call`() = checkFixByText("Remove variable `a`", """
+        fn bar() -> u32 { 0 }
+        fn foo() {
+            let <warning>a/*caret*/</warning>: u32 = bar();
+        }
+    """, """
+        fn bar() -> u32 { 0 }
+        fn foo() {
+            bar();
+        }
+    """)
+
+    fun `test remove variable with a block`() = checkFixByText("Remove variable `a`", """
+        fn foo() {
+            let <warning>a/*caret*/</warning> = { 0 };
+        }
+    """, """
+        fn foo() {
+            { 0 };
         }
     """)
 }

@@ -5,15 +5,18 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.ide.utils.isCfgUnknown
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
 import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.topLevelPattern
 import org.rust.lang.core.types.DeclarationKind
 import org.rust.lang.core.types.DeclarationKind.Parameter
 import org.rust.lang.core.types.DeclarationKind.Variable
@@ -61,11 +64,21 @@ class RsLivenessInspection : RsLintInspection() {
         // TODO: remove this check when multi-resolve for `RsOrPats` is implemented
         if (binding.ancestorStrict<RsOrPats>() != null) return
 
-        val message = when (kind) {
-            Parameter -> "Parameter `$name` is never used"
-            Variable -> "Variable `$name` is never used"
+        val isSimplePat = binding.topLevelPattern is RsPatIdent
+        val message = if (isSimplePat) {
+            when (kind) {
+                Parameter -> "Parameter `$name` is never used"
+                Variable -> "Variable `$name` is never used"
+            }
+        } else {
+            "Binding `$name` is never used"
         }
 
-        holder.registerProblem(binding, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, RenameFix(binding, "_$name"))
+        val fixes = mutableListOf<LocalQuickFix>(RenameFix(binding, "_$name"))
+        if (kind == Variable && isSimplePat) {
+            fixes.add(RemoveVariableFix(binding, name))
+        }
+
+        holder.registerProblem(binding, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, *fixes.toTypedArray())
     }
 }
