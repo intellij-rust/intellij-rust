@@ -33,8 +33,6 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
         val nonVoidArm = matchArmList.singleOrNull { it.expr?.isVoid == false } ?: return null
         if (nonVoidArm.matchArmGuard != null || nonVoidArm.outerAttrList.isNotEmpty()) return null
         val orPats = nonVoidArm.orPats
-        val pats = orPats.patList
-        if (pats.size == 1 && pats[0].isIrrefutable) return null
 
         return Context(matchExpr, matchTarget, nonVoidArm, orPats)
     }
