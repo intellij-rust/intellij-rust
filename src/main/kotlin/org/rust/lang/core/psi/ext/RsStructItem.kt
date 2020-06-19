@@ -41,8 +41,13 @@ abstract class RsStructItemImplMixin : RsStubbedNamedElementImpl<RsStructItemStu
 
     constructor(stub: RsStructItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int): Icon =
-        iconWithVisibility(flags, RsIcons.STRUCT)
+    override fun getIcon(flags: Int): Icon {
+        val baseIcon = when (kind) {
+            RsStructKind.STRUCT -> RsIcons.STRUCT
+            RsStructKind.UNION -> RsIcons.UNION
+        }
+        return iconWithVisibility(flags, baseIcon)
+    }
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
 

@@ -47,7 +47,11 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
     constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int) = iconWithVisibility(flags, when (kind) {
-        RsConstantKind.CONST -> RsIcons.CONSTANT
+        RsConstantKind.CONST -> when (owner) {
+            is RsAbstractableOwner.Trait -> if (isAbstract) RsIcons.ABSTRACT_ASSOC_CONSTANT else RsIcons.ASSOC_CONSTANT
+            is RsAbstractableOwner.Impl -> RsIcons.ASSOC_CONSTANT
+            else -> RsIcons.CONSTANT
+        }
         RsConstantKind.MUT_STATIC -> RsIcons.MUT_STATIC
         RsConstantKind.STATIC -> RsIcons.STATIC
     })

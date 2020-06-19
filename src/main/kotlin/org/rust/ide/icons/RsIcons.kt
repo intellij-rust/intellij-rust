@@ -39,34 +39,41 @@ object RsIcons {
     // Source code elements
 
     val CRATE = AllIcons.Nodes.PpLib
-    val MODULE = AllIcons.Nodes.Package
+    val MODULE = IconLoader.getIcon("/icons/nodes/module.svg")
 
-    val TRAIT = AllIcons.Nodes.Interface
-    val STRUCT = AllIcons.Nodes.Class
-    val TYPE = IconLoader.getIcon("/icons/nodes/typeAlias.svg")
-    val IMPL = AllIcons.Nodes.AbstractClass
-    val ENUM = AllIcons.Nodes.Enum
-
-    val METHOD = AllIcons.Nodes.Method
+    val TRAIT = IconLoader.getIcon("/icons/nodes/trait.svg")
+    val STRUCT = IconLoader.getIcon("/icons/nodes/struct.svg")
+    val UNION = IconLoader.getIcon("/icons/nodes/union.svg")
+    val ENUM = IconLoader.getIcon("/icons/nodes/enum.svg")
+    val TYPE_ALIAS = IconLoader.getIcon("/icons/nodes/typeAlias.svg")
+    val IMPL = IconLoader.getIcon("/icons/nodes/impl.svg")
     val FUNCTION = IconLoader.getIcon("/icons/nodes/function.svg")
-    val ASSOC_FUNCTION = FUNCTION.addStaticMark()
     val MACRO = AllIcons.General.ExclMark
 
-    val ABSTRACT_METHOD = AllIcons.Nodes.AbstractMethod
-    val ABSTRACT_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.svg")
-    val ABSTRACT_ASSOC_FUNCTION = ABSTRACT_FUNCTION.addStaticMark()
+    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/constant.svg")
+    val CONSTANT = GLOBAL_BINDING.addFinalMark()
+    // TODO: look like we need separate icons for statics and constants
+    val MUT_STATIC = GLOBAL_BINDING
+    val STATIC = MUT_STATIC.addFinalMark()
+
+    val METHOD = IconLoader.getIcon("/icons/nodes/method.svg")
+    val ASSOC_FUNCTION = FUNCTION.addStaticMark()
+    val ASSOC_CONSTANT = CONSTANT.addStaticMark()
+    val ASSOC_TYPE_ALIAS = TYPE_ALIAS.addStaticMark()
+
+    val ABSTRACT_METHOD = IconLoader.getIcon("/icons/nodes/abstractMethod.svg")
+    val ABSTRACT_ASSOC_FUNCTION = IconLoader.getIcon("/icons/nodes/abstractFunction.svg").addStaticMark()
+    val ABSTRACT_ASSOC_CONSTANT = IconLoader.getIcon("/icons/nodes/abstractConstant.svg").addStaticMark().addFinalMark()
+    val ABSTRACT_ASSOC_TYPE_ALIAS = IconLoader.getIcon("/icons/nodes/abstractTypeAlias.svg").addStaticMark()
 
     val ATTRIBUTE = AllIcons.Nodes.Annotationtype
     val MUT_ARGUMENT = AllIcons.Nodes.Parameter
     val ARGUMENT = MUT_ARGUMENT.addFinalMark()
-    val FIELD = AllIcons.Nodes.Field
     val MUT_BINDING = AllIcons.Nodes.Variable
     val BINDING = MUT_BINDING.addFinalMark()
-    val GLOBAL_BINDING = IconLoader.getIcon("/icons/nodes/globalBinding.svg")
-    val CONSTANT = GLOBAL_BINDING.addFinalMark()
-    val MUT_STATIC = GLOBAL_BINDING.addStaticMark()
-    val STATIC = MUT_STATIC.addFinalMark()
-    val ENUM_VARIANT = FIELD.addFinalMark().addStaticMark()
+
+    val FIELD = IconLoader.getIcon("/icons/nodes/field.svg")
+    val ENUM_VARIANT = IconLoader.getIcon("/icons/nodes/enumVariant.svg")
 
     // Gutter
 
