@@ -8,8 +8,6 @@ package org.rust.ide.icons
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.LayeredIcon
-import com.intellij.ui.RowIcon
-import com.intellij.util.PlatformIcons
 import javax.swing.Icon
 
 /**
@@ -92,9 +90,6 @@ fun Icon.addFinalMark(): Icon = LayeredIcon(this, RsIcons.FINAL_MARK)
 fun Icon.addStaticMark(): Icon = LayeredIcon(this, RsIcons.STATIC_MARK)
 
 fun Icon.addTestMark(): Icon = LayeredIcon(this, RsIcons.TEST_MARK)
-
-fun Icon.addVisibilityIcon(pub: Boolean): RowIcon =
-    RowIcon(this, if (pub) PlatformIcons.PUBLIC_ICON else PlatformIcons.PRIVATE_ICON)
 
 fun Icon.multiple(): Icon {
     val compoundIcon = LayeredIcon(2)

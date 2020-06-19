@@ -5,8 +5,9 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.psi.impl.ElementBase
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.ide.icons.addVisibilityIcon
+import com.intellij.util.PlatformIcons
 import org.rust.lang.core.psi.*
 import javax.swing.Icon
 
@@ -26,11 +27,14 @@ interface RsVisibilityOwner : RsVisible {
 
 val RsVisible.isPublic get() = visibility != RsVisibility.Private
 
-fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon =
-    if ((flags and com.intellij.openapi.util.Iconable.ICON_FLAG_VISIBILITY) == 0)
-        icon
-    else
-        icon.addVisibilityIcon(isPublic)
+fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon {
+    val visibilityIcon = when (vis?.stubKind) {
+        RsVisStubKind.PUB -> PlatformIcons.PUBLIC_ICON
+        RsVisStubKind.CRATE, RsVisStubKind.RESTRICTED -> PlatformIcons.PROTECTED_ICON
+        null -> PlatformIcons.PRIVATE_ICON
+    }
+    return ElementBase.iconWithVisibilityIfNeeded(flags, icon, visibilityIcon)
+}
 
 fun RsVisible.isVisibleFrom(mod: RsMod): Boolean {
     // XXX: this hack fixes false-positive "E0603 module is private" for modules with multiple

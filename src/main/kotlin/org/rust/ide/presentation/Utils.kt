@@ -7,8 +7,8 @@ package org.rust.ide.presentation
 
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.navigation.ItemPresentation
+import com.intellij.openapi.util.Iconable
 import org.rust.ide.colors.RsColor
-import org.rust.ide.icons.addVisibilityIcon
 import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -56,11 +56,7 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
             }
         }
     }
-    var icon = psi.getIcon(0)
-    if ((psi as? RsVisibilityOwner)?.isPublic == true) {
-        icon = icon.addVisibilityIcon(true)
-    }
-
+    val icon = psi.getIcon(Iconable.ICON_FLAG_VISIBILITY)
     val textAttributes = if (psi.isExpandedFromMacro) RsColor.GENERATED_ITEM.textAttributesKey else null
 
     return PresentationData(presentation, null, icon, textAttributes)

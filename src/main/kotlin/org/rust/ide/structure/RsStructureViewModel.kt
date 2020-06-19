@@ -13,7 +13,11 @@ import com.intellij.ide.util.treeView.TreeAnchorizer
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.ui.Queryable
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.pom.Navigatable
+import com.intellij.ui.icons.RowIcon
+import com.intellij.util.PlatformIcons
 import org.rust.ide.presentation.getPresentationForStructure
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -42,9 +46,9 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase)
         }
 }
 
-private class RsStructureViewElement(
+class RsStructureViewElement(
     psiArg: RsElement
-) : StructureViewTreeElement {
+) : StructureViewTreeElement, Queryable {
 
     private val psiAnchor = TreeAnchorizer.getService().createAnchor(psiArg)
     private val psi: RsElement? get() = TreeAnchorizer.getService().retrieveElement(psiAnchor) as? RsElement
@@ -60,7 +64,7 @@ private class RsStructureViewElement(
     override fun getValue(): RsElement? = psi
 
     override fun getPresentation(): ItemPresentation {
-        return psi?.let { getPresentationForStructure(it) }
+        return psi?.let(::getPresentationForStructure)
             ?: PresentationData("", null, null, null)
     }
 
@@ -111,6 +115,28 @@ private class RsStructureViewElement(
                 }
             }
         }
+
+    // Used in `RsStructureViewTest`
+    override fun putInfo(info: MutableMap<String, String>) {
+        if (!isUnitTestMode) return
+
+        val presentation = presentation
+        info[NAME_KEY] = presentation.presentableText ?: ""
+        val icon = (presentation.getIcon(false) as? RowIcon)?.allIcons?.getOrNull(1)
+
+        info[VISIBILITY_KEY] = when (icon) {
+            PlatformIcons.PUBLIC_ICON -> "public"
+            PlatformIcons.PRIVATE_ICON -> "private"
+            PlatformIcons.PROTECTED_ICON -> "restricted"
+            null -> "none"
+            else -> "unknown"
+        }
+    }
+
+    companion object {
+        const val NAME_KEY: String = "name"
+        const val VISIBILITY_KEY = "visibility"
+    }
 }
 
 private fun RsReplCodeFragment.getVariablesDeclarations(): Collection<RsPatBinding> {

@@ -176,16 +176,23 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     final override val innerAttrList: List<RsInnerAttr>
         get() = stubOnlyBlock?.innerAttrList.orEmpty()
 
-    override fun getIcon(flags: Int): Icon = when (owner) {
-        is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
-            if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
+    override fun getIcon(flags: Int): Icon {
+        val baseIcon = when (val owner = owner) {
+            is RsAbstractableOwner.Free, is RsAbstractableOwner.Foreign ->
+                if (isTest) RsIcons.FUNCTION.addTestMark() else RsIcons.FUNCTION
 
-        is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> when {
-            isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
-            isAssocFn -> RsIcons.ASSOC_FUNCTION
-            isAbstract -> RsIcons.ABSTRACT_METHOD
-            else -> RsIcons.METHOD
+            is RsAbstractableOwner.Trait, is RsAbstractableOwner.Impl -> {
+                val icon = when {
+                    isAssocFn && isAbstract -> RsIcons.ABSTRACT_ASSOC_FUNCTION
+                    isAssocFn -> RsIcons.ASSOC_FUNCTION
+                    isAbstract -> RsIcons.ABSTRACT_METHOD
+                    else -> RsIcons.METHOD
+                }
+                if (!owner.isInherentImpl) return icon
+                icon
+            }
         }
+        return iconWithVisibility(flags, baseIcon)
     }
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
