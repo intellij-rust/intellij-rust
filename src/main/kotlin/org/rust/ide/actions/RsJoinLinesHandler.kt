@@ -13,8 +13,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.text.CharSequenceSubSequence
 import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.typing.endsWithUnescapedBackslash
-import org.rust.lang.core.parser.RustParserDefinition.Companion.INNER_EOL_DOC_COMMENT
-import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
 import org.rust.lang.core.psi.RS_STRING_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsFile
@@ -40,9 +38,6 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
             in RS_STRING_LITERALS ->
                 joinStringLiteral(document, offsetNear, end)
 
-            INNER_EOL_DOC_COMMENT, OUTER_EOL_DOC_COMMENT ->
-                joinLineDocComment(document, offsetNear, end)
-
             else -> CANNOT_JOIN
         }
     }
@@ -59,15 +54,6 @@ class RsJoinLinesHandler : JoinLinesHandlerDelegate {
             return leftPsi.textOffset
         }
         return CANNOT_JOIN
-    }
-
-    // Normally this is handled by `CodeDocumentationAwareCommenter`, but Rust have different styles
-    // of documentation comments, so we handle this manually.
-    private fun joinLineDocComment(document: Document, offsetNear: Int, end: Int): Int {
-        val prefix = document.charsSequence.subSequence(end, end + 3).toString()
-        if (prefix != "///" && prefix != "//!") return CANNOT_JOIN
-        document.deleteString(offsetNear + 1, end + prefix.length)
-        return offsetNear + 1
     }
 
     private fun joinStringLiteral(document: Document, offsetNear: Int, end: Int): Int {
