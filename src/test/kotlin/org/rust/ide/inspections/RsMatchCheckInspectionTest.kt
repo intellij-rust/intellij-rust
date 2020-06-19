@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ProjectDescriptor
+import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.ide.inspections.checkMatch.RsMatchCheckInspection
 
 class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection::class) {
@@ -1224,6 +1226,42 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
             match test {
                 true => {}
                 false => {}
+            }
+        }
+    """)
+
+    fun `test non-exhaustive enum match in same crate`() = checkByText("""
+        #[non_exhaustive]
+        enum Error {
+            Variant
+        }
+
+        fn main() {
+            let error = Error::Variant;
+
+            match error {
+                Error::Variant => println!("Variant")
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test non-exhaustive enum match in different crate`() = checkByFileTree("""
+        //- dep-lib/lib.rs
+        #[non_exhaustive]
+        pub enum Error {
+            Variant
+        }
+
+        //- main.rs
+        extern crate dep_lib_target;
+        use dep_lib_target::Error;
+
+        fn main() {
+            let error = Error::Variant;
+
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> error {
+                Error::Variant => println!("Variant")
             }
         }
     """)
