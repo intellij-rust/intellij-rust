@@ -10,39 +10,39 @@ package org.rust.ide.inspections
  */
 class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::class) {
 
-    fun testDirrectAllow() = checkByText("""
+    fun `test direct allow`() = checkByText("""
         #[allow(non_camel_case_types)]
         struct foo;
     """)
 
-    fun testDirrectAllowBadStyle() = checkByText("""
+    fun `test direct allow bad style`() = checkByText("""
         #[allow(bad_style)]
         struct foo;
     """)
 
-    fun testDirrectWarn() = checkByText("""
+    fun `test direct warn`() = checkByText("""
         #[warn(non_camel_case_types)]
         struct <warning>foo</warning>;
     """)
 
-    fun testDirrectDeny() = checkByText("""
+    fun `test direct deny`() = checkByText("""
         #[deny(non_camel_case_types)]
-        struct <warning>foo</warning>;
+        struct <error>foo</error>;
     """)
 
-    fun testModuleOuterAllow() = checkByText("""
+    fun `test module outer allow`() = checkByText("""
         #[allow(non_camel_case_types)]
         mod space {
             struct planet;
         }
     """)
 
-    fun testModuleInnerAllow() = checkByText("""
+    fun `test module inner allow`() = checkByText("""
         #![allow(non_camel_case_types)]
         struct planet;
     """)
 
-    fun testGrandParentAllow() = checkByText("""
+    fun `test grand parent allow`() = checkByText("""
         #[allow(non_camel_case_types)]
         mod space {
             mod planet {
@@ -51,7 +51,7 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
     """)
 
-    fun testGrandParentAllowBadStyle() = checkByText("""
+    fun `test grand parent allow bad style`() = checkByText("""
         #[allow(bad_style)]
         mod space {
             mod planet {
@@ -60,7 +60,7 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
     """)
 
-    fun testInnerTakesPrecedence() = checkByText("""
+    fun `test inner takes precedence`() = checkByText("""
         #[warn(non_camel_case_types)]
         mod space {
             #![allow(non_camel_case_types)]
@@ -73,17 +73,17 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
     """)
 
-    fun testIgnoresOtherItems() = checkByText("""
+    fun `test ignores other items`() = checkByText("""
         #[allow(non_snake_case)]
         struct <warning>foo</warning>;
     """)
 
-    fun testMultipleMetaItems() = checkByText("""
+    fun `test multiple meta items`() = checkByText("""
         #[allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
         struct foo;
     """)
 
-    fun testMixedAttributes() = checkByText("""
+    fun `test mixed attributes`() = checkByText("""
         #[allow(non_camel_case_types, non_upper_case_globals)]
         mod space {
             #[allow(non_snake_case)]
@@ -94,33 +94,52 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
     """)
 
-    fun testWorksWithNonLevelAttributes() = checkByText("""
+    fun `test works with non level attributes`() = checkByText("""
         #[allow(non_camel_case_types)]
         #[derive(Debug)]
         struct inhabitant;
+    """)
+
+    fun `test direct forbid`() = checkByText("""
+        #[forbid(non_camel_case_types)]
+        struct <error>inhabitant</error>;
+    """)
+
+    fun `test parent indirectly forbid`() = checkByText("""
+        #[forbid(non_camel_case_types)]
+        pub mod m1 {
+            struct <error>inhabitant</error>;
+        }
     """)
 }
 
 class RsLintLevelFieldTest : RsInspectionsTestBase(RsFieldNamingInspection::class) {
 
-    fun testParentAllow() = checkByText("""
+    fun `test parent allow`() = checkByText("""
         #[allow(non_snake_case)]
         struct Foo {
             Bar: u32
         }
     """)
 
-    fun testParentWarn() = checkByText("""
+    fun `test parent warn`() = checkByText("""
         #[warn(non_snake_case)]
         struct Foo {
             <warning>Bar</warning>: u32
         }
     """)
 
-    fun testParentDeny() = checkByText("""
+    fun `test parent deny`() = checkByText("""
         #[deny(non_snake_case)]
         struct Foo {
-            <warning>Bar</warning>: u32
+            <error>Bar</error>: u32
+        }
+    """)
+
+    fun `test parent forbid`() = checkByText("""
+        #[forbid(non_snake_case)]
+        struct Foo {
+            <error>Bar</error>: u32
         }
     """)
 

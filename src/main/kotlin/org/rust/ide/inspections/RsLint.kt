@@ -5,7 +5,9 @@
 
 package org.rust.ide.inspections
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
+import org.rust.ide.inspections.RsLintLevel.*
 import org.rust.lang.core.psi.ext.*
 
 /**
@@ -14,14 +16,43 @@ import org.rust.lang.core.psi.ext.*
 enum class RsLint(
     val id: String,
     val groupIds: List<String> = emptyList(),
-    val defaultLevel: RsLintLevel = RsLintLevel.WARN
+    val defaultLevel: RsLintLevel = WARN
 ) {
     NonSnakeCase("non_snake_case", listOf("bad_style")),
     NonCamelCaseTypes("non_camel_case_types", listOf("bad_style")),
     NonUpperCaseGlobals("non_upper_case_globals", listOf("bad_style")),
-    Deprecated("deprecated"),
-    UnusedVariables("unused_variables", listOf("unused")),
-    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy"));
+    Deprecated("deprecated") {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_DEPRECATED
+                else -> super.toHighlightingType(level)
+            }
+    },
+
+    UnusedVariables("unused_variables", listOf("unused")) {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                else -> super.toHighlightingType(level)
+            }
+    },
+
+    NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy")) {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.WEAK_WARNING
+                else -> super.toHighlightingType(level)
+            }
+    };
+
+    protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+        when (level) {
+            ALLOW -> ProblemHighlightType.INFORMATION
+            WARN -> ProblemHighlightType.WARNING
+            DENY, FORBID -> ProblemHighlightType.GENERIC_ERROR
+        }
+
+    fun getProblemHighlightType(element: PsiElement): ProblemHighlightType = toHighlightingType(levelFor(element))
 
     /**
      * Returns the level of the lint for the given PSI element.

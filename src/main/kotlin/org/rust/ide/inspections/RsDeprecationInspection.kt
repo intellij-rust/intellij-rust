@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemHighlightType.LIKE_DEPRECATED
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsElementTypes.CSELF
@@ -44,7 +43,7 @@ class RsDeprecationInspection : RsLintInspection() {
     private fun checkAndRegisterAsDeprecated(identifier: PsiElement, original: PsiElement, holder: RsProblemsHolder) {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
-            holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), LIKE_DEPRECATED)
+            holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), getProblemHighlightType(identifier))
         }
     }
 
