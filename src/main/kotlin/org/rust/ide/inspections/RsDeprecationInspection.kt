@@ -43,7 +43,7 @@ class RsDeprecationInspection : RsLintInspection() {
     private fun checkAndRegisterAsDeprecated(identifier: PsiElement, original: PsiElement, holder: RsProblemsHolder) {
         if (original is RsOuterAttributeOwner) {
             val attr = original.queryAttributes.deprecatedAttribute ?: return
-            holder.registerProblem(identifier, attr.extractDeprecatedMessage(identifier.text), getProblemHighlightType(identifier))
+            holder.registerLintProblem(identifier, attr.extractDeprecatedMessage(identifier.text))
         }
     }
 

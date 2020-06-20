@@ -35,10 +35,9 @@ abstract class RsNamingInspection(
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
 
-        holder.registerProblem(
+        holder.registerLintProblem(
             id,
             "$elementType `$name` should have $styleName case name such as `$suggestedName`",
-            getProblemHighlightType(id),
             *fixes)
     }
 

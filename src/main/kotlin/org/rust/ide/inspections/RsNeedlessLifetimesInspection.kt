@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.ReferenceLifetime.*
@@ -29,8 +28,22 @@ class RsNeedlessLifetimesInspection : RsLintInspection() {
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitFunction(fn: RsFunction) {
-            if (couldUseElision(fn)) registerProblem(holder, fn, getProblemHighlightType(fn))
+            if (couldUseElision(fn)) {
+                registerProblem(holder, fn)
+            }
         }
+    }
+
+    private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction) {
+        holder.registerLintProblem(
+            fn,
+            "Explicit lifetimes given in parameter types where they could be elided",
+            TextRange(
+                fn.fn.startOffsetInParent,
+                fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent
+            ),
+            ElideLifetimesFix()
+        )
     }
 }
 
@@ -234,19 +247,6 @@ private fun checkLifetimesUsedInBody(body: RsBlock?): Boolean {
     return checker.lifetimesUsedInBody
 }
 
-private fun registerProblem(holder: RsProblemsHolder, fn: RsFunction, highlightType: ProblemHighlightType) {
-    holder.registerProblem(
-        fn,
-        "Explicit lifetimes given in parameter types where they could be elided",
-        highlightType,
-        TextRange(
-            fn.fn.startOffsetInParent,
-            fn.block?.getPrevNonCommentSibling()?.endOffsetInParent ?: fn.identifier.endOffsetInParent
-        ),
-        ElideLifetimesFix()
-    )
-}
-
 /** The lifetime of a &-reference. */
 private sealed class ReferenceLifetime {
     object Unnamed : ReferenceLifetime()
@@ -256,7 +256,7 @@ private sealed class ReferenceLifetime {
 
 private fun LifetimeName.toReferenceLifetime(): ReferenceLifetime =
     when (this) {
-        is LifetimeName.Parameter -> ReferenceLifetime.Named(name)
-        LifetimeName.Static -> ReferenceLifetime.Static
-        LifetimeName.Implicit, LifetimeName.Underscore -> ReferenceLifetime.Unnamed
+        is LifetimeName.Parameter -> Named(name)
+        LifetimeName.Static -> Static
+        LifetimeName.Implicit, LifetimeName.Underscore -> Unnamed
     }
