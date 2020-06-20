@@ -28,6 +28,7 @@ interface ScopeEntry {
     val name: String
     val element: RsElement?
     val subst: Substitution get() = emptySubstitution
+    val isInitialized: Boolean get() = true
 }
 
 /**
@@ -165,9 +166,12 @@ data class AssocItemScopeEntry(
 
 private class LazyScopeEntry(
     override val name: String,
-    thunk: Lazy<RsElement?>
+    private val thunk: Lazy<RsElement?>
 ) : ScopeEntry {
     override val element: RsElement? by thunk
+
+    override val isInitialized: Boolean
+        get() = thunk.isInitialized()
 
     override fun toString(): String = "LazyScopeEntry($name, $element)"
 }

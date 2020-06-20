@@ -60,10 +60,16 @@ fun processItemDeclarations(
 ): Boolean {
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 
-    val directlyDeclaredNames = HashSet<String>()
+    val directlyDeclaredNames = HashMap<String, Set<Namespace>>()
     val processor = { e: ScopeEntry ->
-        directlyDeclaredNames += e.name
-        originalProcessor(e)
+        val result = originalProcessor(e)
+        if (e.isInitialized) {
+            val element = e.element
+            if (element is RsNamedElement) {
+                directlyDeclaredNames[e.name] = element.namespaces
+            }
+        }
+        result
     }
 
     val cachedItems = scope.expandedItemsCached
@@ -148,7 +154,7 @@ fun processItemDeclarations(
         if (isEdition2018 && !scope.isCrateRoot) {
             val crateRoot = scope.crateRoot
             if (crateRoot != null) {
-                val result = processWithShadowing(directlyDeclaredNames, processor) { shadowingProcessor ->
+                val result = processWithShadowingAndUpdateScope(directlyDeclaredNames, originalProcessor) { shadowingProcessor ->
                     crateRoot.processExpandedItemsExceptImplsAndUses { item ->
                         if (item is RsExternCrateItem) {
                             processExternCrateItem(item, shadowingProcessor, true)
@@ -164,7 +170,7 @@ fun processItemDeclarations(
         // "extern_prelude" feature. Extern crate names can be resolved as if they were in the prelude.
         // See https://blog.rust-lang.org/2018/10/25/Rust-1.30.0.html#module-system-improvements
         // See https://github.com/rust-lang/rust/pull/54404/
-        val result = processWithShadowing(directlyDeclaredNames, processor) { shadowingProcessor ->
+        val result = processWithShadowingAndUpdateScope(directlyDeclaredNames, originalProcessor) { shadowingProcessor ->
             val isCompletion = ipm == ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
             processExternCrateResolveVariants(
                 scope,
@@ -206,10 +212,14 @@ fun processItemDeclarations(
         } ?: continue
 
         val found = recursionGuard(mod, Computable {
-            processItemOrEnumVariantDeclarations(mod, ns,
-                { it.name !in directlyDeclaredNames && originalProcessor(it) },
-                withPrivateImports = basePath != null && isSuperChain(basePath)
-            )
+            processWithShadowing(directlyDeclaredNames, originalProcessor) { shadowingProcessor ->
+                processItemOrEnumVariantDeclarations(
+                    mod,
+                    ns,
+                    processor = shadowingProcessor,
+                    withPrivateImports = basePath != null && isSuperChain(basePath)
+                )
+            }
         }, memoize = false)
         if (found == true) return true
     }

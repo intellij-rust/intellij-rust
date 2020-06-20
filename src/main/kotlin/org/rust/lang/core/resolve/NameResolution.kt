@@ -57,6 +57,7 @@ import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.buildList
+import org.rust.stdext.intersects
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -1413,9 +1414,9 @@ fun processNestedScopesUpwards(
     } else {
         { true }
     }
-    val prevScope = mutableSetOf<String>()
+    val prevScope = mutableMapOf<String, Set<Namespace>>()
     val stop = walkUp(scopeStart, { it is RsMod }) { cameFrom, scope ->
-        processWithShadowing(prevScope, processor) { shadowingProcessor ->
+        processWithShadowingAndUpdateScope(prevScope, processor) { shadowingProcessor ->
             val ipm = when {
                 scope !is RsMod -> ItemProcessingMode.WITH_PRIVATE_IMPORTS
                 isCompletion -> ItemProcessingMode.WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION
@@ -1431,10 +1432,9 @@ fun processNestedScopesUpwards(
 
     val prelude = findPrelude(scopeStart)
     if (prelude != null) {
-        // XXX: fix prelude items resolve on the nightly. Revert it to `v -> v.name !in prevScope`
-        //   after cfg attrs support or when `#[cfg(bootstrap)]` will be removed from the prelude
-        val preludeProcessor: (ScopeEntry) -> Boolean = { v -> prevScope.add(v.name) && processor(v) }
-        return processItemDeclarations(prelude, ns, preludeProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
+        return processWithShadowing(prevScope, processor) { shadowingProcessor ->
+            processItemDeclarations(prelude, ns, shadowingProcessor, ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS)
+        }
     }
 
     return false
@@ -1470,22 +1470,41 @@ private tailrec fun PsiFile.unwrapCodeFragments(): PsiFile {
     }
 }
 
-inline fun processWithShadowing(
-    prevScope: MutableSet<String>,
+inline fun processWithShadowingAndUpdateScope(
+    prevScope: MutableMap<String, Set<Namespace>>,
     crossinline processor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
-    val currScope = mutableListOf<String>()
-    val shadowingProcessor = { e: ScopeEntry ->
-        e.name !in prevScope && run {
-            currScope += e.name
-            processor(e)
+    val currScope = mutableMapOf<String, Set<Namespace>>()
+    val shadowingProcessor = lambda@ { e: ScopeEntry ->
+        val prevNs = prevScope[e.name]
+        if (prevNs != null && (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) == true) {
+            return@lambda false
         }
+        val result = processor(e)
+        if (e.isInitialized) {
+            val newNs = (e.element as? RsNamedElement)?.namespaces
+            if (newNs != null) {
+                currScope[e.name] = prevNs?.let { it + newNs } ?: newNs
+            }
+        }
+        result
     }
     return try {
         f(shadowingProcessor)
     } finally {
-        prevScope.addAll(currScope)
+        prevScope.putAll(currScope)
+    }
+}
+
+inline fun processWithShadowing(
+    prevScope: Map<String, Set<Namespace>>,
+    crossinline processor: RsResolveProcessor,
+    f: (RsResolveProcessor) -> Boolean
+): Boolean {
+    return f { e: ScopeEntry ->
+        val prevNs = prevScope[e.name]
+        (prevNs == null || (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) != true) && processor(e)
     }
 }
 
