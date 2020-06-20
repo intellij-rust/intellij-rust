@@ -746,18 +746,6 @@ sealed class RsDiagnostic(
             val name = escapeString(found.name)
             return "Expected trait, found $itemKind `$name`"
         }
-
-        private val RsItemElement.itemKindName: String
-            get() = when (this) {
-                is RsStructItem -> when (kind) {
-                    RsStructKind.STRUCT -> "struct"
-                    RsStructKind.UNION -> "union"
-                }
-                is RsEnumItem -> "enum"
-                is RsTypeAlias -> "type alias"
-                is RsModItem -> "module"
-                else -> error("unknown item")
-            }
     }
 
     class DuplicateDefinitionError(

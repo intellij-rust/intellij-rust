@@ -24,10 +24,10 @@ class TyTypeParameter private constructor(
 ) : Ty(HAS_TY_TYPE_PARAMETER_MASK) {
 
     private val traitBounds: Collection<BoundElement<RsTraitItem>>
-        by lazy(LazyThreadSafetyMode.NONE, traitBoundsSupplier)
+        by lazy(LazyThreadSafetyMode.PUBLICATION, traitBoundsSupplier)
 
     val regionBounds: Collection<Region>
-        by lazy(LazyThreadSafetyMode.NONE, regionBoundsSupplier)
+        by lazy(LazyThreadSafetyMode.PUBLICATION, regionBoundsSupplier)
 
     override fun equals(other: Any?): Boolean = other is TyTypeParameter && other.parameter == parameter
     override fun hashCode(): Int = parameter.hashCode()
