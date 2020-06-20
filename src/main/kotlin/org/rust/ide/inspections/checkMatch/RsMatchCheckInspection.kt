@@ -125,7 +125,7 @@ private fun isUseful(matrix: Matrix, patterns: List<Pattern>, withWitness: Boole
 
     val isPrivatelyEmpty = allConstructors.isEmpty()
     val isDeclaredNonExhaustive = type is TyAdt &&
-        type.item.outerAttrList.any { it.metaItem.name == "non_exhaustive" }
+        type.item.queryAttributes.hasAtomAttribute("non_exhaustive")
     val isInDifferentCrate = type is TyAdt && type.item.crateRoot != crateRoot
 
     val isNonExhaustive = isPrivatelyEmpty || (isDeclaredNonExhaustive && isInDifferentCrate)
