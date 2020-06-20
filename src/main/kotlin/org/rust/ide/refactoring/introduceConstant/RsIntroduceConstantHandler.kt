@@ -18,7 +18,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.ide.inspections.import.RsImportHelper
 import org.rust.ide.refactoring.*
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.openapiext.runWriteCommandAction
 
 class RsIntroduceConstantHandler : RefactoringActionHandler {
@@ -66,28 +65,27 @@ private fun replaceWithConstant(expr: RsExpr, occurrences: List<RsExpr>, candida
     val name = suggestedNames.default.toUpperCase()
     val const = factory.createConstant(name, expr)
 
-    val (insertedConstant, replaced) = project.runWriteCommandAction {
+    project.runWriteCommandAction {
         val newline = PsiParserFacade.SERVICE.getInstance(project).createWhiteSpaceFromText("\n")
         val context = candidate.parent
-        val inserted = context.addBefore(const, candidate.anchor) as RsConstant
-        context.addAfter(newline, inserted)
+        val insertedConstant = context.addBefore(const, candidate.anchor) as RsConstant
+        context.addAfter(newline, insertedConstant)
         val replaced = occurrences.map {
             val created = factory.createExpression(name)
             val element = it.replace(created) as RsPathExpr
             if (element.path.reference?.resolve() == null) {
-                RsImportHelper.importElements(element, setOf(inserted))
+                RsImportHelper.importElements(element, setOf(insertedConstant))
             }
             element
         }
-        Pair(inserted, replaced.toList())
+
+        editor.caretModel.moveToOffset(insertedConstant.identifier?.textRange?.startOffset
+            ?: error("Impossible because we just created a constant with a name"))
+
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+        RsInPlaceVariableIntroducer(insertedConstant, editor, project, "Choose a constant name", replaced)
+            .performInplaceRefactoring(LinkedHashSet(suggestedNames.all.map { it.toUpperCase() }))
     }
-
-    editor.caretModel.moveToOffset(insertedConstant.identifier?.textRange?.startOffset
-        ?: error("Impossible because we just created a constant with a name"))
-
-    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-    RsInPlaceVariableIntroducer(insertedConstant, editor, project, "Choose a constant name", replaced)
-        .performInplaceRefactoring(LinkedHashSet(suggestedNames.all.map { it.toUpperCase() }))
 }
 
 private fun extractExpression(editor: Editor, expr: RsExpr) {

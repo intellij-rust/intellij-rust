@@ -92,7 +92,7 @@ private class ParamIntroducer(
         } else {
             findFunctionUsages(function)
         }
-        val newParameter = project.runWriteCommandAction {
+        project.runWriteCommandAction {
             appendNewArgument(functionUsages, expr)
             if (replaceForTrait) {
                 getTraitAndImpls(traitFunction)
@@ -102,16 +102,13 @@ private class ParamIntroducer(
             val newParam = introduceParam(function, suggestedNames.default, typeRef)
             val name = psiFactory.createExpression(suggestedNames.default)
             exprs.forEach { it.replace(name) }
-            moveEditorToNameElement(editor, newParam)
-        }
+            val newParameter = moveEditorToNameElement(editor, newParam)
 
-        val documentManager = PsiDocumentManager.getInstance(project)
-        documentManager.commitDocument(editor.document)
-        documentManager.doPostponedOperationsAndUnblockDocument(editor.document)
-
-        if (newParameter != null) {
-            RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter")
-                .performInplaceRefactoring(suggestedNames.all)
+            if (newParameter != null) {
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+                RsInPlaceVariableIntroducer(newParameter, editor, project, "choose a parameter")
+                    .performInplaceRefactoring(suggestedNames.all)
+            }
         }
     }
 
