@@ -302,6 +302,20 @@ class RsIntroduceVariableHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test replace lone expression`() = doTest("""
+        fn main() {
+            /*caret*/1;
+            let a = 1;
+            let b = 1;
+        }
+    """, emptyList(), 0, """
+        fn main() {
+            let i = 1;
+            let a = i;
+            let b = i;
+        }
+    """, replaceAll = true)
+
     private fun doTest(
         @Language("Rust") before: String,
         expressions: List<String>,

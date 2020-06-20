@@ -40,8 +40,8 @@ private fun replaceExpression(editor: Editor, chosenExpr: RsExpr, exprs: List<Ps
 
     val replacer = ExpressionReplacer(project, editor, chosenExpr)
     when {
-        anchor == chosenExpr -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr)
-        parent is RsExprStmt -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr.parent)
+        anchor == chosenExpr -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr, exprs)
+        parent is RsExprStmt -> replacer.inlineLet(project, editor, chosenExpr, chosenExpr.parent, exprs)
         else -> replacer.replaceElementForAllExpr(exprs)
     }
 }
@@ -59,12 +59,24 @@ private class ExpressionReplacer(
      * @param elementToReplace the element that should be replaced with the new let binding.
      *         this can be either the expression its self if it had no semicolon at the end.
      *         or the statement surrounding the entire expression if it already had a semicolon.
+     * @param exprs occurrences that should be replaced with the created let binding
      */
-    fun inlineLet(project: Project, editor: Editor, expr: RsExpr, elementToReplace: PsiElement) {
+    fun inlineLet(
+        project: Project,
+        editor: Editor,
+        expr: RsExpr,
+        elementToReplace: PsiElement,
+        exprs: List<PsiElement>
+    ) {
         val suggestedNames = expr.suggestedNames()
+
+        val name = suggestedNames.default
+        val statement = psiFactory.createLetDeclaration(name, expr)
+        val nameExpr = psiFactory.createExpression(suggestedNames.default)
+
         val nameElem: RsPatBinding? = project.runWriteCommandAction {
-            val statement = psiFactory.createLetDeclaration(suggestedNames.default, expr)
             val newStatement = elementToReplace.replace(statement)
+            exprs.forEach { it.replace(nameExpr) }
             moveEditorToNameElement(editor, newStatement)
         }
 
