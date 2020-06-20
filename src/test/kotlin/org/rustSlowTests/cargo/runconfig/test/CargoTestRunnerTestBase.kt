@@ -25,7 +25,7 @@ abstract class CargoTestRunnerTestBase : RunConfigurationTestBase() {
             waitFor()
         }
         UIUtil.dispatchAllInvocationEvents()
-        Disposer.dispose(executionConsole)
+        Disposer.register(project, executionConsole)
         return testsRootNode
     }
 

@@ -122,7 +122,8 @@ class CargoTestEventsConverter(
                 // Parse `rustdoc` test name:
                 // src/lib.rs - qualifiedName (line #i) -> qualifiedName (line #i)
                 val qualifiedName = it.name.substringAfter(" - ")
-                it.copy(name = "$target::$qualifiedName")
+                val stdout = it.stdout?.let(::unescape)
+                it.copy(name = "$target::$qualifiedName", stdout = stdout)
             } ?: return false
         val messages = createServiceMessagesFor(testMessage) ?: return false
         for (message in messages) {
@@ -355,8 +356,6 @@ class CargoTestEventsConverter(
             val groups = ERROR_MESSAGE_RE.find(failedMessage)?.groups ?: return null
             val message = groups["message"]?.value ?: error("Failed to find `message` capturing group")
 
-            fun unescape(s: String): String = unquoteString(unescapeStringCharacters(s))
-
             val diff = if (groups["sign"]?.value == "==") {
                 val left = groups["left"]?.value?.let(::unescape)
                 val right = groups["right"]?.value?.let(::unescape)
@@ -392,6 +391,8 @@ class CargoTestEventsConverter(
         DOCTESTS_PACKAGE_NAME
     }
 }
+
+private fun unescape(s: String): String = unquoteString(unescapeStringCharacters(s))
 
 private data class FailedTestOutput(val stdout: String, val failedMessage: String)
 private data class ErrorMessage(val message: String, val diff: DiffResult?, val backtrace: String?)
