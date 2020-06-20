@@ -62,16 +62,16 @@ private class ExpressionReplacer(
      */
     fun inlineLet(project: Project, editor: Editor, expr: RsExpr, elementToReplace: PsiElement) {
         val suggestedNames = expr.suggestedNames()
-        val nameElem: RsPatBinding? = project.runWriteCommandAction {
+        project.runWriteCommandAction {
             val statement = psiFactory.createLetDeclaration(suggestedNames.default, expr)
             val newStatement = elementToReplace.replace(statement)
-            moveEditorToNameElement(editor, newStatement)
-        }
+            val nameElem = moveEditorToNameElement(editor, newStatement)
 
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        if (nameElem != null) {
-            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
-                .performInplaceRefactoring(suggestedNames.all)
+            if (nameElem != null) {
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+                RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
+                    .performInplaceRefactoring(suggestedNames.all)
+            }
         }
     }
 
@@ -83,16 +83,16 @@ private class ExpressionReplacer(
         val let = createLet(suggestedNames.default)
         val name = psiFactory.createExpression(suggestedNames.default)
 
-        val nameElem: RsPatBinding? = project.runWriteCommandAction {
+        project.runWriteCommandAction {
             val newElement = introduceLet(project, anchor, let)
             exprs.forEach { it.replace(name) }
-            moveEditorToNameElement(editor, newElement)
-        }
+            val nameElem = moveEditorToNameElement(editor, newElement)
 
-        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
-        if (nameElem != null) {
-            RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
-                .performInplaceRefactoring(suggestedNames.all)
+            if (nameElem != null) {
+                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+                RsInPlaceVariableIntroducer(nameElem, editor, project, "choose a variable")
+                    .performInplaceRefactoring(suggestedNames.all)
+            }
         }
     }
 
