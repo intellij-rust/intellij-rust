@@ -57,7 +57,7 @@ enum class RsLint(
     /**
      * Returns the level of the lint for the given PSI element.
      */
-    fun levelFor(el: PsiElement) = explicitLevel(el) ?: superModsLevel(el) ?: defaultLevel
+    fun levelFor(el: PsiElement): RsLintLevel = explicitLevel(el) ?: superModsLevel(el) ?: defaultLevel
 
     private fun explicitLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsDocAndAttributeOwner>()

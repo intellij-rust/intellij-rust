@@ -5,11 +5,9 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.codeInspection.ContainerBasedSuppressQuickFix
-import com.intellij.codeInspection.LocalQuickFixOnPsiElement
-import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.SuppressQuickFix
+import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -21,6 +19,23 @@ import org.rust.lang.core.psi.ext.*
 abstract class RsLintInspection : RsLocalInspectionTool() {
 
     protected abstract fun getLint(element: PsiElement): RsLint?
+
+    protected fun RsProblemsHolder.registerLintProblem(
+        element: PsiElement,
+        descriptionTemplate: String,
+        vararg fixes: LocalQuickFix
+    ) {
+        registerProblem(element, descriptionTemplate, getProblemHighlightType(element), *fixes)
+    }
+
+    protected fun RsProblemsHolder.registerLintProblem(
+        element: PsiElement,
+        descriptionTemplate: String,
+        rangeInElement: TextRange,
+        vararg fixes: LocalQuickFix
+    ) {
+        registerProblem(element, descriptionTemplate, getProblemHighlightType(element), rangeInElement, *fixes)
+    }
 
     protected fun getProblemHighlightType(element: PsiElement): ProblemHighlightType =
         getLint(element)?.getProblemHighlightType(element) ?: ProblemHighlightType.WARNING

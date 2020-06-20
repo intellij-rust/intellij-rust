@@ -6,7 +6,6 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.fixes.RemoveVariableFix
@@ -46,7 +45,7 @@ class RsLivenessInspection : RsLintInspection() {
                 for (deadDeclaration in liveness.deadDeclarations) {
                     val name = deadDeclaration.binding.name ?: continue
                     if (name.startsWith("_")) continue
-                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind, getProblemHighlightType(deadDeclaration.binding))
+                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind)
                 }
             }
         }
@@ -55,8 +54,7 @@ class RsLivenessInspection : RsLintInspection() {
         holder: RsProblemsHolder,
         binding: RsPatBinding,
         name: String,
-        kind: DeclarationKind,
-        highlightType: ProblemHighlightType
+        kind: DeclarationKind
     ) {
         if (!binding.isPhysical) return
 
@@ -80,6 +78,6 @@ class RsLivenessInspection : RsLintInspection() {
             fixes.add(RemoveVariableFix(binding, name))
         }
 
-        holder.registerProblem(binding, message, highlightType, *fixes.toTypedArray())
+        holder.registerLintProblem(binding, message, *fixes.toTypedArray())
     }
 }
