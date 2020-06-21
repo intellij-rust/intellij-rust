@@ -8,6 +8,7 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.inspections.fixes.RemoveParameterFix
 import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.ide.utils.isCfgUnknown
@@ -74,8 +75,11 @@ class RsLivenessInspection : RsLintInspection() {
         }
 
         val fixes = mutableListOf<LocalQuickFix>(RenameFix(binding, "_$name"))
-        if (kind == Variable && isSimplePat) {
-            fixes.add(RemoveVariableFix(binding, name))
+        if (isSimplePat) {
+            when (kind) {
+                Parameter -> fixes.add(RemoveParameterFix(binding, name))
+                Variable -> fixes.add(RemoveVariableFix(binding, name))
+            }
         }
 
         holder.registerLintProblem(binding, message, *fixes.toTypedArray())
