@@ -14,7 +14,4 @@ interface RsPathReference : RsReference {
 
     fun advancedResolve(): BoundElement<RsElement>? =
         resolve()?.let { BoundElement(it) }
-
-    fun advancedMultiResolve(): List<BoundElement<RsElement>> =
-        multiResolve().map { BoundElement(it) }
 }
