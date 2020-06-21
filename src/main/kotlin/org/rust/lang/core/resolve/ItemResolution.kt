@@ -36,6 +36,13 @@ fun processItemOrEnumVariantDeclarations(
                 if (processAllWithSubst(item.variants, subst, processor)) return true
             }
         }
+        is RsImplItem -> {
+            val (item, subst) = (scope.typeReference?.skipParens() as? RsBaseType)
+                ?.path?.reference?.advancedDeepResolve() ?: return false
+            if (item is RsEnumItem) {
+                if (processAllWithSubst(item.variants, subst, processor)) return true
+            }
+        }
         is RsEnumItem -> {
             if (processAll(scope.variants, processor)) return true
         }

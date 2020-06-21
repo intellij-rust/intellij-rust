@@ -559,6 +559,14 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test enum Self in impl block`() = checkByCode("""
+        enum E { X }
+               //X
+
+        impl E { fn foo() -> Self { Self::X }}
+                                        //^
+    """)
+
     fun `test enum variant 2`() = checkByCode("""
         enum E { X, Y(X) }
                     //^ unresolved

@@ -490,6 +490,22 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test complete enum variants after Self`() = doSingleCompletion("""
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        impl Expr {
+            fn new() -> Self {
+                Self::B/*caret*/
+            }
+        }
+    """, """
+        enum Expr { Unit, BinOp(Box<Expr>, Box<Expr>) }
+        impl Expr {
+            fn new() -> Self {
+                Self::BinOp(/*caret*/)
+            }
+        }
+    """)
+
     fun `test should not complete for test functions`() = checkNoCompletion("""
         #[test]
         fn foobar() {}
