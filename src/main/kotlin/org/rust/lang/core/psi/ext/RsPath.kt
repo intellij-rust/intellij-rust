@@ -42,6 +42,12 @@ tailrec fun RsPath.basePath(): RsPath {
     return if (qualifier == null) this else qualifier.basePath()
 }
 
+/** For `Foo::bar` in `Foo::bar::baz::quux` returns `Foo::bar::baz::quux` */
+tailrec fun RsPath.superPath(): RsPath {
+    val parent = context
+    return if (parent is RsPath) parent.superPath() else this
+}
+
 val RsPath.textRangeOfLastSegment: TextRange
     get() = TextRange(referenceNameElement.startOffset, typeArgumentList?.endOffset ?: referenceNameElement.endOffset)
 
