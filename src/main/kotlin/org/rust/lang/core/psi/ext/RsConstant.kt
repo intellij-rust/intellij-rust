@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsConstantStub
 import org.rust.lang.core.types.ty.Mutability
+import javax.swing.Icon
 
 enum class RsConstantKind {
     STATIC,
@@ -46,11 +47,24 @@ abstract class RsConstantImplMixin : RsStubbedNamedElementImpl<RsConstantStub>, 
 
     constructor(stub: RsConstantStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
-    override fun getIcon(flags: Int) = iconWithVisibility(flags, when (kind) {
-        RsConstantKind.CONST -> RsIcons.CONSTANT
-        RsConstantKind.MUT_STATIC -> RsIcons.MUT_STATIC
-        RsConstantKind.STATIC -> RsIcons.STATIC
-    })
+    override fun getIcon(flags: Int): Icon {
+        val baseIcon = when (kind) {
+            RsConstantKind.CONST -> {
+                val owner = owner
+                val icon = when (owner) {
+                    is RsAbstractableOwner.Trait -> if (isAbstract) RsIcons.ABSTRACT_ASSOC_CONSTANT else RsIcons.ASSOC_CONSTANT
+                    is RsAbstractableOwner.Impl -> RsIcons.ASSOC_CONSTANT
+                    else -> RsIcons.CONSTANT
+                }
+                if (owner.isImplOrTrait && !owner.isInherentImpl) return icon
+                icon
+            }
+            RsConstantKind.MUT_STATIC -> RsIcons.MUT_STATIC
+            RsConstantKind.STATIC -> RsIcons.STATIC
+        }
+
+        return iconWithVisibility(flags, baseIcon)
+    }
 
     override val isAbstract: Boolean get() = expr == null
 
