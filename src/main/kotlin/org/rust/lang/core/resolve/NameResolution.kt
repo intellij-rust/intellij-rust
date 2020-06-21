@@ -57,7 +57,6 @@ import org.rust.lang.core.types.ty.*
 import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.buildList
-import org.rust.stdext.notEmptyElseNull
 
 // IntelliJ Rust name resolution algorithm.
 // Collapse all methods (`ctrl shift -`) to get a bird's eye view.
@@ -371,89 +370,87 @@ private fun processQualifiedPathResolveVariants(
     parent: PsiElement?,
     processor: RsResolveProcessor
 ): Boolean {
-    val variants = qualifier.reference?.advancedMultiResolve()?.notEmptyElseNull() ?: run {
+    val (base, subst) = qualifier.reference?.advancedResolve() ?: run {
         val primitiveType = TyPrimitive.fromPath(qualifier)
         if (primitiveType != null) {
             if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, primitiveType, null)) return true
         }
         return false
     }
-    for ((base, subst) in variants) {
-        val isSuperChain = isSuperChain(qualifier)
-        if (base is RsMod) {
-            val s = base.`super`
-            // `super` is allowed only after `self` and `super`
-            // so we add `super` in completion only when it produces valid path
-            if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
+    val isSuperChain = isSuperChain(qualifier)
+    if (base is RsMod) {
+        val s = base.`super`
+        // `super` is allowed only after `self` and `super`
+        // so we add `super` in completion only when it produces valid path
+        if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
 
-            val containingMod = path.containingMod
-            if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
-                containingMod is RsFile && containingMod.isCrateRoot) {
-                if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
+        val containingMod = path.containingMod
+        if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
+            containingMod is RsFile && containingMod.isCrateRoot) {
+            if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
+        }
+
+        // Proc macro crates are not allowed to export anything but procedural macros,
+        // and all possible macro exports are collected above. However, when resolve
+        // happens inside proc macro crate itself, all items are allowed
+        val resolveBetweenDifferentTargets = base.containingCargoTarget != path.containingCargoTarget
+        if (resolveBetweenDifferentTargets && base.containingCargoTarget?.isProcMacro == true) {
+            return false
+        }
+    }
+
+    if (parent is RsUseSpeck && path.path == null) {
+        selfInGroup.hit()
+        if (processor("self", base)) return true
+    }
+
+    // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
+    // avoid this, we exclude `MACROS` from passed namespaces
+    if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = isSuperChain)) {
+        return true
+    }
+
+    if (base is RsTraitItem && parent !is RsUseSpeck && !qualifier.hasCself) {
+        if (processTraitRelativePath(BoundElement(base, subst), ns, processor)) return true
+    } else if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
+        val baseTy = if (qualifier.hasCself) {
+            when (base) {
+                // impl S { fn foo() { Self::bar() } }
+                is RsImplItem -> base.typeReference?.type ?: TyUnknown
+                is RsTraitItem -> TyTypeParameter.self(base)
+                else -> TyUnknown
             }
-
-            // Proc macro crates are not allowed to export anything but procedural macros,
-            // and all possible macro exports are collected above. However, when resolve
-            // happens inside proc macro crate itself, all items are allowed
-            val resolveBetweenDifferentTargets = base.containingCargoTarget != path.containingCargoTarget
-            if (resolveBetweenDifferentTargets && base.containingCargoTarget?.isProcMacro == true) {
-                return false
-            }
-        }
-
-        if (parent is RsUseSpeck && path.path == null) {
-            selfInGroup.hit()
-            if (processor("self", base)) return true
-        }
-
-        // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
-        // avoid this, we exclude `MACROS` from passed namespaces
-        if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = isSuperChain)) {
-            return true
-        }
-
-        if (base is RsTraitItem && parent !is RsUseSpeck && !qualifier.hasCself) {
-            if (processTraitRelativePath(BoundElement(base, subst), ns, processor)) return true
-        } else if (base is RsTypeDeclarationElement && parent !is RsUseSpeck) { // Foo::<Bar>::baz
-            val baseTy = if (qualifier.hasCself) {
-                when (base) {
-                    // impl S { fn foo() { Self::bar() } }
-                    is RsImplItem -> base.typeReference?.type ?: TyUnknown
-                    is RsTraitItem -> TyTypeParameter.self(base)
-                    else -> TyUnknown
-                }
+        } else {
+            val realSubst = if (qualifier.typeArgumentList != null) {
+                // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
+                // it means that all possible `TyInfer` has already substituted (with `_`)
+                subst
             } else {
-                val realSubst = if (qualifier.typeArgumentList != null) {
-                    // If the path contains explicit type arguments `Foo::<_, Bar, _>::baz`
-                    // it means that all possible `TyInfer` has already substituted (with `_`)
-                    subst
-                } else {
-                    subst
-                        .mapTypeValues { (_, v) ->
-                            v.foldTyTypeParameterWith { TyInfer.TyVar(it) }
-                                .foldCtConstParameterWith { CtInferVar(it) }
-                        }
-                        .mapConstValues { (_, v) -> v.foldCtConstParameterWith { CtInferVar(it) } }
-                }
-                base.declaredType.substitute(realSubst)
-            }
-
-            // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
-            // to only members of the current impl or implemented trait or its parent traits
-            val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
-                NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
-                base.implementedTrait?.flattenHierarchy
-                    ?.map { value ->
-                        value
-                            .foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                subst
+                    .mapTypeValues { (_, v) ->
+                        v.foldTyTypeParameterWith { TyInfer.TyVar(it) }
                             .foldCtConstParameterWith { CtInferVar(it) }
                     }
-            } else {
-                null
+                    .mapConstValues { (_, v) -> v.foldCtConstParameterWith { CtInferVar(it) } }
             }
-
-            if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, baseTy, restrictedTraits)) return true
+            base.declaredType.substitute(realSubst)
         }
+
+        // Self-qualified type paths `Self::Item` inside impl items are restricted to resolve
+        // to only members of the current impl or implemented trait or its parent traits
+        val restrictedTraits = if (Namespace.Types in ns && base is RsImplItem && qualifier.hasCself) {
+            NameResolutionTestmarks.selfRelatedTypeSpecialCase.hit()
+            base.implementedTrait?.flattenHierarchy
+                ?.map { value ->
+                    value
+                        .foldTyTypeParameterWith { TyInfer.TyVar(it) }
+                        .foldCtConstParameterWith { CtInferVar(it) }
+                }
+        } else {
+            null
+        }
+
+        if (processTypeQualifiedPathResolveVariants(lookup, path, processor, ns, baseTy, restrictedTraits)) return true
     }
     return false
 }
@@ -1307,9 +1304,6 @@ private fun processLexicalDeclarations(
             if (Namespace.Values in ns && processAll(scope.constParameters, processor)) return true
             if (processor("Self", scope)) return true
             if (scope is RsImplItem) {
-                scope.typeReference?.let { typeRef ->
-                    if (processor.lazy("Self") { (typeRef.type as? TyAdt)?.item as? RsEnumItem }) return true
-                }
                 scope.traitRef?.let { traitRef ->
                     // really should be unnamed, but "_" is not a valid name in rust, so I think it's ok
                     if (processor.lazy("_") { traitRef.resolveToTrait() }) return true
