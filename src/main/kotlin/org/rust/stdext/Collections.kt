@@ -112,11 +112,6 @@ inline fun <T> List<T>.notEmptyOrLet(function: (List<T>) -> List<T>): List<T> = 
     else -> function(this)
 }
 
-inline fun <T> List<T>.notEmptyElseNull(): List<T>? = when {
-    isNotEmpty() -> this
-    else -> null
-}
-
 fun <T> List<T>.chain(other: List<T>): Sequence<T> =
     when {
         other.isEmpty() -> this.asSequence()
