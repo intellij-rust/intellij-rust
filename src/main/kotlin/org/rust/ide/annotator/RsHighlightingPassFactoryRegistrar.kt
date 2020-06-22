@@ -12,5 +12,6 @@ import com.intellij.openapi.project.Project
 class RsHighlightingPassFactoryRegistrar : TextEditorHighlightingPassFactoryRegistrar {
     override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
         RsExternalLinterPassFactory(project, registrar)
+        RsMacroExpansionHighlightingPassFactory(project, registrar)
     }
 }

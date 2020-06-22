@@ -277,7 +277,7 @@ private fun RsMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<
     return mapRangeFromExpansionToCallBody(expansion, this, range)
 }
 
-private fun mapRangeFromExpansionToCallBody(
+fun mapRangeFromExpansionToCallBody(
     expansion: MacroExpansion,
     call: RsMacroCall,
     range: TextRange
