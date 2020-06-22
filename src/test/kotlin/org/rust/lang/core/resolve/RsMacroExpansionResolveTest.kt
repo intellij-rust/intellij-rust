@@ -8,6 +8,7 @@ package org.rust.lang.core.resolve
 import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.stdext.BothEditions
 
 @ExpandMacros
 class RsMacroExpansionResolveTest : RsResolveTestBase() {
@@ -539,6 +540,33 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     //- foo/bar/baz.rs
         if_std! {
             pub struct Baz;
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @BothEditions
+    fun `test local_inner_macros`() = stubOnlyResolve("""
+    //- main.rs
+        extern crate test_package;
+        use test_package::foo;
+        macro_rules! bar {
+            () => { use Bar as Baz; };
+        }
+
+        foo! { bar!{} } // Expands to `use Foo as Bar; use Bar as Baz;`
+
+        struct Foo; // <-- resolves here
+        type T = Baz;
+               //^ main.rs
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            ($ i:item) => { bar!{} $ i };
+        }
+
+        #[macro_export]
+        macro_rules! bar {
+            () => { use Foo as Bar; };
         }
     """)
 }

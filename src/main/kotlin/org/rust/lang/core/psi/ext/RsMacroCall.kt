@@ -128,14 +128,18 @@ fun RsMacroCall.resolveToMacro(): RsMacro? =
     path.reference?.resolve() as? RsMacro
 
 val RsMacroCall.expansion: MacroExpansion?
-    get() = CachedValuesManager.getCachedValue(this) {
-        val project = project
-        val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
-            // Use the original element only if macro bodies are equal. They
-            // will be different if completion invoked inside the macro body.
-            it.macroBody == this.macroBody
-        } ?: this
-        project.macroExpansionManager.getExpansionFor(originalOrSelf)
+    get() {
+        val mgr = project.macroExpansionManager
+        if (mgr.expansionState != null) return mgr.getExpansionFor(this).value
+
+        return CachedValuesManager.getCachedValue(this) {
+            val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
+                // Use the original element only if macro bodies are equal. They
+                // will be different if completion invoked inside the macro body.
+                it.macroBody == this.macroBody
+            } ?: this
+            mgr.getExpansionFor(originalOrSelf)
+        }
     }
 
 val RsMacroCall.expansionFlatten: List<RsExpandedElement>

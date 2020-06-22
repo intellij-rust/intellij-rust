@@ -897,19 +897,31 @@ private class MacroExpansionServiceImplInner(
 
     fun getExpansionFor(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
         checkReadAccessAllowed()
-        if (expansionState != null) return CachedValueProvider.Result.create(null, ModificationTracker.EVER_CHANGED)
+        val expansionState = expansionState
 
         if (expansionMode == MacroExpansionMode.OLD) {
+            if (expansionState != null) return nullResult()
             return expandMacroOld(call)
         }
 
-        if (!call.isTopLevelExpansion || call.containingFile.virtualFile?.fileSystem?.isSupportedFs != true) {
+        val containingFile: VirtualFile? = call.containingFile.virtualFile
+
+        if (!call.isTopLevelExpansion || containingFile?.fileSystem?.isSupportedFs != true) {
+            if (expansionState != null) return nullResult()
             return expandMacroToMemoryFile(call, storeRangeMap = true)
+        }
+
+        // Forbid accessing expansions of next steps
+        if (expansionState != null && !expansionState.expandedSearchScope.contains(containingFile)) {
+            return nullResult()
         }
 
         val expansion = storage.getInfoForCall(call)?.getExpansion()
         return CachedValueProvider.Result.create(expansion, storage.modificationTracker, call.modificationTracker)
     }
+
+    private fun nullResult(): CachedValueProvider.Result<MacroExpansion?> =
+        CachedValueProvider.Result.create(null, ModificationTracker.EVER_CHANGED)
 
     fun getExpandedFrom(element: RsExpandedElement): RsMacroCall? {
         checkReadAccessAllowed()
