@@ -69,7 +69,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatBox(o: RsPatBox) = checkPatBox(holder, o)
             override fun visitPatField(o: RsPatField) = checkPatField(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
-            override fun visitPatRest(o: RsPatRest): Unit = checkPatRest(holder, o)
+            override fun visitPatRest(o: RsPatRest) = checkPatRest(holder, o)
+            override fun visitOrPat(o: RsOrPat) = checkOrPat(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = checkDuplicates(holder, o)
             override fun visitRetExpr(o: RsRetExpr) = checkRetExpr(holder, o)
@@ -106,6 +107,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
+        val parent = orPat.context
+
+        if (parent is RsPat) {
+            val firstChild = orPat.firstChild
+            if (firstChild?.elementType == RsElementTypes.OR) {
+                holder.createErrorAnnotation(
+                    firstChild,
+                    "a leading `|` is only allowed in a top-level pattern",
+                    RemoveElementFix(firstChild)
+                )
+            }
+        }
+
+        if (parent !is RsCondition && parent !is RsMatchArm) {
+            OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
+        }
     }
 
     private fun checkUseSpeck(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {

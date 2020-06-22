@@ -1793,6 +1793,93 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test top level or patterns E0658 1`() = checkErrors("""
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            let <error descr="or-patterns syntax is experimental [E0658]">V::V1(x) | V::V2(x)</error> = y;
+            if let V::V1(x) | V::V2(x) = y {}
+            while let V::V1(x) | V::V2(x) = y {}
+            match y {
+                V::V1(x) | V::V2(x) => {},
+                _ => {}
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test or patterns in let decl E0658 2`() = checkErrors("""
+        #![feature(or_patterns)]
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            let V::V1(x) | V::V2(x) = y;
+            if let V::V1(x) | V::V2(x) = y {}
+            while let V::V1(x) | V::V2(x) = y {}
+            match y {
+                V::V1(x) | V::V2(x) => {},
+                _ => {}
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0")
+    fun `test non top level or patterns E0658 1`() = checkErrors("""
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: Option<V>) {
+            if let Option::Some(<error descr="or-patterns syntax is experimental [E0658]">V::V1(x) | V::V2(x)</error>) = y {}
+            while let Option::Some(<error descr="or-patterns syntax is experimental [E0658]">V::V1(x) | V::V2(x)</error>) = y {}
+            match y {
+                Option::Some(<error descr="or-patterns syntax is experimental [E0658]">V::V1(x) | V::V2(x)</error>) => {},
+                _ => {}
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test non top level or patterns E0658 2`() = checkErrors("""
+        #![feature(or_patterns)]
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V) {
+            if let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            while let Option::Some(V::V1(x) | V::V2(x)) = y {}
+            match y {
+                Option::Some(V::V1(x) | V::V2(x)) => {},
+                _ => {}
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test leading | in or patterns 1`() = checkErrors("""
+        #![feature(or_patterns)]
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: V, z: V) {
+            if let | V::V1(x) | V::V2(x) = y {}
+            match z {
+                | V::V1(x) | V::V2(x) => {},
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test leading | in or patterns 2`() = checkFixByText("Remove `|`", """
+        #![feature(or_patterns)]
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: Option<V>) {
+            while let Option::Some(<error descr="a leading `|` is only allowed in a top-level pattern">|/*caret*/</error> V::V1(x) | V::V2(x)) = y {}
+        }
+    """, """
+        #![feature(or_patterns)]
+        enum Option<T> { None, Some(T) }
+        enum V { V1(i32), V2(i32) }
+        fn foo(y: Option<V>) {
+            while let Option::Some(/*caret*/V::V1(x) | V::V2(x)) = y {}
+        }
+    """)
+
     @MockRustcVersion("1.33.0")
     fun `test extern_crate_self 1`() = checkErrors("""
         <error descr="`extern crate self` is experimental [E0658]">extern crate self as foo;</error>
