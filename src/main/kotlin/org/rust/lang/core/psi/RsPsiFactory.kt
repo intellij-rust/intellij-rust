@@ -476,6 +476,9 @@ class RsPsiFactory(
         else -> createExpressionOfType("${expr.text}.$methodNameText()")
     }
 
+    fun tryCreateMethodCall(receiver: RsExpr, methodNameText: String, arguments: List<RsExpr>): RsDotExpr? =
+        tryCreateExpressionOfType("${receiver.text}.$methodNameText(${arguments.joinToString(", ") { it.text }})")
+
     fun createDerefExpr(expr: RsExpr, nOfDerefs: Int = 1): RsExpr =
         if (nOfDerefs > 0)
             when (expr) {
@@ -507,6 +510,8 @@ class RsPsiFactory(
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
             ?: error("Failed to create ${E::class.simpleName} from `$text`")
+
+    private inline fun <reified E : RsExpr> tryCreateExpressionOfType(text: String): E? = createExpression(text) as? E
 
     fun createDynTraitType(pathText: String): RsTraitType =
         createFromText("type T = &dyn $pathText;}")
