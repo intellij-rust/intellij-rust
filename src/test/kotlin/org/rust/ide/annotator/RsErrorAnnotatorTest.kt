@@ -3372,6 +3372,12 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    fun `test no E0015 in array with const parameter`() = checkErrors("""
+        fn new_array<const N: usize>() -> [u8; N] {
+            [0; N]
+        }
+    """)
+
     fun `test E0015 in array type`() = checkErrors("""
         fn main() {
             fn foo(a: usize, b: usize) -> usize {

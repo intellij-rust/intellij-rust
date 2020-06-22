@@ -966,15 +966,14 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkArraySizeExpr(holder: RsAnnotationHolder, sizeExpr: RsExpr) {
         sizeExpr.descendantsOfTypeOrSelf<RsPathExpr>().forEach { pathExpr ->
-            val ref = pathExpr.path.reference?.resolve()
-            if (ref != null && ref !is RsConstant && (ref as? RsFunction)?.isConst != true) {
-                val diagnostic = if (ref is RsPatBinding) {
-                    RsDiagnostic.NonConstantValueInConstantError(pathExpr)
-                } else {
-                    RsDiagnostic.NonConstantCallInConstantError(pathExpr)
-                }
-                diagnostic.addToHolder(holder)
+            val ref = pathExpr.path.reference?.resolve() ?: return@forEach
+            if (ref is RsConstant || ref is RsConstParameter || ref is RsFunction && ref.isConst) return@forEach
+            val diagnostic = if (ref is RsPatBinding) {
+                RsDiagnostic.NonConstantValueInConstantError(pathExpr)
+            } else {
+                RsDiagnostic.NonConstantCallInConstantError(pathExpr)
             }
+            diagnostic.addToHolder(holder)
         }
     }
 
