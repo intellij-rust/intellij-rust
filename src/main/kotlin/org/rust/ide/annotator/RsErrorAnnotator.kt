@@ -670,8 +670,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
-            holder.getErrorAnnotationBuilder(o, "Chained comparison operator require parentheses")
-                ?.withFix(AddTurbofishFix())?.create()
+            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses", AddTurbofishFix())
         }
     }
 
@@ -690,9 +689,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
         // `::` is redundant only in types
         if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
-        val annotation = holder.createWeakWarningAnnotation(coloncolon, "Redundant `::`") ?: return
-        annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-            .withFix(RemoveElementFix(coloncolon)).create()
+        val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon)) ?: return
+        annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL).create()
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {

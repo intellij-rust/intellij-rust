@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.lang.annotation.AnnotationBuilder
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
@@ -14,25 +15,45 @@ import org.rust.ide.utils.isEnabledByCfg
 
 class RsAnnotationHolder(val holder: AnnotationHolder) {
 
-    fun createErrorAnnotation(element: PsiElement, message: String?): Unit? =
-        getErrorAnnotationBuilder(element, message)?.create()
+    fun createErrorAnnotation(element: PsiElement, message: String?, vararg fixes: IntentionAction) {
+        newErrorAnnotation(element, message, *fixes)?.create()
+    }
 
-    fun getErrorAnnotationBuilder(element: PsiElement, message: String?): AnnotationBuilder? =
-        if (element.isEnabledByCfg) {
-            if (message == null) {
-                holder.newSilentAnnotation(HighlightSeverity.ERROR).range(element)
-            } else {
-                holder.newAnnotation(HighlightSeverity.ERROR, message).range(element)
-            }
-        } else null
+    fun createWeakWarningAnnotation(element: PsiElement, message: String?, vararg fixes: IntentionAction) {
+        newWeakWarningAnnotation(element, message, *fixes)?.create()
+    }
 
-    fun createWeakWarningAnnotation(element: PsiElement, message: String?): AnnotationBuilder? =
-        if (element.isEnabledByCfg) {
-            if (message == null)
-                holder.newSilentAnnotation(HighlightSeverity.WEAK_WARNING).range(element)
-            else
-                holder.newAnnotation(HighlightSeverity.WEAK_WARNING, message).range(element)
-        } else null
+    fun newErrorAnnotation(
+        element: PsiElement,
+        message: String?,
+        vararg fixes: IntentionAction
+    ): AnnotationBuilder? =
+        newAnnotation(element, HighlightSeverity.ERROR, message, *fixes)
+
+    fun newWeakWarningAnnotation(
+        element: PsiElement,
+        message: String?,
+        vararg fixes: IntentionAction
+    ): AnnotationBuilder? = newAnnotation(element, HighlightSeverity.WEAK_WARNING, message, *fixes)
+
+    fun newAnnotation(
+        element: PsiElement,
+        severity: HighlightSeverity,
+        message: String?,
+        vararg fixes: IntentionAction
+    ): AnnotationBuilder? {
+        if (!element.isEnabledByCfg) return null
+        val builder = if (message == null) {
+            holder.newSilentAnnotation(severity)
+        } else {
+            holder.newAnnotation(severity, message)
+        }
+        builder.range(element)
+        for (fix in fixes) {
+            builder.withFix(fix)
+        }
+        return builder
+    }
 
     val currentAnnotationSession: AnnotationSession = holder.currentAnnotationSession
 }
