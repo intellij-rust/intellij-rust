@@ -658,4 +658,123 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             let <error>test</error> = 1;
         }
     """)
+
+    fun `test no remove on struct literal parameter`() = checkFixIsUnavailable("Remove", """
+        struct S {
+            a: u32
+        }
+        fn foo(S { <warning>a/*caret*/</warning> }: S) {}
+    """)
+
+    fun `test remove function lone parameter`() = checkFixByText("Remove parameter `a`", """
+        fn foo(<warning>a/*caret*/</warning>: u32) {}
+    """, """
+        fn foo() {}
+    """)
+
+    fun `test remove function parameter in the middle`() = checkFixByText("Remove parameter `a`", """
+        fn foo(_: u32, <warning>a/*caret*/</warning>: u32, _: i32) {}
+    """, """
+        fn foo(_: u32, _: i32) {}
+    """)
+
+    fun `test remove function lone argument`() = checkFixByText("Remove parameter `a`", """
+        fn foo(<warning>a/*caret*/</warning>: u32) {}
+        fn bar() {
+            foo(1);
+        }
+    """, """
+        fn foo() {}
+        fn bar() {
+            foo();
+        }
+    """)
+
+    fun `test remove function argument trailing comma`() = checkFixByText("Remove parameter `a`", """
+        fn foo(<warning>a/*caret*/</warning>: u32,) {}
+        fn bar() {
+            foo(1,);
+        }
+    """, """
+        fn foo() {}
+        fn bar() {
+            foo();
+        }
+    """)
+
+    fun `test remove function argument at the beginning`() = checkFixByText("Remove parameter `a`", """
+        fn foo(<warning>a/*caret*/</warning>: u32, _: u32, _: i32) {}
+        fn bar() {
+            foo(1, 2, 3);
+        }
+    """, """
+        fn foo(_: u32, _: i32) {}
+        fn bar() {
+            foo(2, 3);
+        }
+    """)
+
+    fun `test remove function argument in the middle`() = checkFixByText("Remove parameter `a`", """
+        fn foo(_: u32, <warning>a/*caret*/</warning>: u32, _: i32) {}
+        fn bar() {
+            foo(1, 2, 3);
+        }
+    """, """
+        fn foo(_: u32, _: i32) {}
+        fn bar() {
+            foo(1, 3);
+        }
+    """)
+
+    fun `test remove function argument at the end`() = checkFixByText("Remove parameter `a`", """
+        fn foo(_: u32, <warning>a/*caret*/</warning>: u32) {}
+        fn bar() {
+            foo(1, 2);
+        }
+    """, """
+        fn foo(_: u32) {}
+        fn bar() {
+            foo(1);
+        }
+    """)
+
+    fun `test remove method argument UFCS`() = checkFixByText("Remove parameter `a`", """
+        struct S;
+        impl S {
+            fn foo(&self, <warning>a/*caret*/</warning>: u32, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            S::foo(s, 1, 2);
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(&self, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            S::foo(s, 2);
+        }
+    """)
+
+    fun `test remove method argument method call`() = checkFixByText("Remove parameter `a`", """
+        struct S;
+        impl S {
+            fn foo(&self, <warning>a/*caret*/</warning>: u32, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            s.foo(1, 2);
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(&self, _: u32) {}
+        }
+        fn bar() {
+            let s = S;
+            s.foo(2);
+        }
+    """)
 }
