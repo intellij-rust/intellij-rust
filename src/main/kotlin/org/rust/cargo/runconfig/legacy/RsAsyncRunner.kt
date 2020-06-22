@@ -125,9 +125,16 @@ abstract class RsAsyncRunner(
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
 
-    open fun checkToolchainSupported(state: CargoRunStateBase): Boolean = true
+    open fun checkToolchainSupported(host: String): BuildResult.ToolchainError? = null
 
-    open fun processUnsupportedToolchain(project: Project, promise: AsyncPromise<Binary?>) {}
+    open fun processUnsupportedToolchain(
+        project: Project,
+        toolchainError: BuildResult.ToolchainError,
+        promise: AsyncPromise<Binary?>
+    ) {
+        project.showErrorDialog(toolchainError.message)
+        promise.setResult(null)
+    }
 
     private fun buildProjectAndGetBinaryArtifactPath(
         project: Project,
@@ -162,10 +169,9 @@ abstract class RsAsyncRunner(
 
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
-                            if (!checkToolchainSupported(state)) {
-                                result = BuildResult.UnsupportedToolchain
-                                return
-                            }
+                            val host = state.rustVersion().rustc?.host.orEmpty()
+                            result = checkToolchainSupported(host)
+                            if (result != null) return
 
                             val processForJson = CapturingProcessHandler(
                                 cargo.toGeneralCommandLine(project, command.prependArgument("--message-format=json"))
@@ -203,17 +209,14 @@ abstract class RsAsyncRunner(
                                     }
                                     isSuitableTarget && (!isTestBuild || profile.test)
                                 }
-                                .flatMap {
-                                    // FIXME: correctly launch binaries for macos
-                                    it.filenames.filter { !it.endsWith(".dSYM") }
-                                }
+                                .flatMap { it.executables }
                                 .let(BuildResult::Binaries)
                         }
 
                         override fun onSuccess() {
                             when (val result = result!!) {
-                                is BuildResult.UnsupportedToolchain -> {
-                                    processUnsupportedToolchain(project, promise)
+                                is BuildResult.ToolchainError -> {
+                                    processUnsupportedToolchain(project, result, promise)
                                 }
                                 is BuildResult.Binaries -> {
                                     val binaries = result.paths
@@ -247,10 +250,5 @@ abstract class RsAsyncRunner(
 
     companion object {
         class Binary(val path: Path)
-
-        private sealed class BuildResult {
-            data class Binaries(val paths: List<String>) : BuildResult()
-            object UnsupportedToolchain : BuildResult()
-        }
     }
 }

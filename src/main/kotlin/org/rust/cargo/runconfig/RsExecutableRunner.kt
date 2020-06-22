@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.showRunContent
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
@@ -24,6 +23,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.openapiext.computeWithCancelableProgress
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -41,8 +41,16 @@ abstract class RsExecutableRunner(
 
     override fun execute(environment: ExecutionEnvironment) {
         val state = environment.state as CargoRunStateBase
-        if (!checkToolchainSupported(environment.project, state)) return
-        if (!checkToolchainConfigured(environment.project)) return
+        val project = environment.project
+        val host = project.computeWithCancelableProgress("Checking if toolchain is supported...") {
+            state.rustVersion().rustc?.host.orEmpty()
+        }
+        if (!checkToolchainConfigured(project)) return
+        val toolchainError = checkToolchainSupported(host)
+        if (toolchainError != null) {
+            processInvalidToolchain(project, toolchainError)
+            return
+        }
         state.addCommandLinePatch(cargoCommonPatch)
         environment.putUserData(BINARIES, CompletableFuture())
         super.execute(environment)
@@ -104,11 +112,15 @@ abstract class RsExecutableRunner(
         return DefaultExecutionResult(console, handler)
     }
 
-    open fun checkToolchainSupported(project: Project, state: CargoRunStateBase): Boolean = true
+    open fun checkToolchainSupported(host: String): BuildResult.ToolchainError? = null
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
 
-    protected fun Project.showErrorDialog(message: String) {
+    open fun processInvalidToolchain(project: Project, toolchainError: BuildResult.ToolchainError) {
+        project.showErrorDialog(toolchainError.message)
+    }
+
+    private fun Project.showErrorDialog(message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
     }
 

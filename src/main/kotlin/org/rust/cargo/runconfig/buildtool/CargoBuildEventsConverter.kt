@@ -121,13 +121,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         }
         if (!isSuitableTarget || context.isTestBuild && !rustcArtifact.profile.test) return true
 
-        val executable = rustcArtifact.executable
-        if (executable != null) {
-            rawBinaries.add(executable)
-        } else {
-            // BACKCOMPAT: Cargo 0.34.0
-            rustcArtifact.filenames.filterNotTo(rawBinaries) { it.endsWith(".dSYM") }
-        }
+        rawBinaries.addAll(rustcArtifact.executables)
 
         return true
     }

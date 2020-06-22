@@ -146,23 +146,29 @@ class RsDebugProcessConfigurationHelper(
     companion object {
         private val LOG: Logger = Logger.getInstance(RsDebugProcessConfigurationHelper::class.java)
 
-        /** Should be synchronized with `rust_types.py` */
+        /**
+         * Should be synchronized with `rust_types.py`
+         *
+         * `([a-z_]+::)+)` part is used instead of a specific path to make these regexes
+         * more immune to changes in Rust stdlib module structure. Note that `\w` metacharacter
+         * may be not supported by LLDB so it should not be used there
+         */
         private val RUST_STD_TYPES: List<String> = listOf(
-            "^(alloc::(\\w+::)+)String$",
+            "^(alloc::([a-z_]+::)+)String$",
             "^&str$",
-            "^(std::ffi::(\\w+::)+)OsString$",
-            "^(alloc::(\\w+::)+)Vec<.+>$",
-            "^(alloc::(\\w+::)+)VecDeque<.+>$",
-            "^(alloc::(\\w+::)+)BTreeSet<.+>$",
-            "^(alloc::(\\w+::)+)BTreeMap<.+>$",
-            "^(std::collections::(\\w+::)+)HashMap<.+>$",
-            "^(std::collections::(\\w+::)+)HashSet<.+>$",
-            "^(alloc::(\\w+::)+)Rc<.+>$",
-            "^(alloc::(\\w+::)+)Arc<.+>$",
-            "^(core::(\\w+::)+)Cell<.+>$",
-            "^(core::(\\w+::)+)Ref<.+>$",
-            "^(core::(\\w+::)+)RefMut<.+>$",
-            "^(core::(\\w+::)+)RefCell<.+>$",
+            "^(std::ffi::([a-z_]+::)+)OsString$",
+            "^(alloc::([a-z_]+::)+)Vec<.+>$",
+            "^(alloc::([a-z_]+::)+)VecDeque<.+>$",
+            "^(alloc::([a-z_]+::)+)BTreeSet<.+>$",
+            "^(alloc::([a-z_]+::)+)BTreeMap<.+>$",
+            "^(std::collections::([a-z_]+::)+)HashMap<.+>$",
+            "^(std::collections::([a-z_]+::)+)HashSet<.+>$",
+            "^(alloc::([a-z_]+::)+)Rc<.+>$",
+            "^(alloc::([a-z_]+::)+)Arc<.+>$",
+            "^(core::([a-z_]+::)+)Cell<.+>$",
+            "^(core::([a-z_]+::)+)Ref<.+>$",
+            "^(core::([a-z_]+::)+)RefMut<.+>$",
+            "^(core::([a-z_]+::)+)RefCell<.+>$",
             "^core::num::NonZero.+$"
         )
     }
