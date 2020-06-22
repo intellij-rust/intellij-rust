@@ -749,7 +749,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplBothCopyAndDrop(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprAttribute(holder, attr)
-        checkReprForEmptyEnum(holder, attr)
 
         if (attr.owner !is RsFunction)
             checkStartAttribute(holder, attr)
@@ -796,16 +795,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
-    // E0084: Enum with no variants can't have `repr` attribute
-    private fun checkReprForEmptyEnum(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (attr.metaItem.name != "repr") return
-        val enum = attr.owner as? RsEnumItem ?: return
-        // Not using `enum.variants` to avoid false positive for enum without body
-        if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
-            RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
-        }
-    }
-
     private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
         if (attr.metaItem.name != "repr") return
 
@@ -840,20 +829,20 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
             RsDiagnostic.ReprAttrUnsupportedItem(reprArg, errorText).addToHolder(holder)
         }
+
+        // E0084: Enum with no variants can't have `repr` attribute
+        val enum = owner as? RsEnumItem ?: return
+        // Not using `enum.variants` to avoid false positive for enum without body
+        if (enum.enumBody?.enumVariantList?.isEmpty() == true) {
+            RsDiagnostic.ReprForEmptyEnumError(attr).addToHolder(holder)
+        }
     }
 
     // E0518: Inline attribute is allowed only on functions
     private fun checkInlineAttr(holder: RsAnnotationHolder, attr: RsAttr) {
         val metaItem = attr.metaItem
         if (metaItem.name == "inline") {
-            val parent = when (attr) {
-                // #[inline] fn foo() {}
-                is RsOuterAttr -> attr.parent
-                // Apparently you can place attr inside the function as well
-                // fn foo() { #![inline] }
-                is RsInnerAttr -> attr.parent?.parent
-                else -> null
-            } ?: return
+            val parent = attr.owner
 
             if (parent !is RsFunction && parent !is RsLambdaExpr) {
                 RsDiagnostic.IncorrectlyPlacedInlineAttr(metaItem.path?.referenceNameElement ?: metaItem, attr)
@@ -861,7 +850,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             }
         }
     }
-
 
     private fun checkRetExpr(holder: RsAnnotationHolder, ret: RsRetExpr) {
         if (ret.expr != null) return
