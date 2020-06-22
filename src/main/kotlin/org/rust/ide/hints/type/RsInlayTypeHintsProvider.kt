@@ -129,13 +129,12 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                         presentTypeForPat(pat, element.expr)
                     }
                     is RsCondition -> {
-                        for (pat in element.patList) {
-                            presentTypeForPat(pat, element.expr)
-                        }
+                        val pat = element.pat ?: return
+                        presentTypeForPat(pat, element.expr)
                     }
                     is RsMatchExpr -> {
-                        for (pat in element.arms.flatMap { it.patList }) {
-                            presentTypeForPat(pat, element.expr)
+                        for (arm in element.arms) {
+                            presentTypeForPat(arm.pat, element.expr)
                         }
                     }
                 }
