@@ -16,12 +16,10 @@ import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.hasChildModules
 import org.rust.lang.core.psi.ext.isEdition2018
-import org.rust.openapiext.isFeatureEnabled
 
 class RsMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
 
@@ -35,7 +33,6 @@ class RsMoveFilesOrDirectoriesHandler : MoveFilesOrDirectoriesHandler() {
         targetContainer: PsiElement?,
         reference: PsiReference?
     ): Boolean {
-        if (!isFeatureEnabled(RsExperiments.MOVE_REFACTORING)) return false
         if (!elements.all { it.canBeMoved() }) return false
 
         // TODO: support move multiple files
