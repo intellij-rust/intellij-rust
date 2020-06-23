@@ -384,8 +384,9 @@ class RsPsiFactory(
             ?: error("Failed to create unsafe element")
 
     fun createFunction(text: String): RsFunction =
-        createFromText(text)
-            ?: error("Failed to create function element: $text")
+        tryCreateFunction(text) ?: error("Failed to create function element: $text")
+
+    fun tryCreateFunction(text: String): RsFunction? = createFromText(text)
 
     fun createRetType(ty: String): RsRetType =
         createFromText("fn foo() -> $ty {}")

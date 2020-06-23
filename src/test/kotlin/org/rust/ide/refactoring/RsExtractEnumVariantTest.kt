@@ -133,7 +133,7 @@ class RsExtractEnumVariantTest : RsTestBase() {
             fn foo() -> S;
         }
 
-        struct /*caret*/V1<'a, 'b, T, S, U> where T: Trait + Trait2<S, Item=U>, 'a: 'b { pub a: &'a T, pub b: &'b T }
+        struct /*caret*/V1<'a, 'b, T, S, U> where 'a: 'b, T: Trait + Trait2<S, Item=U> { pub a: &'a T, pub b: &'b T }
 
         enum A<'a, 'b, 'c, T, S, R, U> where T: Trait + Trait2<S, Item=U>, R: Trait, 'a: 'b + 'c, 'b: 'c {
             V1(V1<'a, 'b, T, S, U>),
