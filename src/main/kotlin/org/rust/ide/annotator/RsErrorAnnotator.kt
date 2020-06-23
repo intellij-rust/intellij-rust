@@ -702,10 +702,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             else -> null
         } ?: return
         val realCount = args.exprList.size
-        if (variadic && realCount < expectedCount) {
-            RsDiagnostic.TooFewParamsError(args, expectedCount, realCount).addToHolder(holder)
-        } else if (!variadic && realCount != expectedCount) {
-            RsDiagnostic.TooManyParamsError(args, expectedCount, realCount).addToHolder(holder)
+        if (realCount < expectedCount) {
+            val target = args.rparen ?: args
+            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, variadic).addToHolder(holder)
+        } else if (!variadic && realCount > expectedCount) {
+            args.exprList.drop(expectedCount).forEach {
+                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount).addToHolder(holder)
+            }
         }
     }
 

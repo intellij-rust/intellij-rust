@@ -514,37 +514,21 @@ sealed class RsDiagnostic(
         }
     }
 
-    class TooFewParamsError(
+    class IncorrectFunctionArgumentCountError(
         element: PsiElement,
         private val expectedCount: Int,
-        private val realCount: Int
+        private val realCount: Int,
+        private val variadic: Boolean = false
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
-            E0060,
+            if (variadic) E0060 else E0061,
             errorText()
         )
 
         private fun errorText(): String {
-            return "This function takes at least $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
-                " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
-                " ${pluralise(realCount, "was", "were")} supplied"
-        }
-    }
-
-    class TooManyParamsError(
-        element: PsiElement,
-        private val expectedCount: Int,
-        private val realCount: Int
-    ) : RsDiagnostic(element) {
-        override fun prepare() = PreparedAnnotation(
-            ERROR,
-            E0061,
-            errorText()
-        )
-
-        private fun errorText(): String {
-            return "This function takes $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
+            return "This function takes${if (variadic) " at least" else ""}" +
+                " $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
                 " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
                 " ${pluralise(realCount, "was", "were")} supplied"
         }
