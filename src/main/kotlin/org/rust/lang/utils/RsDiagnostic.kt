@@ -11,6 +11,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
@@ -41,6 +42,7 @@ import org.rust.lang.core.types.infer.hasTyInfer
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
+import org.rust.openapiext.BUILD_202
 import org.rust.stdext.buildList
 import org.rust.stdext.buildMap
 
@@ -1407,12 +1409,15 @@ private val RsSelfParameter.canonicalDecl: String
         append("self")
     }
 
-// BACKCOMPAT: ???
-// Fix for IntelliJ platform bug: https://youtrack.jetbrains.com/issue/IDEA-186991
-// replace it with `escapeString()` after the end of support IDEs with the bug
-private fun escapeTy(str: String): String = str
-    .replace("<", "&#60;")
-    .replace(">", "&#62;")
-    .replace("&", "&amp;")
+// BACKCOMPAT: 2020.1. Replace with `escapeString(str)`
+private fun escapeTy(str: String): String {
+    return if (ApplicationInfo.getInstance().build > BUILD_202) {
+        escapeString(str)
+    } else {
+        str.replace("<", "&#60;")
+            .replace(">", "&#62;")
+            .replace("&", "&amp;")
+    }
+}
 
 private val Ty.escaped get() = escapeTy(toString())
