@@ -1,0 +1,6 @@
+impl Iterator for Foo {
+    type Item = i32;
+    fn next(&mut self) -> Option<i32> {
+        unimplemented!()
+    }
+}
