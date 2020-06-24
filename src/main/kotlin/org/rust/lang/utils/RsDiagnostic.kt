@@ -27,6 +27,7 @@ import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.isEnabledByCfg
@@ -35,10 +36,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.types.*
-import org.rust.lang.core.types.infer.TypeFoldable
-import org.rust.lang.core.types.infer.TypeFolder
-import org.rust.lang.core.types.infer.TypeVisitor
-import org.rust.lang.core.types.infer.hasTyInfer
+import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsErrorCode.*
 import org.rust.lang.utils.Severity.*
@@ -149,6 +147,16 @@ sealed class RsDiagnostic(
                         val derefsRefsToExpected = derefRefPathFromActualToExpected(lookup, element)
                         if (derefsRefsToExpected != null) {
                             add(ConvertToTyWithDerefsRefsFix(element, expectedTy, derefsRefsToExpected))
+                        }
+                    }
+
+                    val parent = element.parent
+                    if (parent is RsLetDecl && parent.typeReference != null) {
+                        val pat = parent.pat
+                        if (pat is RsPatIdent &&
+                            !actualTy.containsTyOfClass(TyUnknown::class.java, TyAnon::class.java)) {
+                            val text = "Change type of `${pat.patBinding.identifier.text ?: "?"}` to `${actualTy.renderInsertionSafe(useAliasNames = true)}`"
+                            add(ConvertLetDeclTypeFix(parent, text, actualTy))
                         }
                     }
                 }
