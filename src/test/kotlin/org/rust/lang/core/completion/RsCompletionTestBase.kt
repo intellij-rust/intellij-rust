@@ -73,6 +73,11 @@ abstract class RsCompletionTestBase : RsTestBase() {
         @Language("Rust") code: String
     ) = completionFixture.checkContainsCompletion(code, variant)
 
+    protected fun checkContainsCompletion(
+        variants: List<String>,
+        @Language("Rust") code: String
+    ) = completionFixture.checkContainsCompletion(code, variants)
+
     protected fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,

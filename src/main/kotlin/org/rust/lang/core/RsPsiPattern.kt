@@ -88,6 +88,13 @@ object RsPsiPattern {
         "start"
     )
 
+    private val LINT_ATTRIBUTES: Set<String> = setOf(
+        "allow",
+        "warn",
+        "deny",
+        "forbid"
+    )
+
     const val META_ITEM_IDENTIFIER_DEPTH = 4
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
@@ -172,12 +179,17 @@ object RsPsiPattern {
             .withSuperParent(2, RsOuterAttributeOwner::class.java)
             .with("nonStdAttributeCondition") { e -> e.name !in STD_ATTRIBUTES }
 
+    val lintAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
+        psiElement<RsMetaItem>()
+            .withParent(RsAttr::class.java)
+            .with("lintAttributeCondition") { e -> e.name in LINT_ATTRIBUTES }
+
     val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(psiElement<RsIncludeMacroArgument>())
 
     val pathAttrLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(psiElement<RsMetaItem>()
-            .withSuperParent(2, StandardPatterns.or(psiElement<RsModDeclItem>(), psiElement<RsModItem>()))
+            .withSuperParent(2, or(psiElement<RsModDeclItem>(), psiElement<RsModItem>()))
             .with("pathAttrCondition") { metaItem -> metaItem.name == "path" }
         )
 
