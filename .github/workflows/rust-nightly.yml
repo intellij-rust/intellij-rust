@@ -35,12 +35,22 @@ jobs:
               with:
                   java-version: 1.8
 
-            - name: Build & publish
-              env:
-                  CI: true
-                  ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
-                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
-                  ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
-                  ORG_GRADLE_PROJECT_publishChannel: nightly
-                  ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
-              run: ./gradlew :plugin:buildPlugin :plugin:publishPlugin
+            - name: Set up env variables
+              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+              run: |
+                  echo "::set-env name=CI::true"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_buildNumber::${{ needs.generate-build-number.outputs.build_number }}"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_enableBuildSearchableOptions::true"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_publishChannel::nightly"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_publishToken::${{ secrets.plugin_bot_token }}"
+
+            - name: Publish rust plugin
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :plugin:publishPlugin
+
+            - name: Publish toml plugin
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :intellij-toml:publishPlugin
