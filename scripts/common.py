@@ -26,11 +26,20 @@ def inc_patch_version():
         properties.write(new_text)
 
 
-def git_command(*args) -> str:
-    print(["git"] + list(args))
-    result = subprocess.run(["git"] + list(args), check=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def git_command(*args, print_stdout=True, check=True) -> str:
+    if print_stdout:
+        print(["git"] + list(args))
+
+    try:
+        result = subprocess.run(["git"] + list(args), check=check, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as e:
+        if print_stdout:
+            print(e.output)
+        raise e
+
     stdout_str = result.stdout.decode("utf-8").strip()
-    print(stdout_str)
+    if print_stdout:
+        print(stdout_str)
     return stdout_str
 
 
