@@ -17,6 +17,7 @@ import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
+import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -73,7 +74,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun generateDoc(element: RsPatBinding, buffer: StringBuilder) {
         val presentationInfo = element.presentationInfo ?: return
-        val type = element.type.toString().escaped
+        val type = element.type.render(useAliasNames = true).escaped
         buffer += presentationInfo.type
         buffer += " "
         buffer.b { it += presentationInfo.name }
