@@ -10,17 +10,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.SearchScope
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.refactoring.rename.RenamePsiElementProcessor
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.containers.MultiMap
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.processLocalVariables
 
 class RsRenameProcessor : RenamePsiElementProcessor() {
-
-    override fun createRenameDialog(project: Project, element: PsiElement, nameSuggestionContext: PsiElement?, editor: Editor?): RenameDialog {
+    override fun createRenameDialog(
+        project: Project,
+        element: PsiElement,
+        nameSuggestionContext: PsiElement?,
+        editor: Editor?
+    ): RenameDialog {
         return object : RenameDialog(project, element, nameSuggestionContext, editor) {
             override fun getFullName(): String {
                 val mod = (element as? RsFile)?.modName ?: return super.getFullName()
@@ -31,7 +37,51 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
 
     override fun canProcessElement(element: PsiElement): Boolean = element is RsNamedElement
 
-    override fun renameElement(element: PsiElement, newName: String, usages: Array<out UsageInfo>, listener: RefactoringElementListener?) {
+    override fun findExistingNameConflicts(
+        element: PsiElement,
+        newName: String,
+        conflicts: MultiMap<PsiElement, String>
+    ) {
+        val binding = element as? RsPatBinding ?: return
+        val function = binding.parentOfType<RsFunction>() ?: return
+        val functionName = function.name ?: return
+        val foundConflicts = mutableListOf<String>()
+
+        val scope = if (binding.parentOfType<RsValueParameter>() != null) {
+            function.block?.rbrace?.getPrevNonCommentSibling() as? RsElement
+        } else {
+            binding
+        }
+
+        scope?.let { s ->
+            processLocalVariables(s) {
+                if (it.name == newName) {
+                    val type = when (it.parent) {
+                        is RsPatIdent -> {
+                            if (it.parentOfType<RsValueParameter>() != null) {
+                                "Parameter"
+                            } else {
+                                "Variable"
+                            }
+                        }
+                        else -> "Binding"
+                    }
+                    foundConflicts.add("$type `$newName` is already declared in function `$functionName`")
+                }
+            }
+        }
+
+        if (foundConflicts.isNotEmpty()) {
+            conflicts.put(element, foundConflicts)
+        }
+    }
+
+    override fun renameElement(
+        element: PsiElement,
+        newName: String,
+        usages: Array<out UsageInfo>,
+        listener: RefactoringElementListener?
+    ) {
         val psiFactory = RsPsiFactory(element.project)
         if (element is RsPatBinding) {
             usages.forEach {
@@ -56,7 +106,12 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         super.renameElement(newRenameElement, newName, usages, listener)
     }
 
-    override fun prepareRenaming(element: PsiElement, newName: String, allRenames: MutableMap<PsiElement, String>, scope: SearchScope) {
+    override fun prepareRenaming(
+        element: PsiElement,
+        newName: String,
+        allRenames: MutableMap<PsiElement, String>,
+        scope: SearchScope
+    ) {
         if (element is RsLifetime || element is RsLifetimeParameter || element is RsLabel || element is RsLabelDecl) {
             allRenames.put(element, newName.ensureQuote())
         } else {
