@@ -854,6 +854,38 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test no return in struct literal`() = checkNotContainsCompletion("return", """
+        struct S { a: u32, b: u32 }
+        fn foo() {
+            let s = S { /*caret*/ };
+        }
+    """)
+
+    fun `test no let in struct literal`() = checkNotContainsCompletion("let", """
+        struct S { a: u32, b: u32 }
+        fn foo() {
+            let s = S { /*caret*/ };
+        }
+    """)
+
+    fun `test no return in struct pat`() = checkNotContainsCompletion("return", """
+        struct S { a: u32, b: u32 }
+        fn foo(s: S) {
+            match s {
+                S { /*caret*/ } => {}
+            }
+        }
+    """)
+
+    fun `test no let in struct pat`() = checkNotContainsCompletion("let", """
+        struct S { a: u32, b: u32 }
+        fn foo(s: S) {
+            match s {
+                S { /*caret*/ } => {}
+            }
+        }
+    """)
+
     // Smart mode is used for not completion tests to disable additional results
     // from language agnostic `com.intellij.codeInsight.completion.WordCompletionContributor`
     override fun checkNoCompletion(@Language("Rust") code: String) {

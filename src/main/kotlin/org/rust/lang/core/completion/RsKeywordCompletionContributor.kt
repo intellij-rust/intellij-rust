@@ -138,6 +138,8 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         psiElement()
             .inside(psiElement<RsFunction>())
             .andNot(psiElement().withParent(RsModItem::class.java))
+            .andNot(psiElement().withSuperParent(2, RsStructLiteralBody::class.java))
+            .andNot(psiElement().withSuperParent(3, RsPatStruct::class.java))
 
     private fun statementBeginningPattern(vararg startWords: String): PsiElementPattern.Capture<PsiElement> =
         psiElement(IDENTIFIER).and(RsPsiPattern.onStatementBeginning(*startWords))
