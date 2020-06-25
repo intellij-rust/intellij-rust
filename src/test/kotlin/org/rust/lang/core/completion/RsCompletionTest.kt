@@ -296,14 +296,44 @@ class RsCompletionTest : RsCompletionTestBase() {
         impl S { fn foo(test: &self::/*caret*/) {}}
     """)
 
-    fun `test struct field`() = doSingleCompletion("""
+    fun `test struct field no binding with same name`() = doSingleCompletion("""
         struct S { foobarbaz: i32 }
         fn main() {
+            let foobar: i32 = 0;
             let _ = S { foo/*caret*/ };
         }
     """, """
         struct S { foobarbaz: i32 }
         fn main() {
+            let foobar: i32 = 0;
+            let _ = S { foobarbaz: /*caret*/ };
+        }
+    """)
+
+    fun `test struct field no binding with same type`() = doSingleCompletion("""
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let foobarbaz = "foo";
+            let _ = S { foo/*caret*/ };
+        }
+    """, """
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let foobarbaz = "foo";
+            let _ = S { foobarbaz: /*caret*/ };
+        }
+    """)
+
+    fun `test struct field matching binding`() = doSingleCompletion("""
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let foobarbaz: i32 = 0;
+            let _ = S { foo/*caret*/ };
+        }
+    """, """
+        struct S { foobarbaz: i32 }
+        fn main() {
+            let foobarbaz: i32 = 0;
             let _ = S { foobarbaz/*caret*/ };
         }
     """)
@@ -328,7 +358,7 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         enum E { X { bazbarfoo: i32 } }
         fn main() {
-            let _ = E::X { bazbarfoo/*caret*/ }
+            let _ = E::X { bazbarfoo: /*caret*/ }
         }
     """)
 
