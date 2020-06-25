@@ -94,25 +94,26 @@ allprojects {
         instrumentCode = false
         ideaDependencyCachePath = dependencyCachePath
         sandboxDirectory = "$buildDir/$baseIDE-sandbox-$platformVersion"
-
-        tasks {
-            withType<PatchPluginXmlTask> {
-                sinceBuild(prop("sinceBuild"))
-                untilBuild(prop("untilBuild"))
-            }
-
-            buildSearchableOptions {
-                enabled = prop("enableBuildSearchableOptions").toBoolean()
-            }
-        }
     }
 
-    tasks.withType<KotlinCompile> {
-        kotlinOptions {
-            jvmTarget = "1.8"
-            languageVersion = "1.3"
-            apiVersion = "1.3"
-            freeCompilerArgs = listOf("-Xjvm-default=enable")
+    tasks {
+        withType<KotlinCompile> {
+            kotlinOptions {
+                jvmTarget = "1.8"
+                languageVersion = "1.3"
+                apiVersion = "1.3"
+                freeCompilerArgs = listOf("-Xjvm-default=enable")
+            }
+        }
+        withType<PatchPluginXmlTask> {
+            sinceBuild(prop("sinceBuild"))
+            untilBuild(prop("untilBuild"))
+        }
+
+        buildSearchableOptions {
+            // buildSearchableOptions task doesn't make sense for non-root subprojects
+            val isRootProject = project.name in listOf("plugin", "intellij-toml")
+            enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
         }
     }
 

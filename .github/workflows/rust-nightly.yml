@@ -19,8 +19,41 @@ jobs:
                   token: ${{ secrets.github_token }}
                   prefix: rust
 
+    fetch-latest-changes:
+        runs-on: ubuntu-latest
+        outputs:
+            rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
+            rust-nightly: ${{ steps.fetch-commits.outputs.rust-nightly }}
+            toml-commit: ${{ steps.fetch-commits.outputs.toml-commit }}
+            toml-nightly: ${{ steps.fetch-commits.outputs.toml-nightly }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Fetch latest commits
+              id: fetch-commits
+              run: |
+                  echo "::set-output name=rust-commit::$(git log -n 1 --format=format:%H)"
+                  echo "::set-output name=rust-nightly::$(python scripts/get_tag_commit.py --tag "rust-nightly")"
+                  echo "::set-output name=toml-commit::$(git log -n 1 --format=format:%H intellij-toml *gradle*)"
+                  echo "::set-output name=toml-nightly::$(python scripts/get_tag_commit.py --tag "toml-nightly")"
+
+            - name: Show commits
+              run: |
+                  echo "rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}"
+                  echo "rust-nightly: ${{ steps.fetch-commits.outputs.rust-nightly }}"
+                  echo "toml-commit: ${{ steps.fetch-commits.outputs.toml-commit }}"
+                  echo "toml-nightly: ${{ steps.fetch-commits.outputs.toml-nightly }}"
+
     build:
-        needs: generate-build-number
+        needs: [ generate-build-number, fetch-latest-changes ]
         runs-on: ubuntu-latest
         strategy:
             fail-fast: true
@@ -35,12 +68,43 @@ jobs:
               with:
                   java-version: 1.8
 
-            - name: Build & publish
-              env:
-                  CI: true
-                  ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
-                  ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
-                  ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
-                  ORG_GRADLE_PROJECT_publishChannel: nightly
-                  ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
-              run: ./gradlew :plugin:buildPlugin :plugin:publishPlugin
+            - name: Set up env variables
+              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+              run: |
+                  echo "::set-env name=CI::true"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_buildNumber::${{ needs.generate-build-number.outputs.build_number }}"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_enableBuildSearchableOptions::true"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_publishChannel::nightly"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_publishToken::${{ secrets.plugin_bot_token }}"
+
+            - name: Publish rust plugin
+              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :plugin:publishPlugin
+
+            - name: Publish toml plugin
+              if: needs.fetch-latest-changes.outputs.toml-commit != needs.fetch-latest-changes.outputs.toml-nightly
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :intellij-toml:publishPlugin
+
+    save-commit:
+        needs: [ build, fetch-latest-changes ]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Save commits
+              run: |
+                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag rust-nightly --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag toml-nightly --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}
