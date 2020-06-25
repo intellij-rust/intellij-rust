@@ -20,11 +20,8 @@ class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
-        val mod = element.ancestorOrSelf<RsModItem>() ?: return null
-        if (mod.`super`?.ownsDirectory != true) return null
-        return mod
-    }
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? =
+        element.ancestorOrSelf()
 
     override fun invoke(project: Project, editor: Editor, ctx: RsModItem) {
         val modName = ctx.name ?: return

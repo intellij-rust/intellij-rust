@@ -36,6 +36,63 @@ class ExtractInlineModuleIntentionTest : RsTestBase() {
         }
     )
 
+    fun `test extract non-root module`() = doTest(
+        fileTree {
+            rust("main.rs", """
+                mod foo;
+
+                fn main() {}
+            """)
+            rust("foo.rs", """
+                mod /*caret*/bar {
+                    fn baz() {}
+                }
+            """)
+        },
+        fileTree {
+            rust("main.rs", """
+                mod foo;
+
+                fn main() {}
+            """)
+            rust("foo.rs", """
+                mod bar;
+            """)
+            dir("foo") {
+                rust("bar.rs", """
+                    fn baz() {}
+                """)
+            }
+        }
+    )
+
+    fun `test keep existing file content`() = doTest(
+        fileTree {
+            rust("main.rs", """
+                mod /*caret*/foo {
+                    fn b() {}
+                }
+
+                fn main() {}
+            """)
+            rust("foo.rs", """
+                fn a() {}
+            """)
+        },
+        fileTree {
+            rust("main.rs", """
+                mod foo;
+
+                fn main() {}
+            """)
+            rust("foo.rs", """
+                fn a() {}
+
+                fn b() {}
+            """)
+        }
+    )
+
     fun `test extracting module preserves attributes and visibility`() = ExtractInlineModuleIntention.Testmarks.copyAttrs.checkHit {
         doTest(
             fileTree {
