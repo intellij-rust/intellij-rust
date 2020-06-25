@@ -446,6 +446,12 @@ class RsPsiFactory(
         createFromText("fn foo() -> $ty {}")
             ?: error("Failed to create function return type: $ty")
 
+    fun createImpl(name: String, functions: List<RsFunction>): RsImplItem {
+        val functionsText = functions.joinToString(separator = "\n") { it.text }
+        return createFromText("impl $name {\n$functionsText\n}")
+            ?: error("Failed to create RsImplItem element")
+    }
+
     fun createSimpleValueParameterList(name: String, type: RsTypeReference): RsValueParameterList {
         return createFromText<RsFunction>("fn main($name: ${type.text}){}")
             ?.valueParameterList
