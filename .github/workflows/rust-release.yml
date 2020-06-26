@@ -73,8 +73,43 @@ jobs:
                   echo "::set-output name=channel::beta"
                 fi
 
+    fetch-latest-changes:
+        runs-on: ubuntu-latest
+        needs: [ get-release-branch, update-changelog-link, get-channel ]
+        outputs:
+            rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
+            rust-release: ${{ steps.fetch-commits.outputs.rust-release }}
+            toml-commit: ${{ steps.fetch-commits.outputs.toml-commit }}
+            toml-release: ${{ steps.fetch-commits.outputs.toml-release }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  ref: ${{ needs.get-release-branch.outputs.release-branch }}
+                  fetch-depth: 0
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Fetch latest commits
+              id: fetch-commits
+              run: |
+                  echo "::set-output name=rust-commit::$(git log -n 1 --format=format:%H)"
+                  echo "::set-output name=rust-release::$(python scripts/get_tag_commit.py --tag "rust-${{ needs.get-channel.outputs.channel }}")"
+                  echo "::set-output name=toml-commit::$(git log -n 1 --format=format:%H intellij-toml *gradle*)"
+                  echo "::set-output name=toml-release::$(python scripts/get_tag_commit.py --tag "toml-${{ needs.get-channel.outputs.channel }}")"
+
+            - name: Show commits
+              run: |
+                  echo "rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}"
+                  echo "rust-release: ${{ steps.fetch-commits.outputs.rust-release }}"
+                  echo "toml-commit: ${{ steps.fetch-commits.outputs.toml-commit }}"
+                  echo "toml-release: ${{ steps.fetch-commits.outputs.toml-release }}"
+
     build:
-        needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel ]
+        needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel, fetch-latest-changes ]
         runs-on: ubuntu-latest
         strategy:
             fail-fast: true
@@ -102,11 +137,32 @@ jobs:
                   echo "::set-env name=ORG_GRADLE_PROJECT_publishToken::${{ secrets.plugin_bot_token }}"
 
             - name: Publish rust plugin
+              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: :plugin:publishPlugin
 
             - name: Publish toml plugin
+              if: needs.fetch-latest-changes.outputs.toml-commit != needs.fetch-latest-changes.outputs.toml-release
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: :intellij-toml:publishPlugin
+
+    save-commit:
+        needs: [ get-channel, fetch-latest-changes, build ]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Save commits
+              run: |
+                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag rust-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag toml-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}
