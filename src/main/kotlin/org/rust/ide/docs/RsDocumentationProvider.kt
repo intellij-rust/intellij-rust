@@ -222,7 +222,7 @@ private fun RsDocAndAttributeOwner.header(buffer: StringBuilder) {
     }
 }
 
-private fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
+fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
     val rawLines = when (this) {
         is RsNamedFieldDecl -> listOfNotNull(presentationInfo?.signatureText)
         is RsFunction -> {
@@ -256,6 +256,7 @@ private fun RsDocAndAttributeOwner.signature(builder: StringBuilder) {
             } else emptyList()
         }
         is RsMacro -> listOf("macro <b>$name</b>")
+        is RsImplItem -> declarationText
         else -> emptyList()
     }
     rawLines.joinTo(builder, "<br>")
