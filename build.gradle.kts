@@ -14,10 +14,6 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
 
 // The same as `--full-stacktrace` param
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS_FULL
@@ -39,18 +35,6 @@ val baseVersion = when (baseIDE) {
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
-
-val httpClient: OkHttpClient by lazy { OkHttpClient() }
-
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-    }
-    dependencies {
-        classpath("com.squareup.okhttp3:okhttp:4.4.0")
-    }
-}
 
 plugins {
     idea
@@ -481,115 +465,6 @@ task("runPrettyPrintersTests") {
         }
         "cargo run --package pretty_printers_test --bin pretty_printers_test -- gdb $gdbBinary".execute("pretty_printers_tests")
     }
-}
-
-task("makeReleaseBranch") {
-    doLast {
-        val regex = Regex("patchVersion=(\\d+)")
-
-        val properties = file("gradle.properties")
-        val propertiesText = properties.readText()
-        val patchVersion = regex.find(propertiesText)?.groupValues?.get(1)?.toInt()
-            ?: error("Failed to read 'patchVersion' property")
-        val releaseBranchName = "release-$patchVersion"
-
-        // Create local release branch
-        "git branch $releaseBranchName".execute()
-        // Update patchVersion property
-        val newPropertiesText = propertiesText.replace(regex) {
-            "patchVersion=${patchVersion + 1}"
-        }
-        properties.writeText(newPropertiesText)
-        // Push release branch
-        "git push -u origin $releaseBranchName".execute()
-        // Commit changes in `gradle.properties`
-        "git add gradle.properties".execute()
-        listOf("git", "commit", "-m", ":arrow_up: patch version").execute()
-        "git push".execute()
-    }
-}
-
-task("makeRelease") {
-    doLast {
-        val website = "../intellij-rust.github.io"
-        val newChangelog = File("$website/_posts").listFiles()
-            .orEmpty()
-            .map { it.name }
-            .max()!!
-        val newChangelogPath = newChangelog
-            .replace(".markdown", "")
-            .replaceFirst("-", "/").replaceFirst("-", "/").replaceFirst("-", "/")
-        val pluginXmlPath = "./plugin/src/main/resources/META-INF/plugin.xml"
-        val pluginXml = File(pluginXmlPath)
-        val oldText = pluginXml.readText()
-        val newText = oldText.replace(
-            """https://intellij-rust\.github\.io/(.*)\.html""".toRegex(),
-            "https://intellij-rust.github.io/$newChangelogPath.html"
-        )
-        pluginXml.writeText(newText)
-        "git add $pluginXmlPath".execute()
-        "git commit -m Changelog".execute()
-        "git push".execute()
-
-        val head = "git rev-parse HEAD".execute()
-        // We assume that current version in master is 1 more than version in release branch
-        "git checkout release-${patchVersion - 1}".execute()
-        "git cherry-pick $head".execute()
-        "git push".execute()
-
-        "git checkout master".execute()
-//        commitNightly()
-    }
-}
-
-task("makeNightlyRelease") {
-    doLast {
-        sendReleaseEvent("nightly-release")
-    }
-}
-
-fun sendReleaseEvent(eventName: String) {
-    val contentType = "application/json; charset=utf-8".toMediaType()
-    val body = """{"event_type": "$eventName"}""".toRequestBody(contentType)
-    val request = Request.Builder()
-        .url("https://api.github.com/repos/intellij-rust/intellij-rust/dispatches")
-        .header("Authorization", "token ${prop("githubToken")}")
-        .header("Accept", "application/vnd.github.v3+json")
-        .post(body)
-        .build()
-    val response = httpClient.newCall(request).execute()
-    println("Response code: ${response.code}")
-}
-
-fun commitNightly() {
-    // TODO: extract the latest versions of all supported platforms
-    val ideaArtifactName = "$platformVersion-EAP-SNAPSHOT"
-
-    val versionUrl = URL("https://www.jetbrains.com/intellij-repository/snapshots/com/jetbrains/intellij/idea/BUILD/$ideaArtifactName/BUILD-$ideaArtifactName.txt")
-    val ideaVersion = versionUrl.openStream().bufferedReader().readLine().trim()
-    println("\n    NEW IDEA: $ideaVersion\n")
-
-    "rustup update nightly".execute()
-    val version = "rustup run nightly rustc --version".execute()
-    val date = """\d\d\d\d-\d\d-\d\d""".toRegex().find(version)!!.value
-    val rustVersion = "nightly-$date"
-    println("\n    NEW RUST: $rustVersion\n")
-
-    val travisYml = File(rootProject.projectDir, ".travis.yml")
-    val updated = travisYml.readLines().joinToString("\n") { line ->
-        if ("modified by script" in line) {
-            line.replace("""RUST_VERSION=[\w\-\.]+""".toRegex(), "RUST_VERSION=$rustVersion")
-                .replace("""ORG_GRADLE_PROJECT_ideaVersion=[\w\-\.]+""".toRegex(), "ORG_GRADLE_PROJECT_ideaVersion=$ideaVersion")
-        } else {
-            line
-        }
-    }
-    travisYml.writeText(updated)
-    "git branch -Df nightly".execute(ignoreExitCode = true)
-    "git checkout -b nightly".execute()
-    "git add .travis.yml".execute()
-    listOf("git", "commit", "-m", ":arrow_up: nightly IDEA & rust").execute()
-    "git push origin nightly".execute()
 }
 
 task("updateCompilerFeatures") {
