@@ -743,6 +743,18 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>variable <b>x</b>: S&lt;i32&gt;</pre></div>
     """)
 
+    fun `test variable type alias`() = doTest("""
+        struct S;
+        type T = S;
+
+        fn main() {
+            let x: T = S;
+              //^
+        }
+    """, """
+        <div class='definition'><pre>variable <b>x</b>: T</pre></div>
+    """)
+
     fun `test tuple destructuring`() = doTest("""
         fn main() {
             let (a, b) = (1, ("foo", 1));
