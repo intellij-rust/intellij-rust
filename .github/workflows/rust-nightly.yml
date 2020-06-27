@@ -106,5 +106,5 @@ jobs:
 
             - name: Save commits
               run: |
-                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag rust-nightly --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
-                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag toml-nightly --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --tag rust-nightly --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --tag toml-nightly --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}

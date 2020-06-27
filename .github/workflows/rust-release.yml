@@ -57,7 +57,7 @@ jobs:
 
             - name: Update changelog link
               if: github.event_name == 'repository_dispatch' && github.event.action == 'stable-release' && github.event.client_payload.update_changelog
-              run: python scripts/update-changelog-link.py --token ${{ secrets.GITHUB_TOKEN }}
+              run: python scripts/update-changelog-link.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
     get-channel:
         runs-on: ubuntu-latest
@@ -164,5 +164,5 @@ jobs:
 
             - name: Save commits
               run: |
-                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag rust-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
-                  python scripts/save_tag.py --token ${{ secrets.GITHUB_TOKEN }} --tag toml-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --tag rust-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.rust-commit }}
+                  python scripts/save_tag.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }} --tag toml-${{ needs.get-channel.outputs.channel }} --commit ${{ needs.fetch-latest-changes.outputs.toml-commit }}

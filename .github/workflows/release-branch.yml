@@ -21,4 +21,4 @@ jobs:
                   git config --local user.name "GitHub Action"
 
             - name: Make release branch
-              run: python scripts/make_release_branch.py --token ${{ secrets.GITHUB_TOKEN }}
+              run: python scripts/make_release_branch.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
