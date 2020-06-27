@@ -1398,9 +1398,9 @@ private fun escapeTy(str: String): String {
     return if (ApplicationInfo.getInstance().build > BUILD_202) {
         escapeString(str)
     } else {
-        str.replace("<", "&#60;")
+        str.replace("&", "&amp;")
+            .replace("<", "&#60;")
             .replace(">", "&#62;")
-            .replace("&", "&amp;")
     }
 }
 
