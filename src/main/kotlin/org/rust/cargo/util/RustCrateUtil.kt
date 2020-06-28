@@ -63,6 +63,7 @@ object AutoInjectedCrates {
         StdLibInfo("unwind", StdLibType.FEATURE_GATED),
         // Dependencies
         StdLibInfo("build_helper", StdLibType.DEPENDENCY, srcDir = "build_helper"),
+        StdLibInfo("rustc", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_asan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_lsan", StdLibType.DEPENDENCY),
         StdLibInfo("rustc_msan", StdLibType.DEPENDENCY),
