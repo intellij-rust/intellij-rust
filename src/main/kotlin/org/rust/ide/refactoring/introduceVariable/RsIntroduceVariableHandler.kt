@@ -44,13 +44,6 @@ class RsIntroduceVariableHandler : RefactoringActionHandler {
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
         //this doesn't get called from the editor.
     }
-
-    companion object {
-        fun isAvailable(editor: Editor, file: PsiFile): Boolean {
-            val rsFile = file as? RsFile ?: return false
-            return findCandidateExpressionsToExtract(editor, rsFile).isNotEmpty()
-        }
-    }
 }
 
 object IntroduceVariableTestmarks {

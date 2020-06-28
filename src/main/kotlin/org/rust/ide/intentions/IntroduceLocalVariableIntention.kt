@@ -5,31 +5,36 @@
 
 package org.rust.ide.intentions
 
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import org.rust.ide.refactoring.RsBaseEditorRefactoringAction
-import org.rust.ide.refactoring.introduceVariable.RsIntroduceVariableHandler
+import org.rust.ide.refactoring.introduceVariable.extractExpression
+import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsExprStmt
+import org.rust.lang.core.psi.RsRetExpr
+import org.rust.lang.core.psi.ext.ancestors
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.type
 
-class IntroduceLocalVariableIntention : RsRefactoringAdaptorIntention() {
+class IntroduceLocalVariableIntention : RsElementBaseIntentionAction<RsExpr>() {
     override fun getText(): String = "Introduce local variable"
     override fun getFamilyName(): String = text
 
-    override val refactoringAction: RsBaseEditorRefactoringAction
-        get() = RsIntroduceLocalVariableAction()
-}
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsExpr? {
+        val expr = element.ancestors
+            .takeWhile { it !is RsBlock }
+            .find {
+                val parent = it.parent
+                parent is RsRetExpr || parent is RsExprStmt || parent is RsBlock && it == parent.expr
+            } as? RsExpr
 
-private class RsIntroduceLocalVariableAction : RsBaseEditorRefactoringAction() {
-    override fun isAvailableOnElementInEditorAndFile(
-        element: PsiElement,
-        editor: Editor,
-        file: PsiFile,
-        context: DataContext
-    ): Boolean = RsIntroduceVariableHandler.isAvailable(editor, file)
+        if (expr?.type == TyUnit) return null
 
-    override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-        RsIntroduceVariableHandler().invoke(project, editor, file, dataContext ?: return)
+        return expr
+    }
+
+    override fun invoke(project: Project, editor: Editor, ctx: RsExpr) {
+        extractExpression(editor, ctx)
     }
 }
