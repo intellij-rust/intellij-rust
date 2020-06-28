@@ -3558,4 +3558,156 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         #[repr(<error descr="Unrecognized representation CD [E0552]">CD</error>)]
         struct Test(i32);
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom repr proc macro attr`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn repr(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::repr;
+
+        #[repr/*caret*/(C)]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom start proc macro attr`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn start(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::start;
+
+        #[start/*caret*/]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::inline;
+
+        #[inline/*caret*/]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr use alias`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::inline as repr;
+
+        #[repr/*caret*/]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr and disable cfg`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        #[cfg(target_os = "windows")]
+        use dep_proc_macro::inline;
+
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr but ref invalid`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::test::inline;
+
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
+        type Foo = i32;
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr but at the child level`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline</error>]
+        type Foo = i32;
+
+        fn foo() {
+            use dep_proc_macro::inline;
+
+            #[inline/*caret*/]
+            struct Test(i32);
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom inline proc macro attr but declared in a child level`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_attribute]
+        pub fn inline(attr: TokenStream, item: TokenStream) -> TokenStream {
+            item
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        #[<error descr="Attribute should be applied to function or closure [E0518]">inline/*caret*/</error>]
+        type Foo = i32;
+
+        fn foo() {
+            use dep_proc_macro::inline;
+        }
+    """)
 }
