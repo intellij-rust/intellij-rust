@@ -109,8 +109,13 @@ class RsCodeHighlightingInQuickDocumentationTest : RsDocumentationProviderTest()
         /// ```
         /// #[attr1]
         /// ##[attr2]
+        ///    ##[attr3]
+        /// #
+        ///   #
         /// let foo = Foo;
         /// # let foo2 = Foo;
+        ///    # let foo3 = Foo;
+        ///    let foo4 = Foo;
         /// ```
         struct Foo;
               //^
@@ -119,7 +124,9 @@ class RsCodeHighlightingInQuickDocumentationTest : RsDocumentationProviderTest()
         struct <b>Foo</b></pre></div>
         <div class='content'><p>Some doc.</p><h2>Example</h2><pre>#[attr1]
         #[attr2]
+        #[attr3]
         <span style="...">let </span>foo = Foo;
+           <span style="...">let </span>foo4 = Foo;
         </pre>
         </div>
     """)

@@ -141,7 +141,7 @@ private class RsCodeFenceProvider(private val context: PsiElement) : GeneratingP
         var skipNextEOL = false
         var lastChildWasContent = false
 
-        loop@for (child in childrenToConsider) {
+        loop@ for (child in childrenToConsider) {
             if (isContentStarted && child.type in listOf(MarkdownTokenTypes.CODE_FENCE_CONTENT, MarkdownTokenTypes.EOL)) {
                 if (skipNextEOL && child.type == MarkdownTokenTypes.EOL) {
                     skipNextEOL = false
@@ -152,12 +152,14 @@ private class RsCodeFenceProvider(private val context: PsiElement) : GeneratingP
                 //   * `# ` prefix is used to mark lines that should be skipped in rendered documentation.
                 //   * `##` prefix is converted to `#`
                 // See https://github.com/rust-lang/rust/blob/5182cc1ca65d05f16ee5e1529707ac6f63233ca9/src/librustdoc/html/markdown.rs#L114 for more details
+                val trimmedLine = rawLine.trimStart()
                 val codeLine = when {
-                    rawLine.startsWith("# ") -> {
+                    // `#` or `# `
+                    trimmedLine.startsWith("#") && trimmedLine.getOrNull(1)?.equals(' ') != false -> {
                         skipNextEOL = true
                         continue@loop
                     }
-                    rawLine.startsWith("##") -> rawLine.removePrefix("#")
+                    trimmedLine.startsWith("##") -> trimmedLine.removePrefix("#")
                     else -> rawLine
                 }
 
