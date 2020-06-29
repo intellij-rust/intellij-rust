@@ -66,6 +66,7 @@ data class CargoCommandLine(
                         listOf("--example", target.name)
                     CargoWorkspace.TargetKind.Bench -> listOf("--bench", target.name)
                     is CargoWorkspace.TargetKind.Lib -> listOf("--lib")
+                    CargoWorkspace.TargetKind.CustomBuild,
                     CargoWorkspace.TargetKind.Unknown -> emptyList()
                 }
             }

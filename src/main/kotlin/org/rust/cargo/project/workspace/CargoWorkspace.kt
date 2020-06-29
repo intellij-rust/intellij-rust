@@ -130,6 +130,7 @@ interface CargoWorkspace {
         object ExampleBin : TargetKind("example")
         class ExampleLib(val kinds: EnumSet<LibKind>) : TargetKind("example")
         object Bench : TargetKind("bench")
+        object CustomBuild : TargetKind("custom-build")
         object Unknown : TargetKind("unknown")
     }
 
