@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
 import org.rust.openapiext.checkCommitIsNotInProgress
+import org.rust.stdext.singleOrFilter
 
 class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
     override fun getVersion(): Int = RsFileStub.Type.stubVersion
@@ -46,7 +47,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
                 true
             }
 
-            return result.filter { it.isValidProjectMember }.takeIf { it.isNotEmpty() } ?: result
+            return result.singleOrFilter { it.isValidProjectMember }.takeIf { it.isNotEmpty() } ?: result
         }
 
 
