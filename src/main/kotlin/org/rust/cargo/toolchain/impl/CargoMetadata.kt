@@ -152,6 +152,7 @@ object CargoMetadata {
                 "test" -> TargetKind.TEST
                 "bench" -> TargetKind.BENCH
                 "proc-macro" -> TargetKind.LIB
+                "custom-build" -> TargetKind.CUSTOM_BUILD
                 else ->
                     if (kind.any { it.endsWith("lib") })
                         TargetKind.LIB
@@ -175,7 +176,7 @@ object CargoMetadata {
     }
 
     enum class TargetKind {
-        LIB, BIN, TEST, EXAMPLE, BENCH, UNKNOWN
+        LIB, BIN, TEST, EXAMPLE, BENCH, CUSTOM_BUILD, UNKNOWN
     }
 
     /**
@@ -373,6 +374,7 @@ object CargoMetadata {
                 CargoWorkspace.TargetKind.ExampleLib(crateTypes.toLibKinds())
             }
             TargetKind.BENCH -> CargoWorkspace.TargetKind.Bench
+            TargetKind.CUSTOM_BUILD -> CargoWorkspace.TargetKind.CustomBuild
             TargetKind.UNKNOWN -> CargoWorkspace.TargetKind.Unknown
         }
     }
