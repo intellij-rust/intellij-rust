@@ -708,4 +708,16 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             consume(<error descr="Use of moved value">a</error>);
         }
     """)
+
+    fun `test partial move and reassign`() = checkByText("""
+        struct T;
+        struct S { x: T }
+
+        fn main() {
+            let mut s = S { x: T };
+            s.x;
+            s.x = T;
+            s.x;
+        }
+    """, checkWarn = false)
 }
