@@ -37,7 +37,7 @@ import org.rust.ide.annotator.createAnnotationsForFile
 import org.rust.ide.annotator.createDisposableOnAnyPsiChange
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.stdext.buildList
 import java.util.*
 
@@ -58,7 +58,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         globalContext: GlobalInspectionContext,
         problemDescriptionsProcessor: ProblemDescriptionsProcessor
     ) {
-        if (file !is RsFile || file.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return
+        if (file !is RsFile || file.containingCrate?.origin != PackageOrigin.WORKSPACE) return
         val analyzedFiles = globalContext.getUserData(ANALYZED_FILES) ?: return
         analyzedFiles.add(file)
     }

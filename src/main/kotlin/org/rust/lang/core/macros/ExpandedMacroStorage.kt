@@ -31,7 +31,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.bodyHash
-import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeStrict
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
@@ -351,7 +351,7 @@ class SourceFile(
 
     // Should not be lazy b/c target/pkg/origin can be changed
     private val isBelongToWorkspace: Boolean
-        get() = rootSourceFile.loadPsi()?.containingCargoTarget?.pkg?.origin == PackageOrigin.WORKSPACE
+        get() = rootSourceFile.loadPsi()?.containingCrate?.origin == PackageOrigin.WORKSPACE
 
     /**
      * Checks that [modificationStamp], [infos] content, [ExpandedMacroInfoImpl.macroCallStrongRef] or

@@ -398,7 +398,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         use dep_lib_target::Foo;
                             //^ dep-lib-new/lib.rs
-    """, NameResolutionTestmarks.otherVersionOfSameCrate)
+    """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test resolve reference without extern crate item 1 (edition 2018)`() = stubOnlyResolve("""

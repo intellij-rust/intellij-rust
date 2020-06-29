@@ -39,7 +39,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
         val macroPos = macroToFormatPos(formatMacro.macroName) ?: return
         val macroArgs = formatMacro.formatMacroArgument?.formatMacroArgList ?: return
         val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return
-        if (macro.containingCargoPackage?.origin != PackageOrigin.STDLIB) return
+        if (macro.containingCrate?.origin != PackageOrigin.STDLIB) return
 
         val formatStr = macroArgs
             .getOrNull(macroPos)

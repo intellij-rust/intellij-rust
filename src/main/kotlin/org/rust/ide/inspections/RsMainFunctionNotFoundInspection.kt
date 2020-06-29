@@ -25,13 +25,13 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
                 if (file is RsFile) {
                     if (file.childOfType<PsiErrorElement>() != null) return
 
-                    val target = file.cargoTarget ?: return
-                    val crateName = if ((target.isBin || target.isExampleBin) && file.isCrateRoot) target.name else return
+                    val crate = file.crate ?: return
+                    if (!(crate.kind.isBin || crate.kind.isExampleBin) || !file.isCrateRoot) return
 
                     if (file.queryAttributes.hasAttribute("no_main")) return
                     if (file.childrenOfType<RsFunction>().lastOrNull { fn -> "main" == fn.name } != null) return
 
-                    RsDiagnostic.MainFunctionNotFound(file, crateName).addToHolder(holder)
+                    RsDiagnostic.MainFunctionNotFound(file, crate.presentableName).addToHolder(holder)
                 }
             }
         }

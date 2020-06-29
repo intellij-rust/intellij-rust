@@ -7,11 +7,10 @@ package org.rust.ide.icons
 
 import com.intellij.ide.IconProvider
 import com.intellij.psi.PsiElement
-import org.rust.cargo.CargoConstants
 import org.rust.cargo.icons.CargoIcons
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.containingCargoPackage
 import javax.swing.Icon
 
 class RsIconProvider : IconProvider() {
@@ -31,7 +30,6 @@ class RsIconProvider : IconProvider() {
         (element.name == RsConstants.MAIN_RS_FILE || element.name == RsConstants.LIB_RS_FILE)
             && element.isCrateRoot
 
-    private fun isBuildRs(element: RsFile): Boolean =
-        element.name == CargoConstants.BUILD_RS_FILE
-            && element.containingCargoPackage?.contentRoot == element.containingDirectory?.virtualFile
+    private fun isBuildRs(element: RsFile): Boolean = // TODO containingTarget
+        element.isCrateRoot && element.crate?.kind == CargoWorkspace.TargetKind.CustomBuild
 }

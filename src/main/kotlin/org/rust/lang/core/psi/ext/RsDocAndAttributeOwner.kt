@@ -225,9 +225,9 @@ private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
     // this will return the library as containing package.
     // When the application now requests certain features, which are not enabled by default in the library
     // we will evaluate features wrongly here
-    val pkg = containingCargoPackage ?: return ThreeValuedLogic.True
-    val features = pkg.features.associate { it.name to it.state }
-    return CfgEvaluator(pkg.workspace.cfgOptions, pkg.cfgOptions, features, pkg.origin).evaluate(cfgAttributes)
+    val crate = containingCrate ?: return ThreeValuedLogic.True
+    val features = crate.features.associate { it.name to it.state }
+    return CfgEvaluator(crate.cargoWorkspace.cfgOptions, crate.cfgOptions, features, crate.origin).evaluate(cfgAttributes)
 }
 
 private val CFG_ATTRIBUTES_ENABLED_KEY = Registry.get("org.rust.lang.cfg.attributes")

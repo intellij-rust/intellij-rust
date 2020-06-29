@@ -373,6 +373,7 @@ data class CargoProjectImpl(
         if (doesProjectLooksLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
             val std = StandardLibrary.fromPath(manifest.parent.toString())
+                ?.asPartOfCargoProject()
             if (std != null) {
                 return CompletableFuture.completedFuture(withStdlib(TaskResult.Ok(std)))
             }
@@ -395,7 +396,7 @@ data class CargoProjectImpl(
 
     // Checks that the project is https://github.com/rust-lang/rust
     private fun doesProjectLooksLikeRustc(): Boolean {
-        val workspace = workspace ?: return false
+        val workspace = rawWorkspace ?: return false
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
         val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")

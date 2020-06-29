@@ -16,7 +16,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.resolve.RsProcessor
@@ -51,7 +51,7 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
                 val stdlibAliases = mutableListOf<RsTypeAlias>()
                 val workspaceAliases = mutableListOf<RsTypeAlias>()
                 for (alias in aliases) {
-                    val packageOrigin = alias.containingCargoPackage?.origin ?: continue
+                    val packageOrigin = alias.containingCrate?.origin ?: continue
                     when (packageOrigin) {
                         PackageOrigin.STDLIB -> stdlibAliases += alias
                         PackageOrigin.WORKSPACE -> workspaceAliases += alias

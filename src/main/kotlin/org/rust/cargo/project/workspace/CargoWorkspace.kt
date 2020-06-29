@@ -17,6 +17,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import org.rust.stdext.applyWithSymlink
+import org.rust.stdext.mapToSet
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
@@ -68,7 +69,8 @@ interface CargoWorkspace {
         val origin: PackageOrigin
 
         val targets: Collection<Target>
-        val libTarget: Target? get() = targets.find { it.isLib }
+        val libTarget: Target? get() = targets.find { it.kind.isLib }
+        val customBuildTarget: Target? get() = targets.find { it.kind == TargetKind.CustomBuild }
 
         val dependencies: Collection<Dependency>
 
@@ -91,20 +93,12 @@ interface CargoWorkspace {
     /** See docs for [CargoProjectsService] */
     interface Target {
         val name: String
+
         // target name must be a valid Rust identifier, so normalize it by mapping `-` to `_`
         // https://github.com/rust-lang/cargo/blob/ece4e963a3054cdd078a46449ef0270b88f74d45/src/cargo/core/manifest.rs#L299
         val normName: String get() = name.replace('-', '_')
 
         val kind: TargetKind
-
-        val isLib: Boolean get() = kind is TargetKind.Lib
-        val isBin: Boolean get() = kind == TargetKind.Bin
-        val isExampleBin: Boolean get() = kind == TargetKind.ExampleBin
-        val isProcMacro: Boolean
-            get() {
-                val kind = kind
-                return kind is TargetKind.Lib && kind.kinds.contains(LibKind.PROC_MACRO)
-            }
 
         val crateRoot: VirtualFile?
 
@@ -127,8 +121,10 @@ interface CargoWorkspace {
     )
 
     enum class DepKind {
-        // Stdlib
-        All,
+        // For old Cargo versions prior to `1.41.0`
+        Unclassified,
+
+        Stdlib,
         // [dependencies]
         Normal,
         // [dev-dependencies]
@@ -149,6 +145,12 @@ interface CargoWorkspace {
         object Bench : TargetKind("bench")
         object CustomBuild : TargetKind("custom-build")
         object Unknown : TargetKind("unknown")
+
+        val isLib: Boolean get() = this is Lib
+        val isBin: Boolean get() = this == Bin
+        val isExampleBin: Boolean get() = this == ExampleBin
+        val isProcMacro: Boolean
+            get() = this is Lib && this.kinds.contains(LibKind.PROC_MACRO)
     }
 
     enum class LibKind {
@@ -159,7 +161,7 @@ interface CargoWorkspace {
         EDITION_2015("2015"), EDITION_2018("2018")
     }
 
-    class Feature(
+    data class Feature(
         val name: String,
         val state: FeatureState
     )
@@ -211,14 +213,31 @@ private class WorkspaceImpl(
         // so we have to rebuild the whole workspace from scratch instead of
         // *just* adding in the stdlib.
 
-        val stdAll = stdlib.crates.associateBy { it.id }
-        val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
-        val stdRoots = stdlib.crates.filter { it.type == StdLibType.ROOT }.map { it.id }.toSet()
+        val (newPackagesData, stdCrates) = if (!stdlib.isPartOfCargoProject) {
+            Pair(
+                packages.map { it.asPackageData() } + stdlib.crates.map { it.asPackageData(rustcInfo) },
+                stdlib.crates
+            )
+        } else {
+            // In the case of https://github.com/rust-lang/rust project, stdlib
+            // is already a part of the project, so no need to add extra packages.
+            val oldPackagesData = packages.map { it.asPackageData() }
+            val stdCratePackageRoots = stdlib.crates.mapToSet { it.packageRootUrl }
+            val (stdPackagesData, otherPackagesData) = oldPackagesData.partition { it.contentRootUrl in stdCratePackageRoots }
+            val stdPackagesByPackageRoot = stdPackagesData.associateBy { it.contentRootUrl }
+            Pair(
+                otherPackagesData + stdPackagesData.map { it.copy(origin = PackageOrigin.STDLIB) },
+                stdlib.crates.map { it.copy(id = stdPackagesByPackageRoot[it.packageRootUrl]?.id ?: it.id) }
+            )
+        }
+
+        val stdAll = stdCrates.associateBy { it.id }
+        val stdInternalDeps = stdCrates.filter { it.type == StdLibType.DEPENDENCY }.map { it.id }.toSet()
 
         val result = WorkspaceImpl(
             manifestPath,
             workspaceRootPath,
-            packages.map { it.asPackageData() } + stdlib.crates.map { it.asPackageData(rustcInfo) },
+            newPackagesData,
             cfgOptions
         )
 
@@ -226,7 +245,7 @@ private class WorkspaceImpl(
             val oldIdToPackage = packages.associateBy { it.id }
             val newIdToPackage = result.packages.associateBy { it.id }
             val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }
-                .map { DependencyImpl(it, depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.All))) }
+                .map { DependencyImpl(it, depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Stdlib))) }
             newIdToPackage.forEach { (id, pkg) ->
                 val stdCrate = stdAll[id]
                 if (stdCrate == null) {
@@ -234,9 +253,8 @@ private class WorkspaceImpl(
                         val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
                         DependencyImpl(dependencyPackage, name, depKinds)
                     })
-                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdRoots })
-                    val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
-                    pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdGated && it.pkg.id !in explicitDeps })
+                    val explicitDeps = pkg.dependencies.map { it.name }.toSet()
+                    pkg.dependencies.addAll(stdlibDependencies.filter { it.name !in explicitDeps && it.pkg.id !in stdInternalDeps })
                 } else {
                     // `pkg` is a crate from stdlib
                     val stdCrateDeps = stdCrate.dependencies.mapNotNull { stdDep ->
@@ -383,7 +401,7 @@ private class DependencyImpl(
     name: String? = null,
     override val depKinds: List<CargoWorkspace.DepKindInfo>
 ) : CargoWorkspace.Dependency {
-    override val name: String = name ?: (pkg.targets.find { it.isLib }?.normName ?: pkg.normName)
+    override val name: String = name ?: (pkg.targets.find { it.kind.isLib }?.normName ?: pkg.normName)
 
     operator fun component1(): PackageImpl = pkg
     operator fun component2(): String = name
