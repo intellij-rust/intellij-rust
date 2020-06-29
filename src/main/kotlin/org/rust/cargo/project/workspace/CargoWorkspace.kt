@@ -193,7 +193,7 @@ private class WorkspaceImpl(
         // so we have to rebuild the whole workspace from scratch instead of
         // *just* adding in the stdlib.
 
-        val stdAll = stdlib.crates.map { it.id }.toSet()
+        val stdAll = stdlib.crates.associateBy { it.id }
         val stdGated = stdlib.crates.filter { it.type == StdLibType.FEATURE_GATED }.map { it.id }.toSet()
         val stdRoots = stdlib.crates.filter { it.type == StdLibType.ROOT }.map { it.id }.toSet()
 
@@ -209,7 +209,8 @@ private class WorkspaceImpl(
             val newIdToPackage = result.packages.associateBy { it.id }
             val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }.map { DependencyImpl(it) }
             newIdToPackage.forEach { (id, pkg) ->
-                if (id !in stdAll) {
+                val stdCrate = stdAll[id]
+                if (stdCrate == null) {
                     pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
                         val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
                         DependencyImpl(dependencyPackage, name)
@@ -218,7 +219,11 @@ private class WorkspaceImpl(
                     val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
                     pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdGated && it.pkg.id !in explicitDeps })
                 } else {
-                    pkg.dependencies.addAll(stdlibDependencies)
+                    // `pkg` is a crate from stdlib
+                    val stdCrateDeps = stdCrate.dependencies.mapNotNull { stdDep ->
+                        stdlibDependencies.find { it.name == stdDep }
+                    }
+                    pkg.dependencies.addAll(stdCrateDeps)
                 }
             }
         }
