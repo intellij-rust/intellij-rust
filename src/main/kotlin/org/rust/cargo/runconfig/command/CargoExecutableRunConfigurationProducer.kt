@@ -68,7 +68,7 @@ class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() 
 
         private fun findBinaryTarget(ws: CargoWorkspace, file: VirtualFile): ExecutableTarget? {
             val target = ws.findTargetByCrateRoot(file) ?: return null
-            if (!target.isBin && !target.isExampleBin) return null
+            if (!target.kind.isBin && !target.kind.isExampleBin) return null
             return ExecutableTarget(target)
         }
     }

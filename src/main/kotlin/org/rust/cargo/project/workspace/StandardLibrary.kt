@@ -11,7 +11,8 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.StdLibType
 
 class StandardLibrary private constructor(
-    val crates: List<StdCrate>
+    val crates: List<StdCrate>,
+    val isPartOfCargoProject: Boolean = false
 ) {
 
     data class StdCrate(
@@ -19,10 +20,10 @@ class StandardLibrary private constructor(
         val type: StdLibType,
         val crateRootUrl: String,
         val packageRootUrl: String,
-        val dependencies: Collection<String>
-    ) {
-        val id: PackageId get() = "(stdlib) $name"
-    }
+        val dependencies: Collection<String>,
+        val id: PackageId = "(stdlib) $name"
+    )
+    fun asPartOfCargoProject(): StandardLibrary = StandardLibrary(crates, true)
 
     companion object {
         fun fromPath(path: String): StandardLibrary? =

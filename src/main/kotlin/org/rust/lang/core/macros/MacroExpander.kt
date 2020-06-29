@@ -327,8 +327,8 @@ class MacroExpander(val project: Project) {
  * DON'T TRY THIS AT HOME
  */
 private fun expandDollarCrateVar(call: RsMacroCall, def: RsMacro): String {
-    val defTarget = def.containingCargoTarget
-    val callTarget = call.containingCargoTarget
+    val defTarget = def.containingCrate
+    val callTarget = call.containingCrate
     val crateName = if (defTarget == callTarget) "self" else defTarget?.normName ?: ""
     return MACRO_CRATE_IDENTIFIER_PREFIX + crateName
 }

@@ -12,11 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
-import org.rust.lang.core.psi.ext.RsVisibility
-import org.rust.lang.core.psi.ext.RsVisible
-import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
+import org.rust.lang.core.psi.ext.*
 
 class MakePublicFix(
     element: RsVisible,
@@ -80,7 +76,7 @@ class MakePublicFix(
                 visible.visibility is RsVisibility.Private
                     && visible !is RsEnumVariant
                     && visible.parent.parent !is RsTraitItem
-                    && visible.containingCargoPackage?.origin == PackageOrigin.WORKSPACE
+                    && visible.containingCrate?.origin == PackageOrigin.WORKSPACE
                 -> MakePublicFix(visible, elementName, withinOneCrate)
                 else -> null
             }

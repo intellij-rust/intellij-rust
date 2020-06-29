@@ -78,7 +78,7 @@ class ChangeReturnTypeFix(element: RsElement, private val actualTy: Ty) : LocalQ
             PsiTreeUtil.getContextOfType(element, true, RsFunction::class.java, RsLambdaExpr::class.java)
 
         fun createIfCompatible(element: RsElement, actualTy: Ty): ChangeReturnTypeFix? {
-            if (element.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
+            if (element.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
 
             val owner = findCallableOwner(element)
             val isOverriddenFn = owner is RsFunction && owner.superItem != null

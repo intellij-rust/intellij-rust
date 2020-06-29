@@ -33,6 +33,7 @@ import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.IN_BAND_LIFETIMES
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
@@ -42,7 +43,6 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks.missingMacroUse
 import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInInlineModule
 import org.rust.lang.core.resolve.NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule
 import org.rust.lang.core.resolve.NameResolutionTestmarks.modRsFile
-import org.rust.lang.core.resolve.NameResolutionTestmarks.otherVersionOfSameCrate
 import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
@@ -264,32 +264,25 @@ fun processExternCrateResolveVariants(
     withSelf: Boolean,
     processor: RsResolveProcessor
 ): Boolean {
-    val isDoctestInjection = element.isDoctestInjection
-    val target = element.containingCargoTarget ?: return false
-    val pkg = target.pkg
+    val crate = element.containingCrate ?: return false
 
     val visitedDeps = mutableSetOf<String>()
-    fun processPackage(pkg: CargoWorkspace.Package, dependencyName: String? = null): Boolean {
-        if (isCompletion && pkg.origin != PackageOrigin.DEPENDENCY) return false
-        val libTarget = pkg.libTarget ?: return false
-        // When crate depends on another version of the same crate
-        // we shouldn't add current package into resolve/completion results
-        if (otherVersionOfSameCrate.hitOnFalse(libTarget == target) && !isDoctestInjection) return false
+    fun processPackage(crate: Crate, dependencyName: String): Boolean {
+        if (isCompletion && crate.origin != PackageOrigin.DEPENDENCY) return false
 
-        if (pkg.origin == PackageOrigin.STDLIB && pkg.name in visitedDeps) return false
-        visitedDeps += pkg.name
-        return processor.lazy(dependencyName ?: libTarget.normName) {
-            libTarget.crateRoot?.toPsiFile(element.project)?.rustFile
+        if (crate.origin == PackageOrigin.STDLIB && dependencyName in visitedDeps) return false
+        visitedDeps.add(dependencyName)
+
+        return processor.lazy(dependencyName) {
+            crate.rootModFile?.toPsiFile(element.project)?.rustFile
         }
     }
 
-    val crateRoot = element.crateRoot
-    if (crateRoot != null && withSelf) {
-        if (processor("self", crateRoot)) return true
+    if (withSelf) {
+        if (processor.lazy("self") { crate.rootMod }) return true
     }
-    if (processPackage(pkg)) return true
-    val explicitDepsFirst = pkg.dependencies.sortedBy {
-        when (it.pkg.origin) {
+    val explicitDepsFirst = crate.dependenciesWithCyclic.sortedBy {
+        when (it.crate.origin) {
             PackageOrigin.WORKSPACE,
             PackageOrigin.DEPENDENCY,
             PackageOrigin.TRANSITIVE_DEPENDENCY -> {
@@ -300,7 +293,7 @@ fun processExternCrateResolveVariants(
         }
     }
     for (dependency in explicitDepsFirst) {
-        if (processPackage(dependency.pkg, dependency.name)) return true
+        if (processPackage(dependency.crate, dependency.normName)) return true
     }
     return false
 }
@@ -395,8 +388,8 @@ private fun processQualifiedPathResolveVariants(
         // Proc macro crates are not allowed to export anything but procedural macros,
         // and all possible macro exports are collected above. However, when resolve
         // happens inside proc macro crate itself, all items are allowed
-        val resolveBetweenDifferentTargets = base.containingCargoTarget != path.containingCargoTarget
-        if (resolveBetweenDifferentTargets && base.containingCargoTarget?.isProcMacro == true) {
+        val resolveBetweenDifferentTargets = base.containingCrate != path.containingCrate
+        if (resolveBetweenDifferentTargets && base.containingCrate?.kind?.isProcMacro == true) {
             return false
         }
     }
@@ -1035,7 +1028,7 @@ private val EXPORTED_MACROS_KEY: Key<CachedValue<List<ScopeEntry>>> = Key.create
 
 private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
     // proc-macro crates are allowed to export only procedural macros.
-    if (scope.containingCargoTarget?.isProcMacro == true) {
+    if (scope.containingCrate?.kind?.isProcMacro == true) {
         return scope.stubChildrenOfType<RsFunction>().mapNotNull { asProcMacroDefinition(it) }
     }
 
@@ -1520,6 +1513,7 @@ fun findPrelude(element: RsElement): RsFile? {
     val packageName = cargoPackage?.normName
 
     // `std` and `core` crates explicitly add their prelude
+    // TODO `#[prelude_import]`
     val stdlibCrateRoot = if (isStdlib && (packageName == STD || packageName == CORE)) {
         crateRoot
     } else {
@@ -1581,7 +1575,6 @@ object NameResolutionTestmarks {
     val processSelfCrateExportedMacros = Testmark("processSelfCrateExportedMacros")
     val dollarCrateMagicIdentifier = Testmark("dollarCrateMagicIdentifier")
     val selfInGroup = Testmark("selfInGroup")
-    val otherVersionOfSameCrate = Testmark("otherVersionOfSameCrate")
     val crateRootModule = Testmark("crateRootModule")
     val modRsFile = Testmark("modRsFile")
     val modDeclExplicitPathInInlineModule = Testmark("modDeclExplicitPathInInlineModule")
