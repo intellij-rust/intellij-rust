@@ -194,7 +194,7 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         override fun elementInfo(e: RsMatchArm): String = e.buildText(TextKind.INFO)
 
-        private fun RsMatchArm.buildText(kind: TextKind): String = "${orPats.text.truncate(kind)} =>"
+        private fun RsMatchArm.buildText(kind: TextKind): String = "${pat.text.truncate(kind)} =>"
     }
 
     private object RsLambdaHandler : RsElementHandler<RsLambdaExpr> {

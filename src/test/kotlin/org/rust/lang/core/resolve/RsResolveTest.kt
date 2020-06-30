@@ -165,10 +165,30 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test if let with multiple patterns`() = checkByCode("""
+    fun `test if let with or pattern 1`() = checkByCode("""
         fn foo(x: V) {
             if let V1(v) | V2(v) = x {
                     //X
+                v;
+              //^
+            }
+        }
+    """)
+
+    fun `test if let with or pattern 2`() = checkByCode("""
+        fn foo(x: Option<V>) {
+            if let Some(V1(v) | V2(v)) = x {
+                         //X
+                v;
+              //^
+            }
+        }
+    """)
+
+    fun `test if let with or pattern 3`() = checkByCode("""
+        fn foo(x: Option<V>) {
+            if let Some(L(V1(v) | V2(v)) | R(V1(v) | V2(v))) = x {
+                           //X
                 v;
               //^
             }
@@ -205,10 +225,20 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test while let with multiple patterns`() = checkByCode("""
+    fun `test while let with or pattern 1`() = checkByCode("""
         fn foo(x: V) {
             while let V1(v) | V2(v) = x {
                        //X
+                v;
+              //^
+            }
+        }
+    """)
+
+    fun `test while let with or pattern 2`() = checkByCode("""
+        fn foo(x: Option<V>) {
+            while let Some(V1(v) | V2(v)) = x {
+                            //X
                 v;
               //^
             }
@@ -1134,7 +1164,7 @@ class RsResolveTest : RsResolveTestBase() {
         fn foo(x: i32) {
             match x {
                 X => 92
-            } //^
+            };//^
         }
     """)
 

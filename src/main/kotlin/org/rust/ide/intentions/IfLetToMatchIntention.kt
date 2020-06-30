@@ -27,7 +27,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     )
 
     data class MatchArm(
-        val orPats: RsOrPats,
+        val pat: RsPat,
         val body: RsBlock
     )
 
@@ -52,15 +52,15 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (ifStmt, target, matchArms, elseBody) = ctx
         val item = (target.type as? TyAdt)?.item as? RsEnumItem
-        val optionOrResultPats = matchArms.flatMap { it.orPats.patList }.filter(RsPat::isPossibleOptionOrResultVariant)
-        val isIrrefutable = matchArms.all { it.orPats.patList.all { pat -> pat?.isIrrefutable ?: false } }
+        val optionOrResultPats = matchArms.map { it.pat }.filter(RsPat::isPossibleOptionOrResultVariant)
+        val isIrrefutable = matchArms.all { it.pat.isIrrefutable }
         val generatedCode = buildString {
             append("match ")
             append(target.text)
             append(" {")
             matchArms.forEach {
                 append('\n')
-                append(it.orPats.text)
+                append(it.pat.text)
                 append(" => ")
                 append(it.body.text)
             }
@@ -93,7 +93,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         val condition = iflet.condition ?: return null
 
         //2) Extract the match arm conditions
-        val orPats = condition.orPats ?: return null
+        val pat = condition.pat ?: return null
 
         //3) Extract the target
         val target = condition.expr
@@ -101,7 +101,7 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         //4) Extract the if body
         val ifBody = iflet.block ?: return null
 
-        val matchArm = MatchArm(orPats, ifBody)
+        val matchArm = MatchArm(pat, ifBody)
         var context = if (ctx != null) {
             //If we reach this code, that mean we are in a `if let Some(value) = x { ... } else if let Other(value) = x { ... }` case
             //                                                                                  ^

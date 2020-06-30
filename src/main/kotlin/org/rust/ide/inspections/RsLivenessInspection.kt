@@ -61,8 +61,8 @@ class RsLivenessInspection : RsLintInspection() {
 
         if (binding.isCfgUnknown) return
 
-        // TODO: remove this check when multi-resolve for `RsOrPats` is implemented
-        if (binding.ancestorStrict<RsOrPats>() != null) return
+        // TODO: remove this check when multi-resolve for `RsOrPat` is implemented
+        if (binding.ancestorStrict<RsOrPat>() != null) return
 
         val isSimplePat = binding.topLevelPattern is RsPatIdent
         val message = if (isSimplePat) {

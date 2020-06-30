@@ -65,14 +65,11 @@ val RsNamedElement.presentationInfo: PresentationInfo? get() {
             }
         }
         is RsPatBinding -> {
-            var patOwner = topLevelPattern.parent
-            if (patOwner is RsOrPats) {
-                patOwner = patOwner.parent
-            }
+            val patOwner = topLevelPattern.parent
             when (patOwner) {
                 is RsLetDecl -> Pair("variable", createDeclarationInfo(patOwner, identifier, false, listOf(patOwner.typeReference)))
                 is RsValueParameter -> Pair("value parameter", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.typeReference)))
-                is RsMatchArm -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.orPats)))
+                is RsMatchArm -> Pair("match arm binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.pat)))
                 is RsCondition -> Pair("condition binding", createDeclarationInfo(patOwner, identifier, true, listOf(patOwner.lastChild)))
                 else -> Pair("binding", createDeclarationInfo(this, identifier, true))
             }

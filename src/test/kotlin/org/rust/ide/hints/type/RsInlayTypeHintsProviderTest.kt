@@ -250,13 +250,26 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    fun `test hints in if let expr with multiple patterns`() = checkByText("""
+    fun `test hints in if let expr with or patterns 1`() = checkByText("""
         enum V<T> {
             V1(T), V2(T)
         }
         fn main() {
             let result = V::V1((1, 2));
             if let V::V1(x/*hint text="[:  [( [i32 ,  i32] )]]"*/) | V::V2(x/*hint text="[:  [( [i32 ,  i32] )]]"*/) = result {}
+        }
+    """)
+
+    fun `test hints in if let expr with or patterns 2`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T)
+        }
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some(V::V1((1, false)));
+            if let Option::Some(V::V1(x/*hint text="[:  [( [i32 ,  bool] )]]"*/) | V::V2(x/*hint text="[:  [( [i32 ,  bool] )]]"*/)) = result {}
         }
     """)
 
@@ -270,13 +283,27 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
         }
     """)
 
-    fun `test hints in while let expr with multiple patterns`() = checkByText("""
+    fun `test hints in while let expr with or patterns 1`() = checkByText("""
         enum V<T> {
             V1(T), V2(T)
         }
+
         fn main() {
             let result = V::V1((1, 2));
             while let V::V1(x/*hint text="[:  [( [i32 ,  i32] )]]"/>) | V::V2(x<hint text="[:  [( [i32 ,  i32] )]]"*/) = result {}
+        }
+    """)
+
+    fun `test hints in while let expr with or patterns 2`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T)
+        }
+        enum Option<T> {
+            Some(T), None
+        }
+        fn main() {
+            let result = Option::Some(V::V1((1, false)));
+            while let Option::Some(V::V1(x/*hint text="[:  [( [i32 ,  bool] )]]"*/) | V::V2(x/*hint text="[:  [( [i32 ,  bool] )]]"*/)) = result {}
         }
     """)
 
@@ -320,6 +347,36 @@ class RsInlayTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsInlayTypeHintsPr
             match Option::Some((1, 2)) {
                 Some((x/*hint text="[:  i32]"*/, 5)) => (),
                 y => ()
+            }
+        }
+    """)
+
+    fun `test hints for match with or patterns 1`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T), V3(T)
+        }
+
+        fn main() {
+            match V::V1((1, false)) {
+                V::V1(x/*hint text="[:  [( [i32 ,  bool] )]]"*/) | V::V2(x/*hint text="[:  [( [i32 ,  bool] )]]"*/) => (),
+                _ => ()
+            }
+        }
+    """)
+
+    fun `test hints for match with or patterns 2`() = checkByText("""
+        enum V<T> {
+            V1(T), V2(T), V3(T)
+        }
+
+        enum Option<T> {
+            Some(T), None
+        }
+
+        fn main() {
+            match Option::Some(V::V1((1, false))) {
+                Option::Some(V::V1(x/*hint text="[:  [( [i32 ,  bool] )]]"*/) | V::V2(x/*hint text="[:  [( [i32 ,  bool] )]]"*/)) => (),
+                _ => ()
             }
         }
     """)

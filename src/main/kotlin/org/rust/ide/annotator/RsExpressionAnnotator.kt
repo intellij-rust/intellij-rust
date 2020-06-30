@@ -44,7 +44,7 @@ class RsExpressionAnnotator : AnnotatorBase() {
                 field.reference.multiResolve().none { it is RsFieldDecl }
             }
             .forEach { field ->
-                val annotationBuilder = holder.getErrorAnnotationBuilder(field.referenceNameElement, "No such field") ?: return@forEach
+                val annotationBuilder = holder.newErrorAnnotation(field.referenceNameElement, "No such field") ?: return@forEach
 
                 CreateStructFieldFromConstructorFix.tryCreate(field)?.also { annotationBuilder.withFix(it) }
 
@@ -99,7 +99,7 @@ private class RedundantParenthesisVisitor(private val holder: RsAnnotationHolder
 
     private fun RsExpr?.warnIfParens(message: String) {
         if (this !is RsParenExpr || !canWarn(this)) return
-        holder.createWeakWarningAnnotation(this, message)?.newFix(RemoveRedundantParenthesesFix(this))?.registerFix()?.create()
+        holder.createWeakWarningAnnotation(this, message, RemoveRedundantParenthesesFix(this))
     }
 
     private fun canWarn(expr: RsParenExpr): Boolean {

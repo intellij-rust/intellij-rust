@@ -39,6 +39,9 @@ fn test() -> u32 {
     [1;2];
 
     || {};          /* lambda */
+    |x| x;
+    |&x| x;
+    |box x| x;
     |x: i32| -> i32 92;
     move |x: i32| {
         x

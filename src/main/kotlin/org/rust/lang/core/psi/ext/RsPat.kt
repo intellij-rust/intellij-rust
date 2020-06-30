@@ -34,6 +34,9 @@ val RsPat.isIrrefutable: Boolean
             (pat.expr as? RsPathExpr)?.path?.isIrrefutable ?: false
         is RsPatRange ->
             false
+        // FIXME: support it
+        is RsOrPat ->
+            false
         else ->
             true
     }

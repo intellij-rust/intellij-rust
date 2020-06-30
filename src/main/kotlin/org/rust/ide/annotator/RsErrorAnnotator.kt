@@ -69,7 +69,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitPatBox(o: RsPatBox) = checkPatBox(holder, o)
             override fun visitPatField(o: RsPatField) = checkPatField(holder, o)
             override fun visitPatBinding(o: RsPatBinding) = checkPatBinding(holder, o)
-            override fun visitPatRest(o: RsPatRest): Unit = checkPatRest(holder, o)
+            override fun visitPatRest(o: RsPatRest) = checkPatRest(holder, o)
+            override fun visitOrPat(o: RsOrPat) = checkOrPat(holder, o)
             override fun visitPath(o: RsPath) = checkPath(holder, o)
             override fun visitNamedFieldDecl(o: RsNamedFieldDecl) = checkDuplicates(holder, o)
             override fun visitRetExpr(o: RsRetExpr) = checkRetExpr(holder, o)
@@ -106,6 +107,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
+        val parent = orPat.context
+
+        if (parent is RsPat) {
+            val firstChild = orPat.firstChild
+            if (firstChild?.elementType == RsElementTypes.OR) {
+                holder.createErrorAnnotation(
+                    firstChild,
+                    "a leading `|` is only allowed in a top-level pattern",
+                    RemoveElementFix(firstChild)
+                )
+            }
+        }
+
+        if (parent !is RsCondition && parent !is RsMatchArm) {
+            OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
+        }
     }
 
     private fun checkUseSpeck(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
@@ -670,8 +690,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkBinary(holder: RsAnnotationHolder, o: RsBinaryExpr) {
         if (o.isComparisonBinaryExpr() && (o.left.isComparisonBinaryExpr() || o.right.isComparisonBinaryExpr())) {
-            holder.getErrorAnnotationBuilder(o, "Chained comparison operator require parentheses")
-                ?.withFix(AddTurbofishFix())?.create()
+            holder.createErrorAnnotation(o, "Chained comparison operator require parentheses", AddTurbofishFix())
         }
     }
 
@@ -690,9 +709,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
         // `::` is redundant only in types
         if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
-        val annotation = holder.createWeakWarningAnnotation(coloncolon, "Redundant `::`") ?: return
-        annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL)
-            .withFix(RemoveElementFix(coloncolon)).create()
+        val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon)) ?: return
+        annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL).create()
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
@@ -713,16 +731,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkCondition(holder: RsAnnotationHolder, element: RsCondition) {
-        val patList = element.patList
-        val pat = patList.singleOrNull()
+        val pat = element.pat
         if (pat != null && pat.isIrrefutable) {
             IRREFUTABLE_LET_PATTERNS.check(holder, pat, "irrefutable let pattern")
         }
-        if (patList.size > 1) {
+        if (pat is RsOrPat) {
             IF_WHILE_OR_PATTERNS.check(
                 holder,
-                patList.first(),
-                patList.last(),
+                pat.patList.first(),
+                pat.patList.last(),
                 "multiple patterns in `if let` and `while let` are unstable"
             )
         }
