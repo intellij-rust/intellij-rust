@@ -15,9 +15,10 @@ import org.rust.lang.core.psi.RsPath
 
 class CargoTomlWatcherIntegrationTest : RsWithToolchainTestBase() {
     fun `test Cargo toml is refreshed`() {
-        project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
+        val watcher = CargoTomlWatcher(project.cargoProjects, fun() {
             project.cargoProjects.refreshAllProjects()
-        }))
+        })
+        project.messageBus.connect(testRootDisposable).subscribe(VirtualFileManager.VFS_CHANGES, watcher)
 
         val p = fileTree {
             toml("Cargo.toml", """
