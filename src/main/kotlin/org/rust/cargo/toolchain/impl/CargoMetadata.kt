@@ -227,8 +227,29 @@ object CargoMetadata {
         /**
          * Dependency name that should be used in code as extern crate name
          */
-        val name: String?
+        val name: String?,
+
+        /**
+         * Used to distinguish `[dependencies]`, [dev-dependencies]` and `[build-dependencies]`.
+         * It's a list because a dependency can be used in both `[dependencies]` and `[build-dependencies]`.
+         * `null` on old cargo only.
+         */
+        val dep_kinds: List<DepKindInfo>?
     )
+
+    data class DepKindInfo(
+        val kind: String?,
+        val target: String?
+    ) {
+        fun clean(): CargoWorkspace.DepKindInfo = CargoWorkspace.DepKindInfo(
+            when (kind) {
+                "dev" -> CargoWorkspace.DepKind.Development
+                "build" -> CargoWorkspace.DepKind.Build
+                else -> CargoWorkspace.DepKind.Normal
+            },
+            target
+        )
+    }
 
     // The next two things do not belong here,
     // see `machine_message` in Cargo.
@@ -303,7 +324,11 @@ object CargoMetadata {
             },
             project.resolve.nodes.associate { (id, dependencies, deps) ->
                 val dependencySet = if (deps != null) {
-                    deps.mapToSet { (pkgId, name) -> CargoWorkspaceData.Dependency(pkgId, name) }
+                    deps.mapToSet { (pkgId, name, depKinds) ->
+                        val depKindsLowered = depKinds?.map { it.clean() }
+                            ?: listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Normal))
+                        CargoWorkspaceData.Dependency(pkgId, name, depKindsLowered)
+                    }
                 } else {
                     dependencies.mapToSet { CargoWorkspaceData.Dependency(it) }
                 }

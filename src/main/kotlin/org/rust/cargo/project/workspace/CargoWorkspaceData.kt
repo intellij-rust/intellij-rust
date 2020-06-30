@@ -46,6 +46,7 @@ data class CargoWorkspaceData(
 
     data class Dependency(
         val id: PackageId,
-        val name: String? = null
+        val name: String? = null,
+        val depKinds: List<CargoWorkspace.DepKindInfo> = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Normal))
     )
 }

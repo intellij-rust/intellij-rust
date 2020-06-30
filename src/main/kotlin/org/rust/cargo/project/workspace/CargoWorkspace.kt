@@ -118,6 +118,23 @@ interface CargoWorkspace {
     interface Dependency {
         val pkg: Package
         val name: String
+        val depKinds: List<DepKindInfo>
+    }
+
+    data class DepKindInfo(
+        val kind: DepKind,
+        val target: String? = null
+    )
+
+    enum class DepKind {
+        // Stdlib
+        All,
+        // [dependencies]
+        Normal,
+        // [dev-dependencies]
+        Development,
+        // [build-dependencies]
+        Build
     }
 
     sealed class TargetKind(val name: String) {
@@ -208,13 +225,14 @@ private class WorkspaceImpl(
         run {
             val oldIdToPackage = packages.associateBy { it.id }
             val newIdToPackage = result.packages.associateBy { it.id }
-            val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }.map { DependencyImpl(it) }
+            val stdlibDependencies = result.packages.filter { it.origin == PackageOrigin.STDLIB }
+                .map { DependencyImpl(it, depKinds = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.All))) }
             newIdToPackage.forEach { (id, pkg) ->
                 val stdCrate = stdAll[id]
                 if (stdCrate == null) {
-                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+                    pkg.dependencies.addAll(oldIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name, depKinds) ->
                         val dependencyPackage = newIdToPackage[pkg.id] ?: return@mapNotNull null
-                        DependencyImpl(dependencyPackage, name)
+                        DependencyImpl(dependencyPackage, name, depKinds)
                     })
                     pkg.dependencies.addAll(stdlibDependencies.filter { it.pkg.id in stdRoots })
                     val explicitDeps = pkg.dependencies.map { it.pkg.id }.toSet()
@@ -236,9 +254,9 @@ private class WorkspaceImpl(
         val otherIdToPackage = other.packages.associateBy { it.id }
         val thisIdToPackage = packages.associateBy { it.id }
         thisIdToPackage.forEach { (id, pkg) ->
-            pkg.dependencies.addAll(otherIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name) ->
+            pkg.dependencies.addAll(otherIdToPackage[id]?.dependencies.orEmpty().mapNotNull { (pkg, name, depKinds) ->
                 val dependencyPackage = thisIdToPackage[pkg.id] ?: return@mapNotNull null
-                DependencyImpl(dependencyPackage, name)
+                DependencyImpl(dependencyPackage, name, depKinds)
             })
         }
         return this
@@ -284,9 +302,9 @@ private class WorkspaceImpl(
                 val idToPackage = result.packages.associateBy { it.id }
                 idToPackage.forEach { (id, pkg) ->
                     val deps = data.dependencies[id].orEmpty()
-                    pkg.dependencies.addAll(deps.mapNotNull { (id, name) ->
+                    pkg.dependencies.addAll(deps.mapNotNull { (id, name, depKinds) ->
                         val dependencyPackage = idToPackage[id] ?: return@mapNotNull null
-                        DependencyImpl(dependencyPackage, name)
+                        DependencyImpl(dependencyPackage, name, depKinds)
                     })
                 }
             }
@@ -360,11 +378,16 @@ private class TargetImpl(
     override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
 
-private class DependencyImpl(override val pkg: PackageImpl, name: String? = null) : CargoWorkspace.Dependency {
+private class DependencyImpl(
+    override val pkg: PackageImpl,
+    name: String? = null,
+    override val depKinds: List<CargoWorkspace.DepKindInfo>
+) : CargoWorkspace.Dependency {
     override val name: String = name ?: (pkg.targets.find { it.isLib }?.normName ?: pkg.normName)
 
     operator fun component1(): PackageImpl = pkg
     operator fun component2(): String = name
+    operator fun component3(): List<CargoWorkspace.DepKindInfo> = depKinds
 }
 
 private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): CargoWorkspaceData.Package =
