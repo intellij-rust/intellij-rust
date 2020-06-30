@@ -14,87 +14,74 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.rust.RsTestBase
 
 class CargoTomlWatcherTest : RsTestBase() {
-    private var counter = 0
-
     fun `test toml modifications`() {
-        val watcher = CargoTomlWatcher { counter += 1 }
-
         val (tomlFile, createEvent) = newCreateEvent("Cargo.toml")
-        watcher.checkTriggered(createEvent)
+        checkTriggered(createEvent)
 
-        watcher.checkNotTriggered(newCreateEvent("Rustfmt.toml").second)
+        checkNotTriggered(newCreateEvent("Rustfmt.toml").second)
 
-        watcher.checkTriggered(newChangeEvent(tomlFile))
+        checkTriggered(newChangeEvent(tomlFile))
 
-        watcher.checkTriggered(newRenameEvent(tomlFile, "Foo.toml"))
-        watcher.checkTriggered(newRenameEvent(tomlFile, "Cargo.toml"))
+        checkTriggered(newRenameEvent(tomlFile, "Foo.toml"))
+        checkTriggered(newRenameEvent(tomlFile, "Cargo.toml"))
     }
 
     fun `test lockfile modifications`() {
-        val watcher = CargoTomlWatcher { counter += 1 }
-
         val (lockFile, createEvent) = newCreateEvent("Cargo.lock")
-        watcher.checkTriggered(createEvent)
-        watcher.checkTriggered(newChangeEvent(lockFile))
+        checkTriggered(createEvent)
+        checkTriggered(newChangeEvent(lockFile))
     }
 
     fun `test implicit targets`() {
-        val watcher = CargoTomlWatcher { counter += 1 }
-
         // src/bin/*.rs
         val (binFile, createEvent) = newCreateEvent("src/bin/foo.rs")
-        watcher.checkTriggered(createEvent)
-        watcher.checkNotTriggered(newChangeEvent(binFile))
+        checkTriggered(createEvent)
+        checkNotTriggered(newChangeEvent(binFile))
 
         // src/bin/*/main.rs
-        watcher.checkTriggered(newCreateEvent("src/bin/foo/main.rs").second)
+        checkTriggered(newCreateEvent("src/bin/foo/main.rs").second)
 
         // src/main.rs
-        watcher.checkTriggered(newCreateEvent("src/main.rs").second)
-        watcher.checkNotTriggered(newCreateEvent("prefix_src/main.rs").second)
+        checkTriggered(newCreateEvent("src/main.rs").second)
+        checkNotTriggered(newCreateEvent("prefix_src/main.rs").second)
 
         // src/lib.rs
-        watcher.checkTriggered(newCreateEvent("src/lib.rs").second)
-        watcher.checkNotTriggered(newCreateEvent("prefix_src/lib.rs").second)
-        watcher.checkNotTriggered(newCreateEvent("src/bar.rs").second)
+        checkTriggered(newCreateEvent("src/lib.rs").second)
+        checkNotTriggered(newCreateEvent("prefix_src/lib.rs").second)
+        checkNotTriggered(newCreateEvent("src/bar.rs").second)
 
         // benches/*.rs, examples/*.rs, tests/*.rs
-        watcher.checkTriggered(newCreateEvent("benches/foo.rs").second)
-        watcher.checkTriggered(newCreateEvent("examples/foo.rs").second)
-        watcher.checkTriggered(newCreateEvent("tests/foo.rs").second)
-        watcher.checkNotTriggered(newCreateEvent("prefix_tests/foo.rs").second)
+        checkTriggered(newCreateEvent("benches/foo.rs").second)
+        checkTriggered(newCreateEvent("examples/foo.rs").second)
+        checkTriggered(newCreateEvent("tests/foo.rs").second)
+        checkNotTriggered(newCreateEvent("prefix_tests/foo.rs").second)
 
         // benches/*/main.rs, examples/*/main.rs, tests/*/main.rs
-        watcher.checkTriggered(newCreateEvent("benches/foo/main.rs").second)
-        watcher.checkTriggered(newCreateEvent("examples/foo/main.rs").second)
-        watcher.checkTriggered(newCreateEvent("tests/foo/main.rs").second)
+        checkTriggered(newCreateEvent("benches/foo/main.rs").second)
+        checkTriggered(newCreateEvent("examples/foo/main.rs").second)
+        checkTriggered(newCreateEvent("tests/foo/main.rs").second)
 
         // build.rs
-        watcher.checkTriggered(newCreateEvent("build.rs").second)
-        watcher.checkNotTriggered(newCreateEvent("prefix_build.rs").second)
+        checkTriggered(newCreateEvent("build.rs").second)
+        checkNotTriggered(newCreateEvent("prefix_build.rs").second)
     }
 
     fun `test event properties`() {
-        val watcher = CargoTomlWatcher { counter += 1 }
         val (binFile, createEvent) = newCreateEvent("src/foo.rs")
-        watcher.checkNotTriggered(createEvent)
-        watcher.checkTriggered(newRenameEvent(binFile, "main.rs"))
-        watcher.checkNotTriggered(VFilePropertyChangeEvent(null, binFile, VirtualFile.PROP_WRITABLE, false, true, true))
-        watcher.checkTriggered(newRenameEvent(binFile, "foo.rs"))
+        checkNotTriggered(createEvent)
+        checkTriggered(newRenameEvent(binFile, "main.rs"))
+        checkNotTriggered(VFilePropertyChangeEvent(null, binFile, VirtualFile.PROP_WRITABLE, false, true, true))
+        checkTriggered(newRenameEvent(binFile, "foo.rs"))
     }
 
-    private fun CargoTomlWatcher.checkTriggered(event: VFileEvent) {
-        val old = counter
-        after(listOf(event))
-        check(counter == old + 1) {
+    private fun checkTriggered(event: VFileEvent) {
+        check(CargoTomlWatcher.isInterestingEvent(event)) {
             "Watcher ignored $event"
         }
     }
 
-    private fun CargoTomlWatcher.checkNotTriggered(event: VFileEvent) {
-        val old = counter
-        after(listOf(event))
-        check(counter == old) {
+    private fun checkNotTriggered(event: VFileEvent) {
+        check(!CargoTomlWatcher.isInterestingEvent(event)) {
             "Watcher should have ignored $event"
         }
     }

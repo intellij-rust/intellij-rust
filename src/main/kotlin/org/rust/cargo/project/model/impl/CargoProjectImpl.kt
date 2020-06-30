@@ -83,7 +83,7 @@ open class CargoProjectsServiceImpl(
     init {
         with(project.messageBus.connect()) {
             if (!isUnitTestMode) {
-                subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(fun() {
+                subscribe(VirtualFileManager.VFS_CHANGES, CargoTomlWatcher(this@CargoProjectsServiceImpl, fun() {
                     if (!project.rustSettings.autoUpdateEnabled) return
                     refreshAllProjects()
                 }))
