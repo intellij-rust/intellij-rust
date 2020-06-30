@@ -188,7 +188,9 @@ class MoveData(
         var lp = loanPath
         var lpKind = lp.kind
         while (lpKind is Extend) {
-            processUnionFields(lpKind) { addMoveHelper(it) }
+            if (lpKind.loanPath.isUnion) {
+                processUnionFields(lpKind) { addMoveHelper(it) }
+            }
             lp = lpKind.loanPath
             lpKind = lp.kind
         }
@@ -213,7 +215,7 @@ class MoveData(
         }
 
         val lpKind = loanPath.kind
-        if (lpKind is Extend) {
+        if (lpKind is Extend && lpKind.loanPath.isUnion) {
             processUnionFields(lpKind) { addAssignmentHelper(it) }
         } else {
             addAssignmentHelper(loanPath)
@@ -354,9 +356,19 @@ data class Assignment(
     val element: RsElement
 )
 
+private val LoanPath.isUnion: Boolean
+    get() {
+        val tyAdt = ty as? TyAdt ?: return false
+        val item = tyAdt.item as? RsStructItem ?: return false
+        return item.kind == RsStructKind.UNION
+    }
+
 val LoanPath.isPrecise: Boolean
     get() = when (kind) {
         is Var -> true
-        is Extend -> if (kind.lpElement is Interior) false else kind.loanPath.isPrecise
+        is Extend -> when (kind.lpElement) {
+            is Interior.Index, is Interior.Pattern -> false
+            is Interior.Field, is LoanPathElement.Deref -> kind.loanPath.isPrecise
+        }
         is Downcast -> kind.loanPath.isPrecise
     }
