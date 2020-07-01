@@ -201,7 +201,9 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
             for (file in analyzedFiles) {
                 if (!file.isValid) continue
                 val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
-                annotationHolder.createAnnotationsForFile(file, annotationResult)
+                annotationHolder.runAnnotatorWithContext(file) { _, holder ->
+                    holder.createAnnotationsForFile(file, annotationResult)
+                }
                 addAll(convertToProblemDescriptors(annotationHolder, file))
             }
         }
