@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.move.MoveCallback
@@ -20,8 +19,9 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.inspections.import.insertUseItem
 import org.rust.ide.inspections.import.lastElement
+import org.rust.ide.refactoring.move.common.RsMoveReferenceInfo
+import org.rust.ide.refactoring.move.common.RsMoveRetargetReferencesProcessor
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWithCancelableProgress
@@ -57,6 +57,7 @@ class RsMoveFilesOrDirectoriesProcessor(
 
     private val psiFactory = RsPsiFactory(project)
     private val movedFile: RsFile = elementsToMove[0] as RsFile
+    private val oldParentMod: RsMod = movedFile.`super` ?: error("Can't find parent mod of moved file")
 
     // keys --- `RsPath`s inside movedFile
     // outsideReferencesMap[path] --- target element for path reference
@@ -119,17 +120,18 @@ class RsMoveFilesOrDirectoriesProcessor(
 
         updateReferencesInMovedFileBeforeMove()
 
-        // step 1: move mod-declaration and update references in use-directives
+        // step 1: move file and its mod-declaration
         moveModDeclaration(oldModDeclarations)
-        super.performRefactoring(useDirectiveUsages.toTypedArray())
+        super.performRefactoring(emptyArray())
 
         check(!movedFile.crateRelativePath.isNullOrEmpty())
         { "${movedFile.name} had correct crateRelativePath before moving mod-declaration, but empty/null after move" }
 
-        // step 2: some usages could still remain invalid (because of glob-imports)
-        // so we should add new import, or replace reference path with absolute one
-        otherUsages.removeIf { it.reference!!.resolve() != null }
-        retargetOtherUsages(otherUsages)
+        // step 2:
+        // a) update references in use-directives
+        // b) some usages could still remain invalid (because of glob-imports)
+        //    so we should add new import, or replace reference path with absolute one
+        retargetUsages(useDirectiveUsages + otherUsages)
 
         // step 3: retarget references from moved file to outside
         updateReferencesInMovedFileAfterMove()
@@ -182,49 +184,14 @@ class RsMoveFilesOrDirectoriesProcessor(
         newParentMod.insertModDecl(psiFactory, newModDeclaration)
     }
 
-    private fun retargetOtherUsages(otherUsages: MutableList<UsageInfo>) {
-        val movedFileName = movedFile.modName
-        if (movedFileName == null) {
-            super.retargetUsages(otherUsages.toTypedArray(), emptyMap())
-            return
+    private fun retargetUsages(usages: List<UsageInfo>) {
+        val references = usages.mapNotNull { usage ->
+            val pathOld = usage.element as? RsPath ?: return@mapNotNull null
+            val pathNewText = movedFile.qualifiedNameRelativeTo(pathOld.containingMod) ?: return@mapNotNull null
+            val pathNew = psiFactory.tryCreatePath(pathNewText) ?: return@mapNotNull null
+            RsMoveReferenceInfo(pathOld, pathNew, movedFile)
         }
-
-        // (assume `foo` is movedFile)
-        // group by pair:
-        //   1) containingMod
-        //   2) path prefix before `foo`
-        //      (e.g. for `foo::...` it is `foo` and for `bar1::bar2::foo::...` it is `bar1::bar2::foo`)
-        val otherUsagesGrouped = otherUsages.groupBy {
-            val element = it.element!! as RsElement
-            Pair(element.containingMod, element.text)
-        }
-
-        val otherUsagesRemaining = mutableListOf<UsageInfo>()
-        for (usages in otherUsagesGrouped.values) {
-            if (usages.size <= NUMBER_USAGES_THRESHOLD_FOR_ADDING_IMPORT) {
-                otherUsagesRemaining.addAll(usages)
-                continue
-            }
-
-            val context = PsiTreeUtil.findCommonParent(usages.map { it.element }) as RsElement
-            if (!addImport(psiFactory, context, movedFile)) {
-                otherUsagesRemaining.addAll(usages)
-                continue
-            }
-
-            // we added import for `foo`,
-            // and if path starts with `mod1::foo` (and not with just `foo`)
-            // we should remove `mod1::` part from path
-            val movedFileSinglePath = psiFactory.tryCreatePath(movedFileName)!!
-            for (usage in usages) {
-                val element = usage.element!! as RsElement
-                if (element !is RsPath || element.children.isEmpty()) continue
-
-                element.replace(movedFileSinglePath)
-            }
-        }
-
-        super.retargetUsages(otherUsagesRemaining.toTypedArray(), emptyMap())
+        RsMoveRetargetReferencesProcessor(project, oldParentMod, newParentMod).retargetReferences(references)
     }
 
     private fun updateReferencesInMovedFileBeforeMove() {
@@ -253,10 +220,6 @@ class RsMoveFilesOrDirectoriesProcessor(
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor {
         return MoveMultipleElementsViewDescriptor(elementsToMove, newParent.name)
-    }
-
-    companion object {
-        const val NUMBER_USAGES_THRESHOLD_FOR_ADDING_IMPORT: Int = 2
     }
 }
 
@@ -289,15 +252,6 @@ private fun RsMod.insertModDecl(psiFactory: RsPsiFactory, modDecl: PsiElement) {
     if (modDecl.nextSibling == null) {
         addAfter(psiFactory.createNewline(), modDecl)
     }
-}
-
-private fun addImport(psiFactory: RsPsiFactory, context: RsElement, movedFile: RsFile): Boolean {
-    val path = movedFile.qualifiedNameRelativeTo(context.containingMod) ?: return false
-
-    val blockScope = context.ancestors.find { it is RsBlock && it.childOfType<RsUseItem>() != null } as RsBlock?
-    val scope = blockScope ?: context.containingMod
-    scope.insertUseItem(psiFactory, path)
-    return true
 }
 
 fun RsPath.hasOnlySuperSegments(): Boolean {
