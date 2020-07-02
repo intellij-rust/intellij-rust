@@ -101,6 +101,7 @@ private fun RsExpr.getFoldableReturns(): List<FoldableElement>? {
             }
             is RsMatchExpr -> {
                 val arms = matchBody?.matchArmList ?: return false
+                if (arms.isEmpty()) return false
                 for (arm in arms) {
                     if (arm.expr?.collectFoldableReturns() != true) return false
                 }

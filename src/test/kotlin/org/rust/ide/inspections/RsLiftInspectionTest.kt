@@ -233,4 +233,12 @@ class RsLiftInspectionTest : RsInspectionsTestBase(RsLiftInspection::class) {
             }
         }
     """, checkWeakWarn = true)
+
+    fun `test lift return in empty match unavailable`() = checkFixIsUnavailable("Lift return out of 'match'", """
+        fn foo() {
+            match/*caret*/ true {
+            }
+            let x = 1;
+        }
+    """, checkWeakWarn = true)
 }
