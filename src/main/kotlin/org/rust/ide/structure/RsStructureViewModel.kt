@@ -10,6 +10,7 @@ import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.util.treeView.TreeAnchorizer
+import com.intellij.ide.util.treeView.smartTree.Sorter
 import com.intellij.ide.util.treeView.smartTree.TreeElement
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.Editor
@@ -32,6 +33,7 @@ class RsStructureViewModel(editor: Editor?, file: RsFileBase)
             RsNamedElement::class.java,
             RsImplItem::class.java
         )
+        withSorters(Sorter.ALPHA_SORTER)
     }
 
     override fun isAlwaysShowsPlus(element: StructureViewTreeElement): Boolean = element.value is RsFile
