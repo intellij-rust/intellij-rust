@@ -165,6 +165,8 @@ open class CargoProjectsServiceImpl(
     // Guarded by the platform RWLock
     override var initialized: Boolean = false
 
+    private var isLegacyRustNotificationShowed: Boolean = false
+
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
         file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { it !== noProjectMarker } }
 
@@ -221,6 +223,8 @@ open class CargoProjectsServiceImpl(
                 invokeAndWaitIfNeeded {
                     runWriteAction {
                         if (projects.isNotEmpty()) {
+                            checkRustVersion(projects)
+
                             // Android RenderScript (from Android plugin) files has the same extension (.rs) as Rust files.
                             // In some cases, IDEA determines `*.rs` files have RenderScript file type instead of Rust one
                             // that leads any code insight features don't work in Rust projects.
@@ -246,6 +250,25 @@ open class CargoProjectsServiceImpl(
 
                 projects
             }
+
+    private fun checkRustVersion(projects: List<CargoProjectImpl>) {
+        val minToolchainVersion = projects.asSequence()
+            .mapNotNull { it.rustcInfo?.version?.semver }
+            .min()
+        val isUnsupportedRust = minToolchainVersion != null &&
+            minToolchainVersion < RustToolchain.MIN_SUPPORTED_TOOLCHAIN
+        if (isUnsupportedRust) {
+            if (!isLegacyRustNotificationShowed) {
+                val content = "Rust <b>$minToolchainVersion</b> is no longer supported. " +
+                    "It may lead to unexpected errors. " +
+                    "Consider upgrading your toolchain to at least <b>${RustToolchain.MIN_SUPPORTED_TOOLCHAIN}</b>"
+                project.showBalloon(content, NotificationType.WARNING)
+            }
+            isLegacyRustNotificationShowed = true
+        } else {
+            isLegacyRustNotificationShowed = false
+        }
+    }
 
     override fun getState(): Element {
         val state = Element("state")
