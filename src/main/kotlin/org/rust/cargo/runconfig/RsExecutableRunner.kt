@@ -16,6 +16,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.util.net.HttpConfigurable
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
@@ -24,7 +25,9 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.withWorkDirectory
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -74,12 +77,11 @@ abstract class RsExecutableRunner(
 
         val runCargoCommand = state.prepareCommandLine()
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
-        val runExecutable = Cargo.createGeneralCommandLine(
-            binaries.single(),
-            runCargoCommand.workingDirectory,
+        val runExecutable = state.toolchain.createBaseCommandLine(binaries.single(), arguments = *executableArguments.toTypedArray(), workingDirectory = runCargoCommand.workingDirectory)
+        Cargo.configureCommandLine(
+            runExecutable,
             runCargoCommand.backtraceMode,
             runCargoCommand.environmentVariables,
-            executableArguments,
             runCargoCommand.emulateTerminal
         )
         return showRunContent(state, environment, runExecutable)

@@ -16,8 +16,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Path
+import java.util.regex.Pattern
 
 private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
 
@@ -27,6 +29,14 @@ fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(pat
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
+    if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
+        if (parametersList[0] == "-d") {
+            environment.forEach { (k, v) -> parametersList.addAt(2, "$k=$v") }
+        } else {
+            environment.forEach { (k, v) -> parametersList.addAt(0, "$k=$v") }
+        }
+    }
+
     val output = try {
         val handler = CapturingProcessHandler(this)
         LOG.info("Executing `$commandLineString`")
@@ -50,6 +60,13 @@ fun GeneralCommandLine.execute(
     stdIn: ByteArray? = null,
     listener: ProcessListener? = null
 ): ProcessOutput {
+    if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
+        if (parametersList[0] == "-d") {
+            environment.forEach { (k, v) -> parametersList.addAt(2, "$k=$v") }
+        } else {
+            environment.forEach { (k, v) -> parametersList.addAt(0, "$k=$v") }
+        }
+    }
 
     val handler = CapturingProcessHandler(this)
     val cargoKiller = Disposable {
@@ -85,6 +102,7 @@ fun GeneralCommandLine.execute(
     }
 
     val output = try {
+        LOG.info("Executing `$commandLineString`")
         handler.runProcessWithGlobalProgress(null)
     } finally {
         Disposer.dispose(cargoKiller)

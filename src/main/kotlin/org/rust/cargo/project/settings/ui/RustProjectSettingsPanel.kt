@@ -45,7 +45,7 @@ class RustProjectSettingsPanel(
     private var fetchedSysroot: String? = null
 
     private val downloadStdlibLink = Link("Download via rustup", action = {
-        val rustup = RustToolchain(Paths.get(pathToToolchainField.text)).rustup
+        val rustup = RustToolchain.get(Paths.get(pathToToolchainField.text)).rustup
         if (rustup != null) {
             object : Task.Backgroundable(null, "Downloading Rust standard library") {
                 override fun shouldStartInBackground(): Boolean = false
@@ -63,7 +63,7 @@ class RustProjectSettingsPanel(
 
     var data: Data
         get() {
-            val toolchain = RustToolchain(Paths.get(pathToToolchainField.text))
+            val toolchain = RustToolchain.get(Paths.get(pathToToolchainField.text))
             return Data(
                 toolchain = toolchain,
                 explicitPathToStdlib = pathToStdlibField.text.blankToNull()
@@ -101,7 +101,7 @@ class RustProjectSettingsPanel(
         val pathToToolchain = pathToToolchainField.text
         versionUpdateDebouncer.run(
             onPooledThread = {
-                val toolchain = RustToolchain(Paths.get(pathToToolchain))
+                val toolchain = RustToolchain.get(Paths.get(pathToToolchain))
                 val rustcVersion = toolchain.queryVersions().rustc?.semver
                 val rustup = toolchain.rustup
                 val stdlibLocation = toolchain.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl

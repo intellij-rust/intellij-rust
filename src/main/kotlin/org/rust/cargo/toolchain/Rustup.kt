@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.RustToolchain.Companion.RUSTUP
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
@@ -22,7 +23,6 @@ private val LOG = Logger.getInstance(Rustup::class.java)
 
 class Rustup(
     private val toolchain: RustToolchain,
-    private val rustup: Path,
     private val projectDirectory: Path
 ) {
     data class Component(val name: String, val isInstalled: Boolean) {
@@ -36,10 +36,7 @@ class Rustup(
     }
 
     fun listComponents(): List<Component> =
-        GeneralCommandLine(rustup)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("component", "list")
-            .execute()
+        toolchain.runTool(RUSTUP, "component", "list", workingDirectory = projectDirectory)
             ?.stdoutLines
             ?.map { Component.from(it) }
             ?: emptyList()
@@ -47,10 +44,7 @@ class Rustup(
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
         if (needInstallComponent("rust-src")) {
-            val downloadProcessOutput = GeneralCommandLine(rustup)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", "rust-src")
-                .execute(null)
+            val downloadProcessOutput = toolchain.runTool(RUSTUP, "component", "add", "rust-src", workingDirectory = projectDirectory, timeout = null)
             if (downloadProcessOutput?.isSuccess != true) {
                 val message = "rustup failed: `${downloadProcessOutput?.stderr ?: ""}`"
                 LOG.warn(message)
@@ -67,9 +61,7 @@ class Rustup(
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
         try {
-            GeneralCommandLine(rustup)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", componentName)
+            toolchain.createGeneralCommandLine(RUSTUP, "component", "add", componentName, workingDirectory = projectDirectory)
                 .execute(owner, false)
             DownloadResult.Ok(Unit)
         } catch (e: ExecutionException) {

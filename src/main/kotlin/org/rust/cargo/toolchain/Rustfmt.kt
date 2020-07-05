@@ -9,6 +9,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
@@ -16,13 +17,14 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.RustToolchain.Companion.RUSTFMT
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.nio.file.Path
 
-class Rustfmt(private val rustfmtExecutable: Path) {
+class Rustfmt(private val toolchain: RustToolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {
@@ -59,11 +61,8 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             }
         }
 
-        return GeneralCommandLine(rustfmtExecutable)
-            .withWorkDirectory(cargoProject.workingDirectory)
-            .withParameters(arguments)
-            .withCharset(Charsets.UTF_8)
-            .execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
+        return toolchain.createGeneralCommandLine(RUSTFMT, *arguments.toTypedArray(), workingDirectory = cargoProject.workingDirectory)
+            .execute(Disposer.newDisposable(), ignoreExitCode = false, stdIn = document.text.toByteArray())
             .stdout
     }
 

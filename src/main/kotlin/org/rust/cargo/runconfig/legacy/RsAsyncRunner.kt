@@ -73,14 +73,15 @@ abstract class RsAsyncRunner(
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
-                Cargo.createGeneralCommandLine(
-                    executablePath,
-                    workingDirectory,
-                    backtraceMode,
-                    environmentVariables,
-                    executableArguments,
-                    emulateTerminal
-                )
+                state.toolchain.createBaseCommandLine(executablePath, *executableArguments.toTypedArray(), workingDirectory = workingDirectory)
+                    .apply {
+                        Cargo.configureCommandLine(
+                            this,
+                            backtraceMode,
+                            environmentVariables,
+                            emulateTerminal
+                        )
+                    }
             }
         }
 

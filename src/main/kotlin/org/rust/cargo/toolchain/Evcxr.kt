@@ -7,14 +7,15 @@ package org.rust.cargo.toolchain
 
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.util.io.systemIndependentPath
+import org.rust.cargo.toolchain.RustToolchain.Companion.EVCXR
 import java.io.File
 import java.nio.file.Path
 
-class Evcxr(private val evcxrExecutable: Path) {
+class Evcxr(private val toolchain: RustToolchain) {
     fun createCommandLine(workingDirectory: File): PtyCommandLine =
         PtyCommandLine()
             .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
-            .withExePath(evcxrExecutable.systemIndependentPath)
+            .withExePath(toolchain.location.resolve(EVCXR).systemIndependentPath)
             .withParameters(
                 "--ide-mode",
                 "--disable-readline",

@@ -51,7 +51,7 @@ interface RustProjectSettingsService {
         @get:Transient
         @set:Transient
         var toolchain: RustToolchain?
-            get() = toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) }
+            get() = toolchainHomeDirectory?.let { RustToolchain.get(Paths.get(it)) }
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }

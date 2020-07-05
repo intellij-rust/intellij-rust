@@ -45,7 +45,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(text, actual)
 
         assertEquals(XML_FORMAT_VERSION, service.version)
-        assertEquals(RustToolchain(Paths.get("/")), service.toolchain)
+        assertEquals(RustToolchain.get(Paths.get("/")), service.toolchain)
         assertEquals(false, service.autoUpdateEnabled)
         assertEquals(ExternalLinter.CLIPPY, service.externalLinter)
         assertEquals("/stdlib", service.explicitPathToStdlib)

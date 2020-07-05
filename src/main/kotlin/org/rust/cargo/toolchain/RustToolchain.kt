@@ -6,6 +6,8 @@
 package org.rust.cargo.toolchain
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -20,7 +22,21 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
-data class RustToolchain(val location: Path) {
+open class RustToolchain(val location: Path) {
+    open fun createBaseCommandLine(path: Path, vararg arguments: String, workingDirectory: Path?): GeneralCommandLine {
+        return GeneralCommandLine(path, *arguments)
+            .withWorkDirectory(workingDirectory)
+            .withCharset(Charsets.UTF_8)
+    }
+
+    fun createGeneralCommandLine(toolName: String, vararg arguments: String, workingDirectory: Path? = null): GeneralCommandLine {
+        return createBaseCommandLine(pathToExecutable(toolName), *arguments, workingDirectory = workingDirectory)
+    }
+
+    fun runTool(toolName: String, vararg arguments: String, workingDirectory: Path? = null, timeout: Int? = 1000): ProcessOutput? {
+        return createGeneralCommandLine(toolName, *arguments, workingDirectory = workingDirectory)
+            .execute(timeout)
+    }
 
     fun looksLikeValidToolchain(): Boolean =
         hasExecutable(CARGO) && hasExecutable(RUSTC)
@@ -29,19 +45,24 @@ data class RustToolchain(val location: Path) {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        return VersionInfo(scrapeRustcVersion(pathToExecutable(RUSTC)))
+        val rustcVersion = scrapeRustcVersion()
+        return VersionInfo(rustcVersion)
     }
 
-    fun getSysroot(projectDirectory: Path): String? {
+    private fun scrapeRustcVersion(): RustcVersion? {
+        val lines = runTool(RUSTC, "--version", "--verbose")
+            ?.stdoutLines
+            ?: return null
+
+        return parseRustcVersion(lines)
+    }
+
+    open fun getSysroot(projectDirectory: Path): String? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
         val timeoutMs = 10000
-        val output = GeneralCommandLine(pathToExecutable(RUSTC))
-            .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("--print", "sysroot")
-            .execute(timeoutMs)
+        val output = runTool(RUSTC, "--print", "sysroot", workingDirectory = projectDirectory, timeout = timeoutMs)
         return if (output?.isSuccess == true) output.stdout.trim() else null
     }
 
@@ -51,35 +72,31 @@ data class RustToolchain(val location: Path) {
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust"))
     }
 
-    fun getCfgOptions(projectDirectory: Path): List<String>? {
+    open fun getCfgOptions(projectDirectory: Path): List<String>? {
         val timeoutMs = 10000
-        val output = GeneralCommandLine(pathToExecutable(RUSTC))
-            .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("--print", "cfg")
-            .execute(timeoutMs)
+        val output = runTool(RUSTC, "--print", "cfg", workingDirectory = projectDirectory, timeout = timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 
-    fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
+    fun rawCargo(): Cargo = Cargo(this, CARGO, pathToExecutable(RUSTC))
 
     fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
         val hasXargoToml = cargoProjectDirectory?.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
         val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
-        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC))
+        return Cargo(this, cargoWrapper, pathToExecutable(RUSTC))
     }
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
         if (isRustupAvailable)
-            Rustup(this, pathToExecutable(RUSTUP), cargoProjectDirectory)
+            Rustup(this, cargoProjectDirectory)
         else
             null
 
-    fun rustfmt(): Rustfmt = Rustfmt(pathToExecutable(RUSTFMT))
+    fun rustfmt(): Rustfmt = Rustfmt(this)
 
-    fun grcov(): Grcov? = if (hasCargoExecutable(GRCOV)) Grcov(pathToCargoExecutable(GRCOV)) else null
+    fun grcov(): Grcov? = if (hasCargoExecutable(GRCOV)) Grcov(this) else null
 
-    fun evcxr(): Evcxr? = if (hasCargoExecutable(EVCXR)) Evcxr(pathToCargoExecutable(EVCXR)) else null
+    fun evcxr(): Evcxr? = if (hasCargoExecutable(EVCXR)) Evcxr(this) else null
 
     fun wasmPack(): WasmPack? = if (hasCargoExecutable(WASM_PACK)) WasmPack(pathToCargoExecutable(WASM_PACK)) else null
 
@@ -89,7 +106,7 @@ data class RustToolchain(val location: Path) {
 
     // for executables from toolchain
     private fun pathToExecutable(toolName: String): Path {
-        val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
+        val exeName = if (SystemInfo.isWindows && this !is WslRustToolchain) "$toolName.exe" else toolName
         return location.resolve(exeName).toAbsolutePath()
     }
 
@@ -107,7 +124,7 @@ data class RustToolchain(val location: Path) {
     }
 
     private fun hasExecutable(exec: String): Boolean =
-        Files.isExecutable(pathToExecutable(exec))
+        Files.exists(pathToExecutable(exec))
 
     private fun hasCargoExecutable(exec: String): Boolean =
         Files.isExecutable(pathToCargoExecutable(exec))
@@ -117,14 +134,14 @@ data class RustToolchain(val location: Path) {
     )
 
     companion object {
-        private const val RUSTC = "rustc"
-        private const val RUSTFMT = "rustfmt"
-        private const val CARGO = "cargo"
-        private const val RUSTUP = "rustup"
-        private const val XARGO = "xargo"
-        private const val GRCOV = "grcov"
-        private const val EVCXR = "evcxr"
-        private const val WASM_PACK = "wasm-pack"
+        const val RUSTC = "rustc"
+        const val RUSTFMT = "rustfmt"
+        const val CARGO = "cargo"
+        const val RUSTUP = "rustup"
+        const val XARGO = "xargo"
+        const val GRCOV = "grcov"
+        const val EVCXR = "evcxr"
+        const val WASM_PACK = "wasm-pack"
 
         const val CARGO_TOML = "Cargo.toml"
         const val CARGO_LOCK = "Cargo.lock"
@@ -133,9 +150,17 @@ data class RustToolchain(val location: Path) {
         val MIN_SUPPORTED_TOOLCHAIN = SemVer.parseFromText("1.32.0")!!
 
         fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
-            val candidate = RustToolchain(it.toPath().toAbsolutePath())
+            val candidate = get(it.toPath().toAbsolutePath())
             if (candidate.looksLikeValidToolchain()) candidate else null
         }.firstOrNull()
+
+        fun get(location: Path): RustToolchain {
+            return if (WSL_ROOT_REGEX.matches(location.root.toString())) {
+                WslRustToolchain(location)
+            } else {
+                RustToolchain(location)
+            }
+        }
     }
 }
 
@@ -146,16 +171,6 @@ data class RustcVersion(
     val commitHash: String? = null,
     val commitDate: LocalDate? = null
 )
-
-private fun scrapeRustcVersion(rustc: Path): RustcVersion? {
-    val lines = GeneralCommandLine(rustc)
-        .withParameters("--version", "--verbose")
-        .execute()
-        ?.stdoutLines
-        ?: return null
-
-    return parseRustcVersion(lines)
-}
 
 @VisibleForTesting
 fun parseRustcVersion(lines: List<String>): RustcVersion? {

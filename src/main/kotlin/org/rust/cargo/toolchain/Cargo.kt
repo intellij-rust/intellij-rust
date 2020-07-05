@@ -58,7 +58,7 @@ import java.nio.file.Paths
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path) {
+class Cargo(private val toolchain: RustToolchain, private val wrapper: String, private val rustcExecutable: Path) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -71,9 +71,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        GeneralCommandLine(cargoExecutable)
-            .withParameters("install", "--list")
-            .execute()
+        toolchain.runTool(wrapper, "install", "--list")
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
             ?.map { BinaryCrate.from(it) }
@@ -86,9 +84,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = GeneralCommandLine(cargoExecutable)
-            .withParameters("help", "check")
-            .execute()
+        val lines = toolchain.runTool(wrapper, "help", "check")
             ?.stdoutLines
             ?: return false
 
@@ -131,9 +127,26 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
-            .dropWhile { it != '{' }
+        LOG.info("Output from Cargo metadata: $json")
         val project = try {
-            Gson().fromJson(json, CargoMetadata.Project::class.java)
+            val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
+            if (toolchain is WslRustToolchain) {
+                project.copy(
+                    packages = project.packages.map { cargoPackage ->
+                        cargoPackage.copy(
+                            manifest_path = convertWslPathToWindowsPath(cargoPackage.manifest_path)
+                                ?: cargoPackage.manifest_path,
+                            targets = cargoPackage.targets.map { target ->
+                                target.copy(
+                                    src_path = convertWslPathToWindowsPath(target.src_path) ?: target.src_path
+                                )
+                            })
+                    },
+                    workspace_root = convertWslPathToWindowsPath(project.workspace_root)?.trim()
+                        ?: project.workspace_root)
+            } else {
+                project
+            }
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
@@ -334,13 +347,14 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
                 addAll(additionalArguments)
             }
             createGeneralCommandLine(
-                cargoExecutable,
+                toolchain,
                 workingDirectory,
                 backtraceMode,
                 environmentVariables,
                 parameters,
                 emulateTerminal,
-                http
+                http,
+                wrapper
             ).withEnvironment("RUSTC", rustcExecutable.toString())
         }
 
@@ -354,8 +368,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
-        GeneralCommandLine(cargoExecutable)
-            .withParameters(listOf("install", "cargo-generate"))
+        toolchain.createGeneralCommandLine(wrapper, "install", "cargo-generate")
             .execute(owner, listener = listener)
     }
 
@@ -417,23 +430,22 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         }
 
         fun createGeneralCommandLine(
-            executablePath: Path,
+            toolchain: RustToolchain,
             workingDirectory: Path,
             backtraceMode: BacktraceMode,
             environmentVariables: EnvironmentVariablesData,
             parameters: List<String>,
             emulateTerminal: Boolean,
-            http: HttpConfigurable = HttpConfigurable.getInstance()
+            http: HttpConfigurable = HttpConfigurable.getInstance(),
+            wrapper: String
         ): GeneralCommandLine {
-            val cmdLine = GeneralCommandLine(executablePath)
-                .withWorkDirectory(workingDirectory)
+            val cmdLine = toolchain.createGeneralCommandLine(wrapper, *parameters.toTypedArray(), workingDirectory = workingDirectory)
                 .withEnvironment("TERM", "ansi")
                 .withRedirectErrorStream(true)
-                .withParameters(parameters)
-                // Explicitly use UTF-8.
-                // Even though default system encoding is usually not UTF-8 on Windows,
-                // most Rust programs are UTF-8 only.
-                .withCharset(Charsets.UTF_8)
+            return configureCommandLine(cmdLine, backtraceMode, environmentVariables, emulateTerminal, http)
+        }
+
+        fun configureCommandLine(cmdLine: GeneralCommandLine, backtraceMode: BacktraceMode, environmentVariables: EnvironmentVariablesData, emulateTerminal: Boolean, http: HttpConfigurable = HttpConfigurable.getInstance()): GeneralCommandLine {
             withProxyIfNeeded(cmdLine, http)
             when (backtraceMode) {
                 BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACKTRACE_ENV_VAR, "short")
