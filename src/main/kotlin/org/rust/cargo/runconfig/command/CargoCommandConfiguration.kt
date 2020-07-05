@@ -18,7 +18,6 @@ import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunState
 import org.rust.cargo.runconfig.CargoTestRunState
@@ -28,6 +27,8 @@ import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.run
@@ -111,7 +112,9 @@ class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val config = clean().ok ?: return null
-        return if (command.startsWith("test") && !command.contains("--nocapture")) {
+        return if (command.startsWith("test") &&
+            isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
+            !command.contains("--nocapture")) {
             CargoTestRunState(environment, this, config)
         } else {
             CargoRunState(environment, this, config)
