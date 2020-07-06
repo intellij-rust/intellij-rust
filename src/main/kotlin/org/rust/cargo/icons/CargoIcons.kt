@@ -24,4 +24,5 @@ object CargoIcons {
     val TEST_TARGET = IconLoader.getIcon("/icons/targetTest.svg")
     val BENCH_TARGET = IconLoader.getIcon("/icons/targetBench.svg")
     val EXAMPLE_TARGET = IconLoader.getIcon("/icons/targetExample.svg")
+    val CUSTOM_BUILD_TARGET = IconLoader.getIcon("/icons/targetCustomBuild.svg")
 }
