@@ -70,6 +70,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
             override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, child: ASTNode): Boolean {
                 val elementType = child.elementType
                 return elementType == MACRO_ARGUMENT || elementType == MACRO_BODY ||
+                    elementType in RS_DOC_COMMENTS ||
                     elementType == BLOCK && parent.elementType == FUNCTION && skipChildForFunctionBody(child)
             }
 

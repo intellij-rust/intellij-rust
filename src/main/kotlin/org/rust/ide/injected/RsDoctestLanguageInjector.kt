@@ -21,12 +21,15 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.parser.probe
-import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.core.psi.RsDocCommentImpl
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.contextualFile
+import org.rust.lang.doc.psi.RsDocCodeFence
 import org.rust.lang.doc.psi.RsDocKind
+import org.rust.lang.doc.psi.ownerDoc
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.nextOrNull
 import java.util.regex.Pattern
@@ -55,21 +58,19 @@ class RsDoctestLanguageInjector : MultiHostInjector {
     }
 
     override fun elementsToInjectIn(): List<Class<out PsiElement>> =
-        listOf(RsDocCommentImpl::class.java)
+        listOf(RsDocCodeFence::class.java)
 
     override fun getLanguagesToInject(registrar: MultiHostRegistrar, context: PsiElement) {
-        if (context !is RsDocCommentImpl) return
-        if (!context.isValidHost || context.elementType !in RS_DOC_COMMENTS) return
+        if (context !is RsDocCodeFence) return
         val project = context.project
         if (!project.rustSettings.doctestInjectionEnabled) return
 
-        val rsElement = context.ancestorStrict<RsElement>() ?: return
-        val crate = rsElement.containingCrate ?: return
+        val crate = context.containingCrate ?: return
         if (!crate.areDoctestsEnabled) return // only library targets can have doctests
         val crateName = crate.normName
         val text = context.text
 
-        findDoctestInjectableRanges(text, context.elementType).map { ranges ->
+        findDoctestInjectableRanges(text, context.ownerDoc.elementType).map { ranges ->
             ranges.map {
                 CodeRange(
                     it.startOffset,
@@ -164,13 +165,13 @@ fun findDoctestInjectableRanges(comment: RsDocCommentImpl): Sequence<List<TextRa
 
 private fun findDoctestInjectableRanges(text: String, elementType: IElementType): Sequence<List<TextRange>> {
     // TODO use markdown parser
-    val tripleBacktickIndices = text.indicesOf("```").toList()
-    if (tripleBacktickIndices.size < 2) return emptySequence() // no code blocks in the comment
+//    val tripleBacktickIndices = text.indicesOf("```").toList()
+//    if (tripleBacktickIndices.size < 2) return emptySequence() // no code blocks in the comment
 
     val infix = RsDocKind.of(elementType).infix
     val isBlockInfixUsed = text.count { it == '\n' } == "\\n[\\s]*\\*".toRegex().findAll(text).count()
 
-    return tripleBacktickIndices.asSequence().chunked(2).mapNotNull { idx ->
+    return sequenceOf(listOf(0, text.length)).mapNotNull { idx ->
         // Contains code lines inside backticks including `///` at the start and `\n` at the end.
         // It doesn't contain the last line with /// ```
         val lines = run {
@@ -305,7 +306,7 @@ fun VirtualFile.isDoctestInjection(project: Project): Boolean {
     val virtualFileWindow = this as? VirtualFileWindow ?: return false
     val hostFile = virtualFileWindow.delegate.toPsiFile(project) as? RsFile ?: return false
     val hostElement = hostFile.findElementAt(virtualFileWindow.documentWindow.injectedToHost(0)) ?: return false
-    return hostElement.elementType in RS_DOC_COMMENTS
+    return hostElement.parent is RsDocCodeFence
 }
 
 val RsFile.isDoctestInjection: Boolean

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiFile
 
 class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
+    fun `test doc comments`() = doTest(true)
     fun `test fn`() = doTest(true)
     fun `test turbo`() = doTest(true)
     fun `test numbers`() = doTest(true)
