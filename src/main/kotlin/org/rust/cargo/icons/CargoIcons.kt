@@ -19,9 +19,10 @@ object CargoIcons {
 
     // Icons for target nodes in cargo toolwindow
     val TARGETS = IconLoader.getIcon("/icons/targets.svg")
-    val BIN_TARGET = IconLoader.getIcon("/icons/target-bin.svg")
-    val LIB_TARGET = IconLoader.getIcon("/icons/target-lib.svg")
-    val TEST_TARGET = IconLoader.getIcon("/icons/target-test.svg")
-    val BENCH_TARGET = IconLoader.getIcon("/icons/target-bench.svg")
-    val EXAMPLE_TARGET = IconLoader.getIcon("/icons/target-example.svg")
+    val BIN_TARGET = IconLoader.getIcon("/icons/targetBin.svg")
+    val LIB_TARGET = IconLoader.getIcon("/icons/targetLib.svg")
+    val TEST_TARGET = IconLoader.getIcon("/icons/targetTest.svg")
+    val BENCH_TARGET = IconLoader.getIcon("/icons/targetBench.svg")
+    val EXAMPLE_TARGET = IconLoader.getIcon("/icons/targetExample.svg")
+    val CUSTOM_BUILD_TARGET = IconLoader.getIcon("/icons/targetCustomBuild.svg")
 }

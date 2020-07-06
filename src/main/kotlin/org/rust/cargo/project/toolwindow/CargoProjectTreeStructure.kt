@@ -143,7 +143,7 @@ class CargoProjectTreeStructure(
                     Test -> CargoIcons.TEST_TARGET
                     Bench -> CargoIcons.BENCH_TARGET
                     ExampleBin, is ExampleLib -> CargoIcons.EXAMPLE_TARGET
-                    CustomBuild -> null // TODO add an icon
+                    CustomBuild -> CargoIcons.CUSTOM_BUILD_TARGET
                     Unknown -> null
                 }
         }
