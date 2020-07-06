@@ -22,10 +22,11 @@ import java.util.concurrent.TimeUnit
 
 typealias CargoPatch = (CargoCommandLine) -> CargoCommandLine
 
-val ExecutionEnvironment.cargoPatches: MutableList<CargoPatch>
-    get() = putUserDataIfAbsent(CARGO_PATCHES, mutableListOf())
+var ExecutionEnvironment.cargoPatches: List<CargoPatch>
+    get() = putUserDataIfAbsent(CARGO_PATCHES, emptyList())
+    set(value) = putUserData(CARGO_PATCHES, value)
 
-private val CARGO_PATCHES: Key<MutableList<CargoPatch>> = Key.create("CARGO.PATCHES")
+private val CARGO_PATCHES: Key<List<CargoPatch>> = Key.create("CARGO.PATCHES")
 
 private val ExecutionEnvironment.executionListener: ExecutionListener
     get() = project.messageBus.syncPublisher(ExecutionManager.EXECUTION_TOPIC)

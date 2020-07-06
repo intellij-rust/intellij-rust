@@ -16,7 +16,6 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -52,16 +51,13 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
     }
 
     override fun execute(environment: ExecutionEnvironment) {
-        val state = environment.state as CargoRunStateBase
-
         if (checkNeedInstallGrcov(environment.project)) return
 
-        state.addCommandLinePatch(cargoCoveragePatch)
-        environment.cargoPatches.add(cargoCoveragePatch)
-
+        val state = environment.state as CargoRunStateBase
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
 
+        environment.cargoPatches += cargoCoveragePatch
         super.execute(environment)
     }
 

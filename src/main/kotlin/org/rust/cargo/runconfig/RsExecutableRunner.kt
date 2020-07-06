@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Key
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
@@ -51,7 +52,7 @@ abstract class RsExecutableRunner(
             processInvalidToolchain(project, toolchainError)
             return
         }
-        state.addCommandLinePatch(cargoCommonPatch)
+        environment.cargoPatches += cargoCommonPatch
         environment.putUserData(BINARIES, CompletableFuture())
         super.execute(environment)
     }

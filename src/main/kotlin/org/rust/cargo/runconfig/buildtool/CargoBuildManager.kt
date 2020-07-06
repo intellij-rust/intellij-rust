@@ -79,16 +79,12 @@ object CargoBuildManager {
         val configuration = buildConfiguration.configuration
         val environment = buildConfiguration.environment
 
+        environment.cargoPatches += cargoBuildPatch
         val state = CargoRunState(
             environment,
             configuration,
             configuration.clean().ok ?: return CANCELED_BUILD_RESULT
-        ).apply {
-            addCommandLinePatch(cargoBuildPatch)
-            for (patch in environment.cargoPatches) {
-                addCommandLinePatch(patch)
-            }
-        }
+        )
 
         val cargoProject = state.cargoProject ?: return CANCELED_BUILD_RESULT
 
