@@ -48,7 +48,7 @@ class CargoTestEventsConverter(
     private var doctestPackageCounter: Int = 0
 
     override fun processServiceMessages(text: String, outputType: Key<*>, visitor: ServiceMessageVisitor): Boolean {
-        if (handleStartMessage(text)) return true
+        handleStartMessage(text)
 
         val jsonObject = try {
             val escapedText = text.replace(DOCTEST_PATH_RE) { it.value.replace("\\", "\\\\") }
@@ -56,18 +56,17 @@ class CargoTestEventsConverter(
             JsonParser.parseReader(reader).takeIf { it.isJsonObject }?.asJsonObject
         } catch (e: JsonSyntaxException) {
             null
-        } ?: return true
+        }
 
-        if (handleTestMessage(jsonObject, outputType, visitor)) return true
-        if (handleSuiteMessage(jsonObject, outputType, visitor)) return true
-
-        return true
+        return when {
+            jsonObject == null -> false
+            handleTestMessage(jsonObject, outputType, visitor) -> true
+            handleSuiteMessage(jsonObject, outputType, visitor) -> true
+            else -> true // don't print unknown json messages
+        }
     }
 
-    /** @return true if message successfully processed. */
-    private fun handleStartMessage(text: String): Boolean {
-        if (suitesStack.isNotEmpty()) return false
-
+    private fun handleStartMessage(text: String) {
         when (converterState) {
             START_MESSAGE -> {
                 val clean = text.trim().toLowerCase()
@@ -84,7 +83,7 @@ class CargoTestEventsConverter(
                         suitesStack.add(executableName)
                         START_MESSAGE
                     }
-                    else -> START_MESSAGE
+                    else -> return
                 }
             }
             EXECUTABLE_NAME -> {
@@ -108,8 +107,6 @@ class CargoTestEventsConverter(
                 converterState = START_MESSAGE
             }
         }
-
-        return true
     }
 
     private fun handleTestMessage(

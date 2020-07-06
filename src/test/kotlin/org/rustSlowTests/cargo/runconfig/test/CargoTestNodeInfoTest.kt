@@ -73,6 +73,39 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
 
            - """)
 
+    fun `test root output`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    #[test]
+                    fn test() {
+                        /*caret*/
+                        let x = 42;
+                    }
+                """)
+            }
+        }
+
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        val configuration = createTestRunConfigurationFromContext()
+        configuration.command += " --unknown"
+        val root = executeAndGetTestRoot(configuration)
+        assertTrue("Testing started" in root.output)
+        assertTrue("Compiling sandbox" in root.output)
+        assertTrue("warning: unused variable: `x`" in root.output)
+        assertTrue("Finished" in root.output)
+        assertTrue("Running" in root.output)
+        assertTrue("error: Unrecognized option: 'unknown'" in root.output)
+        assertTrue("Process finished" in root.output)
+    }
+
     private fun checkErrors(
         @Language("Rust") testFnText: String,
         message: String,
