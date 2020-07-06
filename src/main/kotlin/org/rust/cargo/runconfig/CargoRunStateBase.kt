@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.buildtool.CargoPatch
+import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Cargo
@@ -33,19 +34,22 @@ abstract class CargoRunStateBase(
     )
     private val workingDirectory: Path? get() = cargoProject?.workingDirectory
 
-    private val commandLinePatches: MutableList<CargoPatch> = mutableListOf()
+    protected val commandLinePatches: MutableList<CargoPatch> = mutableListOf()
 
-    fun addCommandLinePatch(patch: CargoPatch) {
-        commandLinePatches.add(patch)
+    init {
+        commandLinePatches.addAll(environment.cargoPatches)
     }
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
     fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
 
-    fun prepareCommandLine(): CargoCommandLine {
+    fun prepareCommandLine(vararg additionalPatches: CargoPatch): CargoCommandLine {
         var commandLine = commandLine
         for (patch in commandLinePatches) {
+            commandLine = patch(commandLine)
+        }
+        for (patch in additionalPatches) {
             commandLine = patch(commandLine)
         }
         return commandLine

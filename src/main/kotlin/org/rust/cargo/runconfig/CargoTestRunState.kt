@@ -35,7 +35,7 @@ class CargoTestRunState(
 
     init {
         consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)
-        addCommandLinePatch(cargoTestPatch)
+        commandLinePatches.add(cargoTestPatch)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }
 

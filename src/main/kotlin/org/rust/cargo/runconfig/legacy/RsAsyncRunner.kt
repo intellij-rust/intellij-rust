@@ -61,8 +61,7 @@ abstract class RsAsyncRunner(
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         saveAllDocuments()
 
-        (state as CargoRunStateBase).addCommandLinePatch(cargoCommonPatch)
-        val commandLine = state.prepareCommandLine()
+        val commandLine = (state as CargoRunStateBase).prepareCommandLine(cargoCommonPatch)
         val (commandArguments, executableArguments) = parseArgs(commandLine.command, commandLine.additionalArguments)
 
         val isTestRun = commandLine.command == "test"

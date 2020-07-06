@@ -49,12 +49,25 @@ jobs:
                   components: rust-src, rustfmt, clippy
                   default: true
 
+            - name: Set up Rust nightly
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: nightly
+
             - name: Install evcxr
               if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
               uses: actions-rs/cargo@v1
               with:
                   command: install
                   args: evcxr_repl
+
+            - name: Install grcov
+              uses: actions-rs/cargo@v1
+              with:
+                  command: install
+                  toolchain: nightly
+                  args: grcov
 
             - name: Check environment
               run: |
