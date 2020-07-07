@@ -43,6 +43,10 @@
 /// * Unordered list item
 /// * Unordered list item 2
 ///
+/// | Table header 1   | Table header 2
+/// |------------------|---------------
+/// | Foo              | Bar
+///
 /// [inline link](http://example.com)
 /// [inline link](http://example.com "link title")
 ///

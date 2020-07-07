@@ -14,6 +14,9 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.injected.findDoctestInjectableRanges
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.stubKind
+import org.rust.lang.core.stubs.RsStubLiteralKind
+import org.rust.lang.doc.psi.RsDocComment
 
 class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
 
@@ -23,11 +26,9 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
     // BACKCOMPAT: 2020.2
     @Suppress("UnstableApiUsage", "OverridingDeprecatedMember")
     override fun isTypoAccepted(root: PsiElement, typoRange: IntRange, ruleRange: IntRange): Boolean {
-        if (root !is RsDocCommentImpl) return true
+        if (root !is RsDocComment) return true
 
-        return findDoctestInjectableRanges(root)
-            .flatten()
-            .none { it.intersects(typoRange.first, typoRange.last) }
+        return root.codeFences.none { it.textRange.intersects(typoRange.first, typoRange.last) }
     }
 
     override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup? = RuleGroup.LITERALS

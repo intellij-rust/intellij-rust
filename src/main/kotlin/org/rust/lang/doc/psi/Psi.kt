@@ -6,17 +6,23 @@
 package org.rust.lang.doc.psi
 
 import com.intellij.psi.PsiLanguageInjectionHost
-import org.rust.lang.core.psi.RsDocCommentImpl2
+import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
+import org.rust.ide.annotator.RsDoctestAnnotator
+import org.rust.ide.injected.RsDoctestLanguageInjector
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorStrict
 
-interface RsDocElement : RsElement
+interface RsDocElement : RsElement {
+    @JvmDefault
+    val containingDoc: RsDocComment
+        get() = ancestorStrict<RsDocComment>()
+            ?: error("RsDocElement cannot leave outside of the doc comment! `${text}`")
 
-val RsDocElement.owner: RsElement
-    get() = ancestorStrict<RsDocCommentImpl2>()!!.parent as RsElement
-
-val RsDocElement.ownerDoc: RsDocCommentImpl2
-    get() = ancestorStrict<RsDocCommentImpl2>()!!
+    @JvmDefault
+    val owner: RsDocAndAttributeOwner?
+        get() = containingDoc.owner
+}
 
 interface RsDocLink : RsDocElement {
     val linkTextOrLabel: RsDocElement
@@ -85,4 +91,13 @@ interface RsDocLinkText : RsDocElement
 interface RsDocLinkLabel : RsDocElement
 interface RsDocLinkDestination : RsDocElement
 
-interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost
+/**
+ * Psi element for [markdown code fences](https://spec.commonmark.org/0.29/#fenced-code-blocks)
+ * in rust documentation comments.
+ *
+ * Provides specific behavior for language injections (see [RsDoctestLanguageInjector]).
+ *
+ * [InjectionBackgroundSuppressor] is used to disable builtin background highlighting for injection.
+ * We create such background manually by [RsDoctestAnnotator] (see the class docs)
+ */
+interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost, InjectionBackgroundSuppressor

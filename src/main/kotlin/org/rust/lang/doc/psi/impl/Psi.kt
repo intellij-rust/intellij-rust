@@ -8,14 +8,11 @@ package org.rust.lang.doc.psi.impl
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.CompositePsiElement
-import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
-import org.rust.ide.annotator.RsDoctestAnnotator
 import org.rust.ide.injected.RsDoctestLanguageInjector
 import org.rust.lang.core.completion.getOriginalOrSelf
-import org.rust.lang.core.psi.RsDocCommentImpl
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.*
 import org.rust.lang.doc.ref.RsDocLinkDestinationReferenceImpl
@@ -72,13 +69,7 @@ class RsDocLinkDestinationImpl(type: IElementType) : RsDocElementImpl(type), RsD
 
 }
 
-/**
- * Psi element for rust documentation comments. Provides specific behavior for
- * language injections (see [RsDoctestLanguageInjector]).
- * [InjectionBackgroundSuppressor] is used to disable builtin background highlighting for injection.
- * We create such background manually by [RsDoctestAnnotator] (see the class docs)
- */
-class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCodeFence, InjectionBackgroundSuppressor {
+class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCodeFence {
     override fun isValidHost(): Boolean = true
 
     /**
@@ -127,7 +118,7 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
         val fromText = PsiFileFactory.getInstance(project).createFileFromText("__." + type.defaultExtension, type, newText)
         val newElement = PsiTreeUtil.getParentOfType(fromText.findElementAt(0), javaClass, false)
             ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
-        return replace(newElement) as RsDocCommentImpl
+        return replace(newElement) as RsDocCodeFenceImpl
     }
 
     override fun createLiteralTextEscaper(): LiteralTextEscaper<RsDocCodeFenceImpl> =

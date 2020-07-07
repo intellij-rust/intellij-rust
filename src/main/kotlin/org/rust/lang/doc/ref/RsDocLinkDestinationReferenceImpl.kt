@@ -16,7 +16,6 @@ import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.doc.psi.RsDocLinkDestination
-import org.rust.lang.doc.psi.owner
 import java.net.URI
 
 class RsDocLinkDestinationReferenceImpl(
