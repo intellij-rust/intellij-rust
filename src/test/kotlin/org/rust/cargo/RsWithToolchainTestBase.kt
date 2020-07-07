@@ -90,9 +90,10 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
      */
     protected fun runWithInvocationEventsDispatching(
         errorMessage: String = "Failed to invoke `action` successfully",
+        retries: Int = 1000,
         action: () -> Boolean
     ) {
-        for (retries in 0..1000) {
+        repeat(retries) {
             UIUtil.dispatchAllInvocationEvents()
             if (action()) {
                 return

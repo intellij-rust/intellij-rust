@@ -183,7 +183,7 @@ class RsCoverageTest : RunConfigurationTestBase() {
         }
 
         executeWithCoverage(configuration)
-        runWithInvocationEventsDispatching("Failed to fetch coverage data") { coverageData != null }
+        runWithInvocationEventsDispatching("Failed to fetch coverage data", retries = 10000) { coverageData != null }
         val projectData = coverageData!!
 
         val actual = hashMapOf<String, Set<Hits>>()
