@@ -18,6 +18,7 @@ import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
 import org.rust.ide.icons.RsIcons
+import org.rust.openapiext.computeWithCancelableProgress
 import java.io.File
 import javax.swing.Icon
 
@@ -41,7 +42,9 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
 
     override fun generateProject(project: Project, baseDir: VirtualFile, data: ConfigurationData, module: Module) {
         val (settings, createBinary) = data
-        val generatedFiles = settings.toolchain?.rawCargo()?.init(project, module, baseDir, createBinary) ?: return
+        val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
+            settings.toolchain?.rawCargo()?.init(project, module, baseDir, createBinary)
+        } ?: return
 
         // Open new files
         if (!isHeadlessEnvironment) {
