@@ -16,7 +16,7 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RS_OPERATORS
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.doc.psi.RsDocElementTypes.*
+import org.rust.lang.doc.psi.RsDocHighlightingElementTypes.*
 
 class RsHighlighter : SyntaxHighlighterBase() {
 

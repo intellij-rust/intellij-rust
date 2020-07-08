@@ -169,7 +169,7 @@ private fun findDoctestInjectableRanges(text: String, elementType: IElementType)
     // Contains code lines inside backticks including `///` at the start and `\n` at the end.
     // It doesn't contain the last line with /// ```
     val lines = run {
-        val codeBlockStart = CharArrayUtil.shiftForward(text, 0, "`") // skip ```
+        val codeBlockStart = CharArrayUtil.shiftForward(text, 0, "` \t") // skip ```
         val codeBlockEnd = text.length
         generateSequence(codeBlockStart) { text.indexOf("\n", it) + 1 }
             .takeWhile { it != 0 && it <= codeBlockEnd }

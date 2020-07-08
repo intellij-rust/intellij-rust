@@ -1,7 +1,12 @@
+/*!
+ * Methods for the various MIR types. These are intended for use after
+ * building is complete.
+ */
+
 /// This is Setext level 1 header!
 /// ==============================
 ///
-/// This is Setext level 2 header
+/// This is Setext level 2 header!
 /// -----------------------------
 ///
 /// # Header

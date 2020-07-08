@@ -24,6 +24,34 @@ interface RsDocElement : RsElement {
         get() = containingDoc.owner
 }
 
+/**
+ * Header 1
+ * ========
+ *
+ * Header 2
+ * --------
+ *
+ * # Header 1
+ * ## Header 2
+ * ### Header 3
+ * #### Header 4
+ * ##### Header 5
+ * ###### Header 6
+ */
+interface RsDocHeading : RsDocElement
+
+/** *an emphasis span* or _an emphasis span_ */
+interface RsDocEmphasis : RsDocElement
+
+/** **a strong span** or __a strong span__ */
+interface RsDocStrong : RsDocElement
+
+/** `a code span` */
+interface RsDocCodeSpan : RsDocElement
+
+/** <http://example.com> */
+interface RsDocAutoLink : RsDocElement
+
 interface RsDocLink : RsDocElement {
     val linkTextOrLabel: RsDocElement
 }
@@ -89,6 +117,7 @@ interface RsDocLinkReferenceDef : RsDocLink {
 
 interface RsDocLinkText : RsDocElement
 interface RsDocLinkLabel : RsDocElement
+interface RsDocLinkTitle : RsDocElement
 interface RsDocLinkDestination : RsDocElement
 
 /**
@@ -101,3 +130,7 @@ interface RsDocLinkDestination : RsDocElement
  * We create such background manually by [RsDoctestAnnotator] (see the class docs)
  */
 interface RsDocCodeFence : RsDocElement, PsiLanguageInjectionHost, InjectionBackgroundSuppressor
+
+interface RsDocCodeBlock : RsDocElement
+interface RsDocQuoteBlock : RsDocElement
+interface RsDocHtmlBlock : RsDocElement

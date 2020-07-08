@@ -25,7 +25,7 @@ class RsDocRemoveDecorationTest(
         val contentNorm = StringUtil.convertLineSeparators(content).trim()
 
         assertEquals(contentNorm,
-            kind.removeDecoration(commentNorm.splitToSequence('\n')).joinToString("\n").trim())
+            kind.removeDecoration(commentNorm).joinToString("\n").trim())
     }
 
     companion object {

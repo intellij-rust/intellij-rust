@@ -31,6 +31,13 @@ abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type),
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
 
+class RsDocHeadingImpl(type: IElementType) : RsDocElementImpl(type), RsDocHeading
+
+class RsDocEmphasisImpl(type: IElementType) : RsDocElementImpl(type), RsDocEmphasis
+class RsDocStrongImpl(type: IElementType) : RsDocElementImpl(type), RsDocStrong
+class RsDocCodeSpanImpl(type: IElementType) : RsDocElementImpl(type), RsDocCodeSpan
+class RsDocAutoLinkImpl(type: IElementType) : RsDocElementImpl(type), RsDocAutoLink
+
 class RsDocInlineLinkImpl(type: IElementType) : RsDocElementImpl(type), RsDocInlineLink {
     override val linkText: RsDocLinkText
         get() = notNullChild(childOfType())
@@ -62,6 +69,7 @@ class RsDocLinkReferenceDefImpl(type: IElementType) : RsDocElementImpl(type), Rs
 
 class RsDocLinkTextImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkText
 class RsDocLinkLabelImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkLabel
+class RsDocLinkTitleImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkTitle
 class RsDocLinkDestinationImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkDestination, RsReferenceElementBase {
     override fun getReference(): PsiReference = RsDocLinkDestinationReferenceImpl(this)
     override val referenceNameElement: PsiElement?
@@ -124,3 +132,7 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
     override fun createLiteralTextEscaper(): LiteralTextEscaper<RsDocCodeFenceImpl> =
         SimpleMultiLineTextEscaper(this)
 }
+
+class RsDocCodeBlockImpl(type: IElementType) : RsDocElementImpl(type), RsDocCodeBlock
+class RsDocBlockQuoteImpl(type: IElementType) : RsDocElementImpl(type), RsDocQuoteBlock
+class RsDocHtmlBlockImpl(type: IElementType) : RsDocElementImpl(type), RsDocHtmlBlock

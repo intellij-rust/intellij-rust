@@ -208,7 +208,7 @@ class MacroExpander(val project: Project) {
             if (token in RS_DOC_COMMENTS) {
                 // TODO calculate how many `#` we should insert
                 sb.append("#[doc=r###\"")
-                RsDocKind.of(token).removeDecoration(text.splitToSequence("\n")).joinTo(sb, separator = "\n")
+                RsDocKind.of(token).removeDecoration(text).joinTo(sb, separator = "\n")
                 sb.append("\"###]")
             } else {
                 ranges.mergeAdd(MappedTextRange(start, sb.length, text.length))
