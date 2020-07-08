@@ -95,7 +95,7 @@ data class RustcSpan(
         fun toOffset(document: Document, line: Int, column: Int): Int? {
             val line = line - 1
             val column = column - 1
-            if (line >= document.lineCount) return null
+            if (line < 0 || line >= document.lineCount) return null
             return (document.getLineStartOffset(line) + column)
                 .takeIf { it <= document.textLength }
         }
