@@ -7,12 +7,10 @@ package org.rust.lang.doc.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.CompositeElement
-import com.intellij.psi.impl.source.tree.CompositePsiElement
-import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.impl.source.tree.SharedImplUtil
+import com.intellij.psi.impl.source.tree.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.ILazyParseableElementType
+import com.intellij.util.text.CharArrayUtil
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.RsLanguage
@@ -35,7 +33,13 @@ class RsDocCommentElementType(debugName: String) : ILazyParseableElementType(deb
                     val text = charTable.intern(piece.str)
                     val leaf = when (piece) {
                         is Piece.Text -> LeafPsiElement(RsDocElementTypes.DOC_TEXT, text)
-                        is Piece.Prefix -> RsDocGapImpl(RsDocElementTypes.DOC_GAP, text)
+                        is Piece.Gap -> {
+                            val ws = CharArrayUtil.shiftForward(text, 0, "\n\t ")
+                            if (ws != 0) {
+                                rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(text.substring(0, ws)))
+                            }
+                            RsDocGapImpl(RsDocElementTypes.DOC_GAP, text.substring(ws))
+                        }
                     }
                     rawAddChildrenWithoutNotifications(leaf)
                 }
@@ -124,18 +128,24 @@ private class DocTextMap(
             val md = StringBuilder()
             val map = IntArray(text.length)
             var counter = 0
-            for (line in kind.removeDecorationToLines(text)) {
+            val lines = kind.removeDecorationToLines(text).toList()
+            for ((i, line) in lines.withIndex()) {
+                val isLast = i == lines.lastIndex
                 val prefix = line.prefix
                 val suffix = line.suffix
 
                 if (prefix.isNotEmpty()) {
-                    pieces += Piece.Prefix(prefix)
+                    pieces.mergeAddGap(prefix)
                     counter += prefix.length
                 }
 
-                val new = line.content + if (suffix.isEmpty()) "\n" else ""
+                val hasLineBreak = suffix.isEmpty() && !isLast
+                val content = line.content
+                val new = content + if (hasLineBreak) "\n" else ""
                 if (new.isNotEmpty()) {
-                    pieces += Piece.Text(new)
+                    if (content.isNotEmpty()) {
+                        pieces += Piece.Text(content)
+                    }
                     for (j in new.indices) {
                         map[md.length + j] = counter + j
                     }
@@ -144,27 +154,40 @@ private class DocTextMap(
                     md.append(new)
                 }
 
+                if (hasLineBreak) {
+                    pieces += Piece.Gap("\n")
+                }
+
                 if (suffix.isNotEmpty()) {
-                    pieces += Piece.Prefix(suffix)
+//                    pieces += Piece.Gap(suffix)
+                    pieces.mergeAddGap(suffix)
                     counter += suffix.length
                 }
             }
 
-            return DocTextMap(text, md.removeSuffix("\n"), map, pieces)
+            return DocTextMap(text, md, map, pieces)
+        }
+
+        private fun MutableList<Piece>.mergeAddGap(gap: String) {
+            if (lastOrNull() is Piece.Gap) {
+                this[lastIndex] = Piece.Gap(this[lastIndex].str.toString() + gap)
+            } else {
+                this += Piece.Gap(gap)
+            }
         }
     }
 }
 
 private sealed class Piece(val str: CharSequence) {
     class Text(str: CharSequence): Piece(str)
-    class Prefix(str: CharSequence): Piece(str)
+    class Gap(str: CharSequence): Piece(str)
 }
 
 private fun Piece.cut(startOffset: Int, endOffset: Int): Piece {
     val newStr = str.subSequence(max(0, startOffset), min(endOffset, str.length))
     return when (this) {
         is Piece.Text -> Piece.Text(newStr)
-        is Piece.Prefix -> Piece.Prefix(newStr)
+        is Piece.Gap -> Piece.Gap(newStr)
     }
 }
 
