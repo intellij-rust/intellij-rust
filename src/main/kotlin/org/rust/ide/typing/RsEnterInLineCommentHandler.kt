@@ -24,8 +24,8 @@ import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_CO
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.lang.doc.psi.RsDocElement
 import org.rust.lang.doc.psi.RsDocKind
+import org.rust.lang.doc.psi.ext.containingDoc
 
 class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
     override fun preprocessEnter(
@@ -64,8 +64,9 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
             elementAtCaret = elementAtCaret.prevSibling ?: return Result.Continue
         }
 
-        if (elementAtCaret is RsDocElement) {
-            elementAtCaret = elementAtCaret.containingDoc
+        val containingDoc = elementAtCaret.containingDoc
+        if (containingDoc != null) {
+            elementAtCaret = containingDoc
         }
 
         // check if the element at the caret is a line comment

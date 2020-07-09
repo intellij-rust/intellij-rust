@@ -26,6 +26,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.STRING_LITERAL
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.doc.psi.RsDocCommentElementType
+import org.rust.lang.doc.psi.ext.isDocCommentLeafToken
 
 class RustParserDefinition : ParserDefinition {
 
@@ -58,7 +59,17 @@ class RustParserDefinition : ParserDefinition {
     }
 
     override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
-        if (left.elementType in RS_EOL_COMMENTS) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+        val leftElementType = left.elementType
+        if (leftElementType == EOL_COMMENT) {
+            return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+        }
+        if (leftElementType.isDocCommentLeafToken) {
+            return if (right.elementType.isDocCommentLeafToken) {
+                ParserDefinition.SpaceRequirements.MAY
+            } else {
+                ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
+            }
+        }
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
 

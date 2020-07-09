@@ -11,7 +11,7 @@ import org.rust.lang.doc.psi.impl.*
 @Suppress("MemberVisibilityCanBePrivate")
 object RsDocElementTypes {
     val DOC_TEXT = RsDocTokenType("<DOC_TEXT>")
-    val DOC_PREFIX = RsDocTokenType("<DOC_PREFIX>")
+    val DOC_GAP = RsDocTokenType("<DOC_GAP>")
 
     val DOC_HEADING = RsDocCompositeTokenType("<DOC_HEADING>", ::RsDocHeadingImpl)
 
@@ -35,7 +35,7 @@ object RsDocElementTypes {
     val DOC_BLOCK_QUOTE = RsDocCompositeTokenType("<DOC_BLOCK_QUOTE>", ::RsDocBlockQuoteImpl)
     val DOC_HTML_BLOCK = RsDocCompositeTokenType("<DOC_HTML_BLOCK>", ::RsDocHtmlBlockImpl)
 
-    private val HEADERS = setOf(
+    private val MARKDOWN_HEADERS = setOf(
         MarkdownElementTypes.ATX_1,
         MarkdownElementTypes.ATX_2,
         MarkdownElementTypes.ATX_3,
@@ -48,7 +48,7 @@ object RsDocElementTypes {
 
     fun map(type: org.intellij.markdown.IElementType): RsDocCompositeTokenType? {
         return when (type) {
-            in HEADERS -> DOC_HEADING
+            in MARKDOWN_HEADERS -> DOC_HEADING
             MarkdownElementTypes.EMPH -> DOC_EMPHASIS
             MarkdownElementTypes.STRONG -> DOC_STRONG
             MarkdownElementTypes.CODE_SPAN -> DOC_CODE_SPAN

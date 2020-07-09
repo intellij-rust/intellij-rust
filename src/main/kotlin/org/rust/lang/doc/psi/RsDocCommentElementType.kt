@@ -17,6 +17,7 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
 import org.rust.lang.RsLanguage
 import org.rust.lang.doc.psi.impl.RsDocCommentImpl
+import org.rust.lang.doc.psi.impl.RsDocGapImpl
 import kotlin.math.max
 import kotlin.math.min
 
@@ -31,11 +32,12 @@ class RsDocCommentElementType(debugName: String) : ILazyParseableElementType(deb
 
             private fun CompositeElement.insertLeaves(startOffset: Int, endOffset: Int) {
                 for (piece in textMap.split(startOffset, endOffset)) {
-                    val type = when (piece) {
-                        is Piece.Text -> RsDocElementTypes.DOC_TEXT
-                        is Piece.Prefix -> RsDocElementTypes.DOC_PREFIX
+                    val text = charTable.intern(piece.str)
+                    val leaf = when (piece) {
+                        is Piece.Text -> LeafPsiElement(RsDocElementTypes.DOC_TEXT, text)
+                        is Piece.Prefix -> RsDocGapImpl(RsDocElementTypes.DOC_GAP, text)
                     }
-                    rawAddChildrenWithoutNotifications(LeafPsiElement(type, charTable.intern(piece.str)))
+                    rawAddChildrenWithoutNotifications(leaf)
                 }
             }
 

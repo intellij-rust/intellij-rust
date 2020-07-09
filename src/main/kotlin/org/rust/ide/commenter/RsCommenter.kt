@@ -21,6 +21,7 @@ import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
+import org.rust.lang.doc.psi.ext.isInEolDocComment
 
 data class CommentHolder(val file: PsiFile) : CommenterDataHolder() {
     fun useSpaceAfterLineComment(): Boolean {
@@ -124,4 +125,4 @@ private fun getStartLineComment(line: Int, document: Document, file: PsiFile): P
 }
 
 private val PsiComment.isEolComment: Boolean
-    get() = this.tokenType in RS_EOL_COMMENTS
+    get() = tokenType in RS_EOL_COMMENTS || isInEolDocComment

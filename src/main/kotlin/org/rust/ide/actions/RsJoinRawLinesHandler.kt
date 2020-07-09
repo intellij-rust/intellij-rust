@@ -14,6 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.doc.psi.ext.containingDoc
 
 class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
     /**
@@ -27,8 +28,8 @@ class RsJoinRawLinesHandler : JoinRawLinesHandlerDelegate {
         val tryJoinSingleExpressionBlock = tryJoinSingleExpressionBlock(file, start)
         if (tryJoinSingleExpressionBlock != CANNOT_JOIN) return tryJoinSingleExpressionBlock
 
-        val leftPsi = file.findElementAt(start) ?: return CANNOT_JOIN
-        val rightPsi = file.findElementAt(end) ?: return CANNOT_JOIN
+        val leftPsi = file.findElementAt(start)?.containingDoc ?: return CANNOT_JOIN
+        val rightPsi = file.findElementAt(end)?.containingDoc ?: return CANNOT_JOIN
 
         if (leftPsi != rightPsi) return CANNOT_JOIN
 

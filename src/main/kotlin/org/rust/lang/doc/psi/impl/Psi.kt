@@ -7,7 +7,9 @@ package org.rust.lang.doc.psi.impl
 
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
 import com.intellij.psi.*
+import com.intellij.psi.impl.source.tree.AstBufferUtil
 import com.intellij.psi.impl.source.tree.CompositePsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
@@ -16,8 +18,9 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.*
 import org.rust.lang.doc.ref.RsDocLinkDestinationReferenceImpl
+import org.rust.lang.doc.ref.RsDocLinkLabelReferenceImpl
 
-abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type), RsElement {
+abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type), RsDocElement {
     protected open fun <T: Any> notNullChild(child: T?): T =
         child ?: error("$text parent=${parent.text}")
 
@@ -28,7 +31,18 @@ abstract class RsDocElementImpl(type: IElementType) : CompositePsiElement(type),
     final override val crateRoot: RsMod?
         get() = (contextualFile as? RsElement)?.crateRoot
 
+    override val containingDoc: RsDocComment
+        get() = ancestorStrict<RsDocComment>()
+            ?: error("RsDocElement cannot leave outside of the doc comment! `${text}`")
+
+    override val markdownValue: String
+        get() = AstBufferUtil.getTextSkippingWhitespaceComments(this)
+
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
+}
+
+class RsDocGapImpl(type: IElementType, val text: CharSequence) : LeafPsiElement(type, text), RsDocGap {
+    override fun getTokenType(): IElementType = elementType
 }
 
 class RsDocHeadingImpl(type: IElementType) : RsDocElementImpl(type), RsDocHeading
@@ -68,7 +82,12 @@ class RsDocLinkReferenceDefImpl(type: IElementType) : RsDocElementImpl(type), Rs
 }
 
 class RsDocLinkTextImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkText
-class RsDocLinkLabelImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkLabel
+class RsDocLinkLabelImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkLabel, RsReferenceElementBase {
+    override fun getReference(): PsiReference = RsDocLinkLabelReferenceImpl(this)
+    override val referenceNameElement: PsiElement?
+        get() = this
+
+}
 class RsDocLinkTitleImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkTitle
 class RsDocLinkDestinationImpl(type: IElementType) : RsDocElementImpl(type), RsDocLinkDestination, RsReferenceElementBase {
     override fun getReference(): PsiReference = RsDocLinkDestinationReferenceImpl(this)
@@ -90,10 +109,19 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
      * Here we insure that every comment line is started from appropriate prefix
      */
     override fun updateText(text: String): PsiLanguageInjectionHost {
-        val docKind = RsDocKind.of(elementType)
+        val docKind = RsDocKind.of(containingDoc.elementType)
         val infix = docKind.infix
 
+        val prevSiblingText = prevSibling.text ?: "" // Should starts with `infix` (e.g. `/// `)
+
         val newText = StringBuilder()
+
+        if (!prevSiblingText.trimStart().startsWith(docKind.prefix)) {
+            newText.append(docKind.prefix)
+            newText.append("\n")
+        }
+        newText.append(prevSiblingText)
+
         var prevIndent = ""
         var index = 0
         while (index < text.length) {
@@ -124,7 +152,7 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
         // copied from PsiCommentManipulator
         val type = containingFile.fileType
         val fromText = PsiFileFactory.getInstance(project).createFileFromText("__." + type.defaultExtension, type, newText)
-        val newElement = PsiTreeUtil.getParentOfType(fromText.findElementAt(0), javaClass, false)
+        val newElement = PsiTreeUtil.findChildOfType(fromText, javaClass, false)
             ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
         return replace(newElement) as RsDocCodeFenceImpl
     }

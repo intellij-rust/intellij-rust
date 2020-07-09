@@ -16,4 +16,8 @@ interface RsDocComment : PsiComment {
         get() = parent as? RsDocAndAttributeOwner
 
     val codeFences: List<RsDocCodeFence>
+
+    val linkDefinitions: List<RsDocLinkReferenceDef>
+
+    val linkReferenceMap: Map<String, RsDocLinkReferenceDef>
 }

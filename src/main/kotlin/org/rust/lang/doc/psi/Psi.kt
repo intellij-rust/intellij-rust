@@ -5,24 +5,24 @@
 
 package org.rust.lang.doc.psi
 
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import org.rust.ide.annotator.RsDoctestAnnotator
 import org.rust.ide.injected.RsDoctestLanguageInjector
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.ancestorStrict
 
 interface RsDocElement : RsElement {
-    @JvmDefault
     val containingDoc: RsDocComment
-        get() = ancestorStrict<RsDocComment>()
-            ?: error("RsDocElement cannot leave outside of the doc comment! `${text}`")
 
-    @JvmDefault
-    val owner: RsDocAndAttributeOwner?
-        get() = containingDoc.owner
+    val markdownValue: String
 }
+
+/**
+ * A skipped `/// ` (or other kind of documentation comment decorations)
+ * is treated as a comment leaf in the markdown tree
+ */
+interface RsDocGap : PsiComment
 
 /**
  * Header 1

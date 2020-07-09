@@ -22,7 +22,7 @@ class RsDocLinkDestinationReferenceImpl(
     element: RsDocLinkDestination
 ) : PsiReferenceBase<RsDocLinkDestination>(element, TextRange(0, element.textLength), false) {
     override fun resolve(): PsiElement? {
-        val path = when (val owner = element.owner) {
+        val path = when (val owner = element.containingDoc.owner) {
             is RsQualifiedNamedElement -> RsQualifiedName.from(owner)?.toUrlPath()
             // generating documentation for primitive types via the corresponding module
             is RsPath -> if (TyPrimitive.fromPath(owner) != null) "${AutoInjectedCrates.STD}/" else return null
