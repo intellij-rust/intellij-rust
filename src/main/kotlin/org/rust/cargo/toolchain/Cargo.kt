@@ -43,6 +43,7 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -179,7 +180,7 @@ class Cargo(private val cargoExecutable: Path) {
         for (line in processOutput.stdoutLines) {
             val jsonObject = try {
                 JsonParser.parseString(line).asJsonObject
-            } catch (ignore: JsonSyntaxException){
+            } catch (ignore: JsonSyntaxException) {
                 continue
             }
             val message = BuildScriptMessage.fromJson(jsonObject) ?: continue
@@ -237,6 +238,44 @@ class Cargo(private val cargoExecutable: Path) {
         val manifest = checkNotNull(directory.findChild(RustToolchain.CARGO_TOML)) { "Can't find the manifest file" }
         val fileName = if (createBinary) "main.rs" else "lib.rs"
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
+        return GeneratedFilesHolder(manifest, sourceFiles)
+    }
+
+    @Throws(ExecutionException::class)
+    fun generate(
+        project: Project,
+        owner: Disposable,
+        directory: VirtualFile,
+        template: String
+    ): GeneratedFilesHolder? {
+        val path = directory.pathAsPath
+        val name = path.fileName.toString().replace(' ', '_')
+        val args = mutableListOf("--name", name, "--git", template)
+
+        // TODO: Rewrite this for the future versions of cargo-generate when init subcommand will be available
+        // See https://github.com/ashleygwilliams/cargo-generate/issues/193
+
+        // Generate a cargo-generate project inside a subdir
+        CargoCommandLine("generate", path, args).execute(project, owner)
+
+        // Move all the generated files to the project root and delete the subdir itself
+        val generatedDir = try {
+            File(path.toString(), project.name)
+        } catch (e: NullPointerException) {
+            LOG.warn("Failed to generate project using cargo-generate")
+            return null
+        }
+        val generatedFiles = generatedDir.walk().drop(1) // drop the `generatedDir` itself
+        for (generatedFile in generatedFiles) {
+            val newFile = File(path.toString(), generatedFile.name)
+            Files.move(generatedFile.toPath(), newFile.toPath())
+        }
+        generatedDir.delete()
+
+        fullyRefreshDirectory(directory)
+
+        val manifest = checkNotNull(directory.findChild(RustToolchain.CARGO_TOML)) { "Can't find the manifest file" }
+        val sourceFiles = listOf("main", "lib").mapNotNull { directory.findFileByRelativePath("src/${it}.rs") }
         return GeneratedFilesHolder(manifest, sourceFiles)
     }
 
@@ -312,6 +351,25 @@ class Cargo(private val cargoExecutable: Path) {
         stdIn: ByteArray? = null,
         listener: ProcessListener? = null
     ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
+
+    fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
+        GeneralCommandLine(cargoExecutable)
+            .withParameters(listOf("install", "cargo-generate"))
+            .execute(owner, listener = listener)
+    }
+
+    fun checkNeedInstallCargoGenerate(): Boolean {
+        val crateName = "cargo-generate"
+        val minVersion = SemVer("v0.5.0", 0, 5, 0)
+        return checkBinaryCrateIsNotInstalled(crateName, minVersion)
+    }
+
+    private fun checkBinaryCrateIsNotInstalled(crateName: String, minVersion: SemVer?): Boolean {
+        val installed = listInstalledBinaryCrates().any { (name, version) ->
+            name == crateName && (minVersion == null || version != null && version >= minVersion)
+        }
+        return !installed
+    }
 
     private var _http: HttpConfigurable? = null
     private val http: HttpConfigurable
@@ -435,16 +493,10 @@ class Cargo(private val cargoExecutable: Path) {
             message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
-            fun isNotInstalled(): Boolean {
-                val cargo = project.toolchain?.rawCargo() ?: return false
-                val installed = cargo.listInstalledBinaryCrates().any { (name, version) ->
-                    name == crateName && (minVersion == null || version != null && version >= minVersion)
-                }
-                return !installed
-            }
-
+            val cargo = project.toolchain?.rawCargo() ?: return false
+            val isNotInstalled = { cargo.checkBinaryCrateIsNotInstalled(crateName, minVersion) }
             val needInstall = if (isDispatchThread) {
-                project.computeWithCancelableProgress("Checking if $crateName is installed...", ::isNotInstalled)
+                project.computeWithCancelableProgress("Checking if $crateName is installed...", isNotInstalled)
             } else {
                 isNotInstalled()
             }

@@ -15,7 +15,7 @@ import javax.swing.JComponent
 
 class RsProjectGeneratorPeer : GeneratorPeerImpl<ConfigurationData>() {
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeCheckbox = true) { checkValid?.run() }
+    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = true) { checkValid?.run() }
     private var checkValid: Runnable? = null
 
     override fun getSettings(): ConfigurationData = newProjectPanel.data
