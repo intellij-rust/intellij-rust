@@ -120,11 +120,9 @@ class RsGotoSuperHandlerTest : RsTestBase() {
         assertEquals(expected.toList().map { it.trimIndent() }.sorted(), targets.map { it.text }.sorted())
     }
 
-    private fun checkNavigation(@Language("Rust") code: String) {
-        InlineFile(code.replace("/*caret_before*/", "<caret>").replace("/*caret_after*/", ""))
+    private fun checkNavigation(@Language("Rust") code: String) = checkCaretMove(code) {
         val handler = CodeInsightActions.GOTO_SUPER.forLanguage(RsLanguage)
             ?: error("GotoSuperHandler for Rust was not found.")
         handler.invoke(project, myFixture.editor, myFixture.file)
-        myFixture.checkResult(code.replace("/*caret_after*/", "<caret>").replace("/*caret_before*/", ""))
     }
 }
