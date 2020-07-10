@@ -952,6 +952,8 @@
                      description="Maximum number of type aliases to take into account during `impl`s search"/>
         <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
                      description="Enable Rust cfg attributes support"/>
+        <registryKey key="org.rust.lang.highlight.macro.body" defaultValue="true" restartRequired="false"
+                     description="Highlight Rust macro call bodies"/>
 
         <!-- Move refactoring -->
 
