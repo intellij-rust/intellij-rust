@@ -37,9 +37,9 @@ class RsProjectConfigurable(
             renderer = SimpleListCellRenderer.create("") {
                 @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
                 when (it) {
-                    MacroExpansionEngine.DISABLED -> "Disable (use only if you have problems with macro expansions)"
-                    MacroExpansionEngine.OLD -> "Expand with default engine"
-                    MacroExpansionEngine.NEW -> "Expand with experimental engine (faster, but not yet stable)"
+                    MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
+                    MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
+                    MacroExpansionEngine.NEW -> "Use new engine"
                 }
             }
         }
