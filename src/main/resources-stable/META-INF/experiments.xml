@@ -12,7 +12,7 @@
         <experimentalFeature id="org.rust.cargo.evaluate.build.scripts" percentOfUsers="0">
             <description>Run build scripts while project refresh. It allows collecting information about generated items like `cfg` options, environment variables, etc</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.macros.new.engine" percentOfUsers="0">
+        <experimentalFeature id="org.rust.macros.new.engine" percentOfUsers="100">
             <description>Enables new macro expansion engine by default</description>
         </experimentalFeature>
     </extensions>
