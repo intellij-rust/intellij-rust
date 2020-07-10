@@ -219,6 +219,20 @@ class RsResolveCacheTest : RsTestBase() {
         }             //^
     """, "\b2")
 
+    fun `test edit function-local macro`() = checkResolvedToXY("""
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
+        struct S1;
+             //Y
+        fn main() {
+            as_is! { struct S1/*caret*/; }
+                          //X
+            let a: S1;
+        }        //^
+    """, "\b2")
+
+    override val followMacroExpansions: Boolean
+        get() = true
+
     private fun checkResolvedToXY(@Language("Rust") code: String, textToType: String) {
         InlineFile(code).withCaret()
 

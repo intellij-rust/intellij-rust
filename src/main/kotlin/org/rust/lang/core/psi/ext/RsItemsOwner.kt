@@ -85,9 +85,14 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
             }
             false
         }
+        val localModTracker = if (this is RsBlock) {
+            findModificationTrackerOwner(strict = true)
+        } else {
+            null
+        }
         CachedValueProvider.Result.create(
             RsCachedItems(namedImports.optimizeList(), starImports.optimizeList(), rest.optimizeList()),
-            rustStructureOrAnyPsiModificationTracker
+            listOfNotNull(rustStructureOrAnyPsiModificationTracker, localModTracker)
         )
     }
 
