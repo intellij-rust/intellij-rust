@@ -27,7 +27,7 @@ class AddWildcardArmFix(match: RsMatchExpr) : LocalQuickFixOnPsiElement(match) {
         if (lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
             lastMatchArm.add(rsPsiFactory.createComma())
 
-        val newArm = rsPsiFactory.createMatchBody(listOf(Pattern.Wild)).matchArmList.first()
+        val newArm = rsPsiFactory.createMatchBody(listOf(Pattern.wild())).matchArmList.first()
         oldMatchBody.addBefore(newArm, oldMatchBody.rbrace)
     }
 }

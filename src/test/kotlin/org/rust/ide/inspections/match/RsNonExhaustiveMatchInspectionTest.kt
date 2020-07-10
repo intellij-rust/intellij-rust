@@ -710,4 +710,36 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             }
         }
     """)
+
+    fun `test empty match simple enum variants`() = checkFixByText("Add remaining patterns", """
+        enum FooBar { Foo, Bar }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum FooBar { Foo, Bar }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            }
+        }
+    """)
+
+    fun `test empty match ergonomics`() = checkFixByText("Add remaining patterns", """
+        enum E { A, B }
+        fn foo(x: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum E { A, B }
+        fn foo(x: &E) {
+            match/*caret*/ x {
+                E::A => {}
+                E::B => {}
+            }
+        }
+    """)
 }

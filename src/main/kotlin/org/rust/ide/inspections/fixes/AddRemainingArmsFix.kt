@@ -25,8 +25,8 @@ class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : Loc
         val oldMatchBody = (startElement as? RsMatchExpr)?.matchBody ?: return
         val rsPsiFactory = RsPsiFactory(project)
 
-        val lastMatchArm = oldMatchBody.matchArmList.last()
-        if (lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
+        val lastMatchArm = oldMatchBody.matchArmList.lastOrNull()
+        if (lastMatchArm != null && lastMatchArm.expr !is RsBlockExpr && lastMatchArm.comma == null)
             lastMatchArm.add(rsPsiFactory.createComma())
 
         val newArms = rsPsiFactory.createMatchBody(patterns, oldMatchBody).matchArmList

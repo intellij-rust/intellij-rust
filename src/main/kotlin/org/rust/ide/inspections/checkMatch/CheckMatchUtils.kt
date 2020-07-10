@@ -33,13 +33,12 @@ val Matrix.type: Ty
 /**
  * Returns the type of the first column of the matrix
  *
- * @returns [TyUnknown] if there is more than one distinct known type in first column
+ * @returns [null] if there is more than one distinct known type in first column
  */
-val Matrix.firstColumnType: Ty
+val Matrix.firstColumnType: Ty?
     get() = mapNotNull { it.firstOrNull()?.ty }
         .filter { it !is TyUnknown }
         .distinct().singleOrNull()
-        ?: TyUnknown
 
 @Throws(CheckMatchException::class)
 fun List<RsMatchArm>.calculateMatrix(): Matrix =

@@ -40,7 +40,7 @@ class RsNonExhaustiveMatchInspection : RsLocalInspectionTool() {
             .takeIf { it.isEmpty() || it.type !is TyUnknown }
             ?: return
 
-        val wild = Pattern(matchedExprType, PatternKind.Wild)
+        val wild = Pattern.wild(matchedExprType)
         val useful = isUseful(matrix, listOf(wild), true, match.crateRoot, true)
 
         /** if `_` pattern is useful, the match is not exhaustive */
