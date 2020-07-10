@@ -521,10 +521,15 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Unreachable patterns"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.checkMatch.RsUnreachablePatternsInspection"/>
+
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Match Check"
+                         displayName="Non-exhaustive match"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.checkMatch.RsMatchCheckInspection"/>
+                         implementationClass="org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Return can be lifted out"
@@ -682,10 +687,6 @@
         </intentionAction>
         <intentionAction>
             <className>org.rust.ide.intentions.ToggleIgnoreTestIntention</className>
-            <category>Rust</category>
-        </intentionAction>
-        <intentionAction>
-            <className>org.rust.ide.intentions.FillMatchArmsIntention</className>
             <category>Rust</category>
         </intentionAction>
         <intentionAction>

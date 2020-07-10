@@ -51,7 +51,9 @@ enum class RsLint(
                 WARN -> ProblemHighlightType.WEAK_WARNING
                 else -> super.toHighlightingType(level)
             }
-    };
+    },
+
+    UnreachablePattern("unreachable_patterns", listOf("unused"));
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {
