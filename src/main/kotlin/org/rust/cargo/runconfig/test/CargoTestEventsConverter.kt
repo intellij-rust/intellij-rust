@@ -263,6 +263,8 @@ class CargoTestEventsConverter(
 
         private val DOCTEST_PATH_RE: Regex = """"[0-9 a-z_A-Z\-\\.]+ - """.toRegex()
 
+        private val LINE_NUMBER_RE: Regex = """\s+\(line\s+(?<line>\d+)\)\s*""".toRegex()
+
         private val ERROR_MESSAGE_RE: Regex =
             """thread '.*' panicked at '(assertion failed: `\(left (?<sign>.*) right\)`\s*left: `(?<left>.*?)`,\s*right: `(?<right>.*?)`(: )?)?(?<message>.*)',"""
                 .toRegex(setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
@@ -294,15 +296,17 @@ class CargoTestEventsConverter(
             ServiceMessageBuilder.testSuiteFinished(suite.name)
                 .addAttribute("nodeId", suite)
 
-        private fun createTestStartedMessage(test: NodeId): ServiceMessageBuilder =
-            ServiceMessageBuilder.testStarted(test.name)
+        private fun createTestStartedMessage(test: NodeId): ServiceMessageBuilder {
+            // target_name::name1::name2 (line i) -> target_name::name1::name2#i
+            val name = test.replace(LINE_NUMBER_RE) {
+                val line = it.groups["line"]?.value ?: error("Failed to find `line` capturing group")
+                "#$line"
+            }
+            return ServiceMessageBuilder.testStarted(test.name)
                 .addAttribute("nodeId", test)
                 .addAttribute("parentNodeId", test.parent)
-                .addAttribute(
-                    "locationHint",
-                    // target_name::name1::name2 (line #i) -> target_name::name1::name2
-                    CargoTestLocator.getTestUrl(test.substringBefore(" ("))
-                )
+                .addAttribute("locationHint", CargoTestLocator.getTestUrl(name))
+        }
 
         private fun createTestFailedMessage(test: NodeId, failedMessage: String): ServiceMessageBuilder {
             val builder = ServiceMessageBuilder.testFailed(test.name)

@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.URLUtil
@@ -22,6 +21,7 @@ import org.rust.cargo.toolchain.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.plugin
+import org.rust.openapiext.virtualFile
 
 class CreateNewGithubIssue : DumbAwareAction(
     "Create New Issue",
@@ -118,7 +118,7 @@ class CreateNewGithubIssue : DumbAwareAction(
 
         private val Editor.codeExample: String
             get() {
-                if (FileDocumentManager.getInstance().getFile(document)?.isRustFile != true) return ""
+                if (document.virtualFile?.isRustFile != true) return ""
                 val selectedCode = selectionModel.selectedText ?: return ""
                 return "```rust\n$selectedCode\n```"
             }

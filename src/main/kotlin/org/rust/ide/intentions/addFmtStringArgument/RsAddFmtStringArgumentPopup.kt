@@ -18,13 +18,13 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.RsCodeFragment
+import org.rust.openapiext.document
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -37,7 +37,7 @@ object RsAddFmtStringArgumentPopup {
     }
 
     private fun createEditorTextField(project: Project, codeFragment: RsCodeFragment): EditorTextField? {
-        val document = PsiDocumentManager.getInstance(project).getDocument(codeFragment.containingFile) ?: return null
+        val document = codeFragment.containingFile.document ?: return null
         val editorTextField = object : EditorTextField(document, project, RsFileType, false, true) {
             override fun createEditor(): EditorEx {
                 val editor = super.createEditor()

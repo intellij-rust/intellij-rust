@@ -5,10 +5,10 @@
 
 package org.rust.toml
 
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.openapiext.virtualFile
 
 class CargoTomlGotoSuperHandlerTest : RsTestBase() {
 
@@ -34,8 +34,10 @@ class CargoTomlGotoSuperHandlerTest : RsTestBase() {
     private fun checkNavigationInFiles(fileTreeText: String, expectedFilePath: String) {
         fileTreeFromText(fileTreeText).createAndOpenFileWithCaretMarker()
         myFixture.performEditorAction("GotoSuperMethod")
-        val file = FileDocumentManager.getInstance().getFile(
-            FileEditorManager.getInstance(project).selectedTextEditor!!.document)!!
+        val file = FileEditorManager.getInstance(project)
+            .selectedTextEditor
+            ?.document
+            ?.virtualFile!!
         check(file.path.endsWith(expectedFilePath)) { "Expected `$expectedFilePath`, actual `${file.path}`" }
     }
 }

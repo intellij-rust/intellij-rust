@@ -8,6 +8,9 @@ package org.rustSlowTests.cargo.runconfig.test
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.search.GlobalSearchScope
+import org.rust.TestProject
 import org.rust.openapiext.toPsiDirectory
 
 class CargoTestRunnerTest : CargoTestRunnerTestBase() {
@@ -667,7 +670,48 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
     }
 
     fun `test test location`() {
-        buildProject {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[test]
+                    fn /*caret*/test() {}
+                """)
+            }
+        }
+        checkTestLocation("sandbox::test", testProject)
+    }
+
+    fun `test test mod location`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(test)]
+                    mod /*caret*/test_mod {
+                        #[test]
+                        fn test() {}
+                    }
+                """)
+            }
+        }
+        checkTestLocation("sandbox::test_mod", testProject)
+    }
+
+    fun `test nested test location`() {
+        val testProject = buildProject {
             toml("Cargo.toml", """
                 [package]
                 name = "sandbox"
@@ -680,13 +724,29 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                     #[cfg(test)]
                     mod test_mod {
                         #[test]
-                        fn test() {}
+                        fn /*caret*/test() {}
                     }
 
                     #[test]
                     fn test() {}
+                """)
+            }
+        }
+        checkTestLocation("sandbox::test_mod::test", testProject)
+    }
 
-                    /// ```
+    fun `test doctest location 1`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    /*caret*//// ```
                     /// 1;
                     /// ```
                     /// ```
@@ -696,24 +756,31 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
                 """)
             }
         }
-        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
-        val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
-        val root = executeAndGetTestRoot(configuration)
+        checkTestLocation("sandbox (doc-tests)::doctest (line 1)", testProject)
+    }
 
-        val test = root.findTestByName("sandbox::test")
-        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test".toRegex().matches(test.locationUrl ?: ""))
+    fun `test doctest location 2`() {
+        val testProject = buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "sandbox"
+                version = "0.1.0"
+                authors = []
+            """)
 
-        val mod = root.findTestByName("sandbox::test_mod")
-        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test_mod".toRegex().matches(mod.locationUrl ?: ""))
-
-        val testInner = root.findTestByName("sandbox::test_mod::test")
-        assertTrue("cargo:test://sandbox-[a-f0-9]{16}::test_mod::test".toRegex().matches(testInner.locationUrl ?: ""))
-
-        val doctest1 = root.findTestByName("sandbox (doc-tests)::doctest (line 10)")
-        assertEquals("cargo:test://sandbox-0doctests::doctest", doctest1.locationUrl ?: "")
-
-        val doctest2 = root.findTestByName("sandbox (doc-tests)::doctest (line 13)")
-        assertEquals("cargo:test://sandbox-0doctests::doctest", doctest2.locationUrl ?: "")
+            dir("src") {
+                rust("lib.rs", """
+                    /// ```
+                    /// 1;
+                    /// ```
+                    /*caret*//// ```
+                    /// 2;
+                    /// ```
+                    pub fn doctest() {}
+                """)
+            }
+        }
+        checkTestLocation("sandbox (doc-tests)::doctest (line 4)", testProject)
     }
 
     fun `test test duration`() {
@@ -768,6 +835,20 @@ class CargoTestRunnerTest : CargoTestRunnerTestBase() {
         }
         val root = executeAndGetTestRoot(configuration)
         assertEquals(expectedFormattedTestTree.trimIndent(), getFormattedTestTree(root))
+    }
+
+    private fun checkTestLocation(testName: String, testProject: TestProject) {
+        val expectedText = (testProject.psiFile(testProject.fileWithCaret) as PsiFile).text
+        myFixture.configureFromTempProjectFile(testProject.fileWithCaret)
+        myFixture.editor.caretModel.moveToOffset(0)
+        val sourceElement = cargoProjectDirectory.toPsiDirectory(project)!!
+        val configuration = createTestRunConfigurationFromContext(PsiLocation.fromPsiElement(sourceElement))
+        val root = executeAndGetTestRoot(configuration)
+        val test = root.findTestByName(testName)
+        val location = test.getLocation(project, GlobalSearchScope.allScope(project))
+        val desc = location?.openFileDescriptor!!
+        desc.navigateIn(editor)
+        myFixture.checkResult(expectedText)
     }
 
     companion object {

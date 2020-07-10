@@ -9,7 +9,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.xdebugger.XExpression
@@ -21,13 +20,17 @@ import com.jetbrains.cidr.execution.debugger.evaluation.CidrEvaluatedValue
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.openapiext.toPsiFile
 
 class RsEvaluator(frame: CidrStackFrame) : CidrEvaluator(frame) {
-    override fun getExpressionRangeAtOffset(project: Project, document: Document, offset: Int, sideEffectsAllowed: Boolean): TextRange? {
-        return runReadAction {
-            PsiDocumentManager.getInstance(project).getPsiFile(document)?.let { file ->
-                findSuitableExpression(file, offset)?.textRange
-            }
+    override fun getExpressionRangeAtOffset(
+        project: Project,
+        document: Document,
+        offset: Int,
+        sideEffectsAllowed: Boolean
+    ): TextRange? = runReadAction {
+        document.toPsiFile(project)?.let { file ->
+            findSuitableExpression(file, offset)?.textRange
         }
     }
 

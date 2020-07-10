@@ -8,13 +8,13 @@ package org.rust.ide.lineMarkers
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.FunctionUtil
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.openapiext.document
 import java.util.*
 
 /**
@@ -40,7 +40,7 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
                 else -> false
             }
             if (!isRecursive) continue
-            val doc = PsiDocumentManager.getInstance(el.project).getDocument(el.containingFile) ?: continue
+            val doc = el.containingFile.document ?: continue
             val lineNumber = doc.getLineNumber(el.textOffset)
             if (lineNumber !in lines) {
                 lines.add(lineNumber)
