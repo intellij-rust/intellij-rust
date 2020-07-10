@@ -10,8 +10,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.hitOnFalse
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiManager
+import com.intellij.psi.*
 import org.rust.cargo.project.workspace.PackageOrigin.DEPENDENCY
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -22,11 +21,15 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
+import org.rust.lang.doc.RsDocRenderMode
+import org.rust.lang.doc.docElements
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.escaped
 import org.rust.stdext.joinToWithBuffer
+import java.util.function.Consumer
 
-class RsDocumentationProvider : AbstractDocumentationProvider() {
+@Suppress("UnstableApiUsage")
+abstract class RsDocumentationProviderBase : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         val buffer = StringBuilder()
@@ -53,6 +56,15 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             }
             is RsNamedElement -> this += element.presentationInfo?.quickDocumentationText
             else -> return null
+        }
+    }
+
+    override fun collectDocComments(file: PsiFile, sink: Consumer<PsiDocCommentBase>) {
+        if (file !is RsFile) return
+        for (element in SyntaxTraverser.psiTraverser(file)) {
+            if (element is RsDocCommentImpl) {
+                sink.accept(element)
+            }
         }
     }
 

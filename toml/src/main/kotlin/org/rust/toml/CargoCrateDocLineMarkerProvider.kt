@@ -50,12 +50,18 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
     }
 
     private fun genLineMarkerInfo(anchor: PsiElement, name: String, version: String): LineMarkerInfo<PsiElement> {
+        val urlVersion = when {
+            version.isEmpty() -> "*"
+            version.first().isDigit() -> "^${version}"
+            else -> version
+        }
+
         return LineMarkerInfo(
             anchor,
             anchor.textRange,
             RsIcons.DOCS_MARK,
-            { "Open documentation for `$name@$version`" },
-            { _, _ -> BrowserUtil.browse("https://docs.rs/$name/$version/$name") },
+            { "Open documentation for `$name@$urlVersion`" },
+            { _, _ -> BrowserUtil.browse("https://docs.rs/$name/$urlVersion") },
             GutterIconRenderer.Alignment.LEFT)
 
     }

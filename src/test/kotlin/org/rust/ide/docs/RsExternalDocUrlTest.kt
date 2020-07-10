@@ -7,6 +7,7 @@ package org.rust.ide.docs
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.ide.docs.RsDocumentationProviderBase.Testmarks
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsExternalDocUrlTest : RsDocumentationProviderTest() {
@@ -79,7 +80,7 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         #[doc(hidden)]
         pub fn foo() {}
                //^
-    """, null, RsDocumentationProvider.Testmarks.docHidden)
+    """, null, Testmarks.docHidden)
 
     fun `test macro`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
@@ -96,17 +97,17 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
                     //^
             () => { unimplemented!() };
         }
-    """, null, RsDocumentationProvider.Testmarks.notExportedMacro)
+    """, null, Testmarks.notExportedMacro)
 
     fun `test not external url for workspace package`() = doUrlTestByFileTree("""
         //- lib.rs
         pub enum Foo { FOO, BAR }
                 //^
-    """, null, RsDocumentationProvider.Testmarks.nonDependency)
+    """, null, Testmarks.nonDependency)
 
     fun `test not external url for dependency package without source`() = doUrlTestByFileTree("""
         //- no-source-lib/lib.rs
         pub enum Foo { FOO, BAR }
                 //^
-    """, null, RsDocumentationProvider.Testmarks.pkgWithoutSource)
+    """, null, Testmarks.pkgWithoutSource)
 }

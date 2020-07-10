@@ -43,6 +43,9 @@ class RsModuleBuilder : ModuleBuilder() {
         // Just work if user "creates new project" over an existing one.
         if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
             try {
+                // TODO: rewrite this somehow to fix `Synchronous execution on EDT` exception
+                // The problem is that `setupRootModel` is called on EDT under write action
+                // so `$ cargo init` invocation blocks UI thread
                 toolchain.rawCargo().init(
                     modifiableRootModel.project,
                     modifiableRootModel.module,

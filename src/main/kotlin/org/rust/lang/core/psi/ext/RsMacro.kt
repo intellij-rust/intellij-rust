@@ -87,7 +87,7 @@ private val MACRO_CALL_PATTERN: Regex = """(^|[^\p{Alnum}_])(r#)?(?<name>\w+)\s*
  */
 private fun RsMacro.guessPreferredBraces(): MacroBraces {
     val documentation = documentation()
-    if (documentation.isNullOrEmpty()) return MacroBraces.PARENS
+    if (documentation.isEmpty()) return MacroBraces.PARENS
 
     val map: MutableMap<MacroBraces, Int> = EnumMap(MacroBraces::class.java)
     for (result in MACRO_CALL_PATTERN.findAll(documentation)) {
