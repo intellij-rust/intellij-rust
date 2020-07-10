@@ -159,11 +159,12 @@ val Project.dependencyCachePath get(): String {
 
 val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
+val majorVersion = "0.3"
 val patchVersion = prop("patchVersion").toInt()
 
 // Special module with run, build and publish tasks
 project(":plugin") {
-    version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
+    version = "$majorVersion.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
         pluginName = "intellij-rust"
         val plugins = mutableListOf(
