@@ -8,6 +8,7 @@ package org.rust.cargo.runconfig.test
 import com.intellij.execution.Location
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -31,9 +32,9 @@ object CargoTestLocator : SMTestLocator {
         path: String,
         project: Project,
         scope: GlobalSearchScope
-    ): List<Location<PsiElement>> {
+    ): List<Location<out PsiElement>> {
         if (protocol != TEST_PROTOCOL) return emptyList()
-        val qualifiedName = toQualifiedName(path)
+        val (qualifiedName, lineNum) = toQualifiedName(path)
 
         // `RsQualifiedNamedElement.qualifiedName` starts with Cargo target name, so if the `qualifiedName` doesn't
         // contain the name separator, we are looking for a target with the corresponding name
@@ -42,7 +43,7 @@ object CargoTestLocator : SMTestLocator {
                 .filter { it.pkg.origin == PackageOrigin.WORKSPACE }
                 .filter { it.normName == qualifiedName }
                 .mapNotNull { it.crateRoot?.toPsiFile(project) }
-                .map { PsiLocation.fromPsiElement<PsiElement>(it) }
+                .map { getLocation(project, it, lineNum) }
                 .toList()
         }
 
@@ -55,21 +56,32 @@ object CargoTestLocator : SMTestLocator {
                     else -> null
                 }
                 if (sourceElement?.qualifiedName == qualifiedName) {
-                    add(PsiLocation.fromPsiElement(sourceElement))
+                    add(getLocation(project, sourceElement, lineNum))
                 }
             }
         }
     }
+
+    private fun getLocation(project: Project, element: PsiElement, lineNum: Int?) =
+        if (lineNum != null) {
+            object : PsiLocation<PsiElement>(project, element) {
+                override fun getOpenFileDescriptor(): OpenFileDescriptor? =
+                    virtualFile?.let { OpenFileDescriptor(project, it, lineNum, 0) }
+            }
+        } else {
+            PsiLocation.fromPsiElement(element)
+        }
 
     fun getTestUrl(name: String): String = "$TEST_PROTOCOL://$name"
 
     fun getTestUrl(function: RsQualifiedNamedElement): String =
         getTestUrl(function.qualifiedName ?: "")
 
-    private fun toQualifiedName(path: String): String {
+    private fun toQualifiedName(path: String): Pair<String, Int?> {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
-        if (!path.contains(NAME_SEPARATOR)) return targetName
-        val qualifiedName = path.substringAfter(NAME_SEPARATOR)
-        return "$targetName$NAME_SEPARATOR$qualifiedName"
+        if (NAME_SEPARATOR !in path) return targetName to null
+        val qualifiedName = path.substringAfter(NAME_SEPARATOR).substringBefore("#")
+        val lineNum = if ("#" in path) path.substringAfterLast("#").toInt() - 1 else null
+        return "$targetName$NAME_SEPARATOR$qualifiedName" to lineNum
     }
 }
