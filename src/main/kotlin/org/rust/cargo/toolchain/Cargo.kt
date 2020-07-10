@@ -486,6 +486,18 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
             )
         }
 
+        fun checkNeedInstallWasmPack(project: Project): Boolean {
+            val crateName = "wasm-pack"
+            val minVersion = SemVer("v0.9.1", 0, 9, 1)
+            return checkNeedInstallBinaryCrate(
+                project,
+                crateName,
+                NotificationType.ERROR,
+                "Need at least $crateName $minVersion",
+                minVersion
+            )
+        }
+
         private fun checkNeedInstallBinaryCrate(
             project: Project,
             crateName: String,

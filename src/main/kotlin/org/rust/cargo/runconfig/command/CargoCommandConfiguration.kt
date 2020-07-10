@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig.command
 
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
-import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -19,8 +18,7 @@ import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.CargoRunState
-import org.rust.cargo.runconfig.CargoTestRunState
+import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
@@ -196,46 +194,3 @@ class CargoCommandConfiguration(
 }
 
 val CargoProject.workingDirectory: Path get() = manifest.parent
-
-private fun Element.writeString(name: String, value: String) {
-    val opt = org.jdom.Element("option")
-    opt.setAttribute("name", name)
-    opt.setAttribute("value", value)
-    addContent(opt)
-}
-
-private fun Element.readString(name: String): String? =
-    children
-        .find { it.name == "option" && it.getAttributeValue("name") == name }
-        ?.getAttributeValue("value")
-
-private fun Element.writeBool(name: String, value: Boolean) {
-    writeString(name, value.toString())
-}
-
-private fun Element.readBool(name: String): Boolean? =
-    readString(name)?.toBoolean()
-
-private fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
-    writeString(name, value.name)
-}
-
-private inline fun <reified E : Enum<E>> Element.readEnum(name: String): E? {
-    val variantName = readString(name) ?: return null
-    return try {
-        java.lang.Enum.valueOf(E::class.java, variantName)
-    } catch (_: IllegalArgumentException) {
-        null
-    }
-}
-
-private fun Element.writePath(name: String, value: Path?) {
-    if (value != null) {
-        val s = ExternalizablePath.urlValue(value.toString())
-        writeString(name, s)
-    }
-}
-
-private fun Element.readPath(name: String): Path? {
-    return readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }
-}

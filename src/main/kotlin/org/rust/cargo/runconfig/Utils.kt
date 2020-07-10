@@ -5,6 +5,7 @@
 
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.filters.Filter
@@ -12,6 +13,7 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -26,6 +28,8 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.run
 import org.rust.openapiext.checkIsDispatchThread
 import org.rust.stdext.buildList
+import java.nio.file.Path
+import java.nio.file.Paths
 
 fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): CargoCommandLine =
     copy(
@@ -121,4 +125,47 @@ sealed class BuildResult {
         object GNUWithRustMSVC : ToolchainError("GNU debugger cannot be used with MSVC Rust toolchain")
         class Other(message: String) : ToolchainError(message)
     }
+}
+
+fun Element.writeString(name: String, value: String) {
+    val opt = Element("option")
+    opt.setAttribute("name", name)
+    opt.setAttribute("value", value)
+    addContent(opt)
+}
+
+fun Element.readString(name: String): String? =
+    children
+        .find { it.name == "option" && it.getAttributeValue("name") == name }
+        ?.getAttributeValue("value")
+
+fun Element.writeBool(name: String, value: Boolean) {
+    writeString(name, value.toString())
+}
+
+fun Element.readBool(name: String): Boolean? =
+    readString(name)?.toBoolean()
+
+fun <E : Enum<*>> Element.writeEnum(name: String, value: E) {
+    writeString(name, value.name)
+}
+
+inline fun <reified E : Enum<E>> Element.readEnum(name: String): E? {
+    val variantName = readString(name) ?: return null
+    return try {
+        java.lang.Enum.valueOf(E::class.java, variantName)
+    } catch (_: IllegalArgumentException) {
+        null
+    }
+}
+
+fun Element.writePath(name: String, value: Path?) {
+    if (value != null) {
+        val s = ExternalizablePath.urlValue(value.toString())
+        writeString(name, s)
+    }
+}
+
+fun Element.readPath(name: String): Path? {
+    return readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }
 }
