@@ -7,6 +7,7 @@ package org.rust.ide.inspections.match
 
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection
 
@@ -763,6 +764,136 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
                 FooBar::Foo { .. } => {}
                 FooBar::Bar { .. } => {}
             }
+        }
+    """)
+
+    fun `test empty match different enum variants`() = checkFixByText("Add remaining patterns", """
+        enum Foo {
+            X,
+            Y(i32),
+            Z { foo: bool }
+        }
+
+        fn foo(x: Foo) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum Foo {
+            X,
+            Y(i32),
+            Z { foo: bool }
+        }
+
+        fn foo(x: Foo) {
+            match/*caret*/ x {
+                Foo::X => {}
+                Foo::Y(_) => {}
+                Foo::Z { .. } => {}
+            }
+        }
+    """)
+
+    fun `test empty match don't remove comments`() = checkFixByText("Add remaining patterns", """
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {
+                // test
+            }
+        }
+    """, """
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                // test
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test empty match Option enum`() = checkFixByText("Add remaining patterns", """
+        fn foo(x: Option<i32>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        fn foo(x: Option<i32>) {
+            match/*caret*/ x {
+                None => {}
+                Some(_) => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test empty match Result enum`() = checkFixByText("Add remaining patterns", """
+        fn foo(x: Result<i32, bool>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        fn foo(x: Result<i32, bool>) {
+            match/*caret*/ x {
+                Ok(_) => {}
+                Err(_) => {}
+            }
+        }
+    """)
+
+    fun `test empty match one variant is in scope`() = checkFixByText("Add remaining patterns", """
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            match/*caret*/ x {
+                A => {}
+                E::B => {}
+            }
+        }
+    """)
+
+    fun `test empty match import unresolved type`() = checkFixByText("Add remaining patterns", """
+        use a::foo;
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> foo() {};
+        }
+    """, """
+        use a::{foo, FooBar};
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            match/*caret*/ foo() {
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            };
         }
     """)
 }

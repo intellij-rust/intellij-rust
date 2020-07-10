@@ -17,7 +17,6 @@ import org.rust.lang.core.macros.prepareExpandedTextForParsing
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.VALUES
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.Mutability
@@ -313,23 +312,6 @@ class RsPsiFactory(
     fun createInnerAttr(text: String): RsInnerAttr =
         createFromText("#![$text]")
             ?: error("Failed to create an inner attribute from text: `$text`")
-
-    fun createMatchBody(context: RsElement, enumName: String, variants: List<RsEnumVariant>): RsMatchBody {
-        val matchBodyText = variants.joinToString(",\n", postfix = ",") { variant ->
-            val variantName = variant.name ?: return@joinToString ""
-            val tupleFields = variant.tupleFields?.tupleFieldDeclList
-            val blockFields = variant.blockFields
-            val suffix = when {
-                tupleFields != null -> tupleFields.joinToString(", ", " (", ")") { "_" }
-                blockFields != null -> " { .. }"
-                else -> ""
-            }
-            val prefix = if (context.findInScope(variantName, VALUES) != variant) "$enumName::" else ""
-            "$prefix$variantName$suffix => {}"
-        }
-        return createExpressionOfType<RsMatchExpr>("match x { $matchBodyText }").matchBody
-            ?: error("Failed to create match body from text: `$matchBodyText`")
-    }
 
     fun createMatchBody(patterns: List<Pattern>, ctx: RsElement? = null): RsMatchBody {
         val arms = patterns.joinToString("\n") { "${it.text(ctx)} => {}" }

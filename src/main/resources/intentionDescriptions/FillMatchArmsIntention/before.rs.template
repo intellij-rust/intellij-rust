@@ -1,3 +1,0 @@
-fn foo(opt: Option<i32>) {
-    <spot>match x { }</spot>
-}
