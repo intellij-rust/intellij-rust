@@ -198,6 +198,14 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
     """)
 
+    fun `test type declared by a macro`() = doTest("""
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
+        as_is! { struct /*caret_after*/S; }
+        fn main() {
+            let /*caret_before*/a = S;
+        }
+    """)
+
     private fun doTest(@Language("Rust") code: String) = checkCaretMove(code) {
         myFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
     }

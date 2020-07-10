@@ -16,6 +16,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.completion.getOriginalOrSelf
+import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
@@ -93,6 +94,10 @@ abstract class RsElementImpl(node: ASTNode) : ASTWrapperPsiElement(node), RsElem
 
     final override val crateRoot: RsMod?
         get() = (contextualFile as? RsElement)?.crateRoot
+
+    override fun getNavigationElement(): PsiElement {
+        return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
+    }
 }
 
 abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElementBase<StubT>, RsElement {
@@ -107,6 +112,10 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
     final override val crateRoot: RsMod?
         get() = (contextualFile as? RsElement)?.crateRoot
+
+    override fun getNavigationElement(): PsiElement {
+        return findNavigationTargetIfMacroExpansion() ?: super.getNavigationElement()
+    }
 
     override fun toString(): String = "${javaClass.simpleName}($elementType)"
 }
