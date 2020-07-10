@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.checkMatch
 
+import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsElement
@@ -95,8 +96,12 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
 
 private fun RsFieldsOwner.initializer(subPatterns: List<Pattern>, ctx: RsElement?): String = when {
     blockFields != null -> {
-        subPatterns.withIndex().joinToString(",", "{", "}") { (index, pattern) ->
-            "${blockFields!!.namedFieldDeclList[index].name}: ${pattern.text(ctx)}"
+        if (subPatterns.all { it.kind is PatternKind.Wild }) {
+            "{ .. }"
+        } else {
+            subPatterns.withIndex().joinToString(",", "{", "}") { (index, pattern) ->
+                "${blockFields!!.namedFieldDeclList[index].name}: ${pattern.text(ctx)}"
+            }
         }
     }
     tupleFields != null -> subPatterns.joinToString(",", "(", ")") { it.text(ctx) }

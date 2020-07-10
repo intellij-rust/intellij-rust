@@ -742,4 +742,27 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             }
         }
     """)
+
+    fun `test empty match struct enum variants`() = checkFixByText("Add remaining patterns", """
+        enum FooBar {
+            Foo { foo: i32 },
+            Bar { bar1: bool, bar2: f64 }
+        }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum FooBar {
+            Foo { foo: i32 },
+            Bar { bar1: bool, bar2: f64 }
+        }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                FooBar::Foo { .. } => {}
+                FooBar::Bar { .. } => {}
+            }
+        }
+    """)
 }
