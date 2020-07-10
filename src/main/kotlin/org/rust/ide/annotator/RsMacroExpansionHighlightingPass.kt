@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.isEnabledByCfg
@@ -41,11 +42,18 @@ class RsMacroExpansionHighlightingPassFactory(
 
     override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
         if (project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return null
+        if (!MACRO_HIGHLIGHTING_ENABLED_KEY.asBoolean()) return null
+
         val restrictedRange = FileStatusMap.getDirtyTextRange(editor, passId) ?: return null
         return RsMacroExpansionHighlightingPass(file, restrictedRange, editor.document)
     }
 
     override fun getPassId(): Int = myPassId
+
+    companion object {
+        @JvmStatic
+        private val MACRO_HIGHLIGHTING_ENABLED_KEY = Registry.get("org.rust.lang.highlight.macro.body")
+    }
 }
 
 class RsMacroExpansionHighlightingPass(
