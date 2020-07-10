@@ -19,7 +19,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 class RsDuplicateInspectionTest : RsInspectionsTestBase(DuplicateInspection::class) {
 
     private val scope = RsDuplicateScope()
-    private val inspectionState by lazy { (inspection as DuplicateInspection).state.findConfiguration(scope)!! }
+    private val inspectionState by lazy { RsDuplicateInspectionUtils.findConfiguration(inspection as DuplicateInspection, scope)!! }
     private val indexState by lazy { scope.indexConfiguration }
 
     fun `test duplicate`() = doTest("""
