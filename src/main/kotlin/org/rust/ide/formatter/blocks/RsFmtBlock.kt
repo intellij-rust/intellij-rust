@@ -14,6 +14,7 @@ import org.rust.ide.formatter.RsFormattingModelBuilder
 import org.rust.ide.formatter.impl.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.doc.psi.RsDocElementTypes.DOC_GAP
 
 class RsFmtBlock(
     private val node: ASTNode,
@@ -97,9 +98,9 @@ class RsFmtBlock(
         }
 
         val indent = when {
-        // Flat brace blocks do not have separate PSI node for content blocks
-        // so we have to manually decide whether new child is before (no indent)
-        // or after (normal indent) left brace node.
+            // Flat brace blocks do not have separate PSI node for content blocks
+            // so we have to manually decide whether new child is before (no indent)
+            // or after (normal indent) left brace node.
             node.isFlatBraceBlock -> {
                 val lbraceIndex = subBlocks.indexOfFirst { it is ASTBlock && it.node?.elementType == LBRACE }
                 if (lbraceIndex != -1 && lbraceIndex < newChildIndex) {
@@ -109,13 +110,15 @@ class RsFmtBlock(
                 }
             }
 
-        // We are inside some kind of {...}, [...], (...) or <...> block
+            // We are inside some kind of {...}, [...], (...) or <...> block
             node.isDelimitedBlock -> Indent.getNormalIndent()
 
-        // Indent expressions (chain calls, binary expressions, ...)
+            // Indent expressions (chain calls, binary expressions, ...)
             node.psi is RsExpr -> Indent.getContinuationWithoutFirstIndent()
 
-        // Otherwise we don't want any indentation (null means continuation indent)
+            node.elementType == DOC_GAP && node.chars.startsWith('*') -> Indent.getSpaceIndent(1)
+
+            // Otherwise we don't want any indentation (null means continuation indent)
             else -> Indent.getNoneIndent()
         }
         return ChildAttributes(indent, null)

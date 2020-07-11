@@ -6,7 +6,10 @@
 package org.rust.lang.doc.psi.impl
 
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
-import com.intellij.psi.*
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiLanguageInjectionHost
+import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.tree.AstBufferUtil
 import com.intellij.psi.impl.source.tree.CompositePsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -15,6 +18,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
 import org.rust.ide.injected.RsDoctestLanguageInjector
 import org.rust.lang.core.completion.getOriginalOrSelf
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.*
 import org.rust.lang.doc.ref.RsDocLinkDestinationReferenceImpl
@@ -112,15 +116,20 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
         val docKind = RsDocKind.of(containingDoc.elementType)
         val infix = docKind.infix
 
-        val prevSiblingText = prevSibling.text ?: "" // Should starts with `infix` (e.g. `/// `)
+        val prevSibling = getPrevNonWhitespaceSibling() // Should be an `infix` (e.g. `///`)
 
         val newText = StringBuilder()
 
-        if (!prevSiblingText.trimStart().startsWith(docKind.prefix)) {
+        if (prevSibling?.text != docKind.prefix) {
             newText.append(docKind.prefix)
             newText.append("\n")
         }
-        newText.append(prevSiblingText)
+
+        newText.append(docKind.infix)
+
+        if (prevSibling != null && prevSibling.nextSibling != this) {
+            newText.append(prevSibling.nextSibling.text)
+        }
 
         var prevIndent = ""
         var index = 0
@@ -148,12 +157,15 @@ class RsDocCodeFenceImpl(type: IElementType) : RsDocElementImpl(type), RsDocCode
             }
         }
 
+        if (docKind.isBlock && !newText.endsWith("*/")) {
+            newText.append("\n*/")
+        }
+
         // There are some problems with indentation if we just use replaceWithText(text).
         // copied from PsiCommentManipulator
-        val type = containingFile.fileType
-        val fromText = PsiFileFactory.getInstance(project).createFileFromText("__." + type.defaultExtension, type, newText)
+        val fromText = RsPsiFactory(project, markGenerated = true).createFile(newText)
         val newElement = PsiTreeUtil.findChildOfType(fromText, javaClass, false)
-            ?: error(type.toString() + " " + type.defaultExtension + " " + newText)
+            ?: error(newText)
         return replace(newElement) as RsDocCodeFenceImpl
     }
 

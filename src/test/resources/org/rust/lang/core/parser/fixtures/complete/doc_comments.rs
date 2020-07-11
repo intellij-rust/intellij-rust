@@ -74,3 +74,16 @@
 /// [multiline]:
 /// foobar
 fn foo() {}
+
+mod foo {
+    ///
+    ///
+    ///
+    fn bar() {}
+
+    /**
+     * starred line
+       not starred line
+     */
+    fn baz() {}
+}

@@ -17,7 +17,7 @@ import org.rust.lang.doc.psi.RsDocCodeFence
 import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.doc.psi.RsDocLinkReferenceDef
 
-class RsDocCommentImpl(type: IElementType, text: CharSequence) : LazyParseablePsiElement(type, text), RsDocComment {
+class RsDocCommentImpl(type: IElementType, text: CharSequence?) : LazyParseablePsiElement(type, text), RsDocComment {
     override fun getTokenType(): IElementType = elementType
 
     override fun getReferences(): Array<PsiReference> {

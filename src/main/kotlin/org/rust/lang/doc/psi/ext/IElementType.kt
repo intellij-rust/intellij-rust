@@ -9,4 +9,4 @@ import com.intellij.psi.tree.IElementType
 import org.rust.lang.doc.psi.RsDocElementTypes
 
 val IElementType.isDocCommentLeafToken: Boolean
-    get() = this == RsDocElementTypes.DOC_GAP || this == RsDocElementTypes.DOC_TEXT
+    get() = this == RsDocElementTypes.DOC_GAP || this == RsDocElementTypes.DOC_DATA

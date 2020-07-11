@@ -19,24 +19,26 @@ interface RsDocElement : RsElement {
 }
 
 /**
- * A skipped `/// ` (or other kind of documentation comment decorations)
+ * A skipped `///` (or other kind of documentation comment decorations)
  * is treated as a comment leaf in the markdown tree
  */
 interface RsDocGap : PsiComment
 
 /**
- * Header 1
- * ========
- *
- * Header 2
- * --------
- *
- * # Header 1
- * ## Header 2
- * ### Header 3
- * #### Header 4
- * ##### Header 5
- * ###### Header 6
+ * ```
+ * /// Header 1
+ * /// ========
+ * ///
+ * /// Header 2
+ * /// --------
+ * ///
+ * /// # Header 1
+ * /// ## Header 2
+ * /// ### Header 3
+ * /// #### Header 4
+ * /// ##### Header 5
+ * /// ###### Header 6
+ * ```
  */
 interface RsDocHeading : RsDocElement
 
@@ -52,42 +54,32 @@ interface RsDocCodeSpan : RsDocElement
 /** <http://example.com> */
 interface RsDocAutoLink : RsDocElement
 
-interface RsDocLink : RsDocElement {
-    val linkTextOrLabel: RsDocElement
-}
+interface RsDocLink : RsDocElement
 
 /**
  * ```
- * [link text](link_destination)
+ * /// [link text](link_destination)
  * ```
  */
 interface RsDocInlineLink : RsDocLink {
     val linkText: RsDocLinkText
     val linkDestination: RsDocLinkDestination
-
-    @JvmDefault
-    override val linkTextOrLabel: RsDocElement
-        get() = linkText
 }
 
 /**
  * ```
- * [link label]
+ * /// [link label]
  * ```
  *
  * Then, the link should be defined with [RsDocLinkReferenceDef]
  */
 interface RsDocLinkReferenceShort : RsDocLink {
     val linkLabel: RsDocLinkLabel
-
-    @JvmDefault
-    override val linkTextOrLabel: RsDocElement
-        get() = linkLabel
 }
 
 /**
  * ```
- * [link text][link label]
+ * /// [link text][link label]
  * ```
  *
  * Then, the link should be defined with [RsDocLinkReferenceDef] (identified by [linkLabel])
@@ -95,24 +87,16 @@ interface RsDocLinkReferenceShort : RsDocLink {
 interface RsDocLinkReferenceFull : RsDocLink {
     val linkText: RsDocLinkText
     val linkLabel: RsDocLinkLabel
-
-    @JvmDefault
-    override val linkTextOrLabel: RsDocElement
-        get() = linkText
 }
 
 /**
  * ```
- * [link label]: link_destination
+ * /// [link label]: link_destination
  * ```
  */
 interface RsDocLinkReferenceDef : RsDocLink {
     val linkLabel: RsDocLinkLabel
     val linkDestination: RsDocLinkDestination
-
-    @JvmDefault
-    override val linkTextOrLabel: RsDocElement
-        get() = linkLabel
 }
 
 interface RsDocLinkText : RsDocElement

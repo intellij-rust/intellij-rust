@@ -19,9 +19,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.util.text.CharArrayUtil
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
-import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
-import org.rust.lang.doc.psi.ext.isInEolDocComment
 
 data class CommentHolder(val file: PsiFile) : CommenterDataHolder() {
     fun useSpaceAfterLineComment(): Boolean {
@@ -80,7 +78,7 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
         SelfManagingCommenterUtil.uncommentBlockComment(startOffset, endOffset, document, blockCommentPrefix, blockCommentSuffix)
 
     override fun isLineCommented(line: Int, offset: Int, document: Document, data: CommentHolder): Boolean {
-        return getStartLineComment(line, document, data.file)?.isEolComment ?: false
+        return LINE_PREFIXES.any { CharArrayUtil.regionMatches(document.charsSequence, offset, it) }
     }
 
     override fun commentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
@@ -117,12 +115,3 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
         private val LINE_PREFIXES = listOf(RsDocKind.OuterEol.prefix, RsDocKind.InnerEol.prefix, "//")
     }
 }
-
-private fun getStartLineComment(line: Int, document: Document, file: PsiFile): PsiComment? {
-    val offset = document.getLineStartOffset(line)
-    val chars = document.charsSequence
-    return file.findElementAt(CharArrayUtil.shiftForward(chars, offset, " \t")) as? PsiComment
-}
-
-private val PsiComment.isEolComment: Boolean
-    get() = tokenType in RS_EOL_COMMENTS || isInEolDocComment

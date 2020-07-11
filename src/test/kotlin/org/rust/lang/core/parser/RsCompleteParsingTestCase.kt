@@ -9,7 +9,6 @@ import com.intellij.psi.PsiFile
 
 class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
-    fun `test doc comments`() = doTest(true)
     fun `test fn`() = doTest(true)
     fun `test turbo`() = doTest(true)
     fun `test numbers`() = doTest(true)
@@ -41,6 +40,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test oror`() = doTest(true)
     fun `test andand`() = doTest(true)
     fun `test comment binding`() = doTest(true)
+    fun `test doc comments`() = doTest(true)
     fun `test associated types`() = doTest(true)
     fun `test last block is expression`() = doTest(true)
     fun `test loops`() = doTest(true)

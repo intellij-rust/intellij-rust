@@ -7,9 +7,12 @@ package org.rust.lang.doc.psi
 
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.source.tree.*
-import com.intellij.psi.tree.IElementType
+import com.intellij.psi.impl.source.tree.CompositeElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl
+import com.intellij.psi.impl.source.tree.SharedImplUtil
 import com.intellij.psi.tree.ILazyParseableElementType
+import com.intellij.util.CharTable
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.parser.MarkdownParser
@@ -23,81 +26,93 @@ class RsDocCommentElementType(debugName: String) : ILazyParseableElementType(deb
     override fun doParseContents(chameleon: ASTNode, psi: PsiElement): ASTNode {
         val charTable = SharedImplUtil.findCharTableByTree(chameleon)
         val textMap = DocTextMap.new(chameleon.text, RsDocKind.of(this))
-        val markdownRoot = MarkdownParser(GFMFlavourDescriptor()).buildMarkdownTreeFromString(textMap.mappedText.toString())
 
-        val builder = object {
-            private var prevNodeEnd = 0
-
-            private fun CompositeElement.insertLeaves(startOffset: Int, endOffset: Int) {
-                for (piece in textMap.split(startOffset, endOffset)) {
-                    val text = charTable.intern(piece.str)
-                    val leaf = when (piece) {
-                        is Piece.Text -> LeafPsiElement(RsDocElementTypes.DOC_TEXT, text)
-                        is Piece.Gap -> {
-                            val ws = CharArrayUtil.shiftForward(text, 0, "\n\t ")
-                            if (ws != 0) {
-                                rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(text.substring(0, ws)))
-                            }
-                            RsDocGapImpl(RsDocElementTypes.DOC_GAP, text.substring(ws))
-                        }
-                    }
-                    rawAddChildrenWithoutNotifications(leaf)
-                }
-            }
-
-            private fun CompositeElement.insertLeaves(endOffset: Int) {
-                val endOffsetMapped = textMap.mapOffsetFromMarkdownToRust(endOffset)
-                if (endOffsetMapped != prevNodeEnd) {
-                    insertLeaves(prevNodeEnd, endOffsetMapped)
-                }
-                prevNodeEnd = endOffsetMapped
-            }
-
-            fun visitNode(parent: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode) {
-                val type = RsDocElementTypes.map(markdownNode.type)
-                if (type == null) {
-                    if (markdownNode !is org.intellij.markdown.ast.LeafASTNode) {
-                        visitChildren(parent, markdownNode)
-                    }
-                    return
-                }
-
-                parent.insertLeaves(markdownNode.startOffset)
-
-                val node = type.createCompositeNode()
-                parent.rawAddChildrenWithoutNotifications(node)
-
-                visitChildren(node, markdownNode)
-                node.insertLeaves(markdownNode.endOffset)
-            }
-
-            private fun visitChildren(node: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode) {
-                for (markdownChild in markdownNode.children) {
-                    visitNode(node, markdownChild)
-                }
-            }
-
-            fun visitRoot(root: CompositeElement, markdownRoot: org.intellij.markdown.ast.ASTNode) {
-                for (markdownChild in markdownRoot.children) {
-                    visitNode(root, markdownChild)
-                }
-
-                if (prevNodeEnd < textMap.originalText.length) {
-                    root.insertLeaves(prevNodeEnd, textMap.originalText.length)
-                }
-            }
-        }
-
-        val root = RsDummyCompositePsiElement(this)
-        builder.visitRoot(root, markdownRoot)
-
-        check(textMap.originalText.contentEquals(root.chars)) { "`${textMap.originalText}` != `${root.text}`" }
+        val root = RsDocCommentImpl(this, null)
+        RsDocMarkdownAstBuilder(textMap, charTable).buildTree(
+            root,
+            MarkdownParser(GFMFlavourDescriptor()).buildMarkdownTreeFromString(textMap.mappedText.toString())
+        )
 
         return root.firstChildNode
     }
 
     override fun createNode(text: CharSequence): ASTNode? = RsDocCommentImpl(this, text)
 }
+
+private class RsDocMarkdownAstBuilder(
+    private val textMap: DocTextMap,
+    private val charTable: CharTable
+) {
+    private var prevNodeEnd = 0
+
+    private fun CompositeElement.insertLeaves(startOffset: Int, endOffset: Int) {
+        for (piece in textMap.split(startOffset, endOffset)) {
+            when (piece) {
+                is Piece.Text -> {
+                    rawAddChildrenWithoutNotifications(LeafPsiElement(RsDocElementTypes.DOC_DATA, charTable.intern(piece.str)))
+                }
+                is Piece.Gap -> {
+                    val gapStart = CharArrayUtil.shiftForward(piece.str, 0, "\n\t ")
+                    if (gapStart != 0) {
+                        rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(charTable.intern(piece.str.substring(0, gapStart))))
+                    }
+                    if (gapStart != piece.str.length) {
+                        val gapEnd = CharArrayUtil.shiftBackward(piece.str, gapStart, piece.str.lastIndex, "\n\t ") + 1
+                        val gapText = charTable.intern(piece.str, gapStart, gapEnd)
+                        check(gapText.isNotEmpty())
+                        rawAddChildrenWithoutNotifications(RsDocGapImpl(RsDocElementTypes.DOC_GAP, gapText))
+                        if (gapEnd != piece.str.length) {
+                            rawAddChildrenWithoutNotifications(PsiWhiteSpaceImpl(charTable.intern(piece.str.substring(gapEnd))))
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun CompositeElement.insertLeaves(endOffset: Int) {
+        val endOffsetMapped = textMap.mapOffsetFromMarkdownToRust(endOffset)
+        if (endOffsetMapped != prevNodeEnd) {
+            insertLeaves(prevNodeEnd, endOffsetMapped)
+        }
+        prevNodeEnd = endOffsetMapped
+    }
+
+    private fun visitNode(parent: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode) {
+        val type = RsDocElementTypes.map(markdownNode.type)
+        if (type == null) {
+            if (markdownNode !is org.intellij.markdown.ast.LeafASTNode) {
+                visitChildren(parent, markdownNode)
+            }
+            return
+        }
+
+        parent.insertLeaves(markdownNode.startOffset)
+
+        val node = type.createCompositeNode()
+        parent.rawAddChildrenWithoutNotifications(node)
+
+        visitChildren(node, markdownNode)
+        node.insertLeaves(markdownNode.endOffset)
+    }
+
+    private fun visitChildren(node: CompositeElement, markdownNode: org.intellij.markdown.ast.ASTNode) {
+        for (markdownChild in markdownNode.children) {
+            visitNode(node, markdownChild)
+        }
+    }
+
+    fun buildTree(root: CompositeElement, markdownRoot: org.intellij.markdown.ast.ASTNode) {
+        for (markdownChild in markdownRoot.children) {
+            visitNode(root, markdownChild)
+        }
+
+        if (prevNodeEnd < textMap.originalText.length) {
+            root.insertLeaves(prevNodeEnd, textMap.originalText.length)
+        }
+    }
+}
+
 
 private class DocTextMap(
     val originalText: String,
@@ -125,7 +140,7 @@ private class DocTextMap(
     companion object {
         fun new(text: String, kind: RsDocKind): DocTextMap {
             val pieces = mutableListOf<Piece>()
-            val md = StringBuilder()
+            val mappedText = StringBuilder()
             val map = IntArray(text.length)
             var counter = 0
             val lines = kind.removeDecorationToLines(text).toList()
@@ -139,19 +154,19 @@ private class DocTextMap(
                     counter += prefix.length
                 }
 
-                val hasLineBreak = suffix.isEmpty() && !isLast
+                val hasLineBreak = !isLast && suffix.isEmpty()
                 val content = line.content
                 val new = content + if (hasLineBreak) "\n" else ""
-                if (new.isNotEmpty()) {
+                if (content.isNotEmpty() || hasLineBreak) {
                     if (content.isNotEmpty()) {
                         pieces += Piece.Text(content)
                     }
                     for (j in new.indices) {
-                        map[md.length + j] = counter + j
+                        map[mappedText.length + j] = counter + j
                     }
-                    map[md.length + new.length] = counter + new.length
+                    map[mappedText.length + new.length] = counter + new.length
                     counter += new.length
-                    md.append(new)
+                    mappedText.append(new)
                 }
 
                 if (hasLineBreak) {
@@ -165,7 +180,7 @@ private class DocTextMap(
                 }
             }
 
-            return DocTextMap(text, md, map, pieces)
+            return DocTextMap(text, mappedText, map, pieces)
         }
 
         private fun MutableList<Piece>.mergeAddGap(gap: String) {
@@ -190,5 +205,3 @@ private fun Piece.cut(startOffset: Int, endOffset: Int): Piece {
         is Piece.Gap -> Piece.Gap(newStr)
     }
 }
-
-private class RsDummyCompositePsiElement(type: IElementType) : CompositePsiElement(type)

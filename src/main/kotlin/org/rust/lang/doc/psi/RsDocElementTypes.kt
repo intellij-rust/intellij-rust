@@ -10,7 +10,7 @@ import org.rust.lang.doc.psi.impl.*
 
 @Suppress("MemberVisibilityCanBePrivate")
 object RsDocElementTypes {
-    val DOC_TEXT = RsDocTokenType("<DOC_TEXT>")
+    val DOC_DATA = RsDocTokenType("<DOC_DATA>")
     val DOC_GAP = RsDocTokenType("<DOC_GAP>")
 
     val DOC_HEADING = RsDocCompositeTokenType("<DOC_HEADING>", ::RsDocHeadingImpl)
