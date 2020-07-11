@@ -153,18 +153,23 @@ private object BlockMayHaveStubsHeuristic {
         // See `RsBlockStubType.reuseCollapsedTokens`
         val b = PsiBuilderFactory.getInstance().createBuilder(node.psi.project, node, null, RsLanguage, node.chars)
         var prevToken: IElementType? = null
+        var prevTokenText: String? = null
         while (true) {
             val token = b.tokenType ?: break
             val looksLikeStubElement = token in ITEM_DEF_KWS
-                || token == CONST && prevToken != MUL     // `const` but not `*const`
-                || token == EXCL && prevToken == SHA      // `#!`
-                || token == IDENTIFIER && prevToken == FN // `fn foo` (but not `fn()`)
+                // `const` but not `*const` and not `raw const`
+                || token == CONST && !(prevToken == MUL || prevToken == IDENTIFIER && prevTokenText == "raw")
+                // `#!`
+                || token == EXCL && prevToken == SHA
+                // `fn foo` (but not `fn()`)
+                || token == IDENTIFIER && prevToken == FN
                 || token == IDENTIFIER && b.tokenText == "union" && b.lookAhead(1) == IDENTIFIER
             if (looksLikeStubElement) {
                 return true
             }
-            b.advanceLexer()
             prevToken = token
+            prevTokenText = if (token == IDENTIFIER) b.tokenText else null
+            b.advanceLexer()
         }
 
         return false
