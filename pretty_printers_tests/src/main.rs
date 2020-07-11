@@ -39,25 +39,18 @@ fn main() -> Result<(), ()> {
     let debugger = args.get(1).expect("You need to choose a debugger (lldb or gdb)").clone().to_lowercase();
     let debugger_path = args.get(2);
 
-    // BACKOMPAT: 2019.3
-    let platform_version: i32 = if let Some(num) = args.get(3) {
-        num.parse().unwrap_or(201)
-    } else {
-        201
-    };
-
     if debugger == "lldb" {
         let lldb_python = debugger_path.unwrap_or(&String::from("./")).clone();
-        test(Debugger::LLDB, lldb_python, platform_version)
+        test(Debugger::LLDB, lldb_python)
     } else if debugger == "gdb" {
         let gdb_binary = args.get(2).unwrap_or(&String::from("gdb")).clone();
-        test(Debugger::GDB, gdb_binary, platform_version)
+        test(Debugger::GDB, gdb_binary)
     } else {
         panic!("Invalid debugger");
     }
 }
 
-fn test(debugger: Debugger, path: String, platform_version: i32) -> Result<(), ()> {
+fn test(debugger: Debugger, path: String) -> Result<(), ()> {
     let settings = fs::read_to_string(SETTINGS).expect(&format!("Cannot read {}", SETTINGS));
     let settings: Settings = toml::from_str(&settings).expect(&format!("Invalid {}", SETTINGS));
 
@@ -71,7 +64,6 @@ fn test(debugger: Debugger, path: String, platform_version: i32) -> Result<(), (
             python: settings.python,
             print_stdout: settings.print_stdout,
             native_rust: settings.native_rust,
-            platform_version,
         }),
 
         Debugger::GDB => Config::GDB(GDBConfig {
@@ -81,7 +73,6 @@ fn test(debugger: Debugger, path: String, platform_version: i32) -> Result<(), (
             gdb_lookup: settings.gdb_lookup,
             print_stdout: settings.print_stdout,
             native_rust: settings.native_rust,
-            platform_version,
         })
     };
 

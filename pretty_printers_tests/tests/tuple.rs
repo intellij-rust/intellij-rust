@@ -5,11 +5,9 @@
 // lldb-command:run
 
 // lldb-command:print t1
-// lldbg-check:[...]$0 = { 0 = { 0 = 1 1 = 2 } 1 = 3 }
-// lldbg-check-201:[...]t1 = { 0 = { 0 = 1 1 = 2 } 1 = 3 }
+// lldbg-check:[...]t1 = { 0 = { 0 = 1 1 = 2 } 1 = 3 }
 // lldb-command:print t2
-// lldbg-check:[...]$1 = { 0 = "abc" [...] 1 = 42 }
-// lldbg-check-201:[...]t2 = { 0 = "abc" [...] 1 = 42 }
+// lldbg-check:[...]t2 = { 0 = "abc" [...] 1 = 42 }
 
 // === GDB TESTS ==================================================================================
 
