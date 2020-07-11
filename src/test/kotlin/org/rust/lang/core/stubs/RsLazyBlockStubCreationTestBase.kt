@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rustSlowTests
+package org.rust.lang.core.stubs
 
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -18,25 +18,17 @@ import com.intellij.psi.impl.source.tree.TreeUtil
 import com.intellij.util.LocalTimeCounter
 import junit.framework.TestCase
 import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.descendantsOfType
-import org.rust.lang.core.stubs.RsFileStub
 import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
 
-class RsLazyCodeBlockIsNotExpandedDuringStubBuildingTest : RsTestBase() {
-    override fun getProjectDescriptor() = WithStdlibRustProjectDescriptor
+/**
+ * Base class for tests to check that block elements are not parsed if they don't contain stub elements
+ */
+abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
 
-    fun `test stdlib source`() {
-        val sources = rustSrcDir()
-        checkRustFiles(
-            sources,
-            ignored = setOf("tests", "test", "doc", "etc", "grammar")
-        )
-    }
-
-    private fun checkRustFiles(directory: VirtualFile, ignored: Collection<String>) {
+    protected fun checkRustFiles(directory: VirtualFile, ignored: Collection<String>) {
         val files = collectRustFiles(directory, ignored)
             .mapNotNull { it.toInMemoryPsiFile() as? RsFile }
 
@@ -145,6 +137,4 @@ class RsLazyCodeBlockIsNotExpandedDuringStubBuildingTest : RsTestBase() {
     }
 
     private val RsBlock.isParsed get() = (node as LazyParseableElement).isParsed
-
-    private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
 }

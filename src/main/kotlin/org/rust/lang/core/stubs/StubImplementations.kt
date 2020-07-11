@@ -119,7 +119,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
  *   block, so it is processed earlier). The value is then removed from the cache because it is no longer needed
  *   and should be invalidated after each PSI change.
  *
- * See tests in `RsLazyCodeBlockIsNotExpandedDuringStubBuildingTest`
+ * See tests in `RsCodeBlockStubCreationTest`
  */
 private object BlockMayHaveStubsHeuristic {
     private val RS_HAS_ITEMS_OR_ATTRS: Key<Boolean> = Key.create("RS_HAS_ITEMS_OR_ATTRS")
