@@ -59,6 +59,13 @@ jobs:
             fail-fast: true
             matrix:
                 platform-version: [ 201, 202 ]
+        env:
+            ORG_GRADLE_PROJECT_buildNumber: ${{ needs.generate-build-number.outputs.build_number }}
+            ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+            ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
+            ORG_GRADLE_PROJECT_publishChannel: nightly
+            ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
+
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -67,16 +74,6 @@ jobs:
               uses: actions/setup-java@v1
               with:
                   java-version: 1.8
-
-            - name: Set up env variables
-              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
-              run: |
-                  echo "::set-env name=CI::true"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_buildNumber::${{ needs.generate-build-number.outputs.build_number }}"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_enableBuildSearchableOptions::true"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_publishChannel::nightly"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_publishToken::${{ secrets.plugin_bot_token }}"
 
             - name: Publish rust plugin
               if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
