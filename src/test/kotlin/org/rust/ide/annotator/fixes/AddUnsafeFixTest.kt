@@ -8,7 +8,7 @@ package org.rust.ide.annotator.fixes
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsUnsafeExpressionAnnotator
 
-class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
+class AddUnsafeFixTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
     fun `test add unsafe to function`() = checkFixByText("Add unsafe to function", """
         unsafe fn foo() {}
 
@@ -130,6 +130,32 @@ class AddUnsafeTest : RsAnnotatorTestBase(RsUnsafeExpressionAnnotator::class) {
             if true {
                 foo();
             }
+        }
+    """)
+
+    fun `test add unsafe inside if in a block`() = checkFixByText("Add unsafe to block", """
+        unsafe fn foo() -> u32 { 0 }
+
+        fn main() {
+            let x = {
+                if true {
+                    <error>foo()/*caret*/</error>
+                } else {
+                    5
+                }
+            };
+        }
+    """, """
+        unsafe fn foo() -> u32 { 0 }
+
+        fn main() {
+            let x = unsafe {
+                if true {
+                    foo()
+                } else {
+                    5
+                }
+            };
         }
     """)
 

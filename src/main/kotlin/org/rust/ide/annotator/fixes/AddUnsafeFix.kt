@@ -10,26 +10,31 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.lang.core.psi.RsBlock
+import com.intellij.psi.util.PsiTreeUtil
 import org.rust.lang.core.psi.RsBlockExpr
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-class AddUnsafeFix(expr: RsBlock) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
-    private val _text = "Add unsafe to ${if (expr.parent is RsBlockExpr) "block" else "function"}"
+class AddUnsafeFix private constructor(element: PsiElement) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+    private val _text = "Add unsafe to ${if (element is RsBlockExpr) "block" else "function"}"
     override fun getFamilyName() = text
     override fun getText() = _text
 
-    override fun invoke(project: Project, file: PsiFile, editor: Editor?, expr: PsiElement, endElement: PsiElement) {
+    override fun invoke(project: Project, file: PsiFile, editor: Editor?, element: PsiElement, endElement: PsiElement) {
         val unsafe = RsPsiFactory(project).createUnsafeKeyword()
 
-        if (expr.parent is RsBlockExpr) {
-            expr.parent.addBefore(unsafe, expr)
-        } else {
-            expr.ancestorOrSelf<RsFunction>()?.let {
-                it.addBefore(unsafe, it.fn)
-            }
+        when (element) {
+            is RsBlockExpr -> element.addBefore(unsafe, element.block)
+            is RsFunction -> element.addBefore(unsafe, element.fn)
+            else -> error("unreachable")
+        }
+    }
+
+    companion object {
+        fun create(element: PsiElement): AddUnsafeFix? {
+            val parent = PsiTreeUtil.getParentOfType(element, RsBlockExpr::class.java, RsFunction::class.java)
+                ?: return null
+            return AddUnsafeFix(parent)
         }
     }
 }
