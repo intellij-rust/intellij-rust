@@ -28,17 +28,9 @@ class RsImplsSearch : QueryExecutorBase<PsiElement, DefinitionsScopedSearch.Sear
             is RsStructItem -> psi.searchForImplementations()
             is RsEnumItem -> psi.searchForImplementations()
             is RsTraitItem -> psi.searchForImplementations()
-            is RsAbstractable -> {
-                val owner = psi.owner as? RsAbstractableOwner.Trait ?: return
-                owner.trait
-                    .searchForImplementations()
-                    .mapQuery {
-                        PsiTreeUtil.findChildrenOfType(it.members, psi.javaClass)
-                            .find { it.name == psi.name }
-                    }.filterQuery(Condition { it != null })
-            }
+            is RsAbstractable -> psi.searchForImplementations()
             else -> return
-        }
+        }.filterQuery(Condition { it != null })
         query.forEach(Processor { consumer.process(it) })
     }
 }

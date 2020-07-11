@@ -27,14 +27,14 @@ class RsMethodLineSeparatorProviderTest : RsLineMarkerProviderTestBase() {
     fun `test trait`() {
         doTest("""
             trait Foo { // - Has implementations
-                const C1: i32 = 1;
-                fn f1();
-                fn f2();
-                fn f3() { // - null
+                const C1: i32 = 1; // - Has implementations
+                fn f1(); // - null,Has implementations
+                fn f2(); // - null,Has implementations
+                fn f3() { // - Has implementations
                 }
-                fn f4() { // - null
+                fn f4() { // - null,Has implementations
                 }
-                fn f5(); // - null
+                fn f5(); // - null,Has implementations
             }
         """)
     }
