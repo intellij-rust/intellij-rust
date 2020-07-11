@@ -25,9 +25,9 @@ jobs:
                 rust-version: [ 1.41.0, nightly-2019-12-19 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 201, 202 ]
-                # TODO: pass minimal supported versions of IDEs. See .travis.yml
                 include:
                     - os: ubuntu-latest
+                      # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.32.0
                       base-ide: idea
                       platform-version: 201
@@ -78,6 +78,15 @@ jobs:
                   rustc --version
                   rustup component list --installed
                   cargo install --list
+
+            - name: Set up additional env variables
+              if: matrix.rust-version == '1.32.0'
+              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
+              run: |
+                  echo "::set-env name=ORG_GRADLE_PROJECT_ideaVersion::IU-2020.1"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_clionVersion::CL-2020.1"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::201.6668.113"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::2020.1"
 
             - name: Download
               uses: eskatos/gradle-command-action@v1
