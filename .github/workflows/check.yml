@@ -33,6 +33,10 @@ jobs:
                       platform-version: 201
 
         runs-on: ${{ matrix.os }}
+        env:
+            ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
+            ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+
         steps:
             - uses: actions/checkout@v1
 
@@ -74,12 +78,6 @@ jobs:
                   rustc --version
                   rustup component list --installed
                   cargo install --list
-
-            - name: Set up env variables
-              # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
-              run: |
-                  echo "::set-env name=ORG_GRADLE_PROJECT_baseIDE::${{ matrix.base-ide }}"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_platformVersion::${{ matrix.platform-version }}"
 
             - name: Download
               uses: eskatos/gradle-command-action@v1
