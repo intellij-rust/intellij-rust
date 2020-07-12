@@ -12,182 +12,108 @@ import org.rust.RsTestBase
 class RsGotoTypeDeclarationTest : RsTestBase() {
 
     fun `test function declaration`() = doTest("""
-        struct Foo;
-        fn foo/*caret*/() -> Foo { unimplemented!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo() -> Foo { unimplemented!() }
+        struct /*caret_after*/Foo;
+        fn foo/*caret_before*/() -> Foo { unimplemented!() }
     """)
 
     fun `test method declaration`() = doTest("""
-        enum Bar { BAR }
+        enum /*caret_after*/Bar { BAR }
         struct Foo;
         impl Foo {
-            fn bar/*caret*/(&self) -> Bar { unimplemented!() }
-        }
-    """, """
-        enum /*caret*/Bar { BAR }
-        struct Foo;
-        impl Foo {
-            fn bar(&self) -> Bar { unimplemented!() }
+            fn bar/*caret_before*/(&self) -> Bar { unimplemented!() }
         }
     """)
 
     fun `test field declaration`() = doTest("""
-        struct Bar;
+        struct /*caret_after*/Bar;
         struct Foo {
-            bar/*caret*/: Bar
-        }
-    """, """
-        struct /*caret*/Bar;
-        struct Foo {
-            bar: Bar
+            bar/*caret_before*/: Bar
         }
     """)
 
     fun `test const declaration`() = doTest("""
-        struct Foo;
-        const FOO/*caret*/: Foo = Foo;
-    """, """
-        struct /*caret*/Foo;
-        const FOO: Foo = Foo;
+        struct /*caret_after*/Foo;
+        const FOO/*caret_before*/: Foo = Foo;
     """)
 
     fun `test variable declaration`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         fn main() {
-            let a/*caret*/ = Foo;
-        }
-    """, """
-        struct /*caret*/Foo;
-        fn main() {
-            let a = Foo;
+            let a/*caret_before*/ = Foo;
         }
     """)
 
     fun `test argument declaration`() = doTest("""
-        struct Foo;
-        fn foo(foo/*caret*/: Foo) { unimplemeneted!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo(foo: Foo) { unimplemeneted!() }
+        struct /*caret_after*/Foo;
+        fn foo(foo/*caret_before*/: Foo) { unimplemeneted!() }
     """)
 
     fun `test function call`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         fn foo() -> Foo { unimplemented!() }
         fn main() {
-            foo/*caret*/();
-        }
-    """, """
-        struct /*caret*/Foo;
-        fn foo() -> Foo { unimplemented!() }
-        fn main() {
-            foo();
+            foo/*caret_before*/();
         }
     """)
 
     fun `test method call`() = doTest("""
-        enum Bar { BAR }
+        enum /*caret_after*/Bar { BAR }
         struct Foo;
         impl Foo {
             fn bar(&self) -> Bar { unimplemented!() }
         }
         fn main() {
-            Foo.bar/*caret*/();
-        }
-    """, """
-        enum /*caret*/Bar { BAR }
-        struct Foo;
-        impl Foo {
-            fn bar(&self) -> Bar { unimplemented!() }
-        }
-        fn main() {
-            Foo.bar();
+            Foo.bar/*caret_before*/();
         }
     """)
 
     fun `test field using`() = doTest("""
-        struct Bar;
+        struct /*caret_after*/Bar;
         struct Foo {
             bar: Bar
         }
         fn foo(foo: Foo) -> Bar {
-            foo.bar/*caret*/
-        }
-    """, """
-        struct /*caret*/Bar;
-        struct Foo {
-            bar: Bar
-        }
-        fn foo(foo: Foo) -> Bar {
-            foo.bar
+            foo.bar/*caret_before*/
         }
     """)
 
     fun `test variable using`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         fn main() {
             let a = Foo;
-            a/*caret*/;
-        }
-    """, """
-        struct /*caret*/Foo;
-        fn main() {
-            let a = Foo;
-            a;
+            a/*caret_before*/;
         }
     """)
 
     fun `test reference type`() = doTest("""
-        struct Foo;
-        fn foo/*caret*/<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
+        struct /*caret_after*/Foo;
+        fn foo/*caret_before*/<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
     """)
 
     fun `test pointer type`() = doTest("""
-        struct Foo;
-        fn foo/*caret*/() -> *const Foo { unimplemented!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo() -> *const Foo { unimplemented!() }
+        struct /*caret_after*/Foo;
+        fn foo/*caret_before*/() -> *const Foo { unimplemented!() }
     """)
 
     fun `test array type`() = doTest("""
-        struct Foo;
-        fn foo/*caret*/() -> [Foo; 2] { unimplemented!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo() -> [Foo; 2] { unimplemented!() }
+        struct /*caret_after*/Foo;
+        fn foo/*caret_before*/() -> [Foo; 2] { unimplemented!() }
     """)
 
     fun `test slice type`() = doTest("""
-        struct Foo;
-        fn foo/*caret*/<'a>(_: &'a i32) -> &'a [Foo] { unimplemented!() }
-    """, """
-        struct /*caret*/Foo;
-        fn foo<'a>(_: &'a i32) -> &'a [Foo] { unimplemented!() }
+        struct /*caret_after*/Foo;
+        fn foo/*caret_before*/<'a>(_: &'a i32) -> &'a [Foo] { unimplemented!() }
     """)
 
     fun `test trait object type`() = doTest("""
-        trait Foo {}
-        fn foo/*caret*/<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
-    """, """
-        trait /*caret*/Foo {}
-        fn foo<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
+        trait /*caret_after*/Foo {}
+        fn foo/*caret_before*/<'a>(_: &'a i32) -> &'a Foo { unimplemented!() }
     """)
 
     fun `test type parameter`() = doTest("""
-        fn foo<T>() -> T { unimplemented!() }
+        fn foo</*caret_after*/T>() -> T { unimplemented!() }
         fn main() {
-            let x = foo/*caret*/::<i32>();
-        }
-    """, """
-        fn foo</*caret*/T>() -> T { unimplemented!() }
-        fn main() {
-            let x = foo::<i32>();
+            let x = foo/*caret_before*/::<i32>();
         }
     """)
 
@@ -197,7 +123,7 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
             fn foo(&self) -> Self::Bar;
         }
         struct Baz;
-        struct Qwe;
+        struct /*caret_after*/Qwe;
         impl Foo for Baz {
             type Bar = Qwe;
 
@@ -207,132 +133,80 @@ class RsGotoTypeDeclarationTest : RsTestBase() {
         }
 
         fn main() {
-            let x = Baz.foo/*caret*/();
-        }
-    """, """
-        trait Foo {
-            type Bar;
-            fn foo(&self) -> Self::Bar;
-        }
-        struct Baz;
-        struct /*caret*/Qwe;
-        impl Foo for Baz {
-            type Bar = Qwe;
-
-            fn foo(&self) -> Self::Bar {
-                unimplemented!()
-            }
-        }
-
-        fn main() {
-            let x = Baz.foo();
+            let x = Baz.foo/*caret_before*/();
         }
     """)
 
     fun `test impl trait`() = doTest("""
-        trait Foo {}
+        trait /*caret_after*/Foo {}
         fn foo() -> impl Foo { unimplemented!() }
 
         fn main() {
-            foo/*caret*/();
-        }
-    """, """
-        trait /*caret*/Foo {}
-        fn foo() -> impl Foo { unimplemented!() }
-
-        fn main() {
-            foo();
+            foo/*caret_before*/();
         }
     """)
 
     fun `test self param in impl`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         impl Foo {
-            fn bar(se/*caret*/lf) {}
-        }
-    """, """
-        struct /*caret*/Foo;
-        impl Foo {
-            fn bar(self) {}
+            fn bar(/*caret_before*/self) {}
         }
     """)
 
     fun `test &self param in impl`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         impl Foo {
-            fn bar(&s/*caret*/elf) {}
-        }
-    """, """
-        struct /*caret*/Foo;
-        impl Foo {
-            fn bar(&self) {}
+            fn bar(&self/*caret_before*/) {}
         }
     """)
 
     fun `test &mut self param in impl`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         impl Foo {
-            fn bar(&mut /*caret*/self) {}
-        }
-    """, """
-        struct /*caret*/Foo;
-        impl Foo {
-            fn bar(&mut self) {}
+            fn bar(&mut /*caret_before*/self) {}
         }
     """)
 
     fun `test &mut self param in impl with spacing`() = doTest("""
-        struct Foo;
+        struct /*caret_after*/Foo;
         impl Foo {
-            fn bar(  &  mut /*caret*/self) {}
-        }
-    """, """
-        struct /*caret*/Foo;
-        impl Foo {
-            fn bar(  &  mut self) {}
+            fn bar(  &  mut /*caret_before*/self) {}
         }
     """)
 
     fun `test self param in trait`() = doTest("""
-        trait Foo {
-            fn bar(se/*caret*/lf) {}
-        }
-    """, """
-        trait /*caret*/Foo {
-            fn bar(self) {}
+        trait /*caret_after*/Foo {
+            fn bar(/*caret_before*/self) {}
         }
     """)
 
     fun `test &self param in trait`() = doTest("""
-        trait Foo {
-            fn bar(&self/*caret*/) {}
-        }
-    """, """
-        trait /*caret*/Foo {
-            fn bar(&self) {}
+        trait /*caret_after*/Foo {
+            fn bar(&self/*caret_before*/) {}
         }
     """)
 
     fun `test &mut self param in trait`() = doTest("""
-        trait Foo {
-            fn bar(&mut /*caret*/self) {}
-        }
-    """, """
-        trait /*caret*/Foo {
-            fn bar(&mut self) {}
+        trait /*caret_after*/Foo {
+            fn bar(&mut /*caret_before*/self) {}
         }
     """)
 
     fun `test &mut self param in trait with spacing`() = doTest("""
-        trait Foo {
-            fn bar(  &  mut /*caret*/self) {}
-        }
-    """, """
-        trait /*caret*/Foo {
-            fn bar(  &  mut self) {}
+        trait /*caret_after*/Foo {
+            fn bar(  &  mut /*caret_before*/self) {}
         }
     """)
 
-    private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkEditorAction(before, after, ACTION_GOTO_TYPE_DECLARATION)
+    fun `test type declared by a macro`() = doTest("""
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
+        as_is! { struct /*caret_after*/S; }
+        fn main() {
+            let /*caret_before*/a = S;
+        }
+    """)
+
+    private fun doTest(@Language("Rust") code: String) = checkCaretMove(code) {
+        myFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
+    }
 }

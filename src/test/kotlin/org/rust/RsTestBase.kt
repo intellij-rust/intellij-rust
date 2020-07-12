@@ -219,6 +219,15 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         myFixture.checkResult(replaceCaretMarker(after))
     }
 
+    protected fun checkCaretMove(
+        @Language("Rust") code: String,
+        action: () -> Unit
+    ) {
+        InlineFile(code.replace("/*caret_before*/", "<caret>").replace("/*caret_after*/", ""))
+        action()
+        myFixture.checkResult(code.replace("/*caret_after*/", "<caret>").replace("/*caret_before*/", ""))
+    }
+
     protected open fun checkEditorAction(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
