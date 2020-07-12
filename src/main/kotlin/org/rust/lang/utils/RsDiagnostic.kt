@@ -296,20 +296,15 @@ sealed class RsDiagnostic(
     }
 
     class UnsafeError(
-        element: PsiElement,
+        element: RsExpr,
         private val message: String
     ) : RsDiagnostic(element) {
-        override fun prepare(): PreparedAnnotation {
-            val block = element.ancestorStrict<RsBlock>()
-            val fixes = mutableListOf<LocalQuickFix>(SurroundWithUnsafeFix(element as RsExpr))
-            if (block != null) fixes.add(AddUnsafeFix(block))
-            return PreparedAnnotation(
-                ERROR,
-                E0133,
-                message,
-                fixes = fixes
-            )
-        }
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0133,
+            message,
+            fixes = listOfNotNull(SurroundWithUnsafeFix(element as RsExpr), AddUnsafeFix.create(element))
+        )
     }
 
     class TypePlaceholderForbiddenError(
