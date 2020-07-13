@@ -5,11 +5,9 @@
 // lldb-command:run
 
 // lldb-command:print a
-// lldbg-check:[...]$0 = -1 [...]
-// lldbg-check-201:[...]a = -1 [...]
+// lldbg-check:[...]a = -1 [...]
 // lldb-command:print b
-// lldbg-check:[...]$1 = 1024 [...]
-// lldbg-check-201:[...]b = 1024 [...]
+// lldbg-check:[...]b = 1024 [...]
 
 // === GDB TESTS ===================================================================================
 
