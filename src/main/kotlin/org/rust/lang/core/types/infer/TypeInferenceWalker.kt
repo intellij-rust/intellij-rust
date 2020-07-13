@@ -1039,8 +1039,11 @@ class RsTypeInferenceWalker(
 
     private fun inferTryExprType(expr: RsTryExpr): Ty {
         val base = expr.expr.inferType() as? TyAdt ?: return TyUnknown
-        // TODO: make it work with generic `std::ops::Try` trait
-        if (base.item != items.Result && base.item != items.Option) return TyUnknown
+        if (base.item != items.Result && base.item != items.Option) {
+            val tryItem = items.Try ?: return TyUnknown
+            val okType = tryItem.findAssociatedType("Ok") ?: return TyUnknown
+            return ctx.normalizeAssociatedTypesIn(TyProjection.valueOf(base, BoundElement(tryItem), okType)).value
+        }
         TypeInferenceMarks.questionOperator.hit()
         return base.typeArguments.getOrElse(0) { TyUnknown }
     }
