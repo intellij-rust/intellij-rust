@@ -71,6 +71,8 @@ val ABI_VECTORCALL = CompilerFeature("abi_vectorcall", ACTIVE, "1.7.0")
 // no-tracking-issue-end
 
 // Allows using `#[structural_match]` which indicates that a type is structurally matchable.
+// FIXME: Subsumed by trait `StructuralPartialEq`, cannot move to removed until a library
+// feature with the same name exists.
 val STRUCTURAL_MATCH = CompilerFeature("structural_match", ACTIVE, "1.8.0")
 // Allows using the `may_dangle` attribute (RFC 1327).
 val DROPCK_EYEPATCH = CompilerFeature("dropck_eyepatch", ACTIVE, "1.10.0")
@@ -123,6 +125,7 @@ val CMPXCHG16B_TARGET_FEATURE = CompilerFeature("cmpxchg16b_target_feature", ACT
 val MOVBE_TARGET_FEATURE = CompilerFeature("movbe_target_feature", ACTIVE, "1.34.0")
 val RTM_TARGET_FEATURE = CompilerFeature("rtm_target_feature", ACTIVE, "1.35.0")
 val F16C_TARGET_FEATURE = CompilerFeature("f16c_target_feature", ACTIVE, "1.36.0")
+val RISCV_TARGET_FEATURE = CompilerFeature("riscv_target_feature", ACTIVE, "1.45.0")
 // -------------------------------------------------------------------------
 // feature-group-end: actual feature gates (target features)
 // -------------------------------------------------------------------------
@@ -236,8 +239,6 @@ val CONST_FN_UNION = CompilerFeature("const_fn_union", ACTIVE, "1.27.0")
 val CONST_RAW_PTR_TO_USIZE_CAST = CompilerFeature("const_raw_ptr_to_usize_cast", ACTIVE, "1.27.0")
 // Allows dereferencing raw pointers during const eval.
 val CONST_RAW_PTR_DEREF = CompilerFeature("const_raw_ptr_deref", ACTIVE, "1.27.0")
-// Allows comparing raw pointers during const eval.
-val CONST_COMPARE_RAW_POINTERS = CompilerFeature("const_compare_raw_pointers", ACTIVE, "1.27.0")
 // Allows `#[doc(alias = "...")]`.
 val DOC_ALIAS = CompilerFeature("doc_alias", ACTIVE, "1.27.0")
 // Allows inconsistent bounds in where clauses.
@@ -256,8 +257,7 @@ val ABI_AMDGPU_KERNEL = CompilerFeature("abi_amdgpu_kernel", ACTIVE, "1.29.0")
 val CONST_PANIC = CompilerFeature("const_panic", ACTIVE, "1.30.0")
 // Allows `#[marker]` on certain traits allowing overlapping implementations.
 val MARKER_TRAIT_ATTR = CompilerFeature("marker_trait_attr", ACTIVE, "1.30.0")
-// Allows macro invocations on modules expressions and statements and
-// procedural macros to expand to non-items.
+// Allows macro attributes on expressions, statements and non-inline modules.
 val PROC_MACRO_HYGIENE = CompilerFeature("proc_macro_hygiene", ACTIVE, "1.30.0")
 // Allows unsized rvalues at arguments and parameters.
 val UNSIZED_LOCALS = CompilerFeature("unsized_locals", ACTIVE, "1.30.0")
@@ -301,9 +301,6 @@ val OR_PATTERNS = CompilerFeature("or_patterns", ACTIVE, "1.38.0")
 val CONST_EXTERN_FN = CompilerFeature("const_extern_fn", ACTIVE, "1.40.0")
 // Allows the use of raw-dylibs (RFC 2627).
 val RAW_DYLIB = CompilerFeature("raw_dylib", ACTIVE, "1.40.0")
-// Allows `#[track_caller]` to be used which provides
-// accurate caller location reporting during panic (RFC 2091).
-val TRACK_CALLER = CompilerFeature("track_caller", ACTIVE, "1.40.0")
 // Allows making `dyn Trait` well-formed even if `Trait` is not object safe.
 // In that case, `dyn Trait: Trait` does not hold. Moreover, coercions and
 // casts in safe Rust to `dyn Trait` for such a `Trait` is also forbidden.
@@ -318,16 +315,12 @@ val NEVER_TYPE_FALLBACK = CompilerFeature("never_type_fallback", ACTIVE, "1.41.0
 val REGISTER_ATTR = CompilerFeature("register_attr", ACTIVE, "1.41.0")
 // Allows using the `#[register_tool]` attribute.
 val REGISTER_TOOL = CompilerFeature("register_tool", ACTIVE, "1.41.0")
-// Allows the use of `if` and `match` in constants.
-val CONST_IF_MATCH = CompilerFeature("const_if_match", ACTIVE, "1.41.0")
 // Allows the use of `#[cfg(sanitize = "option")]`; set when -Zsanitizer is used.
 val CFG_SANITIZE = CompilerFeature("cfg_sanitize", ACTIVE, "1.41.0")
 // Allows using `..X`, `..=X`, `...X`, and `X..` as a pattern.
 val HALF_OPEN_RANGE_PATTERNS = CompilerFeature("half_open_range_patterns", ACTIVE, "1.41.0")
 // Allows using `&mut` in constant functions.
 val CONST_MUT_REFS = CompilerFeature("const_mut_refs", ACTIVE, "1.41.0")
-// Allows the use of `loop` and `while` in constants.
-val CONST_LOOP = CompilerFeature("const_loop", ACTIVE, "1.41.0")
 // Allows bindings in the subpattern of a binding pattern.
 // For example, you can write `x @ Some(y)`.
 val BINDINGS_AFTER_AT = CompilerFeature("bindings_after_at", ACTIVE, "1.41.0")
@@ -342,6 +335,26 @@ val CONST_TRAIT_BOUND_OPT_OUT = CompilerFeature("const_trait_bound_opt_out", ACT
 val NO_SANITIZE = CompilerFeature("no_sanitize", ACTIVE, "1.42.0")
 // Allows limiting the evaluation steps of const expressions
 val CONST_EVAL_LIMIT = CompilerFeature("const_eval_limit", ACTIVE, "1.43.0")
+// Allow negative trait implementations.
+val NEGATIVE_IMPLS = CompilerFeature("negative_impls", ACTIVE, "1.44.0")
+// Allows the use of `#[target_feature]` on safe functions.
+val TARGET_FEATURE_11 = CompilerFeature("target_feature_11", ACTIVE, "1.45.0")
+// Allow conditional compilation depending on rust version
+val CFG_VERSION = CompilerFeature("cfg_version", ACTIVE, "1.45.0")
+// Allows the use of `#[ffi_pure]` on foreign functions.
+val FFI_PURE = CompilerFeature("ffi_pure", ACTIVE, "1.45.0")
+// Allows the use of `#[ffi_const]` on foreign functions.
+val FFI_CONST = CompilerFeature("ffi_const", ACTIVE, "1.45.0")
+// No longer treat an unsafe function as an unsafe block.
+val UNSAFE_BLOCK_IN_UNSAFE_FN = CompilerFeature("unsafe_block_in_unsafe_fn", ACTIVE, "1.45.0")
+// Allows `extern "avr-interrupt" fn()` and `extern "avr-non-blocking-interrupt" fn()`.
+val ABI_AVR_INTERRUPT = CompilerFeature("abi_avr_interrupt", ACTIVE, "1.45.0")
+// Be more precise when looking for live drops in a const context.
+val CONST_PRECISE_LIVE_DROPS = CompilerFeature("const_precise_live_drops", ACTIVE, "1.46.0")
+// Allows capturing variables in scope using format_args!
+val FORMAT_ARGS_CAPTURE = CompilerFeature("format_args_capture", ACTIVE, "1.46.0")
+// Lazily evaluate constants. This allows constants to depend on type parameters.
+val LAZY_NORMALIZATION_CONSTS = CompilerFeature("lazy_normalization_consts", ACTIVE, "1.46.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -578,3 +591,10 @@ val RE_REBALANCE_COHERENCE = CompilerFeature("re_rebalance_coherence", ACCEPTED,
 val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACCEPTED, "1.42.0")
 // Allows using subslice patterns, `[a, .., b]` and `[a, xs @ .., b]`.
 val SLICE_PATTERNS = CompilerFeature("slice_patterns", ACCEPTED, "1.42.0")
+// Allows the use of `if` and `match` in constants.
+val CONST_IF_MATCH = CompilerFeature("const_if_match", ACCEPTED, "1.45.0")
+// Allows the use of `loop` and `while` in constants.
+val CONST_LOOP = CompilerFeature("const_loop", ACCEPTED, "1.45.0")
+// Allows `#[track_caller]` to be used which provides
+// accurate caller location reporting during panic (RFC 2091).
+val TRACK_CALLER = CompilerFeature("track_caller", ACCEPTED, "1.46.0")
