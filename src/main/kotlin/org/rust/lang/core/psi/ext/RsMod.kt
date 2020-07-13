@@ -87,7 +87,7 @@ val RsMod.superMods: List<RsMod> get() {
 fun RsMod.hasChildModules(): Boolean =
     expandedItemsExceptImplsAndUses.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }
 
-private val RsMod.childModules: List<RsMod>
+val RsMod.childModules: List<RsMod>
     get() = expandedItemsExceptImplsAndUses
         .mapNotNull {
             when (it) {

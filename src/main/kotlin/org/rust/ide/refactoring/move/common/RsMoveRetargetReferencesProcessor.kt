@@ -6,6 +6,11 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.project.Project
+import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModStrict
+import org.rust.ide.refactoring.move.common.RsMoveUtil.isAbsolute
+import org.rust.ide.refactoring.move.common.RsMoveUtil.resolvesToAndAccessible
+import org.rust.ide.refactoring.move.common.RsMoveUtil.startsWithSuper
+import org.rust.ide.refactoring.move.common.RsMoveUtil.textNormalized
 import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsPath

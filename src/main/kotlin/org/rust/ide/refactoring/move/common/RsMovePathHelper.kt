@@ -9,6 +9,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
+import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
+import org.rust.ide.refactoring.move.common.RsMoveUtil.resolvesToAndAccessible
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.RsCodeFragmentFactory
 import org.rust.lang.core.psi.RsFile
@@ -92,5 +94,3 @@ class RsMovePathHelper(private val project: Project, private val mod: RsMod) {
         return if (path.resolvesToAndAccessible(element)) path.text else null
     }
 }
-
-private val RsElement.containingModOrSelf: RsMod get() = (this as? RsMod) ?: containingMod

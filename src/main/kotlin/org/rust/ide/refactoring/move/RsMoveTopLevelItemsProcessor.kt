@@ -6,19 +6,22 @@
 package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
+import org.rust.ide.refactoring.move.common.ElementToMove
+import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.startOffset
 
+/** See overview of move refactoring in comment for [RsMoveCommonProcessor] */
 class RsMoveTopLevelItemsProcessor(
     private val project: Project,
     private val itemsToMove: Set<RsItemElement>,
@@ -26,30 +29,45 @@ class RsMoveTopLevelItemsProcessor(
     private val searchForReferences: Boolean
 ) : BaseRefactoringProcessor(project) {
 
+    private val commonProcessor: RsMoveCommonProcessor = run {
+        val elementsToMove = itemsToMove.map { ElementToMove.fromItem(it) }
+        RsMoveCommonProcessor(project, elementsToMove, targetMod)
+    }
+
     init {
         if (itemsToMove.isEmpty()) throw IncorrectOperationException("No items to move")
     }
 
-    override fun findUsages(): Array<UsageInfo> {
+    override fun findUsages(): Array<out UsageInfo> {
         if (!searchForReferences) return UsageInfo.EMPTY_ARRAY
-        return itemsToMove
-            .flatMap { ReferencesSearch.search(it, GlobalSearchScope.projectScope(project)) }
-            .filterNotNull()
-            .map { UsageInfo(it) }
-            .toTypedArray()
+        return commonProcessor.findUsages()
+    }
+
+    override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
+        return commonProcessor.preprocessUsages(refUsages.get()) && super.preprocessUsages(refUsages)
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
-        for (item in itemsToMove) {
-            val space = item.nextSibling as? PsiWhiteSpace
+        commonProcessor.performRefactoring(usages, this::moveItems)
+    }
 
-            // have to call `copy` because of rare suspicious `PsiInvalidElementAccessException`
-            targetMod.addInner(item.copy())
-            if (space != null) targetMod.addInner(space.copy())
+    private fun moveItems(): List<ElementToMove> {
+        return itemsToMove
+            .sortedBy { it.startOffset }
+            .map { item -> moveItem(item) }
+    }
 
-            space?.delete()
-            item.delete()
-        }
+    private fun moveItem(item: RsItemElement): ElementToMove {
+        val space = item.nextSibling as? PsiWhiteSpace
+
+        // have to call `copy` because of rare suspicious `PsiInvalidElementAccessException`
+        val itemNew = targetMod.addInner(item.copy()) as RsItemElement
+        if (space != null) targetMod.addInner(space.copy())
+
+        space?.delete()
+        item.delete()
+
+        return ElementToMove.fromItem(itemNew)
     }
 
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
