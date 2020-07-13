@@ -15,8 +15,6 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 class RsMoveFileTest : RsMoveFileTestBase() {
     override val dataPath = "org/rust/ide/refactoring/move/fixtures/"
 
-    fun `test add import if there are many usages`() = doTest("mod1/foo.rs", "mod2")
-
     fun `test rename inside references`() = doTest("mod1/foo.rs", "mod2")
 
     fun `test rename outside references`() = doTest("mod1/mod1_inner/foo.rs", "mod2")
@@ -125,10 +123,9 @@ class RsMoveFileTest : RsMoveFileTestBase() {
         """
     //- main.rs
         extern crate test_package;
-        use test_package::mod1::foo::func;
         fn test1() {
-            use test_package::mod1::*;
-            foo::func();
+            use test_package::mod1::foo::func;
+            func();
         }
         fn test2() {
             use test_package::mod1;
@@ -147,17 +144,15 @@ class RsMoveFileTest : RsMoveFileTestBase() {
     """, """
     //- main.rs
         extern crate test_package;
-        use test_package::mod2::foo::func;
         fn test1() {
-            use test_package::mod1::*;
-            test_package::mod2::foo::func();
+            use test_package::mod2::foo::func;
+            func();
         }
         fn test2() {
-            use test_package::mod1;
-            use test_package::mod2::foo;
-            foo::func();
-            foo::func();
-            foo::func();
+            use test_package::{mod1, mod2};
+            mod2::foo::func();
+            mod2::foo::func();
+            mod2::foo::func();
         }
     //- lib.rs
         pub mod mod1;
@@ -245,6 +240,44 @@ class RsMoveFileTest : RsMoveFileTestBase() {
     //- inner/test_package/mod2/mod.rs
         pub mod foo;
     //- inner/test_package/mod2/foo.rs
+        pub fn func() {}
+    """)
+
+    // test that we don't use `RsPath::text`, by adding comment containing :: inside `RsPath`
+    // we keep existing reference style, so if we erroneously used `RsPath::text`,
+    // then this comment will trigger replacing reference to `crate::mod2::foo` (and not to `mod2::foo`)
+    fun `test ignore comments inside RsPath`() = doTest(
+        "mod1/foo.rs",
+        "mod2",
+        """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+        mod usage {
+            fn test() {
+                use crate::mod1;
+                mod1::/*::*/foo::func();
+            }
+        }
+    //- mod1/mod.rs
+        pub mod foo;
+    //- mod2.rs
+    //- mod1/foo.rs
+        pub fn func() {}
+    """, """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+        mod usage {
+            fn test() {
+                use crate::{mod1, mod2};
+                mod2::foo::func();
+            }
+        }
+    //- mod1/mod.rs
+    //- mod2.rs
+        pub mod foo;
+    //- mod2/foo.rs
         pub fn func() {}
     """)
 
