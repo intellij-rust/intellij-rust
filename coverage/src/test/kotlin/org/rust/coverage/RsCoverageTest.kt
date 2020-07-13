@@ -29,6 +29,8 @@ class RsCoverageTest : RunConfigurationTestBase() {
     private val coverageData: ProjectData?
         get() = CoverageDataManager.getInstance(project).currentSuitesBundle?.coverageData
 
+    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
+
     fun `test main`() = doTest {
         toml("Cargo.toml", """
             [package]
@@ -136,7 +138,6 @@ class RsCoverageTest : RunConfigurationTestBase() {
     }
 
     fun `test tests`() {
-        if (System.getenv("CI") != null) return // TODO: find out why this test fails sometimes
         if (SystemInfo.isWindows) return // https://github.com/mozilla/grcov/issues/462
 
         doTest(runTests = true) {
