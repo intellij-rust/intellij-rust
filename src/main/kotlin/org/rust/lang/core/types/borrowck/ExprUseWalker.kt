@@ -11,7 +11,7 @@ import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.types.GatherLivenessContext
+import org.rust.lang.core.types.analysis.GatherUsageContext
 import org.rust.lang.core.types.borrowck.ConsumeMode.Copy
 import org.rust.lang.core.types.borrowck.ConsumeMode.Move
 import org.rust.lang.core.types.borrowck.MatchMode.*
@@ -488,7 +488,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
             if (binding.kind is BindByValue) {
                 // In case of NonConsumingMatch (e.g. `for x in xs {}`), the pat should not be consumed as copy/move,
                 // but should be consumed as usage
-                if (matchMode != NonConsumingMatch || delegate is GatherLivenessContext) {
+                if (matchMode != NonConsumingMatch || delegate is GatherUsageContext<*>) {
                     delegate.consumePat(subPat, subPatCmt, copyOrMove(mc, subPatCmt, PatBindingMove))
                 }
             }

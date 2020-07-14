@@ -43,6 +43,14 @@ enum class RsLint(
                 WARN -> ProblemHighlightType.WEAK_WARNING
                 else -> super.toHighlightingType(level)
             }
+    },
+
+    UnusedMutability("unused_mut", listOf("unused")) {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                else -> super.toHighlightingType(level)
+            }
     };
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
