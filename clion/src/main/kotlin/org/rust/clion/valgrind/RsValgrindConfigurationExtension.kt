@@ -155,7 +155,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         project: Project
     ) {
         val application = ApplicationManager.getApplication()
-        val expiredCondition = { _: Any -> !project.isOpen || project.isDisposed }
+        val expiredCondition = { _: Any? -> !project.isOpen || project.isDisposed }
         val tree = outputPanel.tree
         handler.addProcessListener(object : ProcessAdapter() {
             override fun startNotified(event: ProcessEvent) {
