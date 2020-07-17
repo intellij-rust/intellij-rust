@@ -18,6 +18,10 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.analysis.liveness.Liveness
+import org.rust.lang.core.types.analysis.liveness.LivenessContext
+import org.rust.lang.core.types.analysis.mutability.UnusedMutability
+import org.rust.lang.core.types.analysis.mutability.UnusedMutabilityContext
 import org.rust.lang.core.types.borrowck.BorrowCheckContext
 import org.rust.lang.core.types.borrowck.BorrowCheckResult
 import org.rust.lang.core.types.infer.*
@@ -156,4 +160,13 @@ val RsInferenceContextOwner.liveness: Liveness?
         val livenessContext = LivenessContext.buildFor(this)
         val livenessResult = livenessContext?.check()
         createResult(livenessResult)
+    }
+
+private val UNUSED_MUTABILITY_KEY: Key<CachedValue<UnusedMutability>> = Key.create("UNUSED_MUTABILITY_KEY")
+
+val RsInferenceContextOwner.unusedMutability: UnusedMutability?
+    get() = CachedValuesManager.getCachedValue(this, UNUSED_MUTABILITY_KEY) {
+        val unusedMutabilityContext = UnusedMutabilityContext.buildFor(this)
+        val unusedMutabilityResult = unusedMutabilityContext?.check()
+        createResult(unusedMutabilityResult)
     }
