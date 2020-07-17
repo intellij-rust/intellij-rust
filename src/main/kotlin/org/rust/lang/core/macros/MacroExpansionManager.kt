@@ -644,7 +644,10 @@ private class MacroExpansionServiceImplInner(
         PsiManager.getInstance(project).addPsiTreeChangeListener(treeChangeListener, disposable)
         ApplicationManager.getApplication().addApplicationListener(treeChangeListener, disposable)
 
-        registerIndexableSet(disposable)
+        // BACKCOMPAT: 2020.1
+        if (ApplicationInfo.getInstance().build < BUILD_202) {
+            registerIndexableSet(disposable)
+        }
 
         val connect = project.messageBus.connect(disposable)
 
@@ -671,6 +674,7 @@ private class MacroExpansionServiceImplInner(
      * Work together with [RsIndexableSetContributor]. Really looks
      * like a platform bug that [RsIndexableSetContributor] is not enough.
      */
+    // BACKCOMPAT: 2020.1
     private fun registerIndexableSet(disposable: Disposable) {
         FileBasedIndex.getInstance().registerIndexableSet(object : IndexableFileSet {
             override fun isInSet(file: VirtualFile): Boolean =
@@ -694,6 +698,7 @@ private class MacroExpansionServiceImplInner(
         }, disposable)
     }
 
+    // BACKCOMPAT: 2020.1
     private fun FileBasedIndex.registerIndexableSet(indexableSet: IndexableFileSet, disposable: Disposable) {
         registerIndexableSet(indexableSet, project)
         Disposer.register(disposable, Disposable { removeIndexableSet(indexableSet) })
