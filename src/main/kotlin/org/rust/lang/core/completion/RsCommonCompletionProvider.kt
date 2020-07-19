@@ -28,6 +28,7 @@ import org.rust.lang.core.psiElement
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
+import org.rust.lang.core.stubs.index.ReexportKey
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
 import org.rust.lang.core.types.expectedType
@@ -177,7 +178,9 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         val keys = hashSetOf<String>().apply {
             val explicitNames = StubIndex.getInstance().getAllKeys(RsNamedElementIndex.KEY, project)
-            val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project)
+            val reexportedNames = StubIndex.getInstance().getAllKeys(RsReexportIndex.KEY, project).mapNotNull {
+                (it as? ReexportKey.ProducedNameKey)?.name
+            }
 
             addAll(explicitNames)
             addAll(reexportedNames)

@@ -16,6 +16,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
+import org.rust.lang.core.stubs.index.ReexportKey
 import org.rust.lang.core.stubs.index.RsExternCrateReexportIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
@@ -87,7 +88,7 @@ data class RsQualifiedName private constructor(
         // First: look for `RsQualifiedNamedElement` with the same name as expected,
         // generate sequence of all possible reexports of this element and check
         // if any variant has the same `RsQualifiedName`
-        var result = lookupInIndex(project, RsNamedElementIndex.KEY) { element ->
+        var result = lookupInIndex(project, RsNamedElementIndex.KEY, { it }) { element ->
             if (element !is RsQualifiedNamedElement) return@lookupInIndex null
             val candidate = if (element is RsModDeclItem && item.type == MOD) {
                 element.reference.resolve() as? RsMod ?: return@lookupInIndex null
@@ -102,7 +103,7 @@ data class RsQualifiedName private constructor(
             // look over all direct item reexports (considering possible new alias),
             // generate sequence of all possible reexports for each element and check
             // if any variant has the same `RsQualifiedName`
-            result = lookupInIndex(project, RsReexportIndex.KEY) { useSpeck ->
+            result = lookupInIndex(project, RsReexportIndex.KEY, ReexportKey::ProducedNameKey) { useSpeck ->
                 if (useSpeck.isStarImport) return@lookupInIndex null
                 val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement
                     ?: return@lookupInIndex null
@@ -134,16 +135,17 @@ data class RsQualifiedName private constructor(
         return psiManager.findFile(crateRoot)?.rustFile
     }
 
-    private inline fun <reified T : RsElement> lookupInIndex(
+    private inline fun <reified T : RsElement, K> lookupInIndex(
         project: Project,
-        indexKey: StubIndexKey<String, T>,
+        indexKey: StubIndexKey<K, T>,
+        keyProducer: (String) -> K,
         crossinline transform: (T) -> QualifiedNamedItem?
     ): RsQualifiedNamedElement? {
         var result: RsQualifiedNamedElement? = null
         val item = childItem ?: parentItem
         StubIndex.getInstance().processElements(
             indexKey,
-            item.name,
+            keyProducer(item.name),
             project,
             GlobalSearchScope.allScope(project),
             T::class.java
