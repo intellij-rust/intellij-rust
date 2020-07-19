@@ -182,6 +182,20 @@ object RsPsiPattern {
 
     val error: PsiElementPattern.Capture<PsiErrorElement> = psiElement<PsiErrorElement>()
 
+    val simplePathPattern: ElementPattern<PsiElement>
+        get() {
+            val simplePath = psiElement<RsPath>()
+                .with(object : PatternCondition<RsPath>("SimplePath") {
+                    override fun accepts(path: RsPath, context: ProcessingContext?): Boolean =
+                        path.kind == PathKind.IDENTIFIER &&
+                            path.path == null &&
+                            path.typeQual == null &&
+                            !path.hasColonColon &&
+                            path.ancestorStrict<RsUseSpeck>() == null
+                })
+            return psiElement().withParent(simplePath)
+        }
+
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(META_ITEM_IDENTIFIER_DEPTH)
     }
