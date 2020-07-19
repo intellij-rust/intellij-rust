@@ -47,13 +47,25 @@ class RsReexportIndex : AbstractStubIndex<ReexportKey, RsUseSpeck>() {
             producedName?.let { sink.occurrence(KEY, ReexportKey.ProducedNameKey(it)) }
         }
 
-        fun findReexportsByName(
+        fun findReexportsByProducedName(
             project: Project,
             target: String,
             scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
+        ): Collection<RsUseSpeck> = findReexportsByName(project, ReexportKey.ProducedNameKey(target), scope)
+
+        fun findReexportsByOriginalName(
+            project: Project,
+            target: String,
+            scope: GlobalSearchScope = GlobalSearchScope.allScope(project)
+        ): Collection<RsUseSpeck> = findReexportsByName(project, ReexportKey.OriginalNameKey(target), scope)
+
+        private fun findReexportsByName(
+            project: Project,
+            key: ReexportKey,
+            scope: GlobalSearchScope
         ): Collection<RsUseSpeck> {
             checkCommitIsNotInProgress(project)
-            return getElements(KEY, ReexportKey.ProducedNameKey(target), project, scope)
+            return getElements(KEY, key, project, scope)
         }
     }
 }

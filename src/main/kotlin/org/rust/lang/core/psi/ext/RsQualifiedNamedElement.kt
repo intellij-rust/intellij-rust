@@ -557,7 +557,7 @@ private fun QualifiedNamedItem.collectImportItems(
     val superMods = superMods.orEmpty()
     superMods.forEachIndexed { index, ancestorMod ->
         val modName = ancestorMod.modItem.modName ?: return@forEachIndexed
-        RsReexportIndex.findReexportsByName(project, modName)
+        RsReexportIndex.findReexportsByOriginalName(project, modName)
             .mapNotNull {
                 if (it in visited) return@mapNotNull null
                 val reexportedMod = it.pathOrQualifier?.reference?.resolve() as? RsMod

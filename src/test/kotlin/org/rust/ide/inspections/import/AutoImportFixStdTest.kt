@@ -625,4 +625,38 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
             Foo/*caret*/::fmt();
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test module re-export with module alias 1`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub mod foo {
+            pub struct FooBar;
+        }
+        //- dep-lib/lib.rs
+        pub use trans_lib::foo as bar;
+        //- lib.rs
+        fn foo(x: <error descr="Unresolved reference: `bar`">bar/*caret*/</error>::FooBar) {}
+    """, """
+        //- lib.rs
+        use dep_lib_target::bar;
+
+        fn foo(x: bar/*caret*/::FooBar) {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test module re-export with module alias 2`() = checkAutoImportFixByFileTree("""
+        //- trans-lib/lib.rs
+        pub mod foo {
+            pub struct FooBar;
+        }
+        //- dep-lib/lib.rs
+        pub use trans_lib::foo as bar;
+        //- lib.rs
+        fn foo(x: <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>) {}
+    """, """
+        //- lib.rs
+        use dep_lib_target::bar::FooBar;
+
+        fn foo(x: FooBar/*caret*/) {}
+    """)
 }
