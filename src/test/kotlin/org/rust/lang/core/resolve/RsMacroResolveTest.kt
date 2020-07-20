@@ -194,5 +194,20 @@ class RsMacroResolveTest : RsResolveTestBase() {
          //^
     """)
 
+    fun `test macro call with crate prefix 1`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo { () => () }
+                    //X
+        crate::foo!();
+              //^
+    """)
+
+    fun `test macro call with crate prefix 2`() = checkByCode("""
+        macro_rules! foo { () => () }
+
+        crate::foo!();
+              //^ unresolved
+    """)
+
     // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
 }
