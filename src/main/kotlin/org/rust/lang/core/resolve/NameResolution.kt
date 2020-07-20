@@ -315,6 +315,7 @@ fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
             }
             refinedName
         }
+        name == "crate" -> return context.crateRoot as? RsFile
         else -> name
     }
     var found: RsFile? = null

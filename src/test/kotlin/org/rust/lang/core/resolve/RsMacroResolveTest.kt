@@ -6,25 +6,24 @@
 package org.rust.lang.core.resolve
 
 class RsMacroResolveTest : RsResolveTestBase() {
-    private val `$` = '$'
     fun `test resolve simple matching with multiple pattern definition`() = checkByCode("""
         macro_rules! test {
-            ($`$`test:expr) => (
+            ($ test:expr) => (
                //X
-                $`$`test
+                $ test
                  //^
             )
-            ($`$`test:expr) => (
-                $`$`test
+            ($ test:expr) => (
+                $ test
             )
         }
     """)
 
     fun `test resolve simple matching with multiple matching`() = checkByCode("""
         macro_rules! test {
-            ($`$`test:expr, $`$`ty:ty) => (
+            ($ test:expr, $ ty:ty) => (
                //X
-                $`$`test
+                $ test
                  //^
             )
         }
@@ -32,10 +31,10 @@ class RsMacroResolveTest : RsResolveTestBase() {
 
     fun `test resolve simple matching in complex matching`() = checkByCode("""
         macro_rules! test {
-            ($`$`($`$`test:expr),+, $`$`ty:ty) => (
+            ($ ($ test:expr),+, $ ty:ty) => (
               //X
-                $`$`($`$`test),+
-                  //^
+                $ ($ test),+
+                   //^
             )
         }
     """)
@@ -193,6 +192,21 @@ class RsMacroResolveTest : RsResolveTestBase() {
                     //X
         r#foo!();
          //^
+    """)
+
+    fun `test macro call with crate prefix 1`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo { () => () }
+                    //X
+        crate::foo!();
+              //^
+    """)
+
+    fun `test macro call with crate prefix 2`() = checkByCode("""
+        macro_rules! foo { () => () }
+
+        crate::foo!();
+              //^ unresolved
     """)
 
     // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
