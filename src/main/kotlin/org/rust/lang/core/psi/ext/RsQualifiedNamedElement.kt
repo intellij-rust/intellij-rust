@@ -16,6 +16,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
+import org.rust.lang.core.stubs.index.ReexportKey
 import org.rust.lang.core.stubs.index.RsExternCrateReexportIndex
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.stubs.index.RsReexportIndex
@@ -87,7 +88,7 @@ data class RsQualifiedName private constructor(
         // First: look for `RsQualifiedNamedElement` with the same name as expected,
         // generate sequence of all possible reexports of this element and check
         // if any variant has the same `RsQualifiedName`
-        var result = lookupInIndex(project, RsNamedElementIndex.KEY) { element ->
+        var result = lookupInIndex(project, RsNamedElementIndex.KEY, { it }) { element ->
             if (element !is RsQualifiedNamedElement) return@lookupInIndex null
             val candidate = if (element is RsModDeclItem && item.type == MOD) {
                 element.reference.resolve() as? RsMod ?: return@lookupInIndex null
@@ -102,7 +103,7 @@ data class RsQualifiedName private constructor(
             // look over all direct item reexports (considering possible new alias),
             // generate sequence of all possible reexports for each element and check
             // if any variant has the same `RsQualifiedName`
-            result = lookupInIndex(project, RsReexportIndex.KEY) { useSpeck ->
+            result = lookupInIndex(project, RsReexportIndex.KEY, ReexportKey::ProducedNameKey) { useSpeck ->
                 if (useSpeck.isStarImport) return@lookupInIndex null
                 val candidate = useSpeck.path?.reference?.resolve() as? RsQualifiedNamedElement
                     ?: return@lookupInIndex null
@@ -134,16 +135,17 @@ data class RsQualifiedName private constructor(
         return psiManager.findFile(crateRoot)?.rustFile
     }
 
-    private inline fun <reified T : RsElement> lookupInIndex(
+    private inline fun <reified T : RsElement, K> lookupInIndex(
         project: Project,
-        indexKey: StubIndexKey<String, T>,
+        indexKey: StubIndexKey<K, T>,
+        keyProducer: (String) -> K,
         crossinline transform: (T) -> QualifiedNamedItem?
     ): RsQualifiedNamedElement? {
         var result: RsQualifiedNamedElement? = null
         val item = childItem ?: parentItem
         StubIndex.getInstance().processElements(
             indexKey,
-            item.name,
+            keyProducer(item.name),
             project,
             GlobalSearchScope.allScope(project),
             T::class.java
@@ -554,19 +556,22 @@ private fun QualifiedNamedItem.collectImportItems(
     val importItems = mutableListOf(this)
     val superMods = superMods.orEmpty()
     superMods.forEachIndexed { index, ancestorMod ->
-        val modName = ancestorMod.modItem.modName ?: return@forEachIndexed
-        RsReexportIndex.findReexportsByName(project, modName)
+        val modItem = ancestorMod.modItem
+        val modOriginalName = (if (modItem.isCrateRoot) modItem.containingCargoTarget?.normName else modItem.modName)
+            ?: return@forEachIndexed
+
+        RsReexportIndex.findReexportsByOriginalName(project, modOriginalName)
             .mapNotNull {
                 if (it in visited) return@mapNotNull null
                 val reexportedMod = it.pathOrQualifier?.reference?.resolve() as? RsMod
-                if (reexportedMod != ancestorMod.modItem) return@mapNotNull null
+                if (reexportedMod != modItem) return@mapNotNull null
                 it to reexportedMod
             }
             .forEach { (useSpeck, reexportedMod) ->
                 // only public items can be reexported
                 if (!useSpeck.isStarImport && !reexportedMod.isPublic) return@forEach
                 visited += useSpeck
-                val (mod, endModIndex) = if (!useSpeck.isStarImport) {
+                val (mod, explicitSuperMods) = if (!useSpeck.isStarImport) {
                     // In case of general reexport
                     //
                     // ```rust
@@ -581,8 +586,29 @@ private fun QualifiedNamedItem.collectImportItems(
                     // ```
                     //
                     // reexportedMod is `baz` (from `pub use bar::baz` use item).
-                    // And we should generate "foo::baz::Baz" item from "foo::[bar::]baz::Baz"
-                    reexportedMod to index + 1
+                    // And we should generate "foo::[baz::]Baz" item from "foo::[bar::baz::]Baz"
+                    //                                ^                              /
+                    //                                 \____________________________/
+                    //
+                    // In case of reexport with alias
+                    //
+                    // ```rust
+                    // mod foo {
+                    //     pub use bar::baz as qqq; // <---
+                    //     mod bar {
+                    //         pub mod baz {
+                    //             public struct Baz;
+                    //         }
+                    //     }
+                    // }
+                    // ```
+                    //
+                    // reexportedMod is `baz` with `qqq` name (from `pub use bar::baz as qqq` use item).
+                    // And we should generate "foo::[qqq::]Baz" item from "foo::[bar::baz::]Baz"
+                    //                                ^                              /
+                    //                                 \____________________________/
+                    val explicitSuperMods = superMods.subList(0, index) + QualifiedNamedItem.ModWithName(reexportedMod, useSpeck.nameInScope)
+                    reexportedMod to explicitSuperMods
                 } else {
                     // Otherwise (when use item has wildcard)
                     //
@@ -600,12 +626,14 @@ private fun QualifiedNamedItem.collectImportItems(
                     // reexportedMod is still `baz` (from `pub use bar::baz::*` use item).
                     // But we should replace it with `foo` mod because use item with wildcard reexports
                     // children items of `baz` to `foo` instead of `baz` itself,
-                    // i.e. generate "foo::Baz" item from "foo::[bar::baz::]Baz"
-                    useSpeck.containingMod to index
+                    // i.e. generate "foo::[]Baz" item from "foo::[bar::baz::]Baz"
+                    //                     ^                              /
+                    //                      \____________________________/
+                    useSpeck.containingMod to superMods.subList(0, index)
                 }
                 val items = QualifiedNamedItem.ReexportedItem.from(useSpeck, mod).collectImportItems(project, visited)
                 importItems += items.map {
-                    QualifiedNamedItem.CompositeItem(itemName, isPublic, it, superMods.subList(0, endModIndex), item)
+                    QualifiedNamedItem.CompositeItem(itemName, isPublic, it, explicitSuperMods, item)
                 }
                 visited -= useSpeck
             }

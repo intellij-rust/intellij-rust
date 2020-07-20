@@ -181,7 +181,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             targetName: String,
             scope: GlobalSearchScope
         ): Sequence<QualifiedNamedItem.ReexportedItem> {
-            return RsReexportIndex.findReexportsByName(project, targetName, scope)
+            return RsReexportIndex.findReexportsByProducedName(project, targetName, scope)
                 .asSequence()
                 .filter { !it.isStarImport }
                 .mapNotNull {

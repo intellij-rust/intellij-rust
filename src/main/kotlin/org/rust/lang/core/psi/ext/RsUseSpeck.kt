@@ -20,9 +20,13 @@ val RsUseSpeck.qualifier: RsPath? get() {
 
 val RsUseSpeck.pathOrQualifier: RsPath? get() = path ?: qualifier
 
-val RsUseSpeck.nameInScope: String? get() {
+val RsUseSpeck.nameInScope: String? get() = itemName(withAlias = true)
+
+fun RsUseSpeck.itemName(withAlias: Boolean): String? {
     if (useGroup != null) return null
-    alias?.name?.let { return it }
+    if (withAlias) {
+        alias?.name?.let { return it }
+    }
     val baseName = path?.referenceName ?: return null
     if (baseName == "self") {
         return qualifier?.referenceName
