@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
@@ -146,6 +147,9 @@ open class WithCustomStdlibRustProjectDescriptor(
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
+        val stdlibPath = explicitStdlibPath() ?: return
+        val file = LocalFileSystem.getInstance().findFileByPath(stdlibPath)
+        VfsRootAccess.allowRootAccess(fixture.testRootDisposable, *listOfNotNull(file?.path, file?.canonicalPath).toTypedArray())
     }
 }
 
