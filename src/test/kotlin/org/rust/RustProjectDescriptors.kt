@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
@@ -26,6 +27,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.DownloadResult
+import java.io.File
 import java.nio.file.Paths
 import java.util.*
 
@@ -38,7 +40,12 @@ object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)
 
 object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectDescriptor(DefaultDescriptor, {
-    System.getenv("RUST_SRC_WITH_SYMLINK")
+    val path = System.getenv("RUST_SRC_WITH_SYMLINK")
+    if (System.getenv("CI") != null) {
+        if (path == null) error("`RUST_SRC_WITH_SYMLINK` environment variable is not set")
+        if (!File(path).exists()) error("`$path` doesn't exist")
+    }
+    path
 })
 
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
@@ -140,6 +147,9 @@ open class WithCustomStdlibRustProjectDescriptor(
 
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
+        val stdlibPath = explicitStdlibPath() ?: return
+        val file = LocalFileSystem.getInstance().findFileByPath(stdlibPath)
+        VfsRootAccess.allowRootAccess(fixture.testRootDisposable, *listOfNotNull(file?.path, file?.canonicalPath).toTypedArray())
     }
 }
 
