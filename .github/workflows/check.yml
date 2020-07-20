@@ -88,6 +88,17 @@ jobs:
                   echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::201.6668.113"
                   echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::2020.1"
 
+            - name: Set up test env variables
+              run: echo "::set-env name=RUST_SRC_WITH_SYMLINK::$HOME/.rust-src"
+
+            - name: Create symlink for Rust stdlib Unix
+              if: matrix.os != 'windows-latest'
+              run: ln -s $(rustc --print sysroot)/lib/rustlib/src/rust/src $RUST_SRC_WITH_SYMLINK
+
+            - name: Create symlink for Rust stdlib Windows
+              if: matrix.os == 'windows-latest'
+              run: New-Item -ItemType Junction -Path "$env:RUST_SRC_WITH_SYMLINK" -Target "$(rustc --print sysroot)/lib/rustlib/src/rust/src"
+
             - name: Download
               uses: eskatos/gradle-command-action@v1
               with:

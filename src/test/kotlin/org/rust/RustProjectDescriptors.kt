@@ -26,6 +26,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.util.DownloadResult
+import java.io.File
 import java.nio.file.Paths
 import java.util.*
 
@@ -38,7 +39,12 @@ object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)
 
 object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectDescriptor(DefaultDescriptor, {
-    System.getenv("RUST_SRC_WITH_SYMLINK")
+    val path = System.getenv("RUST_SRC_WITH_SYMLINK")
+    if (System.getenv("CI") != null) {
+        if (path == null) error("`RUST_SRC_WITH_SYMLINK` environment variable is not set")
+        if (!File(path).exists()) error("`$path` doesn't exist")
+    }
+    path
 })
 
 open class RustProjectDescriptorBase : LightProjectDescriptor() {
