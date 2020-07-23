@@ -284,8 +284,7 @@ fun processExternCrateResolveVariants(
     val explicitDepsFirst = crate.dependenciesWithCyclic.sortedBy {
         when (it.crate.origin) {
             PackageOrigin.WORKSPACE,
-            PackageOrigin.DEPENDENCY,
-            PackageOrigin.TRANSITIVE_DEPENDENCY -> {
+            PackageOrigin.DEPENDENCY -> {
                 NameResolutionTestmarks.shadowingStdCrates.hit()
                 0
             }

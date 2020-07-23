@@ -151,7 +151,7 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
             val crate = importCandidate?.qualifiedNamedItem?.containingCrate ?: return null
             return when (crate.origin) {
                 PackageOrigin.STDLIB -> crate.normName to RsIcons.RUST
-                PackageOrigin.DEPENDENCY, PackageOrigin.TRANSITIVE_DEPENDENCY -> crate.normName to CargoIcons.ICON
+                PackageOrigin.DEPENDENCY -> crate.normName to CargoIcons.ICON
                 else -> null
             }
         }

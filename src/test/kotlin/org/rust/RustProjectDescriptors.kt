@@ -196,14 +196,12 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             testCargoPackage(contentRoot),
             externalPackage("$contentRoot/dep-lib", "lib.rs", "dep-lib", "dep-lib-target"),
             externalPackage("", null, "nosrc-lib", "nosrc-lib-target"),
-            externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib",
-                origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+            externalPackage("$contentRoot/trans-lib", "lib.rs", "trans-lib"),
             externalPackage("$contentRoot/dep-lib-new", "lib.rs", "dep-lib", "dep-lib-target",
-                version = "0.0.2", origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+                version = "0.0.2"),
             externalPackage("$contentRoot/dep-proc-macro", "lib.rs", "dep-proc-macro", libKind = LibKind.PROC_MACRO),
             externalPackage("$contentRoot/dep-lib-2", "lib.rs", "dep-lib-2", "dep-lib-target-2"),
-            externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2",
-                origin = PackageOrigin.TRANSITIVE_DEPENDENCY),
+            externalPackage("$contentRoot/trans-lib-2", "lib.rs", "trans-lib-2"),
             externalPackage("$contentRoot/no-source-lib", "lib.rs", "no-source-lib").copy(source = null)
         )
 

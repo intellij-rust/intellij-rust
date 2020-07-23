@@ -327,14 +327,6 @@ private class WorkspaceImpl(
                 }
             }
 
-            // Figure out packages origins:
-            // - if a package is a workspace member it's WORKSPACE (handled in constructor)
-            // - if a package is a direct dependency of a workspace member, it's DEPENDENCY
-            // - otherwise, it's TRANSITIVE_DEPENDENCY (handled in constructor as well)
-            result.packages.filter { it.origin == PackageOrigin.WORKSPACE }
-                .flatMap { it.dependencies }
-                .forEach { it.pkg.origin = PackageOrigin.min(it.pkg.origin, PackageOrigin.DEPENDENCY) }
-
             return result
         }
     }
