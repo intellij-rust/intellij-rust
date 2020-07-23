@@ -15,8 +15,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
@@ -26,77 +24,97 @@ import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.doc.psi.RsDocKind
 import org.rust.openapiext.forEachChild
-import org.rust.stdext.joinToWithBuffer
 import org.rust.stdext.mapNotNullToSet
+import org.rust.stdext.removeLast
 import java.util.*
 import java.util.Collections.singletonMap
 
+/**
+ * The actual algorithm for expansion is not too hard, but is pretty tricky.
+ * `MacroSubstitution` structure is the key to understanding what we are doing here.
+ *
+ * On the high level, it stores mapping from meta variables to the bits of
+ * syntax it should be substituted with. For example, if `$e:expr` is matched
+ * with `1 + 1` by macro_rules, the `MacroSubstitution` will store `$e -> 1 + 1`.
+ *
+ * The tricky bit is dealing with repetitions (`$()*`). Consider this example:
+ *
+ * ```
+ * macro_rules! foo {
+ *     ($($ i:ident $($ e:expr),*);*) => {
+ *         $(fn $ i() { $($ e);*; })*
+ *     }
+ * }
+ * foo! { foo 1,2,3; bar 4,5,6 }
+ * ```
+ *
+ * Here, the `$i` meta variable is matched first with `foo` and then with
+ * `bar`, and `$e` is matched in turn with `1`, `2`, `3`, `4`, `5`, `6`.
+ *
+ * To represent such "multi-mappings", we use a recursive structures: we map
+ * variables not to values, but to *lists* of values or other lists (that is,
+ * to the trees).
+ *
+ * For the above example, the MacroSubstitution would store
+ *
+ * ```
+ * i -> [foo, bar]
+ * e -> [[1, 2, 3], [4, 5, 6]]
+ * ```
+ *
+ * The comment copied from [rust-analyzer](https://github.com/rust-analyzer/rust-analyzer/blob/2dd8ba2b21/crates/ra_mbe/src/mbe_expander.rs#L58)
+ */
 data class MacroSubstitution(
-    /**
-     * Maps meta variable names with the actual values, e.g. for this macro
-     * ```rust
-     * macro_rules! foo {
-     *     ($ i:item) => ( $i )
-     * }
-     * foo!( mod a {} )
-     * ```
-     * we map "i" to "mod a {}"
-     */
-    val variables: Map<String, MetaVarValue>,
-
-    /**
-     * Contains macro groups values. E.g. for this macro
-     * ```rust
-     * macro_rules! foo {
-     *     ($($ i:item),*; $($ e:expr),*) => {
-     *         fn foo() { $($ e);*; }
-     *         $($ i)*
-     *     }
-     * }
-     * foo! { mod a {}, mod b {}; 1, 2 }
-     * ```
-     * It will contains
-     * ```
-     * [
-     *     MacroGroup {
-     *         substs: [
-     *             {"i" => "mod a {}"},
-     *             {"i" => "mod b {}"}
-     *         ]
-     *     },
-     *     MacroGroup {
-     *         substs: [
-     *             {"e" => "1"},
-     *             {"e" => "2"}
-     *         ]
-     *     }
-     * ]
-     * ```
-     */
-    val groups: List<MacroGroup>
+    val variables: Map<String, MetaVarValue>
 )
 
-data class MacroGroup(
-    val definition: RsMacroBindingGroup,
-    val substs: List<MacroSubstitution>
-)
-
-private data class WithParent(
-    private val subst: MacroSubstitution,
-    private val parent: WithParent?
-) {
-    val groups: List<MacroGroup>
-        get() = subst.groups
-
-    fun getVar(name: String): MetaVarValue? =
-        subst.variables[name] ?: parent?.getVar(name)
+private fun MacroSubstitution.getVar(name: String, nesting: List<NestingState>): VarLookupResult {
+    var value = variables[name] ?: return VarLookupResult.None
+    loop@ for (nestingState in nesting) {
+        nestingState.hit = true
+        value = when (value) {
+            is MetaVarValue.Fragment -> break@loop
+            is MetaVarValue.Group -> {
+                value.nested.getOrNull(nestingState.idx) ?: run {
+                    nestingState.atTheEnd = true
+                    return VarLookupResult.Error
+                }
+            }
+            MetaVarValue.EmptyGroup -> {
+                nestingState.atTheEnd = true
+                return VarLookupResult.Error
+            }
+        }
+    }
+    return when (value) {
+        is MetaVarValue.Fragment -> VarLookupResult.Ok(value)
+        is MetaVarValue.Group -> VarLookupResult.Error
+        MetaVarValue.EmptyGroup -> VarLookupResult.Error
+    }
 }
 
-data class MetaVarValue(
-    val value: String,
-    val kind: FragmentKind?,
-    val elementType: IElementType?,
-    val offsetInCallBody: Int
+private sealed class VarLookupResult {
+    class Ok(val value: MetaVarValue.Fragment) : VarLookupResult()
+    object None : VarLookupResult()
+    object Error : VarLookupResult()
+}
+
+sealed class MetaVarValue {
+    data class Fragment(
+        val value: String,
+        val kind: FragmentKind?,
+        val elementType: IElementType?,
+        val offsetInCallBody: Int
+    ) : MetaVarValue()
+
+    data class Group(val nested: MutableList<MetaVarValue> = mutableListOf()) : MetaVarValue()
+    object EmptyGroup : MetaVarValue()
+}
+
+private class NestingState(
+    var idx: Int = 0,
+    var hit: Boolean = false,
+    var atTheEnd: Boolean = false
 )
 
 class MacroExpander(val project: Project) {
@@ -104,15 +122,8 @@ class MacroExpander(val project: Project) {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return null
 
-        val substWithGlobalVars = WithParent(
-            subst,
-            WithParent(
-                MacroSubstitution(
-                    singletonMap("crate", MetaVarValue(expandDollarCrateVar(call, def), null, null, -1)),
-                    emptyList()
-                ),
-                null
-            )
+        val substWithGlobalVars = MacroSubstitution(
+            subst.variables + singletonMap("crate", MetaVarValue.Fragment(expandDollarCrateVar(call, def), null, null, -1))
         )
 
         return substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
@@ -187,10 +198,10 @@ class MacroExpander(val project: Project) {
         return false
     }
 
-    private fun substituteMacro(root: PsiElement, subst: WithParent): Pair<CharSequence, RangeMap>? {
+    private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): Pair<CharSequence, RangeMap>? {
         val sb = StringBuilder()
         val ranges = SmartList<MappedTextRange>()
-        if (!substituteMacro(sb, ranges, root.node, subst)) return null
+        if (!substituteMacro(sb, ranges, root.node, subst, mutableListOf())) return null
         return sb to RangeMap.from(ranges)
     }
 
@@ -198,49 +209,68 @@ class MacroExpander(val project: Project) {
         sb: StringBuilder,
         ranges: MutableList<MappedTextRange>,
         root: ASTNode,
-        subst: WithParent
+        subst: MacroSubstitution,
+        nesting: MutableList<NestingState>
     ): Boolean {
         root.forEachChild { child ->
             when (child.elementType) {
                 in RS_COMMENTS -> Unit
                 MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS ->
-                    if (!substituteMacro(sb, ranges, child, subst)) return false
+                    if (!substituteMacro(sb, ranges, child, subst, nesting)) return false
                 MACRO_REFERENCE -> {
-                    val value = subst.getVar((child.psi as RsMacroReference).referenceName)
-                    if (value == null) {
-                        MacroExpansionMarks.substMetaVarNotFound.hit()
-                        sb.safeAppend(child.text)
-                        return@forEachChild
-                    }
-                    val parensNeeded = value.kind == FragmentKind.Expr
-                        && value.elementType !in USELESS_PARENS_EXPRS
-                    if (parensNeeded) {
-                        sb.append("(")
-                        sb.append(value.value)
-                        sb.append(")")
-                    } else {
-                        sb.safeAppend(value.value)
-                    }
-                    if (value.offsetInCallBody != -1 && value.value.isNotEmpty()) {
-                        ranges.mergeAdd(MappedTextRange(
-                            value.offsetInCallBody,
-                            sb.length - value.value.length - if (parensNeeded) 1 else 0,
-                            value.value.length
-                        ))
+                    when (val result = subst.getVar((child.psi as RsMacroReference).referenceName, nesting)) {
+                        is VarLookupResult.Ok -> {
+                            val value = result.value
+                            val parensNeeded = value.kind == FragmentKind.Expr
+                                && value.elementType !in USELESS_PARENS_EXPRS
+                            if (parensNeeded) {
+                                sb.append("(")
+                                sb.append(value.value)
+                                sb.append(")")
+                            } else {
+                                sb.safeAppend(value.value)
+                            }
+                            if (value.offsetInCallBody != -1 && value.value.isNotEmpty()) {
+                                ranges.mergeAdd(MappedTextRange(
+                                    value.offsetInCallBody,
+                                    sb.length - value.value.length - if (parensNeeded) 1 else 0,
+                                    value.value.length
+                                ))
+                            }
+                        }
+                        VarLookupResult.None -> {
+                            MacroExpansionMarks.substMetaVarNotFound.hit()
+                            sb.safeAppend(child.text)
+                            return@forEachChild
+                        }
+                        VarLookupResult.Error -> {
+                            return true
+                        }
                     }
                 }
                 MACRO_EXPANSION_REFERENCE_GROUP -> {
                     val childPsi = child.psi as RsMacroExpansionReferenceGroup
                     childPsi.macroExpansionContents?.let { contents ->
+                        nesting += NestingState()
                         val separator = childPsi.macroExpansionGroupSeparator?.text ?: ""
 
-                        val matchedGroup = subst.groups.singleOrNull()
-                            ?: subst.groups.firstOrNull { it.definition.matches(contents) }
-                            ?: return false
-
-                        matchedGroup.substs.joinToWithBuffer(sb, separator) { sb ->
-                            if (!substituteMacro(sb, ranges, contents.node, WithParent(this, subst))) return false
+                        for (i in 0 until 65536) {
+                            val lastPosition = sb.length
+                            if (!substituteMacro(sb, ranges, contents.node, subst, nesting)) return false
+                            val nestingState = nesting.last()
+                            if (nestingState.atTheEnd || !nestingState.hit) {
+                                sb.delete(lastPosition, sb.length)
+                                if (i != 0) {
+                                    sb.delete(sb.length - separator.length, sb.length)
+                                }
+                                break
+                            }
+                            nestingState.idx += 1
+                            nestingState.hit = false
+                            sb.append(separator)
                         }
+
+                        nesting.removeLast()
                     }
                 }
                 else -> {
@@ -278,7 +308,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 5
+        const val EXPANDER_VERSION = 6
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
@@ -355,7 +385,6 @@ class MacroPattern private constructor(
     private fun matchPartial(macroCallBody: PsiBuilder): MacroSubstitution? {
         ProgressManager.checkCanceled()
         val map = HashMap<String, MetaVarValue>()
-        val groups = mutableListOf<MacroGroup>()
 
         for (node in pattern) {
             when (node.elementType) {
@@ -373,11 +402,27 @@ class MacroPattern private constructor(
                     }
                     val text = macroCallBody.originalText.substring(lastOffset, macroCallBody.currentOffset)
                     val elementType = macroCallBody.latestDoneMarker?.tokenType
-                    map[name] = MetaVarValue(text, kind, elementType, lastOffset)
+                    map[name] = MetaVarValue.Fragment(text, kind, elementType, lastOffset)
                 }
                 MACRO_BINDING_GROUP -> {
                     val psi = node.psi as RsMacroBindingGroup
-                    groups += MacroGroup(psi, matchGroup(psi, macroCallBody) ?: return null)
+                    val nesteds = matchGroup(psi, macroCallBody) ?: return null
+                    nesteds.forEachIndexed { i, nested ->
+                        for ((key, value) in nested.variables) {
+                            val it = map.getOrPut(key) { MetaVarValue.Group() } as? MetaVarValue.Group
+                                ?: return null
+                            while (it.nested.size < i) {
+                                it.nested += MetaVarValue.Group()
+                            }
+                            it.nested += value
+                        }
+                    }
+                    if (nesteds.isEmpty()) {
+                        val vars = psi.descendantsOfType<RsMacroBinding>().mapNotNullToSet { it.name }
+                        for (v in vars) {
+                            map[v] = MetaVarValue.EmptyGroup
+                        }
+                    }
                 }
                 else -> {
                     if (!macroCallBody.isSameToken(node)) {
@@ -387,7 +432,7 @@ class MacroPattern private constructor(
                 }
             }
         }
-        return MacroSubstitution(map, groups)
+        return MacroSubstitution(map)
     }
 
 
@@ -481,46 +526,6 @@ fun PsiBuilder.isSameToken(node: ASTNode): Boolean {
         PsiBuilderUtil.advance(this, size)
     }
     return result
-}
-
-private fun RsMacroBindingGroup.matches(contents: RsMacroExpansionContents): Boolean {
-    val available = availableVars
-    val used = contents.descendantsOfType<RsMacroReference>()
-    return used.all { it.referenceName in available || it.referenceName == "crate" }
-}
-
-/**
- * Metavars available inside this group. Includes vars from this group, from all descendant groups
- * and from all ancestor groups. Sibling groups are excluded. E.g these vars available for these groups
- * ```
- * ($a [$b $($c)* ]    $($d)*      $($e           $($f)*)*)
- *         ^ a, b, c   ^ a, b, d   ^ a, b, e, f   ^ a, b, e, f
- * ```
- */
-private val RsMacroBindingGroup.availableVars: Set<String>
-    get() = CachedValuesManager.getCachedValue(this) {
-        CachedValueProvider.Result.create(
-            collectAvailableVars(this),
-            ancestorStrict<RsMacro>()!!.modificationTracker
-        )
-    }
-
-private fun collectAvailableVars(groupDefinition: RsMacroBindingGroup): Set<String> {
-    val vars = groupDefinition.descendantsOfType<RsMacroBinding>().toMutableList()
-
-    fun go(psi: PsiElement) {
-        when (psi) {
-            is RsMacroBinding -> vars += psi
-            !is RsMacroBindingGroup -> psi.forEachChild(::go)
-        }
-    }
-
-    groupDefinition.ancestors
-        .drop(1)
-        .takeWhile { it !is RsMacroCase}
-        .forEach(::go)
-
-    return vars.mapNotNullToSet { it.name }
 }
 
 object MacroExpansionMarks {

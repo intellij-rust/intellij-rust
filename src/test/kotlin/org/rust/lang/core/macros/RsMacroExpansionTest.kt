@@ -668,6 +668,24 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn bar() { 1; 2; }
     """)
 
+    fun `test merged groups`() = doTest("""
+        macro_rules! foo {
+            (($($ a:ident)*) ; ($($ b:block)*)) => {
+                $(
+                    fn $ a () $ b
+                )*
+            };
+        }
+
+        foo! {
+            (bar baz) ;
+            ({ 0; } { 1; })
+        }
+    """, """
+        fn bar() { 0; }
+        fn baz() { 1; }
+    """)
+
     fun `test impl members context`() = checkSingleMacro("""
         macro_rules! foo {
             () => {
