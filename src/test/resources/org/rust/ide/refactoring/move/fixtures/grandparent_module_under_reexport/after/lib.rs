@@ -1,11 +1,12 @@
 pub mod inner1 {
+    pub use inner2::*;
+
     mod inner2 {
-        mod inner3 {
+        pub mod inner3 {
             pub mod mod1;
             pub mod mod2;
         }
     }
-    pub use inner2::*;
 }
 mod usages {
     fn test1a() {

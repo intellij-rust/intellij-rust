@@ -20,6 +20,7 @@ import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
 import org.rust.ide.inspections.import.lastElement
+import org.rust.ide.refactoring.move.common.RsMovePathHelper
 import org.rust.ide.refactoring.move.common.RsMoveReferenceInfo
 import org.rust.ide.refactoring.move.common.RsMoveRetargetReferencesProcessor
 import org.rust.lang.core.psi.*
@@ -59,6 +60,11 @@ class RsMoveFilesOrDirectoriesProcessor(
     private val movedFile: RsFile = elementsToMove[0] as RsFile
     private val oldParentMod: RsMod = movedFile.`super` ?: error("Can't find parent mod of moved file")
 
+    // keys --- `RsPath`s which references moved file
+    // insideReferencesMap[path] --- path to moved file after move
+    // null means no accessible path found
+    private lateinit var insideReferencesMap: Map<RsPath, RsPath?>
+
     // keys --- `RsPath`s inside movedFile
     // outsideReferencesMap[path] --- target element for path reference
     private lateinit var outsideReferencesMap: Map<RsPath, RsElement>
@@ -97,9 +103,29 @@ class RsMoveFilesOrDirectoriesProcessor(
     }
 
     private fun detectVisibilityProblems(usages: Array<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
+        insideReferencesMap = preprocessInsideReferences(usages)
         outsideReferencesMap = collectOutsideReferencesFromMovedFile()
-        conflictsDetector = RsMoveFilesOrDirectoriesConflictsDetector(movedFile, newParentMod, outsideReferencesMap)
-        conflictsDetector.detectVisibilityProblems(usages, conflicts)
+        conflictsDetector = RsMoveFilesOrDirectoriesConflictsDetector(
+            movedFile,
+            newParentMod,
+            insideReferencesMap,
+            outsideReferencesMap
+        )
+        conflictsDetector.detectVisibilityProblems(conflicts)
+    }
+
+    private fun preprocessInsideReferences(usages: Array<UsageInfo>): Map<RsPath, RsPath?> {
+        val pathHelper = RsMovePathHelper(project, newParentMod)
+        return usages
+            .mapNotNull { usage ->
+                val path = usage.element as? RsPath
+                val target = usage.reference?.resolve() as? RsQualifiedNamedElement
+                if (path == null || target == null) return@mapNotNull null
+
+                val pathNew = pathHelper.findPathAfterMove(path, target)
+                path to pathNew
+            }
+            .toMap()
     }
 
     private fun collectOutsideReferencesFromMovedFile(): MutableMap<RsPath, RsElement> {
@@ -185,10 +211,18 @@ class RsMoveFilesOrDirectoriesProcessor(
     }
 
     private fun retargetUsages(usages: List<UsageInfo>) {
+        // if no accessible path found, then we use absolute path
+        // (it happens only if user choose "Continue" in conflicts dialog)
+        fun getPathNewFallback(pathOld: RsPath): RsPath? {
+            val pathNewText = movedFile.qualifiedNameRelativeTo(pathOld.containingMod) ?: return null
+            return psiFactory.tryCreatePath(pathNewText)
+        }
+
         val references = usages.mapNotNull { usage ->
             val pathOld = usage.element as? RsPath ?: return@mapNotNull null
-            val pathNewText = movedFile.qualifiedNameRelativeTo(pathOld.containingMod) ?: return@mapNotNull null
-            val pathNew = psiFactory.tryCreatePath(pathNewText) ?: return@mapNotNull null
+            val pathNew = insideReferencesMap[pathOld]
+                ?: getPathNewFallback(pathOld)
+                ?: return@mapNotNull null
             RsMoveReferenceInfo(pathOld, pathNew, movedFile)
         }
         RsMoveRetargetReferencesProcessor(project, oldParentMod, newParentMod).retargetReferences(references)

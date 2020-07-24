@@ -5,11 +5,9 @@
 
 package org.rust.ide.refactoring.move
 
-import org.junit.Ignore
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-@Ignore
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveFileReexportTest : RsMoveFileTestBase() {
     override val dataPath = "org/rust/ide/refactoring/move/fixtures/"
@@ -65,8 +63,8 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
         """
     //- main.rs
         mod inner {
-            mod mod1;
-            mod mod2;
+            mod mod1;  // private
+            pub mod mod2;
             pub use mod1::*;
         }
         mod usages {
@@ -82,14 +80,13 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
     """, """
     //- main.rs
         mod inner {
-            mod mod1;
-            mod mod2;
+            mod mod1;  // private
+            pub mod mod2;
             pub use mod1::*;
-            pub use mod2::foo;
         }
         mod usages {
             fn test() {
-                crate::inner::foo::func();
+                crate::inner::mod2::foo::func();
             }
         }
     //- inner/mod1/mod.rs
@@ -117,6 +114,7 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
     //- inner/mod1/mod.rs
         pub mod foo;
     //- inner/mod2/mod.rs
+        pub fn mod2_func() {}
     //- inner/mod1/foo.rs
         pub fn func() {}
     """, """
@@ -134,6 +132,8 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
     //- inner/mod1/mod.rs
     //- inner/mod2/mod.rs
         pub mod foo;
+
+        pub fn mod2_func() {}
     //- inner/mod2/foo.rs
         pub fn func() {}
     """)

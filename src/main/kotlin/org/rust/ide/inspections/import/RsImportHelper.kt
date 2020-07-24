@@ -6,10 +6,7 @@
 package org.rust.ide.inspections.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.lang.core.psi.RsMembers
-import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.RsTypeReference
-import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
@@ -49,6 +46,17 @@ object RsImportHelper {
             val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item in elements }
             candidate?.import(context)
         }
+    }
+
+    // finds path to `element` from `context.containingMod`, taking into account reexports and glob imports
+    fun findPath(context: RsElement, element: RsQualifiedNamedElement): String? {
+        if (element is RsFile) return element.declaration?.let { findPath(context, it) }
+
+        val importContext = ImportContext.from(context.project, context)
+        val name = element.name ?: return null
+        val candidates = AutoImportFix.getImportCandidates(importContext, name, name) { it.item.parent !is RsMembers }
+        val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item == element }
+        return candidate?.info?.usePath
     }
 
     /**

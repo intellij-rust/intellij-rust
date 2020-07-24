@@ -8,7 +8,6 @@ package org.rust.ide.refactoring.move
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
-import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -16,41 +15,26 @@ import org.rust.lang.core.psi.ext.*
 class RsMoveFilesOrDirectoriesConflictsDetector(
     private val movedFile: RsFile,
     private val newParentMod: RsMod,
+    private val insideReferencesMap: Map<RsPath, RsPath?>,
     private val outsideReferencesMap: Map<RsPath, RsElement>
 ) {
 
     var shouldMakeMovedFileModDeclarationPublic: Boolean = false
         private set
 
-    fun detectVisibilityProblems(usages: Array<UsageInfo>, conflicts: MultiMap<PsiElement, String>) {
-        detectInsideReferencesVisibilityProblems(usages, conflicts)
+    fun detectVisibilityProblems(conflicts: MultiMap<PsiElement, String>) {
+        detectInsideReferencesVisibilityProblems(conflicts)
         detectOutsideReferencesVisibilityProblems(conflicts)
     }
 
-    private fun detectInsideReferencesVisibilityProblems(
-        usages: Array<UsageInfo>,
-        conflicts: MultiMap<PsiElement, String>
-    ) {
-        // for each reference we should check that:
-        // - newParentMod is accessible
-        // - movedFile mod-declaration in newParentMod is accessible
-        //   either `pub` or `pub(in ...)`, otherwise we should add `pub`
-        // - items in movedFile can have `pub(in ...)` visibility,
-        //   but we will update them in performRefactoring
-
+    private fun detectInsideReferencesVisibilityProblems(conflicts: MultiMap<PsiElement, String>) {
         shouldMakeMovedFileModDeclarationPublic = false
-        for (usage in usages) {
-            val usageElement = usage.element as? RsPath ?: continue
-            val usageMod = usageElement.containingMod
-
-            // TODO: better support for reexports
-            for (superMod in newParentMod.superMods.asReversed()) {
-                if (!superMod.isVisibleFrom(usageMod)) {
-                    addVisibilityConflict(conflicts, usageElement, movedFile)
-                    break
-                }
+        for ((pathOld, pathNew) in insideReferencesMap) {
+            if (pathNew == null) {
+                addVisibilityConflict(conflicts, pathOld, movedFile)
             }
 
+            val usageMod = pathOld.containingMod
             if (!usageMod.superMods.contains(newParentMod)) {
                 shouldMakeMovedFileModDeclarationPublic = true
             }
