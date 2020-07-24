@@ -166,6 +166,11 @@ class RsFile(
         return declaration?.visibility ?: RsVisibility.Private
     }
 
+    override val isPublic: Boolean get() {
+        if (isCrateRoot) return true
+        return declaration?.isPublic ?: false
+    }
+
     val attributes: Attributes
         get() {
             val stub = greenStub as RsFileStub?
