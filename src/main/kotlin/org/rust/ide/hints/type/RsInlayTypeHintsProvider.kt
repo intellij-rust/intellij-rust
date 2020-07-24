@@ -6,6 +6,7 @@
 package org.rust.ide.hints.type
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ImmediateConfigurable.Case
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
@@ -15,9 +16,6 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.layout.panel
-import com.intellij.util.ui.JBUI
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.*
@@ -28,6 +26,7 @@ import org.rust.lang.core.types.infer.collectInferTys
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 @Suppress("UnstableApiUsage")
@@ -46,49 +45,17 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
             """.trimIndent()
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
-        val showForVariables = "Show for variables"
-        val showForLambdas = "Show for closures"
-        val showForIterators = "Show for loop variables"
-        val showForPlaceholders = "Show for type placeholders"
-        val showObviousTypes = "Show obvious types"
 
-        private val varField = CheckBox(showForVariables)
-        private val lambdaField = CheckBox(showForLambdas)
-        private val iteratorField = CheckBox(showForIterators)
-        private val placeholderField = CheckBox(showForPlaceholders)
-        private val obviousTypesField = CheckBox(showObviousTypes)
+        override val cases: List<Case>
+            get() = listOf(
+                Case("Show for variables", "variables", settings::showForVariables),
+                Case("Show for closures", "closures", settings::showForLambdas),
+                Case("Show for loop variables", "loop_variables", settings::showForIterators),
+                Case("Show for type placeholders", "type_placeholders", settings::showForPlaceholders),
+                Case("Show obvious types", "obvious_types", settings::showObviousTypes)
+            )
 
-        override fun createComponent(listener: ChangeListener): JPanel {
-            varField.isSelected = settings.showForVariables
-            varField.addItemListener { handleChange(listener) }
-            lambdaField.isSelected = settings.showForLambdas
-            lambdaField.addItemListener { handleChange(listener) }
-            iteratorField.isSelected = settings.showForIterators
-            iteratorField.addItemListener { handleChange(listener) }
-            placeholderField.isSelected = settings.showForPlaceholders
-            placeholderField.addItemListener { handleChange(listener) }
-            obviousTypesField.isSelected = settings.showObviousTypes
-            obviousTypesField.addItemListener { handleChange(listener) }
-
-            val panel = panel {
-                row { varField(pushX) }
-                row { lambdaField(pushX) }
-                row { iteratorField(pushX) }
-                row { placeholderField(pushX) }
-                row { obviousTypesField(pushX) }
-            }
-            panel.border = JBUI.Borders.empty(5)
-            return panel
-        }
-
-        private fun handleChange(listener: ChangeListener) {
-            settings.showForVariables = varField.isSelected
-            settings.showForLambdas = lambdaField.isSelected
-            settings.showForIterators = iteratorField.isSelected
-            settings.showForPlaceholders = placeholderField.isSelected
-            settings.showObviousTypes = obviousTypesField.isSelected
-            listener.settingsChanged()
-        }
+        override fun createComponent(listener: ChangeListener): JComponent = JPanel()
     }
 
     override fun createSettings(): Settings = Settings()

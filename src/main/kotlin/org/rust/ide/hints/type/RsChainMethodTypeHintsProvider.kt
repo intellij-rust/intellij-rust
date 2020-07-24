@@ -7,6 +7,7 @@
 package org.rust.ide.hints.type
 
 import com.intellij.codeInsight.hints.*
+import com.intellij.codeInsight.hints.ImmediateConfigurable.Case
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.InsetPresentation
 import com.intellij.codeInsight.hints.presentation.MenuOnClickPresentation
@@ -17,9 +18,6 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.ui.components.CheckBox
-import com.intellij.ui.layout.panel
-import com.intellij.util.ui.JBUI
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsDotExpr
@@ -31,6 +29,7 @@ import org.rust.lang.core.psi.ext.parentDotExpr
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHintsProvider.Settings> {
@@ -41,28 +40,14 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
     override val previewText: String? = null
 
     override fun createConfigurable(settings: Settings): ImmediateConfigurable = object : ImmediateConfigurable {
-        private val consecutiveField = CheckBox("Show same consecutive types")
-        private val iteratorSpecialCase = CheckBox("Show iterators as `impl Iterator<...>`")
 
-        override fun createComponent(listener: ChangeListener): JPanel {
-            consecutiveField.isSelected = settings.showSameConsecutiveTypes
-            consecutiveField.addItemListener { handleChange(listener) }
-            iteratorSpecialCase.isSelected = settings.iteratorSpecialCase
-            iteratorSpecialCase.addItemListener { handleChange(listener) }
+        override val cases: List<Case>
+            get() = listOf(
+                Case("Show same consecutive types", "consecutive_types", settings::showSameConsecutiveTypes),
+                Case("Show iterators as `impl Iterator<...>`", "iterators", settings::iteratorSpecialCase)
+            )
 
-            val panel = panel {
-                row { consecutiveField(pushX) }
-                row { iteratorSpecialCase(pushX) }
-            }
-            panel.border = JBUI.Borders.empty(5)
-            return panel
-        }
-
-        private fun handleChange(listener: ChangeListener) {
-            settings.showSameConsecutiveTypes = consecutiveField.isSelected
-            settings.iteratorSpecialCase = iteratorSpecialCase.isSelected
-            listener.settingsChanged()
-        }
+        override fun createComponent(listener: ChangeListener): JComponent = JPanel()
     }
 
     override fun createSettings(): Settings = Settings()
