@@ -13,6 +13,7 @@ import javax.swing.Icon
 
 interface RsVisible : RsElement {
     val visibility: RsVisibility
+    val isPublic: Boolean  // restricted visibility considered as public
 }
 
 interface RsVisibilityOwner : RsVisible {
@@ -23,9 +24,11 @@ interface RsVisibilityOwner : RsVisible {
     @JvmDefault
     override val visibility: RsVisibility
         get() = vis?.visibility ?: RsVisibility.Private
-}
 
-val RsVisible.isPublic get() = visibility != RsVisibility.Private
+    @JvmDefault
+    override val isPublic: Boolean
+        get() = vis != null
+}
 
 fun RsVisibilityOwner.iconWithVisibility(flags: Int, icon: Icon): Icon {
     val visibilityIcon = when (vis?.stubKind) {

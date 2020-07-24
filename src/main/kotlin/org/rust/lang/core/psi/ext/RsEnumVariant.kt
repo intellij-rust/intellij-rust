@@ -24,6 +24,7 @@ abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantS
     override fun getIcon(flags: Int): Icon = RsIcons.ENUM_VARIANT
 
     override val visibility: RsVisibility get() = parentEnum.visibility
+    override val isPublic: Boolean get() = parentEnum.isPublic
 
     override val crateRelativePath: String? get() {
         val variantName = name ?: return null
@@ -32,4 +33,3 @@ abstract class RsEnumVariantImplMixin : RsStubbedNamedElementImpl<RsEnumVariantS
 
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
-

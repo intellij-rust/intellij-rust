@@ -34,7 +34,7 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
 
     override fun getIcon(flags: Int) = RsIcons.IMPL
 
-    val isPublic: Boolean get() = false // pub does not affect impls at all
+    override val isPublic: Boolean get() = false // pub does not affect impls at all
 
     override fun getPresentation(): ItemPresentation = getPresentation(this)
 
