@@ -38,18 +38,25 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
             val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope
                 ?: RsWithMacrosProjectScope(project)
-            StubIndex.getInstance().processElements(
-                KEY, key, project, scope, RsModDeclItem::class.java
-            ) { modDecl ->
-                if (modDecl.reference.resolve() == mod) {
-                    result += modDecl
+
+            fun processElements(key: String) {
+                StubIndex.getInstance().processElements(
+                    KEY, key, project, scope, RsModDeclItem::class.java
+                ) { modDecl ->
+                    if (modDecl.reference.resolve() == mod) {
+                        result += modDecl
+                    }
+                    true
                 }
-                true
+            }
+            processElements(key)
+            if (mod.name == RsConstants.MOD_RS_FILE && result.isEmpty()) {
+                // Parent path will be empty for #[path = "mod.rs"]
+                processElements("")
             }
 
             return result.singleOrFilter { it.isValidProjectMember }.takeIf { it.isNotEmpty() } ?: result
         }
-
 
         fun index(stub: RsModDeclItemStub, indexSink: IndexSink) {
             val key = key(stub.psi)
@@ -63,7 +70,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
 
         // We use case-insensitive name as a key, because certain file systems
         // are case-insensitive. It will work correctly with case-sensitive fs
-        // because we of the resolve check we do in [getDeclarationFor]
+        // because of the resolve check we do in [getDeclarationFor]
         private fun key(mod: RsFile): String? {
             val name = if (mod.name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(mod.name) else mod.parent?.name
             return name?.toLowerCase()
@@ -74,7 +81,8 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
             return if (pathAttribute != null) {
                 val fileName = PathUtil.getFileName(pathAttribute)
                 if (fileName == RsConstants.MOD_RS_FILE)
-                    // Use the name of the parent directory for files named mod.rs
+                // Use the name of the parent directory for files named mod.rs
+                // Will be empty string for #[path = "mod.rs"]
                     PathUtil.getFileName(PathUtil.getParentPath(pathAttribute))
                 else
                     FileUtil.getNameWithoutExtension(fileName)

@@ -72,7 +72,7 @@ class RsGotoSuperHandlerTest : RsTestBase() {
             mod foo;
         """, expected = "mod foo;")
 
-    fun `test with path attribute`() = checkNavigationInFiles("""
+    fun `test with path attribute 1`() = checkNavigationInFiles("""
         //- foo.rs
         /*caret*/    // only comment
 
@@ -82,6 +82,19 @@ class RsGotoSuperHandlerTest : RsTestBase() {
 
     """, expected = """
         #[path="foo.rs"]
+        mod bar;
+    """)
+
+    fun `test with path attribute 2`() = checkNavigationInFiles("""
+        //- mod.rs
+        /*caret*/    // only comment
+
+        //- main.rs
+            #[path="mod.rs"]
+            mod bar;
+
+    """, expected = """
+        #[path="mod.rs"]
         mod bar;
     """)
 
