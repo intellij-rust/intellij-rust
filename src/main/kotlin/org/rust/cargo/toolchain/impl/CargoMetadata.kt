@@ -326,7 +326,7 @@ object CargoMetadata {
                 val dependencySet = if (deps != null) {
                     deps.mapToSet { (pkgId, name, depKinds) ->
                         val depKindsLowered = depKinds?.map { it.clean() }
-                            ?: listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Normal))
+                            ?: listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Unclassified))
                         CargoWorkspaceData.Dependency(pkgId, name, depKindsLowered)
                     }
                 } else {

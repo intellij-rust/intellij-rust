@@ -160,6 +160,8 @@ fun <T> dequeOf(): Deque<T> = ArrayDeque<T>()
 fun <T> dequeOf(vararg elements: T): Deque<T> =
     ArrayDeque<T>().apply { addAll(elements) }
 
+inline fun <reified T: Enum<T>> enumSetOf(): EnumSet<T> = EnumSet.noneOf(T::class.java)
+
 typealias LookbackValue<T> = Pair<T, T?>
 
 fun <T> Sequence<T>.withPrevious(): Sequence<LookbackValue<T>> = LookbackSequence(this)

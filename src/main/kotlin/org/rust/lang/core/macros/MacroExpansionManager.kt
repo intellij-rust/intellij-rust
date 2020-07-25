@@ -1034,7 +1034,7 @@ class MacroExpansionManagerWaker : CargoProjectsService.CargoProjectsListener {
 
 private fun expandMacroOld(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?> {
     // Most of std macros contain the only `impl`s which are not supported for now, so ignoring them
-    if (call.containingCargoTarget?.pkg?.origin == PackageOrigin.STDLIB) {
+    if (call.containingCrate?.origin == PackageOrigin.STDLIB) {
         return nullExpansionResult(call)
     }
     return expandMacroToMemoryFile(

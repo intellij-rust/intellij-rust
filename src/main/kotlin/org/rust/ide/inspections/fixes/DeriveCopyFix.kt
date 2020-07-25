@@ -63,7 +63,7 @@ class DeriveCopyFix(element: RsElement) : LocalQuickFixAndIntentionActionOnPsiEl
         fun createIfCompatible(element: RsElement): DeriveCopyFix? {
             val pathExpr = element as? RsPathExpr ?: return null
             val item = (pathExpr.type as? TyAdt)?.item ?: return null
-            if (item.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
+            if (item.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
 
             val implLookup = ImplLookup.relativeTo(element)
 

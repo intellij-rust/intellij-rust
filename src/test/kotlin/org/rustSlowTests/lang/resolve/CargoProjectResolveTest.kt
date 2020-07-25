@@ -10,7 +10,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.fileTree
+import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.openapiext.pathAsPath
@@ -544,5 +546,231 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.run {
         checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
+    fun `test 2 cargo projects with common dependency with different features`() = fileTree {
+        dir("project_1") {
+            toml("Cargo.toml", """
+                [package]
+                name = "project_1"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                common_dep = { path = "../common_dep", features = ["foo"] }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    extern crate common_dep;
+                    fn main() {
+                        common_dep::foo();
+                    }              //^
+                """)
+            }
+        }
+        dir("project_2") {
+            toml("Cargo.toml", """
+                [package]
+                name = "project_2"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                common_dep = { path = "../common_dep", features = ["bar"] }
+            """)
+
+            dir("src") {
+                rust("main.rs", """
+                    extern crate common_dep;
+                    fn main() {
+                        common_dep::bar();
+                    }              //^
+                """)
+            }
+        }
+        dir("common_dep") {
+            toml("Cargo.toml", """
+                [package]
+                name = "common_dep"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+
+                [features]
+                foo = []
+                bar = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature = "foo")]
+                    pub fn foo() {}
+                    #[cfg(feature = "bar")]
+                    pub fn bar() {}
+                """)
+            }
+        }
+    }.run {
+        val prj = create(project, cargoProjectDirectory)
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("project_1/Cargo.toml"))
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("project_2/Cargo.toml"))
+        prj.checkReferenceIsResolved<RsPath>("project_1/src/main.rs")
+        prj.checkReferenceIsResolved<RsPath>("project_2/src/main.rs")
+    }
+
+    fun `test cyclic dev deps`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            build = "build.rs"
+
+            [dev-dependencies]
+            foo = { path = "./foo" }
+        """)
+        dir("tests") {
+            rust("main.rs", """
+                extern crate foo;
+                fn main() {
+                    foo::bar();
+                }     // ^
+            """)
+        }
+        dir("src") {
+            rust("lib.rs", """
+                pub fn bar() {}
+                #[test]
+                fn test() {
+                    extern crate foo;
+                    foo::bar();
+                }     // ^
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+
+                [dependencies]
+                hello = { path = "../" }
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    extern crate hello;
+                    pub use hello::bar;
+                """)
+            }
+        }
+    }.run {
+        CrateGraphTestmarks.cyclicDevDependency.checkHit {
+            checkReferenceIsResolved<RsPath>("tests/main.rs")
+            checkReferenceIsResolved<RsPath>("src/lib.rs")
+        }
+    }
+
+    @MinRustcVersion("1.41.0") // In this version Cargo starts providing `[build-dependencies]` info
+    fun `test build-dependency is resolved in 'build rs' and not resolved in 'main rs'`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            build = "build.rs"
+
+            [build-dependencies]
+            foo = { path = "./foo" }
+        """)
+        rust("build.rs", """
+            extern crate foo;
+            fn main() {
+                foo::bar();
+            }     // ^
+        """)
+        dir("src") {
+            rust("main.rs", """
+                extern crate foo;
+                fn main() {
+                    foo::bar();
+                }     // ^
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn bar() {}
+                """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("build.rs")
+        checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
+    }
+
+    @MinRustcVersion("1.41.0") // In this version Cargo starts providing `[build-dependencies]` info
+    fun `test normal dependency is not resolved in 'build rs' and resolved in 'main rs'`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            build = "build.rs"
+
+            [dependencies]
+            foo = { path = "./foo" }
+        """)
+        rust("build.rs", """
+            extern crate foo;
+            fn main() {
+                foo::bar();
+            }     // ^
+        """)
+        dir("src") {
+            rust("main.rs", """
+                extern crate foo;
+                fn main() {
+                    foo::bar();
+                }     // ^
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn bar() {}
+                """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("build.rs", shouldNotResolve = true)
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
+    fun `test stdlib in 'build rs'`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            build = "build.rs"
+        """)
+        rust("build.rs", """
+            fn main() {
+                std::mem::size_of::<i32>();
+            }            // ^
+        """)
+        dir("src") {
+            rust("main.rs", "")
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("build.rs")
     }
 }

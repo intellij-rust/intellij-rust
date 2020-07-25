@@ -14,7 +14,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.rustStructureOrAnyPsiModificationTracker
 import org.rust.lang.core.stubs.RsExternCrateItemStub
 import org.rust.lang.core.stubs.RsFileStub
@@ -39,7 +39,7 @@ class RsExternCrateReexportIndex : StringStubIndexExtension<RsExternCrateItem>()
         fun findReexports(project: Project, crateRoot: RsMod): List<RsExternCrateItem> {
             checkCommitIsNotInProgress(project)
             return CachedValuesManager.getCachedValue(crateRoot) {
-                val targetName = crateRoot.containingCargoTarget?.normName
+                val targetName = crateRoot.containingCrate?.normName
                 val reexports = if (targetName != null) {
                     getElements(KEY, targetName, project, GlobalSearchScope.allScope(project))
                         .filter { externCrateItem -> externCrateItem.reference.resolve() == crateRoot }

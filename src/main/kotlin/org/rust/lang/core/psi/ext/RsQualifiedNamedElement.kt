@@ -13,6 +13,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.util.AutoInjectedCrates.STD
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ChildItemType.*
 import org.rust.lang.core.psi.ext.RsQualifiedName.ParentItemType.*
@@ -29,7 +30,7 @@ interface RsQualifiedNamedElement : RsNamedElement {
 val RsQualifiedNamedElement.qualifiedName: String?
     get() {
         val inCratePath = crateRelativePath ?: return null
-        val cargoTarget = containingCargoTarget?.normName ?: return null
+        val cargoTarget = containingCrate?.normName ?: return null
         return "$cargoTarget$inCratePath"
     }
 
@@ -228,7 +229,7 @@ data class RsQualifiedName private constructor(
             val crateName = if (parentItem.type == PRIMITIVE) {
                 STD
             } else {
-                element.containingCargoTarget?.normName ?: return null
+                element.containingCrate?.normName ?: return null
             }
 
             val modSegments = if (parentItem.type == PRIMITIVE || parentItem.type == MACRO) {
@@ -247,7 +248,7 @@ data class RsQualifiedName private constructor(
 
         @JvmStatic
         fun from(qualifiedNamedItem: QualifiedNamedItem): RsQualifiedName? {
-            val crateName = qualifiedNamedItem.containingCargoTarget?.normName ?: return null
+            val crateName = qualifiedNamedItem.containingCrate?.normName ?: return null
             val modSegments = mutableListOf<String>()
 
             val (parentItem, childItem) = qualifiedNamedItem.item.toItems() ?: return null
@@ -340,7 +341,7 @@ data class RsQualifiedName private constructor(
                 is RsMacro -> MACRO
                 is RsMod -> {
                     if (isCrateRoot) {
-                        val crateName = containingCargoTarget?.normName ?: return null
+                        val crateName = containingCrate?.normName ?: return null
                         return Item(crateName, CRATE, this)
                     }
                     MOD
@@ -465,7 +466,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
     abstract val itemName: String?
     abstract val isPublic: Boolean
     abstract val superMods: List<ModWithName>?
-    abstract val containingCargoTarget: CargoWorkspace.Target?
+    abstract val containingCrate: Crate?
 
     val parentCrateRelativePath: String?
         get() {
@@ -486,7 +487,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         }
 
     override fun toString(): String {
-        return "${containingCargoTarget?.normName}::$crateRelativePath"
+        return "${containingCrate?.normName}::$crateRelativePath"
     }
 
     class ExplicitItem(item: RsQualifiedNamedElement) : QualifiedNamedItem(item) {
@@ -494,7 +495,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         override val isPublic: Boolean get() = (item as? RsVisible)?.isPublic == true
         override val superMods: List<ModWithName>?
             get() = (if (item is RsMod) item.`super` else item.containingMod)?.superMods?.map { ModWithName(it) }
-        override val containingCargoTarget: CargoWorkspace.Target? get() = item.containingCargoTarget
+        override val containingCrate: Crate? get() = item.containingCrate
     }
 
     class ReexportedItem private constructor(
@@ -505,7 +506,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
 
         override val isPublic: Boolean get() = true
         override val superMods: List<ModWithName>? get() = reexportItem.containingMod.superMods.map { ModWithName(it) }
-        override val containingCargoTarget: CargoWorkspace.Target? get() = reexportItem.containingCargoTarget
+        override val containingCrate: Crate? get() = reexportItem.containingCrate
 
         companion object {
             fun from(useSpeck: RsUseSpeck, item: RsQualifiedNamedElement): ReexportedItem {
@@ -532,7 +533,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
                 mods += reexportedModItem.superMods.orEmpty()
                 return mods
             }
-        override val containingCargoTarget: CargoWorkspace.Target? get() = reexportedModItem.containingCargoTarget
+        override val containingCrate: Crate? get() = reexportedModItem.containingCrate
     }
 
     data class ModWithName(val modItem: RsMod, val modName: String? = modItem.modName)
@@ -561,7 +562,7 @@ private fun QualifiedNamedItem.collectImportItems(
     val superMods = superMods.orEmpty()
     superMods.forEachIndexed { index, ancestorMod ->
         val modItem = ancestorMod.modItem
-        val modOriginalName = (if (modItem.isCrateRoot) modItem.containingCargoTarget?.normName else modItem.modName)
+        val modOriginalName = (if (modItem.isCrateRoot) modItem.containingCrate?.normName else modItem.modName)
             ?: return@forEachIndexed
 
         RsReexportIndex.findReexportsByOriginalName(project, modOriginalName)

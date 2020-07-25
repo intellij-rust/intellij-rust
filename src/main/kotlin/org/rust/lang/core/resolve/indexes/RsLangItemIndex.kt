@@ -15,7 +15,7 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsNamedElement
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.checkCommitIsNotInProgress
@@ -37,7 +37,7 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
             return if (elements.size < 2) {
                 elements.firstOrNull() as? RsNamedElement
             } else {
-                elements.find { it.containingCargoPackage?.normName == crateName } as? RsNamedElement
+                elements.find { it.containingCrate?.normName == crateName } as? RsNamedElement
             }
         }
 

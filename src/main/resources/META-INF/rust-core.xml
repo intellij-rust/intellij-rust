@@ -848,6 +848,9 @@
                         serviceImplementation="org.rust.cargo.project.model.impl.CargoProjectsServiceImpl"
                         testServiceImplementation="org.rust.cargo.project.model.impl.TestCargoProjectsServiceImpl"/>
 
+        <projectService serviceInterface="org.rust.lang.core.crate.CrateGraphService"
+                        serviceImplementation="org.rust.lang.core.crate.impl.CrateGraphServiceImpl"/>
+
         <toolWindow id="Cargo"
                     anchor="right"
                     factoryClass="org.rust.cargo.project.toolwindow.CargoToolWindowFactory"

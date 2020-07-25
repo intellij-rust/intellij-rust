@@ -14,12 +14,12 @@ import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.GlobalSearchScope
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.search.RsWithMacrosProjectScope
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -250,9 +250,10 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         private fun QualifiedNamedItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
             check(superMods.isNotEmpty())
             if (item !is RsVisible) return null
-            val target = containingCargoTarget ?: return null
+            val crate = containingCrate ?: return null
             // filter out transitive dependencies
-            if (target.pkg.origin == PackageOrigin.TRANSITIVE_DEPENDENCY) return null
+            // TODO use `Crate.hasDependency` and relative dependency name
+            if (crate.origin == PackageOrigin.TRANSITIVE_DEPENDENCY) return null
 
             val ourSuperMods = this.superMods ?: return null
             val parentMod = ourSuperMods.getOrNull(0) ?: return null
@@ -274,13 +275,13 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 }.singleOrNull()
 
                 val (externCrateName, needInsertExternCrateItem, depth) = if (externCrateWithDepth == null) {
-                    Triple(target.normName, true, null)
+                    Triple(crate.normName, true, null)
                 } else {
                     val (externCrateItem, depth) = externCrateWithDepth
                     Triple(externCrateItem.nameWithAlias, false, depth)
                 }
 
-                val importInfo = ImportInfo.ExternCrateImportInfo(target, externCrateName,
+                val importInfo = ImportInfo.ExternCrateImportInfo(crate, externCrateName,
                     needInsertExternCrateItem, depth, crateRelativePath)
                 ourSuperMods to importInfo
             } else {
@@ -304,8 +305,8 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             info: ImportInfo
         ): Boolean {
             val externCrateName = if (info !is ImportInfo.ExternCrateImportInfo ||
-                context.attributes == RsFile.Attributes.NONE && info.target.isStd ||
-                context.attributes == RsFile.Attributes.NO_STD && info.target.isCore) {
+                context.attributes == RsFile.Attributes.NONE && info.crate.isStd ||
+                context.attributes == RsFile.Attributes.NO_STD && info.crate.isCore) {
                 null
             } else {
                 info.externCrateName
@@ -343,14 +344,14 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             candidates: List<ImportCandidate>,
             fileAttributes: RsFile.Attributes
         ): List<ImportCandidate> {
-            val candidatesWithPackage = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
+            val candidatesWithPackage = mutableListOf<Pair<ImportCandidate, Crate>>()
 
-            val stdlibCandidates = mutableListOf<Pair<ImportCandidate, CargoWorkspace.Package>>()
+            val stdlibCandidates = mutableListOf<Pair<ImportCandidate, Crate>>()
 
             for (candidate in candidates) {
-                val pkg = candidate.qualifiedNamedItem.containingCargoTarget?.pkg ?: continue
-                val container = if (pkg.origin == PackageOrigin.STDLIB) stdlibCandidates else candidatesWithPackage
-                container += candidate to pkg
+                val crate = candidate.qualifiedNamedItem.containingCrate ?: continue
+                val container = if (crate.origin == PackageOrigin.STDLIB) stdlibCandidates else candidatesWithPackage
+                container += candidate to crate
             }
 
             candidatesWithPackage += filterStdlibCandidates(stdlibCandidates, fileAttributes)
@@ -359,13 +360,13 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         }
 
         private fun filterStdlibCandidates(
-            stdlibCandidates: List<Pair<ImportCandidate, CargoWorkspace.Package>>,
+            stdlibCandidates: List<Pair<ImportCandidate, Crate>>,
             fileAttributes: RsFile.Attributes
-        ): List<Pair<ImportCandidate, CargoWorkspace.Package>> {
+        ): List<Pair<ImportCandidate, Crate>> {
             var hasImportWithSameAttributes = false
             val candidateToAttributes = stdlibCandidates.map { candidate ->
-                val pkg = candidate.second
-                val attributes = when (pkg.normName) {
+                val crate = candidate.second
+                val attributes = when (crate.normName) {
                     AutoInjectedCrates.STD -> RsFile.Attributes.NONE
                     AutoInjectedCrates.CORE -> RsFile.Attributes.NO_STD
                     else -> RsFile.Attributes.NO_CORE
@@ -436,7 +437,7 @@ sealed class ImportInfo {
     class LocalImportInfo(override val usePath: String) : ImportInfo()
 
     class ExternCrateImportInfo(
-        val target: CargoWorkspace.Target,
+        val crate: Crate,
         val externCrateName: String,
         val needInsertExternCrateItem: Boolean,
         /**
@@ -530,17 +531,17 @@ fun ImportCandidate.import(context: RsElement) {
     // if crate of importing element differs from current crate
     // we need to add new extern crate item
     if (info is ImportInfo.ExternCrateImportInfo) {
-        val target = info.target
+        val crate = info.crate
         val crateRoot = context.crateRoot
         val attributes = crateRoot?.stdlibAttributes ?: RsFile.Attributes.NONE
         when {
             // but if crate of imported element is `std` and there aren't `#![no_std]` and `#![no_core]`
             // we don't add corresponding extern crate item manually
             // because it will be done by compiler implicitly
-            attributes == RsFile.Attributes.NONE && target.isStd -> AutoImportFix.Testmarks.autoInjectedStdCrate.hit()
+            attributes == RsFile.Attributes.NONE && crate.isStd -> AutoImportFix.Testmarks.autoInjectedStdCrate.hit()
             // if crate of imported element is `core` and there is `#![no_std]`
             // we don't add corresponding extern crate item manually for the same reason
-            attributes == RsFile.Attributes.NO_STD && target.isCore -> AutoImportFix.Testmarks.autoInjectedCoreCrate.hit()
+            attributes == RsFile.Attributes.NO_STD && crate.isCore -> AutoImportFix.Testmarks.autoInjectedCoreCrate.hit()
             else -> {
                 if (info.needInsertExternCrateItem && !isEdition2018) {
                     crateRoot?.insertExternCrateItem(psiFactory, info.externCrateName)
@@ -694,11 +695,11 @@ private val RsElement.stdlibAttributes: RsFile.Attributes
 private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it !is RsAttr && it !is RsVis }
 val <T : RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
-private val CargoWorkspace.Target.isStd: Boolean
-    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD
+private val Crate.isStd: Boolean
+    get() = origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD
 
-private val CargoWorkspace.Target.isCore: Boolean
-    get() = pkg.origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.CORE
+private val Crate.isCore: Boolean
+    get() = origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.CORE
 
 /**
  * If function or constant is defined in a trait
