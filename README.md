@@ -7,8 +7,7 @@
 
 | Build Status |                                                                              |
 |--------------|------------------------------------------------------------------------------|
-| Travis       | [![Travis Build Status][travis-build-status-svg]][travis-build-status]       |
-| AppVeyor     | [![AppVeyor Build Status][appveyor-build-status-svg]][appveyor-build-status] |
+| Check        | [![Check Status][check-status-svg]][check-status]                            |
 | Stable       | [![Stable Build Status][stable-build-status-svg]][stable-build-status]       |
 | Beta         | [![Beta Build Status][beta-build-status-svg]][beta-build-status]             |
 | Nightly      | [![Nightly Build Status][nightly-build-status-svg]][nightly-build-status]    |
@@ -69,11 +68,8 @@ understand the high-level structure of the codebase. If you are not sure where t
 [plugin-version-svg]: https://img.shields.io/jetbrains/plugin/v/8182-rust.svg
 [plugin-downloads-svg]: https://img.shields.io/jetbrains/plugin/d/8182-rust.svg
 
-[travis-build-status]: https://travis-ci.org/intellij-rust/intellij-rust?branch=master
-[travis-build-status-svg]: https://travis-ci.org/intellij-rust/intellij-rust.svg?branch=master
-
-[appveyor-build-status]: https://ci.appveyor.com/project/intellij-rust/intellij-rust/branch/master
-[appveyor-build-status-svg]: https://ci.appveyor.com/api/projects/status/xf8792c7p3637060?svg=true
+[check-status]: https://github.com/intellij-rust/intellij-rust/actions?query=workflow%3Acheck+event%3Apush+branch%3Amaster
+[check-status-svg]: https://github.com/intellij-rust/intellij-rust/workflows/check/badge.svg?branch=master&event=push
 
 [stable-build-status]: https://github.com/intellij-rust/intellij-rust/actions?query=workflow%3A%22rust+release%22+event%3Arepository_dispatch
 [stable-build-status-svg]: https://github.com/intellij-rust/intellij-rust/workflows/rust%20release/badge.svg?event=repository_dispatch
