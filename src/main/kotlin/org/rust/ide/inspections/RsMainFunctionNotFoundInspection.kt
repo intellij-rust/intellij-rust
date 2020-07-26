@@ -26,7 +26,8 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
                     if (file.childOfType<PsiErrorElement>() != null) return
 
                     val crate = file.crate ?: return
-                    if (!(crate.kind.isBin || crate.kind.isExampleBin) || !file.isCrateRoot) return
+                    if (!(crate.kind.isBin || crate.kind.isExampleBin || crate.kind.isCustomBuild)) return
+                    if (!file.isCrateRoot) return
 
                     if (file.queryAttributes.hasAttribute("no_main")) return
                     if (file.childrenOfType<RsFunction>().lastOrNull { fn -> "main" == fn.name } != null) return
