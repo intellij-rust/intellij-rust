@@ -149,6 +149,7 @@ interface CargoWorkspace {
         val isLib: Boolean get() = this is Lib
         val isBin: Boolean get() = this == Bin
         val isExampleBin: Boolean get() = this == ExampleBin
+        val isCustomBuild: Boolean get() = this == CustomBuild
         val isProcMacro: Boolean
             get() = this is Lib && this.kinds.contains(LibKind.PROC_MACRO)
     }

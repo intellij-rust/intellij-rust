@@ -115,6 +115,11 @@ class RsMainFunctionNotFoundInspectionTest : RsInspectionsTestBase(RsMainFunctio
         fn foo() { /*caret*/ }
     """)
 
+    fun `test main function does not exist in build file`() = checkByFileTree("""
+    //- build.rs
+        <error descr="`main` function not found in crate `build_script_build` [E0601]"> /*caret*/ </error>
+    """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test that the main function does not exist in the external binary crate`() = checkByFileTree("""
     //- dep-lib/lib.rs
