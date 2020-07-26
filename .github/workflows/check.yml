@@ -33,6 +33,7 @@ jobs:
                       platform-version: 201
 
         runs-on: ${{ matrix.os }}
+        timeout-minutes: 60
         env:
             ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
