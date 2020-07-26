@@ -297,22 +297,18 @@ fun processExternCrateResolveVariants(
     return false
 }
 
-fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
-    val refinedName = when {
-        name.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && context.isExpandedFromMacro -> {
-            NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
-            val refinedName = name.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
-            if (refinedName == "self") {
-                return context.crateRoot as? RsFile
-            }
-            refinedName
-        }
-        name == "crate" -> return context.crateRoot as? RsFile
-        else -> name
+fun findDependencyCrateByNamePath(context: RsElement, path: RsPath): RsFile? {
+    return when (val referenceName = path.referenceName) {
+        MACRO_DOLLAR_CRATE_IDENTIFIER -> path.resolveDollarCrateIdentifier()?.rootMod
+        "crate" -> context.crateRoot as? RsFile
+        else -> findDependencyCrateByName(context, referenceName)
     }
+}
+
+fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
     var found: RsFile? = null
     processExternCrateResolveVariants(context, false) {
-        if (it.name == refinedName) {
+        if (it.name == name) {
             found = it.element as? RsFile
             true
         } else {
@@ -494,14 +490,9 @@ private fun processUnqualifiedPathResolveVariants(
         run {
             // hacks around $crate macro metavar. See `expandDollarCrateVar` function docs
             val referenceName = path.referenceName
-            if (referenceName.startsWith(MACRO_CRATE_IDENTIFIER_PREFIX) && path.isExpandedFromMacro) {
-                val crate = referenceName.removePrefix(MACRO_CRATE_IDENTIFIER_PREFIX)
-                val result = if (crate == "self") {
-                    if (crateRoot != null) processor(referenceName, crateRoot) else false
-                } else {
-                    processExternCrateResolveVariants(path, false) {
-                        if (it.name == crate) processor.lazy(referenceName) { it.element } else false
-                    }
+            if (referenceName == MACRO_DOLLAR_CRATE_IDENTIFIER) {
+                val result = processor.lazy(referenceName) {
+                    path.resolveDollarCrateIdentifier()?.rootMod
                 }
                 if (result) return true
             }
@@ -542,6 +533,13 @@ private fun processUnqualifiedPathResolveVariants(
 
         else -> processNestedScopesUpwards(path, ns, isCompletion, processor)
     }
+}
+
+private fun RsPath.resolveDollarCrateIdentifier(): Crate? {
+    NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
+    val dollarCrateSource = findMacroCallFromWhichLeafIsExpanded() ?: this
+    val macro = dollarCrateSource.findMacroCallExpandedFromNonRecursive()?.resolveToMacro()
+    return macro?.containingCrate
 }
 
 private fun processTypeQualifiedPathResolveVariants(
@@ -791,12 +789,21 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
             resolved?.let { processor(it) } ?: false
         }
     } else {
-        processMacrosExportedByCrateName(path, qualifier.referenceName, processor)
+        processMacrosExportedByCratePath(path, qualifier, processor)
     }
+}
+
+private fun processMacrosExportedByCratePath(context: RsElement, crateName: RsPath, processor: RsResolveProcessor): Boolean {
+    val crateRoot = findDependencyCrateByNamePath(context, crateName) ?: return false
+    return processMacrosExportedByCrate(crateRoot, processor)
 }
 
 fun processMacrosExportedByCrateName(context: RsElement, crateName: String, processor: RsResolveProcessor): Boolean {
     val crateRoot = findDependencyCrateByName(context, crateName) ?: return false
+    return processMacrosExportedByCrate(crateRoot, processor)
+}
+
+private fun processMacrosExportedByCrate(crateRoot: RsFile, processor: RsResolveProcessor): Boolean {
     val exportedMacros = exportedMacrosAsScopeEntries(crateRoot)
     return processAllScopeEntries(exportedMacros, processor)
 }
@@ -1117,8 +1124,8 @@ private fun collectMacrosImportedWithUseItem(
 
     return buildList {
         for ((crateName, macroName) in twoSegmentPaths) {
-            val crateRoot = exportingMacrosCrates[crateName] as? RsFile
-                ?: findDependencyCrateByName(useItem, crateName)
+            val crateRoot = exportingMacrosCrates[crateName.referenceName] as? RsFile
+                ?: findDependencyCrateByNamePath(useItem, crateName)
                 ?: continue
             val exportedMacros = exportedMacrosAsScopeEntries(crateRoot)
             addAll(if (macroName == null) {
@@ -1131,7 +1138,7 @@ private fun collectMacrosImportedWithUseItem(
 }
 
 /** Represents a path of 2 segments `foo::bar`. For wildcard `foo::*` path [rightSegment] is null */
-private data class TwoSegmentPath(val leftSegment: String, val rightSegment: String?)
+private data class TwoSegmentPath(val leftSegment: RsPath, val rightSegment: String?)
 
 /** For given `use foo::{bar, baz::quux, spam::{eggs}}` return the only `[foo::bar]`. */
 private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
@@ -1149,7 +1156,7 @@ private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
         when {
             group == null && firstSegment != null && (path != null || starImport) -> {
                 if (firstSegment != lastSegment && starImport) return
-                result += TwoSegmentPath(firstSegment.referenceName, if (starImport) null else path?.referenceName)
+                result += TwoSegmentPath(firstSegment, if (starImport) null else path?.referenceName)
             }
             group != null && firstSegment == lastSegment -> {
                 group.useSpeckList.forEach { go(it) }

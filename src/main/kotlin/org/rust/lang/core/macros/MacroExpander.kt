@@ -21,7 +21,10 @@ import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import org.rust.lang.core.parser.rawLookupText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.descendantsOfType
+import org.rust.lang.core.psi.ext.fragmentSpecifier
+import org.rust.lang.core.psi.ext.macroBody
+import org.rust.lang.core.psi.ext.macroBodyStubbed
 import org.rust.lang.doc.psi.RsDocKind
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.mapNotNullToSet
@@ -123,7 +126,7 @@ class MacroExpander(val project: Project) {
         val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return null
 
         val substWithGlobalVars = MacroSubstitution(
-            subst.variables + singletonMap("crate", MetaVarValue.Fragment(expandDollarCrateVar(call, def), null, null, -1))
+            subst.variables + singletonMap("crate", MetaVarValue.Fragment(MACRO_DOLLAR_CRATE_IDENTIFIER, null, null, -1))
         )
 
         return substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
@@ -308,7 +311,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 6
+        const val EXPANDER_VERSION = 7
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
@@ -316,7 +319,8 @@ class MacroExpander(val project: Project) {
 }
 
 /**
- * Returns (synthetic) path from [call] to [def]'s crate
+ * A synthetic identifier produced from `$crate` metavar expansion.
+ *
  * We can't just expand `$crate` to something like `::crate_name` because
  * we can pass a result of `$crate` expansion to another macro as a single identifier.
  *
@@ -356,15 +360,7 @@ class MacroExpander(val project: Project) {
  * It's a very awful hack and we know it.
  * DON'T TRY THIS AT HOME
  */
-private fun expandDollarCrateVar(call: RsMacroCall, def: RsMacro): String {
-    val defTarget = def.containingCrate
-    val callTarget = call.containingCrate
-    val crateName = if (defTarget == callTarget) "self" else defTarget?.normName ?: ""
-    return MACRO_CRATE_IDENTIFIER_PREFIX + crateName
-}
-
-/** Prefix for synthetic identifier produced from `$crate` metavar. See [expandDollarCrateVar] */
-const val MACRO_CRATE_IDENTIFIER_PREFIX: String = "IntellijRustDollarCrate_"
+const val MACRO_DOLLAR_CRATE_IDENTIFIER: String = "IntellijRustDollarCrate"
 
 class MacroPattern private constructor(
     val pattern: Sequence<ASTNode>
