@@ -34,11 +34,9 @@ class RsTargetElementEvaluator : TargetElementEvaluatorEx2() {
             return ref.element
         }
 
-        // These conditions should filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest)
+        // Filter invocations from CtrlMouseHandler (see RsQuickNavigationInfoTest)
         // and leave invocations from GotoDeclarationAction only.
-        // Really it is a hack and it may break down in the future.
-        if (BitUtil.isSet(flags, TargetElementUtil.ELEMENT_NAME_ACCEPTED)) return null
-        if (!BitUtil.isSet(flags, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)) return null
+        if (!RsGoToDeclarationRunningService.getInstance().isGoToDeclarationAction) return null
 
         return tryResolveToDeriveMetaItem(ref)
     }

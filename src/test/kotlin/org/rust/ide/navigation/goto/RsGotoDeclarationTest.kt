@@ -7,7 +7,6 @@ package org.rust.ide.navigation.goto
 
 import com.intellij.openapi.actionSystem.IdeActions
 import org.intellij.lang.annotations.Language
-import org.rust.IgnoreInPlatform
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
@@ -75,7 +74,6 @@ class RsGotoDeclarationTest : RsTestBase() {
         type T = S;
     """)
 
-    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5531
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test resolve path to derive meta item`() = doTest("""
         #[derive(Default)]
@@ -87,7 +85,6 @@ class RsGotoDeclarationTest : RsTestBase() {
         fn main() { S::default(); }
     """)
 
-    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5531
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test resolve aliased path to derive meta item`() = doTest("""
         #[derive(Default)]
@@ -101,7 +98,6 @@ class RsGotoDeclarationTest : RsTestBase() {
         fn main() { T::default(); }
     """)
 
-    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5531
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test resolve method to derive meta item`() = doTest("""
         #[derive(Clone)]
@@ -113,7 +109,6 @@ class RsGotoDeclarationTest : RsTestBase() {
         fn main() { S.clone(); }
     """)
 
-    @IgnoreInPlatform(202) // https://github.com/intellij-rust/intellij-rust/issues/5531
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test resolve operator to derive meta item`() = doTest("""
         #[derive(PartialEq)]

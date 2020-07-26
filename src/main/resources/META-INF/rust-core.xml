@@ -982,6 +982,11 @@
                         dynamic="true"/>
     </extensionPoints>
 
+    <applicationListeners>
+        <listener class="org.rust.ide.navigation.goto.RsGoToDeclarationRunningService$Listener"
+                  topic="com.intellij.openapi.actionSystem.ex.AnActionListener" />
+    </applicationListeners>
+
     <projectListeners>
         <listener class="org.rust.lang.core.macros.MacroExpansionManagerWaker"
                   topic="org.rust.cargo.project.model.CargoProjectsService$CargoProjectsListener" />
