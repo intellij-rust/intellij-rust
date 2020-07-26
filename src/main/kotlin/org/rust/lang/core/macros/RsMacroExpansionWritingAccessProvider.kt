@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.WritingAccessProvider
 /** Protect macro expansions from being edited (e.g. by rename) */
 class RsMacroExpansionWritingAccessProvider(val project: Project) : WritingAccessProvider() {
     /** @return set of files that cannot be accessed */
-    override fun requestWriting(vararg files: VirtualFile): Collection<VirtualFile> {
+    override fun requestWriting(files: Collection<VirtualFile>): Collection<VirtualFile> {
         return files.filter { MacroExpansionManager.isExpansionFile(it) }
     }
 

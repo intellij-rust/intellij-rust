@@ -56,7 +56,7 @@ class RustParserDefinition : ParserDefinition {
         return default()
     }
 
-    override fun spaceExistanceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
+    override fun spaceExistenceTypeBetweenTokens(left: ASTNode, right: ASTNode): ParserDefinition.SpaceRequirements {
         if (left.elementType in RS_EOL_COMMENTS) return ParserDefinition.SpaceRequirements.MUST_LINE_BREAK
         return LanguageUtil.canStickTokensTogetherByLexer(left, right, RsLexer())
     }
