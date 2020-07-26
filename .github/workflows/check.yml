@@ -17,7 +17,7 @@ jobs:
             - name: Check license
               run: ./check-license.sh
 
-    build:
+    check-plugin:
         strategy:
             fail-fast: false
             matrix:
@@ -119,3 +119,10 @@ jobs:
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: runPrettyPrintersTests --no-daemon
+
+    check:
+        needs: [ check-license, check-plugin ]
+        runs-on: ubuntu-latest
+        steps:
+            - name: Finish check
+              run: echo "Check finished successfully!"
