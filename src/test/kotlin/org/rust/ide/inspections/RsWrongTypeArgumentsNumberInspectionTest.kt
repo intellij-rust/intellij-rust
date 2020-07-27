@@ -5,9 +5,18 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTypeArgumentsNumberInspection::class) {
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test ignores Fn-traits`() = checkByText("""
         fn foo(f: &mut FnOnce(u32) -> bool) {}  // No annotation despite the fact that FnOnce has a type parameter
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test ignores Fn-traits in type bounds`() = checkByText("""
+        fn foo<F: Fn(&str) -> u32>() {}
     """)
 
     fun `test ignores Self type`() = checkByText("""
@@ -187,5 +196,17 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         struct Err {
             err1: Foo<u32, i32>,
         }
+    """)
+
+    fun `test dyn trait`() = checkByText("""
+        trait Trait<A> {}
+        fn foo() {
+            let x: &dyn <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Trait<></error>;
+        }
+    """)
+
+    fun `test impl trait`() = checkByText("""
+        trait Trait<A> {}
+        fn foo(_: impl <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Trait<></error>) {}
     """)
 }
