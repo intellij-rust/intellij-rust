@@ -114,6 +114,11 @@ jobs:
               with:
                   arguments: check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
 
+            - name: Verify plugin
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: :plugin:verifyPlugin
+
             - name: Check bundled Rust formatters
               if: matrix.os != 'windows-latest'
               uses: eskatos/gradle-command-action@v1
