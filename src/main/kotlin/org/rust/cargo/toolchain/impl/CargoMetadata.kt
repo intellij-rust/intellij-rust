@@ -365,7 +365,7 @@ object CargoMetadata {
             version,
             targets.mapNotNull { it.clean(root) },
             source,
-            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.TRANSITIVE_DEPENDENCY,
+            origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition.cleanEdition(),
             features = features,
             cfgOptions = cfgOptions,

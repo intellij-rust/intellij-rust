@@ -20,6 +20,7 @@ import org.rust.ide.injected.isDoctestInjection
 import org.rust.ide.inspections.import.AutoImportFix.Type.*
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.hasDirectDependency
 import org.rust.lang.core.parser.RustParserUtil.PathParsingMode
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -250,10 +251,10 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         private fun QualifiedNamedItem.canBeImported(superMods: LinkedHashSet<RsMod>): ImportInfo? {
             check(superMods.isNotEmpty())
             if (item !is RsVisible) return null
-            val crate = containingCrate ?: return null
+            val ourCrate = containingCrate ?: return null
+            val targetCrate = superMods.last().containingCrate ?: return null
             // filter out transitive dependencies
-            // TODO use `Crate.hasDependency` and relative dependency name
-            if (crate.origin == PackageOrigin.TRANSITIVE_DEPENDENCY) return null
+            if (targetCrate != ourCrate && !targetCrate.hasDirectDependency(ourCrate)) return null
 
             val ourSuperMods = this.superMods ?: return null
             val parentMod = ourSuperMods.getOrNull(0) ?: return null
@@ -275,13 +276,13 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 }.singleOrNull()
 
                 val (externCrateName, needInsertExternCrateItem, depth) = if (externCrateWithDepth == null) {
-                    Triple(crate.normName, true, null)
+                    Triple(ourCrate.normName, true, null)
                 } else {
                     val (externCrateItem, depth) = externCrateWithDepth
                     Triple(externCrateItem.nameWithAlias, false, depth)
                 }
 
-                val importInfo = ImportInfo.ExternCrateImportInfo(crate, externCrateName,
+                val importInfo = ImportInfo.ExternCrateImportInfo(ourCrate, externCrateName,
                     needInsertExternCrateItem, depth, crateRelativePath)
                 ourSuperMods to importInfo
             } else {

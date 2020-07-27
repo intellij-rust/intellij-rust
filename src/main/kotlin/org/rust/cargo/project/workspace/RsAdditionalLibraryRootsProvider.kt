@@ -22,6 +22,7 @@ import org.rust.cargo.toolchain.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.stdext.buildList
+import org.rust.stdext.exhaustive
 import javax.swing.Icon
 
 /**
@@ -74,10 +75,9 @@ private val CargoProject.ideaLibraries: Collection<CargoLibrary>
         for (pkg in workspace.packages) {
             when (pkg.origin) {
                 STDLIB -> stdlibPackages += pkg
-                DEPENDENCY,
-                TRANSITIVE_DEPENDENCY -> dependencyPackages += pkg
-                else -> Unit
-            }
+                DEPENDENCY -> dependencyPackages += pkg
+                WORKSPACE -> Unit
+            }.exhaustive
         }
 
         return buildList {
