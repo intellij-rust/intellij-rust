@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.inspections.import.import
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TraitImplSource

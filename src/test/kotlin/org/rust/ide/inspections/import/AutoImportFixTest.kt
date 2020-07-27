@@ -10,6 +10,7 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.utils.import.Testmarks
 
 class AutoImportFixTest : AutoImportFixTestBase() {
 
@@ -2169,7 +2170,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// foo();
         /// ```
         pub fn foo() {}
-    """,  AutoImportFix.Testmarks.doctestInjectionImport)
+    """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
@@ -2190,7 +2191,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// ```
         pub fn foo() {}
         pub fn bar() {}
-    """,  AutoImportFix.Testmarks.doctestInjectionImport)
+    """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import second outer item without grouping in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
@@ -2212,7 +2213,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// ```
         pub fn foo() {}
         pub mod bar { pub fn baz() {} }
-    """, AutoImportFix.Testmarks.insertNewLineBeforeUseItem)
+    """, Testmarks.insertNewLineBeforeUseItem)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import outer item in doctest injection with inner module`() = checkAutoImportFixByFileTreeWithouHighlighting("""
@@ -2236,7 +2237,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         /// }
         /// ```
         pub fn foo() {}
-    """,  AutoImportFix.Testmarks.doctestInjectionImport)
+    """, Testmarks.doctestInjectionImport)
 
     @ExpandMacros
     fun `test import struct from macro`() = checkAutoImportFixByText("""

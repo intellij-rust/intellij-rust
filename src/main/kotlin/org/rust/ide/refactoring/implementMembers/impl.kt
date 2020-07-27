@@ -11,8 +11,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromElements
 import org.rust.ide.presentation.shortPresentableText
+import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromElements
 import org.rust.lang.core.macros.expandedFromRecursively
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*

@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
+import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.arms

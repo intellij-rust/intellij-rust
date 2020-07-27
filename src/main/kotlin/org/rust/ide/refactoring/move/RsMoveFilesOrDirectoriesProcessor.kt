@@ -19,10 +19,10 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
-import org.rust.ide.inspections.import.lastElement
 import org.rust.ide.refactoring.move.common.RsMovePathHelper
 import org.rust.ide.refactoring.move.common.RsMoveReferenceInfo
 import org.rust.ide.refactoring.move.common.RsMoveRetargetReferencesProcessor
+import org.rust.ide.utils.import.lastElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.runWithCancelableProgress
