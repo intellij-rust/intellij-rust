@@ -125,7 +125,14 @@ fun <T : TypeFoldable<T>> TypeFoldable<T>.foldCtConstParameterWith(folder: (CtCo
 fun <T> TypeFoldable<T>.foldTyProjectionWith(folder: (TyProjection) -> Ty): T =
     foldWith(object : TypeFolder {
         override fun foldTy(ty: Ty): Ty = when {
-            ty is TyProjection -> folder(ty)
+            ty is TyProjection -> {
+                val foldedTy = if (ty.type.hasTyProjection || ty.trait.hasTyProjection) {
+                    ty.superFoldWith(this) as TyProjection
+                } else {
+                    ty
+                }
+                folder(foldedTy)
+            }
             ty.hasTyProjection -> ty.superFoldWith(this)
             else -> ty
         }
