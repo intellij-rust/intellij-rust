@@ -828,12 +828,12 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
         pub struct Error(
             pub ErrorKind,
             #[doc(hidden)]
-            pub IntellijRustDollarCrate_self::State,
+            pub IntellijRustDollarCrate::State,
         );
-        impl IntellijRustDollarCrate_self::ChainedError for Error {
+        impl IntellijRustDollarCrate::ChainedError for Error {
             type ErrorKind = ErrorKind;
 
-            fn new(kind: ErrorKind, state: IntellijRustDollarCrate_self::State) -> Error {
+            fn new(kind: ErrorKind, state: IntellijRustDollarCrate::State) -> Error {
                 Error(kind, state)
             }
 
@@ -853,8 +853,8 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 self.kind()
             }
 
-            fn iter(&self) -> IntellijRustDollarCrate_self::Iter {
-                IntellijRustDollarCrate_self::Iter::new(Some(self))
+            fn iter(&self) -> IntellijRustDollarCrate::Iter {
+                IntellijRustDollarCrate::Iter::new(Some(self))
             }
 
             fn chain_err<F, EK>(self, error: F) -> Self
@@ -863,13 +863,13 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 self.chain_err(error)
             }
 
-            fn backtrace(&self) -> Option<&IntellijRustDollarCrate_self::Backtrace> {
+            fn backtrace(&self) -> Option<&IntellijRustDollarCrate::Backtrace> {
                 self.backtrace()
             }
 
             #[allow(unknown_lints, renamed_and_removed_lints, unused_doc_comment, unused_doc_comments)]
             fn extract_backtrace(e: &(   ::std::error::Error + Send + 'static   ))
-                                 -> Option<IntellijRustDollarCrate_self::InternalBacktrace> {
+                                 -> Option<IntellijRustDollarCrate::InternalBacktrace> {
                 if let Some(e) = e.downcast_ref::<Error
                 >() {
                     return Some(e.1.backtrace.clone());
@@ -888,7 +888,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             pub fn from_kind(kind: ErrorKind) -> Error {
                 Error(
                     kind,
-                    IntellijRustDollarCrate_self::State::default(),
+                    IntellijRustDollarCrate::State::default(),
                 )
             }
 
@@ -908,7 +908,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             {
                 Error(
                     kind.into(),
-                    IntellijRustDollarCrate_self::State::new::<Error>(error, ),
+                    IntellijRustDollarCrate::State::new::<Error>(error, ),
                 )
             }
 
@@ -918,12 +918,12 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             }
 
 
-            pub fn iter(&self) -> IntellijRustDollarCrate_self::Iter {
-                IntellijRustDollarCrate_self::ChainedError::iter(self)
+            pub fn iter(&self) -> IntellijRustDollarCrate::Iter {
+                IntellijRustDollarCrate::ChainedError::iter(self)
             }
 
 
-            pub fn backtrace(&self) -> Option<&IntellijRustDollarCrate_self::Backtrace> {
+            pub fn backtrace(&self) -> Option<&IntellijRustDollarCrate::Backtrace> {
                 self.1.backtrace()
             }
 
@@ -1125,8 +1125,8 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 where F: FnOnce() -> EK,
                       EK: Into<ErrorKind> {
                 self.map_err(move |e| {
-                    let state = IntellijRustDollarCrate_self::State::new::<Error>(Box::new(e), );
-                    IntellijRustDollarCrate_self::ChainedError::new(callback().into(), state)
+                    let state = IntellijRustDollarCrate::State::new::<Error>(Box::new(e), );
+                    IntellijRustDollarCrate::ChainedError::new(callback().into(), state)
                 })
             }
         }
@@ -1135,7 +1135,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 where F: FnOnce() -> EK,
                       EK: Into<ErrorKind> {
                 self.ok_or_else(move || {
-                    IntellijRustDollarCrate_self::ChainedError::from_kind(callback().into())
+                    IntellijRustDollarCrate::ChainedError::from_kind(callback().into())
                 })
             }
         }

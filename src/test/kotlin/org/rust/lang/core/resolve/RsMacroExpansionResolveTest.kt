@@ -334,6 +334,87 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar passed to another macro in a different crate`() = stubOnlyResolve("""
+    //- trans-lib/lib.rs
+        #[macro_export]
+        macro_rules! def_fn {
+            ($ ret_ty:ty) => { fn foo() -> $ ret_ty { unimplemented!() } }
+        }
+    //- dep-lib/lib.rs
+        #[macro_use]
+        extern crate trans_lib;
+        pub use trans_lib::def_fn;
+        pub struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }
+        #[macro_export]
+        macro_rules! foo {
+            () => { def_fn! { $ crate::Foo } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate dep_lib_target;
+
+        foo!(); // def_fn! { IntellijRustDollarCrate_dep_lib::Foo }
+
+        fn main() {
+            foo().bar()
+        }       //^ dep-lib/lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar passed to another macro in a different crate 2`() = stubOnlyResolve("""
+    //- trans-lib-2/lib.rs
+        #[macro_export]
+        macro_rules! def_fn_2 {
+            ($ ret_ty:ty) => { $ crate::def_fn_3! { $ ret_ty  } }
+        }
+        #[macro_export]
+        macro_rules! def_fn_3 {
+            ($ ret_ty:ty) => {
+                use $ crate::def_fn_4;
+                def_fn_4! { $ ret_ty  }
+            }
+        }
+        #[macro_export]
+        macro_rules! def_fn_4 {
+            ($ ret_ty:ty) => { fn foo() -> $ ret_ty { unimplemented!() } }
+        }
+    //- trans-lib/lib.rs
+        #[macro_use]
+        extern crate trans_lib_2;
+        pub use trans_lib_2::def_fn_2;
+
+        #[macro_export]
+        macro_rules! def_fn {
+            ($ ret_ty:ty) => { def_fn_2! { $ ret_ty  } }
+        }
+    //- dep-lib/lib.rs
+        #[macro_use]
+        extern crate trans_lib;
+        pub use trans_lib::{def_fn, def_fn_2};
+
+        pub struct Foo;
+        impl Foo {
+            pub fn bar(&self) {}
+        }
+        #[macro_export]
+        macro_rules! foo {
+            () => { def_fn! { $ crate::Foo } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate dep_lib_target;
+
+        foo!();
+
+        fn main() {
+            foo().bar()
+        }       //^ dep-lib/lib.rs
+    """)
+
     fun `test expand macro inside stubbed file`() = stubOnlyResolve("""
     //- bar.rs
         pub struct S;
