@@ -5,19 +5,32 @@
 
 package org.rust.ide.formatter.settings
 
+import com.intellij.application.options.CodeStyleAbstractConfigurable
+import com.intellij.application.options.CodeStyleAbstractPanel
 import com.intellij.application.options.IndentOptionsEditor
 import com.intellij.application.options.SmartIndentOptionsEditor
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable
+import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
 import org.rust.lang.RsLanguage
 
 class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
     override fun getLanguage(): Language = RsLanguage
+
+    override fun createCustomSettings(settings: CodeStyleSettings): CustomCodeStyleSettings =
+        RsCodeStyleSettings(settings)
+
+    override fun createConfigurable(
+        baseSettings: CodeStyleSettings,
+        modelSettings: CodeStyleSettings
+    ): CodeStyleConfigurable {
+        return object : CodeStyleAbstractConfigurable(baseSettings, modelSettings, configurableDisplayName) {
+            override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel =
+                RsCodeStyleMainPanel(currentSettings, settings)
+        }
+    }
 
     override fun getCodeSample(settingsType: SettingsType): String =
         when (settingsType) {

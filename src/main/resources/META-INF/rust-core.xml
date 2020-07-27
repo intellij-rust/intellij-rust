@@ -270,7 +270,6 @@
 
         <!-- Code Style -->
 
-        <codeStyleSettingsProvider implementation="org.rust.ide.formatter.settings.RsCodeStyleSettingsProvider"/>
         <langCodeStyleSettingsProvider
                 implementation="org.rust.ide.formatter.settings.RsLanguageCodeStyleSettingsProvider"/>
 
