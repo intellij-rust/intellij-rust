@@ -535,7 +535,7 @@ private fun processUnqualifiedPathResolveVariants(
     }
 }
 
-private fun RsPath.resolveDollarCrateIdentifier(): Crate? {
+fun RsPath.resolveDollarCrateIdentifier(): Crate? {
     NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
     val dollarCrateSource = findMacroCallFromWhichLeafIsExpanded() ?: this
     val macro = dollarCrateSource.findMacroCallExpandedFromNonRecursive()?.resolveToMacro()
