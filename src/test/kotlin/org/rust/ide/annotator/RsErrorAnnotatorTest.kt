@@ -1426,7 +1426,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 //        }
     """)
 
-    @ExpandMacros
     fun `test supertrait is not implemented E0277 simple trait`() = checkErrors("""
         trait A {}
         trait B: A {}
@@ -1436,7 +1435,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="the trait bound `S: A` is not satisfied [E0277]">B</error> for S {}
     """)
 
-    @ExpandMacros
     fun `test supertrait is not implemented E0277 multiple traits`() = checkErrors("""
         trait A {}
         trait B {}
@@ -1448,7 +1446,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="the trait bound `S: B` is not satisfied [E0277]"><error descr="the trait bound `S: A` is not satisfied [E0277]">C</error></error> for S {}
     """)
 
-    @ExpandMacros
     fun `test supertrait is not implemented E0277 generic supertrait`() = checkErrors("""
         trait A<T> {}
         trait B: A<u32> {}
@@ -1490,7 +1487,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl C<u32> for S9 {}
     """)
 
-    @ExpandMacros
     fun `test supertrait is not implemented E0277 ignore unknown type`() = checkErrors("""
         trait A<T> {}
         trait B<T>: A<T> {}
@@ -1499,7 +1495,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl B<Foo> for S {}
     """)
 
-    @ExpandMacros
     fun `test supertrait is not implemented E0277 self substitution`() = checkErrors("""
         trait Tr1<A=Self> {}
         trait Tr2<A=Self> : Tr1<A> {}
@@ -1507,6 +1502,26 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         struct S;
         impl Tr1 for S {}
         impl Tr2 for S {}
+    """)
+
+    fun `test supertrait is not implemented E0277 self substitution 2`() = checkErrors("""
+        trait Trait<Rhs: ?Sized = Self> {}
+        trait Trait2: Trait<Self> {}
+
+        struct X<T>(T);
+
+        impl <T> Trait for X<T> where T: Trait {}
+        impl <T> Trait2 for X<T> where T: Trait<T> {}
+    """)
+
+    fun `test supertrait is not implemented E0277 self substitution 3`() = checkErrors("""
+        trait Trait<Rhs: ?Sized = Self> {}
+        trait Trait2: Trait<Self> {}
+
+        struct X<T>(T);
+
+        impl <T: Trait> Trait for X<T> {}
+        impl <T> Trait2 for X<T> where T: Trait<T> {}
     """)
 
     @MockRustcVersion("1.27.1")
