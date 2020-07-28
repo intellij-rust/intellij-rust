@@ -18,6 +18,7 @@ import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
+import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
 import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.toPsiFile
@@ -152,16 +153,23 @@ val RsMacroCall.expansionFlatten: List<RsExpandedElement>
         return list
     }
 
-fun RsMacroCall.expandAllMacrosRecursively(): String =
-    expandAllMacrosRecursively(0)
+fun RsMacroCall.expandAllMacrosRecursively(replaceDollarCrate: Boolean): String =
+    expandMacrosRecursively(DEFAULT_RECURSION_LIMIT, replaceDollarCrate)
 
-private fun RsMacroCall.expandAllMacrosRecursively(depth: Int): String {
-    if (depth > DEFAULT_RECURSION_LIMIT) return text
+fun RsMacroCall.expandMacrosRecursively(depthLimit: Int, replaceDollarCrate: Boolean): String {
+    if (depthLimit == 0) return text
 
     fun toExpandedText(element: PsiElement): String =
         when (element) {
-            is RsMacroCall -> element.expandAllMacrosRecursively(depth)
-            is RsElement -> element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
+            is RsMacroCall -> element.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate)
+            is RsElement -> if (replaceDollarCrate && element is RsPath && element.referenceName == MACRO_DOLLAR_CRATE_IDENTIFIER
+                && element.qualifier == null && element.typeQual == null && !element.hasColonColon) {
+                // Replace `$crate` to a crate name. Note that the name can be incorrect because of crate renames
+                // and the fact that `$crate` can come from a transitive dependency
+                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName)
+            } else {
+                element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
+            }
             else -> element.text
         }
 

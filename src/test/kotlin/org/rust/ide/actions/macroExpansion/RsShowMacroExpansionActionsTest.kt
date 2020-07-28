@@ -70,12 +70,22 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     fun `test macros correctly recursively expands to itself`() = testRecursiveExpansion("""
         macro_rules! foo {
             () => { println!(); }
-            (${'$'}i: expr) => { foo!(); }
+            ($ i: expr) => { foo!(); }
         }
 
         /*caret*/foo!(boo);
     """, """
         println!();
+    """)
+
+    fun `test dollar crate replacement`() = testSingleStepExpansion("""
+        macro_rules! foo {
+            () => { $ crate::foobar(); }
+        }
+
+        fn main() { /*caret*/foo!(); }
+    """, """
+        ::test_package::foobar();
     """)
 
     fun `test that recursive expansion of macro without body is just its name`() = testMacroExpansionFail("""
@@ -102,7 +112,10 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
         testMacroExpansion(code, expectedRaw, expandRecursively = true)
     }
 
-    private fun testSingleStepExpansion(@Language("Rust") code: String, @Language("Rust") expectedRaw: String) {
+    private fun testSingleStepExpansion(
+        @Language("Rust") code: String,
+        @Language("Rust", prefix = "fn main(){", suffix = ";}") expectedRaw: String
+    ) {
         testMacroExpansion(code, expectedRaw, expandRecursively = false)
     }
 

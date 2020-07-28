@@ -92,15 +92,15 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsMacroCall, expandRecursi
     }
 
 private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Boolean): MacroExpansion? {
-    if (!expandRecursively) {
-        return macroToExpand.expansion
-    }
-
     if (macroToExpand.expansion == null) {
         return null
     }
 
-    val expansionText = macroToExpand.expandAllMacrosRecursively()
+    val expansionText = if (expandRecursively) {
+        macroToExpand.expandAllMacrosRecursively(replaceDollarCrate = true)
+    } else {
+        macroToExpand.expandMacrosRecursively(depthLimit = 1, replaceDollarCrate = true)
+    }
 
     return parseExpandedTextWithContext(
         macroToExpand.expansionContext,

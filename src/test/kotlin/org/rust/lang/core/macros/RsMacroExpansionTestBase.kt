@@ -78,7 +78,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         errorMessage: String,
         mark: Testmark? = null
     ) {
-        val expand = { macroCall.expandAllMacrosRecursively() }
+        val expand = { macroCall.expandAllMacrosRecursively(replaceDollarCrate = false) }
         val expandedText = mark?.checkHit(expand) ?: expand()
 
         if (!StringUtil.equalsIgnoreWhitespaces(expectedExpansion, expandedText)) {
