@@ -7,8 +7,14 @@ package org.rust.ide.annotator
 
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.colors.RsColor
 
 class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018KeywordsAnnotator::class) {
+
+    override fun setUp() {
+        super.setUp()
+        annotationFixture.registerSeverities(listOf(RsColor.KEYWORD.testSeverity))
+    }
 
     fun `test edition 2018 keywords in edition 2015`() = checkErrors("""
         fn main() {
@@ -55,12 +61,12 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test async in edition 2018`() = checkErrors("""
-        async fn foo() {}
+        <KEYWORD>async</KEYWORD> fn foo() {}
 
         fn main() {
-            async { () };
-            async || { () };
-            async move || { () };
+            <KEYWORD>async</KEYWORD> { () };
+            <KEYWORD>async</KEYWORD> || { () };
+            <KEYWORD>async</KEYWORD> move || { () };
         }
     """)
 
@@ -73,7 +79,7 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test try in edition 2018`() = checkErrors("""
         fn main() {
-            try { () };
+            <KEYWORD>try</KEYWORD> { () };
         }
     """)
 
