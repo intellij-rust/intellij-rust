@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import org.rust.ide.inspections.fixes.AddTypeArguments
 import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
@@ -37,14 +38,7 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
     private fun isPathValid(path: RsPath?): Boolean = path?.valueParameterList == null && path?.cself == null
 
     private fun checkTypeArguments(holder: RsProblemsHolder, o: RsElement) {
-        val (actualArguments, declaration) = when (o) {
-            is RsMethodCall -> o.typeArgumentList to o.reference.resolve()
-            is RsCallExpr ->
-                (o.expr as? RsPathExpr)?.path?.typeArgumentList to (o.expr as? RsPathExpr)?.path?.reference?.resolve()
-            is RsBaseType -> o.path?.typeArgumentList to o.path?.reference?.resolve()
-            is RsTraitRef -> o.path.typeArgumentList to o.path.reference?.resolve()
-            else -> return
-        }
+        val (actualArguments, declaration) = getTypeArgumentsAndDeclaration(o) ?: return
         if (declaration !is RsGenericDeclaration) return
         val actualArgs = actualArguments?.typeReferenceList?.size ?: 0
 
@@ -61,7 +55,7 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
         } ?: return
 
         val problemText = "Wrong number of type arguments: expected ${errorText}, found $actualArgs"
-        val fixes = getFixes(actualArgs, expectedTotalParams)
+        val fixes = getFixes(o, actualArgs, expectedTotalParams)
 
         RsDiagnostic.WrongNumberOfTypeArguments(o, problemText, fixes).addToHolder(holder)
     }
@@ -87,8 +81,21 @@ private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expe
     }
 }
 
-private fun getFixes(actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> =
-    if (actualArgs > expectedTotalParams)
-        listOf(RemoveTypeArguments(expectedTotalParams, actualArgs))
-    else
-        emptyList()
+private fun getFixes(element: RsElement, actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> =
+    when {
+        actualArgs > expectedTotalParams -> listOf(RemoveTypeArguments(expectedTotalParams, actualArgs))
+        actualArgs < expectedTotalParams -> listOf(AddTypeArguments(element))
+        else -> emptyList()
+    }
+
+fun getTypeArgumentsAndDeclaration(element: RsElement): Pair<RsTypeArgumentList?, RsGenericDeclaration>? {
+    val (arguments, resolved) = when (element) {
+        is RsMethodCall -> element.typeArgumentList to element.reference.resolve()
+        is RsCallExpr -> (element.expr as? RsPathExpr)?.path?.typeArgumentList to (element.expr as? RsPathExpr)?.path?.reference?.resolve()
+        is RsBaseType -> element.path?.typeArgumentList to element.path?.reference?.resolve()
+        is RsTraitRef -> element.path.typeArgumentList to element.path.reference?.resolve()
+        else -> return null
+    }
+    if (resolved !is RsGenericDeclaration) return null
+    return Pair(arguments, resolved)
+}
