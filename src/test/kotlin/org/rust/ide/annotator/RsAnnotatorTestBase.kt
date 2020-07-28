@@ -11,5 +11,5 @@ import kotlin.reflect.KClass
 abstract class RsAnnotatorTestBase(private val annotatorClass: KClass<out AnnotatorBase>) : RsAnnotationTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture =
-        RsAnnotationTestFixture(myFixture, annotatorClasses = listOf(annotatorClass))
+        RsAnnotationTestFixture(this, myFixture, annotatorClasses = listOf(annotatorClass))
 }

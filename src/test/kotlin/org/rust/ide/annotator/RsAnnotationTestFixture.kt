@@ -12,6 +12,7 @@ import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture.*
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.TestProject
 import org.rust.createAndOpenFileWithCaretMarker
@@ -19,11 +20,12 @@ import org.rust.fileTreeFromText
 import kotlin.reflect.KClass
 
 class RsAnnotationTestFixture(
+    testCase: TestCase,
     codeInsightFixture: CodeInsightTestFixture,
     annotatorClasses: List<KClass<out AnnotatorBase>> = emptyList(),
     inspectionClasses: List<KClass<out InspectionProfileEntry>> = emptyList(),
     override val baseFileName: String = "main.rs"
-) : AnnotationTestFixtureBase(codeInsightFixture, annotatorClasses, inspectionClasses) {
+) : AnnotationTestFixtureBase(testCase, codeInsightFixture, annotatorClasses, inspectionClasses) {
 
     fun checkByFileTree(
         @Language("Rust") text: String,

@@ -6,6 +6,7 @@
 package org.rust
 
 import com.intellij.TestCase
+import com.intellij.findAnnotationInstance
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
@@ -48,10 +49,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         return annotation.descriptor.objectInstance
             ?: error("Only Kotlin objects defined with `object` keyword are allowed")
     }
-
-    /** Tries to find the specified annotation on the current test method and then on the current class */
-    private inline fun <reified T : Annotation> findAnnotationInstance(): T? =
-        javaClass.getMethod(name).getAnnotation(T::class.java) ?: javaClass.getAnnotation(T::class.java)
 
     override fun isWriteActionRequired(): Boolean = false
 
