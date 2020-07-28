@@ -1065,6 +1065,32 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
         } //^ D
     """)
 
+    fun `test nested projections`() = testExpr("""
+        trait Trait1 {
+            type Item1;
+            fn foo(&self) -> Self::Item1 { unimplemented!() }
+        }
+        trait Trait2 { type Item2; }
+
+        struct X<T>(T);
+        struct Y;
+        struct Z;
+
+        impl<T> Trait1 for X<T>
+            where T: Trait2,
+                  T::Item2: Trait1
+        {
+            type Item1 = <<T as Trait2>::Item2 as Trait1>::Item1;
+        }
+        impl Trait2 for Y { type Item2 = Z; }
+        impl Trait1 for Z { type Item1 = i32; }
+
+        fn main() {
+            let a = X(Y).foo();
+            a;
+        } //^ i32
+    """)
+
     fun `test simple unification`() = testExpr("""
         struct S<T>(T);
 
