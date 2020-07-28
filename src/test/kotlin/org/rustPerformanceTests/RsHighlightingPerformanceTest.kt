@@ -6,6 +6,7 @@
 package org.rustPerformanceTests
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.macros.MacroExpansionScope
@@ -38,8 +39,8 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
             f(it)
             Disposer.dispose(disposable)
-            tearDown()
-            setUp()
+            super.tearDown()
+            super.setUp()
         }
     }
 
@@ -100,5 +101,18 @@ class RsHighlightingPerformanceTest : RsRealProjectTestBase() {
 
     private fun currentPsiModificationCount() =
         PsiModificationTracker.SERVICE.getInstance(project).modificationCount
+
+    override val disableMissedCacheAssertions: Boolean get() = false
+    private val lastDisposable = Disposer.newDisposable("RsHighlightingPerformanceTest last")
+
+    override fun setUp() {
+        super.setUp()
+        RecursionManager.disableMissedCacheAssertions(lastDisposable)
+    }
+
+    override fun tearDown() {
+        super.tearDown()
+        Disposer.dispose(lastDisposable)
+    }
 }
 
