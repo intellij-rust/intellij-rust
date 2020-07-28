@@ -914,8 +914,20 @@ private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
 
 private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
     .filter { !it.hasQ } // ignore `?Sized`
-    .mapNotNull { it.bound.traitRef?.resolveToBoundTrait() }
-    .map { TraitRef(selfTy, it) }
+    .flatMap { bound ->
+        val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<TraitRef>()
+        val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<TraitRef>()
+
+        // T: Iterator<Item: Debug>
+        //             ~~~~~~~~~~~ equivalent to `<T as Iterator>::Item: Debug`
+        val assocTypeBounds = traitRef.path.typeArgumentList?.assocTypeBindingList.orEmpty().asSequence()
+            .filter { it.typeReference == null }
+            .flatMap nestedFlatMap@{
+                val assoc = it.reference.resolve() as? RsTypeAlias ?: return@nestedFlatMap emptySequence<TraitRef>()
+                it.polyboundList.toTraitRefs(TyProjection.valueOf(selfTy, assoc))
+            }
+        sequenceOf(TraitRef(selfTy, boundTrait)) + assocTypeBounds
+    }
 
 
 data class TyWithObligations<out T>(

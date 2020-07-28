@@ -1790,4 +1790,26 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test assoc type bound in path selection`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item; }
+        fn bar<T: Bar<Item: Foo<X>>>(_: T, b: T::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
+
+    fun `test assoc type bound in nested path selection`() = testExpr("""
+        struct X;
+        trait Foo<T> {}
+        fn foo<A: Foo<B>, B>(_: A) -> B { unimplemented!() }
+        trait Bar { type Item; }
+        fn bar<T: Bar<Item: Bar<Item: Foo<X>>>>(_: T, b: <T::Item as Bar>::Item) {
+            let a = foo(b);
+            a;
+        } //^ X
+    """)
 }
