@@ -28,11 +28,11 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
 
         fn main() {
             println!("<error descr="Invalid reference to positional argument 0 (no arguments were given)">{}</error>");
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<error descr="Invalid reference to positional argument 1 (there is 1 argument)">1</error>}</FORMAT_SPECIFIER>", 1);
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{1}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<error descr="Invalid reference to positional argument 3 (there are 2 arguments)">3</error>}</FORMAT_SPECIFIER>", 1, 1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<error descr="Invalid reference to positional argument 1 (there is 1 argument)">1</error>}</FORMAT_SPECIFIER>", 1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<error descr="Invalid reference to positional argument 3 (there are 2 arguments)">3</error>}</FORMAT_SPECIFIER>", 1, 1);
             println!("Hello <FORMAT_SPECIFIER>{:<error descr="Invalid reference to positional argument 1 (there is 1 argument)">1${'$'}</error>}</FORMAT_SPECIFIER>", 1);
             println!("<FORMAT_SPECIFIER>{<error descr="There is no argument named `foo`">foo</error>}</FORMAT_SPECIFIER>");
-            println!("Hello <FORMAT_SPECIFIER>{:<error descr="There is no argument named `foo`">foo$</error>}</FORMAT_SPECIFIER>", 1);
+            println!("Hello <FORMAT_SPECIFIER>{:<error descr="There is no argument named `foo`">foo${'$'}</error>}</FORMAT_SPECIFIER>", 1);
         }
     """)
 
@@ -41,7 +41,7 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
 
         fn main() {
             println!("", <error descr="Argument never used">1.2</error>);
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER>", 1, <error descr="Argument never used">1.2</error>);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, <error descr="Argument never used">1.2</error>);
             println!("", <error descr="Named argument never used">foo=1.2</error>);
         }
     """)
@@ -62,17 +62,17 @@ class RsFormatMacroAnnotatorTest : RsAnnotatorTestBase(RsFormatMacroAnnotator::c
 
         fn main() {
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", 1);
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", 1);
-            println!("<FORMAT_SPECIFIER>{foo}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", foo=1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", 1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>foo</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", foo=1);
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", 1, 1);
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", foo=1);
 
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER>", foo=1);
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{1:?}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER>", 1, Debug);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER>", foo=1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>:<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, Debug);
 
-            println!("<FORMAT_SPECIFIER>{foo}</FORMAT_SPECIFIER>", foo=1);
-            println!("<FORMAT_SPECIFIER>{bar:?}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{foo}</FORMAT_SPECIFIER>", foo=1, bar=Debug);
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{foo}</FORMAT_SPECIFIER>", foo=1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>foo</IDENTIFIER>}</FORMAT_SPECIFIER>", foo=1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>bar</IDENTIFIER>:<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>foo</IDENTIFIER>}</FORMAT_SPECIFIER>", foo=1, bar=Debug);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>foo</IDENTIFIER>}</FORMAT_SPECIFIER>", foo=1);
         }
     """)
 
@@ -164,7 +164,7 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             //~^ ERROR invalid format string
 
             format!("
-            <FORMAT_SPECIFIER>{asdf
+            <FORMAT_SPECIFIER>{<IDENTIFIER>asdf</IDENTIFIER>
             }</FORMAT_SPECIFIER>
             ", asdf=1);
             // ok - this is supported
@@ -218,21 +218,21 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
         fn main(){
             println!("<FORMAT_SPECIFIER>{{</FORMAT_SPECIFIER><FORMAT_SPECIFIER>}}</FORMAT_SPECIFIER>");
-            println!("<FORMAT_SPECIFIER>{0}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{0:}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:#?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:e}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{x:}</FORMAT_SPECIFIER>", x=S);
-            println!("<FORMAT_SPECIFIER>{0:x}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{0:x?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{0:0<}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{1:0$}</FORMAT_SPECIFIER>", 1, S);
-            println!("<FORMAT_SPECIFIER>{1:00$}</FORMAT_SPECIFIER>", 1, S);
-            println!("<FORMAT_SPECIFIER>{0:10x}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{0:1$.10x}</FORMAT_SPECIFIER>", S, 1);
-            println!("<FORMAT_SPECIFIER>{0:a$.b${'$'}x}</FORMAT_SPECIFIER>", S, a=2, b=3);
-            println!("<FORMAT_SPECIFIER>{number:*>+#0width$.10x?}</FORMAT_SPECIFIER>", number=S, width=1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:#<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>e</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>x</IDENTIFIER>:}</FORMAT_SPECIFIER>", x=S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<FUNCTION>x?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:0<}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>:<IDENTIFIER>0${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>:0<IDENTIFIER>0${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<IDENTIFIER>10</IDENTIFIER><FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<IDENTIFIER>1${'$'}</IDENTIFIER>.<IDENTIFIER>10</IDENTIFIER><FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", S, 1);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<IDENTIFIER>a${'$'}</IDENTIFIER>.<IDENTIFIER>b${'$'}</IDENTIFIER><FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", S, a=2, b=3);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>number</IDENTIFIER>:*>+#0<IDENTIFIER>width${'$'}</IDENTIFIER>.<IDENTIFIER>10</IDENTIFIER><FUNCTION>x?</FUNCTION>}</FORMAT_SPECIFIER>", number=S, width=1);
             println!("<FORMAT_SPECIFIER>{:-}</FORMAT_SPECIFIER> <FORMAT_SPECIFIER>{:#}</FORMAT_SPECIFIER> <FORMAT_SPECIFIER>{:+#}</FORMAT_SPECIFIER>", S, S, S);
             println!("");
             println!("<FORMAT_SPECIFIER>\x7B}</FORMAT_SPECIFIER>", S);
@@ -248,17 +248,17 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         fn main() {
             let s = S;
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Display` (required by {})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:?}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:?})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:x?}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:x?})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:X?}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:X?})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:#?}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:#?})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:o}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Octal` (required by {:o})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:x}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `LowerHex` (required by {:x})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:X}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `UpperHex` (required by {:X})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:p}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Pointer` (required by {:p})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:b}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Binary` (required by {:b})">s</error>);
-            println!("<FORMAT_SPECIFIER>{:e}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `LowerExp` (required by {:e})">s</error>);
-            println!("<FORMAT_SPECIFIER>{0:E}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:?})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>x?</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:x?})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>X?</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:X?})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:#<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Debug` (required by {:#?})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>o</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Octal` (required by {:o})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `LowerHex` (required by {:x})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>X</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `UpperHex` (required by {:X})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>p</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Pointer` (required by {:p})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>b</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `Binary` (required by {:b})">s</error>);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>e</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `LowerExp` (required by {:e})">s</error>);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:<FUNCTION>E</FUNCTION>}</FORMAT_SPECIFIER>", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
         }
     """)
 
@@ -296,17 +296,17 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
         fn main() {
             println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:x?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:X?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:#?}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:o}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:x}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:X}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:p}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:b}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:e}</FORMAT_SPECIFIER>", S);
-            println!("<FORMAT_SPECIFIER>{:E}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>x?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>X?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:#<FUNCTION>?</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>o</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>x</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>X</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>p</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>b</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>e</FUNCTION>}</FORMAT_SPECIFIER>", S);
+            println!("<FORMAT_SPECIFIER>{:<FUNCTION>E</FUNCTION>}</FORMAT_SPECIFIER>", S);
         }
     """)
 
@@ -345,12 +345,12 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
 
         fn main() {
             let a = 5;
-            println!("Hello <FORMAT_SPECIFIER>{:1${'$'}}</FORMAT_SPECIFIER>!", 1, a);
+            println!("Hello <FORMAT_SPECIFIER>{:<IDENTIFIER>1${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, a);
 
-            println!("Hello <FORMAT_SPECIFIER>{:1${'$'}}</FORMAT_SPECIFIER>!", 1, 5);
-            println!("Hello <FORMAT_SPECIFIER>{1:0${'$'}}</FORMAT_SPECIFIER>!", 5, 1);
-            println!("Hello <FORMAT_SPECIFIER>{1:0${'$'}.2${'$'}}</FORMAT_SPECIFIER>!", 1, 1, 4);
-            println!("Hello <FORMAT_SPECIFIER>{:width${'$'}}</FORMAT_SPECIFIER>!", 1, width = 5);
+            println!("Hello <FORMAT_SPECIFIER>{:<IDENTIFIER>1${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, 5);
+            println!("Hello <FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>:<IDENTIFIER>0${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 5, 1);
+            println!("Hello <FORMAT_SPECIFIER>{<IDENTIFIER>1</IDENTIFIER>:<IDENTIFIER>0${'$'}</IDENTIFIER>.<IDENTIFIER>2${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, 1, 4);
+            println!("Hello <FORMAT_SPECIFIER>{:<IDENTIFIER>width${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, width = 5);
         }
     """)
 
@@ -358,9 +358,9 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         $implDisplayI32
 
         fn main() {
-            println!("Hello <FORMAT_SPECIFIER>{:1${'$'}}</FORMAT_SPECIFIER>!", 1, <error descr="Width specifier must be of type `usize`">"asd"</error>);
-            println!("Hello <FORMAT_SPECIFIER>{:.1${'$'}}</FORMAT_SPECIFIER>!", 1, <error descr="Precision specifier must be of type `usize`">2.0</error>);
-            println!("Hello <FORMAT_SPECIFIER>{:1${'$'}.1${'$'}}</FORMAT_SPECIFIER>!", 1, <error descr="Width specifier must be of type `usize`"><error descr="Precision specifier must be of type `usize`">2.0</error></error>);
+            println!("Hello <FORMAT_SPECIFIER>{:<IDENTIFIER>1${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, <error descr="Width specifier must be of type `usize`">"asd"</error>);
+            println!("Hello <FORMAT_SPECIFIER>{:.<IDENTIFIER>1${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, <error descr="Precision specifier must be of type `usize`">2.0</error>);
+            println!("Hello <FORMAT_SPECIFIER>{:<IDENTIFIER>1${'$'}</IDENTIFIER>.<IDENTIFIER>1${'$'}</IDENTIFIER>}</FORMAT_SPECIFIER>!", 1, <error descr="Precision specifier must be of type `usize`"><error descr="Width specifier must be of type `usize`">2.0</error></error>);
         }
     """)
 
@@ -368,11 +368,11 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         $implDisplayI32
 
         fn main() {
-            println!("<FORMAT_SPECIFIER>{:.*}</FORMAT_SPECIFIER>", 1, 2);
-            println!("<FORMAT_SPECIFIER>{0:.*}</FORMAT_SPECIFIER>", 1);
-            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{name:.*}</FORMAT_SPECIFIER>", 1, 3, name=2);
-            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{2:.*}</FORMAT_SPECIFIER>", 1, 5, 2);
-            println!("<FORMAT_SPECIFIER>{:a${'$'}.*}</FORMAT_SPECIFIER>!", 5, 1, a=3);
+            println!("<FORMAT_SPECIFIER>{:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, 2);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>", 1);
+            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>name</IDENTIFIER>:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, 3, name=2);
+            println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER><FORMAT_SPECIFIER>{<IDENTIFIER>2</IDENTIFIER>:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>", 1, 5, 2);
+            println!("<FORMAT_SPECIFIER>{:<IDENTIFIER>a${'$'}</IDENTIFIER>.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>!", 5, 1, a=3);
         }
     """)
 
@@ -385,8 +385,8 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
         }
 
         fn main() {
-            println!("<FORMAT_SPECIFIER>{:.*}</FORMAT_SPECIFIER>!", <error descr="Precision specifier must be of type `usize`">"asd"</error>, S);
-            println!("<FORMAT_SPECIFIER>{0:.*}</FORMAT_SPECIFIER>!", <error descr="Precision specifier must be of type `usize`">S</error>);
+            println!("<FORMAT_SPECIFIER>{:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>!", <error descr="Precision specifier must be of type `usize`">"asd"</error>, S);
+            println!("<FORMAT_SPECIFIER>{<IDENTIFIER>0</IDENTIFIER>:.<IDENTIFIER>*</IDENTIFIER>}</FORMAT_SPECIFIER>!", <error descr="Precision specifier must be of type `usize`">S</error>);
         }
     """)
 

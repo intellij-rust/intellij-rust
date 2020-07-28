@@ -263,7 +263,8 @@ private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHold
 private fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
     fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.IDENTIFIER) {
         if (range != null && !range.isEmpty()) {
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            val highlightSeverity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
+            holder.newSilentAnnotation(highlightSeverity)
                 .range(ctx.toSourceRange(range, offset))
                 .textAttributes(color.textAttributesKey)
                 .create()
