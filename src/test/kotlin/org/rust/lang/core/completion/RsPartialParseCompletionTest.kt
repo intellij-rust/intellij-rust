@@ -90,7 +90,7 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test struct field 1`() = @Suppress("DEPRECATION") checkSingleCompletion("foobar", """
+    fun `test struct field 1`() = doSingleCompletion("""
         struct S {
             foobar: i32,
             frobnicator: i32,
@@ -99,6 +99,18 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         fn main() {
             let _ = S {
                 foo/*caret*/
+                frobnicator: 92
+            };
+        }
+    """, """
+        struct S {
+            foobar: i32,
+            frobnicator: i32,
+        }
+
+        fn main() {
+            let _ = S {
+                foobar: /*caret*/
                 frobnicator: 92
             };
         }
@@ -151,9 +163,12 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         executeSoloCompletion()
     }
 
-    fun `test struct field 2`() = @Suppress("DEPRECATION") checkSingleCompletion("bar", """
+    fun `test struct field 2`() = doSingleCompletion("""
         struct S { foo: i32, bar: i32}
         fn main() { let _ = S { foo: 2, .ba/*caret*/ } }
+    """, """
+        struct S { foo: i32, bar: i32}
+        fn main() { let _ = S { foo: 2, .bar: /*caret*/ } }
     """)
 
     fun `test function parameter`() = doSingleCompletion("""
@@ -164,4 +179,3 @@ class RsPartialParseCompletionTest : RsCompletionTestBase() {
         fn foo(x: i32, foo bar: i32, baz: Frobnicate/*caret*/) {}
     """)
 }
-

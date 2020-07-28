@@ -20,21 +20,15 @@ import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.AssocItemScopeEntryBase
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.resolve.ScopeEntry
-import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ref.FieldResolveVariant
-import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.emptySubstitution
-import org.rust.lang.core.types.implLookup
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyNever
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 
 const val KEYWORD_PRIORITY = 80.0
 const val PRIMITIVE_TYPE_PRIORITY = KEYWORD_PRIORITY
@@ -300,6 +294,21 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
                 } else {
                     appendSemicolon(context, curUseItem)
+                }
+            }
+            is RsNamedFieldDecl -> {
+                val literalfield = context.getElementOfType<RsStructLiteralField>()
+                if (literalfield != null) {
+                    var foundCompatibleBinding = false
+                    processLocalVariables(literalfield) {
+                        if (it.name == element.name && it.type == element.asTy) {
+                            foundCompatibleBinding = true
+                        }
+                    }
+
+                    if (!foundCompatibleBinding) {
+                        context.addSuffix(": ")
+                    }
                 }
             }
         }
