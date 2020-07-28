@@ -30,19 +30,23 @@ class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
                 holder.newAnnotation(HighlightSeverity.ERROR, "`${element.text}` is reserved keyword in Edition 2018").create()
 
             isEdition2018 && !isIdentifier && isEnabledByCfg -> {
-                val severity = if (isUnitTestMode) RsColor.KEYWORD.testSeverity else HighlightSeverity.INFORMATION
-                holder.newSilentAnnotation(severity)
-                    .textAttributes(RsColor.KEYWORD.textAttributesKey).create()
+                if (!holder.isBatchMode) {
+                    val severity = if (isUnitTestMode) RsColor.KEYWORD.testSeverity else HighlightSeverity.INFORMATION
+                    holder.newSilentAnnotation(severity)
+                        .textAttributes(RsColor.KEYWORD.textAttributesKey).create()
+                }
             }
 
             isEdition2018 && !isIdentifier && !isEnabledByCfg -> {
-                val colorScheme = EditorColorsManager.getInstance().globalScheme
-                val keywordTextAttributes = colorScheme.getAttributes(RsColor.KEYWORD.textAttributesKey)
-                val cfgDisabledCodeTextAttributes = colorScheme.getAttributes(RsColor.CFG_DISABLED_CODE.textAttributesKey)
-                val cfgDisabledKeywordTextAttributes = TextAttributes.merge(keywordTextAttributes, cfgDisabledCodeTextAttributes)
+                if (!holder.isBatchMode) {
+                    val colorScheme = EditorColorsManager.getInstance().globalScheme
+                    val keywordTextAttributes = colorScheme.getAttributes(RsColor.KEYWORD.textAttributesKey)
+                    val cfgDisabledCodeTextAttributes = colorScheme.getAttributes(RsColor.CFG_DISABLED_CODE.textAttributesKey)
+                    val cfgDisabledKeywordTextAttributes = TextAttributes.merge(keywordTextAttributes, cfgDisabledCodeTextAttributes)
 
-                holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-                    .enforcedTextAttributes(cfgDisabledKeywordTextAttributes).create()
+                    holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+                        .enforcedTextAttributes(cfgDisabledKeywordTextAttributes).create()
+                }
             }
 
             !isEdition2018 && !isIdentifier ->

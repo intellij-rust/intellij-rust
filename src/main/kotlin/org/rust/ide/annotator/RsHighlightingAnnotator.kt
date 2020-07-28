@@ -29,6 +29,7 @@ import org.rust.openapiext.getOrPut
 class RsHighlightingAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        if (holder.isBatchMode) return
         val color = when (element) {
             is LeafPsiElement -> highlightLeaf(element, holder)
             is RsAttr -> RsColor.ATTRIBUTE

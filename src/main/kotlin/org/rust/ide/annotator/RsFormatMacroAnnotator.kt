@@ -53,14 +53,18 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
             holder.newAnnotation(HighlightSeverity.ERROR, error.error).range(error.range).create()
         }
 
-        highlightParametersOutside(parseCtx, holder)
+        if (!holder.isBatchMode) {
+            highlightParametersOutside(parseCtx, holder)
+        }
 
         // skip advanced checks and highlighting if there are syntax errors
         if (errors.isNotEmpty()) {
             return
         }
 
-        highlightParametersInside(parseCtx, holder)
+        if (!holder.isBatchMode) {
+            highlightParametersInside(parseCtx, holder)
+        }
 
         val suppressTraitErrors = !isUnitTestMode &&
             (element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New

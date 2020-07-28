@@ -25,6 +25,7 @@ import org.rust.lang.core.types.type
 class RsHighlightingMutableAnnotator : AnnotatorBase() {
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        if (holder.isBatchMode) return
         val ref = when (element) {
             is RsPath -> element.reference?.resolve() ?: return
             is RsSelfParameter -> element
