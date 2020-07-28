@@ -46,4 +46,14 @@ class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingIns
             r#extern();
         }
     """)
+
+    fun `test no_mangle function`() = checkByText("""
+        #[no_mangle]
+        pub fn <warning descr="Function `Foo` should have a snake case name such as `foo`">Foo</warning>() {}
+    """)
+
+    fun `test no_mangle extern function`() = checkByText("""
+        #[no_mangle]
+        pub unsafe extern fn Foo() {}
+    """)
 }

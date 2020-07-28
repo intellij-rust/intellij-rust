@@ -10,10 +10,7 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.inspections.fixes.RenameFix
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.RsConstantKind
-import org.rust.lang.core.psi.ext.kind
-import org.rust.lang.core.psi.ext.owner
+import org.rust.lang.core.psi.ext.*
 
 /**
  * Base class for naming inspections. Implements the core logic of checking names
@@ -206,6 +203,13 @@ class RsFunctionNamingInspection : RsSnakeCaseNamingInspection("Function") {
                 }
             }
         }
+
+    override fun isSuppressedFor(element: PsiElement): Boolean {
+        if (super.isSuppressedFor(element)) return true
+
+        val function = element.parent as? RsFunction ?: return false
+        return function.isExtern && function.findOuterAttr("no_mangle") != null
+    }
 }
 
 class RsMethodNamingInspection : RsSnakeCaseNamingInspection("Method") {
