@@ -474,12 +474,6 @@ sealed class ImportInfo {
 
 data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo)
 
-/** For `Foo::bar` in `Foo::bar::baz::quux` returns `Foo::bar::baz::quux` */
-private tailrec fun RsPath.superPath(): RsPath {
-    val parent = context
-    return if (parent is RsPath) parent.superPath() else this
-}
-
 private fun RsPath.namespaceFilter(isCompletion: Boolean): (RsQualifiedNamedElement) -> Boolean = when (context) {
     is RsTypeReference -> { e ->
         when (e) {
