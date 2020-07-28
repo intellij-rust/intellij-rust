@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import com.intellij.ide.todo.TodoConfiguration
 import org.intellij.lang.annotations.Language
 import org.rust.*
@@ -224,6 +225,40 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             () => {};
         }
     """)
+
+    @BatchMode
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test no highlighting in batch mode`() = checkHighlighting("""
+        extern crate dep_lib_target;
+
+        use std::io::Read;
+
+        const FOO: i32 = 0;
+        static BAR: i32 = 0;
+
+        struct Q(i32);
+        struct S { field: T }
+
+        trait T {
+            fn foo();
+        }
+        union U { }
+        impl T for U {
+            default fn foo() {}
+        }
+
+        fn main() {
+            let s = S { field: T(92) };
+            s.field.0;
+        }
+
+        fn foo() -> bool {
+            let a: u8 = 42;
+            let b: f32 = 10.0;
+            let c: &str = "example";
+            char::is_lowercase('a')
+        }
+    """, ignoreExtraHighlighting = false)
 
     private fun checkHighlightingWithMacro(@Language("Rust") text: String) {
         checkHighlighting(text)

@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -64,4 +65,13 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         </CFG_DISABLED_CODE>
         }
     """)
+
+    @BatchMode
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test no highlighting in batch mode`() = checkHighlighting("""
+        #[cfg(not(intellij_rust))]
+        fn foo() {
+            let x = 1;
+        }
+    """, ignoreExtraHighlighting = false)
 }

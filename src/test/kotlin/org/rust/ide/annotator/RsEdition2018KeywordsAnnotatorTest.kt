@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
@@ -105,4 +106,14 @@ class RsEdition2018KeywordsAnnotatorTest : RsAnnotatorTestBase(RsEdition2018Keyw
             let y = f().<error descr="`await` is reserved keyword in Edition 2018">await</error>();
         }
     """)
+
+    @BatchMode
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test no keyword highlighting in batch mode`() = checkHighlighting("""
+        async fn foo() {}
+        fn main() {
+            try { () };
+            let x = foo().await;
+        }
+    """, ignoreExtraHighlighting = false)
 }

@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 
@@ -110,6 +111,14 @@ class RsDoctestAnnotatorTest : RsAnnotatorTestBase(RsDoctestAnnotator::class) {
         /// ```
         fn foo() {}
     """, checkInfo = true)
+
+    @BatchMode
+    fun `test no highlighting in batch mod`() = doTest("""
+        |/// ```
+        |/// <inject>let a = 0;
+        |</inject>/// ```
+        |fn foo() {}
+        |""")
 
     fun doTest(code: String) = checkByFileTree(
         "//- lib.rs\n/*caret*/${code.trimMargin()}",

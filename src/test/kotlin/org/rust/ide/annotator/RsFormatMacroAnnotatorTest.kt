@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor
@@ -438,6 +439,27 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!(b"format", 1);
             println!(br"format", 1);
             println!(br##"format"##, 1);
+        }
+    """)
+
+    @BatchMode
+    fun `test only errors in batch mode`() = checkErrors("""
+        struct S;
+
+        fn main() {
+            let s = S;
+            println!("{}", <error descr="`S` doesn't implement `Display` (required by {})">s</error>);
+            println!("{:?}", <error descr="`S` doesn't implement `Debug` (required by {:?})">s</error>);
+            println!("{:x?}", <error descr="`S` doesn't implement `Debug` (required by {:x?})">s</error>);
+            println!("{:X?}", <error descr="`S` doesn't implement `Debug` (required by {:X?})">s</error>);
+            println!("{:#?}", <error descr="`S` doesn't implement `Debug` (required by {:#?})">s</error>);
+            println!("{:o}", <error descr="`S` doesn't implement `Octal` (required by {:o})">s</error>);
+            println!("{:x}", <error descr="`S` doesn't implement `LowerHex` (required by {:x})">s</error>);
+            println!("{:X}", <error descr="`S` doesn't implement `UpperHex` (required by {:X})">s</error>);
+            println!("{:p}", <error descr="`S` doesn't implement `Pointer` (required by {:p})">s</error>);
+            println!("{:b}", <error descr="`S` doesn't implement `Binary` (required by {:b})">s</error>);
+            println!("{:e}", <error descr="`S` doesn't implement `LowerExp` (required by {:e})">s</error>);
+            println!("{0:E}", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
         }
     """)
 }
