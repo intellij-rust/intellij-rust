@@ -153,7 +153,7 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- foo.rs
     """, "lib.rs")
 
-    fun `test attach module file`() = checkFixWithMultipleModules("""
+    fun `test attach module file 1`() = checkFixWithMultipleModules("""
         //- main.rs
             fn main() {}
         //- lib.rs
@@ -169,6 +169,23 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
             fn test() {}
         //- a/mod.rs
     """, "lib.rs")
+
+    fun `test attach module file 2`() = checkFixByFileTree("Attach file to mod.rs", """
+        //- lib.rs
+            mod a;
+        //- a/mod.rs
+            fn foo() {}
+        //- a/b/mod.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            mod a;
+        //- a/mod.rs
+            mod b;
+
+            fn foo() {}
+        //- a/b/mod.rs
+    """)
 
     private fun checkFixWithMultipleModules(
         @Language("Rust") before: String,

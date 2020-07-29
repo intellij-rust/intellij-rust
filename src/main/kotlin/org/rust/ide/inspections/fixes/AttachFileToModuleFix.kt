@@ -77,6 +77,9 @@ class AttachFileToModuleFix(
             val modules = mutableListOf<RsMod>()
 
             if (file.isModuleFile) {
+                // module file in parent directory
+                modules.addIfNotNull(findModule(file, project, directory.parent?.findFileByRelativePath(RsConstants.MOD_RS_FILE)))
+
                 // package target roots in parent directory
                 for (target in pkg.targets) {
                     val crateRoot = target.crateRoot ?: continue
@@ -90,8 +93,7 @@ class AttachFileToModuleFix(
 
                 // module file in parent directory
                 if (pkg.edition == CargoWorkspace.Edition.EDITION_2018) {
-                    val parent = directory.parent
-                    modules.addIfNotNull(findModule(file, project, parent?.findFileByRelativePath("${directory.name}.rs")))
+                    modules.addIfNotNull(findModule(file, project, directory.parent?.findFileByRelativePath("${directory.name}.rs")))
                 }
 
                 // package target roots in the same directory
