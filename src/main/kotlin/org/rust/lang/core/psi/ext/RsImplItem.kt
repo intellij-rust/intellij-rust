@@ -16,6 +16,7 @@ import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
+import org.rust.lang.core.psi.RsElementTypes.EXCL
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
@@ -23,6 +24,10 @@ import org.rust.lang.core.types.ty.Ty
 
 val RsImplItem.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
+
+/** `impl !Sync for Bar` vs `impl Foo for Bar` */
+val RsImplItem.isNegativeImpl: Boolean
+    get() = greenStub?.isNegativeImpl ?: (node.findChildByType(EXCL) != null)
 
 val RsImplItem.isReservationImpl: Boolean
     get() = queryAttributes.hasAttribute("rustc_reservation_impl")
