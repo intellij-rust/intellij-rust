@@ -970,6 +970,8 @@
         <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveTopLevelItemsHandler"
                                  order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
 
+        <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
+
     </extensions>
 
     <extensionPoints>

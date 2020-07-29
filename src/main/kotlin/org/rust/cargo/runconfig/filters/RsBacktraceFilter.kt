@@ -62,27 +62,22 @@ class RsBacktraceFilter @NonInjectable constructor(
             .firstOrNull()
 
     companion object {
-        private val LINE_REGEX: String = "\\s+at $FILE_POSITION_RE"
+        val LINE_REGEX: String = "\\s+at $FILE_POSITION_RE"
     }
 }
 
 /**
  * Adds hyperlinks to function names in backtraces
  */
-private class RsBacktraceItemFilter(
+class RsBacktraceItemFilter(
     val project: Project,
     val workspace: CargoWorkspace?
 ) : Filter {
-    private val pattern = Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
     private val docManager = PsiDocumentManager.getInstance(project)
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        val matcher = pattern.matcher(line)
-        if (!matcher.find()) return null
-        val header = matcher.group(1)
-        val funcName = matcher.group(2)
-        val funcHash = matcher.group(3)
-        val normFuncName = funcName.normalize()
+        val (header, funcName, funcHash) = parseBacktraceRecord(line) ?: return null
+        val normFuncName = FilterUtils.normalizeFunctionPath(funcName)
         val resultItems = ArrayList<Filter.ResultItem>(2)
 
         // Add hyperlink to the function name
@@ -109,57 +104,7 @@ private class RsBacktraceItemFilter(
         return Filter.ResultItem(start, end, link, pkg.origin != PackageOrigin.WORKSPACE)
     }
 
-    /**
-     * Normalizes function path:
-     * - Removes angle brackets from the element path, including enclosed contents when necessary.
-     * - Removes closure markers.
-     * Examples:
-     * - <core::option::Option<T>>::unwrap -> core::option::Option::unwrap
-     * - std::panicking::default_hook::{{closure}} -> std::panicking::default_hook
-     */
-    private fun String.normalize(): String {
-        var str = this
-        while (str.endsWith("::{{closure}}")) {
-            str = str.substringBeforeLast("::")
-        }
-        while (true) {
-            val range = str.findAngleBrackets() ?: break
-            val idx = str.indexOf("::", range.start + 1)
-            str = if (idx < 0 || idx > range.endInclusive) {
-                str.removeRange(range)
-            } else {
-                str.removeRange(IntRange(range.endInclusive, range.endInclusive))
-                    .removeRange(IntRange(range.start, range.start))
-            }
-        }
-        return str
-    }
-
-    /**
-     * Finds the range of the first matching angle brackets within the string.
-     */
-    private fun String.findAngleBrackets(): IntRange? {
-        var start = -1
-        var counter = 0
-        loop@ for ((index, char) in this.withIndex()) {
-            when (char) {
-                '<' -> {
-                    if (start < 0) {
-                        start = index
-                    }
-                    counter += 1
-                }
-                '>' -> counter -= 1
-                else -> continue@loop
-            }
-            if (counter == 0) {
-                return IntRange(start, index)
-            }
-        }
-        return null
-    }
-
-    private companion object {
+    companion object {
         val DIMMED_TEXT = EditorColorsManager.getInstance().globalScheme
             .getAttributes(TextAttributesKey.createTextAttributesKey("org.rust.DIMMED_TEXT"))!!
         val SKIP_PREFIXES = arrayOf(
@@ -168,5 +113,18 @@ private class RsBacktraceItemFilter(
             "std::sys::backtrace",
             "std::sys::imp::backtrace",
             "core::panicking")
+
+        data class BacktraceRecord(val header: String, val functionName: String, val functionHash: String?)
+
+        private val FUNCTION_PATTERN = Pattern.compile("^(\\s*\\d+:\\s+(?:0x[a-f0-9]+ - )?)(.+?)(::h[0-9a-f]+)?$")!!
+
+        fun parseBacktraceRecord(line: String): BacktraceRecord? {
+            val matcher = FUNCTION_PATTERN.matcher(line)
+            if (!matcher.find()) return null
+            val header = matcher.group(1)
+            val funcName = matcher.group(2)
+            val funcHash = matcher.group(3)
+            return BacktraceRecord(header, funcName, funcHash)
+        }
     }
 }
