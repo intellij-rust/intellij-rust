@@ -1522,4 +1522,17 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
           //^ <unknown>
         }
     """)
+
+    fun `test negative impl is ignored`() = testExpr("""
+        struct S;
+        trait Clone: Sized { fn clone(&self) -> Self { unimplemented!() } }
+        impl Clone for S {}
+        impl !Clone for &mut S {}
+        fn main() {
+            let a = &mut S;
+            let b = a.clone();
+            b;
+          //^ S
+        }
+    """)
 }

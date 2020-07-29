@@ -9,10 +9,7 @@ import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
-import org.rust.lang.core.psi.ext.RsAbstractable
-import org.rust.lang.core.psi.ext.expandedMembers
-import org.rust.lang.core.psi.ext.isReservationImpl
-import org.rust.lang.core.psi.ext.resolveToBoundTrait
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.resolve.ref.ResolveCacheDependency
 import org.rust.lang.core.resolve.ref.RsResolveCache
@@ -34,7 +31,7 @@ class RsCachedImplItem(
     val impl: RsImplItem
 ) {
     private val traitRef: RsTraitRef? = impl.traitRef
-    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl
+    val isValid: Boolean = impl.isValidProjectMember && !impl.isReservationImpl && !impl.isNegativeImpl
     val isInherent: Boolean get() = traitRef == null
 
     val implementedTrait: BoundElement<RsTraitItem>? by lazy(PUBLICATION) { traitRef?.resolveToBoundTrait() }

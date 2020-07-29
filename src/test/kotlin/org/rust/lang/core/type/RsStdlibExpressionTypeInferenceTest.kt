@@ -795,4 +795,17 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    // There is `impl<T: ?Sized> !Clone for &mut T {}`
+    fun `test clone through mut ref`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #[derive(Clone)]
+        pub struct S;
+
+        fn main() {
+            let a = &mut S;
+            let b = a.clone();
+            b;
+        } //^ S
+    """)
 }
