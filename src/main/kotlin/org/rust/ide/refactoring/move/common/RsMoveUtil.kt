@@ -5,7 +5,7 @@
 
 package org.rust.ide.refactoring.move.common
 
-import org.rust.ide.inspections.import.insertUseItem
+import org.rust.ide.utils.import.insertUseItem
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory

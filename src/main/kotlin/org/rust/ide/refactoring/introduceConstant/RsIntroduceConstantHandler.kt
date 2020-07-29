@@ -15,8 +15,8 @@ import com.intellij.psi.PsiParserFacade
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil
-import org.rust.ide.inspections.import.RsImportHelper
 import org.rust.ide.refactoring.*
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.openapiext.runWriteCommandAction
 

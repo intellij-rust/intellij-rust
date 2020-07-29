@@ -16,9 +16,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
-import org.rust.ide.inspections.import.RsImportHelper
 import org.rust.ide.refactoring.RsInPlaceVariableIntroducer
-import org.rust.ide.refactoring.findBinding
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.Const

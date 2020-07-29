@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.import
+package org.rust.ide.utils.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
@@ -40,7 +40,7 @@ object RsImportHelper {
         val importContext = ImportContext.from(context.project, context)
         for (element in elements) {
             val name = element.name ?: continue
-            val candidates = AutoImportFix.getImportCandidates(importContext, name, name) {
+            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) {
                 !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }
             val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item in elements }
@@ -54,7 +54,7 @@ object RsImportHelper {
 
         val importContext = ImportContext.from(context.project, context)
         val name = element.name ?: return null
-        val candidates = AutoImportFix.getImportCandidates(importContext, name, name) { it.item.parent !is RsMembers }
+        val candidates = ImportCandidatesCollector.getImportCandidates(importContext, name, name) { it.item.parent !is RsMembers }
         val candidate = candidates.firstOrNull { it.qualifiedNamedItem.item == element }
         return candidate?.info?.usePath
     }

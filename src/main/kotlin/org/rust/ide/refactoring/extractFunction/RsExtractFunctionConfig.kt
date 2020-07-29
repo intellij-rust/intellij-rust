@@ -120,6 +120,7 @@ class RsExtractFunctionConfig private constructor(
     var name: String = "",
     var visibilityLevelPublic: Boolean = false,
     val isAsync: Boolean = false,
+    val isUnsafe: Boolean = false,
     var parameters: List<Parameter>
 ) {
     val valueParameters: List<Parameter>
@@ -147,6 +148,9 @@ class RsExtractFunctionConfig private constructor(
         }
         if (isAsync) {
             append("async ")
+        }
+        if (isUnsafe) {
+            append("unsafe ")
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
         if (returnValue != null && returnValue.type !is TyUnit) {
@@ -305,7 +309,8 @@ class RsExtractFunctionConfig private constructor(
                 elements,
                 returnValue = returnValue,
                 parameters = parameters,
-                isAsync = isAsync
+                isAsync = isAsync,
+                isUnsafe = fn.isUnsafe
             )
         }
     }

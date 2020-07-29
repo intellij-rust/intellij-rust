@@ -12,9 +12,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.inspections.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsPsiFactory

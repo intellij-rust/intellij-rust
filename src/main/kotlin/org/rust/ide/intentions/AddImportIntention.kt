@@ -11,9 +11,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import org.rust.ide.inspections.import.ImportCandidate
-import org.rust.ide.inspections.import.ImportInfo
-import org.rust.ide.inspections.import.import
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportInfo
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.namespaces
@@ -58,8 +58,10 @@ class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Conte
         if (ctx.needsImport) {
             val targetItem = path.reference?.resolve() as? RsQualifiedNamedElement ?: return
             val usePath = path.generateUsePath()
-            val candidate = ImportCandidate(QualifiedNamedItem.ExplicitItem(targetItem),
-                ImportInfo.LocalImportInfo(usePath))
+            val candidate = ImportCandidate(
+                QualifiedNamedItem.ExplicitItem(targetItem),
+                ImportInfo.LocalImportInfo(usePath)
+            )
             candidate.import(ctx.path)
         }
 

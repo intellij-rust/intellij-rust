@@ -6,7 +6,10 @@
 package org.rust.lang.core.completion
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
+import com.intellij.codeInsight.completion.CompletionUtil
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
@@ -15,11 +18,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
-import org.rust.ide.inspections.import.AutoImportFix
-import org.rust.ide.inspections.import.ImportCandidate
-import org.rust.ide.inspections.import.ImportContext
-import org.rust.ide.inspections.import.import
 import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.ImportCandidate
+import org.rust.ide.utils.import.ImportCandidatesCollector
+import org.rust.ide.utils.import.ImportContext
+import org.rust.ide.utils.import.import
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.macros.findElementExpandedFrom
 import org.rust.lang.core.psi.*
@@ -191,7 +194,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 
         val context = RsCompletionContext(path.implLookup, expectedTy, isSimplePath = true)
         for (elementName in result.prefixMatcher.sortMatching(keys)) {
-            val candidates = AutoImportFix.getImportCandidates(importContext, elementName, elementName) {
+            val candidates = ImportCandidatesCollector.getImportCandidates(importContext, elementName, elementName) {
                 !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
             }
 
@@ -342,9 +345,12 @@ private fun methodAndFieldCompletionProcessor(
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
     if (!RsCodeInsightSettings.getInstance().importOutOfScopeItems) return null
     val ancestor = PsiTreeUtil.getParentOfType(methodOrField, RsBlock::class.java, RsMod::class.java) ?: return null
-    // `AutoImportFix.getImportCandidates` expects original scope element for correct item filtering
+    // `ImportCandidatesCollector.getImportCandidates` expects original scope element for correct item filtering
     val scope = CompletionUtil.getOriginalElement(ancestor) as? RsElement ?: return null
-    return AutoImportFix.getImportCandidates(methodOrField.project, scope, listOf(resolveVariant)).orEmpty().singleOrNull()
+    return ImportCandidatesCollector
+        .getImportCandidates(methodOrField.project, scope, listOf(resolveVariant))
+        .orEmpty()
+        .singleOrNull()
 }
 
 private fun addProcessedPathName(

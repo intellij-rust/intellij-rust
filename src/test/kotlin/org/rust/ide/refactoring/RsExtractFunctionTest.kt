@@ -1212,6 +1212,22 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo", mutabilityOverride = mapOf("a" to true))
 
+    fun `test extract unsafe function`() = doTest("""
+        unsafe fn bar(ptr: *const u32) -> u32 {
+            <selection>*ptr</selection>
+        }
+    """, """
+        unsafe fn bar(ptr: *const u32) -> u32 {
+            foo(ptr)
+        }
+
+        unsafe fn foo(ptr: *const u32) -> u32 {
+            *ptr
+        }
+    """,
+        false,
+        "foo")
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String,
                        pub: Boolean,

@@ -9,6 +9,7 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.utils.import.Testmarks
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class AutoImportFixStdTest : AutoImportFixTestBase() {
@@ -18,7 +19,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use std::io;
 
         fn foo<T: io/*caret*/::Read>(t: T) {}
-    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
+    """, Testmarks.autoInjectedStdCrate)
 
     fun `test import item from not std crate`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
@@ -104,7 +105,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn main() {
             let mutex = Mutex/*caret*/::new(Vec::new());
         }
-    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
+    """, Testmarks.autoInjectedStdCrate)
 
     fun `test module reexport`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
@@ -139,7 +140,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use std::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, AutoImportFix.Testmarks.autoInjectedStdCrate)
+    """, Testmarks.autoInjectedStdCrate)
 
     fun `test import without std crate 1`() = checkAutoImportFixByText("""
         #![no_std]
@@ -151,7 +152,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         use core::hash::Hash;
 
         fn foo<T: Hash/*caret*/>(t: T) {}
-    """, AutoImportFix.Testmarks.autoInjectedCoreCrate)
+    """, Testmarks.autoInjectedCoreCrate)
 
     fun `test import without std crate 2`() = checkAutoImportFixByText("""
         #![no_std]
@@ -257,7 +258,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn bar() {
             let x = Foo/*caret*/;
         }
-    """, AutoImportFix.Testmarks.externCrateItemInNotCrateRoot)
+    """, Testmarks.externCrateItemInNotCrateRoot)
 
     fun `test insert relative use item 2`() = checkAutoImportFixByFileTree("""
         //- dep-lib/lib.rs
@@ -295,7 +296,7 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
         fn baz() {
             let x = Foo/*caret*/;
         }
-    """, AutoImportFix.Testmarks.externCrateItemInNotCrateRoot)
+    """, Testmarks.externCrateItemInNotCrateRoot)
 
     fun `test do not try to highlight primitive types`() = checkAutoImportFixIsUnavailable("""
         pub trait Zero<N> {
