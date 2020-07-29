@@ -612,7 +612,10 @@ fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolea
     if (binding.parent is RsPatField) {
         val parentPat = binding.parent.parent as RsPatStruct
         val patStruct = parentPat.path.reference?.deepResolve()
-        if (patStruct is RsFieldsOwner && processFieldDeclarations(patStruct, processor)) return true
+        if (patStruct is RsFieldsOwner) {
+            if (processFieldDeclarations(patStruct, processor)) return true
+            if (isCompletion) return false
+        }
     }
 
     return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES) { entry ->

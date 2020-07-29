@@ -350,6 +350,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test no outside type in struct field pattern`() = checkNotContainsCompletion("T", """
+        struct T;
+        struct S { a: i32 }
+        fn main() {
+            let S { /*caret*/ } = S{ a: 0 };
+        }
+    """)
+
     fun `test enum field`() = doSingleCompletion("""
         enum E { X { bazbarfoo: i32 } }
         fn main() {
