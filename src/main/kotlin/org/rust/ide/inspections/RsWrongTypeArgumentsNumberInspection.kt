@@ -20,22 +20,29 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
-                // Don't apply generic declaration checks to Fn-traits and `Self`
-                if (type.path?.valueParameterList != null) return
-                if (type.path?.cself != null) return
-                checkMethod(holder, type)
+                if (!isPathValid(type.path)) return
+                checkTypeArguments(holder, type)
             }
 
-            override fun visitCallExpr(o: RsCallExpr) = checkMethod(holder, o)
-            override fun visitMethodCall(o: RsMethodCall) = checkMethod(holder, o)
+            override fun visitTraitRef(trait: RsTraitRef) {
+                if (!isPathValid(trait.path)) return
+                checkTypeArguments(holder, trait)
+            }
+
+            override fun visitCallExpr(o: RsCallExpr) = checkTypeArguments(holder, o)
+            override fun visitMethodCall(o: RsMethodCall) = checkTypeArguments(holder, o)
         }
 
-    private fun checkMethod(holder: RsProblemsHolder, o: RsElement) {
+    // Don't apply generic declaration checks to Fn-traits and `Self`
+    private fun isPathValid(path: RsPath?): Boolean = path?.valueParameterList == null && path?.cself == null
+
+    private fun checkTypeArguments(holder: RsProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = when (o) {
             is RsMethodCall -> o.typeArgumentList to o.reference.resolve()
             is RsCallExpr ->
                 (o.expr as? RsPathExpr)?.path?.typeArgumentList to (o.expr as? RsPathExpr)?.path?.reference?.resolve()
             is RsBaseType -> o.path?.typeArgumentList to o.path?.reference?.resolve()
+            is RsTraitRef -> o.path.typeArgumentList to o.path.reference?.resolve()
             else -> return
         }
         if (declaration !is RsGenericDeclaration) return
@@ -48,7 +55,7 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
         if (actualArgs == expectedTotalParams) return
 
         val errorText = when (o) {
-            is RsBaseType -> checkBaseType(actualArgs, expectedRequiredParams, expectedTotalParams)
+            is RsBaseType, is RsTraitRef -> checkTypeReference(actualArgs, expectedRequiredParams, expectedTotalParams)
             is RsMethodCall, is RsCallExpr -> checkFunctionCall(actualArgs, expectedRequiredParams, expectedTotalParams)
             else -> null
         } ?: return
@@ -60,7 +67,7 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
     }
 }
 
-private fun checkBaseType(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): String? {
+private fun checkTypeReference(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): String? {
     return when {
         actualArgs > expectedTotalParams ->
             if (expectedRequiredParams != expectedTotalParams) "at most $expectedTotalParams" else "$expectedTotalParams"
