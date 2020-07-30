@@ -49,7 +49,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 200
+        private const val STUB_VERSION = 201
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -618,6 +618,10 @@ class RsImplItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsImplItem>(parent, elementType) {
+
+    val isNegativeImpl: Boolean
+        get() = BitUtil.isSet(flags, NEGATIVE_IMPL_MASK)
+
     object Type : RsStubElementType<RsImplItemStub, RsImplItem>("IMPL_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -630,10 +634,17 @@ class RsImplItemStub(
         override fun createPsi(stub: RsImplItemStub): RsImplItem =
             RsImplItemImpl(stub, this)
 
-        override fun createStub(psi: RsImplItem, parentStub: StubElement<*>?) =
-            RsImplItemStub(parentStub, this, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsImplItem, parentStub: StubElement<*>?): RsImplItemStub {
+            var flags = RsAttributeOwnerStub.extractFlags(psi)
+            flags = BitUtil.set(flags, NEGATIVE_IMPL_MASK, psi.isNegativeImpl)
+            return RsImplItemStub(parentStub, this, flags)
+        }
 
         override fun indexStub(stub: RsImplItemStub, sink: IndexSink) = sink.indexImplItem(stub)
+    }
+
+    companion object {
+        private val NEGATIVE_IMPL_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
     }
 }
 
