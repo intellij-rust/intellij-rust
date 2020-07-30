@@ -1,8 +1,15 @@
 name: rust release
 
 on:
-    repository_dispatch:
-        types: [ stable-release, beta-release ]
+    workflow_dispatch:
+        inputs:
+            type:
+                required: true
+                default: 'stable'
+                description: 'Available values: `beta` and `stable`'
+            update_changelog:
+                required: false
+                description: 'Enables/disables Rust changelog update'
     schedule:
         - cron: '0 3 * * *'
 
@@ -56,7 +63,7 @@ jobs:
                   git config --local user.name "GitHub Action"
 
             - name: Update changelog link
-              if: github.event_name == 'repository_dispatch' && github.event.action == 'stable-release' && github.event.client_payload.update_changelog
+              if: github.event_name == 'workflow_dispatch' && github.event.inputs.type == 'stable' && github.event.inputs.update_changelog != 'false'
               run: python scripts/update-changelog-link.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
     get-channel:
@@ -66,7 +73,7 @@ jobs:
         steps:
             - id: get-channel
               run: |
-                if ${{ github.event_name == 'repository_dispatch' && github.event.action == 'stable-release' }}
+                if ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.type == 'stable' }}
                 then
                   echo "::set-output name=channel::stable"
                 else

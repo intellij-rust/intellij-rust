@@ -1,8 +1,6 @@
 name: release branch
 
-on:
-    repository_dispatch:
-        types: release-branch
+on: workflow_dispatch
 
 jobs:
     make-release-branch:

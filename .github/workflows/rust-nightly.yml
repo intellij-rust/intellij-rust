@@ -1,8 +1,7 @@
 name: rust nightly
 
 on:
-    repository_dispatch:
-        types: nightly-release
+    workflow_dispatch:
     schedule:
         - cron: '0 2 * * *'
 
