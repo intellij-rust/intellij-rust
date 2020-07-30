@@ -10,17 +10,14 @@ import com.intellij.psi.ResolveResult
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
-import org.rust.lang.core.types.BoundElement
-import org.rust.lang.core.types.Substitution
+import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
 import org.rust.lang.core.types.infer.foldTyInferWith
 import org.rust.lang.core.types.infer.resolve
 import org.rust.lang.core.types.infer.substitute
-import org.rust.lang.core.types.inference
 import org.rust.lang.core.types.regions.ReEarlyBound
 import org.rust.lang.core.types.ty.*
-import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.PathExprResolver
 import org.rust.lang.utils.evaluation.evaluate
 import org.rust.stdext.buildMap
@@ -217,7 +214,20 @@ fun <T : RsElement> instantiatePathGenerics(
         } else {
             // Args aren't optional, and some args/turbofish aren't present OR not optional and turbofis is present.
             // Use either default argument from a definition `struct S<T=u8>(T);` or falling back to `TyUnknown`
-            param.typeReference?.type ?: TyUnknown
+            val defaultTy = param.typeReference?.type ?: TyUnknown
+
+            if (parent is RsTraitRef && parent.parent is RsBound) {
+                val pred = parent.ancestorStrict<RsWherePred>()
+                val selfTy = if (pred != null) {
+                    pred.typeReference?.type
+                } else {
+                    parent.ancestorStrict<RsTypeParameter>()?.declaredType
+                } ?: TyUnknown
+
+                defaultTy.substitute(mapOf(TyTypeParameter.self() to selfTy).toTypeSubst())
+            } else {
+                defaultTy
+            }
         }
         paramTy to value
     }

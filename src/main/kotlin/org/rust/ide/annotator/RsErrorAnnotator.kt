@@ -11,6 +11,7 @@ import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.AnnotationSession
 import com.intellij.openapi.util.Key
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
@@ -577,7 +578,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkSuperTraitImplemented(holder: RsAnnotationHolder, impl: RsImplItem, trait: RsTraitItem) {
-        if (impl.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
+        if (!isUnitTestMode && impl.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New) return
 
         val traitRef = impl.traitRef ?: return
         val typeRef = impl.typeReference ?: return
