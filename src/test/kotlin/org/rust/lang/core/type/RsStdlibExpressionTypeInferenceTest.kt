@@ -754,6 +754,15 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    fun `test "try expr" on a complex type = complex type (correct type vars resolve)`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = vec![Some(42)].into_iter().next()??;
+            a;
+        } //^ i32
+    """)
+
     fun `test macro impls`() = stubOnlyTypeInfer("""
     //- main.rs
         fn main() {

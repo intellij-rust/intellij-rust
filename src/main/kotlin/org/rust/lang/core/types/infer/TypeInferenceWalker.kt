@@ -1038,7 +1038,7 @@ class RsTypeInferenceWalker(
     }
 
     private fun inferTryExprType(expr: RsTryExpr): Ty {
-        val base = expr.expr.inferType() as? TyAdt ?: return TyUnknown
+        val base = resolveTypeVarsWithObligations(expr.expr.inferType()) as? TyAdt ?: return TyUnknown
         if (base.item != items.Result && base.item != items.Option) {
             val tryItem = items.Try ?: return TyUnknown
             val okType = tryItem.findAssociatedType("Ok") ?: return TyUnknown
