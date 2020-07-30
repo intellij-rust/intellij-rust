@@ -28,6 +28,7 @@ import org.rust.lang.core.psi.ext.containingCrate
  */
 class RsDoctestAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        if (holder.isBatchMode) return
         if (element !is RsDocCommentImpl) return
         if (!element.project.rustSettings.doctestInjectionEnabled) return
         // only library targets can have doctests

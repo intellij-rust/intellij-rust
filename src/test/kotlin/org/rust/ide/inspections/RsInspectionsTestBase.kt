@@ -16,7 +16,7 @@ abstract class RsInspectionsTestBase(
 ) : RsAnnotationTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture =
-        RsAnnotationTestFixture(myFixture, inspectionClasses = listOf(inspectionClass))
+        RsAnnotationTestFixture(this, myFixture, inspectionClasses = listOf(inspectionClass))
 
     protected lateinit var inspection: InspectionProfileEntry
 

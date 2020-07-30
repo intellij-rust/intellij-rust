@@ -120,6 +120,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
     }
 
     private fun AnnotationHolder.createUnsafeAnnotation(textRange: TextRange, message: String) {
+        if (isBatchMode) return
         val color = RsColor.UNSAFE_CODE
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
 

@@ -15,6 +15,6 @@ abstract class RsMultipleInspectionsTestBase(
 ) : RsAnnotationTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture {
-        return RsAnnotationTestFixture(myFixture, inspectionClasses = inspectionClasses.toList())
+        return RsAnnotationTestFixture(this, myFixture, inspectionClasses = inspectionClasses.toList())
     }
 }

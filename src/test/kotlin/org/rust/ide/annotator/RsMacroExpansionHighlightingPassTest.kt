@@ -49,6 +49,7 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
 
     override fun createAnnotationFixture(): RsAnnotationTestFixture =
         RsAnnotationTestFixture(
+            this,
             myFixture,
             annotatorClasses = listOf(RsHighlightingAnnotator::class, RsCfgDisabledCodeAnnotator::class)
         )

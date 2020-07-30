@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.rangeWithSurroundingLineBreaks
 
 class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        if (holder.isBatchMode) return
         if (element is RsDocAndAttributeOwner && !element.isEnabledByCfg) {
             holder.createCfgDisabledAnnotation(element.rangeWithSurroundingLineBreaks)
         }

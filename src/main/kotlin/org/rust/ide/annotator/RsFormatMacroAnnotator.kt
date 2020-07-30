@@ -53,14 +53,18 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
             holder.newAnnotation(HighlightSeverity.ERROR, error.error).range(error.range).create()
         }
 
-        highlightParametersOutside(parseCtx, holder)
+        if (!holder.isBatchMode) {
+            highlightParametersOutside(parseCtx, holder)
+        }
 
         // skip advanced checks and highlighting if there are syntax errors
         if (errors.isNotEmpty()) {
             return
         }
 
-        highlightParametersInside(parseCtx, holder)
+        if (!holder.isBatchMode) {
+            highlightParametersInside(parseCtx, holder)
+        }
 
         val suppressTraitErrors = !isUnitTestMode &&
             (element.project.macroExpansionManager.macroExpansionMode !is MacroExpansionMode.New
@@ -263,7 +267,8 @@ private fun highlightParametersOutside(ctx: ParseContext, holder: AnnotationHold
 private fun highlightParametersInside(ctx: ParseContext, holder: AnnotationHolder) {
     fun highlight(range: IntRange?, offset: Int, color: RsColor = RsColor.IDENTIFIER) {
         if (range != null && !range.isEmpty()) {
-            holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
+            val highlightSeverity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
+            holder.newSilentAnnotation(highlightSeverity)
                 .range(ctx.toSourceRange(range, offset))
                 .textAttributes(color.textAttributesKey)
                 .create()

@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator
 
+import com.intellij.ide.annotator.BatchMode
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.colors.RsColor.MUT_BINDING
@@ -41,4 +42,15 @@ class RsHighlightingMutableAnnotatorTest : RsAnnotatorTestBase(RsHighlightingMut
             let b = <MUT_PARAMETER>para</MUT_PARAMETER>;
         }
     """)
+
+    @BatchMode
+    fun `test no highlighting in batch mode`() = checkHighlighting("""
+        struct Foo {}
+        impl Foo {
+            fn bar(&mut self, mut par: i32) {
+                let mut a = 1;
+                self.bar();
+            }
+        }
+    """, ignoreExtraHighlighting = false)
 }
