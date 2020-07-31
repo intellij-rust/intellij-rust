@@ -57,7 +57,7 @@ import java.nio.file.Paths
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(private val cargoExecutable: Path) {
+class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -301,7 +301,7 @@ class Cargo(private val cargoExecutable: Path) {
                 parameters,
                 emulateTerminal,
                 http
-            )
+            ).withEnvironment("RUSTC", rustcExecutable.toString())
         }
 
     @Throws(ExecutionException::class)

@@ -18,19 +18,19 @@ class CargoTest : RsTestBase() {
     fun `test run arguments preserved`() = checkCommandLine(
         cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--bin", "parity", "--", "--prune", "archive"))), """
         cmd: /usr/bin/cargo run --color=always --bin parity -- --prune archive
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe run --color=always --bin parity -- --prune archive
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test basic command`() = checkCommandLine(
         cargo.toGeneralCommandLine(project, CargoCommandLine("test", wd, listOf("--all"))), """
         cmd: /usr/bin/cargo test --all
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe test --all
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test propagates proxy settings`() {
@@ -46,48 +46,48 @@ class CargoTest : RsTestBase() {
         checkCommandLine(
             cargo.toGeneralCommandLine(project, CargoCommandLine("check", wd)), """
             cmd: /usr/bin/cargo check
-            env: RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
             """, """
             cmd: C:/usr/bin/cargo.exe check
-            env: RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi, http_proxy=http://user:pwd@host:3268/
         """)
     }
 
     fun `test adds colors for common commands`() = checkCommandLine(
         cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
         cmd: /usr/bin/cargo run --color=always --release -- foo
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe run --color=always --release -- foo
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test don't add color for unknown command`() = checkCommandLine(
         cargo.toColoredCommandLine(project, CargoCommandLine("tree", wd)), """
         cmd: /usr/bin/cargo tree
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe tree
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
     fun `test adds nightly channel`() = checkCommandLine(
         cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"), channel = RustChannel.NIGHTLY)), """
         cmd: /usr/bin/cargo +nightly run --color=always --release -- foo
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
         """, """
         cmd: C:/usr/bin/cargo.exe +nightly run --color=always --release -- foo
-        env: RUST_BACKTRACE=short, TERM=ansi
+        env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
     """)
 
     @MockRustcVersion("1.36.0")
     fun `test adds --offline option`() = withOfflineMode {
         checkCommandLine(cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
             cmd: /usr/bin/cargo --offline run --color=always --release -- foo
-            env: RUST_BACKTRACE=short, TERM=ansi
+            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
             """, """
             cmd: C:/usr/bin/cargo.exe --offline run --color=always --release -- foo
-            env: RUST_BACKTRACE=short, TERM=ansi
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
         """)
     }
 
@@ -95,10 +95,10 @@ class CargoTest : RsTestBase() {
     fun `test adds -Zoffline`() = withOfflineMode {
         checkCommandLine(cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
             cmd: /usr/bin/cargo -Zoffline run --color=always --release -- foo
-            env: RUST_BACKTRACE=short, TERM=ansi
+            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
             """, """
             cmd: C:/usr/bin/cargo.exe -Zoffline run --color=always --release -- foo
-            env: RUST_BACKTRACE=short, TERM=ansi
+            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
         """)
     }
 
