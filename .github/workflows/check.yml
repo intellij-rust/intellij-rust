@@ -112,28 +112,28 @@ jobs:
             - name: Download
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: :resolveDependencies -Pkotlin.incremental=false --no-daemon
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false --no-daemon"
 
             - name: Build
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: assemble testClasses -Pkotlin.incremental=false --no-daemon
+                  arguments: "assemble testClasses -Pkotlin.incremental=false --no-daemon"
 
             - name: Check
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon
+                  arguments: "check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon"
 
             - name: Verify plugin
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: :plugin:verifyPlugin
+                  arguments: ":plugin:verifyPlugin"
 
             - name: Check bundled Rust formatters
               if: matrix.os != 'windows-latest'
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: runPrettyPrintersTests --no-daemon
+                  arguments: "runPrettyPrintersTests --no-daemon"
 
     check:
         needs: [ check-license, check-plugin ]

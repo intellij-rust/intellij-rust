@@ -78,10 +78,13 @@ One week before release we create release branch with `release-%release_version%
 `release_version` value is the same as the corresponding milestone version.
 Release branches are used to build beta and stable plugin builds.
 
-Most of release actions can be done automatically via GitHub workflow. 
-There is `scripts/release-actions.py` script to trigger them.
+Most of release actions can be done automatically via GitHub workflow.
+You can trigger them from [GitHub UI](https://github.blog/changelog/2020-07-06-github-actions-manual-triggers-with-workflow_dispatch/).
+Just open `Action` tab, choose a necessary workflow and launch it via `Run workflow` button.
+
+Alternatively, there is `scripts/release-actions.py` script to trigger events from your console.
 Syntax: `python release-actions.py release_command --token github_token`.
-Alternatively, you can provide `IR_GITHUB_TOKEN` environment variable to provide github token.
+Also, you can provide `IR_GITHUB_TOKEN` environment variable to provide github token.
 It allows you to omit `--token` option.
 
 See [instruction](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line)

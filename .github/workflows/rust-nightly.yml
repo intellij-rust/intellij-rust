@@ -1,8 +1,7 @@
 name: rust nightly
 
 on:
-    repository_dispatch:
-        types: nightly-release
+    workflow_dispatch:
     schedule:
         - cron: '0 2 * * *'
 
@@ -79,13 +78,13 @@ jobs:
               if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: :plugin:publishPlugin
+                  arguments: ":plugin:publishPlugin"
 
             - name: Publish toml plugin
               if: needs.fetch-latest-changes.outputs.toml-commit != needs.fetch-latest-changes.outputs.toml-nightly
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: :intellij-toml:publishPlugin
+                  arguments: ":intellij-toml:publishPlugin"
 
     save-commit:
         needs: [ build, fetch-latest-changes ]
