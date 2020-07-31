@@ -120,6 +120,13 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         }
     """)
 
+    fun `test smart should not annotate single lambda argument`() = checkByText("""
+        fn foo(bar: impl Fn(i32) -> i32) {}
+        fn main() {
+            foo(|x| x);
+        }
+    """)
+
     fun `test fn arg with mut ident`() = checkByText("""
         fn foo(mut arg: u32) {}
         fn main() { foo(/*hint text="arg:"*/0); }
