@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -19,6 +20,7 @@ import org.rust.cargo.runconfig.readString
 import org.rust.cargo.runconfig.wasmpack.ui.WasmPackCommandConfigurationEditor
 import org.rust.cargo.runconfig.writePath
 import org.rust.cargo.runconfig.writeString
+import org.rust.cargo.toolchain.WasmPackCommandLine
 import java.nio.file.Path
 
 class WasmPackCommandConfiguration(
@@ -32,7 +34,7 @@ class WasmPackCommandConfiguration(
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
 
     override fun getConfigurationEditor(): SettingsEditor<out RunConfiguration> =
-        WasmPackCommandConfigurationEditor()
+        WasmPackCommandConfigurationEditor(project)
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val wasmPack = environment.project.toolchain?.wasmPack() ?: return null
@@ -55,5 +57,10 @@ class WasmPackCommandConfiguration(
 
     override fun suggestedName(): String? {
         return command.substringBefore(' ').capitalize()
+    }
+
+    fun setFromCmd(cmd: WasmPackCommandLine) {
+        command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
+        workingDirectory = cmd.workingDirectory
     }
 }

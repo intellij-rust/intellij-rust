@@ -137,13 +137,10 @@ fun CargoCommandLine.run(
     presentableName: String = command,
     saveConfiguration: Boolean = true
 ) {
-    val project = cargoProject.project
-    val name = if (project.cargoProjects.allProjects.size > 1) {
-        "$presentableName [${cargoProject.presentableName}]"
-    } else {
-        presentableName
-    }
-    val configuration = createRunConfiguration(project, this, name, saveConfiguration)
+    val name = cargoProject.localConfigurationName(presentableName)
+    val configuration = createRunConfiguration(
+        cargoProject.project, this, name, saveConfiguration
+    )
     val executor = DefaultRunExecutor.getRunExecutorInstance()
     ProgramRunnerUtil.executeConfiguration(configuration, executor)
 }
@@ -164,3 +161,12 @@ private fun createRunConfiguration(
 
 fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
     copy(additionalArguments = listOf(arg) + additionalArguments)
+
+fun CargoProject.localConfigurationName(name: String): String {
+    val project = this.project
+
+    return when {
+        project.cargoProjects.allProjects.size > 1 -> "$name [${this.presentableName}]"
+        else -> name
+    }
+}

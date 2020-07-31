@@ -9,8 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.util.CargoCommandLineEditor
+import org.rust.cargo.util.CargoCommandCompletionProvider
+import org.rust.cargo.util.RsCommandLineEditor
 import org.rust.ide.ui.layout
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.ComboBoxDelegate
@@ -33,12 +35,14 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
     private val compileAllTargetsCheckBox = JBCheckBox()
     private var compileAllTargets: Boolean by CheckboxDelegate(compileAllTargetsCheckBox)
 
-    private lateinit var externalLinterArguments: CargoCommandLineEditor
+    private lateinit var externalLinterArguments: RsCommandLineEditor
 
     override fun getDisplayName(): String = "Cargo"
 
     override fun createComponent(): JComponent = layout {
-        externalLinterArguments = CargoCommandLineEditor(project, "check ") { null }
+        externalLinterArguments = RsCommandLineEditor(
+            project, CargoCommandCompletionProvider(project.cargoProjects, "check ") { null }
+        )
 
         row("Watch Cargo.toml:", autoUpdateEnabledCheckbox, """
             Update project automatically if `Cargo.toml` changes.
