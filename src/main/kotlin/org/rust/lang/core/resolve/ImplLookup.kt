@@ -731,7 +731,7 @@ class ImplLookup(
                     .mapTypeValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) }
                     .mapConstValues { (_, v) -> ctx.resolveTypeVarsIfPossible(v) } +
                     mapOf(TyTypeParameter.self() to ref.selfTy).toTypeSubst()
-                val obligations = ctx.instantiateBounds(candidate.impl.bounds, candidateSubst, newRecDepth).toList()
+                val obligations = ctx.instantiateBounds(candidate.impl.predicates, candidateSubst, newRecDepth).toList()
                 Selection(candidate.impl, obligations, candidateSubst)
             }
             is SelectionCandidate.DerivedTrait -> {

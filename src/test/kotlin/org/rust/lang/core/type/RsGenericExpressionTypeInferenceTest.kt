@@ -1838,4 +1838,17 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ X
     """)
+
+    fun `test infer type parameter from associated type binding`() = testExpr("""
+        trait Foo { type Item; }
+        fn foo<A, B>(a: A) -> B where A: Foo<Item = B> { unimplemented!() }
+
+        struct S;
+        impl Foo for S { type Item = i32; }
+
+        fn main() {
+            let a = foo(S);
+            a;
+        } //^ i32
+    """)
 }

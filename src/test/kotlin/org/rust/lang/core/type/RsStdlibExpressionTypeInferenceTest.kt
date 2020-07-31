@@ -550,6 +550,16 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    fun `test iterator cloned`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn main() {
+            let a = vec![1, 2].iter()
+                .cloned()
+                .next();
+            a;
+        } //^ Option<i32>
+    """)
+
     fun `test vec push`() = stubOnlyTypeInfer("""
     //- main.rs
         use std::vec::Vec;
