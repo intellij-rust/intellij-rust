@@ -139,7 +139,7 @@ class Cargo(private val cargoExecutable: Path) {
 
         val workspaceRoot = project.workspace_root
 
-        if (workspaceRoot == null || projectDirectory.toString() == workspaceRoot) {
+        if (projectDirectory.toString() == workspaceRoot) {
             return project
         }
 
