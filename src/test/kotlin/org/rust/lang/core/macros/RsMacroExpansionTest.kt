@@ -987,6 +987,54 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """ to MacroExpansionMarks.docsLowering)
 
+    fun `test comment in macro definition`() = doTest("""
+        macro_rules! foobar {
+            ($ name:ident) => {
+                // Say hello
+                pub fn $ name() {
+                    /* Yet another comment */
+                    println!("Hello!")
+                }
+            }
+        }
+
+        foobar!(foo);
+    """, """
+        pub fn foo() {
+            println!("Hello!")
+        }
+    """)
+
+    fun `test doc comment in macro definition`() = doTest("""
+        macro_rules! foobar {
+            ($ name:ident) => {
+                /// outer doc comment
+                pub mod $ name {
+                    //! inner doc comment
+                    /*!  - Inner block doc */
+
+                    /** outer block comment */
+                    pub fn foobar() {
+                        println!("Hello!")
+                    }
+                }
+            }
+        }
+
+        foobar!(foo);
+    """, """
+        /// outer doc comment
+        pub mod foo {
+            //! inner doc comment
+            /*!  - Inner block doc */
+
+            /** outer block comment */
+            pub fn foobar() {
+                println!("Hello!")
+            }
+        }
+    """)
+
     fun `test literal expr is not wrapped into parens`() = doTest("""
         macro_rules! foo {
             ($ e:expr) => {

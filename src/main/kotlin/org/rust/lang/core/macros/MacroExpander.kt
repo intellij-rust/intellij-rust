@@ -217,7 +217,7 @@ class MacroExpander(val project: Project) {
     ): Boolean {
         root.forEachChild { child ->
             when (child.elementType) {
-                in RS_COMMENTS -> Unit
+                in RS_REGULAR_COMMENTS -> Unit
                 MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS ->
                     if (!substituteMacro(sb, ranges, child, subst, nesting)) return false
                 MACRO_REFERENCE -> {
@@ -311,7 +311,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 7
+        const val EXPANDER_VERSION = 8
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
