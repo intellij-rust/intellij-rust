@@ -16,7 +16,7 @@ open class RsRecursiveVisitor : RsVisitor(), PsiRecursiveVisitor {
         element.acceptChildren(this)
     }
 
-    override fun visitElement(o: RsElement) {
-        visitElement(o as PsiElement)
+    override fun visitElement(element: RsElement) {
+        visitElement(element as PsiElement)
     }
 }
