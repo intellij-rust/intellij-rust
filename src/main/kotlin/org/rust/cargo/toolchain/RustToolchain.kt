@@ -61,12 +61,12 @@ data class RustToolchain(val location: Path) {
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 
-    fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO))
+    fun rawCargo(): Cargo = Cargo(pathToExecutable(CARGO), pathToExecutable(RUSTC))
 
     fun cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
         val hasXargoToml = cargoProjectDirectory?.resolve(XARGO_TOML)?.let { Files.isRegularFile(it) } == true
         val cargoWrapper = if (hasXargoToml && hasExecutable(XARGO)) XARGO else CARGO
-        return Cargo(pathToExecutable(cargoWrapper))
+        return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(RUSTC))
     }
 
     fun rustup(cargoProjectDirectory: Path): Rustup? =
