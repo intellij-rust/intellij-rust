@@ -11,7 +11,9 @@ import com.intellij.spellchecker.inspections.IdentifierSplitter
 import com.intellij.spellchecker.tokenizer.TokenConsumer
 import com.intellij.spellchecker.tokenizer.Tokenizer
 import org.rust.lang.core.psi.RS_RAW_PREFIX
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
+import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.unescapeIdentifier
 
@@ -32,10 +34,12 @@ object RsNameIdentifierOwnerTokenizer : Tokenizer<RsNameIdentifierOwner>() {
             element
         }
         val text = identifier.text
-        val unescapedText = text.unescapeIdentifier()
-        if (text.startsWith(RS_RAW_PREFIX)) {
-            offset += 2
+        val (unescapedText, offsetShift) = when {
+            identifier.elementType == RsElementTypes.QUOTE_IDENTIFIER -> text.removePrefix("'") to 1
+            text.startsWith(RS_RAW_PREFIX) -> text.unescapeIdentifier() to 2
+            else -> text to 0
         }
+        offset += offsetShift
         consumer.consumeToken(parent, unescapedText, true, offset, TextRange.allOf(unescapedText), IdentifierSplitter.getInstance())
     }
 }

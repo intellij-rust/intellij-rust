@@ -38,12 +38,17 @@ class RsSpellCheckerTest : RsTestBase() {
         fn r#<TYPO>wodrl</TYPO>() {}
     """)
 
+    fun `test lifetimes`() = doTest("""
+        const FOO: & 'static str = "123";
+        fn foo<'<TYPO>wodrl</TYPO>>(x: &'<TYPO>wodrl</TYPO> str) {}
+    """)
+
     fun `test do not highlight word from rust bundled dictionary`() = doTest("""
         pub struct Bar;
         impl<T> Deref for Bar {
             type Target = ();
             fn deref(&self) -> &Self::Target { unimplemented!() }
-        }         
+        }
     """)
 
     private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
