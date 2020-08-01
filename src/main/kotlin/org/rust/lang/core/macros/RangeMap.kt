@@ -37,7 +37,7 @@ data class RangeMap private constructor(private val ranges: List<MappedTextRange
         }
     }
 
-    private fun mapTextRangeFromExpansionToCallBody(toMap: TextRange): List<MappedTextRange> {
+    fun mapTextRangeFromExpansionToCallBody(toMap: TextRange): List<MappedTextRange> {
         return ranges.mapNotNull { it.dstIntersection(toMap) }
     }
 

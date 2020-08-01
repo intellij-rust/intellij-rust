@@ -7,8 +7,22 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.BaseElementAtCaretIntentionAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.impl.PsiFileFactoryImpl
+import com.intellij.testFramework.LightVirtualFile
+import org.rust.lang.RsFileType
+import org.rust.lang.RsLanguage
+import org.rust.lang.core.macros.*
+import org.rust.lang.core.psi.ext.bodyTextRange
+import org.rust.lang.core.psi.ext.expansion
+import org.rust.lang.core.psi.ext.startOffset
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 
@@ -40,17 +54,73 @@ abstract class RsElementBaseIntentionAction<Ctx> : BaseElementAtCaretIntentionAc
     abstract fun invoke(project: Project, editor: Editor, ctx: Ctx)
 
     final override fun invoke(project: Project, editor: Editor, element: PsiElement) {
-        val ctx = findApplicableContext(project, editor, element) ?: return
+        val expandedElement = element.findExpansionElementOrSelf()
+        val isMacroExpansion = expandedElement != element
+
+        data class Change(val origRange: TextRange, val newText: CharSequence)
+        val changes = mutableListOf<Change>()
+        lateinit var ranges: RangeMap
+
+        val target = if (isMacroExpansion) {
+            val macroCall = expandedElement.findMacroCallExpandedFromNonRecursive()
+            val expansion = macroCall?.expansion!!
+            ranges = generateSequence(macroCall) { macroCall.findMacroCallExpandedFromNonRecursive() }
+                .toList()
+                .asReversed()
+                .map { it.expansion!!.ranges }
+                .reduce { acc, range -> acc.mapAll(range) }
+            val text = expansion.file.text
+            val doc = DocumentImpl(text)
+
+            doc.addDocumentListener(object : DocumentListener {
+                override fun documentChanged(event: DocumentEvent) {
+                    changes += Change(TextRange(event.offset, event.offset + event.oldLength), event.newFragment)
+                }
+            })
+
+            val file = LightVirtualFile("foo.rs", RsFileType, text)
+            FileDocumentManagerImpl.registerDocument(doc, file)
+            val psi = (PsiFileFactory.getInstance(project) as PsiFileFactoryImpl).trySetupPsiForFile(file, RsLanguage, true, false)!!
+            psi.findElementAt(expandedElement.startOffset)!!
+        } else {
+            element
+        }
+        val ctx = findApplicableContext(project, editor, target) ?: return
 
         if (startInWriteAction()) {
             checkWriteAccessAllowed()
         }
 
         invoke(project, editor, ctx)
+
+        // TODO support multiple changes (mutate the range map)
+        // TODO do reformat
+        if (isMacroExpansion) {
+            val start = expandedElement.findMacroCallExpandedFrom()!!.bodyTextRange!!.startOffset
+            val changes = changes.map { change ->
+                val range = if (change.origRange.length == 0) {
+                    ranges.mapOffsetFromExpansionToCallBody(change.origRange.startOffset)
+                        ?.let { TextRange(it, it) }
+                } else {
+                    ranges.mapTextRangeFromExpansionToCallBody(change.origRange)
+                        .singleOrNull()
+                        ?.srcRange
+                }
+                    ?.takeIf { it.length == change.origRange.length }
+                    ?.shiftRight(start)
+                    ?: return
+
+                Change(range, change.newText)
+            }
+
+            for (change in changes) {
+                editor.document.replaceString(change.origRange.startOffset, change.origRange.endOffset, change.newText)
+            }
+        }
     }
 
     final override fun isAvailable(project: Project, editor: Editor, element: PsiElement): Boolean {
         checkReadAccessAllowed()
-        return findApplicableContext(project, editor, element) != null
+        return findApplicableContext(project, editor, element.findExpansionElementOrSelf()) != null
     }
 }
