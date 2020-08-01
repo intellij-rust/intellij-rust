@@ -224,7 +224,7 @@ fun processItemDeclarations(
                     mod,
                     ns,
                     processor = shadowingProcessor,
-                    withPrivateImports = basePath != null && isSuperChain(basePath)
+                    withPrivateImports = basePath != null && withPrivateImports(basePath)
                 )
             }
         }, memoize = false)
