@@ -8,12 +8,12 @@ package org.rust.lang.core.macros
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.BitUtil
 import com.intellij.util.io.DigestUtil
 import org.rust.openapiext.fileId
 import org.rust.stdext.HashCode
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 object VfsInternals {
@@ -21,8 +21,8 @@ object VfsInternals {
     @VisibleForTesting
     val MUST_RELOAD_CONTENT: Int = 0x08
 
-    /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.CONTENT_HASH_DIGEST] */
-    private val CONTENT_HASH_DIGEST: MessageDigest = DigestUtil.sha1()
+    /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.getContentHashDigest] */
+    private fun getContentHashDigest(): MessageDigest = DigestUtil.sha1()
 
     @VisibleForTesting
     fun isMarkedForContentReload(file: VirtualFile) =
@@ -41,8 +41,14 @@ object VfsInternals {
     fun getContentHashIfStored(file: VirtualFile): HashCode? =
         file.getContentHashIfStored()?.let { HashCode.fromByteArray(it) }
 
-    fun calculateContentHash(fileContent: ByteArray): HashCode =
-        HashCode.fromByteArray(DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, fileContent))
+    /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash] */
+    fun calculateContentHash(fileContent: ByteArray): HashCode {
+        val digest = getContentHashDigest()
+        digest.update(fileContent.size.toString().toByteArray(StandardCharsets.UTF_8))
+        digest.update("\u0000".toByteArray(StandardCharsets.UTF_8))
+        digest.update(fileContent)
+        return HashCode.fromByteArray(digest.digest())
+    }
 
     fun getUpToDateContentHash(file: VirtualFile): ContentHashResult {
         try {
