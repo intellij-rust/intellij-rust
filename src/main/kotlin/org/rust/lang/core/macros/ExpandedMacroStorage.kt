@@ -10,8 +10,10 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
@@ -22,7 +24,6 @@ import com.intellij.psi.PsiAnchor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.StubbedSpine
-import com.intellij.util.indexing.FileBasedIndexScanRunnableCollector
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.RsFileType
@@ -494,13 +495,20 @@ class SourceFile(
         return extract(calls)
     }
 
+    private fun shouldIndexFile(project: Project, file: VirtualFile): Boolean {
+        val index = ProjectFileIndex.getInstance(project)
+        if (!(index.isInContent(file) || index.isInLibrary(file))) {
+            return false
+        }
+        return !FileTypeManager.getInstance().isFileIgnored(file)
+    }
+
     private fun extract(calls: List<RsMacroCall>?): List<Pipeline.Stage1ResolveAndExpand>? {
         checkReadAccessAllowed() // Needed to access PSI
         checkIsSmartMode(project)
 
         val isExpansionFile = MacroExpansionManager.isExpansionFile(file)
-        val isIndexedFile = file.isValid && (
-            FileBasedIndexScanRunnableCollector.getInstance(project).shouldCollect(file) || isExpansionFile)
+        val isIndexedFile = file.isValid && (isExpansionFile || shouldIndexFile(project, file))
 
         val stages1 = if (!isIndexedFile) {
             // The file is now outside of the project, so we should not access it.
