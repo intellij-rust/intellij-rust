@@ -13,6 +13,16 @@ macro_rules! vec {
     };
 }
 
+macro_rules! comments {
+    () => {
+        /// doc comment
+        mod foo() {
+            /** doc comment 2 */
+            fn bar() {}
+        }
+    };
+}
+
 macro_rules! default {
     ($ty: ty) => { /* ANYTHING */ };
 }

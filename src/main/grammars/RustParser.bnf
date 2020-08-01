@@ -1346,8 +1346,9 @@ MacroBindingGroupSeparator ::= <<macroBindingGroupSeparatorToken>>
 
 MacroExpansion ::= <<any_braces MacroExpansionContents>>
 
-MacroExpansionContents ::=
-  (MacroExpansion | MacroReference | MacroExpansionReferenceGroup | <<unpairedToken>>)*
+MacroExpansionContents ::= (MacroExpansion | MacroReference | MacroExpansionReferenceGroup | <<unpairedToken>>)* {
+  hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
+}
 
 MacroReference ::= '$' MetaVarIdentifier {
   implements = [ "org.rust.lang.core.psi.ext.RsMandatoryReferenceElement" ]
