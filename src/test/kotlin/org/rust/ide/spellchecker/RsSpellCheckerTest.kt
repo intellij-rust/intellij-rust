@@ -7,9 +7,10 @@ package org.rust.ide.spellchecker
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection
 import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
+import org.rust.ide.inspections.RsInspectionsTestBase
 
-class RsSpellCheckerTest : RsTestBase() {
+class RsSpellCheckerTest : RsInspectionsTestBase(SpellCheckingInspection::class) {
+
     fun `test comments`() = doTest("""// Hello, <TYPO descr="Typo: In word 'Wodrl'">Wodrl</TYPO>!""")
 
     fun `test string literals`() = doTest("""
@@ -52,12 +53,8 @@ class RsSpellCheckerTest : RsTestBase() {
     """)
 
     private fun doTest(@Language("Rust") text: String, processComments: Boolean = true, processLiterals: Boolean = true) {
-        val inspection = SpellCheckingInspection()
-        inspection.processLiterals = processLiterals
-        inspection.processComments = processComments
-
-        myFixture.configureByText("main.rs", text)
-        myFixture.enableInspections(inspection)
-        myFixture.testHighlighting(false, false, true, "main.rs")
+        (inspection as SpellCheckingInspection).processLiterals = processLiterals
+        (inspection as SpellCheckingInspection).processComments = processComments
+        checkByText(text, checkWarn = false, checkWeakWarn = true, checkInfo = false)
     }
 }
