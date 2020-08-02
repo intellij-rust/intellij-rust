@@ -145,6 +145,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         processResolveVariants(
             lookup,
             receiverTy,
+            element,
             filterCompletionVariantsByVisibility(
                 filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy),
                 receiver.containingMod

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 
-interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement {
+interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement, RsVisible {
     val isAbstract: Boolean
 }
 

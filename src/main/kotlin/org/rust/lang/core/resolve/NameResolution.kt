@@ -100,10 +100,11 @@ private val LOG = Logger.getInstance("org.rust.lang.core.resolve.NameResolution"
 fun processDotExprResolveVariants(
     lookup: ImplLookup,
     receiverType: Ty,
+    context: RsElement,
     processor: (DotExprResolveVariant) -> Boolean
 ): Boolean {
     if (processFieldExprResolveVariants(lookup, receiverType, processor)) return true
-    if (processMethodDeclarationsWithDeref(lookup, receiverType, processor)) return true
+    if (processMethodDeclarationsWithDeref(lookup, receiverType, context, processor)) return true
 
     return false
 }
@@ -144,8 +145,13 @@ fun processStructPatternFieldResolveVariants(
     return processFieldDeclarations(resolvedStruct, processor)
 }
 
-fun processMethodCallExprResolveVariants(lookup: ImplLookup, receiverType: Ty, processor: RsMethodResolveProcessor): Boolean =
-    processMethodDeclarationsWithDeref(lookup, receiverType, processor)
+fun processMethodCallExprResolveVariants(
+    lookup: ImplLookup,
+    receiverType: Ty,
+    context: RsElement,
+    processor: RsMethodResolveProcessor
+): Boolean =
+    processMethodDeclarationsWithDeref(lookup, receiverType, context, processor)
 
 /**
  * Looks-up file corresponding to particular module designated by `mod-declaration-item`:
@@ -582,7 +588,7 @@ private fun processTypeQualifiedPathResolveVariants(
     } else {
         emptySubstitution
     }
-    if (processAssociatedItemsWithSelfSubst(lookup, baseTy, ns, selfSubst, shadowingProcessor)) return true
+    if (processAssociatedItemsWithSelfSubst(lookup, path, baseTy, ns, selfSubst, shadowingProcessor)) return true
     return false
 }
 
@@ -1177,7 +1183,12 @@ private fun processFieldDeclarations(struct: RsFieldsOwner, processor: RsResolve
         processor(name, field)
     }
 
-private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty, processor: RsMethodResolveProcessor): Boolean {
+private fun processMethodDeclarationsWithDeref(
+    lookup: ImplLookup,
+    receiver: Ty,
+    context: RsElement,
+    processor: RsMethodResolveProcessor
+): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
         val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, _, source) ->
             // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
@@ -1186,7 +1197,7 @@ private fun processMethodDeclarationsWithDeref(lookup: ImplLookup, receiver: Ty,
             element is RsFunction && element.hasSelfParameters &&
                 processor(MethodResolveVariant(name, element, ty, i, source))
         }
-        processAssociatedItems(lookup, ty, VALUES, methodProcessor)
+        processAssociatedItems(lookup, ty, VALUES, context, methodProcessor)
     }
 }
 
@@ -1194,6 +1205,7 @@ private fun processAssociatedItems(
     lookup: ImplLookup,
     type: Ty,
     ns: Set<Namespace>,
+    context: RsElement,
     processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
     val nsFilter: (RsAbstractable) -> Boolean = when {
@@ -1210,7 +1222,8 @@ private fun processAssociatedItems(
     }
 
     val traitBounds = (type as? TyTypeParameter)?.let { lookup.getEnvBoundTransitivelyFor(it).toList() }
-    val visitedInherent = mutableSetOf<String>()
+    val visitedInherent = hashMapOf<String, RsAbstractable>()
+    val contextMod = lazy(LazyThreadSafetyMode.NONE) { context.containingMod }
 
     for (traitOrImpl in lookup.findImplsAndTraits(type)) {
         val isInherent = traitOrImpl.isInherent
@@ -1222,8 +1235,8 @@ private fun processAssociatedItems(
             // In Rust, inherent impl members (`impl Foo {}`) wins over trait impl members (`impl T for Foo {}`).
             // Note that `findImplsAndTraits` returns ordered sequence: inherent impls are placed to the head
             if (isInherent) {
-                visitedInherent.add(name)
-            } else if (name in visitedInherent) {
+                visitedInherent[name] = member
+            } else if (visitedInherent[name]?.isVisibleFrom(contextMod.value) == true) {
                 continue
             }
 
@@ -1245,12 +1258,13 @@ private fun processAssociatedItems(
 
 private fun processAssociatedItemsWithSelfSubst(
     lookup: ImplLookup,
+    path: RsPath,
     type: Ty,
     ns: Set<Namespace>,
     selfSubst: Substitution,
     processor: (AssocItemScopeEntry) -> Boolean
 ): Boolean {
-    return processAssociatedItems(lookup, type, ns) {
+    return processAssociatedItems(lookup, type, ns, path) {
         processor(it.copy(subst = it.subst + selfSubst))
     }
 }

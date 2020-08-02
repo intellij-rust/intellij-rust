@@ -51,7 +51,7 @@ fun resolveMethodCallReferenceWithReceiverType(
     methodCall: RsMethodCall
 ): List<MethodResolveVariant> {
     return collectResolveVariantsAsScopeEntries(methodCall.referenceName) {
-        processMethodCallExprResolveVariants(lookup, receiverType, it)
+        processMethodCallExprResolveVariants(lookup, receiverType, methodCall, it)
     }
 }
 
