@@ -48,7 +48,7 @@ data class RustToolchain(val location: Path) {
     fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
         val sysroot = getSysroot(projectDirectory) ?: return null
         val fs = LocalFileSystem.getInstance()
-        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust/src"))
+        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust"))
     }
 
     fun getCfgOptions(projectDirectory: Path): List<String>? {

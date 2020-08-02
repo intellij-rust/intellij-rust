@@ -27,10 +27,9 @@ enum class StdLibType {
     DEPENDENCY
 }
 
-data class StdLibInfo (
+data class StdLibInfo(
     val name: String,
     val type: StdLibType,
-    val srcDir: String = "lib$name",
     val dependencies: List<String> = emptyList()
 )
 
@@ -46,7 +45,7 @@ object AutoInjectedCrates {
         StdLibInfo("proc_macro", type = StdLibType.ROOT, dependencies = listOf(STD, "syntax")),
         StdLibInfo("test", type = StdLibType.ROOT, dependencies = listOf(STD, CORE, "libc", "getopts", "term")),
         // Feature gated
-        StdLibInfo("libc", StdLibType.FEATURE_GATED, srcDir = "liblibc/src"),
+        StdLibInfo("libc", StdLibType.FEATURE_GATED),
         StdLibInfo("panic_unwind", type = StdLibType.FEATURE_GATED, dependencies = listOf(CORE, "libc", "alloc",
             "unwind", "compiler_builtins")),
         StdLibInfo("compiler_builtins", StdLibType.FEATURE_GATED, dependencies = listOf(CORE)),
@@ -56,7 +55,7 @@ object AutoInjectedCrates {
         StdLibInfo("term", StdLibType.FEATURE_GATED, dependencies = listOf(STD, CORE)),
         StdLibInfo("getopts", StdLibType.FEATURE_GATED, dependencies = listOf(STD, CORE)),
         // Dependencies
-        StdLibInfo("build_helper", StdLibType.DEPENDENCY, srcDir = "build_helper"),
+        StdLibInfo("build_helper", StdLibType.DEPENDENCY),
         StdLibInfo("syntax", StdLibType.DEPENDENCY, dependencies = listOf(STD, CORE))
     )
 }
