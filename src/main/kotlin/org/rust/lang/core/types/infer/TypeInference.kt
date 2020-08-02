@@ -766,14 +766,14 @@ class RsInferenceContext(
         varUnificationTable.findRoot(ty) != ty || varUnificationTable.findValue(ty) != null
 
     fun instantiateBounds(
-        bounds: List<TraitRef>,
+        bounds: List<Predicate>,
         subst: Substitution = emptySubstitution,
         recursionDepth: Int = 0
     ): Sequence<Obligation> {
         return bounds.asSequence()
             .map { it.substitute(subst) }
             .map { normalizeAssociatedTypesIn(it, recursionDepth) }
-            .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, Predicate.Trait(it.value)) }
+            .flatMap { it.obligations.asSequence() + Obligation(recursionDepth, it.value) }
     }
 
     fun instantiateBounds(
@@ -791,7 +791,7 @@ class RsInferenceContext(
                 .associateWith { constVarForParam(it) }
             subst + Substitution(typeSubst = typeSubst, constSubst = constSubst)
         }
-        instantiateBounds(element.bounds, map).forEach(fulfill::registerPredicateObligation)
+        instantiateBounds(element.predicates, map).forEach(fulfill::registerPredicateObligation)
         return map
     }
 
@@ -815,7 +815,7 @@ class RsInferenceContext(
             constSubst = impl.constGenerics.associateWith { constVarForParam(it) }
         )
         return probe {
-            instantiateBounds(impl.bounds, subst).forEach(ff::registerPredicateObligation)
+            instantiateBounds(impl.predicates, subst).forEach(ff::registerPredicateObligation)
             impl.typeReference?.type?.substitute(subst)?.let { combineTypes(selfTy, it) }
             ff.selectUntilError()
         }
@@ -887,46 +887,57 @@ val RsGenericDeclaration.constGenerics: List<CtConstParameter>
     get() = constParameters.map { CtConstParameter(it) }
 
 val RsGenericDeclaration.bounds: List<TraitRef>
+    get() = predicates.mapNotNull { (it as? Predicate.Trait)?.trait }
+
+val RsGenericDeclaration.predicates: List<Predicate>
     get() = CachedValuesManager.getCachedValue(this) {
         CachedValueProvider.Result.create(
-            doGetBounds(),
+            doGetPredicates(),
             rustStructureOrAnyPsiModificationTracker
         )
     }
 
-private fun RsGenericDeclaration.doGetBounds(): List<TraitRef> {
+private fun RsGenericDeclaration.doGetPredicates(): List<Predicate> {
     val whereBounds = whereClause?.wherePredList.orEmpty().asSequence()
         .flatMap {
-            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<TraitRef>()
-            it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
+            val selfTy = it.typeReference?.type ?: return@flatMap emptySequence<Predicate>()
+            it.typeParamBounds?.polyboundList.toPredicates(selfTy)
         }
     val bounds = typeParameters.asSequence().flatMap {
         val selfTy = TyTypeParameter.named(it)
-        it.typeParamBounds?.polyboundList.toTraitRefs(selfTy)
+        it.typeParamBounds?.polyboundList.toPredicates(selfTy)
     }
     val assocTypeBounds = if (this is RsTraitItem) {
-        expandedMembers.types.asSequence().flatMap { it.typeParamBounds?.polyboundList.toTraitRefs(it.declaredType) }
+        expandedMembers.types.asSequence().flatMap { it.typeParamBounds?.polyboundList.toPredicates(it.declaredType) }
     } else {
         emptySequence()
     }
     return (bounds + whereBounds + assocTypeBounds).toList()
 }
 
-private fun List<RsPolybound>?.toTraitRefs(selfTy: Ty): Sequence<TraitRef> = orEmpty().asSequence()
+private fun List<RsPolybound>?.toPredicates(selfTy: Ty): Sequence<Predicate> = orEmpty().asSequence()
     .filter { !it.hasQ } // ignore `?Sized`
     .flatMap { bound ->
-        val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<TraitRef>()
-        val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<TraitRef>()
+        val traitRef = bound.bound.traitRef ?: return@flatMap emptySequence<Predicate>()
+        val boundTrait = traitRef.resolveToBoundTrait() ?: return@flatMap emptySequence<Predicate>()
 
-        // T: Iterator<Item: Debug>
-        //             ~~~~~~~~~~~ equivalent to `<T as Iterator>::Item: Debug`
         val assocTypeBounds = traitRef.path.typeArgumentList?.assocTypeBindingList.orEmpty().asSequence()
-            .filter { it.typeReference == null }
             .flatMap nestedFlatMap@{
-                val assoc = it.reference.resolve() as? RsTypeAlias ?: return@nestedFlatMap emptySequence<TraitRef>()
-                it.polyboundList.toTraitRefs(TyProjection.valueOf(selfTy, assoc))
+                val assoc = it.reference.resolve() as? RsTypeAlias
+                    ?: return@nestedFlatMap emptySequence<Predicate>()
+                val projectionTy = TyProjection.valueOf(selfTy, assoc)
+                val typeRef = it.typeReference
+                if (typeRef != null) {
+                    // T: Iterator<Item = Foo>
+                    //             ~~~~~~~~~~ expands to predicate `T::Item = Foo`
+                    sequenceOf(Predicate.Equate(projectionTy, typeRef.type))
+                } else {
+                    // T: Iterator<Item: Debug>
+                    //             ~~~~~~~~~~~ equivalent to `T::Item: Debug`
+                    it.polyboundList.toPredicates(projectionTy)
+                }
             }
-        sequenceOf(TraitRef(selfTy, boundTrait)) + assocTypeBounds
+        sequenceOf(Predicate.Trait(TraitRef(selfTy, boundTrait))) + assocTypeBounds
     }
 
 
