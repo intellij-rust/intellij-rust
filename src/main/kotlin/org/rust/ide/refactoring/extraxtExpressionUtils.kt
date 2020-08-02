@@ -13,9 +13,10 @@ import org.rust.ide.utils.findExpressionAtCaret
 import org.rust.ide.utils.findExpressionInRange
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestors
-import java.util.ArrayList
+import java.util.*
 
 fun findCandidateExpressionsToExtract(editor: Editor, file: RsFile): List<RsExpr> {
     val selection = editor.selectionModel
@@ -40,8 +41,10 @@ fun findCandidateExpressionsToExtract(editor: Editor, file: RsFile): List<RsExpr
  * Finds occurrences in the sub scope of expr, so that all will be replaced if replace all is selected.
  */
 fun findOccurrences(expr: RsExpr): List<RsExpr> {
-    val block = expr.ancestorOrSelf<RsBlock>() ?: return emptyList()
-    return findOccurrences(block, expr)
+    val parent = expr.ancestorOrSelf<RsBlock>()
+        ?: expr.ancestorOrSelf<RsItemElement>() // outside a function, try to find a parent
+        ?: return emptyList()
+    return findOccurrences(parent, expr)
 }
 
 fun findOccurrences(parent: RsElement, expr: RsExpr): List<RsExpr> {

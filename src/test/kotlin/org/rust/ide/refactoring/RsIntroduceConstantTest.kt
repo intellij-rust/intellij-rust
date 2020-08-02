@@ -118,6 +118,35 @@ class RsIntroduceConstantTest : RsTestBase() {
         }
     """)
 
+    fun `test constant at file scope`() = doTest("""
+        const BUFFER: [u8; /*caret*/1000] = [1000; 1000];
+    """, listOf("file"), 0, """
+        const I: usize = 1000;
+        const BUFFER: [u8; I] = [I; I];
+    """, replaceAll = true)
+
+    fun `test type alias at file scope`() = doTest("""
+        type ARRAY = [u8; /*caret*/1000];
+    """, listOf("file"), 0, """
+        const I: usize = 1000;
+
+        type ARRAY = [u8; I];
+    """)
+
+    fun `test type inside a struct`() = doTest("""
+        struct S {
+            a: [u8; /*caret*/1000],
+            b: [u8; 1000]
+        }
+    """, listOf("file"), 0, """
+        const I: usize = 1000;
+
+        struct S {
+            a: [u8; I],
+            b: [u8; I]
+        }
+    """, replaceAll = true)
+
     private fun doTest(
         @Language("Rust") before: String,
         candidate: List<String>,
