@@ -770,6 +770,26 @@ class RsInlineFunctionTest : RsTestBase() {
 
         """)
 
+    fun `test inline function with never return type`() = doTest("""
+            fn main() {
+                let a = foo();
+                println!(a);
+            }
+            fn /*caret*/foo() -> i32 {
+                if (false) {
+                    panic!()
+                }
+                return 1;
+            }""", """
+            fn main() {
+                if (false) {
+                    panic!()
+                }
+                let a = 1;
+                println!(a);
+            }
+            """)
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String) {
         checkByText(code, excepted) {
