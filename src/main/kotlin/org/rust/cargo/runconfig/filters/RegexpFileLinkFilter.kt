@@ -43,8 +43,7 @@ open class RegexpFileLinkFilter(
 
     // Line is a single sine, with line separator included
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
-        val match = linePattern.matchEntire(line)
-            ?: return null
+        val match = matchLine(line) ?: return null
         val fileGroup = match.groups[1]!!
         val lineNumber = match.groups[2]?.let { zeroBasedNumber(it.value) } ?: 0
         val columnNumber = match.groups[3]?.let { zeroBasedNumber(it.value) } ?: 0
@@ -56,6 +55,8 @@ open class RegexpFileLinkFilter(
             createOpenFileHyperlink(fileGroup.value, lineNumber, columnNumber)
         )
     }
+
+    fun matchLine(line: String): MatchResult? = linePattern.matchEntire(line)
 
     private fun zeroBasedNumber(number: String): Int {
         return try {
