@@ -811,6 +811,10 @@
             <className>org.rust.ide.intentions.AddImportIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.SubstituteAssociatedTypeIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
