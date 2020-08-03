@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
+    // TODO: fix comment indents
     fun `test test error_chain`() = doTest("""
         macro_rules! impl_error_chain_kind {
             (   $ (#[$ meta:meta])*
@@ -824,9 +825,20 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             }
         }
     """, """
+        /// The Error type.
+                        ///
+                        /// This tuple struct is made of two elements:
+                        ///
+                        /// - an `ErrorKind` which is used to determine the type of the error.
+                        /// - An internal `State`, not meant for direct use outside of `error_chain`
+                        ///   internals, containing:
+                        ///   - a backtrace, generated when the error is created.
+                        ///   - an error chain, used for the implementation of `Error::cause()`.
         #[derive(Debug)]
         pub struct Error(
+            /// The kind of the error.
             pub ErrorKind,
+            /// Contains the error chain and the backtrace.
             #[doc(hidden)]
             pub IntellijRustDollarCrate::State,
         );
@@ -885,6 +897,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         #[allow(dead_code)]
         impl Error {
+            /// Constructs an error from a kind, and generates a backtrace.
             pub fn from_kind(kind: ErrorKind) -> Error {
                 Error(
                     kind,
@@ -892,7 +905,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 )
             }
 
-
+            /// Constructs a chained error from another error and a kind, and generates a backtrace.
             pub fn with_chain<E, K>(error: E, kind: K)
                                     -> Error
                 where E: ::std::error::Error + Send + 'static,
@@ -901,7 +914,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 Error::with_boxed_chain(Box::new(error), kind)
             }
 
-
+            /// Construct a chained error from another boxed error and a kind, and generates a backtrace
             pub fn with_boxed_chain<K>(error: Box<::std::error::Error + Send>, kind: K)
                                        -> Error
                 where K: Into<ErrorKind>
@@ -912,22 +925,22 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 )
             }
 
-
+            /// Returns the kind of the error.
             pub fn kind(&self) -> &ErrorKind {
                 &self.0
             }
 
-
+            /// Iterates over the error chain.
             pub fn iter(&self) -> IntellijRustDollarCrate::Iter {
                 IntellijRustDollarCrate::ChainedError::iter(self)
             }
 
-
+            /// Returns the backtrace associated with this error.
             pub fn backtrace(&self) -> Option<&IntellijRustDollarCrate::Backtrace> {
                 self.1.backtrace()
             }
 
-
+            /// Extends the error chain with a new entry.
             pub fn chain_err<F, EK>(self, error: F) -> Error
                 where F: FnOnce() -> EK, EK: Into<ErrorKind> {
                 Error::with_chain(self, Self::from_kind(error().into()))
@@ -1008,8 +1021,10 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 &self.0
             }
         }
+        #[doc = r###"The kind of an error."###]
         #[derive(Debug)]
         pub enum ErrorKind {
+            #[doc = r###"A convenient variant for String."###]
             Msg(String),
             #[cfg(unix)]
             Another(other_error::ErrorKind),
@@ -1028,6 +1043,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                    -> ::std::fmt::Result
             {
                 match *self {
+                    #[doc = r###"A convenient variant for String."###]
                     ErrorKind::Msg(ref s) => {
                         let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", s) };
 
@@ -1067,8 +1083,10 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         #[allow(unknown_lints, unused, renamed_and_removed_lints, unused_doc_comment, unused_doc_comments)]
         impl ErrorKind {
+            /// A string describing the error kind.
             pub fn description(&self) -> &str {
                 match *self {
+                    #[doc = r###"A convenient variant for String."###]
                     ErrorKind::Msg(ref s) => {
                         (&s)
                     }
@@ -1115,7 +1133,12 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 e.0
             }
         }
+         /// Additional methods for `Result`, for easy interaction with this crate.
         pub trait ResultExt<T> {
+            /// If the `Result` is an `Err` then `chain_err` evaluates the closure,
+                            /// which returns *some type that can be converted to `ErrorKind`*, boxes
+                            /// the original error to store as the cause, then returns a new error
+                            /// containing the original error.
             fn chain_err<F, EK>(self, callback: F) -> ::std::result::Result<T, Error>
                 where F: FnOnce() -> EK,
                       EK: Into<ErrorKind>;
@@ -1139,6 +1162,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 })
             }
         }
+         /// Convenient wrapper around `std::Result`.
         #[allow(unused)]
         pub type Result<T> = ::std::result::Result<T, Error>;
     """)

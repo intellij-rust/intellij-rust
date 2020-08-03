@@ -217,7 +217,7 @@ class MacroExpander(val project: Project) {
     ): Boolean {
         root.forEachChild { child ->
             when (child.elementType) {
-                in RS_COMMENTS -> Unit
+                in RS_REGULAR_COMMENTS -> Unit
                 MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS ->
                     if (!substituteMacro(sb, ranges, child, subst, nesting)) return false
                 MACRO_REFERENCE -> {

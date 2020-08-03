@@ -8,6 +8,7 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
@@ -1053,6 +1054,79 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         """.trimIndent(), RegexOption.MULTILINE)
         assertTrue(actual.matches(regex))
     }
+
+    @ExpandMacros
+    fun `test documentation provided via macro definition 1`() = doTest("""
+        macro_rules! foobar {
+            ($ name:ident) => {
+                /// Say hello!
+                pub fn $ name() {
+                    println!("Hello!")
+                }
+            }
+        }
+
+        foobar!(foo);
+
+        fn main() {
+            foo();
+            //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        pub fn <b>foo</b>()</pre></div>
+        <div class='content'><p>Say hello!</p></div>
+    """)
+
+    @ExpandMacros
+    fun `test documentation provided via macro definition 2`() = doTest("""
+        pub struct Bar {
+            pub bar: i32
+        }
+
+        macro_rules! foobar {
+            ($ Name:ident) => {
+                impl $ Name {
+                    /// Say hello
+                    pub fn hello(&self) {
+                        println!("hello: {}", self.bar)
+                    }
+                }
+            }
+        }
+
+        foobar!(Bar);
+
+        pub fn say_hello() {
+            let foo = Bar { bar: 1 };
+            foo.hello();
+               //^
+        }
+    """, """
+        <div class='definition'><pre>test_package<br>impl <a href="psi_element://Bar">Bar</a>
+        pub fn <b>hello</b>(&amp; self)</pre></div>
+        <div class='content'><p>Say hello</p></div>
+    """)
+
+    @ExpandMacros
+    fun `test documentation provided via macro call`() = doTest("""
+        macro_rules! foo {
+            ($ i:item) => { $ i }
+        }
+        foo! {
+            /// Some docs
+            fn foo() {}
+        }
+        fn main() {
+            foo();
+            //^
+        }
+    """, """
+        <div class='definition'><pre>test_package
+        fn <b>foo</b>()</pre></div>
+        <div class='content'><p>Some docs</p></div>
+    """)
+
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
         = doTest(code, expected, RsDocumentationProvider::generateDoc)
