@@ -57,3 +57,12 @@ fun PsiBuilder.Marker.close(result: Boolean): Boolean {
     }
     return result
 }
+
+fun PsiBuilder.clearFrame() {
+    val state = GeneratedParserUtilBase.ErrorState.get(this)
+    val currentFrame = state.currentFrame
+    if (currentFrame != null) {
+        currentFrame.errorReportedAt = -1
+        currentFrame.lastVariantAt = -1
+    }
+}

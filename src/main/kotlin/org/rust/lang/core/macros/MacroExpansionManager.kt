@@ -33,7 +33,10 @@ import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.IndexableFileSet
-import com.intellij.util.io.*
+import com.intellij.util.io.DataOutputStream
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
+import com.intellij.util.io.exists
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -89,7 +92,10 @@ interface MacroExpansionManager {
 
         @JvmStatic
         fun invalidateCaches() {
-            getCorruptionMarkerFile().createFile()
+            getCorruptionMarkerFile().apply {
+                parent?.createDirectories()
+                Files.createFile(this)
+            }
         }
     }
 }

@@ -10,6 +10,7 @@ import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil
+import org.rust.lang.core.parser.clearFrame
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RS_LITERALS
 import org.rust.lang.core.psi.RsElementTypes
@@ -33,6 +34,7 @@ enum class FragmentKind(private val kind: String) {
     Lifetime("lifetime");
 
     fun parse(builder: PsiBuilder): Boolean {
+        builder.clearFrame()
         return when (this) {
             Ident -> parseIdentifier(builder)
             Path -> RustParser.TypePathGenericArgsNoTypeQual(builder, 0)
