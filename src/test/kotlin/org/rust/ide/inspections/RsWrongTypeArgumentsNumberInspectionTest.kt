@@ -209,4 +209,186 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         trait Trait<A> {}
         fn foo(_: impl <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Trait<></error>) {}
     """)
+
+    fun `test add arguments missing arguments`() = checkFixByText("Add missing type arguments", """
+        struct S<T> { t: T }
+
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">S/*caret*/</error>;
+        }
+    """, """
+        struct S<T> { t: T }
+
+        fn main() {
+            let x: S<T>;
+        }
+    """)
+
+    fun `test add arguments empty arguments`() = checkFixByText("Add missing type arguments", """
+        struct S<T> { t: T }
+
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">S</*caret*/></error>;
+        }
+    """, """
+        struct S<T> { t: T }
+
+        fn main() {
+            let x: S<T>;
+        }
+    """)
+
+    fun `test add arguments copy existing arguments`() = checkFixByText("Add missing type arguments", """
+        struct S<T, R> { t: T, r: R }
+
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32/*caret*/></error>;
+        }
+    """, """
+        struct S<T, R> { t: T, r: R }
+
+        fn main() {
+            let x: S<u32, R>;
+        }
+    """)
+
+    fun `test add arguments copy existing lifetime`() = checkFixByText("Add missing type arguments", """
+        struct S<'a, T> { t: &'a T }
+
+        fn foo<'a>(x: &'a u32) {
+            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">S<'a/*caret*/></error>;
+        }
+    """, """
+        struct S<'a, T> { t: &'a T }
+
+        fn foo<'a>(x: &'a u32) {
+            let x: S<'a, T>;
+        }
+    """)
+
+    fun `test add arguments keep lifetimes`() = checkFixByText("Add missing type arguments", """
+        struct S<'a, T, R> { t: &'a T, r: R }
+
+        fn foo<'a>(x: &'a u32) {
+            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<'a, u32/*caret*/></error>;
+        }
+    """, """
+        struct S<'a, T, R> { t: &'a T, r: R }
+
+        fn foo<'a>(x: &'a u32) {
+            let x: S<'a, u32, R>;
+        }
+    """)
+
+    fun `test add arguments keep associated types`() = checkFixByText("Add missing type arguments", """
+        trait S<A, B> {
+            type Item;
+        }
+
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32, Item=u32/*caret*/></error>;
+        }
+    """, """
+        trait S<A, B> {
+            type Item;
+        }
+
+        fn main() {
+            let x: S<u32, B, Item=u32>;
+        }
+    """)
+
+    fun `test add arguments ignore type parameters with a default`() = checkFixIsUnavailable("Add missing type arguments", """
+        struct S<A, B=u32, C=u32>(A, B, C);
+
+        fn main() {
+            let x: S<u32, u32>;
+        }
+    """)
+
+    fun `test add arguments keep comments and whitespace`() = checkFixByText("Add missing type arguments", """
+        trait Trait<'a, A, B> {
+            type Item;
+            fn foo(&self) -> (&'a u32, A, B);
+        }
+        fn foo<'a>(_: &'a u32) {
+            let x: &<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">Trait< /*'a*/ 'a    /*'a*/, /*A*/   u32 /*A*/,   /*Item*/ Item = u32 /*Item*/  >/*caret*/</error>;
+        }
+    """, """
+        trait Trait<'a, A, B> {
+            type Item;
+            fn foo(&self) -> (&'a u32, A, B);
+        }
+        fn foo<'a>(_: &'a u32) {
+            let x: &Trait< /*'a*/ 'a    /*'a*/, /*A*/   u32 /*A*/, B, /*Item*/ Item = u32 /*Item*/  >;
+        }
+    """)
+
+    fun `test add arguments keep trailing comma`() = checkFixByText("Add missing type arguments", """
+        struct S<T, R>(T, R);
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32,>/*caret*/</error>;
+        }
+    """, """
+        struct S<T, R>(T, R);
+        fn main() {
+            let x: S<u32, R, >;
+        }
+    """)
+
+    fun `test add arguments to function call`() = checkFixByText("Add missing type arguments", """
+        fn foo<S, T>() -> (S, T) { unreachable!() }
+
+        fn main() {
+            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/>()</error>;
+        }
+    """, """
+        fn foo<S, T>() -> (S, T) { unreachable!() }
+
+        fn main() {
+            foo::<u32, T>();
+        }
+    """)
+
+    fun `test add arguments to method call`() = checkFixByText("Add missing type arguments", """
+        struct S;
+        impl S {
+            fn foo<S, T>(&self) -> (S, T) {
+                unreachable!()
+            }
+        }
+
+        fn foo(s: S) {
+            s.<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32>()/*caret*/</error>;
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo<S, T>(&self) -> (S, T) {
+                unreachable!()
+            }
+        }
+
+        fn foo(s: S) {
+            s.foo::<u32, T>();
+        }
+    """)
+
+    fun `test add arguments keep path format`() = checkFixByText("Add missing type arguments", """
+        mod foo {
+            pub struct S<T>(T);
+        }
+
+        fn main() {
+            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">foo::   S/*caret*/</error>;
+        }
+    """, """
+        mod foo {
+            pub struct S<T>(T);
+        }
+
+        fn main() {
+            let x: foo::   S<T>;
+        }
+    """)
 }
