@@ -27,6 +27,7 @@ interface RsQualifiedNamedElement : RsNamedElement {
     val crateRelativePath: String?
 }
 
+/** Always starts with crate root name */
 val RsQualifiedNamedElement.qualifiedName: String?
     get() {
         val inCratePath = crateRelativePath ?: return null
@@ -34,14 +35,20 @@ val RsQualifiedNamedElement.qualifiedName: String?
         return "$cargoTarget$inCratePath"
     }
 
-fun RsQualifiedNamedElement.qualifiedNameRelativeTo(context: RsMod): String? {
+/** Starts with 'crate' instead of crate root name if `context` is in same crate */
+fun RsQualifiedNamedElement.qualifiedNameInCrate(context: RsElement): String? {
     val crateRelativePath = crateRelativePath
     if (context.crateRoot != crateRoot || crateRelativePath == null) {
         return qualifiedName
     }
 
     check(crateRelativePath.isEmpty() || crateRelativePath.startsWith("::"))
-    val absolutePath = "crate$crateRelativePath"
+    return "crate$crateRelativePath"
+}
+
+/** If `this` is `crate::inner1::inner2::foo` and `context` is `crate::inner1`, then returns `inner2::foo` */
+fun RsQualifiedNamedElement.qualifiedNameRelativeTo(context: RsMod): String? {
+    val absolutePath = qualifiedNameInCrate(context) ?: return null
     if (!containingMod.superMods.contains(context)) return absolutePath
     return convertPathToRelativeIfPossible(context, absolutePath)
 }
