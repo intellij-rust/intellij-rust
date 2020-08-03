@@ -34,15 +34,22 @@ abstract class RsLineMarkerProviderTestBase : RsTestBase() {
         text.split('\n')
             .withIndex()
             .filter { it.value.contains(MARKER) }
-            .map { Pair(it.index, it.value.substring(it.value.indexOf(MARKER) + MARKER.length).trim()) }
+            .flatMap { row ->
+                row.value
+                    .substring(row.value.indexOf(MARKER) + MARKER.length)
+                    .trim()
+                    .split(',')
+                    .map { Pair(row.index, it) }
+            }
+            .sortedWith(compareBy({ it.first }, { it.second }))
 
     private fun markersFrom(editor: Editor, project: Project) =
         DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
             .map {
                 Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int),
-                    it.lineMarkerTooltip)
+                    it.lineMarkerTooltip ?: "null")
             }
-            .sortedBy { it.first }
+            .sortedWith(compareBy({ it.first }, { it.second }))
 
     private companion object {
         val MARKER = "// - "

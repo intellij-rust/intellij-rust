@@ -38,9 +38,9 @@ val RsStructOrEnumItemElement.firstKeyword: PsiElement?
     }
 
 fun RsStructOrEnumItemElement.searchForImplementations(): Query<RsImplItem> {
-    return ReferencesSearch.search(this, this.useScope)
+    return ReferencesSearch.search(this, useScope)
         .mapQuery { ref ->
             PsiTreeUtil.getTopmostParentOfType(ref.element, RsTypeReference::class.java)?.parent
         }
-        .filterIsInstanceQuery<RsImplItem>()
+        .filterIsInstanceQuery()
 }

@@ -9,17 +9,16 @@ package org.rust.ide.lineMarkers
  * Tests for Trait member (const, fn, type) Implementation Line Marker
  */
 class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
-
     fun `test impl`() = doTestByText("""
         trait Foo {         // - Has implementations
-            fn foo(&self);
-            fn bar(&self) {
+            fn foo(&self);  // - Has implementations
+            fn bar(&self) { // - Has implementations
                 self.foo();
             }
-            type T1;
-            type T2 = ();
-            const C1: u32;
-            const C2: u32 = 1;
+            type T1;        // - Has implementations
+            type T2 = ();   // - Has implementations
+            const C1: u32;  // - Has implementations
+            const C2: u32 = 1;  // - Has implementations
         }
         struct Bar {} // - Has implementations
         impl Foo for Bar {
@@ -39,15 +38,15 @@ class RsTraitItemImplLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         Foo // - Has implementations
         {
             fn
-            foo
+            foo     // - Has implementations
             (&self);
 
             type
-            T1
+            T1      // - Has implementations
             ;
 
             const
-            C1
+            C1      // - Has implementations
             : u32;
         }
         struct
