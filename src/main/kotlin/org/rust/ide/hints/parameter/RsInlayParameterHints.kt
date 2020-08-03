@@ -12,6 +12,7 @@ import org.rust.ide.utils.CallInfo
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.RsCallExpr
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsLambdaExpr
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.stdext.buildList
@@ -50,6 +51,9 @@ object RsInlayParameterHints {
                     return emptyList()
                 }
                 if (callInfo.methodName == callInfo.parameters.getOrNull(0)?.pattern) {
+                    return emptyList()
+                }
+                if (hints.lastOrNull()?.second is RsLambdaExpr) {
                     return emptyList()
                 }
             }
