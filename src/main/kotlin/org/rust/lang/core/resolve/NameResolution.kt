@@ -373,12 +373,11 @@ private fun processQualifiedPathResolveVariants(
         }
         return false
     }
-    val isSuperChain = isSuperChain(qualifier)
     if (base is RsMod) {
         val s = base.`super`
         // `super` is allowed only after `self` and `super`
         // so we add `super` in completion only when it produces valid path
-        if (s != null && (!isCompletion || isSuperChain) && processor("super", s)) return true
+        if (s != null && (!isCompletion || isSuperChain(qualifier)) && processor("super", s)) return true
 
         val containingMod = path.containingMod
         if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
@@ -402,7 +401,7 @@ private fun processQualifiedPathResolveVariants(
 
     // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
     // avoid this, we exclude `MACROS` from passed namespaces
-    if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = isSuperChain)) {
+    if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = withPrivateImports(qualifier))) {
         return true
     }
 
@@ -1584,10 +1583,17 @@ private fun walkUp(
     return false
 }
 
-fun isSuperChain(path: RsPath): Boolean {
-    val qualifier = path.path
-    val referenceName = path.referenceName
-    return (referenceName == "super" || referenceName == "self" || referenceName == "crate") &&
+fun withPrivateImports(path: RsPath): Boolean {
+    if (path.basePath().kind == PathKind.CRATE) {
+        return true
+    }
+    return isSuperChain(path)
+}
+
+private fun isSuperChain(path: RsPath): Boolean {
+    val qualifier = path.qualifier
+    val pathKind = path.kind
+    return (pathKind == PathKind.SUPER || pathKind == PathKind.SELF) &&
         (qualifier == null || isSuperChain(qualifier))
 }
 
