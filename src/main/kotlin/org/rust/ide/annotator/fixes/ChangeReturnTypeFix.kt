@@ -15,10 +15,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsLambdaExpr
-import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.RsRetExpr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyUnit
@@ -67,7 +64,12 @@ class ChangeReturnTypeFix(element: RsElement, private val actualTy: Ty) : LocalQ
                 is RsLambdaExpr -> owner.valueParameterList
                 else -> return
             }
+
             owner.addAfter(retType, parameters)
+
+            if (owner is RsLambdaExpr && owner.expr !is RsBlockExpr) {
+                owner.expr?.replace(psiFactory.createBlockExpr(owner.expr?.text ?: return))
+            }
         }
 
         importTypeReferencesFromTy(owner, actualTy, useAliases = true)
