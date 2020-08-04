@@ -832,13 +832,11 @@ private class MacroResolver private constructor(private val processor: RsResolve
             return true
         }
 
-        val crateRoot = startElement.contextOrSelf<RsElement>()?.crateRoot as? RsFile
-        if (crateRoot != null) {
-            NameResolutionTestmarks.processSelfCrateExportedMacros.hit()
-            if (processAllScopeEntries(exportedMacrosAsScopeEntries(crateRoot), processor)) return true
-        }
+        if (processRemainedExportedMacros()) return true
 
-        return processRemainedExportedMacros()
+        val crateRoot = startElement.contextOrSelf<RsElement>()?.crateRoot as? RsFile ?: return false
+        NameResolutionTestmarks.processSelfCrateExportedMacros.hit()
+        return processAllScopeEntries(exportedMacrosAsScopeEntries(crateRoot), processor)
     }
 
     /**
