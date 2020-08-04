@@ -33,6 +33,7 @@ class CargoRunAnythingProviderTest : RsTestBase() {
         val commands = listOf(
             "build", "check", "clean", "doc", "run", "test", "bench", "update", "search", "publish", "install"
         ).map { "cargo $it" }
+        assertSameElements(provider.getValues(dataContext, "car"), commands)
         assertSameElements(provider.getValues(dataContext, "cargo"), commands)
         assertSameElements(provider.getValues(dataContext, "cargo "), commands)
         assertSameElements(provider.getValues(dataContext, "cargo ru"), commands)
