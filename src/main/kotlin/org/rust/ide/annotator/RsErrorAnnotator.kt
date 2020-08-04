@@ -651,7 +651,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkImplBothCopyAndDrop(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (attr.metaItem.name != "derive") return
         // TODO: support `#[derive(std::marker::Copy)]`
         val deriveCopy = attr.metaItem.metaItemArgs?.metaItemList?.find { it.name == "Copy" } ?: return
         val selfType = (attr.parent as? RsStructOrEnumItemElement)?.declaredType ?: return
@@ -769,12 +768,22 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkAttr(holder: RsAnnotationHolder, attr: RsAttr) {
-        checkImplBothCopyAndDrop(holder, attr)
+        checkDeriveAttribute(holder, attr)
         checkInlineAttr(holder, attr)
         checkReprAttribute(holder, attr)
 
         if (attr.owner !is RsFunction)
             checkStartAttribute(holder, attr)
+    }
+
+    private fun checkDeriveAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
+        if (!attr.isBuiltinWithName("derive")) return
+
+        if (attr.owner is RsStructOrEnumItemElement) {
+            checkImplBothCopyAndDrop(holder, attr)
+        } else {
+            RsDiagnostic.DeriveAttrUnsupportedItem(attr).addToHolder(holder)
+        }
     }
 
     // E0132: Invalid `start` attribute

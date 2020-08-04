@@ -1249,6 +1249,15 @@ sealed class RsDiagnostic(
         )
     }
 
+    class DeriveAttrUnsupportedItem(element: RsAttr) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "`derive` may only be applied to structs, enums and unions",
+            fixes = listOf(RemoveAttrFix(element as RsAttr))
+        )
+    }
+
     class ReprAttrUnsupportedItem(element: PsiElement,
                                   private val errorText: String
     ) : RsDiagnostic(element) {
