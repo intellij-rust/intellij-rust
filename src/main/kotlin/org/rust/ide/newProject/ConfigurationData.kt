@@ -9,5 +9,5 @@ import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 
 data class ConfigurationData(
     val settings: RustProjectSettingsPanel.Data,
-    val createBinary: Boolean
+    val template: RsProjectTemplate
 )

@@ -28,7 +28,7 @@ class CargoConfigurationWizardStep private constructor(
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep() {
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeCheckbox = projectDescriptor == null)
+    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = projectDescriptor == null)
 
     override fun getComponent(): JComponent = layout {
         newProjectPanel.attachTo(this)
