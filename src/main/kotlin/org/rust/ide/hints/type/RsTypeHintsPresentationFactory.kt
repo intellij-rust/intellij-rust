@@ -11,32 +11,19 @@ import org.rust.ide.presentation.shortPresentableText
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeParameter
-import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.typeParameters
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.*
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Kind
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.*
-import kotlin.LazyThreadSafetyMode.PUBLICATION
+import org.rust.lang.core.types.type
 
 @Suppress("UnstableApiUsage")
 class RsTypeHintsPresentationFactory(
-    context: RsElement?,
     private val factory: PresentationFactory,
     private val showObviousTypes: Boolean
 ) {
-    // The object is usually created on EDT, but we shouldn't call slow implLookupAndKnownItems from EDT, so it's lazy
-    private val lookupAndIteratorTrait: Pair<ImplLookup, BoundElement<RsTraitItem>>? by lazy(PUBLICATION) {
-        val (lookup, items) = context?.implLookupAndKnownItems ?: null to null
-        val iterator = items?.Iterator?.let { BoundElement(it) }
-        if (lookup != null && iterator != null) {
-            lookup to iterator
-        } else {
-            null
-        }
-    }
-
     // BACKCOMPAT: 2019.3
     @Suppress("DEPRECATION")
     fun typeHint(type: Ty): InlayPresentation = factory.roundWithBackground(
@@ -102,8 +89,6 @@ class RsTypeHintsPresentationFactory(
         )
 
     private fun adtTypeHint(type: TyAdt, level: Int): InlayPresentation {
-        tryIteratorHint(type, level)?.let { return it }
-
         val aliasedBy = type.aliasedBy
         val alias = aliasedBy?.element
 
@@ -137,17 +122,6 @@ class RsTypeHintsPresentationFactory(
             return listOf(typeNamePresentation, collapsible).join()
         }
         return typeNamePresentation
-    }
-
-    /** Creates fake `impl Iterator<Item=...>` presentation if [type] implements `Iterator` trait */
-    private fun tryIteratorHint(type: TyAdt, level: Int): InlayPresentation? {
-        val (lookup, iteratorTrait) = lookupAndIteratorTrait ?: return null
-        val assoc = lookup.selectAllProjectionsStrict(TraitRef(type, iteratorTrait))
-        if (assoc != null) {
-            val element = iteratorTrait.copy(assoc = assoc)
-            return anonTypeHint(TyAnon(null, listOf(element)), level - 1)
-        }
-        return null
     }
 
     private fun referenceTypeHint(type: TyReference, level: Int): InlayPresentation = listOf(
