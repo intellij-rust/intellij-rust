@@ -23,23 +23,37 @@ class StandardLibrary private constructor(
         val dependencies: Collection<String>,
         val id: PackageId = "(stdlib) $name"
     )
+
     fun asPartOfCargoProject(): StandardLibrary = StandardLibrary(crates, true)
 
     companion object {
+        private val SRC_ROOTS: List<String> = listOf("library", "src")
+        private val LIB_PATHS: List<String> = listOf("src/lib.rs", "lib.rs")
+
         fun fromPath(path: String): StandardLibrary? =
             LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(it) }
 
         fun fromFile(sources: VirtualFile): StandardLibrary? {
             if (!sources.isDirectory) return null
-            val srcDir = if (sources.name == "src") {
+
+            fun VirtualFile.findFirstFileByRelativePaths(paths: List<String>): VirtualFile? {
+                for (path in paths) {
+                    val file = findFileByRelativePath(path)
+                    if (file != null) return file
+                }
+                return null
+            }
+
+            val srcDir = if (sources.name in SRC_ROOTS) {
                 sources
             } else {
-                sources.findChild("src") ?: sources
+                sources.findFirstFileByRelativePaths(SRC_ROOTS) ?: sources
             }
 
             val stdlib = AutoInjectedCrates.stdlibCrates.mapNotNull { libInfo ->
-                val packageSrcDir = srcDir.findFileByRelativePath(libInfo.srcDir)?.canonicalFile
-                val libFile = packageSrcDir?.findChild("lib.rs")
+                val packageSrcPaths = listOf(libInfo.name, "lib${libInfo.name}")
+                val packageSrcDir = srcDir.findFirstFileByRelativePaths(packageSrcPaths)?.canonicalFile
+                val libFile = packageSrcDir?.findFirstFileByRelativePaths(LIB_PATHS)
                 if (packageSrcDir != null && libFile != null)
                     StdCrate(libInfo.name, libInfo.type, libFile.url, packageSrcDir.url, libInfo.dependencies)
                 else
