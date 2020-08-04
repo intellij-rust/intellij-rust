@@ -3725,4 +3725,20 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             RED, GREEN
         }
     """)
+
+    fun `test E0025 struct field bound multiple times`() = checkErrors("""
+        struct Foo { a: i32, b: i32 }
+
+        fn foo(x: Foo) {
+            let Foo { a, <error descr="Field `a` bound multiple times in the pattern [E0025]">a</error>, b } = x;
+        }
+    """)
+
+    fun `test E0025 renamed struct field bound multiple times`() = checkErrors("""
+        struct Foo { a: i32, b: i32 }
+
+        fn foo(x: Foo) {
+            let Foo { a, <error descr="Field `a` bound multiple times in the pattern [E0025]">a: c</error>, b } = x;
+        }
+    """)
 }
