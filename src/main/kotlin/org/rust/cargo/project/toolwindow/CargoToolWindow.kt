@@ -31,7 +31,7 @@ import org.rust.cargo.runconfig.hasCargoProject
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
-class CargoToolWindowFactory : ToolWindowFactory, Condition<Project>, DumbAware {
+class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
         val toolwindowPanel = CargoToolWindowPanel(project)
@@ -40,7 +40,7 @@ class CargoToolWindowFactory : ToolWindowFactory, Condition<Project>, DumbAware 
         toolWindow.contentManager.addContent(tab)
     }
 
-    override fun value(project: Project): Boolean {
+    override fun isApplicable(project: Project): Boolean {
         if (CargoToolWindow.isRegistered(project)) return false
         val cargoProjects = project.cargoProjects
         return cargoProjects.hasAtLeastOneValidProject || cargoProjects.suggestManifests().any()
@@ -129,12 +129,10 @@ class CargoToolWindow(
         fun initializeToolWindow(project: Project) {
             try {
                 val manager = ToolWindowManager.getInstance(project) as? ToolWindowManagerEx ?: return
-                for (bean in ToolWindowEP.EP_NAME.extensionList) {
-                    if (ID == bean.id) {
-                        // BACKCOMPAT: 2019.3
-                        @Suppress("DEPRECATION")
-                        manager.initToolWindow(bean)
-                    }
+                val bean = ToolWindowEP.EP_NAME.extensionList.find { it.id == ID }
+                if (bean != null) {
+                    @Suppress("DEPRECATION")
+                    manager.initToolWindow(bean)
                 }
             } catch (e: Exception) {
                 LOG.error("Unable to initialize $ID tool window", e)
