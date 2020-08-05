@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.lang.annotations.Language
@@ -75,8 +76,10 @@ abstract class RsCompletionTestBase : RsTestBase() {
     protected fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,
-        @Language("Rust") after: String
-    ) = completionFixture.checkCompletion(lookupString, before, after)
+        @Language("Rust") after: String,
+        completionChar: Char = '\n',
+        testmark: Testmark? = null
+    ) = completionFixture.checkCompletion(lookupString, before, after, completionChar, testmark)
 
     protected fun checkNotContainsCompletion(
         variant: String,

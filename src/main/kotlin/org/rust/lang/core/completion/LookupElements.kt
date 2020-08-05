@@ -13,6 +13,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorModificationUtil
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.icons.RsIcons
@@ -250,6 +251,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     val isMethodCall = context.getElementOfType<RsMethodOrField>() != null
                     if (!context.alreadyHasCallParens) {
                         document.insertString(context.selectionEndOffset, "()")
+                        context.doNotAddOpenParenCompletionChar()
                     }
                     val caretShift = if (element.valueParameters.isEmpty() && (isMethodCall || !element.hasSelfParameters)) 2 else 1
                     EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
@@ -264,7 +266,10 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     // Currently this works only for enum variants (and not for structs). It's because in the case of
                     // struct you may want to append an associated function call after a struct name (e.g. `::new()`)
                     val (text, shift) = when {
-                        element.tupleFields != null -> Pair("()", 1)
+                        element.tupleFields != null -> {
+                            context.doNotAddOpenParenCompletionChar()
+                            Pair("()", 1)
+                        }
                         element.blockFields != null -> Pair(" {}", 2)
                         else -> Pair("", 0)
                     }
@@ -335,6 +340,7 @@ private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Do
     if (element.isFnLikeTrait) {
         if (!context.alreadyHasCallParens) {
             document.insertString(context.selectionEndOffset, "()")
+            context.doNotAddOpenParenCompletionChar()
         }
     } else {
         if (!context.alreadyHasAngleBrackets) {
@@ -343,6 +349,16 @@ private fun addGenericTypeCompletion(element: RsGenericDeclaration, document: Do
     }
 
     EditorModificationUtil.moveCaretRelatively(context.editor, 1)
+}
+
+// When a user types `(` while completion,
+// `com.intellij.codeInsight.completion.DefaultCharFilter` invokes completion with selected item.
+// And if we insert `()` for the item (for example, function), a user get double parentheses
+private fun InsertionContext.doNotAddOpenParenCompletionChar() {
+    if (completionChar == '(') {
+        setAddCompletionChar(false)
+        Testmarks.doNotAddOpenParenCompletionChar.hit()
+    }
 }
 
 inline fun <reified T : PsiElement> InsertionContext.getElementOfType(strict: Boolean = false): T? =
@@ -409,4 +425,8 @@ private fun isCompatibleTypes(lookup: ImplLookup, actualTy: Ty?, expectedTy: Ty?
     }
 
     return lookup.ctx.combineTypesNoVars(actualTy.foldWith(folder), expectedTy.foldWith(folder)).isOk
+}
+
+object Testmarks {
+    val doNotAddOpenParenCompletionChar = Testmark("doNotAddOpenParenCompletionChar")
 }
