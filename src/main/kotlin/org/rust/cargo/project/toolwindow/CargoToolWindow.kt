@@ -13,7 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowEP
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -32,6 +32,8 @@ import javax.swing.JComponent
 import javax.swing.JEditorPane
 
 class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
+    private val lock: Any = Any()
+
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         guessAndSetupRustProject(project)
         val toolwindowPanel = CargoToolWindowPanel(project)
@@ -42,8 +44,22 @@ class CargoToolWindowFactory : ToolWindowFactory, DumbAware {
 
     override fun isApplicable(project: Project): Boolean {
         if (CargoToolWindow.isRegistered(project)) return false
+
         val cargoProjects = project.cargoProjects
-        return cargoProjects.hasAtLeastOneValidProject || cargoProjects.suggestManifests().any()
+        if (!cargoProjects.hasAtLeastOneValidProject
+            && cargoProjects.suggestManifests().none()) return false
+
+        synchronized(lock) {
+            val res = project.getUserData(CARGO_TOOL_WINDOW_APPLICABLE) ?: true
+            if (res) {
+                project.putUserData(CARGO_TOOL_WINDOW_APPLICABLE, false)
+            }
+            return res
+        }
+    }
+
+    companion object {
+        private val CARGO_TOOL_WINDOW_APPLICABLE: Key<Boolean> = Key.create("CARGO_TOOL_WINDOW_APPLICABLE")
     }
 }
 
