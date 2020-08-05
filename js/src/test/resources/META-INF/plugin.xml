@@ -1,0 +1,5 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <id>org.rust.js</id>
+    <xi:include href="/META-INF/rust-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <depends optional="true" config-file="js-only.xml">JavaScript</depends>
+</idea-plugin>
