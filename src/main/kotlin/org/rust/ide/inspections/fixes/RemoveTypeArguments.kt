@@ -5,28 +5,30 @@
 
 package org.rust.ide.inspections.fixes
 
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 
 class RemoveTypeArguments(
+    element: RsElement,
     private val startIndex: Int,
     private val endIndex: Int
-) : LocalQuickFix {
+) : LocalQuickFixOnPsiElement(element) {
 
-    override fun getFamilyName() = "Remove redundant type arguments"
+    override fun getFamilyName(): String = text
+    override fun getText(): String = "Remove redundant type arguments"
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement as? RsElement ?: return
-        when (element) {
+    override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
+        when (startElement) {
             is RsBaseType ->
-                element.path?.typeArgumentList
+                startElement.path?.typeArgumentList
             is RsMethodCall ->
-                element.typeArgumentList
+                startElement.typeArgumentList
             is RsCallExpr ->
-                (element.expr as? RsPathExpr)?.path?.typeArgumentList
+                (startElement.expr as? RsPathExpr)?.path?.typeArgumentList
             else -> null
         }?.removeTypeParameters() ?: return
     }
@@ -34,8 +36,9 @@ class RemoveTypeArguments(
     private fun RsTypeArgumentList.removeTypeParameters() {
         if (lifetimeList.size > 0) return
 
-        if (startIndex == 0) delete()
-        else {
+        if (startIndex == 0) {
+            delete()
+        } else {
             val startElement = typeReferenceList[startIndex - 1].nextSibling
             val endElement = typeReferenceList[endIndex - 1]
 

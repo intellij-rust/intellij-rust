@@ -40,13 +40,13 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
 
         struct Err {
             err1: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Foo1</error>,
-            err2: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">Foo2<u32></error>,
-            err3: <error descr="Wrong number of type arguments: expected at least 2, found 1 [E0107]">Foo2to3<u32></error>,
+            err2: Foo2<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32></error>,
+            err3: Foo2to3<error descr="Wrong number of type arguments: expected at least 2, found 1 [E0107]"><u32></error>,
         }
 
         impl <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Foo1</error> {}
-        fn err(f: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">Foo2<u32></error>) -> <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Foo1</error> {}
-        type Type = <error descr="Wrong number of type arguments: expected at least 2, found 1 [E0107]">Foo2to3<u8></error>;
+        fn err(f: Foo2<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32></error>) -> <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Foo1</error> {}
+        type Type = Foo2to3<error descr="Wrong number of type arguments: expected at least 2, found 1 [E0107]"><u8></error>;
     """)
 
     fun `test too many type arguments struct`() = checkByText("""
@@ -62,14 +62,14 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
 
         struct Err {
-            err1: <error descr="Wrong number of type arguments: expected 0, found 2 [E0107]">Foo0<u32, bool></error>,
-            err2: <error descr="Wrong number of type arguments: expected 1, found 2 [E0107]">Foo1<u8, f64></error>,
-            err3: <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">Foo1to2<u32, f32, bool></error>,
+            err1: Foo0<error descr="Wrong number of type arguments: expected 0, found 2 [E0107]"><u32, bool></error>,
+            err2: Foo1<error descr="Wrong number of type arguments: expected 1, found 2 [E0107]"><u8, f64></error>,
+            err3: Foo1to2<error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]"><u32, f32, bool></error>,
         }
 
-        impl <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">Foo0<u8></error> {}
-        fn err(f: <error descr="Wrong number of type arguments: expected 1, found 2 [E0107]">Foo1<u32, bool></error>) -> <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">Foo1to2<u8, u8, u8></error> {}
-        type Type = <error descr="Wrong number of type arguments: expected 1, found 3 [E0107]">Foo1<u8, bool, f64></error>;
+        impl Foo0<error descr="Wrong number of type arguments: expected 0, found 1 [E0107]"><u8></error> {}
+        fn err(f: Foo1<error descr="Wrong number of type arguments: expected 1, found 2 [E0107]"><u32, bool></error>) -> Foo1to2<error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]"><u8, u8, u8></error> {}
+        type Type = Foo1<error descr="Wrong number of type arguments: expected 1, found 3 [E0107]"><u8, bool, f64></error>;
     """)
 
     fun `test missing arguments in struct`() = checkByText("""
@@ -92,8 +92,8 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
             let u = &[0];
             let v = &[0];
 
-            x.<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">method1::<i32>(u, v)</error>;
-            x.<error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">method1::<i32, i32, i32>(u, v)</error>;
+            x.method1::<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><i32></error>(u, v);
+            x.method1::<error descr="Wrong number of type arguments: expected 2, found 3 [E0107]"><i32, i32, i32></error>(u, v);
             x.method1::<>(u, v);
             x.method1(u, v);
         }
@@ -106,8 +106,8 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
             let u = &[0];
             let v = &[0];
 
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32>(u, v)</error>;
-            <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32>(u, v)</error>;
+            foo::<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><i32></error>(u, v);
+            foo::<error descr="Wrong number of type arguments: expected 2, found 3 [E0107]"><i32, i32, i32></error>(u, v);
             foo::<>(u, v);
             foo(u, v);
         }
@@ -115,7 +115,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
 
     fun `test fix no type arguments struct`() = checkFixByText("Remove redundant type arguments", """
         struct Foo0;
-        impl <error>Foo0/*caret*/<u8></error> {}
+        impl Foo0<error></*caret*/u8></error> {}
     """, """
         struct Foo0;
         impl Foo0 {}
@@ -130,7 +130,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
 
         fn main() {
             let x = Test;
-            x.<error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">/*caret*/method::<i32>()</error>;
+            x.method::<error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">/*caret*/<i32></error>();
         }
     """, """
         struct Test;
@@ -149,7 +149,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         fn foo() {}
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">foo/*caret*/::<i32>()</error>;
+            foo::<error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">/*caret*/<i32></error>();
         }
     """, """
         fn foo() {}
@@ -177,7 +177,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
     fun `test fix struct with multiple type arguments`() = checkFixByText("Remove redundant type arguments", """
         struct Foo<T, U> { t: T, u: U }
         struct Err {
-            err1: <error descr="Wrong number of type arguments: expected 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
+            err1: Foo<error descr="Wrong number of type arguments: expected 2, found 4 [E0107]"><u32, i32, u32, u32/*caret*/></error>,
         }
     """, """
         struct Foo<T, U> { t: T, u: U }
@@ -189,7 +189,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
     fun `test fix struct with default type arguments`() = checkFixByText("Remove redundant type arguments", """
         struct Foo<T, U = i32> { t: T, u: U }
         struct Err {
-            err1: <error descr="Wrong number of type arguments: expected at most 2, found 4 [E0107]">Foo<u32, i32, u32, u32/*caret*/></error>,
+            err1: Foo<error descr="Wrong number of type arguments: expected at most 2, found 4 [E0107]"><u32, i32, u32, u32/*caret*/></error>,
         }
     """, """
         struct Foo<T, U = i32> { t: T, u: U }
@@ -201,13 +201,13 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
     fun `test dyn trait`() = checkByText("""
         trait Trait<A> {}
         fn foo() {
-            let x: &dyn <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Trait<></error>;
+            let x: &dyn Trait<error descr="Wrong number of type arguments: expected 1, found 0 [E0107]"><></error>;
         }
     """)
 
     fun `test impl trait`() = checkByText("""
         trait Trait<A> {}
-        fn foo(_: impl <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">Trait<></error>) {}
+        fn foo(_: impl Trait<error descr="Wrong number of type arguments: expected 1, found 0 [E0107]"><></error>) {}
     """)
 
     fun `test add arguments missing arguments`() = checkFixByText("Add missing type arguments", """
@@ -228,7 +228,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         struct S<T> { t: T }
 
         fn main() {
-            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">S</*caret*/></error>;
+            let x: S<error descr="Wrong number of type arguments: expected 1, found 0 [E0107]"></*caret*/></error>;
         }
     """, """
         struct S<T> { t: T }
@@ -242,7 +242,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         struct S<T, R> { t: T, r: R }
 
         fn main() {
-            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32/*caret*/></error>;
+            let x: S<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32/*caret*/></error>;
         }
     """, """
         struct S<T, R> { t: T, r: R }
@@ -256,7 +256,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         struct S<'a, T> { t: &'a T }
 
         fn foo<'a>(x: &'a u32) {
-            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">S<'a/*caret*/></error>;
+            let x: S<error descr="Wrong number of type arguments: expected 1, found 0 [E0107]"><'a/*caret*/></error>;
         }
     """, """
         struct S<'a, T> { t: &'a T }
@@ -270,7 +270,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         struct S<'a, T, R> { t: &'a T, r: R }
 
         fn foo<'a>(x: &'a u32) {
-            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<'a, u32/*caret*/></error>;
+            let x: S<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><'a, u32/*caret*/></error>;
         }
     """, """
         struct S<'a, T, R> { t: &'a T, r: R }
@@ -286,7 +286,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
 
         fn main() {
-            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32, Item=u32/*caret*/></error>;
+            let x: S<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32, Item=u32/*caret*/></error>;
         }
     """, """
         trait S<A, B> {
@@ -312,7 +312,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
             fn foo(&self) -> (&'a u32, A, B);
         }
         fn foo<'a>(_: &'a u32) {
-            let x: &<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">Trait< /*'a*/ 'a    /*'a*/, /*A*/   u32 /*A*/,   /*Item*/ Item = u32 /*Item*/  >/*caret*/</error>;
+            let x: &Trait<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">< /*'a*/ 'a    /*'a*/, /*A*/   u32 /*A*/,   /*Item*/ Item = u32 /*Item*/  >/*caret*/</error>;
         }
     """, """
         trait Trait<'a, A, B> {
@@ -327,7 +327,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
     fun `test add arguments keep trailing comma`() = checkFixByText("Add missing type arguments", """
         struct S<T, R>(T, R);
         fn main() {
-            let x: <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">S<u32,>/*caret*/</error>;
+            let x: S<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32,>/*caret*/</error>;
         }
     """, """
         struct S<T, R>(T, R);
@@ -340,7 +340,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         fn foo<S, T>() -> (S, T) { unreachable!() }
 
         fn main() {
-            <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32/*caret*/>()</error>;
+            foo::<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32/*caret*/></error>();
         }
     """, """
         fn foo<S, T>() -> (S, T) { unreachable!() }
@@ -359,7 +359,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
 
         fn foo(s: S) {
-            s.<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<u32>()/*caret*/</error>;
+            s.foo::<error descr="Wrong number of type arguments: expected 2, found 1 [E0107]"><u32>/*caret*/</error>();
         }
     """, """
         struct S;
@@ -380,7 +380,7 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
 
         fn main() {
-            let x: <error descr="Wrong number of type arguments: expected 1, found 0 [E0107]">foo::   S/*caret*/</error>;
+            let x: foo::   S/*caret*/;
         }
     """, """
         mod foo {

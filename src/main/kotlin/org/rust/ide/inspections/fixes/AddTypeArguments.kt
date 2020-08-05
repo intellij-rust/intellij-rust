@@ -10,8 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.inspections.getTypeArgumentsAndDeclaration
-import org.rust.lang.core.parser.RustParserUtil
+import org.rust.ide.inspections.RsWrongTypeArgumentsNumberInspection.Companion.findApplicableContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.RsElementTypes.LT
@@ -31,7 +30,7 @@ class AddTypeArguments(element: RsElement) : LocalQuickFixAndIntentionActionOnPs
         endElement: PsiElement
     ) {
         val element = startElement as? RsElement ?: return
-        val (typeArguments, declaration) = getTypeArgumentsAndDeclaration(element) ?: return
+        val (typeArguments, declaration) = findApplicableContext(element) ?: return
 
         val requiredParameters = declaration.requiredGenericParameters
         if (requiredParameters.isEmpty()) return

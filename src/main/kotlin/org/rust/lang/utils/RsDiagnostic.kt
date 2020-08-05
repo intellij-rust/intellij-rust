@@ -997,10 +997,11 @@ sealed class RsDiagnostic(
     }
 
     class WrongNumberOfTypeArguments(
-        element: PsiElement,
+        startElement: PsiElement,
+        endElement: PsiElement?,
         private val errorText: String,
         private val fixes: List<LocalQuickFix>
-    ) : RsDiagnostic(element) {
+    ) : RsDiagnostic(startElement, endElement) {
         override fun prepare(): PreparedAnnotation {
             return PreparedAnnotation(
                 ERROR,

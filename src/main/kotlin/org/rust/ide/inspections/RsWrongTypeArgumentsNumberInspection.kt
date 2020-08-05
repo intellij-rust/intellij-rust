@@ -6,6 +6,7 @@
 package org.rust.ide.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.psi.PsiElement
 import org.rust.ide.inspections.fixes.AddTypeArguments
 import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
@@ -38,13 +39,12 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
     private fun isPathValid(path: RsPath?): Boolean = path?.valueParameterList == null && path?.cself == null
 
     private fun checkTypeArguments(holder: RsProblemsHolder, o: RsElement) {
-        val (actualArguments, declaration) = getTypeArgumentsAndDeclaration(o) ?: return
-        if (declaration !is RsGenericDeclaration) return
+        val (actualArguments, declaration, startElement, endElement) = findApplicableContext(o) ?: return
         val actualArgs = actualArguments?.typeReferenceList?.size ?: 0
 
-        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size
-            ?: 0
-        val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
+        val typeParameters = declaration.typeParameterList
+        val expectedRequiredParams = typeParameters?.typeParameterList?.filter { it.typeReference == null }?.size ?: 0
+        val expectedTotalParams = typeParameters?.typeParameterList?.size ?: 0
 
         if (actualArgs == expectedTotalParams) return
 
@@ -57,8 +57,39 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
         val problemText = "Wrong number of type arguments: expected ${errorText}, found $actualArgs"
         val fixes = getFixes(o, actualArgs, expectedTotalParams)
 
-        RsDiagnostic.WrongNumberOfTypeArguments(o, problemText, fixes).addToHolder(holder)
+        RsDiagnostic.WrongNumberOfTypeArguments(startElement, endElement, problemText, fixes).addToHolder(holder)
     }
+
+    companion object {
+        fun findApplicableContext(element: RsElement): Context? {
+            val (typeArguments, referenceElement, identifier) = if (element is RsMethodCall) {
+                Triple(element.typeArgumentList, element, element.identifier)
+            } else {
+                val path = when (element) {
+                    is RsCallExpr -> (element.expr as? RsPathExpr)?.path
+                    is RsBaseType -> element.path
+                    is RsTraitRef -> element.path
+                    else -> return null
+                } ?: return null
+                Triple(path.typeArgumentList, path, path.referenceNameElement)
+            }
+
+            val declaration = referenceElement.reference?.resolve() as? RsGenericDeclaration ?: return null
+            val (startElement, endElement) = if (typeArguments != null) {
+                typeArguments.lt to (typeArguments.gt ?: typeArguments.lastChild)
+            } else {
+                identifier to null
+            }
+            return Context(typeArguments, declaration, startElement, endElement)
+        }
+    }
+
+    data class Context(
+        val typeArgs: RsTypeArgumentList?,
+        val declaration: RsGenericDeclaration,
+        val startElement: PsiElement,
+        val endElement: PsiElement?
+    )
 }
 
 private fun checkTypeReference(actualArgs: Int, expectedRequiredParams: Int, expectedTotalParams: Int): String? {
@@ -83,19 +114,7 @@ private fun checkFunctionCall(actualArgs: Int, expectedRequiredParams: Int, expe
 
 private fun getFixes(element: RsElement, actualArgs: Int, expectedTotalParams: Int): List<LocalQuickFix> =
     when {
-        actualArgs > expectedTotalParams -> listOf(RemoveTypeArguments(expectedTotalParams, actualArgs))
+        actualArgs > expectedTotalParams -> listOf(RemoveTypeArguments(element, expectedTotalParams, actualArgs))
         actualArgs < expectedTotalParams -> listOf(AddTypeArguments(element))
         else -> emptyList()
     }
-
-fun getTypeArgumentsAndDeclaration(element: RsElement): Pair<RsTypeArgumentList?, RsGenericDeclaration>? {
-    val (arguments, resolved) = when (element) {
-        is RsMethodCall -> element.typeArgumentList to element.reference.resolve()
-        is RsCallExpr -> (element.expr as? RsPathExpr)?.path?.typeArgumentList to (element.expr as? RsPathExpr)?.path?.reference?.resolve()
-        is RsBaseType -> element.path?.typeArgumentList to element.path?.reference?.resolve()
-        is RsTraitRef -> element.path.typeArgumentList to element.path.reference?.resolve()
-        else -> return null
-    }
-    if (resolved !is RsGenericDeclaration) return null
-    return Pair(arguments, resolved)
-}
