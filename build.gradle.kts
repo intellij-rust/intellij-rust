@@ -171,7 +171,8 @@ project(":plugin") {
             project(":intellij-toml"),
             "IntelliLang",
             graziePlugin,
-            psiViewerPlugin
+            psiViewerPlugin,
+            "JavaScriptLanguage"
         )
         if (baseIDE == "idea") {
             plugins += listOf(
@@ -194,6 +195,7 @@ project(":plugin") {
         implementation(project(":intelliLang"))
         implementation(project(":duplicates"))
         implementation(project(":grazie"))
+        implementation(project(":js"))
     }
 
     tasks {
@@ -398,6 +400,18 @@ project(":coverage") {
 project(":grazie") {
     intellij {
         setPlugins(graziePlugin)
+    }
+    dependencies {
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
+    }
+}
+
+project(":js") {
+    intellij {
+        setPlugins("JavaScriptLanguage")
     }
     dependencies {
         implementation(project(":"))
