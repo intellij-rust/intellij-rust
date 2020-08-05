@@ -125,6 +125,30 @@ class RsChainMethodTypeHintsProviderTest : RsInlayTypeHintsTestBase(RsChainMetho
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test iterator consecutive types`() = doTest("""
+        struct S<T>(T);
+
+        impl<T> std::iter::Iterator for S<T> {
+            type Item = ();
+
+            fn next(&self) -> Option<Self::Item> { None }
+        }
+
+        impl<T> S<T> {
+            fn foo(self) -> S<Self> { unreachable!(); }
+        }
+
+        fn main() {
+            S(0)
+                .foo()/*hint text="[:  [impl  [Iterator [< [Item = ()] >]] ]]"*/
+                .foo()
+                .foo()
+                .foo();
+            ;
+        }
+    """, showSameConsecutiveTypes = false)
+
     @Suppress("UnstableApiUsage")
     private fun doTest(@Language("Rust") code: String, showSameConsecutiveTypes: Boolean = true) {
         val service = InlayHintsSettings.instance()

@@ -21,12 +21,18 @@ import com.intellij.psi.PsiWhiteSpace
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsDotExpr
+import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.childOfType
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.parentDotExpr
+import org.rust.lang.core.resolve.ImplLookup
+import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.TraitRef
+import org.rust.lang.core.types.implLookupAndKnownItems
 import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAnon
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.JComponent
@@ -52,14 +58,20 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
 
     override fun createSettings(): Settings = Settings()
 
-    override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? =
+    override fun getCollectorFor(
+        file: PsiFile,
+        editor: Editor,
+        settings: Settings,
+        sink: InlayHintsSink
+    ): InlayHintsCollector? =
         object : FactoryInlayHintsCollector(editor) {
+            val typeHintsFactory = RsTypeHintsPresentationFactory(factory, true)
 
-            val typeHintsFactory = RsTypeHintsPresentationFactory(
-                if (settings.iteratorSpecialCase) file as? RsElement else null,
-                factory,
-                true
-            )
+            private val lookupAndIteratorTrait: Pair<ImplLookup?, BoundElement<RsTraitItem>?> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+                val (lookup, items) = (file as? RsFile)?.implLookupAndKnownItems ?: null to null
+                val iterator = items?.Iterator?.let { BoundElement(it) }
+                lookup to iterator
+            }
 
             override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
                 if (DumbService.isDumb(element.project)) return true
@@ -67,26 +79,39 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 if (!element.isLastInChain) return true
                 if (!element.isEnabledByCfg) return true
 
+                val (lookup, iterator) = lookupAndIteratorTrait
+
                 val chain = collectChain(element)
                 var lastType: Ty? = null
                 for (call in chain.dropLast(1)) {
-                    if (call.type != TyUnknown && call.isLastOnLine) {
-                        if (settings.showSameConsecutiveTypes || call.type != lastType) {
-                            presentTypeForMethodCall(call)
+                    val type = normalizeType(call.type, lookup, iterator)
+                    if (type != TyUnknown && call.isLastOnLine) {
+                        if (settings.showSameConsecutiveTypes || type != lastType) {
+                            presentTypeForMethodCall(call, type)
                         }
-                        lastType = call.type
+                        lastType = type
                     }
                 }
 
                 return true
             }
 
-            private fun presentTypeForMethodCall(call: RsMethodCall) {
+            private fun presentTypeForMethodCall(call: RsMethodCall, type: Ty) {
                 val project = call.project
-                val type = call.type
                 val presentation = typeHintsFactory.typeHint(type)
                 val finalPresentation = presentation.withDisableAction(project)
                 sink.addInlineElement(call.endOffset, true, finalPresentation)
+            }
+
+            /**
+             * Returns fake impl Iterator<Item=...> type if [type] implements the Iterator trait and
+             * `iteratorSpecialCase` setting is enabled.
+             * */
+            private fun normalizeType(type: Ty, lookup: ImplLookup?, iteratorTrait: BoundElement<RsTraitItem>?): Ty {
+                if (!settings.iteratorSpecialCase || iteratorTrait == null) return type
+
+                val assoc = lookup?.selectAllProjectionsStrict(TraitRef(type, iteratorTrait)) ?: return type
+                return TyAnon(null, listOf(iteratorTrait.copy(assoc = assoc)))
             }
         }
 
