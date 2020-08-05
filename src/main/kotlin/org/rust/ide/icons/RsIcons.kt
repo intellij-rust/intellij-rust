@@ -83,6 +83,9 @@ object RsIcons {
     // Repl
 
     val REPL = IconLoader.getIcon("/icons/repl.svg")
+
+    val CARGO_GENERATE = IconLoader.getIcon("/icons/cargo-generate.svg")
+    val WASM_PACK = IconLoader.getIcon("/icons/wasm-pack.svg")
 }
 
 fun Icon.addFinalMark(): Icon = LayeredIcon(this, RsIcons.FINAL_MARK)

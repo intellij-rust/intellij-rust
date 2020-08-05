@@ -5,7 +5,6 @@
 
 package org.rust.ide.newProject
 
-import com.intellij.icons.AllIcons
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
@@ -20,7 +19,7 @@ class RsGenericTemplate(name: String, isBinary: Boolean) : RsProjectTemplate(nam
 }
 
 class RsCustomTemplate(name: String, val link: String, isBinary: Boolean = true) : RsProjectTemplate(name, isBinary) {
-    override val icon: Icon = AllIcons.Vcs.Vendors.Github
+    override val icon: Icon = RsIcons.CARGO_GENERATE
     val shortLink: String
         get() = link.substringAfter("//")
 }
