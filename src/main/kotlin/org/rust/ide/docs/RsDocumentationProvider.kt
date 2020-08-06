@@ -150,7 +150,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                 ?.reference
                 ?.resolve()
         } else {
-            qualifiedName.findPsiElement(psiManager, element)
+            qualifiedName.findPsiElement(psiManager, element.project)
         }
     }
 
