@@ -19,6 +19,11 @@ class RsTraitNamingInspectionTest : RsInspectionsTestBase(RsTraitNamingInspectio
         trait trait_foo {}
     """)
 
+    fun `test traits suppression nonstandard style`() = checkByText("""
+        #[allow(nonstandard_style)]
+        trait trait_foo {}
+    """)
+
     fun `test traits fix`() = checkFixByText("Rename to `HotFix`", """
         trait <warning descr="Trait `hot_fix` should have a camel case name such as `HotFix`">ho<caret>t_fix</warning> {}
         struct Patch {}

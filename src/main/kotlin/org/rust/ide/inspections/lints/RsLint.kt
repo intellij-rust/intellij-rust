@@ -18,9 +18,9 @@ enum class RsLint(
     val groupIds: List<String> = emptyList(),
     val defaultLevel: RsLintLevel = WARN
 ) {
-    NonSnakeCase("non_snake_case", listOf("bad_style")),
-    NonCamelCaseTypes("non_camel_case_types", listOf("bad_style")),
-    NonUpperCaseGlobals("non_upper_case_globals", listOf("bad_style")),
+    NonSnakeCase("non_snake_case", listOf("bad_style", "nonstandard_style")),
+    NonCamelCaseTypes("non_camel_case_types", listOf("bad_style", "nonstandard_style")),
+    NonUpperCaseGlobals("non_upper_case_globals", listOf("bad_style", "nonstandard_style")),
     Deprecated("deprecated") {
         override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
             when (level) {
