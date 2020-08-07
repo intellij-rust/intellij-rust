@@ -37,6 +37,14 @@ enum class RsLint(
             }
     },
 
+    WhileTrue("while_true") {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.WEAK_WARNING
+                else -> super.toHighlightingType(level)
+            }
+    },
+
     NeedlessLifetimes("clippy::needless_lifetimes", listOf("clippy::complexity", "clippy::all", "clippy")) {
         override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
             when (level) {
