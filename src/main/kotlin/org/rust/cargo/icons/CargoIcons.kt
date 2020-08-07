@@ -9,8 +9,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
 
 object CargoIcons {
-    val ICON = IconLoader.getIcon("/icons/cargo.png")
-    val LOCK_ICON = IconLoader.getIcon("/icons/cargo-lock.png")
+    val ICON = IconLoader.getIcon("/icons/cargo.svg")
+    val LOCK_ICON = IconLoader.getIcon("/icons/cargo-lock.svg")
     val BUILD_RS_ICON = IconLoader.getIcon("/icons/build-rs.svg")
     val EXTERNAL_LINTER = IconLoader.getIcon("/icons/external-linter.svg")
     val TEST = AllIcons.RunConfigurations.TestState.Run
