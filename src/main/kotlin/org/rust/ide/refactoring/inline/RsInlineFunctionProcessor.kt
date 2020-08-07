@@ -138,7 +138,7 @@ class RsInlineFunctionProcessor(
         fun doesFunctionHaveMultipleReturns(fn: RsFunction): Boolean {
             var entryCount = 0
             val sink: (ExitPoint) -> Unit = {
-                if (it !is ExitPoint.TryExpr) {
+                if (it !is ExitPoint.TryExpr && it !is ExitPoint.DivergingExpr) {
                     ++entryCount
                 }
             }
