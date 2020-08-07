@@ -293,7 +293,7 @@
         <localInspection language="Rust" groupName="Rust"
                          displayName="Deprecated element"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsDeprecationInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsDeprecationInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Approximate Constants"
@@ -343,57 +343,57 @@
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Argument naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsArgumentNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsArgumentNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Associated type naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsAssocTypeNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsAssocTypeNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Constant naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsConstNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsConstNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Enum naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsEnumNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsEnumNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Enum variant naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsEnumVariantNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsEnumVariantNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Function naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsFunctionNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsFunctionNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Lifetime naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsLifetimeNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsLifetimeNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Macro naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsMacroNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsMacroNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Method naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsMethodNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsMethodNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Module naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsModuleNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsModuleNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Static constant naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsStaticConstNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsStaticConstNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Self convention"
@@ -403,32 +403,32 @@
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Struct naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsStructNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsStructNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Field naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsFieldNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsFieldNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Trait naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsTraitNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTraitNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Type alias naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsTypeAliasNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTypeAliasNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Type parameter naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsTypeParameterNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsTypeParameterNamingInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Naming conventions"
                          displayName="Variable naming convention"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsVariableNamingInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsVariableNamingInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Extra semicolon"
@@ -508,7 +508,7 @@
         <localInspection language="Rust" groupName="Rust"
                          displayName="Needless lifetimes"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsNeedlessLifetimesInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsNeedlessLifetimesInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Assign to immutable"
@@ -538,7 +538,7 @@
         <localInspection language="Rust" groupName="Rust"
                          displayName="Liveness analysis"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsLivenessInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsLivenessInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Main function not found"

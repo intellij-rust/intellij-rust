@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
-import org.rust.ide.inspections.RsConstNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.lints.RsConstNamingInspection
 
 class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspection::class) {
     fun `test constants`() = checkByText("""

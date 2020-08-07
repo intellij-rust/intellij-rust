@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
-import org.rust.ide.inspections.RsAssocTypeNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.lints.RsAssocTypeNamingInspection
 
 class RsAssocTypeNamingInspectionTest : RsInspectionsTestBase(RsAssocTypeNamingInspection::class) {
     fun `test associated types`() = checkByText("""

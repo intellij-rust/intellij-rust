@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.RsLintLevel.*
+import org.rust.ide.inspections.lints.RsLintLevel.*
 import org.rust.lang.core.psi.ext.*
 
 /**

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.RsModuleNamingInspection
+import org.rust.ide.inspections.lints.RsModuleNamingInspection
 
 class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspection::class) {
     fun `test modules`() = checkByText("""

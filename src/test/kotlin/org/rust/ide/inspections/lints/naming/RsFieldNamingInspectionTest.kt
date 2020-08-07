@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
-import org.rust.ide.inspections.RsFieldNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.lints.RsFieldNamingInspection
 
 class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspection::class) {
     fun `test enum variant fields`() = checkByText("""

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.RsStructNamingInspection
+import org.rust.ide.inspections.lints.RsStructNamingInspection
 
 class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspection::class) {
     fun `test structs`() = checkByText("""

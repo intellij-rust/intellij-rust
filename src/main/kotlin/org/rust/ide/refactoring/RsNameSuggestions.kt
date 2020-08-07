@@ -9,7 +9,7 @@ import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.PsiElement
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.ide.inspections.toSnakeCase
+import org.rust.ide.inspections.lints.toSnakeCase
 import org.rust.ide.refactoring.introduceVariable.IntroduceVariableTestmarks
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.*

@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.RsVariableNamingInspection
+import org.rust.ide.inspections.lints.RsVariableNamingInspection
 
 class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingInspection::class) {
     fun `test variables`() = checkByText("""

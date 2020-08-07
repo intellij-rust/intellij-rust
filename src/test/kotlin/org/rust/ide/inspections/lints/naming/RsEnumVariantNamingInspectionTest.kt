@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
-import org.rust.ide.inspections.RsEnumVariantNamingInspection
 import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.lints.RsEnumVariantNamingInspection
 
 class RsEnumVariantNamingInspectionTest : RsInspectionsTestBase(RsEnumVariantNamingInspection::class) {
     fun `test enum variants`() = checkByText("""

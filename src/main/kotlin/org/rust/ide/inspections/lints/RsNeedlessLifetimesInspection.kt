@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.rust.ide.inspections.ReferenceLifetime.*
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.ElideLifetimesFix
+import org.rust.ide.inspections.lints.ReferenceLifetime.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ReEarlyBound
@@ -59,7 +60,8 @@ private fun couldUseElision(fn: RsFunction): Boolean {
     val typeParametersBounds = fn.typeParameters.flatMap { it.bounds }.map { it.bound }
     if (typeParametersBounds.any { hasNamedReferenceLifetime(it) }) return false
 
-    val (inputLifetimes, outputLifetimes) = collectLifetimesFromFnSignature(fn) ?: return false
+    val (inputLifetimes, outputLifetimes) = collectLifetimesFromFnSignature(fn)
+        ?: return false
 
     // no input lifetimes? easy case!
     if (inputLifetimes.isEmpty()) return false

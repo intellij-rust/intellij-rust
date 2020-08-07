@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.RsElementTypes.CSELF
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsMetaItem

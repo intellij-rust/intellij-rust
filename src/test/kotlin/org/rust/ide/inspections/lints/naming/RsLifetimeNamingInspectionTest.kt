@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.RsLifetimeNamingInspection
+import org.rust.ide.inspections.lints.RsLifetimeNamingInspection
 
 class RsLifetimeNamingInspectionTest : RsInspectionsTestBase(RsLifetimeNamingInspection::class) {
     fun `test lifetimes`() = checkByText("""
