@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.newProject.ConfigurationData
+import org.rust.ide.newProject.makeDefaultRunConfiguration
 import org.rust.ide.newProject.makeProject
 import org.rust.ide.newProject.openFiles
 
@@ -58,6 +59,7 @@ class RsModuleBuilder : ModuleBuilder() {
                     root, template
                 ) ?: return
 
+                project.makeDefaultRunConfiguration(template)
                 project.openFiles(generatedFiles)
             } catch (e: ExecutionException) {
                 LOG.error(e)

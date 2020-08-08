@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig.wasmpack
 
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationTypeBase
+import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
 import org.rust.ide.icons.RsIcons
@@ -19,6 +20,13 @@ class WasmPackCommandConfigurationType : ConfigurationTypeBase(
 ) {
     init {
         addFactory(WasmPackConfigurationFactory(this))
+    }
+
+    val factory: ConfigurationFactory get() = configurationFactories.single()
+
+    companion object {
+        fun getInstance(): WasmPackCommandConfigurationType =
+            ConfigurationTypeUtil.findConfigurationType(WasmPackCommandConfigurationType::class.java)
     }
 }
 

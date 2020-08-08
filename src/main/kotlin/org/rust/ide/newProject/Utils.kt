@@ -5,14 +5,31 @@
 
 package org.rust.ide.newProject
 
+import com.intellij.execution.RunManager
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isHeadlessEnvironment
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
+import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.Cargo.Companion.GeneratedFilesHolder
+import org.rust.stdext.toPath
+
+fun Cargo.makeProject(
+    project: Project,
+    module: Module,
+    baseDir: VirtualFile,
+    template: RsProjectTemplate
+): GeneratedFilesHolder? = when (template) {
+    is RsGenericTemplate -> init(project, module, baseDir, template.isBinary)
+    is RsCustomTemplate -> generate(project, module, baseDir, template.url)
+}
 
 fun Project.openFiles(files: GeneratedFilesHolder) = invokeLater {
     if (!isHeadlessEnvironment) {
@@ -24,12 +41,42 @@ fun Project.openFiles(files: GeneratedFilesHolder) = invokeLater {
     }
 }
 
-fun Cargo.makeProject(
-    project: Project,
-    module: Module,
-    baseDir: VirtualFile,
-    template: RsProjectTemplate
-): GeneratedFilesHolder? = when (template) {
-    is RsGenericTemplate -> init(project, module, baseDir, template.isBinary)
-    is RsCustomTemplate -> generate(project, module, baseDir, template.link)
+fun Project.makeDefaultRunConfiguration(template: RsProjectTemplate) {
+    val runManager = RunManager.getInstance(this)
+    val configurationFactory = DefaultRunConfigurationFactory(runManager, this)
+
+    val configuration = when (template) {
+        is RsGenericTemplate.CargoBinaryTemplate -> configurationFactory.createCargoRunConfiguration()
+        is RsGenericTemplate.CargoLibraryTemplate -> configurationFactory.createCargoTestConfiguration()
+        is RsCustomTemplate.WasmPackTemplate -> configurationFactory.createWasmPackBuildConfiguration()
+        is RsCustomTemplate -> return
+    }
+
+    runManager.addConfiguration(configuration)
+    runManager.selectedConfiguration = configuration
+}
+
+private class DefaultRunConfigurationFactory(val runManager: RunManager, val project: Project) {
+    private val cargoProjectName = project.name.replace(' ', '_')
+
+    fun createCargoRunConfiguration(): RunnerAndConfigurationSettings =
+        runManager.createConfiguration("Run", CargoCommandConfigurationType.getInstance().factory).apply {
+            (configuration as? CargoCommandConfiguration)?.apply {
+                command = "run --package $cargoProjectName --bin $cargoProjectName"
+                workingDirectory = project.basePath?.toPath()
+            }
+        }
+
+    fun createCargoTestConfiguration(): RunnerAndConfigurationSettings =
+        runManager.createConfiguration("Test", CargoCommandConfigurationType.getInstance().factory).apply {
+            (configuration as? CargoCommandConfiguration)?.apply {
+                command = "test --package $cargoProjectName --lib tests"
+                workingDirectory = project.basePath?.toPath()
+            }
+        }
+
+    fun createWasmPackBuildConfiguration(): RunnerAndConfigurationSettings =
+        runManager.createConfiguration("Build", WasmPackCommandConfigurationType.getInstance().factory).apply {
+            (configuration as? WasmPackCommandConfiguration)?.workingDirectory = project.basePath?.toPath()
+        }
 }

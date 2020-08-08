@@ -45,6 +45,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
             cargo.makeProject(project, module, baseDir, template)
         } ?: return
 
+        project.makeDefaultRunConfiguration(template)
         project.openFiles(generatedFiles)
     }
 
