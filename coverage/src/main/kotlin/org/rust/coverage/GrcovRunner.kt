@@ -12,6 +12,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
+import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
@@ -19,6 +20,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -34,6 +37,7 @@ import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallGrcov
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.io.File
 
@@ -51,12 +55,12 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
     }
 
     override fun execute(environment: ExecutionEnvironment) {
-        if (checkNeedInstallGrcov(environment.project)) return
-
+        val project = environment.project
+        if (checkNeedInstallGrcov(project)) return
         val state = environment.state as CargoRunStateBase
+        if (!checkIsNightlyToolchain(project, state.config)) return
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
-
         environment.cargoPatches += cargoCoveragePatch
         super.execute(environment)
     }
@@ -87,7 +91,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
                 ),
                 oldVariables.isPassParentEnvs
             )
-            commandLine.copy(channel = RustChannel.NIGHTLY, environmentVariables = environmentVariables)
+            commandLine.copy(environmentVariables = environmentVariables)
         }
 
         private fun cleanOldCoverageData(workingDirectory: File) {
@@ -130,6 +134,30 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             } catch (e: ExecutionException) {
                 LOG.error(e)
             }
+        }
+
+        private fun checkIsNightlyToolchain(project: Project, config: CargoCommandConfiguration.CleanConfiguration.Ok): Boolean {
+            var channel: RustChannel? = config.cmd.channel
+            if (channel == RustChannel.DEFAULT) {
+                channel = project.computeWithCancelableProgress("Fetching rustc version...") {
+                    config.toolchain.queryVersions().rustc?.channel
+                }
+            }
+            if (channel == RustChannel.NIGHTLY) return true
+
+            val option = Messages.showDialog(
+                project,
+                "Code coverage is available only with nightly toolchain",
+                "Unable to run with coverage",
+                arrayOf("Configure"),
+                Messages.OK,
+                Messages.getErrorIcon()
+            )
+            if (option == Messages.OK) {
+                EditConfigurationsDialog(project).show()
+            }
+
+            return false
         }
     }
 }

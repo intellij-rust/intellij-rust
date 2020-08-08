@@ -19,6 +19,8 @@ import com.intellij.rt.coverage.data.ClassData
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import org.rust.FileTreeBuilder
+import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.toPsiFile
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
@@ -29,7 +31,12 @@ class RsCoverageTest : RunConfigurationTestBase() {
     private val coverageData: ProjectData?
         get() = CoverageDataManager.getInstance(project).currentSuitesBundle?.coverageData
 
-    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
+    override fun shouldRunTest(): Boolean {
+        if (System.getenv("CI") != null) return false
+        val toolchain = RustToolchain.suggest()
+        val channel = toolchain?.queryVersions()?.rustc?.channel
+        return channel == RustChannel.NIGHTLY
+    }
 
     fun `test main`() = doTest {
         toml("Cargo.toml", """
