@@ -16,7 +16,7 @@ import org.rust.cargo.util.DownloadResult
 import java.nio.file.Paths
 
 // TODO: use it in [org.rust.WithRustup]
-class RustupTestFixture(
+open class RustupTestFixture(
     // This property is mutable to allow `com.intellij.testFramework.UsefulTestCase.clearDeclaredFields`
     // set null in `tearDown`
     private var project: Project
@@ -26,7 +26,7 @@ class RustupTestFixture(
     val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib: VirtualFile? by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 
-    val skipTestReason: String?
+    open val skipTestReason: String?
         get() {
             if (rustup == null) return "No rustup"
             if (stdlib == null) return "No stdlib"

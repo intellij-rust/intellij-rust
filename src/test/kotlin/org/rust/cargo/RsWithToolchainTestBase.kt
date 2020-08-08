@@ -63,7 +63,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
 
     override fun setUp() {
         super.setUp()
-        rustupFixture = RustupTestFixture(project)
+        rustupFixture = createRustupFixture()
         rustupFixture.setUp()
         if (disableMissedCacheAssertions) {
             RecursionManager.disableMissedCacheAssertions(testRootDisposable)
@@ -75,6 +75,8 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         super.tearDown()
         checkMacroExpansionFileSystemAfterTest()
     }
+
+    protected open fun createRustupFixture(): RustupTestFixture = RustupTestFixture(project)
 
     protected fun buildProject(builder: FileTreeBuilder.() -> Unit): TestProject =
         fileTree { builder() }.create()
