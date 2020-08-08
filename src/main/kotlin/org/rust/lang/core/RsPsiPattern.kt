@@ -25,64 +25,67 @@ object RsPsiPattern {
     private val STATEMENT_BOUNDARIES = TokenSet.create(SEMICOLON, LBRACE, RBRACE)
 
     /**
-     * Source of attributes: [https://doc.rust-lang.org/1.30.0/reference/attributes.html]
+     * Source of attributes: [https://doc.rust-lang.org/1.41.1/reference/attributes.html#built-in-attributes-index]
      */
-    private val STD_ATTRIBUTES: Set<String> = setOf(
-        "crate_name",
-        "crate_type",
-        "no_builtins",
-        "no_main",
-        "no_start",
-        "no_std",
-        "recursion_limit",
-        "windows_subsystem",
+    val STD_ATTRIBUTES: Set<String> = setOf(
+        "cfg",
+        "cfg_attr",
 
-        "no_implicit_prelude",
-        "path",
+        "test",
+        "ignore",
+        "should_panic",
 
-        "link_args",
-        "link",
-        "linked_from",
+        "derive",
 
-        "link_name",
-        "linkage",
-
-        "macro_use",
-        "macro_use",
-        "macro_reexport",
         "macro_export",
-        "no_link",
-
+        "macro_use",
         "proc_macro",
         "proc_macro_derive",
         "proc_macro_attribute",
 
-        "export_name",
-        "global_allocator",
-        "link_section",
-        "no_mangle",
+        "allow",
+        "warn",
+        "deny",
+        "forbid",
 
         "deprecated",
+        "must_use",
+
+        "link",
+        "link_name",
+        "no_link",
+        "repr",
+        "crate_type",
+        "no_main",
+        "export_name",
+        "link_section",
+        "no_mangle",
+        "used",
+        "crate_name",
+
+        "inline",
+        "cold",
+        "no_builtins",
+        "target_feature",
 
         "doc",
 
-        "test",
-        "should_panic",
+        "no_std",
+        "no_implicit_prelude",
 
-        "cfg",
-        "cfg_attr",
+        "path",
 
-        "allow",
-        "deny",
-        "forbid",
-        "warn",
+        "recursion_limit",
+        "type_length_limit",
 
-        "must_use",
+        "panic_handler",
+        "global_allocator",
+        "windows_subsystem",
 
-        "cold",
-        "inline",
+        "non_exhaustive",
 
-        "derive"
+        // unstable attr
+        "start"
     )
 
     const val META_ITEM_IDENTIFIER_DEPTH = 4

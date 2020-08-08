@@ -26,11 +26,13 @@ import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
 import org.rust.lang.core.FeatureAvailability.CAN_BE_ADDED
 import org.rust.lang.core.FeatureAvailability.NOT_AVAILABLE
+import org.rust.lang.core.RsPsiPattern.STD_ATTRIBUTES
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.MACROS
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.resolve.namespaces
@@ -777,7 +779,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0132: Invalid `start` attribute
     private fun checkStartAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (attr.metaItem.name != "start") return
+        if (!attr.isBuiltinWithName("start")) return
 
         START.check(holder, attr.metaItem, "#[start] function")
 
@@ -817,7 +819,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (attr.metaItem.name != "repr") return
+        if (!attr.isBuiltinWithName("repr")) return
 
         val owner = attr.owner ?: return
 
@@ -861,14 +863,14 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0518: Inline attribute is allowed only on functions
     private fun checkInlineAttr(holder: RsAnnotationHolder, attr: RsAttr) {
-        val metaItem = attr.metaItem
-        if (metaItem.name == "inline") {
-            val parent = attr.owner
+        if (!attr.isBuiltinWithName("inline")) return
 
-            if (parent !is RsFunction && parent !is RsLambdaExpr) {
-                RsDiagnostic.IncorrectlyPlacedInlineAttr(metaItem.path?.referenceNameElement ?: metaItem, attr)
-                    .addToHolder(holder)
-            }
+        val owner = attr.owner
+        if (owner !is RsFunction && owner !is RsLambdaExpr) {
+
+            val metaItem = attr.metaItem
+            RsDiagnostic.IncorrectlyPlacedInlineAttr(metaItem.path?.referenceNameElement ?: metaItem, attr)
+                .addToHolder(holder)
         }
     }
 
@@ -1207,4 +1209,13 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     if (isError(ty)) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
     }
+}
+
+private fun RsAttr.isBuiltinWithName(target: String): Boolean {
+    val name = metaItem.name ?: return false
+
+    if (name != target) return false
+    if (name !in STD_ATTRIBUTES) return false
+
+    return !hasInScope(name, MACROS)
 }
