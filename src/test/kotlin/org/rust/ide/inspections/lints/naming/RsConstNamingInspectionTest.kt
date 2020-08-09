@@ -19,6 +19,11 @@ class RsConstNamingInspectionTest : RsInspectionsTestBase(RsConstNamingInspectio
         const const_foo: u32 = 12;
     """)
 
+    fun `test constants suppression nonstandard style`() = checkByText("""
+        #[allow(nonstandard_style)]
+        const const_foo: u32 = 12;
+    """)
+
     fun `test constants fix`() = checkFixByText("Rename to `CONST_FOO`", """
         const <warning descr="Constant `ConstFoo` should have an upper case name such as `CONST_FOO`">Con<caret>stFoo</warning>: u32 = 42;
         fn const_use() {
