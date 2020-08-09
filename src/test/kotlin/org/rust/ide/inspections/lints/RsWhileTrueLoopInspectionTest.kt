@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.intellij.lang.annotations.Language
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsWhileTrueLoopInspectionTest : RsInspectionsTestBase(RsWhileTrueLoopInspection::class) {
     fun `test simple`() = checkFix("""
@@ -63,6 +64,13 @@ class RsWhileTrueLoopInspectionTest : RsInspectionsTestBase(RsWhileTrueLoopInspe
                 let a = 42;
                 println!("{}", a);
             }
+        }
+    """)
+
+    fun `test allow while_true`() = checkWarnings("""
+        #[allow(while_true)]
+        fn main() {
+            while true {}
         }
     """)
 

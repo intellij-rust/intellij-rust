@@ -440,10 +440,10 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsTryMacroInspection"/>
 
-        <localInspection language="Rust" groupName="Rust"
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="While true loop"
                          enabledByDefault="true" level="WEAK WARNING"
-                         implementationClass="org.rust.ide.inspections.RsWhileTrueLoopInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsWhileTrueLoopInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="println!(&quot;&quot;) usage"
