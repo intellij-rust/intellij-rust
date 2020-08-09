@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapiext.Testmark
 import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
@@ -66,13 +67,20 @@ abstract class RsCompletionTestFixtureBase<IN>(
     fun checkCompletion(
         lookupString: String,
         before: IN,
-        @Language("Rust") after: String
-    ) = checkByText(before, after.trimIndent()) {
-        val items = myFixture.completeBasic()
-            ?: return@checkByText // single completion was inserted
-        val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
-        myFixture.lookup.currentItem = lookupItem
-        myFixture.type('\n')
+        @Language("Rust") after: String,
+        completionChar: Char,
+        testmark: Testmark?
+    ) {
+        val action = {
+            checkByText(before, after.trimIndent()) {
+                val items = myFixture.completeBasic()
+                    ?: return@checkByText // single completion was inserted
+                val lookupItem = items.find { it.lookupString == lookupString } ?: return@checkByText
+                myFixture.lookup.currentItem = lookupItem
+                myFixture.type(completionChar)
+            }
+        }
+        testmark?.checkHit(action)
     }
 
     fun checkNoCompletion(code: IN) {

@@ -1207,4 +1207,45 @@ class RsCompletionTest : RsCompletionTestBase() {
     """, """
         fn foo(f: &FnOnce(/*caret*/)) {}
     """)
+
+    fun `test do not insert second parenthesis 1`() = checkCompletion("foo", """
+        fn foo() {}
+        fn foo2() {}
+        fn main() {
+            foo/*caret*/
+        }
+    """, """
+        fn foo() {}
+        fn foo2() {}
+        fn main() {
+            foo()/*caret*/
+        }
+    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+
+    fun `test do not insert second parenthesis 2`() = checkCompletion("V1", """
+        enum E {
+            V1(i32),
+            V2(i32)
+        }
+        fn main() {
+            E::V/*caret*/
+        }
+    """, """
+        enum E {
+            V1(i32),
+            V2(i32)
+        }
+        fn main() {
+            E::V1(/*caret*/)
+        }
+    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test do not insert second parenthesis 3`() = checkCompletion("FnOnce", """
+        struct FnOnceStruct;
+        fn foo(f: FnOnce/*caret*/) {}
+    """, """
+        struct FnOnceStruct;
+        fn foo(f: FnOnce(/*caret*/)) {}
+    """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
 }
