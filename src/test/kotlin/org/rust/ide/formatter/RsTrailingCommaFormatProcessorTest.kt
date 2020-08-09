@@ -5,6 +5,12 @@
 
 package org.rust.ide.formatter
 
+import org.intellij.lang.annotations.Language
+import org.rust.cargo.project.settings.rustSettings
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.descendantOfTypeStrict
+
 class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
     fun `test removes trailing comma if single line in brace blocks`() = doTextTest("""
         use foo::{bar, baz,};
@@ -119,4 +125,47 @@ class RsTrailingCommaFormatProcessorTest : RsFormatterTestBase() {
             );
         }
     """)
+
+    fun `test trailing comma processor works when RustfmtExternalFormatProcessor is used`() {
+        @Language("Rust")
+        val before = """
+            mod foo {
+                struct T1(
+                    i32,
+                    i32
+                                                                        // gap
+                );
+
+                struct T2(
+                    i32,
+                    i32
+                );
+            }
+        """.trimIndent()
+
+        @Language("Rust")
+        val after = """
+            mod foo {
+                struct T1(
+                    i32,
+                    i32,
+                    // gap
+                );
+
+                struct T2(
+                    i32,
+                    i32
+                );
+            }
+        """.trimIndent()
+
+        // This enables usage of `RustfmtExternalFormatProcessor`, but not `Rustfmt` itself
+        project.rustSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
+        // `Rustfmt` will not be used because of range restriction
+        myTextRange = RsPsiFactory(project).createFile(before).descendantOfTypeStrict<RsStructItem>()!!.textRange
+
+        RustfmtExternalFormatProcessor.Testmarks.builtinPostProcess.checkHit {
+            doTextTest(before, after)
+        }
+    }
 }

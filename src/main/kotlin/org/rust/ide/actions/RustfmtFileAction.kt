@@ -45,7 +45,7 @@ class RustfmtFileAction : DumbAwareAction() {
     private fun reformatDocumentAndGetText(cargoProject: CargoProject, rustfmt: Rustfmt, document: Document): String? {
         return try {
             if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return null
-            rustfmt.reformatDocumentText(cargoProject, document)
+            rustfmt.reformatDocumentTextOrNull(cargoProject, document)
         } catch (e: ExecutionException) {
             // Just easy way to know that something wrong happened
             if (isUnitTestMode) throw e

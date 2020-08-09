@@ -25,6 +25,17 @@ import java.nio.file.Path
 
 class Rustfmt(private val rustfmtExecutable: Path) {
 
+    fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
+        return try {
+            reformatDocumentText(cargoProject, document)
+        } catch (e: ExecutionException) {
+            if (isUnitTestMode) throw e else null
+        }
+    }
+
+    /**
+     * @throws ExecutionException if `Rustfmt` exit-code is other than `0`
+     */
     @Throws(ExecutionException::class)
     fun reformatDocumentText(cargoProject: CargoProject, document: Document): String? {
         val file = document.virtualFile ?: return null
@@ -54,17 +65,12 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             }
         }
 
-        val processOutput = try {
-            GeneralCommandLine(rustfmtExecutable)
-                .withWorkDirectory(cargoProject.workingDirectory)
-                .withParameters(arguments)
-                .withCharset(Charsets.UTF_8)
-                .execute(cargoProject.project, false, stdIn = document.text.toByteArray())
-        } catch (e: ExecutionException) {
-            if (isUnitTestMode) throw e else return null
-        }
-
-        return processOutput.stdout
+        return GeneralCommandLine(rustfmtExecutable)
+            .withWorkDirectory(cargoProject.workingDirectory)
+            .withParameters(arguments)
+            .withCharset(Charsets.UTF_8)
+            .execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
+            .stdout
     }
 
     @Throws(ExecutionException::class)

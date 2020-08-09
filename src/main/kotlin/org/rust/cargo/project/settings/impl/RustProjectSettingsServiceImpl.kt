@@ -49,6 +49,7 @@ class RustProjectSettingsServiceImpl(
     override val useOffline: Boolean get() = state.useOffline
     override val macroExpansionEngine: MacroExpansionEngine get() = state.macroExpansionEngine
     override val doctestInjectionEnabled: Boolean get() = state.doctestInjectionEnabled
+    override val useRustfmt: Boolean get() = state.useRustfmt
     override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
     override val useSkipChildren: Boolean get() = state.useSkipChildren
 
