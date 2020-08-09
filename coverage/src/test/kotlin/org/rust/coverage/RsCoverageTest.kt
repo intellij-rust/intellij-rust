@@ -13,14 +13,15 @@ import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.rt.coverage.data.ClassData
 import com.intellij.rt.coverage.data.LineData
 import com.intellij.rt.coverage.data.ProjectData
 import org.rust.FileTreeBuilder
+import org.rust.cargo.RustupTestFixture
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.toPsiFile
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
@@ -31,12 +32,9 @@ class RsCoverageTest : RunConfigurationTestBase() {
     private val coverageData: ProjectData?
         get() = CoverageDataManager.getInstance(project).currentSuitesBundle?.coverageData
 
-    override fun shouldRunTest(): Boolean {
-        if (System.getenv("CI") != null) return false
-        val toolchain = RustToolchain.suggest()
-        val channel = toolchain?.queryVersions()?.rustc?.channel
-        return channel == RustChannel.NIGHTLY
-    }
+    override fun shouldRunTest(): Boolean = (System.getenv("CI") == null)
+
+    override fun createRustupFixture(): RustupTestFixture = CoverageRustupTestFixture(project)
 
     fun `test main`() = doTest {
         toml("Cargo.toml", """
@@ -159,12 +157,12 @@ class RsCoverageTest : RunConfigurationTestBase() {
                     fn foo() {                      // Hits: 2
                         println!("Hello, world!");  // Hits: 2
                     }                               // Hits: 2
-    
+
                     #[test]
                     fn test1() {                    // Hits: 2
                         foo();                      // Hits: 1
                     }                               // Hits: 2
-    
+
                     #[test]
                     fn test2() {                    // Hits: 2
                         foo();                      // Hits: 1
@@ -242,5 +240,15 @@ class RsCoverageTest : RunConfigurationTestBase() {
 
     private companion object {
         private const val MARKER: String = "// Hits:"
+    }
+
+    private class CoverageRustupTestFixture(project: Project) : RustupTestFixture(project) {
+        override val skipTestReason: String?
+            get() = super.skipTestReason ?: checkNightlyToolchain()
+
+        private fun checkNightlyToolchain(): String? {
+            val channel = toolchain?.queryVersions()?.rustc?.channel
+            return if (channel != RustChannel.NIGHTLY) "Coverage works with nightly toolchain only" else null
+        }
     }
 }
