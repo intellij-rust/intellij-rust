@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.psi.PsiElement
 import org.rust.ide.injected.isDoctestInjection
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.RemoveParameterFix
 import org.rust.ide.inspections.fixes.RemoveVariableFix
 import org.rust.ide.inspections.fixes.RenameFix

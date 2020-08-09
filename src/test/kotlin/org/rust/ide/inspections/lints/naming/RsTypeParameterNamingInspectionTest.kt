@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.naming
+package org.rust.ide.inspections.lints.naming
 
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.ide.inspections.RsTypeParameterNamingInspection
+import org.rust.ide.inspections.lints.RsTypeParameterNamingInspection
 
 class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParameterNamingInspection::class) {
     fun `test type parameters`() = checkByText("""

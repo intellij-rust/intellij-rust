@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifetimesInspection::class) {
 
@@ -301,23 +302,23 @@ class RsNeedlessLifetimesInspectionTest : RsInspectionsTestBase(RsNeedlessLifeti
 
     fun `test allow`() = checkByText("""
         <weak_warning>fn foo1<'a>(_: &'a str)</weak_warning> {}
-        
+
         #[allow(clippy::needless_lifetimes)]
         fn foo2<'a>(_: &'a str) {}
-        
+
         #[allow(clippy::complexity)]
         fn foo3<'a>(_: &'a str) {}
-        
+
         #[allow(clippy::all)]
         fn foo4<'a>(_: &'a str) {}
-        
+
         #[allow(clippy)]
         fn foo5<'a>(_: &'a str) {}
     """)
 
     fun `test global allow`() = checkByText("""
         #![allow(clippy::needless_lifetimes)]
-        
+
         fn foo1<'a>(_: &'a str) {}
 
         fn foo2<'a>(_: &'a str) {}

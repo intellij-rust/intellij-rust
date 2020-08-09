@@ -3,7 +3,9 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
+
+import org.rust.ide.inspections.RsInspectionsTestBase
 
 /**
  * Tests for Deprecated Attribute inspection.

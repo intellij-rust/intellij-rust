@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
@@ -12,7 +12,9 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
-import org.rust.ide.inspections.RsLintLevel.ALLOW
+import org.rust.ide.inspections.RsLocalInspectionTool
+import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.inspections.lints.RsLintLevel.ALLOW
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
