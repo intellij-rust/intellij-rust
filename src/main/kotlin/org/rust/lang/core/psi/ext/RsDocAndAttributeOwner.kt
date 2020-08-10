@@ -205,10 +205,10 @@ class QueryAttributes(
  *
  * HACK: do not check on [RsFile] as [RsFile.queryAttributes] would access the PSI
  */
-val RsDocAndAttributeOwner.isEnabledByCfg: Boolean
+val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
     get() = evaluateCfg() != ThreeValuedLogic.False
 
-val RsDocAndAttributeOwner.isCfgUnknown: Boolean
+val RsDocAndAttributeOwner.isCfgUnknownSelf: Boolean
     get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
 private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {

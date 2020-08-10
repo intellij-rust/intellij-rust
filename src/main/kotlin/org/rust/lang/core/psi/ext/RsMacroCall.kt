@@ -186,7 +186,7 @@ private fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElemen
 
 private fun RsExpandedElement.processRecursively(processor: (RsExpandedElement) -> Boolean, depth: Int): Boolean {
     return when (this) {
-        is RsMacroCall -> isEnabledByCfg && processExpansionRecursively(processor, depth + 1)
+        is RsMacroCall -> isEnabledByCfgSelf && processExpansionRecursively(processor, depth + 1)
         else -> processor(this)
     }
 }

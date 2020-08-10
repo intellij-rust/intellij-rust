@@ -244,10 +244,10 @@ private val CACHED_DATA_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_D
 private val CACHED_DATA_MACROS_KEY: Key<CachedValue<CachedData>> = Key.create("CACHED_DATA_MACROS_KEY")
 
 private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<PsiFile, Boolean> {
-    if (this is RsDocAndAttributeOwner && !isEnabledByCfg) return contextualFile to false
+    if (this is RsDocAndAttributeOwner && !isEnabledByCfgSelf) return contextualFile to false
     val contextOrMacro = (this as? RsExpandedElement)?.expandedFrom ?: context!!
     return if (contextOrMacro is PsiFile) {
-        contextOrMacro to (contextOrMacro !is RsDocAndAttributeOwner || contextOrMacro.isEnabledByCfg)
+        contextOrMacro to (contextOrMacro !is RsDocAndAttributeOwner || contextOrMacro.isEnabledByCfgSelf)
     } else {
         contextOrMacro.contextualFileAndIsEnabledByCfgOnThisWay()
     }
