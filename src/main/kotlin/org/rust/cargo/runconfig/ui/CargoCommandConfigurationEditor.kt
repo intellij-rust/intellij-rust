@@ -5,15 +5,11 @@
 
 package org.rust.cargo.runconfig.ui
 
-import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.LabeledComponent
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.SimpleListCellRenderer
@@ -62,15 +58,7 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     }
 
     private val currentWorkingDirectory: Path? get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
-    private val workingDirectory = run {
-        val textField = TextFieldWithBrowseButton().apply {
-            val fileChooser = FileChooserDescriptorFactory.createSingleFolderDescriptor().apply {
-                title = ExecutionBundle.message("select.working.directory.message")
-            }
-            addBrowseFolderListener(null, null, null, fileChooser)
-        }
-        LabeledComponent.create(textField, ExecutionBundle.message("run.configuration.working.directory.label"))
-    }
+    private val workingDirectory = WorkingDirectoryComponent()
     private val cargoProject = ComboBox<CargoProject>().apply {
         renderer = SimpleListCellRenderer.create("") { it.presentableName }
         allCargoProjects.forEach { addItem(it) }

@@ -87,6 +87,7 @@
       <w>unsafety</w>
       <w>valobj</w>
       <w>wasm</w>
+      <w>wasmpack</w>
       <w>xargo</w>
       <w>xpointer</w>
     </words>

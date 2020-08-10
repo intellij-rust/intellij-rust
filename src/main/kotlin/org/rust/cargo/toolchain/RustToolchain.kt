@@ -81,6 +81,8 @@ data class RustToolchain(val location: Path) {
 
     fun evcxr(): Evcxr? = if (hasCargoExecutable(EVCXR)) Evcxr(pathToCargoExecutable(EVCXR)) else null
 
+    fun wasmPack(): WasmPack? = if (hasCargoExecutable(WASM_PACK)) WasmPack(pathToCargoExecutable(WASM_PACK)) else null
+
     val isRustupAvailable: Boolean get() = hasExecutable(RUSTUP)
 
     val presentableLocation: String = pathToExecutable(CARGO).toString()
@@ -122,6 +124,7 @@ data class RustToolchain(val location: Path) {
         private const val XARGO = "xargo"
         private const val GRCOV = "grcov"
         private const val EVCXR = "evcxr"
+        private const val WASM_PACK = "wasm-pack"
 
         const val CARGO_TOML = "Cargo.toml"
         const val CARGO_LOCK = "Cargo.lock"

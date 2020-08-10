@@ -821,8 +821,10 @@
         <programRunner implementation="org.rust.cargo.runconfig.CargoCommandRunner"/>
         <programRunner implementation="org.rust.cargo.runconfig.CargoTestCommandRunner"/>
         <programRunner implementation="org.rust.debugger.runconfig.RsDebugAdvertisingRunner"/>
+        <programRunner implementation="org.rust.cargo.runconfig.wasmpack.WasmPackCommandRunner"/>
 
         <configurationType implementation="org.rust.cargo.runconfig.command.CargoCommandConfigurationType"/>
+        <configurationType implementation="org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType"/>
 
         <runConfigurationProducer
                 implementation="org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer"/>
