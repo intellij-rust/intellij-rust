@@ -56,4 +56,11 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             let v = Vec::/*caret*/<i32>::new();
         }
     """, checkWeakWarn = true)
+
+    fun `test derive on function`() = checkFixByText("Remove attribute `derive`","""
+        <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
+        fn foo() { }
+    """, """
+        fn foo() { }
+    """)
 }

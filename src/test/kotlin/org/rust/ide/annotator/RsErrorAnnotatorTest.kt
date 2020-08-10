@@ -3710,4 +3710,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             use dep_proc_macro::inline;
         }
     """)
+
+    fun `test use derive attr on unsupported items`() = checkErrors("""
+        <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
+        type Test = i32;
+    """)
+
+    fun `test use derive attr on supported items`() = checkErrors("""
+        #[derive(Debug)]
+        struct Test(i32);
+
+        #[derive(Debug)]
+        enum Color {
+            RED, GREEN
+        }
+    """)
 }
