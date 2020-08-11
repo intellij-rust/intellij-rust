@@ -47,7 +47,7 @@ class RsImplIndex : AbstractStubIndex<TyFingerprint, RsImplItem>() {
             // Note that `getElements` is intentionally used with intermediate collection instead of
             // `StubIndex.processElements` in order to simplify profiling
             return impls.any {
-                val cachedImpl = RsCachedImplItem.forImpl(project, it)
+                val cachedImpl = RsCachedImplItem.forImpl(it)
                 cachedImpl.isValid && processor(cachedImpl)
             }
         }

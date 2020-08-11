@@ -5,14 +5,13 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
+import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.RsTraitRef
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.isValidProjectMember
-import org.rust.lang.core.resolve.ref.ResolveCacheDependency
-import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -49,15 +48,8 @@ class RsCachedImplItem(
     }
 
     companion object {
-        fun forImpl(project: Project, impl: RsImplItem): RsCachedImplItem {
-            return RsResolveCache.getInstance(project)
-                .resolveWithCaching(impl, ResolveCacheDependency.RUST_STRUCTURE, Resolver)!!
-        }
-
-        private object Resolver : (RsImplItem) -> RsCachedImplItem {
-            override fun invoke(impl: RsImplItem): RsCachedImplItem {
-                return RsCachedImplItem(impl)
-            }
+        fun forImpl(impl: RsImplItem): RsCachedImplItem {
+            return (impl as RsImplItemImplMixin).cachedImplItem.value
         }
     }
 }
