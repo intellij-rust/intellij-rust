@@ -374,10 +374,16 @@ private fun processQualifiedPathResolveVariants(
         return false
     }
     if (base is RsMod) {
-        val s = base.`super`
-        // `super` is allowed only after `self` and `super`
-        // so we add `super` in completion only when it produces valid path
-        if (s != null && (!isCompletion || isSuperChain(qualifier)) && processor("super", s)) return true
+        val result = processor.lazy("super") {
+            // `super` is allowed only after `self` and `super`
+            // so we add `super` in completion only when it produces valid path
+            if (!isCompletion || isSuperChain(qualifier)) {
+                base.`super`
+            } else {
+                null
+            }
+        }
+        if (result) return true
 
         val containingMod = path.containingMod
         if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
@@ -388,8 +394,9 @@ private fun processQualifiedPathResolveVariants(
         // Proc macro crates are not allowed to export anything but procedural macros,
         // and all possible macro exports are collected above. However, when resolve
         // happens inside proc macro crate itself, all items are allowed
-        val resolveBetweenDifferentTargets = base.containingCrate != path.containingCrate
-        if (resolveBetweenDifferentTargets && base.containingCrate?.kind?.isProcMacro == true) {
+        val baseModContainingCrate = base.containingCrate
+        val resolveBetweenDifferentTargets = baseModContainingCrate != containingMod.containingCrate
+        if (resolveBetweenDifferentTargets && baseModContainingCrate?.kind?.isProcMacro == true) {
             return false
         }
     }
@@ -504,8 +511,7 @@ private fun processUnqualifiedPathResolveVariants(
         }
         if (Namespace.Types in ns) {
             if (processor("self", containingMod)) return true
-            val superMod = containingMod.`super`
-            if (superMod != null && processor("super", superMod)) return true
+            if (processor.lazy("super") { containingMod.`super` }) return true
             if (crateRoot != null && processor("crate", crateRoot)) return true
         }
     }
