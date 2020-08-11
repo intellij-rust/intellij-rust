@@ -1296,9 +1296,12 @@ private fun processLexicalDeclarations(
             }
         }
 
-        val boundNames = PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java)
-            .filter { (it.parent is RsPatField || !it.isReferenceToConstant) && hygieneFilter(it) }
-        return processAll(boundNames, patternProcessor)
+        return PsiTreeUtil.findChildrenOfType(pattern, RsPatBinding::class.java).any { binding ->
+            val name = binding.name ?: return@any false
+            patternProcessor.lazy(name) {
+                binding.takeIf { (it.parent is RsPatField || !it.isReferenceToConstant) && hygieneFilter(it) }
+            }
+        }
     }
 
     fun processCondition(condition: RsCondition?, processor: RsResolveProcessor): Boolean {
@@ -1361,9 +1364,10 @@ private fun processLexicalDeclarations(
             val visited = mutableSetOf<String>()
             if (Namespace.Values in ns) {
                 val shadowingProcessor = { e: ScopeEntry ->
-                    (e.name !in visited) && run {
-                        visited += e.name
-                        processor(e)
+                    (e.name !in visited) && processor(e).also {
+                        if (e.isInitialized && e.element != null) {
+                            visited += e.name
+                        }
                     }
                 }
 
