@@ -523,8 +523,8 @@ private fun processUnqualifiedPathResolveVariants(
     // In 2018 edition a path is crate-relative if it starts with `crate::` (handled above)
     // or if it's inside "visibility restriction". `::`-qualified path on 2018 edition means that
     // such path is a name of some dependency crate (that should be resolved without `extern crate`)
-    val isCrateRelative = !isEdition2018 && (hasColonColon || path.contextStrict<RsUseItem>() != null)
-        || path.contextStrict<RsVisRestriction>() != null
+    val isCrateRelative = !isEdition2018 && (hasColonColon || path.rootPath().parent is RsUseSpeck)
+        || path.rootPath().parent is RsVisRestriction
     // see https://doc.rust-lang.org/edition-guide/rust-2018/module-system/path-clarity.html#the-crate-keyword-refers-to-the-current-crate
     val isExternCrate = isEdition2018 && hasColonColon
     return when {

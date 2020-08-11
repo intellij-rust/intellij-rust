@@ -43,9 +43,11 @@ tailrec fun RsPath.basePath(): RsPath {
 }
 
 /** For `Foo::bar` in `Foo::bar::baz::quux` returns `Foo::bar::baz::quux` */
-tailrec fun RsPath.superPath(): RsPath {
-    val parent = context
-    return if (parent is RsPath) parent.superPath() else this
+tailrec fun RsPath.rootPath(): RsPath {
+    // Use `parent` instead of `context` because of better performance.
+    // Assume nobody set a context for a part of a path
+    val parent = parent
+    return if (parent is RsPath) parent.rootPath() else this
 }
 
 val RsPath.textRangeOfLastSegment: TextRange
@@ -134,7 +136,7 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             //     pub(in self) mod bar {}
             //          //^ containingMod == `foo`
             // ```
-            val visParent = contextStrict<RsVis>()?.context
+            val visParent = (rootPath().parent as? RsVisRestriction)?.parent?.parent
             return if (visParent is RsMod) visParent.containingMod else super.containingMod
         }
 }
