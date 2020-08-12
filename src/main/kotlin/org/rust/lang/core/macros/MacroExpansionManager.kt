@@ -69,7 +69,7 @@ interface MacroExpansionManager {
     fun getExpansionFor(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?>
     fun getExpandedFrom(element: RsExpandedElement): RsMacroCall?
     /** Optimized equivalent for `getExpandedFrom(element)?.context` */
-    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement?
+    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement, stubParent: PsiElement?): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
     fun reexpand()
 
@@ -223,13 +223,13 @@ class MacroExpansionManagerImpl(
         }
     }
 
-    override fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement? {
+    override fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement, stubParent: PsiElement?): PsiElement? {
         // For in-memory expansions
         element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it.context }
 
         val inner = inner
         return if (inner != null && inner.isExpansionModeNew) {
-            inner.getContextOfMacroCallExpandedFrom(element)
+            inner.getContextOfMacroCallExpandedFrom(element, stubParent)
         } else {
             null
         }
@@ -948,9 +948,9 @@ private class MacroExpansionServiceImplInner(
     }
 
     /** Optimized equivalent for `getExpandedFrom(element)?.context` */
-    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement): PsiElement? {
+    fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement, stubParent: PsiElement?): PsiElement? {
         checkReadAccessAllowed()
-        var parentVirtualFile = (element.stubParent as? RsFile)?.virtualFile ?: return null
+        var parentVirtualFile = (stubParent as? RsFile)?.virtualFile ?: return null
         if (parentVirtualFile !is VirtualFileWithId) return null
         while (true) {
             val info = storage.getInfoForExpandedFile(parentVirtualFile) ?: return null
