@@ -220,6 +220,7 @@ private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
     if (attributeStub?.hasCfg == false) return ThreeValuedLogic.True
 
     val cfgAttributes = queryAttributes.cfgAttributes
+    if (cfgAttributes.none()) return ThreeValuedLogic.True
 
     // TODO: When we open both cargo projects for an application and a library,
     // this will return the library as containing package.
