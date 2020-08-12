@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.usageView.UsageInfo
 import org.rust.ide.utils.import.insertUseItem
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -30,11 +31,17 @@ class RsPathUsageInfo(
 
 class RsMoveReferenceInfo(
     var pathOld: RsPath,
-    val pathNew: RsPath?,
-    // == `pathOld.reference.resolve()`
-    // mutable because it can be inside moved elements, so after move we have to change it
+    /** `null` means no accessible path found */
+    val pathNewAccessible: RsPath?,
+    /** Fallback path to use when `pathNew == null` (if user choose "Continue" in conflicts view) */
+    val pathNewFallback: RsPath?,
+    /**
+     * == `pathOld.reference.resolve()`
+     * mutable because it can be inside moved elements, so after move we have to change it
+     */
     var target: RsQualifiedNamedElement
 ) {
+    val pathNew: RsPath? get() = pathNewAccessible ?: pathNewFallback
     val isInsideUseDirective: Boolean get() = pathOld.ancestorStrict<RsUseItem>() != null
 }
 
@@ -56,6 +63,16 @@ object RsMoveUtil {
             LOG.error("Can't create RsPath from '$this' in context $context")
             null
         }
+
+    fun String.toRsPathInEmptyTmpMod(
+        codeFragmentFactory: RsCodeFragmentFactory,
+        psiFactory: RsPsiFactory,
+        context: RsMod
+    ): RsPath? {
+        val mod = psiFactory.createModItem("__tmp__", "")
+        mod.setContext(context)
+        return toRsPath(codeFragmentFactory, mod)
+    }
 
     fun RsPath.isAbsolute(): Boolean {
         if (basePath().hasColonColon) return true

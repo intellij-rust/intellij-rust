@@ -220,10 +220,10 @@ class RsMoveFilesOrDirectoriesProcessor(
 
         val references = usages.mapNotNull { usage ->
             val pathOld = usage.element as? RsPath ?: return@mapNotNull null
-            val pathNew = insideReferencesMap[pathOld]
-                ?: getPathNewFallback(pathOld)
-                ?: return@mapNotNull null
-            RsMoveReferenceInfo(pathOld, pathNew, movedFile)
+            val pathNewAccessible = insideReferencesMap[pathOld]
+            val pathNewFallback = getPathNewFallback(pathOld)
+            if (pathNewAccessible == null && pathNewFallback == null) return@mapNotNull null
+            RsMoveReferenceInfo(pathOld, pathNewAccessible, pathNewFallback, movedFile)
         }
         RsMoveRetargetReferencesProcessor(project, oldParentMod, newParentMod).retargetReferences(references)
     }
