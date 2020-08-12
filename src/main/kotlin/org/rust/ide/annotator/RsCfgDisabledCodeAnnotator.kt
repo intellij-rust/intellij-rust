@@ -13,13 +13,13 @@ import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import org.rust.ide.colors.RsColor
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
-import org.rust.lang.core.psi.ext.isEnabledByCfg
+import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
 import org.rust.lang.core.psi.ext.rangeWithSurroundingLineBreaks
 
 class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         if (holder.isBatchMode) return
-        if (element is RsDocAndAttributeOwner && !element.isEnabledByCfg) {
+        if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelf) {
             holder.createCfgDisabledAnnotation(element.rangeWithSurroundingLineBreaks)
         }
     }

@@ -120,10 +120,10 @@ private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsItemElement)
 }
 
 private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolean {
-    if (this is RsDocAndAttributeOwner && !this.isEnabledByCfg) return false
+    if (this is RsDocAndAttributeOwner && !this.isEnabledByCfgSelf) return false
 
     return when (this) {
-        is RsMacroCall -> processExpansionRecursively { it is RsItemElement && it.isEnabledByCfg && processor(it) }
+        is RsMacroCall -> processExpansionRecursively { it is RsItemElement && it.isEnabledByCfgSelf && processor(it) }
         is RsItemElement -> processor(this)
         else -> false
     }
