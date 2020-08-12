@@ -8,6 +8,7 @@ package org.rust.ide.newProject.ui
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -17,9 +18,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.Link
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.Cargo
@@ -27,11 +28,13 @@ import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate
 import org.rust.ide.newProject.RsProjectTemplate
+import org.rust.ide.newProject.state.RsUserTemplatesState
 import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
+import javax.swing.DefaultListModel
 import javax.swing.JList
 import javax.swing.ListSelectionModel
-import javax.swing.ScrollPaneConstants
+import kotlin.math.min
 
 class RsNewProjectPanel(
     private val showProjectTypeSelection: Boolean,
@@ -43,11 +46,21 @@ class RsNewProjectPanel(
     private val cargo: Cargo?
         get() = rustProjectSettings.data.toolchain?.rawCargo()
 
-    private val templateList = JBList(
+    private val defaultTemplates: List<RsProjectTemplate> = listOf(
         RsGenericTemplate("Binary (application)", true),
         RsGenericTemplate("Library", false),
         RsCustomTemplate("WebAssembly Lib", "https://github.com/rustwasm/wasm-pack-template", false)
-    ).apply {
+    )
+
+    private val userTemplates: List<RsCustomTemplate>
+        get() = RsUserTemplatesState.instance.templates.map {
+            RsCustomTemplate(it.name, it.url)
+        }
+
+    private val templateListModel: DefaultListModel<RsProjectTemplate> =
+        JBList.createDefaultListModel(defaultTemplates + userTemplates)
+
+    private val templateList: JBList<RsProjectTemplate> = JBList(templateListModel).apply {
         selectionMode = ListSelectionModel.SINGLE_SELECTION
         selectedIndex = 0
         addListSelectionListener { update() }
@@ -73,9 +86,20 @@ class RsNewProjectPanel(
     private val selectedTemplate: RsProjectTemplate
         get() = templateList.selectedValue
 
-    private val templatePane = JBScrollPane(templateList).apply {
-        horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-    }
+    val templateToolbar: ToolbarDecorator = ToolbarDecorator.createDecorator(templateList)
+        .setToolbarPosition(ActionToolbarPosition.BOTTOM)
+        .disableUpDownActions()
+        .setAddAction {
+            AddUserTemplateDialog().show()
+            updateTemplatesList()
+        }
+        .setRemoveAction {
+            val customTemplate = selectedTemplate as? RsCustomTemplate ?: return@setRemoveAction
+            RsUserTemplatesState.instance.templates
+                .removeIf { it.name == customTemplate.name }
+            updateTemplatesList()
+        }
+        .setRemoveActionUpdater { selectedTemplate !in defaultTemplates }
 
     private var needInstallCargoGenerate = false
     private val downloadCargoGenerateLink = Link("Install cargo-generate using Cargo", action = {
@@ -87,7 +111,7 @@ class RsNewProjectPanel(
             override fun onSuccess() {
                 if (exitCode != 0) {
                     PopupUtil.showBalloonForComponent(
-                        templatePane,
+                        templateList,
                         "Failed to install cargo-generate",
                         MessageType.ERROR,
                         true,
@@ -126,7 +150,7 @@ class RsNewProjectPanel(
 
         if (showProjectTypeSelection) {
             component(JBLabel("Project template:"))
-            component(templatePane)
+            component(templateToolbar.createPanel())
             component(downloadCargoGenerateLink)
         }
 
@@ -147,6 +171,18 @@ class RsNewProjectPanel(
                 updateListener?.invoke()
             }
         )
+    }
+
+    private fun updateTemplatesList() {
+        val index: Int = templateList.selectedIndex
+
+        with(templateListModel) {
+            removeAllElements()
+            defaultTemplates.forEach(::addElement)
+            userTemplates.forEach(::addElement)
+        }
+
+        templateList.selectedIndex = min(index, templateList.itemsCount - 1)
     }
 
     @Throws(ConfigurationException::class)
