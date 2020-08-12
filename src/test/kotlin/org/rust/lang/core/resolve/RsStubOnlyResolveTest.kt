@@ -323,6 +323,23 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn baz() {}
     """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
 
+    fun `test module inside inline module with path`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo {
+            #[path="qwe"]
+            pub mod bar {
+                pub mod baz;
+            }
+        }
+
+        fn main() {
+            self::foo::bar::baz::func();
+                               //^ foo/qwe/baz.rs
+        }
+    //- foo/qwe/baz.rs
+        pub fn func() {}
+    """)
+
     fun `test inline module path in non crate root`() = stubOnlyResolve("""
     //- main.rs
         mod foo;

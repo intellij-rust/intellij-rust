@@ -54,7 +54,13 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
 
         val explicitPath = pathAttribute
         val (parentDirectory, path) = if (explicitPath != null) {
-            contextualFile.originalFile.parent to explicitPath
+            // https://doc.rust-lang.org/reference/items/modules.html#the-path-attribute
+            val parentDirectory = if (`super` is RsFile) {
+                contextualFile.originalFile.parent
+            } else {
+                `super`?.getOwnedDirectory(createIfNotExists)
+            }
+            parentDirectory to explicitPath
         } else {
             `super`?.getOwnedDirectory(createIfNotExists) to name
         }
