@@ -52,11 +52,14 @@ class RsModuleBuilder : ModuleBuilder() {
                 val template = configurationData?.template ?: return
                 val cargo = toolchain.rawCargo()
                 val project = modifiableRootModel.project
+                val name = project.name.replace(' ', '_')
 
                 val generatedFiles = cargo.makeProject(
                     project,
                     modifiableRootModel.module,
-                    root, template
+                    root,
+                    name,
+                    template
                 ) ?: return
 
                 project.makeDefaultRunConfiguration(template)

@@ -41,8 +41,9 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         val (settings, template) = data
         val cargo = settings.toolchain?.rawCargo() ?: return
 
+        val name = project.name.replace(' ', '_')
         val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {
-            cargo.makeProject(project, module, baseDir, template)
+            cargo.makeProject(project, module, baseDir, name, template)
         } ?: return
 
         project.makeDefaultRunConfiguration(template)
