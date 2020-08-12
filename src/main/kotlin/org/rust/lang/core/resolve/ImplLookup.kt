@@ -490,8 +490,10 @@ class ImplLookup(
             val result = RsTypeAliasIndex.findPotentialAliases(project, fingerprint) {
                 val name = it.name ?: return@findPotentialAliases false
                 val aliasFingerprint = TyFingerprint(name)
-                val isAppropriateAlias = set.add(aliasFingerprint) &&
-                    canCombineTypes(selfTy, it.declaredType, it.generics, it.constGenerics)
+                val isAppropriateAlias = set.add(aliasFingerprint) && run {
+                    val (declaredType, generics, constGenerics) = it.typeAndGenerics
+                    canCombineTypes(selfTy, declaredType, generics, constGenerics)
+                }
                 isAppropriateAlias && processor(aliasFingerprint)
             }
             if (result) return true
