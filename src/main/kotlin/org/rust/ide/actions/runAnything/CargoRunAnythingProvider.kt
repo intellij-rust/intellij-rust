@@ -29,15 +29,22 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
         if (pattern.startsWith(helpCommand)) getCommand(pattern) else null
 
     override fun getValues(dataContext: DataContext, pattern: String): Collection<String> {
-        if (!pattern.startsWith(helpCommand)) return emptyList()
         val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return emptyList()
         if (!project.hasCargoProject) return emptyList()
         val completionProvider = CargoCommandCompletionProvider(project.cargoProjects) {
             getAppropriateCargoProject(dataContext)?.workspace
         }
-        val context = trimStart(pattern, helpCommand).substringBeforeLast(' ')
-        val prefix = pattern.substringBeforeLast(' ')
-        return completionProvider.complete(context).map { "$prefix ${it.lookupString}" }
+
+        return when {
+            pattern.startsWith(helpCommand) -> {
+                val context = trimStart(pattern, helpCommand).substringBeforeLast(' ')
+                val prefix = pattern.substringBeforeLast(' ')
+                completionProvider.complete(context).map { "$prefix ${it.lookupString}" }
+            }
+            pattern.isNotBlank() && helpCommand.startsWith(pattern) ->
+                completionProvider.complete("").map { "$helpCommand ${it.lookupString}" }
+            else -> emptyList()
+        }
     }
 
     override fun execute(dataContext: DataContext, value: String) {
