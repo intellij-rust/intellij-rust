@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections.typecheck
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
@@ -118,7 +120,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub type A = S;
             pub fn bar() -> (S, A) { (S, A) }
         }
-        
+
         fn foo() {
             <error>bar()<caret></error>
         }
@@ -130,7 +132,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub type A = S;
             pub fn bar() -> (S, A) { (S, A) }
         }
-        
+
         fn foo() -> (S, A) {
             bar()
         }
@@ -144,7 +146,7 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub type A = S;
             pub fn bar() -> (S, A) { (S, A) }
         }
-        
+
         fn foo() -> i32 {
             <error>bar()<caret></error>
         }
@@ -156,9 +158,38 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
             pub type A = S;
             pub fn bar() -> (S, A) { (S, A) }
         }
-        
+
         fn foo() -> (S, A) {
             bar()
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test do not offer fix in closure without an explicit return type passed to a function`() = checkFixIsUnavailable("Change return type of closure", """
+        fn foo<F>(f: F) -> i32
+            where F: Fn(i32) -> i32 {
+            f(0)
+        }
+        fn bar() {
+            foo(|x| <error>true<caret></error>);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test do not offer fix in closure without an explicit return type assigned to a variable`() = checkFixIsUnavailable("Change return type of closure", """
+        fn foo() {
+            let x: fn() -> i32 = || <error>true<caret></error>;
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test offer fix in closure with an explicit return type`() = checkFixByText("Change return type of closure", """
+        fn foo() {
+            let x: fn() -> i32 = || -> i32 <error>true<caret></error>;
+        }
+    """, """
+        fn foo() {
+            let x: fn() -> i32 = || -> bool true;
         }
     """)
 }
