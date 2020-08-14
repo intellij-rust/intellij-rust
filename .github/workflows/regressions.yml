@@ -1,6 +1,6 @@
 name: regressions
 
-on: workflow_dispatch
+on: [ workflow_dispatch, pull_request ]
 
 jobs:
     calculate-base-commit:
@@ -12,9 +12,23 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: Calculate base commit
+            # In case of `workflow_dispatch` event, `github.sha` points to latest commit of chosen branch
+            # So, we need to find the latest common commit for master branch and chosen one
+            # to calculate difference only for branch changes
+            - name: Calculate base commit for workflow_dispatch event
+              if: github.event_name == 'workflow_dispatch'
+              run: echo "::set-env name=BASE_COMMIT::$(git merge-base origin/master ${{ github.sha }})"
+
+            # For pull request event, GitHub produces additional merge commit with `master` branch and PR branch as parents
+            # In this case, we want to check difference between master branch and merge commit
+            # so emit hash of `origin/master` branch itself as base commit
+            - name: Calculate base commit for pull_request event
+              if: github.event_name == 'pull_request'
+              run: echo "::set-env name=BASE_COMMIT::$(git log origin/master -n 1 --format=format:%H)"
+
+            - name: Emit base commit
               id: base-commit
-              run: echo "::set-output name=base-commit::$(git merge-base origin/master ${{ github.sha }})"
+              run: echo "::set-output name=base-commit::$BASE_COMMIT"
 
             - name: Show commits
               run: |
