@@ -11,10 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
-import org.rust.lang.core.psi.RsBlock
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.LBRACE
 import org.rust.lang.core.psi.RsElementTypes.RBRACE
-import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.ancestors
 
 /**
@@ -26,11 +25,13 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
         addFixers(
             MethodCallFixer(),
             SemicolonFixer(),
-            CommaFixer()
+            CommaFixer(),
+            FunctionOrStructFixer()
         )
 
         addEnterProcessors(
             AfterSemicolonEnterProcessor(),
+            AfterFunctionOrStructEnterProcessor(),
             PlainEnterProcessor()
         )
     }
@@ -42,7 +43,8 @@ class RsSmartEnterProcessor : SmartEnterProcessorWithFixers() {
             val elementType = each.node.elementType
             when {
                 elementType == LBRACE || elementType == RBRACE -> continue@loop
-                each is RsMatchArm || each.parent is RsBlock -> return each
+                each is RsMatchArm || each.parent is RsBlock
+                    || each.parent is RsFunction || each.parent is RsStructItem -> return each
             }
         }
         return null

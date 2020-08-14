@@ -201,7 +201,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true =>/*caret*/
             }
         }
-    ""","""
+    """, """
         fn main() {
             let a = true;
             match a {
@@ -220,7 +220,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => test()/*caret*/
             }
         }
-    ""","""
+    """, """
         fn test() {}
 
         fn main() {
@@ -239,7 +239,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => "test".as_bytes()/*caret*/
             }
         }
-    ""","""
+    """, """
         fn main() {
             let a = true;
             match a {
@@ -256,7 +256,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => ()/*caret*/
             }
         }
-    ""","""
+    """, """
         fn main() {
             let a = true;
             match a {
@@ -273,7 +273,7 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => println!("test")/*caret*/
             }
         }
-    ""","""
+    """, """
         fn main() {
             let a = true;
             match a {
@@ -290,11 +290,71 @@ class RsSmartEnterProcessorTest : RsTestBase() {
                 true => {}/*caret*/
             }
         }
-    ""","""
+    """, """
         fn main() {
             let a = true;
             match a {
                 true => {}
+                /*caret*/
+            }
+        }
+    """)
+
+    fun `test fix function`() = doTest("""
+        fn foo/*caret*/
+    """, """
+        fn foo() {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix function with parameters`() = doTest("""
+        fn foo(a: i32, b: i32/*caret*/)
+    """, """
+        fn foo(a: i32, b: i32) {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix function with return type`() = doTest("""
+        fn foo() -> i32/*caret*/
+    """, """
+        fn foo() -> i32 {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix function with parameters and return type`() = doTest("""
+        fn foo(a: i32) -> i32/*caret*/
+    """, """
+        fn foo(a: i32) -> i32 {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix struct`() = doTest("""
+        struct s/*caret*/
+    """, """
+        struct s {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix union`() = doTest("""
+        union u/*caret*/
+    """, """
+        union u {
+            /*caret*/
+        }
+    """)
+
+    fun `test fix nested function definition`() = doTest("""
+        fn foo() {
+            fn bar(/*caret*/)
+        }
+    """, """
+        fn foo() {
+            fn bar() {
                 /*caret*/
             }
         }
