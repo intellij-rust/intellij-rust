@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
@@ -790,6 +791,18 @@ class RsInlineFunctionTest : RsTestBase() {
             }
             """)
 
+    fun `test inline function with return not at end of body`() = expectError<RefactoringErrorHintException> ("""
+            fn main() {
+                let a = foo();
+                println!(a);
+            }
+            fn /*caret*/foo() -> i32 {
+                if (true) {
+                    return 1;
+                }
+                panic!();
+            }""")
+
     fun `test inline function with differently named function parameters`() = doTest("""
             fn main() {
                 let a = foo(bar());
@@ -816,5 +829,10 @@ class RsInlineFunctionTest : RsTestBase() {
         checkByText(code, excepted) {
             myFixture.performEditorAction("Inline")
         }
+    }
+
+    private inline fun <reified T : Throwable> expectError(code: String) {
+        InlineFile(code)
+        expect<T> { myFixture.performEditorAction("Inline") }
     }
 }

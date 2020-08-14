@@ -136,14 +136,14 @@ class RsInlineFunctionProcessor(
 
     companion object {
         fun doesFunctionHaveMultipleReturns(fn: RsFunction): Boolean {
-            var entryCount = 0
+            val entryPoints =  mutableListOf<ExitPoint>()
             val sink: (ExitPoint) -> Unit = {
-                if (it !is ExitPoint.TryExpr && it !is ExitPoint.DivergingExpr) {
-                    ++entryCount
+                if (it !is ExitPoint.TryExpr) {
+                    entryPoints.add(it)
                 }
             }
             ExitPoint.process(fn, sink)
-            return entryCount > 1
+            return entryPoints.count() > 1 && entryPoints.dropLast(1).any { it is ExitPoint.Return }
         }
 
         fun isFunctionRecursive(fn: RsFunction): Boolean {
