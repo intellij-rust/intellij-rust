@@ -61,8 +61,11 @@ fun parseExpandedTextWithContext(
     context: MacroExpansionContext,
     factory: RsPsiFactory,
     expandedText: CharSequence
-): MacroExpansion? =
-    getExpansionFromExpandedFile(context, factory.createFile(context.prepareExpandedTextForParsing(expandedText)))
+): MacroExpansion? {
+    val file = factory.createPsiFile(context.prepareExpandedTextForParsing(expandedText))
+        as? RsFile ?: return null
+    return getExpansionFromExpandedFile(context, file)
+}
 
 /** Keep in sync with [MacroExpansionContext.expansionFileStartOffset] */
 fun MacroExpansionContext.prepareExpandedTextForParsing(
