@@ -6,10 +6,7 @@
 package org.rust.lang.core.psi
 
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.PsiParserFacade
+import com.intellij.psi.*
 import com.intellij.util.LocalTimeCounter
 import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.presentation.renderInsertionSafe
@@ -34,7 +31,13 @@ class RsPsiFactory(
     private val markGenerated: Boolean = true,
     private val eventSystemEnabled: Boolean = false
 ) {
-    fun createFile(text: CharSequence): RsFile =
+    fun createFile(text: CharSequence): RsFile = createPsiFile(text) as RsFile
+
+    /**
+     * Returns [PsiPlainTextFile] if [text] is too large.
+     * Otherwise returns [RsFile].
+     */
+    fun createPsiFile(text: CharSequence): PsiFile =
         PsiFileFactory.getInstance(project)
             .createFileFromText(
                 "DUMMY.rs",
@@ -43,7 +46,7 @@ class RsPsiFactory(
                 /*modificationStamp =*/ LocalTimeCounter.currentTime(), // default value
                 /*eventSystemEnabled =*/ eventSystemEnabled, // `false` by default
                 /*markAsCopy =*/ markGenerated // `true` by default
-            ) as RsFile
+            )
 
     fun createMacroBody(text: String): RsMacroBody? = createFromText(
         "macro_rules! m $text"
