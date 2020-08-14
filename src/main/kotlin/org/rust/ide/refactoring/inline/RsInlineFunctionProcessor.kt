@@ -188,6 +188,8 @@ class RsInlineFunctionProcessor(
             val selfParam = functionDup.selfParameter
             replaceSelfParamWithExpr(selfParam, caller, funcScope)
 
+            replaceParametersWithArgumentValues(functionDup, caller, funcScope)
+
             val retExprInside = body.descendantsOfType<RsRetExpr>().firstOrNull()?.expr
             if (retExprInside != null && body.stmtList.size == 1) {
                 caller.replace(retExprInside)
@@ -219,6 +221,22 @@ class RsInlineFunctionProcessor(
             }
         } catch (e: IncorrectOperationException) {
             logger.error(e)
+        }
+    }
+
+    private fun replaceParametersWithArgumentValues(functionDup: RsFunction, caller: PsiElement, funcScope: LocalSearchScope) {
+        val parameterBindingsList = functionDup.valueParameters
+            .filter { it !is RsSelfParameter }
+            .map { it.pat }
+            .filterIsInstance(RsPatIdent::class.java)
+            .map { it.patBinding }
+        val valueArgumentList = when (caller) {
+            is RsCallExpr -> caller.valueArgumentList
+            is RsDotExpr -> caller.methodCall?.valueArgumentList ?: return
+            else -> return
+        }
+        for ((index, parameterBinding) in parameterBindingsList.withIndex()) {
+            replaceParamWithExpr(parameterBinding, valueArgumentList.exprList[index], funcScope)
         }
     }
 
@@ -273,6 +291,18 @@ class RsInlineFunctionProcessor(
             }
         } else {
             caller.delete()
+        }
+    }
+
+    private fun replaceParamWithExpr(param: RsPatBinding, argument: RsExpr, funcScope: LocalSearchScope) {
+        val argumentText = buildString {
+            append(argument.text.removePrefix("mut ").removePrefix("&"))
+        }
+
+        val paramExpr = factory.tryCreateExpression(argumentText)!!
+        val allParamRefs = ReferencesSearch.search(param.navigationElement, funcScope).findAll()
+        allParamRefs.forEach {
+            it.element.ancestorOrSelf<RsExpr>()!!.replace(paramExpr)
         }
     }
 

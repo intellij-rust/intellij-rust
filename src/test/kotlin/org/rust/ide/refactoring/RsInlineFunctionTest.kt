@@ -777,16 +777,37 @@ class RsInlineFunctionTest : RsTestBase() {
             }
             fn /*caret*/foo() -> i32 {
                 if (false) {
-                    panic!()
+                    panic!();
                 }
                 return 1;
             }""", """
             fn main() {
                 if (false) {
-                    panic!()
+                    panic!();
                 }
                 let a = 1;
                 println!(a);
+            }
+            """)
+
+    fun `test inline function with differently named function parameters`() = doTest("""
+            fn main() {
+                let a = foo(bar());
+            }
+            fn /*caret*/foo(i: i32) -> i32 {
+                return i + bar();
+            }
+
+            fn bar() -> i32 {
+                5
+            }
+            """, """
+            fn main() {
+                let a = bar() + bar();
+            }
+
+            fn bar() -> i32 {
+                5
             }
             """)
 
