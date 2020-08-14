@@ -40,6 +40,7 @@ class CustomRealProjectAnalysisTest : RsRealProjectAnalysisTest() {
             annotations += annotation
         }
 
+        // Should be synchronized with `scripts/calculate_regressions.py`
         override fun finish() {
             val testDir = File("regressions")
             testDir.mkdirs()
