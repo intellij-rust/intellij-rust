@@ -99,6 +99,10 @@ allprojects {
             val isRootProject = project.name in listOf("plugin", "intellij-toml")
             enabled = isRootProject && prop("enableBuildSearchableOptions").toBoolean()
         }
+
+        test {
+            testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
+        }
     }
 
     configure<JavaPluginConvention> {

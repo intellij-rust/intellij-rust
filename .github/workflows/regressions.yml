@@ -39,6 +39,7 @@ jobs:
             PROJECT_PATH: ${{ matrix.project.path }}
             PROJECT_URL: https://github.com/${{ matrix.project.url }}
             PROJECT_EXCLUDE_PATHS: ${{ matrix.project.exclude_paths }}
+            ORG_GRADLE_PROJECT_showStandardStreams: true
         steps:
             - uses: actions/checkout@v2
               with:
