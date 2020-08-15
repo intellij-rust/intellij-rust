@@ -187,6 +187,106 @@ class RsDetachedFileInspectionTest : RsInspectionsTestBase(RsDetachedFileInspect
         //- a/b/mod.rs
     """)
 
+    fun `test attach file find existing mod item`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            mod a;
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            mod a;
+            mod foo;
+        //- foo.rs
+    """)
+
+    fun `test attach file multiple mod items`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            mod a;
+            mod b;
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            mod a;
+            mod b;
+            mod foo;
+        //- foo.rs
+    """)
+
+    fun `test attach file find last existing mod item`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            fn test1() {}
+
+            mod a;
+            mod b;
+
+            mod c;
+
+            fn test2() {}
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            fn test1() {}
+
+            mod a;
+            mod b;
+
+            mod c;
+            mod foo;
+
+            fn test2() {}
+        //- foo.rs
+    """)
+
+    fun `test attach file skip attributes`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            #![allow(dead_code)]
+            #![feature(async_closure)]
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            #![allow(dead_code)]
+            #![feature(async_closure)]
+
+            mod foo;
+        //- foo.rs
+    """)
+
+    fun `test attach file skip attributes with comments`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            //! foo
+            //! bar
+            #![allow(dead_code)]
+            #![feature(async_closure)]
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            //! foo
+            //! bar
+            #![allow(dead_code)]
+            #![feature(async_closure)]
+
+            mod foo;
+        //- foo.rs
+    """)
+
+    fun `test attach file skip comments`() = checkFixByFileTree("Attach file to lib.rs", """
+        //- lib.rs
+            //! foo
+            //! bar
+        //- foo.rs
+        <warning descr="File is not included in module tree, analysis is not available"></warning>/*caret*/
+    """, """
+        //- lib.rs
+            //! foo
+            //! bar
+            mod foo;
+        //- foo.rs
+    """)
+
     private fun checkFixWithMultipleModules(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
