@@ -12,27 +12,30 @@ import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.ext.RsNamedElement
 
+// BACKCOMPAT: Rust 1.46
+//  Since Rust 1.47 layout of stdlib was changed.
+//  In general, `lib%lib_name%` was replaced with `%lib_name%/src`
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveLinkTest : RsTestBase() {
-    fun `test with import`() = doTest("Hash", ".../hash/mod.rs", """
+    fun `test with import`() = doTest("Hash", "...hash/mod.rs", """
         use std::hash::Hash;
 
         fn foo<T: Hash>(t: T) {}
           //^
     """)
 
-    fun `test item from prelude`() = doTest("String", ".../string.rs", """
+    fun `test item from prelude`() = doTest("String", "...string.rs", """
         fn foo(s: String) {}
           //^
     """)
 
-    fun `test crate fqn link`() = doTest("std/index.html", ".../libstd/lib.rs")
-    fun `test mod fqn link`() = doTest("std/io/index.html", ".../libstd/io/mod.rs")
-    fun `test fqn link with reexport`() = doTest("std/cmp/trait.Eq.html", ".../libcore/cmp.rs")
-    fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", ".../libcore/marker.rs")
-    fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", ".../libcore/result.rs")
-    fun `test macro fqn link`() = doTest("std/macro.println.html", ".../libstd/macros.rs")
-    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", ".../libcore/macros.rs|...libcore/macros/mod.rs")
+    fun `test crate fqn link`() = doTest("std/index.html", "...libstd/lib.rs|...std/src/lib.rs")
+    fun `test mod fqn link`() = doTest("std/io/index.html", "...libstd/io/mod.rs|...std/src/io/mod.rs")
+    fun `test fqn link with reexport`() = doTest("std/cmp/trait.Eq.html", "...libcore/cmp.rs|...core/src/cmp.rs")
+    fun `test mod fqn link with reexport`() = doTest("std/marker/index.html", "...libcore/marker.rs|...core/src/marker.rs")
+    fun `test method fqn link with reexport`() = doTest("std/result/enum.Result.html#method.unwrap", "...libcore/result.rs|...core/src/result.rs")
+    fun `test macro fqn link`() = doTest("std/macro.println.html", "...libstd/macros.rs|...std/src/macros.rs")
+    fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", "...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs")
 
     private fun doTest(link: String, expectedPaths: String, @Language("Rust") code: String = DEFAULT_TEXT) {
         val paths = expectedPaths.split("|")

@@ -13,13 +13,16 @@ import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.stdext.BothEditions
 
+// BACKCOMPAT: Rust 1.46
+//  Since Rust 1.47 layout of stdlib was changed.
+//  In general, `lib%lib_name%` was replaced with `%lib_name%/src`
 @BothEditions
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve fs`() = stubOnlyResolve("""
     //- main.rs
         use std::fs::File;
-                    //^ ...libstd/fs.rs
+                    //^ ...libstd/fs.rs|...std/src/fs.rs
 
         fn main() {}
     """)
@@ -27,7 +30,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve collections`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::Bound;
-                             //^ ...libcore/ops/range.rs
+                             //^ ...libcore/ops/range.rs|...core/src/ops/range.rs
 
         fn main() {}
     """)
@@ -35,14 +38,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test BTreeMap`() = stubOnlyResolve("""
     //- main.rs
         use std::collections::BTreeMap;
-                                //^ ...liballoc/collections/btree/map.rs
+                                //^ ...liballoc/collections/btree/map.rs|...alloc/src/collections/btree/map.rs
     """)
 
     fun `test resolve core`() = stubOnlyResolve("""
     //- main.rs
         // FromStr is defined in `core` and reexported in `std`
         use std::str::FromStr;
-                        //^ ...libcore/str/mod.rs
+                        //^ ...libcore/str/mod.rs|...core/src/str/mod.rs|...core/src/str/traits.rs
 
         fn main() { }
     """)
@@ -69,7 +72,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             let _ = Box::new(92);
-                   //^ ...liballoc/boxed.rs
+                   //^ ...liballoc/boxed.rs|...alloc/src/boxed.rs
         }
     """)
 
@@ -100,7 +103,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn bar() {
             if let Some(x) = f(42) {
                 if let Some(y) = f(x) {
-                      //^ ...libcore/option.rs
+                      //^ ...libcore/option.rs|...core/src/option.rs
                     if let Some(z) = f(y) {}
                 }
             }
@@ -142,13 +145,13 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test inherent impl char 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() { 'Z'.is_lowercase(); }
-                      //^ ...libcore/char/methods.rs
+                      //^ ...libcore/char/methods.rs|...core/src/char/methods.rs
     """)
 
     fun `test inherent impl char 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() { char::is_lowercase('Z'); }
-                        //^ ...libcore/char/methods.rs
+                        //^ ...libcore/char/methods.rs|...core/src/char/methods.rs
     """)
 
     fun `test inherent impl str 1`() = stubOnlyResolve("""
@@ -200,7 +203,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *const char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
@@ -211,7 +214,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *const char;
             <*const char>::is_null(p);
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
@@ -222,7 +225,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             <*const char>::is_null(p); //Pass a *mut pointer to a *const method
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs
+                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
@@ -233,7 +236,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs
+            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
         }
     """)
 
@@ -244,7 +247,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let p: *mut char;
             <*mut char>::is_null(p);
-                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs
+                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
         }
     """)
 
@@ -252,14 +255,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             println!("Hello, World!");
-        }   //^ ...libstd/macros.rs
+        }   //^ ...libstd/macros.rs|...std/src/macros.rs
     """)
 
     fun `test assert_eq macro`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             assert_eq!("Hello, World!", "");
-        }   //^ ...libcore/macros.rs|...libcore/macros/mod.rs
+        }   //^ ...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test iterating a vec`() = stubOnlyResolve("""
@@ -280,7 +283,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             match x {
                 Some(v) => V,
                 None => 0,
-            }  //^ ...libcore/option.rs
+            }  //^ ...libcore/option.rs|...core/src/option.rs
         }
     """)
 
@@ -324,7 +327,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve with unsatisfied bounds`() = stubOnlyResolve("""
     //- main.rs
         fn main() { foo().unwrap(); }
-                        //^ ...libcore/result.rs
+                        //^ ...libcore/result.rs|...core/src/result.rs
 
         fn foo() -> Result<i32, i32> { Ok(42) }
     """)
@@ -405,7 +408,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                 stubOnlyResolve("""
                 //- main.rs
                     #[derive($trait)]
-                           ${" ".repeat(trait.length - 1)}//^ ...libcore/$path
+                           ${" ".repeat(trait.length - 1)}//^ ...libcore/$path|...core/src/$path
                     struct Foo;
                 """)
             }
@@ -418,7 +421,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test raw identifier in derive trait`() = stubOnlyResolve("""
     //- main.rs
         #[derive(r#Debug)]
-                 //^ ...libcore/fmt/mod.rs
+                 //^ ...libcore/fmt/mod.rs|...core/src/fmt/mod.rs
         struct Foo;
     """)
 
@@ -441,7 +444,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn bar(foo: Foo) {
             let x = foo.clone();
-                         //^ ...libcore/clone.rs
+                         //^ ...libcore/clone.rs|...core/src/clone.rs
         }
     """)
 
@@ -452,7 +455,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn main() {
             let foo = Foo::default();
-                          //^ ...libcore/default.rs
+                          //^ ...libcore/default.rs|...core/src/default.rs
         }
     """)
 
@@ -465,7 +468,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn bar(foo: Foo) {
             let x = foo.clone();
-                         //^ ...libcore/clone.rs
+                         //^ ...libcore/clone.rs|...core/src/clone.rs
         }
     """)
 
@@ -507,8 +510,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
             //^
         }
     """, TypeInferenceMarks.questionOperator)
-
-
 
     fun `test try! macro with aliased Result`() = checkByCode("""
         mod io {
@@ -588,7 +589,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn foo() {
             panic!("{}");
-            //^ ...libcore/macros.rs|...libcore/macros/mod.rs
+            //^ ...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
         }
     """)
 
@@ -617,7 +618,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test path to stdlib contains symlink`() = stubOnlyResolve("""
     //- main.rs
         fn foo(x: std::rc::Rc<i32>) {}
-                         //^ .../liballoc/rc.rs
+                         //^ ...liballoc/rc.rs|...alloc/src/rc.rs
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
@@ -627,7 +628,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             let a: AtomicUsize;
             a.store();
-        }   //^ .../libcore/sync/atomic.rs
+        }   //^ ...libcore/sync/atomic.rs|...core/src/sync/atomic.rs
     """)
 
     // BACKCOMPAT: Rust 1.36.0
@@ -637,7 +638,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         mod foo {
             fn main() {
                 std::mem::size_of::<i32>();
-            }           //^ .../libcore/mem.rs|...libcore/mem/mod.rs
+            }           //^ ...libcore/mem.rs|...libcore/mem/mod.rs|...core/src/mem/mod.rs
         }
     """)
 
@@ -674,14 +675,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             format_args!(true);
-        }   //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
+        }   //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test rustc doc only macro from std`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             std::format_args!(true);
-        }        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
+        }        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test f64 INFINITY`() = stubOnlyResolve("""
@@ -695,6 +696,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve concat args`() = stubOnlyResolve("""
     //- main.rs
         include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-                        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs
+                        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 }

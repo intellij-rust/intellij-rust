@@ -5,6 +5,7 @@
 
 package org.rustSlowTests
 
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +17,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.RsFileType
-import java.util.*
 import kotlin.system.measureTimeMillis
 
 class RsCompilerSourcesPerformance : RsTestBase() {
@@ -58,7 +58,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
                 override fun visitFileEx(file: VirtualFile): Result {
                     if (file.isDirectory && file.name in ignored) return SKIP_CHILDREN
                     if (file.fileType != RsFileType) return CONTINUE
-                    val fileContent = String(file.contentsToByteArray())
+                    val fileContent = file.loadText()
 
                     val time = measureTimeMillis {
                         val psi = PsiFileFactory.getInstance(project).createFileFromText(file.name, file.fileType, fileContent)
@@ -102,7 +102,7 @@ class RsCompilerSourcesPerformance : RsTestBase() {
         VfsUtilCore.visitChildrenRecursively(rustSrcDir(), object : VirtualFileVisitor<Void>() {
             override fun visitFileEx(file: VirtualFile): Result {
                 if (file.fileType != RsFileType) return CONTINUE
-                val fileContent = String(file.contentsToByteArray())
+                val fileContent = file.loadText()
 
                 val psi = PsiFileFactory.getInstance(project).createFileFromText(file.name, file.fileType, fileContent)
 
@@ -116,4 +116,6 @@ class RsCompilerSourcesPerformance : RsTestBase() {
     }
 
     private fun rustSrcDir(): VirtualFile = projectDescriptor.stdlib!!
+
+    private fun VirtualFile.loadText(): CharSequence = LoadTextUtil.loadText(this)
 }
