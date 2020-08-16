@@ -1,6 +1,9 @@
 name: release branch
 
-on: workflow_dispatch
+on:
+    workflow_dispatch:
+    schedule:
+        - cron: '0 1 * * *' # try everyday
 
 jobs:
     make-release-branch:
@@ -18,5 +21,11 @@ jobs:
                   git config --local user.email "action@github.com"
                   git config --local user.name "GitHub Action"
 
+            - name: Check date
+              if: github.event_name == 'schedule'
+              id: check-date
+              run: echo "::set-output name=result::$(python scripts/check_release_branch_date.py)"
+
             - name: Make release branch
+              if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
               run: python scripts/make_release_branch.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
