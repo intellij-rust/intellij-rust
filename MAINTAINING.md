@@ -103,6 +103,8 @@ Available commands:
 * `release-branch` - creates new release branch `release-%release_version%` from `master` one
 where `%release_version%` is the same as `patchVersion` property in `gradle.properties`.
 After that it increases `patchVersion` by one, commits changes and pushes them to master.
+Note, the corresponding workflow is triggered on schedule to create release branch one week before release,
+so you don't usually need to trigger it manually.
 * `nightly-release` - builds the plugin from `master` branch and publishes it into `nightly` channel on [Marketplace].
 Note, the corresponding workflow is triggered on schedule, so you don't usually need to trigger it manually.
 * `beta-release` - builds the plugin from release branch and publishes it into `beta` channel on [Marketplace].
