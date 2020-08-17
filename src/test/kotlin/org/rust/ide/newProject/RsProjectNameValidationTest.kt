@@ -33,7 +33,11 @@ class RsProjectNameValidationTest(
             arrayOf("build", true, false),
             arrayOf("1name", false, false),
             arrayOf("package.name", false, false),
-            arrayOf("パッケージ", false , true)
+            arrayOf("パッケージ", false , true),
+            arrayOf("test", false, false),
+            arrayOf("async", false, false),
+            arrayOf("dyn", false, false),
+            arrayOf("native", true, true)
         )
     }
 }
