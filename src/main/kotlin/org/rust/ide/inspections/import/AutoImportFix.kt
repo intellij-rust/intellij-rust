@@ -96,7 +96,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 return null
             }
 
-            val superPath = path.superPath()
+            val superPath = path.rootPath()
             val candidates = ImportCandidatesCollector.getImportCandidates(
                 ImportContext.from(project, path, false),
                 basePath.referenceName,

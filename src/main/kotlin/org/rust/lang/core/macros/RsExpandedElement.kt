@@ -28,9 +28,9 @@ interface RsExpandedElement : RsElement {
     companion object {
         fun getContextImpl(psi: RsExpandedElement, isIndexAccessForbidden: Boolean = false): PsiElement? {
             val project = psi.project
-            project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi)?.let { return it }
-            psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             val parent = psi.stubParent
+            project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi, parent)?.let { return it }
+            psi.getUserData(RS_EXPANSION_CONTEXT)?.let { return it }
             if (parent is RsFile && !isIndexAccessForbidden && !DumbService.isDumb(project)) {
                 RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
             }

@@ -15,10 +15,7 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.containingCrate
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.psi.isValidProjectMember
+import org.rust.lang.core.resolve.RsCachedTypeAlias
 import org.rust.lang.core.resolve.RsProcessor
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsTypeAliasStub
@@ -34,12 +31,13 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
         fun findPotentialAliases(
             project: Project,
             tyf: TyFingerprint,
-            processor: RsProcessor<RsTypeAlias>
+            processor: RsProcessor<RsCachedTypeAlias>
         ): Boolean {
             // Note that `getElements` is intentionally used with intermediate collection instead of
             // `StubIndex.processElements` in order to simplify profiling
             val aliases = getElements(KEY, tyf, project, RsWithMacrosProjectScope(project))
-                .filter { it.owner is RsAbstractableOwner.Free && it.isValidProjectMember }
+                .map { RsCachedTypeAlias.forAlias(it) }
+                .filter { it.isFreeAndValid }
 
             // This is basically a hack to make some crates (winapi 0.2) work in a reasonable amount of time.
             // If the number of aliases exceeds the threshold, we prefer ones from stdlib and a workspace over
@@ -48,8 +46,8 @@ class RsTypeAliasIndex : AbstractStubIndex<TyFingerprint, RsTypeAlias>() {
             val filteredAliases = if (aliases.size <= threshold) {
                 aliases
             } else {
-                val stdlibAliases = mutableListOf<RsTypeAlias>()
-                val workspaceAliases = mutableListOf<RsTypeAlias>()
+                val stdlibAliases = mutableListOf<RsCachedTypeAlias>()
+                val workspaceAliases = mutableListOf<RsCachedTypeAlias>()
                 for (alias in aliases) {
                     val packageOrigin = alias.containingCrate?.origin ?: continue
                     when (packageOrigin) {

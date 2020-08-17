@@ -9,14 +9,17 @@ import com.intellij.lang.ASTNode
 import com.intellij.navigation.ItemPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.IStubElementType
+import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.util.CachedValueImpl
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.presentation.getPresentation
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsElementTypes.EXCL
+import org.rust.lang.core.resolve.RsCachedImplItem
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
@@ -72,4 +75,8 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     override val isUnsafe: Boolean get() = unsafe != null
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
+
+    val cachedImplItem: CachedValue<RsCachedImplItem> = CachedValueImpl {
+        CachedValueProvider.Result(RsCachedImplItem(this), project.rustStructureModificationTracker)
+    }
 }
