@@ -27,8 +27,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.rustFile
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
@@ -69,12 +68,12 @@ class AttachFileToModuleFix(
     }
 
     companion object {
-        fun findAvailableModulesForFile(project: Project, file: RsFile): List<RsMod> {
+        fun findAvailableModulesForFile(project: Project, file: RsFile): List<RsFile> {
             val virtualFile = file.virtualFile ?: return emptyList()
             val pkg = project.cargoProjects.findPackageForFile(virtualFile) ?: return emptyList()
 
             val directory = virtualFile.parent ?: return emptyList()
-            val modules = mutableListOf<RsMod>()
+            val modules = mutableListOf<RsFile>()
 
             if (file.isModuleFile) {
                 // module file in parent directory
@@ -110,13 +109,13 @@ class AttachFileToModuleFix(
     }
 }
 
-private fun selectModule(file: RsFile, availableModules: List<RsMod>): RsMod? {
+private fun selectModule(file: RsFile, availableModules: List<RsFile>): RsFile? {
     if (isUnitTestMode) {
         val mock = MOCK ?: error("You should set mock module selector via withMockModuleAttachSelector")
         return mock(file, availableModules)
     }
 
-    val box = ComboBox<RsMod>()
+    val box = ComboBox<RsFile>()
     with(box) {
         for (module in availableModules) {
             addItem(module)
@@ -133,20 +132,20 @@ private fun selectModule(file: RsFile, availableModules: List<RsMod>): RsMod? {
     }, focusedComponent = box)
 
     return if (dialog.showAndGet()) {
-        box.selectedItem as? RsMod
+        box.selectedItem as? RsFile
     } else {
         null
     }
 }
 
-private fun findModule(root: RsFile, project: Project, file: VirtualFile?): RsMod? {
+private fun findModule(root: RsFile, project: Project, file: VirtualFile?): RsFile? {
     if (file == null) return null
     val module = file.toPsiFile(project)?.rustFile ?: return null
     if (module == root || module.crateRoot == null) return null
     return module
 }
 
-private fun insertFileToModule(file: RsFile, mod: RsMod) {
+private fun insertFileToModule(file: RsFile, targetFile: RsFile) {
     val project = file.project
     val factory = RsPsiFactory(project)
 
@@ -164,20 +163,26 @@ private fun insertFileToModule(file: RsFile, mod: RsMod) {
     }
 
     WriteCommandAction.runWriteCommandAction(project) {
-        val child = mod.firstChild
-        val inserted = if (child == null) {
-            mod.add(modItem)
-        } else {
-            mod.addBefore(modItem, child)
-        } as RsModDeclItem
-        inserted.navigate(true)
+        insertModItem(modItem, targetFile).navigate(true)
     }
+}
+
+private fun insertModItem(item: RsModDeclItem, module: RsFile): RsModDeclItem {
+    val anchor = module.firstItem
+    val existingMod = module.childrenOfType<RsModDeclItem>().lastOrNull()
+
+    val inserted = when {
+        existingMod != null -> module.addAfter(item, existingMod)
+        anchor != null -> module.addBefore(item, anchor)
+        else -> module.add(item)
+    }
+    return inserted as RsModDeclItem
 }
 
 private val RsFile.isModuleFile
     get() = name == RsConstants.MOD_RS_FILE
 
-typealias ModuleAttachSelector = (file: RsFile, availableModules: List<RsMod>) -> RsMod?
+typealias ModuleAttachSelector = (file: RsFile, availableModules: List<RsFile>) -> RsFile?
 
 private var MOCK: ModuleAttachSelector? = null
 
@@ -193,3 +198,5 @@ fun withMockModuleAttachSelector(
         MOCK = null
     }
 }
+
+private val RsFile.firstItem: RsElement? get() = itemsAndMacros.firstOrNull { it !is RsAttr }
