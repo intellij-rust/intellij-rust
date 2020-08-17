@@ -88,7 +88,7 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     private fun modifyProjectsSync(f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>) {
-        modifyProjects(makeRootsChange = false, f = f).get(1, TimeUnit.MINUTES) ?: error("Timeout when refreshing a test Cargo project")
+        modifyProjects(f).get(1, TimeUnit.MINUTES) ?: error("Timeout when refreshing a test Cargo project")
     }
 
     @TestOnly
