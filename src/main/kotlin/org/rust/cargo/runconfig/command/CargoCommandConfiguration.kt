@@ -168,6 +168,8 @@ class CargoCommandConfiguration(
         return CleanConfiguration.Ok(cmd, toolchain)
     }
 
+    override fun suggestedName(): String? = command.substringBefore(' ').capitalize()
+
     companion object {
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
             val cargoProjects = project.cargoProjects
