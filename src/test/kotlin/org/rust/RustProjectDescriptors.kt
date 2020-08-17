@@ -5,9 +5,11 @@
 
 package org.rust
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
@@ -17,6 +19,7 @@ import com.intellij.util.Urls
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
@@ -124,6 +127,16 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     override fun setUp(fixture: CodeInsightTestFixture) {
         delegate.setUp(fixture)
         stdlib?.let { VfsRootAccess.allowRootAccess(fixture.testRootDisposable, it.path) }
+        // TODO: use RustupTestFixture somehow
+        val rustSettings = fixture.project.rustSettings
+        rustSettings.modify {
+            it.toolchain = toolchain
+        }
+        Disposer.register(fixture.testRootDisposable, Disposable {
+            rustSettings.modify {
+                it.toolchain = null
+            }
+        })
     }
 }
 

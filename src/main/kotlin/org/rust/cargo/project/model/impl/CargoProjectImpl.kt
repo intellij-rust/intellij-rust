@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -215,7 +216,6 @@ open class CargoProjectsServiceImpl(
      * [allProjects] contains fresh projects.
      */
     protected fun modifyProjects(
-        makeRootsChange: Boolean = true,
         f: (List<CargoProjectImpl>) -> CompletableFuture<List<CargoProjectImpl>>
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateAsync(f)
@@ -236,11 +236,9 @@ open class CargoProjectsServiceImpl(
 
                         directoryIndex.resetIndex()
                         // In unit tests roots change is done by the test framework in most cases
-                        if (makeRootsChange) {
+                        runWithNonLightProject(project) {
                             ProjectRootManagerEx.getInstanceEx(project)
                                 .makeRootsChange(EmptyRunnable.getInstance(), false, true)
-                        } else {
-                            check(isUnitTestMode)
                         }
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
                             .cargoProjectsUpdated(this, projects)
@@ -475,9 +473,19 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Compl
                 }
             }
 
-            setupProjectRoots(project, updatedProjects)
+            runWithNonLightProject(project) {
+                setupProjectRoots(project, updatedProjects)
+            }
             updatedProjects
         }
+}
+
+private inline fun runWithNonLightProject(project: Project, action: () -> Unit) {
+    if ((project as? ProjectEx)?.isLight != true) {
+        action()
+    } else {
+        check(isUnitTestMode)
+    }
 }
 
 private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject>) {
