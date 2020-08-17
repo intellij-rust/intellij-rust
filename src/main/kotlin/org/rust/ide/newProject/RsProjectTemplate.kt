@@ -8,18 +8,20 @@ package org.rust.ide.newProject
 import org.rust.ide.icons.RsIcons
 import javax.swing.Icon
 
-sealed class RsProjectTemplate(val name: String, val isBinary: Boolean) {
-    abstract val icon: Icon
-
+sealed class RsProjectTemplate(val name: String, val isBinary: Boolean, val icon: Icon) {
     fun validateProjectName(crateName: String): String? = RsPackageNameValidator.validate(crateName, isBinary)
 }
 
-class RsGenericTemplate(name: String, isBinary: Boolean) : RsProjectTemplate(name, isBinary) {
-    override val icon: Icon = RsIcons.RUST
+sealed class RsGenericTemplate(name: String, isBinary: Boolean) : RsProjectTemplate(name, isBinary, RsIcons.RUST) {
+    object CargoBinaryTemplate : RsGenericTemplate("Binary (application)", true)
+    object CargoLibraryTemplate : RsGenericTemplate("Library", false)
 }
 
-class RsCustomTemplate(name: String, val link: String, isBinary: Boolean = true) : RsProjectTemplate(name, isBinary) {
-    override val icon: Icon = RsIcons.CARGO_GENERATE
+open class RsCustomTemplate(
+    name: String, val url: String
+) : RsProjectTemplate(name, false, RsIcons.CARGO_GENERATE) {
+    object WasmPackTemplate : RsCustomTemplate("WebAssembly Lib", "https://github.com/rustwasm/wasm-pack-template")
+
     val shortLink: String
-        get() = link.substringAfter("//")
+        get() = url.substringAfter("//")
 }

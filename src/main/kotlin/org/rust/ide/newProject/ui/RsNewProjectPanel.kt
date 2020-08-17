@@ -47,9 +47,9 @@ class RsNewProjectPanel(
         get() = rustProjectSettings.data.toolchain?.rawCargo()
 
     private val defaultTemplates: List<RsProjectTemplate> = listOf(
-        RsGenericTemplate("Binary (application)", true),
-        RsGenericTemplate("Library", false),
-        RsCustomTemplate("WebAssembly Lib", "https://github.com/rustwasm/wasm-pack-template", false)
+        RsGenericTemplate.CargoBinaryTemplate,
+        RsGenericTemplate.CargoLibraryTemplate,
+        RsCustomTemplate.WasmPackTemplate
     )
 
     private val userTemplates: List<RsCustomTemplate>
