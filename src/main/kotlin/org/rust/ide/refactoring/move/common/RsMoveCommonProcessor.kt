@@ -24,6 +24,8 @@ import org.rust.ide.refactoring.move.common.RsMoveUtil.resolvesToAndAccessible
 import org.rust.ide.refactoring.move.common.RsMoveUtil.startsWithSuper
 import org.rust.ide.refactoring.move.common.RsMoveUtil.textNormalized
 import org.rust.ide.refactoring.move.common.RsMoveUtil.toRsPath
+import org.rust.ide.refactoring.move.common.RsMoveUtil.toRsPathInEmptyTmpMod
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.computeWithCancelableProgress
@@ -100,6 +102,8 @@ class RsMoveCommonProcessor(
         .distinct()
         .singleOrNull()
         ?: error("Elements to move must belong to single parent mod")
+
+    private val pathHelper: RsMovePathHelper = RsMovePathHelper(project, targetMod)
 
     fun findUsages(): Array<RsMoveUsageInfo> {
         return elementsToMove
@@ -201,10 +205,17 @@ class RsMoveCommonProcessor(
             if (pathNew != null && pathNew.resolvesToAndAccessible(target)) return null  // not needed to change path
         }
 
-        val pathNewText = target.qualifiedNameInCrate(targetMod)
-        val pathNew = pathNewText?.toRsPath(psiFactory) ?: return null
+        val pathNewFallback = if (path.containingMod == sourceMod) {
+            // after move `path` will belong to `targetMod`
+            target.qualifiedNameRelativeTo(targetMod)
+                ?.toRsPath(codeFragmentFactory, targetMod)
+        } else {
+            target.qualifiedNameInCrate(targetMod)
+                ?.toRsPathInEmptyTmpMod(codeFragmentFactory, psiFactory, targetMod)
+        }
+        val pathNewAccessible = RsImportHelper.findPath(targetMod, target)?.toRsPath(psiFactory)
 
-        return RsMoveReferenceInfo(path, pathNew, target)
+        return RsMoveReferenceInfo(path, pathNewAccessible, pathNewFallback, target)
     }
 
     private fun preprocessInsideReferences(usages: Array<UsageInfo>): List<RsMoveReferenceInfo> {
@@ -236,15 +247,18 @@ class RsMoveCommonProcessor(
             check(target.containingModStrict == sourceMod)  // any inside reference is reference to moved item
             if (path.containingMod == sourceMod) {
                 val pathNew = target.name?.toRsPath(codeFragmentFactory, targetMod)
-                if (pathNew != null) return RsMoveReferenceInfo(path, pathNew, target)
+                if (pathNew != null) return RsMoveReferenceInfo(path, pathNew, pathNew, target)
             }
         }
 
-        val targetModPath = targetMod.qualifiedNameRelativeTo(path.containingMod)
-        val targetName = target.name
-        val pathNewText = if (targetModPath != null && targetName != null) "$targetModPath::$targetName" else null
-        val pathNew = pathNewText?.toRsPath(codeFragmentFactory, context = path.context as? RsElement ?: path)
-        return RsMoveReferenceInfo(path, pathNew, target)
+        val pathNewAccessible = pathHelper.findPathAfterMove(path, target)
+        val pathNewFallback = run {
+            val targetModPath = targetMod.qualifiedNameRelativeTo(path.containingMod) ?: return@run null
+            val targetName = target.name ?: return@run null
+            val pathNewFallbackText = "$targetModPath::$targetName"
+            pathNewFallbackText.toRsPath(codeFragmentFactory, context = path.context as? RsElement ?: path)
+        }
+        return RsMoveReferenceInfo(path, pathNewAccessible, pathNewFallback, target)
     }
 
     /**
@@ -283,8 +297,10 @@ class RsMoveCommonProcessor(
             return pathFull
         }
 
-        val pathNew = reference.pathNew?.let { convertPathToFull(it) }
-        return RsMoveReferenceInfo(pathOld, pathNew, target)
+        val pathNewAccessible = reference.pathNewAccessible?.let { convertPathToFull(it) }
+        val pathNewFallback = reference.pathNewFallback?.let { convertPathToFull(it) }
+
+        return RsMoveReferenceInfo(pathOld, pathNewAccessible, pathNewFallback, target)
     }
 
     fun performRefactoring(usages: Array<out UsageInfo>, moveElements: () -> List<ElementToMove>) {
