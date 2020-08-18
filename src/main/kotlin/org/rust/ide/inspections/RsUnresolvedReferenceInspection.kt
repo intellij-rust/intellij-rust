@@ -24,7 +24,7 @@ import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
-    var ignoreWithoutQuickFix: Boolean = true
+    var ignoreWithoutQuickFix: Boolean = false
 
     override fun getDisplayName() = "Unresolved reference"
 
