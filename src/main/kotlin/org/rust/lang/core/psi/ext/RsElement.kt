@@ -23,6 +23,7 @@ import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
+import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 
 interface RsElement : PsiElement {
@@ -123,7 +124,7 @@ abstract class RsStubbedElementImpl<StubT : StubElement<*>> : StubBasedPsiElemen
 
 fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
     var resolved: PsiElement? = null
-    processNestedScopesUpwards(this, ns) { entry ->
+    val processor = createProcessor(name) { entry ->
         if (entry.name == name && entry.element != null) {
             resolved = entry.element
             true
@@ -131,6 +132,7 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
             false
         }
     }
+    processNestedScopesUpwards(this, ns, processor)
     return resolved
 }
 

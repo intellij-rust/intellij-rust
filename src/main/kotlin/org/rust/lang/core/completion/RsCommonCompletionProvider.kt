@@ -252,9 +252,9 @@ private fun filterAssocTypes(
     val qualifier = path.path
     val allAssocItemsAllowed =
         qualifier == null || qualifier.hasCself || qualifier.reference?.resolve() is RsTypeParameter
-    return if (allAssocItemsAllowed) processor else fun(it: ScopeEntry): Boolean {
-        if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) return false
-        return processor(it)
+    return if (allAssocItemsAllowed) processor else createProcessor(processor.name) {
+        if (it is AssocItemScopeEntry && (it.element is RsTypeAlias)) false
+        else processor(it)
     }
 }
 
@@ -263,21 +263,21 @@ private fun filterPathCompletionVariantsByTraitBounds(
     lookup: ImplLookup
 ): RsResolveProcessor {
     val cache = hashMapOf<TraitImplSource, Boolean>()
-    return fun(it: ScopeEntry): Boolean {
-        if (it !is AssocItemScopeEntry) return processor(it)
+    return createProcessor(processor.name) {
+        if (it !is AssocItemScopeEntry) return@createProcessor processor(it)
 
-        val receiver = it.subst[TyTypeParameter.self()] ?: return processor(it)
+        val receiver = it.subst[TyTypeParameter.self()] ?: return@createProcessor processor(it)
         // Don't filter partially unknown types
-        if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor(it)
+        if (receiver.containsTyOfClass(TyUnknown::class.java)) return@createProcessor processor(it)
         // Filter members by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete members
         // in the same impl and always have the same receiver type
         val canEvaluate = cache.getOrPut(it.source) {
             lookup.ctx.canEvaluateBounds(it.source, receiver)
         }
-        if (canEvaluate) return processor(it)
+        if (canEvaluate) return@createProcessor processor(it)
 
-        return false
+        false
     }
 }
 
@@ -290,18 +290,18 @@ private fun filterMethodCompletionVariantsByTraitBounds(
     if (receiver.containsTyOfClass(TyUnknown::class.java)) return processor
 
     val cache = mutableMapOf<TraitImplSource, Boolean>()
-    return fun(it: ScopeEntry): Boolean {
+    return createProcessor(processor.name) {
         // If not a method (actually a field) or a trait method - just process it
-        if (it !is MethodResolveVariant) return processor(it)
+        if (it !is MethodResolveVariant) return@createProcessor processor(it)
         // Filter methods by trait bounds (try to select all obligations for each impl)
         // We're caching evaluation results here because we can often complete methods
         // in the same impl and always have the same receiver type
         val canEvaluate = cache.getOrPut(it.source) {
             lookup.ctx.canEvaluateBounds(it.source, receiver)
         }
-        if (canEvaluate) return processor(it)
+        if (canEvaluate) return@createProcessor processor(it)
 
-        return false
+        false
     }
 }
 
@@ -309,14 +309,14 @@ private fun methodAndFieldCompletionProcessor(
     methodOrField: RsMethodOrField,
     result: CompletionResultSet,
     context: RsCompletionContext
-): RsResolveProcessor = fun(e: ScopeEntry): Boolean {
+): RsResolveProcessor = createProcessor { e ->
     when (e) {
         is FieldResolveVariant -> result.addElement(createLookupElement(
             scopeEntry = e,
             context = context
         ))
         is MethodResolveVariant -> {
-            if (e.element.isTest) return false
+            if (e.element.isTest) return@createProcessor false
 
             result.addElement(createLookupElement(
                 scopeEntry = e,
@@ -340,7 +340,7 @@ private fun methodAndFieldCompletionProcessor(
             ))
         }
     }
-    return false
+    false
 }
 
 private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVariant: MethodResolveVariant): ImportCandidate? {
@@ -357,11 +357,11 @@ private fun findTraitImportCandidate(methodOrField: RsMethodOrField, resolveVari
 private fun addProcessedPathName(
     processor: RsResolveProcessor,
     processedPathNames: MutableSet<String>
-): RsResolveProcessor = fun(it: ScopeEntry): Boolean {
+): RsResolveProcessor = createProcessor(processor.name) {
     if (it.element != null) {
         processedPathNames.add(it.name)
     }
-    return processor(it)
+    processor(it)
 }
 
 private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement): Ty? {

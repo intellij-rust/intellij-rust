@@ -37,7 +37,7 @@ interface ScopeEntry {
  */
 enum class ScopeEvent : ScopeEntry {
     /**
-     * Communicate to the resolve processor that we are about to process wildecard imports.
+     * Communicate to the resolve processor that we are about to process wildcard imports.
      * This is basically a hack to make winapi 0.2 work in a reasonable amount of time.
      */
     STAR_IMPORTS;
@@ -47,82 +47,113 @@ enum class ScopeEvent : ScopeEntry {
 
 typealias RsProcessor<T> = (T) -> Boolean
 
-/**
- * Return `true` to stop further processing,
- * return `false` to continue search
- */
-typealias RsResolveProcessor = (ScopeEntry) -> Boolean
+interface RsResolveProcessorBase<in T : ScopeEntry> {
+    /**
+     * Return `true` to stop further processing,
+     * return `false` to continue search
+     */
+    operator fun invoke(entry: T): Boolean
 
-typealias RsMethodResolveProcessor = (MethodResolveVariant) -> Boolean
+    /**
+     * Indicates that processor is interested only in [ScopeEntry]s with specified [name].
+     * Improves performance for Resolve2.
+     * `null` in completion
+     */
+    val name: String?
+}
+
+typealias RsResolveProcessor = RsResolveProcessorBase<ScopeEntry>
+
+fun createProcessor(name: String? = null, processor: (ScopeEntry) -> Boolean): RsResolveProcessor =
+    createProcessorGeneric(name, processor)
+
+fun <T : ScopeEntry> createProcessorGeneric(
+    name: String? = null,
+    processor: (T) -> Boolean
+): RsResolveProcessorBase<T> {
+    return object : RsResolveProcessorBase<T> {
+        override fun invoke(entry: T): Boolean = processor(entry)
+        override val name: String? = name
+    }
+}
+
+typealias RsMethodResolveProcessor = RsResolveProcessorBase<MethodResolveVariant>
 
 fun collectPathResolveVariants(
     referenceName: String,
     f: (RsResolveProcessor) -> Unit
 ): List<BoundElement<RsElement>> {
     val result = SmartList<BoundElement<RsElement>>()
-    f { e ->
+    val processor = createProcessor(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
-            return@f true
+            return@createProcessor true
         }
 
         if (e.name == referenceName) {
-            val element = e.element ?: return@f false
+            val element = e.element ?: return@createProcessor false
             if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
                 result += BoundElement(element, e.subst)
             }
         }
         false
     }
+    f(processor)
     return result
 }
 
 fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
     val result = SmartList<RsElement>()
-    f { e ->
-        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@f true
+    val processor = createProcessor(referenceName) { e ->
+        if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@createProcessor true
 
         if (e.name == referenceName) {
-            val element = e.element ?: return@f false
+            val element = e.element ?: return@createProcessor false
             if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
                 result += element
             }
         }
         false
     }
+    f(processor)
     return result
 }
 
-fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(referenceName: String, f: ((T) -> Boolean) -> Unit): List<T> {
+fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
+    referenceName: String,
+    f: (RsResolveProcessorBase<T>) -> Unit
+): List<T> {
     val result = mutableListOf<T>()
-    f { e ->
+    val processor = createProcessorGeneric<T>(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
-            return@f true
+            return@createProcessorGeneric true
         }
 
         if (e.name == referenceName) {
             // de-lazying. See `RsResolveProcessor.lazy`
-            val element = e.element ?: return@f false
+            val element = e.element ?: return@createProcessorGeneric false
             if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
                 result += e
             }
         }
         false
     }
+    f(processor)
     return result
 }
 
 fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Unit): RsElement? {
     var result: RsElement? = null
-    f { e ->
+    val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {
             val element = e.element
             if (element != null && (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf)) {
                 result = element
-                return@f true
+                return@createProcessor true
             }
         }
         false
     }
+    f(processor)
     return result
 }
 
@@ -131,9 +162,9 @@ fun collectCompletionVariants(
     context: RsCompletionContext,
     f: (RsResolveProcessor) -> Unit
 ) {
-    f { e ->
-        val element = e.element ?: return@f false
-        if (element is RsFunction && element.isTest) return@f false
+    val processor = createProcessor { e ->
+        val element = e.element ?: return@createProcessor false
+        if (element is RsFunction && element.isTest) return@createProcessor false
         if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
             result.addElement(createLookupElement(
                 scopeEntry = e,
@@ -142,6 +173,7 @@ fun collectCompletionVariants(
         }
         false
     }
+    f(processor)
 }
 
 data class SimpleScopeEntry(
@@ -213,14 +245,14 @@ fun processAllWithSubst(
 }
 
 fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsMod): RsResolveProcessor {
-    return fun(it: ScopeEntry): Boolean {
+    return createProcessor(processor.name) {
         val element = it.element
-        if (element is RsVisible && !element.isVisibleFrom(mod)) return false
+        if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod
-        if (isHidden) return false
+        if (isHidden) return@createProcessor false
 
-        return processor(it)
+        processor(it)
     }
 }

@@ -5,11 +5,11 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 
 /**
@@ -20,10 +20,11 @@ interface RsItemElement : RsVisibilityOwner, RsOuterAttributeOwner, RsExpandedEl
 
 fun <T : RsItemElement> Iterable<T>.filterInScope(scope: RsElement): List<T> {
     val set = toMutableSet()
-    processNestedScopesUpwards(scope, TYPES) {
+    val processor = createProcessor {
         set.remove(it.element)
         set.isEmpty()
     }
+    processNestedScopesUpwards(scope, TYPES, processor)
     return if (set.isEmpty()) toList() else toMutableList().apply { removeAll(set) }
 }
 
