@@ -7,8 +7,8 @@ package org.rustPerformanceTests
 
 import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.annotator.AnnotatorBase
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
-import org.junit.ComparisonFailure
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.lang.RsFileType
@@ -16,9 +16,8 @@ import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsFile
 import org.rust.openapiext.toPsiFile
-import java.lang.reflect.Field
 
-class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
+open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
     /** Don't run it on Rustc! It's a kind of stress-test */
     fun `test analyze rustc`() = doTest(RUSTC)
@@ -35,7 +34,12 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
 
     private val earlyTestRootDisposable = Disposer.newDisposable()
 
-    private fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
+    protected fun doTest(info: RealProjectInfo, failOnFirstFileWithErrors: Boolean = false) {
+        val errorConsumer = if (failOnFirstFileWithErrors) FAIL_FAST else COLLECT_ALL_EXCEPTIONS
+        doTest(info, errorConsumer)
+    }
+
+    protected fun doTest(info: RealProjectInfo, consumer: AnnotationConsumer) {
         Disposer.register(
             earlyTestRootDisposable,
             project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.ALL, name)
@@ -46,7 +50,7 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             .filterIsInstance<RsLocalInspectionTool>()
         myFixture.enableInspections(*inspections.toTypedArray())
 
-        println("Opening the project")
+        println("Opening the project `${info.name}`")
         val base = openRealProject(info) ?: return
 
         println("Collecting files to analyze")
@@ -56,56 +60,74 @@ class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
                 file is RsFile && file.crateRoot != null && file.cargoWorkspace != null
             }
         }
-
-        if (failOnFirstFileWithErrors) {
-            println("Analyzing...")
-            myFixture.testHighlightingAllFiles(
-                /* checkWarnings = */ false,
-                /* checkInfos = */ false,
-                /* checkWeakWarnings = */ false,
-                *filesToCheck.toTypedArray()
-            )
-        } else {
-            val exceptions = filesToCheck.mapNotNull { file ->
-                val path = file.path.substring(base.path.length + 1)
-                println("Analyzing $path")
-                try {
-                    myFixture.testHighlighting(
-                        /* checkWarnings = */ false,
-                        /* checkInfos = */ false,
-                        /* checkWeakWarnings = */ false,
-                        file
-                    )
-                    null
-                } catch (e: ComparisonFailure) {
-                    e to path
-                }
-            }
-
-            if (exceptions.isNotEmpty()) {
-                error("Error annotations found:\n\n" + exceptions.joinToString("\n\n") { (e, path) ->
-                    "$path:\n${e.detailMessage}"
-                })
+        for (file in filesToCheck) {
+            val path = file.path.substring(base.path.length + 1)
+            println("Analyzing $path")
+            myFixture.openFileInEditor(file)
+            val infos = myFixture.doHighlighting(HighlightSeverity.ERROR)
+            val text = myFixture.editor.document.text
+            for (highlightInfo in infos) {
+                val position = myFixture.editor.offsetToLogicalPosition(highlightInfo.startOffset)
+                val annotation = Annotation(
+                    path,
+                    position.line,
+                    position.column,
+                    text.substring(highlightInfo.startOffset, highlightInfo.endOffset),
+                    highlightInfo.description,
+                    highlightInfo.inspectionToolId
+                )
+                consumer.consumeAnnotation(annotation)
             }
         }
+        consumer.finish()
     }
 
     override fun tearDown() {
         Disposer.dispose(earlyTestRootDisposable)
         super.tearDown()
     }
-}
 
-private val THROWABLE_DETAILED_MESSAGE_FIELD: Field = run {
-    val field = Throwable::class.java.getDeclaredField("detailMessage")
-    field.isAccessible = true
-    field
-}
+    companion object {
 
-/**
- * Retrieves original value of detailMessage field of [Throwable] class.
- * It is needed because [ComparisonFailure] overrides [Throwable.message]
- * method so we can't get the original value without reflection
- */
-private val Throwable.detailMessage: CharSequence
-    get() = THROWABLE_DETAILED_MESSAGE_FIELD.get(this) as CharSequence
+        val FAIL_FAST = object : AnnotationConsumer {
+            override fun consumeAnnotation(annotation: Annotation) {
+                error(annotation.toString())
+            }
+            override fun finish() {}
+        }
+
+        val COLLECT_ALL_EXCEPTIONS = object : AnnotationConsumer {
+
+            val annotations = mutableListOf<Annotation>()
+
+            override fun consumeAnnotation(annotation: Annotation) {
+                annotations += annotation
+            }
+
+            override fun finish() {
+                if (annotations.isNotEmpty()) {
+                    error("Error annotations found:\n\n" + annotations.joinToString("\n\n"))
+                }
+            }
+        }
+    }
+
+    interface AnnotationConsumer {
+        fun consumeAnnotation(annotation: Annotation)
+        fun finish()
+    }
+
+    data class Annotation(
+        val filePath: String,
+        val line: Int,
+        val column: Int,
+        val highlightedText: String,
+        val error: String,
+        val inspectionToolId: String?
+    ) {
+        override fun toString(): String {
+            val suffix = if (inspectionToolId != null) " by $inspectionToolId" else ""
+            return "$filePath:$line:$column '$highlightedText' ($error)$suffix"
+        }
+    }
+}

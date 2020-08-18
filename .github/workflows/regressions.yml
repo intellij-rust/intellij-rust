@@ -1,0 +1,116 @@
+name: regressions
+
+on: [ workflow_dispatch, pull_request ]
+
+jobs:
+    calculate-base-commit:
+        runs-on: ubuntu-latest
+        outputs:
+            base-commit: ${{ steps.base-commit.outputs.base-commit }}
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            # In case of `workflow_dispatch` event, `github.sha` points to latest commit of chosen branch
+            # So, we need to find the latest common commit for master branch and chosen one
+            # to calculate difference only for branch changes
+            - name: Calculate base commit for workflow_dispatch event
+              if: github.event_name == 'workflow_dispatch'
+              run: echo "::set-env name=BASE_COMMIT::$(git merge-base origin/master ${{ github.sha }})"
+
+            # For pull request event, GitHub produces additional merge commit with `master` branch and PR branch as parents
+            # In this case, we want to check difference between master branch and merge commit
+            # so emit hash of `origin/master` branch itself as base commit
+            - name: Calculate base commit for pull_request event
+              if: github.event_name == 'pull_request'
+              run: echo "::set-env name=BASE_COMMIT::$(git log origin/master -n 1 --format=format:%H)"
+
+            - name: Emit base commit
+              id: base-commit
+              run: echo "::set-output name=base-commit::$BASE_COMMIT"
+
+            - name: Show commits
+              run: |
+                  echo "current commit:"
+                  git log ${{ github.sha }} -n 1 --pretty=short
+                  echo "base commit:"
+                  git log ${{ steps.base-commit.outputs.base-commit }} -n 1 --pretty=short
+
+    check:
+        needs: [ calculate-base-commit ]
+        name: ${{ matrix.project.name }}
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            matrix:
+                project:
+                    - name: cargo
+                      path: cargo
+                      repository: rust-lang/cargo
+                      exclude_paths: ""
+        env:
+            PROJECT_PATH: ${{ matrix.project.path }}
+            PROJECT_URL: https://github.com/${{ matrix.project.url }}
+            PROJECT_EXCLUDE_PATHS: ${{ matrix.project.exclude_paths }}
+            ORG_GRADLE_PROJECT_showStandardStreams: true
+        steps:
+            - uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            - uses: actions/checkout@v2
+              with:
+                  repository: ${{ matrix.project.repository }}
+                  ref: master
+                  path: testData/${{ matrix.project.name }}
+
+            - name: Set up JDK 1.8
+              uses: actions/setup-java@v1
+              with:
+                  java-version: 1.8
+
+            - name: Set up Python
+              uses: actions/setup-python@v1
+              with:
+                  python-version: 3.7
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  components: rust-src
+                  default: true
+
+            - name: Download
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: ":resolveDependencies -Pkotlin.incremental=false"
+
+            - name: Check with changes
+              uses: eskatos/gradle-command-action@v1
+              env:
+                  PROJECT_NAME: ${{ matrix.project.name }}_with_changes
+              with:
+                  arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest.test\""
+
+            - name: Checkout base version
+              run: git checkout ${{ needs.calculate-base-commit.outputs.base-commit }}
+
+            - name: Check without changes
+              uses: eskatos/gradle-command-action@v1
+              env:
+                  PROJECT_NAME: ${{ matrix.project.name }}_without_changes
+              with:
+                  arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest.test\""
+
+            - name: Calculate regressions
+              run: python scripts/calculate_regressions.py --name ${{ matrix.project.name }}
+
+            - name: Upload results
+              if: ${{ always() }}
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ matrix.project.name }}
+                  path: regressions/
