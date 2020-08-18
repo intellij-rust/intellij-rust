@@ -34,6 +34,7 @@ class RsPostfixTemplateProvider : PostfixTemplateProvider {
         IterPostfixTemplate("for", this),
         PrintlnPostfixTemplate(this),
         DbgPostfixTemplate(this),
+        DbgrPostfixTemplate(this),
         OkPostfixTemplate(this),
         SomePostfixTemplate(this),
         ErrPostfixTemplate(this)

@@ -108,6 +108,7 @@ class IterPostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
 }
 
 class DbgPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("dbg", "dbg!(expr)", provider)
+class DbgrPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("dbgr", "dbg!(&expr)", provider)
 
 class SomePostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("some", "Some(expr)", provider)
 class OkPostfixTemplate(provider: RsPostfixTemplateProvider) : SimpleExprPostfixTemplate("ok", "Ok(expr)", provider)
