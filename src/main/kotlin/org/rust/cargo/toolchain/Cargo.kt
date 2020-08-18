@@ -251,6 +251,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         val path = directory.pathAsPath
         val name = path.fileName.toString().replace(' ', '_')
         val args = mutableListOf("--name", name, "--git", template)
+        args.add("--force") // enforce cargo-generate not to do underscores to hyphens name conversion
 
         // TODO: Rewrite this for the future versions of cargo-generate when init subcommand will be available
         // See https://github.com/ashleygwilliams/cargo-generate/issues/193
