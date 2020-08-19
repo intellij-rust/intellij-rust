@@ -6,9 +6,11 @@
 package org.rust.lang.core.resolve
 
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.RsTypeAlias
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
+import org.rust.lang.core.psi.ext.RsTypeAliasImplMixin
+import org.rust.lang.core.psi.ext.containingCrate
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -25,16 +27,15 @@ class RsCachedTypeAlias(
     val alias: RsTypeAlias
 ) {
     val name: String? = alias.name
-    val context: RsElement? = RsExpandedElement.getContextImpl(alias) as? RsElement
 
     val isFreeAndValid: Boolean by lazy(PUBLICATION) {
         name != null
-            && alias.getOwner { this@RsCachedTypeAlias.context } is RsAbstractableOwner.Free
+            && alias.owner is RsAbstractableOwner.Free
             && alias.isValidProjectMember
     }
 
     val containingCrate: Crate? by lazy(PUBLICATION) {
-        context?.containingCrate
+        alias.containingCrate
     }
 
     val typeAndGenerics: Triple<Ty, List<TyTypeParameter>, List<CtConstParameter>> by lazy(PUBLICATION) {
