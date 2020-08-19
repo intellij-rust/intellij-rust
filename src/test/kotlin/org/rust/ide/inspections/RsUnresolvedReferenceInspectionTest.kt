@@ -160,6 +160,33 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         }
     """, false)
 
+    fun `test no unresolved reference for UFCS with trait`() = checkByText("""
+        mod foo {
+            pub trait Bar {
+                fn baz(&self) {}
+            }
+        }
+        struct S;
+        use foo::Bar;
+        impl Bar for S {}
+        fn main() {
+            Bar::baz(&S)
+        }
+    """)
+
+    fun `test no unresolved reference for UFCS with qualified trait`() = checkByText("""
+        mod foo {
+            pub trait Bar {
+                fn baz(&self) {}
+            }
+        }
+        struct S;
+        impl foo::Bar for S {}
+        fn main() {
+            foo::Bar::baz(&S)
+        }
+    """)
+
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val inspection = inspection as RsUnresolvedReferenceInspection
         val defaultValue = inspection.ignoreWithoutQuickFix
