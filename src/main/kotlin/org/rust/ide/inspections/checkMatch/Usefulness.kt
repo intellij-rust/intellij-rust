@@ -10,6 +10,11 @@ import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.queryAttributes
 import org.rust.lang.core.types.ty.*
 
+/*
+ * A witness of non-exhaustiveness.
+ * At the end of exhaustiveness checking, the witness will have length 1,
+ * but in the middle of the algorithm, it can contain multiple patterns.
+ */
 class Witness(val patterns: MutableList<Pattern> = mutableListOf()) {
     override fun toString() = patterns.toString()
 
@@ -73,7 +78,11 @@ sealed class Usefulness {
     val isUseful: Boolean get() = this !== Useless
 }
 
-/** Use algorithm from [INRIA](http://moscova.inria.fr/~maranget/papers/warn/warn004.html) */
+/**
+ * See detailed description in [rust/src/librustc_mir_build/thir/pattern/_match.rs](https://github.com/rust-lang/rust/blob/dfe1e3b641abbede6230e3931d14f0d43e5b8e54/src/librustc_mir_build/thir/pattern/_match.rs).
+ *
+ * Original algorithm from [INRIA](http://moscova.inria.fr/~maranget/papers/warn/warn004.html)
+ */
 fun isUseful(
     matrix: Matrix,
     patterns: List<Pattern>,
@@ -93,15 +102,26 @@ fun isUseful(
         return Usefulness.Useless
     }
 
-    val type = matrix.firstColumnType ?: patterns.first().ergonomicType
-    val constructors = patterns.first().constructors
+    // Get the first pattern and analyze it
+    val pattern = patterns.first()
+    val type = matrix.firstColumnType ?: pattern.ergonomicType
+    val constructors = pattern.constructors
+
     if (constructors != null) {
+        /**
+         * If [pattern] is a constructor pattern, then its usefulness can be reduced to whether it is useful when
+         * we ignore all the patterns in the first column of [matrix] that involve other constructors
+         */
         return expandConstructors(constructors, type)
     }
 
-    val usedConstructors = matrix.flatMap { it.firstOrNull()?.constructors ?: emptyList() }
+    /**
+     * Otherwise, [pattern] is wildcard (or binding which is basically the same).
+     * We look at the list of constructors that appear in the first column of [matrix].
+     */
+    val usedConstructors = matrix.flatMap { row -> row.firstOrNull()?.constructors.orEmpty() }
     val allConstructors = Constructor.allConstructors(type)
-    val missingConstructor = allConstructors.minus(usedConstructors)
+    val missingConstructors = allConstructors.minus(usedConstructors)
 
     val isPrivatelyEmpty = allConstructors.isEmpty()
     val isDeclaredNonExhaustive = type is TyAdt &&
@@ -110,20 +130,31 @@ fun isUseful(
 
     val isNonExhaustive = isPrivatelyEmpty || (isDeclaredNonExhaustive && isInDifferentCrate)
 
-    if (missingConstructor.isEmpty() && !isNonExhaustive) {
+    if (missingConstructors.isEmpty() && !isNonExhaustive) {
+        /**
+         * If all possible constructors are present, we must check whether the wildcard [pattern] covers any unmatched value.
+         * The wildcard pattern is useful in this case if it is useful when specialized to one of the possible constructors.
+         * For example, if `Some(<something>)` and `None` constructors of `Option` are covered, we should specialize
+         * wildcard [pattern] to `Some(<something else>)` and check its usefulness
+         */
         return expandConstructors(allConstructors, type)
     }
 
-    val newMatrix = matrix.mapNotNull {
-        val kind = it.firstOrNull()?.kind
-        if (kind is PatternKind.Wild || kind is PatternKind.Binding) {
-            it.subList(1, it.size)
-        } else {
-            null
+    /**
+     * If there are [missingConstructors], then our wildcard [pattern] might be useful.
+     * But [missingConstructors] can be matched by wildcards in the beginning of rows, so we need to check
+     * usefulness of the remaining patterns in a submatrix containing all rows starting with a wildcard.
+     */
+    val wildcardRows = matrix.filter { row ->
+        when (row.firstOrNull()?.kind) {
+            PatternKind.Wild, is PatternKind.Binding -> true
+            else -> false
         }
     }
-    val newPatterns = patterns.subList(1, patterns.size)
-    val res = isUseful(newMatrix, newPatterns, withWitness, crateRoot, false)
+    val wildcardSubmatrix = wildcardRows.map { it.drop(1) }
+    val remainingPatterns = patterns.drop(1)
+
+    val res = isUseful(wildcardSubmatrix, remainingPatterns, withWitness, crateRoot, isTopLevel = false)
 
     if (res is Usefulness.UsefulWithWitness) {
         val reportConstructors = isTopLevel && !type.isIntegral
@@ -134,7 +165,7 @@ fun isUseful(
             }
         } else {
             res.witnesses.flatMap { witness ->
-                missingConstructor.map { witness.clone().pushWildConstructor(it, type) }
+                missingConstructors.map { witness.clone().pushWildConstructor(it, type) }
             }
         }
         return Usefulness.UsefulWithWitness(newWitness)
@@ -152,24 +183,24 @@ private fun isUsefulSpecialized(
     crateRoot: RsMod?
 ): Usefulness {
     val newPatterns = specializeRow(patterns, constructor, type) ?: return Usefulness.Useless
-    val newMatrix = matrix.mapNotNull { specializeRow(it, constructor, type) }
+    val newMatrix = matrix.mapNotNull { row -> specializeRow(row, constructor, type) }
 
-    return when (val useful = isUseful(newMatrix, newPatterns, withWitness, crateRoot, false)) {
+    return when (val useful = isUseful(newMatrix, newPatterns, withWitness, crateRoot, isTopLevel = false)) {
         is Usefulness.UsefulWithWitness -> Usefulness.UsefulWithWitness(useful.witnesses.map { it.applyConstructor(constructor, type) })
         else -> useful
     }
 }
 
 private fun specializeRow(row: List<Pattern>, constructor: Constructor, type: Ty): List<Pattern>? {
-    val pat = row.firstOrNull() ?: return emptyList()
+    val firstPattern = row.firstOrNull() ?: return emptyList()
     val wildPatterns = constructor
         .subTypes(type)
         .map { subType -> Pattern.wild(subType) }
         .toMutableList()
 
-    val head: List<Pattern>? = when (val kind = pat.kind) {
+    val head: List<Pattern>? = when (val kind = firstPattern.kind) {
         is PatternKind.Variant -> {
-            if (constructor == pat.constructors?.first()) {
+            if (constructor == firstPattern.constructors?.first()) {
                 wildPatterns.apply { fillWithSubPatterns(kind.subPatterns) }
             } else {
                 null

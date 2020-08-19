@@ -40,6 +40,7 @@ val Matrix.firstColumnType: Ty?
         .filter { it !is TyUnknown }
         .distinct().singleOrNull()
 
+/** Calculates the pattern matrix by splitting or-patterns across different rows */
 @Throws(CheckMatchException::class)
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }

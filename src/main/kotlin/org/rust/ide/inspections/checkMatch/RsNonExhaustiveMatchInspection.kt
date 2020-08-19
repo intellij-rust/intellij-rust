@@ -41,11 +41,11 @@ class RsNonExhaustiveMatchInspection : RsLocalInspectionTool() {
             ?: return
 
         val wild = Pattern.wild(matchedExprType)
-        val useful = isUseful(matrix, listOf(wild), true, match.crateRoot, true)
+        val useful = isUseful(matrix, listOf(wild), true, match.crateRoot, isTopLevel = true)
 
-        /** if `_` pattern is useful, the match is not exhaustive */
+        /** If `_` pattern is useful, the match is not exhaustive */
         if (useful is Usefulness.UsefulWithWitness) {
-            val patterns = useful.witnesses.mapNotNull { it.patterns.firstOrNull() }
+            val patterns = useful.witnesses.mapNotNull { it.patterns.singleOrNull() }
             RsDiagnostic.NonExhaustiveMatch(match, patterns).addToHolder(holder)
         }
     }
