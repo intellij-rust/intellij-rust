@@ -20,4 +20,26 @@ class TomlAutoIndentTest : TomlTypingTestBase() {
             <caret>
         ]
     """)
+
+    fun `test new key value inside table`() = doOptionTest(tomlSettings()::INDENT_TABLE_KEYS, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1<caret>
+    """, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1
+            <caret>
+    """, """
+        [foo]
+        bar = 1
+
+        [key]
+            foo = 1
+        <caret>
+    """)
 }
