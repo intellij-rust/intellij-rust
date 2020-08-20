@@ -327,6 +327,23 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro from import inside function wins over macro from crate root`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => { /* 1 */ } }
+                    //X
+    //- main.rs
+        mod inner {
+            #[macro_export]
+            macro_rules! foo { () => { /* 2 */ } }
+        }
+        fn main() {
+            use test_package::foo;
+            foo!();
+        }  //^ lib.rs
+    """)
+
     fun `test import macro by non-root use item with aliased extern crate`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_lib_target as aliased;
