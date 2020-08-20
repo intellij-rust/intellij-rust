@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -187,8 +188,8 @@ class RsInlineFunctionProcessor(
 
             val selfParam = functionDup.selfParameter
             replaceSelfParamWithExpr(selfParam, caller, funcScope)
-
             replaceParametersWithArgumentValues(functionDup, caller, funcScope)
+            removeFunctionUseStatements(caller)
 
             val retExprInside = body.descendantsOfType<RsRetExpr>().firstOrNull()?.expr
             if (retExprInside != null && body.stmtList.size == 1) {
@@ -221,6 +222,14 @@ class RsInlineFunctionProcessor(
             }
         } catch (e: IncorrectOperationException) {
             logger.error(e)
+        }
+    }
+
+    private fun removeFunctionUseStatements(caller: PsiElement) {
+        caller.containingFile.children.filterIsInstance<RsUseItem>().forEach { useStatement: RsUseItem ->
+            if (function.crateRelativePath?.trimStart(':') == useStatement.useSpeck?.text) {
+                useStatement.delete()
+            }
         }
     }
 

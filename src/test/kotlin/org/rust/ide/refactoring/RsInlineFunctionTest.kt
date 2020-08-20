@@ -824,6 +824,28 @@ class RsInlineFunctionTest : RsTestBase() {
             }
             """)
 
+    @Language("Rust")
+    fun `test inline function from different module`() = doTest("""
+            /**/use foo::bar::test;
+            /**/fn main() {
+            /**/    test();
+            /**/}
+            /**/mod foo {
+            /**/    mod bar {
+            /**/        pub fn /*caret*/test() {
+            /**/            println!("test");
+            /**/            println!("test2");
+            /**/        }
+            /**/    }
+            /**/}""".trimMargin("/**/"), """
+            /**/fn main() {
+            /**/    println!("test");
+            /**/    println!("test2");
+            /**/}
+            /**/mod foo {
+            /**/    mod bar {}
+            /**/}""".trimMargin("/**/"))
+
     private fun doTest(@Language("Rust") code: String,
                        @Language("Rust") excepted: String) {
         checkByText(code, excepted) {
