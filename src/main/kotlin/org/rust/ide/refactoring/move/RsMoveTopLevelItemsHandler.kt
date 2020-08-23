@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.CaretModel
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.Project
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -78,7 +79,12 @@ class RsMoveTopLevelItemsHandler : MoveHandlerDelegate() {
 
         val relatedImplItems = collectRelatedImplItems(containingMod, itemsToMove)
         val itemsToMoveAll = itemsToMove + relatedImplItems
-        RsMoveTopLevelItemsDialog(project, itemsToMoveAll, containingMod).show()
+        val dialog = RsMoveTopLevelItemsDialog(project, itemsToMoveAll, containingMod)
+        if (isUnitTestMode) {
+            dialog.doAction()
+        } else {
+            dialog.show()
+        }
     }
 
     private fun collectInitialItems(project: Project, editor: Editor): Pair<Set<RsItemElement>, RsMod>? {
@@ -145,6 +151,7 @@ private inline fun <reified T : RsElement> findCommonAncestorStrictOfType(elemen
 }
 
 private fun collectRelatedImplItems(containingMod: RsMod, items: Set<RsItemElement>): List<RsImplItem> {
+    if (isUnitTestMode) return emptyList()
     // For struct `Foo` we should collect:
     // * impl Foo { ... }
     // * impl ... for Foo { ... }
