@@ -7,7 +7,9 @@ package org.rust.ide.refactoring.move
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.refactoring.ui.RefactoringDialog
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -81,7 +83,7 @@ class RsMoveTopLevelItemsDialog(
             .filter { RsMoveTopLevelItemsHandler.canMoveElement(it) }
     }
 
-    override fun doAction() {
+    public override fun doAction() {
         val itemsToMove = memberPanel.table.selectedMemberInfos.mapToSet { it.member }
         val targetFilePath = targetFileChooser.text
 
@@ -96,12 +98,16 @@ class RsMoveTopLevelItemsDialog(
             val processor = RsMoveTopLevelItemsProcessor(project, itemsToMove, targetMod, searchForReferences)
             invokeRefactoring(processor)
         } catch (e: IncorrectOperationException) {
+            if (isUnitTestMode) throw e
             CommonRefactoringUtil.showErrorMessage(message("error.title"), e.message, null, project)
         }
     }
 
     private fun findTargetMod(targetFilePath: String): RsMod? {
+        if (isUnitTestMode) return sourceMod.containingFile.getUserData(MOVE_TARGET_MOD_KEY)
         val targetFile = LocalFileSystem.getInstance().findFileByIoFile(File(targetFilePath))
         return targetFile?.toPsiFile(project) as? RsMod
     }
 }
+
+val MOVE_TARGET_MOD_KEY: Key<RsMod> = Key("RS_MOVE_TARGET_MOD_KEY")
