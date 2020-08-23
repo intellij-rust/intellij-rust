@@ -53,7 +53,7 @@ where StubT : RsNamedStub, StubT : StubElement<*> {
 
     override fun getName(): String? {
         val stub = greenStub
-        return if (stub != null) stub.name else nameIdentifier?.unescapedText
+        return if (stub !== null) stub.name else nameIdentifier?.unescapedText
     }
 
     override fun setName(name: String): PsiElement? {
