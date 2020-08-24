@@ -22,7 +22,6 @@ import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.prependArgument
 import org.rust.openapiext.saveAllDocuments
 
 class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {

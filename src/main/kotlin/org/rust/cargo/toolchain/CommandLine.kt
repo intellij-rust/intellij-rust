@@ -10,25 +10,54 @@ import com.intellij.execution.RunManagerEx
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.executors.DefaultRunExecutor
-import com.intellij.openapi.project.Project
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
+import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.stdext.buildList
 import java.nio.file.Path
 
+abstract class RsCommandLineBase {
+    abstract val command: String
+    abstract val workingDirectory: Path
+    abstract val additionalArguments: List<String>
+
+    protected abstract fun createRunConfiguration(runManager: RunManagerEx, name: String? = null): RunnerAndConfigurationSettings
+
+    fun run(cargoProject: CargoProject, presentableName: String = command, saveConfiguration: Boolean = true) {
+        val project = cargoProject.project
+        val configurationName = when {
+            project.cargoProjects.allProjects.size > 1 -> "$presentableName [${cargoProject.presentableName}]"
+            else -> presentableName
+        }
+        val runManager = RunManagerEx.getInstanceEx(project)
+        val configuration = createRunConfiguration(runManager, configurationName).apply {
+            if (saveConfiguration) {
+                runManager.setTemporaryConfiguration(this)
+            }
+        }
+        val executor = DefaultRunExecutor.getRunExecutorInstance()
+        ProgramRunnerUtil.executeConfiguration(configuration, executor)
+    }
+}
+
 data class CargoCommandLine(
-    val command: String, // Can't be `enum` because of custom subcommands
-    val workingDirectory: Path, // Note that working directory selects Cargo project as well
-    val additionalArguments: List<String> = emptyList(),
+    override val command: String, // Can't be `enum` because of custom subcommands
+    override val workingDirectory: Path, // Note that working directory selects Cargo project as well
+    override val additionalArguments: List<String> = emptyList(),
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
     val allFeatures: Boolean = false,
     val emulateTerminal: Boolean = false
-) {
+) : RsCommandLineBase() {
+
+    override fun createRunConfiguration(runManager: RunManagerEx, name: String?): RunnerAndConfigurationSettings =
+        runManager.createCargoCommandRunConfiguration(this, name)
+
     /**
      * Adds [arg] to [additionalArguments] as an positional argument, in other words, inserts [arg] right after
      * `--` argument in [additionalArguments].
@@ -45,6 +74,9 @@ data class CargoCommandLine(
      */
     fun splitOnDoubleDash(): Pair<List<String>, List<String>> =
         org.rust.cargo.util.splitOnDoubleDash(additionalArguments)
+
+    fun prependArgument(arg: String): CargoCommandLine =
+        copy(additionalArguments = listOf(arg) + additionalArguments)
 
     companion object {
         fun forTargets(
@@ -120,53 +152,18 @@ data class CargoCommandLine(
     }
 }
 
-fun CargoWorkspace.Target.launchCommand(): String? {
-    return when (kind) {
-        CargoWorkspace.TargetKind.Bin -> "run"
-        is CargoWorkspace.TargetKind.Lib -> "build"
-        CargoWorkspace.TargetKind.Test -> "test"
-        CargoWorkspace.TargetKind.Bench -> "bench"
-        CargoWorkspace.TargetKind.ExampleBin -> "run"
-        is CargoWorkspace.TargetKind.ExampleLib -> "build"
-        else -> null
-    }
-}
-
-fun CargoCommandLine.run(
-    cargoProject: CargoProject,
-    presentableName: String = command,
-    saveConfiguration: Boolean = true
-) {
-    val name = cargoProject.localConfigurationName(presentableName)
-    val configuration = createRunConfiguration(
-        cargoProject.project, this, name, saveConfiguration
-    )
-    val executor = DefaultRunExecutor.getRunExecutorInstance()
-    ProgramRunnerUtil.executeConfiguration(configuration, executor)
-}
-
-private fun createRunConfiguration(
-    project: Project,
-    cargoCommandLine: CargoCommandLine,
-    name: String? = null,
-    saveConfiguration: Boolean
-): RunnerAndConfigurationSettings {
-    val runManager = RunManagerEx.getInstanceEx(project)
-    return runManager.createCargoCommandRunConfiguration(cargoCommandLine, name).apply {
-        if (saveConfiguration) {
-            runManager.setTemporaryConfiguration(this)
-        }
-    }
-}
-
-fun CargoCommandLine.prependArgument(arg: String): CargoCommandLine =
-    copy(additionalArguments = listOf(arg) + additionalArguments)
-
-fun CargoProject.localConfigurationName(name: String): String {
-    val project = this.project
-
-    return when {
-        project.cargoProjects.allProjects.size > 1 -> "$name [${this.presentableName}]"
-        else -> name
+data class WasmPackCommandLine(
+    override val command: String,
+    override val workingDirectory: Path,
+    override val additionalArguments: List<String> = emptyList()
+) : RsCommandLineBase() {
+    override fun createRunConfiguration(runManager: RunManagerEx, name: String?): RunnerAndConfigurationSettings {
+        val runnerAndConfigurationSettings = runManager.createConfiguration(
+            name ?: command,
+            WasmPackCommandConfigurationType.getInstance().factory
+        )
+        val configuration = runnerAndConfigurationSettings.configuration as WasmPackCommandConfiguration
+        configuration.setFromCmd(this)
+        return runnerAndConfigurationSettings
     }
 }

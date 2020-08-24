@@ -13,7 +13,6 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.run
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandCompletionProvider
 import org.rust.ide.actions.runAnything.RsRunAnythingProvider

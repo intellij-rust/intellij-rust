@@ -9,9 +9,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.treeStructure.SimpleTree
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNode
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.launchCommand
-import org.rust.cargo.toolchain.run
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.tree.DefaultMutableTreeNode
@@ -52,4 +51,14 @@ class CargoProjectsTree : SimpleTree() {
     companion object {
         private val LOG: Logger = Logger.getInstance(CargoProjectsTree::class.java)
     }
+}
+
+private fun CargoWorkspace.Target.launchCommand(): String? = when (kind) {
+    CargoWorkspace.TargetKind.Bin -> "run"
+    is CargoWorkspace.TargetKind.Lib -> "build"
+    CargoWorkspace.TargetKind.Test -> "test"
+    CargoWorkspace.TargetKind.Bench -> "bench"
+    CargoWorkspace.TargetKind.ExampleBin -> "run"
+    is CargoWorkspace.TargetKind.ExampleLib -> "build"
+    else -> null
 }
