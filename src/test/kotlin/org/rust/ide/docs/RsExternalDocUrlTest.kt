@@ -99,6 +99,12 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, null, Testmarks.notExportedMacro)
 
+    fun `test macro 2`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub macro Bar() {}
+                 //^
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/macro.Bar.html")
+
     fun `test not external url for workspace package`() = doUrlTestByFileTree("""
         //- lib.rs
         pub enum Foo { FOO, BAR }

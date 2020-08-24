@@ -345,7 +345,7 @@ data class RsQualifiedName private constructor(
                 is RsTypeAlias -> TYPE
                 is RsFunction -> FN
                 is RsConstant -> CONSTANT
-                is RsMacro -> MACRO
+                is RsMacro, is RsMacro2 -> MACRO
                 is RsMod -> {
                     if (isCrateRoot) {
                         val crateName = containingCrate?.normName ?: return null
