@@ -8,7 +8,7 @@ package org.rust.cargo.runconfig.command
 import com.intellij.ide.actions.runAnything.RunAnythingManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.icons.CargoIcons
-import org.rust.ide.actions.runAnything.CargoRunAnythingProvider.Companion.HELP_COMMAND
+import org.rust.ide.actions.runAnything.cargo.CargoRunAnythingProvider.Companion.HELP_COMMAND
 
 class RunCargoCommandAction : RunCargoCommandActionBase(CargoIcons.ICON) {
     override fun actionPerformed(e: AnActionEvent) {

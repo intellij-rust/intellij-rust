@@ -28,7 +28,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.util.CargoCommandLineEditor
+import org.rust.cargo.util.CargoCommandCompletionProvider
+import org.rust.cargo.util.RsCommandLineEditor
 import java.awt.Dimension
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -43,7 +44,9 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
     private val allCargoProjects: List<CargoProject> =
         project.cargoProjects.allProjects.sortedBy { it.presentableName }
 
-    private val command = CargoCommandLineEditor(project) { this.currentWorkspace() }
+    private val command = RsCommandLineEditor(
+        project, CargoCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
+    )
 
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
         BacktraceMode.values()

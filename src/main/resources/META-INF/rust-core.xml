@@ -927,7 +927,9 @@
         <!-- Run Anything -->
 
         <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
-                                       implementation="org.rust.ide.actions.runAnything.CargoRunAnythingProvider"/>
+                                       implementation="org.rust.ide.actions.runAnything.cargo.CargoRunAnythingProvider"/>
+        <runAnything.executionProvider order="after RunAnythingRunConfigurationProvider"
+                                       implementation="org.rust.ide.actions.runAnything.wasmpack.WasmPackRunAnythingProvider"/>
 
         <lang.elementManipulator forClass="org.rust.lang.core.psi.RsLitExpr"
                                  implementationClass="org.rust.ide.injected.RsStringLiteralManipulator"/>

@@ -9,21 +9,23 @@ import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.trimStart
 import com.intellij.util.execution.ParametersListUtil
-import org.rust.cargo.icons.CargoIcons
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.runconfig.hasCargoProject
-import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.run
-import org.rust.cargo.util.CargoCommandCompletionProvider
-import javax.swing.Icon
+import org.rust.cargo.util.RsCommandCompletionProvider
+import org.rust.stdext.toPath
+import java.nio.file.Path
 
-class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
+abstract class RsRunAnythingProvider : RunAnythingProviderBase<String>() {
 
-    override fun getMainListItem(dataContext: DataContext, value: String): RunAnythingItem =
-        RunAnythingCargoItem(getCommand(value), getIcon(value))
+    abstract override fun getMainListItem(dataContext: DataContext, value: String): RunAnythingItem
+
+    abstract fun run(command: String, params: List<String>, workingDirectory: Path, cargoProject: CargoProject)
+
+    abstract fun getCompletionProvider(project: Project, dataContext: DataContext) : RsCommandCompletionProvider
 
     override fun findMatchingValue(dataContext: DataContext, pattern: String): String? =
         if (pattern.startsWith(helpCommand)) getCommand(pattern) else null
@@ -31,9 +33,7 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
     override fun getValues(dataContext: DataContext, pattern: String): Collection<String> {
         val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return emptyList()
         if (!project.hasCargoProject) return emptyList()
-        val completionProvider = CargoCommandCompletionProvider(project.cargoProjects) {
-            getAppropriateCargoProject(dataContext)?.workspace
-        }
+        val completionProvider = getCompletionProvider(project, dataContext)
 
         return when {
             pattern.startsWith(helpCommand) -> {
@@ -52,31 +52,10 @@ class CargoRunAnythingProvider : RunAnythingProviderBase<String>() {
         if (!project.hasCargoProject) return
         val cargoProject = getAppropriateCargoProject(dataContext) ?: return
         val params = ParametersListUtil.parse(trimStart(value, helpCommand))
-        val commandLine = CargoCommandLine.forProject(
-            cargoProject,
-            params.firstOrNull() ?: "--help",
-            params.drop(1)
-        )
-        commandLine.run(cargoProject)
+        val path = project.basePath?.toPath() ?: return
+        run(params.firstOrNull() ?: "--help", params.drop(1), path, cargoProject)
     }
 
-    override fun getCommand(value: String): String = value
-
-    override fun getIcon(value: String): Icon = CargoIcons.ICON
-
-    override fun getCompletionGroupTitle(): String = "Cargo commands"
-
-    override fun getHelpGroupTitle(): String = "Cargo"
-
-    override fun getHelpCommandPlaceholder(): String = "cargo <subcommand> <args...>"
-
-    override fun getHelpCommand(): String = HELP_COMMAND
-
-    override fun getHelpIcon(): Icon = CargoIcons.ICON
-
-    override fun getHelpDescription(): String = "Runs Cargo command"
-
-    companion object {
-        const val HELP_COMMAND = "cargo"
-    }
+    abstract override fun getHelpCommand(): String
 }
+

@@ -3,80 +3,50 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.actions.runAnything
+package org.rust.ide.actions.runAnything.cargo
 
-import com.intellij.ide.actions.runAnything.items.RunAnythingItemBase
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.execution.ParametersListUtil
-import java.awt.BorderLayout
-import java.awt.Component
+import org.rust.ide.actions.runAnything.RsRunAnythingItem
 import javax.swing.Icon
-import javax.swing.JPanel
 
-class RunAnythingCargoItem(command: String, icon: Icon) : RunAnythingItemBase(command, icon) {
+class RunAnythingCargoItem(command: String, icon: Icon) : RsRunAnythingItem(command, icon) {
+    override val helpCommand: String = "cargo"
 
-    override fun createComponent(pattern: String?, isSelected: Boolean, hasFocus: Boolean): Component {
-        return super.createComponent(pattern, isSelected, hasFocus).also(this::customizeComponent)
-    }
-
-    private fun customizeComponent(component: Component) {
-        if (component !is JPanel) return
-
-        val params = ParametersListUtil.parse(StringUtil.trimStart(command, "cargo"))
-        val description = when (params.size) {
-            0 -> null
-            1 -> commandDescriptions[params.last()]
-            else -> {
-                val optionsDescriptions = getOptionsDescriptionsForCommand(params.first())
-                optionsDescriptions?.get(params.last())
-            }
-        } ?: return
-        val descriptionComponent = SimpleColoredComponent()
-        descriptionComponent.append(
-            StringUtil.shortenTextWithEllipsis(" $description.", 200, 0),
-            SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES
+    override val commandDescriptions: Map<String, String> =
+        hashMapOf(
+            "build" to "Compile the current project",
+            "check" to "Analyze the current project and report errors, but don't build object files",
+            "clean" to "Remove the target directory",
+            "doc" to "Build this project's and its dependencies' documentation",
+            "new" to "Create a new cargo project",
+            "init" to "Create a new cargo project in an existing directory",
+            "run" to "Build and execute src/main.rs",
+            "test" to "Run the tests",
+            "bench" to "Run the benchmarks",
+            "update" to "Update dependencies listed in Cargo.lock",
+            "search" to "Search registry for crates",
+            "publish" to "Package and upload this project to the registry",
+            "install" to "Install a Rust binary",
+            "uninstall" to "Uninstall a Rust binary"
         )
-        component.add(descriptionComponent, BorderLayout.EAST)
-    }
+
+    override fun getOptionsDescriptionsForCommand(commandName: String): Map<String, String>? =
+        when (commandName) {
+            "build" -> buildOptionsDescriptions
+            "check" -> checkOptionsDescriptions
+            "clean" -> cleanOptionsDescriptions
+            "doc" -> docOptionsDescriptions
+            "run" -> runOptionsDescriptions
+            "test" -> testOptionsDescriptions
+            "bench" -> benchOptionsDescriptions
+            "update" -> updateOptionsDescriptions
+            "search" -> searchOptionsDescriptions
+            "publish" -> publishOptionsDescriptions
+            "install" -> installOptionsDescriptions
+            "uninstall" -> uninstallOptionsDescriptions
+            else -> null
+        }
 
     companion object {
-        private val commandDescriptions: Map<String, String> =
-            hashMapOf(
-                "build" to "Compile the current project",
-                "check" to "Analyze the current project and report errors, but don't build object files",
-                "clean" to "Remove the target directory",
-                "doc" to "Build this project's and its dependencies' documentation",
-                "new" to "Create a new cargo project",
-                "init" to "Create a new cargo project in an existing directory",
-                "run" to "Build and execute src/main.rs",
-                "test" to "Run the tests",
-                "bench" to "Run the benchmarks",
-                "update" to "Update dependencies listed in Cargo.lock",
-                "search" to "Search registry for crates",
-                "publish" to "Package and upload this project to the registry",
-                "install" to "Install a Rust binary",
-                "uninstall" to "Uninstall a Rust binary"
-            )
-
-        fun getOptionsDescriptionsForCommand(commandName: String): Map<String, String>? =
-            when (commandName) {
-                "build" -> buildOptionsDescriptions
-                "check" -> checkOptionsDescriptions
-                "clean" -> cleanOptionsDescriptions
-                "doc" -> docOptionsDescriptions
-                "run" -> runOptionsDescriptions
-                "test" -> testOptionsDescriptions
-                "bench" -> benchOptionsDescriptions
-                "update" -> updateOptionsDescriptions
-                "search" -> searchOptionsDescriptions
-                "publish" -> publishOptionsDescriptions
-                "install" -> installOptionsDescriptions
-                "uninstall" -> uninstallOptionsDescriptions
-                else -> null
-            }
-
         private val jobs: Pair<String, String> = "--jobs" to "Number of parallel jobs, defaults to # of CPUs"
         private val exclude: Pair<String, String> = "--exclude" to "Exclude packages from the build"
         private val index: Pair<String, String> = "--index" to "Registry index to upload the package to"

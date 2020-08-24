@@ -13,24 +13,18 @@ import com.intellij.ui.ExpandableEditorSupport
 import com.intellij.ui.TextAccessor
 import com.intellij.ui.components.fields.ExpandableSupport
 import com.intellij.util.Function
+import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
-import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.workspace.CargoWorkspace
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class CargoCommandLineEditor(
+class RsCommandLineEditor(
     private val project: Project,
-    private val implicitTextPrefix: String,
-    private val workspaceGetter: () -> CargoWorkspace?
+    private val completionProvider: TextFieldCompletionProvider
 ) : JPanel(BorderLayout()), TextAccessor {
-
-    constructor(project: Project, workspaceGetter: () -> CargoWorkspace?) : this(project, "", workspaceGetter)
-
-    constructor(project: Project, workspace: CargoWorkspace?) : this(project, { workspace })
 
     private val textField = createTextField("")
     val preferredFocusedComponent: JComponent = textField
@@ -57,7 +51,7 @@ class CargoCommandLineEditor(
     private fun createTextField(value: String): TextFieldWithCompletion =
         TextFieldWithCompletion(
             project,
-            CargoCommandCompletionProvider(project.cargoProjects, implicitTextPrefix, workspaceGetter),
+            completionProvider,
             value,
             true,
             false,
