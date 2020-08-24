@@ -76,6 +76,8 @@ private fun getLocallyIndexedCrates(project: Project): Map<String, CrateIndexEnt
     if (result.exitCode != 0) return null
 
     return result.stdout.lineSequence().mapNotNull {
+        if (it == "config.json") return@mapNotNull null
+
         val path = it
         val name = path.substringAfterLast("/")
         Pair(name, CrateIndexEntry(path, name))
