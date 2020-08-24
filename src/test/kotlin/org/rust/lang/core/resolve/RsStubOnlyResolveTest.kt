@@ -101,6 +101,34 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub fn baz() {}
     """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
 
+    fun `test module path to different directory 1`() = stubOnlyResolve("""
+    //- main.rs
+        #[path = "src2/foo.rs"]
+        mod foo;
+
+        type T = foo::bar::S;
+                         //^ src2/bar/mod.rs
+    //- src2/foo.rs
+        pub mod bar;
+    //- src2/bar/mod.rs
+        pub struct S;
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+
+    fun `test module path to different directory 2`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            inner::foo::bar::func();
+        }                  //^ inner/src2/bar.rs
+
+        mod inner {
+            #[path = "src2/foo.rs"]
+            pub mod foo;
+        }
+    //- inner/src2/foo.rs
+        pub mod bar;
+    //- inner/src2/bar.rs
+        pub fn func() {}
+    """)
 
     fun `test invalid path`() = stubOnlyResolve("""
     //- main.rs
@@ -338,6 +366,25 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- bar/baz.rs
         pub fn baz() {}
+    """)
+
+    fun `test inline module path in non crate root 2`() = stubOnlyResolve("""
+    //- main.rs
+        mod foo;
+    //- foo.rs
+        pub mod bar {
+            #[path="baz2"]
+            pub mod baz {
+                pub mod quux;
+            }
+        }
+
+        fn foo() {
+            self::bar::baz::quux::eggs();
+                                 //^ foo/bar/baz2/quux.rs
+        }
+    //- foo/bar/baz2/quux.rs
+        pub fn eggs() {}
     """)
 
     fun `test use from child`() = stubOnlyResolve("""

@@ -53,10 +53,16 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
         if (this is RsFile && name == RsConstants.MOD_RS_FILE || isCrateRoot) return contextualFile.originalFile.parent
 
         val explicitPath = pathAttribute
+        val superMod = `super`
+        val superModDir = { superMod?.getOwnedDirectory(createIfNotExists) }
         val (parentDirectory, path) = if (explicitPath != null) {
-            contextualFile.originalFile.parent to explicitPath
+            when {
+                this is RsFile -> return contextualFile.originalFile.parent
+                superMod is RsFile -> contextualFile.originalFile.parent to explicitPath
+                else -> superModDir() to explicitPath
+            }
         } else {
-            `super`?.getOwnedDirectory(createIfNotExists) to name
+            superModDir() to name
         }
         if (parentDirectory == null || path == null) return null
 
