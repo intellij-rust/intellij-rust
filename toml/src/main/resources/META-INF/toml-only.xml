@@ -7,5 +7,9 @@
         <codeInsight.lineMarkerProvider language="TOML"
                                         implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
         <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
+
+        <projectService serviceInterface="org.rust.toml.crates.CrateResolverService"
+                        serviceImplementation="org.rust.toml.crates.impl.CrateResolverImpl"
+                        testServiceImplementation="org.rust.toml.crates.impl.TestCrateResolverImpl"/>
     </extensions>
 </idea-plugin>
