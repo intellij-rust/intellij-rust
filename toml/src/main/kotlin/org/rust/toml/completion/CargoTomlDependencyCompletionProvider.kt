@@ -15,7 +15,6 @@ import com.intellij.util.ProcessingContext
 import com.intellij.util.text.SemVer
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.toml.StringValueInsertionHandler
-import org.rust.toml.crates.CrateDescription
 import org.rust.toml.crates.CrateResolverService
 import org.rust.toml.crates.crateResolver
 import org.rust.toml.getClosestKeyValueAncestor
@@ -45,7 +44,7 @@ abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<Completio
 class CargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val resolver = getCrateResolver(keyValue.project) ?: return
-        val variants = resolver.searchCrates(getCrateName(keyValue.key)).map { it.dependencyLine }
+        val variants = resolver.searchCrates(getCrateName(keyValue.key))
         result.addAllElements(variants.map(LookupElementBuilder::create))
     }
 
@@ -71,14 +70,14 @@ class CargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvider<C
         val variants = resolver.searchCrates(getCrateName(key))
 
         val elements = variants.map { variant ->
-            LookupElementBuilder.create(variant.name)
-                .withPresentableText(variant.dependencyLine)
+            LookupElementBuilder.create(variant)
+                .withPresentableText(variant)
                 .withInsertHandler { context, _ ->
                     val table = key.ancestorStrict<TomlTable>() ?: return@withInsertHandler
                     if (table.entries.isEmpty()) {
                         context.document.insertString(
                             context.selectionEndOffset + 1,
-                            "\nversion = \"${variant.maxVersion}\""
+                            "\nversion = "
                         )
                     }
                 }
@@ -127,6 +126,3 @@ private fun getCrateLastVersion(key: TomlKey): SemVer? {
 }
 
 private fun getCrateName(key: TomlKey): String = CompletionUtil.getOriginalElement(key)?.text ?: ""
-
-private val CrateDescription.dependencyLine: String
-    get() = "$name = \"$maxVersion\""

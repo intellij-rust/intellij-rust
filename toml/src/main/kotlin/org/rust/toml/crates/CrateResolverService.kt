@@ -16,17 +16,13 @@ interface CrateResolverService {
     fun isAvailable(): Boolean = true
 
     /**
-     * Returns crate descriptions that include `name` in their name.
+     * Returns crates that include `name` in their name.
      */
-    fun searchCrates(name: String): Collection<CrateDescription>
+    fun searchCrates(name: String): Collection<String>
 
-    /**
-     * Looks up a specific crate.
-     */
     fun getCrate(name: String): Crate?
 }
 
-data class CrateDescription(val name: String, val maxVersion: SemVer?)
 data class Crate(val name: String, val maxVersion: SemVer?, val versions: List<CrateVersion>)
 data class CrateVersion(val version: SemVer?, val yanked: Boolean)
 
