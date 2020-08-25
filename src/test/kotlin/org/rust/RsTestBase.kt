@@ -199,9 +199,15 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 
-    protected fun checkByDirectory(@Language("Rust") before: String, @Language("Rust") after: String, action: (TestProject) -> Unit) {
+    protected fun checkByDirectory(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        expectError: Boolean = false,
+        action: (TestProject) -> Unit
+    ) {
         val testProject = fileTreeFromText(before).create()
         action(testProject)
+        if (expectError) return
         saveAllDocuments()
         fileTreeFromText(after).assertEquals(myFixture.findFileInTempDir("."))
     }

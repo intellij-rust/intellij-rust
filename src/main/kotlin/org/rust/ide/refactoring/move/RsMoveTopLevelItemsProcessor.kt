@@ -13,10 +13,10 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
-import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.ElementToMove
 import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
-import org.rust.lang.core.psi.RsModItem
+import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.startOffset
@@ -34,17 +34,15 @@ class RsMoveTopLevelItemsProcessor(
         RsMoveCommonProcessor(project, elementsToMove, targetMod)
     }
 
-    init {
-        if (itemsToMove.isEmpty()) throw IncorrectOperationException("No items to move")
-    }
-
     override fun findUsages(): Array<out UsageInfo> {
         if (!searchForReferences) return UsageInfo.EMPTY_ARRAY
         return commonProcessor.findUsages()
     }
 
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
-        return commonProcessor.preprocessUsages(refUsages.get()) && super.preprocessUsages(refUsages)
+        val usages = refUsages.get()
+        val conflicts = MultiMap<PsiElement, String>()
+        return commonProcessor.preprocessUsages(usages, conflicts) && showConflicts(conflicts, usages)
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
@@ -75,7 +73,3 @@ class RsMoveTopLevelItemsProcessor(
 
     override fun getCommandName(): String = "Move items"
 }
-
-// like `PsiElement::add`, but works correctly for `RsModItem`
-private fun RsMod.addInner(element: PsiElement): PsiElement =
-    addBefore(element, if (this is RsModItem) rbrace else null)

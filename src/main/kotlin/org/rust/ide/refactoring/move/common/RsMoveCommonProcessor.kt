@@ -7,14 +7,19 @@ package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapiext.isUnitTestMode
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.usageView.UsageInfo
+import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMoveUtil.LOG
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModStrict
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isAbsolute
@@ -29,6 +34,7 @@ import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.computeWithCancelableProgress
+import org.rust.openapiext.runWithCancelableProgress
 
 class ItemToMove(val item: RsItemElement) : ElementToMove()
 class ModToMove(val mod: RsMod) : ElementToMove()
@@ -98,12 +104,20 @@ class RsMoveCommonProcessor(
     private val codeFragmentFactory: RsCodeFragmentFactory = RsCodeFragmentFactory(project)
 
     private val sourceMod: RsMod = elementsToMove
+        .also { if (it.isEmpty()) throw IncorrectOperationException("No items to move") }
         .map { it.element.containingModStrict }
         .distinct()
         .singleOrNull()
         ?: error("Elements to move must belong to single parent mod")
 
     private val pathHelper: RsMovePathHelper = RsMovePathHelper(project, targetMod)
+    private lateinit var conflictsDetector: RsMoveConflictsDetector
+
+    init {
+        if (targetMod == sourceMod) {
+            throw IncorrectOperationException("Source and destination modules should be different")
+        }
+    }
 
     fun findUsages(): Array<RsMoveUsageInfo> {
         return elementsToMove
@@ -130,17 +144,26 @@ class RsMoveCommonProcessor(
         }
     }
 
-    fun preprocessUsages(usages: Array<UsageInfo>): Boolean {
+    fun preprocessUsages(usages: Array<UsageInfo>, conflicts: MultiMap<PsiElement, String>): Boolean {
         val title = message("refactoring.preprocess.usages.progress")
         return try {
-            // we need to use `computeWithCancelableProgress` and not `runWithCancelableProgress`
-            // because otherwise any exceptions will be silently ignored
-            // (exception will only be written to log, `runWithCancelableProgress` will return `true`)
+            /**
+             * We need to use [computeWithCancelableProgress] and not [runWithCancelableProgress],
+             * because otherwise any exceptions will be silently ignored.
+             * (exception will only be written to log, `runWithCancelableProgress` will return `true`)
+             */
             project.computeWithCancelableProgress(title) {
                 runReadAction {
                     // TODO: two threads
-                    collectOutsideReferences()
-                    preprocessInsideReferences(usages)
+                    val outsideReferences = collectOutsideReferences()
+                    val insideReferences = preprocessInsideReferences(usages)
+
+                    if (!isUnitTestMode) {
+                        ProgressManager.getInstance().progressIndicator.text = message("detecting.possible.conflicts")
+                    }
+                    conflictsDetector = RsMoveConflictsDetector(conflicts, elementsToMove, sourceMod, targetMod)
+                    conflictsDetector.detectOutsideReferencesVisibilityProblems(outsideReferences)
+                    conflictsDetector.detectInsideReferencesVisibilityProblems(insideReferences)
                 }
             }
             true
