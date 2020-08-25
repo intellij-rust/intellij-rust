@@ -462,4 +462,12 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!("{0:E}", <error descr="`S` doesn't implement `UpperExp` (required by {0:E})">s</error>);
         }
     """)
+
+    fun `test ignore format string macro argument`() = checkErrors("""
+        struct S;
+
+        fn main() {
+            println!(concat!("{}", "{}", "{}"), S, S);
+        }
+    """)
 }

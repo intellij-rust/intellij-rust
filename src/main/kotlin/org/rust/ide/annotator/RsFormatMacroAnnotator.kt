@@ -19,7 +19,10 @@ import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.containingCrate
+import org.rust.lang.core.psi.ext.macroName
+import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
@@ -43,7 +46,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
 
         val formatStr = macroArgs
             .getOrNull(macroPos)
-            ?.descendantOfTypeStrict<RsLitExpr>()
+            ?.expr as? RsLitExpr
             ?: return
 
         val parseCtx = parseParameters(formatStr) ?: return
