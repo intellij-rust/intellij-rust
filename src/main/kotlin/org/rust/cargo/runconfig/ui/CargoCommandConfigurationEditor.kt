@@ -7,7 +7,6 @@ package org.rust.cargo.runconfig.ui
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.SystemInfo
@@ -19,11 +18,9 @@ import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
-import com.intellij.util.text.nullize
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.BacktraceMode
@@ -31,22 +28,18 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
 import java.awt.Dimension
-import java.nio.file.Path
-import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+class CargoCommandConfigurationEditor(project: Project)
+    : RsCommandConfigurationEditor<CargoCommandConfiguration>(project) {
 
-class CargoCommandConfigurationEditor(private val project: Project) : SettingsEditor<CargoCommandConfiguration>() {
-    private fun currentWorkspace(): CargoWorkspace? =
-        CargoCommandConfiguration.findCargoProject(project, command.text, currentWorkingDirectory)?.workspace
+    override val command = RsCommandLineEditor(
+        project, CargoCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
+    )
 
     private val allCargoProjects: List<CargoProject> =
         project.cargoProjects.allProjects.sortedBy { it.presentableName }
-
-    private val command = RsCommandLineEditor(
-        project, CargoCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
-    )
 
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
         BacktraceMode.values()
@@ -60,8 +53,6 @@ class CargoCommandConfigurationEditor(private val project: Project) : SettingsEd
             .forEach { addItem(it) }
     }
 
-    private val currentWorkingDirectory: Path? get() = workingDirectory.component.text.nullize()?.let { Paths.get(it) }
-    private val workingDirectory = WorkingDirectoryComponent()
     private val cargoProject = ComboBox<CargoProject>().apply {
         renderer = SimpleListCellRenderer.create("") { it.presentableName }
         allCargoProjects.forEach { addItem(it) }

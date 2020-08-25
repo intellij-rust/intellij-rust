@@ -17,7 +17,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.readPath
 import org.rust.cargo.runconfig.readString
-import org.rust.cargo.runconfig.wasmpack.ui.WasmPackCommandConfigurationEditor
+import org.rust.cargo.runconfig.ui.WasmPackCommandConfigurationEditor
 import org.rust.cargo.runconfig.writePath
 import org.rust.cargo.runconfig.writeString
 import org.rust.cargo.toolchain.WasmPackCommandLine
