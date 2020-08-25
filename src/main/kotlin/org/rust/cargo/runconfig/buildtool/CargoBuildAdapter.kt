@@ -48,7 +48,8 @@ class CargoBuildAdapter(
     private val textBuffer: MutableList<String> = mutableListOf()
 
     init {
-        context.environment.notifyProcessStarted(context.processHandler)
+        val processHandler = checkNotNull(context.processHandler) { "Process handler can't be null" }
+        context.environment.notifyProcessStarted(processHandler)
         val descriptor = DefaultBuildDescriptor(
             context.buildId,
             "Run Cargo command",
@@ -57,15 +58,15 @@ class CargoBuildAdapter(
         )
         val buildStarted = StartBuildEventImpl(descriptor, "${context.taskName} running...")
             .withExecutionFilters(*createFilters(context.cargoProject).toTypedArray())
-            .withRestartAction(createRerunAction(context.processHandler, context.environment))
-            .withRestartAction(createStopAction(context.processHandler))
+            .withRestartAction(createRerunAction(processHandler, context.environment))
+            .withRestartAction(createStopAction(processHandler))
         buildProgressListener.onEvent(context.buildId, buildStarted)
     }
 
     override fun processTerminated(event: ProcessEvent) {
         instantReader.closeAndGetFuture().whenComplete { _, error ->
             val isSuccess = event.exitCode == 0 && context.errors == 0
-            val isCanceled = context.indicator.isCanceled
+            val isCanceled = context.indicator?.isCanceled ?: false
             context.environment.binaries = buildOutputParser.binaries.takeIf { isSuccess && !isCanceled }
 
             val (status, result) = when {

@@ -116,8 +116,8 @@ object CargoBuildManager {
             }
 
             processHandler = state.startProcess(emulateTerminal = true)
-            processHandler.addProcessListener(CargoBuildAdapter(this, buildProgressListener))
-            processHandler.startNotify()
+            processHandler?.addProcessListener(CargoBuildAdapter(this, buildProgressListener))
+            processHandler?.startNotify()
         }
     }
 
@@ -145,7 +145,7 @@ object CargoBuildManager {
                                 if (!wasCanceled && indicator.isCanceled) {
                                     wasCanceled = true
                                     synchronized(processCreationLock) {
-                                        context.processHandler.destroyProcess()
+                                        context.processHandler?.destroyProcess()
                                     }
                                 }
 
@@ -168,8 +168,8 @@ object CargoBuildManager {
             }
         }
 
-        context.indicator.text = context.progressTitle
-        context.indicator.text2 = ""
+        context.indicator?.text = context.progressTitle
+        context.indicator?.text2 = ""
 
         ApplicationManager.getApplication().executeOnPooledThread {
             if (!context.waitAndStart()) return@executeOnPooledThread
@@ -184,7 +184,8 @@ object CargoBuildManager {
             @Suppress("DEPRECATION")
             TransactionGuard.submitTransaction(context.project, Runnable {
                 synchronized(processCreationLock) {
-                    if (context.indicator.isCanceled) {
+                    val isCanceled = context.indicator?.isCanceled ?: false
+                    if (isCanceled) {
                         context.canceled()
                         return@Runnable
                     }

@@ -204,11 +204,11 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
             return Progress(current, total)
         }
 
-        fun updateIndicator(indicator: ProgressIndicator, title: String, description: String, progress: Progress) {
-            indicator.isIndeterminate = progress.total < 0
-            indicator.text = title
-            indicator.text2 = description
-            indicator.fraction = progress.fraction
+        fun ProgressIndicator.update(title: String, description: String, progress: Progress) {
+            isIndeterminate = progress.total < 0
+            text = title
+            text2 = description
+            fraction = progress.fraction
         }
 
         val activeTaskNames = message
@@ -217,12 +217,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
             .map { it.substringBefore("(").trim() }
         finishNonActiveTasks(activeTaskNames)
 
-        updateIndicator(
-            context.indicator,
-            context.progressTitle,
-            message.substringAfter(":").trim(),
-            parseProgress(message)
-        )
+        context.indicator?.update(context.progressTitle, message.substringAfter(":").trim(), parseProgress(message))
     }
 
     private fun handleFinishedMessage(failedTaskName: String?, messageConsumer: Consumer<in BuildEvent>) {

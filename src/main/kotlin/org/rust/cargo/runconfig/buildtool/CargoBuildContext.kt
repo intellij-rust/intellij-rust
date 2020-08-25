@@ -39,8 +39,8 @@ class CargoBuildContext(
     private val buildSemaphore: Semaphore = project.getUserData(BUILD_SEMAPHORE_KEY)
         ?: (project as UserDataHolderEx).putUserDataIfAbsent(BUILD_SEMAPHORE_KEY, Semaphore(1))
 
-    lateinit var indicator: ProgressIndicator
-    lateinit var processHandler: ProcessHandler
+    var indicator: ProgressIndicator? = null
+    var processHandler: ProcessHandler? = null
 
     val started: Long = System.currentTimeMillis()
     var finished: Long = started
@@ -50,12 +50,12 @@ class CargoBuildContext(
     var warnings: Int = 0
 
     fun waitAndStart(): Boolean {
-        indicator.pushState()
+        indicator?.pushState()
         try {
-            indicator.text = "Waiting for the current build to finish..."
-            indicator.text2 = ""
+            indicator?.text = "Waiting for the current build to finish..."
+            indicator?.text2 = ""
             while (true) {
-                indicator.checkCanceled()
+                indicator?.checkCanceled()
                 try {
                     if (buildSemaphore.tryAcquire(100, TimeUnit.MILLISECONDS)) break
                 } catch (e: InterruptedException) {
@@ -66,13 +66,13 @@ class CargoBuildContext(
             canceled()
             return false
         } finally {
-            indicator.popState()
+            indicator?.popState()
         }
         return true
     }
 
     fun finished(isSuccess: Boolean) {
-        val isCanceled = indicator.isCanceled
+        val isCanceled = indicator?.isCanceled ?: false
 
         finished = System.currentTimeMillis()
         buildSemaphore.release()
