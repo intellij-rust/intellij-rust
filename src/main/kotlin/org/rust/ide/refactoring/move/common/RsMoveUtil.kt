@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.util.PsiTreeUtil
@@ -85,7 +86,7 @@ object RsMoveUtil {
 
     fun RsPath.startsWithSuper(): Boolean = basePath().referenceName == "super"
 
-    private fun RsPath.startsWithSelf(): Boolean = basePath().referenceName == "self"
+    fun RsPath.startsWithSelf(): Boolean = basePath().referenceName == "self"
 
     private fun RsPath.startsWithCSelf(): Boolean = basePath().referenceName == "Self"
 
@@ -100,6 +101,13 @@ object RsMoveUtil {
         }
 
     /**
+     * Any outermost path has exactly one simple subpath:
+     * `mod1::mod2::Struct1::method1`
+     *  ^~~~~~~~~~~~~~~~~~~~~~~~~~~^ not simple
+     *  ^~~~~~~~~~~~~~~~~~^ simple
+     *  ^~~~~~~~~^ not simple
+     *  ^~~^ not simple
+     *
      * Path is simple if target of all subpaths is [RsMod]
      * (target of whole path could be [RsMod] or [RsItemElement]).
      * These paths are simple:
@@ -147,6 +155,10 @@ object RsMoveUtil {
             else -> containingMod
         }
 
+    /** Like [PsiElement.add], but works correctly for [RsModItem] */
+    fun RsMod.addInner(element: PsiElement): PsiElement =
+        addBefore(element, if (this is RsModItem) rbrace else null)
+
     // TODO: possible performance improvement: iterate over RsElement ancestors only once
     fun RsElement.isInsideMovedElements(elementsToMove: List<ElementToMove>): Boolean {
         if (containingFile is RsCodeFragment) LOG.error("Unexpected containingFile: $containingFile")
@@ -160,6 +172,9 @@ object RsMoveUtil {
 
     val LOG: Logger = Logger.getInstance(RsMoveUtil::class.java)
 }
+
+inline fun <reified T : RsElement> movedElementsShallowDescendantsOfType(elementsToMove: List<ElementToMove>): List<T> =
+    movedElementsShallowDescendantsOfType(elementsToMove, T::class.java)
 
 fun <T : RsElement> movedElementsShallowDescendantsOfType(
     elementsToMove: List<ElementToMove>,

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
+import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.TestProject
@@ -28,7 +29,15 @@ import org.rust.stdext.mapToSet
 abstract class RsMoveTopLevelItemsTestBase : RsTestBase() {
 
     protected fun doTest(@Language("Rust") before: String, @Language("Rust") after: String) =
-        checkByDirectory(before.trimIndent(), after.trimIndent(), ::performMove)
+        checkByDirectory(before.trimIndent(), after.trimIndent(), false, ::performMove)
+
+    protected fun doTestConflictsError(@Language("Rust") before: String) =
+        expect<BaseRefactoringProcessor.ConflictsInTestsException> {
+            checkByDirectory(before.trimIndent(), "", true, ::performMove)
+        }
+
+    protected fun doTestNoConflicts(@Language("Rust") before: String) =
+        checkByDirectory(before.trimIndent(), "", true, ::performMove)
 
     private fun performMove(testProject: TestProject) {
         val sourceFile = myFixture.findFileInTempDir(testProject.fileWithCaret).toPsiFile(project)!!
