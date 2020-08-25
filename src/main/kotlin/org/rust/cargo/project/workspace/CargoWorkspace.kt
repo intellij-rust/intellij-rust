@@ -401,6 +401,27 @@ private class DependencyImpl(
     operator fun component3(): List<CargoWorkspace.DepKindInfo> = depKinds
 }
 
+/**
+ * A way to add additional (indexable) source roots for a package.
+ * These hacks are needed for the stdlib that has a weird source structure.
+ */
+fun CargoWorkspace.Package.additionalRoots(): List<VirtualFile> {
+    return if (origin == PackageOrigin.STDLIB) {
+        when (name) {
+            STD -> listOfNotNull(contentRoot?.parent?.findFileByRelativePath("backtrace"))
+            CORE -> contentRoot?.parent?.let {
+                listOfNotNull(
+                    it.findFileByRelativePath("stdarch/crates/core_arch"),
+                    it.findFileByRelativePath("stdarch/crates/std_detect")
+                )
+            } ?: emptyList()
+            else -> emptyList()
+        }
+    } else {
+        emptyList()
+    }
+}
+
 private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): CargoWorkspaceData.Package =
     CargoWorkspaceData.Package(
         id = id,

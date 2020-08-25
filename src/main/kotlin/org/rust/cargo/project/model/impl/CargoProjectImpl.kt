@@ -55,6 +55,7 @@ import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToo
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.additionalRoots
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
@@ -132,6 +133,9 @@ open class CargoProjectsServiceImpl(
             fun CargoWorkspace.Package.put(cargoProject: CargoProjectImpl) {
                 contentRoot?.put(cargoProject)
                 outDir?.put(cargoProject)
+                for (additionalRoot in additionalRoots()) {
+                    additionalRoot.put(cargoProject)
+                }
                 for (target in targets) {
                     target.crateRoot?.parent?.put(cargoProject)
                 }
