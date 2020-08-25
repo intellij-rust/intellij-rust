@@ -15,7 +15,7 @@ import org.rust.ide.icons.RsIcons
 
 class CargoCommandConfigurationType : ConfigurationTypeBase(
     "CargoCommandRunConfiguration",
-    "Cargo Command",
+    "Cargo",
     "Cargo command run configuration",
     RsIcons.RUST
 ) {
