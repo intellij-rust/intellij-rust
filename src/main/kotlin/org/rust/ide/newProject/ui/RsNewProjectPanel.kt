@@ -49,6 +49,7 @@ class RsNewProjectPanel(
     private val defaultTemplates: List<RsProjectTemplate> = listOf(
         RsGenericTemplate.CargoBinaryTemplate,
         RsGenericTemplate.CargoLibraryTemplate,
+        RsCustomTemplate.ProcMacroTemplate,
         RsCustomTemplate.WasmPackTemplate
     )
 
