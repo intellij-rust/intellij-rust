@@ -170,7 +170,7 @@ fun PsiElement.getTopmostParentInside(parent: PsiElement): PsiElement {
     return element
 }
 
-private fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
+fun collectElements(start: PsiElement, stop: PsiElement?, pred: (PsiElement) -> Boolean): Array<out PsiElement> {
     check(stop == null || start.parent == stop.parent)
 
     val psiSeq = generateSequence(start) {

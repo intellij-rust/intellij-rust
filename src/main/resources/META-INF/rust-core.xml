@@ -976,11 +976,13 @@
             `before kotlin.moveFilesOrDirectories` is needed because otherwise
             incorrect handler can be used: https://youtrack.jetbrains.com/issue/IDEA-237769
         -->
-        <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler"
+        <refactoring.moveHandler id="rust.moveFilesOrDirectories"
+                                 implementation="org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler"
                                  order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
 
-        <refactoring.moveHandler implementation="org.rust.ide.refactoring.move.RsMoveTopLevelItemsHandler"
-                                 order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories"/>
+        <refactoring.moveHandler id="rust.moveTopLevelItems"
+                                 implementation="org.rust.ide.refactoring.move.RsMoveTopLevelItemsHandler"
+                                 order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories, before rust.moveFilesOrDirectories"/>
 
         <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
 

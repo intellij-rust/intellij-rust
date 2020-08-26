@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring.move
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
@@ -14,17 +15,15 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.TestProject
-import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.openapiext.document
 import org.rust.openapiext.toPsiDirectory
 import org.rust.openapiext.toPsiFile
-import org.rust.stdext.mapToSet
 
 abstract class RsMoveTopLevelItemsTestBase : RsTestBase() {
 
@@ -40,20 +39,17 @@ abstract class RsMoveTopLevelItemsTestBase : RsTestBase() {
         checkByDirectory(before.trimIndent(), "", true, ::performMove)
 
     private fun performMove(testProject: TestProject) {
-        val sourceFile = myFixture.findFileInTempDir(testProject.fileWithCaret).toPsiFile(project)!!
-        val itemsToMove = sourceFile.getElementsAtMarker().mapToSet { it.parentOfType<RsItemElement>()!! }
+        val fileWithCaret = testProject.fileWithCaretOrSelection
+        val sourceFile = myFixture.findFileInTempDir(fileWithCaret).toPsiFile(project)!!
+        myFixture.configureFromExistingVirtualFile(sourceFile.virtualFile)
 
         val root = myFixture.findFileInTempDir(".").toPsiDirectory(project)!!
         val targetMod = searchElementInAllFiles(root.virtualFile) { it.getElementAtMarker(TARGET_MARKER) }
-            ?.parentOfType<RsMod>()
+            ?.ancestorOrSelf<RsMod>()
             ?: error("Please add $TARGET_MARKER marker for target mod")
+        sourceFile.putUserData(MOVE_TARGET_MOD_KEY, targetMod)
 
-        RsMoveTopLevelItemsProcessor(
-            project,
-            itemsToMove,
-            targetMod,
-            searchForReferences = true
-        ).run()
+        myFixture.performEditorAction(IdeActions.ACTION_MOVE)
     }
 
     private fun <T> searchElementInAllFiles(root: VirtualFile, searcher: (PsiFile) -> T?): T? {
@@ -78,7 +74,9 @@ private fun PsiFile.getElementAtMarker(marker: String = "<caret>"): PsiElement? 
     getElementsAtMarker(marker).singleOrNull()
 
 private fun PsiFile.getElementsAtMarker(marker: String = "<caret>"): List<PsiElement> =
-    extractMultipleMarkerOffsets(project, marker).map { findElementAt(it)!! }
+    extractMultipleMarkerOffsets(project, marker).map {
+        if (it == textLength) this else findElementAt(it)!!
+    }
 
 private fun PsiFile.extractMultipleMarkerOffsets(project: Project, marker: String): List<Int> =
     virtualFile.document!!.extractMultipleMarkerOffsets(project, marker)
