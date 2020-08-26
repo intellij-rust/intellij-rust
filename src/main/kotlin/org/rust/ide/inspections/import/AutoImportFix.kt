@@ -118,6 +118,10 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
         /** Import traits for type-related UFCS method calls and assoc items */
         fun findApplicableContextForAssocItemPath(project: Project, path: RsPath): Context? {
             val parent = path.parent as? RsPathExpr ?: return null
+
+            val qualifierElement = path.qualifier?.reference?.resolve()
+            if (qualifierElement is RsTraitItem) return null
+
             val resolved = path.inference?.getResolvedPath(parent) ?: return null
             val sources = resolved.map {
                 if (it !is ResolvedPath.AssocItem) return null
