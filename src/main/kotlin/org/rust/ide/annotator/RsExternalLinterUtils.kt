@@ -11,7 +11,6 @@ import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -167,7 +166,11 @@ fun MessageBus.createDisposableOnAnyPsiChange(): Disposable {
     return disposable
 }
 
-fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: RsExternalLinterResult) {
+fun AnnotationHolder.createAnnotationsForFile(
+    file: RsFile,
+    annotationResult: RsExternalLinterResult,
+    isOnTheFly: Boolean
+) {
     val cargoPackageOrigin = file.containingCargoPackage?.origin
     if (cargoPackageOrigin != PackageOrigin.WORKSPACE) return
 
@@ -188,7 +191,13 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
             .problemGroup { annotationMessage }
             .needsUpdateOnTyping(true)
 
-        message.quickFixes.forEach { f -> annotationBuilder.withFix(f) }
+        for (quickFix in message.quickFixes) {
+            if (isOnTheFly
+                || quickFix.applicability == Applicability.MACHINE_APPLICABLE
+                || quickFix.applicability == Applicability.MAYBE_INCORRECT) {
+                annotationBuilder.withFix(quickFix)
+            }
+        }
 
         annotationBuilder.create()
     }
@@ -288,11 +297,12 @@ private fun RustcMessage.collectQuickFixes(file: PsiFile, document: Document): L
 }
 
 private fun createQuickFix(file: PsiFile, document: Document, span: RustcSpan?, message: String): ApplySuggestionFix? {
-    if (span?.suggested_replacement == null || span.suggestion_applicability == null) return null
+    val replacement = span?.suggested_replacement ?: return null
+    val applicability = span.suggestion_applicability ?: return null
     val textRange = span.toTextRange(document) ?: return null
     val endElement = file.findElementAt(textRange.endOffset - 1) ?: return null
     val startElement = file.findElementAt(textRange.startOffset) ?: endElement
-    return ApplySuggestionFix(message, span.suggested_replacement, startElement, endElement)
+    return ApplySuggestionFix(message, replacement, applicability, startElement, endElement)
 }
 
 private fun formatMessage(message: String): String {

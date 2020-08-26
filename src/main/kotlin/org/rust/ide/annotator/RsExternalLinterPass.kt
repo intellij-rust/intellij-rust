@@ -108,7 +108,7 @@ class RsExternalLinterPass(
         if (file !is RsFile || !file.isValid) return
         try {
             annotationHolder.runAnnotatorWithContext(file) { _, holder ->
-                holder.createAnnotationsForFile(file, annotationResult)
+                holder.createAnnotationsForFile(file, annotationResult, isOnTheFly = true)
             }
         } catch (t: Throwable) {
             if (t is ProcessCanceledException) throw t
