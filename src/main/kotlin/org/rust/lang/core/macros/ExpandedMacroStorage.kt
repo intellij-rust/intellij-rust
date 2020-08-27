@@ -26,6 +26,7 @@ import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.StubbedSpine
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.psi.RsFile
@@ -510,19 +511,26 @@ class SourceFile(
         val isExpansionFile = MacroExpansionManager.isExpansionFile(file)
         val isIndexedFile = file.isValid && (isExpansionFile || shouldIndexFile(project, file))
 
-        val stages1 = if (!isIndexedFile) {
-            // The file is now outside of the project, so we should not access it.
-            // All infos of this file should be invalidated
+        val invalidateFileInfos = {
             syncAndMapInfos { info ->
                 info.markInvalid()
                 info.makeInvalidationPipeline()
             }
-        } else {
-            // If project file doesn't have crate root
-            // we shouldn't try to expand its macro calls
+        }
+
+        val stages1 = if (!isIndexedFile) {
+            // The file is now outside of the project, so we should not access it.
+            // All infos of this file should be invalidated
+            invalidateFileInfos()
+        } else run {
             if (!isExpansionFile) {
                 val psiFile = loadPsi()
-                if (psiFile != null && psiFile.crateRoot == null) return null
+                if (psiFile != null) {
+                    // If project file doesn't have crate root
+                    // we shouldn't try to expand its macro calls
+                    if (psiFile.crateRoot == null) return null
+                    if (!psiFile.isDeeplyEnabledByCfg) return@run invalidateFileInfos()
+                }
             }
             matchRefs(MakePipeline(), calls)
         }
@@ -554,9 +562,11 @@ class SourceFile(
     private fun freshExtractMacros(prefetchedCalls: List<RsMacroCall>?) {
         val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
-        val newInfos = calls.map { call ->
-            ExpandedMacroInfoImpl.newStubLinked(this, call)
-        }
+        val newInfos = calls
+            .filter { it.isEnabledByCfg }
+            .map { call ->
+                ExpandedMacroInfoImpl.newStubLinked(this, call)
+            }
         switchToStubRefsInReadAction(RefKind.FRESH) { infos ->
             check(infos.isEmpty())
             infos.addAll(newInfos)
@@ -866,7 +876,11 @@ class ExpandedMacroInfoImpl(
     }
 
     fun makePipeline(call: RsMacroCall?): Pipeline.Stage1ResolveAndExpand {
-        return if (call != null) ExpansionPipeline.Stage1(call, this) else InvalidationPipeline.Stage1(this)
+        return if (call != null && call.isEnabledByCfg) {
+            ExpansionPipeline.Stage1(call, this)
+        } else {
+            InvalidationPipeline.Stage1(this)
+        }
     }
 
     fun makeInvalidationPipeline(): Pipeline.Stage1ResolveAndExpand =
