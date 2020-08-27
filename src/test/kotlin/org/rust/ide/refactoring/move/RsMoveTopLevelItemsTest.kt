@@ -457,6 +457,44 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         pub fn foo3() {}
     """)
 
+    fun `test change scope for pub(in) visibility`() = doTest("""
+    //- lib.rs
+        mod inner1 {
+            mod inner2 {
+                mod inner3 {
+                    mod mod1 {
+                        pub(crate) fn foo1/*caret*/() {}
+                        pub(self) fn foo2/*caret*/() {}
+                        pub(super) fn foo3/*caret*/() {}
+                        pub(in super::super) fn foo4/*caret*/() {}
+                        pub(in crate::inner1) fn foo5/*caret*/() {}
+                    }
+                }
+                mod mod2/*target*/ {}
+            }
+        }
+    """, """
+    //- lib.rs
+        mod inner1 {
+            mod inner2 {
+                mod inner3 {
+                    mod mod1 {}
+                }
+                mod mod2 {
+                    pub(crate) fn foo1() {}
+
+                    pub(in crate::inner1::inner2) fn foo2() {}
+
+                    pub(in crate::inner1::inner2) fn foo3() {}
+
+                    pub(in crate::inner1::inner2) fn foo4() {}
+
+                    pub(in crate::inner1) fn foo5() {}
+                }
+            }
+        }
+    """)
+
     fun `test absolute outside reference which should be changed because of reexports`() = doTest("""
     //- lib.rs
         mod inner1 {

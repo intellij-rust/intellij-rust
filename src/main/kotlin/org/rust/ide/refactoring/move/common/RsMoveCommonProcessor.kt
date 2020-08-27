@@ -328,6 +328,8 @@ class RsMoveCommonProcessor(
     }
 
     fun performRefactoring(usages: Array<out UsageInfo>, moveElements: () -> List<ElementToMove>) {
+        updateOutsideReferencesInVisRestrictions()
+
         elementsToMove = moveElements()
 
         val retargetReferencesProcessor = RsMoveRetargetReferencesProcessor(project, sourceMod, targetMod)
@@ -339,6 +341,12 @@ class RsMoveCommonProcessor(
             .map { it.referenceInfo }
         updateInsideReferenceInfosIfNeeded(insideReferences)
         retargetReferencesProcessor.retargetReferences(insideReferences)
+    }
+
+    private fun updateOutsideReferencesInVisRestrictions() {
+        for (visRestriction in movedElementsDeepDescendantsOfType<RsVisRestriction>(elementsToMove)) {
+            visRestriction.updateScopeIfNecessary(psiFactory, targetMod)
+        }
     }
 
     /**
