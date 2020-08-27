@@ -854,6 +854,7 @@ private class MacroExpansionServiceImplInner(
 
                 val calls = runReadActionInSmartMode(dumbService) {
                     val calls = RsMacroCallIndex.getMacroCalls(project, scope)
+                        .filter { it.isTopLevelExpansion }
                     MACRO_LOG.info("Macros to expand: ${calls.size}")
                     calls.groupBy { it.containingFile.virtualFile }
 
