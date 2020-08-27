@@ -95,6 +95,10 @@ private fun makeStdlibLibrary(packages: List<CargoWorkspace.Package>, rustcVersi
     for (pkg in packages) {
         val root = pkg.contentRoot ?: continue
         sourceRoots += root
+        sourceRoots += pkg.additionalRoots()
+    }
+
+    for (root in sourceRoots) {
         excludedRoots += listOfNotNull(root.findChild("tests"), root.findChild("benches"))
     }
 

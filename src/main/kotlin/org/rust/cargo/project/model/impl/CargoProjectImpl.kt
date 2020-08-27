@@ -55,6 +55,7 @@ import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToo
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.project.workspace.additionalRoots
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
@@ -132,6 +133,9 @@ open class CargoProjectsServiceImpl(
             fun CargoWorkspace.Package.put(cargoProject: CargoProjectImpl) {
                 contentRoot?.put(cargoProject)
                 outDir?.put(cargoProject)
+                for (additionalRoot in additionalRoots()) {
+                    additionalRoot.put(cargoProject)
+                }
                 for (target in targets) {
                     target.crateRoot?.parent?.put(cargoProject)
                 }
@@ -393,7 +397,7 @@ data class CargoProjectImpl(
     }
 
     // Checks that the project is https://github.com/rust-lang/rust
-    private fun doesProjectLooksLikeRustc(): Boolean {
+    fun doesProjectLooksLikeRustc(): Boolean {
         val workspace = rawWorkspace ?: return false
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
@@ -496,6 +500,12 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                 for (cargoProject in cargoProjects) {
                     cargoProject.workspaceRootDir?.setupContentRoots(project) { contentRoot ->
                         addExcludeFolder(FileUtil.join(contentRoot.url, CargoConstants.ProjectLayout.target))
+                    }
+
+                    if ((cargoProject as? CargoProjectImpl)?.doesProjectLooksLikeRustc() == true) {
+                        cargoProject.workspaceRootDir?.setupContentRoots(project) { contentRoot ->
+                            addExcludeFolder(FileUtil.join(contentRoot.url, "build"))
+                        }
                     }
 
                     val alreadySetUp = hashSetOf<CargoWorkspace.Package>()
