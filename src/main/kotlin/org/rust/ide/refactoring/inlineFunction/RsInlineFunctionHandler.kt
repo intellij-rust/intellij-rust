@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.inline
+package org.rust.ide.refactoring.inlineFunction
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.lang.Language
@@ -22,10 +22,6 @@ import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineFunctionHandler : InlineActionHandler() {
     override fun isEnabledOnElement(element: PsiElement): Boolean = canInlineElement(element)
-
-    override fun isEnabledOnElement(element: PsiElement, editor: Editor?): Boolean =
-        isEnabledOnElement(element)
-
     override fun inlineElement(project: Project, editor: Editor, element: PsiElement) {
         val function = element as RsFunction
 
@@ -52,7 +48,7 @@ class RsInlineFunctionHandler : InlineActionHandler() {
         }
 
         if (function.block == null) {
-            errorHint(project, editor,"Cannot inline an empty function")
+            errorHint(project, editor, "Cannot inline an empty function")
             return
         }
 

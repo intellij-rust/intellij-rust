@@ -3,39 +3,30 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.inline
+package org.rust.ide.refactoring
 
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.inline.InlineOptionsWithSearchSettingsDialog
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.ext.declaration
+import com.intellij.usageView.UsageViewBundle
+import com.intellij.usageView.UsageViewDescriptor
+import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 import org.rust.lang.core.resolve.ref.RsReference
 
-class RsInlineFunctionDialog constructor(
-    private val function: RsFunction,
+abstract class RsInlineDialog(
+    element: RsNameIdentifierOwner,
     private val refElement: RsReference?,
-    private val allowInlineThisOnly: Boolean,
-    project: Project = function.project,
-    private val occurrencesNumber: Int =
-        initOccurrencesNumber(function)
-) : InlineOptionsWithSearchSettingsDialog(project, true, function) {
+    project: Project,
+    private val occurrencesNumber: Int
+) : InlineOptionsWithSearchSettingsDialog(project, true, element) {
+    private var searchInCommentsAndStrings = true
+    private var searchInTextOccurrences = true
 
-    public override fun doAction() {
-        invokeRefactoring(RsInlineFunctionProcessor(
-            project,
-            function,
-            refElement,
-            isInlineThisOnly,
-            !isInlineThisOnly && !isKeepTheDeclaration
-        ))
-    }
+    abstract fun getLabelText(occurrences: String): String
 
     fun shouldBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
-
-    override fun getBorderTitle(): String =
-        RefactoringBundle.message("inline.method.border.title")
 
     override fun getNameLabelText(): String {
         val occurrencesString =
@@ -47,40 +38,10 @@ class RsInlineFunctionDialog constructor(
                     if (occurrencesNumber != 1) append("s")
                 }
             }
-        return RefactoringBundle.message(
-            "inline.method.method.label",
-            function.declaration,
-            occurrencesString)
-    }
-
-    override fun getInlineAllText(): String {
-        val text =
-            if (function.isWritable && !allowInlineThisOnly) {
-                "all.invocations.and.remove.the.method"
-            } else {
-                "all.invocations.in.project"
-            }
-        return RefactoringBundle.message(text)
+        return getLabelText(occurrencesString)
     }
 
     override fun isInlineThis(): Boolean = false
-
-    override fun getInlineThisText(): String =
-        RefactoringBundle.message("this.invocation.only.and.keep.the.method")
-
-    override fun getKeepTheDeclarationText(): String =
-        if (function.isWritable) {
-            "Inline all references and keep the function"
-        } else {
-            super.getKeepTheDeclarationText()
-        }
-
-    override fun getHelpId(): String =
-        "refactoring.inlineMethod"
-
-
-    private var searchInCommentsAndStrings = true
-    private var searchInTextOccurrences = true
 
     override fun isSearchInCommentsAndStrings() =
         searchInCommentsAndStrings
@@ -96,25 +57,35 @@ class RsInlineFunctionDialog constructor(
         this.searchInTextOccurrences = searchInTextOccurrences
     }
 
-    init {
+    final override fun init() {
         title = borderTitle
         myInvokedOnReference = refElement != null
 
         setPreviewResults(true)
         setDoNotAskOption(object : DoNotAskOption {
             override fun isToBeShown() = EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog
-
             override fun setToBeShown(value: Boolean, exitCode: Int) {
                 EditorSettingsExternalizable.getInstance().isShowInlineLocalDialog = value
             }
 
             override fun canBeHidden() = true
-
             override fun shouldSaveOptionsOnCancel() = false
-
             override fun getDoNotShowMessage() = "Do not show in future"
         })
-
-        init()
+        super.init()
     }
+}
+
+class RsInlineUsageViewDescriptor(val element: PsiElement, val header: String) : UsageViewDescriptor {
+    override fun getCommentReferencesText(usagesCount: Int, filesCount: Int) =
+        RefactoringBundle.message("comments.elements.header",
+            UsageViewBundle.getOccurencesString(usagesCount, filesCount))
+
+    override fun getCodeReferencesText(usagesCount: Int, filesCount: Int) =
+        RefactoringBundle.message("invocations.to.be.inlined",
+            UsageViewBundle.getReferencesString(usagesCount, filesCount))
+
+    override fun getElements() = arrayOf(element)
+
+    override fun getProcessedElementsHeader() = header
 }
