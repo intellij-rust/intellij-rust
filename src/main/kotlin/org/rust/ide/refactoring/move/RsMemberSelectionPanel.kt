@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.ext.RsItemElement
 import javax.swing.Icon
 
-// currently supports only move refactoring requirements
+@Suppress("unused")  // could be used in other refactorings
 class RsMemberSelectionPanel(
     title: String,
     memberInfo: List<RsMemberInfo>
