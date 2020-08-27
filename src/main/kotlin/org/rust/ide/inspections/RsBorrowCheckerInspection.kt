@@ -17,7 +17,7 @@ import org.rust.lang.core.types.type
 
 class RsBorrowCheckerInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitMethodCall(o: RsMethodCall) {
                 val fn = o.reference.resolve() as? RsFunction ?: return

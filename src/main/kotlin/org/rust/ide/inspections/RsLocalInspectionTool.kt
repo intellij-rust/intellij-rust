@@ -12,12 +12,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.isEnabledByCfg
+import org.rust.lang.core.psi.RsVisitor
 
 abstract class RsLocalInspectionTool : LocalInspectionTool() {
     final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         buildVisitor(RsProblemsHolder(holder), isOnTheFly) ?: super.buildVisitor(holder, isOnTheFly)
 
-    open fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? = null
+    open fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor? = null
 }
 
 class RsProblemsHolder(private val holder: ProblemsHolder) {

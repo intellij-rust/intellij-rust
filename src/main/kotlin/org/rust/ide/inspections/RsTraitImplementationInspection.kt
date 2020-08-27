@@ -5,7 +5,6 @@
 
 package org.rust.ide.inspections
 
-import com.intellij.psi.PsiElementVisitor
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsVisitor
@@ -18,7 +17,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsTraitImplementationInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val traitRef = impl.traitRef ?: return
             val trait = traitRef.resolveToTrait() ?: return

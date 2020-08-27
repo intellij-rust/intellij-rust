@@ -20,7 +20,7 @@ import org.rust.lang.utils.addToHolder
 
 class RsAssignToImmutableInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitBinaryExpr(expr: RsBinaryExpr) {
                 if (expr.isAssignBinaryExpr) checkAssignment(expr, holder)

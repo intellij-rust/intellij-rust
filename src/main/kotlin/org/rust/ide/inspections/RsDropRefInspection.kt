@@ -21,7 +21,7 @@ import org.rust.lang.core.types.type
 class RsDropRefInspection : RsLocalInspectionTool() {
     override fun getDisplayName(): String = "Drop reference"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitCallExpr(expr: RsCallExpr) = inspectExpr(expr, holder)
         }

@@ -16,7 +16,7 @@ import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val traitOrImpl = when (val owner = m.owner) {

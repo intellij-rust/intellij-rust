@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.*
 
 class RsSortImplTraitMembersInspection : RsLocalInspectionTool() {
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor = object : RsVisitor() {
         override fun visitImplItem(impl: RsImplItem) {
             val trait = impl.traitRef?.resolveToTrait() ?: return
             val typeRef = impl.typeReference ?: return

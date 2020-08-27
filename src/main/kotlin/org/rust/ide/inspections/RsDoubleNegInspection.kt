@@ -18,7 +18,7 @@ import org.rust.lang.core.psi.RsVisitor
 class RsDoubleNegInspection : RsLocalInspectionTool() {
     override fun getDisplayName() = "Double negation"
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitUnaryExpr(expr: RsUnaryExpr) {
                 if (expr.isNegation && expr.expr.isNegation) {
