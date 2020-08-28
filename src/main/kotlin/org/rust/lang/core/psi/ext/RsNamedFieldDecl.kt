@@ -21,7 +21,7 @@ abstract class RsNamedFieldDeclImplMixin : RsStubbedNamedElementImpl<RsNamedFiel
     constructor(stub: RsNamedFieldDeclStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
-        if (parent.parent is RsEnumVariant) RsIcons.FIELD else iconWithVisibility(flags, RsIcons.FIELD)
+        if (owner is RsEnumVariant) RsIcons.FIELD else iconWithVisibility(flags, RsIcons.FIELD)
 
     // temporary solution.
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)

@@ -183,6 +183,17 @@ class RsResolveLinkTest : RsTestBase() {
               //^
     """, "test_package/struct.Foo.html#structfield.foo")
 
+    fun `test enum variant field fqn link`() = doTest("""
+        pub enum Foo {
+            Bar {
+                baz: i32
+            }  //X
+        }
+
+        struct S;
+             //^
+    """, "test_package/enum.Foo.html#variant.Bar.field.baz")
+
     fun `test assoc type fqn link 1`() = doTest("""
         trait Foo {
             type Bar;

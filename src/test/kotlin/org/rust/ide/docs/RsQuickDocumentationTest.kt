@@ -682,6 +682,20 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Outer documentation</p></div>
     """)
 
+    fun `test macro 2 outer docs`() = doTest("""
+        pub struct Foo;
+
+        /// Outer doc
+        /// [link](Foo)
+        pub macro Bar() {}
+                 //^
+    """, """
+        <div class='definition'><pre>test_package::Bar
+        </pre></div>
+        <div class='content'><p>Outer doc
+        <a href="psi_element://test_package/Foo">link</a></p></div>
+    """)
+
     fun `test qualified name`() = doTest("""
         mod q {
             /// Blurb.
@@ -790,6 +804,24 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """, """
         <div class='definition'><pre>test_package::Foo
         pub <b>foo</b>: i32</pre></div>
+        <div class='content'><p>Documented</p></div>
+    """)
+
+    fun `test enum variant field`() = doTest("""
+        enum Foo {
+            Bar {
+                /// Documented
+                baz: i32
+            }
+        }
+
+        fn foo(f: Foo) {
+            if let Foo::Bar { baz: x } = f {}
+                             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::Foo::Bar
+        <b>baz</b>: i32</pre></div>
         <div class='content'><p>Documented</p></div>
     """)
 

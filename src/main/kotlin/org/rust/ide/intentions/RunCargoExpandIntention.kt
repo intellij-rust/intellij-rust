@@ -12,7 +12,6 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallCargoExpand
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.run
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
