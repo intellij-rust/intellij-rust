@@ -16,7 +16,7 @@ import org.rust.lang.core.stubs.RsPlaceholderStub
 import javax.swing.Icon
 
 val RsTupleFieldDecl.position: Int?
-    get() = parentStruct?.positionalFields?.withIndex()?.firstOrNull { it.value === this }?.index
+    get() = owner?.positionalFields?.withIndex()?.firstOrNull { it.value === this }?.index
 
 
 abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStub>, RsTupleFieldDecl {
@@ -24,7 +24,7 @@ abstract class RsTupleFieldDeclImplMixin : RsStubbedElementImpl<RsPlaceholderStu
     constructor(stub: RsPlaceholderStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
 
     override fun getIcon(flags: Int): Icon =
-        if (parent.parent is RsEnumVariant) RsIcons.FIELD else iconWithVisibility(flags, RsIcons.FIELD)
+        if (owner is RsEnumVariant) RsIcons.FIELD else iconWithVisibility(flags, RsIcons.FIELD)
 
     override fun getName(): String? = position?.toString()
 

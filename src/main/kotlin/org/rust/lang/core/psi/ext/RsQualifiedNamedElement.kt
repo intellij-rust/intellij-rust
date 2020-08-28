@@ -302,7 +302,7 @@ data class RsQualifiedName private constructor(
                     }
                 }
                 is RsEnumVariant -> element.parentEnum
-                is RsNamedFieldDecl -> element.parentStruct
+                is RsNamedFieldDecl -> element.owner
                 else -> return null
             }
             return parentItem?.toParentItem()
