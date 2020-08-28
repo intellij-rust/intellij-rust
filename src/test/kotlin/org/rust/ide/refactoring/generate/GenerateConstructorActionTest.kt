@@ -3,15 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring
+package org.rust.ide.refactoring.generate
 
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.refactoring.generateConstructor.RsStructMemberChooserObject
-import org.rust.ide.refactoring.generateConstructor.StructMemberChooserUi
-import org.rust.ide.refactoring.generateConstructor.withMockStructMemberChooserUi
 
 class GenerateConstructorActionTest : RsTestBase() {
 
