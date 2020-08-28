@@ -31,7 +31,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
-                rust-version: [ 1.45.0, nightly-2020-07-10]
+                rust-version: [ 1.46.0, nightly-2020-07-10 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 201, 202 ]
                 include:

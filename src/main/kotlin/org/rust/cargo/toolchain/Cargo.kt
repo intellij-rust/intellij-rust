@@ -217,11 +217,11 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         project: Project,
         owner: Disposable,
         directory: VirtualFile,
+        name: String,
         createBinary: Boolean,
         vcs: String? = null
     ): GeneratedFilesHolder {
         val path = directory.pathAsPath
-        val name = path.fileName.toString().replace(' ', '_')
         val crateType = if (createBinary) "--bin" else "--lib"
 
         val args = mutableListOf(crateType, "--name", name)
@@ -246,11 +246,11 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         project: Project,
         owner: Disposable,
         directory: VirtualFile,
-        template: String
+        name: String,
+        templateUrl: String
     ): GeneratedFilesHolder? {
         val path = directory.pathAsPath
-        val name = path.fileName.toString().replace(' ', '_')
-        val args = mutableListOf("--name", name, "--git", template)
+        val args = mutableListOf("--name", name, "--git", templateUrl)
         args.add("--force") // enforce cargo-generate not to do underscores to hyphens name conversion
 
         // TODO: Rewrite this for the future versions of cargo-generate when init subcommand will be available
@@ -261,7 +261,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
 
         // Move all the generated files to the project root and delete the subdir itself
         val generatedDir = try {
-            File(path.toString(), project.name)
+            File(path.toString(), name)
         } catch (e: NullPointerException) {
             LOG.warn("Failed to generate project using cargo-generate")
             return null

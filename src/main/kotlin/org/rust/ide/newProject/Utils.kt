@@ -25,10 +25,11 @@ fun Cargo.makeProject(
     project: Project,
     module: Module,
     baseDir: VirtualFile,
+    name: String,
     template: RsProjectTemplate
 ): GeneratedFilesHolder? = when (template) {
-    is RsGenericTemplate -> init(project, module, baseDir, template.isBinary)
-    is RsCustomTemplate -> generate(project, module, baseDir, template.url)
+    is RsGenericTemplate -> init(project, module, baseDir, name, template.isBinary)
+    is RsCustomTemplate -> generate(project, module, baseDir, name, template.url)
 }
 
 fun Project.openFiles(files: GeneratedFilesHolder) = invokeLater {
