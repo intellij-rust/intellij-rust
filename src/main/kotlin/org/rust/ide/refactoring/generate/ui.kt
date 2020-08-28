@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.generateConstructor
+package org.rust.ide.refactoring.generate
 
 import com.intellij.codeInsight.generation.ClassMember
 import com.intellij.codeInsight.generation.MemberChooserObject
@@ -18,18 +18,19 @@ import org.rust.lang.core.types.Substitution
 
 private var MOCK: StructMemberChooserUi? = null
 
-fun showConstructorArgumentsChooser(
+fun showStructMemberChooserDialog(
     project: Project,
     structItem: RsStructItem,
-    substitution: Substitution
-): List<ConstructorArgument>? {
+    fields: List<StructMember>,
+    title: String
+): List<StructMember>? {
     val chooser = if (isUnitTestMode) {
         MOCK ?: error("You should set mock ui via `withMockStructMemberChooserUi`")
     } else {
-        DialogStructMemberChooserUi
+        DialogStructMemberChooserUi(title)
     }
     val base = MemberChooserObjectBase(structItem.name, structItem.getIcon(0))
-    val arguments = ConstructorArgument.fromStruct(structItem, substitution).map { RsStructMemberChooserObject(base, it) }
+    val arguments = fields.map { RsStructMemberChooserObject(base, it) }
     return chooser.selectMembers(project, arguments)?.map { it.member }
 }
 
@@ -45,7 +46,7 @@ fun withMockStructMemberChooserUi(mockUi: StructMemberChooserUi, action: () -> U
 
 class RsStructMemberChooserObject(
     val base: MemberChooserObjectBase,
-    val member: ConstructorArgument
+    val member: StructMember
 ) : MemberChooserObjectBase(member.dialogRepresentation, RsIcons.FIELD),
     ClassMember {
 
@@ -58,11 +59,11 @@ interface StructMemberChooserUi {
     fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>?
 }
 
-private object DialogStructMemberChooserUi : StructMemberChooserUi {
-
+private class DialogStructMemberChooserUi(private val title: String) : StructMemberChooserUi {
     override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
+        val dialogTitle = title
         val chooser = MemberChooser(all.toTypedArray(), true, true, project).apply {
-            title = "Generate Constructor"
+            title = dialogTitle
             selectElements(all.toTypedArray())
             setCopyJavadocVisible(false)
         }

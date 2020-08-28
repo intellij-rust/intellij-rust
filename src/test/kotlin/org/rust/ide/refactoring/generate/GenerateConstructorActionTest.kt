@@ -3,26 +3,19 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring
+package org.rust.ide.refactoring.generate
 
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.project.Project
-import org.intellij.lang.annotations.Language
-import org.rust.RsTestBase
-import org.rust.ide.refactoring.generateConstructor.RsStructMemberChooserObject
-import org.rust.ide.refactoring.generateConstructor.StructMemberChooserUi
-import org.rust.ide.refactoring.generateConstructor.withMockStructMemberChooserUi
-
-class GenerateConstructorActionTest : RsTestBase() {
+class GenerateConstructorActionTest : RsGenerateBaseTest() {
+    override val generateId: String = "Rust.GenerateConstructor"
 
     fun `test generic struct`() = doTest("""
         struct S<T> {
-            n: i32,
+            n: i32,/*caret*/
             m: T
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", true),
-        ConstructorArgumentsSelection("m: T", true)
+        MemberSelection("n: i32", true),
+        MemberSelection("m: T", true)
     ), """
         struct S<T> {
             n: i32,
@@ -38,12 +31,12 @@ class GenerateConstructorActionTest : RsTestBase() {
 
     fun `test empty type declaration`() = doTest("""
         struct S {
-            n: i32,
+            n: i32,/*caret*/
             m:
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", true),
-        ConstructorArgumentsSelection("m: ()", true)
+        MemberSelection("n: i32", true),
+        MemberSelection("m: ()", true)
     ), """
         struct S {
             n: i32,
@@ -58,7 +51,7 @@ class GenerateConstructorActionTest : RsTestBase() {
     """)
 
     fun `test empty struct`() = doTest("""
-        struct S {}
+        struct S {/*caret*/}
     """, emptyList(), """
         struct S {}
 
@@ -72,9 +65,9 @@ class GenerateConstructorActionTest : RsTestBase() {
     fun `test tuple struct`() = doTest("""
         struct Color(i32, i32, i32)/*caret*/;
     """, listOf(
-        ConstructorArgumentsSelection("field0: i32", true),
-        ConstructorArgumentsSelection("field1: i32", true),
-        ConstructorArgumentsSelection("field2: i32", true)
+        MemberSelection("field0: i32", true),
+        MemberSelection("field1: i32", true),
+        MemberSelection("field2: i32", true)
     ), """
         struct Color(i32, i32, i32);
 
@@ -91,8 +84,8 @@ class GenerateConstructorActionTest : RsTestBase() {
             m: i64,
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", false),
-        ConstructorArgumentsSelection("m: i64", false)
+        MemberSelection("n: i32", false),
+        MemberSelection("m: i64", false)
     ), """
         struct S {
             n: i32,
@@ -112,8 +105,8 @@ class GenerateConstructorActionTest : RsTestBase() {
             m: i64,
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", true),
-        ConstructorArgumentsSelection("m: i64", true)
+        MemberSelection("n: i32", true),
+        MemberSelection("m: i64", true)
     ), """
         struct S {
             n: i32,
@@ -133,8 +126,8 @@ class GenerateConstructorActionTest : RsTestBase() {
             m: i64,
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", true),
-        ConstructorArgumentsSelection("m: i64", false)
+        MemberSelection("n: i32", true),
+        MemberSelection("m: i64", false)
     ), """
         struct S {
             n: i32,
@@ -158,8 +151,8 @@ class GenerateConstructorActionTest : RsTestBase() {
             /*caret*/
         }
     """, listOf(
-        ConstructorArgumentsSelection("n: i32", true),
-        ConstructorArgumentsSelection("m: i64", true)
+        MemberSelection("n: i32", true),
+        MemberSelection("m: i64", true)
     ), """
         struct S {
             n: i32,
@@ -173,7 +166,7 @@ class GenerateConstructorActionTest : RsTestBase() {
         }
     """)
 
-    fun `test not available when new method exists`() = checkNotAvailable("""
+    fun `test not available when new method exists`() = doUnavailableTest("""
         struct S {
             n: i32,
             m: i64,
@@ -185,7 +178,7 @@ class GenerateConstructorActionTest : RsTestBase() {
         }
     """)
 
-    fun `test not available on trait impl`() = checkNotAvailable("""
+    fun `test not available on trait impl`() = doUnavailableTest("""
         trait T { fn foo() }
 
         struct S {
@@ -204,7 +197,7 @@ class GenerateConstructorActionTest : RsTestBase() {
         impl S<i32> {
             /*caret*/
         }
-    """, listOf(ConstructorArgumentsSelection("field0: i32", true)), """
+    """, listOf(MemberSelection("field0: i32", true)), """
         struct S<T>(T);
 
         impl S<i32> {
@@ -220,7 +213,7 @@ class GenerateConstructorActionTest : RsTestBase() {
         impl <'a> S<'a, i32> {
             /*caret*/
         }
-    """, listOf(ConstructorArgumentsSelection("field0: &'a i32", true)), """
+    """, listOf(MemberSelection("field0: &'a i32", true)), """
         struct S<'a, T>(&'a T);
 
         impl <'a> S<'a, i32> {
@@ -229,35 +222,4 @@ class GenerateConstructorActionTest : RsTestBase() {
             }
         }
     """)
-
-    private data class ConstructorArgumentsSelection(val member: String, val isSelected: Boolean)
-
-    private fun doTest(
-        @Language("Rust") code: String,
-        chooser: List<ConstructorArgumentsSelection>,
-        @Language("Rust") expected: String
-    ) {
-        withMockStructMemberChooserUi(object : StructMemberChooserUi {
-            override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
-                assertEquals(chooser.map { it.member }, all.map { it.text })
-                val selected = chooser.filter { it.isSelected }.map { it.member }
-                return all.filter { it.text in selected }
-            }
-        }) {
-            checkEditorAction(code, expected, "Rust.GenerateConstructor")
-        }
-    }
-
-    private fun checkNotAvailable(@Language("Rust") code: String) {
-        InlineFile(code)
-
-        withMockStructMemberChooserUi(object : StructMemberChooserUi {
-            override fun selectMembers(project: Project, all: List<RsStructMemberChooserObject>): List<RsStructMemberChooserObject>? {
-                error("unreachable")
-            }
-        }) {
-            val presentation = myFixture.testAction(ActionManagerEx.getInstanceEx().getAction("Rust.GenerateConstructor"))
-            check(!presentation.isEnabled)
-        }
-    }
 }
