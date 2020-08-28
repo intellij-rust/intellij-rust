@@ -86,11 +86,8 @@ val RsPatField.type: Ty
 val RsExpr.type: Ty
     get() = inference?.getExprType(this) ?: TyUnknown
 
-val RsPathExpr.expectedType: Ty?
-    get() = inference?.getExpectedPathExprType(this)
-
-val RsDotExpr.expectedType: Ty?
-    get() = inference?.getExpectedDotExprType(this)
+val RsExpr.expectedType: Ty?
+    get() = inference?.getExpectedExprType(this)
 
 val RsExpr.declaration: RsElement?
     get() = when (this) {

@@ -203,4 +203,132 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention(
             }
         }
     """)
+
+    fun `test guess return type let decl`() = doAvailableTest("""
+        fn foo() {
+            let x: u32 = bar/*caret*/();
+        }
+    """, """
+        fn foo() {
+            let x: u32 = bar();
+        }
+
+        fn bar() -> u32 {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type assignment`() = doAvailableTest("""
+        fn foo() {
+            let mut x: u32 = 0;
+            x = bar/*caret*/();
+        }
+    """, """
+        fn foo() {
+            let mut x: u32 = 0;
+            x = bar();
+        }
+
+        fn bar() -> u32 {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type function call`() = doAvailableTest("""
+        fn bar(x: u32) {}
+        fn foo() {
+            bar(baz/*caret*/());
+        }
+    """, """
+        fn bar(x: u32) {}
+        fn foo() {
+            bar(baz());
+        }
+
+        fn baz() -> u32 {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type method call`() = doAvailableTest("""
+        struct S;
+        impl S {
+            fn bar(&self, x: u32) {}
+        }
+        fn foo(s: S) {
+            s.bar(baz/*caret*/());
+        }
+    """, """
+        struct S;
+        impl S {
+            fn bar(&self, x: u32) {}
+        }
+        fn foo(s: S) {
+            s.bar(baz());
+        }
+
+        fn baz() -> u32 {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type struct literal`() = doAvailableTest("""
+        struct S {
+            a: u32
+        }
+        fn foo() {
+            S {
+                a: baz/*caret*/()
+            };
+        }
+    """, """
+        struct S {
+            a: u32
+        }
+        fn foo() {
+            S {
+                a: baz()
+            };
+        }
+
+        fn baz() -> u32 {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type self parameter`() = doAvailableTest("""
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            S::bar(baz/*caret*/());
+        }
+    """, """
+        struct S;
+        impl S {
+            fn bar(&self) {}
+        }
+        fn foo() {
+            S::bar(baz());
+        }
+
+        fn baz() -> &S {
+            unimplemented!()
+        }
+    """)
+
+    fun `test guess return type generic parameter`() = doAvailableTest("""
+        fn foo<T>() {
+            let x: T = bar/*caret*/();
+        }
+    """, """
+        fn foo<T>() {
+            let x: T = bar();
+        }
+
+        fn bar<T>() -> T {
+            unimplemented!()
+        }
+    """)
 }

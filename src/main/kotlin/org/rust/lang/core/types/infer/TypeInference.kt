@@ -49,8 +49,7 @@ sealed class Adjustment(open val target: Ty) {
 interface RsInferenceData {
     fun getExprAdjustments(expr: RsExpr): List<Adjustment>
     fun getExprType(expr: RsExpr): Ty
-    fun getExpectedPathExprType(expr: RsPathExpr): Ty
-    fun getExpectedDotExprType(expr: RsDotExpr): Ty
+    fun getExpectedExprType(expr: RsExpr): Ty
     fun getPatType(pat: RsPat): Ty
     fun getPatFieldType(patField: RsPatField): Ty
     fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath>
@@ -70,8 +69,7 @@ class RsInferenceResult(
     val exprTypes: Map<RsExpr, Ty>,
     val patTypes: MutableMap<RsPat, Ty>,
     val patFieldTypes: MutableMap<RsPatField, Ty>,
-    private val expectedPathExprTypes: Map<RsPathExpr, Ty>,
-    private val expectedDotExprTypes: Map<RsDotExpr, Ty>,
+    private val expectedExprTypes: Map<RsExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<ResolvedPath>>,
     private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
     private val resolvedFields: Map<RsFieldLookup, List<RsElement>>,
@@ -92,11 +90,8 @@ class RsInferenceResult(
     override fun getPatFieldType(patField: RsPatField): Ty =
         patFieldTypes[patField] ?: TyUnknown
 
-    override fun getExpectedPathExprType(expr: RsPathExpr): Ty =
-        expectedPathExprTypes[expr] ?: TyUnknown
-
-    override fun getExpectedDotExprType(expr: RsDotExpr): Ty =
-        expectedDotExprTypes[expr] ?: TyUnknown
+    override fun getExpectedExprType(expr: RsExpr): Ty =
+        expectedExprTypes[expr] ?: TyUnknown
 
     override fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> =
         resolvedPaths[expr] ?: emptyList()
@@ -127,8 +122,7 @@ class RsInferenceContext(
     private val exprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
     private val patTypes: MutableMap<RsPat, Ty> = hashMapOf()
     private val patFieldTypes: MutableMap<RsPatField, Ty> = hashMapOf()
-    private val expectedPathExprTypes: MutableMap<RsPathExpr, Ty> = hashMapOf()
-    private val expectedDotExprTypes: MutableMap<RsDotExpr, Ty> = hashMapOf()
+    private val expectedExprTypes: MutableMap<RsExpr, Ty> = hashMapOf()
     private val resolvedPaths: MutableMap<RsPathExpr, List<ResolvedPath>> = hashMapOf()
     private val resolvedMethods: MutableMap<RsMethodCall, List<MethodResolveVariant>> = hashMapOf()
     private val resolvedFields: MutableMap<RsFieldLookup, List<RsElement>> = hashMapOf()
@@ -225,8 +219,7 @@ class RsInferenceContext(
         fulfill.selectWherePossible()
 
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
-        expectedPathExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
-        expectedDotExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        expectedExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
         patTypes.replaceAll { _, ty -> fullyResolve(ty) }
         patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
@@ -238,8 +231,7 @@ class RsInferenceContext(
             exprTypes,
             patTypes,
             patFieldTypes,
-            expectedPathExprTypes,
-            expectedDotExprTypes,
+            expectedExprTypes,
             resolvedPaths,
             resolvedMethods,
             resolvedFields,
@@ -302,12 +294,8 @@ class RsInferenceContext(
         return patFieldTypes[patField] ?: TyUnknown
     }
 
-    override fun getExpectedPathExprType(expr: RsPathExpr): Ty {
-        return expectedPathExprTypes[expr] ?: TyUnknown
-    }
-
-    override fun getExpectedDotExprType(expr: RsDotExpr): Ty {
-        return expectedDotExprTypes[expr] ?: TyUnknown
+    override fun getExpectedExprType(expr: RsExpr): Ty {
+        return expectedExprTypes[expr] ?: TyUnknown
     }
 
     override fun getResolvedPath(expr: RsPathExpr): List<ResolvedPath> {
@@ -330,12 +318,8 @@ class RsInferenceContext(
         patFieldTypes[psi] = ty
     }
 
-    fun writeExpectedPathExprTy(psi: RsPathExpr, ty: Ty) {
-        expectedPathExprTypes[psi] = ty
-    }
-
-    fun writeExpectedDotExprTy(psi: RsDotExpr, ty: Ty) {
-        expectedDotExprTypes[psi] = ty
+    fun writeExpectedExprTy(psi: RsExpr, ty: Ty) {
+        expectedExprTypes[psi] = ty
     }
 
     fun writePath(path: RsPathExpr, resolved: List<ResolvedPath>) {
