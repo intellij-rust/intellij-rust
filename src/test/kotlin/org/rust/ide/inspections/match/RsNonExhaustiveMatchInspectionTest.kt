@@ -896,4 +896,15 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             };
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test pair of Options`() = checkByText("""
+        fn foo(a: Option<bool>, b: Option<bool>) {
+            match (a, b) {
+                (None, None) => {}
+                (Some(true), _) | (_, Some(true)) => {}
+                (Some(false), _) | (_, Some(false)) => {}
+            }
+        }
+    """)
 }

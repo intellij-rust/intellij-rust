@@ -12,6 +12,7 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.fieldTypes
 import org.rust.lang.core.psi.ext.size
 import org.rust.lang.core.psi.ext.variants
+import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.evaluation.ConstExpr.Value
 
@@ -83,8 +84,12 @@ sealed class Constructor {
         is TyReference -> listOf(type.referenced)
 
         is TyAdt -> when {
-            this is Single && type.item is RsFieldsOwner -> type.item.fieldTypes
-            this is Variant -> variant.fieldTypes
+            this is Single && type.item is RsFieldsOwner -> {
+                type.item.fieldTypes.map { it.substitute(type.typeParameterValues) }
+            }
+            this is Variant -> {
+                variant.fieldTypes.map { it.substitute(type.typeParameterValues) }
+            }
             else -> emptyList()
         }
 
