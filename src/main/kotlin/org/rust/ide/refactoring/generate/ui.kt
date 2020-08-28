@@ -21,7 +21,7 @@ private var MOCK: StructMemberChooserUi? = null
 fun showStructMemberChooserDialog(
     project: Project,
     structItem: RsStructItem,
-    substitution: Substitution,
+    fields: List<StructMember>,
     title: String
 ): List<StructMember>? {
     val chooser = if (isUnitTestMode) {
@@ -30,7 +30,7 @@ fun showStructMemberChooserDialog(
         DialogStructMemberChooserUi(title)
     }
     val base = MemberChooserObjectBase(structItem.name, structItem.getIcon(0))
-    val arguments = StructMember.fromStruct(structItem, substitution).map { RsStructMemberChooserObject(base, it) }
+    val arguments = fields.map { RsStructMemberChooserObject(base, it) }
     return chooser.selectMembers(project, arguments)?.map { it.member }
 }
 

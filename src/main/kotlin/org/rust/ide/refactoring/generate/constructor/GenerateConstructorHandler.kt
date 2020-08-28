@@ -6,11 +6,8 @@
 package org.rust.ide.refactoring.generate.constructor
 
 
-import com.intellij.codeInsight.CodeInsightActionHandler
-import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
+import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.StructMember
 import org.rust.lang.core.psi.RsFunction
@@ -22,20 +19,17 @@ import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.lang.core.types.Substitution
 import org.rust.openapiext.checkWriteAccessAllowed
 
-class GenerateConstructorAction : CodeInsightAction() {
-
-    private val generateConstructorHandler: GenerateConstructorHandler = GenerateConstructorHandler()
-
-    override fun getHandler(): CodeInsightActionHandler = generateConstructorHandler
-
-    override fun isValidForFile(project: Project, editor: Editor, file: PsiFile): Boolean =
-        generateConstructorHandler.isValidFor(editor, file)
+class GenerateConstructorAction : BaseGenerateAction() {
+    override val handler: BaseGenerateHandler = GenerateConstructorHandler()
 }
 
 class GenerateConstructorHandler : BaseGenerateHandler() {
     override val dialogTitle: String = "Select constructor parameters"
 
-    override fun isImplBlockValid(impl: RsImplItem): Boolean = impl.isSuitableForConstructor
+    override fun isImplBlockValid(impl: RsImplItem): Boolean = super.isImplBlockValid(impl) &&
+        impl.isSuitableForConstructor
+
+    override fun allowEmptyFields(): Boolean = true
 
     override fun performRefactoring(
         struct: RsStructItem,
@@ -48,12 +42,7 @@ class GenerateConstructorHandler : BaseGenerateHandler() {
         val project = editor.project ?: return
         val structName = struct.name ?: return
         val psiFactory = RsPsiFactory(project)
-        val impl = if (implBlock == null) {
-            val impl = psiFactory.createInherentImplItem(structName, struct.typeParameterList, struct.whereClause)
-            struct.parent.addAfter(impl, struct) as RsImplItem
-        } else {
-            implBlock
-        }
+        val impl = getOrCreateImplBlock(implBlock, psiFactory, structName, struct)
 
         val anchor = impl.lastChild.lastChild
         val constructor = createConstructor(struct, chosenFields, psiFactory, substitution)

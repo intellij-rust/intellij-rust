@@ -13,7 +13,7 @@ import org.rust.RsTestBase
 abstract class RsGenerateBaseTest : RsTestBase() {
     abstract val generateId: String
 
-    protected data class MemberSelection(val member: String, val isSelected: Boolean)
+    protected data class MemberSelection(val member: String, val isSelected: Boolean = true)
 
     protected fun doTest(
         @Language("Rust") code: String,
