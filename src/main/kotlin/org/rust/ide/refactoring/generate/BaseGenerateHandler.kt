@@ -18,7 +18,9 @@ import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -51,7 +53,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         val (structItem, impl) = if (struct != null) {
             struct to null
         } else {
-            val impl = element.ancestorOrSelf<RsImplItem>() ?: return null
+            val impl = element.ancestorStrict<RsItemElement>() as? RsImplItem ?: return null
 
             if (!isImplBlockValid(impl)) return null
 

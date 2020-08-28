@@ -23,6 +23,19 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         impl T for S/*caret*/ {}
     """)
 
+    fun `test not available inside method body`() = doUnavailableTest("""
+        struct S {
+            a: i32,
+            b: i32,
+        }
+
+        impl S{
+            pub fn foo(&self) {
+                /*caret*/
+            }
+        }
+    """)
+
     fun `test not available on tuple struct`() = doUnavailableTest("""
         struct S(u32, u32);
 
