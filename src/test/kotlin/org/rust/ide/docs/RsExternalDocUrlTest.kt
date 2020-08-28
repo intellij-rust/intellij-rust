@@ -27,6 +27,15 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         }
     """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/struct.Foo.html#associatedconstant.BAR")
 
+    fun `test enum variant field`() = doUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        pub enum Foo {
+            Bar {
+                baz: i32
+            }  //^
+        }
+    """, "https://docs.rs/dep-lib/0.0.1/dep_lib_target/enum.Foo.html#variant.Bar.field.baz")
+
     fun `test item with restricted visibility`() = doUrlTestByFileTree("""
         //- dep-lib/lib.rs
         pub(crate) enum Foo { V1, V2 }

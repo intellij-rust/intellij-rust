@@ -807,6 +807,24 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='content'><p>Documented</p></div>
     """)
 
+    fun `test enum variant field`() = doTest("""
+        enum Foo {
+            Bar {
+                /// Documented
+                baz: i32
+            }
+        }
+
+        fn foo(f: Foo) {
+            if let Foo::Bar { baz: x } = f {}
+                             //^
+        }
+    """, """
+        <div class='definition'><pre>test_package::Foo::Bar
+        <b>baz</b>: i32</pre></div>
+        <div class='content'><p>Documented</p></div>
+    """)
+
     fun `test type parameter`() = doTest("""
         fn foo<T>() { unimplemented!() }
              //^
