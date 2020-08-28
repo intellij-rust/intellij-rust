@@ -20,10 +20,22 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 
-    protected fun doAvailableTestWithFileTree(@Language("Rust") fileStructureBefore: String, @Language("Rust") openedFileAfter: String) {
+    protected fun doAvailableTestWithFileTree(
+        @Language("Rust") fileStructureBefore: String,
+        @Language("Rust") openedFileAfter: String
+    ) {
         fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
         launchAction()
         myFixture.checkResult(replaceCaretMarker(openedFileAfter.trimIndent()))
+    }
+
+    protected fun doAvailableTestWithFileTreeComplete(
+        @Language("Rust") fileStructureBefore: String,
+        @Language("Rust") fileStructureAfter: String
+    ) {
+        fileTreeFromText(fileStructureBefore).createAndOpenFileWithCaretMarker()
+        launchAction()
+        fileTreeFromText(replaceCaretMarker(fileStructureAfter)).check(myFixture)
     }
 
     private fun launchAction() {
