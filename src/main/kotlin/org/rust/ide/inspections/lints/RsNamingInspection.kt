@@ -174,7 +174,7 @@ class RsStaticConstNamingInspection : RsUpperCaseNamingInspection("Static consta
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitConstant(el: RsConstant) {
-                if (el.kind != RsConstantKind.CONST) {
+                if (el.kind != RsConstantKind.CONST && el.owner is RsAbstractableOwner.Free) {
                     inspect(el.identifier, holder)
                 }
             }
