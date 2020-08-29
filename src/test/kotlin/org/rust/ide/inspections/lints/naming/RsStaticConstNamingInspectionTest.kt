@@ -30,4 +30,10 @@ class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNam
             let a = STATIC_FOO;
         }
     """)
+
+    fun `test extern static`() = checkByText("""
+        extern {
+            static Bar: i32;
+        }
+    """)
 }
