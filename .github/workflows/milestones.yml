@@ -1,0 +1,10 @@
+name: milestones
+
+on: pull_request
+
+jobs:
+    set_milestone:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Test
+              run: echo "${{ toJSON(github.event) }}"
