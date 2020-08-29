@@ -345,8 +345,11 @@ data class CargoProjectImpl(
         rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
     }
 
-    override val presentableName: String
-        get() = workingDirectory.fileName.toString()
+    override val presentableName: String by lazy {
+        workspace?.packages?.singleOrNull {
+            it.origin == PackageOrigin.WORKSPACE && it.rootDirectory == workingDirectory
+        }?.name ?: workingDirectory.fileName.toString()
+    }
 
     private val rootDirCache = AtomicReference<VirtualFile>()
     override val rootDir: VirtualFile?
