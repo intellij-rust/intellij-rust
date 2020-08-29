@@ -110,7 +110,7 @@ private fun insertFunction(
             else -> null
         }
 
-        val target = impl ?: sourceFunction
+        val target: RsItemElement = impl ?: sourceFunction
         return target.parent.addAfter(function, target) as RsFunction
     }
 
