@@ -15,6 +15,10 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.expectedType
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyUnit
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
@@ -58,7 +62,10 @@ private fun createFunction(project: Project, editor: Editor, ctx: CreateFunction
     val whereClause = config.genericConstraints.buildWhereClause()
 
     val vis = if (callExpr.containingMod != ctx.module) "pub(crate) " else ""
-    val function = factory.tryCreateFunction("${vis}fn $functionName$genericParams($params)$whereClause {\n    unimplemented!()\n}")
+    val returnType = if (config.returnType !is TyUnit) {
+        " -> ${config.returnType.renderInsertionSafe(useAliasNames = true)}"
+    } else ""
+    val function = factory.tryCreateFunction("${vis}fn $functionName$genericParams($params)$returnType $whereClause {\n    unimplemented!()\n}")
         ?: return
 
     val sourceFunction = callExpr.parentOfType<RsFunction>() ?: return
@@ -85,6 +92,7 @@ private fun getTargetModuleForFunction(path: RsPath): RsMod? {
 }
 
 private data class FunctionConfig(val parameters: List<String>,
+                                  val returnType: Ty,
                                   val genericConstraints: GenericConstraints)
 
 private fun getFunctionConfig(callExpr: RsCallExpr): FunctionConfig {
@@ -92,10 +100,12 @@ private fun getFunctionConfig(callExpr: RsCallExpr): FunctionConfig {
         "p$index: ${expr.type.renderInsertionSafe(useAliasNames = true)}"
     }
 
-    val genericConstraints = GenericConstraints.create(callExpr)
-        .filterByTypes(callExpr.valueArgumentList.exprList.map { it.type })
+    val returnType = callExpr.expectedType.takeIf { it != TyUnknown } ?: TyUnit
 
-    return FunctionConfig(parameters, genericConstraints)
+    val genericConstraints = GenericConstraints.create(callExpr)
+        .filterByTypes(callExpr.valueArgumentList.exprList.map { it.type }.plus(returnType))
+
+    return FunctionConfig(parameters, returnType, genericConstraints)
 }
 
 private fun insertFunction(
