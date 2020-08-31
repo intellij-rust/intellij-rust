@@ -119,7 +119,7 @@ fun isUseful(
      * Otherwise, [pattern] is wildcard (or binding which is basically the same).
      * We look at the list of constructors that appear in the first column of [matrix].
      */
-    val usedConstructors = matrix.flatMap { row -> row.firstOrNull()?.constructors.orEmpty() }
+    val usedConstructors = matrix.firstColumn.map { it.constructors.orEmpty() }.flatten()
     val allConstructors = Constructor.allConstructors(type)
     val missingConstructors = allConstructors.minus(usedConstructors)
 

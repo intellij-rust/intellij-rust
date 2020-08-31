@@ -907,4 +907,70 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
             }
         }
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on pair of Options match ergonomics`() = checkByText("""
+        fn foo(a: Option<bool>, b: &Option<bool>) {
+            match (a, b) {
+                (None, None) => {}
+                (Some(true), _) | (_, &Some(true)) => {}
+                (Some(false), _) | (_, Some(false)) => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on pair of Options match ergonomics different refs`() = checkByText("""
+        fn foo(a: &Option<bool>) {
+            match a {
+                None => {}
+                &Some(true) => {}
+                Some(false) => {}
+            }
+        }
+    """)
+
+    // TODO: better support of match ergonomics
+    fun `test match ergonomics different refs`() = expect<AssertionError> {
+        checkFixByText("Add remaining patterns", """
+        enum E { A(i32), B, C }
+        use E::*;
+        fn foo(e: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> &e {
+                B => {}
+                &C => {}
+            }
+        }
+    """, """
+        enum E { A(i32), B, C }
+        use E::*;
+        fn foo(e: &E) {
+            match &e {
+                B => {}
+                &C => {}
+                A(_) => {}
+            }
+        }
+    """)
+    }
+
+    fun `test no error on different expr and arm types`() = checkByText("""
+        enum E1 { A, B }
+        enum E2 { C, D }
+        fn foo(a: E1) {
+            match a {
+                E2::C => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on Fn call`() = checkByText("""
+        fn foo(f: &dyn Fn() -> Option<bool>) {
+            match f() {
+                Some(_) => {}
+                None => {}
+            }
+        }
+    """)
 }
