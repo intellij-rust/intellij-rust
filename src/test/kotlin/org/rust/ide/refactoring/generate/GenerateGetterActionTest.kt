@@ -410,4 +410,28 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test move to first generated getter`() = doTest("""
+        struct S {
+            a: i32,
+            b: bool,/*caret*/
+        }
+    """, listOf(
+        MemberSelection("a: i32"),
+        MemberSelection("b: bool")
+    ), """
+        struct S {
+            a: i32,
+            b: bool,
+        }
+
+        impl S {
+            pub fn /*caret*/a(&self) -> i32 {
+                self.a
+            }
+            pub fn b(&self) -> bool {
+                self.b
+            }
+        }
+    """)
 }
