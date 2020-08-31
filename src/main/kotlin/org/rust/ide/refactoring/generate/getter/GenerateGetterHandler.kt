@@ -13,6 +13,7 @@ import org.rust.ide.refactoring.generate.StructMember
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
+import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.expandedMembers
 import org.rust.lang.core.psi.ext.isTupleStruct
@@ -48,7 +49,7 @@ class GenerateGetterHandler : BaseGenerateHandler() {
             val fieldName = it.argumentIdentifier
             val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
 
-            val (borrow, type) = getBorrowAndType(fieldType)
+            val (borrow, type) = getBorrowAndType(fieldType, it.field)
             val fnSignature = "pub fn $fieldName(&self) -> $borrow$type"
             val fnBody = "${borrow}self.$fieldName"
 
@@ -69,18 +70,19 @@ class GenerateGetterHandler : BaseGenerateHandler() {
     }
 }
 
-private fun getBorrowAndType(type: Ty): Pair<String, Ty> {
-    return when (type) {
-        is TyReference -> Pair("&", type.referenced)
-        is TyPrimitive -> Pair("", type)
-        is TyAdt -> {
+private fun getBorrowAndType(type: Ty, context: RsElement): Pair<String, Ty> {
+    return when {
+        type is TyReference -> Pair("&", type.referenced)
+        type is TyPrimitive -> Pair("", type)
+        type is TyAdt -> {
             val item = type.item
             when {
                 item == item.knownItems.String -> Pair("&", TyStr)
-                item.implLookup.isCopy(type) -> Pair("", type)
+                !type.isMovesByDefault(context.implLookup) -> Pair("", type)
                 else -> Pair("&", type)
             }
         }
+        !type.isMovesByDefault(context.implLookup) -> Pair("", type)
         else -> Pair("&", type)
     }
 }

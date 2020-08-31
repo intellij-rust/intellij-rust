@@ -219,6 +219,46 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test tuple copy`() = doTest("""
+        struct S {
+            a: (u32, u32)
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: (u32, u32)")), """
+        struct S {
+            a: (u32, u32)
+        }
+
+        impl S/*caret*/ {
+            pub fn a(&self) -> (u32, u32) {
+                self.a
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test tuple move`() = doTest("""
+        struct NoCopy;
+        struct S {
+            a: (u32, NoCopy)
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: (u32, NoCopy)")), """
+        struct NoCopy;
+        struct S {
+            a: (u32, NoCopy)
+        }
+
+        impl S/*caret*/ {
+            pub fn a(&self) -> &(u32, NoCopy) {
+                &self.a
+            }
+        }
+    """)
+
     fun `test generic field changed type parameter name`() = doTest("""
         struct S<T> {
             a: T
