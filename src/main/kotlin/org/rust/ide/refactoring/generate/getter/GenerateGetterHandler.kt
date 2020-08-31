@@ -9,6 +9,7 @@ package org.rust.ide.refactoring.generate.getter
 import com.intellij.openapi.editor.Editor
 import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
+import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
@@ -29,7 +30,7 @@ class GenerateGetterAction : BaseGenerateAction() {
     override val handler: BaseGenerateHandler = GenerateGetterHandler()
 }
 
-class GenerateGetterHandler : BaseGenerateHandler() {
+class GenerateGetterHandler : GenerateAccessorHandler() {
     override val dialogTitle: String = "Select Fields to Generate Getters"
 
     override fun performRefactoring(
@@ -58,16 +59,7 @@ class GenerateGetterHandler : BaseGenerateHandler() {
         }
     }
 
-    override fun isStructValid(struct: RsStructItem): Boolean {
-        if (struct.isTupleStruct) return false
-        if (struct.blockFields?.namedFieldDeclList?.isEmpty() != false) return false
-        return true
-    }
-
-    override fun isFieldValid(member: StructMember, impl: RsImplItem?): Boolean {
-        if (member.field.visibility == RsVisibility.Public) return false
-        return impl?.expandedMembers?.all { it.name != member.argumentIdentifier } ?: true
-    }
+    override fun methodName(member: StructMember): String = member.argumentIdentifier
 }
 
 private fun getBorrowAndType(type: Ty, context: RsElement): Pair<String, Ty> {

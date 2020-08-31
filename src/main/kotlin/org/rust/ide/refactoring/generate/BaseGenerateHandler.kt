@@ -13,7 +13,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.rust.ide.refactoring.generate.getter.GenerateGetterHandler
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
