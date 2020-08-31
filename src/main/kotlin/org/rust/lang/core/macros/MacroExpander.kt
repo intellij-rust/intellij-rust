@@ -11,6 +11,7 @@ import com.intellij.lang.PsiBuilderUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
@@ -129,9 +130,13 @@ class MacroExpander(val project: Project) {
             subst.variables + singletonMap("crate", MetaVarValue.Fragment(MACRO_DOLLAR_CRATE_IDENTIFIER, null, null, -1))
         )
 
-        return substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
+        val result = substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
             text to loweringRanges.mapAll(ranges)
-        }
+        } ?: return null
+
+        checkRanges(call, result.first, result.second)
+
+        return result
     }
 
     private fun findMatchingPattern(
@@ -266,6 +271,9 @@ class MacroExpander(val project: Project) {
                                 if (i != 0) {
                                     sb.delete(sb.length - separator.length, sb.length)
                                 }
+                                while (ranges.isNotEmpty() && ranges.last().dstOffset >= sb.length) {
+                                    ranges.removeLast()
+                                }
                                 break
                             }
                             nestingState.idx += 1
@@ -310,8 +318,21 @@ class MacroExpander(val project: Project) {
         }
     }
 
+    private fun checkRanges(call: RsMacroCall, expandedText: CharSequence, ranges: RangeMap) {
+        if (!isUnitTestMode) return
+        val callBody = call.macroBody ?: return
+
+        for (range in ranges.ranges) {
+            val callBodyFragment = callBody.subSequence(range.srcOffset, range.srcEndOffset)
+            val expandedFragment = expandedText.subSequence(range.dstOffset, range.dstEndOffset)
+            check(callBodyFragment == expandedFragment) {
+                "`$callBodyFragment` != `$expandedFragment`"
+            }
+        }
+    }
+
     companion object {
-        const val EXPANDER_VERSION = 8
+        const val EXPANDER_VERSION = 9
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
