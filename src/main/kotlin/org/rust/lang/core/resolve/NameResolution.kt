@@ -408,7 +408,12 @@ private fun processQualifiedPathResolveVariants(
 
     // Procedural macros definitions are functions, so they get added twice (once as macros, and once as items). To
     // avoid this, we exclude `MACROS` from passed namespaces
-    if (processItemOrEnumVariantDeclarations(base, ns - MACROS, processor, withPrivateImports = withPrivateImports(qualifier))) {
+    if (processItemOrEnumVariantDeclarations(
+            base,
+            ns - MACROS,
+            processor,
+            withPrivateImports = { withPrivateImports(qualifier, base) }
+        )) {
         return true
     }
 
@@ -535,7 +540,7 @@ private fun processUnqualifiedPathResolveVariants(
     val isExternCrate = isEdition2018 && hasColonColon
     return when {
         isCrateRelative -> if (crateRoot != null) {
-            processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = true)
+            processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = { true })
         } else {
             false
         }
@@ -1591,9 +1596,9 @@ private fun walkUp(
     return false
 }
 
-fun withPrivateImports(path: RsPath): Boolean {
+fun withPrivateImports(path: RsPath, resolvedPath: RsElement): Boolean {
     if (path.basePath().kind == PathKind.CRATE) {
-        return true
+        return resolvedPath is RsMod && resolvedPath in path.containingMod.superMods
     }
     return isSuperChain(path)
 }

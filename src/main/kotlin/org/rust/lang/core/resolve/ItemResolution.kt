@@ -25,7 +25,7 @@ fun processItemOrEnumVariantDeclarations(
     scope: RsElement,
     ns: Set<Namespace>,
     processor: RsResolveProcessor,
-    withPrivateImports: Boolean = false
+    withPrivateImports: () -> Boolean
 ): Boolean {
     when (scope) {
         // https://github.com/rust-lang/rfcs/blob/master/text/2338-type-alias-enum-variants.md
@@ -47,7 +47,7 @@ fun processItemOrEnumVariantDeclarations(
             if (processAll(scope.variants, processor)) return true
         }
         is RsMod -> {
-            val ipm = if (withPrivateImports) {
+            val ipm = if (withPrivateImports()) {
                 ItemProcessingMode.WITH_PRIVATE_IMPORTS
             } else {
                 ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
@@ -224,7 +224,7 @@ fun processItemDeclarations(
                     mod,
                     ns,
                     processor = shadowingProcessor,
-                    withPrivateImports = basePath != null && withPrivateImports(basePath)
+                    withPrivateImports = { basePath != null && withPrivateImports(basePath, mod) }
                 )
             }
         }, memoize = false)
