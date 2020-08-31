@@ -51,7 +51,7 @@ class CargoTestEventsConverter(
         handleStartMessage(text)
 
         val jsonObject = try {
-            val escapedText = text.replace(DOCTEST_PATH_RE) { it.value.replace("\\", "\\\\") }
+            val escapedText = text.replace(NAME_RE) { it.value.replace("\\", "\\\\") }
             val reader = JsonReader(StringReader(escapedText)).apply { isLenient = true }
             JsonParser.parseReader(reader).takeIf { it.isJsonObject }?.asJsonObject
         } catch (e: JsonSyntaxException) {
@@ -119,8 +119,7 @@ class CargoTestEventsConverter(
                 // Parse `rustdoc` test name:
                 // src/lib.rs - qualifiedName (line #i) -> qualifiedName (line #i)
                 val qualifiedName = it.name.substringAfter(" - ")
-                val stdout = it.stdout?.let(::unescape)
-                it.copy(name = "$target::$qualifiedName", stdout = stdout)
+                it.copy(name = "$target::$qualifiedName")
             } ?: return false
         val messages = createServiceMessagesFor(testMessage) ?: return false
         for (message in messages) {
@@ -261,7 +260,7 @@ class CargoTestEventsConverter(
         private const val NAME_SEPARATOR: String = "::"
         private const val DOCTESTS_SUFFIX = "doctests"
 
-        private val DOCTEST_PATH_RE: Regex = """"[0-9 a-z_A-Z\-\\.]+ - """.toRegex()
+        private val NAME_RE: Regex = """"name":\s*"(?<name>[^"]+)"""".toRegex()
 
         private val LINE_NUMBER_RE: Regex = """\s+\(line\s+(?<line>\d+)\)\s*""".toRegex()
 

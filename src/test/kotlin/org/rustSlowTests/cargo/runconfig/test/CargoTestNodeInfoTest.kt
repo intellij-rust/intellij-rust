@@ -52,26 +52,34 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
        assert_ne!(123, 123, "123 == 123");
     """, "123 == 123")
 
+    fun `test unescape error messages`() = checkErrors("""
+       assert_eq!("a\\\\b", "a\\b", "`a\\\\b` != `a\\b`");
+    """, "`a\\\\b` != `a\\b`", Diff("a\\\\b", "a\\b"))
+
+    @MinRustcVersion("1.39.0")
+    fun `test don't unescape test output`() = checkOutput("""
+        println!("a\\\\b");
+    """, "a\\\\b\n")
+
     @MinRustcVersion("1.39.0")
     fun `test successful output`() = checkOutput("""
         println!("
-                   - ");
-    """,
-        output = """
-           - """,
-        shouldPass = true)
+                  aaa - bbb");
+    """, """
+          aaa - bbb
+    """)
 
     fun `test failed output`() = checkOutput("""
         println!("
-                   - ");
+                  aaa - bbb");
         panic!("
-                   - ");
-    """,
-        output = """
-           - 
+                  ccc - ddd");
+    """, """
+          aaa - bbb
 
 
-           - """)
+          ccc - ddd
+    """, shouldPass = false)
 
     fun `test root output`() {
         val testProject = buildProject {
@@ -121,9 +129,9 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
         }
     }
 
-    private fun checkOutput(@Language("Rust") testFnText: String, output: String, shouldPass: Boolean = false) {
+    private fun checkOutput(@Language("Rust") testFnText: String, output: String, shouldPass: Boolean = true) {
         val testNode = getTestNode(testFnText, shouldPass)
-        assertEquals(output, testNode.output.trimEnd('\n'))
+        assertEquals(output.trimIndent(), testNode.output.trimIndent())
     }
 
     private fun getTestNode(testFnText: String, shouldPass: Boolean): SMTestProxy {
