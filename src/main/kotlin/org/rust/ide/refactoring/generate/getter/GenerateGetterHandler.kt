@@ -7,6 +7,7 @@ package org.rust.ide.refactoring.generate.getter
 
 
 import com.intellij.openapi.editor.Editor
+import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
@@ -51,7 +52,9 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
             val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
 
             val (borrow, type) = getBorrowAndType(fieldType, it.field)
-            val fnSignature = "pub fn $fieldName(&self) -> $borrow$type"
+            val typeStr = type.renderInsertionSafe(useAliasNames = true)
+
+            val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"
             val fnBody = "${borrow}self.$fieldName"
 
             val accessor = RsPsiFactory(project).createTraitMethodMember("$fnSignature {\n$fnBody\n}")
