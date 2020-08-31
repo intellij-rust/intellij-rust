@@ -388,4 +388,26 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
         }
     """)
+
+    fun `test type alias`() = doTest("""
+        struct T;
+        type Alias = T;
+        struct S {
+            a: Alias
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: Alias")), """
+        struct T;
+        type Alias = T;
+        struct S {
+            a: Alias
+        }
+
+        impl S {
+            pub fn a(&self) -> &Alias {
+                &self.a
+            }
+        }
+    """)
 }
