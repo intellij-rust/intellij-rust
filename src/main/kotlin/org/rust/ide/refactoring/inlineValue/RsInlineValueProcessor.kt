@@ -13,6 +13,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineValueProcessor(
@@ -33,9 +35,20 @@ class RsInlineValueProcessor(
     }
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
+        val factory = RsPsiFactory(project)
         usages.asIterable().forEach loop@{
             val reference = it.reference as? RsReference ?: return@loop
-            reference.element.replace(context.expr)
+            when (val element = reference.element) {
+                is RsStructLiteralField -> {
+                    if (element.colon == null) {
+                        element.addAfter(factory.createColon(), element.referenceNameElement)
+                    }
+                    if (element.expr == null) {
+                        element.addAfter(context.expr, element.colon)
+                    }
+                }
+                else -> element.replace(context.expr)
+            }
         }
         if (mode is InlineValueMode.InlineAllAndRemoveOriginal) {
             context.delete()
