@@ -5,7 +5,6 @@
 
 package org.rust.ide.refactoring
 
-import junit.framework.Assert
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.ide.refactoring.inlineValue.InlineValueMode
@@ -177,6 +176,59 @@ class RsInlineValueTest : RsTestBase() {
         }
     """)
 
+    fun `test inline into field init`() = doTest("""
+        struct S {
+            a: u32,
+        }
+
+        fn foo() {
+            let /*caret*/a = 10;
+            S { a: a };
+        }
+    """, """
+        struct S {
+            a: u32,
+        }
+
+        fn foo() {
+            S { a: 10 };
+        }
+    """)
+
+    fun `test inline into field shorthand init`() = doTest("""
+        struct S {
+            a: u32,
+        }
+
+        fn foo() {
+            let /*caret*/a = 10;
+            S { a };
+        }
+    """, """
+        struct S {
+            a: u32,
+        }
+
+        fn foo() {
+            S { a: 10 };
+        }
+    """)
+
+    fun `test inline into tuple struct init`() = doTest("""
+        struct S(u32);
+
+        fn foo() {
+            let /*caret*/a = 10;
+            S { 0: a };
+        }
+    """, """
+        struct S(u32);
+
+        fn foo() {
+            S { 0: 10 };
+        }
+    """)
+
     private fun doTest(@Language("Rust") before: String, @Language("Rust") after: String,
                        mode: InlineValueMode = InlineValueMode.InlineAllAndRemoveOriginal) {
         withMockInlineValueMode(mode) {
@@ -189,8 +241,7 @@ class RsInlineValueTest : RsTestBase() {
             checkEditorAction(code, code, "Inline")
             error("no error found, expected $errorMessage")
         } catch (e: Exception) {
-            Assert.assertEquals(e.message, errorMessage)
+            assertEquals(errorMessage, e.message)
         }
     }
-
 }
