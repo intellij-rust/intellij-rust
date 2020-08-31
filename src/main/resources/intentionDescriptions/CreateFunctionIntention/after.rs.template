@@ -1,0 +1,7 @@
+fn foo(p0: i32, p1: i32) -> U32 {
+    unimplemented!()
+}
+
+fn bar() {
+    let x: u32 = foo(1, 2);
+}
