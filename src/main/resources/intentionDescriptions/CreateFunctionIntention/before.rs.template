@@ -1,0 +1,3 @@
+fn bar() {
+    let x: u32 = <spot>foo</spot>(1, 2);
+}
