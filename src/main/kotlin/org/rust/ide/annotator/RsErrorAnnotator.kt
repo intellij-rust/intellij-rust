@@ -18,9 +18,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.utils.import.isStd
 import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
@@ -375,6 +377,25 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    private fun checkStdUsageInNoStdEnvironment(ref: RsPath, holder: RsAnnotationHolder) {
+        if (ref != ref.rootPath()) return
+
+        val file = ref.crateRoot?.containingFile as? RsFile ?: return
+        if (file.attributes != RsFile.Attributes.NO_STD) return
+
+        val basePath = ref.basePath()
+        val resolved = basePath.reference?.resolve()
+        val isStd = if (resolved != null) {
+            val resolvedCrate = resolved.containingCrate
+            (resolvedCrate?.isStd ?: false) && resolvedCrate?.rootMod == resolved
+        } else {
+            basePath.referenceName == AutoInjectedCrates.STD
+        }
+        if (isStd) {
+            holder.createErrorAnnotation(ref, "Standard library usage in a #![no_std] environment")
+        }
+    }
+
     private fun checkBaseType(holder: RsAnnotationHolder, type: RsBaseType) {
         if (type.underscore == null) return
         val owner = type.owner.parent
@@ -443,6 +464,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         checkReferenceIsPublic(path, path, holder)
         checkUnstableAttribute(path, holder)
+        checkStdUsageInNoStdEnvironment(path, holder)
     }
 
     private fun checkConstParameter(holder: RsAnnotationHolder, constParameter: RsConstParameter) {

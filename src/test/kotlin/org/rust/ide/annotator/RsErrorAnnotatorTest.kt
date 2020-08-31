@@ -3395,6 +3395,63 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test custom std usage with no_std`() = checkErrors("""
+        #![no_std]
+
+        mod std {
+            pub struct MyVec;
+        }
+
+        use std::MyVec;
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test std usage with no_std`() = checkErrors("""
+        #![no_std]
+
+        use <error descr="Standard library usage in a #![no_std] environment">std::vec::Vec</error>;
+
+        fn foo() {
+            <error descr="Standard library usage in a #![no_std] environment">std::vec::Vec::new</error>();
+            <error descr="Standard library usage in a #![no_std] environment">println</error>!("format");
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test alloc usage with no_std`() = checkErrors("""
+        #![no_std]
+        #![feature(alloc)]
+
+        extern crate alloc;
+
+        use alloc::alloc::Layout;
+
+        fn foo() {
+            let v: alloc::vec::Vec<u32> = alloc::vec::Vec::new();
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test core usage with no_std`() = checkErrors("""
+        #![no_std]
+
+        fn foo() {
+            let d = core::time::Duration::from_millis(1);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test std usage with no_std in different file`() = checkByFileTree("""
+        //- main.rs
+            #![no_std]
+            mod foo;
+        //- foo.rs
+            fn foo() {
+                /*caret*/<error descr="Standard library usage in a #![no_std] environment">println</error>!("format");
+            }
+    """)
+
     fun `test E0435 non-constant in array type`() = checkErrors("""
         fn main() {
             let foo = 42;
