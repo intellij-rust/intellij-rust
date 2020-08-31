@@ -6,6 +6,13 @@
 package org.rust.ide.intentions
 
 class SubstituteAssociatedTypeIntentionTest : RsIntentionTestBase(SubstituteAssociatedTypeIntention()) {
+    fun `test unavailable on type alias`() = doUnavailableTest("""
+        type Alias = u32;
+        fn foo() -> Alias/*caret*/ {
+            unimplemented!()
+        }
+    """)
+
     fun `test unavailable on trait associated type`() = doUnavailableTest("""
         trait Trait {
             type Item;
@@ -198,20 +205,26 @@ class SubstituteAssociatedTypeIntentionTest : RsIntentionTestBase(SubstituteAsso
     """)
 
     fun `test import after substitution`() = doAvailableTest("""
-        use foo::B;
-
         mod foo {
-            pub struct A;
-            pub type B = A;
+            pub struct S;
+            pub trait Trait {
+                type Item = S;
+            }
         }
-        fn foo() -> /*caret*/B { unreachable!() }
+        fn foo<T: foo::Trait>() -> T::/*caret*/Item {
+            unimplemented!()
+        }
     """, """
-        use foo::{B, A};
+        use foo::S;
 
         mod foo {
-            pub struct A;
-            pub type B = A;
+            pub struct S;
+            pub trait Trait {
+                type Item = S;
+            }
         }
-        fn foo() -> A { unreachable!() }
+        fn foo<T: foo::Trait>() -> S {
+            unimplemented!()
+        }
     """)
 }

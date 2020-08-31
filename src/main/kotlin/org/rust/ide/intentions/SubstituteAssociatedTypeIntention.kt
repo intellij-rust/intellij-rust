@@ -16,7 +16,9 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeReference
+import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.endOffsetInParent
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.types.type
 
 class SubstituteAssociatedTypeIntention : RsElementBaseIntentionAction<SubstituteAssociatedTypeIntention.Context>() {
@@ -29,6 +31,7 @@ class SubstituteAssociatedTypeIntention : RsElementBaseIntentionAction<Substitut
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>() ?: return null
         val typeAlias = path.reference?.resolve() as? RsTypeAlias ?: return null
+        if (!typeAlias.owner.isImplOrTrait) return null
         val type = typeAlias.typeReference ?: return null
         return Context(path, type)
     }
