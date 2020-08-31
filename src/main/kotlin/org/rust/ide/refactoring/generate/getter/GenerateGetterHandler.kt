@@ -53,7 +53,7 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
             val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
 
             val (borrow, type) = getBorrowAndType(fieldType, it.field)
-            val typeStr = type.renderInsertionSafe(useAliasNames = true)
+            val typeStr = type.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)
 
             val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"
             val fnBody = "${borrow}self.$fieldName"
@@ -68,7 +68,6 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
 
 private fun getBorrowAndType(type: Ty, context: RsElement): Pair<String, Ty> {
     return when {
-        type is TyReference -> Pair("&", type.referenced)
         type is TyPrimitive -> Pair("", type)
         type is TyAdt -> {
             val item = type.item
