@@ -213,8 +213,8 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
 
         impl<'a> S<'a> {
-            pub fn a(&self) -> &str {
-                &self.a
+            pub fn a(&self) -> &'a str {
+                self.a
             }
         }
     """)
@@ -231,7 +231,7 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             a: (u32, u32)
         }
 
-        impl S/*caret*/ {
+        impl S {
             pub fn a(&self) -> (u32, u32) {
                 self.a
             }
@@ -245,14 +245,14 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             a: (u32, NoCopy)
         }
 
-        impl S/*caret*/ {}
+        impl S {/*caret*/}
     """, listOf(MemberSelection("a: (u32, NoCopy)")), """
         struct NoCopy;
         struct S {
             a: (u32, NoCopy)
         }
 
-        impl S/*caret*/ {
+        impl S {
             pub fn a(&self) -> &(u32, NoCopy) {
                 &self.a
             }
