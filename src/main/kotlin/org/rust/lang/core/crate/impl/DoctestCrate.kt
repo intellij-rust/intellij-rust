@@ -32,7 +32,7 @@ class DoctestCrate(
     override val kind: CargoWorkspace.TargetKind get() = CargoWorkspace.TargetKind.Test
 
     override val cfgOptions: CfgOptions get() = CfgOptions.EMPTY
-    override val features: Collection<CargoWorkspace.Feature> get() = emptyList()
+    override val features: Map<String, List<String>> get() = emptyMap()
     override val env: Map<String, String> get() = emptyMap()
     override val outDir: VirtualFile? get() = null
 

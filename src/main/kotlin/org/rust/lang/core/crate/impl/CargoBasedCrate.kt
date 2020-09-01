@@ -25,7 +25,7 @@ class CargoBasedCrate(
     override val flatDependencies: LinkedHashSet<Crate>
 ) : Crate {
     override val reverseDependencies = mutableListOf<CargoBasedCrate>()
-    override var features: Collection<CargoWorkspace.Feature> = cargoTarget.pkg.features
+    override var features: Map<String, List<String>> = cargoTarget.pkg.features
 
     // These properties are fields (not just delegates to `cargoTarget`) because [Crate] must be immutable
     override val rootModFile: VirtualFile? = cargoTarget.crateRoot

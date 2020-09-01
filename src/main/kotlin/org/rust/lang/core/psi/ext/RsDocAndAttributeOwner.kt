@@ -226,7 +226,8 @@ private fun RsDocAndAttributeOwner.evaluateCfg(): ThreeValuedLogic {
     // When the application now requests certain features, which are not enabled by default in the library
     // we will evaluate features wrongly here
     val crate = containingCrate ?: return ThreeValuedLogic.True // TODO: maybe unknown?
-    val features = crate.featureState
+    val pkg = containingCargoPackage ?: return ThreeValuedLogic.True
+    val features = pkg.featureState
     return CfgEvaluator(crate.cargoWorkspace.cfgOptions, crate.cfgOptions, features, crate.origin).evaluate(cfgAttributes)
 }
 

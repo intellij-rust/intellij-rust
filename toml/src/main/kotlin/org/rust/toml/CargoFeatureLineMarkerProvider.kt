@@ -20,6 +20,7 @@ import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
 import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.grayed
+import org.rust.ide.lineMarkers.SlowRunMarketResult
 import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.findCargoProject
 import org.toml.lang.psi.TomlFile
@@ -30,10 +31,7 @@ import org.toml.lang.psi.TomlTable
 class CargoFeatureLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(
-        elements: MutableList<PsiElement>,
-        result: MutableCollection<LineMarkerInfo<PsiElement>>
-    ) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: SlowRunMarketResult) {
         if (!tomlPluginIsAbiCompatible()) return
 
         val firstElement = elements.firstOrNull() ?: return

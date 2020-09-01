@@ -288,7 +288,7 @@ open class CargoProjectsServiceImpl(
                 runWriteAction {
                     directoryIndex.resetIndex()
                     project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
-                        .cargoProjectsUpdated(projects)
+                        .cargoProjectsUpdated(this, projects)
                     //TODO: Do something lightweight instead of heavy `refreshAllProjects`
                     // Probably, full refresh is only necessary in case of a new dependency
                     refreshAllProjects()

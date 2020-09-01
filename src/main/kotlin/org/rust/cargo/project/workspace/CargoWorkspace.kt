@@ -51,7 +51,7 @@ interface CargoWorkspace {
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
 
     fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo? = null): CargoWorkspace
-    fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Set<String>>): CargoWorkspace
+    fun withOverriddenFeatures(userOverriddenFeatures: Map<PackageRoot, Map<String>>): CargoWorkspace
     val hasStandardLibrary: Boolean get() = packages.any { it.origin == STDLIB }
 
     @TestOnly
@@ -171,16 +171,6 @@ interface CargoWorkspace {
 
     enum class Edition(val presentation: String) {
         EDITION_2015("2015"), EDITION_2018("2018")
-    }
-
-    data class Feature(
-        val name: String,
-        val state: FeatureState
-    )
-
-    enum class FeatureState {
-        Enabled,
-        Disabled
     }
 
     companion object {
@@ -330,7 +320,7 @@ private class WorkspaceImpl(
         val enabledByDefault = packages.flatMap { pkg ->
             when (pkg.origin) {
                 WORKSPACE -> emptyList()
-                STDLIB, DEPENDENCY, TRANSITIVE_DEPENDENCY -> pkg.defaultFeatures.map { pkg.findFeature(it) }
+                STDLIB, DEPENDENCY -> pkg.defaultFeatures.map { pkg.findFeature(it) }
             }
         }
         val enabledByUser = userOverriddenFeatures.mapNotNull { (rootDirectory, features) ->

@@ -375,20 +375,10 @@ private fun Iterable<Crate>.assertTopSorted() {
 }
 
 private fun mergeFeatures(
-    features1: Collection<CargoWorkspace.Feature>,
-    features2: Collection<CargoWorkspace.Feature>
-): Collection<CargoWorkspace.Feature> {
-    val featureMap = features1.associateTo(hashMapOf()) { it.name to it.state }
-    for ((k, v) in features2) {
-        featureMap.merge(k, v) { v1, v2 ->
-            when {
-                v1 == CargoWorkspace.FeatureState.Enabled -> CargoWorkspace.FeatureState.Enabled
-                v2 == CargoWorkspace.FeatureState.Enabled -> CargoWorkspace.FeatureState.Enabled
-                else -> CargoWorkspace.FeatureState.Disabled
-            }
-        }
-    }
-    return featureMap.entries.map { (k, v) -> CargoWorkspace.Feature(k, v) }
+    features1: Map<String, List<String>>,
+    features2: Map<String, List<String>>
+): Map<String, List<String>> {
+    return features1
 }
 
 private data class ProjectPackage(

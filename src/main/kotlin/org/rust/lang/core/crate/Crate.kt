@@ -33,7 +33,7 @@ interface Crate {
     val origin: PackageOrigin
 
     val cfgOptions: CfgOptions
-    val features: Collection<CargoWorkspace.Feature>
+    val features: Map<String, List<String>>
 
     /** A map of compile-time environment variables, needed for `env!("FOO")` macros expansion */
     val env: Map<String, String>
