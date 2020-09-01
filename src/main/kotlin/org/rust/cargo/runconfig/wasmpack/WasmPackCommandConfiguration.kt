@@ -5,6 +5,7 @@
 
 package org.rust.cargo.runconfig.wasmpack
 
+import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -55,8 +56,15 @@ class WasmPackCommandConfiguration(
         element.readPath("workingDirectory")?.let { workingDirectory = it }
     }
 
-    override fun suggestedName(): String? {
-        return command.substringBefore(' ').capitalize()
+    override fun suggestedName(): String = command.substringBefore(' ').capitalize()
+
+    override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
+        val tasks = super.getBeforeRunTasks()
+        return if (tasks.none { it is WasmPackBuildTaskProvider.BuildTask }) {
+            tasks + WasmPackBuildTaskProvider.BuildTask()
+        } else {
+            tasks
+        }
     }
 
     fun setFromCmd(cmd: WasmPackCommandLine) {

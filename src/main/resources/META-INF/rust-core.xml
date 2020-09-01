@@ -833,6 +833,7 @@
              producer instead of registering it here. -->
 
         <stepsBeforeRunProvider implementation="org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider"/>
+        <stepsBeforeRunProvider implementation="org.rust.cargo.runconfig.wasmpack.WasmPackBuildTaskProvider"/>
 
         <projectTaskRunner implementation="org.rust.cargo.runconfig.buildtool.CargoBuildTaskRunner"/>
 
