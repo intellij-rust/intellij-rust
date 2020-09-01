@@ -86,8 +86,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             val environmentVariables = EnvironmentVariablesData.create(
                 oldVariables.envs + mapOf(
                     "CARGO_INCREMENTAL" to "0",
-                    "RUSTFLAGS" to "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort",
-                    "RUSTDOCFLAGS" to "-Cpanic=abort"
+                    "RUSTFLAGS" to "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off"
                 ),
                 oldVariables.isPassParentEnvs
             )
