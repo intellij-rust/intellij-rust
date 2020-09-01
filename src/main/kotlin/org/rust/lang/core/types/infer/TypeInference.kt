@@ -219,7 +219,7 @@ class RsInferenceContext(
         fulfill.selectWherePossible()
 
         exprTypes.replaceAll { _, ty -> fullyResolve(ty) }
-        expectedExprTypes.replaceAll { _, ty -> fullyResolve(ty) }
+        expectedExprTypes.replaceAll { _, ty -> fullyResolveWithOrigins(ty) }
         patTypes.replaceAll { _, ty -> fullyResolve(ty) }
         patFieldTypes.replaceAll { _, ty -> fullyResolve(ty) }
         // replace types in diagnostics for better quick fixes
@@ -241,7 +241,9 @@ class RsInferenceContext(
     }
 
     private fun fallbackUnresolvedTypeVarsIfPossible() {
-        for (ty in exprTypes.values.asSequence() + patTypes.values.asSequence() + patFieldTypes.values.asSequence()) {
+        val allTypes = exprTypes.values.asSequence() + patTypes.values.asSequence() +
+            patFieldTypes.values.asSequence() + expectedExprTypes.values.asSequence()
+        for (ty in allTypes) {
             ty.visitInferTys { tyInfer ->
                 val rty = shallowResolve(tyInfer)
                 if (rty is TyInfer) {
@@ -595,6 +597,35 @@ class RsInferenceContext(
     }
 
     private val fullTypeResolver: FullTypeResolver = FullTypeResolver()
+
+    /**
+     * Similar to [fullyResolve], but replaces unresolved [TyInfer.TyVar] to its [TyInfer.TyVar.origin]
+     * instead of [TyUnknown]
+     */
+    fun <T : TypeFoldable<T>> fullyResolveWithOrigins(value: T): T {
+        return value.foldWith(fullTypeWithOriginsResolver)
+    }
+
+    private inner class FullTypeWithOriginsResolver : TypeFolder {
+        override fun foldTy(ty: Ty): Ty {
+            if (!ty.needsInfer) return ty
+            return when (val res = shallowResolve(ty)) {
+                is TyUnknown -> (ty as? TyInfer.TyVar)?.origin as? TyTypeParameter ?: TyUnknown
+                is TyInfer.TyVar -> res.origin as? TyTypeParameter ?: TyUnknown
+                is TyInfer -> TyUnknown
+                else -> res.superFoldWith(this)
+            }
+        }
+
+        override fun foldConst(const: Const): Const =
+            if (const is CtInferVar) {
+                constUnificationTable.findValue(const) ?: CtUnknown
+            } else {
+                const
+            }
+    }
+
+    private val fullTypeWithOriginsResolver: FullTypeWithOriginsResolver = FullTypeWithOriginsResolver()
 
     fun typeVarForParam(ty: TyTypeParameter): Ty = TyInfer.TyVar(ty)
 
