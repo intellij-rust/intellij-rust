@@ -299,4 +299,24 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
         use foo::foo;
         use foo::bar;
     """)
+
+    fun `test flatten simple statements and nested statements`() = doAvailableTest("""
+        use std::{
+            /*caret*/a,
+            b::b1,
+            c::{c1, c2},
+            d::{
+                d1,
+                d2::{d21, d22}
+            }
+        };
+    """, """
+        use std::a;
+        use std::b::b1;
+        use std::c::c1;
+        use std::c::c2;
+        use std::d::d1;
+        use std::d::d2::d21;
+        use std::d::d2::d22;
+    """)
 }

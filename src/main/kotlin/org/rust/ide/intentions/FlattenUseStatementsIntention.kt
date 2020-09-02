@@ -74,7 +74,13 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
     }
 
     private fun makeSeparatedPath(basePath: String, useSpecks: List<RsUseSpeck>): List<String> = useSpecks.flatMap {
-        it.useGroup?.useSpeckList?.map { "$basePath::${it.text}" } ?: listOf(addBasePath(it.text, basePath))
+        val useSpeckList = it.useGroup?.useSpeckList
+        val path = it.path
+        if (useSpeckList != null && path != null) {
+            makeSeparatedPath("$basePath::${path.text}", useSpeckList)
+        } else {
+            listOf(addBasePath(it.text, basePath))
+        }
     }
 
     private fun addBasePath(localPath: String, basePath: String): String = when (localPath) {
