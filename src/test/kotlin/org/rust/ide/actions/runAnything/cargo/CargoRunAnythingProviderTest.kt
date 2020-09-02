@@ -43,7 +43,7 @@ class CargoRunAnythingProviderTest : RsTestBase() {
     fun `test options completion`() {
         val runOptions = listOf(
             "--bin", "--example", "--package", "--jobs", "--release", "--manifest-path", "--verbose", "--quiet",
-            "--features", "--all-features", "--no-default-features"
+            "--target", "--features", "--all-features", "--no-default-features"
         ).map { "cargo run $it" }
         assertSameElements(provider.getValues(dataContext, "cargo run "), runOptions)
         assertSameElements(provider.getValues(dataContext, "cargo run -"), runOptions)

@@ -35,6 +35,16 @@ class Rustup(
         }
     }
 
+    data class Target(val name: String, val isInstalled: Boolean) {
+        companion object {
+            fun from(line: String): Target {
+                val name = line.substringBefore(' ')
+                val isInstalled = line.substringAfter(' ') == "(installed)"
+                return Target(name, isInstalled)
+            }
+        }
+    }
+
     fun listComponents(): List<Component> =
         GeneralCommandLine(rustup)
             .withWorkDirectory(projectDirectory)
@@ -42,6 +52,15 @@ class Rustup(
             .execute()
             ?.stdoutLines
             ?.map { Component.from(it) }
+            ?: emptyList()
+
+    fun listTargets(): List<Target> =
+        GeneralCommandLine(rustup)
+            .withWorkDirectory(projectDirectory)
+            .withParameters("target", "list")
+            .execute()
+            ?.stdoutLines
+            ?.map { Target.from(it) }
             ?: emptyList()
 
     fun downloadStdlib(): DownloadResult<VirtualFile> {

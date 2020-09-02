@@ -10,9 +10,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.Rustup
 import org.rust.lang.core.completion.withPriority
+import org.rust.stdext.toPath
 
 class CargoCommandCompletionProvider(
     projects: CargoProjectsService,
@@ -123,6 +126,7 @@ class CargoCommandCompletionProvider(
             jobs()
             features()
             verbose()
+            targetTriple()
         }
 
         fun release() = flag("release")
@@ -132,11 +136,21 @@ class CargoCommandCompletionProvider(
             flag("all-features")
             flag("no-default-features")
         }
+        fun targetTriple() = opt("target", targetTripleCompleter())
 
         private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ctx ->
             ctx.currentWorkspace?.packages.orEmpty()
                 .filter { it.origin == PackageOrigin.WORKSPACE }
                 .flatMap { it.targets.filter { it.kind == kind } }
+                .map { it.lookupElement }
+        }
+
+        private fun targetTripleCompleter(): ArgCompleter = { ctx ->
+            val project = ctx.projects.first().project
+            val rustup = project.toolchain!!.rustup(ctx.projects.first().rootDir!!.path.toPath())!!
+
+            rustup.listTargets()
+                .filter { it.isInstalled }
                 .map { it.lookupElement }
         }
 
@@ -197,3 +211,4 @@ private val CargoWorkspace.Package.lookupElement: LookupElement
         val priority = if (origin == PackageOrigin.WORKSPACE) 1.0 else 0.0
         return LookupElementBuilder.create(name).withPriority(priority)
     }
+private val Rustup.Target.lookupElement: LookupElement get() = LookupElementBuilder.create(name)
