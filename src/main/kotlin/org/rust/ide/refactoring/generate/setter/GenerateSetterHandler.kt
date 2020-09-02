@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.refactoring.generate.getter
+package org.rust.ide.refactoring.generate.setter
 
 
 import com.intellij.openapi.editor.Editor
@@ -12,6 +12,7 @@ import org.rust.ide.refactoring.generate.BaseGenerateAction
 import org.rust.ide.refactoring.generate.BaseGenerateHandler
 import org.rust.ide.refactoring.generate.GenerateAccessorHandler
 import org.rust.ide.refactoring.generate.StructMember
+import org.rust.ide.refactoring.generate.getter.GenerateGetterHandler
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
@@ -28,12 +29,12 @@ import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.checkWriteAccessAllowed
 
-class GenerateGetterAction : BaseGenerateAction() {
-    override val handler: BaseGenerateHandler = GenerateGetterHandler()
+class GenerateSetterAction : BaseGenerateAction() {
+    override val handler: BaseGenerateHandler = GenerateSetterHandler()
 }
 
-class GenerateGetterHandler : GenerateAccessorHandler() {
-    override val dialogTitle: String = "Select Fields to Generate Getters"
+class GenerateSetterHandler : GenerateAccessorHandler() {
+    override val dialogTitle: String = "Select Fields to Generate Setters"
 
     override fun generateAccessors(
         struct: RsStructItem,
@@ -51,33 +52,15 @@ class GenerateGetterHandler : GenerateAccessorHandler() {
         return chosenFields.map {
             val fieldName = it.argumentIdentifier
             val fieldType = it.field.typeReference?.type?.substitute(substitution) ?: TyUnit
+            val typeStr = fieldType.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)
 
-            val (borrow, type) = getBorrowAndType(fieldType, it.field)
-            val typeStr = type.renderInsertionSafe(useAliasNames = true, includeLifetimeArguments = true)
-
-            val fnSignature = "pub fn $fieldName(&self) -> $borrow$typeStr"
-            val fnBody = "${borrow}self.$fieldName"
+            val fnSignature = "pub fn ${methodName(it)}(&mut self, $fieldName: $typeStr)"
+            val fnBody = "self.$fieldName = $fieldName;"
 
             val accessor = RsPsiFactory(project).createTraitMethodMember("$fnSignature {\n$fnBody\n}")
             impl.members?.addBefore(accessor, impl.members?.rbrace) as RsFunction
         }
     }
 
-    override fun methodName(member: StructMember): String = member.argumentIdentifier
-}
-
-private fun getBorrowAndType(type: Ty, context: RsElement): Pair<String, Ty> {
-    return when {
-        type is TyPrimitive -> Pair("", type)
-        type is TyAdt -> {
-            val item = type.item
-            when {
-                item == item.knownItems.String -> Pair("&", TyStr)
-                !type.isMovesByDefault(context.implLookup) -> Pair("", type)
-                else -> Pair("&", type)
-            }
-        }
-        !type.isMovesByDefault(context.implLookup) -> Pair("", type)
-        else -> Pair("&", type)
-    }
+    override fun methodName(member: StructMember): String = "set_${member.argumentIdentifier}"
 }

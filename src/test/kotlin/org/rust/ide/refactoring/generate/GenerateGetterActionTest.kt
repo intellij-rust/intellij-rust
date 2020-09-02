@@ -213,7 +213,47 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
         }
 
         impl<'a> S<'a> {
-            pub fn a(&self) -> &str {
+            pub fn a(&self) -> &'a str {
+                self.a
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test tuple copy`() = doTest("""
+        struct S {
+            a: (u32, u32)
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: (u32, u32)")), """
+        struct S {
+            a: (u32, u32)
+        }
+
+        impl S {
+            pub fn a(&self) -> (u32, u32) {
+                self.a
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test tuple move`() = doTest("""
+        struct NoCopy;
+        struct S {
+            a: (u32, NoCopy)
+        }
+
+        impl S {/*caret*/}
+    """, listOf(MemberSelection("a: (u32, NoCopy)")), """
+        struct NoCopy;
+        struct S {
+            a: (u32, NoCopy)
+        }
+
+        impl S {
+            pub fn a(&self) -> &(u32, NoCopy) {
                 &self.a
             }
         }
@@ -345,6 +385,52 @@ class GenerateGetterActionTest : RsGenerateBaseTest() {
             }
             pub fn c(&self) -> i32 {
                 self.c
+            }
+        }
+    """)
+
+    fun `test type alias`() = doTest("""
+        struct T;
+        type Alias = T;
+        struct S {
+            a: Alias
+        }
+
+        impl S/*caret*/ {}
+    """, listOf(MemberSelection("a: Alias")), """
+        struct T;
+        type Alias = T;
+        struct S {
+            a: Alias
+        }
+
+        impl S {
+            pub fn a(&self) -> &Alias {
+                &self.a
+            }
+        }
+    """)
+
+    fun `test move to first generated getter`() = doTest("""
+        struct S {
+            a: i32,
+            b: bool,/*caret*/
+        }
+    """, listOf(
+        MemberSelection("a: i32"),
+        MemberSelection("b: bool")
+    ), """
+        struct S {
+            a: i32,
+            b: bool,
+        }
+
+        impl S {
+            pub fn /*caret*/a(&self) -> i32 {
+                self.a
+            }
+            pub fn b(&self) -> bool {
+                self.b
             }
         }
     """)
