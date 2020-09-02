@@ -1,16 +1,12 @@
 import json
 from datetime import datetime, date, timedelta
-from urllib import request
 
-from common import get_patch_version, env
+from common import env
+from github import get_current_milestone
 
 if __name__ == '__main__':
     repo = env("GITHUB_REPOSITORY")
-    response = request.urlopen(f"https://api.github.com/repos/{repo}/milestones")
-    milestones = json.load(response)
-
-    milestone_version = f"v{get_patch_version()}"
-    milestone = next(milestone for milestone in milestones if milestone["title"] == milestone_version)
+    milestone = get_current_milestone(repo)
     # TODO: find out more correct way to parse data
     release_date = datetime.strptime(milestone["due_on"], "%Y-%m-%dT%H:%M:%SZ").date()
 
