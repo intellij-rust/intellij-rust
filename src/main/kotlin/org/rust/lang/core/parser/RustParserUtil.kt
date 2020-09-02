@@ -389,6 +389,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
         put(RustParser::IncludeMacroArgument, false, "include")
         put(RustParser::ConcatMacroArgument, true, "concat")
         put(RustParser::EnvMacroArgument, true, "env")
+        put(RustParser::AsmMacroArgument, false, "asm")
     }
 
     fun isSpecialMacro(name: String): Boolean =

@@ -1374,7 +1374,7 @@ private Macro2MatchLikeBody ::= '{' (MacroCase ','?)* '}'
 
 fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
     MacroArgument | ExprMacroArgument | FormatMacroArgument | AssertMacroArgument |
-      VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument
+      VecMacroArgument | LogMacroArgument | IncludeMacroArgument | ConcatMacroArgument | EnvMacroArgument | AsmMacroArgument
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement"
@@ -1445,6 +1445,24 @@ FormatMacroArg ::= [ identifier '=' ] AnyExpr
 AssertMacroArgument ::= <<any_braces (AnyExpr [ ',' <<comma_separated_list FormatMacroArg>> ])>>
 //noinspection BnfUnusedRule
 VecMacroArgument ::= <<any_braces ArrayInitializer >>
+//noinspection BnfUnusedRule
+AsmMacroArgument ::= <<any_braces [ <<comma_separated_list AsmMacroArg>> ] >>
+//noinspection BnfUnusedRule
+AsmMacroArg ::= AsmMacroOperand | STRING_LITERAL | AsmMacroOptions
+//noinspection BnfUnusedRule
+AsmMacroOperand ::= [ identifier '=' ] ( CONST AnyExpr | 'sym' PathWithoutTypeArgs | AsmMacroRegOperand )
+//noinspection BnfUnusedRule
+AsmMacroRegOperand ::= AsmMacroRegDir '(' AsmMacroRegSpec ')' AsmMacroRegTarget [ FAT_ARROW AsmMacroRegTarget ]
+//noinspection BnfUnusedRule
+AsmMacroRegDir ::= <<macroIdentifier>>
+//noinspection BnfUnusedRule
+AsmMacroRegSpec ::= STRING_LITERAL | identifier
+//noinspection BnfUnusedRule
+AsmMacroRegTarget ::= UNDERSCORE | AnyExpr
+//noinspection BnfUnusedRule
+AsmMacroOptions ::= 'options' '(' <<comma_separated_list AsmMacroOption>> ')'
+//noinspection BnfUnusedRule
+AsmMacroOption ::= identifier
 //noinspection BnfUnusedRule
 LogMacroArgument ::=
   <<any_braces (('target' ':' Expr ','?)? (<<comma_separated_list FormatMacroArg>>)?)>>
