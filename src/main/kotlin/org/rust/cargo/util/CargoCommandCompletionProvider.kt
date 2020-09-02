@@ -159,7 +159,7 @@ class CargoCommandCompletionProvider(
             flag("tests")
 
             targetBench()
-            flag("bench")
+            flag("benches")
         }
 
         fun pkg() = opt("package") { ctx ->
