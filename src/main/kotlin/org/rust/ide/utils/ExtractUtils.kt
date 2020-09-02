@@ -55,7 +55,7 @@ data class GenericConstraints(
     }
 
     fun buildTypeParameters(): String {
-        val all = lifetimes + typeParameters + constParameters
+        val all: List<RsNameIdentifierOwner> = lifetimes + typeParameters + constParameters
         return if (all.isNotEmpty()) {
             all.joinToString(", ", prefix = "<", postfix = ">") { it.text }
         } else {
