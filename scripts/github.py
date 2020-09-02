@@ -10,7 +10,10 @@ def get_current_milestone(repo: str) -> Dict:
     response = urlopen(f"https://api.github.com/repos/{repo}/milestones")
     milestones = json.load(response)
     milestone_version = f"v{get_patch_version()}"
-    return next(milestone for milestone in milestones if milestone["title"] == milestone_version)
+    result = next((milestone for milestone in milestones if milestone["title"] == milestone_version), None)
+    if result is None:
+        raise AssertionError(f"Milestone `{milestone_version}` doesn't exist")
+    return result
 
 
 def set_milestone(token: str, repo: str, issue_number: int, milestone_number: int) -> None:
