@@ -501,6 +501,7 @@ private fun processUnqualifiedPathResolveVariants(
 
     val containingMod = path.containingMod
     val crateRoot = containingMod.crateRoot
+
     /** Path starts with `::` */
     val hasColonColon = path.hasColonColon
     if (!hasColonColon) {
@@ -831,7 +832,9 @@ fun processMacroCallVariantsInScope(context: PsiElement, processor: RsResolvePro
     val result = MacroResolver.processMacrosInLexicalOrderUpward(context, processor)
     if (result) return true
 
-    val prelude = context.contextOrSelf<RsElement>()?.findDependencyCrateRoot(STD) ?: return false
+    val element = context.contextOrSelf<RsElement>() ?: return false
+    val crateRoot = element.crateRoot as? RsFile ?: return false
+    val prelude = implicitStdlibCrate(crateRoot)?.crateRoot ?: return false
     return processAllScopeEntries(exportedMacrosAsScopeEntries(prelude), processor)
 }
 
@@ -1509,7 +1512,7 @@ inline fun processWithShadowingAndUpdateScope(
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val currScope = mutableMapOf<String, Set<Namespace>>()
-    val shadowingProcessor = lambda@ { e: ScopeEntry ->
+    val shadowingProcessor = lambda@{ e: ScopeEntry ->
         val prevNs = prevScope[e.name]
         if (prevNs != null && (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) == true) {
             return@lambda false

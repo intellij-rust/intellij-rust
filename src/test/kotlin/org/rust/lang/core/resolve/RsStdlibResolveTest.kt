@@ -561,6 +561,47 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                  //^ unresolved
     """)
 
+    fun `test resolve std macro with no_std attribute`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+
+        fn foo() {
+            println!("{}");
+            //^ unresolved
+        }
+    """)
+
+    fun `test resolve std macro with no_std attribute in a different file`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+        mod foo;
+    //- foo.rs
+        fn foo() {
+            println!("{}");
+            //^ unresolved
+        }
+    """)
+
+    fun `test resolve core macro with no_std attribute`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_std]
+
+        fn foo() {
+            panic!("{}");
+            //^ ...libcore/macros.rs|...libcore/macros/mod.rs
+        }
+    """)
+
+    fun `test resolve core macro with no_core attribute`() = stubOnlyResolve("""
+    //- main.rs
+        #![no_core]
+
+        fn foo() {
+            panic!("{}");
+            //^ unresolved
+        }
+    """)
+
     fun `test inherent impl have higher priority than derived`() = checkByCode("""
         #[derive(Clone)]
         struct S;
