@@ -314,14 +314,14 @@ sealed class RsDiagnostic(
     }
 
     class UnsafeError(
-        element: RsExpr,
+        element: PsiElement,
         private val message: String
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0133,
             message,
-            fixes = listOfNotNull(SurroundWithUnsafeFix(element as RsExpr), AddUnsafeFix.create(element))
+            fixes = listOfNotNull(SurroundWithUnsafeFix(element), AddUnsafeFix.create(element))
         )
     }
 
