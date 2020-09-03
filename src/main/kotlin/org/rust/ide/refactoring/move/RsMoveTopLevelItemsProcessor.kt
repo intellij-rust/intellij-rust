@@ -56,6 +56,8 @@ class RsMoveTopLevelItemsProcessor(
     }
 
     private fun moveItem(item: RsItemElement): ElementToMove {
+        commonProcessor.updateMovedItemVisibility(item)
+
         val space = item.nextSibling as? PsiWhiteSpace
 
         // have to call `copy` because of rare suspicious `PsiInvalidElementAccessException`

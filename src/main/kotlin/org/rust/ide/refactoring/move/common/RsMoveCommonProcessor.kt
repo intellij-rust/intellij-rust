@@ -20,6 +20,7 @@ import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.move.common.RsMoveUtil.LOG
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModStrict
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isAbsolute
@@ -327,6 +328,8 @@ class RsMoveCommonProcessor(
     }
 
     fun performRefactoring(usages: Array<out UsageInfo>, moveElements: () -> List<ElementToMove>) {
+        updateOutsideReferencesInVisRestrictions()
+
         elementsToMove = moveElements()
 
         val retargetReferencesProcessor = RsMoveRetargetReferencesProcessor(project, sourceMod, targetMod)
@@ -338,6 +341,12 @@ class RsMoveCommonProcessor(
             .map { it.referenceInfo }
         updateInsideReferenceInfosIfNeeded(insideReferences)
         retargetReferencesProcessor.retargetReferences(insideReferences)
+    }
+
+    private fun updateOutsideReferencesInVisRestrictions() {
+        for (visRestriction in movedElementsDeepDescendantsOfType<RsVisRestriction>(elementsToMove)) {
+            visRestriction.updateScopeIfNecessary(psiFactory, targetMod)
+        }
     }
 
     /**
@@ -388,6 +397,28 @@ class RsMoveCommonProcessor(
                 LOG.error("Can't restore target ${reference.target}" +
                     " for reference '${reference.pathOld.text}' after move")
             }
+        }
+    }
+
+    fun updateMovedItemVisibility(item: RsItemElement) {
+        when (item.visibility) {
+            is RsVisibility.Private -> {
+                if (conflictsDetector.itemsToMakePublic.contains(item)) {
+                    val itemName = item.name
+                    val containingFile = item.containingFile
+                    if (item !is RsNameIdentifierOwner) {
+                        LOG.error("Unexpected item to make public: $item")
+                        return
+                    }
+                    MakePublicFix(item, itemName, withinOneCrate = false)
+                        .invoke(project, null, containingFile)
+                }
+            }
+            is RsVisibility.Restricted -> run {
+                val visRestriction = item.vis?.visRestriction ?: return@run
+                visRestriction.updateScopeIfNecessary(psiFactory, targetMod)
+            }
+            RsVisibility.Public -> Unit  // already public, keep as is
         }
     }
 

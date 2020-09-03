@@ -335,6 +335,166 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2/*target*/ {}
     """)
 
+    fun `test add pub to moved items if necessary`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod foo1/*caret*/ { pub fn foo1_func() {} }
+            fn foo2/*caret*/() {}
+            struct Foo3/*caret*/ {}
+            struct Foo4/*caret*/ { pub field: i32 }
+            struct Foo5/*caret*/ { pub field: i32 }
+            struct Foo6/*caret*/(pub i32);
+            struct Foo7/*caret*/(pub i32);
+            fn bar() {
+                foo1::foo1_func();
+                foo2();
+                let _ = Foo3 {};
+                let _ = Foo4 { field: 0 };
+                let Foo5 { field: _ } = None.unwrap();
+                let _ = Foo6(0);
+                let Foo7(_) = None.unwrap();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod2::{foo1, Foo3, Foo4, Foo5, Foo6, Foo7};
+            use crate::mod2;
+
+            fn bar() {
+                foo1::foo1_func();
+                mod2::foo2();
+                let _ = Foo3 {};
+                let _ = Foo4 { field: 0 };
+                let Foo5 { field: _ } = None.unwrap();
+                let _ = Foo6(0);
+                let Foo7(_) = None.unwrap();
+            }
+        }
+        mod mod2 {
+            pub mod foo1 { pub fn foo1_func() {} }
+
+            pub fn foo2() {}
+
+            pub struct Foo3 {}
+
+            pub struct Foo4 { pub field: i32 }
+
+            pub struct Foo5 { pub field: i32 }
+
+            pub struct Foo6(pub i32);
+
+            pub struct Foo7(pub i32);
+        }
+    """)
+
+    fun `test add pub to moved items if necessary when items has doc comments`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            // comment 1
+            #[attr1]
+            fn foo1/*caret*/() {}
+            /// comment 2
+            #[attr2]
+            struct Foo2/*caret*/ {}
+            fn bar() {
+                foo1();
+                let _ = Foo2 {};
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod2;
+            use crate::mod2::Foo2;
+
+            fn bar() {
+                mod2::foo1();
+                let _ = Foo2 {};
+            }
+        }
+        mod mod2 {
+            // comment 1
+            #[attr1]
+            pub fn foo1() {}
+
+            /// comment 2
+            #[attr2]
+            pub struct Foo2 {}
+        }
+    """)
+
+    fun `test add pub to moved items if necessary when moving to other crate`() = doTest("""
+    //- main.rs
+        mod mod1 {
+            fn foo1/*caret*/() {}
+            pub(self) fn foo2/*caret*/() {}
+            pub(in mod1) fn foo3/*caret*/() {}
+            fn bar() {
+                foo1();
+                foo2();
+                foo3();
+            }
+        }
+    //- lib.rs
+        /*target*/
+    """, """
+    //- main.rs
+        mod mod1 {
+            fn bar() {
+                test_package::foo1();
+                test_package::foo2();
+                test_package::foo3();
+            }
+        }
+    //- lib.rs
+        pub fn foo1() {}
+
+        pub fn foo2() {}
+
+        pub fn foo3() {}
+    """)
+
+    fun `test change scope for pub(in) visibility`() = doTest("""
+    //- lib.rs
+        mod inner1 {
+            mod inner2 {
+                mod inner3 {
+                    mod mod1 {
+                        pub(crate) fn foo1/*caret*/() {}
+                        pub(self) fn foo2/*caret*/() {}
+                        pub(super) fn foo3/*caret*/() {}
+                        pub(in super::super) fn foo4/*caret*/() {}
+                        pub(in crate::inner1) fn foo5/*caret*/() {}
+                    }
+                }
+                mod mod2/*target*/ {}
+            }
+        }
+    """, """
+    //- lib.rs
+        mod inner1 {
+            mod inner2 {
+                mod inner3 {
+                    mod mod1 {}
+                }
+                mod mod2 {
+                    pub(crate) fn foo1() {}
+
+                    pub(in crate::inner1::inner2) fn foo2() {}
+
+                    pub(in crate::inner1::inner2) fn foo3() {}
+
+                    pub(in crate::inner1::inner2) fn foo4() {}
+
+                    pub(in crate::inner1) fn foo5() {}
+                }
+            }
+        }
+    """)
+
     fun `test absolute outside reference which should be changed because of reexports`() = doTest("""
     //- lib.rs
         mod inner1 {

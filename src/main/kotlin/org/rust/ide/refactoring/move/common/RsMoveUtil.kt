@@ -211,6 +211,25 @@ fun <T : RsElement> movedElementsDeepDescendantsOfType(
         }
 }
 
+/**
+ * Updates `pub(in path)` visibility modifier.
+ * We replace `path` with common parent module of `newParent` and target of old `path`.
+ */
+fun RsVisRestriction.updateScopeIfNecessary(psiFactory: RsPsiFactory, newParent: RsMod) {
+    if (crateRoot == newParent.crateRoot) {
+        // TODO: pass `oldScope` as parameter?
+        val oldScope = path.reference?.resolve() as? RsMod ?: return
+        val newScope = commonParentMod(oldScope, newParent) ?: return
+        val newScopePath = newScope.crateRelativePath ?: return
+        val newVisRestriction = psiFactory.createVisRestriction("crate$newScopePath")
+        replace(newVisRestriction)
+    } else {
+        // RsVisibility has text `pub(in path)`
+        // after removing RsVisRestriction it will be changed to `pub`
+        delete()
+    }
+}
+
 fun addImport(psiFactory: RsPsiFactory, context: RsElement, usePath: String) {
     if (!usePath.contains("::")) return
     val blockScope = context.ancestors.find { it is RsBlock && it.childOfType<RsUseItem>() != null } as RsBlock?

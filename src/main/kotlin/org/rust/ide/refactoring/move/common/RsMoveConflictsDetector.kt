@@ -26,12 +26,21 @@ class RsMoveConflictsDetector(
     private val targetMod: RsMod
 ) {
 
+    val itemsToMakePublic: MutableSet<RsElement> = hashSetOf()
+
     fun detectInsideReferencesVisibilityProblems(insideReferences: List<RsMoveReferenceInfo>) {
         for (reference in insideReferences) {
             val pathOld = reference.pathOld
             val target = reference.target
             if (reference.pathNewAccessible == null) {
                 addVisibilityConflict(conflicts, pathOld, target)
+            }
+
+            val usageMod = pathOld.containingMod
+            val isSelfReference = pathOld.isInsideMovedElements(elementsToMove)
+            if (!isSelfReference && !usageMod.superMods.contains(targetMod)) {
+                val itemToMakePublic = (target as? RsFile)?.declaration ?: target
+                itemsToMakePublic.add(itemToMakePublic)
             }
         }
 

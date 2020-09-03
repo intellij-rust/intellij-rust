@@ -22,6 +22,7 @@ import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMovePathHelper
 import org.rust.ide.refactoring.move.common.RsMoveReferenceInfo
 import org.rust.ide.refactoring.move.common.RsMoveRetargetReferencesProcessor
+import org.rust.ide.refactoring.move.common.updateScopeIfNecessary
 import org.rust.ide.utils.import.lastElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -258,20 +259,6 @@ class RsMoveFilesOrDirectoriesProcessor(
 }
 
 fun RsElement.isInsideModSubtree(mod: RsMod): Boolean = containingMod.superMods.contains(mod)
-
-// updates `pub(in path)` visibility modifier
-// `path` must be a parent module of the item whose visibility is being declared,
-// so we replace `path` with common parent module of `newParent` and old `path`
-private fun RsVisRestriction.updateScopeIfNecessary(psiFactory: RsPsiFactory, newParent: RsMod) {
-    val oldScope = path.reference?.resolve() as? RsMod ?: return
-    val newScope = commonParentMod(oldScope, newParent) ?: return
-    if (newScope == oldScope) return
-    val newScopePath = newScope.crateRelativePath ?: return
-
-    check(crateRoot == newParent.crateRoot)
-    val newVisRestriction = psiFactory.createVisRestriction("crate$newScopePath")
-    replace(newVisRestriction)
-}
 
 private fun RsMod.insertModDecl(psiFactory: RsPsiFactory, modDecl: PsiElement) {
     val anchor = childrenOfType<RsModDeclItem>().lastElement ?: childrenOfType<RsUseItem>().lastElement
