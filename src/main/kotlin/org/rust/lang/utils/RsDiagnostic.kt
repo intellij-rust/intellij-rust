@@ -1156,7 +1156,7 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0023,
                 "$itemType pattern does not correspond to its declaration: expected $expectedAmount ${pluralize("field", expectedAmount)}, found $actualAmount",
-                fixes = listOf(AddStructFieldsPatFix(element))
+                fixes = listOf(AddStructFieldsPatFix(element), AddPatRestFix(element))
             )
         }
     }
@@ -1173,7 +1173,7 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0027,
                 "$itemType pattern does not mention ${pluralize("field", missingFields.size)} $missingFieldNames",
-                fixes = listOf(AddStructFieldsPatFix(element))
+                fixes = listOf(AddStructFieldsPatFix(element), AddPatRestFix(element))
             )
         }
     }
