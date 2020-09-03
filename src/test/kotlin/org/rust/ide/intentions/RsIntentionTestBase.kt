@@ -11,8 +11,24 @@ import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import java.nio.file.Path
+import java.nio.file.Paths
 
 abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
+
+    fun `test intention has documentation`() {
+        if (intention !is RsElementBaseIntentionAction<*>) return
+
+        val directory = "intentionDescriptions/${intention.javaClass.simpleName}"
+        val description = checkFileExists(intention, Paths.get(directory, "description.html"))
+        checkHtmlStyle(description)
+
+        checkFileExists(intention, Paths.get(directory, "before.rs.template"))
+        checkFileExists(intention, Paths.get(directory, "after.rs.template"))
+    }
+
+    private fun checkFileExists(intention: IntentionAction, path: Path): String = getResourceAsString(path.toString())
+        ?: error("No ${path.fileName} found for ${intention.javaClass} ($path)")
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
