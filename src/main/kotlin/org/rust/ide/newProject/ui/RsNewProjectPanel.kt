@@ -5,8 +5,8 @@
 
 package org.rust.ide.newProject.ui
 
+import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
-import com.intellij.execution.process.ProcessListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.options.ConfigurationException
@@ -105,7 +105,7 @@ class RsNewProjectPanel(
         .setRemoveActionUpdater { selectedTemplate !in defaultTemplates }
 
     private var needInstallCargoGenerate = false
-    private val downloadCargoGenerateLink = Link("Install cargo-generate using Cargo", action = {
+    private val downloadCargoGenerateLink = Link("Install cargo-generate using Cargo") {
         val cargo = cargo ?: return@Link
 
         object : Task.Modal(null, "Installing cargo-generate", true) {
@@ -127,7 +127,7 @@ class RsNewProjectPanel(
 
             override fun run(indicator: ProgressIndicator) {
                 indicator.isIndeterminate = true
-                cargo.installCargoGenerate(this@RsNewProjectPanel, listener = object : ProcessListener {
+                cargo.installCargoGenerate(this@RsNewProjectPanel, listener = object : ProcessAdapter() {
                     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
                         indicator.text = "Installing using Cargo..."
                         indicator.text2 = event.text.trim()
@@ -136,13 +136,10 @@ class RsNewProjectPanel(
                     override fun processTerminated(event: ProcessEvent) {
                         exitCode = event.exitCode
                     }
-
-                    override fun startNotified(event: ProcessEvent) {}
-
                 })
             }
         }.queue()
-    }).apply { isVisible = false }
+    }.apply { isVisible = false }
 
     private val updateDebouncer = UiDebouncer(this)
 

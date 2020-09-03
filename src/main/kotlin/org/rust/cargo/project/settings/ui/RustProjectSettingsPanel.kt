@@ -5,10 +5,13 @@
 
 package org.rust.cargo.project.settings.ui
 
+import com.intellij.execution.process.ProcessAdapter
+import com.intellij.execution.process.ProcessEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
@@ -46,20 +49,25 @@ class RustProjectSettingsPanel(
 
     private var fetchedSysroot: String? = null
 
-    private val downloadStdlibLink = Link("Download via rustup", action = {
+    private val downloadStdlibLink = Link("Download via rustup") {
         val rustup = RsToolchain(Paths.get(pathToToolchainField.text)).rustup
         if (rustup != null) {
-            object : Task.Backgroundable(null, "Downloading Rust standard library") {
-                override fun shouldStartInBackground(): Boolean = false
+            object : Task.Modal(null, "Downloading Rust standard library", true) {
                 override fun onSuccess() = update()
 
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
-                    rustup.downloadStdlib()
+                    indicator.text = "Installing using Rustup..."
+
+                    rustup.downloadStdlib(this@RustProjectSettingsPanel, listener = object : ProcessAdapter() {
+                        override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
+                            indicator.text2 = event.text.trim()
+                        }
+                    })
                 }
             }.queue()
         }
-    }).apply { isVisible = false }
+    }.apply { isVisible = false }
 
     private val toolchainVersion = JLabel()
 

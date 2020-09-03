@@ -6,6 +6,7 @@
 package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.ExecutionException
+import com.intellij.execution.process.ProcessListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
@@ -48,13 +49,20 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
             workingDirectory = projectDirectory
         ).execute()?.stdoutLines?.map { Component.from(it) }.orEmpty()
 
-    fun downloadStdlib(): DownloadResult<VirtualFile> {
+    fun downloadStdlib(owner: Disposable? = null, listener: ProcessListener? = null): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
         if (needInstallComponent("rust-src")) {
-            val downloadProcessOutput = createBaseCommandLine(
+            val commandLine = createBaseCommandLine(
                 "component", "add", "rust-src",
                 workingDirectory = projectDirectory
-            ).execute(null)
+            )
+
+            val downloadProcessOutput = if (owner == null) {
+                commandLine.execute(null)
+            } else {
+                commandLine.execute(owner, listener = listener)
+            }
+
             if (downloadProcessOutput?.isSuccess != true) {
                 val message = "rustup failed: `${downloadProcessOutput?.stderr ?: ""}`"
                 LOG.warn(message)
