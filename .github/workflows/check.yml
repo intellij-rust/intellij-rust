@@ -63,6 +63,17 @@ jobs:
                   components: rust-src, rustfmt, clippy
                   default: true
 
+            - name: Cache evcxr
+              uses: actions/cache@v2
+              with:
+                  path: |
+                      ~/.cargo/bin/evcxr
+                      ~/.cargo/.crates.toml
+                      ~/.cargo/.crates2.json
+                  key: ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-${{ github.run_id }} # https://github.com/actions/cache/issues/342#issuecomment-673371329
+                  restore-keys: |
+                      ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-
+
             - name: Install evcxr
               if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
               uses: actions-rs/cargo@v1
