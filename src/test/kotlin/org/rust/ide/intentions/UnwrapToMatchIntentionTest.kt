@@ -21,7 +21,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let a: Option<i32> = Some(42);
             let a = match a {
                 Some(x) => x,
-                None => unimplemented!(),
+                None => todo!(),
             };
         }
     """)
@@ -36,7 +36,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let a: Result<i32, &str> = Ok(42);
             let a = match a {
                 Ok(x) => x,
-                Err(_) => unimplemented!(),
+                Err(_) => todo!(),
             };
         }
     """)
@@ -53,7 +53,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let a : Option<&str> = None;
             let a = match a {
                 Some(x) => x,
-                None => unimplemented!(),
+                None => todo!(),
             };
         }
     """)
@@ -76,7 +76,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let a = Test{};
             match a.b() {
                 Some(x) => x,
-                None => unimplemented!(),
+                None => todo!(),
             }.d().e().f();
         }
 
@@ -99,7 +99,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let b = Some(50);
             f(a, match b {
                 Some(x) => x,
-                None => unimplemented!(),
+                None => todo!(),
             }, c)
         }
     """)
@@ -114,7 +114,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let x: Result<i32, &str> = Err("test");
             let x = match x {
                 Ok(x) => x,
-                Err(_) => unimplemented!(),
+                Err(_) => todo!(),
             } + 42;
         }
     """)
@@ -129,7 +129,7 @@ class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::cl
             let x = Some(Some(Some(42)));
             let x = match x.unwrap() {
                 Some(x) => x,
-                None => unimplemented!(),
+                None => todo!(),
             }.unwrap();
         }
     """)

@@ -1,5 +1,5 @@
 fn foo(p0: i32, p1: i32) -> u32 {
-    unimplemented!()
+    todo!()
 }
 
 fn bar() {
