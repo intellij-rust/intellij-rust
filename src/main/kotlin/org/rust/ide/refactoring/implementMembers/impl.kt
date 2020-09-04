@@ -169,7 +169,7 @@ private fun RsPsiFactory.createTraitMembers(
             is RsTypeAlias ->
                 "    type ${it.escapedName} = ();"
             is RsFunction ->
-                "    ${it.getSignatureText(subst, trait, impl) ?: ""}{\n        unimplemented!()\n    }"
+                "    ${it.getSignatureText(subst, trait, impl) ?: ""}{\n        todo!()\n    }"
             else ->
                 error("Unknown trait member")
         }

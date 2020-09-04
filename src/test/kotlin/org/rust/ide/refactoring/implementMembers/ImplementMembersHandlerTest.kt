@@ -37,7 +37,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             struct S;
             impl T for S {
                 fn f1() {
-                    unimplemented!()
+                    todo!()
                 }
             }
         """) {
@@ -84,11 +84,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             fn f4() {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -116,7 +116,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f() -> (R, R) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -146,7 +146,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f() -> (R, U) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -180,7 +180,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<i32> for S {
             fn f() -> U<i32> {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -204,7 +204,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f() -> (R, U) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -224,7 +224,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn call(handler: extern fn(bool)) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -244,7 +244,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<fn(), extern fn(), fn(bool)> for S {
             fn call(z: fn(bool), x: fn(), y: extern fn()) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -264,7 +264,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn call(handler: extern fn()) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -284,7 +284,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<extern fn(bool)> for S {
             fn call(handler: extern fn(bool)) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -313,11 +313,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             unsafe fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             unsafe fn f4() {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -346,11 +346,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             async fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             async fn f4() {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -382,23 +382,23 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1(a: i8, b: i16, c: i32, d: i64) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             fn f2(a: (i32, u32)) {
-                unimplemented!()
+                todo!()
             }
 
             fn f3(_: u32, _: u64) {
-                unimplemented!()
+                todo!()
             }
 
             fn f4() -> bool {
-                unimplemented!()
+                todo!()
             }
 
             fn f5(a: f64, b: bool) -> (i8, u8) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -489,7 +489,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             type T1 = ();
@@ -527,19 +527,19 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<u8, u16> for S {
             fn f1(_: u8) -> u8 {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             const C1: u8 = 0;
 
             fn f2(_: u16) -> u16 {
-                unimplemented!()
+                todo!()
             }
 
             const C2: u16 = 0;
 
             fn f3(_: u32) -> u32 {
-                unimplemented!()
+                todo!()
             }
 
             const C3: u32 = 0;
@@ -605,43 +605,43 @@ class ImplementMembersHandlerTest : RsTestBase() {
     }
     impl<'b> T<'b> for S<'b> {
         fn f1(&'b self) -> &'b str {
-            <selection>unimplemented!()</selection>
+            <selection>todo!()</selection>
         }
 
         const C1: &'b str = "";
 
         fn f2(_: &'b S<'b>) -> &'b S<'b> {
-            unimplemented!()
+            todo!()
         }
 
         const C2: &'b S<'b> = &S { x: "" };
 
         fn f3(_: &'b A<'b>) -> &'b A<'b> {
-            unimplemented!()
+            todo!()
         }
 
         const C3: &'b A<'b> = &S { x: "" };
 
         fn f4(_: &'b B) -> &'b B {
-            unimplemented!()
+            todo!()
         }
 
         const C4: &'b B = &S { x: "" };
 
         fn f5(_: &'b C) -> &'b C {
-            unimplemented!()
+            todo!()
         }
 
         const C5: &'b C = &S { x: "" };
 
         fn f6(_: &'b D<'b, D<'b, D<'b, S<'b>>>>) -> &'b D<'b, D<'b, D<'b, S<'b>>>> {
-            unimplemented!()
+            todo!()
         }
 
         const C6: &'b D<'b, D<'b, D<'b, S<'b>>>> = &D { x: &() };
 
         fn f7(&self) -> &str {
-            unimplemented!()
+            todo!()
         }
     }
     """)
@@ -667,7 +667,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn r#type() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             type r#const = ();
@@ -711,25 +711,25 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         impl T<1> for S<1> {
             fn f1(_: S<1>) -> S<1> {
-                unimplemented!()
+                todo!()
             }
 
             const C1: S<1> = S;
 
             fn f2(_: S<{}>) -> S<{}> {
-                unimplemented!()
+                todo!()
             }
 
             const C2: S<{}> = S;
 
             fn f3(_: [i32; 1]) -> [i32; 1] {
-                unimplemented!()
+                todo!()
             }
 
             const C3: [i32; 1] = [];
 
             fn f4(_: [i32; {}]) -> [i32; {}] {
-                unimplemented!()
+                todo!()
             }
 
             const C4: [i32; {}] = [];
@@ -760,13 +760,13 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
         impl <const K: usize> T<{ K }> for S<{ K }> {
             fn f1(_: S<{ K }>) -> S<{ K }> {
-                unimplemented!()
+                todo!()
             }
 
             const C1: S<{ K }> = S;
 
             fn f2(_: [i32; K]) -> [i32; K] {
-                unimplemented!()
+                todo!()
             }
 
             const C2: [i32; K] = [];
@@ -798,7 +798,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn f1() { }
 
             fn f2() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -825,7 +825,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             fn f2() { }
@@ -862,7 +862,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             type T1 = u32;
@@ -907,7 +907,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             type T1 = u32;
 
             fn f1() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             const C1: i32 = 0;
@@ -941,7 +941,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {
             fn x() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             type y = ();
@@ -974,7 +974,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             type Item = <selection>()</selection>;
 
             fn foo() -> Self::Item {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1009,7 +1009,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
             foo!(foo, {});
 
             fn bar() {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
 
             fn baz() {}
@@ -1035,7 +1035,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(&self, bar: &mut Bar) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -1060,7 +1060,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: Box<Self>, bar: &mut Bar) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -1086,7 +1086,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Bar for Foo {
             fn bar(&self) -> &dyn A + B {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1111,7 +1111,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(&self) -> Box<dyn Fn(i32, i32) -> i32> {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1135,7 +1135,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: *const Self, bar: &mut Bar) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -1162,7 +1162,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl Baz for Foo {
             fn baz(self: Pin<&mut Self>, bar: &mut Bar) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
@@ -1189,7 +1189,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
 
         impl<'a> Baz<'a> for Foo {
             fn baz(self: Pin<&'a mut Self>, bar: &mut Bar) {
-                <selection>unimplemented!()</selection>
+                <selection>todo!()</selection>
             }
         }
     """)
