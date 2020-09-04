@@ -49,6 +49,14 @@ jobs:
                       path: cargo
                       repository: rust-lang/cargo
                       exclude_paths: ""
+                    - name: tokio
+                      path: tokio
+                      repository: tokio-rs/tokio
+                      exclude_paths: ""
+                    - name: amethyst
+                      path: amethyst
+                      repository: amethyst/amethyst
+                      exclude_paths: ""
         env:
             PROJECT_PATH: ${{ matrix.project.path }}
             PROJECT_URL: https://github.com/${{ matrix.project.url }}
