@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class JoinLiteralFieldListIntentionTest : RsIntentionTestBase(JoinLiteralFieldListIntention()) {
+class JoinLiteralFieldListIntentionTest : RsIntentionTestBase(JoinLiteralFieldListIntention::class) {
     fun `test one parameter`() = doAvailableTest("""
         struct S { x: i32 }
         fn foo() {

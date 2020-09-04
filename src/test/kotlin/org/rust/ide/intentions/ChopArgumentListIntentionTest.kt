@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ChopArgumentListIntentionTest : RsIntentionTestBase(ChopArgumentListIntention()) {
+class ChopArgumentListIntentionTest : RsIntentionTestBase(ChopArgumentListIntention::class) {
     fun `test one parameter`() = doUnavailableTest("""
         fn foo(p1: i32) {}
         fn main() {

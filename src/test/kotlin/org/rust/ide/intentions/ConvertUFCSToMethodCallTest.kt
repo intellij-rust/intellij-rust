@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ConvertUFCSToMethodCallTest : RsIntentionTestBase(ConvertUFCSToMethodCallIntention()) {
+class ConvertUFCSToMethodCallTest : RsIntentionTestBase(ConvertUFCSToMethodCallIntention::class) {
     fun `test not available for methods`() = doUnavailableTest("""
         struct S;
         impl S {

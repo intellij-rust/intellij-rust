@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention()) {
+class IfLetToMatchIntentionTest : RsIntentionTestBase(IfLetToMatchIntention::class) {
     fun `test option with some`() = doAvailableTest("""
         fn main() {
             let x = Some(42);

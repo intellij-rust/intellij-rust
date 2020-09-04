@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ReplaceLineCommentWithBlockCommentIntentionTest : RsIntentionTestBase(ReplaceLineCommentWithBlockCommentIntention()) {
+class ReplaceLineCommentWithBlockCommentIntentionTest : RsIntentionTestBase(ReplaceLineCommentWithBlockCommentIntention::class) {
 
     fun `test convert single line comment to block`() = doAvailableTest("""
         // /*caret*/Hello, World!

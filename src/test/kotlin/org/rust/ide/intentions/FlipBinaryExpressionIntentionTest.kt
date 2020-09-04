@@ -7,7 +7,7 @@ package org.rust.ide.intentions
 
 import org.rust.lang.core.psi.RsElementTypes.*
 
-class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressionIntention()) {
+class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressionIntention::class) {
 
     fun `test all available operators`() {
         val operators = FlipBinaryExpressionIntention.COMMUNICATIVE_OPERATORS +

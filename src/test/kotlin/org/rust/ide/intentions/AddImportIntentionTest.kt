@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddImportIntentionTest : RsIntentionTestBase(AddImportIntention()) {
+class AddImportIntentionTest : RsIntentionTestBase(AddImportIntention::class) {
     fun `test not available in use statements`() = doUnavailableTest("""
         mod foo {
             pub struct Foo;

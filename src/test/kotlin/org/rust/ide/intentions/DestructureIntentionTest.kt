@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention()) {
+class DestructureIntentionTest : RsIntentionTestBase(DestructureIntention::class) {
 
     fun `test destructure variable`() = doAvailableTest("""
         struct S<T, U> { x: T, y: U }

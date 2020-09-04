@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class SetMutableIntentionTest : RsIntentionTestBase(SetMutableIntention()) {
+class SetMutableIntentionTest : RsIntentionTestBase(SetMutableIntention::class) {
     fun `test set mutable variable`() = doAvailableTest(
         """ fn main() { let var: &i3/*caret*/2 = 52; } """,
         """ fn main() { let var: &mut i3/*caret*/2 = 52; } """

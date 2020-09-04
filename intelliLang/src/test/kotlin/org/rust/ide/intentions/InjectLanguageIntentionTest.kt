@@ -16,7 +16,7 @@ import org.intellij.plugins.intelliLang.inject.InjectLanguageAction
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-class InjectLanguageIntentionTest : RsIntentionTestBase(InjectLanguageAction()) {
+class InjectLanguageIntentionTest : RsIntentionTestBase(InjectLanguageAction::class) {
     fun `test available inside string`() = checkAvailable("""
         const C: &str = "/*caret*/";
     """)

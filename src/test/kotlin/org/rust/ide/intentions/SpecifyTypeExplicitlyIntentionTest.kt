@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplicitlyIntention()) {
+class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplicitlyIntention::class) {
     fun `test inferred type`() = doAvailableTest(
         """ fn main() { let var/*caret*/ = 42; } """,
         """ fn main() { let var: i32 = 42; } """

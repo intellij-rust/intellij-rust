@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntention()) {
+class ChopVariantListIntentionTest : RsIntentionTestBase(ChopVariantListIntention::class) {
     fun `test one parameter`() = doUnavailableTest("""
         enum E { /*caret*/A }
     """)

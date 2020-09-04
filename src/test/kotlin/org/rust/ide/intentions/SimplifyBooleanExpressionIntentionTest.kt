@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 /**
  * @author Moklev Vyacheslav
  */
-class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBooleanExpressionIntention()) {
+class SimplifyBooleanExpressionIntentionTest : RsIntentionTestBase(SimplifyBooleanExpressionIntention::class) {
     fun `test or`() = doAvailableTest("""
         fn main() {
             let a = true /*caret*/|| false;

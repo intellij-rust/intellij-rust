@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention()) {
+class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention::class) {
     fun `test unavailable`() = doUnavailableTest(
         """
         fn bar/*caret*/(x: i32) -> i32 {}

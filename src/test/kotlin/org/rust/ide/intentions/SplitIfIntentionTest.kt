@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention()) {
+class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
 
     fun test1() = doUnavailableTest("""
         fn main() {

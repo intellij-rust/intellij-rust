@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class SubstituteAssociatedTypeIntentionTest : RsIntentionTestBase(SubstituteAssociatedTypeIntention()) {
+class SubstituteAssociatedTypeIntentionTest : RsIntentionTestBase(SubstituteAssociatedTypeIntention::class) {
     fun `test unavailable on type alias`() = doUnavailableTest("""
         type Alias = u32;
         fn foo() -> Alias/*caret*/ {

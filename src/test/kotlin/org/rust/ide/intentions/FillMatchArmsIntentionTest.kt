@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention()) {
+class FillMatchArmsIntentionTest : RsIntentionTestBase(FillMatchArmsIntention::class) {
 
     fun `test simple enum variants`() = doAvailableTest("""
         enum FooBar {

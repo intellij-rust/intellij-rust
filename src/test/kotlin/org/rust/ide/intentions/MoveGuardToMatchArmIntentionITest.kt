@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class MoveGuardToMatchArmIntentionTest : RsIntentionTestBase(MoveGuardToMatchArmIntention()) {
+class MoveGuardToMatchArmIntentionTest : RsIntentionTestBase(MoveGuardToMatchArmIntention::class) {
     fun `test unavailable without match arm`() = doUnavailableTest("""
         fn main() {
             match 1 {

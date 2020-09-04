@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ToggleIgnoreTestIntentionTest : RsIntentionTestBase(ToggleIgnoreTestIntention()) {
+class ToggleIgnoreTestIntentionTest : RsIntentionTestBase(ToggleIgnoreTestIntention::class) {
     fun `test add ignore`() = doAvailableTest("""
         #[test]
         fn foo/*caret*/() {}
