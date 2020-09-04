@@ -135,4 +135,15 @@ fn foo() {
     env!("FOO", "error message", );
     env!(Foo[]); // custom env macro
     // ------------------
+
+    // - asm macros
+    asm!("nop");
+    asm!("nop", "nop");
+    asm!("nop", options(pure, nomem, nostack));
+    asm!("nop", const 5, a = const 5);
+    asm!("nop", sym foo::bar, a = sym foo::bar, const 6);
+    asm!("nop", a = const A + 1);
+    asm!("nop", in(reg) x => y, out("eax") _);
+    asm!("nop", a = const 5, b = sym foo::bar, c = in(reg) _, d = out(reg) a => _);
+    // ------------------
 }
