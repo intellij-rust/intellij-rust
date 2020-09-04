@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class JoinVariantListIntentionTest : RsIntentionTestBase(JoinVariantListIntention()) {
+class JoinVariantListIntentionTest : RsIntentionTestBase(JoinVariantListIntention::class) {
     fun `test one parameter`() = doAvailableTest("""
         enum E {
             /*caret*/A

@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention()) {
+class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
     fun `test if let unavailable`() = doUnavailableTest("""
         fn foo(a: Option<i32>) {
             if/*caret*/ let Some(x) = a {} else {}

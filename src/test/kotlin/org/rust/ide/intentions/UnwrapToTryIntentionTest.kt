@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention()) {
+class UnwrapToTryIntentionTest : RsIntentionTestBase(UnwrapToTryIntention::class) {
     fun `test available 1`() = doAvailableTest("""
         fn main() {
             let a = a.unwrap/*caret*/();

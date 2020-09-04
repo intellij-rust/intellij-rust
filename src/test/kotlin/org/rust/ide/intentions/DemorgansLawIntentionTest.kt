@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention()) {
+class DemorgansLawIntentionTest : RsIntentionTestBase(DemorgansLawIntention::class) {
 
     fun `test or`() = doAvailableTest("""
         fn main() {

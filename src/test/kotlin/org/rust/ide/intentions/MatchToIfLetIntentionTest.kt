@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention()) {
+class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::class) {
     fun `test unavailable all void arms`() = doUnavailableTest("""
         enum MyOption {
             Nothing,

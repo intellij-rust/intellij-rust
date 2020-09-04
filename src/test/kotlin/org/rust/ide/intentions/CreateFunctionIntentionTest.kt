@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention()) {
+class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
     fun `test unavailable on resolved function`() = doUnavailableTest("""
         fn foo() {}
 

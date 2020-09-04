@@ -9,7 +9,7 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention()) {
+class UnwrapToMatchIntentionTest: RsIntentionTestBase(UnwrapToMatchIntention::class) {
 
     fun `test option base case`() = doAvailableTest("""
         fn main() {

@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddStructFieldsLiteralRecursiveTest : RsIntentionTestBase(AddStructFieldsLiteralRecursiveIntention()) {
+class AddStructFieldsLiteralRecursiveTest : RsIntentionTestBase(AddStructFieldsLiteralRecursiveIntention::class) {
     fun `test struct literal with inner struct`() = doAvailableTest(
         """
             struct Foo { bar: i32, baz: i32, quux: Bar }

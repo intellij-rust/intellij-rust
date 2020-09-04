@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatementsIntention()) {
+class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatementsIntention::class) {
     fun `test use statement with alias`() = doAvailableTest("""
         use std::collections::{
             /*caret*/HashMap as HM,
@@ -260,10 +260,7 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
         use quux::eggs;
     """)
 
-    fun `test cannot nest if non common base path exist`() = doAvailableTest("""
-        use a1::/*caret*/b::c;
-        use a2::b::c;
-    """, """
+    fun `test cannot nest if non common base path exist`() = doUnavailableTest("""
         use a1::/*caret*/b::c;
         use a2::b::c;
     """)
@@ -279,10 +276,7 @@ class FlattenUseStatementsIntentionTest : RsIntentionTestBase(FlattenUseStatemen
         use ::a1::b2::c;
     """)
 
-    fun `test starts with colon colon with no colon colon`() = doAvailableTest("""
-        use ::a1/*caret*/::b::c;
-        use a1::b::c;
-    """, """
+    fun `test starts with colon colon with no colon colon`() = doUnavailableTest("""
         use ::a1/*caret*/::b::c;
         use a1::b::c;
     """)

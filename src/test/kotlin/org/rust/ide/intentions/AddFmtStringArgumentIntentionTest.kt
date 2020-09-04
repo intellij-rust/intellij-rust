@@ -8,7 +8,7 @@ package org.rust.ide.intentions
 import org.intellij.lang.annotations.Language
 import org.rust.ide.intentions.addFmtStringArgument.AddFmtStringArgumentIntention
 
-class AddFmtStringArgumentIntentionTest : RsIntentionTestBase(AddFmtStringArgumentIntention()) {
+class AddFmtStringArgumentIntentionTest : RsIntentionTestBase(AddFmtStringArgumentIntention::class) {
     fun `test no args`() = doTest("""
         fn main() {
             println!("x = /*caret*/");

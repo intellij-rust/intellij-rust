@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class JoinArgumentListIntentionTest : RsIntentionTestBase(JoinArgumentListIntention()) {
+class JoinArgumentListIntentionTest : RsIntentionTestBase(JoinArgumentListIntention::class) {
     fun `test one parameter`() = doAvailableTest("""
         fn foo(p1: i32) {}
         fn main() {

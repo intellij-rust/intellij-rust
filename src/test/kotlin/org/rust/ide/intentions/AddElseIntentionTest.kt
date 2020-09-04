@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention()) {
+class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
 
     fun test1() = doUnavailableTest("""
         fn main() {

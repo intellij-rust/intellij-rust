@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ChopLiteralFieldListIntentionTest : RsIntentionTestBase(ChopLiteralFieldListIntention()) {
+class ChopLiteralFieldListIntentionTest : RsIntentionTestBase(ChopLiteralFieldListIntention::class) {
     fun `test one parameter`() = doUnavailableTest("""
         struct S { x: i32 }
         fn foo {

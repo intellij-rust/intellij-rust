@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ConvertMethodCallToUFCSTest : RsIntentionTestBase(ConvertMethodCallToUFCSIntention()) {
+class ConvertMethodCallToUFCSTest : RsIntentionTestBase(ConvertMethodCallToUFCSIntention::class) {
     fun `test unavailable on function call`() = doUnavailableTest("""
         fn foo() {}
         fn bar() {

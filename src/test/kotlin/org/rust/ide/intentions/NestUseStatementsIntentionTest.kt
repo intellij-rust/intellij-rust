@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsIntention()) {
+class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsIntention::class) {
     fun `test simple use statements`() = doAvailableTest("""
         use /*caret*/std::error;
         use std::io;
@@ -225,10 +225,7 @@ class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsInte
         use quux::eggs;
     """)
 
-    fun `test cannot nest if non common base path exist`() = doAvailableTest("""
-        use a1::/*caret*/b::c;
-        use a2::b::c;
-    """, """
+    fun `test cannot nest if non common base path exist`() = doUnavailableTest("""
         use a1::/*caret*/b::c;
         use a2::b::c;
     """)
@@ -244,10 +241,7 @@ class NestUseStatementsIntentionTest : RsIntentionTestBase(NestUseStatementsInte
 
     """)
 
-    fun `test starts with colon colon with no colon colon`() = doAvailableTest("""
-        use ::a1/*caret*/::b::c;
-        use a1::b::c;
-    """, """
+    fun `test starts with colon colon with no colon colon`() = doUnavailableTest("""
         use ::a1/*caret*/::b::c;
         use a1::b::c;
     """)

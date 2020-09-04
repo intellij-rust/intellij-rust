@@ -6,7 +6,7 @@
 package org.rust.ide.intentions
 
 
-class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention()) {
+class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention::class) {
 
     fun `test remove dbg! from expr`() = doAvailableTest("""
         fn test() {

@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class JoinFieldListIntentionTest : RsIntentionTestBase(JoinFieldListIntention()) {
+class JoinFieldListIntentionTest : RsIntentionTestBase(JoinFieldListIntention::class) {
     fun `test one parameter`() = doAvailableTest("""
         struct S {
             /*caret*/x: i32

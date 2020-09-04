@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class UnwrapSingleExprIntentionTest : RsIntentionTestBase(UnwrapSingleExprIntention()) {
+class UnwrapSingleExprIntentionTest : RsIntentionTestBase(UnwrapSingleExprIntention::class) {
     fun `test available lambda unwrap braces single expression`() = doAvailableTest("""
         fn main() {
             {

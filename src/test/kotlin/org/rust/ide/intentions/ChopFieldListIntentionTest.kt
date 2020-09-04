@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class ChopFieldListIntentionTest : RsIntentionTestBase(ChopFieldListIntention()) {
+class ChopFieldListIntentionTest : RsIntentionTestBase(ChopFieldListIntention::class) {
     fun `test one parameter`() = doUnavailableTest("""
         struct S { /*caret*/x: i32 }
     """)
@@ -40,7 +40,7 @@ class ChopFieldListIntentionTest : RsIntentionTestBase(ChopFieldListIntention())
     """)
 
     fun `test has some line breaks 2`() = doAvailableTest("""
-        struct S { 
+        struct S {
             x: i32, y: i32, z: i32/*caret*/
         }
     """, """
@@ -52,15 +52,15 @@ class ChopFieldListIntentionTest : RsIntentionTestBase(ChopFieldListIntention())
     """)
 
     fun `test has comment`() = doUnavailableTest("""
-        struct S { 
-            /*caret*/x: i32, /* comment */ 
+        struct S {
+            /*caret*/x: i32, /* comment */
             y: i32,
             z: i32
         }
     """)
 
     fun `test has comment 2`() = doAvailableTest("""
-        struct S { 
+        struct S {
             /*caret*/x: i32, /*
                 comment
             */y: i32,

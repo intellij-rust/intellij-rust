@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddStructFieldsLiteralIntentionTest : RsIntentionTestBase(AddStructFieldsLiteralIntention()) {
+class AddStructFieldsLiteralIntentionTest : RsIntentionTestBase(AddStructFieldsLiteralIntention::class) {
     fun `test smoke struct literal`() = doAvailableTest(
         """
             struct Foo { bar: i32, baz: i32 }

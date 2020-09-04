@@ -7,7 +7,7 @@ package org.rust.ide.intentions
 
 import org.rust.ide.intentions.ImplTraitToTypeParamIntention.Companion.outerImplTestMark
 
-class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypeParamIntention()) {
+class ImplTraitToTypeParamIntentionTest : RsIntentionTestBase(ImplTraitToTypeParamIntention::class) {
     fun `test simple`() = doAvailableTest("""
         trait Trait{}
         fn test(arg: impl/*caret*/ Trait) {}

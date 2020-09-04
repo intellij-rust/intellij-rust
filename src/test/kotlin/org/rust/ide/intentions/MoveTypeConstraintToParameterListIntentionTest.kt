@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class MoveTypeConstraintToParameterListIntentionTest : RsIntentionTestBase(MoveTypeConstraintToParameterListIntention()) {
+class MoveTypeConstraintToParameterListIntentionTest : RsIntentionTestBase(MoveTypeConstraintToParameterListIntention::class) {
 
     fun `test lifetimes and traits`() = doAvailableTest(
         """ fn foo<'a, 'b, 'c, T, U>() /*caret*/where 'b: 'a, 'c:'a, T: Clone, U: Copy {} """,

@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention()) {
+class AddDeriveIntentionTest : RsIntentionTestBase(AddDeriveIntention::class) {
 
     fun `test add derive struct`() = doAvailableTest("""
         struct Te/*caret*/st {}

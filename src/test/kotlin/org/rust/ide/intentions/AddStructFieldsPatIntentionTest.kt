@@ -5,7 +5,7 @@
 
 package org.rust.ide.intentions
 
-class AddStructFieldsPatIntentionTest : RsIntentionTestBase(AddStructFieldsPatIntention()) {
+class AddStructFieldsPatIntentionTest : RsIntentionTestBase(AddStructFieldsPatIntention::class) {
     fun `test simple case match`() = doAvailableTest("""
         struct Foo {
             a: i32,

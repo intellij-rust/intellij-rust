@@ -6,29 +6,35 @@
 package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.openapiext.Testmark
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import kotlin.reflect.KClass
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.full.isSubclassOf
 
-abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase() {
+abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
+
+    protected val intention: IntentionAction
+        get() = findIntention() ?: error("Failed to find `${intentionClass.simpleName}` intention")
 
     fun `test intention has documentation`() {
-        if (intention !is RsElementBaseIntentionAction<*>) return
+        if (!intentionClass.isSubclassOf(RsElementBaseIntentionAction::class)) return
 
-        val directory = "intentionDescriptions/${intention.javaClass.simpleName}"
-        val description = checkFileExists(intention, Paths.get(directory, "description.html"))
+        val directory = "intentionDescriptions/${intentionClass.simpleName}"
+        val description = checkFileExists(Paths.get(directory, "description.html"))
         checkHtmlStyle(description)
 
-        checkFileExists(intention, Paths.get(directory, "before.rs.template"))
-        checkFileExists(intention, Paths.get(directory, "after.rs.template"))
+        checkFileExists(Paths.get(directory, "before.rs.template"))
+        checkFileExists(Paths.get(directory, "after.rs.template"))
     }
 
-    private fun checkFileExists(intention: IntentionAction, path: Path): String = getResourceAsString(path.toString())
-        ?: error("No ${path.fileName} found for ${intention.javaClass} ($path)")
+    private fun checkFileExists(path: Path): String = getResourceAsString(path.toString())
+        ?: error("No ${path.fileName} found for $intentionClass ($path)")
 
     protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
@@ -66,8 +72,16 @@ abstract class RsIntentionTestBase(val intention: IntentionAction) : RsTestBase(
 
     protected fun doUnavailableTest(@Language("Rust") before: String) {
         InlineFile(before).withCaret()
-        check(intention.familyName !in myFixture.availableIntentions.mapNotNull { it.familyName }) {
-            "\"$intention\" intention should not be available"
+        val intention = findIntention()
+        check(intention == null) {
+            "\"${intentionClass.simpleName}\" should not be available"
+        }
+    }
+
+    private fun findIntention(): IntentionAction? {
+        return myFixture.availableIntentions.firstOrNull {
+            val originalIntention = IntentionActionDelegate.unwrap(it)
+            intentionClass == originalIntention::class
         }
     }
 }
