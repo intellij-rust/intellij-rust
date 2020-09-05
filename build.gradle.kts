@@ -598,7 +598,7 @@ fun Writer.writeCargoOptions(baseUrl: String) {
     }
 
     val commands = fetchCommands()
-    writeln("enum class CargoCommand(val description: String, val options: List<CargoOption>) {")
+    writeln("enum class CargoCommands(val description: String, val options: List<CargoOption>) {")
     for ((index, command) in commands.withIndex()) {
         writeEnumVariant(command, isLast = index == commands.size - 1)
     }

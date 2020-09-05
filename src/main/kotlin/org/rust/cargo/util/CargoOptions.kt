@@ -9,7 +9,7 @@ data class CargoOption(val name: String, val description: String) {
     val longName: String get() = "--$name"
 }
 
-enum class CargoCommand(val description: String, val options: List<CargoOption>) {
+enum class CargoCommands(val description: String, val options: List<CargoOption>) {
     BENCH(
         description = "Execute benchmarks of a package",
         options = listOf(
