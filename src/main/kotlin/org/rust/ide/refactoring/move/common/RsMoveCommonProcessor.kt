@@ -237,7 +237,8 @@ class RsMoveCommonProcessor(
             target.qualifiedNameInCrate(targetMod)
                 ?.toRsPathInEmptyTmpMod(codeFragmentFactory, psiFactory, targetMod)
         }
-        val pathNewAccessible = RsImportHelper.findPath(targetMod, target)?.toRsPath(psiFactory)
+        val pathNewAccessible = RsImportHelper.findPath(targetMod, target)
+            ?.toRsPathInEmptyTmpMod(codeFragmentFactory, psiFactory, targetMod)
 
         return RsMoveReferenceInfo(path, pathNewAccessible, pathNewFallback, target)
     }

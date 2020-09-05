@@ -35,6 +35,17 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2/*target*/ {}
     """)
 
+    fun `test outside reference to item which has pub(in old_parent_mod) visibility`() = doTestConflictsError("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() { bar::bar_func(); }
+            pub mod bar {
+                pub(super) fn bar_func() {}  // private for mod2
+            }
+        }
+        mod mod2/*target*/ {}
+    """)
+
     fun `test outside reference to private method of struct in old mod using UFCS`() = doTestConflictsError("""
     //- lib.rs
         mod mod1 {
@@ -483,7 +494,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
                 mod mod2 {
                     pub(crate) fn foo1() {}
 
-                    pub(in crate::inner1::inner2) fn foo2() {}
+                    pub(self) fn foo2() {}
 
                     pub(in crate::inner1::inner2) fn foo3() {}
 

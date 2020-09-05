@@ -13,6 +13,7 @@ import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isInsideMovedElements
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isSimplePath
+import org.rust.ide.refactoring.move.common.RsMoveUtil.isTargetOfEachSubpathAccessible
 import org.rust.ide.refactoring.move.common.RsMoveUtil.startsWithSelf
 import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.macros.setContext
@@ -29,13 +30,15 @@ class RsMoveConflictsDetector(
     val itemsToMakePublic: MutableSet<RsElement> = hashSetOf()
 
     fun detectInsideReferencesVisibilityProblems(insideReferences: List<RsMoveReferenceInfo>) {
+        updateItemsToMakePublic(insideReferences)
+        detectReferencesVisibilityProblems(insideReferences)
+        detectPrivateFieldOrMethodInsideReferences()
+    }
+
+    private fun updateItemsToMakePublic(insideReferences: List<RsMoveReferenceInfo>) {
         for (reference in insideReferences) {
             val pathOld = reference.pathOld
             val target = reference.target
-            if (reference.pathNewAccessible == null) {
-                addVisibilityConflict(conflicts, pathOld, target)
-            }
-
             val usageMod = pathOld.containingMod
             val isSelfReference = pathOld.isInsideMovedElements(elementsToMove)
             if (!isSelfReference && !usageMod.superMods.contains(targetMod)) {
@@ -43,18 +46,20 @@ class RsMoveConflictsDetector(
                 itemsToMakePublic.add(itemToMakePublic)
             }
         }
-
-        detectPrivateFieldOrMethodInsideReferences()
     }
 
     fun detectOutsideReferencesVisibilityProblems(outsideReferences: List<RsMoveReferenceInfo>) {
-        for (reference in outsideReferences) {
-            if (reference.pathNewAccessible == null) {
+        detectReferencesVisibilityProblems(outsideReferences)
+        detectPrivateFieldOrMethodOutsideReferences()
+    }
+
+    private fun detectReferencesVisibilityProblems(references: List<RsMoveReferenceInfo>) {
+        for (reference in references) {
+            val pathNew = reference.pathNewAccessible
+            if (pathNew == null || !pathNew.isTargetOfEachSubpathAccessible()) {
                 addVisibilityConflict(conflicts, reference.pathOld, reference.target)
             }
         }
-
-        detectPrivateFieldOrMethodOutsideReferences()
     }
 
     /**
