@@ -11,6 +11,7 @@ import org.jetbrains.intellij.tasks.PublishTask
 import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import org.jsoup.Jsoup
 import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
@@ -151,15 +152,16 @@ allprojects {
 }
 
 
-val Project.dependencyCachePath get(): String {
-    val cachePath = file("${rootProject.projectDir}/deps")
-    // If cache path doesn't exist, we need to create it manually
-    // because otherwise gradle-intellij-plugin will ignore it
-    if (!cachePath.exists()) {
-        cachePath.mkdirs()
+val Project.dependencyCachePath
+    get(): String {
+        val cachePath = file("${rootProject.projectDir}/deps")
+        // If cache path doesn't exist, we need to create it manually
+        // because otherwise gradle-intellij-plugin will ignore it
+        if (!cachePath.exists()) {
+            cachePath.mkdirs()
+        }
+        return cachePath.absolutePath
     }
-    return cachePath.absolutePath
-}
 
 val channelSuffix = if (channel.isBlank() || channel == "stable") "" else "-$channel"
 val versionSuffix = "-$platformVersion$channelSuffix"
@@ -497,6 +499,28 @@ task("updateCompilerFeatures") {
     }
 }
 
+task("updateCargoOptions") {
+    doLast {
+        val file = File("src/main/kotlin/org/rust/cargo/util/CargoOptions.kt")
+        file.bufferedWriter().use {
+            it.writeln("""
+                /*
+                 * Use of this source code is governed by the MIT license that can be
+                 * found in the LICENSE file.
+                 */
+
+                package org.rust.cargo.util
+
+                data class CargoOption(val name: String, val description: String) {
+                    val longName: String get() = "--${'$'}name"
+                }
+
+            """.trimIndent())
+            it.writeCargoOptions("https://doc.rust-lang.org/cargo/commands")
+        }
+    }
+}
+
 fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
     val text = URL(remoteFileUrl).openStream().bufferedReader().readText()
     val commentRegex = "^/{2,}".toRegex()
@@ -512,6 +536,74 @@ fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
             }
             writeln("""val ${featureName.toUpperCase()} = CompilerFeature("$featureName", ${featureSet.toUpperCase()}, $version)""")
         }
+}
+
+fun Writer.writeCargoOptions(baseUrl: String) {
+
+    data class CargoOption(
+        val name: String,
+        val description: String
+    )
+
+    data class CargoCommand(
+        val name: String,
+        val description: String,
+        val options: List<CargoOption>
+    )
+
+    fun fetchCommand(commandUrl: String): CargoCommand {
+        val document = Jsoup.connect("$baseUrl/$commandUrl").get()
+
+        val fullCommandDesc = document.select("div[class=sectionbody] > p").text()
+        val parts = fullCommandDesc.split(" - ", limit = 2)
+        check(parts.size == 2) { "Invalid page format: $baseUrl/$commandUrl$" }
+        val commandName = parts.first().removePrefix("cargo-")
+        val commandDesc = parts.last()
+
+        val options = document
+            .select("dt > strong:matches(^--)")
+            .map { option ->
+                val optionName = option.text().removePrefix("--")
+                val nextSiblings = generateSequence(option.parent()) { it.nextElementSibling() }
+                val descElement = nextSiblings.first { it.tagName() == "dd" }
+                val fullOptionDesc = descElement.select("p").text()
+                val optionDesc = fullOptionDesc.substringBefore(". ").removeSuffix(".")
+                CargoOption(optionName, optionDesc)
+            }
+
+        return CargoCommand(commandName, commandDesc, options)
+    }
+
+    fun fetchCommands(): List<CargoCommand> {
+        val document = Jsoup.connect("$baseUrl/cargo.html").get()
+        val urls = document.select("dt > a[href]").map { it.attr("href") }
+        return urls.map { fetchCommand(it) }
+    }
+
+    fun writeEnumVariant(command: CargoCommand, isLast: Boolean) {
+        val variantName = command.name.toUpperCase().replace('-', '_')
+        val renderedOptions = command.options.joinToString(
+            separator = ",\n            ",
+            prefix = "\n            ",
+            postfix = "\n        "
+        ) { "CargoOption(\"${it.name}\", \"\"\"${it.description}\"\"\")" }
+
+        writeln("""
+        |    $variantName(
+        |        description = "${command.description}",
+        |        options = ${if (command.options.isEmpty()) "emptyList()" else "listOf($renderedOptions)"}
+        |    )${if (isLast) ";" else ","}
+        """.trimMargin())
+        writeln()
+    }
+
+    val commands = fetchCommands()
+    writeln("enum class CargoCommand(val description: String, val options: List<CargoOption>) {")
+    for ((index, command) in commands.withIndex()) {
+        writeEnumVariant(command, isLast = index == commands.size - 1)
+    }
+    writeln("    val presentableName: String get() = name.toLowerCase().replace('_', '-')")
+    writeln("}")
 }
 
 fun Writer.writeln(str: String = "") {
