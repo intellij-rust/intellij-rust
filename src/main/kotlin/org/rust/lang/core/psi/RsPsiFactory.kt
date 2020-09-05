@@ -458,6 +458,10 @@ class RsPsiFactory(
         return createFromText("fn f() { let $tuple = x; }") ?: error("Failed to create pat tuple")
     }
 
+    fun createPatRest(): RsPatRest {
+        return createFromText("fn f(S {..}: S) {}") ?: error("Failed to create pat rest")
+    }
+
     fun createCastExpr(expr: RsExpr, typeText: String): RsCastExpr = when (expr) {
         is RsBinaryExpr -> createExpressionOfType("(${expr.text}) as $typeText")
         else -> createExpressionOfType("${expr.text} as $typeText")
