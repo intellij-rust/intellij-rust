@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.ExpandMacros
-import org.rust.MockAdditionalCfgOptions
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsTupleFieldDecl
 
 class RsCfgAttrResolveTest : RsResolveTestBase() {
@@ -83,6 +81,26 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         fn t() {
             my::bar();
               //^
+        }
+     """)
+
+    // From https://github.com/rust-lang/hashbrown/blob/09e43a8cf97f37b17768b98f28291a24c5767847/src/lib.rs#L52-L68
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import inside inline mod with cfg`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod my {
+            mod inner {
+                pub fn func() {}
+            }
+            pub use inner::*;
+        }
+        #[cfg(intellij_rust)]
+        mod my {}
+
+        fn t() {
+            my::func();
+              //^ unresolved
         }
      """)
 
@@ -415,6 +433,22 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     @ExpandMacros
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
+    fun `test macro from another crate with cfg`() = stubOnlyResolve("""
+    //- lib.rs
+        #[macro_export]
+        #[cfg(not(intellij_rust))]
+        macro_rules! foo { () -> {} }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+        use test_package::foo;
+        foo!();
+        //^ unresolved
+     """)
+
+    @ExpandMacros
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test exported macro with cfg on "extern crate" 1`() = stubOnlyResolve("""
     //- lib.rs
         #[macro_export]
@@ -472,5 +506,41 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         use dep_lib_target::foo;
         foo!();
         //^ lib.rs
+     """)
+
+    // `cfg_attr` is not supported yet, but we test that there are no exceptions
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg_attr with path on mod declaration`() = stubOnlyResolve("""
+    //- bar.rs
+        pub fn func() {}
+    //- main.rs
+        #[cfg_attr(intellij_rust, path = "bar.rs")]
+        mod foo;
+        use foo::*;
+        fn main() {
+            func();
+        }  //^ unresolved
+     """)
+
+    @ExpandMacros
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled macro call expanded to inline mod`() = stubOnlyResolve("""
+    //- main.rs
+        fn main() {
+            foo::func();
+        }      //^ unresolved
+
+        macro_rules! gen_foo {
+            () => {
+                mod foo {
+                    pub fn func() {}
+                }
+            };
+        }
+
+        #[cfg(not(intellij_rust))]
+        gen_foo!();
      """)
 }
