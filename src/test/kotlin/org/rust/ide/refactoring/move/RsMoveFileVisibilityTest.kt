@@ -16,7 +16,7 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
         expect<BaseRefactoringProcessor.ConflictsInTestsException>(action)
     }
 
-    fun `test outside reference to private item in old parent module 1`() = expectConflicts {
+    fun `test outside reference to private item in old parent module`() = expectConflicts {
         doTestExpectError(
             arrayOf("mod1/foo.rs"),
             "mod2",
@@ -34,24 +34,6 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
             }
         //- mod1/bar.rs
             pub fn bar_func() {}
-        """)
-    }
-
-    fun `test outside reference to private item in old parent module 2`() = expectConflicts {
-        doTestExpectError(
-            arrayOf("mod1/foo.rs"),
-            "mod2",
-            """
-        //- main.rs
-            mod mod1;
-            mod mod2;
-        //- mod1/mod.rs
-            mod foo;
-            struct Mod1Struct1;
-            struct Mod1Struct2;
-        //- mod2/mod.rs
-        //- mod1/foo.rs
-            use crate::mod1::{Mod1Struct1, Mod1Struct2};
         """)
     }
 
@@ -148,8 +130,10 @@ class RsMoveFileVisibilityTest : RsMoveFileTestBase() {
     //- mod2/mod.rs
         mod foo;
     //- mod2/foo.rs
+        use crate::mod1;
+
         fn func() {
-            crate::mod1::mod1_func();
+            mod1::mod1_func();
         }
     """)
 
