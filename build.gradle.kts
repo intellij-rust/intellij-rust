@@ -490,9 +490,9 @@ task("updateCompilerFeatures") {
                 import org.rust.lang.core.FeatureState.ACTIVE
 
             """.trimIndent())
-            it.writeFeatures("active", "https://raw.githubusercontent.com/rust-lang/rust/master/src/librustc_feature/active.rs")
+            it.writeFeatures("active", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/active.rs")
             it.writeln()
-            it.writeFeatures("accepted", "https://raw.githubusercontent.com/rust-lang/rust/master/src/librustc_feature/accepted.rs")
+            it.writeFeatures("accepted", "https://raw.githubusercontent.com/rust-lang/rust/master/compiler/rustc_feature/src/accepted.rs")
         }
     }
 }
