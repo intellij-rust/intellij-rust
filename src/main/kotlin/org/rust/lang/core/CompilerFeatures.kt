@@ -217,6 +217,8 @@ val GENERATORS = CompilerFeature("generators", ACTIVE, "1.21.0")
 val DOC_CFG = CompilerFeature("doc_cfg", ACTIVE, "1.21.0")
 // Allows `#[doc(masked)]`.
 val DOC_MASKED = CompilerFeature("doc_masked", ACTIVE, "1.21.0")
+// Allows `#[doc(spotlight)]`.
+val DOC_SPOTLIGHT = CompilerFeature("doc_spotlight", ACTIVE, "1.22.0")
 // Allows `#[doc(include = "some-file")]`.
 val EXTERNAL_DOC = CompilerFeature("external_doc", ACTIVE, "1.22.0")
 // Allows using `crate` as visibility modifier, synonymous with `pub(crate)`.
@@ -355,6 +357,12 @@ val CONST_PRECISE_LIVE_DROPS = CompilerFeature("const_precise_live_drops", ACTIV
 val FORMAT_ARGS_CAPTURE = CompilerFeature("format_args_capture", ACTIVE, "1.46.0")
 // Lazily evaluate constants. This allows constants to depend on type parameters.
 val LAZY_NORMALIZATION_CONSTS = CompilerFeature("lazy_normalization_consts", ACTIVE, "1.46.0")
+// Allows calling `transmute` in const fn
+val CONST_FN_TRANSMUTE = CompilerFeature("const_fn_transmute", ACTIVE, "1.46.0")
+// The smallest useful subset of `const_generics`.
+val MIN_CONST_GENERICS = CompilerFeature("min_const_generics", ACTIVE, "1.47.0")
+// Allows `if let` guard in match arms.
+val IF_LET_GUARD = CompilerFeature("if_let_guard", ACTIVE, "1.47.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -592,9 +600,9 @@ val TRANSPARENT_ENUMS = CompilerFeature("transparent_enums", ACCEPTED, "1.42.0")
 // Allows using subslice patterns, `[a, .., b]` and `[a, xs @ .., b]`.
 val SLICE_PATTERNS = CompilerFeature("slice_patterns", ACCEPTED, "1.42.0")
 // Allows the use of `if` and `match` in constants.
-val CONST_IF_MATCH = CompilerFeature("const_if_match", ACCEPTED, "1.45.0")
+val CONST_IF_MATCH = CompilerFeature("const_if_match", ACCEPTED, "1.46.0")
 // Allows the use of `loop` and `while` in constants.
-val CONST_LOOP = CompilerFeature("const_loop", ACCEPTED, "1.45.0")
+val CONST_LOOP = CompilerFeature("const_loop", ACCEPTED, "1.46.0")
 // Allows `#[track_caller]` to be used which provides
 // accurate caller location reporting during panic (RFC 2091).
 val TRACK_CALLER = CompilerFeature("track_caller", ACCEPTED, "1.46.0")
