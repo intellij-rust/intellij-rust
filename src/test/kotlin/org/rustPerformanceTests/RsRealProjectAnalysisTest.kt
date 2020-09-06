@@ -11,6 +11,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
+import org.rust.ide.inspections.RsUnresolvedReferenceInspection
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.macros.macroExpansionManager
@@ -48,6 +49,11 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
         val inspections = InspectionToolRegistrar.getInstance().createTools()
             .map { it.tool }
             .filterIsInstance<RsLocalInspectionTool>()
+
+        for (inspection in inspections) {
+            setUpInspection(inspection)
+        }
+
         myFixture.enableInspections(*inspections.toTypedArray())
 
         println("Opening the project `${info.name}`")
@@ -80,6 +86,12 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
             }
         }
         consumer.finish()
+    }
+
+    protected open fun setUpInspection(inspection: RsLocalInspectionTool) {
+        when (inspection) {
+            is RsUnresolvedReferenceInspection -> inspection.ignoreWithoutQuickFix = false
+        }
     }
 
     override fun tearDown() {
