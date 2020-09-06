@@ -27,6 +27,7 @@ import org.rust.lang.core.crate.CrateGraphService
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.openapiext.CachedValueDelegate
 import org.rust.openapiext.checkReadAccessAllowed
+import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.enumSetOf
 import org.rust.stdext.exhaustive
 import java.nio.file.Path
@@ -61,7 +62,7 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
 
     override fun findCrateByRootMod(rootModFile: VirtualFile): Crate? {
         checkReadAccessAllowed()
-        return if (rootModFile is VirtualFileWithId) findCrateById(rootModFile.id) else null
+        return rootModFile.applyWithSymlink { if (it is VirtualFileWithId) findCrateById(it.id) else null }
     }
 
 }
