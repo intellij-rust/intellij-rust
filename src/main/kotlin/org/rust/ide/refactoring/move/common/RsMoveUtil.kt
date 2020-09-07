@@ -134,7 +134,10 @@ object RsMoveUtil {
         if (target.containingFile is DummyHolder) LOG.error("Target $target of path '$text' is inside dummy holder")
         val reference = reference ?: return false
         if (!reference.isReferenceTo(target)) return false
+        return isTargetOfEachSubpathAccessible()
+    }
 
+    fun RsPath.isTargetOfEachSubpathAccessible(): Boolean {
         for (subpath in generateSequence(this) { it.path }) {
             val subpathTarget = subpath.reference?.resolve() as? RsVisible ?: continue
             if (!subpathTarget.isVisibleFrom(containingMod)) return false
@@ -217,6 +220,7 @@ fun <T : RsElement> movedElementsDeepDescendantsOfType(
  */
 fun RsVisRestriction.updateScopeIfNecessary(psiFactory: RsPsiFactory, newParent: RsMod) {
     if (crateRoot == newParent.crateRoot) {
+        if (path.kind == PathKind.SELF) return  // `pub(self)`
         // TODO: pass `oldScope` as parameter?
         val oldScope = path.reference?.resolve() as? RsMod ?: return
         val newScope = commonParentMod(oldScope, newParent) ?: return
