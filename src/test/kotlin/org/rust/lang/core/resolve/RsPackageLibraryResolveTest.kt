@@ -51,6 +51,29 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo_bar { () => {} }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro rules with underscore alias`() = stubOnlyResolve("""
+    //- main.rs
+        #[macro_use]
+        extern crate test_package as _;
+
+        gen_mod!(foo);
+
+        fn main() {
+            foo::func();
+        }      //^ main.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! gen_mod {
+            ($ name : ident) => {
+                mod $ name {
+                    pub fn func() {}
+                         //X
+                }
+            }
+        }
+    """)
+
     fun `test duplicated macro_export macro`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
@@ -748,5 +771,19 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
 
         type T = Foo;
                //^ trans-lib/lib.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test extern crate double renaming`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        pub fn func() {}
+    //- lib.rs
+        extern crate dep_lib_target as foo1;
+        extern crate foo1 as foo2;
+
+        fn main() {
+            foo2::func();
+                 //^ unresolved
+        }
     """)
 }

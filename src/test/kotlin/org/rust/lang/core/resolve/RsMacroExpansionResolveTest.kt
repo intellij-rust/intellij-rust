@@ -6,8 +6,10 @@
 package org.rust.lang.core.resolve
 
 import org.rust.ExpandMacros
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.stdext.BothEditions
 
 @ExpandMacros
@@ -266,12 +268,66 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }       //^
     """)
 
+    // We need to test macros expanded to import,
+    // because paths in imports are resolved using different code when Resolve2 is enabled.
+    fun `test 'crate' metavar in same crate (macro expanded to import)`() = checkByCode("""
+        fn func() {}
+         //X
+
+        macro_rules! foo {
+            () => { use $ crate::func; }
+        }
+
+        mod inner {
+            foo!();
+            fn main() {
+                func();
+            } //^
+        }
+    """)
+
+    fun `test 'crate' metavar in same crate 1 (macro expanded to inline mod)`() = checkByCode("""
+        fn func() {}
+         //X
+
+        macro_rules! foo {
+            () => {
+                mod inner { pub use $ crate::func; }
+            }
+        }
+
+        foo!();
+        fn main() {
+            inner::func();
+        }        //^
+    """)
+
+    fun `test 'crate' metavar in same crate 2 (macro expanded to inline mod)`() = checkByCode("""
+        fn func() {}
+         //X
+
+        macro_rules! foo1 {
+            () => {
+                mod inner { foo2!($ crate::func); }
+            }
+        }
+        macro_rules! foo2 {
+            ($ path:path) => { pub use $ path; }
+        }
+
+        foo1!();
+        fn main() {
+            inner::func();
+        }        //^
+    """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test 'crate' metavar`() = stubOnlyResolve("""
     //- lib.rs
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
+                 //X
         }
         #[macro_export]
         macro_rules! foo {
@@ -289,11 +345,56 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar (macro expanded to import)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+             //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { use $ crate::func; }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        foo!();
+
+        fn main() {
+            func();
+        } //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar (dollar crate in path of macro call)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+             //X
+        #[macro_export]
+        macro_rules! foo0 {
+            () => { use $ crate::func; }
+        }
+        #[macro_export]
+        macro_rules! foo {
+            () => { $ crate::foo0!(); }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package;
+
+        foo!();
+
+        fn main() {
+            func();
+        } //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test 'crate' metavar with alias`() = stubOnlyResolve("""
     //- lib.rs
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
+                 //X
         }
         #[macro_export]
         macro_rules! foo {
@@ -311,11 +412,32 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar with alias (macro expanded to import)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+             //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { use $ crate::func; }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package as package;
+
+        foo!();
+
+        fn main() {
+            func();
+        } //^ lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test 'crate' metavar with macro call not in crate root`() = stubOnlyResolve("""
     //- lib.rs
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
+                 //X
         }
         #[macro_export]
         macro_rules! foo {
@@ -335,6 +457,28 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     """)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar with macro call not in crate root (macro expanded to import)`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+             //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { use $ crate::func; }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate test_package as package;
+
+        mod a {
+            foo!();
+
+            fn main() {
+                func()
+            } //^ lib.rs
+        }
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test 'crate' metavar passed to another macro in a different crate`() = stubOnlyResolve("""
     //- trans-lib/lib.rs
         #[macro_export]
@@ -348,6 +492,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
+                 //X
         }
         #[macro_export]
         macro_rules! foo {
@@ -399,6 +544,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         pub struct Foo;
         impl Foo {
             pub fn bar(&self) {}
+                 //X
         }
         #[macro_export]
         macro_rules! foo {
@@ -413,6 +559,34 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         fn main() {
             foo().bar()
         }       //^ dep-lib/lib.rs
+    """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test 'crate' metavar passed to another macro in a different crate (macro expanded to import)`() = stubOnlyResolve("""
+    //- trans-lib/lib.rs
+        #[macro_export]
+        macro_rules! def_fn {
+            ($ path:path) => { use $ path; }
+        }
+    //- dep-lib/lib.rs
+        #[macro_use]
+        extern crate trans_lib;
+        pub use trans_lib::def_fn;
+        pub fn func() {}
+             //X
+        #[macro_export]
+        macro_rules! foo {
+            () => { def_fn! { $ crate::func } }
+        }
+    //- main.rs
+        #[macro_use]
+        extern crate dep_lib_target;
+
+        foo!(); // def_fn! { IntellijRustDollarCrate_dep_lib::func }
+
+        fn main() {
+            func();
+        } //^ dep-lib/lib.rs
     """)
 
     fun `test expand macro inside stubbed file`() = stubOnlyResolve("""
@@ -486,6 +660,45 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
     //- child.rs
         use super::S;
                  //^ main.rs
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test mod declared with macro inside inline expanded mod`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! gen_mod_decl_item {
+            () => { mod foo2; };
+        }
+        macro_rules! gen_mod_item {
+            () => { mod foo1 { gen_mod_decl_item!(); } };
+        }
+
+        gen_mod_item!();
+
+        use foo1::foo2::S;
+        fn func(_: S) {}
+                 //^ foo1/foo2.rs
+    //- foo1/foo2.rs
+        pub struct S;
+                 //X
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test mod with path attribute declared with macro`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! foo {
+            () => { #[path="foo.rs"] mod child; };
+        }
+
+        foo!();
+    //- foo.rs
+        fn func() {}
+             //X
+        mod inner {
+            use super::func;
+            fn main() {
+                func();
+            } //^ foo.rs
+        }
     """)
 
     fun `test resolve item expanded from stmt context macro`() = checkByCode("""

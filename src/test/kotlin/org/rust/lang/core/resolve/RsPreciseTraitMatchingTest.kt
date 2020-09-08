@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 
 class RsPreciseTraitMatchingTest : RsResolveTestBase() {
@@ -528,5 +530,28 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
         {
             a.foo();
         }   //^
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test cycle using glob-imports (and underscore trait re-export)`() = checkByCode("""
+        mod a {
+            pub use crate::b::*;
+            pub use crate::c::T1 as _;
+        }
+        mod b {
+            pub use crate::a::*;
+        }
+        mod c {
+            pub trait T0 { fn foo(&self) {} }
+            pub trait T1 { fn foo(&self) {} }
+                            //X
+            impl T0 for crate::S {}
+            impl T1 for crate::S {}
+        }
+        struct S;
+        fn main() {
+            use b::*;
+            S.foo();
+        }      //^
     """)
 }
