@@ -121,6 +121,11 @@ data class GenericConstraints(
         }
     }
 
+    fun withoutTypes(params: List<RsTypeParameter>): GenericConstraints {
+        val types = typeParameters - params
+        return copy(typeParameters = types)
+    }
+
     companion object {
         /**
          * Recursively finds parent `RsGenericDeclarations` and collects all of their type parameters and

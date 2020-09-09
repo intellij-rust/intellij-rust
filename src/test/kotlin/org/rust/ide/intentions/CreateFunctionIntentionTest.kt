@@ -331,4 +331,257 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             unimplemented!()
         }
     """)
+
+    fun `test navigate to created function`() = doAvailableTest("""
+        fn foo() {
+            bar/*caret*/();
+        }
+    """, """
+        fn foo() {
+            bar();
+        }
+
+        fn bar() {
+            unimplemented!()/*caret*/
+        }
+    """)
+
+    fun `test create method create impl`() = doAvailableTest("""
+        trait Trait {}
+        struct S<T>(T) where T: Trait;
+
+        fn foo(s: S<u32>) {
+            s.foo/*caret*/(1, 2);
+        }
+    """, """
+        trait Trait {}
+        struct S<T>(T) where T: Trait;
+
+        impl<T> S<T> where T: Trait {
+            pub(crate) fn foo(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo(s: S<u32>) {
+            s.foo(1, 2);
+        }
+    """)
+
+    fun `test create method no arguments`() = doAvailableTest("""
+        struct S;
+
+        fn foo(s: S) {
+            s.foo/*caret*/();
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn foo(&self) {
+                unimplemented!()
+            }
+        }
+
+        fn foo(s: S) {
+            s.foo();
+        }
+    """)
+
+    fun `test create generic method`() = doAvailableTest("""
+        struct S;
+
+        fn foo<R>(s: S, r: R) {
+            s.foo/*caret*/(r);
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn foo<R>(&self, p0: R) {
+                unimplemented!()
+            }
+        }
+
+        fn foo<R>(s: S, r: R) {
+            s.foo(r);
+        }
+    """)
+
+    fun `test create method inside impl`() = doAvailableTest("""
+        struct S;
+        impl S {
+            fn foo(&self) {
+                self.bar/*caret*/(0);
+            }
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo(&self) {
+                self.bar(0);
+            }
+            fn bar(&self, p0: i32) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test create method inside generic impl`() = doAvailableTest("""
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn foo(&self, t: T) {
+                self.bar/*caret*/(t);
+            }
+        }
+    """, """
+        struct S<T>(T);
+        impl<T> S<T> {
+            fn foo(&self, t: T) {
+                self.bar(t);
+            }
+            fn bar(&self, p0: T) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test create method inside generic impl with where`() = doAvailableTest("""
+        trait Trait {}
+        struct S<T>(T);
+        impl<T> S<T> where T: Trait {
+            fn foo(&self, t: T) {
+                self.bar/*caret*/(t);
+            }
+        }
+    """, """
+        trait Trait {}
+        struct S<T>(T);
+        impl<T> S<T> where T: Trait {
+            fn foo(&self, t: T) {
+                self.bar(t);
+            }
+            fn bar(&self, p0: T) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test unavailable inside method arguments`() = doUnavailableTest("""
+        struct S;
+        fn foo(s: S) {
+            s.bar(1, /*caret*/2);
+        }
+    """)
+
+    fun `test available inside method name`() = doAvailableTest("""
+        struct S;
+        fn foo(s: S) {
+            s.b/*caret*/ar(1, 2);
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo(s: S) {
+            s.bar(1, 2);
+        }
+    """)
+
+    fun `test available after method name`() = doAvailableTest("""
+        struct S;
+        fn foo(s: S) {
+            s.bar/*caret*/(1, 2);
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo(s: S) {
+            s.bar(1, 2);
+        }
+    """)
+
+    fun `test guess method return type`() = doAvailableTest("""
+        struct S;
+        fn foo(s: S) {
+            let a: u32 = s.bar/*caret*/(1, 2);
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self, p0: i32, p1: i32) -> u32 {
+                unimplemented!()
+            }
+        }
+
+        fn foo(s: S) {
+            let a: u32 = s.bar(1, 2);
+        }
+    """)
+
+    fun `test create method inside trait impl`() = doAvailableTest("""
+        trait Trait {
+            fn foo(&self);
+        }
+        struct S;
+        impl Trait for S {
+            fn foo(&self) {
+                self.bar/*caret*/();
+            }
+        }
+    """, """
+        trait Trait {
+            fn foo(&self);
+        }
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self) {
+                unimplemented!()
+            }
+        }
+
+        impl Trait for S {
+            fn foo(&self) {
+                self.bar();
+            }
+        }
+    """)
+
+    fun `test create method inside different impl`() = doAvailableTest("""
+        struct S;
+        struct T;
+        impl T {
+            fn foo(&self, s: S) {
+                s.bar/*caret*/();
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self) {
+                unimplemented!()
+            }
+        }
+
+        struct T;
+        impl T {
+            fn foo(&self, s: S) {
+                s.bar();
+            }
+        }
+    """)
 }
