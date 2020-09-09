@@ -23,10 +23,7 @@ import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
 import org.rust.ide.inspections.checkMatch.Pattern
-import org.rust.ide.inspections.fixes.AddMainFnFix
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
-import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.inspections.fixes.*
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
@@ -1279,13 +1276,41 @@ sealed class RsDiagnostic(
             fixes = listOf(RemoveReprValueFix(element))
         )
     }
+
+    class UnsupportedBinaryOpOrOpAssign(element: PsiElement,
+                                        private val isAssignBinaryExpr: Boolean,
+                                        private val op: OverloadableBinaryOperator,
+                                        private val tyName: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            errorCode(),
+            errorText(escapeXmlEntities(op.sign)),
+            fixes = listOf(
+                ImplOperatorTraitFix(element, op.traitName, tyName)
+            )
+        )
+
+        private fun errorCode() =
+            if (isAssignBinaryExpr)
+                E0368
+            else
+                E0369
+
+        private fun errorText(sign: String) =
+            if (isAssignBinaryExpr) {
+                "binary assignment operation `$sign` cannot be applied to type `$tyName`"
+            } else {
+                "binary operation `$sign` cannot be applied to type `$tyName`"
+            }
+    }
 }
 
 enum class RsErrorCode {
     E0004, E0015, E0023, E0026, E0027, E0040, E0046, E0050, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
-    E0308, E0322, E0328, E0379, E0384,
+    E0308, E0322, E0328, E0368, E0369, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0552, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
@@ -1406,7 +1431,7 @@ private val RsSelfParameter.canonicalDecl: String
     }
 
 // BACKCOMPAT: 2020.1. Replace with `escapeString(str)`
-private fun escapeTy(str: String): String {
+private fun escapeXmlEntities(str: String): String {
     return if (ApplicationInfo.getInstance().build > BUILD_202) {
         escapeString(str)
     } else {
@@ -1416,4 +1441,4 @@ private fun escapeTy(str: String): String {
     }
 }
 
-private val Ty.escaped get() = escapeTy(toString())
+private val Ty.escaped get() = escapeXmlEntities(toString())

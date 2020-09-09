@@ -551,6 +551,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Check op and op assign"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsBinaryOpOrBinaryOpAssignInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
