@@ -17,7 +17,7 @@ import java.io.DataOutputStream
  * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
  */
 @Suppress("DataClassPrivateConstructor")
-data class RangeMap private constructor(private val ranges: List<MappedTextRange>) {
+data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
 
     fun isEmpty(): Boolean = ranges.isEmpty()
 
