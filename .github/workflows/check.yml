@@ -40,6 +40,11 @@ jobs:
                       rust-version: 1.32.0
                       base-ide: idea
                       platform-version: 202
+                    - os: windows-latest
+                      rust-version: 1.45.0 # must be different to avoid modifying instead of adding a new job
+                      base-ide: clion
+                      platform-version: 202
+                      use-wsl: true
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 60
@@ -56,12 +61,16 @@ jobs:
                   java-version: 11
 
             - name: Set up Rust
+              if: (matrix.uses-wsl == true) == false
               uses: actions-rs/toolchain@v1
               with:
                   profile: minimal
                   toolchain: ${{ matrix.rust-version }}
                   components: rust-src, rustfmt, clippy
                   default: true
+            - name: Set up WSL Rust
+              if: matrix.uses-wsl
+              run: wsl curl https://sh.rustup.rs -sSf | wsl sh -s
 
             - name: Cache evcxr
               uses: actions/cache@v2
