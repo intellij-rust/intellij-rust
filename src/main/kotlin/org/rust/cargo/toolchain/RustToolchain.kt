@@ -23,6 +23,16 @@ import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
 open class RustToolchain(val location: Path) {
+    override fun toString(): String {
+        return location.toString()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (other is RustToolchain) {
+            return location == other.location
+        } else return false
+    }
+
     open fun createBaseCommandLine(path: Path, vararg arguments: String, workingDirectory: Path?): GeneralCommandLine {
         return GeneralCommandLine(path, *arguments)
             .withWorkDirectory(workingDirectory)
@@ -128,6 +138,10 @@ open class RustToolchain(val location: Path) {
 
     private fun hasCargoExecutable(exec: String): Boolean =
         Files.isExecutable(pathToCargoExecutable(exec))
+
+    override fun hashCode(): Int {
+        return location.hashCode()
+    }
 
     data class VersionInfo(
         val rustc: RustcVersion?
@@ -260,7 +274,17 @@ private object Suggestions {
             programFiles.listFiles { file -> file.isDirectory }.asSequence()
                 .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
                 .map { File(it, "bin") }
+        val fromWsl =
+            if (SystemInfo.isWin10OrNewer) {
+                String(Runtime.getRuntime().exec("wsl source ~/.profile && wslpath -w $(command -v cargo)")
+                    .inputStream.readAllBytes()).trim().let {
+                        sequenceOf(File(it).parentFile)
+                    }
+            } else {
+                emptySequence()
+            }
 
-        return sequenceOf(fromHome) + fromProgramFiles
+
+        return sequenceOf(fromHome) + fromProgramFiles + fromWsl
     }
 }
