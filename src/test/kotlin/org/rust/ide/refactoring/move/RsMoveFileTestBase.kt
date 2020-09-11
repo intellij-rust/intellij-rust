@@ -66,7 +66,7 @@ abstract class RsMoveFileTestBase : RsTestBase() {
         elementsToMove: Array<String>,
         targetDirectory: String,
         @Language("Rust") source: String
-    ) = checkByDirectory(source, source) { testProject ->
+    ) = checkByDirectory(source, source, expectError = true) { testProject ->
         performMove(testProject.root, elementsToMove, targetDirectory)
     }
 }
