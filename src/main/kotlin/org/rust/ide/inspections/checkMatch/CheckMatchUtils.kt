@@ -10,7 +10,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.CtValue
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ConstExpr.Value
 import org.rust.lang.utils.evaluation.evaluate
@@ -20,27 +19,40 @@ class CheckMatchException(message: String) : Exception(message)
 typealias Matrix = List<List<Pattern>>
 
 /**
- * Returns the type of elements of the matrix
- *
- * @returns [TyUnknown] if there is more than one distinct known type
+ * Check if all the patterns have the same type
  */
-val Matrix.type: Ty
-    get() = asSequence().flatten()
-        .map { it.ty }.filter { it !is TyUnknown }
-        .distinct().singleOrNull()
-        ?: TyUnknown
+fun Matrix.isWellTyped(): Boolean {
+    val variantPatternsTypesAreValid = flatten().all { (ty, kind) ->
+        when (kind) {
+            is PatternKind.Variant -> ty is TyAdt && kind.item == ty.item
+            else -> true
+        }
+    }
+    if (!variantPatternsTypesAreValid) return false
+
+    val types = flatten().map { it.ty }
+    return types.isEmpty() || types.distinct().size == 1
+}
 
 /**
- * Returns the type of the first column of the matrix
+ * The type of the first column of the matrix
  *
- * @returns [TyUnknown] if there is more than one distinct known type in first column
+ * @return [null] in case of empty matrix
+ * @throws [CheckMatchException] if the patterns in the first column have different types
  */
-val Matrix.firstColumnType: Ty
-    get() = mapNotNull { it.firstOrNull()?.ty }
-        .filter { it !is TyUnknown }
-        .distinct().singleOrNull()
-        ?: TyUnknown
+val Matrix.firstColumnType: Ty?
+    get() {
+        val firstColumnTypes = firstColumn.map { it.ty }
+            .takeIf { it.isNotEmpty() }
+            ?: return null
 
+        return firstColumnTypes.distinct().singleOrNull()
+            ?: throw CheckMatchException("Ambiguous type of the first column")
+    }
+
+val Matrix.firstColumn: List<Pattern> get() = mapNotNull { row -> row.firstOrNull() }
+
+/** Calculates the pattern matrix by splitting or-patterns across different rows */
 @Throws(CheckMatchException::class)
 fun List<RsMatchArm>.calculateMatrix(): Matrix =
     flatMap { arm -> arm.patList.map { listOf(it.lower) } }

@@ -3,466 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.match
 
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.ide.inspections.checkMatch.RsMatchCheckInspection
+import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.ide.inspections.RsInspectionsTestBase
+import org.rust.ide.inspections.checkMatch.RsNonExhaustiveMatchInspection
 
-class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection::class) {
-
-    fun `test simple boolean useless`() = checkByText("""
-        fn main() {
-            let a = true;
-            match a {
-                true => {}
-                false => {}
-                <warning descr="Unreachable pattern">true</warning> => {}
-                <warning descr="Unreachable pattern">true</warning> => {}
-                <warning descr="Unreachable pattern">false</warning> => {}
-            }
-        }
-    """)
-
-    fun `test binding useless`() = checkFixByText("Remove useless arm", """
-        fn main() {
-            let x = 42;
-            match x {
-                y => {}
-                <warning descr="Unreachable pattern">z/*caret*/</warning> => {}
-            };
-        }
-    """, """
-        fn main() {
-            let x = 42;
-            match x {
-                y => {}
-            };
-        }
-    """)
-
-    fun `test integer literals useless`() = checkByText("""
-        fn main() {
-            let a = 2;
-            match a {
-                123 => {},
-                <warning descr="Unreachable pattern">0x7B</warning> => {},
-                <warning descr="Unreachable pattern">0o173</warning> => {},
-                <warning descr="Unreachable pattern">0b01_11_10_11</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test simple double useless`() = checkByText("""
-        fn main() {
-            let a = 9.9;
-            match a {
-                1.0 => {}
-                2.3 => {}
-                3.6 => {}
-                <warning descr="Unreachable pattern">2.3</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test simple string useless`() = checkByText("""
-        fn main() {
-            let a = "str";
-            match a {
-                "test" => {}
-                "test2" => {}
-                <warning descr="Unreachable pattern">"test"</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test simple char useless`() = checkByText("""
-        fn main() {
-            let a = 'h';
-            match a {
-                'c' => {}
-                'd' => {}
-                <warning descr="Unreachable pattern">'c'</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test simple range useless`() = checkByText("""
-        fn main() {
-            let a = 2;
-            match a {
-                0...10 => {}
-                <warning descr="Unreachable pattern">3...8</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test simple path enum useless`() = checkByText("""
-        enum E { A, B }
-        fn main() {
-            let a = E::A;
-            match a {
-                E::A => {}
-                E::B => {}
-                <warning descr="Unreachable pattern">E::A</warning> => {}
-                <warning descr="Unreachable pattern">E::B</warning> => {}
-            }
-        }
-    """)
-
-    fun `test simple path struct wfUseless`() = checkByText("""
-        struct S;
-        fn main() {
-            let a = S;
-            match a {
-                S => {}
-                <warning descr="Unreachable pattern">S</warning> => {}
-            }
-        }
-    """)
-
-    fun `test enum with boolean useless`() = checkByText("""
-        enum E { A(bool) }
-        fn main() {
-            let a = E::A(true);
-            match a {
-                E::A(true) => {}
-                E::A(false) => {}
-                <warning descr="Unreachable pattern">E::A(true)</warning> => {}
-            }
-        }
-    """)
-
-    fun `test enum with int useless`() = checkByText("""
-        enum E { A(i32) }
-        fn main() {
-            let a = E::A(2);
-            match a {
-                E::A(3) => {}
-                E::A(5) => {}
-                <warning descr="Unreachable pattern">E::A(3)</warning> => {}
-                E::A(x) => {}
-            }
-        }
-    """)
-
-    fun `test enum with double useless`() = checkByText("""
-        enum E { A(f64) }
-        fn main() {
-            let a = E::A(2.3);
-            match a {
-                E::A(3.6) => {}
-                E::A(5.8) => {}
-                <warning descr="Unreachable pattern">E::A(3.6)</warning> => {}
-                E::A(x) => {}
-            }
-        }
-    """)
-
-    fun `test enum with string useless`() = checkByText("""
-        enum E { A(str) }
-        fn main() {
-            let a = E::A("str");
-            match a {
-                E::A("test") => {}
-                E::A("test2") => {}
-                <warning descr="Unreachable pattern">E::A("test")</warning> => {}
-                E::A(x) => {}
-            }
-        }
-    """)
-
-    fun `test enum with char useless`() = checkByText("""
-        enum E { A(char) }
-        fn main() {
-            let a = E::A('c');
-            match a {
-                E::A('d') => {}
-                E::A('b') => {}
-                <warning descr="Unreachable pattern">E::A('b')</warning> => {}
-                E::A(x) => {}
-            }
-        }
-    """)
-
-    fun `test enum with path enum useless`() = checkByText("""
-        enum E { A, B }
-        enum F { A(E) }
-        fn main() {
-            let a = F::A(E::A);
-            match a {
-                F::A(E::A) => {}
-                F::A(E::B) => {}
-                <warning descr="Unreachable pattern">F::A(E::A)</warning> => {}
-            }
-        }
-    """)
-
-    fun `test enum with path struct wf useless`() = checkByText("""
-        struct S;
-        enum E { A(S) }
-        fn main() {
-            let a = E::A(S);
-            match a {
-                E::A(S) => {}
-                <warning descr="Unreachable pattern">E::A(S)</warning> => {}
-            }
-        }
-    """)
-
-    fun `test enum with enum useless`() = checkByText("""
-        enum E { A(i32), B }
-        enum F { A(str), B(E) }
-        enum G { A(F) }
-        fn main() {
-            let a = G::A(F::B(E::A(2)));
-            match a {
-                G::A(F::B(E::A(3))) => {}
-                G::A(F::B(E::A(x))) => {}
-                G::A(F::B(E::B)) => {}
-                G::A(F::A("str")) => {}
-                <warning descr="Unreachable pattern">G::A(F::B(E::A(5)))</warning> => {}
-                <warning descr="Unreachable pattern">G::A(F::B(E::A(_)))</warning> => {}
-                <warning descr="Unreachable pattern">G::A(F::B(E::B))</warning> => {}
-                <warning descr="Unreachable pattern">G::A(F::B(_))</warning> => {}
-                <warning descr="Unreachable pattern">G::A(F::A("str"))</warning> => {}
-                G::A(F::A(_)) => {}
-                <warning descr="Unreachable pattern">G::A(F::A("str2"))</warning> => {}
-            }
-        }
-    """)
-
-    fun `test enum useless pattern with guard`() = checkFixByText("Remove useless pattern", """
-        enum E { A(i32), B(i32) }
-        fn foo(e: E) {
-            match e {
-                E::A(_) => {}
-                E::B(x) | <warning descr="Unreachable pattern">E::A(x)/*caret*/</warning> if x > 0 => {}
-                E::B(_) => {}
-            }
-        }
-    """, """
-        enum E { A(i32), B(i32) }
-        fn foo(e: E) {
-            match e {
-                E::A(_) => {}
-                E::B(x) if x > 0 => {}
-                E::B(_) => {}
-            }
-        }
-    """)
-
-    fun `test struct with boolean useless`() = checkByText("""
-        struct S { a: bool }
-        fn main() {
-            let a = S { a: true };
-            match a {
-                S { a: true } => {}
-                S { a: false } => {}
-                <warning descr="Unreachable pattern">S { a: true }</warning> => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-                <warning descr="Unreachable pattern">S { a }</warning> => {}
-            }
-        }
-    """)
-
-    fun `test struct with int useless`() = checkByText("""
-        struct S { a: i32 }
-        fn main() {
-            let a = S { a: 1 };
-            match a {
-                S { a: 3 } => {}
-                S { a: 4 } => {}
-                <warning descr="Unreachable pattern">S { a: 3 }</warning> => {}
-                S { a } => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-            }
-        }
-    """)
-
-    fun `test struct with double useless`() = checkByText("""
-        struct S { a: f64 }
-        fn main() {
-            let a = S { a: 1.6 };
-            match a {
-                S { a: 3.4 } => {}
-                S { a: 4.1 } => {}
-                <warning descr="Unreachable pattern">S { a: 3.4 }</warning> => {}
-                S { a } => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-            }
-        }
-    """)
-
-    fun `test struct with string useless`() = checkByText("""
-        struct S { a: str }
-        fn main() {
-            let a = S { a: "str" };
-            match a {
-                S { a: "test" } => {}
-                S { a: "test2" } => {}
-                <warning descr="Unreachable pattern">S { a: "test" }</warning> => {}
-                S { a } => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-            }
-        }
-    """)
-
-    fun `test struct with char useless`() = checkByText("""
-        struct S { a: char }
-        fn main() {
-            let a = S { a: 'c' };
-            match a {
-                S { a: 'w' } => {}
-                S { a: 'c' } => {}
-                <warning descr="Unreachable pattern">S { a: 'w' }</warning> => {}
-                S { a } => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-            }
-        }
-    """)
-
-    fun `test struct with path enum useless`() = checkByText("""
-        enum E { A, B }
-        struct S { a: E }
-        fn main() {
-            let a = S { a: E::A };
-            match a {
-                S { a: E::A } => {}
-                S { a: E::B } => {}
-                <warning descr="Unreachable pattern">S { a: E::A }</warning> => {}
-                <warning descr="Unreachable pattern">S { a }</warning> => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-
-            }
-        }
-    """)
-
-    fun `test struct with path struct wfUseless`() = checkByText("""
-        struct E;
-        struct S { a: E }
-        fn main() {
-            let a = S { a: E };
-            match a {
-                S { a: E } => {}
-                <warning descr="Unreachable pattern">S { a: E }</warning> => {}
-                <warning descr="Unreachable pattern">S { a }</warning> => {}
-                <warning descr="Unreachable pattern">S { a: x }</warning> => {}
-
-            }
-        }
-    """)
-
-    fun `test struct with struct useless`() = checkByText("""
-        struct E { a: i32, b: char }
-        struct S { a: E }
-        fn main() {
-            let a = S { a: E {a: 2, b: 'c'} };
-            match a {
-                S { a: E { a: 2, b: 'w' } } => {}
-                <warning descr="Unreachable pattern">S { a: E { b: 'w', a: 2 } }</warning> => {}
-                S { a: E { a: _, b: 'w' } } => {}
-                <warning descr="Unreachable pattern">S { a: E { b: 'w', a: 999 } }</warning> => {}
-                S { a: E { a: _, b: _ } } => {}
-                <warning descr="Unreachable pattern">_</warning> => {}
-            }
-        }
-    """)
-
-    fun `test ref pattern useful`() = checkByText("""
-        struct S { x: i32 }
-        enum E { A, B(S) }
-
-        fn foo(e: E) {
-            match e {
-                E::A => {}
-                E::B(ref s) if s.x > 0 => {}
-                E::B(s) => {}
-            }
-        }
-    """)
-
-    fun `test first ref pattern useful`() = checkByText("""
-        struct S { x: i32 }
-        enum E { A, B(S) }
-
-        fn foo(e: E) {
-            match e {
-                E::B(ref s) if s.x > 0 => {}
-                E::B(s) => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test integer literals useful`() = checkByText("""
-        fn foo(n: i32) {
-            match n {
-                123 => {},
-                0x7C => {},
-                0o175 => {},
-                0b01_11_11_10 => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test unresolved`() = checkByText("""
-        fn foo(s: MyEnum) {
-            match s {
-                MyEnum::A => {}
-                MyEnum::B => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test const useful`() = checkByText("""
-        const ONE: i32 = 1;
-        const TWO: i32 = 2;
-        fn foo(n: i32) {
-            match n {
-                ONE => {}
-                TWO => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test match ergonomics useful`() = checkByText("""
-        enum E { A(i32), B }
-        use E::*;
-        fn foo(e: &E) {
-            match &e {
-                A(x) => {}
-                B => {}
-            }
-            match &e {
-                B => {}
-                A(x) => {}
-            }
-        }
-    """)
-
-    fun `test match reference useful`() = checkByText("""
-        enum E { A(i32), B }
-        use E::*;
-        fn foo(e: &E) {
-            match e {
-                &A(x) => {}
-                &B => {}
-            }
-            match &e {
-                &B => {}
-                &A(x) => {}
-            }
-        }
-    """)
+class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustiveMatchInspection::class) {
 
     fun `test simple boolean exhaustive`() = checkFixByText("Add remaining patterns", """
         fn main() {
@@ -711,109 +260,6 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
             match e {
                 &B => {}
                 &A(_) => {}
-            }
-        }
-    """)
-
-    fun `test const int expr evaluation`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-        const MAX: i32 = 10;
-        const MIN: i32 = -10;
-        const MID: i32 = (MAX + MIN) / 2;
-    //- foo.rs
-        use super::{MAX, MIN, MID};
-        fn foo(v: i32) {
-            match v/*caret*/ {
-                1 => {}
-                MIN...MAX => {}
-                <warning descr="Unreachable pattern">-3</warning> => {}
-                <warning descr="Unreachable pattern">-5..MID</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test const bool expr evaluation`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-        const TRUE: bool = true;
-        const FALSE: bool = !TRUE;
-        const VALUE: bool = FALSE && true || TRUE;
-    //- foo.rs
-        use super::{FALSE, VALUE};
-        fn foo(v: bool) {
-            match v/*caret*/ {
-                true => {}
-                FALSE => {}
-                <warning descr="Unreachable pattern">VALUE</warning> => {}
-                <warning descr="Unreachable pattern">_</warning> => {}
-            }
-        }
-    """)
-
-    fun `test const float expr evaluation`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-        const PI: f32 = 3.14;
-        const E: f32 = 2.718;
-    //- foo.rs
-        use super::{PI, E};
-        fn foo(v: f32) {
-            match v/*caret*/ {
-                PI => {}
-                E => {}
-                <warning descr="Unreachable pattern">3.14</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test const char expr evaluation`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-        const A: char = 'A';
-        const Z: char = 'Z';
-        const F: char = 'f';
-    //- foo.rs
-        use super::{A, F, Z};
-        fn foo(v: char) {
-            match v/*caret*/ {
-                A...'Z' => {}
-                F => {}
-                'a' => {}
-                <warning descr="Unreachable pattern">Z</warning> => {}
-                <warning descr="Unreachable pattern">'f'</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test const str expr evaluation`() = checkByFileTree("""
-    //- main.rs
-        mod foo;
-        const HELLO: &str = "hello!";
-        const FOO: &'static str = "FOO";
-    //- foo.rs
-        use super::{HELLO, FOO};
-        fn foo(v: &str) {
-            match v/*caret*/ {
-                "hello" => {}
-                "hello!" => {}
-                <warning descr="Unreachable pattern">HELLO</warning> => {}
-                FOO => {}
-                <warning descr="Unreachable pattern">"FOO"</warning> => {}
-                _ => {}
-            }
-        }
-    """)
-
-    fun `test unknown value`() = checkByText("""
-        fn main() {
-            match 42 {
-                0..UNRESOLVED => {}
-                20..50 => {}
-                _ => {}
             }
         }
     """)
@@ -1262,6 +708,268 @@ class RsMatchCheckInspectionTest : RsInspectionsTestBase(RsMatchCheckInspection:
 
             <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> error {
                 Error::Variant => println!("Variant")
+            }
+        }
+    """)
+
+    fun `test empty match simple enum variants`() = checkFixByText("Add remaining patterns", """
+        enum FooBar { Foo, Bar }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum FooBar { Foo, Bar }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            }
+        }
+    """)
+
+    fun `test empty match ergonomics`() = checkFixByText("Add remaining patterns", """
+        enum E { A, B }
+        fn foo(x: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum E { A, B }
+        fn foo(x: &E) {
+            match/*caret*/ x {
+                E::A => {}
+                E::B => {}
+            }
+        }
+    """)
+
+    fun `test empty match struct enum variants`() = checkFixByText("Add remaining patterns", """
+        enum FooBar {
+            Foo { foo: i32 },
+            Bar { bar1: bool, bar2: f64 }
+        }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum FooBar {
+            Foo { foo: i32 },
+            Bar { bar1: bool, bar2: f64 }
+        }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                FooBar::Foo { .. } => {}
+                FooBar::Bar { .. } => {}
+            }
+        }
+    """)
+
+    fun `test empty match different enum variants`() = checkFixByText("Add remaining patterns", """
+        enum Foo {
+            X,
+            Y(i32),
+            Z { foo: bool }
+        }
+
+        fn foo(x: Foo) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        enum Foo {
+            X,
+            Y(i32),
+            Z { foo: bool }
+        }
+
+        fn foo(x: Foo) {
+            match/*caret*/ x {
+                Foo::X => {}
+                Foo::Y(_) => {}
+                Foo::Z { .. } => {}
+            }
+        }
+    """)
+
+    fun `test empty match don't remove comments`() = checkFixByText("Add remaining patterns", """
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {
+                // test
+            }
+        }
+    """, """
+        enum FooBar {
+            Foo,
+            Bar
+        }
+
+        fn foo(x: FooBar) {
+            match/*caret*/ x {
+                // test
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test empty match Option enum`() = checkFixByText("Add remaining patterns", """
+        fn foo(x: Option<i32>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        fn foo(x: Option<i32>) {
+            match/*caret*/ x {
+                None => {}
+                Some(_) => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test empty match Result enum`() = checkFixByText("Add remaining patterns", """
+        fn foo(x: Result<i32, bool>) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        fn foo(x: Result<i32, bool>) {
+            match/*caret*/ x {
+                Ok(_) => {}
+                Err(_) => {}
+            }
+        }
+    """)
+
+    fun `test empty match one variant is in scope`() = checkFixByText("Add remaining patterns", """
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> x {}
+        }
+    """, """
+        mod foo {
+            enum E { A, B }
+        }
+        use foo::E;
+        use foo::E::A;
+        fn foo(x: &E) {
+            match/*caret*/ x {
+                A => {}
+                E::B => {}
+            }
+        }
+    """)
+
+    fun `test empty match import unresolved type`() = checkFixByText("Add remaining patterns", """
+        use a::foo;
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> foo() {};
+        }
+    """, """
+        use a::{foo, FooBar};
+
+        mod a {
+            pub enum FooBar { Foo, Bar }
+            pub fn foo() -> FooBar { FooBar::Foo }
+        }
+
+        fn main() {
+            match/*caret*/ foo() {
+                FooBar::Foo => {}
+                FooBar::Bar => {}
+            };
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test pair of Options`() = checkByText("""
+        fn foo(a: Option<bool>, b: Option<bool>) {
+            match (a, b) {
+                (None, None) => {}
+                (Some(true), _) | (_, Some(true)) => {}
+                (Some(false), _) | (_, Some(false)) => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on pair of Options match ergonomics`() = checkByText("""
+        fn foo(a: Option<bool>, b: &Option<bool>) {
+            match (a, b) {
+                (None, None) => {}
+                (Some(true), _) | (_, &Some(true)) => {}
+                (Some(false), _) | (_, Some(false)) => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on pair of Options match ergonomics different refs`() = checkByText("""
+        fn foo(a: &Option<bool>) {
+            match a {
+                None => {}
+                &Some(true) => {}
+                Some(false) => {}
+            }
+        }
+    """)
+
+    // TODO: better support of match ergonomics
+    fun `test match ergonomics different refs`() = expect<AssertionError> {
+        checkFixByText("Add remaining patterns", """
+        enum E { A(i32), B, C }
+        use E::*;
+        fn foo(e: &E) {
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> &e {
+                B => {}
+                &C => {}
+            }
+        }
+    """, """
+        enum E { A(i32), B, C }
+        use E::*;
+        fn foo(e: &E) {
+            match &e {
+                B => {}
+                &C => {}
+                A(_) => {}
+            }
+        }
+    """)
+    }
+
+    fun `test no error on different expr and arm types`() = checkByText("""
+        enum E1 { A, B }
+        enum E2 { C, D }
+        fn foo(a: E1) {
+            match a {
+                E2::C => {}
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no error on Fn call`() = checkByText("""
+        fn foo(f: &dyn Fn() -> Option<bool>) {
+            match f() {
+                Some(_) => {}
+                None => {}
             }
         }
     """)

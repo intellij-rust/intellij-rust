@@ -15,6 +15,7 @@
       <w>decl</w>
       <w>demangle</w>
       <w>dep</w>
+      <w>dereferenced</w>
       <w>destructure</w>
       <w>env</w>
       <w>escaper</w>
@@ -72,6 +73,7 @@
       <w>stmts</w>
       <w>subcommand</w>
       <w>subcommands</w>
+      <w>submatrix</w>
       <w>subobligations</w>
       <w>subparts</w>
       <w>subpath</w>

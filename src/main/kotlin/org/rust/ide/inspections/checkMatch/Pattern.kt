@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.checkMatch
 
+import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsElement
@@ -12,10 +13,7 @@ import org.rust.lang.core.psi.ext.RsFieldsOwner
 import org.rust.lang.core.psi.ext.findInScope
 import org.rust.lang.core.psi.ext.parentEnum
 import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyTuple
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 
 data class Pattern(val ty: Ty, val kind: PatternKind) {
     fun text(ctx: RsElement?): String =
@@ -76,15 +74,34 @@ data class Pattern(val ty: Ty, val kind: PatternKind) {
             is PatternKind.Array -> TODO()
         }
 
+    /**
+     * Returns the type of the pattern suitable for generating constructors
+     *
+     * @returns dereferenced [ty] when [ty] is a (multi)reference to enum
+     * @returns [ty] in other cases
+     */
+    val ergonomicType: Ty
+        get() {
+            var referencedBase = ty
+            while (referencedBase is TyReference) {
+                referencedBase = referencedBase.referenced
+            }
+            return referencedBase.takeIf { it is TyAdt && it.item is RsEnumItem } ?: ty
+        }
+
     companion object {
-        val Wild: Pattern get() = Pattern(TyUnknown, PatternKind.Wild)
+        fun wild(ty: Ty = TyUnknown): Pattern = Pattern(ty, PatternKind.Wild)
     }
 }
 
 private fun RsFieldsOwner.initializer(subPatterns: List<Pattern>, ctx: RsElement?): String = when {
     blockFields != null -> {
-        subPatterns.withIndex().joinToString(",", "{", "}") { (index, pattern) ->
-            "${blockFields!!.namedFieldDeclList[index].name}: ${pattern.text(ctx)}"
+        if (subPatterns.all { it.kind is PatternKind.Wild }) {
+            "{ .. }"
+        } else {
+            subPatterns.withIndex().joinToString(",", "{", "}") { (index, pattern) ->
+                "${blockFields!!.namedFieldDeclList[index].name}: ${pattern.text(ctx)}"
+            }
         }
     }
     tupleFields != null -> subPatterns.joinToString(",", "(", ")") { it.text(ctx) }
