@@ -20,7 +20,7 @@ class WslRustToolchain(location: Path) : RustToolchain(location) {
     override fun createBaseCommandLine(path: Path, vararg arguments: String, workingDirectory: Path?): GeneralCommandLine {
         val translatedArguments = arguments.map { argument ->
             if (WINDOWS_PATH_REGEX.matches(argument)) {
-                GeneralCommandLine("wsl", "wslpath", argument.replace("\\", "\\\\")).execute()?.stdout ?: argument
+                GeneralCommandLine("wsl", "wslpath", argument.replace("\\", "\\\\")).execute()?.stdout?.trim() ?: argument
             } else argument
         }.toTypedArray()
 

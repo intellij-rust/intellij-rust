@@ -62,7 +62,7 @@ class Rustfmt(private val toolchain: RustToolchain) {
         }
 
         return toolchain.createGeneralCommandLine(RUSTFMT, *arguments.toTypedArray(), workingDirectory = cargoProject.workingDirectory)
-            .execute(Disposer.newDisposable(), ignoreExitCode = false, stdIn = document.text.toByteArray())
+            .execute(Disposer.newDisposable("Rustfmt"), ignoreExitCode = false, stdIn = document.text.toByteArray())
             .stdout
     }
 

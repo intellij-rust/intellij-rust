@@ -17,6 +17,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.openapiext.*
 import java.io.File
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
@@ -276,12 +277,15 @@ private object Suggestions {
                 .map { File(it, "bin") }
         val fromWsl =
             if (SystemInfo.isWin10OrNewer) {
-                String(Runtime.getRuntime().exec("wsl source ~/.profile && wslpath -w $(command -v cargo)")
-                    .inputStream.readAllBytes()).trim().let {
-                        sequenceOf(File(it).parentFile)
-                    }
+                try {
+                    val cargoBytes = Runtime.getRuntime().exec("wsl source ~/.profile && wslpath -w $(command -v cargo)")
+                        .inputStream.readBytes()
+                    sequenceOf(File(String(cargoBytes).trim()).parentFile)
+                } catch (e: IOException) {
+                    emptySequence<File>()
+                }
             } else {
-                emptySequence()
+                emptySequence<File>()
             }
 
 
