@@ -77,7 +77,7 @@ abstract class RsExecutableRunner(
 
         val runCargoCommand = state.prepareCommandLine()
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
-        val runExecutable = state.toolchain.createBaseCommandLine(binaries.single(), arguments = *executableArguments.toTypedArray(), workingDirectory = runCargoCommand.workingDirectory)
+        val runExecutable = state.toolchain.createBaseCommandLine(binaries.single(), arguments = executableArguments.toTypedArray(), workingDirectory = runCargoCommand.workingDirectory)
         Cargo.configureCommandLine(
             runExecutable,
             runCargoCommand.backtraceMode,
@@ -123,7 +123,7 @@ abstract class RsExecutableRunner(
         project.showErrorDialog(toolchainError.message)
     }
 
-    private fun Project.showErrorDialog(message: String) {
+    fun Project.showErrorDialog(message: String) {
         Messages.showErrorDialog(this, message, errorMessageTitle)
     }
 

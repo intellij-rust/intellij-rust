@@ -18,7 +18,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.systemIndependentPath
+import org.rust.cargo.toolchain.WSL_ROOT_REGEX
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.regex.Pattern
 
 private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
@@ -30,10 +32,16 @@ fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.
 
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
     if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
-        if (parametersList[0] == "-d") {
-            environment.forEach { (k, v) -> parametersList.addAt(2, "$k=$v") }
-        } else {
-            environment.forEach { (k, v) -> parametersList.addAt(0, "$k=$v") }
+        val insertionIndex = if (parametersList[0] == "-d") 2 else 0
+        environment.forEach { (k, v) ->
+            if (k == "RUSTC") {
+                val path = Paths.get(v)
+                val linuxPath = "/${path.root.relativize(path).systemIndependentPath}"
+
+                parametersList.addAt(insertionIndex, "$k=$linuxPath")
+            } else {
+                parametersList.addAt(insertionIndex, "$k=$v")
+            }
         }
     }
 
@@ -61,10 +69,16 @@ fun GeneralCommandLine.execute(
     listener: ProcessListener? = null
 ): ProcessOutput {
     if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
-        if (parametersList[0] == "-d") {
-            environment.forEach { (k, v) -> parametersList.addAt(2, "$k=$v") }
-        } else {
-            environment.forEach { (k, v) -> parametersList.addAt(0, "$k=$v") }
+        val insertionIndex = if (parametersList[0] == "-d") 2 else 0
+        environment.forEach { (k, v) ->
+            if (k == "RUSTC") {
+                val path = Paths.get(v)
+                val linuxPath = "/${path.root.relativize(path).systemIndependentPath}"
+
+                parametersList.addAt(insertionIndex, "$k=$linuxPath")
+            } else {
+                parametersList.addAt(insertionIndex, "$k=$v")
+            }
         }
     }
 
@@ -98,7 +112,7 @@ fun GeneralCommandLine.execute(
     listener?.let { handler.addProcessListener(it) }
 
     if (stdIn != null) {
-        handler.processInput?.use { it.write(stdIn) }
+        handler.processInput.write(stdIn)
     }
 
     val output = try {

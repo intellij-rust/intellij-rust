@@ -127,6 +127,7 @@ class Cargo(private val toolchain: RustToolchain, private val wrapper: String, p
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
             .execute(owner, listener = listener)
             .stdout
+            .dropWhile { it != '{' }
         LOG.info("Output from Cargo metadata: $json")
         val project = try {
             val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
