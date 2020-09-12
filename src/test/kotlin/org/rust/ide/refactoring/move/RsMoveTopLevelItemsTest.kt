@@ -506,6 +506,162 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    fun `test spaces 1`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            const C1/*caret*/: i32 = 0;
+            const C2/*caret*/: i32 = 0;
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            const C1: i32 = 0;
+            const C2: i32 = 0;
+        }
+    """)
+
+    fun `test spaces 2`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            const C1/*caret*/: i32 = 0;
+            const C2: i32 = 0;
+            const C3/*caret*/: i32 = 0;
+            const C4: i32 = 0;
+        }
+        mod mod2/*target*/ {
+            const D1: i32 = 0;
+            const D2: i32 = 0;
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            const C2: i32 = 0;
+            const C4: i32 = 0;
+        }
+        mod mod2 {
+            const D1: i32 = 0;
+            const D2: i32 = 0;
+            const C1: i32 = 0;
+            const C3: i32 = 0;
+        }
+    """)
+
+    // spaces before moved items are moved to new file
+    fun `test spaces 3`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            const C0: i32 = 0;
+
+            const C1/*caret*/: i32 = 0;
+            const C2: i32 = 0;
+
+
+            const C3/*caret*/: i32 = 0;
+            const C4: i32 = 0;
+            const C5/*caret*/: i32 = 0;
+        }
+        mod mod2/*target*/ {
+            const D1: i32 = 0;
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            const C0: i32 = 0;
+            const C2: i32 = 0;
+            const C4: i32 = 0;
+        }
+        mod mod2 {
+            const D1: i32 = 0;
+
+            const C1: i32 = 0;
+
+
+            const C3: i32 = 0;
+            const C5: i32 = 0;
+        }
+    """)
+
+    // spaces after moved items are kept in old file
+    fun `test spaces 4`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            const C0: i32 = 0;
+            const C1/*caret*/: i32 = 0;
+
+            const C2: i32 = 0;
+            const C3/*caret*/: i32 = 0;
+
+
+            const C4: i32 = 0;
+            const C5/*caret*/: i32 = 0;
+        }
+        mod mod2/*target*/ {
+            const D1: i32 = 0;
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            const C0: i32 = 0;
+
+            const C2: i32 = 0;
+
+
+            const C4: i32 = 0;
+        }
+        mod mod2 {
+            const D1: i32 = 0;
+            const C1: i32 = 0;
+            const C3: i32 = 0;
+            const C5: i32 = 0;
+        }
+    """)
+
+    fun `test remove double newline at end of target file`() = doTest("""
+    //- lib.rs
+        mod mod1;
+        mod mod2;
+    //- mod1.rs
+        fn foo/*caret*/() {}
+
+        fn mod1_func() {}
+    //- mod2.rs
+        /*target*/fn mod2_func() {}
+    """, """
+    //- lib.rs
+        mod mod1;
+        mod mod2;
+    //- mod1.rs
+        fn mod1_func() {}
+    //- mod2.rs
+        fn mod2_func() {}
+
+        fn foo() {}
+    """)
+
+    fun `test remove double newline at end of source file`() = doTest("""
+    //- lib.rs
+        mod mod1;
+        mod mod2;
+    //- mod1.rs
+        fn mod1_func() {}
+
+        fn foo/*caret*/() {}
+    //- mod2.rs
+        /*target*/fn mod2_func() {}
+    """, """
+    //- lib.rs
+        mod mod1;
+        mod mod2;
+    //- mod1.rs
+        fn mod1_func() {}
+    //- mod2.rs
+        fn mod2_func() {}
+
+        fn foo() {}
+    """)
+
     fun `test absolute outside reference which should be changed because of reexports`() = doTest("""
     //- lib.rs
         mod inner1 {
