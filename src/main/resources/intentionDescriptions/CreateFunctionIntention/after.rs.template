@@ -1,4 +1,4 @@
-fn foo(p0: i32, p1: i32) -> U32 {
+fn foo(p0: i32, p1: i32) -> u32 {
     unimplemented!()
 }
 
