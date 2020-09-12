@@ -24,7 +24,7 @@ import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionIntention.Context>() {
-    override fun getFamilyName() = text
+    override fun getFamilyName() = "Create function"
 
     sealed class Context(val name: String, val callElement: PsiElement) {
         abstract val visibility: String
