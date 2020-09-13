@@ -24,7 +24,7 @@ jobs:
             # so emit hash of `origin/master` branch itself as base commit
             - name: Calculate base commit for pull_request event
               if: github.event_name == 'pull_request'
-              run: echo "::set-env name=BASE_COMMIT::$(git log origin/master -n 1 --format=format:%H)"
+              run: echo "::set-env name=BASE_COMMIT::$(git rev-parse origin/master)"
 
             - name: Emit base commit
               id: base-commit
@@ -48,6 +48,14 @@ jobs:
                     - name: cargo
                       path: cargo
                       repository: rust-lang/cargo
+                      exclude_paths: ""
+                    - name: tokio
+                      path: tokio
+                      repository: tokio-rs/tokio
+                      exclude_paths: ""
+                    - name: amethyst
+                      path: amethyst
+                      repository: amethyst/amethyst
                       exclude_paths: ""
         env:
             PROJECT_PATH: ${{ matrix.project.path }}
