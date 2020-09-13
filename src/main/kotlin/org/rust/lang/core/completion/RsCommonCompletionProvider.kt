@@ -58,7 +58,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
         val processedPathNames = hashSetOf<String>()
 
         val context = RsCompletionContext(
-            element.implLookup,
+            element,
             getExpectedTypeForEnclosingPathOrDotExpr(element),
             isSimplePath = RsPsiPattern.simplePathPattern.accepts(parameters.position)
         )
@@ -193,7 +193,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             removeAll(processedPathNames)
         }
 
-        val context = RsCompletionContext(path.implLookup, expectedTy, isSimplePath = true)
+        val context = RsCompletionContext(path, expectedTy, isSimplePath = true)
         for (elementName in result.prefixMatcher.sortMatching(keys)) {
             val candidates = ImportCandidatesCollector.getImportCandidates(importContext, elementName, elementName) {
                 !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)
@@ -240,10 +240,12 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
 }
 
 data class RsCompletionContext(
-    val lookup: ImplLookup? = null,
+    val context: RsElement? = null,
     val expectedTy: Ty? = null,
     val isSimplePath: Boolean = false
-)
+) {
+    val lookup: ImplLookup? = context?.implLookup
+}
 
 private fun filterAssocTypes(
     path: RsPath,

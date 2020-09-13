@@ -333,7 +333,7 @@ class RsLookupElementTest : RsTestBase() {
     ) {
         InlineFile(code)
         val element = findElementInEditor<RsReferenceElement>()
-        val context = RsCompletionContext(element.implLookup)
+        val context = RsCompletionContext(element)
         val processedPathNames = mutableSetOf<String>()
 
         val lookups = mutableListOf<LookupElement>()
