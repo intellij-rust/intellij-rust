@@ -99,6 +99,78 @@ class RsCompletionSortingTest : RsTestBase() {
         RsFunction::class to "foo4"
     ))
 
+    fun `test const before mut for const reference`() = doTest("""
+        struct S;
+
+        impl S {
+            fn foo1(&mut self) {}
+            fn foo2(&mut self) {}
+            fn foo3(&self) {}
+            fn foo4(&self) {}
+        }
+
+        fn foo(a: &S) { a./*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo4",
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo2"
+    ))
+
+    fun `test const before mut for const binding`() = doTest("""
+        struct S;
+
+        impl S {
+            fn foo1(&mut self) {}
+            fn foo2(&mut self) {}
+            fn foo3(&self) {}
+            fn foo4(&self) {}
+        }
+
+        fn foo(a: S) { a./*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo4",
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo2"
+    ))
+
+    fun `test mut reference`() = doTest("""
+        struct S;
+
+        impl S {
+            fn foo1(&mut self) {}
+            fn foo2(&mut self) {}
+            fn foo3(&self) {}
+            fn foo4(&self) {}
+        }
+
+        fn foo(a: &mut S) { a./*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo2",
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo4"
+    ))
+
+    fun `test mut binding`() = doTest("""
+        struct S;
+
+        impl S {
+            fn foo1(&mut self) {}
+            fn foo2(&mut self) {}
+            fn foo3(&self) {}
+            fn foo4(&self) {}
+        }
+
+        fn foo(mut a: S) { a./*caret*/ }
+    """, listOf(
+        RsFunction::class to "foo1",
+        RsFunction::class to "foo2",
+        RsFunction::class to "foo3",
+        RsFunction::class to "foo4"
+    ))
+
     fun `test assoc fns before methods`() = doTest("""
         struct S;
 

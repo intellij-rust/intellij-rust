@@ -31,10 +31,7 @@ import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.infer.RsInferenceContext
 import org.rust.lang.core.types.infer.TypeFolder
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyNever
-import org.rust.lang.core.types.ty.TyTypeParameter
-import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 
 const val KEYWORD_PRIORITY = 80.0
@@ -49,6 +46,7 @@ const val MACRO_PRIORITY = -0.1
 const val DEPRECATED_PRIORITY = -1.0
 
 private const val EXPECTED_TYPE_PRIORITY_OFFSET = 40.0
+private const val MUT_METHOD_PRIORITY_OFFSET = -50.0
 private const val LOCAL_PRIORITY_OFFSET = 20.0
 private const val INHERENT_IMPL_MEMBER_PRIORITY_OFFSET = 0.1
 
@@ -80,6 +78,9 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
         if (element is RsAbstractable && element.owner.isInherentImpl) {
             priority += INHERENT_IMPL_MEMBER_PRIORITY_OFFSET
         }
+        if (element is RsFunction && element.isMethod && isMutableMethodOnConstReference(element, context.context)) {
+            priority += MUT_METHOD_PRIORITY_OFFSET
+        }
 
         if (context.isSimplePath && !element.canBeExported) {
             // It's visible and can't be exported = it's local
@@ -93,6 +94,29 @@ class ScopedBaseCompletionEntity(private val scopeEntry: ScopeEntry) : Completio
         val subst = context.lookup?.ctx?.getSubstitution(scopeEntry) ?: emptySubstitution
         return element.getLookupElementBuilder(scopeEntry.name, subst)
     }
+}
+
+private fun isMutableMethodOnConstReference(method: RsFunction, call: RsElement?): Boolean {
+    if (call == null) return false
+    val self = method.selfParameter ?: return false
+    if (!self.isRef || !self.mutability.isMut) return false
+
+    // now we know that the method takes &mut self
+    val fieldLookup = call as? RsFieldLookup ?: return false
+    val expr = fieldLookup.receiver
+
+    val isMutable = when (val type = expr.type) {
+        is TyReference -> type.mutability.isMut
+        else -> hasMutBinding(expr)
+    }
+
+    return !isMutable
+}
+
+private fun hasMutBinding(expr: RsExpr): Boolean {
+    val pathExpr = expr as? RsPathExpr ?: return true
+    val binding = pathExpr.path.reference?.resolve() as? RsPatBinding ?: return true
+    return binding.mutability.isMut
 }
 
 fun createLookupElement(
