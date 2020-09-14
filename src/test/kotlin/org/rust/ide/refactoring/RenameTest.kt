@@ -5,6 +5,7 @@
 
 package org.rust.ide.refactoring
 
+import com.intellij.refactoring.BaseRefactoringProcessor
 import org.intellij.lang.annotations.Language
 import org.rust.EmptyDescriptor
 import org.rust.ProjectDescriptor
@@ -113,7 +114,6 @@ class RenameTest : RsTestBase() {
             let x = spam;
         }
     """)
-
 
     fun `test field initialization shorthand`() = doTest("spam", """
         struct S { foo: i32 }
@@ -613,6 +613,57 @@ class RenameTest : RsTestBase() {
         fn foo(value: u32) -> u32 { unimplemented!() }
     """)
 
+    fun `test rename variable with variable conflict`() = doTestWithConflicts("a", """
+        fn test() {
+            let a = 1;
+            let b/*caret*/ = 1;
+        }
+    """, setOf("Variable `a` is already declared in function `test`"))
+
+    fun `test rename variable with parameter conflict`() = doTestWithConflicts("a", """
+        fn test(a: u32) {
+            let b/*caret*/ = 1;
+        }
+    """, setOf("Parameter `a` is already declared in function `test`"))
+
+    fun `test rename variable with binding conflict`() = doTestWithConflicts("a", """
+        struct S { a: i32 }
+        fn test(S { a }: S) {
+            let b/*caret*/ = 1;
+        }
+    """, setOf("Binding `a` is already declared in function `test`"))
+
+    fun `test rename variable multiple conflicts`() = doTestWithConflicts("a", """
+        struct S { a: i32 }
+        fn test(S { a }: S) {
+            let a = 1;
+            let b/*caret*/ = 1;
+        }
+    """, setOf("Binding `a` is already declared in function `test`", "Variable `a` is already declared in function `test`"))
+
+    fun `test rename parameter with variable conflict`() = doTestWithConflicts("a", """
+        fn test(b/*caret*/: u32) {
+            let a = 1;
+            let c = 1;
+        }
+    """, setOf("Variable `a` is already declared in function `test`"))
+
+    fun `test rename variable nested function`() = doTest("a", """
+        fn test() {
+            let a = 1;
+            fn foo() {
+                let b/*caret*/ = 1;
+            }
+        }
+    """, """
+        fn test() {
+            let a = 1;
+            fn foo() {
+                let a = 1;
+            }
+        }
+    """)
+
     private fun doTest(
         newName: String,
         @Language("Rust") before: String,
@@ -623,5 +674,18 @@ class RenameTest : RsTestBase() {
         myFixture.renameElement(element, newName, true, true)
         myFixture.checkResult(after)
     }
-}
 
+    private fun doTestWithConflicts(
+        newName: String,
+        @Language("Rust") code: String,
+        conflicts: Set<String>
+    ) {
+        try {
+            doTest(newName, code, code)
+            error("Conflicts $conflicts missing")
+        }
+        catch (e: BaseRefactoringProcessor.ConflictsInTestsException) {
+            assertEquals(e.messages.toSet(), conflicts)
+        }
+    }
+}
