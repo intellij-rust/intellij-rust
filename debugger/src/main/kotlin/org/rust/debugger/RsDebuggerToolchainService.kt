@@ -5,6 +5,7 @@
 
 package org.rust.debugger
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -121,30 +122,18 @@ class RsDebuggerToolchainService {
         val service = DownloadableFileService.getInstance()
 
         val lldbDir = lldbPath().toFile()
+        lldbDir.deleteRecursively()
 
-        val versions = loadLLDBVersions()
-        val descriptions = mutableListOf<DownloadableFileDescription>()
-        var cleanDebuggerDir = false
-
-        fun addFileDescriptorIfNeeded(propertyName: String, url: String) {
-            val version = versions[propertyName]?.toString()
-            if (version != fileNameWithoutExtension(url)) {
-                descriptions += service.createFileDescription(url)
-                cleanDebuggerDir = true
-            }
-        }
-
-        addFileDescriptorIfNeeded(LLDB_FRAMEWORK_PROPERTY_NAME, lldbFrameworkUrl)
-        addFileDescriptorIfNeeded(LLDB_FRONTEND_PROPERTY_NAME, lldbFrontendUrl)
-
-        if (cleanDebuggerDir) {
-            lldbDir.deleteRecursively()
-        }
+        val descriptions = listOf(
+            service.createFileDescription(lldbFrameworkUrl),
+            service.createFileDescription(lldbFrontendUrl)
+        )
 
         val downloader = service.createDownloader(descriptions, "Debugger downloading")
         val downloadDirectory = downloadPath().toFile()
         val downloadResults = downloader.download(downloadDirectory)
 
+        val versions = Properties()
         for (result in downloadResults) {
             val downloadUrl = result.second.downloadUrl
             val propertyName = if (downloadUrl == lldbFrameworkUrl) LLDB_FRAMEWORK_PROPERTY_NAME else LLDB_FRONTEND_PROPERTY_NAME
@@ -168,7 +157,8 @@ class RsDebuggerToolchainService {
         return url.substringAfterLast("/").removeSuffix(".zip").removeSuffix(".tar.gz")
     }
 
-    private fun loadLLDBVersions(): Properties {
+    @VisibleForTesting
+    fun loadLLDBVersions(): Properties {
         val versions = Properties()
         val versionsFile = lldbPath().resolve(LLDB_VERSIONS).toFile()
 
@@ -183,7 +173,8 @@ class RsDebuggerToolchainService {
         return versions
     }
 
-    private fun saveLLDBVersions(versions: Properties) {
+    @VisibleForTesting
+    fun saveLLDBVersions(versions: Properties) {
         try {
             versions.store(lldbPath().resolve(LLDB_VERSIONS).toFile().bufferedWriter(), "")
         } catch (e: IOException) {
@@ -196,8 +187,8 @@ class RsDebuggerToolchainService {
 
         private const val LLDB_VERSIONS: String = "versions.properties"
 
-        private const val LLDB_FRONTEND_PROPERTY_NAME = "lldbFrontend"
-        private const val LLDB_FRAMEWORK_PROPERTY_NAME = "lldbFramework"
+        const val LLDB_FRONTEND_PROPERTY_NAME = "lldbFrontend"
+        const val LLDB_FRAMEWORK_PROPERTY_NAME = "lldbFramework"
 
         const val RUST_DEBUGGER_GROUP_ID = "Rust Debugger"
 
