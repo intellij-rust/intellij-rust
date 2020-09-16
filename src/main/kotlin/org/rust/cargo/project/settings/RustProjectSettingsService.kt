@@ -5,11 +5,13 @@
 
 package org.rust.cargo.project.settings
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.experiments.RsExperiments
@@ -72,6 +74,9 @@ interface RustProjectSettingsService {
      * After setting change,
      */
     fun modify(action: (State) -> Unit)
+
+    @TestOnly
+    fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit)
 
     val version: Int?
     val toolchain: RustToolchain?

@@ -7,15 +7,18 @@ package org.rust.cargo.project.settings.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.configurationStore.serializeObjectInto
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.project.configurable.RsProjectConfigurable
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.*
@@ -67,6 +70,20 @@ class RustProjectSettingsServiceImpl(
             val oldState = state
             state = newState.copy()
             notifySettingsChanged(oldState, newState)
+        }
+    }
+
+    @TestOnly
+    override fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit) {
+        val newState = state.copy().also(action)
+        if (state != newState) {
+            val oldState = state
+            state = newState.copy()
+            notifySettingsChanged(oldState, newState)
+
+            Disposer.register(parentDisposable) {
+                state = oldState
+            }
         }
     }
 

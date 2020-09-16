@@ -37,12 +37,7 @@ open class RustupTestFixture(
         super.setUp()
         stdlib?.let { VfsRootAccess.allowRootAccess(testRootDisposable, it.path) }
         if (toolchain != null) {
-            project.rustSettings.modify { it.toolchain = toolchain }
+            project.rustSettings.modifyTemporary(testRootDisposable) { it.toolchain = toolchain }
         }
-    }
-
-    override fun tearDown() {
-        project.rustSettings.modify { it.toolchain = null }
-        super.tearDown()
     }
 }

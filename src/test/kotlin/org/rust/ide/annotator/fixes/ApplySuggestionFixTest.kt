@@ -17,7 +17,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
 
     override fun setUp() {
         super.setUp()
-        project.rustSettings.modify { it.runExternalLinterOnTheFly = true }
+        project.rustSettings.modifyTemporary(testRootDisposable) { it.runExternalLinterOnTheFly = true }
     }
 
     fun `test rustc suggestion (machine applicable)`() = checkFixByText("""
@@ -86,7 +86,7 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         @Language("Rust") after: String,
         externalLinter: ExternalLinter = ExternalLinter.DEFAULT
     ) {
-        project.rustSettings.modify { it.externalLinter = externalLinter }
+        project.rustSettings.modifyTemporary(testRootDisposable) { it.externalLinter = externalLinter }
         fileTree {
             toml("Cargo.toml", """
                 [package]
