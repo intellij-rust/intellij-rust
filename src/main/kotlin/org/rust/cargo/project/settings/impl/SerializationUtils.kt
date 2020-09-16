@@ -27,6 +27,7 @@ const val COMPILE_ALL_TARGETS: String = "compileAllTargets"
 const val USE_OFFLINE: String = "useOffline"
 const val MACRO_EXPANSION_ENGINE: String = "macroExpansionEngine"
 const val DOCTEST_INJECTION_ENABLED: String = "doctestInjectionEnabled"
+const val USE_RUSTFMT: String = "useRustfmt"
 const val RUN_RUSTFMT_ON_SAVE: String = "runRustfmtOnSave"
 const val USE_SKIP_CHILDREN: String = "useSkipChildren"
 

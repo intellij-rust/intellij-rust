@@ -35,6 +35,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="runRustfmtOnSave" value="true" />
               <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
+              <option name="useRustfmt" value="true" />
               <option name="useSkipChildren" value="true" />
               <option name="version" value="2" />
             </RustProjectSettings>
@@ -55,6 +56,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(true, service.useOffline)
         assertEquals(MacroExpansionEngine.DISABLED, service.macroExpansionEngine)
         assertEquals(false, service.doctestInjectionEnabled)
+        assertEquals(true, service.useRustfmt)
         assertEquals(true, service.runRustfmtOnSave)
         assertEquals(true, service.useSkipChildren)
     }

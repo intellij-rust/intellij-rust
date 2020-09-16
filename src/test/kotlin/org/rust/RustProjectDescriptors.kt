@@ -5,11 +5,9 @@
 
 package org.rust
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
@@ -129,14 +127,9 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         stdlib?.let { VfsRootAccess.allowRootAccess(fixture.testRootDisposable, it.path) }
         // TODO: use RustupTestFixture somehow
         val rustSettings = fixture.project.rustSettings
-        rustSettings.modify {
+        rustSettings.modifyTemporary(fixture.testRootDisposable) {
             it.toolchain = toolchain
         }
-        Disposer.register(fixture.testRootDisposable, Disposable {
-            rustSettings.modify {
-                it.toolchain = null
-            }
-        })
     }
 }
 

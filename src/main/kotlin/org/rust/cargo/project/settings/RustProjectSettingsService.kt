@@ -5,11 +5,13 @@
 
 package org.rust.cargo.project.settings
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
+import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.experiments.RsExperiments
@@ -43,6 +45,7 @@ interface RustProjectSettingsService {
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
         var doctestInjectionEnabled: Boolean = true,
+        var useRustfmt: Boolean = false,
         var runRustfmtOnSave: Boolean = false,
         var useSkipChildren: Boolean = false
     ) {
@@ -73,6 +76,9 @@ interface RustProjectSettingsService {
      */
     fun modify(action: (State) -> Unit)
 
+    @TestOnly
+    fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit)
+
     val version: Int?
     val toolchain: RustToolchain?
     val explicitPathToStdlib: String?
@@ -84,6 +90,7 @@ interface RustProjectSettingsService {
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
     val doctestInjectionEnabled: Boolean
+    val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean
     val useSkipChildren: Boolean
 
