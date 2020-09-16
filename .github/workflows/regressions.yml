@@ -113,6 +113,9 @@ jobs:
               with:
                   arguments: "clean :test --tests \"org.rustPerformanceTests.CustomRealProjectAnalysisTest.test\""
 
+            - name: Checkout current version
+              run: git checkout ${{ github.sha }}
+
             - name: Calculate regressions
               run: python scripts/calculate_regressions.py --name ${{ matrix.project.name }}
 
