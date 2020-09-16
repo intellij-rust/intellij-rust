@@ -136,6 +136,7 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
             }
             is RsMod -> {
                 if (element is RsFile && element.declaration == null) return
+                if (element.pathAttribute != null) return
 
                 val ownedDir = element.getOwnedDirectory() ?: return
                 allRenames[ownedDir] = newName

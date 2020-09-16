@@ -11,6 +11,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.LanguageCommenters
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.io.StreamUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.PsiManagerEx
@@ -44,6 +46,10 @@ import kotlin.reflect.KMutableProperty0
 
 abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
+    // Needed for assertion that the directory doesn't acidentally renamed during the test
+    private var tempDirRootUrl: String? = null
+    private var tempDirRoot: VirtualFile? = null
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val annotation = findAnnotationInstance<ProjectDescriptor>() ?: return DefaultDescriptor
         return annotation.descriptor.objectInstance
@@ -69,11 +75,22 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             Disposer.register(testRootDisposable, disposable)
         }
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+        tempDirRoot = myFixture.findFileInTempDir(".")
+        tempDirRootUrl = tempDirRoot?.url
     }
 
     override fun tearDown() {
+        val oldTempDirRootUrl = tempDirRootUrl
+        val newTempDirRootUrl = tempDirRoot?.url
         super.tearDown()
         checkMacroExpansionFileSystemAfterTest()
+        // Check that temp root directory was not renamed during the test
+        if (oldTempDirRootUrl != null && oldTempDirRootUrl != newTempDirRootUrl) {
+            if (newTempDirRootUrl != null) {
+                runWriteAction { VirtualFileManager.getInstance().findFileByUrl(newTempDirRootUrl)?.delete(null) }
+            }
+            error("Root directory has been renamed from `$oldTempDirRootUrl` to `$newTempDirRootUrl`; This should not happens")
+        }
     }
 
     private fun setupMockRustcVersion() {
