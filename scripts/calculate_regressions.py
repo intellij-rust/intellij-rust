@@ -59,12 +59,17 @@ if __name__ == '__main__':
     dump_as_json(fixed, f"regressions/{args.name}_fixed.json")
     dump_as_json(new, f"regressions/{args.name}_new.json")
 
-    print(f"{len(fixed)} annotations fixed")
-    for ann in fixed:
-        print(ann)
+    print(f"total annotations: {len(without_changes)} without changes, {len(with_changes)} with changes")
+    # should be single line (second and subsequent lines are not displayed)
+    print(f"::warning file={args.name}:: {len(new)} annotations introduced, {len(fixed)} annotations fixed")
     print()
+
     print(f"{len(new)} annotations introduced")
     for ann in new:
+        print(ann)
+    print()
+    print(f"{len(fixed)} annotations fixed")
+    for ann in fixed:
         print(ann)
 
     if len(new) > 0:
