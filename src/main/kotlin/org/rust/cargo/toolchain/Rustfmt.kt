@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
 import org.rust.cargo.project.model.CargoProject
-import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -43,11 +42,6 @@ class Rustfmt(private val rustfmtExecutable: Path) {
 
         val arguments = buildList<String> {
             add("--emit=stdout")
-
-            if (checkSupportForSkipChildrenFlag(cargoProject)) {
-                add("--unstable-features")
-                add("--skip-children")
-            }
 
             val configPath = findConfigPathRecursively(file.parent, stopAt = cargoProject.workingDirectory)
             if (configPath != null) {
@@ -85,19 +79,6 @@ class Rustfmt(private val rustfmtExecutable: Path) {
                 ?.toGeneralCommandLine(project, CargoCommandLine.forProject(cargoProject, "fmt", listOf("--all")))
                 ?.execute(owner, false)
         }
-    }
-
-    private fun checkSupportForSkipChildrenFlag(cargoProject: CargoProject): Boolean {
-        if (!cargoProject.project.rustSettings.useSkipChildren) return false
-        val channel = cargoProject.rustcInfo?.version?.channel
-        if (channel != RustChannel.NIGHTLY) return false
-        return GeneralCommandLine(rustfmtExecutable)
-            .withParameters("-h")
-            .withWorkDirectory(cargoProject.workingDirectory)
-            .execute()
-            ?.stdoutLines
-            ?.contains(" --skip-children ")
-            ?: false
     }
 
     companion object {

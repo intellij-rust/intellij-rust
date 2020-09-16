@@ -47,7 +47,6 @@ interface RustProjectSettingsService {
         var doctestInjectionEnabled: Boolean = true,
         var useRustfmt: Boolean = false,
         var runRustfmtOnSave: Boolean = false,
-        var useSkipChildren: Boolean = false
     ) {
         @get:Transient
         @set:Transient
@@ -92,7 +91,6 @@ interface RustProjectSettingsService {
     val doctestInjectionEnabled: Boolean
     val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean
-    val useSkipChildren: Boolean
 
     /*
      * Show a dialog for toolchain configuration
