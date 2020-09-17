@@ -26,6 +26,7 @@ import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.SemVer
@@ -236,6 +237,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
     ) {
         InlineFile(before)
         action()
+        PsiTestUtil.checkPsiStructureWithCommit(myFixture.file, PsiTestUtil::checkPsiMatchesTextIgnoringNonCode)
         myFixture.checkResult(replaceCaretMarker(after))
     }
 
