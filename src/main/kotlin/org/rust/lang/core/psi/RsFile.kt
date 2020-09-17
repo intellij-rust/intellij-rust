@@ -203,7 +203,7 @@ class RsFile(
             MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
         }
         return CachedValuesManager.getCachedValue(originalFile, key) {
-            val decl = if (isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
+            val decl = if (originalFile.isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
             CachedValueProvider.Result.create(
                 decl,
                 originalFile.rustStructureOrAnyPsiModificationTracker,
