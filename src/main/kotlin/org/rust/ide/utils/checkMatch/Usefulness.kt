@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections.checkMatch
+package org.rust.ide.utils.checkMatch
 
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.ext.RsMod

@@ -9,7 +9,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.type

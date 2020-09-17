@@ -7,6 +7,7 @@ package org.rust.ide.inspections.checkMatch
 
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsProblemsHolder
+import org.rust.ide.utils.checkMatch.*
 import org.rust.lang.core.psi.RsMatchExpr
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.arms
