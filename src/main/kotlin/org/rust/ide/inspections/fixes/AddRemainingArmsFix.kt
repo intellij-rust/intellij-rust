@@ -15,9 +15,8 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.types.type
 
 open class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) : LocalQuickFixOnPsiElement(match) {
-    override fun getFamilyName() = "Add remaining patterns"
-
-    override fun getText() = familyName
+    override fun getFamilyName(): String = NAME
+    override fun getText(): String = familyName
 
     override fun invoke(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) {
         val oldMatchBody = (startElement as? RsMatchExpr)?.matchBody ?: return
@@ -38,14 +37,21 @@ open class AddRemainingArmsFix(match: RsMatchExpr, val patterns: List<Pattern>) 
 
     open fun createNewArms(psiFactory: RsPsiFactory, oldMatchBody: RsMatchBody): List<RsMatchArm> =
         psiFactory.createMatchBody(patterns, oldMatchBody).matchArmList
+
+    companion object {
+        const val NAME = "Add remaining patterns"
+    }
 }
 
 class AddWildcardArmFix(match: RsMatchExpr) : AddRemainingArmsFix(match, emptyList()) {
-    override fun getFamilyName() = "Add _ pattern"
-
-    override fun getText() = familyName
+    override fun getFamilyName(): String = NAME
+    override fun getText(): String = familyName
 
     override fun createNewArms(psiFactory: RsPsiFactory, oldMatchBody: RsMatchBody): List<RsMatchArm> = listOf(
         psiFactory.createMatchBody(listOf(Pattern.wild())).matchArmList.first()
     )
+
+    companion object {
+        const val NAME = "Add _ pattern"
+    }
 }

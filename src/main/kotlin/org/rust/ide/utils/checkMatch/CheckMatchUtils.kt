@@ -8,8 +8,10 @@ package org.rust.ide.utils.checkMatch
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.consts.CtValue
+import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import org.rust.lang.utils.evaluation.ConstExpr.Value
 import org.rust.lang.utils.evaluation.evaluate
@@ -17,6 +19,38 @@ import org.rust.lang.utils.evaluation.evaluate
 class CheckMatchException(message: String) : Exception(message)
 
 typealias Matrix = List<List<Pattern>>
+
+fun RsMatchExpr.checkExhaustive(): List<Pattern>? {
+    val exprType = expr?.type ?: return null
+    if (exprType.containsTyOfClass(TyUnknown::class.java)) return null
+    try {
+        return doCheckExhaustive(this)
+    } catch (todo: NotImplementedError) {
+    } catch (e: CheckMatchException) {
+    }
+    return null
+}
+
+private fun doCheckExhaustive(match: RsMatchExpr): List<Pattern>? {
+    val exprType = match.expr?.type ?: return null
+    if (exprType.containsTyOfClass(TyUnknown::class.java)) return null
+    val matchedExprType = match.expr?.type ?: return null
+
+    val matrix = match.arms
+        .filter { it.matchArmGuard == null }
+        .calculateMatrix()
+        .takeIf { it.isWellTyped() }
+        ?: return null
+
+    val wild = Pattern.wild(matchedExprType)
+    val useful = isUseful(matrix, listOf(wild), true, match.crateRoot, isTopLevel = true)
+
+    /** If `_` pattern is useful, the match is not exhaustive */
+    if (useful is Usefulness.UsefulWithWitness) {
+        return useful.witnesses.mapNotNull { it.patterns.singleOrNull() }
+    }
+    return null
+}
 
 /**
  * Check if all the patterns have the same type
