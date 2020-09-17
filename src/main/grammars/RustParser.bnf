@@ -675,6 +675,7 @@ upper ModDeclItem ::= mod identifier ';' {
 upper ForeignModItem ::= ExternAbi ForeignModBody {
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsItemElement"
+                 "org.rust.lang.core.psi.ext.RsItemsOwner"
                  "org.rust.lang.core.psi.ext.RsInnerAttributeOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsForeignModItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsForeignModStub"
