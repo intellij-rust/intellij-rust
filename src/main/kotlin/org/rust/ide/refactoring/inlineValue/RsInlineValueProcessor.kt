@@ -13,6 +13,8 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
+import org.rust.lang.core.psi.RsPath
+import org.rust.lang.core.psi.RsPathExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructLiteralField
 import org.rust.lang.core.resolve.ref.RsReference
@@ -46,6 +48,10 @@ class RsInlineValueProcessor(
                     if (element.expr == null) {
                         element.addAfter(context.expr, element.colon)
                     }
+                }
+                is RsPath -> when (val parent = element.parent) {
+                    is RsPathExpr -> parent.replace(context.expr)
+                    else -> Unit // Can't replace RsPath to RsExpr
                 }
                 else -> element.replace(context.expr)
             }
