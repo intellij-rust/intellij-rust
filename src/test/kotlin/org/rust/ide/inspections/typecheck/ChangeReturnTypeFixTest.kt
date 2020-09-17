@@ -5,8 +5,10 @@
 
 package org.rust.ide.inspections.typecheck
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.ide.inspections.RsTypeCheckInspection
 
@@ -190,6 +192,103 @@ class ChangeReturnTypeFixTest : RsInspectionsTestBase(RsTypeCheckInspection::cla
     """, """
         fn foo() {
             let x: fn() -> i32 = || -> bool true;
+        }
+    """)
+
+    fun `test use qualified name for ambiguous type`() = checkFixByText("Change return type of function 'foo' to 'a::Foo'", """
+        mod a {
+            pub struct Foo;
+        }
+        struct Foo;
+
+        fn foo() -> Foo {
+            <error>a::Foo<caret></error>
+        }
+    """, """
+        mod a {
+            pub struct Foo;
+        }
+        struct Foo;
+
+        fn foo() -> a::Foo {
+            a::Foo
+        }
+    """)
+
+    fun `test use qualified name for ambiguous nested type`() = checkFixByText("Change return type of function 'foo' to '(a::S, b::S)'", """
+        struct S;
+        mod a {
+            pub struct S;
+        }
+        mod b {
+            pub struct S;
+        }
+
+        fn foo() {
+            <error>(a::S<caret>, b::S)</error>
+        }
+    """, """
+        struct S;
+        mod a {
+            pub struct S;
+        }
+        mod b {
+            pub struct S;
+        }
+
+        fn foo() -> (a::S, b::S) {
+            (a::S, b::S)
+        }
+    """)
+
+    fun `test do not qualify type parameter`() = checkFixByText("Change return type of function 'foo' to 'b::S<T>'", """
+        struct T;
+        struct S<T>(T);
+        mod b {
+            pub struct S<T>(T);
+        }
+
+        fn foo() -> S<T> {
+            <error>b::S::<T>(T)<caret></error>
+        }
+    """, """
+        struct T;
+        struct S<T>(T);
+        mod b {
+            pub struct S<T>(T);
+        }
+
+        fn foo() -> b::S<T> {
+            b::S::<T>(T)
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test qualify ambiguous type with reexported path`() = checkFixByText("Change return type of function 'foo' to 'crate::a::S'", """
+        struct S;
+        mod a {
+            pub use b::S;
+
+            mod b {
+                pub struct S;
+            }
+        }
+
+        fn foo() -> S {
+            <error>a::S<caret></error>
+        }
+    """, """
+        struct S;
+        mod a {
+            pub use b::S;
+
+            mod b {
+                pub struct S;
+            }
+        }
+
+        fn foo() -> crate::a::S {
+            a::S
         }
     """)
 }

@@ -31,7 +31,7 @@ object RsImportHelper {
     }
 
     fun importTypeReferencesFromTy(context: RsElement, ty: Ty, useAliases: Boolean = false) {
-        val (toImport, _) = getTypeReferencesInfoFromTy(context, ty, useAliases)
+        val (toImport, _) = getTypeReferencesInfoFromTys(context, ty, useAliases = useAliases)
         importElements(context, toImport)
     }
 
@@ -74,11 +74,11 @@ object RsImportHelper {
     /**
      * Traverse types in `elemTy` and collects all items that unresolved in current context.
      */
-    private fun getTypeReferencesInfoFromTy(
+    fun getTypeReferencesInfoFromTys(
         context: RsElement,
-        elemTy: Ty,
-        useAliases: Boolean
-    ): TypeReferencesInfo = getTypeReferencesInfo(context, listOf(elemTy)) { ty, result ->
+        vararg elemTys: Ty,
+        useAliases: Boolean = false
+    ): TypeReferencesInfo = getTypeReferencesInfo(context, elemTys.toList()) { ty, result ->
         collectImportSubjectsFromTy(ty, emptySubstitution, result, useAliases)
     }
 
@@ -161,13 +161,13 @@ object RsImportHelper {
 
         return TypeReferencesInfo(importSubjects.flatMap { it.value }.toSet(), toQualifiedName)
     }
-
-    /**
-     * @param toImport  Set of unresolved items that should be imported
-     * @param toQualify Set of unresolved items that can't be imported
-     */
-    private data class TypeReferencesInfo(
-        val toImport: Set<RsQualifiedNamedElement>,
-        val toQualify: Set<RsQualifiedNamedElement>
-    )
 }
+
+/**
+ * @param toImport  Set of unresolved items that should be imported
+ * @param toQualify Set of unresolved items that can't be imported
+ */
+data class TypeReferencesInfo(
+    val toImport: Set<RsQualifiedNamedElement>,
+    val toQualify: Set<RsQualifiedNamedElement>
+)
