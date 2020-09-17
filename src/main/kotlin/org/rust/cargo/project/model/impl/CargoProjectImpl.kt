@@ -9,6 +9,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
@@ -34,6 +35,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
+import com.intellij.ui.GuiUtils
 import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
@@ -103,7 +105,9 @@ open class CargoProjectsServiceImpl(
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
                 override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     StartupManager.getInstance(project).runAfterOpened {
-                        initializeToolWindow(project)
+                        GuiUtils.invokeLaterIfNeeded({
+                            initializeToolWindow(project)
+                        }, ModalityState.NON_MODAL)
                     }
                 }
             })
