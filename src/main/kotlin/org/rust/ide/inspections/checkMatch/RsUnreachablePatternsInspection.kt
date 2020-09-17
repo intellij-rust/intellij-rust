@@ -12,6 +12,7 @@ import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.ide.inspections.lints.RsLint
 import org.rust.ide.inspections.lints.RsLintInspection
+import org.rust.ide.utils.checkMatch.*
 import org.rust.lang.core.psi.RsElementTypes.OR
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsMatchExpr

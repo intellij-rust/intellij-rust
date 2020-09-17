@@ -8,7 +8,7 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.LocalTimeCounter
-import org.rust.ide.inspections.checkMatch.Pattern
+import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
