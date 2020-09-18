@@ -5,9 +5,6 @@
 
 package org.rust.cargo.project.model.impl
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.process.ProcessAdapter
-import com.intellij.execution.process.ProcessEvent
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -28,7 +25,6 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.EmptyRunnable
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -43,7 +39,6 @@ import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
@@ -61,16 +56,16 @@ import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.additionalRoots
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.AutoInjectedCrates
-import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.*
+import org.rust.openapiext.CachedVirtualFile
+import org.rust.openapiext.TaskResult
+import org.rust.openapiext.modules
+import org.rust.openapiext.pathAsPath
 import org.rust.stdext.AsyncValue
 import org.rust.stdext.applyWithSymlink
-import org.rust.stdext.joinAll
 import org.rust.taskQueue
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -342,7 +337,7 @@ data class CargoProjectImpl(
     override val rustcInfoStatus: UpdateStatus = UpdateStatus.NeedsUpdate
 ) : UserDataHolderBase(), CargoProject {
     override val project get() = projectService.project
-    private val toolchain get() = project.toolchain
+
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
         val stdlib = stdlib ?: return@lazy rawWorkspace
@@ -370,42 +365,6 @@ data class CargoProjectImpl(
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)
 
-    fun refresh(): CompletableFuture<CargoProjectImpl> {
-        if (!workingDirectory.exists()) {
-            return CompletableFuture.completedFuture(copy(
-                stdlibStatus = UpdateStatus.UpdateFailed("Project directory does not exist"))
-            )
-        }
-        return refreshRustcInfo()
-            .thenCompose { it.refreshWorkspace() }
-            .thenCompose { it.refreshStdlib() }
-    }
-
-    private fun refreshStdlib(): CompletableFuture<CargoProjectImpl> {
-        if (doesProjectLooksLikeRustc()) {
-            // rust-lang/rust contains stdlib inside the project
-            val std = StandardLibrary.fromPath(manifest.parent.toString())
-                ?.asPartOfCargoProject()
-            if (std != null) {
-                return CompletableFuture.completedFuture(withStdlib(TaskResult.Ok(std)))
-            }
-        }
-
-        val rustup = toolchain?.rustup(workingDirectory)
-        if (rustup == null) {
-            val explicitPath = project.rustSettings.explicitPathToStdlib
-            val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
-            val result = when {
-                explicitPath == null -> TaskResult.Err<StandardLibrary>("no explicit stdlib or rustup found")
-                lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
-                else -> TaskResult.Ok(lib)
-            }
-            return CompletableFuture.completedFuture(withStdlib(result))
-        }
-
-        return fetchStdlib(project, rustup).thenApply(this::withStdlib)
-    }
-
     // Checks that the project is https://github.com/rust-lang/rust
     fun doesProjectLooksLikeRustc(): Boolean {
         val workspace = rawWorkspace ?: return false
@@ -417,37 +376,17 @@ data class CargoProjectImpl(
             possiblePackages.any { workspace.findPackage(it) != null }
     }
 
-    private fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
+    fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {
         is TaskResult.Ok -> copy(stdlib = result.value, stdlibStatus = UpdateStatus.UpToDate)
         is TaskResult.Err -> copy(stdlibStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    private fun refreshWorkspace(): CompletableFuture<CargoProjectImpl> {
-        val toolchain = toolchain
-            ?: return CompletableFuture.completedFuture(copy(workspaceStatus = UpdateStatus.UpdateFailed(
-                "Can't update Cargo project, no Rust toolchain"
-            )))
-
-        return fetchCargoWorkspace(project, toolchain, workingDirectory)
-            .thenApply(this::withWorkspace)
-    }
-
-    private fun withWorkspace(result: TaskResult<CargoWorkspace>): CargoProjectImpl = when (result) {
+    fun withWorkspace(result: TaskResult<CargoWorkspace>): CargoProjectImpl = when (result) {
         is TaskResult.Ok -> copy(rawWorkspace = result.value, workspaceStatus = UpdateStatus.UpToDate)
         is TaskResult.Err -> copy(workspaceStatus = UpdateStatus.UpdateFailed(result.reason))
     }
 
-    private fun refreshRustcInfo(): CompletableFuture<CargoProjectImpl> {
-        val toolchain = toolchain
-            ?: return CompletableFuture.completedFuture(copy(rustcInfoStatus = UpdateStatus.UpdateFailed(
-                "Can't get rustc info, no Rust toolchain"
-            )))
-
-        return fetchRustcInfo(project, toolchain, workingDirectory)
-            .thenApply(this::withRustcInfo)
-    }
-
-    private fun withRustcInfo(result: TaskResult<RustcInfo>): CargoProjectImpl = when (result) {
+    fun withRustcInfo(result: TaskResult<RustcInfo>): CargoProjectImpl = when (result) {
         is TaskResult.Ok -> copy(rustcInfo = result.value, rustcInfoStatus = UpdateStatus.UpToDate)
         is TaskResult.Err -> copy(rustcInfoStatus = UpdateStatus.UpdateFailed(result.reason))
     }
@@ -473,25 +412,28 @@ private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path
 }
 
 private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): CompletableFuture<List<CargoProjectImpl>> {
-    return projects.map { it.refresh() }
-        .joinAll()
-        .thenApply { updatedProjects ->
-            for (p in updatedProjects) {
-                val status = p.mergedStatus
-                if (status is UpdateStatus.UpdateFailed) {
-                    project.showBalloon(
-                        "Cargo project update failed:<br>${status.reason}",
-                        NotificationType.ERROR
-                    )
-                    break
-                }
-            }
+    // TODO: get rid of `result` here
+    val result = CompletableFuture<List<CargoProjectImpl>>()
+    val syncTask = CargoSyncTask(project, projects, result)
+    project.taskQueue.run(syncTask)
 
-            runWithNonLightProject(project) {
-                setupProjectRoots(project, updatedProjects)
+    return result.thenApply { updatedProjects ->
+        for (p in updatedProjects) {
+            val status = p.mergedStatus
+            if (status is UpdateStatus.UpdateFailed) {
+                project.showBalloon(
+                    "Cargo project update failed:<br>${status.reason}",
+                    NotificationType.ERROR
+                )
+                break
             }
-            updatedProjects
         }
+
+        runWithNonLightProject(project) {
+            setupProjectRoots(project, updatedProjects)
+        }
+        updatedProjects
+    }
 }
 
 private inline fun runWithNonLightProject(project: Project, action: () -> Unit) {
@@ -561,90 +503,5 @@ private fun VirtualFile.setupContentRoots(project: Project, setup: ContentEntry.
 private fun VirtualFile.setupContentRoots(packageModule: Module, setup: ContentEntry.(VirtualFile) -> Unit) {
     ModuleRootModificationUtil.updateModel(packageModule) { rootModel ->
         rootModel.contentEntries.singleOrNull()?.setup(this)
-    }
-}
-
-private fun fetchStdlib(
-    project: Project,
-    rustup: Rustup
-): CompletableFuture<TaskResult<StandardLibrary>> {
-    return runAsyncTask(project, project.taskQueue::run, "Getting Rust stdlib") {
-        progress.isIndeterminate = true
-        when (val download = rustup.downloadStdlib()) {
-            is DownloadResult.Ok -> {
-                val lib = StandardLibrary.fromFile(download.value)
-                if (lib == null) {
-                    err("" +
-                        "corrupted standard library: ${download.value.presentableUrl}"
-                    )
-                } else {
-                    ok(lib)
-                }
-            }
-            is DownloadResult.Err -> err(
-                "download failed: ${download.error}"
-            )
-        }
-    }
-}
-
-private fun fetchCargoWorkspace(
-    project: Project,
-    toolchain: RustToolchain,
-    projectDirectory: Path
-): CompletableFuture<TaskResult<CargoWorkspace>> {
-    return runAsyncTask(project, project.taskQueue::run, "Updating cargo") {
-        progress.isIndeterminate = true
-        if (!toolchain.looksLikeValidToolchain()) {
-            return@runAsyncTask err(
-                "invalid Rust toolchain ${toolchain.presentableLocation}"
-            )
-        }
-        val cargo = toolchain.cargoOrWrapper(projectDirectory)
-        try {
-            val projectDescriptionData = cargo.fullProjectDescription(project, projectDirectory, object : ProcessAdapter() {
-                override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
-                    val text = event.text.trim { it <= ' ' }
-                    if (text.startsWith("Updating") || text.startsWith("Downloading")) {
-                        progress.text = text
-                    }
-                }
-            })
-            val manifestPath = projectDirectory.resolve("Cargo.toml")
-
-            // Running "cargo rustc -- --print cfg" causes an error when run in a project with multiple targets
-            // error: extra arguments to `rustc` can only be passed to one target, consider filtering
-            // the package by passing e.g. `--lib` or `--bin NAME` to specify a single target
-            // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
-            // but it also compiles the whole project, which is probably not wanted
-            //TODO: This does not query the target specific cfg flags during cross compilation :-(
-            val rawCfgOptions = toolchain.getCfgOptions(projectDirectory) ?: emptyList()
-            val cfgOptions = CfgOptions.parse(rawCfgOptions)
-            val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
-            ok(ws)
-        } catch (e: ExecutionException) {
-            err(e.message ?: "failed to run Cargo")
-        }
-    }
-}
-
-private fun fetchRustcInfo(
-    project: Project,
-    toolchain: RustToolchain,
-    projectDirectory: Path
-): CompletableFuture<TaskResult<RustcInfo>> {
-    return runAsyncTask(project, project.taskQueue::run, "Getting toolchain version") {
-        progress.isIndeterminate = true
-        if (!toolchain.looksLikeValidToolchain()) {
-            return@runAsyncTask err(
-                "invalid Rust toolchain ${toolchain.presentableLocation}"
-            )
-        }
-
-        val sysroot = toolchain.getSysroot(projectDirectory)
-            ?: return@runAsyncTask err("failed to get project sysroot")
-        val versions = toolchain.queryVersions()
-
-        ok(RustcInfo(sysroot, versions.rustc))
     }
 }
