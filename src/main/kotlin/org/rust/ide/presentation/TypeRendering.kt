@@ -5,6 +5,8 @@
 
 package org.rust.ide.presentation
 
+import org.rust.ide.utils.import.ImportCandidatesCollector.findImportCandidate
+import org.rust.ide.utils.import.ImportContext
 import org.rust.lang.core.psi.RsTraitItem
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
@@ -23,6 +25,7 @@ import org.rust.stdext.withPrevious
 private const val MAX_SHORT_TYPE_LEN = 50
 
 fun Ty.render(
+    context: RsElement? = null,
     level: Int = Int.MAX_VALUE,
     unknown: String = "<unknown>",
     anonymous: String = "<anonymous>",
@@ -30,17 +33,20 @@ fun Ty.render(
     unknownConst: String = "<unknown>",
     integer: String = "{integer}",
     float: String = "{float}",
+    useQualifiedName: Set<RsQualifiedNamedElement> = emptySet(),
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
     useAliasNames: Boolean = false,
     skipUnchangedDefaultTypeArguments: Boolean = false
 ): String = TypeRenderer(
+    context = context,
     unknown = unknown,
     anonymous = anonymous,
     unknownLifetime = unknownLifetime,
     unknownConst = unknownConst,
     integer = integer,
     float = float,
+    useQualifiedName = useQualifiedName,
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
     useAliasNames = useAliasNames,
@@ -48,18 +54,22 @@ fun Ty.render(
 ).render(this, level)
 
 fun Ty.renderInsertionSafe(
+    context: RsElement? = null,
     level: Int = Int.MAX_VALUE,
+    useQualifiedName: Set<RsQualifiedNamedElement> = emptySet(),
     includeTypeArguments: Boolean = true,
     includeLifetimeArguments: Boolean = false,
     useAliasNames: Boolean = false,
     skipUnchangedDefaultTypeArguments: Boolean = false
 ): String = TypeRenderer(
+    context = context,
     unknown = "_",
     anonymous = "_",
     unknownLifetime = "'_",
     unknownConst = "{}",
     integer = "_",
     float = "_",
+    useQualifiedName = useQualifiedName,
     includeTypeArguments = includeTypeArguments,
     includeLifetimeArguments = includeLifetimeArguments,
     useAliasNames = useAliasNames,
@@ -75,12 +85,14 @@ val Ty.shortPresentableText: String
         }.last().first
 
 private data class TypeRenderer(
+    val context: RsElement?,
     val unknown: String,
     val anonymous: String,
     val unknownLifetime: String,
     val unknownConst: String,
     val integer: String,
     val float: String,
+    val useQualifiedName: Set<RsQualifiedNamedElement>,
     val includeTypeArguments: Boolean,
     val includeLifetimeArguments: Boolean,
     val useAliasNames: Boolean,
@@ -151,7 +163,7 @@ private data class TypeRenderer(
                 if (useAliasNames && ty.aliasedBy != null) {
                     append(formatBoundElement(ty.aliasedBy, render))
                 } else {
-                    append(ty.item.name ?: return anonymous)
+                    append(getName(ty.item) ?: return anonymous)
                     if (includeTypeArguments) append(formatGenerics(ty, render))
                 }
             }
@@ -244,7 +256,7 @@ private data class TypeRenderer(
         where T : RsGenericDeclaration,
               T : RsNamedElement {
         return buildString {
-            append(boundElement.element.name ?: return anonymous)
+            append(getName(boundElement.element) ?: return anonymous)
             val visibleTypes = formatBoundElementGenerics(boundElement, render)
             append(if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">"))
         }
@@ -263,4 +275,13 @@ private data class TypeRenderer(
         val constSubst = boundElement.element.constParameters.map { render(boundElement.subst[it] ?: CtUnknown) }
         return regionSubst + tySubst + constSubst
     }
+
+    private fun getName(element: RsNamedElement): String? =
+        if (element is RsQualifiedNamedElement && element in useQualifiedName) {
+            val importingContext = context?.let { ImportContext.from(context.project, it) }
+            val candidate = importingContext?.let { findImportCandidate(it, element) }
+            candidate?.info?.usePath ?: element.qualifiedName
+        } else {
+            element.name
+        }
 }

@@ -27,9 +27,11 @@ import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
 import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
+import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
@@ -62,7 +64,7 @@ sealed class RsDiagnostic(
         private val description: String? = if (expectedTy.hasTyInfer || actualTy.hasTyInfer) {
             // if types contain infer types, they will be replaced with more specific (e.g. `{integer}` with `i32`)
             // so we capture string representation of types right here
-            expectedFound(expectedTy, actualTy)
+            expectedFound(element, expectedTy, actualTy)
         } else {
             null
         }
@@ -72,7 +74,7 @@ sealed class RsDiagnostic(
                 ERROR,
                 E0308,
                 "mismatched types",
-                description ?: expectedFound(expectedTy, actualTy),
+                description ?: expectedFound(element, expectedTy, actualTy),
                 fixes = buildList {
                     if (expectedTy is TyNumeric && isActualTyNumeric()) {
                         add(AddAsTyFix(element, expectedTy))
@@ -200,8 +202,9 @@ sealed class RsDiagnostic(
         private fun isTraitWithTySubstImplForActual(lookup: ImplLookup, trait: RsTraitItem?, ty: TyReference): Boolean =
             trait != null && lookup.canSelectWithDeref(TraitRef(actualTy, trait.withSubst(ty.referenced)))
 
-        private fun expectedFound(expectedTy: Ty, actualTy: Ty): String {
-            return "expected `${expectedTy.escaped}`, found `${actualTy.escaped}`"
+        private fun expectedFound(element: PsiElement, expectedTy: Ty, actualTy: Ty): String {
+            val useQualifiedName = getConflictingNames(element, expectedTy, actualTy)
+            return "expected `${expectedTy.escaped(useQualifiedName)}`, found `${actualTy.escaped(useQualifiedName)}`"
         }
 
         /**
@@ -263,7 +266,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0614,
-            "type ${ty.escaped} cannot be dereferenced"
+            "type ${ty.escaped(getConflictingNames(element, ty))} cannot be dereferenced"
         )
     }
 
@@ -1416,4 +1419,14 @@ private fun escapeTy(str: String): String {
     }
 }
 
-private val Ty.escaped get() = escapeTy(toString())
+private fun Ty.escaped(useQualifiedName: Set<RsQualifiedNamedElement> = emptySet()): String =
+    escapeTy(render(useQualifiedName = useQualifiedName, useAliasNames = true))
+
+private fun getConflictingNames(element: PsiElement, vararg tys: Ty): Set<RsQualifiedNamedElement> {
+    val context = element.ancestorOrSelf<RsElement>()
+    return if (context != null) {
+        getTypeReferencesInfoFromTys(context, *tys, useAliases = true).toQualify
+    } else {
+        emptySet()
+    }
+}

@@ -93,6 +93,19 @@ object ImportCandidatesCollector {
         return getTraitImportCandidates(project, scope, resolvedMethods.map { it.source })
     }
 
+    fun findImportCandidate(importingContext: ImportContext, element: RsQualifiedNamedElement): ImportCandidate? {
+        val project = importingContext.project
+        val searchScope = RsWithMacrosProjectScope(project)
+        val explicitItems = sequenceOf(QualifiedNamedItem.ExplicitItem(element))
+        val reexportedItems = getReexportedItems(project, element.name ?: return null, searchScope)
+        return (explicitItems + reexportedItems)
+            .filter { it.item == element }
+            .flatMap { it.withModuleReexports(project).asSequence() }
+            .mapNotNull { it.toImportCandidate(importingContext.superMods) }
+            .filterImportCandidates(importingContext.attributes)
+            .firstOrNull()
+    }
+
     fun getTraitImportCandidates(
         project: Project,
         scope: RsElement,

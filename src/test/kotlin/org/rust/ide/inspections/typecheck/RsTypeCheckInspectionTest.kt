@@ -127,6 +127,30 @@ class RsTypeCheckInspectionTest : RsInspectionsTestBase(RsTypeCheckInspection::c
         }
     """)
 
+    fun `test type mismatch same type name`() = checkByText("""
+        mod a {
+            pub struct Foo;
+        }
+        struct Foo;
+        fn foo() -> Foo {
+            <error descr="mismatched types [E0308]expected `Foo`, found `test_package::a::Foo`">a::Foo</error>
+        }
+    """)
+
+    fun `test type mismatch same type name behind alias`() = checkByText("""
+        mod a {
+            pub struct Foo {}
+            pub type Bar = Foo;
+            impl Bar {
+                pub fn new() -> Bar { Foo {} }
+            }
+        }
+        struct Bar;
+        fn foo() -> Bar {
+            <error descr="mismatched types [E0308]expected `Bar`, found `test_package::a::Bar`">a::Bar::new()</error>
+        }
+    """)
+
     fun `test type mismatch E0308 unconstrained integer`() = checkByText("""
         struct S;
         fn main () {
