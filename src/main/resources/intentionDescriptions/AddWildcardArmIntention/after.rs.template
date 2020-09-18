@@ -1,0 +1,6 @@
+fn foo(x: Option<i32>) {
+    <spot>match x {
+        None => {}
+        _ => {}
+    }</spot>
+}

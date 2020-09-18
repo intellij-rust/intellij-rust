@@ -22,7 +22,6 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.ide.inspections.checkMatch.Pattern
 import org.rust.ide.inspections.fixes.AddMainFnFix
 import org.rust.ide.inspections.fixes.AddRemainingArmsFix
 import org.rust.ide.inspections.fixes.AddWildcardArmFix
@@ -31,6 +30,7 @@ import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
 import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
+import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
