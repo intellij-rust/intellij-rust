@@ -464,6 +464,13 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    fun `test no add _ pattern for empty match`() = checkFixIsUnavailable("Add _ pattern", """
+        fn main() {
+            let test = true;
+            <error descr="Match must be exhaustive [E0004]">match/*caret*/</error> test {}
+        }
+    """)
+
     fun `test add _ pattern for no expression in match`() = checkFixByText("Add _ pattern", """
         fn main() {
             let test = true;

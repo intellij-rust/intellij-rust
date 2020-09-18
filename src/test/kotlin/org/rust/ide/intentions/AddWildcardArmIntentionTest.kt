@@ -10,20 +10,12 @@ package org.rust.ide.intentions
  */
 class AddWildcardArmIntentionTest : RsIntentionTestBase(AddWildcardArmIntention::class) {
 
-    fun `test empty match`() = doAvailableTest("""
+    fun `test empty match`() = doUnavailableTest("""
         enum E { A, B, C }
         fn main() {
             let a = E::A;
             match a {
                 /*caret*/
-            }
-        }
-    """, """
-        enum E { A, B, C }
-        fn main() {
-            let a = E::A;
-            match a {
-                _ => {}
             }
         }
     """)
