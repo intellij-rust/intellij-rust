@@ -1,6 +1,2 @@
 <idea-plugin>
-    <applicationListeners>
-        <listener class="org.rust.ide.dynamic.RsDynamicPluginListener"
-                  topic="com.intellij.ide.plugins.DynamicPluginListener" />
-    </applicationListeners>
 </idea-plugin>

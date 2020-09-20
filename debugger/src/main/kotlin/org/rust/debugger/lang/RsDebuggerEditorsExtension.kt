@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.RsExpressionCodeFragment
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
-abstract class RsDebuggerEditorsExtensionBase : CidrDebuggerEditorsExtensionBase() {
+class RsDebuggerEditorsExtension : CidrDebuggerEditorsExtensionBase() {
     override fun getContext(project: Project, sourcePosition: XSourcePosition): PsiElement? =
         super.getContext(project, sourcePosition)?.ancestorOrSelf<RsElement>()
 

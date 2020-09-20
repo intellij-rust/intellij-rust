@@ -29,7 +29,7 @@ import org.rust.stdext.joinToWithBuffer
 import java.util.function.Consumer
 
 @Suppress("UnstableApiUsage")
-abstract class RsDocumentationProviderBase : AbstractDocumentationProvider() {
+class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         val buffer = StringBuilder()
@@ -166,6 +166,11 @@ abstract class RsDocumentationProviderBase : AbstractDocumentationProvider() {
 
         val pagePath = qualifiedName?.toUrlPath() ?: return emptyList()
         return listOf("$pagePrefix/$pagePath")
+    }
+
+    @Suppress("UnstableApiUsage")
+    override fun generateRenderedDoc(comment: PsiDocCommentBase): String? {
+        return (comment as? RsDocCommentImpl)?.documentationAsHtml(renderMode = RsDocRenderMode.INLINE_DOC_COMMENT)
     }
 
     private val RsDocAndAttributeOwner.hasExternalDocumentation: Boolean get() {

@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
 import com.intellij.util.BitUtil
 import com.intellij.util.io.DigestUtil
 import org.rust.openapiext.fileId
@@ -39,7 +40,7 @@ object VfsInternals {
     /** `null` means disabled hashing or invalid file */
     @VisibleForTesting
     fun getContentHashIfStored(file: VirtualFile): HashCode? =
-        file.getContentHashIfStored()?.let { HashCode.fromByteArray(it) }
+        PersistentFSImpl.getContentHashIfStored(file)?.let { HashCode.fromByteArray(it) }
 
     /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash] */
     fun calculateContentHash(fileContent: ByteArray): HashCode {

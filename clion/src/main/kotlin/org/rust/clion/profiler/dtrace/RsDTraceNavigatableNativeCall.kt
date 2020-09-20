@@ -11,9 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.profiler.api.BaseCallStackElement
 import com.intellij.profiler.model.NativeCall
 import com.intellij.psi.NavigatablePsiElement
+import com.intellij.util.containers.Interner
 import com.intellij.util.containers.stream
 import org.rust.clion.profiler.RsSymbolSearcher
-import org.rust.clion.profiler.StringInterner
 
 @Suppress("UnstableApiUsage")
 data class RsDTraceNavigatableNativeCall(private val nativeCall: NativeCall) : BaseCallStackElement() {
@@ -38,7 +38,7 @@ data class RsDTraceNavigatableNativeCall(private val nativeCall: NativeCall) : B
     companion object {
         private val LOG = logger<RsDTraceNavigatableNativeCall>()
 
-        fun read(string: String, interner: StringInterner? = null): RsDTraceNavigatableNativeCall? {
+        fun read(string: String, interner: Interner<String>? = null): RsDTraceNavigatableNativeCall? {
              return NativeCall.read(string, interner)?.let(::RsDTraceNavigatableNativeCall)
         }
 

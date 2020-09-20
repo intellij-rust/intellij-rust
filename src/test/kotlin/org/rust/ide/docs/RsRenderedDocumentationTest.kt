@@ -6,8 +6,11 @@
 package org.rust.ide.docs
 
 import org.intellij.lang.annotations.Language
+import org.rust.lang.core.psi.RsDocCommentImpl
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.doc.docElements
 
-abstract class RsRenderedDocumentationTestBase : RsDocumentationProviderTest() {
+class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
 
     fun `test outer comment`() = doTest("""
         /// Adds one to the number given.
@@ -90,5 +93,26 @@ abstract class RsRenderedDocumentationTestBase : RsDocumentationProviderTest() {
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul>
     """)
 
-    protected abstract fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?)
+    fun `test several comments`() = doTest("""
+        /// Outer comment
+        fn add_one(x: i32) -> i32 {
+            //^
+            //! Inner comment
+            x + 1
+        }
+    """, """
+        <p>Outer comment</p>
+        <p>Inner comment</p>
+    """)
+
+    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
+        doTest(code, expected) { originalItem, _ ->
+            (originalItem as? RsDocAndAttributeOwner)
+                ?.docElements()
+                ?.filterIsInstance<RsDocCommentImpl>()
+                ?.mapNotNull { generateRenderedDoc(it) }
+                ?.joinToString("\n")
+                ?.hideSpecificStyles()
+        }
+    }
 }
