@@ -10,7 +10,6 @@ package org.rustSlowTests.cargo.runconfig.buildtool
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.impl.FailureResultImpl
 import com.intellij.build.events.impl.SuccessResultImpl
-import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.fileTree
@@ -20,7 +19,6 @@ import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyMe
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartBuildEvent
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartEvent
 
-@MinRustcVersion("1.32.0")
 class CargoBuildManagerTest : CargoBuildTest() {
 
     fun `test build successful`() {
@@ -656,6 +654,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
             "Building...",
             "Waiting for the current build to finish...",
             "Building... first",
+            "Building... first, second",
             "Building... second"
         )
     }
@@ -756,6 +755,7 @@ class CargoBuildManagerTest : CargoBuildTest() {
             "Building...",
             "Waiting for the current build to finish...",
             "Building... first",
+            "Building... first, second",
             "Building... second"
         )
     }
