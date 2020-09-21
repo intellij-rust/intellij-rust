@@ -6,7 +6,9 @@
 package org.rust.ide.annotator
 
 import com.google.gson.JsonParser
+import com.google.gson.JsonSyntaxException
 import com.google.gson.stream.JsonReader
+import com.google.gson.stream.MalformedJsonException
 import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
@@ -195,9 +197,14 @@ fun AnnotationHolder.createAnnotationsForFile(file: RsFile, annotationResult: Rs
 }
 
 class RsExternalLinterResult(commandOutput: List<String>) {
+    init {
+    }
     val messages: List<CargoTopMessage> = commandOutput.asSequence()
         .filter { MESSAGE_REGEX.matches(it) }
-        .map { JsonReader(StringReader(it)).apply { isLenient = true } }
+        .map {
+            Logger.getInstance(RsExternalLinterUtils::class.java).info("Linter output: $it")
+            JsonReader(StringReader(it)).apply { isLenient = true }
+        }
         .map { JsonParser.parseReader(it) }
         .filter { it.isJsonObject }
         .mapNotNull { CargoTopMessage.fromJson(it.asJsonObject) }

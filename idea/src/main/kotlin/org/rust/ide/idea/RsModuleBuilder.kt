@@ -13,6 +13,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
@@ -21,6 +23,7 @@ import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.makeDefaultRunConfiguration
 import org.rust.ide.newProject.makeProject
 import org.rust.ide.newProject.openFiles
+import org.rust.taskQueue
 
 /**
  * Builder which is used when a new project or module is created and not imported from source.
@@ -33,7 +36,7 @@ class RsModuleBuilder : ModuleBuilder() {
 
     override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep =
         CargoConfigurationWizardStep.newProject(context).apply {
-            Disposer.register(parentDisposable, Disposable { this.disposeUIResources() })
+            Disposer.register(parentDisposable, { this.disposeUIResources() })
         }
 
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
@@ -54,16 +57,20 @@ class RsModuleBuilder : ModuleBuilder() {
                 val project = modifiableRootModel.project
                 val name = project.name.replace(' ', '_')
 
-                val generatedFiles = cargo.makeProject(
-                    project,
-                    modifiableRootModel.module,
-                    root,
-                    name,
-                    template
-                ) ?: return
-
-                project.makeDefaultRunConfiguration(template)
-                project.openFiles(generatedFiles)
+                val generationTask = object : Task.Backgroundable(project, "Generating project", false) {
+                    override fun run(indicator: ProgressIndicator) {
+                        val generatedFiles = cargo.makeProject(
+                            project,
+                            modifiableRootModel.module,
+                            root,
+                            name,
+                            template
+                        ) ?: return
+                        project.makeDefaultRunConfiguration(template)
+                        project.openFiles(generatedFiles)
+                    }
+                }
+                project.taskQueue.run(generationTask)
             } catch (e: ExecutionException) {
                 LOG.error(e)
                 throw ConfigurationException(e.message)

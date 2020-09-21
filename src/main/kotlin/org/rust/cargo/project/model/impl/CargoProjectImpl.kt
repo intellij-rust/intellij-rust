@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.GuiUtils
-import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -48,7 +47,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -123,7 +121,7 @@ open class CargoProjectsServiceImpl(
      * a containing [CargoProject].
      */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
-        LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
+        LightDirectoryIndex(project.taskQueue, noProjectMarker, { index ->
             val visited = mutableSetOf<VirtualFile>()
 
             fun VirtualFile.put(cargoProject: CargoProjectImpl) {
@@ -175,7 +173,7 @@ open class CargoProjectsServiceImpl(
     private var isLegacyRustNotificationShowed: Boolean = false
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { it !== noProjectMarker } }
+        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { candidate -> candidate !== noProjectMarker } }
 
     override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
         file.applyWithSymlink(packageIndex::findPackageForFile)
@@ -299,7 +297,7 @@ open class CargoProjectsServiceImpl(
         // Refresh projects via `invokeLater` to avoid model modifications
         // while the project is being opened. Use `updateSync` directly
         // instead of `modifyProjects` for this reason
-        projects.updateSync { _ -> loaded }
+        projects.updateSync { loaded }
             .whenComplete { _, _ ->
                 invokeLater {
                     if (project.isDisposed) return@invokeLater

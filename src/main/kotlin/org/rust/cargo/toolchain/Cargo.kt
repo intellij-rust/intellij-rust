@@ -312,6 +312,8 @@ class Cargo(private val toolchain: RustToolchain, private val wrapper: String, p
                 add("--all")
             }
 
+            add("--quiet")
+
             if (settings.compileAllTargets && checkSupportForBuildCheckAllTargets()) add("--all-targets")
             addAll(ParametersListUtil.parse(settings.externalLinterArguments))
         }

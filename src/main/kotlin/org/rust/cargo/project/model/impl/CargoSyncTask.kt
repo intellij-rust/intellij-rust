@@ -46,6 +46,9 @@ class CargoSyncTask(
         indicator.isIndeterminate = true
 
         val refreshedProjects = try {
+            if (project.toolchain == null) {
+                cargoProjects
+            }
             doRun(indicator)
         } catch (e: Throwable) {
             result.completeExceptionally(e)
@@ -54,31 +57,20 @@ class CargoSyncTask(
         result.complete(refreshedProjects)
     }
 
-    private fun doRun(indicator: ProgressIndicator): List<CargoProjectImpl> {
-        val toolchain = project.toolchain
-        val refreshedProjects = if (toolchain == null) {
-            project.showBalloon(
-                "Cargo project update failed:<br>No Rust toolchain",
-                NotificationType.ERROR
-            )
-            cargoProjects
-        } else {
-            cargoProjects.map {
-                if (!it.workingDirectory.exists()) {
-                    it.copy(
-                        stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
-                    )
-                } else {
-                    val context = SyncContext(project, it, toolchain)
-                    it.withRustcInfo(fetchRustcInfo(context, indicator))
-                        .withWorkspace(fetchCargoWorkspace(context, indicator))
-                        .withStdlib(fetchStdlib(context, indicator))
-                }
+    private fun doRun(indicator: ProgressIndicator): List<CargoProjectImpl> =
+        project.toolchain?.let { toolchain -> cargoProjects.map {
+            if (it.workingDirectory.exists()) {
+                val context = SyncContext(project, it, toolchain)
+                it
+                    .withRustcInfo(fetchRustcInfo(context, indicator))
+                    .withWorkspace(fetchCargoWorkspace(context, indicator))
+                    .withStdlib(fetchStdlib(context, indicator))
+            } else {
+                it.copy(
+                    stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
+                )
             }
-        }
-
-        return refreshedProjects
-    }
+        }} ?: cargoProjects
 
     data class SyncContext(val project: Project, val oldCargoProject: CargoProjectImpl, val toolchain: RustToolchain)
 }

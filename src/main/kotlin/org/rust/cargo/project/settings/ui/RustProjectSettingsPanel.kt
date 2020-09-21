@@ -17,6 +17,7 @@ import org.rust.cargo.toolchain.Rustup
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.awt.BorderLayout
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
@@ -66,7 +67,12 @@ class RustProjectSettingsPanel(
             if (pathToToolchainField.text.isEmpty()) {
                 return Data(null, null)
             }
-            val toolchain = RustToolchain.get(Paths.get(pathToToolchainField.text))
+            val location = try {
+                Paths.get(pathToToolchainField.text)
+            } catch (e: InvalidPathException) {
+                return Data(null, null)
+            }
+            val toolchain = RustToolchain.get(location)
             return Data(
                 toolchain = toolchain,
                 explicitPathToStdlib = pathToStdlibField.text.blankToNull()
