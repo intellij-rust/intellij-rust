@@ -79,7 +79,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         val rustcMessage = topMessage.message
 
         val message = rustcMessage.message.trim().capitalize().trimEnd('.')
-        if (message.startsWith("Aborting due")) return true
+        if (message.startsWith("Aborting due") || message.endsWith("emitted")) return true
         val detailedMessage = rustcMessage.rendered
 
         val parentEventId = topMessage.package_id.substringBefore("(").trimEnd()
@@ -243,6 +243,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         detailedMessage: String?,
         messageConsumer: Consumer<in BuildEvent>
     ) {
+        if (message in MESSAGES_TO_IGNORE) return
         val messageEvent = createMessageEvent(context.buildId, kind, message, detailedMessage)
         if (messageEvents.add(messageEvent)) {
             messageConsumer.accept(messageEvent)
@@ -276,6 +277,9 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
 
         private val PROGRESS_TOTAL_RE: Regex = """(\d+)/(\d+)""".toRegex()
+
+        private val MESSAGES_TO_IGNORE: List<String> =
+            listOf("Build failed, waiting for other jobs to finish", "Build failed")
 
         private val ERROR_OR_WARNING: List<MessageEvent.Kind> =
             listOf(MessageEvent.Kind.ERROR, MessageEvent.Kind.WARNING)
