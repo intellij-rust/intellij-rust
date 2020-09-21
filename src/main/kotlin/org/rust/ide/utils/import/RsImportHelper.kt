@@ -11,6 +11,7 @@ import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
 import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
@@ -152,12 +153,13 @@ object RsImportHelper {
         }
 
         val toQualifiedName = hashSetOf<RsQualifiedNamedElement>()
-        processNestedScopesUpwards(context, TYPES) { entry ->
-            val group = importSubjects.remove(entry.name) ?: return@processNestedScopesUpwards false
+        val processor = createProcessor { entry ->
+            val group = importSubjects.remove(entry.name) ?: return@createProcessor false
             group.remove(entry.element)
             toQualifiedName.addAll(group)
             importSubjects.isEmpty()
         }
+        processNestedScopesUpwards(context, TYPES, processor)
 
         return TypeReferencesInfo(importSubjects.flatMap { it.value }.toSet(), toQualifiedName)
     }

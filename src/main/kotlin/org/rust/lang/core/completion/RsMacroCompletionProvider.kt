@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns.psiElement
@@ -23,8 +22,8 @@ import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.unescapedText
 import org.rust.lang.core.psiElement
-import org.rust.lang.core.resolve.ScopeEntry
 import org.rust.lang.core.resolve.collectCompletionVariants
+import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processMacroCallVariantsInScope
 import org.rust.lang.core.resolve.processMacrosExportedByCrateName
 import org.rust.lang.core.withPrevSiblingSkipping
@@ -57,7 +56,7 @@ object RsMacroCompletionProvider : RsCompletionProvider() {
         val context = RsCompletionContext(isSimplePath = !is2segmentPath)
 
         collectCompletionVariants(result, context) { originalProcessor ->
-            val processor: (ScopeEntry) -> Boolean = { entry ->
+            val processor = createProcessor(originalProcessor.name) { entry ->
                 val macro = entry.element
                 val hide = mod != null && macro is RsMacro && isHidden(macro, mod)
                 if (!hide) originalProcessor(entry) else false

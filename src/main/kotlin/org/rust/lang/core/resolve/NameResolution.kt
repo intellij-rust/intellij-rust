@@ -101,7 +101,7 @@ fun processDotExprResolveVariants(
     lookup: ImplLookup,
     receiverType: Ty,
     context: RsElement,
-    processor: (DotExprResolveVariant) -> Boolean
+    processor: RsResolveProcessorBase<DotExprResolveVariant>
 ): Boolean {
     if (processFieldExprResolveVariants(lookup, receiverType, processor)) return true
     if (processMethodDeclarationsWithDeref(lookup, receiverType, context, processor)) return true
@@ -112,11 +112,14 @@ fun processDotExprResolveVariants(
 fun processFieldExprResolveVariants(
     lookup: ImplLookup,
     receiverType: Ty,
-    processor: (FieldResolveVariant) -> Boolean
+    originalProcessor: RsResolveProcessorBase<FieldResolveVariant>
 ): Boolean {
     for ((i, ty) in lookup.coercionSequence(receiverType).withIndex()) {
         if (ty !is TyAdt || ty.item !is RsStructItem) continue
-        if (processFieldDeclarations(ty.item) { processor(FieldResolveVariant(it.name, it.element!!, ty, i)) }) return true
+        val processor = createProcessor(originalProcessor.name) {
+            originalProcessor(FieldResolveVariant(it.name, it.element!!, ty, i))
+        }
+        if (processFieldDeclarations(ty.item, processor)) return true
     }
 
     return false
@@ -313,7 +316,7 @@ fun findDependencyCrateByNamePath(context: RsElement, path: RsPath): RsFile? {
 
 fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
     var found: RsFile? = null
-    processExternCrateResolveVariants(context, false) {
+    val processor = createProcessor(name) {
         if (it.name == name) {
             found = it.element as? RsFile
             true
@@ -321,6 +324,7 @@ fun findDependencyCrateByName(context: RsElement, name: String): RsFile? {
             false
         }
     }
+    processExternCrateResolveVariants(context, false, processor)
     return found
 }
 
@@ -625,18 +629,22 @@ private fun processTraitRelativePath(
     return false
 }
 
-fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolean, processor: RsResolveProcessor): Boolean {
+fun processPatBindingResolveVariants(
+    binding: RsPatBinding,
+    isCompletion: Boolean,
+    originalProcessor: RsResolveProcessor
+): Boolean {
     if (binding.parent is RsPatField) {
         val parentPat = binding.parent.parent as RsPatStruct
         val patStruct = parentPat.path.reference?.deepResolve()
         if (patStruct is RsFieldsOwner) {
-            if (processFieldDeclarations(patStruct, processor)) return true
+            if (processFieldDeclarations(patStruct, originalProcessor)) return true
             if (isCompletion) return false
         }
     }
 
-    return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES) { entry ->
-        processor.lazy(entry.name) {
+    val processor = createProcessor(originalProcessor.name) { entry ->
+        originalProcessor.lazy(entry.name) {
             val element = entry.element ?: return@lazy null
             val isConstant = element.isConstantLike
             val isPathOrDestructable = when (element) {
@@ -646,6 +654,7 @@ fun processPatBindingResolveVariants(binding: RsPatBinding, isCompletion: Boolea
             if (isConstant || (isCompletion && isPathOrDestructable)) element else null
         }
     }
+    return processNestedScopesUpwards(binding, if (isCompletion) TYPES_N_VALUES else VALUES, processor)
 }
 
 fun processLabelResolveVariants(label: RsLabel, processor: RsResolveProcessor): Boolean {
@@ -697,14 +706,15 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
     return false
 }
 
-fun processLocalVariables(place: RsElement, processor: (RsPatBinding) -> Unit) {
+fun processLocalVariables(place: RsElement, originalProcessor: (RsPatBinding) -> Unit) {
     val hygieneFilter = makeHygieneFilter(place)
     walkUp(place, { it is RsItemElement }) { cameFrom, scope ->
-        processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter, ItemProcessingMode.WITH_PRIVATE_IMPORTS) { v ->
+        val processor = createProcessor { v ->
             val el = v.element
-            if (el is RsPatBinding) processor(el)
+            if (el is RsPatBinding) originalProcessor(el)
             false
         }
+        processLexicalDeclarations(scope, cameFrom, VALUES, hygieneFilter, ItemProcessingMode.WITH_PRIVATE_IMPORTS, processor)
     }
 }
 
@@ -1299,7 +1309,7 @@ private fun processLexicalDeclarations(
         // Rust allows to defined several bindings in single pattern to the same name,
         // but they all must bind the same variables, hence we can inspect only the first one.
         // See https://github.com/rust-lang/rfcs/blob/master/text/2535-or-patterns.md
-        val patternProcessor: RsResolveProcessor = { e ->
+        val patternProcessor = createProcessor(processor.name) { e ->
             if (e.name !in alreadyProcessedNames) {
                 alreadyProcessedNames += e.name
                 processor(e)
@@ -1375,7 +1385,7 @@ private fun processLexicalDeclarations(
             // ```
             val visited = mutableSetOf<String>()
             if (Namespace.Values in ns) {
-                val shadowingProcessor = { e: ScopeEntry ->
+                val shadowingProcessor = createProcessor(processor.name) { e ->
                     (e.name !in visited) && processor(e).also {
                         if (e.isInitialized && e.element != null) {
                             visited += e.name
@@ -1508,14 +1518,14 @@ private tailrec fun PsiFile.unwrapCodeFragments(): PsiFile {
 
 inline fun processWithShadowingAndUpdateScope(
     prevScope: MutableMap<String, Set<Namespace>>,
-    crossinline processor: RsResolveProcessor,
+    processor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
     val currScope = mutableMapOf<String, Set<Namespace>>()
-    val shadowingProcessor = lambda@{ e: ScopeEntry ->
+    val shadowingProcessor = createProcessor(processor.name) { e ->
         val prevNs = prevScope[e.name]
         if (prevNs != null && (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) == true) {
-            return@lambda false
+            return@createProcessor false
         }
         val result = processor(e)
         if (e.isInitialized) {
@@ -1535,13 +1545,15 @@ inline fun processWithShadowingAndUpdateScope(
 
 inline fun processWithShadowing(
     prevScope: Map<String, Set<Namespace>>,
-    crossinline processor: RsResolveProcessor,
+    originalProcessor: RsResolveProcessor,
     f: (RsResolveProcessor) -> Boolean
 ): Boolean {
-    return f { e: ScopeEntry ->
+    val processor = createProcessor(originalProcessor.name) { e ->
         val prevNs = prevScope[e.name]
-        (prevNs == null || (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) != true) && processor(e)
+        (prevNs == null || (e.element as? RsNamedElement)?.namespaces?.intersects(prevNs) != true)
+            && originalProcessor(e)
     }
+    return f(processor)
 }
 
 fun findPrelude(element: RsElement): RsFile? {

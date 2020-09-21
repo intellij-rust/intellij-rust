@@ -68,7 +68,7 @@ fun processItemDeclarations(
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 
     val directlyDeclaredNames = HashMap<String, Set<Namespace>>()
-    val processor = { e: ScopeEntry ->
+    val processor = createProcessor(originalProcessor.name) { e ->
         val result = originalProcessor(e)
         if (e.isInitialized) {
             val element = e.element
