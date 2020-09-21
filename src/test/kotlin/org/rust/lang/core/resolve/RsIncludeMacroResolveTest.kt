@@ -233,6 +233,30 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
             }  //^ lib.rs
     """)
 
+    fun `test fqn include`() = checkResolve("""
+    //- main.rs
+        std::include!("foo.rs");
+        fn main() {
+            println("{:?}", Foo);
+                           //^ foo.rs
+        }
+    //- foo.rs
+        #[derive(Debug)]
+        struct Foo;
+    """)
+
+    fun `test fqn include and concat`() = checkResolve("""
+    //- main.rs
+        std::include!(std::concat!("bar", "/foo.rs"));
+        fn main() {
+            println("{:?}", Foo);
+                           //^ bar/foo.rs
+        }
+    //- bar/foo.rs
+        #[derive(Debug)]
+        struct Foo;
+    """)
+
     private fun checkResolve(@Language("Rust") code: String) {
         stubOnlyResolve(code) { element -> element.containingFile.virtualFile }
     }

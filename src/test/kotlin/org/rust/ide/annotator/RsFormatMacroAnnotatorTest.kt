@@ -470,4 +470,17 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             println!(concat!("{}", "{}", "{}"), S, S);
         }
     """)
+
+    fun `test fqn macro call`() = checkErrors("""
+        use std::fmt;
+        struct S;
+        impl fmt::Display for S {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { unimplemented!() }
+        }
+        fn main() {
+            std::println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+            std::println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER> <error descr="Invalid reference to positional argument 1 (there is 1 argument)">{}</error>", S);
+            std::println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S, <error descr="Argument never used">S</error>);
+        }
+    """)
 }
