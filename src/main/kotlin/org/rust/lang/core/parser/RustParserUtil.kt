@@ -399,12 +399,12 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun parseMacroCall(b: PsiBuilder, level: Int, mode: MacroCallParsingMode): Boolean {
         if (mode.attrsAndVis && !RustParser.AttrsAndVis(b, level + 1)) return false
 
-        val macroName = lookupSimpleMacroName(b)
-        if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false
-
         if (!RustParser.PathWithoutTypeArgs(b, level + 1) || !consumeToken(b, EXCL)) {
             return false
         }
+
+        val macroName = getMacroName(b, -2)
+        if (mode.forbidExprSpecialMacros && macroName in SPECIAL_EXPR_MACROS) return false
 
         // foo! bar {}
         //      ^ this ident
@@ -434,15 +434,28 @@ object RustParserUtil : GeneratedParserUtilBase() {
         return true
     }
 
-    // foo ! ();
-    // ^ this name
-    private fun lookupSimpleMacroName(b: PsiBuilder): String? {
-        return if (b.tokenType == IDENTIFIER) {
-            val nextTokenIsExcl = b.probe {
-                b.advanceLexer()
-                b.tokenType == EXCL
+    // qualifier::foo ! ();
+    //            ^ this name
+    @Suppress("SameParameterValue")
+    private fun getMacroName(b: PsiBuilder, nameTokenIndex: Int): String? {
+        require(nameTokenIndex < 0) {
+            "`getMacroName` assumes that path with macro name is already parsed and the name token is behind of current position"
+        }
+
+        var steps = 0
+        var meaningfulSteps = 0
+
+        while (meaningfulSteps > nameTokenIndex) {
+            steps--
+            val elementType = b.rawLookup(steps) ?: return null
+
+            if (!isWhitespaceOrComment(b, elementType)) {
+                meaningfulSteps--
             }
-            if (nextTokenIsExcl) b.tokenText else null
+        }
+
+        return if (b.rawLookup(steps) == IDENTIFIER) {
+            PsiBuilderUtil.rawTokenText(b, steps).toString()
         } else {
             null
         }
