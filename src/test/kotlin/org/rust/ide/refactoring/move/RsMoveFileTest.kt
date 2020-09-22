@@ -5,11 +5,11 @@
 
 package org.rust.ide.refactoring.move
 
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.util.IncorrectOperationException
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.withTestDialog
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 class RsMoveFileTest : RsMoveFileTestBase() {
@@ -330,8 +330,7 @@ class RsMoveFileTest : RsMoveFileTestBase() {
     }
 
     // in this case we run default processor
-    fun `test target directory not owned by mod`() {
-        Messages.setTestDialog(TestDialog.OK)
+    fun `test target directory not owned by mod`() = withTestDialog(TestDialog.OK) {
         doTest(
             "mod1/foo.rs",
             "mod2",

@@ -59,7 +59,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
     }
 
-    override fun collectDocComments(file: PsiFile, sink: Consumer<PsiDocCommentBase>) {
+    override fun collectDocComments(file: PsiFile, sink: DocCommentConsumer) {
         if (file !is RsFile) return
         for (element in SyntaxTraverser.psiTraverser(file)) {
             if (element is RsDocCommentImpl) {

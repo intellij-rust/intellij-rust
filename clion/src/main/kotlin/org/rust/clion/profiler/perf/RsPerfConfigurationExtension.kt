@@ -16,9 +16,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profiler.ProfilerToolWindowManager
 import com.intellij.profiler.clion.CPPProfilerSettings
-import com.intellij.profiler.clion.perf.Addr2LineProcess
-import com.intellij.profiler.clion.perf.AddressSymbolizer
-import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.keepTempProfilerFiles
 import com.intellij.profiler.linux.HasInvalidVariables
 import com.intellij.profiler.linux.KernelVariable
@@ -29,7 +26,6 @@ import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
 import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
-import org.rust.lang.core.psi.RsFunction
 import java.io.File
 
 class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
@@ -71,24 +67,13 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = PerfProfilerProcess(
+        val profilerProcess = createPerfProfilerProcess(
             handler,
             outputFile,
-            createAddressSymbolizer(),
             configuration.name,
-            project,
-            System.currentTimeMillis(),
-            RsFunction::class.java
+            project
         )
         ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(profilerProcess)
-    }
-
-    private fun createAddressSymbolizer(): AddressSymbolizer? {
-        return if (Addr2LineProcess.isAvailable) {
-            Addr2LineProcess()
-        } else {
-            null
-        }
     }
 
     companion object {

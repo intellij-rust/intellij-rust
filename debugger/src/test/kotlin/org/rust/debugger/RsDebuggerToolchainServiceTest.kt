@@ -8,6 +8,7 @@ package org.rust.debugger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import org.rust.RsTestBase
+import org.rust.TestContext
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import java.io.File
 
@@ -15,9 +16,9 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
 
     private var lldbDir: File? = null
 
-    override fun runTest() {
+    override fun runTestInternal(context: TestContext) {
         if (PlatformUtils.isIdeaUltimate() && !SystemInfo.isWindows) {
-            super.runTest()
+            super.runTestInternal(context)
         }
     }
 

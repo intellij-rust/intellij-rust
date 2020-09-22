@@ -6,13 +6,13 @@
 package org.rust.ide.search
 
 import com.intellij.codeInsight.TargetElementUtil
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.withTestDialog
 
 class RsFindUsagesTest : RsTestBase() {
     fun `test variable usages`() = doTestByText("""
@@ -207,8 +207,7 @@ class RsFindUsagesTest : RsTestBase() {
         }
     """)
 
-    fun `test method from impl (use base declaration)`() {
-        Messages.setTestDialog(TestDialog.OK)
+    fun `test method from impl (use base declaration)`() = withTestDialog(TestDialog.OK) {
         doTestByText("""
             struct B1;
             struct B2;
@@ -224,8 +223,7 @@ class RsFindUsagesTest : RsTestBase() {
         """)
     }
 
-    fun `test method from impl (don't use base declaration)`() {
-        Messages.setTestDialog(TestDialog.NO)
+    fun `test method from impl (don't use base declaration)`() = withTestDialog(TestDialog.NO) {
         doTestByText("""
             struct B1; struct B2;
             trait A { fn foo(self, x: i32); }
