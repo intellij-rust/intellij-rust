@@ -8,11 +8,9 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.rust.checkMacroExpansionFileSystemAfterTest
 
-class MacroExpansionFileSystemTest : BasePlatformTestCase() {
+class MacroExpansionFileSystemTest : MacroExpansionFileSystemTestBase() {
     fun `test simple`() {
         batch {
             createFile("/foo", "bar.txt", "bar content")
@@ -46,7 +44,7 @@ class MacroExpansionFileSystemTest : BasePlatformTestCase() {
     }
 
     fun `test correct MUST_RELOAD_CONTENT value`() {
-        val realValue = PersistentFS::class.java.getDeclaredField("MUST_RELOAD_CONTENT")
+        val realValue = persistentFSFlagsHolder.getDeclaredField("MUST_RELOAD_CONTENT")
             .also { it.isAccessible = true }
             .getInt(null)
         assertEquals(VfsInternals.MUST_RELOAD_CONTENT, realValue)

@@ -204,6 +204,8 @@ private class RsCodeFenceProvider(
         val attributes = scheme.getAttributes(HighlighterColors.TEXT)
         val defaultFgColor = attributes.foregroundColor ?: scheme.defaultForeground
 
+        // BACKCOMPAT: 2020.2. Since 2020.3 all identifier tokens are wrapped into `style` tag
+        //  so no need to provide a default color in `pre` tags
         htmlCodeText = htmlCodeText.replaceFirst("<pre>",
             "<pre style=\"color:#${ColorUtil.toHex(defaultFgColor)}; text-indent: ${CODE_SNIPPET_INDENT}px;\">")
 

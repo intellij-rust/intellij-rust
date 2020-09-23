@@ -5,37 +5,8 @@
 
 package org.rust.ide.docs
 
-import org.intellij.lang.annotations.Language
-import org.rust.lang.core.psi.RsDocCommentImpl
-import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
-import org.rust.lang.doc.docElements
-
-class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
-
-    fun `test outer comment`() = doTest("""
-        /// Adds one to the number given.
-        ///
-        /// # Examples
-        ///
-        /// Some text
-        ///
-        fn add_one(x: i32) -> i32 {
-            //^
-            x + 1
-        }
-    """, """
-        <p>Adds one to the number given.</p><h2>Examples</h2><p>Some text</p>
-    """)
-
-    fun `test inner comment`() = doTest("""
-        fn add_one(x: i32) -> i32 {
-            //^
-            //! Inner comment
-            x + 1
-        }
-    """, """
-        <p>Inner comment</p>
-    """)
+// BACKCOMPAT: 2020.2. Merge with `RsDocumentationProviderTestBase`
+class RsRenderedDocumentationTest : RsDocumentationProviderTestBase() {
 
     fun `test code highlighting`() = doTest("""
         /// A cheap, reference-to-reference conversion.
@@ -79,40 +50,17 @@ class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
     """, """
         <p>A cheap, reference-to-reference conversion.</p><p><code>AsRef</code> is very similar to, but different than, <code>Borrow</code>. See
         <a href="psi_element://../book/borrow-and-asref.html">the book</a> for more.</p><p><strong>Note: this trait must not fail</strong>. If the conversion can fail, use a dedicated method which
-        returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h2>Examples</h2><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre style="..."><span style="...">fn </span>is_hello&lt;T: AsRef&lt;str&gt;&gt;(s: T) {
-           assert_eq!(<span style="...">&quot;hello&quot;</span>, s.as_ref());
-        }
+        returns an <code>Option&lt;T&gt;</code> or a <code>Result&lt;T, E&gt;</code>.</p><h2>Examples</h2><p>Both <code>String</code> and <code>&amp;str</code> implement <code>AsRef&lt;str&gt;</code>:</p><pre style="..."><span style="...">fn </span><span style="...">is_hello</span><span style="...">&lt;</span><span style="...">T</span><span style="...">: </span><span style="...">AsRef</span><span style="...">&lt;</span><span style="...">str</span><span style="...">&gt;&gt;(</span><span style="...">s</span><span style="...">: </span><span style="...">T</span><span style="...">) {</span>
+           <span style="...">assert_eq</span><span style="...">!(</span><span style="...">&quot;hello&quot;</span><span style="...">, </span><span style="...">s</span><span style="...">.</span><span style="...">as_ref</span><span style="...">());</span>
+        <span style="...">}</span>
 
-        <span style="...">let </span>s = <span style="...">&quot;hello&quot;</span>;
-        is_hello(s);
+        <span style="...">let </span><span style="...">s </span><span style="...">= </span><span style="...">&quot;hello&quot;</span><span style="...">;</span>
+        <span style="...">is_hello</span><span style="...">(</span><span style="...">s</span><span style="...">);</span>
 
-        <span style="...">let </span>s = <span style="...">&quot;hello&quot;</span>.to_string();
-        is_hello(s);
+        <span style="...">let </span><span style="...">s </span><span style="...">= </span><span style="...">&quot;hello&quot;</span><span style="...">.</span><span style="...">to_string</span><span style="...">();</span>
+        <span style="...">is_hello</span><span style="...">(</span><span style="...">s</span><span style="...">);</span>
         </pre>
         <h2>Generic Impls</h2><ul><li><code>AsRef</code> auto-dereference if the inner type is a reference or a mutable
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul>
     """)
-
-    fun `test several comments`() = doTest("""
-        /// Outer comment
-        fn add_one(x: i32) -> i32 {
-            //^
-            //! Inner comment
-            x + 1
-        }
-    """, """
-        <p>Outer comment</p>
-        <p>Inner comment</p>
-    """)
-
-    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
-        doTest(code, expected) { originalItem, _ ->
-            (originalItem as? RsDocAndAttributeOwner)
-                ?.docElements()
-                ?.filterIsInstance<RsDocCommentImpl>()
-                ?.mapNotNull { generateRenderedDoc(it) }
-                ?.joinToString("\n")
-                ?.hideSpecificStyles()
-        }
-    }
 }
