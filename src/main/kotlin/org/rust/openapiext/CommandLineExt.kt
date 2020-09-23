@@ -10,18 +10,16 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.wsl.WSLUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.systemIndependentPath
-import org.rust.cargo.toolchain.WSL_ROOT_REGEX
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.regex.Pattern
 
 private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
 
@@ -31,18 +29,8 @@ fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(pat
 fun GeneralCommandLine.withWorkDirectory(path: Path?) = withWorkDirectory(path?.systemIndependentPath)
 
 fun GeneralCommandLine.execute(timeoutInMilliseconds: Int? = 1000): ProcessOutput? {
-    if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
-        val insertionIndex = if (parametersList[0] == "-d") 2 else 0
-        environment.forEach { (k, v) ->
-            if (k == "RUSTC") {
-                val path = Paths.get(v)
-                val linuxPath = "/${path.root.relativize(path).systemIndependentPath}"
-
-                parametersList.addAt(insertionIndex, "$k=$linuxPath")
-            } else {
-                parametersList.addAt(insertionIndex, "$k=$v")
-            }
-        }
+    if (WSLUtil.isSystemCompatible() && exePath == "wsl") {
+        adjustToWsl()
     }
 
     val output = try {
@@ -68,18 +56,8 @@ fun GeneralCommandLine.execute(
     stdIn: ByteArray? = null,
     listener: ProcessListener? = null
 ): ProcessOutput {
-    if (SystemInfo.isWin10OrNewer && exePath == "wsl") {
-        val insertionIndex = if (parametersList[0] == "-d") 2 else 0
-        environment.forEach { (k, v) ->
-            if (k == "RUSTC") {
-                val path = Paths.get(v)
-                val linuxPath = "/${path.root.relativize(path).systemIndependentPath}"
-
-                parametersList.addAt(insertionIndex, "$k=$linuxPath")
-            } else {
-                parametersList.addAt(insertionIndex, "$k=$v")
-            }
-        }
+    if (WSLUtil.isSystemCompatible() && exePath == "wsl") {
+        adjustToWsl()
     }
 
     val handler = CapturingProcessHandler(this)
@@ -112,7 +90,7 @@ fun GeneralCommandLine.execute(
     listener?.let { handler.addProcessListener(it) }
 
     if (stdIn != null) {
-        handler.processInput?.use { it.write(stdIn) }
+        handler.processInput.use { it.write(stdIn) }
     }
 
     val output = try {
@@ -125,6 +103,20 @@ fun GeneralCommandLine.execute(
         throw ExecutionException(errorMessage(this, output))
     }
     return output
+}
+
+private fun GeneralCommandLine.adjustToWsl() {
+    val insertionIndex = if (parametersList[0] == "-d") 2 else 0
+    environment.forEach { (k, v) ->
+        if (k == "RUSTC") {
+            val path = Paths.get(v)
+            val linuxPath = "/${path.root.relativize(path).systemIndependentPath}"
+
+            parametersList.addAt(insertionIndex, "$k=$linuxPath")
+        } else {
+            parametersList.addAt(insertionIndex, "$k=$v")
+        }
+    }
 }
 
 private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String = """

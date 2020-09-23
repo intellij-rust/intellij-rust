@@ -8,6 +8,7 @@ package org.rust.cargo.toolchain
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.ProcessOutput
+import com.intellij.execution.wsl.WSLUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -23,15 +24,9 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
-open class RustToolchain(val location: Path) {
+open class RustToolchain internal constructor(val location: Path) {
     override fun toString(): String {
         return location.toString()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (other is RustToolchain) {
-            return location == other.location
-        } else return false
     }
 
     open fun createBaseCommandLine(path: Path, vararg arguments: String, workingDirectory: Path?): GeneralCommandLine {
@@ -116,8 +111,8 @@ open class RustToolchain(val location: Path) {
     val presentableLocation: String = pathToExecutable(CARGO).toString()
 
     // for executables from toolchain
-    private fun pathToExecutable(toolName: String): Path {
-        val exeName = if (SystemInfo.isWindows && this !is WslRustToolchain) "$toolName.exe" else toolName
+    protected open fun pathToExecutable(toolName: String): Path {
+        val exeName = if (SystemInfo.isWindows) "$toolName.exe" else toolName
         return location.resolve(exeName).toAbsolutePath()
     }
 
@@ -142,6 +137,15 @@ open class RustToolchain(val location: Path) {
 
     override fun hashCode(): Int {
         return location.hashCode()
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is RustToolchain) return false
+
+        if (location != other.location) return false
+
+        return true
     }
 
     data class VersionInfo(
@@ -276,7 +280,7 @@ private object Suggestions {
                 .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
                 .map { File(it, "bin") }
         val fromWsl =
-            if (SystemInfo.isWin10OrNewer) {
+            if (WSLUtil.isSystemCompatible()) {
                 try {
                     val cargoBytes = Runtime.getRuntime().exec("wsl source ~/.profile && wslpath -w $(command -v cargo)")
                         .inputStream.readBytes()

@@ -120,8 +120,9 @@ open class CargoProjectsServiceImpl(
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
      * a containing [CargoProject].
      */
+    @Suppress("IncorrectParentDisposable")
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
-        LightDirectoryIndex(project.taskQueue, noProjectMarker, { index ->
+        LightDirectoryIndex(project, noProjectMarker, { index ->
             val visited = mutableSetOf<VirtualFile>()
 
             fun VirtualFile.put(cargoProject: CargoProjectImpl) {

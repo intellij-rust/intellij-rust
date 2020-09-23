@@ -6,6 +6,9 @@
 package org.rust.cargo.toolchain
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WSLUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.systemIndependentPath
 import org.rust.openapiext.execute
 import java.nio.file.Path
@@ -17,10 +20,15 @@ private val WINDOWS_PATH_REGEX = """^[a-z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<
 class WslRustToolchain(location: Path) : RustToolchain(location) {
     private val distribution = WSL_ROOT_REGEX.find(location.root.toString())!!.groupValues[1]
 
+    override fun pathToExecutable(toolName: String): Path {
+        return location.resolve(toolName).toAbsolutePath()
+    }
+
     override fun createBaseCommandLine(path: Path, vararg arguments: String, workingDirectory: Path?): GeneralCommandLine {
         val translatedArguments = arguments.map { argument ->
             if (WINDOWS_PATH_REGEX.matches(argument)) {
-                GeneralCommandLine("wsl", "wslpath", argument.replace("\\", "\\\\")).execute()?.stdout?.trim() ?: argument
+                val pathEscaped = StringUtil.escapeBackSlashes(argument)
+                GeneralCommandLine("wsl", "wslpath", pathEscaped).execute()?.stdout?.trim() ?: argument
             } else argument
         }.toTypedArray()
 
