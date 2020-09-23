@@ -122,6 +122,10 @@ allprojects {
         }
     }
 
+    dependencies {
+        compileOnly(kotlin("stdlib-jdk8"))
+    }
+
     afterEvaluate {
         tasks.withType<AbstractTestTask> {
             testLogging {
