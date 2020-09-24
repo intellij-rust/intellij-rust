@@ -50,16 +50,18 @@ class CargoBuildAdapter(
     init {
         val processHandler = checkNotNull(context.processHandler) { "Process handler can't be null" }
         context.environment.notifyProcessStarted(processHandler)
-        val descriptor = DefaultBuildDescriptor(
+        val buildDescriptor = DefaultBuildDescriptor(
             context.buildId,
             "Run Cargo command",
             context.workingDirectory.toString(),
             context.started
         )
-        val buildStarted = StartBuildEventImpl(descriptor, "${context.taskName} running...")
-            .withExecutionFilters(*createFilters(context.cargoProject).toTypedArray())
+        val completeDescriptor = createFilters(context.cargoProject).fold(buildDescriptor) { descriptor, filter ->
+            descriptor.withExecutionFilter(filter)
+        }
             .withRestartAction(createRerunAction(processHandler, context.environment))
             .withRestartAction(createStopAction(processHandler))
+        val buildStarted = StartBuildEventImpl(completeDescriptor, "${context.taskName} running...")
         buildProgressListener.onEvent(context.buildId, buildStarted)
     }
 
