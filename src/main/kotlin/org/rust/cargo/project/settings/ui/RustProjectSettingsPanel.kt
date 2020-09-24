@@ -39,6 +39,8 @@ class RustProjectSettingsPanel(
     private val pathToStdlibField = pathToDirectoryTextField(this,
         "Select directory with standard library source code")
 
+    private var fetchedSysroot: String? = null
+
     private val downloadStdlibLink = Link("Download via rustup", action = {
         val rustup = RustToolchain(Paths.get(pathToToolchainField.text)).rustup
         if (rustup != null) {
@@ -61,7 +63,8 @@ class RustProjectSettingsPanel(
             val toolchain = RustToolchain(Paths.get(pathToToolchainField.text))
             return Data(
                 toolchain = toolchain,
-                explicitPathToStdlib = pathToStdlibField.text.blankToNull()?.takeIf { toolchain.rustup == null }
+                explicitPathToStdlib = pathToStdlibField.text.blankToNull()
+                    ?.takeIf { toolchain.rustup == null && it != fetchedSysroot }
             )
         }
         set(value) {
@@ -106,9 +109,10 @@ class RustProjectSettingsPanel(
 
                 pathToStdlibField.isEditable = !hasRustup
                 pathToStdlibField.button.isEnabled = !hasRustup
-                if (stdlibLocation != null) {
+                if (stdlibLocation != null && (pathToStdlibField.text.isBlank() || hasRustup)) {
                     pathToStdlibField.text = stdlibLocation
                 }
+                fetchedSysroot = stdlibLocation
 
                 if (rustcVersion == null) {
                     toolchainVersion.text = "N/A"

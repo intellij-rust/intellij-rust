@@ -164,6 +164,7 @@ private fun fetchStdlib(
     val rustup = context.toolchain.rustup(workingDirectory)
     if (rustup == null) {
         val explicitPath = context.project.rustSettings.explicitPathToStdlib
+            ?: context.toolchain.getStdlibFromSysroot(workingDirectory)?.path
         val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
         return when {
             explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
