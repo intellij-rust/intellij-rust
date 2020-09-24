@@ -38,8 +38,13 @@ val RsPath.kind: PathKind get() {
 /** For `Foo::bar::baz::quux` path returns `Foo` */
 tailrec fun RsPath.basePath(): RsPath {
     val qualifier = path
-    @Suppress("IfThenToElvis")
-    return if (qualifier == null) this else qualifier.basePath()
+    return if (qualifier === null) this else qualifier.basePath()
+}
+
+/** For `Foo::bar::baz::quux` path returns `Foo` */
+tailrec fun RsPathStub.basePath(): RsPathStub {
+    val qualifier = path
+    return if (qualifier === null) this else qualifier.basePath()
 }
 
 /** For `Foo::bar` in `Foo::bar::baz::quux` returns `Foo::bar::baz::quux` */

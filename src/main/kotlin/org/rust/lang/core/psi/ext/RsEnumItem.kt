@@ -16,6 +16,7 @@ import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsEnumItemStub
+import org.rust.lang.core.stubs.RsEnumVariantStub
 import org.rust.lang.core.types.RsPsiTypeImplUtil
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInteger
@@ -49,6 +50,12 @@ val RsEnumItem.isStdOptionOrResult: Boolean get() {
 
 val RsEnumItem.variants: List<RsEnumVariant>
     get() = enumBody?.enumVariantList.orEmpty()
+
+val RsEnumItemStub.variants: List<RsEnumVariantStub>
+    get() {
+        val enumBody = enumBody ?: return emptyList()
+        return enumBody.childrenStubs.filterIsInstance<RsEnumVariantStub>()
+    }
 
 // A repr attribute like #[repr(u16)] changes the discriminant type of an enum
 // https://doc.rust-lang.org/nomicon/other-reprs.html#repru-repri
