@@ -105,7 +105,7 @@ fun GeneralCommandLine.execute(
     return output
 }
 
-private fun GeneralCommandLine.adjustToWsl() {
+fun GeneralCommandLine.adjustToWsl() {
     val insertionIndex = if (parametersList[0] == "-d") 2 else 0
     environment.forEach { (k, v) ->
         if (k == "RUSTC") {

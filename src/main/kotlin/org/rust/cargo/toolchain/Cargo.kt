@@ -123,11 +123,20 @@ class Cargo(private val toolchain: RustToolchain, private val wrapper: String, p
         projectDirectory: Path,
         listener: ProcessListener?
     ): CargoMetadata.Project {
-        val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
-        val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
-            .execute(owner, listener = listener)
-            .stdout
-            .dropWhile { it != '{' }
+        val additionalArgs = arrayOf("--verbose", "--format-version", "1", "--all-features")
+        val cmd = toolchain.createGeneralCommandLine(wrapper, "metadata", *additionalArgs, workingDirectory = projectDirectory)
+            .withEnvironment("TERM", "ansi")
+            .withEnvironment("RUSTC", rustcExecutable.toString())
+        if (toolchain is WslRustToolchain) {
+            cmd.adjustToWsl()
+        }
+        val json = String(
+            Runtime.getRuntime().exec(
+                cmd.commandLineString,
+                cmd.environment.map { (key, value) -> "$key=$value" }.toTypedArray(),
+                cmd.workDirectory
+            ).inputStream.readBytes()
+        )
         LOG.info("Output from Cargo metadata: $json")
         val project = try {
             val project = Gson().fromJson(json, CargoMetadata.Project::class.java)
