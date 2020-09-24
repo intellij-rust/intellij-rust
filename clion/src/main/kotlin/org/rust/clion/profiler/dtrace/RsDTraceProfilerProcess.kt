@@ -17,9 +17,9 @@ import com.intellij.profiler.dtrace.cpuProfilerScript
 import com.intellij.profiler.model.NativeCall
 import com.intellij.profiler.model.NativeThread
 import com.intellij.profiler.sudo.SudoProcessHandler
+import com.intellij.profiler.ui.NativeCallStackElementRenderer
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.concurrency.Promise
-import org.rust.clion.profiler.NativeCallStackElementRenderer
 import org.rust.clion.profiler.RsCachingStackElementReader
 import org.rust.lang.utils.RsDemangler
 

@@ -7,7 +7,7 @@ package org.rust.ide.docs
 
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
-import org.rust.ide.docs.RsDocumentationProviderBase.Testmarks
+import org.rust.ide.docs.RsDocumentationProvider.Testmarks
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsExternalDocUrlTest : RsDocumentationProviderTest() {

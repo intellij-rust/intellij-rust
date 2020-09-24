@@ -34,6 +34,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     }
 
+    @IgnoreInPlatform(203)
     fun `test check literals`() = checkByText("""
         fn foo() {
             let literal = "<TYPO>There is two apples</TYPO>";
@@ -43,7 +44,7 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
     """)
 
     // https://github.com/intellij-rust/intellij-rust/issues/5530
-    @IgnoreInPlatform(201)
+    @IgnoreInPlatform(203)
     fun `test check doc comments`() = expect<AssertionError> {
         checkByText("""
             ///

@@ -5,6 +5,7 @@
 
 package org.rust.ide.lineMarkers
 
+import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
 import com.intellij.psi.PsiElement
@@ -23,7 +24,7 @@ import javax.swing.Icon
  * Annotates the implementation of a trait members (const, fn, type) with an icon on the gutter.
  */
 class RsTraitItemImplLineMarkerProvider : RelatedItemLineMarkerProvider() {
-    override fun collectNavigationMarkers(el: PsiElement, result: NavigationMarkersResult) {
+    override fun collectNavigationMarkers(el: PsiElement, result: MutableCollection<in RelatedItemLineMarkerInfo<*>>) {
         if (el !is RsAbstractable) return
 
         val superItem = el.superItem ?: return

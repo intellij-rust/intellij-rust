@@ -5,20 +5,12 @@
 
 package org.rust.toml.completion
 
-import org.junit.After
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTomlCompletionTestBase() {
-
-    @Before
-    fun before() = setUp()
-
-    @After
-    fun after() = tearDown()
+class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTomlCompletionEditionTestBase() {
 
     @Test
     fun `key completion`() = doSingleCompletion("""

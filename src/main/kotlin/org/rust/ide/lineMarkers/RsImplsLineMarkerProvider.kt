@@ -31,7 +31,7 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
 
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? = null
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: SlowRunMarketResult) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
         for (el in elements) {
             // Ideally, we want to avoid showing an icon if there are no implementations,
             // but that might be costly. To save time, we always show an icon, but calculate

@@ -7,8 +7,6 @@ package org.rust.cargo
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.builders.ModuleFixtureBuilder
-import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
@@ -19,7 +17,7 @@ import org.rust.cargo.project.model.impl.testCargoProjects
  * Unlike [org.rust.RsTestBase] it does not use in-memory temporary VFS
  * and instead copies real files.
  */
-abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtureBuilder<*>>() {
+abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
 
     private lateinit var rustupFixture: RustupTestFixture
 
@@ -38,7 +36,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         project.testCargoProjects.discoverAndRefreshSync()
     }
 
-    override fun runTest() {
+    override fun runTestInternal(context: TestContext) {
         val skipReason = rustupFixture.skipTestReason
         if (skipReason != null) {
             System.err.println("SKIP \"$name\": $skipReason")
@@ -58,7 +56,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
                 return
             }
         }
-        super.runTest()
+        super.runTestInternal(context)
     }
 
     override fun setUp() {

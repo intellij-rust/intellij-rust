@@ -12,7 +12,6 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 import org.rust.ide.icons.RsIcons
-import org.rust.ide.lineMarkers.SlowRunMarketResult
 import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -21,7 +20,7 @@ import org.toml.lang.psi.ext.kind
 class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: SlowRunMarketResult) {
+    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
         if (!tomlPluginIsAbiCompatible()) return
         val firstElement = elements.firstOrNull() ?: return
         val file = firstElement.containingFile

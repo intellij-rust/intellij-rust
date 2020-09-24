@@ -40,7 +40,7 @@ private class RsHighlightExitPointsHandler(
 ) : HighlightUsagesHandlerBase<PsiElement>(editor, file) {
     override fun getTargets() = listOf(target)
 
-    override fun selectTargets(targets: List<PsiElement>, selectionConsumer: ExitPointSelectionConsumer) {
+    override fun selectTargets(targets: List<PsiElement>, selectionConsumer: Consumer<in List<PsiElement>>) {
         selectionConsumer.consume(targets)
     }
 

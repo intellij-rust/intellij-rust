@@ -33,13 +33,13 @@ jobs:
                 os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.46.0, nightly-2020-07-10 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 201, 202 ]
+                platform-version: [ 202, 203 ]
                 include:
                     - os: ubuntu-latest
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.32.0
                       base-ide: idea
-                      platform-version: 201
+                      platform-version: 202
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 60
@@ -91,10 +91,10 @@ jobs:
               if: matrix.rust-version == '1.32.0'
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                  echo "::set-env name=ORG_GRADLE_PROJECT_ideaVersion::IU-2020.1"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_clionVersion::CL-2020.1"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::201.6668.113"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::2020.1"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_ideaVersion::IU-2020.2"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_clionVersion::CL-2020.2"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::202.6397.20"
+                  echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::202.6397.11"
 
             - name: Set up test env variables
               run: echo "::set-env name=RUST_SRC_WITH_SYMLINK::$HOME/.rust-src"
@@ -120,7 +120,7 @@ jobs:
             - name: Check
               uses: eskatos/gradle-command-action@v1
               with:
-                  arguments: "check -PexcludeTests=org/rustPerformanceTests/** -Pkotlin.incremental=false --no-daemon"
+                  arguments: "check -PexcludeTests=org/rustPerformanceTests/** --continue -Pkotlin.incremental=false --no-daemon"
 
             - name: Verify plugin
               uses: eskatos/gradle-command-action@v1

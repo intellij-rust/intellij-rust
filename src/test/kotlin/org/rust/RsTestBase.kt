@@ -28,7 +28,6 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
@@ -45,7 +44,7 @@ import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
 
-abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
+abstract class RsTestBase : RsPlatformTestBase() {
 
     // Needed for assertion that the directory doesn't acidentally renamed during the test
     private var tempDirRootUrl: String? = null
@@ -134,7 +133,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         return semVer to channel
     }
 
-    override fun runTest() {
+    override fun runTestInternal(context: TestContext) {
         val reason = skipTestReason
         if (reason != null) {
             System.err.println("SKIP \"$name\": $reason")
@@ -155,10 +154,10 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
                 error("Can't mix `BothEditions` and `MockEdition` annotations")
             }
             // These functions exist to simplify stacktrace analyzing
-            runTestEdition2015()
-            runTestEdition2018()
+            runTestEdition2015(context)
+            runTestEdition2018(context)
         } else {
-            super.runTest()
+            super.runTestInternal(context)
         }
     }
 
@@ -177,14 +176,14 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             return reason
         }
 
-    private fun runTestEdition2015() {
+    private fun runTestEdition2015(context: TestContext) {
         project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015, testRootDisposable)
-        super.runTest()
+        super.runTestInternal(context)
     }
 
-    private fun runTestEdition2018() {
+    private fun runTestEdition2018(context: TestContext) {
         project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018, testRootDisposable)
-        super.runTest()
+        super.runTestInternal(context)
     }
 
     protected val fileName: String
