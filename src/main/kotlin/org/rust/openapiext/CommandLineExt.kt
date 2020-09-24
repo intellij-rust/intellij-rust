@@ -90,7 +90,7 @@ fun GeneralCommandLine.execute(
     listener?.let { handler.addProcessListener(it) }
 
     if (stdIn != null) {
-        handler.processInput.use { it.write(stdIn) }
+        handler.processInput?.use { it.write(stdIn) }
     }
 
     val output = try {
