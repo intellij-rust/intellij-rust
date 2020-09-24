@@ -119,10 +119,14 @@ fun RsMacroCall.findIncludingFile(): RsFile? {
 }
 
 val RsMacroCall.bodyHash: HashCode?
-    get() = CachedValuesManager.getCachedValue(this) {
-        val body = macroBody
-        val hash = body?.let { HashCode.compute(it) }
-        CachedValueProvider.Result.create(hash, modificationTracker)
+    get() {
+        val stub = greenStub
+        if (stub !== null) return stub.bodyHash
+        return CachedValuesManager.getCachedValue(this) {
+            val body = macroBody
+            val hash = body?.let { HashCode.compute(it) }
+            CachedValueProvider.Result.create(hash, modificationTracker)
+        }
     }
 
 fun RsMacroCall.resolveToMacro(): RsMacro? =

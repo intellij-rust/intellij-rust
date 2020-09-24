@@ -7,6 +7,8 @@ package org.rust.stdext
 
 import com.intellij.util.io.DigestUtil
 import org.apache.commons.codec.binary.Hex
+import java.io.DataInput
+import java.io.DataOutput
 import java.io.Serializable
 
 /**
@@ -50,3 +52,29 @@ import java.io.Serializable
 }
 
 fun HashCode.getLeading64bits(): Long = toByteArray().getLeading64bits()
+
+fun DataOutput.writeHashCode(hash: HashCode) =
+    write(hash.toByteArray())
+
+fun DataInput.readHashCode(): HashCode {
+    val bytes = ByteArray(HashCode.ARRAY_LEN)
+    readFully(bytes)
+    return HashCode.fromByteArray(bytes)
+}
+
+fun DataOutput.writeHashCodeNullable(hash: HashCode?) {
+    if (hash == null) {
+        writeBoolean(false)
+    } else {
+        writeBoolean(true)
+        writeHashCode(hash)
+    }
+}
+
+fun DataInput.readHashCodeNullable(): HashCode? {
+    return if (readBoolean()) {
+        readHashCode()
+    } else {
+        null
+    }
+}

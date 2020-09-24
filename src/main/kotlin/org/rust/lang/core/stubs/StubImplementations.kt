@@ -35,7 +35,10 @@ import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
+import org.rust.stdext.HashCode
 import org.rust.stdext.makeBitMask
+import org.rust.stdext.readHashCodeNullable
+import org.rust.stdext.writeHashCodeNullable
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
     val attributes: RsFile.Attributes
@@ -1261,6 +1264,7 @@ class RsMacroStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     val macroBody: String?,
+    val bodyHash: HashCode?,
     val preferredBraces: MacroBraces,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsMacro>(parent, elementType),
@@ -1274,6 +1278,7 @@ class RsMacroStub(
             RsMacroStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
                 dataStream.readEnum(),
                 dataStream.readUnsignedByte()
             )
@@ -1282,6 +1287,7 @@ class RsMacroStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeUTFFastAsNullable(stub.macroBody)
+                writeHashCodeNullable(stub.bodyHash)
                 writeEnum(stub.preferredBraces)
                 writeByte(stub.flags)
             }
@@ -1294,6 +1300,7 @@ class RsMacroStub(
             this,
             psi.name,
             psi.macroBody?.text,
+            psi.bodyHash,
             psi.preferredBraces,
             RsAttributeOwnerStub.extractFlags(psi)
         )
@@ -1337,6 +1344,7 @@ class RsMacro2Stub(
 class RsMacroCallStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val macroBody: String?,
+    val bodyHash: HashCode?,
     val bodyStartOffset: Int,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsMacroCall>(parent, elementType) {
@@ -1350,6 +1358,7 @@ class RsMacroCallStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroCallStub(parentStub, this,
                 dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
                 dataStream.readVarInt(),
                 dataStream.readUnsignedByte()
             )
@@ -1357,6 +1366,7 @@ class RsMacroCallStub(
         override fun serialize(stub: RsMacroCallStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeUTFFastAsNullable(stub.macroBody)
+                writeHashCodeNullable(stub.bodyHash)
                 writeVarInt(stub.bodyStartOffset)
                 writeByte(stub.flags)
             }
@@ -1368,6 +1378,7 @@ class RsMacroCallStub(
             parentStub,
             this,
             psi.macroBody,
+            psi.bodyHash,
             psi.bodyTextRange?.startOffset ?: -1,
             RsAttributeOwnerStub.extractFlags(psi)
         )
