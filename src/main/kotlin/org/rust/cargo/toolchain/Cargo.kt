@@ -106,7 +106,7 @@ class Cargo(private val toolchain: RustToolchain, private val wrapper: String, p
         projectDirectory: Path,
         listener: ProcessListener? = null
     ): CargoWorkspaceData {
-        val rawData = fetchMetadata(owner, projectDirectory, listener)
+        val rawData = fetchMetadata(projectDirectory)
         val buildScriptsInfo = fetchBuildScriptsInfo(owner, projectDirectory, listener)
         val buildPlan = if (buildScriptsInfo?.containsOutDirInfo != true) {
             fetchBuildPlan(owner, projectDirectory, listener)
@@ -119,9 +119,7 @@ class Cargo(private val toolchain: RustToolchain, private val wrapper: String, p
 
     @Throws(ExecutionException::class)
     private fun fetchMetadata(
-        owner: Project,
-        projectDirectory: Path,
-        listener: ProcessListener?
+        projectDirectory: Path
     ): CargoMetadata.Project {
         val additionalArgs = arrayOf("--verbose", "--format-version", "1", "--all-features")
         val cmd = toolchain.createGeneralCommandLine(wrapper, "metadata", *additionalArgs, workingDirectory = projectDirectory)
