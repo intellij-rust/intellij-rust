@@ -3725,4 +3725,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             RED, GREEN
         }
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test custom derive macro instead of attr macro are still detected normally`() = checkByFileTree("""
+    //- dep-proc-macro/lib.rs
+        use proc_macro::TokenStream;
+
+        #[proc_macro_derive(repr)]
+        pub fn repr_derive(input: TokenStream) -> TokenStream {
+            input
+        }
+    //- main.rs
+        extern crate dep_proc_macro;
+
+        use dep_proc_macro::repr;
+
+        #[repr(<error descr="Unrecognized representation Demo [E0552]">Demo/*caret*/</error>)]
+        type Foo = i32;
+    """)
 }

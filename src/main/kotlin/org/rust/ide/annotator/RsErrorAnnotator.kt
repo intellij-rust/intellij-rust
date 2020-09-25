@@ -777,7 +777,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkDeriveAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("derive")) return
+        if (!attr.isBuiltinAttrWithName("derive")) return
 
         if (attr.owner is RsStructOrEnumItemElement) {
             checkImplBothCopyAndDrop(holder, attr)
@@ -788,7 +788,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0132: Invalid `start` attribute
     private fun checkStartAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("start")) return
+        if (!attr.isBuiltinAttrWithName("start")) return
 
         START.check(holder, attr.metaItem, "#[start] function")
 
@@ -828,7 +828,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkReprAttribute(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("repr")) return
+        if (!attr.isBuiltinAttrWithName("repr")) return
 
         val owner = attr.owner ?: return
 
@@ -872,7 +872,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     // E0518: Inline attribute is allowed only on functions
     private fun checkInlineAttr(holder: RsAnnotationHolder, attr: RsAttr) {
-        if (!attr.isBuiltinWithName("inline")) return
+        if (!attr.isBuiltinAttrWithName("inline")) return
 
         val owner = attr.owner
         if (owner !is RsFunction && owner !is RsLambdaExpr) {
@@ -1220,11 +1220,13 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     }
 }
 
-private fun RsAttr.isBuiltinWithName(target: String): Boolean {
+private fun RsAttr.isBuiltinAttrWithName(target: String): Boolean {
     val name = metaItem.name ?: return false
 
     if (name != target) return false
     if (name !in STD_ATTRIBUTES) return false
 
-    return !hasInScope(name, MACROS)
+    val fn = findInScope(name, MACROS) as? RsFunction
+
+    return !(fn != null && fn.isAttributeProcMacroDef)
 }

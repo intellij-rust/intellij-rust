@@ -28,6 +28,7 @@ object RsPsiPattern {
      * Source of attributes: [https://doc.rust-lang.org/1.41.1/reference/attributes.html#built-in-attributes-index]
      */
     val STD_ATTRIBUTES: Set<String> = setOf(
+        // outer attr
         "cfg",
         "cfg_attr",
 
@@ -83,6 +84,9 @@ object RsPsiPattern {
         "windows_subsystem",
 
         "non_exhaustive",
+
+        // inner attr
+        "feature",
 
         // unstable attr
         "start"
