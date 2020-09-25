@@ -31,7 +31,11 @@ class CargoRunAnythingProviderTest : RsTestBase() {
 
     fun `test command completion`() {
         val commands = listOf(
-            "build", "check", "clean", "doc", "run", "test", "bench", "update", "search", "publish", "install"
+            "new", "publish", "fetch", "yank", "locate-project", "vendor",
+            "check", "clean", "metadata", "fix", "version", "owner", "bench",
+            "rustc", "run", "rustdoc", "tree", "verify-project", "pkgid",
+            "generate-lockfile", "build", "install", "test", "login", "doc",
+            "update", "init", "package", "search", "uninstall", "help"
         ).map { "cargo $it" }
         assertSameElements(provider.getValues(dataContext, "car"), commands)
         assertSameElements(provider.getValues(dataContext, "cargo"), commands)
@@ -42,9 +46,11 @@ class CargoRunAnythingProviderTest : RsTestBase() {
 
     fun `test options completion`() {
         val runOptions = listOf(
-            "--bin", "--example", "--package", "--jobs", "--release", "--manifest-path", "--verbose", "--quiet",
-            "--features", "--all-features", "--no-default-features"
-        ).map { "cargo run $it" }
+            "color", "target-dir", "manifest-path", "bin", "help", "example",
+            "quiet", "message-format", "all-features", "verbose",
+            "no-default-features", "offline", "jobs", "target", "locked",
+            "package", "features", "frozen", "release"
+        ).map { "cargo run --$it" }
         assertSameElements(provider.getValues(dataContext, "cargo run "), runOptions)
         assertSameElements(provider.getValues(dataContext, "cargo run -"), runOptions)
         assertSameElements(provider.getValues(dataContext, "cargo run --"), runOptions)

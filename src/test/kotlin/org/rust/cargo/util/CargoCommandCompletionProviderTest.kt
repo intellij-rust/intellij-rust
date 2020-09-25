@@ -32,12 +32,44 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test complete empty`() = checkCompletion(
         "",
-        listOf("run", "test", "check", "build", "update", "bench", "doc", "publish", "clean", "search", "install")
+        listOf(
+            "bench",
+            "build",
+            "check",
+            "clean",
+            "doc",
+            "fetch",
+            "fix",
+            "run",
+            "rustc",
+            "rustdoc",
+            "test",
+            "generate-lockfile",
+            "locate-project",
+            "metadata",
+            "pkgid",
+            "tree",
+            "update",
+            "vendor",
+            "verify-project",
+            "init",
+            "install",
+            "new",
+            "search",
+            "uninstall",
+            "login",
+            "owner",
+            "package",
+            "publish",
+            "yank",
+            "help",
+            "version"
+        )
     )
 
     fun `test complete command name`() = checkCompletion(
         "b",
-        listOf("build", "bench")
+        listOf("bench", "build")
     )
 
     fun `test no completion for unknown command`() = checkCompletion(
@@ -48,11 +80,25 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
     fun `test complete run args`() = checkCompletion(
         "run ",
         listOf(
-            "--release", "--jobs",
-            "--features", "--all-features", "--no-default-features",
-            "--verbose", "--quiet",
-            "--bin", "--example", "--package",
-            "--manifest-path"
+            "--package",
+            "--bin",
+            "--example",
+            "--features",
+            "--all-features",
+            "--no-default-features",
+            "--target",
+            "--release",
+            "--target-dir",
+            "--verbose",
+            "--quiet",
+            "--color",
+            "--message-format",
+            "--manifest-path",
+            "--frozen",
+            "--locked",
+            "--offline",
+            "--help",
+            "--jobs"
         )
     )
 
