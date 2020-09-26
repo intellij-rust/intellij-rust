@@ -42,18 +42,16 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     """)
 
-    // https://github.com/intellij-rust/intellij-rust/issues/5530
-    @IgnoreInPlatform(203)
-    fun `test check doc comments`() = expect<AssertionError> {
-        checkByText("""
-            ///
-            /// ```
-            /// let literal = "<TYPO>There is two apples</TYPO>";
-            /// for i in 1..10 {}
-            /// ```
-            pub fn foo() {}
-        """)
-    }
+    // BACKCOMPAT: 2020.2. Proofreading was broken in grazie plugin for 2020.2 in injected code
+    @IgnoreInPlatform(202)
+    fun `test check doc comments`() = checkByText("""
+        ///
+        /// ```
+        /// let literal = "<TYPO>There is two apples</TYPO>";
+        /// for i in 1..10 {}
+        /// ```
+        pub fn foo() {}
+    """)
 
     companion object {
         private val enabledLanguages = setOf(Lang.AMERICAN_ENGLISH)
