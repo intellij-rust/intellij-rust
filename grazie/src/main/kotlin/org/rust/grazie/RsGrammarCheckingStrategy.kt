@@ -13,7 +13,9 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.injected.findDoctestInjectableRanges
 import org.rust.lang.core.psi.RsDocCommentImpl
 import org.rust.lang.core.psi.RsLitExpr
+import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.ext.stubKind
+import org.rust.lang.core.psi.kind
 import org.rust.lang.core.stubs.RsStubLiteralKind
 
 class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
@@ -30,6 +32,13 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
 
     override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup? = RuleGroup.LITERALS
 
-    override fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> =
-        StrategyUtils.indentIndexes(text, setOf(' ', '/', '!'))
+    override fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> {
+        return when (root) {
+            is RsLitExpr -> {
+                val valueTextRange = (root.kind as? RsLiteralKind.String)?.offsets?.value ?: return linkedSetOf()
+                linkedSetOf(0 until valueTextRange.startOffset, valueTextRange.endOffset until text.length)
+            }
+            else -> StrategyUtils.indentIndexes(text, setOf(' ', '/', '!'))
+        }
+    }
 }

@@ -34,7 +34,6 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         }
     }
 
-    @IgnoreInPlatform(203)
     fun `test check literals`() = checkByText("""
         fn foo() {
             let literal = "<TYPO>There is two apples</TYPO>";
