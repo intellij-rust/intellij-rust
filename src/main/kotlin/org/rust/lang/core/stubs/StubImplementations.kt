@@ -35,7 +35,10 @@ import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
+import org.rust.stdext.HashCode
 import org.rust.stdext.makeBitMask
+import org.rust.stdext.readHashCodeNullable
+import org.rust.stdext.writeHashCodeNullable
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
     val attributes: RsFile.Attributes
@@ -49,7 +52,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 201
+        private const val STUB_VERSION = 202
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -321,6 +324,9 @@ class RsExternCrateItemStub(
 ) : RsAttributeOwnerStubBase<RsExternCrateItem>(parent, elementType),
     RsNamedStub {
 
+    val alias: RsAliasStub?
+        get() = findChildStubByType(RsAliasStub.Type)
+
     object Type : RsStubElementType<RsExternCrateItemStub, RsExternCrateItem>("EXTERN_CRATE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -351,6 +357,12 @@ class RsUseItemStub(
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsUseItem>(parent, elementType) {
 
+    val useSpeck: RsUseSpeckStub?
+        get() = findChildStubByType(RsUseSpeckStub.Type)
+    // stored in stub as an optimization
+    val hasPreludeImport: Boolean
+        get() = BitUtil.isSet(flags, HAS_PRELUDE_IMPORT_MASK)
+
     object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
@@ -363,35 +375,62 @@ class RsUseItemStub(
         override fun createPsi(stub: RsUseItemStub) =
             RsUseItemImpl(stub, this)
 
-        override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?) =
-            RsUseItemStub(parentStub, this, RsAttributeOwnerStub.extractFlags(psi))
+        override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?): RsUseItemStub {
+            var flags = RsAttributeOwnerStub.extractFlags(psi)
+            flags = BitUtil.set(flags, HAS_PRELUDE_IMPORT_MASK, psi.hasPreludeImport)
+            return RsUseItemStub(parentStub, this, flags)
+        }
+    }
+
+    companion object {
+        private val HAS_PRELUDE_IMPORT_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
     }
 }
 
 class RsUseSpeckStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val isStarImport: Boolean
+    val isStarImport: Boolean,
+    /** Needed to distinguish `use {aaa, bbb};` and `use ::{aaa, bbb};` */
+    val hasColonColon: Boolean,
 ) : RsElementStub<RsUseSpeck>(parent, elementType) {
+
+    val path: RsPathStub?
+        get() = findChildStubByType(RsPathStub.Type)
+    val alias: RsAliasStub?
+        get() = findChildStubByType(RsAliasStub.Type)
+    val useGroup: StubElement<RsUseGroup>?
+        get() = findChildStubByType(RsStubElementTypes.USE_GROUP)
 
     object Type : RsStubElementType<RsUseSpeckStub, RsUseSpeck>("USE_SPECK") {
 
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsUseSpeckStub(parentStub, this,
-                dataStream.readBoolean()
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsUseSpeckStub {
+            val flags = dataStream.readUnsignedByte()
+            return RsUseSpeckStub(
+                parentStub, this,
+                BitUtil.isSet(flags, IS_STAR_IMPORT_MASK),
+                BitUtil.isSet(flags, HAS_COLON_COLON_MASK),
             )
+        }
 
-        override fun serialize(stub: RsUseSpeckStub, dataStream: StubOutputStream) =
-            with(dataStream) {
-                writeBoolean(stub.isStarImport)
-            }
+        override fun serialize(stub: RsUseSpeckStub, dataStream: StubOutputStream) {
+            var flags = 0
+            flags = BitUtil.set(flags, IS_STAR_IMPORT_MASK, stub.isStarImport)
+            flags = BitUtil.set(flags, HAS_COLON_COLON_MASK, stub.hasColonColon)
+            dataStream.writeByte(flags)
+        }
 
         override fun createPsi(stub: RsUseSpeckStub) =
             RsUseSpeckImpl(stub, this)
 
         override fun createStub(psi: RsUseSpeck, parentStub: StubElement<*>?) =
-            RsUseSpeckStub(parentStub, this, psi.isStarImport)
+            RsUseSpeckStub(parentStub, this, psi.isStarImport, psi.hasColonColon)
 
         override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
+    }
+
+    companion object {
+        private val IS_STAR_IMPORT_MASK: Int = makeBitMask(0)
+        private val HAS_COLON_COLON_MASK: Int = makeBitMask(1)
     }
 }
 
@@ -402,6 +441,8 @@ class RsStructItemStub(
 ) : RsAttributeOwnerStubBase<RsStructItem>(parent, elementType),
     RsNamedStub {
 
+    val blockFields: StubElement<RsBlockFields>?
+        get() = findChildStubByType(RsStubElementTypes.BLOCK_FIELDS)
     val isUnion: Boolean
         get() = BitUtil.isSet(flags, IS_UNION_MASK)
 
@@ -444,6 +485,9 @@ class RsEnumItemStub(
 ) : RsAttributeOwnerStubBase<RsEnumItem>(parent, elementType),
     RsNamedStub {
 
+    val enumBody: StubElement<RsEnumBody>?
+        get() = findChildStubByType(RsStubElementTypes.ENUM_BODY)
+
     object Type : RsStubElementType<RsEnumItemStub, RsEnumItem>("ENUM_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumItemStub =
             RsEnumItemStub(parentStub, this,
@@ -476,6 +520,9 @@ class RsEnumVariantStub(
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsEnumVariant>(parent, elementType),
     RsNamedStub {
+
+    val blockFields: StubElement<RsBlockFields>?
+        get() = findChildStubByType(RsStubElementTypes.BLOCK_FIELDS)
 
     object Type : RsStubElementType<RsEnumVariantStub, RsEnumVariant>("ENUM_VARIANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumVariantStub =
@@ -510,6 +557,10 @@ class RsModDeclItemStub(
 ) : RsAttributeOwnerStubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub {
 
+    val pathAttribute: String?
+        // TODO: Don't use psi
+        get() = if (hasAttrs) psi.pathAttribute else null
+
     object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModDeclItemStub(parentStub, this,
@@ -541,6 +592,10 @@ class RsModItemStub(
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsModItem>(parent, elementType),
     RsNamedStub {
+
+    val pathAttribute: String?
+        // TODO: Don't use psi
+        get() = if (hasAttrs) psi.pathAttribute else null
 
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
@@ -929,6 +984,9 @@ class RsPathStub(
     val startOffset: Int
 ) : StubBase<RsPath>(parent, elementType) {
 
+    val path: RsPathStub?
+        get() = findChildStubByType(Type)
+
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
@@ -1261,10 +1319,18 @@ class RsMacroStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     override val name: String?,
     val macroBody: String?,
+    val bodyHash: HashCode?,
     val preferredBraces: MacroBraces,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsMacro>(parent, elementType),
     RsNamedStub {
+
+    // stored in stub as an optimization
+    val hasMacroExport: Boolean
+        get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT)
+    // stored in stub as an optimization
+    val hasMacroExportLocalInnerMacros: Boolean
+        get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS)
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
         override fun shouldCreateStub(node: ASTNode): Boolean =
@@ -1274,6 +1340,7 @@ class RsMacroStub(
             RsMacroStub(parentStub, this,
                 dataStream.readNameAsString(),
                 dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
                 dataStream.readEnum(),
                 dataStream.readUnsignedByte()
             )
@@ -1282,6 +1349,7 @@ class RsMacroStub(
             with(dataStream) {
                 writeName(stub.name)
                 writeUTFFastAsNullable(stub.macroBody)
+                writeHashCodeNullable(stub.bodyHash)
                 writeEnum(stub.preferredBraces)
                 writeByte(stub.flags)
             }
@@ -1289,16 +1357,27 @@ class RsMacroStub(
         override fun createPsi(stub: RsMacroStub): RsMacro =
             RsMacroImpl(stub, this)
 
-        override fun createStub(psi: RsMacro, parentStub: StubElement<*>?) = RsMacroStub(
-            parentStub,
-            this,
-            psi.name,
-            psi.macroBody?.text,
-            psi.preferredBraces,
-            RsAttributeOwnerStub.extractFlags(psi)
-        )
+        override fun createStub(psi: RsMacro, parentStub: StubElement<*>?): RsMacroStub {
+            var flags = RsAttributeOwnerStub.extractFlags(psi)
+            flags = BitUtil.set(flags, HAS_MACRO_EXPORT, psi.hasMacroExport)
+            flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, psi.hasMacroExportLocalInnerMacros)
+            return RsMacroStub(
+                parentStub,
+                this,
+                psi.name,
+                psi.macroBody?.text,
+                psi.bodyHash,
+                psi.preferredBraces,
+                flags
+            )
+        }
 
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
+    }
+
+    companion object {
+        private val HAS_MACRO_EXPORT: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+        private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
     }
 }
 
@@ -1337,9 +1416,13 @@ class RsMacro2Stub(
 class RsMacroCallStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val macroBody: String?,
+    val bodyHash: HashCode?,
     val bodyStartOffset: Int,
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsMacroCall>(parent, elementType) {
+
+    val path: RsPathStub
+        get() = findChildStubByType(RsPathStub.Type)!! // guaranteed to be non-null by the grammar
 
     object Type : RsStubElementType<RsMacroCallStub, RsMacroCall>("MACRO_CALL") {
         override fun shouldCreateStub(node: ASTNode): Boolean {
@@ -1350,6 +1433,7 @@ class RsMacroCallStub(
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsMacroCallStub(parentStub, this,
                 dataStream.readUTFFastAsNullable(),
+                dataStream.readHashCodeNullable(),
                 dataStream.readVarInt(),
                 dataStream.readUnsignedByte()
             )
@@ -1357,6 +1441,7 @@ class RsMacroCallStub(
         override fun serialize(stub: RsMacroCallStub, dataStream: StubOutputStream) =
             with(dataStream) {
                 writeUTFFastAsNullable(stub.macroBody)
+                writeHashCodeNullable(stub.bodyHash)
                 writeVarInt(stub.bodyStartOffset)
                 writeByte(stub.flags)
             }
@@ -1368,6 +1453,7 @@ class RsMacroCallStub(
             parentStub,
             this,
             psi.macroBody,
+            psi.bodyHash,
             psi.bodyTextRange?.startOffset ?: -1,
             RsAttributeOwnerStub.extractFlags(psi)
         )
@@ -1735,6 +1821,12 @@ class RsVisStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
     val kind: RsVisStubKind
 ) : StubBase<RsVis>(parent, elementType) {
+
+    /** Equivalent of `RsVis.visRestriction.path` */
+    val visRestrictionPath: RsPathStub? get() {
+        val visRestriction = findChildStubByType(RsStubElementTypes.VIS_RESTRICTION)
+        return visRestriction?.findChildStubByType(RsPathStub.Type)
+    }
 
     object Type : RsStubElementType<RsVisStub, RsVis>("VIS") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =

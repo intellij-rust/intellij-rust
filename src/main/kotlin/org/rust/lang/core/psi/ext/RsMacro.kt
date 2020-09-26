@@ -102,10 +102,14 @@ private fun RsMacro.guessPreferredBraces(): MacroBraces {
 private val MACRO_BODY_HASH_KEY: Key<CachedValue<HashCode>> = Key.create("MACRO_BODY_HASH_KEY")
 
 val RsMacro.bodyHash: HashCode?
-    get() = CachedValuesManager.getCachedValue(this, MACRO_BODY_HASH_KEY) {
-        val body = greenStub?.macroBody ?: macroBody?.text
-        val hash = body?.let { HashCode.compute(it) }
-        CachedValueProvider.Result.create(hash, modificationTracker)
+    get() {
+        val stub = greenStub
+        if (stub !== null) return stub.bodyHash
+        return CachedValuesManager.getCachedValue(this, MACRO_BODY_HASH_KEY) {
+            val body = macroBody?.text
+            val hash = body?.let { HashCode.compute(it) }
+            CachedValueProvider.Result.create(hash, modificationTracker)
+        }
     }
 
 private val MACRO_GRAPH_KEY: Key<CachedValue<MacroGraph?>> = Key.create("MACRO_GRAPH_KEY")

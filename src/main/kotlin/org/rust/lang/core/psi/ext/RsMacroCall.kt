@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -60,15 +61,20 @@ val RsMacroCall.bodyTextRange: TextRange?
     get() {
         val stub = greenStub
         return if (stub != null) {
-            val bodyStartOffset = stub.bodyStartOffset
-            val macroBody = stub.macroBody
-            if (bodyStartOffset != -1 && macroBody != null) {
-                TextRange(bodyStartOffset, bodyStartOffset + macroBody.length)
-            } else {
-                null
-            }
+            stub.bodyTextRange
         } else {
             macroArgumentElement?.textRange?.let { TextRange(it.startOffset + 1, it.endOffset - if (it.length == 1) 0 else 1) }
+        }
+    }
+
+val RsMacroCallStub.bodyTextRange: TextRange?
+    get() {
+        val bodyStartOffset = bodyStartOffset
+        val macroBody = macroBody
+        return if (bodyStartOffset != -1 && macroBody !== null) {
+            TextRange(bodyStartOffset, bodyStartOffset + macroBody.length)
+        } else {
+            null
         }
     }
 
@@ -81,7 +87,10 @@ private val MACRO_ARGUMENT_TYPES: TokenSet = tokenSetOf(
 val RsMacroCall.macroArgumentElement: RsElement?
     get() = node.findChildByType(MACRO_ARGUMENT_TYPES)?.psi as? RsElement
 
-private val RsExpr.value: String? get() {
+val RsExpr.value: String? get() = getValue(null)
+
+/** [crateOrNull] is passed to avoid trigger resolve */
+private fun RsExpr.getValue(crateOrNull: Crate?): String? {
     return when (this) {
         is RsLitExpr -> stringValue
         is RsMacroExpr -> {
@@ -91,15 +100,15 @@ private val RsExpr.value: String? get() {
                     val exprList = macroCall.concatMacroArgument?.exprList ?: return null
                     buildString {
                         for (expr in exprList) {
-                            val value = expr.value ?: return null
+                            val value = expr.getValue(crateOrNull) ?: return null
                             append(value)
                         }
                     }
                 }
                 "env" -> {
                     val expr = macroCall.envMacroArgument?.variableNameExpr as? RsLitExpr ?: return null
-                    val crate = expr.containingCrate ?: return null
-                    when (val variableName = expr.value) {
+                    val crate = crateOrNull ?: expr.containingCrate ?: return null
+                    when (val variableName = expr.getValue(crate)) {
                         "OUT_DIR" -> crate.outDir?.path
                         else -> crate.env[variableName]
                     }
@@ -118,11 +127,22 @@ fun RsMacroCall.findIncludingFile(): RsFile? {
     return file.parent?.findFileByMaybeRelativePath(path)?.toPsiFile(project)?.rustFile
 }
 
+/** [crate] is passed to avoid trigger resolve */
+fun RsMacroCallStub.getIncludeMacroArgument(crate: Crate): String? {
+    val includeMacroArgument = findChildStubByType(RsStubElementTypes.INCLUDE_MACRO_ARGUMENT) ?: return null
+    // TODO: Don't use psi
+    return includeMacroArgument.psi.expr?.getValue(crate)
+}
+
 val RsMacroCall.bodyHash: HashCode?
-    get() = CachedValuesManager.getCachedValue(this) {
-        val body = macroBody
-        val hash = body?.let { HashCode.compute(it) }
-        CachedValueProvider.Result.create(hash, modificationTracker)
+    get() {
+        val stub = greenStub
+        if (stub !== null) return stub.bodyHash
+        return CachedValuesManager.getCachedValue(this) {
+            val body = macroBody
+            val hash = body?.let { HashCode.compute(it) }
+            CachedValueProvider.Result.create(hash, modificationTracker)
+        }
     }
 
 fun RsMacroCall.resolveToMacro(): RsMacro? =

@@ -40,6 +40,8 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
+import org.rust.stdext.readHashCodeNullable
+import org.rust.stdext.writeHashCodeNullable
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.IOException
@@ -950,32 +952,6 @@ private fun DataOutputStream.writeUTFNullable(str: String?) {
 private fun DataInputStream.readUTFNullable(): String? {
     return if (readBoolean()) {
         readUTF()
-    } else {
-        null
-    }
-}
-
-private fun DataOutputStream.writeHashCode(hash: HashCode) =
-    write(hash.toByteArray())
-
-private fun DataInputStream.readHashCode(): HashCode {
-    val bytes = ByteArray(HashCode.ARRAY_LEN)
-    readFully(bytes)
-    return HashCode.fromByteArray(bytes)
-}
-
-private fun DataOutputStream.writeHashCodeNullable(hash: HashCode?) {
-    if (hash == null) {
-        writeBoolean(false)
-    } else {
-        writeBoolean(true)
-        writeHashCode(hash)
-    }
-}
-
-private fun DataInputStream.readHashCodeNullable(): HashCode? {
-    return if (readBoolean()) {
-        readHashCode()
     } else {
         null
     }
