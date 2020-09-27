@@ -12,9 +12,9 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.layout.panel
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.newProject.RsPackageNameValidator
-import org.rust.ide.ui.layout
 import javax.swing.JComponent
 
 data class CargoNewCrateSettings(val binary: Boolean, val crateName: String)
@@ -64,17 +64,12 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
         return CargoNewCrateSettings(binary, crateName)
     }
 
-    override fun createCenterPanel(): JComponent {
-
-        return layout {
-            row("Name", name)
-            row("Type", typeCombobox)
-        }
+    override fun createCenterPanel(): JComponent = panel {
+        row("Name") { name() }
+        row("Type") { typeCombobox() }
     }
 
-    override fun getPreferredFocusedComponent(): JComponent? {
-        return name
-    }
+    override fun getPreferredFocusedComponent(): JComponent = name
 
     override fun doValidate(): ValidationInfo? {
         val name = crateName

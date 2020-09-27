@@ -11,14 +11,17 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
+import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.cargo.toolchain.Rustup
-import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
+import java.awt.BorderLayout
 import java.nio.file.Path
 import java.nio.file.Paths
+import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 
 class RustProjectSettingsPanel(
     private val cargoProjectDir: Path = Paths.get("."),
@@ -74,16 +77,16 @@ class RustProjectSettingsPanel(
             update()
         }
 
-    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
+    fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
             toolchain = RustToolchain.suggest(),
             explicitPathToStdlib = null
         )
 
-        row("Toolchain location:", pathToToolchainField)
-        row("Toolchain version:", toolchainVersion)
-        row("Standard library:", pathToStdlibField)
-        row(component = downloadStdlibLink)
+        row("Toolchain location:") { wrapComponent(pathToToolchainField)(growX, pushX) }
+        row("Toolchain version:") { toolchainVersion() }
+        row("Standard library:") { wrapComponent(pathToStdlibField)(growX, pushX) }
+        row { downloadStdlibLink() }
     }
 
     @Throws(ConfigurationException::class)
@@ -130,3 +133,8 @@ class RustProjectSettingsPanel(
 }
 
 private fun String.blankToNull(): String? = if (isBlank()) null else this
+
+private fun wrapComponent(component: JComponent): JComponent =
+    JPanel(BorderLayout()).apply {
+        add(component, BorderLayout.NORTH)
+    }

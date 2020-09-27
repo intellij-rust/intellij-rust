@@ -19,9 +19,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.Link
+import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.Cargo
 import org.rust.ide.newProject.ConfigurationData
@@ -29,7 +29,6 @@ import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate
 import org.rust.ide.newProject.RsProjectTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
-import org.rust.ide.ui.RsLayoutBuilder
 import org.rust.openapiext.UiDebouncer
 import javax.swing.DefaultListModel
 import javax.swing.JList
@@ -146,13 +145,15 @@ class RsNewProjectPanel(
 
     val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, selectedTemplate)
 
-    fun attachTo(layout: RsLayoutBuilder) = with(layout) {
+    fun attachTo(layout: LayoutBuilder) = with(layout) {
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            component(JBLabel("Project template:"))
-            component(templateToolbar.createPanel())
-            component(downloadCargoGenerateLink)
+            titledRow("Project template") {
+                subRowIndent = 0
+                row { templateToolbar.createPanel()(growX) }
+                row { downloadCargoGenerateLink() }
+            }
         }
 
         update()

@@ -13,14 +13,15 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.ide.ui.layout
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.ComboBoxDelegate
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.row
 import java.nio.file.Paths
 import javax.swing.JComponent
 
@@ -33,7 +34,7 @@ class RsProjectConfigurable(
     )
 
     private val macroExpansionEngineComboBox: ComboBox<MacroExpansionEngine> =
-        ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java)).apply {
+        ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java), 100).apply {
             renderer = SimpleListCellRenderer.create("") {
                 @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
                 when (it) {
@@ -50,13 +51,13 @@ class RsProjectConfigurable(
 
     override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
 
-    override fun createComponent(): JComponent = layout {
+    override fun createComponent(): JComponent = panel {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros:", macroExpansionEngineComboBox, """
+        row("Expand declarative macros:", """
             Allow plugin to process declarative macro invocations
-            to extract information for name resolution and type inference.
-        """)
-        row("Inject Rust language into documentation comments:", doctestInjectionCheckbox)
+            to extract information for name resolution and type inference
+        """) { macroExpansionEngineComboBox(growX, pushX) }
+        row("Inject Rust language into documentation comments:") { doctestInjectionCheckbox() }
     }
 
     override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)

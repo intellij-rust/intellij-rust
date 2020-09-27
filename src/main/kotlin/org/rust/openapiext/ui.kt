@@ -18,6 +18,9 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.Label
+import com.intellij.ui.layout.Row
+import com.intellij.ui.layout.RowBuilder
 import com.intellij.util.Alarm
 import org.rust.lang.RsFileType
 import javax.swing.event.DocumentEvent
@@ -114,4 +117,15 @@ class ComboBoxDelegate<E>(private val checkbox: ComboBox<E>) {
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: E) {
         checkbox.selectedItem = value
     }
+}
+
+fun RowBuilder.row(
+    labelText: String,
+    toolTip: String,
+    separated: Boolean = false,
+    init: Row.() -> Unit
+): Row {
+    val label = Label(labelText)
+    label.toolTipText = toolTip.trimIndent()
+    return row(label, separated, init)
 }
