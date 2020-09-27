@@ -53,7 +53,9 @@ enum class RsLint(
             }
     },
 
-    UnreachablePattern("unreachable_patterns", listOf("unused"));
+    UnreachablePattern("unreachable_patterns", listOf("unused")),
+
+    BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms"));
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
         when (level) {

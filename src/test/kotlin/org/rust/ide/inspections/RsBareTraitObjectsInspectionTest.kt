@@ -7,9 +7,10 @@ package org.rust.ide.inspections
 
 import org.rust.MockEdition
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.inspections.lints.RsBareTraitObjectsInspection
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-class RsImplicitTraitObjectInspectionTest : RsInspectionsTestBase(RsImplicitTraitObjectInspection::class) {
+class RsBareTraitObjectsInspectionTest : RsInspectionsTestBase(RsBareTraitObjectsInspection::class) {
 
     fun `test simple trait object`() = checkFixByText("Add 'dyn' keyword to trait object", """
         trait Trait {}
@@ -47,6 +48,24 @@ class RsImplicitTraitObjectInspectionTest : RsInspectionsTestBase(RsImplicitTrai
 
     fun `test no warning on Self`() = checkByText("""
         trait Y where Self: Foo {}
+    """)
+
+    fun `test allow bare_trait_objects`() = checkWarnings("""
+        trait Trait {}
+
+        #[allow(bare_trait_objects)]
+        fn main() {
+            let a: Trait;
+        }
+    """)
+
+    fun `test allow rust_2018_idioms`() = checkWarnings("""
+        trait Trait {}
+
+        #[allow(rust_2018_idioms)]
+        fn main() {
+            let a: Trait;
+        }
     """)
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2015)

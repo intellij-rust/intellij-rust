@@ -289,10 +289,10 @@
         <lang.inspectionSuppressor language="Rust"
                                    implementationClass="org.rust.ide.inspections.RsInspectionSuppressor"/>
 
-        <localInspection language="Rust" groupName="Rust"
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Implicit trait objects are deprecated"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsImplicitTraitObjectInspection"/>
+                         implementationClass="org.rust.ide.inspections.lints.RsBareTraitObjectsInspection"/>
 
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Deprecated element"
