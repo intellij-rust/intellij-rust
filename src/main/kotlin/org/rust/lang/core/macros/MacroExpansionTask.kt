@@ -216,7 +216,7 @@ abstract class MacroExpansionTaskBase(
                 doneStages.addAndGet(if (result is EmptyPipeline) Pipeline.STAGES else 2)
 
                 // Enter heavy process mode only if at least one macros is not up-to-date
-                if (result !is EmptyPipeline) {
+                if (result !is EmptyPipeline && result !is RemoveSourceFileIfEmptyPipeline) {
                     heavyProcessRequested = true
                 }
                 result
