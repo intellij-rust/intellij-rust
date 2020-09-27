@@ -3,19 +3,23 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.ide.inspections.lints
 
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.dyn
 import org.rust.lang.core.psi.ext.isEdition2018
 import org.rust.lang.core.psi.ext.skipParens
 import org.rust.lang.core.resolve.ref.deepResolve
 
-class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
+class RsBareTraitObjectsInspection : RsLintInspection() {
+    override fun getLint(element: PsiElement): RsLint = RsLint.BareTraitObjects
+
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         object : RsVisitor() {
             override fun visitTypeReference(typeReference: RsTypeReference) {
@@ -29,7 +33,7 @@ class RsImplicitTraitObjectInspection : RsLocalInspectionTool() {
                 val hasImpl = traitType?.impl != null
                 if (!isTraitType || isSelf || hasDyn || hasImpl) return
 
-                holder.registerProblem(
+                holder.registerLintProblem(
                     typeReference,
                     "Trait objects without an explicit 'dyn' are deprecated",
                     object : LocalQuickFix {
