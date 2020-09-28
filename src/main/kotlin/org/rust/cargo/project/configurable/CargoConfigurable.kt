@@ -28,9 +28,8 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo")
         return panel {
             row {
                 checkBox(
-                    "Watch Cargo.toml",
-                    state::autoUpdateEnabled,
-                    comment = "Update project automatically if `Cargo.toml` changes"
+                    "Update project automatically if Cargo.toml changes",
+                    state::autoUpdateEnabled
                 )
             }
             row {
