@@ -86,7 +86,7 @@ class RustProjectSettingsPanel(
         row("Toolchain location:") { wrapComponent(pathToToolchainField)(growX, pushX) }
         row("Toolchain version:") { toolchainVersion() }
         row("Standard library:") { wrapComponent(pathToStdlibField)(growX, pushX) }
-        row { downloadStdlibLink() }
+        row("") { downloadStdlibLink() }
     }
 
     @Throws(ConfigurationException::class)
