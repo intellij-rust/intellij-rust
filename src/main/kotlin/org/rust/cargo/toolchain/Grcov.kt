@@ -18,6 +18,7 @@ class Grcov(private val grcovExecutable: Path) {
             .withParameters(
                 ProjectLayout.target,
                 "-t", "lcov",
+                "--llvm",
                 "--branch",
                 "--ignore-not-existing",
                 "-o", coverageFilePath.toString()
