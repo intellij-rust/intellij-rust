@@ -8,88 +8,80 @@ package org.rust.cargo.project.configurable
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
-import org.rust.openapiext.CheckboxDelegate
-import org.rust.openapiext.ComboBoxDelegate
 import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.row
 import java.nio.file.Paths
-import javax.swing.JComponent
+import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
     project: Project
-) : RsConfigurableBase(project), Configurable.NoScroll {
+) : RsConfigurableBase(project, "Rust"), Configurable.NoScroll {
 
     private val rustProjectSettings = RustProjectSettingsPanel(
         project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
     )
 
-    private val macroExpansionEngineComboBox: ComboBox<MacroExpansionEngine> =
-        ComboBox(EnumComboBoxModel(MacroExpansionEngine::class.java), 100).apply {
-            renderer = SimpleListCellRenderer.create("") {
-                @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-                when (it) {
-                    MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
-                    MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
-                    MacroExpansionEngine.NEW -> "Use new engine"
-                }
-            }
-        }
-    private var macroExpansionEngine: MacroExpansionEngine by ComboBoxDelegate(macroExpansionEngineComboBox)
-
-    private val doctestInjectionCheckbox: JBCheckBox = JBCheckBox()
-    private var doctestInjectionEnabled: Boolean by CheckboxDelegate(doctestInjectionCheckbox)
-
-    override fun getDisplayName(): String = "Rust" // sync me with plugin.xml
-
-    override fun createComponent(): JComponent = panel {
+    override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros:", """
-            Allow plugin to process declarative macro invocations
-            to extract information for name resolution and type inference
-        """) { macroExpansionEngineComboBox(growX, pushX) }
-        row("Inject Rust language into documentation comments:") { doctestInjectionCheckbox() }
+        row("Expand declarative macros:") {
+            comboBox(
+                EnumComboBoxModel(MacroExpansionEngine::class.java),
+                state::macroExpansionEngine,
+                createExpansionEngineListRenderer()
+            ).comment(
+                "Allow plugin to process declarative macro invocations to extract information for name resolution and type inference"
+            )
+        }
+        row {
+            checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
+        }
     }
 
-    override fun disposeUIResources() = Disposer.dispose(rustProjectSettings)
+    private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {
+        return SimpleListCellRenderer.create("") {
+            when (it) {
+                MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
+                MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
+                MacroExpansionEngine.NEW -> "Use new engine"
+                null -> error("Unreachable")
+            }
+        }
+    }
+
+    override fun disposeUIResources() {
+        super.disposeUIResources()
+        Disposer.dispose(rustProjectSettings)
+    }
 
     override fun reset() {
-        val toolchain = settings.toolchain ?: RustToolchain.suggest()
+        super.reset()
+        val toolchain = state.toolchain ?: RustToolchain.suggest()
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain = toolchain,
-            explicitPathToStdlib = settings.explicitPathToStdlib
+            explicitPathToStdlib = state.explicitPathToStdlib
         )
-        macroExpansionEngine = settings.macroExpansionEngine
-        doctestInjectionEnabled = settings.doctestInjectionEnabled
-    }
-
-    @Throws(ConfigurationException::class)
-    override fun apply() {
-        rustProjectSettings.validateSettings()
-
-        settings.modify {
-            it.toolchain = rustProjectSettings.data.toolchain
-            it.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
-            it.macroExpansionEngine = macroExpansionEngine
-            it.doctestInjectionEnabled = doctestInjectionEnabled
-        }
     }
 
     override fun isModified(): Boolean {
+        if (super.isModified()) return true
         val data = rustProjectSettings.data
-        return data.toolchain?.location != settings.toolchain?.location
-            || data.explicitPathToStdlib != settings.explicitPathToStdlib
-            || macroExpansionEngine != settings.macroExpansionEngine
-            || doctestInjectionEnabled != settings.doctestInjectionEnabled
+        return data.toolchain?.location != state.toolchain?.location
+            || data.explicitPathToStdlib != state.explicitPathToStdlib
+    }
+
+    @Throws(ConfigurationException::class)
+    override fun doApply() {
+        rustProjectSettings.validateSettings()
+        state.toolchain = rustProjectSettings.data.toolchain
+        state.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
     }
 }
