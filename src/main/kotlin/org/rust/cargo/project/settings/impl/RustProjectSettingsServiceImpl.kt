@@ -36,54 +36,54 @@ class RustProjectSettingsServiceImpl(
     private val project: Project
 ) : PersistentStateComponent<Element>, RustProjectSettingsService {
     @Volatile
-    private var state: State = State()
+    private var _state: State = State()
 
-    override val version: Int? get() = state.version
-    override val toolchain: RustToolchain? get() = state.toolchain
-    override val autoUpdateEnabled: Boolean get() = state.autoUpdateEnabled
-    override val explicitPathToStdlib: String? get() = state.explicitPathToStdlib
-    override val externalLinter: ExternalLinter get() = state.externalLinter
-    override val runExternalLinterOnTheFly: Boolean get() = state.runExternalLinterOnTheFly
-    override val externalLinterArguments: String get() = state.externalLinterArguments
-    override val compileAllTargets: Boolean get() = state.compileAllTargets
-    override val useOffline: Boolean get() = state.useOffline
-    override val macroExpansionEngine: MacroExpansionEngine get() = state.macroExpansionEngine
-    override val doctestInjectionEnabled: Boolean get() = state.doctestInjectionEnabled
-    override val useRustfmt: Boolean get() = state.useRustfmt
-    override val runRustfmtOnSave: Boolean get() = state.runRustfmtOnSave
+    override var settingsState: State
+        get() = _state.copy()
+        set(newState) {
+            if (_state != newState) {
+                val oldState = _state
+                _state = newState.copy()
+                notifySettingsChanged(oldState, newState)
+            }
+        }
+
+    override val version: Int? get() = _state.version
+    override val toolchain: RustToolchain? get() = _state.toolchain
+    override val autoUpdateEnabled: Boolean get() = _state.autoUpdateEnabled
+    override val explicitPathToStdlib: String? get() = _state.explicitPathToStdlib
+    override val externalLinter: ExternalLinter get() = _state.externalLinter
+    override val runExternalLinterOnTheFly: Boolean get() = _state.runExternalLinterOnTheFly
+    override val externalLinterArguments: String get() = _state.externalLinterArguments
+    override val compileAllTargets: Boolean get() = _state.compileAllTargets
+    override val useOffline: Boolean get() = _state.useOffline
+    override val macroExpansionEngine: MacroExpansionEngine get() = _state.macroExpansionEngine
+    override val doctestInjectionEnabled: Boolean get() = _state.doctestInjectionEnabled
+    override val useRustfmt: Boolean get() = _state.useRustfmt
+    override val runRustfmtOnSave: Boolean get() = _state.runRustfmtOnSave
 
     override fun getState(): Element {
         val element = Element(serviceName)
-        serializeObjectInto(state, element)
+        serializeObjectInto(_state, element)
         return element
     }
 
     override fun loadState(element: Element) {
         val rawState = element.clone()
         rawState.updateToCurrentVersion()
-        deserializeInto(state, rawState)
+        deserializeInto(_state, rawState)
     }
 
     override fun modify(action: (State) -> Unit) {
-        val newState = state.copy().also(action)
-        if (state != newState) {
-            val oldState = state
-            state = newState.copy()
-            notifySettingsChanged(oldState, newState)
-        }
+        settingsState = settingsState.also(action)
     }
 
     @TestOnly
     override fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit) {
-        val newState = state.copy().also(action)
-        if (state != newState) {
-            val oldState = state
-            state = newState.copy()
-            notifySettingsChanged(oldState, newState)
-
-            Disposer.register(parentDisposable) {
-                state = oldState
-            }
+        val oldState = settingsState
+        settingsState = oldState.also(action)
+        Disposer.register(parentDisposable) {
+            _state = oldState
         }
     }
 

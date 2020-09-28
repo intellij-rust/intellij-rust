@@ -78,6 +78,12 @@ interface RustProjectSettingsService {
     @TestOnly
     fun modifyTemporary(parentDisposable: Disposable, action: (State) -> Unit)
 
+    /**
+     * Returns current state of the service.
+     * Note, result is a copy of service state, so you need to set modified state back to apply changes
+     */
+    var settingsState: State
+
     val version: Int?
     val toolchain: RustToolchain?
     val explicitPathToStdlib: String?
