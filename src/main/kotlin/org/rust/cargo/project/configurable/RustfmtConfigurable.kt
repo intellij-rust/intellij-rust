@@ -7,7 +7,7 @@ package org.rust.cargo.project.configurable
 
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.JBCheckBox
-import org.rust.ide.ui.layout
+import com.intellij.ui.layout.panel
 import org.rust.openapiext.CheckboxDelegate
 import javax.swing.JComponent
 
@@ -20,9 +20,9 @@ class RustfmtConfigurable(project: Project) : RsConfigurableBase(project) {
 
     override fun getDisplayName(): String = "Rustfmt"
 
-    override fun createComponent(): JComponent? = layout {
-        row("Use rustfmt instead of built-in formatter:", useRustfmtCheckbox)
-        row("Run rustfmt on Save:", runRustfmtOnSaveCheckbox)
+    override fun createComponent(): JComponent = panel {
+        row("Use rustfmt instead of built-in formatter:") { useRustfmtCheckbox() }
+        row("Run rustfmt on Save:") { runRustfmtOnSaveCheckbox() }
     }
 
     override fun isModified(): Boolean =

@@ -9,13 +9,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
-import org.rust.ide.ui.layout
 import org.rust.openapiext.CheckboxDelegate
 import org.rust.openapiext.ComboBoxDelegate
+import org.rust.openapiext.row
 import javax.swing.JComponent
 
 class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
@@ -39,31 +40,33 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project) {
 
     override fun getDisplayName(): String = "Cargo"
 
-    override fun createComponent(): JComponent = layout {
+    override fun createComponent(): JComponent = panel {
         externalLinterArguments = RsCommandLineEditor(
             project, CargoCommandCompletionProvider(project.cargoProjects, "check ") { null }
         )
 
-        row("Watch Cargo.toml:", autoUpdateEnabledCheckbox, """
+        row("Watch Cargo.toml:", """
             Update project automatically if `Cargo.toml` changes.
-        """)
-        row("Compile all project targets if possible:", compileAllTargetsCheckBox, """
+        """) { autoUpdateEnabledCheckbox() }
+        row("Compile all project targets if possible:", """
             Pass `--target-all` option to cargo build/check command.
-        """)
-        row("Offline mode:", useOfflineCheckbox, """
+        """) { compileAllTargetsCheckBox() }
+        row("Offline mode:", """
             Pass `--offline` option to cargo not to perform network requests.
-        """)
-        block("External Linter") {
-            row("External linter:", externalLinterComboBox, """
+        """) { useOfflineCheckbox() }
+
+        titledRow("External Linter") {
+            subRowIndent = 0
+            row("External tool:", """
                 External tool to use for code analysis.
-            """)
-            row("Additional arguments:", externalLinterArguments, """
+            """) { externalLinterComboBox(growX, pushX) }
+            row("Additional arguments:", """
                 Additional arguments to pass to `cargo check` or `cargo clippy` command.
-            """)
-            row("Run external linter to analyze code on the fly:", runExternalLinterOnTheFlyCheckbox, """
+            """) { externalLinterArguments(growX, pushX) }
+            row("Run external linter to analyze code on the fly:", """
                 Enable external linter to add code highlighting based on the used linter result.
                 Can be CPU-consuming.
-            """)
+            """) { runExternalLinterOnTheFlyCheckbox() }
         }
     }
 

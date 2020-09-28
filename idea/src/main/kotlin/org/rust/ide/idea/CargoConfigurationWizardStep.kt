@@ -13,13 +13,13 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.newProject.ui.RsNewProjectPanel
-import org.rust.ide.ui.layout
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
@@ -30,7 +30,7 @@ class CargoConfigurationWizardStep private constructor(
 
     private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = projectDescriptor == null)
 
-    override fun getComponent(): JComponent = layout {
+    override fun getComponent(): JComponent = panel {
         newProjectPanel.attachTo(this)
     }
 
