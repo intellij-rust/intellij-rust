@@ -9,4 +9,6 @@ fn foo() {
     // Distinguish `for` expr from `for<>` in types
     let _:
     for a in b {}
+
+    let _ = 0.0.0e92;
 }

@@ -20,6 +20,7 @@ fn test() -> u32 {
 
     t.a;            /* field */
     t.0;
+    t.0.0;
 
     f.m();          /* method-invokation */
 
@@ -66,6 +67,19 @@ fn test() -> u32 {
     let _ = 1 as u32 + TEN;
     let _ = 1: u32 + TEN;
     let _ = 1 as (i32);
+
+    // Float literals
+    let _ = 1.0;
+    let _ = 1f32;
+    let _ = 1f64;
+    let _ = 1.0f64;
+    let _ = 1.0e92;
+    let _ = 1.0e92f32;
+    let _ = 1.;
+    let _ = 10e_6;
+    let _ = 1f34;
+    let _ = 1.0i98;
+    let _ = 0.0.0;
 
     || { 0; yield 0; };
 

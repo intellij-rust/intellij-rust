@@ -226,6 +226,55 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun isPathMode(b: PsiBuilder, level: Int, mode: PathParsingMode): Boolean =
         mode == getPathMod(b.flags)
 
+    /**
+     * `FLOAT_LITERAL` is never produced during lexing. We construct it during parsing from one or
+     * several `INTEGER_LITERAL` tokens. We need this in order to support nested tuple fields
+     * access syntax (see https://github.com/intellij-rust/intellij-rust/issues/6029)
+     *
+     * Here we collapse these sequences of tokes:
+     * 1. `INTEGER_LITERAL`, `DOT`, `INTEGER_LITERAL`. Like `0.0`
+     * 2. `INTEGER_LITERAL`, `DOT` (but **not** `INTEGER_LITERAL`, `DOT`, `IDENTIFIER`). Like `0.`
+     * 3. Single `INTEGER_LITERAL`, if it has float suffix (`f32`/`f64`) or scientific suffix (`1e3`, `3e-4`)
+     */
+    @JvmStatic
+    fun parseFloatLiteral(b: PsiBuilder, level: Int): Boolean {
+        return when (b.tokenType) {
+            INTEGER_LITERAL -> when (b.rawLookup(1)) {
+                // Works with `0.0`, `0.`, but not `0.foo` (identifies is not accepted after `.`)
+                DOT -> {
+                    val (collapse, size) = when (b.rawLookup(2)) {
+                        INTEGER_LITERAL, FLOAT_LITERAL -> true to 3
+                        IDENTIFIER -> false to 0
+                        else -> true to 2
+                    }
+                    if (collapse) {
+                        val marker = b.mark()
+                        PsiBuilderUtil.advance(b, size)
+                        marker.collapse(FLOAT_LITERAL)
+                    }
+                    collapse
+                }
+                // Works with floats without `.` like `1f32`, `1e3`, `3e-4`
+                else -> {
+                    val text = b.tokenText
+                    val isFloat = text != null &&
+                        (text.contains("f") || text.contains("e", ignoreCase = true) && !text.endsWith("e"))
+                    if (isFloat) {
+                        b.remapCurrentToken(FLOAT_LITERAL)
+                        b.advanceLexer()
+                    }
+                    isFloat
+                }
+            }
+            // Can be already remapped
+            FLOAT_LITERAL -> {
+                b.advanceLexer()
+                true
+            }
+            else -> false
+        }
+    }
+
     // !("union" identifier | "async" fn) identifier | self | super | 'Self' | crate
     @JvmStatic
     fun parsePathIdent(b: PsiBuilder, level: Int): Boolean {

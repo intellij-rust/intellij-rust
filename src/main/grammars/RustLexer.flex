@@ -112,16 +112,13 @@ SUFFIX     = {IDENTIFIER}
 
 EXPONENT      = [eE] [-+]? [0-9_]+
 
-FLT_LITERAL   = ( {DEC_LITERAL} \. {DEC_LITERAL} {EXPONENT}? {SUFFIX}? )
-              | ( {DEC_LITERAL} {EXPONENT} {SUFFIX}? )
-              | ( {DEC_LITERAL} "f" [\p{xidcontinue}]* )
-
-FLT_LITERAL_TDOT = {DEC_LITERAL} \.
-
+// Note: this rule also consumes *float* literals in scientific form like `1e3`, `3e-4`.
+// `FLOAT_LITERAL` is never produced by the lexer.
+// See `RustParserUtil.parseFloatLiteral` where `INTEGER_LITERAL` turns into `FLOAT_LITERAL` during parsing.
 INT_LITERAL = ( {DEC_LITERAL}
               | {HEX_LITERAL}
               | {OCT_LITERAL}
-              | {BIN_LITERAL} ) {SUFFIX}?
+              | {BIN_LITERAL} ) {EXPONENT}? {SUFFIX}?
 
 DEC_LITERAL = [0-9] [0-9_]*
 HEX_LITERAL = "0x" [a-fA-F0-9_]*
@@ -244,13 +241,7 @@ EOL_DOC_LINE  = {LINE_WS}*!(!("///".*)|("////".*))
 
   /* LITERALS */
 
-  // Floats must come first, to parse 1e1 as a float and not as an integer with a suffix
-  {FLT_LITERAL}                   { return FLOAT_LITERAL; }
-
   {INT_LITERAL}                   { return INTEGER_LITERAL; }
-
-  // Correctly handle 1.f32, 1._x and 0..9
-  {FLT_LITERAL_TDOT} / [^._\p{xidstart}] { return FLOAT_LITERAL; }
 
   "b" {CHAR_LITERAL}              { return BYTE_LITERAL; }
 

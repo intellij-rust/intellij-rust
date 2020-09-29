@@ -154,7 +154,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     fun `test primitive`() = checkByText("""
         fn <FUNCTION>main</FUNCTION>() -> <PRIMITIVE_TYPE>bool</PRIMITIVE_TYPE> {
             let a: <PRIMITIVE_TYPE>u8</PRIMITIVE_TYPE> = 42;
-            let b: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = 10.0;
+            let b: <PRIMITIVE_TYPE>f32</PRIMITIVE_TYPE> = <NUMBER>10.0</NUMBER>;
             let c: &<PRIMITIVE_TYPE>str</PRIMITIVE_TYPE> = "example";
             <PRIMITIVE_TYPE>char</PRIMITIVE_TYPE>::is_lowercase('a');
             let mut i32 = 1;
@@ -259,6 +259,12 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
             char::is_lowercase('a')
         }
     """, ignoreExtraHighlighting = false)
+
+    fun `test float literal`() = checkHighlighting("""
+        fn <FUNCTION>main</FUNCTION>() {
+            let a = <NUMBER>0.0</NUMBER>;
+        }
+    """)
 
     private fun checkHighlightingWithMacro(@Language("Rust") text: String) {
         checkHighlighting(text)

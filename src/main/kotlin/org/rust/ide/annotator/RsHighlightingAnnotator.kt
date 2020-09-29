@@ -51,18 +51,13 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             return highlightIdentifier(parent, metavarParent, holder)
         }
 
-        if (parent is RsLitExpr) {
-            return when (parent.parent) {
-                is RsMetaItem, is RsMetaItemArgs -> RsHighlighter.map(element.elementType)
-                else -> null
-            }
-        }
-
         return when (element.elementType) {
             IDENTIFIER, QUOTE_IDENTIFIER, SELF -> highlightIdentifier(element, parent, holder)
             // Although we remap tokens from identifier to keyword, this happens in the
             // parser's pass, so we can't use HighlightingLexer to color these
             in RS_CONTEXTUAL_KEYWORDS -> RsColor.KEYWORD
+            FLOAT_LITERAL -> RsColor.NUMBER
+
             Q -> if (parent is RsTryExpr) {
                 RsColor.Q_OPERATOR
             } else {
@@ -70,6 +65,14 @@ class RsHighlightingAnnotator : AnnotatorBase() {
             }
             EXCL -> if (parent is RsMacro || parent is RsMacroCall && shouldHighlightMacroCall(parent, holder)) {
                 RsColor.MACRO
+            } else {
+                null
+            }
+            in RS_LITERALS -> if (parent is RsLitExpr) {
+                when (parent.parent) {
+                    is RsMetaItem, is RsMetaItemArgs -> RsHighlighter.map(element.elementType)
+                    else -> null
+                }
             } else {
                 null
             }

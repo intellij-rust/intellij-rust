@@ -89,7 +89,7 @@ class RustParserDefinition : ParserDefinition {
         /**
          * Should be increased after any change of lexer rules
          */
-        const val LEXER_VERSION: Int = 2
+        const val LEXER_VERSION: Int = 3
 
         /**
          * Should be increased after any change of parser rules

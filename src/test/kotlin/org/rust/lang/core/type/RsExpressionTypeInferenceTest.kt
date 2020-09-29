@@ -1002,6 +1002,14 @@ class RsExpressionTypeInferenceTest : RsTypificationTestBase() {
         }
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/6029
+    fun `test nested tuple fields`() = testExpr("""
+        fn foo(a: ((i32, ), )) {
+            let b = a.0.0;
+            b;
+        } //^ i32
+    """)
+
 
     fun `test associated types for impl`() = testExpr("""
         trait A {
