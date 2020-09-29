@@ -84,6 +84,23 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             }
     """)
 
+    fun `test create function in an existing file in other crate`() = doAvailableTestWithFileTreeComplete("""
+    //- main.rs
+        fn main() {
+            test_package::foo/*caret*/();
+        }
+    //- lib.rs
+    """, """
+    //- main.rs
+        fn main() {
+            test_package::foo();
+        }
+    //- lib.rs
+        pub fn foo() {
+            unimplemented!()
+        }
+    """)
+
     fun `test unresolved function call in a missing module`() = doUnavailableTest("""
         fn main() {
             foo::bar/*caret*/();
@@ -581,6 +598,28 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         impl T {
             fn foo(&self, s: S) {
                 s.bar();
+            }
+        }
+    """)
+
+    fun `test create method for struct in other crate`() = doAvailableTestWithFileTreeComplete("""
+    //- main.rs
+        fn main(s: test_package::S) {
+            s.foo/*caret*/();
+        }
+    //- lib.rs
+        pub struct S;
+    """, """
+    //- main.rs
+        fn main(s: test_package::S) {
+            s.foo();
+        }
+    //- lib.rs
+        pub struct S;
+
+        impl S {
+            pub fn foo(&self) {
+                unimplemented!()
             }
         }
     """)

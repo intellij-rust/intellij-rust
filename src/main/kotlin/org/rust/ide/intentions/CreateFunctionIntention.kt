@@ -15,9 +15,7 @@ import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.TraitImplSource
 import org.rust.lang.core.types.expectedType
-import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
@@ -32,7 +30,11 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         abstract val returnType: Ty?
 
         class Function(val callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
-            override val visibility: String = if (callExpr.containingMod != module) "pub(crate) " else ""
+            override val visibility: String = when {
+                callExpr.containingCrate != module.containingCrate -> "pub "
+                callExpr.containingMod != module -> "pub(crate) "
+                else -> ""
+            }
             override val arguments: RsValueArgumentList = callExpr.valueArgumentList
             override val returnType: Ty? = callExpr.expectedType
         }
@@ -42,10 +44,12 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             override val visibility: String
                 get() {
                     val parentImpl = methodCall.parentOfType<RsImplItem>()
-                    // creating a method inside the same impl
-                    return if ((parentImpl?.typeReference?.type as? TyAdt)?.item == item && parentImpl.traitRef == null) {
-                        ""
-                    } else "pub(crate)"
+                    return when {
+                        // creating a method inside the same impl
+                        (parentImpl?.typeReference?.type as? TyAdt)?.item == item && parentImpl.traitRef == null -> ""
+                        methodCall.containingCrate != item.containingCrate -> "pub "
+                        else -> "pub(crate)"
+                    }
                 }
             override val arguments: RsValueArgumentList = methodCall.valueArgumentList
             override val returnType: Ty? = methodCall.parentDotExpr.expectedType
