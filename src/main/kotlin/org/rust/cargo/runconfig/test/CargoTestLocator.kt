@@ -72,7 +72,10 @@ object CargoTestLocator : SMTestLocator {
             PsiLocation.fromPsiElement(element)
         }
 
-    fun getTestUrl(name: String): String = "$TEST_PROTOCOL://$name"
+    fun getTestUrl(name: String): String {
+        val (qualifiedName, lineNum) = toQualifiedName(name)
+        return "$TEST_PROTOCOL://$qualifiedName${lineNum?.let { "#$it" } ?: ""}"
+    }
 
     fun getTestUrl(function: RsQualifiedNamedElement): String =
         getTestUrl(function.qualifiedName ?: "")
@@ -81,7 +84,7 @@ object CargoTestLocator : SMTestLocator {
         val targetName = path.substringBefore(NAME_SEPARATOR).substringBeforeLast("-")
         if (NAME_SEPARATOR !in path) return targetName to null
         val qualifiedName = path.substringAfter(NAME_SEPARATOR).substringBefore("#")
-        val lineNum = if ("#" in path) path.substringAfterLast("#").toInt() - 1 else null
+        val lineNum = if ("#" in path) path.substringAfterLast("#").toInt() else null
         return "$targetName$NAME_SEPARATOR$qualifiedName" to lineNum
     }
 }
