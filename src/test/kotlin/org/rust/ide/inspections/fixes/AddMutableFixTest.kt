@@ -261,4 +261,48 @@ class AddMutableFixTest : RsMultipleInspectionsTestBase(
             }
         }
     """)
+
+    fun `test fix E0594 assign to field of immutable binding`() = checkFixByText("Make `self` mutable", """
+        struct A {
+            x: i32
+        }
+
+        impl A {
+            fn foo(self) {
+                <error>self.x/*caret*/ = 4</error>;
+            }
+        }
+    """, """
+        struct A {
+            x: i32
+        }
+
+        impl A {
+            fn foo(mut self) {
+                self.x = 4;
+            }
+        }
+    """)
+
+    fun `test fix E0596 borrow self as mutable`() = checkFixByText("Make `self` mutable", """
+        struct A {}
+
+        impl A {
+            fn foo(self) {
+                <error descr="Cannot borrow immutable local variable `self` as mutable">self/*caret*/</error>.bar();
+            }
+
+            fn bar(&mut self){}
+        }
+    """, """
+        struct A {}
+
+        impl A {
+            fn foo(mut self) {
+                self.bar();
+            }
+
+            fn bar(&mut self){}
+        }
+    """)
 }
