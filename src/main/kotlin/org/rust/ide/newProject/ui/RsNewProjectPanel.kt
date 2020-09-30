@@ -22,6 +22,7 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
+import com.intellij.util.ui.JBUI
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.Cargo
 import org.rust.ide.newProject.ConfigurationData
@@ -88,6 +89,7 @@ class RsNewProjectPanel(
 
     val templateToolbar: ToolbarDecorator = ToolbarDecorator.createDecorator(templateList)
         .setToolbarPosition(ActionToolbarPosition.BOTTOM)
+        .setPreferredSize(JBUI.size(0, 125))
         .disableUpDownActions()
         .setAddAction {
             AddUserTemplateDialog().show()
