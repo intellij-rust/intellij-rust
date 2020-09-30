@@ -147,11 +147,12 @@ class RsCoverageTest : RunConfigurationTestBase() {
 
         doTest(runTests = true) {
             toml("Cargo.toml", """
-            [package]
-            name = "hello"
-            version = "0.1.0"
-            authors = []
-        """)
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+            """)
+
             dir("src") {
                 rust("lib.rs", """
                     fn foo() {                      // Hits: 2
@@ -169,6 +170,60 @@ class RsCoverageTest : RunConfigurationTestBase() {
                     }                               // Hits: 2
                 """)
             }
+        }
+    }
+
+    fun `test proc macro tests`() {
+        if (SystemInfo.isWindows) return // https://github.com/mozilla/grcov/issues/462
+
+        doTest(runTests = true) {
+            toml("Cargo.toml", """
+                [package]
+                name = "hello"
+                version = "0.1.0"
+                authors = []
+                
+                [lib]
+                proc-macro = true
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    fn foo() {                      // Hits: 2
+                        println!("Hello, world!");  // Hits: 2
+                    }                               // Hits: 2
+
+                    #[test]
+                    fn test1() {                    // Hits: 2
+                        foo();                      // Hits: 1
+                    }                               // Hits: 2
+
+                    #[test]
+                    fn test2() {                    // Hits: 2
+                        foo();                      // Hits: 1
+                    }                               // Hits: 2
+                """)
+            }
+        }
+    }
+
+    fun `test panic`() = doTest {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                fn main() {          // Hits: 1
+                    let x = 1;       // Hits: 1
+                    let y = 2;       // Hits: 1
+                    panic!("fail");  // Hits: 1
+                    let z = 3;
+                }
+            """)
         }
     }
 
