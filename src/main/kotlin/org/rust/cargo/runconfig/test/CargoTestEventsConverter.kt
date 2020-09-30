@@ -296,10 +296,10 @@ class CargoTestEventsConverter(
                 .addAttribute("nodeId", suite)
 
         private fun createTestStartedMessage(test: NodeId): ServiceMessageBuilder {
-            // target_name::name1::name2 (line i) -> target_name::name1::name2#i
+            // target_name::name1::name2 (line i) -> target_name::name1::name2#(i - 1)
             val name = test.replace(LINE_NUMBER_RE) {
                 val line = it.groups["line"]?.value ?: error("Failed to find `line` capturing group")
-                "#$line"
+                "#${line.toInt() - 1}"
             }
             return ServiceMessageBuilder.testStarted(test.name)
                 .addAttribute("nodeId", test)
