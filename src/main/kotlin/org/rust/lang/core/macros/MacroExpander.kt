@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
+import com.intellij.lang.parser.rawLookupText
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
@@ -19,7 +20,6 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.util.SmartList
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
-import org.rust.lang.core.parser.rawLookupText
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.descendantsOfType
