@@ -65,7 +65,11 @@ fun updateMutable(project: Project, binding: RsNamedElement, mutable: Boolean = 
             binding.replace(newPatBinding)
         }
         is RsSelfParameter -> {
-            val newSelf = RsPsiFactory(project).createSelf(true)
+            val newSelf: RsSelfParameter = if (binding.isRef) {
+                RsPsiFactory(project).createSelfReference(true)
+            } else {
+                RsPsiFactory(project).createSelf(true)
+            }
             binding.replace(newSelf)
         }
     }

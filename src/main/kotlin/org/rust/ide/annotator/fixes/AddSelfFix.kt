@@ -27,7 +27,7 @@ class AddSelfFix(function: RsFunction) : LocalQuickFixAndIntentionActionOnPsiEle
         val valueParameterList = function.valueParameterList
         val lparen = valueParameterList?.firstChild
 
-        val self = psiFactory.createSelf()
+        val self = psiFactory.createSelfReference()
 
         valueParameterList?.addAfter(self, lparen)
         if (hasParameters) {

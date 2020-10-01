@@ -72,6 +72,11 @@ class RsPsiFactory(
     }
 
     fun createSelf(mutable: Boolean = false): RsSelfParameter {
+        return createFromText<RsFunction>("fn main(${if (mutable) "mut " else ""}self){}")?.selfParameter
+            ?: error("Failed to create self element")
+    }
+
+    fun createSelfReference(mutable: Boolean = false): RsSelfParameter {
         return createFromText<RsFunction>("fn main(&${if (mutable) "mut " else ""}self){}")?.selfParameter
             ?: error("Failed to create self element")
     }
