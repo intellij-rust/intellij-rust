@@ -34,7 +34,7 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-val graziePlugin = "tanvd.grazi:${prop("graziePluginVersion")}"
+val graziePlugin = if (baseIDE == "idea") "grazie" else "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 
 plugins {
