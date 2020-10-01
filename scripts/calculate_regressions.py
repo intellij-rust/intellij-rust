@@ -48,7 +48,7 @@ def dump_as_json(annotations: Iterable[Annotation], path: str) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, help="github token")
+    parser.add_argument("--name", type=str, help="project name", required=True)
 
     args = parser.parse_args()
 
