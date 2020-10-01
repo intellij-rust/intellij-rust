@@ -76,8 +76,9 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
                 val position = myFixture.editor.offsetToLogicalPosition(highlightInfo.startOffset)
                 val annotation = Annotation(
                     path,
-                    position.line,
-                    position.column,
+                    // Use 1-based indexing to be compatible with editor UI and `Go to Line/Column` action
+                    position.line + 1,
+                    position.column + 1,
                     text.substring(highlightInfo.startOffset, highlightInfo.endOffset),
                     highlightInfo.description,
                     highlightInfo.inspectionToolId
