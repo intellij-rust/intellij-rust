@@ -21,6 +21,9 @@ class Annotation(object):
             suffix = ""
         return f"{self.filePath}:{self.line}:{self.column} '{self.highlightedText}' ({self.error}){suffix}"
 
+    def __lt__(self, other):
+        return (self.filePath, self.line, self.column) < (other.filePath, other.line, other.column)
+
     @staticmethod
     def from_dict(raw_dict: Dict) -> "Annotation":
         return Annotation(raw_dict["filePath"],
@@ -53,8 +56,8 @@ if __name__ == '__main__':
     without_changes = set(read_data(f"regressions/{args.name}_without_changes.json"))
     with_changes = set(read_data(f"regressions/{args.name}_with_changes.json"))
 
-    fixed = without_changes - with_changes
-    new = with_changes - without_changes
+    fixed = sorted(without_changes - with_changes)
+    new = sorted(with_changes - without_changes)
 
     dump_as_json(fixed, f"regressions/{args.name}_fixed.json")
     dump_as_json(new, f"regressions/{args.name}_new.json")
