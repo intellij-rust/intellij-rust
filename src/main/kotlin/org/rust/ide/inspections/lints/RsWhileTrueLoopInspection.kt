@@ -47,4 +47,6 @@ class RsWhileTrueLoopInspection : RsLintInspection() {
             }
         }
     }
+
+    override val isSyntaxOnly: Boolean = true
 }

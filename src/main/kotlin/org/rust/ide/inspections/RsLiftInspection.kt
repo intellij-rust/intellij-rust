@@ -34,6 +34,8 @@ class RsLiftInspection : RsLocalInspectionTool() {
         }
     }
 
+    override val isSyntaxOnly: Boolean = true
+
     private fun RsProblemsHolder.register(expr: RsExpr, keyword: PsiElement) {
         val keywordName = keyword.text
         registerProblem(

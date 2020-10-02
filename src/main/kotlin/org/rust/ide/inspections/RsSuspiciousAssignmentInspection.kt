@@ -63,6 +63,8 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
             }
         }
 
+    override val isSyntaxOnly: Boolean = true
+
     /**
      * Computes the distance between the start points of this PSI element and another one.
      */

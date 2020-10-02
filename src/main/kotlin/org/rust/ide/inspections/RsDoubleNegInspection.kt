@@ -27,6 +27,8 @@ class RsDoubleNegInspection : RsLocalInspectionTool() {
             }
         }
 
+    override val isSyntaxOnly: Boolean = true
+
     private val RsExpr?.isNegation: Boolean
         get() = this is RsUnaryExpr && minus != null
 }

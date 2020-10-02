@@ -25,6 +25,8 @@ abstract class RsNamingInspection(
 ) : RsLintInspection() {
     override fun getDisplayName(): String = "$elementTitle naming convention"
 
+    override val isSyntaxOnly: Boolean = true
+
     fun inspect(id: PsiElement?, holder: RsProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val name = id.unescapedText

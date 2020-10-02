@@ -34,6 +34,8 @@ class RsFieldInitShorthandInspection : RsLocalInspectionTool() {
         }
     }
 
+    override val isSyntaxOnly: Boolean = true
+
     companion object {
         fun applyShorthandInit(field: RsStructLiteralField) {
             field.expr?.delete()
