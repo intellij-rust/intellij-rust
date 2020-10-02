@@ -57,12 +57,7 @@ class RsMacroCallSelectionHandler : ExtendWordSelectionHandlerBase() {
         val expansionText = expansion.file.text
 
         // A real EditorImpl can't be created outside of EDT (`select` is called outside of EDT since 2020.3)
-        // EditorEx and Highlighter is needed for InjectedFileReferenceSelectioner, ImaginaryEditor is not enough.
-
-        val highlighter = LexerEditorHighlighter(RsHighlighter(), editor.colorsScheme)
-            .apply { setText(expansionText) }
-
-        val expansionEditor = FakeEditorEx(e.project, expansionText, editor, highlighter)
+        val expansionEditor = FakeEditorEx(e.project, expansionText, editor)
 
         val ranges = mutableListOf<TextRange>()
         SelectWordUtil.processRanges(elementInExpansion, expansionText, offsetInExpansion, expansionEditor) {
@@ -73,12 +68,17 @@ class RsMacroCallSelectionHandler : ExtendWordSelectionHandlerBase() {
     }
 }
 
-class FakeEditorEx(
+
+// EditorEx and Highlighter is needed for InjectedFileReferenceSelectioner, ImaginaryEditor is not enough.
+private class FakeEditorEx(
     project: Project,
     text: String,
-    private val editor: Editor,
-    private val highlighter: LexerEditorHighlighter
+    private val editor: Editor
 ) : ImaginaryEditor(project, DocumentImpl(text)), EditorEx {
+
+    private val highlighter = LexerEditorHighlighter(RsHighlighter(), editor.colorsScheme)
+        .apply { setText(text) }
+
     override fun getDocument(): DocumentEx = super.getDocument() as DocumentEx
     override fun getSettings(): EditorSettings = editor.settings
     override fun getHighlighter(): EditorHighlighter = highlighter
