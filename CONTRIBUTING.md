@@ -170,7 +170,7 @@ change. Common tags are:
   * DOC for documentation
 </details>
 
-Try to keep the summary line of a commit message under 50 characters.
+Try to keep the summary line of a commit message under 72 characters.
 
 # Project structure
 
