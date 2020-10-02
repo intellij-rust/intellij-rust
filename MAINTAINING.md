@@ -49,6 +49,90 @@ Note `--distribution-type all`.
 
 ### New IDE version
 
+Each new major platform release brings not only a lot of new features
+but usually also a bunch of new incompatibilities (both source and binary ones).
+Since we want to support at least the latest stable major platform release and new [EAP](https://www.jetbrains.com/resources/eap/)s,
+we have to compile the plugin with different platform versions to avoid any runtime errors.
+
+To solve the problem with incompatibilities, we use conditional compilation based on Gradle [source sets](https://docs.gradle.org/current/dsl/org.gradle.api.tasks.SourceSet.html).
+See [CONTRIBUTING.md](CONTRIBUTING.md#source-code-for-different-platform-versions) for more details about concrete source structure.
+
+#### How to support new platform version
+
+The following explanation uses `old`, `current` and `new` platform terms that mean:
+* `old` - number of the oldest supported platform version that should be dropped
+* `current` - number of the latest major stable platform release
+* `new` - number of new platform that should be supported
+
+For example, at the moment of writing, `201` is `old`, `202` is `current` and `203` is `new`.
+See [build_number_ranges](https://jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html) for more info about platform versions.
+ 
+Step by step instruction on how to support new platform version:
+* Drop all code related to the `old` platform version, i.e. drop `gradle-%old%.properties` and
+all `%module_name%/src/%old%` directories in each module
+* Move code from `%module_name%/src/%current%` directories into common source set,
+i.e. `%module_name%/src/%current%/main` into `%module_name%/src/main` and `%module_name%/src/%current%/test` into `%module_name%/src/test`.
+Also, simplify the moved code if possible.
+* Add support for `new` platform, i.e. add `gradle-%new%.properties` with all necessary properties and make it compile.
+It may be required to extract some code into platform-specific source sets to make plugin compile with each supported platform.
+See [Tips and tricks](#tips-and-tricks) section for the most common examples of how to do it
+* Fix tests
+* Update log path in run configurations like `runIDEA` and `runCLion`.
+For `runIDEA` configuration it requires:
+    - drop `idea-%old%.log` item 
+    - add `idea-%new%.log` item with `$PROJECT_DIR$/plugin/build/idea-sandbox-%new%/system/log/idea.log` path
+* Update CI workflows to use new platform version instead of old one.
+It usually requires just to update `platform-version` list in all workflows where we build the plugin.
+At the moment of writing they are `check.yml`, `rust-nightly.yml` and `rust-release.yml`
+* Fix `BACKCOMPAT: %old%` comments
+
+#### Tips and tricks
+
+A non-exhaustive list of tips how you can adapt your code for several platforms:
+* if you need to execute specific code for each platform in gradle build scripts (`build.gradle.kts` or `settings.gradle.kts`),
+just use `platformVersion` property and `if`/`when` conditions.
+Note, in `build.gradle.kts` value of this property is already retrieved into `platformVersion` variable
+* if you need to have different sources for each platform:
+    - check that you actually need to have specific code for each platform.
+    There is quite often a deprecated way to make necessary action.
+    If it's your case, don't forget to suppress the deprecation warning and add `// BACKCOMPAT: %current%` comment to mark this code and
+    fix the deprecation in the future
+    - extract different code into a function and place it into `compatUtils.kt` file in each platform-specific source set.
+    It usually works well when you need to call specific public code to make the same things in each platform
+    - if code that you need to call is not public (for example, it uses some protected methods of parent class), use the inheritance mechanism.
+    Extract `AwesomeClassBase` from your `AwesomeClass`, inherit `AwesomeClass` from `AwesomeClassBase`,
+    move `AwesomeClassBase` into platform specific source sets and move all platform specific code into `AwesomeClassBase` as protected methods.
+    - sometimes, signatures of some methods can be specified while platform evolution.
+    For example, `protected abstract void foo(Bar<Baz> bar)` can be converted into `protected abstract void foo(Bar<? extends Baz> bar)` and you have to override this method in your implementation. It introduces source incompatibility (although it doesn't break binary compatibility).
+    The simplest way to make it compile for each platform is to introduce platform-specific [`typealias`](https://kotlinlang.org/docs/reference/type-aliases.html),
+    i.e. `typealias PlaformBar = Bar<Baz>` for `current` platform and `typealias PlaformBar = Bar<out Baz>` for `new` one and use it in signature of overridden method.
+    Also, this approach works well when some class you depend on was moved into another package. 
+    - if creation of platform-specific source set is too heavy for your case, there is a way how you can choose specific code in runtime.
+    Just create the corresponding condition using `com.intellij.openapi.application.ApplicationInfo.getBuild`.
+    Usually, it looks like
+    ```kotlin
+    val BUILD_%new% = BuildNumber.fromString("%new%")!!
+    if (ApplicationInfo.getInstance().build < BUILD_%new%) {
+        // code for current platform
+    } else {
+        // code for new platform
+    }
+    ```
+    Of course, code should be compilable with all supported platforms to use this approach.
+    - sometimes you want to disable some tests temporarily to find out why they don't work later.
+    The simplest way to do it is to mark them with `org.rust.IgnoreInPlatform` annotation.
+    Under the hood, it uses the previous approach with `ApplicationInfo`.
+* if you need to register different items in `%xml_name%.xml` for each platform:
+    1. create `platform-%xml_name%.xml` in `%module_name%/src/%current%/main/resources/META-INF` and `%module_name%/src/%new%/main/resources/META-INF`
+    2. put platform specific definitions into these xml files
+    3. include platform specific xml into `%module_name%/src/main/resources/META-INF/%xml_name%.xml`, i.e. add the following code
+    ```xml
+      <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+          <xi:include href="/META-INF/platform-%xml_name%.xml" xpointer="xpointer(/idea-plugin/*)"/>
+      </idea-plugin>  
+    ```
+
+
 While supporting new IDE version we should check all UI components manually
 because we don't have UI tests yet.
 Especially it's important if it's major IDE update 
