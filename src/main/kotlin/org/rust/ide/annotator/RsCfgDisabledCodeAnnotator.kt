@@ -21,9 +21,10 @@ class RsCfgDisabledCodeAnnotator : AnnotatorBase() {
         if (element is RsDocAndAttributeOwner && !element.isEnabledByCfgSelf) {
             val color = RsColor.CFG_DISABLED_CODE
             val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
-            // BACKCOMPAT: 2019.3
-            @Suppress("DEPRECATION")
-            holder.createAnnotation(severity, element.textRange, "Conditionally disabled code").textAttributes = color.textAttributesKey
+
+            holder.newAnnotation(severity, "Conditionally disabled code")
+                .textAttributes(color.textAttributesKey)
+                .create()
         }
     }
 }

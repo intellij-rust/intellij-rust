@@ -30,8 +30,7 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]
         fn foo() {
             let x = 1;
-        }
-        </CFG_DISABLED_CODE>
+        }</CFG_DISABLED_CODE>
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
@@ -41,8 +40,7 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         #[allow(non_camel_case_types)]
         fn foo() {
             let x = 1;
-        }
-        </CFG_DISABLED_CODE>
+        }</CFG_DISABLED_CODE>
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
@@ -51,8 +49,7 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]
         async fn foo() {
             let x = 1;
-        }
-        </CFG_DISABLED_CODE>
+        }</CFG_DISABLED_CODE>
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
@@ -61,8 +58,7 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
         fn foo() {
         <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]try {
                 let x = 1;
-            }
-        </CFG_DISABLED_CODE>
+            }</CFG_DISABLED_CODE>
         }
     """)
 
