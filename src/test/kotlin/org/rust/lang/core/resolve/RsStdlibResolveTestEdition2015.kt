@@ -27,6 +27,9 @@ class RsStdlibResolveTestEdition2015 : RsResolveTestBase() {
         }
     """)
 
+    // BACKCOMPAT: Rust 1.46
+    //  Since Rust 1.47 layout of stdlib was changed.
+    //  In general, `lib%lib_name%` was replaced with `%lib_name%/src`
     fun `test resolve with no_std attribute 2`() = stubOnlyResolve("""
     //- main.rs
         #![no_std]
@@ -36,6 +39,6 @@ class RsStdlibResolveTestEdition2015 : RsResolveTestBase() {
         use alloc::vec::Vec;
 
         fn foo(v: Vec) {}
-                 //^ .../liballoc/vec.rs
+                 //^ ...liballoc/vec.rs|...alloc/src/vec.rs
     """)
 }

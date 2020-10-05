@@ -1,4 +1,6 @@
 // min-version: 1.33.0
+// https://github.com/intellij-rust/intellij-rust/issues/6198
+// max-version: 1.47.0
 
 // === LLDB TESTS ==================================================================================
 

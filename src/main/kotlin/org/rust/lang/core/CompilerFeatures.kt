@@ -116,7 +116,6 @@ val HEXAGON_TARGET_FEATURE = CompilerFeature("hexagon_target_feature", ACTIVE, "
 val POWERPC_TARGET_FEATURE = CompilerFeature("powerpc_target_feature", ACTIVE, "1.27.0")
 val MIPS_TARGET_FEATURE = CompilerFeature("mips_target_feature", ACTIVE, "1.27.0")
 val AVX512_TARGET_FEATURE = CompilerFeature("avx512_target_feature", ACTIVE, "1.27.0")
-val MMX_TARGET_FEATURE = CompilerFeature("mmx_target_feature", ACTIVE, "1.27.0")
 val SSE4A_TARGET_FEATURE = CompilerFeature("sse4a_target_feature", ACTIVE, "1.27.0")
 val TBM_TARGET_FEATURE = CompilerFeature("tbm_target_feature", ACTIVE, "1.27.0")
 val WASM_TARGET_FEATURE = CompilerFeature("wasm_target_feature", ACTIVE, "1.30.0")
@@ -241,8 +240,6 @@ val CONST_FN_UNION = CompilerFeature("const_fn_union", ACTIVE, "1.27.0")
 val CONST_RAW_PTR_TO_USIZE_CAST = CompilerFeature("const_raw_ptr_to_usize_cast", ACTIVE, "1.27.0")
 // Allows dereferencing raw pointers during const eval.
 val CONST_RAW_PTR_DEREF = CompilerFeature("const_raw_ptr_deref", ACTIVE, "1.27.0")
-// Allows `#[doc(alias = "...")]`.
-val DOC_ALIAS = CompilerFeature("doc_alias", ACTIVE, "1.27.0")
 // Allows inconsistent bounds in where clauses.
 val TRIVIAL_BOUNDS = CompilerFeature("trivial_bounds", ACTIVE, "1.28.0")
 // Allows `'a: { break 'a; }`.
@@ -363,6 +360,16 @@ val CONST_FN_TRANSMUTE = CompilerFeature("const_fn_transmute", ACTIVE, "1.46.0")
 val MIN_CONST_GENERICS = CompilerFeature("min_const_generics", ACTIVE, "1.47.0")
 // Allows `if let` guard in match arms.
 val IF_LET_GUARD = CompilerFeature("if_let_guard", ACTIVE, "1.47.0")
+// Allows non-trivial generic constants which have to be manually propageted upwards.
+val CONST_EVALUATABLE_CHECKED = CompilerFeature("const_evaluatable_checked", ACTIVE, "1.48.0")
+// Allows basic arithmetic on floating point types in a `const fn`.
+val CONST_FN_FLOATING_POINT_ARITHMETIC = CompilerFeature("const_fn_floating_point_arithmetic", ACTIVE, "1.48.0")
+// Allows using and casting function pointers in a `const fn`.
+val CONST_FN_FN_PTR_BASICS = CompilerFeature("const_fn_fn_ptr_basics", ACTIVE, "1.48.0")
+// Allows to use the `#[cmse_nonsecure_entry]` attribute.
+val CMSE_NONSECURE_ENTRY = CompilerFeature("cmse_nonsecure_entry", ACTIVE, "1.48.0")
+// Allows rustc to inject a default alloc_error_handler
+val DEFAULT_ALLOC_ERROR_HANDLER = CompilerFeature("default_alloc_error_handler", ACTIVE, "1.48.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -606,3 +613,5 @@ val CONST_LOOP = CompilerFeature("const_loop", ACCEPTED, "1.46.0")
 // Allows `#[track_caller]` to be used which provides
 // accurate caller location reporting during panic (RFC 2091).
 val TRACK_CALLER = CompilerFeature("track_caller", ACCEPTED, "1.46.0")
+// Allows `#[doc(alias = "...")]`.
+val DOC_ALIAS = CompilerFeature("doc_alias", ACCEPTED, "1.48.0")
