@@ -7,6 +7,7 @@ package org.rustPerformanceTests
 
 import com.fasterxml.jackson.databind.json.JsonMapper
 import java.io.File
+import java.util.*
 
 /**
  * Provides ability to check plugin analysis on custom real project.
@@ -45,7 +46,11 @@ class CustomRealProjectAnalysisTest : RsRealProjectAnalysisTest() {
             val testDir = File("regressions")
             testDir.mkdirs()
             JsonMapper().writerWithDefaultPrettyPrinter()
-                .writeValue(File(testDir, "${info.name}.json"), annotations)
+                .writeValue(File(testDir, "${info.name}.json"), annotations.sortedWith(
+                    Comparator.comparing(Annotation::filePath)
+                        .thenComparingInt(Annotation::line)
+                        .thenComparingInt(Annotation::column)
+                ))
         }
     }
 }
