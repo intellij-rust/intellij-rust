@@ -48,25 +48,27 @@ abstract class HighlightFilterTestBase : RsTestBase() {
         checkHighlights(filter, before, after, lineIndex)
     }
 
-    protected fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
-        val line = before.splitLinesKeepSeparators()[lineIndex]
-        val result = checkNotNull(filter.applyFilter(line, before.length)) {
-            "No match in \"${StringUtil.escapeStringCharacters(line)}\""
-        }
-        var checkText = before
-        val items = ArrayList(result.resultItems)
-        items.sortByDescending { it.getHighlightEndOffset() }
-        items.forEach { item ->
-            val range = IntRange(item.getHighlightStartOffset(), item.getHighlightEndOffset() - 1)
-            var itemText = before.substring(range)
-            (item.getHyperlinkInfo() as? OpenFileHyperlinkInfo)?.let { link ->
-                itemText = "$itemText -> ${link.descriptor?.file?.name}"
+    companion object {
+        fun checkHighlights(filter: Filter, before: String, after: String, lineIndex: Int = 0) {
+            val line = before.splitLinesKeepSeparators()[lineIndex]
+            val result = checkNotNull(filter.applyFilter(line, before.length)) {
+                "No match in \"${StringUtil.escapeStringCharacters(line)}\""
             }
-            checkText = checkText.replaceRange(range, "[$itemText]")
+            var checkText = before
+            val items = ArrayList(result.resultItems)
+            items.sortByDescending { it.highlightEndOffset }
+            items.forEach { item ->
+                val range = IntRange(item.highlightStartOffset, item.highlightEndOffset - 1)
+                var itemText = before.substring(range)
+                (item.getHyperlinkInfo() as? OpenFileHyperlinkInfo)?.let { link ->
+                    itemText = "$itemText -> ${link.descriptor?.file?.name}"
+                }
+                checkText = checkText.replaceRange(range, "[$itemText]")
+            }
+            checkText = checkText.splitLinesKeepSeparators()[lineIndex]
+            assertEquals(after, checkText)
         }
-        checkText = checkText.splitLinesKeepSeparators()[lineIndex]
-        assertEquals(after, checkText)
-    }
 
-    private fun String.splitLinesKeepSeparators() = split("(?<=\n)".toRegex())
+        private fun String.splitLinesKeepSeparators() = split("(?<=\n)".toRegex())
+    }
 }
