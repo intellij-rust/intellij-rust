@@ -264,16 +264,6 @@ fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
 val PsiElement.rangeWithPrevSpace: TextRange
     get() = rangeWithPrevSpace(prevSibling)
 
-val PsiElement.rangeWithSurroundingLineBreaks: TextRange
-    get() {
-        val startOffset = textRange.startOffset
-        val endOffset = textRange.endOffset
-        val text = containingFile.text
-        val newLineBefore = text.lastIndexOf('\n', startOffset).takeIf { it >= 0 }?.let { it + 1 } ?: startOffset
-        val newLineAfter = text.indexOf('\n', endOffset).takeIf { it >= 0 }?.let { it + 1 } ?: endOffset
-        return TextRange(newLineBefore, newLineAfter)
-    }
-
 private fun PsiElement.getLineCount(): Int {
     val doc = containingFile?.document
     if (doc != null) {
