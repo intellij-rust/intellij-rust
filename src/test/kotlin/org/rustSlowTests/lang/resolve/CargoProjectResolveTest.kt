@@ -16,6 +16,8 @@ import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
 import org.rust.openapiext.pathAsPath
+import org.rustPerformanceTests.fullyRefreshDirectoryInUnitTests
+import java.nio.file.Files
 
 class CargoProjectResolveTest : RsWithToolchainTestBase() {
 
@@ -139,6 +141,60 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
     }.run {
         checkReferenceIsResolved<RsPath>("src/main.rs")
         checkReferenceIsResolved<RsPath>("src/bar.rs")
+    }
+
+    fun `test resolve local package under symlink`() = fileTree {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+            foo = { path = "./foo" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                extern crate foo;
+                mod bar;
+
+                fn main() {
+                    foo::hello();
+                }       //^
+            """)
+
+            rust("bar.rs", """
+                use foo::hello;
+
+                pub fn bar() {
+                    hello();
+                }   //^
+            """)
+        }
+
+        dir("foo2") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn hello() {}
+                """)
+            }
+        }
+    }.let { fileTree ->
+        if (SystemInfo.isWindows) return@let
+        val rootPath = cargoProjectDirectory.pathAsPath
+        Files.createSymbolicLink(rootPath.resolve("foo"), rootPath.resolve("foo2"))
+
+        val project = fileTree.create()
+        project.checkReferenceIsResolved<RsPath>("src/main.rs")
+        project.checkReferenceIsResolved<RsPath>("src/bar.rs")
     }
 
     fun `test module relations`() = buildProject {
