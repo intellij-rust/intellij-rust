@@ -9,6 +9,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.text.SemVer
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerCommandException
 import com.jetbrains.cidr.execution.debugger.backend.DebuggerDriver
@@ -34,6 +35,10 @@ class RsDebugProcessConfigurationHelper(
     private val frameIndex = process.currentFrameIndex
 
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
+
+    // BACKCOMPAT: rust 1.45 (https://github.com/rust-lang/rust/pull/72357)
+    private val rustcVersion = cargoProject?.rustcInfo?.version?.semver
+    private val newPrettyPrintersRustcVersion = SemVer.parseFromText("1.46.0")
 
     private val sysroot: String? by lazy {
         cargoProject?.workingDirectory?.let { toolchain?.getSysroot(it) }
@@ -79,10 +84,18 @@ class RsDebugProcessConfigurationHelper(
         when (settings.lldbRenderers) {
             LLDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
-                val path = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
-                executeConsoleCommand(threadId, frameIndex, """command script import "$path" """)
-                executeConsoleCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
-                executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
+
+                if (rustcVersion == null || rustcVersion >= newPrettyPrintersRustcVersion) {
+                    val lookupPath = "$sysroot/lib/rustlib/etc/lldb_lookup.py".systemDependentAndEscaped()
+                    val commandsPath = "$sysroot/lib/rustlib/etc/lldb_commands".systemDependentAndEscaped()
+                    executeConsoleCommand(threadId, frameIndex, """command script import "$lookupPath" """)
+                    executeConsoleCommand(threadId, frameIndex, """command source "$commandsPath" """)
+                } else {
+                    val path = "$sysroot/lib/rustlib/etc/lldb_rust_formatters.py".systemDependentAndEscaped()
+                    executeConsoleCommand(threadId, frameIndex, """command script import "$path" """)
+                    executeConsoleCommand(threadId, frameIndex, """type summary add --no-value --python-function lldb_rust_formatters.print_val -x ".*" --category Rust""")
+                    executeConsoleCommand(threadId, frameIndex, """type category enable Rust""")
+                }
             }
 
             LLDBRenderers.BUNDLED -> {
@@ -111,12 +124,20 @@ class RsDebugProcessConfigurationHelper(
             GDBRenderers.COMPILER -> {
                 val sysroot = checkSysroot(sysroot, "Cannot load rustc renderers") ?: return
                 val path = "$sysroot/lib/rustlib/etc".systemDependentAndEscaped()
+
+                if (rustcVersion == null || rustcVersion >= newPrettyPrintersRustcVersion) {
+                    "gdb_load_rust_pretty_printers"
+                } else {
+
+                }
+
                 // Avoid multiline Python scripts due to https://youtrack.jetbrains.com/issue/CPP-9090
                 val command = """python """ +
                     """sys.path.insert(0, "$path"); """ +
-                    """import gdb_rust_pretty_printing; """ +
+                    """import gdb_rust_pretty_printing as load_rust_pretty_printers; """ +
                     """gdb_rust_pretty_printing.register_printers(gdb); """
                 executeConsoleCommand(threadId, frameIndex, command)
+                // gdb_load_rust_pretty_printers
             }
 
             GDBRenderers.BUNDLED -> {
