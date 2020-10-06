@@ -133,6 +133,7 @@ abstract class MacroExpansionTaskBase(
                 // highlights if nothing actually changed
                 WriteAction.runAndWait<Throwable> {  }
             }
+            MacroExpansionSharedCache.getInstance().flush()
         }
     }
 
@@ -411,14 +412,14 @@ object ExpansionPipeline {
                 return EmptyPipeline // old expansion is up-to-date
             }
 
-            val expansion = expander.expandMacroAsText(def, call)
+            val expansion = MacroExpansionSharedCache.getInstance().cachedExpand(expander, def, call)
             if (expansion == null) {
                 MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName}!(${call.macroBody})`")
                 return nextStageFail(callHash, defHash)
             }
 
-            val expansionBytes = expansion.first.toString().toByteArray()
-            val ranges = expansion.second
+            val expansionBytes = expansion.text.toByteArray()
+            val ranges = expansion.ranges
 
             val expansionBytesHash = VfsInternals.calculateContentHash(expansionBytes).getLeading64bits()
 

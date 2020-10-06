@@ -55,6 +55,7 @@ import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.taskQueue
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -95,6 +96,17 @@ interface MacroExpansionManager {
             getCorruptionMarkerFile().apply {
                 parent?.createDirectories()
                 Files.createFile(this)
+            }
+        }
+
+        @Synchronized
+        fun checkInvalidatedStorage() {
+            if (getCorruptionMarkerFile().exists()) {
+                try {
+                    getBaseMacroDir().cleanDirectory()
+                } catch (e: IOException) {
+                    MACRO_LOG.warn(e)
+                }
             }
         }
     }
@@ -316,7 +328,7 @@ private class MacroExpansionServiceBuilder private constructor(
     companion object {
         fun prepare(dirs: Dirs): MacroExpansionServiceBuilder {
             val dataFile = dirs.dataFile
-            checkInvalidatedStorage()
+            MacroExpansionManager.checkInvalidatedStorage()
             MacroExpansionFileSystemRootsLoader.loadProjectDirs()
             val loaded = load(dataFile)
 
@@ -349,12 +361,6 @@ private class MacroExpansionServiceBuilder private constructor(
             } catch (e: Exception) {
                 MACRO_LOG.warn(e)
                 null
-            }
-        }
-
-        private fun checkInvalidatedStorage() {
-            if (getCorruptionMarkerFile().exists()) {
-                getBaseMacroDir().cleanDirectory()
             }
         }
     }
