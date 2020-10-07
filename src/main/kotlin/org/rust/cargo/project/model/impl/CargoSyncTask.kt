@@ -23,7 +23,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.Rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
@@ -80,7 +80,7 @@ class CargoSyncTask(
         return refreshedProjects
     }
 
-    data class SyncContext(val project: Project, val oldCargoProject: CargoProjectImpl, val toolchain: RustToolchain)
+    data class SyncContext(val project: Project, val oldCargoProject: CargoProjectImpl, val toolchain: RsToolchain)
 }
 
 private fun fetchRustcInfo(

@@ -11,7 +11,6 @@ import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -62,7 +61,7 @@ object RsExternalLinterUtils {
      * @see PsiModificationTracker.MODIFICATION_COUNT
      */
     fun checkLazily(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -94,7 +93,7 @@ object RsExternalLinterUtils {
     }
 
     private fun checkWrapped(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -122,7 +121,7 @@ object RsExternalLinterUtils {
     }
 
     private fun check(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -143,7 +142,7 @@ object RsExternalLinterUtils {
     }
 
     private data class Key(
-        val toolchain: RustToolchain,
+        val toolchain: RsToolchain,
         val workingDirectory: Path,
         val packageName: String?
     )

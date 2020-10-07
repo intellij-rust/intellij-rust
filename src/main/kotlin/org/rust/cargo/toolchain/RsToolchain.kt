@@ -14,7 +14,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-data class RustToolchain(val location: Path) {
+data class RsToolchain(val location: Path) {
 
     fun looksLikeValidToolchain(): Boolean =
         hasExecutable(CARGO) && hasExecutable(RUSTC)
@@ -89,8 +89,8 @@ data class RustToolchain(val location: Path) {
 
         val MIN_SUPPORTED_TOOLCHAIN = SemVer.parseFromText("1.32.0")!!
 
-        fun suggest(): RustToolchain? = Suggestions.all().mapNotNull {
-            val candidate = RustToolchain(it.toPath().toAbsolutePath())
+        fun suggest(): RsToolchain? = Suggestions.all().mapNotNull {
+            val candidate = RsToolchain(it.toPath().toAbsolutePath())
             if (candidate.looksLikeValidToolchain()) candidate else null
         }.firstOrNull()
     }

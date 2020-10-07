@@ -18,11 +18,11 @@ import java.time.format.DateTimeParseException
 
 class Rustc(private val rustcPath: Path) {
 
-    fun queryVersions(): RustToolchain.VersionInfo {
+    fun queryVersions(): RsToolchain.VersionInfo {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        return RustToolchain.VersionInfo(scrapeRustcVersion(rustcPath))
+        return RsToolchain.VersionInfo(scrapeRustcVersion(rustcPath))
     }
 
     fun getSysroot(projectDirectory: Path): String? {

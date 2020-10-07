@@ -24,7 +24,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.*
 import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 
 private const val serviceName: String = "RustProjectSettings"
 
@@ -49,7 +49,7 @@ class RustProjectSettingsServiceImpl(
         }
 
     override val version: Int? get() = _state.version
-    override val toolchain: RustToolchain? get() = _state.toolchain
+    override val toolchain: RsToolchain? get() = _state.toolchain
     override val autoUpdateEnabled: Boolean get() = _state.autoUpdateEnabled
     override val explicitPathToStdlib: String? get() = _state.explicitPathToStdlib
     override val externalLinter: ExternalLinter get() = _state.externalLinter

@@ -21,7 +21,7 @@ import java.nio.file.Path
 private val LOG = Logger.getInstance(Rustup::class.java)
 
 class Rustup(
-    private val toolchain: RustToolchain,
+    private val toolchain: RsToolchain,
     private val rustup: Path,
     private val projectDirectory: Path
 ) {

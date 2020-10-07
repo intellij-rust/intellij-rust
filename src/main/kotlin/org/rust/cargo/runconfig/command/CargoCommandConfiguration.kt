@@ -23,8 +23,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Path
@@ -122,7 +122,7 @@ class CargoCommandConfiguration(
     sealed class CleanConfiguration {
         class Ok(
             val cmd: CargoCommandLine,
-            val toolchain: RustToolchain
+            val toolchain: RsToolchain
         ) : CleanConfiguration()
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()

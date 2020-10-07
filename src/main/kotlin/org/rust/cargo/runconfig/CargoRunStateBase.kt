@@ -17,7 +17,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Cargo
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import java.nio.file.Path
 
 abstract class CargoRunStateBase(
@@ -25,7 +25,7 @@ abstract class CargoRunStateBase(
     val runConfiguration: CargoCommandConfiguration,
     val config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
-    val toolchain: RustToolchain = config.toolchain
+    val toolchain: RsToolchain = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
     val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
         environment.project,
@@ -42,7 +42,7 @@ abstract class CargoRunStateBase(
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
-    fun rustVersion(): RustToolchain.VersionInfo = toolchain.rustc().queryVersions()
+    fun rustVersion(): RsToolchain.VersionInfo = toolchain.rustc().queryVersions()
 
     fun prepareCommandLine(vararg additionalPatches: CargoPatch): CargoCommandLine {
         var commandLine = commandLine

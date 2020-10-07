@@ -13,7 +13,7 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Paths
@@ -50,8 +50,8 @@ interface RustProjectSettingsService {
     ) {
         @get:Transient
         @set:Transient
-        var toolchain: RustToolchain?
-            get() = toolchainHomeDirectory?.let { RustToolchain(Paths.get(it)) }
+        var toolchain: RsToolchain?
+            get() = toolchainHomeDirectory?.let { RsToolchain(Paths.get(it)) }
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }
@@ -85,7 +85,7 @@ interface RustProjectSettingsService {
     var settingsState: State
 
     val version: Int?
-    val toolchain: RustToolchain?
+    val toolchain: RsToolchain?
     val explicitPathToStdlib: String?
     val autoUpdateEnabled: Boolean
     val externalLinter: ExternalLinter
@@ -145,4 +145,4 @@ val Project.rustSettings: RustProjectSettingsService
     get() = ServiceManager.getService(this, RustProjectSettingsService::class.java)
         ?: error("Failed to get RustProjectSettingsService for $this")
 
-val Project.toolchain: RustToolchain? get() = rustSettings.toolchain
+val Project.toolchain: RsToolchain? get() = rustSettings.toolchain

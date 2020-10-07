@@ -16,7 +16,7 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.RunCargoCommandActionBase
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.ide.actions.ui.showCargoNewCrateUI
 import org.rust.openapiext.pathAsPath
 
@@ -43,7 +43,7 @@ class RsCreateCrateAction : RunCargoCommandActionBase(CargoIcons.ICON) {
 
     private fun createProject(
         project: Project,
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         root: VirtualFile,
         name: String,
         binary: Boolean
