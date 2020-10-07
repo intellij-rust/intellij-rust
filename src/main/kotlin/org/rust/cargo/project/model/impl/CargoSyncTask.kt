@@ -98,9 +98,9 @@ private fun fetchRustcInfo(
     val sysroot = context.toolchain.rustc().getSysroot(context.oldCargoProject.workingDirectory)
         ?: return TaskResult.Err("failed to get project sysroot")
 
-    val versions = context.toolchain.rustc().queryVersions()
+    val rustcVersion = context.toolchain.rustc().queryVersion()
 
-    return TaskResult.Ok(RustcInfo(sysroot, versions.rustc))
+    return TaskResult.Ok(RustcInfo(sysroot, rustcVersion))
 }
 
 private fun fetchCargoWorkspace(

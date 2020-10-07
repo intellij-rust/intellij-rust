@@ -18,6 +18,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.components.Cargo
+import org.rust.cargo.toolchain.impl.RustcVersion
 import java.nio.file.Path
 
 abstract class CargoRunStateBase(
@@ -42,7 +43,7 @@ abstract class CargoRunStateBase(
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
-    fun rustVersion(): RsToolchain.VersionInfo = toolchain.rustc().queryVersions()
+    fun rustVersion(): RustcVersion? = toolchain.rustc().queryVersion()
 
     fun prepareCommandLine(vararg additionalPatches: CargoPatch): CargoCommandLine {
         var commandLine = commandLine

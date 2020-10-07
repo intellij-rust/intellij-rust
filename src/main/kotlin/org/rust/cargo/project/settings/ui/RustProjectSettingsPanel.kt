@@ -104,7 +104,7 @@ class RustProjectSettingsPanel(
                 val toolchain = RsToolchain(Paths.get(pathToToolchain))
                 val rustc = toolchain.rustc()
                 val rustup = toolchain.rustup
-                val rustcVersion = rustc.queryVersions().rustc?.semver
+                val rustcVersion = rustc.queryVersion()?.semver
                 val stdlibLocation = rustc.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl
                 Triple(rustcVersion, stdlibLocation, rustup != null)
             },

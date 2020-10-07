@@ -167,7 +167,7 @@ abstract class RsAsyncRunner(
 
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
-                            val host = state.rustVersion().rustc?.host.orEmpty()
+                            val host = state.rustVersion()?.host.orEmpty()
                             result = checkToolchainSupported(host)
                             if (result != null) return
 

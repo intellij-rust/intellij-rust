@@ -9,14 +9,14 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.*
 import java.nio.file.Path
 
 class Rustc(private val rustcPath: Path) {
 
-    fun queryVersions(): RsToolchain.VersionInfo {
+    fun queryVersion(): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
@@ -24,8 +24,7 @@ class Rustc(private val rustcPath: Path) {
             .withParameters("--version", "--verbose")
             .execute()
             ?.stdoutLines
-        val rustcVersion = lines?.let { parseRustcVersion(it) }
-        return RsToolchain.VersionInfo(rustcVersion)
+        return lines?.let { parseRustcVersion(it) }
     }
 
     fun getSysroot(projectDirectory: Path): String? {

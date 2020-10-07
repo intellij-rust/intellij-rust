@@ -45,7 +45,7 @@ abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
         val minRustVersion = findAnnotationInstance<MinRustcVersion>()
         if (minRustVersion != null) {
             val requiredVersion = minRustVersion.semver
-            val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersions().rustc
+            val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion()
             if (rustcVersion == null) {
                 System.err.println("SKIP \"$name\": failed to query Rust version")
                 return

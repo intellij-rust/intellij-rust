@@ -16,7 +16,6 @@ import org.rust.cargo.toolchain.binaries.WasmPack
 import org.rust.cargo.toolchain.components.Cargo
 import org.rust.cargo.toolchain.components.Rustc
 import org.rust.cargo.toolchain.components.Rustfmt
-import org.rust.cargo.toolchain.impl.RustcVersion
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -79,10 +78,6 @@ data class RsToolchain(val location: Path) {
 
     private fun hasCargoExecutable(exec: String): Boolean =
         Files.isExecutable(pathToCargoExecutable(exec))
-
-    data class VersionInfo(
-        val rustc: RustcVersion?
-    )
 
     companion object {
         private const val RUSTC = "rustc"

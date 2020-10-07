@@ -113,7 +113,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         get() {
             val rustc = toolchain?.rustc() ?: return null
             val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
-            val rustcVersion = rustc.queryVersions().rustc
+            val rustcVersion = rustc.queryVersion()
             return RustcInfo(sysroot, rustcVersion)
         }
 
