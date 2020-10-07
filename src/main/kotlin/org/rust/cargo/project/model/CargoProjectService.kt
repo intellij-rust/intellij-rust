@@ -20,7 +20,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.components.RustcVersion
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture

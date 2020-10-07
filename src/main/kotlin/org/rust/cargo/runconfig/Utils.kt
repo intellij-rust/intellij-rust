@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
 import org.jdom.Element
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -24,7 +25,6 @@ import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.openapiext.checkIsDispatchThread
 import org.rust.stdext.buildList
 import java.nio.file.Path

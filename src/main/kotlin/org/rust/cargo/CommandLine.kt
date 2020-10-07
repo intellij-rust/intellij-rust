@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo
 
 import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunManagerEx
@@ -17,6 +17,8 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
+import org.rust.cargo.toolchain.BacktraceMode
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.stdext.buildList
 import java.nio.file.Path
 

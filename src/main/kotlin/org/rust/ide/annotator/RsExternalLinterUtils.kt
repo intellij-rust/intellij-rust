@@ -33,7 +33,11 @@ import com.intellij.util.PathUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.impl.CargoTopMessage
+import org.rust.cargo.toolchain.impl.ErrorCode
+import org.rust.cargo.toolchain.impl.RustcMessage
+import org.rust.cargo.toolchain.impl.RustcSpan
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
 import org.rust.ide.annotator.fixes.ApplySuggestionFix

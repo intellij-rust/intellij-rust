@@ -10,13 +10,12 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.mergeWithDefault
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 
 class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() {

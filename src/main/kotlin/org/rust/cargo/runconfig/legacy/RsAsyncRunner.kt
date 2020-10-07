@@ -28,12 +28,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.components.Cargo
 import org.rust.cargo.toolchain.components.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.toolchain.impl.CargoMetadata

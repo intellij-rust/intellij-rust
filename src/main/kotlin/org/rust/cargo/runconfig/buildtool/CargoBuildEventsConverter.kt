@@ -16,9 +16,9 @@ import com.intellij.build.events.impl.*
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.progress.ProgressIndicator
-import org.rust.cargo.toolchain.CargoTopMessage
-import org.rust.cargo.toolchain.RustcMessage
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoTopMessage
+import org.rust.cargo.toolchain.impl.RustcMessage
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer

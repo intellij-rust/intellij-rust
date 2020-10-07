@@ -8,11 +8,11 @@ package org.rust.ide.actions.runAnything.cargo
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.getAppropriateCargoProject
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandCompletionProvider
 import org.rust.ide.actions.runAnything.RsRunAnythingProvider

@@ -26,6 +26,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
@@ -35,11 +36,15 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.BacktraceMode
+import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.withProxyIfNeeded
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon

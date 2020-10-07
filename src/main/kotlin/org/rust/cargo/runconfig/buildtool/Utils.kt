@@ -16,7 +16,7 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.util.Key
-import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.CargoCommandLine
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 

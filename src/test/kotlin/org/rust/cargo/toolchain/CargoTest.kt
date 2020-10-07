@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.net.HttpConfigurable
 import org.rust.MockRustcVersion
 import org.rust.RsTestBase
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.settings.rustSettings
 import java.nio.file.Paths
 

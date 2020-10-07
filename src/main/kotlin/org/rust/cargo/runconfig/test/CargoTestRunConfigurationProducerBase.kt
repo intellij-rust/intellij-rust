@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allTargets
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -18,7 +19,6 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoRunConfigurationProducer
 import org.rust.cargo.runconfig.mergeWithDefault
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsModDeclItem
