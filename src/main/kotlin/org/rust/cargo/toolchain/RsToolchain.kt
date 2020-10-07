@@ -10,6 +10,9 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.toolchain.binaries.Evcxr
+import org.rust.cargo.toolchain.binaries.Grcov
+import org.rust.cargo.toolchain.binaries.WasmPack
 import org.rust.cargo.toolchain.components.Cargo
 import org.rust.cargo.toolchain.components.Rustc
 import org.rust.cargo.toolchain.components.RustcVersion
