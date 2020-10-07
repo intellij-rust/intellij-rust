@@ -7,9 +7,7 @@ package org.rust.stdext
 
 import com.intellij.util.io.DigestUtil
 import org.apache.commons.codec.binary.Hex
-import java.io.DataInput
-import java.io.DataOutput
-import java.io.Serializable
+import java.io.*
 
 /**
  * Abstracts byte array of cryptographic hash to provide appropriate equals/hashCode methods.
@@ -44,6 +42,13 @@ import java.io.Serializable
         fun compute(input: String): HashCode =
             HashCode(SHA1.digest(input.toByteArray()))
 
+        fun mix(hash1: HashCode, hash2: HashCode): HashCode {
+            val md = SHA1
+            md.update(hash1.toByteArray())
+            md.update(hash2.toByteArray())
+            return HashCode(md.digest())
+        }
+
         fun fromByteArray(bytes: ByteArray): HashCode {
             check(bytes.size == ARRAY_LEN)
             return HashCode(bytes)
@@ -53,9 +58,11 @@ import java.io.Serializable
 
 fun HashCode.getLeading64bits(): Long = toByteArray().getLeading64bits()
 
+@Throws(IOException::class)
 fun DataOutput.writeHashCode(hash: HashCode) =
     write(hash.toByteArray())
 
+@Throws(IOException::class, EOFException::class)
 fun DataInput.readHashCode(): HashCode {
     val bytes = ByteArray(HashCode.ARRAY_LEN)
     readFully(bytes)

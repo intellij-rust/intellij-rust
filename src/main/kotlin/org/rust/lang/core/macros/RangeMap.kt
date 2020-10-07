@@ -10,8 +10,8 @@ import com.intellij.util.SmartList
 import org.rust.stdext.optimizeList
 import org.rust.stdext.readVarInt
 import org.rust.stdext.writeVarInt
-import java.io.DataInputStream
-import java.io.DataOutputStream
+import java.io.DataInput
+import java.io.DataOutput
 
 /**
  * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
@@ -55,7 +55,7 @@ data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
         return RangeMap(other.ranges.flatMap(::mapMappedTextRangeFromExpansionToCallBody))
     }
 
-    fun writeTo(data: DataOutputStream) {
+    fun writeTo(data: DataOutput) {
         data.writeInt(ranges.size)
         ranges.forEach {
             data.writeMappedTextRange(it)
@@ -65,7 +65,7 @@ data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
     companion object {
         val EMPTY: RangeMap = RangeMap(emptyList())
 
-        fun readFrom(data: DataInputStream): RangeMap {
+        fun readFrom(data: DataInput): RangeMap {
             val size = data.readInt()
             val ranges = (0 until size).map { data.readMappedTextRange() }
             return RangeMap(ranges)
@@ -77,13 +77,13 @@ data class RangeMap private constructor(val ranges: List<MappedTextRange>) {
     }
 }
 
-private fun DataInputStream.readMappedTextRange(): MappedTextRange = MappedTextRange(
+private fun DataInput.readMappedTextRange(): MappedTextRange = MappedTextRange(
     readVarInt(),
     readVarInt(),
     readVarInt()
 )
 
-private fun DataOutputStream.writeMappedTextRange(range: MappedTextRange) {
+private fun DataOutput.writeMappedTextRange(range: MappedTextRange) {
     writeVarInt(range.srcOffset)
     writeVarInt(range.dstOffset)
     writeVarInt(range.length)
