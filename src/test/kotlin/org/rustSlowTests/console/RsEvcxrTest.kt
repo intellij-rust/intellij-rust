@@ -9,7 +9,7 @@ import org.rust.MinRustcVersion
 import org.rust.TestContext
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.toolchain.Cargo
+import org.rust.cargo.toolchain.components.Cargo
 import org.rust.ide.console.RsConsoleCommunication
 import org.rust.openapiext.pathAsPath
 import java.io.PrintWriter

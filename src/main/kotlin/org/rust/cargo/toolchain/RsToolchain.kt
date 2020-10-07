@@ -10,6 +10,10 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.toolchain.components.Cargo
+import org.rust.cargo.toolchain.components.Rustc
+import org.rust.cargo.toolchain.components.RustcVersion
+import org.rust.cargo.toolchain.components.Rustfmt
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

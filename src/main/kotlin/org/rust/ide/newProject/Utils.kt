@@ -17,8 +17,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
-import org.rust.cargo.toolchain.Cargo
-import org.rust.cargo.toolchain.Cargo.Companion.GeneratedFilesHolder
+import org.rust.cargo.toolchain.components.Cargo
+import org.rust.cargo.toolchain.components.Cargo.Companion.GeneratedFilesHolder
 import org.rust.stdext.toPath
 
 fun Cargo.makeProject(

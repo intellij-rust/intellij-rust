@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo.toolchain.components
 
 import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.util.io.FileUtil
@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.openapiext.*
 import java.nio.file.Path
 import java.time.LocalDate
