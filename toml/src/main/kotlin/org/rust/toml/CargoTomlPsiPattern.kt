@@ -9,7 +9,7 @@ import com.intellij.patterns.PsiElementPattern
 import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.CargoConstants
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.with
 import org.toml.lang.psi.*
@@ -21,8 +21,8 @@ object CargoTomlPsiPattern {
     private inline fun <reified I : PsiElement> cargoTomlPsiElement(): PsiElementPattern.Capture<I> {
         return psiElement<I>().inVirtualFile(
             StandardPatterns.or(
-                VirtualFilePattern().withName(RustToolchain.CARGO_TOML),
-                VirtualFilePattern().withName(RustToolchain.XARGO_TOML)
+                VirtualFilePattern().withName(CargoConstants.MANIFEST_FILE),
+                VirtualFilePattern().withName(CargoConstants.XARGO_MANIFEST_FILE)
             )
         )
     }

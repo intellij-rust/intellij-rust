@@ -14,11 +14,11 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.panel
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.newProject.ui.RsNewProjectPanel
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
@@ -73,7 +73,7 @@ class CargoConfigurationWizardStep private constructor(
 
             val contentEntry = rootModel.contentEntries.singleOrNull()
             if (contentEntry != null) {
-                val manifest = contentEntry.file?.findChild(RustToolchain.CARGO_TOML)
+                val manifest = contentEntry.file?.findChild(CargoConstants.MANIFEST_FILE)
                 if (manifest != null) {
                     module.project.cargoProjects.attachCargoProject(manifest.pathAsPath)
                 }

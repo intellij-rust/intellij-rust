@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -55,7 +56,7 @@ class RsCreateCrateAction : RunCargoCommandActionBase(CargoIcons.ICON) {
         }
         cargo.init(project, project, targetDir, name, binary, "none")
 
-        val manifest = targetDir.findChild(RustToolchain.CARGO_TOML)
+        val manifest = targetDir.findChild(CargoConstants.MANIFEST_FILE)
         manifest?.let {
             project.cargoProjects.attachCargoProject(it.pathAsPath)
         }

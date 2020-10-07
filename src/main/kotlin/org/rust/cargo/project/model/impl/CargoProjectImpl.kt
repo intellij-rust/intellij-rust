@@ -48,7 +48,6 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -118,6 +117,7 @@ open class CargoProjectsServiceImpl(
 
 
     private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
+
     /**
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
      * a containing [CargoProject].
@@ -214,7 +214,7 @@ open class CargoProjectsServiceImpl(
         project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
 
     /**
      * All modifications to project model except for low-level `loadState` should

@@ -12,10 +12,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.PathUtil
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_LOCK
-import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
 
 /**
  * File changes listener, detecting changes inside the `Cargo.toml` files
@@ -59,7 +58,7 @@ class CargoTomlWatcher(
 
         @VisibleForTesting
         fun isInterestingEvent(event: VFileEvent): Boolean = when {
-            event.pathEndsWith(CARGO_TOML) || event.pathEndsWith(CARGO_LOCK) -> true
+            event.pathEndsWith(CargoConstants.MANIFEST_FILE) || event.pathEndsWith(CargoConstants.LOCK_FILE) -> true
             event is VFileContentChangeEvent -> false
             !event.pathEndsWith(".rs") -> false
             event is VFilePropertyChangeEvent && event.propertyName != VirtualFile.PROP_NAME -> false

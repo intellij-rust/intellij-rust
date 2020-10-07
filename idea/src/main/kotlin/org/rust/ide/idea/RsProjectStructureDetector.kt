@@ -12,7 +12,7 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.CargoConstants
 import java.io.File
 import javax.swing.Icon
 
@@ -23,7 +23,7 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         base: File,
         result: MutableList<DetectedProjectRoot>
     ): DirectoryProcessingResult {
-        if (children.any { it.name == RustToolchain.CARGO_TOML }) {
+        if (children.any { it.name == CargoConstants.MANIFEST_FILE }) {
             result.add(object : DetectedProjectRoot(dir) {
                 override fun getRootTypeName(): String = "Rust"
             })
