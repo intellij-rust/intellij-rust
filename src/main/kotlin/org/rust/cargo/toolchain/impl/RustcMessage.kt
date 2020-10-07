@@ -128,10 +128,13 @@ data class Target(
 enum class Applicability {
     @SerializedName("MachineApplicable")
     MACHINE_APPLICABLE,
+
     @SerializedName("MaybeIncorrect")
     MAYBE_INCORRECT,
+
     @SerializedName("HasPlaceholders")
     HAS_PLACEHOLDERS,
+
     @SerializedName("Unspecified")
     UNSPECIFIED
 }

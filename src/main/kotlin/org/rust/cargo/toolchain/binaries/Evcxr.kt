@@ -6,20 +6,21 @@
 package org.rust.cargo.toolchain.binaries
 
 import com.intellij.execution.configurations.PtyCommandLine
-import com.intellij.util.io.systemIndependentPath
+import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
 class Evcxr(private val evcxrExecutable: Path) {
-    fun createCommandLine(workingDirectory: File): PtyCommandLine =
-        PtyCommandLine()
-            .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
-            .withExePath(evcxrExecutable.systemIndependentPath)
+    fun createCommandLine(workingDirectory: File): PtyCommandLine {
+        val commandLine = GeneralCommandLine(evcxrExecutable)
             .withParameters(
                 "--ide-mode",
                 "--disable-readline",
                 "--opt", "0"
             )
             .withWorkDirectory(workingDirectory)
-            .withCharset(Charsets.UTF_8) as PtyCommandLine
+            .withCharset(Charsets.UTF_8)
+
+        return PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+    }
 }

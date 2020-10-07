@@ -13,8 +13,8 @@ enum class ExternalLinter(val title: String) {
 
     companion object {
         @JvmField
-        val DEFAULT: ExternalLinter = ExternalLinter.CARGO_CHECK
+        val DEFAULT: ExternalLinter = CARGO_CHECK
 
-        fun findByName(name: String): ExternalLinter? = ExternalLinter.values().find { it.title == name }
+        fun findByName(name: String): ExternalLinter? = values().find { it.title == name }
     }
 }

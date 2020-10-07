@@ -16,6 +16,7 @@ import org.rust.cargo.runconfig.mergeWithDefault
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.cargoWorkspace
 import org.rust.openapiext.toPsiFile
 
 class CargoExecutableRunConfigurationProducer : CargoRunConfigurationProducer() {
