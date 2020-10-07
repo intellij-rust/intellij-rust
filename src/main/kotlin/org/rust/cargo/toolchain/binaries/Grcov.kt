@@ -7,9 +7,15 @@ package org.rust.cargo.toolchain.binaries
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import org.rust.cargo.CargoConstants.ProjectLayout
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
+
+fun RsToolchain.grcov(): Grcov? {
+    if (!hasCargoExecutable(Grcov.NAME)) return null
+    return Grcov(pathToCargoExecutable(Grcov.NAME))
+}
 
 class Grcov(private val grcovExecutable: Path) {
     fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
@@ -24,4 +30,8 @@ class Grcov(private val grcovExecutable: Path) {
                 "-o", coverageFilePath.toString()
             )
             .withCharset(Charsets.UTF_8)
+
+    companion object {
+        const val NAME: String = "grcov"
+    }
 }

@@ -25,6 +25,7 @@ import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.ui.JBUI
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.components.Cargo
+import org.rust.cargo.toolchain.components.rawCargo
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate

@@ -18,6 +18,8 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.components.Cargo
+import org.rust.cargo.toolchain.components.cargoOrWrapper
+import org.rust.cargo.toolchain.components.rustc
 import org.rust.cargo.toolchain.impl.RustcVersion
 import java.nio.file.Path
 

@@ -25,6 +25,7 @@ import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsConsoleFilter
 import org.rust.cargo.runconfig.filters.RsExplainFilter
 import org.rust.cargo.runconfig.filters.RsPanicFilter
+import org.rust.cargo.toolchain.components.rawCargo
 import org.rust.openapiext.checkIsDispatchThread
 import org.rust.stdext.buildList
 import java.nio.file.Path

@@ -6,9 +6,15 @@
 package org.rust.cargo.toolchain.binaries
 
 import com.intellij.execution.configurations.PtyCommandLine
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
+
+fun RsToolchain.evcxr(): Evcxr? {
+    if (!hasCargoExecutable(Evcxr.NAME)) return null
+    return Evcxr(pathToCargoExecutable(Evcxr.NAME))
+}
 
 class Evcxr(private val evcxrExecutable: Path) {
     fun createCommandLine(workingDirectory: File): PtyCommandLine {
@@ -22,5 +28,9 @@ class Evcxr(private val evcxrExecutable: Path) {
             .withCharset(Charsets.UTF_8)
 
         return PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+    }
+
+    companion object {
+        const val NAME: String = "evcxr"
     }
 }

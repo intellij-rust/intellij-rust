@@ -9,10 +9,13 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.*
 import java.nio.file.Path
+
+fun RsToolchain.rustc(): Rustc = Rustc(pathToExecutable(Rustc.NAME))
 
 class Rustc(private val rustcPath: Path) {
 
@@ -54,5 +57,9 @@ class Rustc(private val rustcPath: Path) {
             .withParameters("--print", "cfg")
             .execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
+    }
+
+    companion object {
+        const val NAME: String = "rustc"
     }
 }

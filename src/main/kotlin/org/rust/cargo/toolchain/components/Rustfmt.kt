@@ -17,11 +17,14 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.nio.file.Path
+
+fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(pathToExecutable(Rustfmt.NAME))
 
 class Rustfmt(private val rustfmtExecutable: Path) {
 
@@ -83,7 +86,10 @@ class Rustfmt(private val rustfmtExecutable: Path) {
     }
 
     companion object {
+        const val NAME: String = "rustfmt"
+
         private val RUST_1_31: SemVer = SemVer.parseFromText("1.31.0")!!
+
         private val CONFIG_FILES: List<String> = listOf("rustfmt.toml", ".rustfmt.toml")
 
         private fun findConfigPathRecursively(directory: VirtualFile, stopAt: Path): Path? {

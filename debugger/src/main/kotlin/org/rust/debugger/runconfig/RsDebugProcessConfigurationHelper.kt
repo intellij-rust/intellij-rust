@@ -17,6 +17,7 @@ import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.components.rustc
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon

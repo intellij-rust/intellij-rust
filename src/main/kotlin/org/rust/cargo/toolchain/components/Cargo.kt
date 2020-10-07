@@ -36,15 +36,12 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
-import org.rust.cargo.toolchain.BacktraceMode
-import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.*
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
 import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.withProxyIfNeeded
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
@@ -55,6 +52,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+fun RsToolchain.rawCargo(): Cargo = Cargo(pathToExecutable(Cargo.NAME), pathToExecutable(Rustc.NAME))
+
+fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
+    val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
+        ?.let { Files.isRegularFile(it) } == true
+    val cargoWrapper = if (hasXargoToml && hasExecutable(Cargo.WRAPPER_NAME)) Cargo.WRAPPER_NAME else Cargo.NAME
+    return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(Rustc.NAME))
+}
 
 /**
  * A main gateway for executing cargo commands.
@@ -390,6 +395,9 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
 
     companion object {
         private val LOG: Logger = Logger.getInstance(Cargo::class.java)
+
+        const val NAME: String = "cargo"
+        const val WRAPPER_NAME: String = "xargo"
 
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"

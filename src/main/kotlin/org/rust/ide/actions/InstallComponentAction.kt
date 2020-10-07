@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path

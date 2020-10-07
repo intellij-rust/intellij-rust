@@ -34,6 +34,7 @@ import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.components.cargoOrWrapper
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.ErrorCode
 import org.rust.cargo.toolchain.impl.RustcMessage

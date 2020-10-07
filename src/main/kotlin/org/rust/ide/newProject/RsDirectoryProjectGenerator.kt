@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
+import org.rust.cargo.toolchain.components.rawCargo
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.computeWithCancelableProgress
 import java.io.File

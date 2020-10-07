@@ -26,6 +26,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.components.Rustfmt
+import org.rust.cargo.toolchain.components.rustfmt
 import org.rust.ide.formatter.RustfmtExternalFormatProcessor.Companion.formatWithRustfmtOrBuiltinFormatter
 import org.rust.ide.formatter.processors.RsPostFormatProcessor
 import org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor

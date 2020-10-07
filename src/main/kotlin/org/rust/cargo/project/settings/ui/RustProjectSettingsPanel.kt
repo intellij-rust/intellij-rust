@@ -14,6 +14,8 @@ import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.components.rustc
+import org.rust.cargo.toolchain.rustup
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.awt.BorderLayout

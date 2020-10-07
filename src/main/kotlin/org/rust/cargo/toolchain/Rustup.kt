@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.components.rustc
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
@@ -19,6 +20,13 @@ import org.rust.openapiext.*
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
+
+val RsToolchain.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
+
+fun RsToolchain.rustup(cargoProjectDirectory: Path): Rustup? {
+    if (!isRustupAvailable) return null
+    return Rustup(this, pathToExecutable(Rustup.NAME), cargoProjectDirectory)
+}
 
 class Rustup(
     private val toolchain: RsToolchain,
@@ -88,6 +96,7 @@ class Rustup(
     }
 
     companion object {
+        const val NAME: String = "rustup"
 
         fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean =
             checkNeedInstallComponent(project, cargoProjectDirectory, "clippy")

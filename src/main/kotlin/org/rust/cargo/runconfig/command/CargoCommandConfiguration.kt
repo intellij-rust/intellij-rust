@@ -25,6 +25,7 @@ import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Path

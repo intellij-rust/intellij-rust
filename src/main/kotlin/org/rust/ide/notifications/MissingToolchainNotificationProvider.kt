@@ -22,6 +22,7 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsLi
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
+import org.rust.cargo.toolchain.isRustupAvailable
 import org.rust.lang.core.psi.isRustFile
 
 /**

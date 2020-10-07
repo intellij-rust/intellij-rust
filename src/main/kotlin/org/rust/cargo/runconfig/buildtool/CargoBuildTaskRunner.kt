@@ -32,6 +32,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguratio
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.cargo.toolchain.components.rawCargo
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.stdext.buildList
 import java.util.concurrent.*

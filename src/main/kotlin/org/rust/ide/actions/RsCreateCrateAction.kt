@@ -17,6 +17,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.RunCargoCommandActionBase
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.components.cargoOrWrapper
 import org.rust.ide.actions.ui.showCargoNewCrateUI
 import org.rust.openapiext.pathAsPath
 

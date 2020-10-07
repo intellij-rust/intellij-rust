@@ -36,7 +36,9 @@ import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.binaries.grcov
 import org.rust.cargo.toolchain.components.Cargo.Companion.checkNeedInstallGrcov
+import org.rust.cargo.toolchain.components.rustc
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.io.File

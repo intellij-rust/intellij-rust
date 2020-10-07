@@ -20,6 +20,7 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.components.Rustfmt
+import org.rust.cargo.toolchain.components.rustfmt
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.checkWriteAccessNotAllowed
 import org.rust.openapiext.computeWithCancelableProgress
