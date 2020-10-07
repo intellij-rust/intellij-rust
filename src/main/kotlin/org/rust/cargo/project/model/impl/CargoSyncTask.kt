@@ -95,10 +95,10 @@ private fun fetchRustcInfo(
         return TaskResult.Err("Invalid Rust toolchain ${context.toolchain.presentableLocation}")
     }
 
-    val sysroot = context.toolchain.getSysroot(context.oldCargoProject.workingDirectory)
+    val sysroot = context.toolchain.rustc().getSysroot(context.oldCargoProject.workingDirectory)
         ?: return TaskResult.Err("failed to get project sysroot")
 
-    val versions = context.toolchain.queryVersions()
+    val versions = context.toolchain.rustc().queryVersions()
 
     return TaskResult.Ok(RustcInfo(sysroot, versions.rustc))
 }
@@ -134,7 +134,7 @@ private fun fetchCargoWorkspace(
         // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
         // but it also compiles the whole project, which is probably not wanted
         // TODO: This does not query the target specific cfg flags during cross compilation :-(
-        val rawCfgOptions = toolchain.getCfgOptions(projectDirectory) ?: emptyList()
+        val rawCfgOptions = toolchain.rustc().getCfgOptions(projectDirectory) ?: emptyList()
         val cfgOptions = CfgOptions.parse(rawCfgOptions)
         val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
         TaskResult.Ok(ws)
@@ -164,7 +164,7 @@ private fun fetchStdlib(
     val rustup = context.toolchain.rustup(workingDirectory)
     if (rustup == null) {
         val explicitPath = context.project.rustSettings.explicitPathToStdlib
-            ?: context.toolchain.getStdlibFromSysroot(workingDirectory)?.path
+            ?: context.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
         val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
         return when {
             explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")

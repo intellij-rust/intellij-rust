@@ -42,7 +42,7 @@ abstract class CargoRunStateBase(
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
-    fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
+    fun rustVersion(): RustToolchain.VersionInfo = toolchain.rustc().queryVersions()
 
     fun prepareCommandLine(vararg additionalPatches: CargoPatch): CargoCommandLine {
         var commandLine = commandLine

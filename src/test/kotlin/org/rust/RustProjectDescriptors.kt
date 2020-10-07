@@ -111,9 +111,9 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override val rustcInfo: RustcInfo?
         get() {
-            val toolchain = toolchain ?: return null
-            val sysroot = toolchain.getSysroot(Paths.get(".")) ?: return null
-            val rustcVersion = toolchain.queryVersions().rustc
+            val rustc = toolchain?.rustc() ?: return null
+            val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
+            val rustcVersion = rustc.queryVersions().rustc
             return RustcInfo(sysroot, rustcVersion)
         }
 

@@ -36,7 +36,7 @@ class RsDebugProcessConfigurationHelper(
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
 
     private val sysroot: String? by lazy {
-        cargoProject?.workingDirectory?.let { toolchain?.getSysroot(it) }
+        cargoProject?.workingDirectory?.let { toolchain?.rustc()?.getSysroot(it) }
     }
 
     fun configure() {

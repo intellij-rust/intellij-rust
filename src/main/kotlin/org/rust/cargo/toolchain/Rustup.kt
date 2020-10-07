@@ -58,7 +58,7 @@ class Rustup(
             }
         }
 
-        val sources = toolchain.getStdlibFromSysroot(projectDirectory)
+        val sources = toolchain.rustc().getStdlibFromSysroot(projectDirectory)
             ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
         LOG.info("stdlib path: ${sources.path}")
         fullyRefreshDirectory(sources)
