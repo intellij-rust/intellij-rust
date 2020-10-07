@@ -16,8 +16,8 @@ import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
 
-// The same as `--full-stacktrace` param
-gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS_FULL
+// The same as `--stacktrace` param
+gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS
 
 val CI = System.getenv("CI") != null
 val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
@@ -132,8 +132,8 @@ allprojects {
             testLogging {
                 if (hasProp("showTestStatus") && prop("showTestStatus").toBoolean()) {
                     events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED)
-                    exceptionFormat = TestExceptionFormat.FULL
                 }
+                exceptionFormat = TestExceptionFormat.FULL
             }
         }
 
@@ -290,12 +290,6 @@ project(":") {
             generateRustLexer, generateRustDocHighlightingLexer,
             generateRustParser
         )
-    }
-
-    tasks.withType<Test> {
-        testLogging {
-            exceptionFormat = TestExceptionFormat.FULL
-        }
     }
 
     task("resolveDependencies") {

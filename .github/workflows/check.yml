@@ -122,6 +122,15 @@ jobs:
               with:
                   arguments: "check -PexcludeTests=org/rustPerformanceTests/** --continue -Pkotlin.incremental=false --no-daemon"
 
+            - name: Collect fail reports
+              if: failure()
+              uses: actions/upload-artifact@v2
+              with:
+                  name: tests-report-${{ matrix.os }}-${{ matrix.rust-version }}-${{ matrix.base-ide }}-${{ matrix.platform-version }}
+                  path: |
+                      build/reports/tests
+                      */build/reports/tests
+
             - name: Verify plugin
               uses: eskatos/gradle-command-action@v1
               with:
