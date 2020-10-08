@@ -24,9 +24,10 @@ import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.nio.file.Path
 
-fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(pathToExecutable(Rustfmt.NAME))
+fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(this)
 
-class Rustfmt(private val rustfmtExecutable: Path) {
+class Rustfmt(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToExecutable(NAME)
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {
@@ -63,7 +64,7 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             }
         }
 
-        return GeneralCommandLine(rustfmtExecutable)
+        return GeneralCommandLine(executable)
             .withWorkDirectory(cargoProject.workingDirectory)
             .withParameters(arguments)
             .withCharset(Charsets.UTF_8)

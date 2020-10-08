@@ -15,15 +15,16 @@ import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.*
 import java.nio.file.Path
 
-fun RsToolchain.rustc(): Rustc = Rustc(pathToExecutable(Rustc.NAME))
+fun RsToolchain.rustc(): Rustc = Rustc(this)
 
-class Rustc(private val rustcPath: Path) {
+class Rustc(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToExecutable(NAME)
 
     fun queryVersion(): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        val lines = GeneralCommandLine(rustcPath)
+        val lines = GeneralCommandLine(executable)
             .withParameters("--version", "--verbose")
             .execute()
             ?.stdoutLines
@@ -35,7 +36,7 @@ class Rustc(private val rustcPath: Path) {
             checkIsBackgroundThread()
         }
         val timeoutMs = 10000
-        val output = GeneralCommandLine(rustcPath)
+        val output = GeneralCommandLine(executable)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "sysroot")
@@ -51,7 +52,7 @@ class Rustc(private val rustcPath: Path) {
 
     fun getCfgOptions(projectDirectory: Path): List<String>? {
         val timeoutMs = 10000
-        val output = GeneralCommandLine(rustcPath)
+        val output = GeneralCommandLine(executable)
             .withCharset(Charsets.UTF_8)
             .withWorkDirectory(projectDirectory)
             .withParameters("--print", "cfg")

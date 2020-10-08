@@ -12,12 +12,11 @@ import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
-fun RsToolchain.wasmPack(): WasmPack? {
-    if (!hasCargoExecutable(WasmPack.NAME)) return null
-    return WasmPack(pathToCargoExecutable(WasmPack.NAME))
-}
+fun RsToolchain.wasmPack(): WasmPack? = if (hasCargoExecutable(WasmPack.NAME)) WasmPack(this) else null
 
-class WasmPack(private val wasmPackExecutable: Path) {
+class WasmPack(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+
     fun createCommandLine(workingDirectory: File, command: String, args: List<String>): GeneralCommandLine {
         val (pre, post) = splitOnDoubleDash(args)
             .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
@@ -30,7 +29,7 @@ class WasmPack(private val wasmPackExecutable: Path) {
 
         val allArgs = if (post.isEmpty()) pre else pre + "--" + post
 
-        return GeneralCommandLine(wasmPackExecutable)
+        return GeneralCommandLine(executable)
             .withWorkDirectory(workingDirectory)
             .withParameters(command, *allArgs.toTypedArray())
             .withRedirectErrorStream(true)

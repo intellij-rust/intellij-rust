@@ -12,14 +12,13 @@ import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
-fun RsToolchain.grcov(): Grcov? {
-    if (!hasCargoExecutable(Grcov.NAME)) return null
-    return Grcov(pathToCargoExecutable(Grcov.NAME))
-}
+fun RsToolchain.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
 
-class Grcov(private val grcovExecutable: Path) {
+class Grcov(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+
     fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
-        GeneralCommandLine(grcovExecutable)
+        GeneralCommandLine(executable)
             .withWorkDirectory(workingDirectory)
             .withParameters(
                 ProjectLayout.target,

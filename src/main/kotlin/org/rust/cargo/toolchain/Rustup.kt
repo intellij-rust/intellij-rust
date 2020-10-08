@@ -25,14 +25,15 @@ val RsToolchain.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
 
 fun RsToolchain.rustup(cargoProjectDirectory: Path): Rustup? {
     if (!isRustupAvailable) return null
-    return Rustup(this, pathToExecutable(Rustup.NAME), cargoProjectDirectory)
+    return Rustup(this, cargoProjectDirectory)
 }
 
 class Rustup(
     private val toolchain: RsToolchain,
-    private val rustup: Path,
     private val projectDirectory: Path
 ) {
+    private val executable: Path = toolchain.pathToExecutable(NAME)
+
     data class Component(val name: String, val isInstalled: Boolean) {
         companion object {
             fun from(line: String): Component {
@@ -44,7 +45,7 @@ class Rustup(
     }
 
     fun listComponents(): List<Component> =
-        GeneralCommandLine(rustup)
+        GeneralCommandLine(executable)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "list")
             .execute()
@@ -55,7 +56,7 @@ class Rustup(
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
         if (needInstallComponent("rust-src")) {
-            val downloadProcessOutput = GeneralCommandLine(rustup)
+            val downloadProcessOutput = GeneralCommandLine(executable)
                 .withWorkDirectory(projectDirectory)
                 .withParameters("component", "add", "rust-src")
                 .execute(null)
@@ -75,7 +76,7 @@ class Rustup(
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
         try {
-            GeneralCommandLine(rustup)
+            GeneralCommandLine(executable)
                 .withWorkDirectory(projectDirectory)
                 .withParameters("component", "add", componentName)
                 .execute(owner, false)

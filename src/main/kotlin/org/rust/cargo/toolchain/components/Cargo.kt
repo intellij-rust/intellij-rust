@@ -52,13 +52,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-fun RsToolchain.rawCargo(): Cargo = Cargo(pathToExecutable(Cargo.NAME), pathToExecutable(Rustc.NAME))
+fun RsToolchain.rawCargo(): Cargo = Cargo(this)
 
 fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
     val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
         ?.let { Files.isRegularFile(it) } == true
-    val cargoWrapper = if (hasXargoToml && hasExecutable(Cargo.WRAPPER_NAME)) Cargo.WRAPPER_NAME else Cargo.NAME
-    return Cargo(pathToExecutable(cargoWrapper), pathToExecutable(Rustc.NAME))
+    val useWrapper = hasXargoToml && hasExecutable(Cargo.WRAPPER_NAME)
+    return Cargo(this, useWrapper)
 }
 
 /**
@@ -70,7 +70,9 @@ fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path) {
+class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
+    private val executable: Path = toolchain.pathToExecutable(if (useWrapper) WRAPPER_NAME else NAME)
+    private val rustcExecutable: Path = toolchain.pathToExecutable(Rustc.NAME)
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -83,7 +85,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        GeneralCommandLine(cargoExecutable)
+        GeneralCommandLine(executable)
             .withParameters("install", "--list")
             .execute()
             ?.stdoutLines
@@ -98,7 +100,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = GeneralCommandLine(cargoExecutable)
+        val lines = GeneralCommandLine(executable)
             .withParameters("help", "check")
             .execute()
             ?.stdoutLines
@@ -346,7 +348,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
                 addAll(additionalArguments)
             }
             createGeneralCommandLine(
-                cargoExecutable,
+                executable,
                 workingDirectory,
                 backtraceMode,
                 environmentVariables,
@@ -366,7 +368,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
-        GeneralCommandLine(cargoExecutable)
+        GeneralCommandLine(executable)
             .withParameters(listOf("install", "cargo-generate"))
             .execute(owner, listener = listener)
     }

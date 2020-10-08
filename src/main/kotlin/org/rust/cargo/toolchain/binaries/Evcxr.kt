@@ -11,14 +11,13 @@ import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
-fun RsToolchain.evcxr(): Evcxr? {
-    if (!hasCargoExecutable(Evcxr.NAME)) return null
-    return Evcxr(pathToCargoExecutable(Evcxr.NAME))
-}
+fun RsToolchain.evcxr(): Evcxr? = if (hasCargoExecutable(Evcxr.NAME)) Evcxr(this) else null
 
-class Evcxr(private val evcxrExecutable: Path) {
+class Evcxr(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+
     fun createCommandLine(workingDirectory: File): PtyCommandLine {
-        val commandLine = GeneralCommandLine(evcxrExecutable)
+        val commandLine = GeneralCommandLine(executable)
             .withParameters(
                 "--ide-mode",
                 "--disable-readline",
