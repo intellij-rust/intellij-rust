@@ -179,6 +179,24 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { true && false; }
     """)
 
+    fun `test tt collapsed token 2`() = doTest("""
+        macro_rules! foo {
+            ($ i:tt) => { fn foo() { $ i; } }
+        }
+        foo! { 0.0 }
+        foo! { 0. }
+        foo! { 0.0f32 }
+        foo! { 0.1e-3f32 }
+    """, """
+        fn foo() { 0.0; }
+    """, """
+        fn foo() { 0.; }
+    """, """
+        fn foo() { 0.0f32; }
+    """, """
+        fn foo() { 0.1e-3f32; }
+    """)
+
     fun `test vis matcher`() = doTest("""
         macro_rules! foo {
             ($ vis:vis $ name:ident) => { $ vis fn $ name() {}};
