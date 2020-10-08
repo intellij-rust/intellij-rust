@@ -233,10 +233,22 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo!(u8 0);
         foo!(&'static str "value");
+        foo!(f64 0.0);
+        foo!(f64 0.);
+        foo!(f32 0.0f32);
+        foo!(f32 0.1e-3f32);
     """, """
         const VALUE: u8 = 0;
     """, """
         const VALUE: &'static str = "value";
+    """, """
+        const VALUE: f64 = 0.0;
+    """, """
+        const VALUE: f64 = 0.;
+    """, """
+        const VALUE: f32 = 0.0f32;
+    """, """
+        const VALUE: f32 = 0.1e-3f32;
     """)
 
     fun `test tt group`() = doTest("""
