@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
+import com.intellij.lang.parser.GeneratedParserUtilBase
 import com.intellij.lang.parser.rawLookupText
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -332,7 +333,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 10
+        const val EXPANDER_VERSION = 11
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
@@ -538,7 +539,8 @@ private val COMPARE_BY_TEXT_TOKES = TokenSet.orSet(tokenSetOf(IDENTIFIER, QUOTE_
 
 fun PsiBuilder.isSameToken(node: ASTNode): Boolean {
     val (elementType, size) = collapsedTokenType(this) ?: (tokenType to 1)
-    val result = node.elementType == elementType && (elementType !in COMPARE_BY_TEXT_TOKES || node.chars == tokenText)
+    val result = node.elementType == elementType
+        && (elementType !in COMPARE_BY_TEXT_TOKES || GeneratedParserUtilBase.nextTokenIsFast(this, node.text, true) == size)
     if (result) {
         PsiBuilderUtil.advance(this, size)
     }

@@ -325,7 +325,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
 
     fun `test match complex pattern`() = doTest("""
         macro_rules! foo {
-            (=/ $ i1:item #%*=> $ i2:item) => (
+            (=/ $ i1:item #%*=> $ i2:item 0.0) => (
                 $ i1
                 $ i2
             )
@@ -335,6 +335,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
             fn foo() {}
             #%*=>
             fn bar() {}
+            0.0
         }
     """, """
         fn foo() {}
