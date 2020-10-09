@@ -17,14 +17,14 @@ jobs:
             # to calculate difference only for branch changes
             - name: Calculate base commit for workflow_dispatch event
               if: github.event_name == 'workflow_dispatch'
-              run: echo "::set-env name=BASE_COMMIT::$(git merge-base origin/master ${{ github.sha }})"
+              run: echo "BASE_COMMIT=$(git merge-base origin/master ${{ github.sha }})" >> $GITHUB_ENV
 
             # For pull request event, GitHub produces additional merge commit with `master` branch and PR branch as parents
             # In this case, we want to check difference between master branch and merge commit
             # so emit hash of `origin/master` branch itself as base commit
             - name: Calculate base commit for pull_request event
               if: github.event_name == 'pull_request'
-              run: echo "::set-env name=BASE_COMMIT::$(git rev-parse origin/master)"
+              run: echo "BASE_COMMIT=$(git rev-parse origin/master)" >> $GITHUB_ENV
 
             - name: Emit base commit
               id: base-commit
