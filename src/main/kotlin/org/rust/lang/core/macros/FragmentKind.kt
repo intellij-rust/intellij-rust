@@ -12,7 +12,6 @@ import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.parser.clearFrame
 import org.rust.lang.core.psi.RS_KEYWORDS
-import org.rust.lang.core.psi.RS_LITERALS
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.TT
@@ -66,7 +65,9 @@ enum class FragmentKind(private val kind: String) {
         return RustParserUtil.unpairedToken(b, 0) || RustParserUtil.parseTokenTreeLazy(b, 0, TT)
     }
 
-    private fun parseLiteral(b: PsiBuilder): Boolean = b.consumeToken(RS_LITERALS)
+    private fun parseLiteral(b: PsiBuilder): Boolean {
+        return RustParser.LitExprWithoutAttrs(b, 0)
+    }
 
     private fun PsiBuilder.consumeToken(tokenSet: TokenSet): Boolean {
         return if (tokenType in tokenSet) {

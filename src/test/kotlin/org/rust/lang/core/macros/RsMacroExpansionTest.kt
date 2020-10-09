@@ -179,6 +179,24 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() { true && false; }
     """)
 
+    fun `test tt collapsed token 2`() = doTest("""
+        macro_rules! foo {
+            ($ i:tt) => { fn foo() { $ i; } }
+        }
+        foo! { 0.0 }
+        foo! { 0. }
+        foo! { 0.0f32 }
+        foo! { 0.1e-3f32 }
+    """, """
+        fn foo() { 0.0; }
+    """, """
+        fn foo() { 0.; }
+    """, """
+        fn foo() { 0.0f32; }
+    """, """
+        fn foo() { 0.1e-3f32; }
+    """)
+
     fun `test vis matcher`() = doTest("""
         macro_rules! foo {
             ($ vis:vis $ name:ident) => { $ vis fn $ name() {}};
@@ -215,10 +233,22 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         }
         foo!(u8 0);
         foo!(&'static str "value");
+        foo!(f64 0.0);
+        foo!(f64 0.);
+        foo!(f32 0.0f32);
+        foo!(f32 0.1e-3f32);
     """, """
         const VALUE: u8 = 0;
     """, """
         const VALUE: &'static str = "value";
+    """, """
+        const VALUE: f64 = 0.0;
+    """, """
+        const VALUE: f64 = 0.;
+    """, """
+        const VALUE: f32 = 0.0f32;
+    """, """
+        const VALUE: f32 = 0.1e-3f32;
     """)
 
     fun `test tt group`() = doTest("""
@@ -295,7 +325,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
 
     fun `test match complex pattern`() = doTest("""
         macro_rules! foo {
-            (=/ $ i1:item #%*=> $ i2:item) => (
+            (=/ $ i1:item #%*=> $ i2:item 0.0) => (
                 $ i1
                 $ i2
             )
@@ -305,6 +335,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
             fn foo() {}
             #%*=>
             fn bar() {}
+            0.0
         }
     """, """
         fn foo() {}

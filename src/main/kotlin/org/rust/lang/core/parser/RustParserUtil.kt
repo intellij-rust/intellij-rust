@@ -606,6 +606,15 @@ object RustParserUtil : GeneratedParserUtilBase() {
                 AND -> ANDAND to 2
                 else -> null
             }
+            // See `parseFloatLiteral`
+            INTEGER_LITERAL -> when (b.rawLookup(1)) {
+                DOT -> when (b.rawLookup(2)) {
+                    INTEGER_LITERAL, FLOAT_LITERAL -> FLOAT_LITERAL to 3
+                    IDENTIFIER -> null
+                    else -> FLOAT_LITERAL to 2
+                }
+                else -> null
+            }
             else -> null
         }
     }
