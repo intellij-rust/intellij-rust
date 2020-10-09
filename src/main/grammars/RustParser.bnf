@@ -741,12 +741,18 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= [BlockFields | TupleFields] VariantDiscriminant?
 
-BlockFields ::= '{' (NamedFieldDecl (',' | &'}'))* '}' {
+BlockFields ::= '{' NamedFieldDecl_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+
+private NamedFieldDecl_with_recover ::= !'}' NamedFieldDecl (',' | &'}') {
+  pin = 1
+  recoverWhile = NamedFieldDecl_recover
+}
+private NamedFieldDecl_recover ::= !('}' | NamedFieldDecl_first)
 
 TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
   pin = 1
@@ -769,9 +775,8 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   mixin = "org.rust.lang.core.psi.ext.RsNamedFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-  recoverWhile = Field_recover
 }
-private Field_recover ::= !('}' | ',')
+private NamedFieldDecl_first ::= '#' | crate | pub | identifier
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]

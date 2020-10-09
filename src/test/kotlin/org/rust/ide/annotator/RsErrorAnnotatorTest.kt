@@ -3224,14 +3224,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test error analysis on invalid syntax with no name elements`() = checkErrors("""
-        struct Foo { a: i32,<error>:</error> i32<error> </error> }
-
-        fn main() {
-            let Foo { a, } = foo;
-        }
-    """)
-
     fun `test no E0026 on raw identifier field`() = checkErrors("""
         struct Foo { r#field: u64 }
         fn bar(f: Foo) {
