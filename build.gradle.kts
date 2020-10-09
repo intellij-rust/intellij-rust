@@ -29,7 +29,8 @@ val ideaVersion = prop("ideaVersion")
 val clionVersion = prop("clionVersion")
 val baseVersion = when (baseIDE) {
     "idea" -> ideaVersion
-    "clion" -> clionVersion
+    // FIXME: 203.4203. use clionVersion
+    "clion" -> if (platformVersion == 203) ideaVersion else clionVersion
     else -> error("Unexpected IDE name: `$baseIDE`")
 }
 
@@ -183,7 +184,8 @@ project(":plugin") {
             graziePlugin,
             psiViewerPlugin
         )
-        if (baseIDE == "idea") {
+        // FIXME: 203.4203. use `baseIDE == "idea"`
+        if (baseVersion == ideaVersion) {
             plugins += listOf(
                 "copyright",
                 "java",
