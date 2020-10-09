@@ -6,6 +6,22 @@
 package org.rust.ide.intentions
 
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
+    fun `test function availability range`() = checkAvailableInSelectionOnly("""
+        fn main() {
+            <selection>foo</selection>(bar::baz);
+        }
+    """)
+
+    fun `test method availability range`() = expect<IllegalStateException> {
+    checkAvailableInSelectionOnly("""
+        struct S;
+
+        fn foo(s: S) {
+            s.<selection>foo</selection>();
+        }
+    """)
+    }
+
     fun `test unavailable on resolved function`() = doUnavailableTest("""
         fn foo() {}
 
@@ -21,8 +37,6 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
     """)
 
     fun `test unavailable on path argument`() = doUnavailableTest("""
-        fn foo(a: u32) {}
-
         fn main() {
             foo(bar::baz/*caret*/);
         }

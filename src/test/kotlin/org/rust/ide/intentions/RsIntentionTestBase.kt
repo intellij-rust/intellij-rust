@@ -7,14 +7,16 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.Testmark
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
-import kotlin.reflect.KClass
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.KClass
+import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.isSubclassOf
 
 abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
@@ -82,6 +84,25 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         return myFixture.availableIntentions.firstOrNull {
             val originalIntention = IntentionActionDelegate.unwrap(it)
             intentionClass == originalIntention::class
+        }
+    }
+
+    protected fun checkAvailableInSelectionOnly(@Language("Rust") code: String) {
+        InlineFile(code.replace("<selection>", "<selection><caret>"))
+        val selections = myFixture.editor.selectionModel.let { model ->
+            model.blockSelectionStarts.zip(model.blockSelectionEnds)
+                .map { TextRange(it.first, it.second + 1) }
+        }
+        val intention = intentionClass.createInstance()
+        for (pos in myFixture.file.text.indices) {
+            myFixture.editor.caretModel.moveToOffset(pos)
+            val expectAvailable = selections.any { it.contains(pos) }
+            val isAvailable = intention.isAvailable(project, myFixture.editor, myFixture.file)
+            check(isAvailable == expectAvailable) {
+                "Expect ${if (expectAvailable) "available" else "unavailable"}, " +
+                    "actually ${if (isAvailable) "available" else "unavailable"} " +
+                    "at `${StringBuilder(myFixture.file.text).insert(pos, "/*caret*/")}`"
+            }
         }
     }
 }
