@@ -120,7 +120,7 @@
 //   * recovery related rules are PascalCase_with_snake_suffix: Item_recover
 
 
-File ::= [ SHEBANG_LINE ] InnerAttr* Items
+File ::= [ SHEBANG_LINE ] InnerAttr* RootItems
 ExpressionCodeFragmentElement ::= Expr?
 StatementCodeFragmentElement ::= Stmt?
 TypeReferenceCodeFragmentElement ::= TypeReference?
@@ -324,14 +324,21 @@ Item ::= AttrsAndVis default_? (Constant
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
+private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
+
+private RootItem_with_recover ::= !<<eof>> Item {
+  pin = 1
+  recoverWhile = RootItem_recover
+}
+private RootItem_recover ::= !Item_first
+private RootItems ::= RootItem_with_recover*
+
 private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
 private Item_recover ::= !('}' | Item_first )
-
 private Items ::= Item_with_recover*
 
 Lifetime ::= QUOTE_IDENTIFIER {
