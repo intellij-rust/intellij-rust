@@ -111,6 +111,8 @@ sealed class Constructor {
                 else -> sequenceOf(Single)
             }
 
+        fun isInhabited(ty: Ty): Boolean = allConstructorsLazy(ty).any()
+
         fun allConstructors(ty: Ty): List<Constructor> = allConstructorsLazy(ty).toList()
     }
 }
