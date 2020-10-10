@@ -300,6 +300,7 @@ private try ::= <<tryKeyword>>
 private raw ::= <<rawKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
+private AttrsAndVis_first ::= '#' | crate | pub
 
 // Note: don't forget to add new item element types to [org.rust.lang.core.psi.RS_ITEMS], and to
 // `itemKindName` & `itemDefKeyword` in `RsItemElement.kt`
@@ -754,12 +755,17 @@ private NamedFieldDecl_with_recover ::= !'}' NamedFieldDecl (',' | &'}') {
 }
 private NamedFieldDecl_recover ::= !('}' | NamedFieldDecl_first)
 
-TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
+TupleFields ::= '(' TupleFieldDecl_with_recover* ')' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private TupleFieldDecl_with_recover ::= !')' TupleFieldDecl (',' | &')') {
+  pin = 1
+  recoverWhile = TupleFieldDecl_recover
+}
+private TupleFieldDecl_recover ::= !(')' | AttrsAndVis_first | TypeReference_first)
 
 VariantDiscriminant ::= '=' AnyExpr {
   pin = 1
@@ -776,7 +782,7 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-private NamedFieldDecl_first ::= '#' | crate | pub | identifier
+private NamedFieldDecl_first ::= AttrsAndVis_first | identifier
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
@@ -784,9 +790,7 @@ TupleFieldDecl ::= AttrsAndVis TypeReference {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  recoverWhile = TupleField_recover
 }
-private TupleField_recover ::= !(')' | ',')
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -868,6 +872,7 @@ TypeReference ::= ArrayType
   mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
   name = "type"
 }
+private TypeReference_first ::= '[' | '&' | '*' | unsafe | extern | fn | '(' | impl | "dyn" | '_' | '!' | for | Path_first
 
 TypeReferenceNoImplicitTraitType ::= ArrayType
                                    | RefLikeTypeNoImplicitTrait
