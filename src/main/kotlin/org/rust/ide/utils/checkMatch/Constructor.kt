@@ -98,18 +98,20 @@ sealed class Constructor {
     }
 
     companion object {
-        fun allConstructors(ty: Ty): List<Constructor> =
+        private fun allConstructorsLazy(ty: Ty): Sequence<Constructor> =
             when {
-                ty is TyBool -> listOf(true, false).map { ConstantValue(Value.Bool(it)) }
+                ty is TyBool -> sequenceOf(true, false).map { ConstantValue(Value.Bool(it)) }
 
-                ty is TyAdt && ty.item is RsEnumItem -> ty.item.variants.map { Variant(it) }
+                ty is TyAdt && ty.item is RsEnumItem -> ty.item.variants.asSequence().map { Variant(it) }
 
                 // TODO: TyInteger, TyChar (see `all_constructors` at `https://github.com/rust-lang/rust/blob/master/src/librustc_mir/hair/pattern/_match.rs`)
                 ty is TyArray && ty.size != null -> TODO()
                 ty is TyArray || ty is TySlice -> TODO()
 
-                else -> listOf(Single)
+                else -> sequenceOf(Single)
             }
+
+        fun allConstructors(ty: Ty): List<Constructor> = allConstructorsLazy(ty).toList()
     }
 }
 
