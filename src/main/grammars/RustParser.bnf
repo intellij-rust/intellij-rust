@@ -1148,7 +1148,7 @@ StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) StructLiteralFi
 
 private StructLiteralFieldSuffix ::= ':' AnyExpr { pin = 1 }
 
-private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
+private StructLiteralField_with_recover ::= !('..' | '}') StructLiteralField (',' | &'}') {
   pin = 1
   recoverWhile = StructLiteralField_recover
 }
