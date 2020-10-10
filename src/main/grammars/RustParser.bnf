@@ -555,7 +555,11 @@ PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
 
 // TODO: actual recover
 private Pat_with_recover ::= TopPat (',' | &(')' | ']'))
-private PatField_with_recover ::= PatField (',' | & '}')
+private PatField_with_recover ::= !('}' | '..') PatField (',' | & '}') {
+  pin = 1
+  recoverWhile = PatField_recover
+}
+private PatField_recover ::= !('}' | '..' | ref | mut | box | identifier | INTEGER_LITERAL)
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
 PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
