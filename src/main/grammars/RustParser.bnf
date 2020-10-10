@@ -1213,14 +1213,18 @@ MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-MatchBody ::= '{' MatchArm* '}' { pin = 1 }
+MatchBody ::= '{' MatchArm_with_recover* '}' { pin = 1 }
 MatchArm ::= OuterAttr* TopPat MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+}
+MatchArmGuard ::= if AnyExpr
+
+private MatchArm_with_recover ::= !'}' MatchArm {
+  pin = 1
   recoverWhile = MatchArm_recover
 }
 private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')
-MatchArmGuard ::= if AnyExpr
 
 IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
   pin = 'if'
