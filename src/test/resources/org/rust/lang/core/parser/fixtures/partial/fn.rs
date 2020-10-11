@@ -24,3 +24,5 @@ fn foo( ;
 fn bar(a: i32 {}
 fn bar(a: i32, {}
 fn bar(, {}
+
+fn foo(...,,) {}
