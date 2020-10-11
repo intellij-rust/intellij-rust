@@ -364,11 +364,11 @@ fake ValueParameter ::= OuterAttr* Pat? TypeReference? {
 
 FnParameter ::= OuterAttr* [ Pat ':' ] (VariadicUpper | TypeReference)
 upper VariadicUpper ::= '...' ','? { elementType = Variadic }
-private FnParameter_with_recover ::= !')' FnParameter (',' | &')') {
+private FnParameter_with_recover ::= !(')' | '{' | ';') FnParameter (',' | &')') {
   pin = 1
   recoverWhile = FnParameter_recover
 }
-private FnParameter_recover ::= !(Pat_first | OuterAttr_first | ')' | '...')
+private FnParameter_recover ::= !(Pat_first | OuterAttr_first | '...' | ')' | '{' | ';')
 
 LambdaParameter ::= OuterAttr* SimplePat TypeAscription?
 AnonParameter ::= OuterAttr* [ RestrictedPat ':' ] TypeReference
