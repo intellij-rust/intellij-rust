@@ -537,7 +537,7 @@ private SimplePat ::= PatWild
 OrPat ::= '|'? SimplePat ('|' SimplePat)*
 left OrPatLeft ::= ('|' SimplePat)+ { elementType = OrPat }
 
-private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut
+private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|'
 
 PatBox ::= box SimplePat
 
@@ -551,10 +551,8 @@ PatBox ::= box SimplePat
 PatIdent ::= PatBinding [ '@' SimplePat ]
 
 PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* PatRest? '}'
-PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
+PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' PatParenListElem_with_recover* ')'
 
-// TODO: actual recover
-private Pat_with_recover ::= TopPat (',' | &(')' | ']'))
 private PatField_with_recover ::= !('}' | '..') PatField (',' | & '}') {
   pin = 1
   recoverWhile = PatField_recover
@@ -564,10 +562,20 @@ private PatField_recover ::= !('}' | '..' | ref | mut | box | identifier | INTEG
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
 PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
-PatTup ::= '(' SeqPat ')'
-PatSlice ::= '[' SeqPat ']'
-// NB: there are `[x, .. , y]`
-private SeqPat ::= Pat_with_recover*
+PatTup ::= '(' PatParenListElem_with_recover* ')'
+PatSlice ::= '[' PatBracketListElem_with_recover* ']'
+
+private PatParenListElem_with_recover ::= !')' TopPat (',' | &')') {
+  pin = 1
+  recoverWhile = PatParenListElem_recover
+}
+private PatParenListElem_recover ::= !(')' | Pat_first)
+
+private PatBracketListElem_with_recover ::= !']' TopPat (',' | &']') {
+  pin = 1
+  recoverWhile = PatBracketListElem_recover
+}
+private PatBracketListElem_recover ::= !(']' | Pat_first)
 
 PatRef ::= '&' mut? SimplePat
 
@@ -1230,7 +1238,7 @@ private MatchArm_with_recover ::= !'}' MatchArm {
   pin = 1
   recoverWhile = MatchArm_recover
 }
-private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')
+private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
 
 IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
   pin = 'if'
