@@ -40,10 +40,10 @@ val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 
 plugins {
     idea
-    kotlin("jvm") version "1.4.0"
-    id("org.jetbrains.intellij") version "0.4.21"
+    kotlin("jvm") version "1.4.10"
+    id("org.jetbrains.intellij") version "0.5.0"
     id("org.jetbrains.grammarkit") version "2020.2.1"
-    id("net.saliman.properties") version "1.4.6"
+    id("net.saliman.properties") version "1.5.1"
 }
 
 idea {
