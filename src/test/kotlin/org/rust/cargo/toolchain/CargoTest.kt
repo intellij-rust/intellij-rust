@@ -12,7 +12,7 @@ import org.rust.MockRustcVersion
 import org.rust.RsTestBase
 import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.components.rawCargo
+import org.rust.cargo.toolchain.components.cargo
 import java.nio.file.Paths
 
 class CargoTest : RsTestBase() {
@@ -143,7 +143,7 @@ class CargoTest : RsTestBase() {
     }
 
     private val toolchain get() = RsToolchain(Paths.get("/usr/bin"))
-    private val cargo = toolchain.rawCargo()
+    private val cargo = toolchain.cargo()
     private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()
     private val wd = Paths.get("/my-crate")
 

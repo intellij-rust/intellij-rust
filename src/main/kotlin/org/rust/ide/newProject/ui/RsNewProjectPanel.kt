@@ -25,7 +25,7 @@ import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.util.ui.JBUI
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.components.Cargo
-import org.rust.cargo.toolchain.components.rawCargo
+import org.rust.cargo.toolchain.components.cargo
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate
@@ -45,7 +45,7 @@ class RsNewProjectPanel(
     private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
 
     private val cargo: Cargo?
-        get() = rustProjectSettings.data.toolchain?.rawCargo()
+        get() = rustProjectSettings.data.toolchain?.cargo()
 
     private val defaultTemplates: List<RsProjectTemplate> = listOf(
         RsGenericTemplate.CargoBinaryTemplate,

@@ -52,7 +52,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-fun RsToolchain.rawCargo(): Cargo = Cargo(this)
+fun RsToolchain.cargo(): Cargo = Cargo(this)
 
 fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
     val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
@@ -523,7 +523,7 @@ class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
             message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
-            val cargo = project.toolchain?.rawCargo() ?: return false
+            val cargo = project.toolchain?.cargo() ?: return false
             val isNotInstalled = { cargo.checkBinaryCrateIsNotInstalled(crateName, minVersion) }
             val needInstall = if (isDispatchThread) {
                 project.computeWithCancelableProgress("Checking if $crateName is installed...", isNotInstalled)

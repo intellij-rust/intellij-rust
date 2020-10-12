@@ -17,7 +17,7 @@ import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.toolchain.components.rawCargo
+import org.rust.cargo.toolchain.components.cargo
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.makeDefaultRunConfiguration
 import org.rust.ide.newProject.makeProject
@@ -51,7 +51,7 @@ class RsModuleBuilder : ModuleBuilder() {
                 // so `$ cargo init` invocation blocks UI thread
 
                 val template = configurationData?.template ?: return
-                val cargo = toolchain.rawCargo()
+                val cargo = toolchain.cargo()
                 val project = modifiableRootModel.project
                 val name = project.name.replace(' ', '_')
 
