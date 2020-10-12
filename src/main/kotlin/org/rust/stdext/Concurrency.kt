@@ -6,6 +6,7 @@
 package org.rust.stdext
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import java.util.*
 import java.util.concurrent.*
@@ -39,7 +40,10 @@ class AsyncValue<T>(initial: T) {
                         this.current = next
                         result.complete(next)
                     } else {
-                        LOG.error(err)
+                        // Do not log `ProcessCanceledException`
+                        if (!(err is ProcessCanceledException || err is CompletionException && err.cause is ProcessCanceledException)) {
+                            LOG.error(err)
+                        }
                         result.completeExceptionally(err)
                     }
                     Unit
