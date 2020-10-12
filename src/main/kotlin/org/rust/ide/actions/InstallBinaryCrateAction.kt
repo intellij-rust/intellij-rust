@@ -9,11 +9,12 @@ import com.intellij.notification.Notification
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.tools.cargo
 
 class InstallBinaryCrateAction(private val crateName: String) : DumbAwareAction("Install") {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
-        val cargo = project.toolchain?.rawCargo() ?: return
+        val cargo = project.toolchain?.cargo() ?: return
         Notification.get(e).expire()
         cargo.installBinaryCrate(project, crateName)
     }

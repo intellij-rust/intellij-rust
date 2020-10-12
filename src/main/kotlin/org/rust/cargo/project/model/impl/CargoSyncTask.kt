@@ -23,8 +23,11 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.rustup
+import org.rust.cargo.toolchain.tools.cargoOrWrapper
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.TaskResult
@@ -80,7 +83,7 @@ class CargoSyncTask(
         return refreshedProjects
     }
 
-    data class SyncContext(val project: Project, val oldCargoProject: CargoProjectImpl, val toolchain: RustToolchain)
+    data class SyncContext(val project: Project, val oldCargoProject: CargoProjectImpl, val toolchain: RsToolchain)
 }
 
 private fun fetchRustcInfo(
@@ -95,12 +98,12 @@ private fun fetchRustcInfo(
         return TaskResult.Err("Invalid Rust toolchain ${context.toolchain.presentableLocation}")
     }
 
-    val sysroot = context.toolchain.getSysroot(context.oldCargoProject.workingDirectory)
+    val sysroot = context.toolchain.rustc().getSysroot(context.oldCargoProject.workingDirectory)
         ?: return TaskResult.Err("failed to get project sysroot")
 
-    val versions = context.toolchain.queryVersions()
+    val rustcVersion = context.toolchain.rustc().queryVersion()
 
-    return TaskResult.Ok(RustcInfo(sysroot, versions.rustc))
+    return TaskResult.Ok(RustcInfo(sysroot, rustcVersion))
 }
 
 private fun fetchCargoWorkspace(
@@ -134,7 +137,7 @@ private fun fetchCargoWorkspace(
         // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
         // but it also compiles the whole project, which is probably not wanted
         // TODO: This does not query the target specific cfg flags during cross compilation :-(
-        val rawCfgOptions = toolchain.getCfgOptions(projectDirectory) ?: emptyList()
+        val rawCfgOptions = toolchain.rustc().getCfgOptions(projectDirectory) ?: emptyList()
         val cfgOptions = CfgOptions.parse(rawCfgOptions)
         val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
         TaskResult.Ok(ws)
@@ -164,7 +167,7 @@ private fun fetchStdlib(
     val rustup = context.toolchain.rustup(workingDirectory)
     if (rustup == null) {
         val explicitPath = context.project.rustSettings.explicitPathToStdlib
-            ?: context.toolchain.getStdlibFromSysroot(workingDirectory)?.path
+            ?: context.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
         val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
         return when {
             explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")

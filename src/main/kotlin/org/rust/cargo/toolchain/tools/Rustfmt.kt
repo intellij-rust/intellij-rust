@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
@@ -12,17 +12,22 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.*
 import org.rust.stdext.buildList
 import java.nio.file.Path
 
-class Rustfmt(private val rustfmtExecutable: Path) {
+fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(this)
+
+class Rustfmt(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToExecutable(NAME)
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {
@@ -59,7 +64,7 @@ class Rustfmt(private val rustfmtExecutable: Path) {
             }
         }
 
-        return GeneralCommandLine(rustfmtExecutable)
+        return GeneralCommandLine(executable)
             .withWorkDirectory(cargoProject.workingDirectory)
             .withParameters(arguments)
             .withCharset(Charsets.UTF_8)
@@ -82,7 +87,10 @@ class Rustfmt(private val rustfmtExecutable: Path) {
     }
 
     companion object {
+        const val NAME: String = "rustfmt"
+
         private val RUST_1_31: SemVer = SemVer.parseFromText("1.31.0")!!
+
         private val CONFIG_FILES: List<String> = listOf("rustfmt.toml", ".rustfmt.toml")
 
         private fun findConfigPathRecursively(directory: VirtualFile, stopAt: Path): Path? {

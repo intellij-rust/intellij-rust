@@ -16,7 +16,8 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.CargoConstants
+import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.newProject.ConfigurationData
 import org.rust.ide.newProject.makeDefaultRunConfiguration
 import org.rust.ide.newProject.makeProject
@@ -43,14 +44,14 @@ class RsModuleBuilder : ModuleBuilder() {
         root.refresh(/* async = */ false, /* recursive = */ true)
 
         // Just work if user "creates new project" over an existing one.
-        if (toolchain != null && root.findChild(RustToolchain.CARGO_TOML) == null) {
+        if (toolchain != null && root.findChild(CargoConstants.MANIFEST_FILE) == null) {
             try {
                 // TODO: rewrite this somehow to fix `Synchronous execution on EDT` exception
                 // The problem is that `setupRootModel` is called on EDT under write action
                 // so `$ cargo init` invocation blocks UI thread
 
                 val template = configurationData?.template ?: return
-                val cargo = toolchain.rawCargo()
+                val cargo = toolchain.cargo()
                 val project = modifiableRootModel.project
                 val name = project.name.replace(' ', '_')
 

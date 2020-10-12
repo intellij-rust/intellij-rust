@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
@@ -20,11 +21,19 @@ import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
 
+val RsToolchain.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
+
+fun RsToolchain.rustup(cargoProjectDirectory: Path): Rustup? {
+    if (!isRustupAvailable) return null
+    return Rustup(this, cargoProjectDirectory)
+}
+
 class Rustup(
-    private val toolchain: RustToolchain,
-    private val rustup: Path,
+    private val toolchain: RsToolchain,
     private val projectDirectory: Path
 ) {
+    private val executable: Path = toolchain.pathToExecutable(NAME)
+
     data class Component(val name: String, val isInstalled: Boolean) {
         companion object {
             fun from(line: String): Component {
@@ -36,7 +45,7 @@ class Rustup(
     }
 
     fun listComponents(): List<Component> =
-        GeneralCommandLine(rustup)
+        GeneralCommandLine(executable)
             .withWorkDirectory(projectDirectory)
             .withParameters("component", "list")
             .execute()
@@ -47,7 +56,7 @@ class Rustup(
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
         if (needInstallComponent("rust-src")) {
-            val downloadProcessOutput = GeneralCommandLine(rustup)
+            val downloadProcessOutput = GeneralCommandLine(executable)
                 .withWorkDirectory(projectDirectory)
                 .withParameters("component", "add", "rust-src")
                 .execute(null)
@@ -58,7 +67,7 @@ class Rustup(
             }
         }
 
-        val sources = toolchain.getStdlibFromSysroot(projectDirectory)
+        val sources = toolchain.rustc().getStdlibFromSysroot(projectDirectory)
             ?: return DownloadResult.Err("Failed to find stdlib in sysroot")
         LOG.info("stdlib path: ${sources.path}")
         fullyRefreshDirectory(sources)
@@ -67,7 +76,7 @@ class Rustup(
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
         try {
-            GeneralCommandLine(rustup)
+            GeneralCommandLine(executable)
                 .withWorkDirectory(projectDirectory)
                 .withParameters("component", "add", componentName)
                 .execute(owner, false)
@@ -88,6 +97,7 @@ class Rustup(
     }
 
     companion object {
+        const val NAME: String = "rustup"
 
         fun checkNeedInstallClippy(project: Project, cargoProjectDirectory: Path): Boolean =
             checkNeedInstallComponent(project, cargoProjectDirectory, "clippy")

@@ -7,10 +7,8 @@ package org.rust.cargo.runconfig.wasmpack
 
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.psi.search.GlobalSearchScopes
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.console.CargoConsoleBuilder
-import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.WasmPack
+import org.rust.cargo.toolchain.tools.WasmPack
 import java.io.File
 
 class WasmPackCommandRunState(

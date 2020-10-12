@@ -8,8 +8,8 @@ package org.rustPerformanceTests
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vfs.*
 import com.intellij.util.ui.UIUtil
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.openapiext.fullyRefreshDirectory
 
 abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
@@ -36,7 +36,7 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
             // 3. Ignore excluded directories in the root of the project
             if (file.isDirectory &&
                 file.name in EXCLUDED_DIRECTORY_NAMES &&
-                file.parent.findChild(RustToolchain.CARGO_TOML) != null) return false
+                file.parent.findChild(CargoConstants.MANIFEST_FILE) != null) return false
 
             // Otherwise, analyse it
             return true

@@ -8,7 +8,7 @@ package org.rustSlowTests.lang.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.MinRustcVersion
-import org.rust.cargo.toolchain.Cargo
+import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath

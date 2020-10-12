@@ -11,7 +11,6 @@ import com.intellij.CommonBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.lang.annotation.ProblemGroup
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
@@ -34,7 +33,12 @@ import com.intellij.util.PathUtil
 import com.intellij.util.messages.MessageBus
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.impl.CargoTopMessage
+import org.rust.cargo.toolchain.impl.ErrorCode
+import org.rust.cargo.toolchain.impl.RustcMessage
+import org.rust.cargo.toolchain.impl.RustcSpan
+import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
 import org.rust.ide.annotator.fixes.ApplySuggestionFix
@@ -62,7 +66,7 @@ object RsExternalLinterUtils {
      * @see PsiModificationTracker.MODIFICATION_COUNT
      */
     fun checkLazily(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -94,7 +98,7 @@ object RsExternalLinterUtils {
     }
 
     private fun checkWrapped(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -122,7 +126,7 @@ object RsExternalLinterUtils {
     }
 
     private fun check(
-        toolchain: RustToolchain,
+        toolchain: RsToolchain,
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
@@ -143,7 +147,7 @@ object RsExternalLinterUtils {
     }
 
     private data class Key(
-        val toolchain: RustToolchain,
+        val toolchain: RsToolchain,
         val workingDirectory: Path,
         val packageName: String?
     )

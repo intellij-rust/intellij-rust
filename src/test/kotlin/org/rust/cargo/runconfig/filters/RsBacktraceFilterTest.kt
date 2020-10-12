@@ -12,8 +12,6 @@ import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.CargoProjectImpl
-import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.RustToolchain
 import org.rust.stdext.BothEditions
 
 /**

@@ -11,9 +11,9 @@ import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustcVersion
+import org.rust.cargo.toolchain.impl.RustcVersion
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.time.LocalDate

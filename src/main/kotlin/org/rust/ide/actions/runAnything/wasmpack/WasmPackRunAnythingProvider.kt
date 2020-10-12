@@ -8,11 +8,11 @@ package org.rust.ide.actions.runAnything.wasmpack
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import org.rust.cargo.WasmPackCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.runconfig.wasmpack.util.WasmPackCommandCompletionProvider
-import org.rust.cargo.toolchain.WasmPackCommandLine
 import org.rust.cargo.util.RsCommandCompletionProvider
 import org.rust.ide.actions.runAnything.RsRunAnythingProvider
 import org.rust.ide.icons.RsIcons

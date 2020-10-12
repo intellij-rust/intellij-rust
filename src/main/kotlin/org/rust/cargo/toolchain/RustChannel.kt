@@ -15,6 +15,6 @@ enum class RustChannel(val index: Int, val channel: String?) {
     override fun toString(): String = channel ?: "[default]"
 
     companion object {
-        fun fromIndex(index: Int) = values().find { it.index == index } ?: DEFAULT
+        fun fromIndex(index: Int): RustChannel = values().find { it.index == index } ?: DEFAULT
     }
 }

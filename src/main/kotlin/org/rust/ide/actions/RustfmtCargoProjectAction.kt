@@ -14,8 +14,9 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.getAppropriateCargoProject
-import org.rust.cargo.toolchain.Rustfmt
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
+import org.rust.cargo.toolchain.tools.Rustfmt
+import org.rust.cargo.toolchain.tools.rustfmt
 import org.rust.openapiext.saveAllDocumentsAsTheyAre
 
 class RustfmtCargoProjectAction : DumbAwareAction() {

@@ -11,10 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.Rustup
+import org.rust.cargo.toolchain.rustup
 import org.rust.cargo.util.DownloadResult
-import java.io.File
 import java.nio.file.Paths
 
 // TODO: use it in [org.rust.WithRustup]
@@ -24,7 +24,7 @@ open class RustupTestFixture(
     private var project: Project
 ) : BaseFixture() {
 
-    val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+    val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
     val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib: VirtualFile? by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 

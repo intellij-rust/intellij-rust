@@ -17,6 +17,7 @@ import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBDriver
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.debugger.*
 import org.rust.debugger.settings.RsDebuggerSettings
 import org.rust.ide.notifications.showBalloon
@@ -36,7 +37,7 @@ class RsDebugProcessConfigurationHelper(
     private val commitHash = cargoProject?.rustcInfo?.version?.commitHash
 
     private val sysroot: String? by lazy {
-        cargoProject?.workingDirectory?.let { toolchain?.getSysroot(it) }
+        cargoProject?.workingDirectory?.let { toolchain?.rustc()?.getSysroot(it) }
     }
 
     fun configure() {

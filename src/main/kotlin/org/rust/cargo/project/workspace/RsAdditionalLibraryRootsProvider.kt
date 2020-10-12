@@ -18,7 +18,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustcVersion
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.stdext.buildList

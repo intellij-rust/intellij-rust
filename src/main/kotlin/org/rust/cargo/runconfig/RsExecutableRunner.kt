@@ -21,8 +21,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.Cargo
-import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import java.nio.file.Path
@@ -44,7 +44,7 @@ abstract class RsExecutableRunner(
         val state = environment.state as CargoRunStateBase
         val project = environment.project
         val host = project.computeWithCancelableProgress("Checking if toolchain is supported...") {
-            state.rustVersion().rustc?.host.orEmpty()
+            state.rustVersion()?.host.orEmpty()
         }
         if (!checkToolchainConfigured(project)) return
         val toolchainError = checkToolchainSupported(host)

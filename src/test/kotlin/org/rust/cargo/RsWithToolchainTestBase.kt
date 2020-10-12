@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.cargo.toolchain.tools.rustc
 
 /**
  * This class allows executing real Cargo during the tests.
@@ -45,7 +46,7 @@ abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
         val minRustVersion = findAnnotationInstance<MinRustcVersion>()
         if (minRustVersion != null) {
             val requiredVersion = minRustVersion.semver
-            val rustcVersion = rustupFixture.toolchain!!.queryVersions().rustc
+            val rustcVersion = rustupFixture.toolchain!!.rustc().queryVersion()
             if (rustcVersion == null) {
                 System.err.println("SKIP \"$name\": failed to query Rust version")
                 return

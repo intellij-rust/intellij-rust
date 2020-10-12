@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain
 
 import org.junit.Assert
 import org.junit.Test
+import org.rust.cargo.CargoCommandLine
 import java.nio.file.Paths
 
 class CargoCommandLineTest {

@@ -26,7 +26,9 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Package
 import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.rustup
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.util.DownloadResult
 import java.io.File
 import java.nio.file.Paths
@@ -97,7 +99,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 }
 
 open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustProjectDescriptorBase() {
-    private val toolchain: RustToolchain? by lazy { RustToolchain.suggest() }
+    private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
 
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
@@ -111,9 +113,9 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
 
     override val rustcInfo: RustcInfo?
         get() {
-            val toolchain = toolchain ?: return null
-            val sysroot = toolchain.getSysroot(Paths.get(".")) ?: return null
-            val rustcVersion = toolchain.queryVersions().rustc
+            val rustc = toolchain?.rustc() ?: return null
+            val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
+            val rustcVersion = rustc.queryVersion()
             return RustcInfo(sysroot, rustcVersion)
         }
 

@@ -22,6 +22,7 @@ import com.intellij.rt.coverage.data.ProjectData
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RustupTestFixture
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.toPsiFile
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
@@ -302,7 +303,7 @@ class RsCoverageTest : RunConfigurationTestBase() {
             get() = super.skipTestReason ?: checkNightlyToolchain()
 
         private fun checkNightlyToolchain(): String? {
-            val channel = toolchain?.queryVersions()?.rustc?.channel
+            val channel = toolchain?.rustc()?.queryVersion()?.channel
             return if (channel != RustChannel.NIGHTLY) "Coverage works with nightly toolchain only" else null
         }
     }

@@ -10,7 +10,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
-import org.rust.cargo.toolchain.RustToolchain.Companion.CARGO_TOML
+import org.rust.cargo.CargoConstants
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
@@ -24,7 +24,7 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
         if (!tomlPluginIsAbiCompatible()) return
         val firstElement = elements.firstOrNull() ?: return
         val file = firstElement.containingFile
-        if (!file.name.equals(CARGO_TOML, ignoreCase = true)) return
+        if (!file.name.equals(CargoConstants.MANIFEST_FILE, ignoreCase = true)) return
 
         loop@ for (element in elements) {
             val parent = element.parent
@@ -84,7 +84,8 @@ private val TomlKeyValue.version: String?
         }
     }
 
-private val TomlValue.stringValue: String? get() {
-    val kind = (this as? TomlLiteral)?.kind
-    return (kind as? TomlLiteralKind.String)?.value
-}
+private val TomlValue.stringValue: String?
+    get() {
+        val kind = (this as? TomlLiteral)?.kind
+        return (kind as? TomlLiteralKind.String)?.value
+    }

@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -22,9 +23,9 @@ import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
-import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Path
@@ -122,7 +123,7 @@ class CargoCommandConfiguration(
     sealed class CleanConfiguration {
         class Ok(
             val cmd: CargoCommandLine,
-            val toolchain: RustToolchain
+            val toolchain: RsToolchain
         ) : CleanConfiguration()
 
         class Err(val error: RuntimeConfigurationError) : CleanConfiguration()

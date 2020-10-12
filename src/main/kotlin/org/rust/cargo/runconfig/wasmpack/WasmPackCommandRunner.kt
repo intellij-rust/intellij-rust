@@ -6,17 +6,10 @@
 package org.rust.cargo.runconfig.wasmpack
 
 import com.intellij.execution.configurations.RunProfile
-import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.ui.RunContentDescriptor
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
-import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
-import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallWasmPack
-import org.rust.openapiext.execute
+import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallWasmPack
 
 class WasmPackCommandRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID

@@ -10,14 +10,17 @@ import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.ExecutionEnvironment
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.Cargo
-import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.cargoOrWrapper
+import org.rust.cargo.toolchain.tools.rustc
 import java.nio.file.Path
 
 abstract class CargoRunStateBase(
@@ -25,7 +28,7 @@ abstract class CargoRunStateBase(
     val runConfiguration: CargoCommandConfiguration,
     val config: CargoCommandConfiguration.CleanConfiguration.Ok
 ) : CommandLineState(environment) {
-    val toolchain: RustToolchain = config.toolchain
+    val toolchain: RsToolchain = config.toolchain
     val commandLine: CargoCommandLine = config.cmd
     val cargoProject: CargoProject? = CargoCommandConfiguration.findCargoProject(
         environment.project,
@@ -42,7 +45,7 @@ abstract class CargoRunStateBase(
 
     fun cargo(): Cargo = toolchain.cargoOrWrapper(workingDirectory)
 
-    fun rustVersion(): RustToolchain.VersionInfo = toolchain.queryVersions()
+    fun rustVersion(): RustcVersion? = toolchain.rustc().queryVersion()
 
     fun prepareCommandLine(vararg additionalPatches: CargoPatch): CargoCommandLine {
         var commandLine = commandLine

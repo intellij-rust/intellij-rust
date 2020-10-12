@@ -18,7 +18,6 @@ import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.cargo.toolchain.BuildScriptMessage
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.stdext.mapToSet
 import java.util.*

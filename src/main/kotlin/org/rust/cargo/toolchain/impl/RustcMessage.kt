@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo.toolchain.impl
 
 import com.google.gson.Gson
 import com.google.gson.JsonObject
@@ -128,10 +128,13 @@ data class Target(
 enum class Applicability {
     @SerializedName("MachineApplicable")
     MACHINE_APPLICABLE,
+
     @SerializedName("MaybeIncorrect")
     MAYBE_INCORRECT,
+
     @SerializedName("HasPlaceholders")
     HAS_PLACEHOLDERS,
+
     @SerializedName("Unspecified")
     UNSPECIFIED
 }

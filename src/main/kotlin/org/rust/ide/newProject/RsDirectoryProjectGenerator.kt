@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
 import com.intellij.platform.ProjectGeneratorPeer
+import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.computeWithCancelableProgress
 import java.io.File
@@ -39,7 +40,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
 
     override fun generateProject(project: Project, baseDir: VirtualFile, data: ConfigurationData, module: Module) {
         val (settings, template) = data
-        val cargo = settings.toolchain?.rawCargo() ?: return
+        val cargo = settings.toolchain?.cargo() ?: return
 
         val name = project.name.replace(' ', '_')
         val generatedFiles = project.computeWithCancelableProgress("Generating Cargo project...") {

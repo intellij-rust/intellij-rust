@@ -13,7 +13,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.RsKillableColoredProcessHandler
-import org.rust.cargo.toolchain.WasmPack
+import org.rust.cargo.toolchain.tools.WasmPack
 import java.io.File
 
 abstract class WasmPackCommandRunStateBase(

@@ -17,7 +17,7 @@ import com.intellij.util.io.URLUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.RustcVersion
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.plugin

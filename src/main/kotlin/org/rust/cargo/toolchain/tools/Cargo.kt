@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo.toolchain.tools
 
 import com.google.gson.Gson
 import com.google.gson.JsonParser
@@ -26,6 +26,8 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
+import org.rust.cargo.CargoCommandLine
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -34,7 +36,9 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
+import org.rust.cargo.toolchain.*
 import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallClippy
+import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
@@ -48,6 +52,14 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
+fun RsToolchain.cargo(): Cargo = Cargo(this)
+
+fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
+    val hasXargoToml = cargoProjectDirectory?.resolve(CargoConstants.XARGO_MANIFEST_FILE)
+        ?.let { Files.isRegularFile(it) } == true
+    val useWrapper = hasXargoToml && hasExecutable(Cargo.WRAPPER_NAME)
+    return Cargo(this, useWrapper)
+}
 
 /**
  * A main gateway for executing cargo commands.
@@ -58,7 +70,9 @@ import java.nio.file.Paths
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path) {
+class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
+    private val executable: Path = toolchain.pathToExecutable(if (useWrapper) WRAPPER_NAME else NAME)
+    private val rustcExecutable: Path = toolchain.pathToExecutable(Rustc.NAME)
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -71,7 +85,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        GeneralCommandLine(cargoExecutable)
+        GeneralCommandLine(executable)
             .withParameters("install", "--list")
             .execute()
             ?.stdoutLines
@@ -86,7 +100,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = GeneralCommandLine(cargoExecutable)
+        val lines = GeneralCommandLine(executable)
             .withParameters("help", "check")
             .execute()
             ?.stdoutLines
@@ -235,7 +249,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
         CargoCommandLine("init", path, args).execute(project, owner)
         fullyRefreshDirectory(directory)
 
-        val manifest = checkNotNull(directory.findChild(RustToolchain.CARGO_TOML)) { "Can't find the manifest file" }
+        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val fileName = if (createBinary) "main.rs" else "lib.rs"
         val sourceFiles = listOfNotNull(directory.findFileByRelativePath("src/$fileName"))
         return GeneratedFilesHolder(manifest, sourceFiles)
@@ -275,7 +289,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
 
         fullyRefreshDirectory(directory)
 
-        val manifest = checkNotNull(directory.findChild(RustToolchain.CARGO_TOML)) { "Can't find the manifest file" }
+        val manifest = checkNotNull(directory.findChild(CargoConstants.MANIFEST_FILE)) { "Can't find the manifest file" }
         val sourceFiles = listOf("main", "lib").mapNotNull { directory.findFileByRelativePath("src/${it}.rs") }
         return GeneratedFilesHolder(manifest, sourceFiles)
     }
@@ -334,7 +348,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
                 addAll(additionalArguments)
             }
             createGeneralCommandLine(
-                cargoExecutable,
+                executable,
                 workingDirectory,
                 backtraceMode,
                 environmentVariables,
@@ -354,7 +368,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
     ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
-        GeneralCommandLine(cargoExecutable)
+        GeneralCommandLine(executable)
             .withParameters(listOf("install", "cargo-generate"))
             .execute(owner, listener = listener)
     }
@@ -383,6 +397,9 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
 
     companion object {
         private val LOG: Logger = Logger.getInstance(Cargo::class.java)
+
+        const val NAME: String = "cargo"
+        const val WRAPPER_NAME: String = "xargo"
 
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
@@ -506,7 +523,7 @@ class Cargo(private val cargoExecutable: Path, private val rustcExecutable: Path
             message: String? = null,
             minVersion: SemVer? = null
         ): Boolean {
-            val cargo = project.toolchain?.rawCargo() ?: return false
+            val cargo = project.toolchain?.cargo() ?: return false
             val isNotInstalled = { cargo.checkBinaryCrateIsNotInstalled(crateName, minVersion) }
             val needInstall = if (isDispatchThread) {
                 project.computeWithCancelableProgress("Checking if $crateName is installed...", isNotInstalled)

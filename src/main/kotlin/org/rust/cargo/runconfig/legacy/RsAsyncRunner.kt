@@ -28,15 +28,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.Cargo
-import org.rust.cargo.toolchain.Cargo.Companion.cargoCommonPatch
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
@@ -167,7 +167,7 @@ abstract class RsAsyncRunner(
 
                         override fun run(indicator: ProgressIndicator) {
                             indicator.isIndeterminate = true
-                            val host = state.rustVersion().rustc?.host.orEmpty()
+                            val host = state.rustVersion()?.host.orEmpty()
                             result = checkToolchainSupported(host)
                             if (result != null) return
 

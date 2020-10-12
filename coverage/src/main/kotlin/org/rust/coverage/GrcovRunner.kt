@@ -35,8 +35,10 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallGrcov
 import org.rust.cargo.toolchain.RustChannel
+import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
+import org.rust.cargo.toolchain.tools.grcov
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.io.File
@@ -139,7 +141,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             var channel: RustChannel? = config.cmd.channel
             if (channel == RustChannel.DEFAULT) {
                 channel = project.computeWithCancelableProgress("Fetching rustc version...") {
-                    config.toolchain.queryVersions().rustc?.channel
+                    config.toolchain.rustc().queryVersion()?.channel
                 }
             }
             if (channel == RustChannel.NIGHTLY) return true

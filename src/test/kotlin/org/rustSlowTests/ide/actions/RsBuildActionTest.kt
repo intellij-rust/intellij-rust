@@ -12,11 +12,11 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.TestDataProvider
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.command.CompositeCargoRunConfigurationProducer
-import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.fileTree
 import org.rust.ide.actions.RsBuildAction
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest

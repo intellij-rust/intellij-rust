@@ -16,7 +16,7 @@ import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.ListCellRenderer
@@ -63,7 +63,7 @@ class RsProjectConfigurable(
 
     override fun reset() {
         super.reset()
-        val toolchain = state.toolchain ?: RustToolchain.suggest()
+        val toolchain = state.toolchain ?: RsToolchain.suggest()
 
         rustProjectSettings.data = RustProjectSettingsPanel.Data(
             toolchain = toolchain,

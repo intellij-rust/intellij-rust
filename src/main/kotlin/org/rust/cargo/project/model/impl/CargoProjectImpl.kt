@@ -48,14 +48,13 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsChangedEvent
 import org.rust.cargo.project.settings.RustProjectSettingsService.RustSettingsListener
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.toolwindow.CargoToolWindow.Companion.initializeToolWindow
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.project.workspace.additionalRoots
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.RustToolchain
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
@@ -118,6 +117,7 @@ open class CargoProjectsServiceImpl(
 
 
     private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
+
     /**
      * [directoryIndex] allows to quickly map from a [VirtualFile] to
      * a containing [CargoProject].
@@ -214,7 +214,7 @@ open class CargoProjectsServiceImpl(
         project.modules
             .asSequence()
             .flatMap { ModuleRootManager.getInstance(it).contentRoots.asSequence() }
-            .mapNotNull { it.findChild(RustToolchain.CARGO_TOML) }
+            .mapNotNull { it.findChild(CargoConstants.MANIFEST_FILE) }
 
     /**
      * All modifications to project model except for low-level `loadState` should
@@ -260,12 +260,12 @@ open class CargoProjectsServiceImpl(
             .mapNotNull { it.rustcInfo?.version?.semver }
             .min()
         val isUnsupportedRust = minToolchainVersion != null &&
-            minToolchainVersion < RustToolchain.MIN_SUPPORTED_TOOLCHAIN
+            minToolchainVersion < RsToolchain.MIN_SUPPORTED_TOOLCHAIN
         if (isUnsupportedRust) {
             if (!isLegacyRustNotificationShowed) {
                 val content = "Rust <b>$minToolchainVersion</b> is no longer supported. " +
                     "It may lead to unexpected errors. " +
-                    "Consider upgrading your toolchain to at least <b>${RustToolchain.MIN_SUPPORTED_TOOLCHAIN}</b>"
+                    "Consider upgrading your toolchain to at least <b>${RsToolchain.MIN_SUPPORTED_TOOLCHAIN}</b>"
                 project.showBalloon(content, NotificationType.WARNING)
             }
             isLegacyRustNotificationShowed = true

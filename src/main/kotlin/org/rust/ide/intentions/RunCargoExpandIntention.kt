@@ -8,10 +8,10 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.toolchain.Cargo.Companion.checkNeedInstallCargoExpand
-import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallCargoExpand
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 

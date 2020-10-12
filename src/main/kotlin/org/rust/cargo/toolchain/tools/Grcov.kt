@@ -3,17 +3,22 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain
+package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import org.rust.cargo.CargoConstants.ProjectLayout
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
-class Grcov(private val grcovExecutable: Path) {
+fun RsToolchain.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
+
+class Grcov(toolchain: RsToolchain) {
+    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+
     fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
-        GeneralCommandLine(grcovExecutable)
+        GeneralCommandLine(executable)
             .withWorkDirectory(workingDirectory)
             .withParameters(
                 ProjectLayout.target,
@@ -24,4 +29,8 @@ class Grcov(private val grcovExecutable: Path) {
                 "-o", coverageFilePath.toString()
             )
             .withCharset(Charsets.UTF_8)
+
+    companion object {
+        const val NAME: String = "grcov"
+    }
 }

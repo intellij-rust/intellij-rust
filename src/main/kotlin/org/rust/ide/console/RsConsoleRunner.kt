@@ -33,7 +33,8 @@ import com.intellij.util.ui.MessageCategory
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.Cargo
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.evcxr
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.saveAllDocuments
 import java.awt.BorderLayout

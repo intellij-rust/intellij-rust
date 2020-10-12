@@ -19,8 +19,9 @@ import com.intellij.util.messages.Topic
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.toolchain.RustToolchain
-import org.rust.cargo.toolchain.RustcVersion
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.toolchain.isRustupAvailable
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
@@ -132,7 +133,7 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
 }
 
 private fun discoverToolchain(project: Project) {
-    val toolchain = RustToolchain.suggest() ?: return
+    val toolchain = RsToolchain.suggest() ?: return
     invokeLater {
         if (project.isDisposed) return@invokeLater
 
