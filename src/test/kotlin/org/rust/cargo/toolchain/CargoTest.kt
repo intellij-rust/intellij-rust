@@ -12,7 +12,7 @@ import org.rust.MockRustcVersion
 import org.rust.RsTestBase
 import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.components.cargo
+import org.rust.cargo.toolchain.tools.cargo
 import java.nio.file.Paths
 
 class CargoTest : RsTestBase() {

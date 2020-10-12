@@ -21,8 +21,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.components.Cargo
-import org.rust.cargo.toolchain.components.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import java.nio.file.Path

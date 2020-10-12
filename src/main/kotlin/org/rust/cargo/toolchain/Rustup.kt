@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.toolchain.components.rustc
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon

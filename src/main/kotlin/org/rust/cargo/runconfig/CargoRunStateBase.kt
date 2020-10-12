@@ -17,10 +17,10 @@ import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.components.Cargo
-import org.rust.cargo.toolchain.components.cargoOrWrapper
-import org.rust.cargo.toolchain.components.rustc
 import org.rust.cargo.toolchain.impl.RustcVersion
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.cargoOrWrapper
+import org.rust.cargo.toolchain.tools.rustc
 import java.nio.file.Path
 
 abstract class CargoRunStateBase(

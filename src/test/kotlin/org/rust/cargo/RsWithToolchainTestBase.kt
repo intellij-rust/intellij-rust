@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
-import org.rust.cargo.toolchain.components.rustc
+import org.rust.cargo.toolchain.tools.rustc
 
 /**
  * This class allows executing real Cargo during the tests.

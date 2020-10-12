@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain.components
+package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable

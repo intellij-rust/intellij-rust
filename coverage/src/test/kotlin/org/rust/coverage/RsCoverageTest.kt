@@ -22,7 +22,7 @@ import com.intellij.rt.coverage.data.ProjectData
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RustupTestFixture
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.components.rustc
+import org.rust.cargo.toolchain.tools.rustc
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.toPsiFile
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase

@@ -9,8 +9,8 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
-import org.rust.cargo.toolchain.components.Cargo
-import org.rust.cargo.toolchain.components.Rustc
+import org.rust.cargo.toolchain.tools.Cargo
+import org.rust.cargo.toolchain.tools.Rustc
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path

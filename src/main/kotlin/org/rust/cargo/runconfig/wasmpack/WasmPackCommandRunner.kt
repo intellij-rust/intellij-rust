@@ -9,7 +9,7 @@ import com.intellij.execution.configurations.RunProfile
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
-import org.rust.cargo.toolchain.components.Cargo.Companion.checkNeedInstallWasmPack
+import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallWasmPack
 
 class WasmPackCommandRunner : RsDefaultProgramRunnerBase() {
     override fun getRunnerId(): String = RUNNER_ID

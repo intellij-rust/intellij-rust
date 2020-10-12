@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.cargo.toolchain.binaries
+package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.PtyCommandLine
 import org.rust.cargo.toolchain.RsToolchain
