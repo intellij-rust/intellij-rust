@@ -532,17 +532,6 @@ private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): Compl
     project.taskQueue.run(syncTask)
 
     return result.thenApply { updatedProjects ->
-        for (p in updatedProjects) {
-            val status = p.mergedStatus
-            if (status is UpdateStatus.UpdateFailed) {
-                project.showBalloon(
-                    "Cargo project update failed:<br>${status.reason}",
-                    NotificationType.ERROR
-                )
-                break
-            }
-        }
-
         runWithNonLightProject(project) {
             setupProjectRoots(project, updatedProjects)
         }
