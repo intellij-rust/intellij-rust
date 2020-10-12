@@ -11,8 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.apache.commons.lang.RandomStringUtils
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.streams.asSequence
 
 /**
  * Just a way to nudge Kotlin's type checker in the right direction
@@ -39,6 +41,10 @@ inline fun <T> VirtualFile.applyWithSymlink(f: (VirtualFile) -> T?): T? {
 }
 
 fun String.toPath(): Path = Paths.get(this)
+
+fun Path.isExecutable(): Boolean = Files.isExecutable(this)
+
+fun Path.list(): Sequence<Path> = Files.list(this).asSequence()
 
 fun String.pluralize(): String = StringUtil.pluralize(this)
 

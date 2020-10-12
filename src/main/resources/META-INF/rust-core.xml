@@ -1038,9 +1038,37 @@
 
     </extensions>
 
+    <extensions defaultExtensionNs="org.rust">
+
+        <!-- Toolchain flavors -->
+
+        <toolchainFlavor id="rust.rustupToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.RustupToolchainFlavor"
+                         order="first"/>
+
+        <toolchainFlavor id="rust.sysPathToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.RsSysPathToolchainFlavor"/>
+
+        <toolchainFlavor id="rust.unixToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.RsUnixToolchainFlavor"
+                         os="unix"/>
+
+        <toolchainFlavor id="rust.macToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.RsMacToolchainFlavor"
+                         os="mac"/>
+
+        <toolchainFlavor id="rust.winToolchainFlavor"
+                         implementation="org.rust.cargo.toolchain.flavors.RsWinToolchainFlavor"
+                         os="windows"/>
+
+    </extensions>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
+                        dynamic="true"/>
+        <extensionPoint qualifiedName="org.rust.toolchainFlavor"
+                        interface="org.rust.cargo.toolchain.flavors.RsToolchainFlavor"
                         dynamic="true"/>
     </extensionPoints>
 
