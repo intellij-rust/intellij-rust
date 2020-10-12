@@ -48,7 +48,7 @@ class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention::class) {
         fn f1(a: usize, b: usize) {}
 
         fn test() {
-            f1(1 + (3 + 1/*caret*/) * 2), dbg!(10));
+            f1(1 + ((3 + 1/*caret*/) * 2)), dbg!(10));
         }
     """)
 
@@ -97,6 +97,25 @@ class RemoveDbgIntentionTest : RsIntentionTestBase(RemoveDbgIntention::class) {
         }
     """)
 
+    fun `test remove dbg! with binary expr`() = doAvailableTest("""
+        fn main() {
+            assert_eq!(dbg!(/*caret*/1 + 1) * 2, 4);
+        }
+    """, """
+        fn main() {
+            assert_eq!((/*caret*/1 + 1) * 2, 4);
+        }
+    """)
+
+    fun `test remove dbg! with dot expr`() = doAvailableTest("""
+        fn main() {
+            assert_eq!(dbg!(1i32 - 2/*caret*/).abs(), 1);
+        }
+    """, """
+        fn main() {
+            assert_eq!((1i32 - 2/*caret*/).abs(), 1);
+        }
+    """)
 
     fun `test cursor in dbg!`() = doAvailableTest("""
         fn test() {

@@ -9,7 +9,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.psi.RsBinaryExpr
+import org.rust.lang.core.psi.RsDotExpr
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
 import kotlin.math.max
 import kotlin.math.min
@@ -42,8 +45,14 @@ class RemoveDbgIntention : RsElementBaseIntentionAction<RsMacroCall>() {
 
     override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
         val expr = ctx.exprMacroArgument?.expr ?: return
-        val cursorOffsetToExpr = max(0, editor.caretModel.offset - expr.startOffset)
-        val newExpr = ctx.replaceWithExpr(expr)
+        var cursorOffsetToExpr = max(0, editor.caretModel.offset - expr.startOffset)
+        val parent = ctx.parent.parent
+        val newExpr = if (expr is RsBinaryExpr && (parent is RsBinaryExpr || parent is RsDotExpr)) {
+            cursorOffsetToExpr += 1
+            ctx.replaceWithExpr(RsPsiFactory(project).createExpression("(${expr.text})"))
+        } else {
+            ctx.replaceWithExpr(expr)
+        }
         PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
         editor.caretModel.moveToOffset(min(newExpr.startOffset + cursorOffsetToExpr, newExpr.endOffset))
     }
