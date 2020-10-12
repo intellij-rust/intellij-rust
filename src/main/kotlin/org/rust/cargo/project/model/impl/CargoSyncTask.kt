@@ -17,9 +17,12 @@ import com.intellij.build.progress.BuildProgressDescriptor
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
+import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
@@ -38,6 +41,7 @@ import org.rust.cargo.toolchain.rustup
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.util.DownloadResult
+import org.rust.ide.actions.RefreshCargoProjectsAction
 import org.rust.openapiext.TaskResult
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -60,7 +64,7 @@ class CargoSyncTask(
         val syncProgress = SyncViewManager.createBuildProgress(project)
 
         val refreshedProjects = try {
-            syncProgress.start(createSyncProgressDescriptor())
+            syncProgress.start(createSyncProgressDescriptor(indicator))
             val refreshedProjects = doRun(indicator, syncProgress)
             val isUpdateFailed = refreshedProjects.any { it.mergedStatus is CargoProject.UpdateStatus.UpdateFailed }
             if (isUpdateFailed) {
@@ -113,15 +117,29 @@ class CargoSyncTask(
         return refreshedProjects
     }
 
-    private fun createSyncProgressDescriptor(): BuildProgressDescriptor {
+    private fun createSyncProgressDescriptor(progress: ProgressIndicator): BuildProgressDescriptor {
         val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Cargo")
         buildContentDescriptor.isActivateToolWindowWhenFailed = true
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
         val descriptor = DefaultBuildDescriptor("Cargo", "Cargo", project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
+            .withRestartAction(RefreshCargoProjectsAction())
+            .withRestartAction(StopAction(progress))
         return object : BuildProgressDescriptor {
             override fun getTitle(): String = descriptor.title
             override fun getBuildDescriptor(): BuildDescriptor = descriptor
+        }
+    }
+
+    private class StopAction(private val progress: ProgressIndicator) :
+        DumbAwareAction({ "Stop" }, AllIcons.Actions.Suspend) {
+
+        override fun update(e: AnActionEvent) {
+            e.presentation.isEnabled = progress.isRunning
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+            progress.cancel()
         }
     }
 
