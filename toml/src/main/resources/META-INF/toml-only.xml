@@ -9,5 +9,10 @@
         <codeInsight.lineMarkerProvider language="TOML"
                                         implementationClass="org.rust.toml.CargoFeatureLineMarkerProvider"/>
         <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
+
+        <localInspection language="TOML" groupName="Rust"
+                         displayName="Missing features"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CargoTomlMissingFeaturesInspection"/>
     </extensions>
 </idea-plugin>
