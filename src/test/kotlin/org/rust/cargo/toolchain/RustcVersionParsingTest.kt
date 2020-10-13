@@ -54,7 +54,7 @@ class RustcVersionParsingTest(
                 release: 1.39.0-nightly
                 LLVM version: 9.0     
             """, RustcVersion(
-                parseFromText("1.39.0")!!,
+                parseFromText("1.39.0-nightly")!!,
                 "x86_64-unknown-linux-gnu",
                 NIGHTLY,
                 "9af17757be1cc3f672928ecf06c40a662c5ec26d",
@@ -69,7 +69,7 @@ class RustcVersionParsingTest(
                 release: 1.38.0-beta.2
                 LLVM version: 9.0                
             """, RustcVersion(
-                parseFromText("1.38.0")!!,
+                parseFromText("1.38.0-beta.2")!!,
                 "x86_64-apple-darwin",
                 BETA,
                 "641586c1a54f1b1740f8dd796d7501e34c044da2",

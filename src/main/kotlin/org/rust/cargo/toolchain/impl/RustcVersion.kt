@@ -31,7 +31,7 @@ fun parseRustcVersion(lines: List<String>): RustcVersion? {
     //  host: x86_64-unknown-linux-gnu
     //  release: 1.8.0-beta.1
     //  ```
-    val releaseRe = """release: (\d+\.\d+\.\d+)(.*)""".toRegex()
+    val releaseRe = """release: (\d+\.\d+\.\d+.*)""".toRegex()
     val hostRe = "host: (.*)".toRegex()
     val commitHashRe = "commit-hash: ([A-Fa-f0-9]{40})".toRegex()
     val commitDateRe = """commit-date: (\d{4}-\d{2}-\d{2})""".toRegex()
@@ -48,12 +48,12 @@ fun parseRustcVersion(lines: List<String>): RustcVersion? {
     }
 
     val semVer = SemVer.parseFromText(versionText) ?: return null
-    val releaseSuffix = releaseMatch.groups[2]?.value.orEmpty()
+    val releaseSuffix = semVer.preRelease.orEmpty()
     val channel = when {
         releaseSuffix.isEmpty() -> RustChannel.STABLE
-        releaseSuffix.startsWith("-beta") -> RustChannel.BETA
-        releaseSuffix.startsWith("-nightly") -> RustChannel.NIGHTLY
-        releaseSuffix.startsWith("-dev") -> RustChannel.DEV
+        releaseSuffix.startsWith("beta") -> RustChannel.BETA
+        releaseSuffix.startsWith("nightly") -> RustChannel.NIGHTLY
+        releaseSuffix.startsWith("dev") -> RustChannel.DEV
         else -> RustChannel.DEFAULT
     }
     return RustcVersion(semVer, hostText, channel, commitHash, commitDate)
