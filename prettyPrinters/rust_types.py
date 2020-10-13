@@ -49,7 +49,7 @@ STD_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)Cell<.+>$")
 STD_REF_REGEX = re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$")
 STD_REF_MUT_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$")
 STD_REF_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefCell<.+>$")
-STD_NONZERO_NUMBER_REGEX = re.compile(r"^core::num::NonZero.+$")
+STD_NONZERO_NUMBER_REGEX = re.compile(r"^core::num::([a-z_]+::)*NonZero.+$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
