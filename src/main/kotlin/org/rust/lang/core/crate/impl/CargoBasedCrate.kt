@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
@@ -25,7 +26,7 @@ class CargoBasedCrate(
     override val flatDependencies: LinkedHashSet<Crate>
 ) : Crate {
     override val reverseDependencies = mutableListOf<CargoBasedCrate>()
-    override var features: Collection<CargoWorkspace.Feature> = cargoTarget.pkg.features
+    override var features: Map<String, FeatureState> = cargoTarget.pkg.featureState
 
     // These properties are fields (not just delegates to `cargoTarget`) because [Crate] must be immutable
     override val rootModFile: VirtualFile? = cargoTarget.crateRoot

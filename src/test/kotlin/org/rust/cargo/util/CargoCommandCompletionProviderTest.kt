@@ -152,7 +152,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             name = name,
             kind = kind,
             edition = edition,
-            doctest = true
+            doctest = true,
+            requiredFeatures = emptyList()
         )
 
         fun pkg(
@@ -169,7 +170,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             source = null,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition,
-            features = emptyList(),
+            features = emptyMap(),
+            enabledFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
             outDirUrl = null
@@ -183,6 +185,14 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             )),
             pkg("quux", false, listOf(target("quux", TargetKind.Lib(LibKind.LIB))))
         )
-        CargoWorkspace.deserialize(Paths.get("/my-crate/Cargo.toml"), CargoWorkspaceData(pkgs, dependencies = emptyMap()), CfgOptions.DEFAULT)
+        CargoWorkspace.deserialize(
+            Paths.get("/my-crate/Cargo.toml"),
+            CargoWorkspaceData(
+                pkgs,
+                dependencies = emptyMap(),
+                rawDependencies = emptyMap()
+            ),
+            CfgOptions.DEFAULT
+        )
     }
 }

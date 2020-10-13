@@ -71,7 +71,7 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
     open fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
         val packages = listOf(testCargoPackage(contentRoot))
         return CargoWorkspace.deserialize(Paths.get("${Urls.newFromIdea(contentRoot).path}/workspace/Cargo.toml"),
-            CargoWorkspaceData(packages, emptyMap()), CfgOptions.DEFAULT)
+            CargoWorkspaceData(packages, emptyMap(), emptyMap()), CfgOptions.DEFAULT)
     }
 
     protected fun testCargoPackage(contentRoot: String, name: String = "test-package") = Package(
@@ -80,18 +80,19 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
         name = name,
         version = "0.0.1",
         targets = listOf(
-            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/bin/a.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/bench/a.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/example/a.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB)), edition = Edition.EDITION_2015, doctest = true),
-            Target("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, edition = Edition.EDITION_2015, doctest = false)
+            Target("$contentRoot/main.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/lib.rs", name, TargetKind.Lib(LibKind.LIB), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/bin/a.rs", name, TargetKind.Bin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/bench/a.rs", name, TargetKind.Bench, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/example/a.rs", name, TargetKind.ExampleBin, edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/example-lib/a.rs", name, TargetKind.ExampleLib(EnumSet.of(LibKind.LIB)), edition = Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList()),
+            Target("$contentRoot/build.rs", "build_script_build", TargetKind.CustomBuild, edition = Edition.EDITION_2015, doctest = false, requiredFeatures = emptyList())
         ),
         source = null,
         origin = PackageOrigin.WORKSPACE,
         edition = Edition.EDITION_2015,
-        features = emptyList(),
+        features = emptyMap(),
+        enabledFeatures = emptySet(),
         cfgOptions = CfgOptions.EMPTY,
         env = emptyMap(),
         outDirUrl = null
@@ -181,12 +182,13 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
                 // don't use `FileUtil.join` here because it uses `File.separator`
                 // which is system dependent although all other code uses `/` as separator
                 Target(source?.let { "$contentRoot/$it" } ?: "", targetName,
-                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true)
+                    TargetKind.Lib(libKind), Edition.EDITION_2015, doctest = true, requiredFeatures = emptyList())
             ),
             source = source,
             origin = origin,
             edition = Edition.EDITION_2015,
-            features = emptyList(),
+            features = emptyMap(),
+            enabledFeatures = emptySet(),
             cfgOptions = CfgOptions.EMPTY,
             env = emptyMap(),
             outDirUrl = null
@@ -232,6 +234,6 @@ object WithDependencyRustProjectDescriptor : RustProjectDescriptorBase() {
             packages[3].id to setOf(
                 Dependency(packages[7].id)
             )
-        )), CfgOptions.DEFAULT)
+        ), emptyMap()), CfgOptions.DEFAULT)
     }
 }

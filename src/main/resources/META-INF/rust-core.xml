@@ -559,6 +559,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Missing features"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsMissingFeaturesInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
@@ -1006,6 +1011,11 @@
                                  order="first, before moveJavaFileOrDir, before kotlin.moveFilesOrDirectories, before rust.moveFilesOrDirectories"/>
 
         <console.folding implementation="org.rust.ide.console.RsConsoleFolding"/>
+
+        <!--  Experimental features -->
+        <experimentalFeature id="org.rust.cargo.features.settings.gutter" percentOfUsers="0">
+            <description>Show settings gutter icon near [features] section in `Cargo.toml` where you can enable or disable all features</description>
+        </experimentalFeature>
 
     </extensions>
 

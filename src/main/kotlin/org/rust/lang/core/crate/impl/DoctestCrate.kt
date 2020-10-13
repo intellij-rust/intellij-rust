@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
@@ -32,7 +33,7 @@ class DoctestCrate(
     override val kind: CargoWorkspace.TargetKind get() = CargoWorkspace.TargetKind.Test
 
     override val cfgOptions: CfgOptions get() = CfgOptions.EMPTY
-    override val features: Collection<CargoWorkspace.Feature> get() = emptyList()
+    override val features: Map<String, FeatureState> get() = emptyMap()
     override val env: Map<String, String> get() = emptyMap()
     override val outDir: VirtualFile? get() = null
 
