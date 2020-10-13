@@ -13,6 +13,7 @@ import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNo
 import org.rust.cargo.project.workspace.CargoWorkspace
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeSelectionModel
 
@@ -32,7 +33,7 @@ class CargoProjectsTree : SimpleTree() {
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {
-                if (e.clickCount < 2) return
+                if (e.clickCount < 2 || !SwingUtilities.isLeftMouseButton(e)) return
                 val tree = e.source as? CargoProjectsTree ?: return
                 val node = tree.selectionModel.selectionPath
                     ?.lastPathComponent as? DefaultMutableTreeNode ?: return
