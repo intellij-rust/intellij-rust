@@ -559,6 +559,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Missing features"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.RsMissingFeaturesInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"
