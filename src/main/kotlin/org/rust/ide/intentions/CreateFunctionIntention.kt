@@ -71,7 +71,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val methodCall = element.parentOfType<RsMethodCall>()
         if (methodCall != null) {
             if (methodCall.reference.resolve() != null) return null
-            if (element != methodCall.identifier && element != methodCall.valueArgumentList.lparen) return null
+            if (element != methodCall.identifier) return null
 
             val name = methodCall.identifier.text
             val type = methodCall.parentDotExpr.expr.type.stripReferences() as? TyAdt ?: return null
