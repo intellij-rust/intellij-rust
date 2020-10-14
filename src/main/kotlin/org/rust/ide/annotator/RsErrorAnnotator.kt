@@ -163,11 +163,34 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             if (missingFields.isNotEmpty() && patStruct.patRest == null) {
                 RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)
             }
+
+            checkRepeatedPatStructFields(holder, patStruct.patFieldList)
+        }
+    }
+
+    private fun checkRepeatedPatStructFields(holder: RsAnnotationHolder, pats: List<RsPatField>) {
+        val visitedFields = mutableSetOf<String>()
+        for (pat in pats) {
+            val binding = pat.patBinding
+            val fieldFull = pat.patFieldFull
+
+            val name = if (binding != null) {
+                binding.identifier.text
+            } else if (fieldFull != null) {
+                fieldFull.identifier?.text ?: continue
+            } else continue
+
+            if (name in visitedFields) {
+                RsDiagnostic.RepeatedFieldInStructPattern(pat, name).addToHolder(holder)
+            } else {
+                visitedFields.add(name)
+            }
         }
     }
 
     private fun checkRsPatTupleStruct(holder: RsAnnotationHolder, patTupleStruct: RsPatTupleStruct) {
         val declaration = patTupleStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
+
         val declarationFieldsAmount = declaration.fields.size
         val bodyFieldsAmount = patTupleStruct.patList.size
         if (bodyFieldsAmount < declarationFieldsAmount && patTupleStruct.patRest == null) {
