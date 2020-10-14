@@ -69,7 +69,7 @@ fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
+open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
     private val executable: Path = toolchain.pathToExecutable(if (useWrapper) WRAPPER_NAME else NAME)
     private val rustcExecutable: Path = toolchain.pathToExecutable(Rustc.NAME)
 
