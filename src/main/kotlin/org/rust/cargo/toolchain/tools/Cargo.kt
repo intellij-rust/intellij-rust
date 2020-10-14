@@ -26,7 +26,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
@@ -70,7 +69,7 @@ fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
+open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
     private val executable: Path = toolchain.pathToExecutable(if (useWrapper) WRAPPER_NAME else NAME)
     private val rustcExecutable: Path = toolchain.pathToExecutable(Rustc.NAME)
 

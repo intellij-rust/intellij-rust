@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Paths
@@ -55,6 +56,12 @@ interface RustProjectSettingsService {
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }
+
+        @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
+        @Deprecated("Use toolchain property")
+        fun setToolchain(toolchain: RustToolchain?) {
+            toolchainHomeDirectory = toolchain?.location?.systemIndependentPath
+        }
     }
 
     enum class MacroExpansionEngine {
@@ -97,6 +104,10 @@ interface RustProjectSettingsService {
     val doctestInjectionEnabled: Boolean
     val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean
+
+    @Suppress("DEPRECATION")
+    @Deprecated("Use toolchain property")
+    fun getToolchain(): RustToolchain?
 
     /*
      * Show a dialog for toolchain configuration

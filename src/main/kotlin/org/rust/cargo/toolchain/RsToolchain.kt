@@ -15,7 +15,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-data class RsToolchain(val location: Path) {
+open class RsToolchain(val location: Path) {
     val presentableLocation: String = pathToExecutable(Cargo.NAME).toString()
 
     fun looksLikeValidToolchain(): Boolean = hasExecutable(Cargo.NAME) && hasExecutable(Rustc.NAME)
@@ -42,6 +42,24 @@ data class RsToolchain(val location: Path) {
     fun hasExecutable(exec: String): Boolean = Files.isExecutable(pathToExecutable(exec))
 
     fun hasCargoExecutable(exec: String): Boolean = Files.isExecutable(pathToCargoExecutable(exec))
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is RsToolchain) return false
+
+        if (location != other.location) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return location.hashCode()
+    }
+
+    override fun toString(): String {
+        return "RsToolchain(location=$location)"
+    }
+
 
     companion object {
         val MIN_SUPPORTED_TOOLCHAIN = SemVer.parseFromText("1.32.0")!!

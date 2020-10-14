@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.task.*
 import com.intellij.task.impl.ProjectModelBuildTaskImpl
-import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.CargoCommandRunner
@@ -32,6 +31,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguratio
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.stdext.buildList
