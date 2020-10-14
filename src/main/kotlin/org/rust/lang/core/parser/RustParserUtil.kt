@@ -241,7 +241,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     fun parseFloatLiteral(b: PsiBuilder, level: Int): Boolean {
         return when (b.tokenType) {
             INTEGER_LITERAL -> when (b.rawLookup(1)) {
-                // Works with `0.0`, `0.`, but not `0.foo` (identifies is not accepted after `.`)
+                // Works with `0.0`, `0.`, but not `0.foo` (identifier is not accepted after `.`)
                 DOT -> {
                     val (collapse, size) = when (b.rawLookup(2)) {
                         INTEGER_LITERAL, FLOAT_LITERAL -> true to 3
@@ -260,6 +260,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
                     val text = b.tokenText
                     val isFloat = text != null &&
                         (text.contains("f") || text.contains("e", ignoreCase = true) && !text.endsWith("e"))
+                        && !text.startsWith("0x")
                     if (isFloat) {
                         b.remapCurrentToken(FLOAT_LITERAL)
                         b.advanceLexer()
