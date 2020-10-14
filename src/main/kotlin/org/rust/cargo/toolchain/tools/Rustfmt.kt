@@ -12,11 +12,11 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
-import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.isNotRustFile

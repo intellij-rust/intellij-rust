@@ -26,7 +26,6 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
-import org.rust.cargo.CargoCommandLine
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects

@@ -12,7 +12,6 @@ import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
-import org.rust.cargo.WasmPackCommandLine
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
@@ -21,6 +20,7 @@ import org.rust.cargo.runconfig.readString
 import org.rust.cargo.runconfig.ui.WasmPackCommandConfigurationEditor
 import org.rust.cargo.runconfig.writePath
 import org.rust.cargo.runconfig.writeString
+import org.rust.cargo.toolchain.WasmPackCommandLine
 import org.rust.cargo.toolchain.tools.wasmPack
 import java.nio.file.Path
 
