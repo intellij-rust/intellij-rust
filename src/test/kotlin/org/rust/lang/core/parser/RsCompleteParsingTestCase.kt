@@ -11,6 +11,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
 
     fun `test fn`() = doTest(true)
     fun `test turbo`() = doTest(true)
+    fun `test numbers`() = doTest(true)
     fun `test expr`() = doTest(true)
     fun `test mod`() = doTest(true)
     fun `test use item`() = doTest(true)
