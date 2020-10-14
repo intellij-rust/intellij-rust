@@ -80,6 +80,7 @@ fn test() -> u32 {
     let _ = 1f34;
     let _ = 1.0i98;
     let _ = 0.0.0;
+    let _ = 0x1234567890abcdef;
 
     || { 0; yield 0; };
 
