@@ -88,7 +88,7 @@ class RustProjectSettingsServiceImpl(
     }
 
     override fun configureToolchain() {
-        ShowSettingsUtil.getInstance().editConfigurable(project, RsProjectConfigurable(project))
+        ShowSettingsUtil.getInstance().showSettingsDialog(project, RsProjectConfigurable::class.java)
     }
 
     private fun notifySettingsChanged(oldState: State, newState: State) {
