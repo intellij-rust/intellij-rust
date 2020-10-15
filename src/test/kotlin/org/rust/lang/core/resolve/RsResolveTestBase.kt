@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapiext.Testmark
-import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -27,19 +26,25 @@ abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String, fileName: String) =
         checkByCodeGeneric<RsNamedElement>(code, fileName)
 
-    protected inline fun <reified T : NavigatablePsiElement> checkByCodeGeneric(
+    protected inline fun <reified T : PsiElement> checkByCodeGeneric(
         @Language("Rust") code: String,
         fileName: String = "main.rs"
-    ) = checkByCodeGeneric(T::class.java, code, fileName)
+    ) = checkByCodeGeneric2<RsReferenceElementBase, T>(code, fileName)
 
-    protected fun <T : NavigatablePsiElement> checkByCodeGeneric(
+    protected inline fun <reified R : PsiElement, reified T : PsiElement> checkByCodeGeneric2(
+        code: String,
+        fileName: String
+    ) = checkByCodeGeneric2(R::class.java, T::class.java, code, fileName)
+
+    protected fun <R : PsiElement, T : PsiElement> checkByCodeGeneric2(
+        referenceClass: Class<R>,
         targetPsiClass: Class<T>,
         @Language("Rust") code: String,
         fileName: String = "main.rs"
     ) {
         InlineFile(code, fileName)
 
-        val (refElement, data, offset) = findElementWithDataAndOffsetInEditor<RsReferenceElementBase>("^")
+        val (refElement, data, offset) = findElementWithDataAndOffsetInEditor(referenceClass, "^")
 
         if (data == "unresolved") {
             val resolved = refElement.reference?.resolve()
