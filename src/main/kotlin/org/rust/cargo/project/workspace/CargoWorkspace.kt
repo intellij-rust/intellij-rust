@@ -7,7 +7,6 @@ package org.rust.cargo.project.workspace
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapiext.isInternal
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
@@ -395,7 +394,7 @@ private class WorkspaceImpl(
 
     /** A kind of test for [inferFeatureState]: check that our features inference works the same way as Cargo's */
     private fun checkFeaturesInference() {
-        if (!isUnitTestMode && !isInternal) return
+        if (!isUnitTestMode) return
         val enabledByCargo = packages.flatMap { pkg ->
             pkg.cargoEnabledFeatures.map { PackageFeature(pkg, it) }
         }
