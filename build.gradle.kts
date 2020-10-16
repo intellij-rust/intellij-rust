@@ -1,5 +1,5 @@
 import org.apache.tools.ant.taskdefs.condition.Os.*
-import org.gradle.api.JavaVersion.VERSION_11
+import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
@@ -85,7 +85,7 @@ allprojects {
     tasks {
         withType<KotlinCompile> {
             kotlinOptions {
-                jvmTarget = "11"
+                jvmTarget = "1.8"
                 languageVersion = "1.4"
                 apiVersion = "1.3"
                 freeCompilerArgs = listOf("-Xjvm-default=enable")
@@ -108,8 +108,8 @@ allprojects {
     }
 
     configure<JavaPluginConvention> {
-        sourceCompatibility = VERSION_11
-        targetCompatibility = VERSION_11
+        sourceCompatibility = VERSION_1_8
+        targetCompatibility = VERSION_1_8
     }
 
     sourceSets {
