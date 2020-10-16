@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
 import org.rust.cargo.project.model.CargoProjectActionBase
 import org.rust.cargo.project.model.cargoProjects
@@ -13,11 +14,11 @@ import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.openapiext.saveAllDocuments
 
-class RefreshCargoProjectAction : CargoProjectActionBase() {
-    init {
-        templatePresentation.text = "Refresh Cargo project"
-        templatePresentation.description = "Update Cargo project information and download new dependencies"
-    }
+class RefreshCargoProjectsAction : CargoProjectActionBase(
+    "Refresh Cargo Projects",
+    "Update Cargo project information and download new dependencies",
+    AllIcons.Actions.Refresh
+) {
 
     override fun update(e: AnActionEvent) {
         val project = e.project

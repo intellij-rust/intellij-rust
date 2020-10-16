@@ -5,8 +5,7 @@
 
 package org.rust.openapiext
 
-@kotlin.Suppress("unused")
 sealed class TaskResult<out T> {
     class Ok<out T>(val value: T) : TaskResult<T>()
-    class Err<out T>(val reason: String) : TaskResult<T>()
+    class Err<out T>(val reason: String, val message: String? = null) : TaskResult<T>()
 }

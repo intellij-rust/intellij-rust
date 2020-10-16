@@ -1159,7 +1159,7 @@
         </action>
 
         <action id="Cargo.RefreshCargoProject"
-                class="org.rust.ide.actions.RefreshCargoProjectAction"
+                class="org.rust.ide.actions.RefreshCargoProjectsAction"
                 icon="AllIcons.Actions.Refresh"/>
 
         <action id="Cargo.AttachCargoProject"

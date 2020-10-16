@@ -81,7 +81,7 @@ fun GeneralCommandLine.execute(
     listener?.let { handler.addProcessListener(it) }
 
     if (stdIn != null) {
-        handler.processInput?.use { it.write(stdIn) }
+        handler.processInput.use { it.write(stdIn) }
     }
 
     val output = try {
@@ -96,11 +96,11 @@ fun GeneralCommandLine.execute(
 }
 
 private fun errorMessage(commandLine: GeneralCommandLine, output: ProcessOutput): String = """
-        Execution failed (exit code ${output.exitCode}).
-        ${commandLine.commandLineString}
-        stdout : ${output.stdout}
-        stderr : ${output.stderr}
-    """.trimIndent()
+        |Execution failed (exit code ${output.exitCode}).
+        |${commandLine.commandLineString}
+        |stdout : ${output.stdout}
+        |stderr : ${output.stderr}
+    """.trimMargin()
 
 private fun CapturingProcessHandler.runProcessWithGlobalProgress(timeoutInMilliseconds: Int? = null): ProcessOutput {
     return runProcess(ProgressManager.getGlobalProgressIndicator(), timeoutInMilliseconds)
