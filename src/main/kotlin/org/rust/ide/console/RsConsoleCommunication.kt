@@ -17,7 +17,11 @@ class RsConsoleCommunication(private val consoleView: RsConsoleView) {
         isExecuting = true
 
         val codeFragment = consoleView.codeFragment ?: return
-        if (codeFragment.text.isEmpty()) return
+        val codeFragmentText = codeFragment.text.trim()
+        if (codeFragmentText.isEmpty()) return
+        if (codeFragmentText.startsWith(":")) {
+            consoleView.handleEvcxrCommand(codeFragmentText)
+        }
         lastCommandContext = RsConsoleOneCommandContext(codeFragment)
     }
 

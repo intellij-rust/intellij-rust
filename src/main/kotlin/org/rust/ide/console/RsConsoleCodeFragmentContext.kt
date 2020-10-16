@@ -80,6 +80,10 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
         return commands.joinToString("\n")
     }
 
+    fun clearAllCommands() {
+        commands.clear()
+    }
+
     companion object {
         fun createContext(project: Project, originalCrateRoot: RsFile?, commands: List<String> = listOf("")): RsBlock {
             // command may contain functions/structs with same names as in previous commands

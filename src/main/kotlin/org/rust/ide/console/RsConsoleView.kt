@@ -135,6 +135,12 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
         }
     }
 
+    fun handleEvcxrCommand(command: String) {
+        if (command == ":clear") {
+            codeFragmentContext.clearAllCommands()
+        }
+    }
+
     override fun dispose() {
         super.dispose()
         variablesView?.let { Disposer.dispose(it) }
