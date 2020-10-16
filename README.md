@@ -40,7 +40,7 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 
 \** Requires the
 [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin. 
-Available on macOS and Linux, LLDB only.
+LLDB only.
 
 ## TOML
 

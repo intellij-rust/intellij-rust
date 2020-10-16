@@ -10,10 +10,8 @@ import com.intellij.execution.executors.DefaultDebugExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.concurrency.AsyncPromise
 import org.rust.cargo.runconfig.BuildResult.ToolchainError
-import org.rust.cargo.runconfig.BuildResult.ToolchainError.UnsupportedMSVC
 import org.rust.cargo.runconfig.CargoRunStateBase
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.legacy.RsAsyncRunner
@@ -40,11 +38,6 @@ abstract class RsDebugRunnerLegacyBase : RsAsyncRunner(DefaultDebugExecutor.EXEC
     ) {
         project.showErrorDialog(toolchainError.message)
         promise.setResult(null)
-    }
-
-    override fun checkToolchainSupported(host: String): ToolchainError? = when {
-        SystemInfo.isWindows && "msvc" in host -> UnsupportedMSVC
-        else -> null
     }
 
     companion object {

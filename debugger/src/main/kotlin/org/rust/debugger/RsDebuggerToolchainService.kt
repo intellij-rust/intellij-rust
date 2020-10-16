@@ -40,10 +40,7 @@ class RsDebuggerToolchainService {
         val (frameworkPath, frontendPath) = when {
             SystemInfo.isMac -> "LLDB.framework" to "LLDBFrontend"
             SystemInfo.isUnix -> "lib/liblldb.so" to "bin/LLDBFrontend"
-            SystemInfo.isWindows -> {
-                val binaryDir = "${if (SystemInfo.is32Bit) "x86" else "x64"}/bin"
-                "$binaryDir/liblldb.dll" to "$binaryDir/LLDBFrontend.exe"
-            }
+            SystemInfo.isWindows -> "bin/liblldb.dll" to "bin/LLDBFrontend.exe"
             else -> return LLDBStatus.Unavailable
         }
 
