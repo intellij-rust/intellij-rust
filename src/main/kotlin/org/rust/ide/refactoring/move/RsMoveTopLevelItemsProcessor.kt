@@ -17,6 +17,8 @@ import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.ElementToMove
 import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
 import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
+import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.startOffset
@@ -50,19 +52,24 @@ class RsMoveTopLevelItemsProcessor(
     }
 
     private fun moveItems(): List<ElementToMove> {
+        val psiFactory = RsPsiFactory(project)
         return itemsToMove
             .sortedBy { it.startOffset }
-            .map { item -> moveItem(item) }
+            .map { item -> moveItem(item, psiFactory) }
     }
 
-    private fun moveItem(item: RsItemElement): ElementToMove {
+    private fun moveItem(item: RsItemElement, psiFactory: RsPsiFactory): ElementToMove {
         commonProcessor.updateMovedItemVisibility(item)
 
-        val space = item.nextSibling as? PsiWhiteSpace
+        if (targetMod.lastChildInner !is PsiWhiteSpace) {
+            targetMod.addInner(psiFactory.createNewline())
+        }
+        val targetModLastWhiteSpace = targetMod.lastChildInner as PsiWhiteSpace
 
+        val space = (item.prevSibling as? PsiWhiteSpace) ?: (item.nextSibling as? PsiWhiteSpace)
         // have to call `copy` because of rare suspicious `PsiInvalidElementAccessException`
-        val itemNew = targetMod.addInner(item.copy()) as RsItemElement
-        if (space != null) targetMod.addInner(space.copy())
+        val itemNew = targetMod.addBefore(item.copy(), targetModLastWhiteSpace) as RsItemElement
+        targetMod.addBefore(space?.copy() ?: psiFactory.createNewline(), itemNew)
 
         space?.delete()
         item.delete()
@@ -75,3 +82,5 @@ class RsMoveTopLevelItemsProcessor(
 
     override fun getCommandName(): String = "Move items"
 }
+
+private val RsMod.lastChildInner: PsiElement? get() = if (this is RsModItem) rbrace?.prevSibling else lastChild
