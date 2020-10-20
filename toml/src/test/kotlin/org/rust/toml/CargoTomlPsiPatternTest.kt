@@ -15,6 +15,7 @@ import org.rust.toml.CargoTomlPsiPattern.inKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
+import org.rust.toml.CargoTomlPsiPattern.onDependencyPackageFeature
 import org.rust.toml.CargoTomlPsiPattern.onFeatureDependencyLiteral
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.packageWorkspacePath
@@ -169,6 +170,19 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         [features]
         bar = [ "foo" ]
                 #^
+    """)
+
+    fun `test dependency package feature`() = testPattern(onDependencyPackageFeature, """
+        [dependencies]
+        foo = { version = "*", features = ["bar"] }
+                                          #^
+    """)
+
+    fun `test specific dependency package feature`() = testPattern(onDependencyPackageFeature, """
+        [dependencies.foo]
+        version = "*"
+        features = ["bar"]
+                    #^
     """)
 
     private inline fun <reified T : PsiElement> testPattern(

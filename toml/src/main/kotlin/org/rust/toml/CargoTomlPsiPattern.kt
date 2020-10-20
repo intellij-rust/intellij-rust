@@ -10,6 +10,7 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
+import org.rust.lang.core.or
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.with
 import org.toml.lang.psi.*
@@ -223,6 +224,31 @@ object CargoTomlPsiPattern {
      */
     val onFeatureDependencyLiteral: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
         .withParent(onFeatureDependencyArray)
+
+    /**
+     * ```
+     * [dependencies]
+     * foo = { version = "*", features = ["bar"] }
+     *                                    #^
+     * ```
+     *
+     * ```
+     * [dependencies.foo]
+     * features = ["bar"]
+     *             #^
+     * ```
+     */
+    val onDependencyPackageFeature: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
+        .withParent(
+            psiElement<TomlArray>()
+                .withParent(tomlKeyValue("features"))
+                .withSuperParent(
+                    2,
+                    psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                        or onSpecificDependencyTable
+
+                )
+        )
 
     private fun cargoTomlStringLiteral() = cargoTomlPsiElement<TomlLiteral>()
             .with("stringLiteral") { e, _ -> e.kind is TomlLiteralKind.String }
