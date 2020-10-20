@@ -14,6 +14,7 @@ import com.intellij.psi.PsiReference
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.RsTestBase
+import org.rust.TestProject
 import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.ext.*
@@ -67,27 +68,43 @@ abstract class RsResolveTestBase : RsTestBase() {
 
     protected fun stubOnlyResolve(
         @Language("Rust") code: String,
-        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
-    ) = stubOnlyResolve<RsReferenceElement>(fileTreeFromText(code), resolveFileProducer)
-
-    protected fun stubOnlyResolve(
-        @Language("Rust") code: String,
         mark: TestmarkPred,
         resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
     ) = mark.checkHit { stubOnlyResolve(code, resolveFileProducer) }
 
+    protected fun stubOnlyResolve(
+        @Language("Rust") code: String,
+        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
+    ) = stubOnlyResolve<RsReferenceElement>(fileTreeFromText(code), resolveFileProducer)
+
     protected inline fun <reified T : PsiElement> stubOnlyResolve(
         fileTree: FileTree,
-        resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile,
-        customCheck: (PsiElement) -> Unit = {}
+        noinline resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile,
+        noinline customCheck: (PsiElement) -> Unit = {}
+    ) = resolveByFileTree(T::class.java, fileTree, { testProject ->
+        checkAstNotLoaded { file ->
+            !file.path.endsWith(testProject.fileWithCaret)
+        }
+    }, resolveFileProducer, customCheck)
+
+    protected inline fun <reified T : PsiElement> resolveByFileTree(
+        fileTree: FileTree,
+        noinline resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile,
+        noinline customCheck: (PsiElement) -> Unit = {}
+    ) = resolveByFileTree(T::class.java, fileTree, {}, resolveFileProducer, customCheck)
+
+    protected fun <T : PsiElement> resolveByFileTree(
+        referenceClass: Class<T>,
+        fileTree: FileTree,
+        configure: (TestProject) -> Unit,
+        resolveFileProducer: (PsiElement) -> VirtualFile,
+        customCheck: (PsiElement) -> Unit
     ) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker()
 
-        checkAstNotLoaded(VirtualFileFilter { file ->
-            !file.path.endsWith(testProject.fileWithCaret)
-        })
+        configure(testProject)
 
-        val (referenceElement, resolveVariants, offset) = findElementWithDataAndOffsetInEditor<T>()
+        val (referenceElement, resolveVariants, offset) = findElementWithDataAndOffsetInEditor(referenceClass, "^")
 
         if (resolveVariants == "unresolved") {
             val element = referenceElement.findReference(offset)?.resolve()

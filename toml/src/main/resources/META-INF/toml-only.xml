@@ -2,6 +2,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <psi.referenceContributor language="TOML"
                                   implementation="org.rust.toml.resolve.CargoTomlReferenceContributor"/>
+        <psi.referenceContributor language="Rust"
+                                  implementation="org.rust.toml.resolve.RsCargoTomlIntegrationReferenceContributor"/>
         <completion.contributor language="TOML"
                                 implementationClass="org.rust.toml.completion.CargoTomlCompletionContributor"/>
         <codeInsight.lineMarkerProvider language="TOML"

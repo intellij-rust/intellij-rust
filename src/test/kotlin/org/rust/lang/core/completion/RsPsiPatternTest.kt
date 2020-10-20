@@ -337,6 +337,42 @@ class RsPsiPatternTest : RsTestBase() {
         mod foo {}
     """, RsPsiPattern.pathAttrLiteral)
 
+    fun `test cfg feature`() = testPattern("""
+        #[cfg(feature = "foo")]
+        fn foo() {}   //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test inner attribute cfg feature`() = testPattern("""
+        fn foo() {
+            #![cfg(feature = "foo")]
+        }                   //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test nested cfg feature`() = testPattern("""
+        #[cfg(not(feature = "foo"))]
+        fn foo() {}        //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test not a cfg feature`() = testPatternNegative("""
+        #[zfg(feature = "foo")]
+        fn foo() {}    //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test cfg not a feature`() = testPatternNegative("""
+        #[cfg(not_a_feature = "foo")]
+        fn foo() {}          //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test cfg_attr feature`() = testPattern("""
+        #[cfg_attr(feature = "foo")]
+        fn foo() {}          //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
+    fun `test not right part of cfg_attr`() = testPatternNegative("""
+        #[cfg_attr(windows, foo(feature = "foo"))]
+        fn foo() {}                      //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
     private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<T>()
