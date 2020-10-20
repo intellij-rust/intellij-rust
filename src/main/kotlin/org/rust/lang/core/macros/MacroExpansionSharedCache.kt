@@ -125,7 +125,19 @@ class MacroExpansionSharedCache : Disposable {
     }
 
     fun cachedExpand(expander: MacroExpander, def: RsMacro, call: RsMacroCall): ExpansionResult? {
+        val defData = RsMacroData(def)
+        val callData = RsMacroCallData(call)
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
+        return cachedExpand(expander, defData, callData, hash)
+    }
+
+    private fun cachedExpand(
+        expander: MacroExpander,
+        def: RsMacroData,
+        call: RsMacroCallData,
+        /** mixed hash of [def] and [call], passed as optimization */
+        hash: HashCode
+    ): ExpansionResult? {
         return getOrPut(PersistentCacheData::expansions, hash) {
             val result = expander.expandMacroAsText(def, call) ?: return@getOrPut null
             ExpansionResult(result.first.toString(), result.second)
@@ -151,6 +163,12 @@ class MacroExpansionSharedCache : Disposable {
         private val CACHE_ENABLED = Registry.get("org.rust.lang.macros.persistentCache")
     }
 }
+
+class RsMacroDataWithHash(val data: RsMacroData, val bodyHash: HashCode?) {
+    constructor(def: RsMacro) : this(RsMacroData(def), def.bodyHash)
+}
+
+class RsMacroCallDataWithHash(val data: RsMacroCallData, val bodyHash: HashCode?)
 
 @Suppress("UnstableApiUsage")
 private class PersistentCacheData(
