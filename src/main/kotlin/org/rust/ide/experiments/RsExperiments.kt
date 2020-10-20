@@ -12,4 +12,5 @@ object RsExperiments {
     const val EVALUATE_BUILD_SCRIPTS = "org.rust.cargo.evaluate.build.scripts"
     const val CARGO_FEATURES_SETTINGS_GUTTER = "org.rust.cargo.features.settings.gutter"
     const val MACROS_NEW_ENGINE = "org.rust.macros.new.engine"
+    const val RESOLVE_NEW_ENGINE = "org.rust.resolve.new.engine"
 }

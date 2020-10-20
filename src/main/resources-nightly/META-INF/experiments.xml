@@ -15,5 +15,8 @@
         <experimentalFeature id="org.rust.macros.new.engine" percentOfUsers="100">
             <description>Enables new macro expansion engine by default</description>
         </experimentalFeature>
+        <experimentalFeature id="org.rust.resolve.new.engine" percentOfUsers="0">
+            <description>Enables experimental resolve engine</description>
+        </experimentalFeature>
     </extensions>
 </idea-plugin>

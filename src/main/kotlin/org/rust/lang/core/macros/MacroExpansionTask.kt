@@ -33,6 +33,8 @@ import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
+import org.rust.lang.core.resolve2.RESOLVE_LOG
+import org.rust.lang.core.resolve2.updateDefMapForAllCrates
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
 import org.rust.stdext.getLeading64bits
@@ -78,8 +80,6 @@ abstract class MacroExpansionTaskBase(
         indicator.isIndeterminate = false
         realTaskIndicator = indicator
 
-        expansionSteps = getMacrosToExpand(dumbService).iterator()
-
         if (indicator is ProgressIndicatorEx) {
             // [indicator] can be an instance of [BackgroundableProcessIndicator] class, which is thread
             // sensitive and its `checkCanceled` method should be used only from a single thread
@@ -91,6 +91,18 @@ abstract class MacroExpansionTaskBase(
         } else {
             subTaskIndicator = indicator
         }
+
+        try {
+            realTaskIndicator.text = "Preparing resolve data"
+            updateDefMapForAllCrates(project, pool, subTaskIndicator)
+        } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: Exception) {
+            // Exceptions in new resolve should not break macro expansion
+            RESOLVE_LOG.error(e)
+        }
+
+        expansionSteps = getMacrosToExpand(dumbService).iterator()
 
         indicator.checkCanceled()
         var heavyProcessToken: AccessToken? = null

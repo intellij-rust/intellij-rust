@@ -296,6 +296,18 @@ fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: 
 fun runWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit): Boolean =
     ProgressIndicatorUtils.runWithWriteActionPriority(action, indicator)
 
+fun runInReadActionWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit): Boolean =
+    ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator)
+
+fun <T: Any> computeInReadActionWithWriteActionPriority(indicator: ProgressIndicator, action: () -> T): T {
+    lateinit var result: T
+    val success = runInReadActionWithWriteActionPriority(indicator) {
+        result = action()
+    }
+    if (!success) throw ProcessCanceledException()
+    return result
+}
+
 fun <T> executeUnderProgress(indicator: ProgressIndicator, action: () -> T): T {
     var result: T? = null
     ProgressManager.getInstance().executeProcessUnderProgress({ result = action() }, indicator)

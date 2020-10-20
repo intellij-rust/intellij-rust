@@ -52,6 +52,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
+import org.rust.lang.core.resolve2.defMapService
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.taskQueue
@@ -785,6 +786,7 @@ private class MacroExpansionServiceImplInner(
             if (shouldScheduleUpdate && file is RsFile) {
                 val isWorkspace = file.isWorkspaceMember()
                 scheduleChangedMacrosUpdate(isWorkspace)
+                project.defMapService.onFileChanged(file)
             }
         }
 

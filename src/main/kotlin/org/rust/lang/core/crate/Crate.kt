@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.crate
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
@@ -86,6 +87,8 @@ interface Crate {
 
         val crate: Crate
     )
+
+    val project: Project get() = cargoProject.project
 }
 
 fun Crate.findDependency(normName: String): Crate? =

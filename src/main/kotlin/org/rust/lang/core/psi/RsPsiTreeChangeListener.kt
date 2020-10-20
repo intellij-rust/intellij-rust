@@ -119,16 +119,29 @@ sealed class RsPsiTreeChangeEvent {
         val propertyName: String,
         val oldValue: Any?,
         val newValue: Any?,
-        val element: PsiElement?
+        val element: PsiElement?,
+        val child: PsiElement?,
     ) : RsPsiTreeChangeEvent() {
-        class Before(propertyName: String, oldValue: Any?, newValue: Any?, element: PsiElement?) : PropertyChange(propertyName, oldValue, newValue, element)
-        class After(propertyName: String, oldValue: Any?, newValue: Any?, element: PsiElement?) : PropertyChange(propertyName, oldValue, newValue, element)
+        class Before(
+            propertyName: String,
+            oldValue: Any?,
+            newValue: Any?,
+            element: PsiElement?,
+            child: PsiElement?
+        ) : PropertyChange(propertyName, oldValue, newValue, element, child)
+        class After(
+            propertyName: String,
+            oldValue: Any?,
+            newValue: Any?,
+            element: PsiElement?,
+            child: PsiElement?
+        ) : PropertyChange(propertyName, oldValue, newValue, element, child)
 
         override fun toString(): String {
             val oldValue = if (oldValue is Array<*>) Arrays.toString(oldValue) else oldValue
             val newValue = if (newValue is Array<*>) Arrays.toString(newValue) else newValue
             return "PropertyChange.${javaClass.simpleName}(propertyName='$propertyName', " +
-                "oldValue=$oldValue, newValue=$newValue, element=$element)"
+                "oldValue=$oldValue, newValue=$newValue, element=$element, child=$child)"
         }
     }
 }
@@ -142,7 +155,8 @@ abstract class RsPsiTreeChangeAdapter : PsiTreeChangeListener {
             event.propertyName,
             event.oldValue,
             event.newValue,
-            event.element
+            event.element,
+            event.child
         ))
     }
 
@@ -151,7 +165,8 @@ abstract class RsPsiTreeChangeAdapter : PsiTreeChangeListener {
             event.propertyName,
             event.oldValue,
             event.newValue,
-            event.element
+            event.element,
+            event.child
         ))
     }
 

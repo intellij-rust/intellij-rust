@@ -397,6 +397,7 @@ class MacroExpander(val project: Project) {
  * DON'T TRY THIS AT HOME
  */
 const val MACRO_DOLLAR_CRATE_IDENTIFIER: String = "IntellijRustDollarCrate"
+val MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX: Regex = Regex(MACRO_DOLLAR_CRATE_IDENTIFIER)
 
 class MacroPattern private constructor(
     val pattern: Sequence<ASTNode>

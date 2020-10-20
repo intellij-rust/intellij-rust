@@ -6,6 +6,7 @@
 package org.rust.stdext
 
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 import java.util.function.Supplier
 
@@ -16,3 +17,11 @@ fun <T> List<CompletableFuture<T>>.joinAll(): CompletableFuture<List<T>> =
 
 fun <T> supplyAsync(executor: Executor, supplier: () -> T): CompletableFuture<T> =
     CompletableFuture.supplyAsync(Supplier { supplier() }, executor)
+
+fun <T> CompletableFuture<T>.getWithRethrow(): T {
+    try {
+        return get()
+    } catch (e: ExecutionException) {
+        throw e.cause ?: e
+    }
+}
