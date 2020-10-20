@@ -13,9 +13,9 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.toolchain.rustup
+import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.toolchain.tools.rustup
 import org.rust.openapiext.UiDebouncer
 import org.rust.openapiext.pathToDirectoryTextField
 import java.awt.BorderLayout

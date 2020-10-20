@@ -12,8 +12,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.toolchain.rustup
+import org.rust.cargo.toolchain.tools.Rustup
+import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import java.nio.file.Paths
 
