@@ -70,7 +70,7 @@ object RsMoveUtil {
         psiFactory: RsPsiFactory,
         context: RsMod
     ): RsPath? {
-        val mod = psiFactory.createModItem("__tmp__", "")
+        val mod = psiFactory.createModItem(TMP_MOD_NAME, "")
         mod.setContext(context)
         return toRsPath(codeFragmentFactory, mod)
     }
