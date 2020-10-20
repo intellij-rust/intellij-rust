@@ -38,6 +38,7 @@ import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.ErrorCode
 import org.rust.cargo.toolchain.impl.RustcMessage
 import org.rust.cargo.toolchain.impl.RustcSpan
+import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.ide.annotator.RsExternalLinterFilteredMessage.Companion.filterMessage
 import org.rust.ide.annotator.RsExternalLinterUtils.TEST_MESSAGE
@@ -70,10 +71,10 @@ object RsExternalLinterUtils {
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
-        packageName: String?
+        args: CargoCheckArgs
     ): Lazy<RsExternalLinterResult?> {
         checkReadAccessAllowed()
-        return externalLinterLazyResultCache.getOrPut(project, Key(toolchain, workingDirectory, packageName)) {
+        return externalLinterLazyResultCache.getOrPut(project, Key(toolchain, workingDirectory, args)) {
             // We want to run external linter in background thread and *without* read action.
             // And also we want to cache result of external linter because it is cargo package-global,
             // but annotator can be invoked separately for each file.
@@ -92,7 +93,7 @@ object RsExternalLinterUtils {
             lazy {
                 // This code will be executed out of read action in background thread
                 if (!isUnitTestMode) checkReadAccessNotAllowed()
-                checkWrapped(toolchain, project, owner, workingDirectory, packageName)
+                checkWrapped(toolchain, project, owner, workingDirectory, args)
             }
         }
     }
@@ -102,7 +103,7 @@ object RsExternalLinterUtils {
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
-        packageName: String?
+        args: CargoCheckArgs
     ): RsExternalLinterResult? {
         val indicator = WriteAction.computeAndWait<ProgressIndicator, Throwable> {
             saveAllDocumentsAsTheyAre()
@@ -120,7 +121,7 @@ object RsExternalLinterUtils {
             }
         }
         return ProgressManager.getInstance().runProcess(
-            Computable { check(toolchain, project, owner, workingDirectory, packageName) },
+            Computable { check(toolchain, project, owner, workingDirectory, args) },
             indicator
         )
     }
@@ -130,13 +131,13 @@ object RsExternalLinterUtils {
         project: Project,
         owner: Disposable,
         workingDirectory: Path,
-        packageName: String?
+        args: CargoCheckArgs
     ): RsExternalLinterResult? {
         ProgressManager.checkCanceled()
         val output = try {
             toolchain
                 .cargoOrWrapper(workingDirectory)
-                .checkProject(project, owner, workingDirectory, packageName)
+                .checkProject(project, owner, args)
         } catch (e: ExecutionException) {
             LOG.error(e)
             return null
@@ -149,7 +150,7 @@ object RsExternalLinterUtils {
     private data class Key(
         val toolchain: RsToolchain,
         val workingDirectory: Path,
-        val packageName: String?
+        val args: CargoCheckArgs
     )
 
     private val externalLinterLazyResultCache =
