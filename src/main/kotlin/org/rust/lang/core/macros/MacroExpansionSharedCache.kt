@@ -126,11 +126,10 @@ class MacroExpansionSharedCache : Disposable {
         MACRO_LOG.warn(e)
     }
 
-    fun cachedExpand(expander: MacroExpander, def: RsMacro, call: RsMacroCall): ExpansionResult? {
-        val defData = RsMacroData(def)
+    fun cachedExpand(expander: MacroExpander, def: RsMacroDataWithHash, call: RsMacroCall): ExpansionResult? {
         val callData = RsMacroCallData(call)
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
-        return cachedExpand(expander, defData, callData, hash)
+        return cachedExpand(expander, def.data, callData, hash)
     }
 
     private fun cachedExpand(

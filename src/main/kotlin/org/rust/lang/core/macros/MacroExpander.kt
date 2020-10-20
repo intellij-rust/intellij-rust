@@ -131,8 +131,7 @@ class RsMacroCallData(val macroBody: String?) {
 }
 
 class MacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
-        val defData = RsMacroData(def)
+    fun expandMacroAsText(defData: RsMacroData, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
         val callData = RsMacroCallData(call)
         return expandMacroAsText(defData, callData)
     }

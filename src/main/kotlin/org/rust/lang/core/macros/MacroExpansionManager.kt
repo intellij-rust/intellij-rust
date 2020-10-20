@@ -53,6 +53,7 @@ import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.indexes.RsMacroCallIndex
 import org.rust.lang.core.resolve2.defMapService
+import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.openapiext.*
 import org.rust.stdext.*
 import org.rust.taskQueue
@@ -1061,10 +1062,10 @@ private fun expandMacroOld(call: RsMacroCall): CachedValueProvider.Result<MacroE
 
 private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): CachedValueProvider.Result<MacroExpansion?> {
     val context = call.context as? RsElement ?: return nullExpansionResult(call)
-    val def = call.resolveToMacro() ?: return nullExpansionResult(call)
+    val def = call.resolveToMacroWithoutPsi() ?: return nullExpansionResult(call)
     val project = call.project
     val result = MacroExpander(project).expandMacro(
-        def,
+        def.data,
         call,
         RsPsiFactory(project, markGenerated = false),
         storeRangeMap

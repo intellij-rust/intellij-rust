@@ -49,6 +49,8 @@ import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
 import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.resolve2.processMacros
+import org.rust.lang.core.resolve2.resolveToMacroAndGetContainingCrate
+import org.rust.lang.core.resolve2.resolveToMacroAndProcessLocalInnerMacros
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
@@ -561,8 +563,9 @@ private fun processUnqualifiedPathResolveVariants(
 fun RsPath.resolveDollarCrateIdentifier(): Crate? {
     NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
     val dollarCrateSource = findMacroCallFromWhichLeafIsExpanded() ?: this
-    val macro = dollarCrateSource.findMacroCallExpandedFromNonRecursive()?.resolveToMacro()
-    return macro?.containingCrate
+    return dollarCrateSource
+        .findMacroCallExpandedFromNonRecursive()
+        ?.resolveToMacroAndGetContainingCrate()
 }
 
 private fun processTypeQualifiedPathResolveVariants(
@@ -809,11 +812,15 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 // this "recursive" macro resolve should not be a problem because
                 // 1. we resolve the macro from which [path] is expanded, so it can't run into infinite recursion
                 // 2. we expand macros step-by-step, so the result of such resolution should be cached already
-                val def = path.findMacroCallExpandedFromNonRecursive()?.resolveToMacro()
-                if (def != null && def.hasMacroExportLocalInnerMacros) {
-                    val crateRoot = def.crateRoot as? RsFile ?: return false
-                    return processAll(exportedMacros(crateRoot), processor)
-                }
+                val expandedFrom = path.findMacroCallExpandedFromNonRecursive()
+                expandedFrom
+                    ?.resolveToMacroAndProcessLocalInnerMacros(processor) { def ->
+                        /* this code will be executed if new resolve can't be used */
+                        if (!def.hasMacroExportLocalInnerMacros) return@resolveToMacroAndProcessLocalInnerMacros null
+                        val crateRoot = def.crateRoot as? RsFile ?: return@resolveToMacroAndProcessLocalInnerMacros false
+                        processAll(exportedMacros(crateRoot), processor)
+                    }
+                    ?.let { return it }
             }
 
             val resolved = pickFirstResolveVariant(path.referenceName) { processMacroCallVariantsInScope(path, it) }

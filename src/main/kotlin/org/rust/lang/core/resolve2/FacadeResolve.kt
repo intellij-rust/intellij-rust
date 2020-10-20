@@ -11,12 +11,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.crate.Crate
+import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
 import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
+import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
+import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.toPsiFile
@@ -106,6 +110,128 @@ private fun ModData.processMacros(processor: RsResolveProcessor, defMap: CrateDe
 
     return false
 }
+
+/**
+ * Resolve without PSI is needed to prevent caching incomplete result in [expandedItemsCached].
+ * Consider:
+ * - Macro expansion task wants to expand some macro
+ * - Firstly we resolve macro path
+ * - It can trigger items resolve [processItemDeclarations2].
+ *   E.g. if macro path is two segment - we need to resolve first segment as mod
+ * - [processItemDeclarations2] uses [expandedItemsCached] which will try to expand all macros in scope,
+ *   which results in recursion,
+ *   which is prevented by returning null from macro expansion,
+ *   therefore result of [expandedItemsCached] is incomplete (and cached)
+ */
+fun RsMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash? =
+    resolveToMacroAndThen(
+        withNewResolve = { def, _ -> RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash) },
+        withoutNewResolve = { def -> RsMacroDataWithHash(def) }
+    )
+
+/** See [resolveToMacroWithoutPsi] */
+fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? =
+    resolveToMacroAndThen(
+        withNewResolve = { def, _ -> project.crateGraph.findCrateById(def.crate) },
+        withoutNewResolve = { def -> def.containingCrate }
+    )
+
+/** See [resolveToMacroWithoutPsi] */
+fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
+    processor: RsResolveProcessor,
+    withoutNewResolve: (RsMacro) -> Boolean?
+): Boolean? =
+    resolveToMacroAndThen(withoutNewResolve) { def, info ->
+        if (!def.hasLocalInnerMacros) return@resolveToMacroAndThen null
+        val project = info.project
+        val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
+        defMap.root.processMacros(processor, defMap, project)
+    }
+
+/**
+ * If new resolve can be used, computes result using [withNewResolve].
+ * Otherwise fallbacks to [withoutNewResolve].
+ */
+private fun <T> RsMacroCall.resolveToMacroAndThen(
+    withoutNewResolve: (RsMacro) -> T?,
+    withNewResolve: (MacroDefInfo, RsModInfo) -> T?
+): T? {
+    if (!isNewResolveEnabled) {
+        val def = resolveToMacro() ?: return null
+        return withoutNewResolve(def)
+    }
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    val info = if (isTopLevelExpansion) getModInfo(containingMod) else CantUseNewResolve("not top level")
+    return when (info) {
+        is CantUseNewResolve -> {
+            val def = resolveToMacro() ?: return null
+            withoutNewResolve(def)
+        }
+        InfoNotFound -> null
+        is RsModInfo -> {
+            val def = resolveToMacroDefInfo(info) ?: return null
+            withNewResolve(def, info)
+        }
+    }
+}
+
+private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): MacroDefInfo? {
+    val (project, defMap, modData) = containingModInfo
+    return RsResolveCache.getInstance(project)
+        .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
+            val callPath = pathSegmentsAdjusted.toTypedArray()
+            defMap.resolveMacroCallToMacroDefInfo(modData, callPath)
+        }
+}
+
+private val RsMacroCall.pathSegments: List<String>
+    get() = generateSequence(path) { it.path }
+        .map { it.referenceName }
+        .toMutableList()
+        .also { it.reverse() }
+
+/**
+ * Adjustment is performed according to [getPathKind]:
+ * - If macro call is expanded from macro def with `#[macro_export(local_inner_macros)]` attribute:
+ *   before: `foo!();`
+ *   after:  `IntellijRustDollarCrate::12345::foo!();`
+ *                                     ~~~~~ crateId
+ * - If macro call starts with [MACRO_DOLLAR_CRATE_IDENTIFIER]:
+ *   before: `IntellijRustDollarCrate::foo!();`
+ *   after:  `IntellijRustDollarCrate::12345::foo!();`
+ *                                     ~~~~~ crateId
+ *
+ * See also [processMacroCallPathResolveVariants] and [findDependencyCrateByNamePath]
+ */
+private val RsMacroCall.pathSegmentsAdjusted: List<String>
+    get() {
+        val segments = pathSegments
+
+        val callExpandedFrom = findMacroCallExpandedFromNonRecursive() ?: return segments
+        val (defExpandedFromHasLocalInnerMacros, defExpandedFromCrateId) =
+            when (val info = getModInfo(callExpandedFrom.containingMod)) {
+                is CantUseNewResolve -> {
+                    val expandedFrom = callExpandedFrom.resolveToMacro() ?: return segments
+                    val crateId = expandedFrom.containingCrate?.id ?: return segments
+                    expandedFrom.hasMacroExportLocalInnerMacros to crateId
+                }
+                InfoNotFound -> return segments
+                is RsModInfo -> {
+                    val def = callExpandedFrom.resolveToMacroDefInfo(info) ?: return segments
+                    def.hasLocalInnerMacros to def.crate
+                }
+            }
+        return when {
+            segments.size == 1 && !path.cameFromMacroCall() && defExpandedFromHasLocalInnerMacros -> {
+                listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, defExpandedFromCrateId.toString()) + segments
+            }
+            segments.first() == MACRO_DOLLAR_CRATE_IDENTIFIER -> {
+                val crate = path.resolveDollarCrateIdentifier()?.id ?: return segments
+                listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, crate.toString()) + segments.subList(1, segments.size)
+            }
+            else -> segments
+        }
+    }
 
 private sealed class RsModInfoBase {
     /** [reason] is only for debug */

@@ -60,9 +60,6 @@ class RsMacroPathReferenceImpl(
             .getCached(element, cacheDep) as? RsNamedElement
     }
 
-    private val cacheDep: ResolveCacheDependency
-        get() = if (isBatchMode) ResolveCacheDependency.MACRO else ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
-
     private object Resolver : (RsPath) -> RsNamedElement? {
         override fun invoke(element: RsPath): RsNamedElement? {
             return pickFirstResolveVariant(element.referenceName) {
@@ -72,6 +69,9 @@ class RsMacroPathReferenceImpl(
     }
 
     companion object {
+        val cacheDep: ResolveCacheDependency
+            get() = if (isBatchMode) ResolveCacheDependency.MACRO else ResolveCacheDependency.LOCAL_AND_RUST_STRUCTURE
+
         var isBatchMode by ThreadLocalDelegate { false }
 
         /** @see ResolveCacheDependency.MACRO */

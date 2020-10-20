@@ -29,11 +29,11 @@ import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.bodyHash
 import org.rust.lang.core.psi.ext.macroBody
-import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RESOLVE_LOG
+import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.resolve2.updateDefMapForAllCrates
 import org.rust.openapiext.*
 import org.rust.stdext.HashCode
@@ -415,7 +415,7 @@ object ExpansionPipeline {
 
             if (oldExpansionFile != null && !oldExpansionFile.isValid) throw CorruptedExpansionStorageException()
 
-            val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacro() }
+            val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacroWithoutPsi() }
                 ?: return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, null)
 
             val defHash = def.bodyHash

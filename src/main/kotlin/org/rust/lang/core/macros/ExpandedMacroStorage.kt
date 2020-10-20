@@ -28,14 +28,13 @@ import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.bodyHash
 import org.rust.lang.core.psi.ext.containingCrate
-import org.rust.lang.core.psi.ext.resolveToMacro
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeStrict
 import org.rust.lang.core.psi.shouldIndexFile
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
+import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.*
 import org.rust.stdext.*
@@ -583,7 +582,7 @@ class SourceFile(
         val orphans = mutableListOf<RsMacroCall>()
         val bindList = mutableListOf<Pair<ExpandedMacroInfoImpl, Int>>()
         for (call in calls) {
-            val info = unboundInfos.find { it.isUpToDate(call, call.resolveToMacro()) }
+            val info = unboundInfos.find { it.isUpToDate(call, call.resolveToMacroWithoutPsi()) }
             if (info != null) {
                 Testmarks.refsRecoverExactHit.hit()
                 unboundInfos.remove(info)
@@ -836,7 +835,7 @@ interface ExpandedMacroInfo {
     val expansionFile: VirtualFile?
     val expansionFileHash: Long
     fun getMacroCall(): RsMacroCall?
-    fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean
+    fun isUpToDate(call: RsMacroCall, def: RsMacroDataWithHash?): Boolean
     fun getExpansion(): MacroExpansion?
 }
 
@@ -855,7 +854,7 @@ class ExpandedMacroInfoImpl(
     override fun getMacroCall(): RsMacroCall? =
         sourceFile.getCallForInfo(this)
 
-    override fun isUpToDate(call: RsMacroCall, def: RsMacro?): Boolean =
+    override fun isUpToDate(call: RsMacroCall, def: RsMacroDataWithHash?): Boolean =
         callHash == call.bodyHash && def?.bodyHash == defHash
 
     override fun getExpansion(): MacroExpansion? {
