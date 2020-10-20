@@ -35,8 +35,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEna
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
@@ -73,7 +73,7 @@ abstract class RsAsyncRunner(
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
-                Cargo.createGeneralCommandLine(
+                createGeneralCommandLine(
                     executablePath,
                     workingDirectory,
                     backtraceMode,

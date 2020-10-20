@@ -6,20 +6,21 @@
 package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
+import com.intellij.openapi.util.SystemInfo
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.util.splitOnDoubleDash
-import org.rust.openapiext.GeneralCommandLine
 import java.io.File
-import java.nio.file.Path
 
 fun RsToolchain.wasmPack(): WasmPack? = if (hasCargoExecutable(WasmPack.NAME)) WasmPack(this) else null
 
-class WasmPack(toolchain: RsToolchain) {
-    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+class WasmPack(toolchain: RsToolchain) : CargoBinary(NAME, toolchain) {
 
     fun createCommandLine(workingDirectory: File, command: String, args: List<String>): GeneralCommandLine {
         val (pre, post) = splitOnDoubleDash(args)
             .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
+
+        pre.add(0, command)
 
         val buildableCommands = setOf("build", "test")
         val forceColorsOption = "--color=always"
@@ -29,10 +30,16 @@ class WasmPack(toolchain: RsToolchain) {
 
         val allArgs = if (post.isEmpty()) pre else pre + "--" + post
 
-        return GeneralCommandLine(executable)
-            .withWorkDirectory(workingDirectory)
-            .withParameters(command, *allArgs.toTypedArray())
+        var commandLine = createBaseCommandLine(allArgs, workingDirectory.toPath())
             .withRedirectErrorStream(true)
+
+        if (!SystemInfo.isWindows) {
+            commandLine = PtyCommandLine(commandLine)
+                .withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+                .withConsoleMode(false)
+        }
+
+        return commandLine
     }
 
     companion object {

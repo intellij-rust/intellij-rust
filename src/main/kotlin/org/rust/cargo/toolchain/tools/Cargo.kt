@@ -11,14 +11,12 @@ import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isDispatchThread
@@ -27,7 +25,6 @@ import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
-import org.rust.cargo.CargoConstants.RUST_BACKTRACE_ENV_VAR
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
@@ -35,7 +32,10 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
-import org.rust.cargo.toolchain.*
+import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
@@ -69,9 +69,8 @@ fun RsToolchain.cargoOrWrapper(cargoProjectDirectory: Path?): Cargo {
  * It is impossible to guarantee that paths to the project or executables are valid,
  * because the user can always just `rm ~/.cargo/bin -rf`.
  */
-open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
-    private val executable: Path = toolchain.pathToExecutable(if (useWrapper) WRAPPER_NAME else NAME)
-    private val rustcExecutable: Path = toolchain.pathToExecutable(Rustc.NAME)
+open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
+    : RustupComponent(if (useWrapper) WRAPPER_NAME else NAME, toolchain) {
 
     data class BinaryCrate(val name: String, val version: SemVer? = null) {
         companion object {
@@ -84,8 +83,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
     }
 
     fun listInstalledBinaryCrates(): List<BinaryCrate> =
-        GeneralCommandLine(executable)
-            .withParameters("install", "--list")
+        createBaseCommandLine("install", "--list")
             .execute()
             ?.stdoutLines
             ?.filterNot { it.startsWith(" ") }
@@ -99,12 +97,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
     }
 
     fun checkSupportForBuildCheckAllTargets(): Boolean {
-        val lines = GeneralCommandLine(executable)
-            .withParameters("help", "check")
-            .execute()
-            ?.stdoutLines
-            ?: return false
-
+        val lines = createBaseCommandLine("help", "check").execute()?.stdoutLines ?: return false
         return lines.any { it.contains(" --all-targets ") }
     }
 
@@ -346,6 +339,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
                 add(command)
                 addAll(additionalArguments)
             }
+            val rustcExecutable = toolchain.rustc().executable.toString()
             createGeneralCommandLine(
                 executable,
                 workingDirectory,
@@ -354,7 +348,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
                 parameters,
                 emulateTerminal,
                 http
-            ).withEnvironment("RUSTC", rustcExecutable.toString())
+            ).withEnvironment("RUSTC", rustcExecutable)
         }
 
     @Throws(ExecutionException::class)
@@ -367,9 +361,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
     ): ProcessOutput = toGeneralCommandLine(project, this).execute(owner, ignoreExitCode, stdIn, listener)
 
     fun installCargoGenerate(owner: Disposable, listener: ProcessListener) {
-        GeneralCommandLine(executable)
-            .withParameters(listOf("install", "cargo-generate"))
-            .execute(owner, listener = listener)
+        createBaseCommandLine("install", "cargo-generate").execute(owner, listener = listener)
     }
 
     fun checkNeedInstallCargoGenerate(): Boolean {
@@ -430,41 +422,6 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false) {
             if (forceColors) pre.add(0, "--color=always")
 
             return commandLine.copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
-        }
-
-        fun createGeneralCommandLine(
-            executablePath: Path,
-            workingDirectory: Path,
-            backtraceMode: BacktraceMode,
-            environmentVariables: EnvironmentVariablesData,
-            parameters: List<String>,
-            emulateTerminal: Boolean,
-            http: HttpConfigurable = HttpConfigurable.getInstance()
-        ): GeneralCommandLine {
-            val cmdLine = GeneralCommandLine(executablePath)
-                .withWorkDirectory(workingDirectory)
-                .withEnvironment("TERM", "ansi")
-                .withRedirectErrorStream(true)
-                .withParameters(parameters)
-                // Explicitly use UTF-8.
-                // Even though default system encoding is usually not UTF-8 on Windows,
-                // most Rust programs are UTF-8 only.
-                .withCharset(Charsets.UTF_8)
-            withProxyIfNeeded(cmdLine, http)
-            when (backtraceMode) {
-                BacktraceMode.SHORT -> cmdLine.withEnvironment(RUST_BACKTRACE_ENV_VAR, "short")
-                BacktraceMode.FULL -> cmdLine.withEnvironment(RUST_BACKTRACE_ENV_VAR, "full")
-                BacktraceMode.NO -> Unit
-            }
-            environmentVariables.configureCommandLine(cmdLine, true)
-            return if (emulateTerminal) {
-                if (!SystemInfo.isWindows) {
-                    cmdLine.environment["TERM"] = "xterm-256color"
-                }
-                PtyCommandLine(cmdLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
-            } else {
-                cmdLine
-            }
         }
 
         fun checkNeedInstallGrcov(project: Project): Boolean {

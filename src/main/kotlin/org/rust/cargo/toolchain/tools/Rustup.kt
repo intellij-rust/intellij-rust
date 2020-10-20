@@ -16,7 +16,9 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.InstallComponentAction
 import org.rust.ide.notifications.showBalloon
-import org.rust.openapiext.*
+import org.rust.openapiext.execute
+import org.rust.openapiext.fullyRefreshDirectory
+import org.rust.openapiext.isSuccess
 import java.nio.file.Path
 
 private val LOG = Logger.getInstance(Rustup::class.java)
@@ -28,11 +30,7 @@ fun RsToolchain.rustup(cargoProjectDirectory: Path): Rustup? {
     return Rustup(this, cargoProjectDirectory)
 }
 
-class Rustup(
-    private val toolchain: RsToolchain,
-    private val projectDirectory: Path
-) {
-    private val executable: Path = toolchain.pathToExecutable(NAME)
+class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsTool(NAME, toolchain) {
 
     data class Component(val name: String, val isInstalled: Boolean) {
         companion object {
@@ -45,21 +43,18 @@ class Rustup(
     }
 
     fun listComponents(): List<Component> =
-        GeneralCommandLine(executable)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("component", "list")
-            .execute()
-            ?.stdoutLines
-            ?.map { Component.from(it) }
-            ?: emptyList()
+        createBaseCommandLine(
+            "component", "list",
+            workingDirectory = projectDirectory
+        ).execute()?.stdoutLines?.map { Component.from(it) }.orEmpty()
 
     fun downloadStdlib(): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
         if (needInstallComponent("rust-src")) {
-            val downloadProcessOutput = GeneralCommandLine(executable)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", "rust-src")
-                .execute(null)
+            val downloadProcessOutput = createBaseCommandLine(
+                "component", "add", "rust-src",
+                workingDirectory = projectDirectory
+            ).execute(null)
             if (downloadProcessOutput?.isSuccess != true) {
                 val message = "rustup failed: `${downloadProcessOutput?.stderr ?: ""}`"
                 LOG.warn(message)
@@ -76,10 +71,10 @@ class Rustup(
 
     fun downloadComponent(owner: Disposable, componentName: String): DownloadResult<Unit> =
         try {
-            GeneralCommandLine(executable)
-                .withWorkDirectory(projectDirectory)
-                .withParameters("component", "add", componentName)
-                .execute(owner, false)
+            createBaseCommandLine(
+                "component", "add", componentName,
+                workingDirectory = projectDirectory
+            ).execute(owner, false)
             DownloadResult.Ok(Unit)
         } catch (e: ExecutionException) {
             val message = "rustup failed: `${e.message}`"

@@ -12,22 +12,20 @@ import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
-import org.rust.openapiext.*
+import org.rust.openapiext.checkIsBackgroundThread
+import org.rust.openapiext.execute
+import org.rust.openapiext.isSuccess
 import java.nio.file.Path
 
 fun RsToolchain.rustc(): Rustc = Rustc(this)
 
-class Rustc(toolchain: RsToolchain) {
-    private val executable: Path = toolchain.pathToExecutable(NAME)
+class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
 
     fun queryVersion(): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        val lines = GeneralCommandLine(executable)
-            .withParameters("--version", "--verbose")
-            .execute()
-            ?.stdoutLines
+        val lines = createBaseCommandLine("--version", "--verbose").execute()?.stdoutLines
         return lines?.let { parseRustcVersion(it) }
     }
 
@@ -36,11 +34,10 @@ class Rustc(toolchain: RsToolchain) {
             checkIsBackgroundThread()
         }
         val timeoutMs = 10000
-        val output = GeneralCommandLine(executable)
-            .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("--print", "sysroot")
-            .execute(timeoutMs)
+        val output = createBaseCommandLine(
+            "--print", "sysroot",
+            workingDirectory = projectDirectory
+        ).execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdout.trim() else null
     }
 
@@ -52,11 +49,10 @@ class Rustc(toolchain: RsToolchain) {
 
     fun getCfgOptions(projectDirectory: Path): List<String>? {
         val timeoutMs = 10000
-        val output = GeneralCommandLine(executable)
-            .withCharset(Charsets.UTF_8)
-            .withWorkDirectory(projectDirectory)
-            .withParameters("--print", "cfg")
-            .execute(timeoutMs)
+        val output = createBaseCommandLine(
+            "--print", "cfg",
+            workingDirectory = projectDirectory
+        ).execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 

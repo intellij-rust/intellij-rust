@@ -26,8 +26,7 @@ import java.nio.file.Path
 
 fun RsToolchain.rustfmt(): Rustfmt = Rustfmt(this)
 
-class Rustfmt(toolchain: RsToolchain) {
-    private val executable: Path = toolchain.pathToExecutable(NAME)
+class Rustfmt(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
 
     fun reformatDocumentTextOrNull(cargoProject: CargoProject, document: Document): String? {
         return try {
@@ -64,10 +63,7 @@ class Rustfmt(toolchain: RsToolchain) {
             }
         }
 
-        return GeneralCommandLine(executable)
-            .withWorkDirectory(cargoProject.workingDirectory)
-            .withParameters(arguments)
-            .withCharset(Charsets.UTF_8)
+        return createBaseCommandLine(arguments, cargoProject.workingDirectory)
             .execute(cargoProject.project, ignoreExitCode = false, stdIn = document.text.toByteArray())
             .stdout
     }
