@@ -7,7 +7,7 @@ package org.rust.cargo
 
 import org.jetbrains.annotations.TestOnly
 
-class CfgOptions(
+data class CfgOptions(
     val keyValueOptions: Map<String, Set<String>>,
     val nameOptions: Set<String>
 ) {

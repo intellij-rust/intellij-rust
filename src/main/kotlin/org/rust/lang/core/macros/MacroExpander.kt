@@ -122,8 +122,21 @@ private class NestingState(
     var atTheEnd: Boolean = false
 )
 
+class RsMacroData(val macroBody: Lazy<RsMacroBody?>) {
+    constructor(def: RsMacro) : this(lazy(LazyThreadSafetyMode.PUBLICATION) { def.macroBodyStubbed })
+}
+
+class RsMacroCallData(val macroBody: String?) {
+    constructor(call: RsMacroCall) : this(call.macroBody)
+}
+
 class MacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacro, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
+    fun expandMacroAsText(defData: RsMacroData, call: RsMacroCall): Pair<CharSequence, RangeMap>? {
+        val callData = RsMacroCallData(call)
+        return expandMacroAsText(defData, callData)
+    }
+
+    fun expandMacroAsText(def: RsMacroData, call: RsMacroCallData): Pair<CharSequence, RangeMap>? {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call) ?: return null
         val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return null
 
@@ -141,13 +154,13 @@ class MacroExpander(val project: Project) {
     }
 
     private fun findMatchingPattern(
-        def: RsMacro,
-        call: RsMacroCall
+        def: RsMacroData,
+        call: RsMacroCallData
     ): Triple<RsMacroCase, MacroSubstitution, RangeMap>? {
         val (macroCallBody, ranges) = project.createAdaptedRustPsiBuilder(call.macroBody ?: return null).lowerDocComments()
         macroCallBody.eof() // skip whitespace
         var start = macroCallBody.mark()
-        val macroCaseList = def.macroBodyStubbed?.macroCaseList ?: return null
+        val macroCaseList = def.macroBody.value?.macroCaseList ?: return null
 
         for (case in macroCaseList) {
             val subst = case.pattern.match(macroCallBody)
@@ -319,7 +332,7 @@ class MacroExpander(val project: Project) {
         }
     }
 
-    private fun checkRanges(call: RsMacroCall, expandedText: CharSequence, ranges: RangeMap) {
+    private fun checkRanges(call: RsMacroCallData, expandedText: CharSequence, ranges: RangeMap) {
         if (!isUnitTestMode) return
         val callBody = call.macroBody ?: return
 
@@ -383,6 +396,7 @@ class MacroExpander(val project: Project) {
  * DON'T TRY THIS AT HOME
  */
 const val MACRO_DOLLAR_CRATE_IDENTIFIER: String = "IntellijRustDollarCrate"
+val MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX: Regex = Regex(MACRO_DOLLAR_CRATE_IDENTIFIER)
 
 class MacroPattern private constructor(
     val pattern: Sequence<ASTNode>

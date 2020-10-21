@@ -8,7 +8,9 @@ package org.rust.lang.core.psi
 import com.intellij.extapi.psi.PsiFileBase
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
@@ -263,3 +265,9 @@ val RsElement.isValidProjectMember: Boolean
         if (file !is RsFile) return true
         return isEnabledByCfg && file.isDeeplyEnabledByCfg && file.crateRoot != null
     }
+
+fun shouldIndexFile(project: Project, file: VirtualFile): Boolean {
+    val index = ProjectFileIndex.getInstance(project)
+    return (index.isInContent(file) || index.isInLibrary(file))
+        && !FileTypeManager.getInstance().isFileIgnored(file)
+}

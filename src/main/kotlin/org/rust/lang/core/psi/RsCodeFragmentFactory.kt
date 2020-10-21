@@ -48,7 +48,7 @@ class RsCodeFragmentFactory(val project: Project) {
         } else {
             "" to "use $usePath;"
         }
-        val mod = psiFactory.createModItem("__tmp__", """
+        val mod = psiFactory.createModItem(TMP_MOD_NAME, """
             $externCrateItem
             use super::*;
             $useItem
@@ -57,3 +57,5 @@ class RsCodeFragmentFactory(val project: Project) {
         return createPath(importingPathName, mod, mode, ns)
     }
 }
+
+const val TMP_MOD_NAME: String = "__tmp__"

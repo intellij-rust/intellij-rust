@@ -91,7 +91,7 @@ class RsMoveConflictsDetector(
         // because if something in inner mod is private, then it was not accessible before move.
         if (elementsToMove.none { (it as? ItemToMove)?.item == item }) return
 
-        val tempMod = RsPsiFactory(sourceMod.project).createModItem("__tmp__", "")
+        val tempMod = RsPsiFactory(sourceMod.project).createModItem(TMP_MOD_NAME, "")
         tempMod.setContext(targetMod)
 
         target.putCopyableUserData(RS_ELEMENT_FOR_CHECK_INSIDE_REFERENCES_VISIBILITY, target)

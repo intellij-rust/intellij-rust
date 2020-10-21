@@ -13,8 +13,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.stubs.*
+import com.intellij.testFramework.ReadOnlyLightVirtualFile
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.*
+import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
@@ -124,8 +126,19 @@ class MacroExpansionSharedCache : Disposable {
         MACRO_LOG.warn(e)
     }
 
-    fun cachedExpand(expander: MacroExpander, def: RsMacro, call: RsMacroCall): ExpansionResult? {
+    fun cachedExpand(expander: MacroExpander, def: RsMacroDataWithHash, call: RsMacroCall): ExpansionResult? {
+        val callData = RsMacroCallData(call)
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
+        return cachedExpand(expander, def.data, callData, hash)
+    }
+
+    private fun cachedExpand(
+        expander: MacroExpander,
+        def: RsMacroData,
+        call: RsMacroCallData,
+        /** mixed hash of [def] and [call], passed as optimization */
+        hash: HashCode
+    ): ExpansionResult? {
         return getOrPut(PersistentCacheData::expansions, hash) {
             val result = expander.expandMacroAsText(def, call) ?: return@getOrPut null
             ExpansionResult(result.first.toString(), result.second)
@@ -143,6 +156,21 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
+    fun createExpansionStub(
+        project: Project,
+        expander: MacroExpander,
+        def: RsMacroDataWithHash,
+        call: RsMacroCallDataWithHash
+    ): Pair<RsFileStub, ExpansionResult>? {
+        val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
+        val result = cachedExpand(expander, def.data, call.data, hash) ?: return null
+        val stub = cachedBuildStub(hash) {
+            val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
+            createFileContent(project, file, result.text)
+        } ?: return null
+        return Pair(stub.stub as RsFileStub, result)
+    }
+
     companion object {
         @JvmStatic
         fun getInstance(): MacroExpansionSharedCache = service()
@@ -151,6 +179,12 @@ class MacroExpansionSharedCache : Disposable {
         private val CACHE_ENABLED = Registry.get("org.rust.lang.macros.persistentCache")
     }
 }
+
+class RsMacroDataWithHash(val data: RsMacroData, val bodyHash: HashCode?) {
+    constructor(def: RsMacro) : this(RsMacroData(def), def.bodyHash)
+}
+
+class RsMacroCallDataWithHash(val data: RsMacroCallData, val bodyHash: HashCode?)
 
 @Suppress("UnstableApiUsage")
 private class PersistentCacheData(

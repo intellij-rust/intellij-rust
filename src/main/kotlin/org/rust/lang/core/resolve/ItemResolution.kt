@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve.ref.advancedDeepResolve
+import org.rust.lang.core.resolve2.processItemDeclarations2
 import org.rust.openapiext.recursionGuard
 import org.rust.stdext.intersects
 import java.util.*
@@ -65,6 +66,10 @@ fun processItemDeclarations(
     originalProcessor: RsResolveProcessor,
     ipm: ItemProcessingMode
 ): Boolean {
+    if (scope is RsMod) {
+        processItemDeclarations2(scope, ns, originalProcessor, ipm)?.let { return it }
+    }
+
     val withPrivateImports = ipm != ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 
     val directlyDeclaredNames = HashMap<String, Set<Namespace>>()
