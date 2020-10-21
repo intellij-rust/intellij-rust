@@ -41,7 +41,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     }
 
     fun `test any rust keyword may be used as a metavar name`() {
-        val keywords = TokenSet.andNot(RS_KEYWORDS, tokenSetOf(CRATE)).types
+        val keywords = TokenSet.andNot(RS_KEYWORDS, tokenSetOf(CRATE)).types.map { it.toString() } +
+            listOf("true", "false")
         doTest(keywords.joinToString("\n") {"""
             macro_rules! ${it}1 {
                 ($ $it:ident) => (

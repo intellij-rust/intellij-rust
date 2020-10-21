@@ -338,7 +338,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun macroIdentifier(b: PsiBuilder, level: Int): Boolean =
         when (b.tokenType) {
-            IDENTIFIER, in RS_KEYWORDS -> {
+            IDENTIFIER, in RS_KEYWORDS, BOOL_LITERAL -> {
                 b.advanceLexer()
                 true
             }
