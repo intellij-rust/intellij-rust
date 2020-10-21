@@ -17,7 +17,6 @@ import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.PackageOrigin.*
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.checkReadAccessAllowed
@@ -102,15 +101,8 @@ private fun makeStdlibLibrary(packages: List<CargoWorkspace.Package>, rustcVersi
         excludedRoots += listOfNotNull(root.findChild("tests"), root.findChild("benches"))
     }
 
-    val version = rustcVersion?.stdlibVersion()
+    val version = rustcVersion?.semver?.parsedVersion
     return CargoLibrary("stdlib", sourceRoots, excludedRoots, RsIcons.RUST, version)
-}
-
-private fun RustcVersion.stdlibVersion(): String = buildString {
-    append(semver)
-    if (channel > RustChannel.STABLE) {
-        channel.channel?.let { append("-$it") }
-    }
 }
 
 private fun CargoWorkspace.Package.toCargoLibrary(): CargoLibrary? {
