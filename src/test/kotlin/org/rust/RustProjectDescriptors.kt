@@ -27,8 +27,8 @@ import org.rust.cargo.project.workspace.CargoWorkspaceData.Target
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.rustup
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import java.io.File
 import java.nio.file.Paths

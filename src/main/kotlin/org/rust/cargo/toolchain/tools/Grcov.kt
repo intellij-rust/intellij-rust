@@ -8,27 +8,23 @@ package org.rust.cargo.toolchain.tools
 import com.intellij.execution.configurations.GeneralCommandLine
 import org.rust.cargo.CargoConstants.ProjectLayout
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.openapiext.GeneralCommandLine
 import java.io.File
 import java.nio.file.Path
 
 fun RsToolchain.grcov(): Grcov? = if (hasCargoExecutable(Grcov.NAME)) Grcov(this) else null
 
-class Grcov(toolchain: RsToolchain) {
-    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+class Grcov(toolchain: RsToolchain) : CargoBinary(NAME, toolchain) {
 
     fun createCommandLine(workingDirectory: File, coverageFilePath: Path): GeneralCommandLine =
-        GeneralCommandLine(executable)
-            .withWorkDirectory(workingDirectory)
-            .withParameters(
-                ProjectLayout.target,
-                "-t", "lcov",
-                "--llvm",
-                "--branch",
-                "--ignore-not-existing",
-                "-o", coverageFilePath.toString()
-            )
-            .withCharset(Charsets.UTF_8)
+        createBaseCommandLine(
+            ProjectLayout.target,
+            "-t", "lcov",
+            "--llvm",
+            "--branch",
+            "--ignore-not-existing",
+            "-o", coverageFilePath.toString(),
+            workingDirectory = workingDirectory.toPath()
+        )
 
     companion object {
         const val NAME: String = "grcov"

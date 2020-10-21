@@ -20,8 +20,8 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.Rustfmt
+import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
 import org.rust.lang.core.psi.isNotRustFile
 import org.rust.openapiext.checkIsDispatchThread

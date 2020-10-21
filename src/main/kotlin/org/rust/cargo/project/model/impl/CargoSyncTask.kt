@@ -36,10 +36,10 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.Rustup
-import org.rust.cargo.toolchain.rustup
+import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.RefreshCargoProjectsAction
 import org.rust.openapiext.TaskResult

@@ -24,7 +24,7 @@ import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.toolchain.isRustupAvailable
+import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.notifications.showBalloon
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture

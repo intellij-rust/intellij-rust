@@ -7,24 +7,19 @@ package org.rust.cargo.toolchain.tools
 
 import com.intellij.execution.configurations.PtyCommandLine
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.openapiext.GeneralCommandLine
 import java.io.File
-import java.nio.file.Path
 
 fun RsToolchain.evcxr(): Evcxr? = if (hasCargoExecutable(Evcxr.NAME)) Evcxr(this) else null
 
-class Evcxr(toolchain: RsToolchain) {
-    private val executable: Path = toolchain.pathToCargoExecutable(NAME)
+class Evcxr(toolchain: RsToolchain) : CargoBinary(NAME, toolchain) {
 
     fun createCommandLine(workingDirectory: File): PtyCommandLine {
-        val commandLine = GeneralCommandLine(executable)
-            .withParameters(
-                "--ide-mode",
-                "--disable-readline",
-                "--opt", "0"
-            )
-            .withWorkDirectory(workingDirectory)
-            .withCharset(Charsets.UTF_8)
+        val commandLine = createBaseCommandLine(
+            "--ide-mode",
+            "--disable-readline",
+            "--opt", "0",
+            workingDirectory = workingDirectory.toPath()
+        )
 
         return PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
     }
