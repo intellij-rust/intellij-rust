@@ -13,21 +13,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.panel
-import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
-import org.rust.cargo.toolchain.RsToolchain
-import org.rust.openapiext.pathAsPath
-import java.nio.file.Paths
 import javax.swing.ListCellRenderer
 
 class RsProjectConfigurable(
     project: Project
 ) : RsConfigurableBase(project, "Rust"), Configurable.NoScroll {
-
-    private val rustProjectSettings = RustProjectSettingsPanel(
-        project.cargoProjects.allProjects.firstOrNull()?.rootDir?.pathAsPath ?: Paths.get(".")
-    )
+    private val rustProjectSettings: RustProjectSettingsPanel = RustProjectSettingsPanel(project)
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
@@ -63,25 +56,17 @@ class RsProjectConfigurable(
 
     override fun reset() {
         super.reset()
-        val toolchain = state.toolchain ?: RsToolchain.suggest()
-
-        rustProjectSettings.data = RustProjectSettingsPanel.Data(
-            toolchain = toolchain,
-            explicitPathToStdlib = state.explicitPathToStdlib
-        )
+        rustProjectSettings.sdk = state.sdk
     }
 
     override fun isModified(): Boolean {
         if (super.isModified()) return true
-        val data = rustProjectSettings.data
-        return data.toolchain?.location != state.toolchain?.location
-            || data.explicitPathToStdlib != state.explicitPathToStdlib
+        return rustProjectSettings.sdk != state.sdk
     }
 
     @Throws(ConfigurationException::class)
     override fun doApply() {
-        rustProjectSettings.validateSettings()
-        state.toolchain = rustProjectSettings.data.toolchain
-        state.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
+        rustProjectSettings.validateSettings(sdkRequired = false)
+        state.sdk = rustProjectSettings.sdk
     }
 }

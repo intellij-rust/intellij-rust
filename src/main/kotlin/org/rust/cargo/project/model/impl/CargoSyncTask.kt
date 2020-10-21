@@ -42,6 +42,7 @@ import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.actions.RefreshCargoProjectsAction
+import org.rust.ide.sdk.explicitPathToStdlib
 import org.rust.openapiext.TaskResult
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -181,7 +182,7 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
             return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
         }
 
-        val sysroot = childContext.toolchain.rustc().getSysroot(childContext.oldCargoProject.workingDirectory)
+        val sysroot = childContext.toolchain.rustc().getSysroot()
             ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
 
         val rustcVersion = childContext.toolchain.rustc().queryVersion()
@@ -217,7 +218,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
             // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
             // but it also compiles the whole project, which is probably not wanted
             // TODO: This does not query the target specific cfg flags during cross compilation :-(
-            val rawCfgOptions = toolchain.rustc().getCfgOptions(projectDirectory) ?: emptyList()
+            val rawCfgOptions = toolchain.rustc().getCfgOptions() ?: emptyList()
             val cfgOptions = CfgOptions.parse(rawCfgOptions)
             val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             TaskResult.Ok(ws)
@@ -240,10 +241,10 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
             }
         }
 
-        val rustup = childContext.toolchain.rustup(workingDirectory)
+        val rustup = childContext.toolchain.rustup()
         if (rustup == null) {
-            val explicitPath = childContext.project.rustSettings.explicitPathToStdlib
-                ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
+            val explicitPath = childContext.project.rustSettings.sdk?.explicitPathToStdlib
+                ?: childContext.toolchain.rustc().getStdlibFromSysroot()?.path
             val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
             return@runWithChildProgress when {
                 explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")

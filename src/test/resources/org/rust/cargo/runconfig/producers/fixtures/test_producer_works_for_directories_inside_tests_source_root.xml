@@ -1,6 +1,5 @@
 <configurations>
   <configuration name="Tests in 'dir'" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --test foo --test baz &quot;&quot;" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />

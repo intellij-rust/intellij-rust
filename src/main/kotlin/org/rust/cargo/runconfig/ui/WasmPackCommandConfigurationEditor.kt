@@ -21,11 +21,13 @@ class WasmPackCommandConfigurationEditor(project: Project)
     )
 
     override fun resetEditorFrom(configuration: WasmPackCommandConfiguration) {
+        super.resetEditorFrom(configuration)
         command.text = configuration.command
         workingDirectory.component.text = configuration.workingDirectory?.toString().orEmpty()
     }
 
     override fun applyEditorTo(configuration: WasmPackCommandConfiguration) {
+        super.applyEditorTo(configuration)
         configuration.command = command.text
         configuration.workingDirectory = currentWorkingDirectory
     }
@@ -34,7 +36,7 @@ class WasmPackCommandConfigurationEditor(project: Project)
         row("Command:") {
             command(growX, pushX)
         }
-
+        row(sdkList.label) { sdkList.apply { makeWide() }() }
         row(workingDirectory.label) {
             workingDirectory(growX)
         }

@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.cargo.toolchain.tools.Rustfmt
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
@@ -30,7 +29,7 @@ class RustfmtCargoProjectAction : DumbAwareAction() {
         val (cargoProject, rustfmt) = getContext(e) ?: return
         saveAllDocumentsAsTheyAre(reformatLater = false)
         try {
-            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return
+            if (checkNeedInstallRustfmt(cargoProject.project)) return
             rustfmt.reformatCargoProject(cargoProject)
             val rootDir = cargoProject.rootDir ?: return
             // We want to refresh file synchronously only in unit test to get new text right after `reformat` call

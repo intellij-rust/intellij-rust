@@ -13,6 +13,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiModificationTrackerImpl
@@ -24,8 +25,8 @@ import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.RustProjectSettingsService.*
 import org.rust.cargo.project.settings.RustProjectSettingsService.Companion.RUST_SETTINGS_TOPIC
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.sdk.toolchain
 
 private const val serviceName: String = "RustProjectSettings"
 
@@ -50,9 +51,8 @@ class RustProjectSettingsServiceImpl(
         }
 
     override val version: Int? get() = _state.version
-    override val toolchain: RsToolchain? get() = _state.toolchain
+    override val sdk: Sdk? get() = _state.sdk
     override val autoUpdateEnabled: Boolean get() = _state.autoUpdateEnabled
-    override val explicitPathToStdlib: String? get() = _state.explicitPathToStdlib
     override val externalLinter: ExternalLinter get() = _state.externalLinter
     override val runExternalLinterOnTheFly: Boolean get() = _state.runExternalLinterOnTheFly
     override val externalLinterArguments: String get() = _state.externalLinterArguments
@@ -64,7 +64,7 @@ class RustProjectSettingsServiceImpl(
     override val runRustfmtOnSave: Boolean get() = _state.runRustfmtOnSave
 
     @Suppress("OverridingDeprecatedMember", "DEPRECATION")
-    override fun getToolchain(): RustToolchain? = _state.toolchain?.let(RustToolchain::from)
+    override fun getToolchain(): RustToolchain? = _state.sdk?.toolchain?.let(RustToolchain::from)
 
     override fun getState(): Element {
         val element = Element(serviceName)

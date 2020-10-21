@@ -109,7 +109,7 @@ class CompositeCargoRunConfigurationProducer : CargoRunConfigurationProducer() {
         when {
             this === other -> true
             this !is CargoCommandConfiguration || other !is CargoCommandConfiguration -> equals(other)
-            channel != other.channel -> false
+            sdk != other.sdk -> false
             command != other.command -> false
             backtrace != other.backtrace -> false
             workingDirectory != other.workingDirectory -> false

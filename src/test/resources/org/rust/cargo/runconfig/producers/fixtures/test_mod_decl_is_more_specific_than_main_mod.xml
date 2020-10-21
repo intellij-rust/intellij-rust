@@ -1,6 +1,5 @@
 <configurations>
   <configuration name="Test main::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --bin foo tests" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />

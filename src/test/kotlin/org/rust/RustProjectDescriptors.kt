@@ -6,6 +6,7 @@
 package org.rust
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -30,6 +31,8 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
+import org.rust.ide.sdk.RsSdkUtils.findOrCreateSdk
+import org.rust.ide.sdk.toolchain
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
@@ -100,10 +103,11 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
 }
 
 open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustProjectDescriptorBase() {
-    private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
-
-    private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
+    private val toolchain: RsToolchain? by lazy { sdk?.toolchain }
+    private val rustup by lazy { toolchain?.rustup() }
     val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
+
+    override fun getSdk(): Sdk? = findOrCreateSdk()
 
     override val skipTestReason: String?
         get() {
@@ -115,7 +119,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     override val rustcInfo: RustcInfo?
         get() {
             val rustc = toolchain?.rustc() ?: return null
-            val sysroot = rustc.getSysroot(Paths.get(".")) ?: return null
+            val sysroot = rustc.getSysroot() ?: return null
             val rustcVersion = rustc.queryVersion()
             return RustcInfo(sysroot, rustcVersion)
         }
@@ -131,7 +135,7 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         // TODO: use RustupTestFixture somehow
         val rustSettings = fixture.project.rustSettings
         rustSettings.modifyTemporary(fixture.testRootDisposable) {
-            it.toolchain = toolchain
+            it.sdk = sdk
         }
     }
 }

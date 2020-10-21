@@ -8,7 +8,10 @@ package org.rust.cargo.runconfig.command
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
@@ -17,15 +20,12 @@ import com.intellij.util.execution.ParametersListUtil
 import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Path
@@ -41,10 +41,8 @@ class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
-) : LocatableConfigurationBase<RunProfileState>(project, factory, name),
-    RunConfigurationWithSuppressedDefaultDebugAction {
+) : RsCommandConfiguration(project, name, factory) {
 
-    var channel: RustChannel = RustChannel.DEFAULT
     var command: String = "run"
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
@@ -63,7 +61,6 @@ class CargoCommandConfiguration(
 
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
-        element.writeEnum("channel", channel)
         element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
@@ -78,7 +75,6 @@ class CargoCommandConfiguration(
      */
     override fun readExternal(element: Element) {
         super.readExternal(element)
-        element.readEnum<RustChannel>("channel")?.let { channel = it }
         element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
@@ -88,7 +84,6 @@ class CargoCommandConfiguration(
     }
 
     fun setFromCmd(cmd: CargoCommandLine) {
-        channel = cmd.channel
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
         allFeatures = cmd.allFeatures
         emulateTerminal = cmd.emulateTerminal
@@ -148,25 +143,18 @@ class CargoCommandConfiguration(
                 workingDirectory,
                 args.drop(1),
                 backtrace,
-                channel,
                 env,
                 allFeatures,
                 emulateTerminal
             )
         }
 
-        val toolchain = project.toolchain
-            ?: return CleanConfiguration.error("No Rust toolchain specified")
-
-        if (!toolchain.looksLikeValidToolchain()) {
-            return CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
+        val toolchain = toolchain
+        return when {
+            toolchain == null -> CleanConfiguration.error("No Rust toolchain specified")
+            !toolchain.looksLikeValidToolchain() -> CleanConfiguration.error("Invalid toolchain: ${toolchain.presentableLocation}")
+            else -> CleanConfiguration.Ok(cmd, toolchain)
         }
-
-        if (!toolchain.isRustupAvailable && channel != RustChannel.DEFAULT) {
-            return CleanConfiguration.error("Channel '$channel' is set explicitly with no rustup available")
-        }
-
-        return CleanConfiguration.Ok(cmd, toolchain)
     }
 
     override fun suggestedName(): String? = command.substringBefore(' ').capitalize()

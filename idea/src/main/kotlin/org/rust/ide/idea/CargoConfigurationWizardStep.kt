@@ -11,6 +11,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.layout.panel
@@ -18,7 +19,6 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.ide.newProject.ui.RsNewProjectPanel
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
@@ -28,7 +28,7 @@ class CargoConfigurationWizardStep private constructor(
     private val projectDescriptor: ProjectDescriptor? = null
 ) : ModuleWizardStep() {
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = projectDescriptor == null)
+    private val newProjectPanel = RsNewProjectPanel(context.project, projectDescriptor == null)
 
     override fun getComponent(): JComponent = panel {
         newProjectPanel.attachTo(this)
@@ -38,7 +38,7 @@ class CargoConfigurationWizardStep private constructor(
 
     override fun updateDataModel() {
         val data = newProjectPanel.data
-        ConfigurationUpdater.data = data.settings
+        ConfigurationUpdater.sdk = data.sdk
 
         val projectBuilder = context.projectBuilder
         if (projectBuilder is RsModuleBuilder) {
@@ -56,14 +56,14 @@ class CargoConfigurationWizardStep private constructor(
     }
 
     private object ConfigurationUpdater : ModuleConfigurationUpdater() {
-        var data: RustProjectSettingsPanel.Data? = null
+        var sdk: Sdk? = null
 
         override fun update(module: Module, rootModel: ModifiableRootModel) {
-            val data = data
-            if (data != null) {
+            val sdk = sdk
+            if (sdk != null) {
+                rootModel.sdk = sdk
                 module.project.rustSettings.modify {
-                    it.toolchain = data.toolchain
-                    it.explicitPathToStdlib = data.explicitPathToStdlib
+                    it.sdk = sdk
                 }
             }
             // We don't use SDK, but let's inherit one to reduce the amount of

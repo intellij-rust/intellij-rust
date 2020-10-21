@@ -10,7 +10,10 @@ import com.intellij.coverage.CoverageHelper
 import com.intellij.coverage.CoverageRunnerData
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationInfoProvider
+import com.intellij.execution.configurations.RunProfile
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.process.OSProcessHandler
@@ -27,14 +30,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.CargoConstants.ProjectLayout
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.CargoRunStateBase
+import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallGrcov
 import org.rust.cargo.toolchain.tools.grcov
@@ -60,7 +64,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
         val project = environment.project
         if (checkNeedInstallGrcov(project)) return
         val state = environment.state as CargoRunStateBase
-        if (!checkIsNightlyToolchain(project, state.config)) return
+        if (!checkIsNightlyToolchain(project, state.toolchain)) return
         val workingDirectory = state.commandLine.workingDirectory.toFile()
         cleanOldCoverageData(workingDirectory)
         environment.cargoPatches += cargoCoveragePatch
@@ -112,10 +116,9 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
         }
 
         private fun startCollectingCoverage(workingDirectory: File, environment: ExecutionEnvironment) {
-            val project = environment.project
-            val runConfiguration = environment.runProfile as? RunConfigurationBase<*> ?: return
+            val runConfiguration = environment.runProfile as? RsCommandConfiguration ?: return
             val runnerSettings = environment.runnerSettings ?: return
-            val grcov = project.toolchain?.grcov() ?: return
+            val grcov = runConfiguration.toolchain?.grcov() ?: return
 
             val coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(runConfiguration)
                 as? RsCoverageEnabledConfiguration ?: return
@@ -137,12 +140,9 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             }
         }
 
-        private fun checkIsNightlyToolchain(project: Project, config: CargoCommandConfiguration.CleanConfiguration.Ok): Boolean {
-            var channel: RustChannel? = config.cmd.channel
-            if (channel == RustChannel.DEFAULT) {
-                channel = project.computeWithCancelableProgress("Fetching rustc version...") {
-                    config.toolchain.rustc().queryVersion()?.channel
-                }
+        private fun checkIsNightlyToolchain(project: Project, toolchain: RsToolchain): Boolean {
+            val channel = project.computeWithCancelableProgress("Fetching rustc version...") {
+                toolchain.rustc().queryVersion()?.channel
             }
             if (channel == RustChannel.NIGHTLY) return true
 

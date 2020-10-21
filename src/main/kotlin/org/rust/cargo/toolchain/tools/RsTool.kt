@@ -79,4 +79,12 @@ abstract class CargoBinary(binaryName: String, toolchain: RsToolchain) : RsTool(
     override val executable: Path = toolchain.pathToCargoExecutable(binaryName)
 }
 
-abstract class RustupComponent(componentName: String, toolchain: RsToolchain) : RsTool(componentName, toolchain)
+abstract class RustupComponent(componentName: String, toolchain: RsToolchain) : RsTool(componentName, toolchain) {
+    override fun createBaseCommandLine(
+        parameters: List<String>,
+        workingDirectory: Path?
+    ): GeneralCommandLine {
+        val override = listOfNotNull(toolchain.name?.let { "+$it" })
+        return super.createBaseCommandLine(override + parameters, workingDirectory)
+    }
+}

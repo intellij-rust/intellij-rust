@@ -34,6 +34,7 @@ import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
+import org.rust.ide.sdk.toolchain
 import org.rust.stdext.buildList
 import java.util.concurrent.*
 
@@ -109,7 +110,8 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             val settings = project.rustSettings
             add("--all")
             if (settings.compileAllTargets) {
-                val allTargets = settings.toolchain
+                val allTargets = settings.sdk
+                    ?.toolchain
                     ?.cargo()
                     ?.checkSupportForBuildCheckAllTargets()
                     ?: false

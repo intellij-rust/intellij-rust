@@ -15,7 +15,6 @@ import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.checkIsBackgroundThread
 import org.rust.openapiext.execute
 import org.rust.openapiext.isSuccess
-import java.nio.file.Path
 
 fun RsToolchain.rustc(): Rustc = Rustc(this)
 
@@ -29,30 +28,24 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
         return lines?.let { parseRustcVersion(it) }
     }
 
-    fun getSysroot(projectDirectory: Path): String? {
+    fun getSysroot(): String? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
         val timeoutMs = 10000
-        val output = createBaseCommandLine(
-            "--print", "sysroot",
-            workingDirectory = projectDirectory
-        ).execute(timeoutMs)
+        val output = createBaseCommandLine("--print", "sysroot").execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdout.trim() else null
     }
 
-    fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
-        val sysroot = getSysroot(projectDirectory) ?: return null
+    fun getStdlibFromSysroot(): VirtualFile? {
+        val sysroot = getSysroot() ?: return null
         val fs = LocalFileSystem.getInstance()
         return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust"))
     }
 
-    fun getCfgOptions(projectDirectory: Path): List<String>? {
+    fun getCfgOptions(): List<String>? {
         val timeoutMs = 10000
-        val output = createBaseCommandLine(
-            "--print", "cfg",
-            workingDirectory = projectDirectory
-        ).execute(timeoutMs)
+        val output = createBaseCommandLine("--print", "cfg").execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 

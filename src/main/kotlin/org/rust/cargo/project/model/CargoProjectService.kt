@@ -7,9 +7,11 @@ package org.rust.cargo.project.model
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.util.UserDataHolderEx
@@ -19,13 +21,13 @@ import com.intellij.util.messages.Topic
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
-import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.sdk.RsSdkUtils.findOrCreateSdk
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 
@@ -119,7 +121,7 @@ data class RustcInfo(val sysroot: String, val version: RustcVersion?)
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
     if (!explicitRequest) {
         val alreadyTried = run {
-            val key = "org.rust.cargo.project.model.PROJECT_DISCOVERY"
+            val key = "org.rust.cargo.project.model.TOOLCHAIN_DISCOVERY"
             val properties = PropertiesComponent.getInstance(project)
             val alreadyTried = properties.getBoolean(key)
             properties.setValue(key, true)
@@ -128,7 +130,7 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
         if (alreadyTried) return false
     }
 
-    val toolchain = project.rustSettings.toolchain
+    val toolchain = project.toolchain
     if (toolchain == null || !toolchain.looksLikeValidToolchain()) {
         discoverToolchain(project)
         return true
@@ -141,21 +143,28 @@ fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false)
 }
 
 private fun discoverToolchain(project: Project) {
-    val toolchain = RsToolchain.suggest() ?: return
     invokeLater {
         if (project.isDisposed) return@invokeLater
 
-        val oldToolchain = project.rustSettings.toolchain
+        val oldToolchain = project.toolchain
         if (oldToolchain != null && oldToolchain.looksLikeValidToolchain()) {
             return@invokeLater
         }
 
+        val sdk = findOrCreateSdk() ?: return@invokeLater
         runWriteAction {
-            project.rustSettings.modify { it.toolchain = toolchain }
+            project.rustSettings.modify { it.sdk = sdk }
         }
 
-        val tool = if (toolchain.isRustupAvailable) "rustup" else "Cargo at ${toolchain.presentableLocation}"
-        project.showBalloon("Using $tool", NotificationType.INFORMATION)
+        project.showBalloon(
+            "Using Rust ${sdk.versionString}",
+            NotificationType.INFORMATION,
+            object : DumbAwareAction("Change Project Toolchain") {
+                override fun actionPerformed(e: AnActionEvent) {
+                    project.rustSettings.configureToolchain()
+                }
+            }
+        )
         project.cargoProjects.discoverAndRefresh()
     }
 }

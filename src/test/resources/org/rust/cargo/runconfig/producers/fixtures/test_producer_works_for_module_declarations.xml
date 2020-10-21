@@ -1,6 +1,5 @@
 <configurations>
   <configuration name="Test lib::tests" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="test --package test-package --lib tests" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />

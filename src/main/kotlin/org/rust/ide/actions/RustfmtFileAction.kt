@@ -17,7 +17,6 @@ import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.Rustfmt
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
@@ -45,7 +44,7 @@ class RustfmtFileAction : DumbAwareAction() {
 
     private fun reformatDocumentAndGetText(cargoProject: CargoProject, rustfmt: Rustfmt, document: Document): String? {
         return try {
-            if (checkNeedInstallRustfmt(cargoProject.project, cargoProject.workingDirectory)) return null
+            if (checkNeedInstallRustfmt(cargoProject.project)) return null
             rustfmt.reformatDocumentTextOrNull(cargoProject, document)
         } catch (e: ExecutionException) {
             // Just easy way to know that something wrong happened

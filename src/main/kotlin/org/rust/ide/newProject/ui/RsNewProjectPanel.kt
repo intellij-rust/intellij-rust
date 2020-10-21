@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Disposer
@@ -31,6 +32,7 @@ import org.rust.ide.newProject.RsCustomTemplate
 import org.rust.ide.newProject.RsGenericTemplate
 import org.rust.ide.newProject.RsProjectTemplate
 import org.rust.ide.newProject.state.RsUserTemplatesState
+import org.rust.ide.sdk.toolchain
 import org.rust.openapiext.UiDebouncer
 import javax.swing.DefaultListModel
 import javax.swing.JList
@@ -38,14 +40,15 @@ import javax.swing.ListSelectionModel
 import kotlin.math.min
 
 class RsNewProjectPanel(
+    project: Project?,
     private val showProjectTypeSelection: Boolean,
     private val updateListener: (() -> Unit)? = null
 ) : Disposable {
-
-    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
+    private val rustProjectSettings: RustProjectSettingsPanel =
+        RustProjectSettingsPanel(project, updateListener)
 
     private val cargo: Cargo?
-        get() = rustProjectSettings.data.toolchain?.cargo()
+        get() = rustProjectSettings.sdk?.toolchain?.cargo()
 
     private val defaultTemplates: List<RsProjectTemplate> = listOf(
         RsGenericTemplate.CargoBinaryTemplate,
@@ -146,13 +149,13 @@ class RsNewProjectPanel(
 
     private val updateDebouncer = UiDebouncer(this)
 
-    val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.data, selectedTemplate)
+    val data: ConfigurationData get() = ConfigurationData(rustProjectSettings.sdk, selectedTemplate)
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            titledRow("Project template") {
+            titledRow("Project Template") {
                 subRowIndent = 0
                 row { templateToolbar.createPanel()(growX) }
                 row { downloadCargoGenerateLink() }
@@ -192,7 +195,7 @@ class RsNewProjectPanel(
 
     @Throws(ConfigurationException::class)
     fun validateSettings() {
-        rustProjectSettings.validateSettings()
+        rustProjectSettings.validateSettings(sdkRequired = true)
 
         if (needInstallCargoGenerate) {
             throw ConfigurationException("cargo-generate is needed to create a project from a custom template")

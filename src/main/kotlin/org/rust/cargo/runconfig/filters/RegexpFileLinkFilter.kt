@@ -13,7 +13,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.rustSettings
+import org.rust.cargo.project.settings.toolchain
 import java.nio.file.Paths
 
 /**
@@ -116,7 +116,7 @@ open class RegexpFileLinkFilter(
     }
 
     private fun getSysroot(): String? = project.cargoProjects.allProjects.firstOrNull()?.rustcInfo?.sysroot
-    private fun getCargoRoot(): String = project.rustSettings.toolchain?.location?.parent.toString()
+    private fun getCargoRoot(): String = project.toolchain?.location?.parent.toString()
 
     sealed class ResolvedPath(val file: VirtualFile) {
         class Workspace(file: VirtualFile) : ResolvedPath(file)

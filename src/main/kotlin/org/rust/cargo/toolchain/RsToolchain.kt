@@ -11,11 +11,11 @@ import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Rustc
+import org.rust.stdext.isExecutable
 import java.io.File
-import java.nio.file.Files
 import java.nio.file.Path
 
-open class RsToolchain(val location: Path) {
+open class RsToolchain(val location: Path, val name: String?) {
     val presentableLocation: String = pathToExecutable(Cargo.NAME).toString()
 
     fun looksLikeValidToolchain(): Boolean = hasExecutable(Cargo.NAME) && hasExecutable(Rustc.NAME)
@@ -39,9 +39,9 @@ open class RsToolchain(val location: Path) {
         return cargoBinPath.resolve(exeName).toAbsolutePath()
     }
 
-    fun hasExecutable(exec: String): Boolean = Files.isExecutable(pathToExecutable(exec))
+    fun hasExecutable(exec: String): Boolean = pathToExecutable(exec).isExecutable()
 
-    fun hasCargoExecutable(exec: String): Boolean = Files.isExecutable(pathToCargoExecutable(exec))
+    fun hasCargoExecutable(exec: String): Boolean = pathToCargoExecutable(exec).isExecutable()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -62,64 +62,7 @@ open class RsToolchain(val location: Path) {
 
 
     companion object {
-        val MIN_SUPPORTED_TOOLCHAIN = SemVer.parseFromText("1.32.0")!!
-
-        fun suggest(): RsToolchain? = Suggestions.all().mapNotNull {
-            val candidate = RsToolchain(it.toPath().toAbsolutePath())
-            if (candidate.looksLikeValidToolchain()) candidate else null
-        }.firstOrNull()
-    }
-}
-
-private object Suggestions {
-    fun all() = sequenceOf(
-        fromRustup(),
-        fromPath(),
-        forMac(),
-        forUnix(),
-        forWindows()
-    ).flatten()
-
-    private fun fromRustup(): Sequence<File> {
-        val file = File(FileUtil.expandUserHome("~/.cargo/bin"))
-        return if (file.isDirectory) {
-            sequenceOf(file)
-        } else {
-            emptySequence()
-        }
-    }
-
-    private fun fromPath(): Sequence<File> = System.getenv("PATH").orEmpty()
-        .split(File.pathSeparator)
-        .asSequence()
-        .filter { !it.isEmpty() }
-        .map(::File)
-        .filter { it.isDirectory }
-
-    private fun forUnix(): Sequence<File> {
-        if (!SystemInfo.isUnix) return emptySequence()
-
-        return sequenceOf(File("/usr/local/bin"))
-    }
-
-    private fun forMac(): Sequence<File> {
-        if (!SystemInfo.isMac) return emptySequence()
-
-        return sequenceOf(File("/usr/local/Cellar/rust/bin"))
-    }
-
-    private fun forWindows(): Sequence<File> {
-        if (!SystemInfo.isWindows) return emptySequence()
-        val fromHome = File(System.getProperty("user.home") ?: "", ".cargo/bin")
-
-        val programFiles = File(System.getenv("ProgramFiles") ?: "")
-        val fromProgramFiles = if (!programFiles.exists() || !programFiles.isDirectory)
-            emptySequence()
-        else
-            programFiles.listFiles { file -> file.isDirectory }.asSequence()
-                .filter { it.nameWithoutExtension.toLowerCase().startsWith("rust") }
-                .map { File(it, "bin") }
-
-        return sequenceOf(fromHome) + fromProgramFiles
+        @JvmField
+        val MIN_SUPPORTED_TOOLCHAIN: SemVer = SemVer.parseFromText("1.32.0")!!
     }
 }

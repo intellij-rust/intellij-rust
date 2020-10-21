@@ -8,7 +8,6 @@ package org.rust.cargo.runconfig.producers
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.toolchain.BacktraceMode
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.lang.core.psi.RsFile
 
 class ExecutableRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
@@ -52,7 +51,6 @@ class ExecutableRunConfigurationProducerTest : RunConfigurationProducerTestBase(
         }
 
         modifyTemplateConfiguration {
-            channel = RustChannel.NIGHTLY
             allFeatures = true
             emulateTerminal = true
             backtrace = BacktraceMode.FULL

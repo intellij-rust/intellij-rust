@@ -1,6 +1,5 @@
 <configurations>
   <configuration name="Benches in 'benches'" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="bench --package test-package --bench foo &quot;&quot;" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />

@@ -18,8 +18,8 @@ const val XML_FORMAT_VERSION: Int = 2
 
 const val VERSION: String = "version"
 const val TOOLCHAIN_HOME_DIRECTORY: String = "toolchainHomeDirectory"
+const val SDK_KEY: String = "sdkKey"
 const val AUTO_UPDATE_ENABLED: String = "autoUpdateEnabled"
-const val EXPLICIT_PATH_TO_STDLIB: String = "explicitPathToStdlib"
 const val EXTERNAL_LINTER: String = "externalLinter"
 const val RUN_EXTERNAL_LINTER_ON_THE_FLY: String = "runExternalLinterOnTheFly"
 const val EXTERNAL_LINTER_ARGUMENTS: String = "externalLinterArguments"

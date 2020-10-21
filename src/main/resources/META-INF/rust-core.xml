@@ -12,6 +12,11 @@
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>
         <applicationService serviceImplementation="org.rust.ide.newProject.state.RsUserTemplatesState"/>
 
+        <!-- SDK -->
+        <sdkType implementation="org.rust.ide.sdk.RsSdkType"/>
+        <projectService serviceImplementation="org.rust.cargo.project.configurable.RsConfigurableToolchainList"/>
+        <backgroundPostStartupActivity implementation="org.rust.ide.sdk.RsSdkUpdater"/>
+
         <!-- File-type Factory -->
 
         <fileType name="Rust"
@@ -1019,9 +1024,22 @@
 
     </extensions>
 
+    <extensions defaultExtensionNs="org.rust">
+        <!-- SDK Flavors -->
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.RustupSdkFlavor"/>
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.RustupToolchainSdkFlavor"/>
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.SystemPathSdkFlavor"/>
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.UnixSdkFlavor"/>
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.MacSdkFlavor"/>
+        <sdkFlavor implementation="org.rust.ide.sdk.flavors.WinSdkFlavor"/>
+    </extensions>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
+                        dynamic="true"/>
+        <extensionPoint qualifiedName="org.rust.sdkFlavor"
+                        interface="org.rust.ide.sdk.flavors.RsSdkFlavor"
                         dynamic="true"/>
     </extensionPoints>
 

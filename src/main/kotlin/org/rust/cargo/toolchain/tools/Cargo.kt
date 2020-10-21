@@ -35,7 +35,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.find
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
@@ -309,7 +308,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         }
 
         val useClippy = settings.externalLinter == ExternalLinter.CLIPPY
-            && !checkNeedInstallClippy(project, cargoProjectDirectory)
+            && !checkNeedInstallClippy(project)
         val checkCommand = if (useClippy) "clippy" else "check"
         return CargoCommandLine(checkCommand, cargoProjectDirectory, arguments)
             .execute(project, owner, ignoreExitCode = true)
@@ -324,8 +323,8 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
         with(patchArgs(commandLine, colors)) {
             val parameters = buildList<String> {
-                if (channel != RustChannel.DEFAULT) {
-                    add("+$channel")
+                if (toolchain.name != null) {
+                    add("+${toolchain.name}")
                 }
                 if (project.rustSettings.useOffline) {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory)

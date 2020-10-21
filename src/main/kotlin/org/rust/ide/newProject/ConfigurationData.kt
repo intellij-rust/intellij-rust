@@ -5,9 +5,9 @@
 
 package org.rust.ide.newProject
 
-import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
+import com.intellij.openapi.projectRoots.Sdk
 
 data class ConfigurationData(
-    val settings: RustProjectSettingsPanel.Data,
+    val sdk: Sdk?,
     val template: RsProjectTemplate
 )

@@ -5,7 +5,11 @@
 
 package org.rust.cargo
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -15,6 +19,8 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
+import org.rust.ide.sdk.RsSdkUtils.findOrCreateSdk
+import org.rust.ide.sdk.toolchain
 import java.nio.file.Paths
 
 // TODO: use it in [org.rust.WithRustup]
@@ -24,8 +30,9 @@ open class RustupTestFixture(
     private var project: Project
 ) : BaseFixture() {
 
-    val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
-    val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
+    private val sdk: Sdk? by lazy { findOrCreateSdk() }
+    val toolchain: RsToolchain? by lazy { sdk?.toolchain }
+    val rustup: Rustup? by lazy { toolchain?.rustup() }
     val stdlib: VirtualFile? by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 
     open val skipTestReason: String?
@@ -39,8 +46,14 @@ open class RustupTestFixture(
         super.setUp()
         stdlib?.let { VfsRootAccess.allowRootAccess(testRootDisposable, it.path) }
         addCargoHomeToAllowedRoots()
-        if (toolchain != null) {
-            project.rustSettings.modifyTemporary(testRootDisposable) { it.toolchain = toolchain }
+        val sdk = sdk
+        if (sdk != null) {
+            project.rustSettings.modifyTemporary(testRootDisposable) { it.sdk = sdk }
+            Disposer.register(testRootDisposable) {
+                runWriteAction {
+                    ProjectJdkTable.getInstance().removeJdk(sdk)
+                }
+            }
         }
     }
 

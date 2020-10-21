@@ -11,6 +11,8 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
@@ -23,6 +25,9 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.StandardLibrary
 import org.rust.cargo.toolchain.tools.isRustupAvailable
+import org.rust.ide.sdk.RsSdkAdditionalData
+import org.rust.ide.sdk.RsSdkType
+import org.rust.ide.sdk.key
 import org.rust.lang.core.psi.isRustFile
 
 /**
@@ -47,6 +52,27 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
                 override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
                     updateAllNotifications()
+                }
+            })
+
+            subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
+                override fun jdkRemoved(jdk: Sdk) {
+                    if (jdk.sdkType is RsSdkType) {
+                        updateAllNotifications()
+                    }
+                }
+
+                override fun jdkAdded(jdk: Sdk) {}
+                override fun jdkNameChanged(jdk: Sdk, previousName: String) {}
+            })
+
+            subscribe(RsSdkAdditionalData.RUST_ADDITIONAL_DATA_TOPIC, object : RsSdkAdditionalData.Listener {
+                override fun sdkAdditionalDataChanged(sdk: Sdk) {
+                    if (sdk.sdkType !is RsSdkType) return
+                    val projectSdk = project.rustSettings.sdk ?: return
+                    if (sdk.key == projectSdk.key) {
+                        updateAllNotifications()
+                    }
                 }
             })
         }
@@ -85,7 +111,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createBadToolchainPanel(file: VirtualFile): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_RUST_TOOLCHAIN).apply {
-            setText("No Rust toolchain configured")
+            text = "No Rust toolchain configured"
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
             }
@@ -97,12 +123,13 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createLibraryAttachingPanel(file: VirtualFile): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
-            setText("Can not attach stdlib sources automatically without rustup.")
+            text = "Can not attach stdlib sources automatically without rustup."
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
                 if (StandardLibrary.fromFile(stdlib) != null) {
-                    project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
+                    val data = project.rustSettings.sdk?.sdkAdditionalData as? RsSdkAdditionalData
+                    data?.explicitPathToStdlib = stdlib.path
                 } else {
                     project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",

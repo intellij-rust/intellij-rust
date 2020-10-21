@@ -1,6 +1,5 @@
 <configurations>
   <configuration name="Run hello" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="run --package test-package --bin hello" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />

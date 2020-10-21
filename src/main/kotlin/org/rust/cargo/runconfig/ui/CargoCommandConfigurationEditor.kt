@@ -20,17 +20,12 @@ import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.BacktraceMode
-import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
-import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class CargoCommandConfigurationEditor(project: Project)
     : RsCommandConfigurationEditor<CargoCommandConfiguration>(project) {
@@ -44,12 +39,6 @@ class CargoCommandConfigurationEditor(project: Project)
 
     private val backtraceMode = ComboBox<BacktraceMode>().apply {
         BacktraceMode.values()
-            .sortedBy { it.index }
-            .forEach { addItem(it) }
-    }
-    private val channelLabel = Label("C&hannel:")
-    private val channel = ComboBox<RustChannel>().apply {
-        RustChannel.values()
             .sortedBy { it.index }
             .forEach { addItem(it) }
     }
@@ -77,7 +66,7 @@ class CargoCommandConfigurationEditor(project: Project)
     private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
-        channel.selectedIndex = configuration.channel.index
+        super.resetEditorFrom(configuration)
         command.text = configuration.command
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
@@ -95,29 +84,18 @@ class CargoCommandConfigurationEditor(project: Project)
 
     @Throws(ConfigurationException::class)
     override fun applyEditorTo(configuration: CargoCommandConfiguration) {
-        val configChannel = RustChannel.fromIndex(channel.selectedIndex)
-
-        configuration.channel = configChannel
+        super.applyEditorTo(configuration)
         configuration.command = command.text
         configuration.allFeatures = allFeatures.isSelected
         configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
         configuration.workingDirectory = currentWorkingDirectory
         configuration.env = environmentVariables.envData
-
-        val rustupAvailable = project.toolchain?.isRustupAvailable ?: false
-        channel.isEnabled = rustupAvailable || configChannel != RustChannel.DEFAULT
-        if (!rustupAvailable && configChannel != RustChannel.DEFAULT) {
-            throw ConfigurationException("Channel cannot be set explicitly because rustup is not available")
-        }
     }
 
     override fun createEditor(): JComponent = panel {
         labeledRow("&Command:", command) {
             command(CCFlags.pushX, CCFlags.growX)
-            channelLabel.labelFor = channel
-            channelLabel()
-            channel()
         }
 
         row { allFeatures() }
@@ -127,6 +105,7 @@ class CargoCommandConfigurationEditor(project: Project)
         }
 
         row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
+        row(sdkList.label) { sdkList.apply { makeWide() }() }
         row(workingDirectory.label) {
             workingDirectory.apply { makeWide() }()
             if (project.cargoProjects.allProjects.size > 1) {
@@ -140,9 +119,5 @@ class CargoCommandConfigurationEditor(project: Project)
         val label = Label(labelText)
         label.labelFor = component
         row(label) { init() }
-    }
-
-    private fun JPanel.makeWide() {
-        preferredSize = Dimension(1000, height)
     }
 }

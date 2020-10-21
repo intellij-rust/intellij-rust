@@ -6,138 +6,136 @@
 package org.rust.cargo.project.settings.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.Task
-import com.intellij.ui.JBColor
-import com.intellij.ui.components.Link
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.SdkComboBox
+import com.intellij.openapi.roots.ui.configuration.SdkComboBoxModel.Companion.createSdkComboBoxModel
+import com.intellij.openapi.roots.ui.configuration.SdkListItem
+import com.intellij.ui.ComboboxWithBrowseButton
 import com.intellij.ui.layout.LayoutBuilder
-import org.rust.cargo.toolchain.RsToolchain
-import org.rust.cargo.toolchain.tools.Rustup
-import org.rust.cargo.toolchain.tools.rustc
-import org.rust.cargo.toolchain.tools.rustup
-import org.rust.openapiext.UiDebouncer
-import org.rust.openapiext.pathToDirectoryTextField
-import java.awt.BorderLayout
-import java.nio.file.Path
-import java.nio.file.Paths
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
+import org.rust.cargo.project.configurable.RsConfigurableToolchainList
+import org.rust.ide.sdk.RsSdkComparator
+import org.rust.ide.sdk.RsSdkDetailsDialog
+import org.rust.ide.sdk.RsSdkType
+import org.rust.ide.sdk.toolchain
+import java.awt.event.ItemEvent
 
 class RustProjectSettingsPanel(
-    private val cargoProjectDir: Path = Paths.get("."),
+    private val project: Project? = null,
     private val updateListener: (() -> Unit)? = null
 ) : Disposable {
-    data class Data(
-        val toolchain: RsToolchain?,
-        val explicitPathToStdlib: String?
-    )
+    private val toolchainList = RsConfigurableToolchainList.getInstance(project)
 
-    override fun dispose() {}
-
-    private val versionUpdateDebouncer = UiDebouncer(this)
-
-    private val pathToToolchainField = pathToDirectoryTextField(this,
-        "Select directory with cargo binary") { update() }
-
-    private val pathToStdlibField = pathToDirectoryTextField(this,
-        "Select directory with standard library source code")
-
-    private var fetchedSysroot: String? = null
-
-    private val downloadStdlibLink = Link("Download via rustup", action = {
-        val rustup = RsToolchain(Paths.get(pathToToolchainField.text)).rustup
-        if (rustup != null) {
-            object : Task.Backgroundable(null, "Downloading Rust standard library") {
-                override fun shouldStartInBackground(): Boolean = false
-                override fun onSuccess() = update()
-
-                override fun run(indicator: ProgressIndicator) {
-                    indicator.isIndeterminate = true
-                    rustup.downloadStdlib()
+    private val sdkComboBox: SdkComboBox = run {
+        val model = createSdkComboBoxModel(
+            effectiveProject,
+            toolchainList.model,
+            sdkTypeFilter = { it is RsSdkType }
+        )
+        SdkComboBox(model).apply {
+            addItemListener { event ->
+                if (event.stateChange == ItemEvent.SELECTED) {
+                    onSdkSelected()
                 }
-            }.queue()
+            }
         }
-    }).apply { isVisible = false }
+    }
 
-    private val toolchainVersion = JLabel()
+    private val effectiveProject: Project
+        get() = project ?: ProjectManager.getInstance().defaultProject
 
-    var data: Data
-        get() {
-            val toolchain = RsToolchain(Paths.get(pathToToolchainField.text))
-            return Data(
-                toolchain = toolchain,
-                explicitPathToStdlib = pathToStdlibField.text.blankToNull()
-                    ?.takeIf { toolchain.rustup == null && it != fetchedSysroot }
-            )
-        }
+    var sdk: Sdk?
+        get() = sdkComboBox.getSelectedSdk()
         set(value) {
-            // https://youtrack.jetbrains.com/issue/KT-16367
-            pathToToolchainField.setText(value.toolchain?.location?.toString())
-            pathToStdlibField.text = value.explicitPathToStdlib ?: ""
-            update()
+            if (value != null) {
+                sdkComboBox.setSelectedSdk(value)
+            } else {
+                sdkComboBox.selectedItem = sdkComboBox.showNoneSdkItem()
+            }
         }
+
+    init {
+        preselectSdk()
+    }
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
-        data = Data(
-            toolchain = RsToolchain.suggest(),
-            explicitPathToStdlib = null
-        )
-
-        row("Toolchain location:") { wrapComponent(pathToToolchainField)(growX, pushX) }
-        row("Toolchain version:") { toolchainVersion() }
-        row("Standard library:") { wrapComponent(pathToStdlibField)(growX, pushX) }
-        row("") { downloadStdlibLink() }
+        val comboBox = ComboboxWithBrowseButton(sdkComboBox).apply {
+            addActionListener { onShowAllSelected() }
+        }
+        row("Project Toolchain:") { comboBox() }
     }
 
     @Throws(ConfigurationException::class)
-    fun validateSettings() {
-        val toolchain = data.toolchain ?: return
-        if (!toolchain.looksLikeValidToolchain()) {
-            throw ConfigurationException("Invalid toolchain location: can't find Cargo in ${toolchain.location}")
+    fun validateSettings(sdkRequired: Boolean) {
+        val sdk = sdk
+        val toolchain = sdk?.toolchain
+        when {
+            sdk == null && sdkRequired ->
+                throw ConfigurationException("No toolchain specified")
+            sdk == null ->
+                return
+            toolchain == null ->
+                throw ConfigurationException("Invalid toolchain")
+            !toolchain.looksLikeValidToolchain() ->
+                throw ConfigurationException("Invalid toolchain location: can't find Cargo in ${toolchain.location}")
         }
     }
 
-    private fun update() {
-        val pathToToolchain = pathToToolchainField.text
-        versionUpdateDebouncer.run(
-            onPooledThread = {
-                val toolchain = RsToolchain(Paths.get(pathToToolchain))
-                val rustc = toolchain.rustc()
-                val rustup = toolchain.rustup
-                val rustcVersion = rustc.queryVersion()?.semver
-                val stdlibLocation = rustc.getStdlibFromSysroot(cargoProjectDir)?.presentableUrl
-                Triple(rustcVersion, stdlibLocation, rustup != null)
+    override fun dispose() {
+        toolchainList.disposeModel()
+    }
+
+    private fun buildAllSdksDialog(): RsSdkDetailsDialog =
+        RsSdkDetailsDialog(
+            project,
+            toolchainList,
+            selectedSdkCallback = { selectedSdk ->
+                sdk = selectedSdk ?: sdk
             },
-            onUiThread = { (rustcVersion, stdlibLocation, hasRustup) ->
-                downloadStdlibLink.isVisible = hasRustup && stdlibLocation == null
-
-                pathToStdlibField.isEditable = !hasRustup
-                pathToStdlibField.button.isEnabled = !hasRustup
-                if (stdlibLocation != null && (pathToStdlibField.text.isBlank() || hasRustup)) {
-                    pathToStdlibField.text = stdlibLocation
+            cancelCallback = { reset ->
+                if (reset) {
+                    sdk = sdk
                 }
-                fetchedSysroot = stdlibLocation
-
-                if (rustcVersion == null) {
-                    toolchainVersion.text = "N/A"
-                    toolchainVersion.foreground = JBColor.RED
-                } else {
-                    toolchainVersion.text = rustcVersion.parsedVersion
-                    toolchainVersion.foreground = JBColor.foreground()
-                }
-                updateListener?.invoke()
             }
         )
+
+    private fun onSdkSelected() {
+        updateListener?.invoke()
+
+        // Save SDK from `Detected SDKs` list
+        invokeLater {
+            runWriteAction {
+                try {
+                    toolchainList.model.apply(null, true)
+                } catch (e: ConfigurationException) {
+                    LOG.error(e)
+                }
+            }
+        }
     }
 
-    private val RsToolchain.rustup: Rustup? get() = rustup(cargoProjectDir)
+    private fun onShowAllSelected() {
+        buildAllSdksDialog().show()
+    }
+
+    private fun preselectSdk() {
+        sdkComboBox.reloadModel()
+
+        val model = sdkComboBox.model
+        sdk = (0 until model.size).asSequence()
+            .map { i -> model.getElementAt(i) }
+            .filterIsInstance<SdkListItem.SdkItem>()
+            .map { it.sdk }
+            .sortedWith(RsSdkComparator)
+            .firstOrNull()
+    }
+
+    companion object {
+        private val LOG: Logger = Logger.getInstance(RustProjectSettingsPanel::class.java)
+    }
 }
-
-private fun String.blankToNull(): String? = if (isBlank()) null else this
-
-private fun wrapComponent(component: JComponent): JComponent =
-    JPanel(BorderLayout()).apply {
-        add(component, BorderLayout.NORTH)
-    }

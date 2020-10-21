@@ -11,10 +11,8 @@ import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansion
 import org.rust.cargo.project.settings.impl.RustProjectSettingsServiceImpl
 import org.rust.cargo.project.settings.impl.XML_FORMAT_VERSION
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.cargo.toolchain.RsToolchain
 import org.rust.openapiext.elementFromXmlString
 import org.rust.openapiext.toXmlString
-import java.nio.file.Paths
 
 class RustProjectSettingsServiceTest : LightPlatformTestCase() {
 
@@ -27,13 +25,11 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="autoUpdateEnabled" value="false" />
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
-              <option name="explicitPathToStdlib" value="/stdlib" />
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
               <option name="runExternalLinterOnTheFly" value="true" />
               <option name="runRustfmtOnSave" value="true" />
-              <option name="toolchainHomeDirectory" value="/" />
               <option name="useOffline" value="true" />
               <option name="useRustfmt" value="true" />
               <option name="version" value="2" />
@@ -45,10 +41,8 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(text, actual)
 
         assertEquals(XML_FORMAT_VERSION, service.version)
-        assertEquals(RsToolchain(Paths.get("/")), service.toolchain)
         assertEquals(false, service.autoUpdateEnabled)
         assertEquals(ExternalLinter.CLIPPY, service.externalLinter)
-        assertEquals("/stdlib", service.explicitPathToStdlib)
         assertEquals(true, service.runExternalLinterOnTheFly)
         assertEquals("--no-default-features", service.externalLinterArguments)
         assertEquals(false, service.compileAllTargets)
