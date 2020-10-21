@@ -30,6 +30,7 @@ class RsPartialParsingTestCase : RsParsingTestCaseBase("partial") {
     fun `test macros`() = doTest(true)
     fun `test exprs`() = doTest(true)
     fun `test bounds`() = doTest(true)
+    fun `test paths`() = doTest(true)
 
     override fun checkResult(targetDataName: String, file: PsiFile) {
         check(hasError(file)) {
