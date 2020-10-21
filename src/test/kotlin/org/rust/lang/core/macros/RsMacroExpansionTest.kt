@@ -28,7 +28,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test any rust keyword may be matched as an identifier`() {
-        val keywords = RS_KEYWORDS.types
+        val keywords = RS_KEYWORDS.types.map { it.toString() } +
+            listOf("true", "false")
         doTest("""
             macro_rules! foo {
                 ($ i:ident) => (
@@ -40,7 +41,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     }
 
     fun `test any rust keyword may be used as a metavar name`() {
-        val keywords = TokenSet.andNot(RS_KEYWORDS, tokenSetOf(CRATE)).types
+        val keywords = TokenSet.andNot(RS_KEYWORDS, tokenSetOf(CRATE)).types.map { it.toString() } +
+            listOf("true", "false")
         doTest(keywords.joinToString("\n") {"""
             macro_rules! ${it}1 {
                 ($ $it:ident) => (

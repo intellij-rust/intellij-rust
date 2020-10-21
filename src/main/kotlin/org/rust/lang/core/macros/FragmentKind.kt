@@ -89,6 +89,9 @@ enum class FragmentKind(private val kind: String) {
          * Some tokens that treated as keywords by our lexer,
          * but rustc's macro parser treats them as identifiers
          */
-        private val IDENTIFIER_TOKENS = TokenSet.orSet(tokenSetOf(RsElementTypes.IDENTIFIER), RS_KEYWORDS)
+        private val IDENTIFIER_TOKENS = TokenSet.orSet(
+            tokenSetOf(RsElementTypes.IDENTIFIER, RsElementTypes.BOOL_LITERAL),
+            RS_KEYWORDS
+        )
     }
 }

@@ -346,7 +346,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 11
+        const val EXPANDER_VERSION = 12
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
