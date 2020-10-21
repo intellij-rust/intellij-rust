@@ -28,7 +28,8 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     fun `test any rust keyword may be matched as an identifier`() {
-        val keywords = RS_KEYWORDS.types
+        val keywords = RS_KEYWORDS.types.map { it.toString() } +
+            listOf("true", "false")
         doTest("""
             macro_rules! foo {
                 ($ i:ident) => (
