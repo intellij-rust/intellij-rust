@@ -29,6 +29,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
+import com.intellij.psi.PsiManager
+import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.ui.GuiUtils
 import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
@@ -343,6 +345,7 @@ open class CargoProjectsServiceImpl(
                         directoryIndex.resetIndex()
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
                             .cargoProjectsUpdated(this, projects)
+                        (PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl).incCounter()
                         DaemonCodeAnalyzer.getInstance(project).restart()
                     }
                 }
