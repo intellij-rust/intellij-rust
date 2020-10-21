@@ -12,15 +12,13 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
-    fun `test method availability range`() = expect<IllegalStateException> {
-    checkAvailableInSelectionOnly("""
+    fun `test method availability range`() = checkAvailableInSelectionOnly("""
         struct S;
 
         fn foo(s: S) {
             s.<selection>foo</selection>();
         }
     """)
-    }
 
     fun `test unavailable on resolved function`() = doUnavailableTest("""
         fn foo() {}
