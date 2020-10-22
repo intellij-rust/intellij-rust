@@ -11,23 +11,43 @@ import com.intellij.util.io.DigestUtil
 import com.intellij.util.messages.Topic
 import org.jdom.Element
 
-data class RsSdkAdditionalData(
+open class RsSdkAdditionalData(
     var sdkKey: String = DigestUtil.randomToken(),
     var toolchainName: String? = null,
     var explicitPathToStdlib: String? = null
 ) : SdkAdditionalData {
 
-    fun save(rootElement: Element) {
+    open fun save(rootElement: Element) {
         rootElement.setAttribute(SDK_KEY, sdkKey)
         toolchainName?.let { rootElement.setAttribute(TOOLCHAIN_NAME, it) }
         explicitPathToStdlib?.let { rootElement.setAttribute(STDLIB_PATH, it) }
     }
 
-    fun load(element: Element?) {
+    open fun load(element: Element?) {
         if (element == null) return
         sdkKey = element.getAttributeValue(SDK_KEY)
         toolchainName = element.getAttributeValue(TOOLCHAIN_NAME)
         explicitPathToStdlib = element.getAttributeValue(STDLIB_PATH)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RsSdkAdditionalData
+
+        if (sdkKey != other.sdkKey) return false
+        if (toolchainName != other.toolchainName) return false
+        if (explicitPathToStdlib != other.explicitPathToStdlib) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = sdkKey.hashCode()
+        result = 31 * result + (toolchainName?.hashCode() ?: 0)
+        result = 31 * result + (explicitPathToStdlib?.hashCode() ?: 0)
+        return result
     }
 
     fun interface Listener {
@@ -44,5 +64,8 @@ data class RsSdkAdditionalData(
             "rust sdk additional data changes",
             Listener::class.java
         )
+
+        fun load(element: Element?): RsSdkAdditionalData =
+            RsSdkAdditionalData().apply { load(element) }
     }
 }

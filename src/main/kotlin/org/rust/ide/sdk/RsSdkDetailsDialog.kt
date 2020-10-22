@@ -14,7 +14,9 @@ import com.intellij.openapi.projectRoots.SdkModel
 import com.intellij.openapi.projectRoots.SdkModificator
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.remote.CredentialsTypeUtil.isCredentialsTypeSupportedForLanguage
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListSpeedSearch
@@ -26,6 +28,9 @@ import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.ide.sdk.add.RsAddSdkDialog
+import org.rust.ide.sdk.remote.RsCredentialsContribution
+import org.rust.ide.sdk.remote.RsRemoteSdkAdditionalData
+import org.rust.ide.sdk.remote.RsRemoteSdkUtils.isRemoteSdk
 import org.rust.openapiext.computeWithCancelableProgress
 import org.rust.stdext.toPath
 import java.awt.Dimension
@@ -177,6 +182,21 @@ class RsSdkDetailsDialog(
     private fun editSdk() {
         val currentSdk = editableSelectedSdk ?: return
         val modificator = modificators[currentSdk] ?: return
+
+        if (isRemoteSdk(currentSdk)) {
+            val data = modificator.sdkAdditionalData
+            check(data is RsRemoteSdkAdditionalData)
+            val credentialsType = data.connectionCredentials().remoteConnectionType
+            if (!isCredentialsTypeSupportedForLanguage(credentialsType, RsCredentialsContribution::class.java)) {
+                Messages.showErrorDialog(
+                    project,
+                    "Cannot load ${credentialsType.name} toolchain. Please make sure corresponding plugin is enabled.",
+                    "Failed Loading Toolchain"
+                )
+                return
+            }
+        }
+
         val dialog = RsEditSdkDialog(effectiveProject, modificator) {
             if (isDuplicateSdkName(it, currentSdk)) {
                 "Please specify a unique name for the toolchain"

@@ -9,6 +9,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Comparing
 import org.rust.ide.sdk.flavors.RsSdkFlavor
 import org.rust.ide.sdk.flavors.RustupSdkFlavor
+import org.rust.ide.sdk.remote.RsRemoteSdkUtils.isRemoteSdk
 import java.util.*
 
 object RsSdkComparator : Comparator<Sdk> {
@@ -23,6 +24,12 @@ object RsSdkComparator : Comparator<Sdk> {
         val detected2Weight = if (o2 is RsDetectedSdk) 0 else 1
         if (detected1Weight != detected2Weight) {
             return detected2Weight - detected1Weight
+        }
+
+        val remote1Weight = if (isRemoteSdk(o1)) 0 else 1
+        val remote2Weight = if (isRemoteSdk(o2)) 0 else 1
+        if (remote1Weight != remote2Weight) {
+            return remote2Weight - remote1Weight
         }
 
         val flavor1Weight = if (RsSdkFlavor.getFlavor(o1) is RustupSdkFlavor) 1 else 0
