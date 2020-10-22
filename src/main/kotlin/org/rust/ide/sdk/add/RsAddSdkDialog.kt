@@ -5,6 +5,9 @@
 
 package org.rust.ide.sdk.add
 
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogWrapper
@@ -36,7 +39,11 @@ class RsAddSdkDialog private constructor(
 
     override fun createCenterPanel(): JComponent {
         val mainPanel = JPanel(JBCardLayout())
-        val panels = listOf(RsAddLocalSdkPanel(existingSdks))
+        val panels = RsAddSdkProvider.EP_NAME.extensionList
+            .mapNotNull {
+                it.safeCreatePanel(existingSdks)
+                    .registerIfDisposable()
+            }
         mainPanel.add(SPLITTER_COMPONENT_CARD_PANE, createCardSplitter(panels))
         return mainPanel
     }
@@ -101,7 +108,12 @@ class RsAddSdkDialog private constructor(
         super.dispose()
     }
 
+    private fun <T> T.registerIfDisposable(): T =
+        apply { (this as? Disposable)?.let { Disposer.register(disposable, it) } }
+
     companion object {
+        private val LOG: Logger = logger<RsAddSdkDialog>()
+
         private const val SPLITTER_COMPONENT_CARD_PANE: String = "Splitter"
         private const val REGULAR_CARD_PANE: String = "Regular"
 
@@ -111,6 +123,13 @@ class RsAddSdkDialog private constructor(
 
             val sdk = if (dialog.showAndGet()) dialog.getOrCreateSdk() else null
             sdkAddedCallback(sdk)
+        }
+
+        private fun RsAddSdkProvider.safeCreatePanel(existingSdks: List<Sdk>): RsAddSdkPanel? = try {
+            createPanel(existingSdks)
+        } catch (e: NoClassDefFoundError) {
+            LOG.info(e)
+            null
         }
     }
 }
