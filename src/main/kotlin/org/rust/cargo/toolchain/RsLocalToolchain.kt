@@ -5,8 +5,11 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import org.rust.cargo.runconfig.RsKillableColoredProcessHandler
 import org.rust.ide.sdk.remote.RsRemoteSdkUtils.isCustomSdkHomePath
 import org.rust.stdext.toPath
 import java.nio.file.Path
@@ -19,6 +22,12 @@ object RsLocalToolchainProvider : RsToolchainProvider {
 }
 
 open class RsLocalToolchain(location: Path, name: String?) : RsToolchain(location, name) {
+
+    override fun <T : GeneralCommandLine> patchCommandLine(commandLine: T): T = commandLine
+
+    override fun startProcess(commandLine: GeneralCommandLine): ProcessHandler {
+        return RsKillableColoredProcessHandler(commandLine)
+    }
 
     override fun expandUserHome(remotePath: String): String = FileUtil.expandUserHome(remotePath)
 

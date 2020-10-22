@@ -5,11 +5,20 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.configuration.EnvironmentVariablesData
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.exists
+import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.Rustc
+import org.rust.openapiext.GeneralCommandLine
+import org.rust.openapiext.withWorkDirectory
 import org.rust.stdext.isExecutable
 import org.rust.stdext.toPath
 import java.nio.file.Path
@@ -31,6 +40,13 @@ abstract class RsToolchain(val location: Path, val name: String?) {
     val presentableLocation: String = pathToExecutable(Cargo.NAME).toString()
 
     fun looksLikeValidToolchain(): Boolean = hasExecutable(Cargo.NAME) && hasExecutable(Rustc.NAME)
+
+    /**
+     * Patches passed command line to make it runnable in remote context.
+     */
+    abstract fun <T : GeneralCommandLine> patchCommandLine(commandLine: T): T
+
+    abstract fun startProcess(commandLine: GeneralCommandLine): ProcessHandler
 
     abstract fun expandUserHome(remotePath: String): String
 
@@ -76,6 +92,41 @@ abstract class RsToolchain(val location: Path, val name: String?) {
         return "RsToolchain(location=$location)"
     }
 
+    fun createGeneralCommandLine(
+        executable: Path,
+        workingDirectory: Path,
+        backtraceMode: BacktraceMode,
+        environmentVariables: EnvironmentVariablesData,
+        parameters: List<String>,
+        emulateTerminal: Boolean,
+        http: HttpConfigurable = HttpConfigurable.getInstance()
+    ): GeneralCommandLine {
+        var commandLine = GeneralCommandLine(executable)
+            .withWorkDirectory(workingDirectory)
+            .withEnvironment("TERM", "ansi")
+            .withParameters(parameters)
+            .withCharset(Charsets.UTF_8)
+            .withRedirectErrorStream(true)
+        withProxyIfNeeded(commandLine, http)
+
+        when (backtraceMode) {
+            BacktraceMode.SHORT -> commandLine.withEnvironment(CargoConstants.RUST_BACKTRACE_ENV_VAR, "short")
+            BacktraceMode.FULL -> commandLine.withEnvironment(CargoConstants.RUST_BACKTRACE_ENV_VAR, "full")
+            BacktraceMode.NO -> Unit
+        }
+
+        environmentVariables.configureCommandLine(commandLine, true)
+        commandLine = patchCommandLine(commandLine)
+
+        if (emulateTerminal) {
+            if (!SystemInfo.isWindows) {
+                commandLine.environment["TERM"] = "xterm-256color"
+            }
+            commandLine = PtyCommandLine(commandLine).withInitialColumns(PtyCommandLine.MAX_COLUMNS)
+        }
+
+        return commandLine
+    }
 
     companion object {
         @JvmField

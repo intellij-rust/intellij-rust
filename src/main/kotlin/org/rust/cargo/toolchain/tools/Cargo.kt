@@ -339,7 +339,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
                 addAll(additionalArguments)
             }
             val rustcExecutable = toolchain.rustc().executable.toString()
-            createGeneralCommandLine(
+            toolchain.createGeneralCommandLine(
                 executable,
                 workingDirectory,
                 backtraceMode,

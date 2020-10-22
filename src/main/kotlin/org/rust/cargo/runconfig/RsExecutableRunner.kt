@@ -22,7 +22,6 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEna
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
-import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
 import java.nio.file.Path
@@ -74,7 +73,7 @@ abstract class RsExecutableRunner(
 
         val runCargoCommand = state.prepareCommandLine()
         val (_, executableArguments) = parseArgs(runCargoCommand.command, runCargoCommand.additionalArguments)
-        val runExecutable = createGeneralCommandLine(
+        val runExecutable = state.toolchain.createGeneralCommandLine(
             binaries.single(),
             runCargoCommand.workingDirectory,
             runCargoCommand.backtraceMode,
@@ -103,7 +102,7 @@ abstract class RsExecutableRunner(
         extensionManager.patchCommandLine(runConfiguration, environment, commandLine, context)
         extensionManager.patchCommandLineState(runConfiguration, environment, state, context)
 
-        val handler = RsKillableColoredProcessHandler(commandLine)
+        val handler = state.toolchain.startProcess(commandLine)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
 
         extensionManager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
