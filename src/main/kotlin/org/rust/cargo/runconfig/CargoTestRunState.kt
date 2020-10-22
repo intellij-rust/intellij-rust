@@ -9,7 +9,6 @@ import com.google.common.annotations.VisibleForTesting
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExecutionResult
 import com.intellij.execution.Executor
-import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.testframework.autotest.ToggleAutoTestAction
@@ -34,7 +33,7 @@ class CargoTestRunState(
     }
 
     init {
-        consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RunConfiguration, environment.executor)
+        consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RsCommandConfiguration, environment.executor)
         commandLinePatches.add(cargoTestPatch)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }

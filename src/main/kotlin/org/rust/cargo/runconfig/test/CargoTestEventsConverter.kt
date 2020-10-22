@@ -24,6 +24,7 @@ import org.rust.cargo.project.model.impl.allPackages
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.test.CargoTestEventsConverter.State.*
+import org.rust.cargo.toolchain.RsToolchain
 import org.rust.stdext.removeLast
 import java.io.File
 import java.io.StringReader
@@ -32,7 +33,8 @@ private typealias NodeId = String
 
 class CargoTestEventsConverter(
     testFrameworkName: String,
-    consoleProperties: TestConsoleProperties
+    consoleProperties: TestConsoleProperties,
+    private val toolchain: RsToolchain?
 ) : OutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties) {
     private val project: Project = consoleProperties.project
     private var converterState: State = START_MESSAGE
@@ -89,7 +91,7 @@ class CargoTestEventsConverter(
             EXECUTABLE_NAME -> {
                 val executableName = text
                     .trim()
-                    .substringAfterLast(File.separator)
+                    .substringAfterLast(toolchain?.fileSeparator ?: File.separator)
                     .substringBeforeLast(".")
                     .takeIf { it.isNotEmpty() }
                     ?: error("Can't parse the executable name")
