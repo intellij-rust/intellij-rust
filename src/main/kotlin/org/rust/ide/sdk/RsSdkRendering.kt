@@ -29,7 +29,7 @@ object RsSdkRenderingUtils {
      */
     fun name(sdk: Sdk, name: String, version: String? = sdk.versionString): SdkName {
         val modifier = when {
-            RsSdkUtils.isInvalid(sdk) || hasInvalidRemoteCredentials(sdk) -> "invalid"
+            RsSdkValidator.isInvalid(sdk) || hasInvalidRemoteCredentials(sdk) -> "invalid"
             isIncompleteRemote(sdk) -> "incomplete"
             else -> null
         }
@@ -55,7 +55,7 @@ object RsSdkRenderingUtils {
     fun icon(sdk: Sdk): Icon? {
         val icon = (sdk.sdkType as? SdkType)?.icon ?: return null
         return when {
-            RsSdkUtils.isInvalid(sdk)
+            RsSdkValidator.isInvalid(sdk)
                 || isIncompleteRemote(sdk)
                 || hasInvalidRemoteCredentials(sdk) -> wrapIconWithWarningDecorator(icon)
             sdk is RsDetectedSdk -> IconLoader.getTransparentIcon(icon)

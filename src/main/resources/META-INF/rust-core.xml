@@ -1038,6 +1038,10 @@
 
         <editSdkProvider implementation="org.rust.ide.sdk.edit.RsEditLocalSdkProvider"/>
 
+        <!-- SDK Validators -->
+
+        <sdkValidator implementation="org.rust.ide.sdk.RsLocalSdkValidator"/>
+
         <!-- SDK Flavors -->
 
         <sdkFlavor implementation="org.rust.ide.sdk.flavors.RustupSdkFlavor"/>
@@ -1046,7 +1050,6 @@
         <sdkFlavor implementation="org.rust.ide.sdk.flavors.UnixSdkFlavor"/>
         <sdkFlavor implementation="org.rust.ide.sdk.flavors.MacSdkFlavor"/>
         <sdkFlavor implementation="org.rust.ide.sdk.flavors.WinSdkFlavor"/>
-
 
     </extensions>
 
@@ -1062,6 +1065,9 @@
                         dynamic="true"/>
         <extensionPoint qualifiedName="org.rust.editSdkProvider"
                         interface="org.rust.ide.sdk.edit.RsEditSdkProvider"
+                        dynamic="true"/>
+        <extensionPoint qualifiedName="org.rust.sdkValidator"
+                        interface="org.rust.ide.sdk.RsSdkValidator"
                         dynamic="true"/>
         <extensionPoint qualifiedName="org.rust.sdkFlavor"
                         interface="org.rust.ide.sdk.flavors.RsSdkFlavor"

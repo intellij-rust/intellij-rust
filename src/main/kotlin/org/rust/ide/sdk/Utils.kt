@@ -45,11 +45,6 @@ private val Sdk.rustData: RsSdkAdditionalData?
 
 object RsSdkUtils {
 
-    fun isInvalid(sdk: Sdk): Boolean {
-        val toolchain = sdk.homeDirectory
-        return toolchain == null || !toolchain.exists()
-    }
-
     fun getAllRustSdks(): List<Sdk> = ProjectJdkTable.getInstance().getSdksOfType(RsSdkType.getInstance())
 
     fun findSdkByKey(key: String): Sdk? = getAllRustSdks().find { it.key == key }
