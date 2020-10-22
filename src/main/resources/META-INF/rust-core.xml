@@ -17,6 +17,12 @@
         <projectService serviceImplementation="org.rust.cargo.project.configurable.RsConfigurableToolchainList"/>
         <backgroundPostStartupActivity implementation="org.rust.ide.sdk.RsSdkUpdater"/>
 
+        <!-- Widgets -->
+
+        <statusBarWidgetFactory id="rustToolchainWidget"
+                                implementation="org.rust.ide.sdk.RsSdkStatusBarWidgetFactory"
+                                order="after codeStyleWidget, before gitWidget, before hgWidget, before notificationsWidget"/>
+
         <!-- File-type Factory -->
 
         <fileType name="Rust"
@@ -1157,6 +1163,10 @@
                 class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue">
             <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ReportProblem"/>
         </action>
+
+        <action id="Rust.SwitchSdkAction"
+                class="org.rust.ide.sdk.RsSwitchSdkAction">
+       </action>
 
         <!-- Cargo-->
 
