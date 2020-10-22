@@ -47,7 +47,7 @@ class LcovCoverageReport {
         fun readLcov(
             lcovFile: File,
             localBaseDir: String? = null,
-            toLocalPathConverter: (String) -> String = { it }
+            toLocalPathConverter: (String) -> String
         ): LcovCoverageReport {
             val report = LcovCoverageReport()
             var currentFileName: String? = null

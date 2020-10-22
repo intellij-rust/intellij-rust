@@ -11,7 +11,6 @@ import com.intellij.coverage.view.CoverageViewExtension
 import com.intellij.coverage.view.CoverageViewManager
 import com.intellij.coverage.view.DirectoryCoverageViewExtension
 import com.intellij.coverage.view.PercentageCoverageColumnInfo
-import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -210,6 +209,7 @@ class RsCoverageEngine : CoverageEngine() {
             coverageDataFileProvider,
             covRunner,
             configuration.workingDirectory?.toString(),
+            configuration.toolchain,
             config.coverageProcess
         )
     }

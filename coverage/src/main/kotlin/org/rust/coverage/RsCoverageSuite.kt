@@ -12,13 +12,16 @@ import com.intellij.coverage.CoverageRunner
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.project.Project
 import org.jdom.Element
+import org.rust.cargo.toolchain.RsToolchain
 
 class RsCoverageSuite : BaseCoverageSuite {
     var contextFilePath: String? private set
+    var toolchain: RsToolchain? private set
     val coverageProcess: ProcessHandler?
 
     constructor() : super() {
         contextFilePath = null
+        toolchain = null
         coverageProcess = null
     }
 
@@ -28,9 +31,11 @@ class RsCoverageSuite : BaseCoverageSuite {
         fileProvider: CoverageFileProvider,
         coverageRunner: CoverageRunner,
         contextFilePath: String?,
+        toolchain: RsToolchain?,
         coverageProcess: ProcessHandler?
     ) : super(name, fileProvider, System.currentTimeMillis(), false, false, false, coverageRunner, project) {
         this.contextFilePath = contextFilePath
+        this.toolchain = toolchain
         this.coverageProcess = coverageProcess
     }
 
