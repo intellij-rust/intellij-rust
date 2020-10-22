@@ -382,13 +382,15 @@ SelfParameter ::= OuterAttr* [ '&' Lifetime? ] mut? self TypeAscription? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+private SelfParameter_with_comma ::= SelfParameter (',' | &')') { pin = 1 }
+
 fake ValueParameterList ::= SelfParameter? ValueParameter* Variadic? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
+FnParameters          ::= '(' !',' SelfParameter_with_comma?
                                    FnParameter_with_recover*
                           ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'

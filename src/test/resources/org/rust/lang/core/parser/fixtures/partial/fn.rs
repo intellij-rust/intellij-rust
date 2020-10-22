@@ -15,6 +15,9 @@ fn bar(, b: i32) {}
 fn baz(a: i32 b: i32) {}
 fn quux(a: i32,, b: i32) {}
 
+fn spam(self a: i32) {}
+fn eggs(self,, a: i32) {}
+
 fn foo( {}
 fn foo( ;
 
