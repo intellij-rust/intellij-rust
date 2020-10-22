@@ -48,6 +48,10 @@ abstract class RsToolchain(val location: Path, val name: String?) {
 
     abstract fun startProcess(commandLine: GeneralCommandLine): ProcessHandler
 
+    abstract fun toLocalPath(remotePath: String): String
+
+    abstract fun toRemotePath(localPath: String): String
+
     abstract fun expandUserHome(remotePath: String): String
 
     protected abstract fun getExecutableName(toolName: String): String

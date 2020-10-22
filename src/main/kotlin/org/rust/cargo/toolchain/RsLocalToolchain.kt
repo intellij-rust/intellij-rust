@@ -29,6 +29,10 @@ open class RsLocalToolchain(location: Path, name: String?) : RsToolchain(locatio
         return RsKillableColoredProcessHandler(commandLine)
     }
 
+    override fun toLocalPath(remotePath: String): String = remotePath
+
+    override fun toRemotePath(localPath: String): String = localPath
+
     override fun expandUserHome(remotePath: String): String = FileUtil.expandUserHome(remotePath)
 
     override fun getExecutableName(toolName: String): String =
