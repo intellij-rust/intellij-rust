@@ -12,6 +12,7 @@ import org.rust.MockRustcVersion
 import org.rust.RsTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.tools.cargo
+import org.rust.stdext.toPath
 import java.nio.file.Paths
 
 class CargoTest : RsTestBase() {
@@ -141,10 +142,10 @@ class CargoTest : RsTestBase() {
         return result
     }
 
-    private val toolchain get() = RsToolchain(Paths.get("/usr/bin"), null)
+    private val toolchain get() = RsLocalToolchain("/usr/bin".toPath(), null)
     private val cargo = toolchain.cargo()
 
-    private val toolchainNightly get() = RsToolchain(Paths.get("/usr/bin"), "nightly")
+    private val toolchainNightly get() = RsLocalToolchain("/usr/bin".toPath(), "nightly")
     private val cargoNightly = toolchainNightly.cargo()
 
     private val drive = Paths.get("/").toAbsolutePath().toString().toUnixSlashes()

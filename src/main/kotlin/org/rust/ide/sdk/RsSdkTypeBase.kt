@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.sdk.RsSdkUtils.createRustSdkAdditionalData
@@ -65,11 +66,11 @@ abstract class RsSdkTypeBase : SdkType(RUST_SDK_ID_NAME) {
         val prevAdditionalData = sdk.sdkAdditionalData
         if (prevAdditionalData != null) return true
 
-        val sdkPath = sdk.homePath?.toPath() ?: return false
+        val homePath = sdk.homePath ?: return false
 
-        val newAdditionalData = createRustSdkAdditionalData(sdkPath) ?: return false
+        val newAdditionalData = createRustSdkAdditionalData(homePath) ?: return false
         val suggestedName = buildString {
-            append(suggestSdkName(sdk.name, sdkPath.toString()))
+            append(suggestSdkName(sdk.name, homePath))
             newAdditionalData.toolchainName?.let { append(" ($it)") }
         }
         val newName = SdkConfigurationUtil.createUniqueSdkName(suggestedName, sdkModel.sdks.toList())
@@ -117,8 +118,8 @@ abstract class RsSdkTypeBase : SdkType(RUST_SDK_ID_NAME) {
     }
 
     override fun getVersionString(sdkHome: String?): String? {
-        val sdkPath = sdkHome?.toPath() ?: return null
-        val toolchain = RsToolchain(sdkPath, null)
+        if (sdkHome == null) return null
+        val toolchain = RsToolchainProvider.getToolchain(sdkHome, null) ?: return null
         return getVersionString(toolchain)
     }
 

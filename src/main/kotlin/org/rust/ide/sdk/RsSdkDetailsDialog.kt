@@ -25,14 +25,13 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.containers.FactoryMap
 import org.rust.cargo.project.configurable.RsConfigurableToolchainList
 import org.rust.cargo.project.settings.rustSettings
-import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.ide.sdk.add.RsAddSdkDialog
 import org.rust.ide.sdk.remote.RsCredentialsContribution
 import org.rust.ide.sdk.remote.RsRemoteSdkAdditionalData
 import org.rust.ide.sdk.remote.RsRemoteSdkUtils.isRemoteSdk
 import org.rust.openapiext.computeWithCancelableProgress
-import org.rust.stdext.toPath
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -229,9 +228,9 @@ class RsSdkDetailsDialog(
     }
 
     private fun updateVersionString(modificator: SdkModificator) {
-        val homePath = modificator.homePath?.toPath() ?: return
+        val homePath = modificator.homePath ?: return
         val data = modificator.sdkAdditionalData as? RsSdkAdditionalData ?: return
-        val toolchain = RsToolchain(homePath, data.toolchainName)
+        val toolchain = RsToolchainProvider.getToolchain(homePath, data.toolchainName) ?: return
         val rustcVersion = effectiveProject.computeWithCancelableProgress("Fetching rustc version...") {
             toolchain.rustc().queryVersion()
         }

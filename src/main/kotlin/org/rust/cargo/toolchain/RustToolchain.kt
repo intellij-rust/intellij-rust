@@ -12,7 +12,7 @@ import java.nio.file.Path
 // BACKCOMPAT: 2020.2
 @Deprecated("Use org.rust.cargo.toolchain.RsToolchain")
 @Suppress("DEPRECATION")
-class RustToolchain(location: Path) : RsToolchain(location, null) {
+class RustToolchain(location: Path) : RsLocalToolchain(location, null) {
 
     fun rawCargo(): Cargo = Cargo(this)
 
