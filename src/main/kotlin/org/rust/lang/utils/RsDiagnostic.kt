@@ -1293,13 +1293,26 @@ sealed class RsDiagnostic(
             fixes = listOf(RemoveReprValueFix(element))
         )
     }
+
+    class InvalidReexport(
+        element: PsiElement,
+        private val name: String,
+        private val exportedItem: RsItemElement
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            if (exportedItem is RsMod) E0365 else E0364,
+            "`$name` is private, and cannot be re-exported",
+            fixes = listOf(MakePublicFix(exportedItem, exportedItem.name, false))
+        )
+    }
 }
 
 enum class RsErrorCode {
     E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
-    E0308, E0322, E0328, E0379, E0384,
+    E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
     E0517, E0518, E0552, E0562, E0569, E0583, E0586, E0594,
     E0601, E0603, E0614, E0616, E0618, E0624, E0658, E0666, E0667, E0688, E0695,
