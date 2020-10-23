@@ -14,6 +14,7 @@ import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectori
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler.Companion.adjustForMove
 import org.rust.ide.refactoring.move.common.ModToMove
 import org.rust.ide.refactoring.move.common.RsModDeclUsageInfo
 import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
@@ -42,7 +43,10 @@ class RsMoveFilesOrDirectoriesProcessor(
 ) {
 
     private val filesToMove: Set<RsFile> = filesOrDirectoriesToMove
-        .filterIsInstance<RsFile>()
+        .map {
+            /** We checked that [adjustForMove] returns not null in [RsMoveFilesOrDirectoriesHandler.canMove] */
+            it.adjustForMove() ?: error("File or directory $it can't be moved")
+        }
         .toSet()
 
     private val elementsToMove = filesToMove.map { ModToMove(it) }
