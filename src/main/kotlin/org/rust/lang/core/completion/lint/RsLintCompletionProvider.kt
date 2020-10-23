@@ -80,7 +80,7 @@ abstract class RsLintCompletionProvider : RsCompletionProvider() {
 
     protected fun getPathPrefix(path: RsPath): String {
         val qualifier = path.qualifier ?: return ""
-        return "${getPathPrefix(qualifier)}${qualifier.referenceName}::"
+        return "${getPathPrefix(qualifier)}${qualifier.referenceName.orEmpty()}::"
     }
 
     companion object {

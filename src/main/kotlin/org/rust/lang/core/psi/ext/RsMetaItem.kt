@@ -23,7 +23,8 @@ val RsMetaItem.id: String?
         .asIterable()
         .reversed()
         .takeIf { it.isNotEmpty() }
-        ?.joinToString("::") { it.referenceName }
+        ?.map { it.referenceName ?: return null }
+        ?.joinToString("::")
 
 val RsMetaItem.value: String? get() = litExpr?.stringValue
 

@@ -60,11 +60,11 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val path = element.parentOfType<RsPath>()
         val functionCall = path?.parentOfType<RsCallExpr>()
         if (functionCall != null) {
-            if (!path.isUnresolved) return null
+            if (path.resolveStatus != PathResolveStatus.UNRESOLVED) return null
             if (!functionCall.expr.isAncestorOf(path)) return null
 
             val module = getTargetModuleForFunction(path) ?: return null
-            val name = path.referenceName
+            val name = path.referenceName ?: return null
             text = "Create function `$name`"
             return Context.Function(functionCall, name, module)
         }

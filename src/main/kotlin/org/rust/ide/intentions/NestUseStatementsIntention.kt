@@ -186,8 +186,8 @@ fun getBasePathFromPath(path: RsPath): String {
     val basePathColoncolon = basePath.coloncolon
 
     return if (basePathColoncolon != null) {
-        "::${basePath.referenceName}"
+        "::${basePath.referenceName.orEmpty()}"
     } else {
-        basePath.referenceName
+        basePath.referenceName.orEmpty()
     }
 }

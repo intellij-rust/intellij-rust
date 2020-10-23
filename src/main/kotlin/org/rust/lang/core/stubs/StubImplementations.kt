@@ -978,7 +978,7 @@ class RsAliasStub(
 
 class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String,
+    val referenceName: String?,
     val hasColonColon: Boolean,
     val kind: PathKind,
     val startOffset: Int
@@ -998,7 +998,7 @@ class RsPathStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsPathStub(parentStub, this,
-                dataStream.readName()!!.string,
+                dataStream.readName()?.string,
                 dataStream.readBoolean(),
                 dataStream.readEnum(),
                 dataStream.readVarInt()

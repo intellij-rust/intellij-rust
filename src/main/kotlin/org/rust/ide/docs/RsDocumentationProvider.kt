@@ -22,11 +22,9 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
 import org.rust.lang.core.types.type
 import org.rust.lang.doc.RsDocRenderMode
-import org.rust.lang.doc.docElements
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.escaped
 import org.rust.stdext.joinToWithBuffer
-import java.util.function.Consumer
 
 @Suppress("UnstableApiUsage")
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -429,7 +427,7 @@ private fun generatePathDocumentation(element: RsPath, buffer: StringBuilder) {
     }
     element.typeQual?.generateDocumentation(buffer)
 
-    val name = element.referenceName
+    val name = element.referenceName.orEmpty()
     if (element.isLinkNeeded()) {
         createLink(buffer, element.link(), name)
     } else {
@@ -506,7 +504,7 @@ private fun RsPath.isLinkNeeded(): Boolean {
 private fun RsPath.link(): String {
     val path = path
     val prefix = if (path != null) "${path.text.escaped}::" else typeQual?.text?.escaped
-    return if (prefix != null) "$prefix$referenceName" else referenceName
+    return if (prefix != null) "$prefix${referenceName.orEmpty()}" else referenceName.orEmpty()
 }
 
 private fun createLink(buffer: StringBuilder, refText: String, text: String) {

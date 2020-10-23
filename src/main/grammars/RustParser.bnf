@@ -204,7 +204,10 @@ TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-left PathSegment ::= '::' PathIdent PathTypeArguments? { elementType = Path }
+left PathSegment ::= '::' !('{' | '*') PathIdent PathTypeArguments? {
+  pin = 2
+  elementType = Path
+}
 
 private PathTypeArguments ::= <<isPathMode 'VALUE'>> ColonTypeArgumentList
                             | <<isPathMode 'TYPE'>> ( TypeArgumentList | PathParameters RetType? ) // Fn(i32) -> i32 sugar

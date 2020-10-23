@@ -312,6 +312,7 @@ fun processExternCrateResolveVariants(
 
 fun findDependencyCrateByNamePath(context: RsElement, path: RsPath): RsFile? {
     return when (val referenceName = path.referenceName) {
+        null -> null
         MACRO_DOLLAR_CRATE_IDENTIFIER -> path.resolveDollarCrateIdentifier()?.rootMod
         "crate" -> context.crateRoot as? RsFile
         else -> findDependencyCrateByName(context, referenceName)
@@ -1197,7 +1198,7 @@ private fun collectMacrosImportedWithUseItem(
 
     return buildList {
         for ((crateName, macroName) in twoSegmentPaths) {
-            val crateRoot = exportingMacrosCrates[crateName.referenceName] as? RsFile
+            val crateRoot = exportingMacrosCrates[crateName.referenceName ?: continue] as? RsFile
                 ?: findDependencyCrateByNamePath(useItem, crateName)
                 ?: continue
             val exportedMacros = exportedMacrosAsScopeEntries(crateRoot)
@@ -1229,7 +1230,12 @@ private fun collect2segmentPaths(rootSpeck: RsUseSpeck): List<TwoSegmentPath> {
         when {
             group == null && firstSegment != null && (path != null || starImport) -> {
                 if (firstSegment != lastSegment && starImport) return
-                result += TwoSegmentPath(firstSegment, if (starImport) null else path?.referenceName)
+                val rightSegment = if (starImport) {
+                    null
+                } else {
+                    path?.referenceName ?: return
+                }
+                result += TwoSegmentPath(firstSegment, rightSegment)
             }
             group != null && firstSegment == lastSegment -> {
                 group.useSpeckList.forEach { go(it) }

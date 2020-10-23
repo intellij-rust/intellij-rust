@@ -16,10 +16,7 @@ import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsVisitor
-import org.rust.lang.core.psi.ext.RsReferenceElement
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.isUnresolved
-import org.rust.lang.core.psi.ext.qualifier
+import org.rust.lang.core.psi.ext.*
 import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
@@ -37,7 +34,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                 // Don't show unresolved reference error in attributes for now
                 if (path.ancestorStrict<RsMetaItem>() != null) return
 
-                val isPathUnresolved = path.isUnresolved
+                val isPathUnresolved = path.resolveStatus != PathResolveStatus.RESOLVED
                 val qualifier = path.qualifier
 
                 val context = when {
@@ -45,7 +42,7 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
                     qualifier != null && isPathUnresolved -> {
                         // There is not sense to highlight path as unresolved
                         // if qualifier cannot be resolved as well
-                        if (qualifier.isUnresolved) return
+                        if (qualifier.resolveStatus != PathResolveStatus.RESOLVED) return
                         null
                     }
                     // Despite the fact that path is (multi)resolved by our resolve engine, it can be unresolved from

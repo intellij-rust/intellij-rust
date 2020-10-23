@@ -39,7 +39,7 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         if (expr.isInUnsafeBlockOrFn(/* skip the expression itself*/ 1)) {
             val textRange = when (expr) {
                 is RsCallExpr -> when (val callee = expr.expr) {
-                    is RsPathExpr -> callee.path.textRangeOfLastSegment
+                    is RsPathExpr -> callee.path.textRangeOfLastSegment ?: return
                     else -> callee.textRange
                 }
                 is RsDotExpr -> when (val call = expr.methodCall) {
@@ -62,7 +62,8 @@ class RsUnsafeExpressionAnnotator : AnnotatorBase() {
         }
 
         if (expr.isInUnsafeBlockOrFn()) {
-            holder.holder.createUnsafeAnnotation(expr.path.textRangeOfLastSegment, "Use of unsafe $constantType static")
+            val textRange = expr.path.textRangeOfLastSegment ?: return
+            holder.holder.createUnsafeAnnotation(textRange, "Use of unsafe $constantType static")
         } else {
             RsDiagnostic.UnsafeError(expr, "Use of $constantType static is unsafe and requires unsafe function or block")
                 .addToHolder(holder)

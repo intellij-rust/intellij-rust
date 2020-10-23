@@ -186,7 +186,7 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
 
 private val RsMacroCall.pathSegments: List<String>
     get() = generateSequence(path) { it.path }
-        .map { it.referenceName }
+        .map { it.referenceName.orEmpty() }
         .toMutableList()
         .also { it.reverse() }
 

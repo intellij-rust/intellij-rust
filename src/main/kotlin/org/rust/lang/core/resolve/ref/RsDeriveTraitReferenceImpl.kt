@@ -19,7 +19,7 @@ class RsDeriveTraitReferenceImpl(
     RsPathReference {
 
     override fun resolveInner(): List<RsElement> {
-        val traitName = element.referenceName
+        val traitName = element.referenceName ?: return emptyList()
         return collectResolveVariants(traitName) { processDeriveTraitResolveVariants(element, traitName, it) }
     }
 

@@ -12,8 +12,8 @@ import org.rust.lang.core.resolve.ref.RsPathReference
 interface RsPathReferenceElement : RsReferenceElement {
     override fun getReference(): RsPathReference?
 
-    override val referenceNameElement: PsiElement
+    override val referenceNameElement: PsiElement?
 
     @JvmDefault
-    override val referenceName: String get() = referenceNameElement.unescapedText
+    override val referenceName: String? get() = referenceNameElement?.unescapedText
 }

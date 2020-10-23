@@ -22,7 +22,7 @@ abstract class TyPrimitive : Ty() {
     companion object {
         fun fromPath(path: RsPath): TyPrimitive? {
             if (path.hasColonColon) return null
-            val name = path.referenceName
+            val name = path.referenceName ?: return null
 
             TyInteger.fromName(name)?.let { return it }
             TyFloat.fromName(name)?.let { return it }

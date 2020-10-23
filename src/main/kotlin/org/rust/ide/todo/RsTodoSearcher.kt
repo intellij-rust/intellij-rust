@@ -44,7 +44,7 @@ class RsTodoSearcher : QueryExecutorBase<IndexPatternOccurrence, IndexPatternSea
             override fun visitMacroCall(call: RsMacroCall) {
                 super.visitMacroCall(call)
                 if (call.macroName == "todo") {
-                    val startOffset = call.path.referenceNameElement.startOffset
+                    val startOffset = call.path.referenceNameElement?.startOffset ?: return
                     val endOffset = call.semicolon?.startOffset ?: call.endOffset
                     val range = TextRange(startOffset, endOffset)
                     consumer.process(RsTodoOccurrence(file, range, pattern))

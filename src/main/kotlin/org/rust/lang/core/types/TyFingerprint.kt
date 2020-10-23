@@ -35,6 +35,7 @@ data class TyFingerprint constructor(
                     RsBaseTypeKind.Never -> TyFingerprint("!")
                     RsBaseTypeKind.Underscore -> return emptyList()
                     is RsBaseTypeKind.Path -> when (val name = kind.path.referenceName) {
+                        null -> return emptyList()
                         in typeParameters -> TYPE_PARAMETER_FINGERPRINT
                         in TyInteger.NAMES -> return listOf(TyFingerprint(name), ANY_INTEGER_FINGERPRINT)
                         in TyFloat.NAMES -> return listOf(TyFingerprint(name), ANY_FLOAT_FINGERPRINT)
