@@ -10,9 +10,12 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.patterns.VirtualFilePattern
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
+import org.rust.lang.core.or
 import org.rust.lang.core.psiElement
 import org.rust.lang.core.with
 import org.toml.lang.psi.*
+import org.toml.lang.psi.ext.TomlLiteralKind
+import org.toml.lang.psi.ext.kind
 
 object CargoTomlPsiPattern {
     private const val TOML_KEY_CONTEXT_NAME = "key"
@@ -72,8 +75,7 @@ object CargoTomlPsiPattern {
             .withChild(
                 psiElement<TomlTableHeader>()
                     .with("specificDependencyCondition") { header, _ ->
-                        val names = header.names
-                        names.getOrNull(names.size - 2)?.isDependencyKey == true
+                        header.isSpecificDependencyTableHeader
                     }
             )
 
@@ -200,6 +202,56 @@ object CargoTomlPsiPattern {
     val buildPath: PsiElementPattern.Capture<TomlLiteral> = cargoTomlPsiElement<TomlLiteral>().withParent(
         tomlKeyValue("build").withParent(tomlTable("package"))
     )
+
+    /**
+     * ```
+     * [features]
+     * foo = []
+     *      #^
+     * ```
+     */
+    private val onFeatureDependencyArray: PsiElementPattern.Capture<TomlArray> = psiElement<TomlArray>()
+        .withSuperParent(1, psiElement<TomlKeyValue>())
+        .withSuperParent(2, tomlTable("features"))
+
+    /**
+     * ```
+     * [features]
+     * foo = []
+     * bar = [ "foo" ]
+     *         #^
+     * ```
+     */
+    val onFeatureDependencyLiteral: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
+        .withParent(onFeatureDependencyArray)
+
+    /**
+     * ```
+     * [dependencies]
+     * foo = { version = "*", features = ["bar"] }
+     *                                    #^
+     * ```
+     *
+     * ```
+     * [dependencies.foo]
+     * features = ["bar"]
+     *             #^
+     * ```
+     */
+    val onDependencyPackageFeature: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
+        .withParent(
+            psiElement<TomlArray>()
+                .withParent(tomlKeyValue("features"))
+                .withSuperParent(
+                    2,
+                    psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                        or onSpecificDependencyTable
+
+                )
+        )
+
+    private fun cargoTomlStringLiteral() = cargoTomlPsiElement<TomlLiteral>()
+            .with("stringLiteral") { e, _ -> e.kind is TomlLiteralKind.String }
 
     private fun tomlKeyValue(key: String): PsiElementPattern.Capture<TomlKeyValue> =
         psiElement<TomlKeyValue>().withChild(

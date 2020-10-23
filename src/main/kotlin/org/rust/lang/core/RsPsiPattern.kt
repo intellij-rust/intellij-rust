@@ -246,7 +246,7 @@ inline fun <reified I : PsiElement> PsiElementPattern.Capture<PsiElement>.withSu
     return this.withSuperParent(level, I::class.java)
 }
 
-inline infix fun <reified I : PsiElement> ElementPattern<I>.or(pattern: ElementPattern<out I>): PsiElementPattern.Capture<PsiElement> {
+inline infix fun <reified I : PsiElement> ElementPattern<out I>.or(pattern: ElementPattern<out I>): PsiElementPattern.Capture<PsiElement> {
     return psiElement().andOr(this, pattern)
 }
 

@@ -9,14 +9,19 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloonWithoutProject
 import org.rust.lang.core.completion.getElementOfType
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.isAncestorOf
+import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
@@ -57,6 +62,12 @@ val TomlKey.isFeaturesKey: Boolean
 val TomlTableHeader.isDependencyListHeader: Boolean
     get() = names.lastOrNull()?.isDependencyKey == true
 
+val TomlTableHeader.isSpecificDependencyTableHeader: Boolean
+    get() {
+        val names = names
+        return names.getOrNull(names.size - 2)?.isDependencyKey == true
+    }
+
 val TomlTableHeader.isFeatureListHeader: Boolean
     get() = names.lastOrNull()?.isFeaturesKey == true
 
@@ -84,6 +95,9 @@ class StringValueInsertionHandler(private val keyValue: TomlKeyValue) : InsertHa
 private val TomlLiteral.literalType: IElementType
     get() = children.first().elementType
 
+fun TomlKeyValueOwner.getValueWithKey(key: String): TomlValue? =
+    entries.find { it.key.text == key }?.value
+
 fun getClosestKeyValueAncestor(position: PsiElement): TomlKeyValue? {
     val parent = position.parent ?: return null
     val keyValue = parent.ancestorOrSelf<TomlKeyValue>()
@@ -97,3 +111,17 @@ fun getClosestKeyValueAncestor(position: PsiElement): TomlKeyValue? {
         else -> null
     }
 }
+
+fun CargoWorkspace.Package.getPackageTomlFile(project: Project): TomlFile? {
+    return contentRoot?.findChild(CargoConstants.MANIFEST_FILE)
+        ?.toPsiFile(project)
+        as? TomlFile
+}
+
+fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String): CargoWorkspace.Package? =
+    dependencies.find { it.pkg.name == pkgName }?.pkg
+
+fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
+    element.containingFile.findCargoPackage()
+        ?.findDependencyByPackageName(depName)
+        ?.getPackageTomlFile(element.project)
