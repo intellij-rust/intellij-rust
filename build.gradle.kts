@@ -12,6 +12,7 @@ import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
+import groovy.json.JsonSlurper
 import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
@@ -520,6 +521,52 @@ task("updateCargoOptions") {
     }
 }
 
+task("updateLints") {
+    doLast {
+        val lints = JsonSlurper().parseText("python3 fetch_lints.py".execute("scripts", print = false)) as List<Map<String, *>>
+
+        fun Map<String, *>.isGroup(): Boolean = get("group") as Boolean
+        fun Map<String, *>.isRustcLint(): Boolean = get("rustc") as Boolean
+        fun Map<String, *>.getName(): String = get("name") as String
+
+        fun writeLints(path: String, lints: List<Map<String, *>>, variableName: String) {
+            val file = File(path)
+            val items = lints.sortedWith(compareBy({ !it.isGroup() }, { it.getName() })).joinToString(
+                separator = ",\n    "
+            ) {
+                val name = it.getName()
+                val isGroup = it.isGroup()
+                "Lint(\"$name\", $isGroup)"
+            }
+            file.bufferedWriter().use {
+                it.writeln("""
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.lang.core.completion.lint
+
+val $variableName: List<Lint> = listOf(
+    $items
+)
+""".trim())
+            }
+        }
+
+        writeLints(
+            "src/main/kotlin/org/rust/lang/core/completion/lint/RustcLints.kt",
+            lints.filter { it.isRustcLint() },
+            "RUSTC_LINTS"
+        )
+        writeLints(
+            "src/main/kotlin/org/rust/lang/core/completion/lint/ClippyLints.kt",
+            lints.filter { !it.isRustcLint() },
+            "CLIPPY_LINTS"
+        )
+    }
+}
+
 fun Writer.writeFeatures(featureSet: String, remoteFileUrl: String) {
     val text = URL(remoteFileUrl).openStream().bufferedReader().readText()
     val commentRegex = "^/{2,}".toRegex()
@@ -631,10 +678,10 @@ fun SourceSet.kotlin(action: SourceDirectorySet.() -> Unit) =
     kotlin.action()
 
 
-fun String.execute(wd: String? = null, ignoreExitCode: Boolean = false): String =
-    split(" ").execute(wd, ignoreExitCode)
+fun String.execute(wd: String? = null, ignoreExitCode: Boolean = false, print: Boolean = true): String =
+    split(" ").execute(wd, ignoreExitCode, print)
 
-fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false): String {
+fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false, print: Boolean = true): String {
     val process = ProcessBuilder(this)
         .also { pb -> wd?.let { pb.directory(File(it)) } }
         .start()
@@ -642,7 +689,9 @@ fun List<String>.execute(wd: String? = null, ignoreExitCode: Boolean = false): S
     val errReader = thread { process.errorStream.bufferedReader().forEachLine { println(it) } }
     val outReader = thread {
         process.inputStream.bufferedReader().forEachLine { line ->
-            println(line)
+            if (print) {
+                println(line)
+            }
             result += line
         }
     }
