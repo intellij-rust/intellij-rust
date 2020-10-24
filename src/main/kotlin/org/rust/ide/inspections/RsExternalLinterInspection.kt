@@ -31,6 +31,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.ide.annotator.RsExternalLinterResult
 import org.rust.ide.annotator.RsExternalLinterUtils
 import org.rust.ide.annotator.createAnnotationsForFile
@@ -128,7 +129,7 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
                 cargoProject.project,
                 disposable,
                 cargoProject.workingDirectory,
-                null
+                CargoCheckArgs.forCargoProject(cargoProject)
             )
         }
 

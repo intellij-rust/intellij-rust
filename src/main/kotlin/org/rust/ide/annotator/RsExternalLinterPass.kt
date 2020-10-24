@@ -31,8 +31,9 @@ import com.intellij.util.ui.update.Update
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.cargo.toolchain.tools.CargoCheckArgs
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.lang.core.psi.ext.containingCargoTarget
 
 class RsExternalLinterPass(
     private val factory: RsExternalLinterPassFactory,
@@ -50,10 +51,12 @@ class RsExternalLinterPass(
         annotationHolder.clear()
         if (file !is RsFile || !isAnnotationPassEnabled) return
 
-        val cargoPackage = file.containingCargoPackage
-        if (cargoPackage?.origin != PackageOrigin.WORKSPACE) return
+        val cargoTarget = file.containingCargoTarget ?: return
+        if (cargoTarget.pkg.origin != PackageOrigin.WORKSPACE) return
 
         val project = file.project
+        val args = CargoCheckArgs.forTarget(project, cargoTarget)
+
         val moduleOrProject: Disposable = ModuleUtil.findModuleForFile(file) ?: project
         disposable = project.messageBus.createDisposableOnAnyPsiChange()
             .also { Disposer.register(moduleOrProject, it) }
@@ -62,8 +65,8 @@ class RsExternalLinterPass(
             project.toolchain ?: return,
             project,
             moduleOrProject,
-            cargoPackage.workspace.contentRoot,
-            cargoPackage.name
+            cargoTarget.pkg.workspace.contentRoot,
+            args
         )
     }
 

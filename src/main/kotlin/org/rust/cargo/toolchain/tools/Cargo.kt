@@ -25,13 +25,16 @@ import com.intellij.util.net.HttpConfigurable
 import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CargoConstants
+import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
+import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
@@ -290,29 +293,45 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     fun checkProject(
         project: Project,
         owner: Disposable,
-        cargoProjectDirectory: Path,
-        cargoPackageName: String? = null
+        args: CargoCheckArgs
     ): ProcessOutput {
-        val settings = project.rustSettings
-        val arguments = buildList<String> {
-            add("--message-format=json")
+        val useClippy = args.linter == ExternalLinter.CLIPPY
+            && !checkNeedInstallClippy(project, args.cargoProjectDirectory)
+        val checkCommand = if (useClippy) "clippy" else "check"
 
-            if (cargoPackageName != null) {
-                add("--package")
-                add(cargoPackageName)
-            } else {
-                add("--all")
+        val commandLine = when (args) {
+            is CargoCheckArgs.SpecificTarget -> {
+                val arguments = buildList<String> {
+                    add("--message-format=json")
+                    add("--no-default-features")
+                    val enabledFeatures = args.target.pkg.featureState.filterValues { it.isEnabled }.keys.toList()
+                    if (enabledFeatures.isNotEmpty()) {
+                        add("--features")
+                        add(enabledFeatures.joinToString(separator = " "))
+                    }
+                    if (args.target.kind !is CargoWorkspace.TargetKind.Test) {
+                        // Check `#[test]`/`#[cfg(test)]`
+                        // TODO try using `--profile test`, see https://github.com/intellij-rust/intellij-rust/issues/6277
+                        add("--tests")
+                    }
+                    addAll(ParametersListUtil.parse(args.extraArguments))
+                }
+                CargoCommandLine.forTarget(args.target, checkCommand, arguments, usePackageOption = false)
             }
-
-            if (settings.compileAllTargets && checkSupportForBuildCheckAllTargets()) add("--all-targets")
-            addAll(ParametersListUtil.parse(settings.externalLinterArguments))
+            is CargoCheckArgs.FullWorkspace -> {
+                val arguments = buildList<String> {
+                    add("--message-format=json")
+                    add("--all")
+                    if (args.allTargets && checkSupportForBuildCheckAllTargets()) {
+                        add("--all-targets")
+                    }
+                    addAll(ParametersListUtil.parse(args.extraArguments))
+                }
+                CargoCommandLine(checkCommand, args.cargoProjectDirectory, arguments)
+            }
         }
 
-        val useClippy = settings.externalLinter == ExternalLinter.CLIPPY
-            && !checkNeedInstallClippy(project, cargoProjectDirectory)
-        val checkCommand = if (useClippy) "clippy" else "check"
-        return CargoCommandLine(checkCommand, cargoProjectDirectory, arguments)
-            .execute(project, owner, ignoreExitCode = true)
+        return commandLine.execute(project, owner, ignoreExitCode = true)
     }
 
     fun toColoredCommandLine(project: Project, commandLine: CargoCommandLine): GeneralCommandLine =
@@ -502,6 +521,49 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
 
     object Testmarks {
         val fetchBuildPlan = Testmark("fetchBuildPlan")
+    }
+}
+
+// Note: the class is used as a cache key, so it must be immutable and must have a correct equals/hashCode
+sealed class CargoCheckArgs {
+    abstract val linter: ExternalLinter
+    abstract val cargoProjectDirectory: Path
+    abstract val extraArguments: String
+
+    data class SpecificTarget(
+        override val linter: ExternalLinter,
+        override val cargoProjectDirectory: Path,
+        val target: CargoWorkspace.Target,
+        override val extraArguments: String
+    ): CargoCheckArgs()
+
+    data class FullWorkspace(
+        override val linter: ExternalLinter,
+        override val cargoProjectDirectory: Path,
+        val allTargets: Boolean,
+        override val extraArguments: String
+    ): CargoCheckArgs()
+
+    companion object {
+        fun forTarget(project: Project, target: CargoWorkspace.Target): CargoCheckArgs {
+            val settings = project.rustSettings
+            return SpecificTarget(
+                settings.externalLinter,
+                target.pkg.workspace.contentRoot,
+                target,
+                settings.externalLinterArguments
+            )
+        }
+
+        fun forCargoProject(cargoProject: CargoProject): CargoCheckArgs {
+            val settings = cargoProject.project.rustSettings
+            return FullWorkspace(
+                settings.externalLinter,
+                cargoProject.workingDirectory,
+                settings.compileAllTargets,
+                settings.externalLinterArguments
+            )
+        }
     }
 }
 
