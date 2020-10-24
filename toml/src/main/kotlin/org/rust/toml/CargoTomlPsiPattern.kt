@@ -231,6 +231,31 @@ object CargoTomlPsiPattern {
     /**
      * ```
      * [dependencies]
+     * foo = { version = "*", features = [] }
+     *                                  #^
+     * ```
+     *
+     * ```
+     * [dependencies.foo]
+     * features = []
+     *           #^
+     * ```
+     */
+    private val onDependencyPackageFeatureArray = psiElement<TomlArray>()
+        .withParent(tomlKeyValue("features"))
+        .withSuperParent(
+            2,
+            psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
+                or onSpecificDependencyTable
+
+        )
+
+    val inDependencyPackageFeatureArray: PsiElementPattern.Capture<PsiElement> = cargoTomlPsiElement<PsiElement>()
+        .inside(onDependencyPackageFeatureArray)
+
+    /**
+     * ```
+     * [dependencies]
      * foo = { version = "*", features = ["bar"] }
      *                                    #^
      * ```
@@ -243,14 +268,7 @@ object CargoTomlPsiPattern {
      */
     val onDependencyPackageFeature: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
         .withParent(
-            psiElement<TomlArray>()
-                .withParent(tomlKeyValue("features"))
-                .withSuperParent(
-                    2,
-                    psiElement<TomlInlineTable>().withSuperParent(2, onDependencyTable)
-                        or onSpecificDependencyTable
-
-                )
+            onDependencyPackageFeatureArray
         )
 
     private fun cargoTomlStringLiteral() = cargoTomlPsiElement<TomlLiteral>()

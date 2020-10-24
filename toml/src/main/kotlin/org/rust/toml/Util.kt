@@ -143,3 +143,33 @@ fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
     element.findCargoPackageForCargoToml()
         ?.findDependencyByPackageName(depName)
         ?.getPackageTomlFile(element.project)
+
+/**
+ * Consider `Cargo.toml`:
+ *
+ * ```
+ * [dependencies]
+ * foo = { version = "*",                 features = [] }
+ * #X                ^ returns `foo` for this value #^ and for this value
+ * ```
+ *
+ * ```
+ * [dependencies.foo]
+ * features = []
+ *           #^ returns `foo` for this value
+ * ```
+ *
+ * @see [org.rust.toml.resolve.CargoTomlDependencyFeaturesReferenceProvider]
+ */
+val TomlValue.containingDependencyKey: TomlKey?
+    get() {
+        val parentParent = parent?.parent as? TomlElement ?: return null
+        return if (parentParent is TomlTable) {
+            // [dependencies.foo]
+            parentParent.header.names.lastOrNull()
+        } else {
+            // [dependencies]
+            // foo = { ... }
+            (parentParent.parent as? TomlKeyValue)?.key
+        }
+    }
