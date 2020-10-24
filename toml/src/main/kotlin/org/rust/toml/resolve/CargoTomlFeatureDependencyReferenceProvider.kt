@@ -23,6 +23,8 @@ import org.toml.lang.psi.ext.kind
  * baz = [ "some_dependency_package/feature_name" ]
  *         #^ and for "some_dependency_package/feature_name"
  * ```
+ *
+ * @see [org.rust.toml.completion.CargoTomlFeatureDependencyCompletionProvider]
  */
 class CargoTomlFeatureDependencyReferenceProvider : PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {

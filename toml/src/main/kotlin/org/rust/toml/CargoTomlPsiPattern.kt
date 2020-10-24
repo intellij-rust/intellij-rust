@@ -214,6 +214,9 @@ object CargoTomlPsiPattern {
         .withSuperParent(1, psiElement<TomlKeyValue>())
         .withSuperParent(2, tomlTable("features"))
 
+    val inFeatureDependencyArray: PsiElementPattern.Capture<PsiElement> = cargoTomlPsiElement<PsiElement>()
+        .inside(onFeatureDependencyArray)
+
     /**
      * ```
      * [features]
