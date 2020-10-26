@@ -744,14 +744,14 @@ EnumBody ::= '{' [ <<comma_separated_list EnumVariant>> ] '}' {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-EnumVariant ::= OuterAttr* identifier VariantArgs? {
+EnumVariant ::= AttrsAndVis identifier VariantArgs? {
   pin = 2
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsFieldsOwner"
-                 "org.rust.lang.core.psi.ext.RsVisible" ]
+                 "org.rust.lang.core.psi.ext.RsVisibilityOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsEnumVariantImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsEnumVariantStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
