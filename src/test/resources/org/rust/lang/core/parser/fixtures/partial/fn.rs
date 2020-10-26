@@ -11,3 +11,18 @@ fn add add() {}
 unsafe const fn b() -> () { () }
 
 fn foo(a: &, b: i32) {}
+fn bar(, b: i32) {}
+fn baz(a: i32 b: i32) {}
+fn quux(a: i32,, b: i32) {}
+
+fn spam(self a: i32) {}
+fn eggs(self,, a: i32) {}
+
+fn foo( {}
+fn foo( ;
+
+fn bar(a: i32 {}
+fn bar(a: i32, {}
+fn bar(, {}
+
+fn foo(...,,) {}

@@ -120,7 +120,7 @@
 //   * recovery related rules are PascalCase_with_snake_suffix: Item_recover
 
 
-File ::= [ SHEBANG_LINE ] InnerAttr* Items
+File ::= [ SHEBANG_LINE ] InnerAttr* RootItems
 ExpressionCodeFragmentElement ::= Expr?
 StatementCodeFragmentElement ::= Stmt?
 TypeReferenceCodeFragmentElement ::= TypeReference?
@@ -300,6 +300,7 @@ private try ::= <<tryKeyword>>
 private raw ::= <<rawKeyword>>
 
 private AttrsAndVis ::= OuterAttr* Vis?
+private AttrsAndVis_first ::= '#' | crate | pub
 
 // Note: don't forget to add new item element types to [org.rust.lang.core.psi.RS_ITEMS], and to
 // `itemKindName` & `itemDefKeyword` in `RsItemElement.kt`
@@ -324,14 +325,21 @@ Item ::= AttrsAndVis default_? (Constant
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
 }
 
+private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
+
+private RootItem_with_recover ::= !<<eof>> Item {
+  pin = 1
+  recoverWhile = RootItem_recover
+}
+private RootItem_recover ::= !Item_first
+private RootItems ::= RootItem_with_recover*
+
 private Item_with_recover ::= !('}' | <<eof>>) Item {
   pin = 1
   recoverWhile = Item_recover
 }
-private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
 private Item_recover ::= !('}' | Item_first )
-
 private Items ::= Item_with_recover*
 
 Lifetime ::= QUOTE_IDENTIFIER {
@@ -355,12 +363,12 @@ fake ValueParameter ::= OuterAttr* Pat? TypeReference? {
 }
 
 FnParameter ::= OuterAttr* [ Pat ':' ] (VariadicUpper | TypeReference)
-upper VariadicUpper ::= '...' ','? { elementType = Variadic }
-private FnParameter_with_recover ::= !')' FnParameter (',' | &')') {
-  pin = 2
+upper VariadicUpper ::= '...' { elementType = Variadic }
+private FnParameter_with_recover ::= !(')' | '{' | ';') FnParameter (',' | &')') {
+  pin = 1
   recoverWhile = FnParameter_recover
 }
-private FnParameter_recover ::= !(Pat_first | OuterAttr_first | ')' | '...')
+private FnParameter_recover ::= !(Pat_first | OuterAttr_first | '...' | ')' | '{' | ';')
 
 LambdaParameter ::= OuterAttr* SimplePat TypeAscription?
 AnonParameter ::= OuterAttr* [ RestrictedPat ':' ] TypeReference
@@ -374,13 +382,15 @@ SelfParameter ::= OuterAttr* [ '&' Lifetime? ] mut? self TypeAscription? {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
+private SelfParameter_with_comma ::= SelfParameter (',' | &')') { pin = 1 }
+
 fake ValueParameterList ::= SelfParameter? ValueParameter* Variadic? {
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-FnParameters          ::= '(' !',' [ SelfParameter (',' | &')') ]
+FnParameters          ::= '(' !',' SelfParameter_with_comma?
                                    FnParameter_with_recover*
                           ')' { pin = 1 }
 LambdaParameters      ::= '|' !',' [ <<comma_separated_list LambdaParameter>> ] '|'
@@ -527,7 +537,7 @@ private SimplePat ::= PatWild
 OrPat ::= '|'? SimplePat ('|' SimplePat)*
 left OrPatLeft ::= ('|' SimplePat)+ { elementType = OrPat }
 
-private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut
+private Pat_first ::= '_' | '..' | '&' | '(' | '[' | Path_first | AnyLitToken_first | box | '-' | ref | mut | '|'
 
 PatBox ::= box SimplePat
 
@@ -541,19 +551,31 @@ PatBox ::= box SimplePat
 PatIdent ::= PatBinding [ '@' SimplePat ]
 
 PatStruct ::= ValuePathGenericArgsNoTypeQual '{' PatField_with_recover* PatRest? '}'
-PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' SeqPat ')'
+PatTupleStruct   ::= ValuePathGenericArgsNoTypeQual '(' PatParenListElem_with_recover* ')'
 
-// TODO: actual recover
-private Pat_with_recover ::= TopPat (',' | &(')' | ']'))
-private PatField_with_recover ::= PatField (',' | & '}')
+private PatField_with_recover ::= !('}' | '..') PatField (',' | & '}') {
+  pin = 1
+  recoverWhile = PatField_recover
+}
+private PatField_recover ::= !('}' | '..' | ref | mut | box | identifier | INTEGER_LITERAL)
 
 PatConst ::= PathExpr | LitExpr | &('-' LitExpr) UnaryExpr
 PatRange ::= PatConst ('..' | '...' | '..=') PatConst { pin = 2 }
 
-PatTup ::= '(' SeqPat ')'
-PatSlice ::= '[' SeqPat ']'
-// NB: there are `[x, .. , y]`
-private SeqPat ::= Pat_with_recover*
+PatTup ::= '(' PatParenListElem_with_recover* ')'
+PatSlice ::= '[' PatBracketListElem_with_recover* ']'
+
+private PatParenListElem_with_recover ::= !')' TopPat (',' | &')') {
+  pin = 1
+  recoverWhile = PatParenListElem_recover
+}
+private PatParenListElem_recover ::= !(')' | Pat_first)
+
+private PatBracketListElem_with_recover ::= !']' TopPat (',' | &']') {
+  pin = 1
+  recoverWhile = PatBracketListElem_recover
+}
+private PatBracketListElem_recover ::= !(']' | Pat_first)
 
 PatRef ::= '&' mut? SimplePat
 
@@ -734,19 +756,30 @@ EnumVariant ::= OuterAttr* identifier VariantArgs? {
 
 private VariantArgs ::= [BlockFields | TupleFields] VariantDiscriminant?
 
-BlockFields ::= '{' (NamedFieldDecl (',' | &'}'))* '}' {
+BlockFields ::= '{' NamedFieldDecl_with_recover* '}' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
 
-TupleFields ::= '(' (TupleFieldDecl (',' | &')'))* ')' {
+private NamedFieldDecl_with_recover ::= !'}' NamedFieldDecl (',' | &'}') {
+  pin = 1
+  recoverWhile = NamedFieldDecl_recover
+}
+private NamedFieldDecl_recover ::= !('}' | NamedFieldDecl_first)
+
+TupleFields ::= '(' TupleFieldDecl_with_recover* ')' {
   pin = 1
   extends = "org.rust.lang.core.psi.ext.RsStubbedElementImpl<?>"
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
+private TupleFieldDecl_with_recover ::= !')' TupleFieldDecl (',' | &')') {
+  pin = 1
+  recoverWhile = TupleFieldDecl_recover
+}
+private TupleFieldDecl_recover ::= !(')' | AttrsAndVis_first | TypeReference_first)
 
 VariantDiscriminant ::= '=' AnyExpr {
   pin = 1
@@ -762,9 +795,8 @@ NamedFieldDecl ::= AttrsAndVis identifier TypeAscription {
   mixin = "org.rust.lang.core.psi.ext.RsNamedFieldDeclImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsNamedFieldDeclStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
-  recoverWhile = Field_recover
 }
-private Field_recover ::= !('}' | ',')
+private NamedFieldDecl_first ::= AttrsAndVis_first | identifier
 
 TupleFieldDecl ::= AttrsAndVis TypeReference {
   implements = [ "org.rust.lang.core.psi.ext.RsFieldDecl" ]
@@ -772,9 +804,7 @@ TupleFieldDecl ::= AttrsAndVis TypeReference {
   stubClass = "org.rust.lang.core.stubs.RsPlaceholderStub"
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
   hooks = [ leftBinder = "ADJACENT_LINE_COMMENTS" ]
-  recoverWhile = TupleField_recover
 }
-private TupleField_recover ::= !(')' | ',')
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -856,6 +886,7 @@ TypeReference ::= ArrayType
   mixin = "org.rust.lang.core.psi.ext.RsTypeReferenceImplMixin"
   name = "type"
 }
+private TypeReference_first ::= '[' | '&' | '*' | unsafe | extern | fn | '(' | impl | "dyn" | '_' | '!' | for | Path_first
 
 TypeReferenceNoImplicitTraitType ::= ArrayType
                                    | RefLikeTypeNoImplicitTrait
@@ -1131,7 +1162,7 @@ StructLiteralField ::= OuterAttr* (identifier | INTEGER_LITERAL) StructLiteralFi
 
 private StructLiteralFieldSuffix ::= ':' AnyExpr { pin = 1 }
 
-private StructLiteralField_with_recover ::= StructLiteralField (',' | &'}') {
+private StructLiteralField_with_recover ::= !('..' | '}') StructLiteralField (',' | &'}') {
   pin = 1
   recoverWhile = StructLiteralField_recover
 }
@@ -1196,14 +1227,18 @@ MatchExpr ::= OuterAttr* match NoStructLitExpr MatchBody {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-MatchBody ::= '{' MatchArm* '}' { pin = 1 }
+MatchBody ::= '{' MatchArm_with_recover* '}' { pin = 1 }
 MatchArm ::= OuterAttr* TopPat MatchArmGuard? '=>' StmtModeExpr (',' | (&'}' | <<isBlock>>)) {
   pin = 2
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner" ]
+}
+MatchArmGuard ::= if AnyExpr
+
+private MatchArm_with_recover ::= !'}' MatchArm {
+  pin = 1
   recoverWhile = MatchArm_recover
 }
-private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}' | '|')
-MatchArmGuard ::= if AnyExpr
+private MatchArm_recover ::= !(Pat_first | OuterAttr_first | '}')
 
 IfExpr ::= OuterAttr* if Condition SimpleBlock ElseBranch? {
   pin = 'if'

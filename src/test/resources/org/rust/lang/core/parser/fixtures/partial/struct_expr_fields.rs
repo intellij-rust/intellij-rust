@@ -8,6 +8,7 @@ struct S {
 
 fn main() {
     let _ = S {
+        ,
         foo: 92,
         bar
         baz: 62,

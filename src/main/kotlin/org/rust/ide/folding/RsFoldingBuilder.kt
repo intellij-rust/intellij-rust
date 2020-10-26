@@ -129,7 +129,7 @@ class RsFoldingBuilder : CustomFoldingBuilder(), DumbAware {
         }
 
         private fun foldBetween(element: PsiElement, left: PsiElement?, right: PsiElement?) {
-            if (left != null && right != null) {
+            if (left != null && right != null && right.textLength > 0) {
                 val range = TextRange(left.textOffset, right.textOffset + 1)
                 descriptors += FoldingDescriptor(element.node, range)
             }

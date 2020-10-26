@@ -79,6 +79,10 @@ FILE
           PsiWhiteSpace(' ')
           RsStructLiteralBodyImpl(STRUCT_LITERAL_BODY)
             PsiElement({)('{')
+            PsiErrorElement:<struct literal field> expected, got ','
+              <empty list>
+            PsiWhiteSpace('\n        ')
+            PsiElement(,)(',')
             PsiWhiteSpace('\n        ')
             RsStructLiteralFieldImpl(STRUCT_LITERAL_FIELD)
               PsiElement(identifier)('foo')
