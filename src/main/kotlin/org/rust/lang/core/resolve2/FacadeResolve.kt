@@ -179,16 +179,20 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
     val (project, defMap, modData) = containingModInfo
     return RsResolveCache.getInstance(project)
         .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
-            val callPath = pathSegmentsAdjusted.toTypedArray()
+            val callPath = pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
             defMap.resolveMacroCallToMacroDefInfo(modData, callPath)
         }
 }
 
-private val RsMacroCall.pathSegments: List<String>
-    get() = generateSequence(path) { it.path }
-        .map { it.referenceName.orEmpty() }
-        .toMutableList()
-        .also { it.reverse() }
+private val RsMacroCall.pathSegments: List<String>?
+    get() {
+        val segments = generateSequence(path) { it.path }
+            .map { it.referenceName }
+            .toMutableList()
+        if (segments.any { it == null }) return null
+        segments.reverse()
+        return segments.requireNoNulls()
+    }
 
 /**
  * Adjustment is performed according to [getPathKind]:
@@ -203,9 +207,9 @@ private val RsMacroCall.pathSegments: List<String>
  *
  * See also [processMacroCallPathResolveVariants] and [findDependencyCrateByNamePath]
  */
-private val RsMacroCall.pathSegmentsAdjusted: List<String>
+private val RsMacroCall.pathSegmentsAdjusted: List<String>?
     get() {
-        val segments = pathSegments
+        val segments = pathSegments ?: return null
 
         val callExpandedFrom = findMacroCallExpandedFromNonRecursive() ?: return segments
         val (defExpandedFromHasLocalInnerMacros, defExpandedFromCrateId) =

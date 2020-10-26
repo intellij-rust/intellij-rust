@@ -1344,6 +1344,20 @@ class RsResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test 'pub (in incomplete_path)'`() = checkByCode("""
+        mod foo {
+            mod bar {
+                pub(in foo::) fn baz() {}
+                               //X
+                fn main() {
+                    // here we just check that incomplete path doesn't cause exceptions
+                    baz();
+                } //^
+            }
+        }
+    """)
+
     fun `test 'pub (self)'`() = checkByCode("""
         mod bar {
           //X
