@@ -835,6 +835,200 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    fun `test outside references to generic struct`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                let _ = Bar::<i32> { field: 0 };
+            }
+            pub struct Bar<T> { pub field: T }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub struct Bar<T> { pub field: T }
+        }
+        mod mod2 {
+            use crate::mod1::Bar;
+
+            fn foo() {
+                let _ = Bar::<i32> { field: 0 };
+            }
+        }
+    """)
+
+    fun `test outside references to generic function`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                bar::<i32>();
+            }
+            pub fn bar<T>() {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub fn bar<T>() {}
+        }
+        mod mod2 {
+            use crate::mod1;
+
+            fn foo() {
+                mod1::bar::<i32>();
+            }
+        }
+    """)
+
+    fun `test self references to generic function`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo1<T>/*caret*/() {}
+            fn foo2/*caret*/() {
+                foo1::<i32>();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn foo1<T>() {}
+
+            fn foo2() {
+                foo1::<i32>();
+            }
+        }
+    """)
+
+    fun `test inside references to generic function`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo<T>/*caret*/() {}
+        }
+        mod mod2/*target*/ {}
+        fn main() {
+            mod1::foo::<i32>();
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo<T>() {}
+        }
+        fn main() {
+            mod2::foo::<i32>();
+        }
+    """)
+
+    fun `test inside references to generic function parametrized by generic struct`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo<T>/*caret*/() {}
+            pub struct Foo<T>/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+        fn main() {
+            mod1::foo::<mod1::Foo<i32>>();
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo<T>() {}
+
+            pub struct Foo<T> {}
+        }
+        fn main() {
+            mod2::foo::<mod2::Foo<i32>>();
+        }
+    """)
+
+    fun `test outside reference to enum variant in old mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use Bar::*;
+            pub enum Bar { Bar1, Bar2 }
+            fn foo/*caret*/() {
+                let _ = Bar1;
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use Bar::*;
+            pub enum Bar { Bar1, Bar2 }
+        }
+        mod mod2 {
+            use crate::mod1::Bar::Bar1;
+
+            fn foo() {
+                let _ = Bar1;
+            }
+        }
+    """)
+
+    fun `test outside reference to enum variant in other mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use crate::bar::Bar::*;
+            fn foo/*caret*/() {
+                let _ = Bar1;
+            }
+        }
+        mod mod2/*target*/ {}
+        mod bar {
+            pub enum Bar { Bar1, Bar2 }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::bar::Bar::*;
+        }
+        mod mod2 {
+            use crate::bar::Bar::Bar1;
+
+            fn foo() {
+                let _ = Bar1;
+            }
+        }
+        mod bar {
+            pub enum Bar { Bar1, Bar2 }
+        }
+    """)
+
+    fun `test outside reference to enum variant in match`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use Bar::*;
+            pub enum Bar { Bar1, Bar2 }
+            fn foo/*caret*/(bar: Bar) {
+                match bar {
+                    Bar1 | Bar2 => ()
+                }
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use Bar::*;
+            pub enum Bar { Bar1, Bar2 }
+        }
+        mod mod2 {
+            use crate::mod1::Bar;
+            use crate::mod1::Bar::{Bar1, Bar2};
+
+            fn foo(bar: Bar) {
+                match bar {
+                    Bar1 | Bar2 => ()
+                }
+            }
+        }
+    """)
+
     fun `test move to other crate simple`() = doTest("""
     //- main.rs
         mod mod1 {

@@ -23,6 +23,7 @@ import com.intellij.util.containers.MultiMap
 import org.rust.ide.annotator.fixes.MakePublicFix
 import org.rust.ide.refactoring.move.common.RsMoveUtil.LOG
 import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModStrict
+import org.rust.ide.refactoring.move.common.RsMoveUtil.convertFromPathOriginal
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isAbsolute
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isInsideMovedElements
 import org.rust.ide.refactoring.move.common.RsMoveUtil.isSimplePath
@@ -209,10 +210,22 @@ class RsMoveCommonProcessor(
             path.putCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY, reference)
             references += reference
         }
+        for (patIdent in movedElementsShallowDescendantsOfType<RsPatIdent>(elementsToMove)) {
+            val target = patIdent.patBinding.reference.resolve() as? RsQualifiedNamedElement ?: continue
+            if (target !is RsStructItem && target !is RsEnumVariant && target !is RsConstant) continue
+            val reference = createOutsideReferenceInfo(patIdent, target) ?: continue
+            patIdent.putCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY, reference)
+            references += reference
+        }
         return references
     }
 
-    private fun createOutsideReferenceInfo(path: RsPath, target: RsQualifiedNamedElement): RsMoveReferenceInfo? {
+    private fun createOutsideReferenceInfo(
+        pathOriginal: RsElement,
+        target: RsQualifiedNamedElement
+    ): RsMoveReferenceInfo? {
+        val path = convertFromPathOriginal(pathOriginal, codeFragmentFactory)
+
         if (path.isAbsolute()) {
             // when moving from binary to library crate, we should change path `library_crate::...` to `crate::...`
             // when moving from one library crate to another, we should change path `crate::...` to `first_library::...`
@@ -240,7 +253,7 @@ class RsMoveCommonProcessor(
         val pathNewAccessible = RsImportHelper.findPath(targetMod, target)
             ?.toRsPathInEmptyTmpMod(codeFragmentFactory, psiFactory, targetMod)
 
-        return RsMoveReferenceInfo(path, pathNewAccessible, pathNewFallback, target)
+        return RsMoveReferenceInfo(path, pathOriginal, pathNewAccessible, pathNewFallback, target)
     }
 
     private fun preprocessInsideReferences(usages: Array<UsageInfo>): List<RsMoveReferenceInfo> {
@@ -256,23 +269,25 @@ class RsMoveCommonProcessor(
             val target = usage.referenceInfo.target
             target.putCopyableUserData(RS_TARGET_BEFORE_MOVE_KEY, target)
 
-            val pathOld = usage.referenceInfo.pathOld
-            if (pathOld.isInsideMovedElements(elementsToMove)) {
-                pathOld.putCopyableUserData(RS_PATH_OLD_BEFORE_MOVE_KEY, pathOld)
+            val pathOldOriginal = usage.referenceInfo.pathOldOriginal
+            if (pathOldOriginal.isInsideMovedElements(elementsToMove)) {
+                pathOldOriginal.putCopyableUserData(RS_PATH_OLD_BEFORE_MOVE_KEY, pathOldOriginal)
             }
         }
         return originalReferences
     }
 
-    private fun createInsideReferenceInfo(path: RsPath, target: RsQualifiedNamedElement): RsMoveReferenceInfo {
-        val isSelfReference = path.isInsideMovedElements(elementsToMove)
+    private fun createInsideReferenceInfo(pathOriginal: RsPath, target: RsQualifiedNamedElement): RsMoveReferenceInfo {
+        val path = convertFromPathOriginal(pathOriginal, codeFragmentFactory)
+
+        val isSelfReference = pathOriginal.isInsideMovedElements(elementsToMove)
         if (isSelfReference) {
             // after move path will be in `targetMod`
             // so we can refer to moved item just with its name
             check(target.containingModStrict == sourceMod)  // any inside reference is reference to moved item
             if (path.containingMod == sourceMod) {
                 val pathNew = target.name?.toRsPath(codeFragmentFactory, targetMod)
-                if (pathNew != null) return RsMoveReferenceInfo(path, pathNew, pathNew, target)
+                if (pathNew != null) return RsMoveReferenceInfo(path, pathOriginal, pathNew, pathNew, target)
             }
         }
 
@@ -283,7 +298,7 @@ class RsMoveCommonProcessor(
             val pathNewFallbackText = "$targetModPath::$targetName"
             pathNewFallbackText.toRsPath(codeFragmentFactory, context = path.context as? RsElement ?: path)
         }
-        return RsMoveReferenceInfo(path, pathNewAccessible, pathNewFallback, target)
+        return RsMoveReferenceInfo(path, pathOriginal, pathNewAccessible, pathNewFallback, target)
     }
 
     /**
@@ -292,22 +307,24 @@ class RsMoveCommonProcessor(
      */
     private fun convertToFullReference(reference: RsMoveReferenceInfo): RsMoveReferenceInfo? {
         // Examples:
-        // `mod1::mod2::mod3::Struct::func::<R>();`
+        // `mod1::mod2::mod3::Struct::<T>::func::<R>();`
         //  ^~~~~~~~~^ reference.pathOld
+        //  ^~~~~~~~~~~~~~~~~~~~~~~~~~~~^ pathOldOriginal
         //  ^~~~~~~~~~~~~~~~~~~~~~~^ pathOld
         //
         // `use mod1::mod2::mod3;`
         //      ^~~~~~~~~^ reference.pathOld
-        //      ^~~~~~~~~~~~~~~^ pathOld
+        //      ^~~~~~~~~~~~~~~^ pathOldOriginal == pathOld
 
         if (isSimplePath(reference.pathOld) || reference.isInsideUseDirective) return null
-        val pathOld = reference.pathOld.ancestors
+        val pathOldOriginal = reference.pathOldOriginal.ancestors
             .takeWhile { it is RsPath }
             .map { it as RsPath }
             .firstOrNull { isSimplePath(it) }
             ?: return null
+        val pathOld = convertFromPathOriginal(pathOldOriginal, codeFragmentFactory)
         if (!pathOld.textNormalized.startsWith(reference.pathOld.textNormalized)) {
-            LOG.error("Expected '${pathOld.text}' to starts with '${reference.pathOld.text}'")
+            LOG.error("Expected '${pathOld.text}' to start with '${reference.pathOld.text}'")
             return null
         }
 
@@ -325,7 +342,7 @@ class RsMoveCommonProcessor(
         val pathNewAccessible = reference.pathNewAccessible?.let { convertPathToFull(it) }
         val pathNewFallback = reference.pathNewFallback?.let { convertPathToFull(it) }
 
-        return RsMoveReferenceInfo(pathOld, pathNewAccessible, pathNewFallback, target)
+        return RsMoveReferenceInfo(pathOld, pathOldOriginal, pathNewAccessible, pathNewFallback, target)
     }
 
     fun performRefactoring(usages: Array<out UsageInfo>, moveElements: () -> List<ElementToMove>) {
@@ -356,13 +373,14 @@ class RsMoveCommonProcessor(
      * We store [RsMoveReferenceInfo] for outside reference in copyable user data for this [RsPath].
      */
     private fun restoreOutsideReferenceInfosAfterMove(): List<RsMoveReferenceInfo> {
-        return movedElementsDeepDescendantsOfType<RsPath>(elementsToMove)
-            .mapNotNullTo(mutableListOf()) { pathOld ->
-                val reference = pathOld.getCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY)
+        return movedElementsDeepDescendantsOfType<RsElement>(elementsToMove)
+            .mapNotNullTo(mutableListOf()) { pathOldOriginal ->
+                val reference = pathOldOriginal.getCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY)
                     ?: return@mapNotNullTo null
-                pathOld.putCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY, null)
+                pathOldOriginal.putCopyableUserData(RS_MOVE_REFERENCE_INFO_KEY, null)
                 // because after move new `RsElement`s are created
-                reference.pathOld = pathOld
+                reference.pathOldOriginal = pathOldOriginal
+                reference.pathOld = convertFromPathOriginal(pathOldOriginal, codeFragmentFactory)
                 reference
             }
     }
@@ -382,11 +400,12 @@ class RsMoveCommonProcessor(
                 .toMap()
         }
 
-        val pathMapping = createMapping(RS_PATH_OLD_BEFORE_MOVE_KEY, RsPath::class.java)
+        val pathMapping = createMapping(RS_PATH_OLD_BEFORE_MOVE_KEY, RsElement::class.java)
         val targetMapping = createMapping(RS_TARGET_BEFORE_MOVE_KEY, RsQualifiedNamedElement::class.java)
         for (reference in references) {
-            pathMapping[reference.pathOld]?.let { pathOld ->
-                reference.pathOld = pathOld
+            pathMapping[reference.pathOldOriginal]?.let { pathOldOriginal ->
+                reference.pathOldOriginal = pathOldOriginal
+                reference.pathOld = convertFromPathOriginal(pathOldOriginal, codeFragmentFactory)
             }
 
             val targetRestored = targetMapping[reference.target]
@@ -396,7 +415,7 @@ class RsMoveCommonProcessor(
                 reference.target = targetRestored
             } else if (reference.target.containingFile is DummyHolder) {
                 LOG.error("Can't restore target ${reference.target}" +
-                    " for reference '${reference.pathOld.text}' after move")
+                    " for reference '${reference.pathOldOriginal.text}' after move")
             }
         }
     }
@@ -436,9 +455,10 @@ class RsMoveCommonProcessor(
          * Used by self references (we treat them as inside references).
          * We store `pathOld` of such reference in `copyableUserData` for `pathOld` itself.
          * So after move we can create mapping between original [RsPath] in [sourceMod] and its copy in [targetMod],
-         * and use this mapping to update `pathOld` in [RsMoveReferenceInfo]
+         * and use this mapping to update `pathOld` in [RsMoveReferenceInfo].
+         * (Type is [RsElement] and not [RsPath] because path to nullary enum variant in bindings is [RsPatIdent])
          */
-        private val RS_PATH_OLD_BEFORE_MOVE_KEY: Key<RsPath> = Key.create("RS_PATH_OLD_BEFORE_MOVE_KEY")
+        private val RS_PATH_OLD_BEFORE_MOVE_KEY: Key<RsElement> = Key.create("RS_PATH_OLD_BEFORE_MOVE_KEY")
 
         /**
          * Used by inside references (to descendants of moved items - but only in same file as [sourceMod]).
