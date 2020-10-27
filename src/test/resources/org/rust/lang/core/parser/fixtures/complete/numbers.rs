@@ -11,6 +11,7 @@ fn main() {
     let _ = 1f34;
     let _ = 1.0i98;
     let _ = 0.0.0;
+    let _ = 0f32.foo();
 
     // Integer literals
     let _ = 1234567890;
@@ -20,4 +21,5 @@ fn main() {
     let _ = 0x1234567890abcdef;
     let _ = 0o1234567;
     let _ = 0b10101011101010000111;
+    let _ = 0.foo();
 }
