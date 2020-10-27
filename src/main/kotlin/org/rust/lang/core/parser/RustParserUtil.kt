@@ -240,9 +240,9 @@ object RustParserUtil : GeneratedParserUtilBase() {
     @JvmStatic
     fun parseFloatLiteral(b: PsiBuilder, level: Int): Boolean {
         return when (b.tokenType) {
-            INTEGER_LITERAL -> when (b.rawLookup(1)) {
+            INTEGER_LITERAL -> {
                 // Works with `0.0`, `0.`, but not `0.foo` (identifier is not accepted after `.`)
-                DOT -> {
+                if (b.rawLookup(1) == DOT) {
                     val (collapse, size) = when (b.rawLookup(2)) {
                         INTEGER_LITERAL, FLOAT_LITERAL -> true to 3
                         IDENTIFIER -> false to 0
@@ -252,21 +252,19 @@ object RustParserUtil : GeneratedParserUtilBase() {
                         val marker = b.mark()
                         PsiBuilderUtil.advance(b, size)
                         marker.collapse(FLOAT_LITERAL)
+                        return true
                     }
-                    collapse
                 }
                 // Works with floats without `.` like `1f32`, `1e3`, `3e-4`
-                else -> {
-                    val text = b.tokenText
-                    val isFloat = text != null &&
-                        (text.contains("f") || text.contains("e", ignoreCase = true) && !text.endsWith("e"))
-                        && !text.startsWith("0x")
-                    if (isFloat) {
-                        b.remapCurrentToken(FLOAT_LITERAL)
-                        b.advanceLexer()
-                    }
-                    isFloat
+                val text = b.tokenText
+                val isFloat = text != null &&
+                    (text.contains("f") || text.contains("e", ignoreCase = true) && !text.endsWith("e"))
+                    && !text.startsWith("0x")
+                if (isFloat) {
+                    b.remapCurrentToken(FLOAT_LITERAL)
+                    b.advanceLexer()
                 }
+                isFloat
             }
             // Can be already remapped
             FLOAT_LITERAL -> {
