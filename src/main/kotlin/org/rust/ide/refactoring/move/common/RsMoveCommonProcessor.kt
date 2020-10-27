@@ -113,6 +113,8 @@ class RsMoveCommonProcessor(
 
     private val pathHelper: RsMovePathHelper = RsMovePathHelper(project, targetMod)
     private lateinit var conflictsDetector: RsMoveConflictsDetector
+    private val traitMethodsProcessor: RsMoveTraitMethodsProcessor =
+        RsMoveTraitMethodsProcessor(psiFactory, sourceMod, targetMod, pathHelper)
 
     init {
         if (targetMod == sourceMod) {
@@ -158,6 +160,8 @@ class RsMoveCommonProcessor(
                     // TODO: two threads
                     val outsideReferences = collectOutsideReferences()
                     val insideReferences = preprocessInsideReferences(usages)
+                    traitMethodsProcessor.preprocessOutsideReferencesToTraitMethods(conflicts, elementsToMove)
+                    traitMethodsProcessor.preprocessInsideReferencesToTraitMethods(conflicts, elementsToMove)
 
                     if (!isUnitTestMode) {
                         ProgressManager.getInstance().progressIndicator.text = message("detecting.possible.conflicts")
@@ -336,6 +340,9 @@ class RsMoveCommonProcessor(
         val retargetReferencesProcessor = RsMoveRetargetReferencesProcessor(project, sourceMod, targetMod)
         val outsideReferences = restoreOutsideReferenceInfosAfterMove()
         retargetReferencesProcessor.retargetReferences(outsideReferences)
+
+        traitMethodsProcessor.addTraitImportsForOutsideReferences(elementsToMove)
+        traitMethodsProcessor.addTraitImportsForInsideReferences()
 
         val insideReferences = usages
             .filterIsInstance<RsPathUsageInfo>()
