@@ -7,6 +7,9 @@ package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
+import org.rust.MockEdition
+import org.rust.UseNewResolve
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 class RsIncludeMacroResolveTest : RsResolveTestBase() {
 
@@ -183,6 +186,27 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
                           //^ bar.rs
     //- bar.rs
         pub struct Foo;
+    """)
+
+    @UseNewResolve
+    @ExpandMacros
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro call in included file`() = checkResolve("""
+    //- main.rs
+        macro_rules! gen_use {
+            () => { use inner::func; };
+        }
+
+        mod inner {
+            pub fn func() {}
+        }        //X
+        include!("foo.rs");
+
+        fn main() {
+            func();
+        } //^ main.rs
+    //- foo.rs
+        gen_use!();
     """)
 
     fun `test concat in include 1`() = checkResolve("""

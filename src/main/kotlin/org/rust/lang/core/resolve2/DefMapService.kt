@@ -12,10 +12,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeEvent
+import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -276,6 +278,20 @@ class DefMapService(val project: Project) : Disposable {
                     }
                 }
                 else -> Unit
+            }
+        }
+    }
+
+    companion object {
+        var forceUseNewResolve: Boolean = false
+            private set
+
+        @TestOnly
+        fun setUseNewResolve(): Disposable {
+            check(isUnitTestMode)
+            forceUseNewResolve = true
+            return Disposable {
+                forceUseNewResolve = false
             }
         }
     }

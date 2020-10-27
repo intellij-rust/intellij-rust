@@ -40,6 +40,7 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.resolve2.DefMapService
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
@@ -72,6 +73,10 @@ abstract class RsTestBase : RsPlatformTestBase() {
         setupMockCfgOptions()
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
+            Disposer.register(testRootDisposable, disposable)
+        }
+        findAnnotationInstance<UseNewResolve>()?.let {
+            val disposable = DefMapService.setUseNewResolve()
             Disposer.register(testRootDisposable, disposable)
         }
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
