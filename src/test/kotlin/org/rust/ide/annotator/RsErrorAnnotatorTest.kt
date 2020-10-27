@@ -887,7 +887,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                 bar: u32,
                 <error>pub</error> baz: u32
             },
-            BAR(<error>pub</error> u32, f64)
+            <error>pub</error> BAR(<error>pub</error> u32, f64),
+            <error>pub(crate)</error> BAZ
         }
 
         pub trait Foo {
