@@ -388,6 +388,15 @@ class RsNonExhaustiveMatchInspectionTest : RsInspectionsTestBase(RsNonExhaustive
         }
     """)
 
+    fun `test empty enum`() = checkByText("""
+        enum E {}
+
+        fn foo(e: E) {
+            match e {
+            }
+        }
+    """)
+
     fun `test ignored fields 1`() = checkByText("""
         struct S { x: bool, y: i32 }
 

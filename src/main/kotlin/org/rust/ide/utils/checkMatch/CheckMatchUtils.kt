@@ -35,6 +35,8 @@ private fun doCheckExhaustive(match: RsMatchExpr): List<Pattern>? {
     val exprType = match.expr?.type ?: return null
     if (exprType.containsTyOfClass(TyUnknown::class.java)) return null
     val matchedExprType = match.expr?.type ?: return null
+    // match on uninhabited type is exhaustive
+    if (!Constructor.isInhabited(exprType)) return null
 
     val matrix = match.arms
         .filter { it.matchArmGuard == null }
