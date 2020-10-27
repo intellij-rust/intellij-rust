@@ -339,18 +339,24 @@ class CFGBuilder(
 
     override fun visitBlockExpr(blockExpr: RsBlockExpr) {
         val labelDeclaration = blockExpr.labelDecl
+        val isAsync = blockExpr.isAsync
+        val exprExit = addAstNode(blockExpr)
+
         if (labelDeclaration != null) {
-            val exprExit = addAstNode(blockExpr)
             withBlockScope(BlockScope(blockExpr, exprExit)) {
                 val stmtsExit = blockExpr.block.stmtList.fold(pred) { pred, stmt -> process(stmt, pred) }
                 val blockExprExit = process(blockExpr.block.expr, stmtsExit)
                 addContainedEdge(blockExprExit, exprExit)
             }
-            finishWith(exprExit)
         } else {
             val blockExit = process(blockExpr.block, pred)
-            finishWithAstNode(blockExpr, blockExit)
+            addContainedEdge(blockExit, exprExit)
         }
+
+        if (isAsync) {
+            addContainedEdge(pred, exprExit)
+        }
+        finishWith(exprExit)
     }
 
     override fun visitIfExpr(ifExpr: RsIfExpr) {

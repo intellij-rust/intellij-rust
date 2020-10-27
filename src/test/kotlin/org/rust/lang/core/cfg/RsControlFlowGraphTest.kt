@@ -7,7 +7,9 @@ package org.rust.lang.core.cfg
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
 import org.rust.RsTestBase
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.descendantsOfType
@@ -974,6 +976,27 @@ class RsControlFlowGraphTest : RsTestBase() {
         Termination
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test async block with infinite loop`() = testCFG("""
+        fn foo() {
+            1;
+            async { loop {} };
+            2;
+        }
+    """, """
+        Entry
+        1
+        1;
+        Dummy
+        BLOCK
+        Termination
+        BLOCK
+        BLOCK;
+        2
+        2;
+        BLOCK
+        Exit
+    """)
 
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)

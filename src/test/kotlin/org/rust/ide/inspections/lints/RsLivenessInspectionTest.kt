@@ -778,4 +778,12 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             s.foo(2);
         }
     """)
+
+    fun `test use after async block with infinite loop`() = checkByText("""
+        fn foo() {
+            let a = 1;
+            let _ = async { loop {} };
+            a;
+        }
+    """)
 }
