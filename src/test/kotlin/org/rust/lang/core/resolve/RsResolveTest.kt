@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.IgnoreInNewResolve
 import org.rust.MockEdition
 import org.rust.MockRustcVersion
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ignoreInNewResolve
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
 class RsResolveTest : RsResolveTestBase() {
@@ -1399,7 +1401,7 @@ class RsResolveTest : RsResolveTestBase() {
 
         use self::Foo;
                 //^
-    """, ItemResolutionTestmarks.externCrateSelfWithoutAlias)
+    """, ItemResolutionTestmarks.externCrateSelfWithoutAlias.ignoreInNewResolve())
 
     fun `test const generic in fn`() = checkByCode("""
         fn f<const AAA: usize>() {

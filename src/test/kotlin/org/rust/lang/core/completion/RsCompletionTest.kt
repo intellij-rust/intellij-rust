@@ -934,12 +934,14 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
+    @IgnoreInNewResolve
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test private extern crate`() = checkNoCompletion("""
         mod foo { extern crate std; }
         pub use foo::st/*caret*/
     """)
 
+    @IgnoreInNewResolve
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test no std completion`() = checkNoCompletion("""
         extern crate dep_lib_target;

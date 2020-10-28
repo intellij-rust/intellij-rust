@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import org.rust.ExpandMacros
+import org.rust.IgnoreInNewResolve
 import org.rust.lang.core.resolve.RsResolveTestBase
 import org.rust.lang.core.resolve.ref.RsMacroBodyReferenceDelegateImpl.Testmarks
 
@@ -40,6 +41,7 @@ class RsMacroCallReferenceDelegationTest : RsResolveTestBase() {
         }              //^
     """, Testmarks.touched)
 
+    @IgnoreInNewResolve
     fun `test type context`() = checkByCode("""
         struct X;
              //X

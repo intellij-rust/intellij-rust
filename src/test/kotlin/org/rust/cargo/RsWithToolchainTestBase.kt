@@ -38,7 +38,7 @@ abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
     }
 
     override fun runTestInternal(context: TestContext) {
-        val skipReason = rustupFixture.skipTestReason
+        val skipReason = rustupFixture.skipTestReason ?: getIgnoredInNewResolveReason()
         if (skipReason != null) {
             System.err.println("SKIP \"$name\": $skipReason")
             return

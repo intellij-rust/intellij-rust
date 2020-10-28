@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.MockEdition
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -74,6 +71,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @IgnoreInNewResolve
     fun `test duplicated macro_export macro`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
@@ -113,7 +111,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     //- lib.rs
         #[macro_export]
         macro_rules! foo_bar { () => {} }
-    """, NameResolutionTestmarks.missingMacroUse)
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
 
     fun `test macro rules in mod 1`() = stubOnlyResolve("""
     //- main.rs
@@ -240,7 +238,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse)
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
 
     fun `test import macro by use item wildcard`() = stubOnlyResolve("""
     //- lib.rs
@@ -254,7 +252,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse)
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
 
     fun `test import macro by use item without extern crate`() = stubOnlyResolve("""
     //- lib.rs
@@ -640,6 +638,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @IgnoreInNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test ambiguity of extern crate alias and other item with the same name`() {
         stubOnlyResolve("""
@@ -681,7 +680,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target;
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse)
+    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve())
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test "extra use of crate name 1" with alias`() = stubOnlyResolve("""
@@ -701,7 +700,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target::{self};
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse)
+    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve())
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import the same name as a crate name`() = stubOnlyResolve("""
