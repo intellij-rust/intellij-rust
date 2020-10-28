@@ -56,4 +56,8 @@ class RsLintCompletionProviderTest : RsCompletionTestBase() {
     """, """
         #![forbid(unused_variables/*caret*/)]
     """)
+
+    fun `test do not complete path with leading double colon`() = checkNoCompletion("""
+        #![allow(::/*caret*/)]
+    """)
 }
