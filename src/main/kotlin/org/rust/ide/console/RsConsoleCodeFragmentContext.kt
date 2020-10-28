@@ -13,7 +13,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.block
 import org.rust.lang.core.psi.ext.childOfType
-import org.rust.lang.core.resolve.TYPES
+import org.rust.lang.core.resolve.TYPES_N_VALUES_N_MACROS
 import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.findPrelude
 import org.rust.lang.core.resolve.processNestedScopesUpwards
@@ -46,7 +46,7 @@ class RsConsoleCodeFragmentContext(codeFragment: RsReplCodeFragment?) {
             preludeItemsNames += it.name
             false
         }
-        processNestedScopesUpwards(prelude, TYPES, processor)
+        processNestedScopesUpwards(prelude, TYPES_N_VALUES_N_MACROS, processor)
         itemsNames += preludeItemsNames
         hasAddedNamesFromPrelude = true
     }
