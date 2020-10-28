@@ -16,7 +16,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.URLUtil
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.hasCargoProject
-import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.isRustFile
@@ -58,24 +57,24 @@ class CreateNewGithubIssue : DumbAwareAction(
             If you would like to report a bug, we have added some points below that you can fill out.
             Feel free to remove all the irrelevant text to request a new feature.
             -->
-            
+
             ## Environment
-            
+
             * **IntelliJ Rust plugin version:** %s
             * **Rust toolchain version:** %s
             * **IDE name and version:** %s
             * **Operating system:** %s
-            
+
             ## Problem description
-            
-            
+
+
             ## Steps to reproduce
             %s
-            
+
             <!--
             Please include as much of your codebase as needed to reproduce the error.
             If the relevant files are large, please provide a link to a public repository or a [Gist](https://gist.github.com/).
-            -->            
+            -->
         """.trimIndent()
 
         private val ideNameAndVersion: String
@@ -98,11 +97,7 @@ class CreateNewGithubIssue : DumbAwareAction(
 
         private val RustcVersion.displayText: String
             get() = buildString {
-                append(semver)
-                if (channel != RustChannel.DEFAULT && channel != RustChannel.STABLE) {
-                    append("-")
-                    append(channel.channel)
-                }
+                append(semver.parsedVersion)
                 if (commitHash != null) {
                     append(" (")
                     append(commitHash.take(9))
