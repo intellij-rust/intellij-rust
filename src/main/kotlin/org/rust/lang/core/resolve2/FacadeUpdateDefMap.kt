@@ -44,11 +44,15 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
         if (holder.hasLatestStamp()) return@withLockAndCheckingCancelled holder.defMap
 
         val pool = Executors.newWorkStealingPool()
-        val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
-        // TODO: Invoke outside of read action ?
-        DefMapUpdater(crate, this, pool, indicator, multithread = true).run()
-        if (holder.defMap != null) holder.checkHasLatestStamp()
-        holder.defMap
+        try {
+            val indicator = ProgressManager.getGlobalProgressIndicator() ?: EmptyProgressIndicator()
+            // TODO: Invoke outside of read action ?
+            DefMapUpdater(crate, this, pool, indicator, multithread = true).run()
+            if (holder.defMap != null) holder.checkHasLatestStamp()
+            holder.defMap
+        } finally {
+            pool.shutdown()
+        }
     }
 }
 
