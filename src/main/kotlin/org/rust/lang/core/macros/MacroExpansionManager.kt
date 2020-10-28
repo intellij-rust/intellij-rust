@@ -517,7 +517,7 @@ private class MacroExpansionServiceImplInner(
         performConsistencyCheckBeforeTask = false
         submitTask(object : Task.Backgroundable(project, "Cleaning outdated macros", false), RsTask {
             override fun run(indicator: ProgressIndicator) {
-                checkReadAccessNotAllowed()
+                if (!isUnitTestMode) checkReadAccessNotAllowed()
                 val vfs = MacroExpansionFileSystem.getInstance()
                 vfs.cleanDirectoryIfExists(dirs.expansionDirPath)
                 vfs.createDirectoryIfNotExistsOrDummy(dirs.expansionDirPath)
@@ -530,6 +530,9 @@ private class MacroExpansionServiceImplInner(
                     }
                 }
             }
+
+            override val runSyncInUnitTests: Boolean
+                get() = true
 
             override val taskType: RsTask.TaskType
                 get() = RsTask.TaskType.MACROS_CLEAR
