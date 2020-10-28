@@ -262,6 +262,22 @@ class RsStubTest : RsTestBase() {
               LIT_EXPR:RsLitExprStub
     """)
 
+    fun `test incomplete paths`() = doTest("""
+        use foo::;
+        use foo::::bar;
+    """, """
+        RsFileStub
+          USE_ITEM:RsUseItemStub
+            USE_SPECK:RsUseSpeckStub
+              PATH:RsPathStub
+                PATH:RsPathStub
+          USE_ITEM:RsUseItemStub
+            USE_SPECK:RsUseSpeckStub
+              PATH:RsPathStub
+                PATH:RsPathStub
+                  PATH:RsPathStub
+    """)
+
     private fun doTest(@Language("Rust") code: String, expectedStubText: String) {
         val fileName = "main.rs"
         fileTreeFromText("//- $fileName\n$code").create()

@@ -426,7 +426,7 @@ object ExpansionPipeline {
 
             val expansion = MacroExpansionSharedCache.getInstance().cachedExpand(expander, def, call)
             if (expansion == null) {
-                MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName}!(${call.macroBody})`")
+                MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName.orEmpty()}!(${call.macroBody})`")
                 return nextStageFail(callHash, defHash)
             }
 
@@ -455,7 +455,7 @@ object ExpansionPipeline {
             Stage2Fail(info, callHash, defHash)
 
         override fun toString(): String =
-            "ExpansionPipeline.Stage1(call=${call.path.referenceName}!(${call.macroBody}))"
+            "ExpansionPipeline.Stage1(call=${call.path.referenceName.orEmpty()}!(${call.macroBody}))"
     }
 
     class Stage2Ok(

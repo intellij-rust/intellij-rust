@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsStdlibCompletionTest : RsCompletionTestBase() {
@@ -80,6 +82,11 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         fn main() { std::stringif/*caret*/ }
     """, """
         fn main() { std::stringify!(/*caret*/) }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    fun `test complete all in std in 'use' in crate root`() = checkContainsCompletion("vec", """
+        use std::/*caret*/;
     """)
 }
 

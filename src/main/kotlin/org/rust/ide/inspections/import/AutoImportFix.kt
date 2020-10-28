@@ -79,7 +79,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             if (path.reference == null) return null
 
             val basePath = path.basePath()
-            if (!basePath.isUnresolved) return null
+            if (basePath.resolveStatus != PathResolveStatus.UNRESOLVED) return null
 
             if (path.ancestorStrict<RsUseSpeck>() != null) {
                 // Don't try to import path in use item
@@ -87,7 +87,9 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
                 return null
             }
 
-            val isNameInScope = path.hasInScope(basePath.referenceName, TYPES_N_VALUES)
+            val referenceName = basePath.referenceName ?: return null
+
+            val isNameInScope = path.hasInScope(referenceName, TYPES_N_VALUES)
             if (isNameInScope) {
                 // Don't import names that are already in scope but cannot be resolved
                 // because namespace of psi element prevents correct name resolution.
@@ -99,7 +101,7 @@ class AutoImportFix(element: RsElement, private val type: Type) : LocalQuickFixO
             val superPath = path.rootPath()
             val candidates = ImportCandidatesCollector.getImportCandidates(
                 ImportContext.from(project, path, false),
-                basePath.referenceName,
+                referenceName,
                 superPath.text
             ) {
                 superPath != basePath || !(it.item is RsMod || it.item is RsModDeclItem || it.item.parent is RsMembers)

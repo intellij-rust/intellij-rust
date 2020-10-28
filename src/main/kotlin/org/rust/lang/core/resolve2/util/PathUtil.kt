@@ -33,7 +33,9 @@ private fun RsUseSpeckStub.forEachLeafSpeck(consumer: RsLeafUseSpeckConsumer, se
     }
 
     val numberSegments = segments.size
-    if (path != null) addPathSegments(path, segments)
+    if (path != null) {
+        if (!addPathSegments(path, segments)) return
+    }
 
     if (useGroup == null) {
         if (!isStarImport && segments.size > 1 && segments.last() == "self") segments.removeAt(segments.lastIndex)
@@ -50,17 +52,18 @@ private fun RsUseSpeckStub.forEachLeafSpeck(consumer: RsLeafUseSpeckConsumer, se
     }
 }
 
-private fun addPathSegments(path: RsPathStub, segments: ArrayList<String>) {
+/** return false if path is incomplete (has empty segments), e.g. `use std::;` */
+private fun addPathSegments(path: RsPathStub, segments: ArrayList<String>): Boolean {
     val subpath = path.path
     if (subpath != null) {
-        addPathSegments(subpath, segments)
+        if (!addPathSegments(subpath, segments)) return false
     } else if (path.hasColonColon) {
         // absolute path: `::foo::bar`
         //                 ~~~~~ this
         segments += ""
     }
 
-    val segment = path.referenceName
+    val segment = path.referenceName ?: return false
     segments += segment
     if (subpath == null && segment == MACRO_DOLLAR_CRATE_IDENTIFIER) {
         val crateId = path.getUserData(RESOLVE_DOLLAR_CRATE_ID_KEY)
@@ -70,9 +73,10 @@ private fun addPathSegments(path: RsPathStub, segments: ArrayList<String>) {
             RESOLVE_LOG.error("Can't find crate for path starting with \$crate")
         }
     }
+    return true
 }
 
-fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String> {
+fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String>? {
     val segments = arrayListOf<String>()
 
     val crateIdFromLocalInnerMacros = getUserData(RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY)
@@ -81,14 +85,14 @@ fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String> {
         segments += crateIdFromLocalInnerMacros.toString()
     }
 
-    addPathSegments(path, segments)
+    if (!addPathSegments(path, segments)) return null
     return segments.toTypedArray()
 }
 
-fun RsVisStub.getRestrictedPath(): Array<String> {
+fun RsVisStub.getRestrictedPath(): Array<String>? {
     val path = visRestrictionPath ?: error("no visibility restriction")
     val segments = arrayListOf<String>()
-    addPathSegments(path, segments)
+    if (!addPathSegments(path, segments)) return null
     if (segments.first().isEmpty()) segments.removeAt(0)
     return segments.toTypedArray()
 }

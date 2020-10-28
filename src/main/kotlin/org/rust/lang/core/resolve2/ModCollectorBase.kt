@@ -138,7 +138,7 @@ class ModCollectorBase private constructor(
         val isCallDeeplyEnabledByCfg = isDeeplyEnabledByCfg && call.isEnabledByCfgSelf(crate)
         if (!isCallDeeplyEnabledByCfg) return
         val body = call.getIncludeMacroArgument(crate) ?: call.macroBody ?: return
-        val path = call.getPathWithAdjustedDollarCrate()
+        val path = call.getPathWithAdjustedDollarCrate() ?: return
         val callLight = MacroCallLight(path, body, call.bodyHash)
         visitor.collectMacroCall(callLight, call)
     }
@@ -232,7 +232,7 @@ sealed class VisibilityLight : Writeable {
                 RsVisStubKind.PUB -> Public
                 RsVisStubKind.CRATE -> RestrictedCrate
                 RsVisStubKind.RESTRICTED -> {
-                    val path = vis.getRestrictedPath()
+                    val path = vis.getRestrictedPath() ?: return RestrictedCrate
                     val pathSingle = path.singleOrNull()
                     if (path.isEmpty() || pathSingle == "crate") return RestrictedCrate
                     if (pathSingle == "self") return Private

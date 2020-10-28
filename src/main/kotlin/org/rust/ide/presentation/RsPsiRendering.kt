@@ -151,7 +151,7 @@ private fun StringBuilder.appendTypeReference(ref: RsTypeReference, subst: Subst
 }
 
 private fun StringBuilder.appendPath(path: RsPath, subst: Substitution, renderLifetimes: Boolean) {
-    append(path.referenceName)
+    append(path.referenceName.orEmpty())
     val inAngles = path.typeArgumentList // Foo<...>
     val fnSugar = path.valueParameterList // &dyn FnOnce(...) -> i32
     if (inAngles != null) {

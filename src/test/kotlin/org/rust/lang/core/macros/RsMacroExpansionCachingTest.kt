@@ -50,10 +50,10 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
 
     private fun List<RsMacroCall>.collectStamps(): Map<String, Long> =
         associate {
-            val expansion = it.expansion ?: error("failed to expand macro ${it.path.referenceName}!")
-            val first = expansion.elements.firstOrNull() ?: error("Macro expanded to empty ${it.path.referenceName}!")
+            val expansion = it.expansion ?: error("failed to expand macro ${it.path.referenceName.orEmpty()}!")
+            val first = expansion.elements.firstOrNull() ?: error("Macro expanded to empty ${it.path.referenceName.orEmpty()}!")
             check(first.isValid)
-            it.path.referenceName to expansion.file.virtualFile.timeStamp
+            it.path.referenceName.orEmpty() to expansion.file.virtualFile.timeStamp
         }
 
     private fun PsiFile.collectMacros(): List<RsMacroCall> {

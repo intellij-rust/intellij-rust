@@ -863,4 +863,19 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             () => { use Foo as Bar; };
         }
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test expand macro with incomplete path`() = stubOnlyResolve("""
+    //- main.rs
+        macro_rules! gen_func {
+            () => { fn func() {} };
+        }
+
+        gen_func::!();
+
+        fn main() {
+            // here we just check that incomplete path doesn't cause exceptions
+            func();
+        } //^ unresolved
+    """)
 }

@@ -80,9 +80,10 @@ fun <T : ScopeEntry> createProcessorGeneric(
 typealias RsMethodResolveProcessor = RsResolveProcessorBase<MethodResolveVariant>
 
 fun collectPathResolveVariants(
-    referenceName: String,
+    referenceName: String?,
     f: (RsResolveProcessor) -> Unit
 ): List<BoundElement<RsElement>> {
+    if (referenceName == null) return emptyList()
     val result = SmartList<BoundElement<RsElement>>()
     val processor = createProcessor(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
@@ -101,7 +102,8 @@ fun collectPathResolveVariants(
     return result
 }
 
-fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Unit): List<RsElement> {
+fun collectResolveVariants(referenceName: String?, f: (RsResolveProcessor) -> Unit): List<RsElement> {
+    if (referenceName == null) return emptyList()
     val result = SmartList<RsElement>()
     val processor = createProcessor(referenceName) { e ->
         if (e == ScopeEvent.STAR_IMPORTS && result.isNotEmpty()) return@createProcessor true
@@ -119,9 +121,10 @@ fun collectResolveVariants(referenceName: String, f: (RsResolveProcessor) -> Uni
 }
 
 fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
-    referenceName: String,
+    referenceName: String?,
     f: (RsResolveProcessorBase<T>) -> Unit
 ): List<T> {
+    if (referenceName == null) return emptyList()
     val result = mutableListOf<T>()
     val processor = createProcessorGeneric<T>(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
@@ -141,7 +144,8 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
     return result
 }
 
-fun pickFirstResolveVariant(referenceName: String, f: (RsResolveProcessor) -> Unit): RsElement? {
+fun pickFirstResolveVariant(referenceName: String?, f: (RsResolveProcessor) -> Unit): RsElement? {
+    if (referenceName == null) return null
     var result: RsElement? = null
     val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {

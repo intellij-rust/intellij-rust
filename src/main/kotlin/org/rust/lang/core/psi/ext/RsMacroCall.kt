@@ -44,7 +44,7 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
 }
 
 val RsMacroCall.macroName: String
-    get() = path.referenceName
+    get() = path.referenceName.orEmpty() // TODO return null if `referenceName` is null
 
 val RsMacroCall.bracesKind: MacroBraces?
     get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }
@@ -186,7 +186,7 @@ fun RsMacroCall.expandMacrosRecursively(depthLimit: Int, replaceDollarCrate: Boo
                 && element.qualifier == null && element.typeQual == null && !element.hasColonColon) {
                 // Replace `$crate` to a crate name. Note that the name can be incorrect because of crate renames
                 // and the fact that `$crate` can come from a transitive dependency
-                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName)
+                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName.orEmpty())
             } else {
                 element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
             }

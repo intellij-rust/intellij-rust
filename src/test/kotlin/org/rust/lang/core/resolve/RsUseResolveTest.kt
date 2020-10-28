@@ -726,4 +726,19 @@ class RsUseResolveTest : RsResolveTestBase() {
                      //^
         }
     """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test use incomplete path`() = checkByCode("""
+        use foo::;
+        mod foo {
+            pub fn func() {}
+        }
+
+        fn func() {}
+         //X
+        fn main() {
+            // here we just check that incomplete path doesn't cause exceptions
+            func();
+        } //^
+    """)
 }

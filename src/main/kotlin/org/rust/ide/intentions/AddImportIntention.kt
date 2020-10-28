@@ -31,7 +31,7 @@ class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Conte
         val importablePath = path.findImportablePath() ?: return null
         if (importablePath.kind != PathKind.IDENTIFIER ||
             importablePath.reference == null ||
-            importablePath.isUnresolved) return null
+            importablePath.resolveStatus != PathResolveStatus.RESOLVED) return null
 
         // ignore paths that cannot be shortened
         if (importablePath.path == null) return null
@@ -40,7 +40,7 @@ class AddImportIntention : RsElementBaseIntentionAction<AddImportIntention.Conte
         val namespace = target.namespaces
 
         // check if the name is already in scope in the same namespace
-        val existingItem = importablePath.findInScope(importablePath.referenceName, namespace)
+        val existingItem = importablePath.findInScope(importablePath.referenceName ?: return null, namespace)
         val sameReference = target == existingItem
 
         // if name exists, but is a different type, exit
@@ -117,7 +117,7 @@ private fun RsPath.findImportablePath(): RsPath? {
 }
 
 private fun RsPath.generateUsePath(): String = generateSequence(this) { it.path }
-    .map { it.referenceName }
+    .map { it.referenceName.orEmpty() }
     .toList()
     .asReversed()
     .joinToString("::")

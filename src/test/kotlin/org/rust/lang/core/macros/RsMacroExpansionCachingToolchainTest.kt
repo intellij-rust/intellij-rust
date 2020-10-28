@@ -73,8 +73,8 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
 
     private fun List<RsMacroCall>.collectStamps(): Map<String, Long> =
         associate {
-            val expansion = it.expansion ?: error("failed to expand macro ${it.path.referenceName}!")
-            it.path.referenceName to expansion.file.virtualFile.timeStamp
+            val expansion = it.expansion ?: error("failed to expand macro ${it.path.referenceName.orEmpty()}!")
+            it.path.referenceName.orEmpty() to expansion.file.virtualFile.timeStamp
         }
 
     private fun checkReExpanded(action: (p: TestProject) -> Unit, @Language("Rust") code: String, vararg names: String) {

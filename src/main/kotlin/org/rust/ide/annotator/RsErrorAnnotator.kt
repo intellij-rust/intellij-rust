@@ -431,8 +431,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkPath(holder: RsAnnotationHolder, path: RsPath) {
         val qualifier = path.path
         if ((qualifier == null || isValidSelfSuperPrefix(qualifier)) && !isValidSelfSuperPrefix(path)) {
+            val element = path.referenceNameElement ?: return
             holder.createErrorAnnotation(
-                path.referenceNameElement,
+                element,
                 "Invalid path: self and super are allowed only at the beginning"
             )
             return

@@ -49,11 +49,11 @@ class AddCurlyBracesIntention : RsElementBaseIntentionAction<AddCurlyBracesInten
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        val identifier = ctx.path.referenceNameElement
+        val identifier = ctx.path.referenceNameElement?.text ?: ""
 
         // Create a new use item that contains a glob list that we can use.
         // Then extract from it the glob list and the double colon.
-        val newUseSpeck = RsPsiFactory(project).createUseSpeck("dummy::{${identifier.text}}")
+        val newUseSpeck = RsPsiFactory(project).createUseSpeck("dummy::{$identifier}")
         val newGroup = newUseSpeck.useGroup ?: return
         val newColonColon = newUseSpeck.coloncolon ?: return
 
