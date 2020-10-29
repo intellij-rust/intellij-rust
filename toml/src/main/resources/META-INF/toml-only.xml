@@ -22,5 +22,8 @@
                          displayName="Missing features"
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.toml.inspections.CargoTomlMissingFeaturesInspection"/>
+
+        <applicationService serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexService"/>
+        <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
     </extensions>
 </idea-plugin>
