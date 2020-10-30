@@ -133,10 +133,62 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkUseSpeck(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
         if (useSpeck.isStarImport || useSpeck.useGroup != null) return
+
+        checkDuplicateImport(holder, useSpeck)
+        checkReexports(holder, useSpeck)
+    }
+
+    private fun checkDuplicateImport(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
         val duplicates = holder.currentAnnotationSession.duplicatesByNamespace(useSpeck.containingMod, false)
         if (useSpeck.namespaces.any { useSpeck in duplicates[it].orEmpty() }) {
             val identifier = PsiTreeUtil.getDeepestLast(useSpeck)
             RsDiagnostic.DuplicateImportError(identifier).addToHolder(holder)
+        }
+    }
+
+    private fun checkReexports(holder: RsAnnotationHolder, useSpeck: RsUseSpeck) {
+        val item = useSpeck.ancestorStrict<RsUseItem>() ?: return
+        if (item.visibility == RsVisibility.Private) return
+
+        val path = useSpeck.path ?: return
+        val targets = path.reference?.multiResolve()?.filterIsInstance<RsItemElement>() ?: emptyList()
+
+        // targets not accessible from the use element will be handled by E0603
+        val visibleTargets = targets.filter { it.isVisibleFrom(useSpeck.containingMod) }
+        val invalidTargets = visibleTargets.filter {
+            !canBeReexported(item.visibility, it)
+        }
+
+        // if at least one item can be re-exported or nothing is invalid, allow the reexport
+        if (invalidTargets.size < targets.size || invalidTargets.isEmpty()) return
+
+        val invalidTarget = invalidTargets.first()
+        val context = useSpeck.context
+        val name = if (path.referenceName == "self" && context is RsUseGroup) {
+            (context.context as? RsUseSpeck)?.path?.referenceName ?: path.referenceName
+        } else {
+            path.referenceName
+        } ?: return
+
+        val element = path.referenceNameElement ?: return
+        RsDiagnostic.InvalidReexport(element, name, invalidTarget).addToHolder(holder)
+    }
+
+    private fun canBeReexported(reexportVisibility: RsVisibility, item: RsItemElement): Boolean {
+        val itemVisibility = item.visibility
+        if (itemVisibility is RsVisibility.Public) return true
+
+        return when (reexportVisibility) {
+            is RsVisibility.Public -> false
+            is RsVisibility.Restricted -> {
+                val targetMod = if (itemVisibility is RsVisibility.Restricted) {
+                    itemVisibility.inMod
+                } else {
+                    item.containingMod
+                }
+                targetMod in reexportVisibility.inMod.superMods
+            }
+            is RsVisibility.Private -> error("unreachable")
         }
     }
 
@@ -735,7 +787,8 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
         // `::` is redundant only in types
         if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
-        val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon)) ?: return
+        val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon))
+            ?: return
         annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL).create()
     }
 
