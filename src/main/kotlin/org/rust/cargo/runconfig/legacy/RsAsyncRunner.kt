@@ -33,7 +33,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEna
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
-import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
@@ -59,7 +59,9 @@ abstract class RsAsyncRunner(
     override fun execute(environment: ExecutionEnvironment, state: RunProfileState): Promise<RunContentDescriptor?> {
         saveAllDocuments()
 
-        val commandLine = (state as CargoRunStateBase).prepareCommandLine(cargoCommonPatch)
+        state as CargoRunStateBase
+
+        val commandLine = state.prepareCommandLine(getCargoCommonPatch(environment.project))
         val (commandArguments, executableArguments) = parseArgs(commandLine.command, commandLine.additionalArguments)
 
         val isTestRun = commandLine.command == "test"

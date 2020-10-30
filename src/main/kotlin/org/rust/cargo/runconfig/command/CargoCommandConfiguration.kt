@@ -19,6 +19,8 @@ import org.jdom.Element
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
@@ -47,6 +49,7 @@ class CargoCommandConfiguration(
     InputRedirectAware.InputRedirectOptions {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
+    var requiredFeatures: Boolean = true
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
@@ -79,6 +82,7 @@ class CargoCommandConfiguration(
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         element.writeEnum("channel", channel)
+        element.writeBool("requiredFeatures", requiredFeatures)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
         element.writeEnum("backtrace", backtrace)
@@ -94,6 +98,7 @@ class CargoCommandConfiguration(
     override fun readExternal(element: Element) {
         super.readExternal(element)
         element.readEnum<RustChannel>("channel")?.let { channel = it }
+        element.readBool("requiredFeatures")?.let { requiredFeatures = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
@@ -105,6 +110,7 @@ class CargoCommandConfiguration(
     fun setFromCmd(cmd: CargoCommandLine) {
         channel = cmd.channel
         command = ParametersListUtil.join(cmd.command, *cmd.additionalArguments.toTypedArray())
+        requiredFeatures = cmd.requiredFeatures
         allFeatures = cmd.allFeatures
         emulateTerminal = cmd.emulateTerminal
         backtrace = cmd.backtraceMode
@@ -171,6 +177,7 @@ class CargoCommandConfiguration(
                 backtrace,
                 channel,
                 env,
+                requiredFeatures,
                 allFeatures,
                 emulateTerminal
             )
@@ -212,6 +219,55 @@ class CargoCommandConfiguration(
         fun findCargoProject(project: Project, cmd: String, workingDirectory: Path?): CargoProject? = findCargoProject(
             project, ParametersListUtil.parse(cmd), workingDirectory
         )
+
+        fun findCargoPackage(
+            cargoProject: CargoProject,
+            additionalArgs: List<String>,
+            workingDirectory: Path?
+        ): CargoWorkspace.Package? {
+            val packages = cargoProject.workspace?.packages
+                ?.filter { it.origin == PackageOrigin.WORKSPACE }
+                .orEmpty()
+
+            packages.singleOrNull()?.let { return it }
+
+            val packageName = run {
+                val idx = additionalArgs.indexOf("--package")
+                if (idx == -1) return@run null
+                additionalArgs.getOrNull(idx + 1)
+            }
+
+            if (packageName != null) {
+                return packages.find { it.name == packageName }
+            }
+
+            return packages.find { it.rootDirectory == workingDirectory }
+        }
+
+        fun findCargoTargets(
+            cargoPackage: CargoWorkspace.Package,
+            additionalArgs: List<String>
+        ): List<CargoWorkspace.Target> {
+
+            fun hasTarget(option: String, name: String): Boolean {
+                if ("$option=$name" in additionalArgs) return true
+                return additionalArgs.windowed(2).any { pair ->
+                    pair.first() == option && pair.last() == name
+                }
+            }
+
+            return cargoPackage.targets.filter { target ->
+                when (target.kind) {
+                    CargoWorkspace.TargetKind.Bin -> hasTarget("--bin", target.name)
+                    CargoWorkspace.TargetKind.Test -> hasTarget("--test", target.name)
+                    CargoWorkspace.TargetKind.ExampleBin,
+                    is CargoWorkspace.TargetKind.ExampleLib -> hasTarget("--example", target.name)
+                    CargoWorkspace.TargetKind.Bench -> hasTarget("--bench", target.name)
+                    is CargoWorkspace.TargetKind.Lib -> "--lib" in additionalArgs
+                    else -> false
+                }
+            }
+        }
     }
 }
 

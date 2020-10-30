@@ -3,6 +3,7 @@
     <option name="command" value="test --package test-package --lib foo" />
     <option name="workingDirectory" value="file:///my-crate" />
     <option name="channel" value="DEFAULT" />
+    <option name="requiredFeatures" value="true" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />

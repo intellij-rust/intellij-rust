@@ -3,6 +3,7 @@
     <option name="command" value="bench --package test-package --lib bench_foo -- --exact" />
     <option name="workingDirectory" value="file:///my-crate" />
     <option name="channel" value="NIGHTLY" />
+    <option name="requiredFeatures" value="false" />
     <option name="allFeatures" value="true" />
     <option name="emulateTerminal" value="true" />
     <option name="backtrace" value="FULL" />

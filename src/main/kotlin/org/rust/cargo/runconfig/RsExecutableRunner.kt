@@ -21,7 +21,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
-import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
+import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.computeWithCancelableProgress
@@ -52,7 +52,7 @@ abstract class RsExecutableRunner(
             processInvalidToolchain(project, toolchainError)
             return
         }
-        environment.cargoPatches += cargoCommonPatch
+        environment.cargoPatches += getCargoCommonPatch(project)
         environment.putUserData(BINARIES, CompletableFuture())
         super.execute(environment)
     }

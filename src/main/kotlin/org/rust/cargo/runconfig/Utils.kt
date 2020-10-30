@@ -36,6 +36,7 @@ fun CargoCommandLine.mergeWithDefault(default: CargoCommandConfiguration): Cargo
         backtraceMode = default.backtrace,
         channel = default.channel,
         environmentVariables = default.env,
+        requiredFeatures = default.requiredFeatures,
         allFeatures = default.allFeatures,
         emulateTerminal = default.emulateTerminal
     )
