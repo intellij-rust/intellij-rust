@@ -79,7 +79,7 @@ abstract class RsLintCompletionProvider : RsCompletionProvider() {
     }
 
     protected fun getPathPrefix(path: RsPath): String {
-        val qualifier = path.qualifier ?: return ""
+        val qualifier = path.qualifier ?: return path.coloncolon?.text ?: ""
         return "${getPathPrefix(qualifier)}${qualifier.referenceName.orEmpty()}::"
     }
 
