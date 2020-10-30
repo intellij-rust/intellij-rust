@@ -524,6 +524,11 @@
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsTraitImplementationInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Cast to bool"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsCastToBoolInspection"/>
+
         <localInspection language="Rust" groupPath="Rust" groupName="Lints"
                          displayName="Unreachable patterns"
                          enabledByDefault="true" level="WARNING"
