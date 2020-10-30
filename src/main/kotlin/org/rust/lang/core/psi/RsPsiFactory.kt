@@ -605,6 +605,10 @@ class RsPsiFactory(
     fun createPat(patText: String): RsPat = tryCreatePat(patText) ?: error("Failed to create pat element")
 
     fun tryCreatePat(patText: String): RsPat? = (createStatement("let $patText;") as RsLetDecl).pat
+
+    fun createAssocTypeBinding(name: String, type: String): RsAssocTypeBinding =
+        createFromText("type T = &dyn Trait<$name=$type>;")
+            ?: error("Failed to created assoc type binding")
 }
 
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "

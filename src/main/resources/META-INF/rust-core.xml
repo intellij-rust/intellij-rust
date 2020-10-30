@@ -665,6 +665,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.lints.RsUnnecessaryQualificationsInspection"/>
 
+        <localInspection language="Rust" groupName="Rust"
+                         displayName="Wrong associated type arguments"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

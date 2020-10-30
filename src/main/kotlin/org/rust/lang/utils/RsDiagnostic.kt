@@ -28,10 +28,8 @@ import org.rust.ide.annotator.fixes.*
 import org.rust.ide.inspections.RsExperimentalChecksInspection
 import org.rust.ide.inspections.RsProblemsHolder
 import org.rust.ide.inspections.RsTypeCheckInspection
-import org.rust.ide.inspections.fixes.AddMainFnFix
-import org.rust.ide.inspections.fixes.AddRemainingArmsFix
-import org.rust.ide.inspections.fixes.AddWildcardArmFix
-import org.rust.ide.inspections.fixes.ChangeRefToMutableFix
+import org.rust.ide.inspections.RsWrongAssocTypeArgumentsInspection
+import org.rust.ide.inspections.fixes.*
 import org.rust.ide.presentation.render
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.presentation.shortPresentableText
@@ -1570,12 +1568,43 @@ sealed class RsDiagnostic(
             fixes = listOfNotNull(fix)
         )
     }
+
+    class UnknownAssocTypeBinding(
+        element: RsAssocTypeBinding,
+        private val name: String,
+        private val trait: String
+    ) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0220,
+            "Associated type `$name` not found for `$trait`",
+            fixes = listOf(RemoveAssocTypeBindingFix(element))
+        )
+    }
+
+    class MissingAssocTypeBindings(
+        element: PsiElement,
+        private val missingTypes: List<RsWrongAssocTypeArgumentsInspection.MissingAssocTypeBinding>
+    ) : RsDiagnostic(element) {
+        private fun getText(): String {
+            val typeText = pluralize("type", missingTypes.size)
+            val missing = missingTypes.joinToString(", ") { "`${it.name}` (from trait `${it.trait}`)" }
+            return "The value of the associated $typeText $missing must be specified"
+        }
+
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            E0191,
+            getText(),
+            fixes = listOf(AddAssocTypeBindingsFix(element, missingTypes.map { it.name }))
+        )
+    }
 }
 
 enum class RsErrorCode {
     E0004, E0013, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0049, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
-    E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
-    E0200, E0201, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
+    E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0191, E0198, E0199,
+    E0200, E0201, E0220, E0252, E0254, E0255, E0259, E0260, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0429, E0430, E0431, E0433, E0434, E0435, E0449, E0451, E0463,
     E0517, E0518, E0537, E0552, E0554, E0562, E0569, E0583, E0586, E0594,
