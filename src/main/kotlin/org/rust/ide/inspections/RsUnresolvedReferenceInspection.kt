@@ -9,9 +9,11 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.inspections.fixes.QualifyPathFix
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.settings.RsCodeInsightSettings
+import org.rust.ide.utils.import.ImportCandidate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.RsDiagnostic
@@ -84,25 +86,41 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
         val referenceName = element.referenceName
         val description = if (referenceName == null) "Unresolved reference" else "Unresolved reference: `$referenceName`"
-        var fix: LocalQuickFix? = null
-        if (candidates != null && candidates.isNotEmpty()) {
-            fix = if (RsCodeInsightSettings.getInstance().showImportPopup) {
-                AutoImportHintFix(element, context.type, candidates[0].info.usePath, candidates.size > 1)
-            } else {
-                AutoImportFix(element, context.type)
-            }
-        }
+        val fixes = createQuickFixes(candidates, element, context)
 
         val highlightedElement = element.referenceNameElement ?: element
         registerProblem(
             highlightedElement,
             description,
             ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
-            *listOfNotNull(fix).toTypedArray()
+            *fixes.toTypedArray()
         )
     }
 
     override fun createOptionsPanel(): JComponent = MultipleCheckboxOptionsPanel(this).apply {
         addCheckbox("Ignore unresolved references without quick fix", "ignoreWithoutQuickFix")
     }
+}
+
+private fun createQuickFixes(
+    candidates: List<ImportCandidate>?,
+    element: RsReferenceElement,
+    context: AutoImportFix.Context?
+): List<LocalQuickFix> {
+    if (context == null) return emptyList()
+
+    val fixes = mutableListOf<LocalQuickFix>()
+    if (candidates != null && candidates.isNotEmpty()) {
+        val importFix = if (RsCodeInsightSettings.getInstance().showImportPopup) {
+            AutoImportHintFix(element, context.type, candidates[0].info.usePath, candidates.size > 1)
+        } else {
+            AutoImportFix(element, context.type)
+        }
+        fixes.add(importFix)
+
+        if (element is RsPath && context.type == AutoImportFix.Type.GENERAL_PATH && candidates.size == 1) {
+            fixes.add(QualifyPathFix(element, candidates[0].info))
+        }
+    }
+    return fixes
 }
