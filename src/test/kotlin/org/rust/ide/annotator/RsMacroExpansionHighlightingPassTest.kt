@@ -27,8 +27,7 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         <CFG_DISABLED_CODE>#</CFG_DISABLED_CODE><CFG_DISABLED_CODE>[cfg(not(intellij_rust))]
         fn foo</CFG_DISABLED_CODE><CFG_DISABLED_CODE>() {
             let x = 1;
-        }
-        </CFG_DISABLED_CODE>
+        }</CFG_DISABLED_CODE>
     """)
 
     private fun checkHighlightingInsideMacro(@Language("Rust") text: String) {
