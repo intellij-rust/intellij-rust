@@ -20,16 +20,6 @@ class WasmPackCommandConfigurationEditor(project: Project)
         project, WasmPackCommandCompletionProvider(project.cargoProjects) { currentWorkspace() }
     )
 
-    override fun resetEditorFrom(configuration: WasmPackCommandConfiguration) {
-        command.text = configuration.command
-        workingDirectory.component.text = configuration.workingDirectory?.toString().orEmpty()
-    }
-
-    override fun applyEditorTo(configuration: WasmPackCommandConfiguration) {
-        configuration.command = command.text
-        configuration.workingDirectory = currentWorkingDirectory
-    }
-
     override fun createEditor(): JComponent = panel {
         row("Command:") {
             command(growX, pushX)

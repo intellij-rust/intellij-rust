@@ -77,12 +77,11 @@ class CargoCommandConfigurationEditor(project: Project)
     private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
+        super.resetEditorFrom(configuration)
         channel.selectedIndex = configuration.channel.index
-        command.text = configuration.command
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
         backtraceMode.selectedIndex = configuration.backtrace.index
-        workingDirectory.component.text = configuration.workingDirectory?.toString() ?: ""
         environmentVariables.envData = configuration.env
         val vFile = currentWorkingDirectory?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
         if (vFile == null) {
@@ -95,14 +94,14 @@ class CargoCommandConfigurationEditor(project: Project)
 
     @Throws(ConfigurationException::class)
     override fun applyEditorTo(configuration: CargoCommandConfiguration) {
+        super.applyEditorTo(configuration)
+
         val configChannel = RustChannel.fromIndex(channel.selectedIndex)
 
         configuration.channel = configChannel
-        configuration.command = command.text
         configuration.allFeatures = allFeatures.isSelected
         configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
-        configuration.workingDirectory = currentWorkingDirectory
         configuration.env = environmentVariables.envData
 
         val rustupAvailable = project.toolchain?.isRustupAvailable ?: false

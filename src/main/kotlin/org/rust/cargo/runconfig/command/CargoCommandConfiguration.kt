@@ -41,15 +41,12 @@ class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
-) : LocatableConfigurationBase<RunProfileState>(project, factory, name),
-    RunConfigurationWithSuppressedDefaultDebugAction {
-
+) : RsCommandConfiguration(project, name, factory) {
+    override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
-    var command: String = "run"
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
-    var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
 
     override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
@@ -64,11 +61,9 @@ class CargoCommandConfiguration(
     override fun writeExternal(element: Element) {
         super.writeExternal(element)
         element.writeEnum("channel", channel)
-        element.writeString("command", command)
         element.writeBool("allFeatures", allFeatures)
         element.writeBool("emulateTerminal", emulateTerminal)
         element.writeEnum("backtrace", backtrace)
-        element.writePath("workingDirectory", workingDirectory)
         env.writeExternal(element)
     }
 
@@ -79,11 +74,9 @@ class CargoCommandConfiguration(
     override fun readExternal(element: Element) {
         super.readExternal(element)
         element.readEnum<RustChannel>("channel")?.let { channel = it }
-        element.readString("command")?.let { command = it }
         element.readBool("allFeatures")?.let { allFeatures = it }
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
-        element.readPath("workingDirectory")?.let { workingDirectory = it }
         env = EnvironmentVariablesData.readExternal(element)
     }
 
@@ -168,8 +161,6 @@ class CargoCommandConfiguration(
 
         return CleanConfiguration.Ok(cmd, toolchain)
     }
-
-    override fun suggestedName(): String? = command.substringBefore(' ').capitalize()
 
     companion object {
         fun findCargoProject(project: Project, additionalArgs: List<String>, workingDirectory: Path?): CargoProject? {
