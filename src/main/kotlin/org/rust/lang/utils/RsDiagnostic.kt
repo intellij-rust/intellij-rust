@@ -518,11 +518,12 @@ sealed class RsDiagnostic(
         }
     }
 
-    class CastAsBoolError(element: PsiElement) : RsDiagnostic(element) {
+    class CastAsBoolError(val castExpr: RsCastExpr) : RsDiagnostic(castExpr) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0054,
-            "It is not allowed to cast to a bool."
+            "It is not allowed to cast to a bool.",
+            fixes = listOfNotNull(CompareWithZeroFix.createIfCompatible(castExpr))
         )
     }
 
