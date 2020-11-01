@@ -192,4 +192,20 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         #[dep/*caret*/]
         mod foo {}
     """)
+
+    fun `test repr completion on enum`() = doSingleCompletion("""
+        #[rep/*caret*/]
+        enum Foo {}
+    """, """
+        #[repr(/*caret*/)]
+        enum Foo {}
+    """)
+
+    fun `test repr completion on struct`() = doSingleCompletion("""
+        #[rep/*caret*/]
+        struct Foo {}
+    """, """
+        #[repr(/*caret*/)]
+        struct Foo {}
+    """)
 }
