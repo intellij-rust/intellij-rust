@@ -113,6 +113,49 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onEnum)
 
+    fun `test on enum variant attr`() = testPattern("""
+        enum Foo {
+            #[foo]
+            //^
+            Bar,
+            Baz
+        }
+    """, RsPsiPattern.onEnumVariant)
+
+    fun `test on struct-like unit struct`() = testPattern("""
+        #[foo]
+        //^
+        struct S;
+    """, RsPsiPattern.onStructLike)
+
+    fun `test on struct-like tuple struct`() = testPattern("""
+        #[foo]
+        //^
+        struct S(u32);
+    """, RsPsiPattern.onStructLike)
+
+    fun `test on struct-like struct`() = testPattern("""
+        #[foo]
+        //^
+        struct S { a: u32 }
+    """, RsPsiPattern.onStructLike)
+
+    fun `test on struct-like enum`() = testPattern("""
+        #[foo]
+        //^
+        enum Foo {
+            A
+        }
+    """, RsPsiPattern.onStructLike)
+
+    fun `test on struct-like enum variant`() = testPattern("""
+        enum Foo {
+            #[foo]
+            //^
+            A
+        }
+    """, RsPsiPattern.onStructLike)
+
     fun `test on extern block attr`() = testPattern("""
         #[foo]
         //^
