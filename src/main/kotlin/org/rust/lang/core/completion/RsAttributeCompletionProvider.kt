@@ -31,6 +31,7 @@ import org.rust.lang.core.RsPsiPattern.onMod
 import org.rust.lang.core.RsPsiPattern.onStatic
 import org.rust.lang.core.RsPsiPattern.onStaticMut
 import org.rust.lang.core.RsPsiPattern.onStruct
+import org.rust.lang.core.RsPsiPattern.onStructLike
 import org.rust.lang.core.RsPsiPattern.onTestFn
 import org.rust.lang.core.RsPsiPattern.onTrait
 import org.rust.lang.core.RsPsiPattern.onTupleStruct
@@ -65,7 +66,8 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
         onStatic to "export_name link_section",
         onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny() deprecated",
         onTupleStruct to "simd",
-        onDropFn to "unsafe_destructor_blind_to_params"
+        onDropFn to "unsafe_destructor_blind_to_params",
+        onStructLike to "non_exhaustive"
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
 
     override fun addCompletions(parameters: CompletionParameters,
