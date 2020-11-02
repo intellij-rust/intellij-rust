@@ -163,7 +163,7 @@ private fun collectRelatedImplItems(containingMod: RsMod, items: Set<RsItemEleme
     return groupImplsByStructOrTrait(containingMod, items).values.flatten()
 }
 
-private fun groupImplsByStructOrTrait(containingMod: RsMod, items: Set<RsItemElement>): Map<RsItemElement, List<RsImplItem>> {
+fun groupImplsByStructOrTrait(containingMod: RsMod, items: Set<RsItemElement>): Map<RsItemElement, List<RsImplItem>> {
     return containingMod
         .childrenOfType<RsImplItem>()
         .mapNotNull { impl ->
