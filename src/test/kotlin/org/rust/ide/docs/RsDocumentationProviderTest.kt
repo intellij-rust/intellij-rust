@@ -16,11 +16,37 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
     protected fun doTest(
         @Language("Rust") code: String,
         @Language("Html") expected: String?,
+        findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() },
         block: RsDocumentationProvider.(PsiElement, PsiElement?) -> String?
+    ) {
+        @Suppress("NAME_SHADOWING")
+        doTest(code, expected, findElement, block) { actual, expected ->
+            assertSameLines(expected.trimIndent(), actual)
+        }
+    }
+
+    protected fun doTest(
+        @Language("Rust") code: String,
+        expected: Regex?,
+        findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() },
+        block: RsDocumentationProvider.(PsiElement, PsiElement?) -> String?
+    ) {
+        @Suppress("NAME_SHADOWING")
+        doTest(code, expected, findElement, block) { actual, expected ->
+            assertTrue(actual.matches(expected))
+        }
+    }
+
+    protected fun <T> doTest(
+        @Language("Rust") code: String,
+        expected: T?,
+        findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() },
+        block: RsDocumentationProvider.(PsiElement, PsiElement?) -> String?,
+        check: (String, T) -> Unit
     ) {
         InlineFile(code)
 
-        val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
+        val (originalElement, offset) = findElement()
         val element = DocumentationManager.getInstance(project)
             .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
 
@@ -29,7 +55,7 @@ abstract class RsDocumentationProviderTest : RsTestBase() {
             check(actual == null) { "Expected null, got `$actual`" }
         } else {
             check(actual != null) { "Expected not null result" }
-            assertSameLines(expected.trimIndent(), actual)
+            check(actual, expected)
         }
     }
 

@@ -5,7 +5,6 @@
 
 package org.rust.ide.docs
 
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
@@ -1068,24 +1067,13 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test primitive type doc`() {
-        InlineFile("""
-            fn foo() -> i32 {}
-                       //^
-        """)
-
-        val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
-        val element = DocumentationManager.getInstance(project)
-            .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
-        val actual = RsDocumentationProvider().generateDoc(element, originalElement)?.trim()
-            ?: error("Expected not null result")
-
-        val regex = Regex("""
-            <div class='definition'><pre>std
-            primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
-        """.trimIndent(), RegexOption.MULTILINE)
-        assertTrue(actual.matches(regex))
-    }
+    fun `test primitive type doc`() = doTestRegex("""
+        fn foo() -> i32 {}
+                   //^
+    """, """
+        <div class='definition'><pre>std
+        primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
+    """)
 
     @ExpandMacros
     fun `test documentation provided via macro definition 1`() = doTest("""
@@ -1161,5 +1149,11 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
 
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
-        = doTest(code, expected, RsDocumentationProvider::generateDoc)
+        = doTest(code, expected, block = RsDocumentationProvider::generateDoc)
+
+    private fun doTestRegex(
+        @Language("Rust") code: String,
+        @Language("Html") expected: String,
+        findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() }
+    ) = doTest(code, Regex(expected.trimIndent(), RegexOption.MULTILINE), findElement, RsDocumentationProvider::generateDoc)
 }
