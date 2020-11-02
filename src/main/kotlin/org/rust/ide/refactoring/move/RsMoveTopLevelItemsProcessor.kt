@@ -19,9 +19,8 @@ import org.rust.ide.refactoring.move.common.RsMoveCommonProcessor
 import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.RsItemElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.startOffset
+import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.namespaces
 
 /** See overview of move refactoring in comment for [RsMoveCommonProcessor] */
 class RsMoveTopLevelItemsProcessor(
@@ -41,9 +40,29 @@ class RsMoveTopLevelItemsProcessor(
         return commonProcessor.findUsages()
     }
 
+    private fun checkNoItemsWithSameName(conflicts: MultiMap<PsiElement, String>) {
+        if (!searchForReferences) return
+
+        val targetModItems = targetMod.expandedItemsExceptImplsAndUses
+            .filterIsInstance<RsNamedElement>()
+            .groupBy { it.name }
+        for (item in itemsToMove) {
+            val name = (item as? RsNamedElement)?.name ?: continue
+            val namespaces = item.namespaces
+            val itemsExisting = targetModItems[name] ?: continue
+            for (itemExisting in itemsExisting) {
+                val namespacesExisting = itemExisting.namespaces
+                if ((namespacesExisting intersect namespaces).isNotEmpty()) {
+                    conflicts.putValue(itemExisting, "Target file already contains item with name $name")
+                }
+            }
+        }
+    }
+
     override fun preprocessUsages(refUsages: Ref<Array<UsageInfo>>): Boolean {
         val usages = refUsages.get()
         val conflicts = MultiMap<PsiElement, String>()
+        checkNoItemsWithSameName(conflicts)
         return commonProcessor.preprocessUsages(usages, conflicts) && showConflicts(conflicts, usages)
     }
 

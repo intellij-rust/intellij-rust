@@ -13,16 +13,46 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
 
     fun `test simple`() = doTest("""
-    //- main.rs
+    //- lib.rs
         mod mod1 {
             fn foo/*caret*/() {}
         }
         mod mod2/*target*/ {}
     """, """
-    //- main.rs
+    //- lib.rs
         mod mod1 {}
         mod mod2 {
             fn foo() {}
+        }
+    """)
+
+    fun `test item with same name exists in new mod 1`() = doTestConflictsError("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            fn foo() {}
+        }
+    """)
+
+    fun `test item with same name exists in new mod 2`() = doTestConflictsError("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            struct foo;
+        }
+    """)
+
+    fun `test item with same name exists in new mod 3`() = doTestNoConflicts("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            struct foo {}
         }
     """)
 
