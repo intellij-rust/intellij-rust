@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -22,10 +23,9 @@ import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.resolve.ResolveResult
 import org.rust.lang.core.resolve.checkResolvedFile
-import org.rust.openapiext.document
-import org.rust.openapiext.fullyRefreshDirectory
-import org.rust.openapiext.saveAllDocuments
-import org.rust.openapiext.toPsiFile
+import org.rust.openapiext.*
+import org.rust.stdext.exhaustive
+import java.nio.file.Files
 import kotlin.text.Charsets.UTF_8
 
 fun fileTree(builder: FileTreeBuilder.() -> Unit): FileTree =
@@ -66,6 +66,7 @@ interface FileTreeBuilder {
     fun dir(name: String, builder: FileTreeBuilder.() -> Unit)
     fun dir(name: String, tree: FileTree)
     fun file(name: String, code: String)
+    fun symlink(name: String, targetPath: String)
 
     fun rust(name: String, @Language("Rust") code: String) = file(name, code)
     fun toml(name: String, @Language("TOML") code: String) = file(name, code)
@@ -89,11 +90,19 @@ class FileTree(val rootDirectory: Entry.Directory) {
                         if (hasSelectionMarker(entry.text)) {
                             filesWithSelection += components.joinToString(separator = "/")
                         }
+                        Unit
                     }
                     is Entry.Directory -> {
                         go(entry, root.createChildDirectory(root, name), components)
                     }
-                }
+                    is Entry.Symlink -> {
+                        check(root.fileSystem == LocalFileSystem.getInstance()) {
+                            "Symlinks are available only in LocalFileSystem"
+                        }
+                        Files.createSymbolicLink(root.pathAsPath.resolve(name), root.pathAsPath.resolve(entry.targetPath))
+                        Unit
+                    }
+                }.exhaustive
             }
         }
 
@@ -123,7 +132,8 @@ class FileTree(val rootDirectory: Entry.Directory) {
                         Assert.assertEquals(entry.text.trimEnd(), actualText.trimEnd())
                     }
                     is Entry.Directory -> go(entry, a)
-                }
+                    is Entry.Symlink -> error("Symlink comparison is not supported!")
+                }.exhaustive
             }
         }
 
@@ -138,7 +148,8 @@ class FileTree(val rootDirectory: Entry.Directory) {
                 when (entry) {
                     is Entry.File -> fixture.checkResult(path, entry.text, true)
                     is Entry.Directory -> go(entry, path)
-                }
+                    is Entry.Symlink -> error("Symlink comparison is not supported!")
+                }.exhaustive
             }
         }
 
@@ -236,12 +247,17 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
         directory[name] = Entry.File(code.trimIndent())
     }
 
+    override fun symlink(name: String, targetPath: String) {
+        directory[name] = Entry.Symlink(targetPath)
+    }
+
     fun intoDirectory() = Entry.Directory(directory)
 }
 
 sealed class Entry {
     class File(val text: String) : Entry()
     class Directory(val children: MutableMap<String, Entry>) : Entry()
+    class Symlink(val targetPath: String) : Entry()
 }
 
 private fun findElementInFile(file: PsiFile, marker: String): PsiElement {

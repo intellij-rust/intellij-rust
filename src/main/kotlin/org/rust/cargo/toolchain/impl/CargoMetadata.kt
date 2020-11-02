@@ -367,9 +367,9 @@ object CargoMetadata {
         enabledFeatures: Set<String>,
         buildScriptMessage: BuildScriptMessage?
     ): CargoWorkspaceData.Package? {
-        val root = checkNotNull(fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))?.canonicalFile) {
-            "`cargo metadata` reported a package which does not exist at `$manifest_path`"
-        }
+        val root = fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))
+            ?.let { if (isWorkspaceMember) it else it.canonicalFile }
+        checkNotNull(root) { "`cargo metadata` reported a package which does not exist at `$manifest_path`" }
 
         val features = features.toMutableMap()
 
@@ -387,14 +387,16 @@ object CargoMetadata {
             .associate { (key, value) -> key to value }
 
         val outDirPath = buildScriptMessage?.out_dir ?: variables.getOutDirPath(this)
-        val outDir = outDirPath?.let { root.fileSystem.refreshAndFindFileByPath(it)?.canonicalFile }
+        val outDir = outDirPath
+            ?.let { root.fileSystem.refreshAndFindFileByPath(it) }
+            ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
         return CargoWorkspaceData.Package(
             id,
             root.url,
             name,
             version,
-            targets.mapNotNull { it.clean(root) },
+            targets.mapNotNull { it.clean(root, isWorkspaceMember) },
             source,
             origin = if (isWorkspaceMember) PackageOrigin.WORKSPACE else PackageOrigin.DEPENDENCY,
             edition = edition.cleanEdition(),
@@ -406,8 +408,9 @@ object CargoMetadata {
         )
     }
 
-    private fun Target.clean(root: VirtualFile): CargoWorkspaceData.Target? {
-        val mainFile = root.findFileByMaybeRelativePath(src_path)?.canonicalFile
+    private fun Target.clean(root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
+        val mainFile = root.findFileByMaybeRelativePath(src_path)
+            ?.let { if (isWorkspaceMember) it else it.canonicalFile }
 
         return mainFile?.let {
             CargoWorkspaceData.Target(
@@ -457,6 +460,21 @@ object CargoMetadata {
         Edition.EDITION_2018.presentation -> Edition.EDITION_2018
         else -> Edition.EDITION_2015
     }
+
+    fun Project.replacePaths(replacer: (String) -> String): Project =
+        copy(
+            packages = packages.map { it.replacePaths(replacer) },
+            workspace_root = replacer(workspace_root)
+        )
+
+    private fun Package.replacePaths(replacer: (String) -> String): Package =
+        copy(
+            manifest_path = replacer(manifest_path),
+            targets = targets.map { it.replacePaths(replacer) }
+        )
+
+    private fun Target.replacePaths(replacer: (String) -> String): Target =
+        copy(src_path = replacer(src_path))
 }
 
 private class PackageVariables(private val variables: Map<PackageInfo, Map<String, String>>) {

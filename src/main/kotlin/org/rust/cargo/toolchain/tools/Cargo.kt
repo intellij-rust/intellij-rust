@@ -43,6 +43,7 @@ import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
 import org.rust.cargo.toolchain.impl.CargoBuildPlan
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
@@ -127,7 +128,9 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             null
         }
 
-        return CargoMetadata.clean(rawData, buildScriptsInfo, buildPlan)
+        val (rawDataAdjusted, buildScriptsInfoAdjusted) =
+            replacePathsSymlinkIfNeeded(rawData, buildScriptsInfo, projectDirectory)
+        return CargoMetadata.clean(rawDataAdjusted, buildScriptsInfoAdjusted, buildPlan)
     }
 
     @Throws(ExecutionException::class)
@@ -141,31 +144,11 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             .execute(owner, listener = listener)
             .stdout
             .dropWhile { it != '{' }
-        val project = try {
-            Gson().fromJson(json, CargoMetadata.Project::class.java)
+        try {
+            return Gson().fromJson(json, CargoMetadata.Project::class.java)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
-
-        val workspaceRoot = project.workspace_root
-
-        if (projectDirectory.toString() == workspaceRoot) {
-            return project
-        }
-
-        val workspaceRootPath = Paths.get(workspaceRoot)
-
-        // If the selected projectDirectory doesn't resolve directly to the directory that Cargo spat out at us,
-        // then there's something a bit special with the cargo workspace, and we don't want to assume anything.
-        if (!Files.isSameFile(projectDirectory, workspaceRootPath)) {
-            return project
-        }
-
-        // Otherwise, it's just a normal symlink.
-
-        val normalisedWorkspace = projectDirectory.normalize().toString()
-
-        return project.copy(workspace_root = normalisedWorkspace)
     }
 
     private fun fetchBuildScriptsInfo(
@@ -219,6 +202,40 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             LOG.warn("Failed to fetch build-plan", e)
             null
         }
+    }
+
+    /**
+     * If project directory is 'source' which is a symlink to 'target' directory,
+     * then `cargo metadata` command inside 'source' directory produces output with 'target' paths.
+     * This function replaces paths to 'source'.
+     * 'source' paths are better because files inside 'source' are indexed, and inside 'target' are not.
+     */
+    private fun replacePathsSymlinkIfNeeded(
+        project: CargoMetadata.Project,
+        buildScriptsInfo: BuildScriptsInfo?,
+        projectDirectory: Path
+    ): Pair<CargoMetadata.Project, BuildScriptsInfo?> {
+        val workspaceRoot = project.workspace_root
+
+        if (projectDirectory.toString() == workspaceRoot) {
+            return Pair(project, buildScriptsInfo)
+        }
+
+        val workspaceRootPath = Paths.get(workspaceRoot)
+
+        // If the selected projectDirectory doesn't resolve directly to the directory that Cargo spat out at us,
+        // then there's something a bit special with the cargo workspace, and we don't want to assume anything.
+        if (!Files.isSameFile(projectDirectory, workspaceRootPath)) {
+            return Pair(project, buildScriptsInfo)
+        }
+
+        // Otherwise, it's just a normal symlink.
+        val normalisedWorkspace = projectDirectory.normalize().toString()
+        val replacer: (String) -> String = replacer@{
+            if (!it.startsWith(workspaceRoot)) return@replacer it
+            normalisedWorkspace + it.removePrefix(workspaceRoot)
+        }
+        return Pair(project.replacePaths(replacer), buildScriptsInfo?.replacePaths(replacer))
     }
 
     @Throws(ExecutionException::class)

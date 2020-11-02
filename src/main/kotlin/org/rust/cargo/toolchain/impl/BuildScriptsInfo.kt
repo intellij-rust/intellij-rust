@@ -12,4 +12,12 @@ class BuildScriptsInfo(private val messages: Map<PackageId, BuildScriptMessage>)
         get() = messages.entries.firstOrNull()?.value?.out_dir != null
 
     operator fun get(packageId: PackageId): BuildScriptMessage? = messages[packageId]
+
+    fun replacePaths(replacer: (String) -> String): BuildScriptsInfo =
+        BuildScriptsInfo(
+            messages.mapValues { (_, message) ->
+                if (message.out_dir == null) return@mapValues message
+                message.copy(out_dir = replacer(message.out_dir))
+            }
+        )
 }

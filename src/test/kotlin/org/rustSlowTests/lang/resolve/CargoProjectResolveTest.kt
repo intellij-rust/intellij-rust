@@ -5,6 +5,10 @@
 
 package org.rustSlowTests.lang.resolve
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
@@ -141,6 +145,61 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/bar.rs")
     }
 
+    fun `test resolve local package under symlink`() = fileTree {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            authors = []
+
+            [dependencies]
+            foo = { path = "./foo" }
+        """)
+
+        dir("src") {
+            rust("main.rs", """
+                extern crate foo;
+                mod bar;
+
+                fn main() {
+                    foo::hello();
+                }       //^
+            """)
+
+            rust("bar.rs", """
+                use foo::hello;
+
+                pub fn bar() {
+                    hello();
+                }   //^
+            """)
+        }
+
+        symlink("foo", "foo2")
+
+        dir("foo2") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "0.1.0"
+                authors = []
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    pub fn hello() {}
+                """)
+            }
+        }
+    }.let { fileTree ->
+        // Symlinks doesn't work on Windows CI for some reason
+        if (SystemInfo.isWindows) return@let
+
+        val project = fileTree.create()
+        project.checkReferenceIsResolved<RsPath>("src/main.rs")
+        project.checkReferenceIsResolved<RsPath>("src/bar.rs")
+    }
+
     fun `test module relations`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -164,6 +223,82 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             """)
         }
     }.checkReferenceIsResolved<RsPath>("src/foo.rs")
+
+    fun `test module relations when cargo project is under symlink`() = fileTree {
+        symlink("foo", "symlink_target")
+
+        dir("symlink_target") {
+            toml("Cargo.toml", """
+                [package]
+                name = "mods"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+            """)
+
+            dir("src") {
+                rust("lib.rs", """
+                    mod foo;
+
+                    pub struct S;
+                """)
+
+                rust("foo.rs", """
+                    use S;
+                      //^
+                """)
+            }
+        }
+    }.let { fileTree ->
+        // Symlinks doesn't work on Windows CI for some reason
+        if (SystemInfo.isWindows) return@let
+
+        val p = fileTree.create(project, cargoProjectDirectory)
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("foo/Cargo.toml"))
+        excludeDirectoryFromIndex("symlink_target")
+
+        p.checkReferenceIsResolved<RsPath>("foo/src/foo.rs")
+    }
+
+    fun `test module relations when parent of cargo project is under symlink`() = fileTree {
+        symlink("symlink_source", "symlink_target")
+
+        dir("symlink_target") {
+            dir("project") {
+                toml("Cargo.toml", """
+                [package]
+                name = "mods"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+            """)
+
+                dir("src") {
+                    rust("lib.rs", """
+                        mod foo;
+
+                        pub struct S;
+                """)
+
+                    rust("foo.rs", """
+                        use S;
+                          //^
+                """)
+                }
+            }
+        }
+    }.let { fileTree ->
+        // Symlinks doesn't work on Windows CI for some reason
+        if (SystemInfo.isWindows) return@let
+
+        val p = fileTree.create(project, cargoProjectDirectory)
+        project.testCargoProjects.attachCargoProject(cargoProjectDirectory.pathAsPath.resolve("symlink_source/project/Cargo.toml"))
+        excludeDirectoryFromIndex("symlink_target/project")
+
+        p.checkReferenceIsResolved<RsPath>("symlink_source/project/src/foo.rs")
+    }
 
     fun `test kebab-case`() = buildProject {
         toml("Cargo.toml", """
@@ -772,5 +907,17 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.run {
         checkReferenceIsResolved<RsPath>("build.rs")
+    }
+
+    private fun excludeDirectoryFromIndex(path: String) {
+        runWriteAction {
+            ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
+                val module = ModuleUtilCore.findModuleForFile(cargoProjectDirectory, project)!!
+                ModuleRootModificationUtil.updateModel(module) { rootModel ->
+                    rootModel.contentEntries.singleOrNull()!!
+                        .addExcludeFolder(FileUtil.join(cargoProjectDirectory.url, path))
+                }
+            }
+        }
     }
 }
