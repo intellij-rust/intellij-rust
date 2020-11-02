@@ -10,6 +10,9 @@ import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.ext.RsElement
 
 class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     fun `test fn`() = doTest("""
@@ -1074,6 +1077,22 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         <div class='definition'><pre>std
         primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
     """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test primitive type doc in stdlib`() = doTestRegex("""
+        const C: u32 = std::f64::DIGITS;
+                                //^
+    """, """
+        <div class='definition'><pre>std
+        primitive type <b>u32</b></pre></div><div class='content'><p>.+</p></div>
+    """) {
+        val element = findElementWithDataAndOffsetInEditor<RsElement>().first
+        val const = element.reference?.resolve() as? RsConstant ?: error("Failed to resolve `${element.text}`")
+        val originalElement = (const.typeReference as RsBaseType).path!!
+
+        myFixture.openFileInEditor(const.containingFile.virtualFile)
+        originalElement to originalElement.textOffset
+    }
 
     @ExpandMacros
     fun `test documentation provided via macro definition 1`() = doTest("""
