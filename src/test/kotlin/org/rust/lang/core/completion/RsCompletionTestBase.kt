@@ -87,6 +87,11 @@ abstract class RsCompletionTestBase : RsTestBase() {
         render: LookupElement.() -> String = { lookupString }
     ) = completionFixture.checkContainsCompletionByFileTree(code, variants, render)
 
+    protected fun checkContainsCompletionPrefixes(
+        prefixes: List<String>,
+        @Language("Rust") code: String
+    ) = completionFixture.checkContainsCompletionPrefixes(code, prefixes)
+
     protected fun checkCompletion(
         lookupString: String,
         @Language("Rust") before: String,

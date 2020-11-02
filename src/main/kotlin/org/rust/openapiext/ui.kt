@@ -8,6 +8,8 @@ package org.rust.openapiext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
@@ -22,6 +24,7 @@ import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.RowBuilder
 import com.intellij.util.Alarm
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.ext.RsElement
 import javax.swing.event.DocumentEvent
 import kotlin.reflect.KProperty
 
@@ -117,4 +120,11 @@ fun RowBuilder.row(
     val label = Label(labelText)
     label.toolTipText = toolTip.trimIndent()
     return row(label, separated, init)
+}
+
+fun selectElement(element: RsElement, editor: Editor) {
+    val start = element.textRange.startOffset
+    editor.caretModel.moveToOffset(start)
+    editor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    editor.selectionModel.setSelection(start, element.textRange.endOffset)
 }
