@@ -1096,7 +1096,10 @@ sealed class RsDiagnostic(
             ERROR,
             E0004,
             "Match must be exhaustive",
-            fixes = listOf(AddRemainingArmsFix(matchExpr, patterns), AddWildcardArmFix(matchExpr))
+            fixes = listOfNotNull(
+                AddRemainingArmsFix(matchExpr, patterns),
+                AddWildcardArmFix(matchExpr).takeIf { matchExpr.arms.isNotEmpty() }
+            )
         )
     }
 
