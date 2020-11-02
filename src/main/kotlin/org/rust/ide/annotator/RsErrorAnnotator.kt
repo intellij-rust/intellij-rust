@@ -51,7 +51,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     override fun isForceHighlightParents(file: PsiFile): Boolean = file is RsFile
 
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
-        val rsHolder = RsAnnotationHolder (holder)
+        val rsHolder = RsAnnotationHolder(holder)
         val visitor = object : RsVisitor() {
             override fun visitBaseType(o: RsBaseType) = checkBaseType(rsHolder, o)
             override fun visitCondition(o: RsCondition) = checkCondition(rsHolder, o)
@@ -1125,7 +1125,14 @@ private fun checkDuplicates(
         element is RsNamedFieldDecl -> RsDiagnostic.DuplicateFieldError(identifier, name)
         element is RsEnumVariant -> RsDiagnostic.DuplicateEnumVariantError(identifier, name)
         element is RsLifetimeParameter -> RsDiagnostic.DuplicateLifetimeError(identifier, name)
-        element is RsPatBinding && owner is RsValueParameterList -> RsDiagnostic.DuplicateBindingError(identifier, name)
+        element is RsPatBinding && owner is RsValueParameterList -> {
+            val parent = owner.parent as? RsFunction
+
+            // Handled by RsDuplicatedTraitMethodBindingInspection
+            if (parent?.owner is RsAbstractableOwner.Trait && parent.isAbstract) return
+
+            RsDiagnostic.DuplicateBindingError(identifier, name)
+        }
         element is RsTypeParameter -> RsDiagnostic.DuplicateTypeParameterError(identifier, name)
         owner is RsImplItem -> RsDiagnostic.DuplicateDefinitionError(identifier, name)
         else -> {

@@ -618,6 +618,19 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                   <error>a</error>: f64) {}
         fn tuples(<error>a</error>: u8, (b, (<error>a</error>, c)): (u16, (u32, u64))) {}
         fn fn_ptrs(x: i32, y: fn (x: i32, y: i32), z: fn (x: i32, x: i32)) {}
+
+        trait Foo {
+            fn foo(&self,
+                   <error descr="Identifier `x` is bound more than once in this parameter list [E0415]">x</error>: i32,
+                   <error descr="Identifier `x` is bound more than once in this parameter list [E0415]">x</error>: i32
+            ) {}
+        }
+    """)
+
+    fun `test name duplication in param list of non-default trait methods`() = checkErrors("""
+        trait Foo {
+            fn bar(x: i32, x: i32);
+        }
     """)
 
     fun `test undeclared label E0426`() = checkErrors("""
