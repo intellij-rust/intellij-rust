@@ -5,7 +5,9 @@
 
 package org.rust.ide.actions.runAnything
 
+import com.intellij.ide.actions.runAnything.RunAnythingContext
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProviderBase
+import com.intellij.ide.actions.runAnything.getPath
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -52,7 +54,8 @@ abstract class RsRunAnythingProvider : RunAnythingProviderBase<String>() {
         if (!project.hasCargoProject) return
         val cargoProject = getAppropriateCargoProject(dataContext) ?: return
         val params = ParametersListUtil.parse(trimStart(value, helpCommand))
-        val path = project.basePath?.toPath() ?: return
+        val executionContext = dataContext.getData(EXECUTING_CONTEXT) ?: RunAnythingContext.ProjectContext(project)
+        val path = executionContext.getPath()?.toPath() ?: return
         run(params.firstOrNull() ?: "--help", params.drop(1), path, cargoProject)
     }
 
