@@ -170,6 +170,7 @@ class RsMoveCommonProcessor(
                     conflictsDetector = RsMoveConflictsDetector(conflicts, elementsToMove, sourceMod, targetMod)
                     conflictsDetector.detectOutsideReferencesVisibilityProblems(outsideReferences)
                     conflictsDetector.detectInsideReferencesVisibilityProblems(insideReferences)
+                    conflictsDetector.checkImpls()
                 }
             }
             true

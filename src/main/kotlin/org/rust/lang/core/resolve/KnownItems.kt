@@ -136,6 +136,7 @@ class KnownItems(
     // In this case, fully qualified name search is used
     val Debug: RsTraitItem? get() = findLangItem("debug_trait") ?: findItem("core::fmt::Debug")
     val Box: RsStructOrEnumItemElement? get() = findLangItem("owned_box", "alloc")
+    val Pin: RsStructOrEnumItemElement? get() = findLangItem("pin", "core")
 
     val drop: RsFunction? get() = findItem("core::mem::drop")
 }

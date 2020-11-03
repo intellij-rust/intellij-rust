@@ -19,6 +19,11 @@ import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.knownItems
+import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.TyAdt
+import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.type
 
 class RsMoveConflictsDetector(
     private val conflicts: MultiMap<PsiElement, String>,
@@ -164,6 +169,95 @@ class RsMoveConflictsDetector(
         }
     }
 
+    /**
+     * Rules for inherent impls:
+     * - An implementing type must be defined within the same crate as the original type definition
+     * - https://doc.rust-lang.org/reference/items/implementations.html#inherent-implementations
+     * - https://doc.rust-lang.org/error-index.html#E0116
+     * We should check:
+     * - When moving inherent impl: check that implementing type is also moved
+     * - When moving struct/enum: check that all inherent impls are also moved
+     * TODO: Check impls for trait objects: `impl dyn Trait { ... }`
+     *
+     * Rules for trait impls:
+     * - Orphan rules: https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules
+     * - https://doc.rust-lang.org/error-index.html#E0117
+     * We should check (denote impls as `impl<P1..=Pn> Trait<T1..=Tn> for T0`):
+     * - When moving trait impl:
+     *     - either implemented trait is in target crate
+     *     - or at least one of the types `T0..=Tn` is a local type
+     * - When moving trait: for each impl of this trait which remains in source crate:
+     *     - at least one of the types `T0..=Tn` is a local type
+     * - Uncovering is not checking, because it is complicated
+     */
+    fun checkImpls() {
+        if (sourceMod.crateRoot == targetMod.crateRoot) return
+
+        val structsToMove = movedElementsDeepDescendantsOfType<RsStructOrEnumItemElement>(elementsToMove).toSet()
+        val implsToMove = movedElementsDeepDescendantsOfType<RsImplItem>(elementsToMove)
+        val (inherentImplsToMove, traitImplsToMove) = implsToMove
+            .partition { it.traitRef == null }
+            .run { first.toSet() to second.toSet() }
+
+        checkStructIsMovedTogetherWithInherentImpl(structsToMove, inherentImplsToMove)
+        checkInherentImplIsMovedTogetherWithStruct(structsToMove, inherentImplsToMove)
+
+        traitImplsToMove.forEach(::checkTraitImplIsCoherentAfterMove)
+    }
+
+    // https://doc.rust-lang.org/reference/items/implementations.html#trait-implementation-coherence
+    private fun checkTraitImplIsCoherentAfterMove(impl: RsImplItem) {
+        fun RsElement.isLocalAfterMove(): Boolean =
+            crateRoot == targetMod.crateRoot || isInsideMovedElements(elementsToMove)
+
+        val traitRef = impl.traitRef!!
+        val (trait, subst, _) = traitRef.resolveToBoundTrait() ?: return
+        if (trait.isLocalAfterMove()) return
+        val typeParameters = subst.typeSubst.values + (impl.typeReference?.type ?: return)
+        val anyTypeParameterIsLocal = typeParameters.any {
+            val ty = it.unwrapFundamentalTypes()
+            if (ty is TyAdt) ty.item.isLocalAfterMove() else false
+        }
+        if (!anyTypeParameterIsLocal) {
+            conflicts.putValue(impl, "Orphan rules check failed for trait implementation after move")
+        }
+    }
+
+    private fun checkStructIsMovedTogetherWithInherentImpl(
+        structsToMove: Set<RsStructOrEnumItemElement>,
+        inherentImplsToMove: Set<RsImplItem>
+    ) {
+        for (impl in inherentImplsToMove) {
+            val struct = impl.implementingType?.item ?: continue
+            if (struct !in structsToMove) {
+                val structDescription = RefactoringUIUtil.getDescription(struct, true)
+                val message = "Inherent implementation should be moved together with $structDescription"
+                conflicts.putValue(impl, message)
+            }
+        }
+    }
+
+    private fun checkInherentImplIsMovedTogetherWithStruct(
+        structsToMove: Set<RsStructOrEnumItemElement>,
+        inherentImplsToMove: Set<RsImplItem>
+    ) {
+        for ((file, structsToMoveInFile) in structsToMove.groupBy { it.containingFile }) {
+            // not working if there is inherent impl in other file
+            // but usually struct and its inherent impls belong to same file
+            val structInherentImpls = file.descendantsOfType<RsImplItem>()
+                .filter { it.traitRef == null }
+                .groupBy { it.implementingType?.item }
+            for (struct in structsToMoveInFile) {
+                val impls = structInherentImpls[struct] ?: continue
+                for (impl in impls.filter { it !in inherentImplsToMove }) {
+                    val structDescription = RefactoringUIUtil.getDescription(struct, true)
+                    val message = "Inherent implementation should be moved together with $structDescription"
+                    conflicts.putValue(impl, message)
+                }
+            }
+        }
+    }
+
     companion object {
         val RS_ELEMENT_FOR_CHECK_INSIDE_REFERENCES_VISIBILITY: Key<RsElement> =
             Key("RS_ELEMENT_FOR_CHECK_INSIDE_REFERENCES_VISIBILITY")
@@ -175,4 +269,23 @@ fun addVisibilityConflict(conflicts: MultiMap<PsiElement, String>, reference: Rs
     val targetDescription = RefactoringUIUtil.getDescription(target, true)
     val message = "$referenceDescription uses $targetDescription which will be inaccessible after move"
     conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message))
+}
+
+private val RsImplItem.implementingType: TyAdt? get() = typeReference?.type as? TyAdt
+
+// https://doc.rust-lang.org/reference/glossary.html#fundamental-type-constructors
+private fun Ty.unwrapFundamentalTypes(): Ty {
+    when (this) {
+        // &T -> T
+        // &mut T -> T
+        is TyReference -> return referenced
+        // Box<T> -> T
+        // Pin<T> -> T
+        is TyAdt -> {
+            if (item == item.knownItems.Box || item == item.knownItems.Pin) {
+                return typeArguments.singleOrNull() ?: this
+            }
+        }
+    }
+    return this
 }
