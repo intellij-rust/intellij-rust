@@ -305,7 +305,16 @@ private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace):
                 val macros = containingModOrEnum.itemsAndMacros
                     .filterIsInstance<RsNamedElement>()
                     .filter {
-                        (it is RsMacro || it is RsMacro2) && it.name == name && matchesIsEnabledByCfg(it, this)
+                        val procMacroName = if (it is RsFunction) {
+                            // TODO: derive proc macros are currently ignored,
+                            //  because of multiresolve of serde::Serialize
+                            if (it.isProcMacroDef && !it.isCustomDeriveProcMacroDef) it.procMacroName else null
+                        } else {
+                            null
+                        }
+                        val itemName = procMacroName ?: it.name
+                        val isMacro = it is RsMacro || it is RsMacro2 || procMacroName != null
+                        isMacro && itemName == name && matchesIsEnabledByCfg(it, this)
                     }
                 // TODO: Multiresolve for macro 2.0
                 val macro = macros.lastOrNull()

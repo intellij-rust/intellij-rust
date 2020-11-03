@@ -101,14 +101,15 @@ class CrateDefMap(
         return parentModData.childModules[mod.modName]
     }
 
-    fun getMacroInfo(macroDef: VisItem): MacroDefInfo {
+    fun getMacroInfo(macroDef: VisItem): MacroDefInfo? {
         val defMap = getDefMap(macroDef.crate) ?: error("Can't find DefMap for macro $macroDef")
         return defMap.doGetMacroInfo(macroDef)
     }
 
     // TODO: [RsMacro2]
-    private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo {
+    private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo? {
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
+        if (macroDef.name in containingMod.procMacros) return null
         return containingMod.legacyMacros[macroDef.name] ?: error("Can't find definition for macro $macroDef")
     }
 
@@ -123,7 +124,7 @@ class CrateDefMap(
         for ((name, def) in from.root.visibleItems) {
             val macroDef = def.macros ?: continue
             // `macro_use` only bring things into legacy scope.
-            root.legacyMacros[name] = from.getMacroInfo(macroDef)
+            root.legacyMacros[name] = from.getMacroInfo(macroDef) ?: continue
         }
     }
 
@@ -194,6 +195,9 @@ class ModData(
      * Currently stores only cfg-enabled macros.
      */
     val legacyMacros: MutableMap<String, MacroDefInfo> = THashMap()
+
+    /** Explicitly declared proc macros */
+    val procMacros: MutableSet<String> = hashSetOf()
 
     /** Traits imported via `use Trait as _;` */
     val unnamedTraitImports: MutableMap<ModPath, Visibility> = THashMap()

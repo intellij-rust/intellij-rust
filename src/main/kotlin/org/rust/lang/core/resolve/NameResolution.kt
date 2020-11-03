@@ -1145,17 +1145,8 @@ private fun exportedMacrosInternal(scope: RsFile): List<ScopeEntry> {
 }
 
 private fun asProcMacroDefinition(item: RsFunction): ScopeEntry? {
-    val macroName = when {
-        item.isBangProcMacroDef || item.isAttributeProcMacroDef -> item.name
-
-        item.isCustomDeriveProcMacroDef -> {
-            item.queryAttributes.getFirstArgOfSingularAttribute("proc_macro_derive")
-        }
-
-        else -> null
-    }
-
-    return macroName?.let { SimpleScopeEntry(it, item) }
+    val macroName = item.procMacroName ?: return null
+    return SimpleScopeEntry(macroName, item)
 }
 
 private fun List<RsMacro>.toScopeEntries(): List<ScopeEntry> =
