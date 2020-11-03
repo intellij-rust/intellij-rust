@@ -41,6 +41,7 @@ import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.resolve2.DefMapService
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
@@ -169,16 +170,18 @@ abstract class RsTestBase : RsPlatformTestBase() {
     protected open val skipTestReason: String?
         get() {
             val projectDescriptor = projectDescriptor as? RustProjectDescriptorBase
-            var reason = projectDescriptor?.skipTestReason
-            if (reason == null) {
+
+            fun getMinRustVersionReason(): String? {
                 val minRustVersion = findAnnotationInstance<MinRustcVersion>() ?: return null
                 val requiredVersion = minRustVersion.semver
                 val rustcVersion = projectDescriptor?.rustcInfo?.version ?: return null
-                if (rustcVersion.semver < requiredVersion) {
-                    reason = "$requiredVersion Rust version required, ${rustcVersion.semver} found"
-                }
+                if (rustcVersion.semver >= requiredVersion) return null
+                return "$requiredVersion Rust version required, ${rustcVersion.semver} found"
             }
-            return reason
+
+            return projectDescriptor?.skipTestReason
+                ?: getMinRustVersionReason()
+                ?: getIgnoredInNewResolveReason()
         }
 
     private fun runTestEdition2015(context: TestContext) {
@@ -447,4 +450,12 @@ abstract class RsTestBase : RsPlatformTestBase() {
 
     protected val PsiElement.lineNumber: Int
         get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
+}
+
+fun junit.framework.TestCase.getIgnoredInNewResolveReason(): String? {
+    return if (isNewResolveEnabled && findAnnotationInstance<IgnoreInNewResolve>() != null) {
+        "Ignored in new resolve"
+    } else {
+        null
+    }
 }

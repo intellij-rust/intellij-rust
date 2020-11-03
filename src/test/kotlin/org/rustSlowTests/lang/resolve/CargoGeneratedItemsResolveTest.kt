@@ -7,6 +7,7 @@ package org.rustSlowTests.lang.resolve
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
+import org.rust.IgnoreInNewResolve
 import org.rust.MinRustcVersion
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.fileTree
@@ -15,6 +16,7 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.openapiext.runWithEnabledFeature
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
+@IgnoreInNewResolve
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
     private val tempDirFixture = TempDirTestFixtureImpl()

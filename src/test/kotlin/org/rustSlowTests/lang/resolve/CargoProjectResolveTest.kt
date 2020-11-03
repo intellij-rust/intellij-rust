@@ -16,6 +16,7 @@ import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.fileTree
+import org.rust.ignoreInNewResolve
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
@@ -91,7 +92,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 }
             }
         }
-        NameResolutionTestmarks.shadowingStdCrates.checkHit {
+        NameResolutionTestmarks.shadowingStdCrates.ignoreInNewResolve().checkHit {
             testProject.checkReferenceIsResolved<RsPath>("foo/src/lib.rs")
         }
     }

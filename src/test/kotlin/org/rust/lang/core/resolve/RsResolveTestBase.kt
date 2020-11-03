@@ -7,7 +7,7 @@ package org.rust.lang.core.resolve
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
-import com.intellij.openapiext.Testmark
+import com.intellij.openapiext.TestmarkPred
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
@@ -62,7 +62,7 @@ abstract class RsResolveTestBase : RsTestBase() {
         }
     }
 
-    protected fun checkByCode(@Language("Rust") code: String, mark: Testmark) =
+    protected fun checkByCode(@Language("Rust") code: String, mark: TestmarkPred) =
         mark.checkHit { checkByCode(code) }
 
     protected fun stubOnlyResolve(
@@ -72,7 +72,7 @@ abstract class RsResolveTestBase : RsTestBase() {
 
     protected fun stubOnlyResolve(
         @Language("Rust") code: String,
-        mark: Testmark,
+        mark: TestmarkPred,
         resolveFileProducer: (PsiElement) -> VirtualFile = this::getActualResolveFile
     ) = mark.checkHit { stubOnlyResolve(code, resolveFileProducer) }
 

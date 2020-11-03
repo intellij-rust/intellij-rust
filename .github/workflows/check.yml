@@ -34,12 +34,19 @@ jobs:
                 rust-version: [ 1.47.0, nightly-2020-10-04 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 202, 203 ]
+                resolve-engine: [ resolve-stable ]
                 include:
                     - os: ubuntu-latest
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.32.0
                       base-ide: idea
                       platform-version: 202
+                      resolve-engine: resolve-stable
+                    - os: ubuntu-latest
+                      rust-version: 1.47.0
+                      base-ide: idea
+                      platform-version: 203
+                      resolve-engine: resolve-new
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 60
@@ -95,6 +102,10 @@ jobs:
                   echo "::set-env name=ORG_GRADLE_PROJECT_clionVersion::CL-2020.2"
                   echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::202.6397.20"
                   echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::202.6397.11"
+
+            - name: Set up env variable for new resolve
+              if: matrix.resolve-engine == 'resolve-new'
+              run: echo "INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE=" >> $GITHUB_ENV
 
             - name: Set up test env variables
               run: echo "::set-env name=RUST_SRC_WITH_SYMLINK::$HOME/.rust-src"

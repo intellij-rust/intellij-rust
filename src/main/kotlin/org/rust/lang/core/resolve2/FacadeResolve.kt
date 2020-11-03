@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.utils.isEnabledByCfg
@@ -26,8 +27,13 @@ import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.toPsiFile
 
 val isNewResolveEnabled: Boolean
-    get() = isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
-        || DefMapService.forceUseNewResolve
+    get() {
+        if (isUnitTestMode) {
+            if (DefMapService.forceUseNewResolve) return true
+            if (System.getenv("INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE") != null) return true
+        }
+        return isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
+    }
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(

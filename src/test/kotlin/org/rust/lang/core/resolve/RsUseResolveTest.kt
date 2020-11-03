@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.IgnoreInNewResolve
 import org.rust.MockEdition
 import org.rust.UseNewResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -224,6 +225,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @IgnoreInNewResolve
     fun `test wildcard`() = checkByCode("""
         mod a {
             fn foo() {}
@@ -500,6 +502,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @IgnoreInNewResolve
     fun `test star imports do not leak`() = checkByCode("""
         fn foo() {}
         mod m {
@@ -773,6 +776,7 @@ class RsUseResolveTest : RsResolveTestBase() {
         }          //^
     """)
 
+    @IgnoreInNewResolve
     @MockEdition(Edition.EDITION_2018)
     fun `test usual import overrides glob import`() = checkByCode("""
         mod foo1 {
