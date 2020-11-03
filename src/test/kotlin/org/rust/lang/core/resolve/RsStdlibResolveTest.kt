@@ -5,10 +5,7 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
+import org.rust.*
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.stdext.BothEditions
@@ -256,6 +253,16 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         fn main() {
             println!("Hello, World!");
         }   //^ ...libstd/macros.rs|...std/src/macros.rs
+    """)
+
+    fun `test println macro inside doctest injection`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// fn main() {
+        ///     println!("Hello, World!");
+        /// }   //^ ...libstd/macros.rs|...std/src/macros.rs
+        /// ```
+        pub fn foo() {}
     """)
 
     fun `test assert_eq macro`() = stubOnlyResolve("""

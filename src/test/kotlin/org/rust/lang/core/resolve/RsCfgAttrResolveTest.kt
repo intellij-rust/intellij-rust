@@ -52,7 +52,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test tuple enum variant with cfg`() = checkByCode("""
+    fun `test tuple enum variant with cfg 1`() = checkByCode("""
         enum E {
             #[cfg(not(intellij_rust))] Variant(u32),
             #[cfg(intellij_rust)]      Variant(u32),
@@ -61,6 +61,24 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
         fn t() {
             E::Variant(0);
+             //^
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test tuple enum variant with cfg 2`() = checkByCode("""
+        enum E {
+            #[cfg(intellij_rust)]      Variant(u32),
+                                     //X
+            #[cfg(not(intellij_rust))] Variant(u32),
+        }
+
+        use E::Variant;
+        #[cfg(not(intellij_rust))]
+        struct Variant(u32);
+
+        fn t() {
+            Variant(0);
              //^
         }
     """)
@@ -102,6 +120,96 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             my::func();
               //^ unresolved
         }
+     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import overrides cfg-disabled item`() = checkByCode("""
+        use foo::func;
+        mod foo {
+            pub fn func() {}
+        }        //X
+
+        #[cfg(not(intellij_rust))]
+        fn func() {}
+
+        mod inner {
+            use super::func;
+            fn main() {
+                func();
+            } //^
+        }
+     """)
+
+    // https://github.com/clap-rs/clap/blob/5a1a209965bf28d3badafec8da6c5c975d3a686f/src/util/mod.rs#L13-L17
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test atom import of extern crate overrides cfg-disabled item`() = stubOnlyResolve("""
+    //- lib.rs
+        pub fn func() {}
+             //X
+    //- main.rs
+        #[cfg(intellij_rust)]
+        use test_package;
+
+        #[cfg(not(intellij_rust))]
+        mod test_package {
+            pub fn func() {}
+        }
+
+        fn main() {
+            test_package::func();
+        } //^ lib.rs
+     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve inside inline mod with cfg 1`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod foo {
+            fn test() {
+                bar();
+            } //^
+            fn bar() {}
+             //X
+        }
+        #[cfg(intellij_rust)]
+        mod foo {
+            fn bar() {}
+        }
+     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve inside inline mod with cfg 2`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod foo {
+            use crate::bar;
+            fn test() {
+                bar();
+            } //^
+        }
+        fn bar() {}
+         //X
+     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve inside non-inline mod with cfg`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(intellij_rust)]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        #[path="foo_disabled.rs"]
+        mod foo;
+    //- foo.rs
+        fn bar() {}
+    //- foo_disabled.rs
+        fn test() {
+            bar();
+        } //^ foo_disabled.rs
+        fn bar() {}
+         //X
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")

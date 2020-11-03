@@ -27,6 +27,7 @@ import org.rust.openapiext.toPsiFile
 
 val isNewResolveEnabled: Boolean
     get() = isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
+        || DefMapService.forceUseNewResolve
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(

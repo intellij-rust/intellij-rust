@@ -6,8 +6,8 @@
 package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
+import org.rust.UseNewResolve
 import org.rust.lang.core.psi.ext.RsReferenceElement
-
 
 class RsMultiResolveTest : RsResolveTestBase() {
     fun `test struct expr`() = doTest("""
@@ -35,14 +35,59 @@ class RsMultiResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test use multi reference`() = doTest("""
+    fun `test use multi reference, function and mod`() = doTest("""
         use m::foo;
               //^
 
         mod m {
-            fn foo() {}
-            mod foo {}
+            pub fn foo() {}
+            pub mod foo {}
         }
+    """)
+
+    @UseNewResolve
+    fun `test use multi reference, duplicated function`() = doTest("""
+        mod m {
+            pub fn foo() {}
+            pub fn foo() {}
+        }
+        use m::foo;
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    @UseNewResolve
+    fun `test use multi reference, duplicated struct`() = doTest("""
+        mod m {
+            pub struct Foo {}
+            pub struct Foo {}
+        }
+        use m::Foo;
+        fn main() {
+            let _ = Foo {};
+        }         //^
+    """)
+
+    @UseNewResolve
+    fun `test use multi reference, duplicated unit struct`() = doTest("""
+        mod m {
+            pub struct Foo;
+            pub struct Foo;
+        }
+        use m::Foo;
+        fn main() {
+            let _ = Foo;
+        }         //^
+    """)
+
+    @UseNewResolve
+    fun `test use multi reference, duplicated enum variant`() = doTest("""
+        enum E { A, A }
+        use E::A;
+        fn main() {
+            let _ = A;
+        }         //^
     """)
 
     fun `test other mod trait bound method`() = doTest("""
