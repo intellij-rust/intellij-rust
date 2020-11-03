@@ -31,7 +31,28 @@ class RsPathUsageInfo(
 }
 
 class RsMoveReferenceInfo(
+    /**
+     * [pathOldOriginal] is real path (from user files).
+     * [pathOld] is our helper path (created with [RsCodeFragmentFactory]), which is more convenient to work with.
+     *
+     * In most cases [pathOld] equals to [pathOldOriginal], but there are two corner cases:
+     * 1) Paths with type arguments: `mod1::mod2::Struct1::<T, R>`
+     *                                ^~~~~~~~~~~~~~~~~~~~~~~~~~^ pathOldOriginal
+     *                                ^~~~~~~~~~~~~~~~~~^ pathOld
+     *    We create [pathOld] from [pathOldOriginal] by deleting type arguments
+     * 2) Paths to nullary enum variants in bindings.
+     *    Unfortunately they are parsed as [RsPatIdent]:
+     *        match none_or_some {
+     *            None => ...
+     *            ^~~^ pathOldOriginal
+     *    This RsPatIdent (pathOldOriginal) is plain identifier,
+     *    so we take it text and create new one-segment RsPath (pathOld)
+     *
+     * Mutable because it can be inside moved elements (if reference is outside), so after move we have to change it.
+     */
     var pathOld: RsPath,
+    /** [RsPath] or [RsPatIdent] */
+    var pathOldOriginal: RsElement,
     /** `null` means no accessible path found */
     val pathNewAccessible: RsPath?,
     /** Fallback path to use when `pathNew == null` (if user choose "Continue" in conflicts view) */
@@ -43,7 +64,7 @@ class RsMoveReferenceInfo(
     var target: RsQualifiedNamedElement
 ) {
     val pathNew: RsPath? get() = pathNewAccessible ?: pathNewFallback
-    val isInsideUseDirective: Boolean get() = pathOld.ancestorStrict<RsUseItem>() != null
+    val isInsideUseDirective: Boolean get() = pathOldOriginal.ancestorStrict<RsUseItem>() != null
 }
 
 /**
@@ -127,6 +148,36 @@ object RsMoveUtil {
 
         val subpaths = generateSequence(path.path) { it.path }
         return subpaths.all { it.reference?.resolve() is RsMod }
+    }
+
+    /**
+     * Creates `pathOld` from `pathOldOriginal`.
+     * See comment for [RsMoveReferenceInfo.pathOld] for details.
+     */
+    fun convertFromPathOriginal(pathOriginal: RsElement, codeFragmentFactory: RsCodeFragmentFactory): RsPath =
+        when (pathOriginal) {
+            is RsPath -> pathOriginal.removeTypeArguments(codeFragmentFactory)
+            is RsPatIdent -> {
+                val context = pathOriginal.context as? RsElement ?: pathOriginal
+                codeFragmentFactory.createPath(pathOriginal.text, context)!!
+            }
+            else -> error("unexpected pathOriginal: $pathOriginal, text=${pathOriginal.text}")
+        }
+
+    /**
+     * Converts `mod1::mod2::Struct1::<T>` to `mod1::mod2::Struct1`.
+     * Because it is much nicer to work with path when it does not have type arguments.
+     * Original path will be stored as [RsMoveReferenceInfo.pathOldOriginal].
+     * And we will convert path back to path with type arguments in [RsMoveRetargetReferencesProcessor.replacePathOldWithTypeArguments].
+     */
+    private fun RsPath.removeTypeArguments(codeFragmentFactory: RsCodeFragmentFactory): RsPath {
+        if (typeArgumentList == null) return this
+
+        val pathCopy = copy() as RsPath
+        pathCopy.typeArgumentList?.delete()
+
+        val context = context as? RsElement ?: this
+        return pathCopy.text.toRsPath(codeFragmentFactory, context) ?: this
     }
 
     fun RsPath.resolvesToAndAccessible(target: RsQualifiedNamedElement): Boolean {

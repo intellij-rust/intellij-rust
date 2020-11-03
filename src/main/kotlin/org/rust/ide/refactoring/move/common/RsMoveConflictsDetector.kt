@@ -37,7 +37,7 @@ class RsMoveConflictsDetector(
 
     private fun updateItemsToMakePublic(insideReferences: List<RsMoveReferenceInfo>) {
         for (reference in insideReferences) {
-            val pathOld = reference.pathOld
+            val pathOld = reference.pathOldOriginal
             val target = reference.target
             val usageMod = pathOld.containingMod
             val isSelfReference = pathOld.isInsideMovedElements(elementsToMove)
@@ -57,7 +57,7 @@ class RsMoveConflictsDetector(
         for (reference in references) {
             val pathNew = reference.pathNewAccessible
             if (pathNew == null || !pathNew.isTargetOfEachSubpathAccessible()) {
-                addVisibilityConflict(conflicts, reference.pathOld, reference.target)
+                addVisibilityConflict(conflicts, reference.pathOldOriginal, reference.target)
             }
         }
     }
