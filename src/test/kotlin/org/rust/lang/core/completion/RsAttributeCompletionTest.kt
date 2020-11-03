@@ -31,7 +31,7 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
     """)
 
     fun `test allow on fn`() = doSingleCompletion("""
-        #[all/*caret*/]
+        #[allo/*caret*/]
         fn foo() {}
     """, """
         #[allow(/*caret*/)]
@@ -207,5 +207,18 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
     """, """
         #[repr(/*caret*/)]
         struct Foo {}
+    """)
+
+    fun `test track_caller on function`() = doSingleCompletion("""
+        #[track/*caret*/]
+        fn foo() {}
+    """, """
+        #[track_caller/*caret*/]
+        fn foo() {}
+    """)
+
+    fun `test no track_caller on struct`() = checkNoCompletion("""
+        #[track/*caret*/]
+        struct Foo;
     """)
 }
