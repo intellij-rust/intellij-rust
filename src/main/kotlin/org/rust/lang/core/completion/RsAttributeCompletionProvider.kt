@@ -53,7 +53,7 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
         onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std plugin recursion_limit",
         onExternCrate to "macro_use macro_reexport no_link",
         onMod to "no_implicit_prelude path macro_use",
-        onFn to "main plugin_registrar start test cold naked export_name link_section lang inline",
+        onFn to "main plugin_registrar start test cold naked export_name link_section lang inline track_caller",
         onTestFn to "should_panic",
         onStaticMut to "thread_local",
         onExternBlock to "link_args link() linked_from",
