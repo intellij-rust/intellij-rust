@@ -17,6 +17,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeEvent
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ref.GCWatcher
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.cargo.project.model.CargoProject
@@ -33,6 +35,7 @@ import org.rust.openapiext.pathAsPath
 import org.rust.stdext.mapToSet
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 
@@ -127,8 +130,13 @@ class DefMapHolder(private val structureModificationTracker: ModificationTracker
 @Service
 class DefMapService(val project: Project) : Disposable {
 
-    /** Concurrent because [DefMapsBuilder] uses multiple threads */
-    private val defMaps: ConcurrentHashMap<CratePersistentId, DefMapHolder> = ConcurrentHashMap()
+    /**
+     * Concurrent because [DefMapsBuilder] uses multiple threads.
+     * [DefMapHolder]s are stored under soft references, so they will be cleared if IDE is low on memory.
+     * [DefMapHolder] can't be garbage collected while [CrateDefMap] is build,
+     * see [DefMapUpdater.runWithStrongReferencesToDefMapHolders].
+     */
+    private val defMaps: ConcurrentMap<CratePersistentId, DefMapHolder> = ContainerUtil.createConcurrentSoftValueMap()
     val defMapsBuildLock: ReentrantLock = ReentrantLock()
 
     private val fileIdToCrateId: ConcurrentHashMap<FileId, CratePersistentId> = ConcurrentHashMap()
@@ -246,6 +254,11 @@ class DefMapService(val project: Project) : Disposable {
             fileIdToCrateId.values.remove(staleCrate)
             missedFiles.values.remove(staleCrate)
         }
+    }
+
+    @TestOnly
+    fun forceClearSoftReferences() {
+        GCWatcher.tracking(defMaps.values).ensureCollected()
     }
 
     override fun dispose() {}
