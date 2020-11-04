@@ -11,7 +11,6 @@ import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
-@IgnoreInNewResolve
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class RsProcMacroResolveTest : RsResolveTestBase() {
@@ -125,6 +124,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                           //^ dep-proc-macro/lib.rs
     """)
 
+    @IgnoreInNewResolve
     fun `test resolve custom derive proc macro from derive attribute`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_derive(ProcMacroName)]
@@ -190,6 +190,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                          //^ dep-proc-macro/lib.rs
     """)
 
+    @IgnoreInNewResolve
     fun `test resolve custom derive proc macro reexported from lib to main from macro call`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_proc_macro;

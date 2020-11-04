@@ -154,6 +154,17 @@ val RsFunction.isCustomDeriveProcMacroDef: Boolean
 val RsFunction.isProcMacroDef: Boolean
     get() = greenStub?.isProcMacroDef ?: (queryAttributes.isProcMacroDef)
 
+val RsFunction.procMacroName: String?
+    get() = when {
+        isBangProcMacroDef || isAttributeProcMacroDef -> name
+
+        isCustomDeriveProcMacroDef -> {
+            queryAttributes.getFirstArgOfSingularAttribute("proc_macro_derive")
+        }
+
+        else -> null
+    }
+
 val QueryAttributes.isProcMacroDef
     get() = hasAnyOfAttributes(
         "proc_macro",

@@ -111,9 +111,9 @@ class ModCollectorBase private constructor(
     }
 
     private fun collectItem(item: RsNamedStub) {
-        val name = item.name ?: return
+        val procMacroName = if (item is RsFunctionStub && item.isProcMacroDef) item.psi.procMacroName else null
+        val name = procMacroName ?: item.name ?: return
         if (item !is RsAttributeOwnerStub) return
-        if (item is RsFunctionStub && item.isProcMacroDef) return  // TODO: Support proc macros
 
         val (hasMacroUse, pathAttribute) = when (item) {
             is RsModItemStub -> item.hasMacroUse to item.pathAttribute
@@ -126,6 +126,7 @@ class ModCollectorBase private constructor(
             visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
             namespaces = item.namespaces,
+            isProcMacroDef = procMacroName != null,
             isModItem = item is RsModItemStub,
             isModDecl = item is RsModDeclItemStub,
             hasMacroUse = hasMacroUse,
@@ -248,6 +249,7 @@ data class ItemLight(
     val visibility: VisibilityLight,
     val isDeeplyEnabledByCfg: Boolean,
     val namespaces: Set<Namespace>,
+    val isProcMacroDef: Boolean,
 
     val isModItem: Boolean,
     val isModDecl: Boolean,

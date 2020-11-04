@@ -115,6 +115,7 @@ private class ModCollector(
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs(visItem, item.namespaces)
         onAddItem(modData, name, perNs)
+        if (item.isProcMacroDef) modData.procMacros += name
 
         // we have to check `modData[name]` to be sure that `childModules` and `visibleItems` are consistent
         if (childModData != null && perNs.types === modData.getVisibleItem(name).types) {
