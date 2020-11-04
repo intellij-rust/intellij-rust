@@ -569,6 +569,11 @@
                          implementationClass="org.rust.ide.inspections.RsCastToBoolInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
+                         displayName="Constant refers to statics"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.ide.inspections.RsConstReferStaticInspection"/>
+
+        <localInspection language="Rust" groupName="Rust"
                          displayName="Attribute without parentheses"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.ide.inspections.RsAttrWithoutParenthesesInspection"/>
