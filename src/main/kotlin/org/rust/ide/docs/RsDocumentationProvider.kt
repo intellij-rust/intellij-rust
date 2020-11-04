@@ -8,6 +8,7 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.*
@@ -17,6 +18,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
 import org.rust.ide.presentation.render
+import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
@@ -105,8 +107,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     private fun generateDoc(element: RsPath, buffer: StringBuilder) {
         val primitive = TyPrimitive.fromPath(element) ?: return
-        val std = element.findDependencyCrateRoot(STD) ?: return
-        val primitiveDocs = std.parent?.findFile("primitive_docs.rs")?.rustFile ?: return
+        val primitiveDocs = element.project.findFileInStdCrate("primitive_docs.rs") ?: return
 
         val mod = primitiveDocs.childrenOfType<RsModItem>().find {
             it.queryAttributes.hasAttributeWithKeyValue("doc", "primitive", primitive.name)
@@ -203,6 +204,15 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         // TODO: we should take into account real path of item for user, i.e. take into account reexports
         // instead of already resolved item path
         return containingMod.superMods.all { it.isPublic }
+    }
+
+    private fun Project.findFileInStdCrate(name: String): RsFile? {
+        return crateGraph.topSortedCrates
+            .find { it.origin == STDLIB && it.normName == STD }
+            ?.rootMod
+            ?.parent
+            ?.findFile(name)
+            ?.rustFile
     }
 
     companion object {

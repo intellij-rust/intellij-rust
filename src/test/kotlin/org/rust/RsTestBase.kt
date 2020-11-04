@@ -311,6 +311,11 @@ abstract class RsTestBase : RsPlatformTestBase() {
         return element to data
     }
 
+    protected inline fun <reified T : PsiElement> findElementAndOffsetInEditor(marker: String = "^"): Pair<T, Int> {
+        val (element, _, offset) = findElementWithDataAndOffsetInEditor<T>(marker)
+        return element to offset
+    }
+
     protected inline fun <reified T : PsiElement> findElementWithDataAndOffsetInEditor(
         marker: String = "^"
     ): Triple<T, String, Int> {

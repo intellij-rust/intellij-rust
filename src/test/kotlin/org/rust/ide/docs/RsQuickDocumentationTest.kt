@@ -5,12 +5,14 @@
 
 package org.rust.ide.docs
 
-import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.lang.core.psi.RsBaseType
+import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.ext.RsElement
 
 class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     fun `test fn`() = doTest("""
@@ -1068,23 +1070,28 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test primitive type doc`() {
-        InlineFile("""
-            fn foo() -> i32 {}
-                       //^
-        """)
+    fun `test primitive type doc`() = doTestRegex("""
+        fn foo() -> i32 {}
+                   //^
+    """, """
+        <div class='definition'><pre>std
+        primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
+    """)
 
-        val (originalElement, _, offset) = findElementWithDataAndOffsetInEditor<PsiElement>()
-        val element = DocumentationManager.getInstance(project)
-            .findTargetElement(myFixture.editor, offset, myFixture.file, originalElement)!!
-        val actual = RsDocumentationProvider().generateDoc(element, originalElement)?.trim()
-            ?: error("Expected not null result")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test primitive type doc in stdlib`() = doTestRegex("""
+        const C: u32 = std::f64::DIGITS;
+                                //^
+    """, """
+        <div class='definition'><pre>std
+        primitive type <b>u32</b></pre></div><div class='content'><p>.+</p></div>
+    """) {
+        val element = findElementWithDataAndOffsetInEditor<RsElement>().first
+        val const = element.reference?.resolve() as? RsConstant ?: error("Failed to resolve `${element.text}`")
+        val originalElement = (const.typeReference as RsBaseType).path!!
 
-        val regex = Regex("""
-            <div class='definition'><pre>std
-            primitive type <b>i32</b></pre></div><div class='content'><p>.+</p></div>
-        """.trimIndent(), RegexOption.MULTILINE)
-        assertTrue(actual.matches(regex))
+        myFixture.openFileInEditor(const.containingFile.virtualFile)
+        originalElement to originalElement.textOffset
     }
 
     @ExpandMacros
@@ -1161,5 +1168,11 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
 
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
-        = doTest(code, expected, RsDocumentationProvider::generateDoc)
+        = doTest(code, expected, block = RsDocumentationProvider::generateDoc)
+
+    private fun doTestRegex(
+        @Language("Rust") code: String,
+        @Language("Html") expected: String,
+        findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() }
+    ) = doTest(code, Regex(expected.trimIndent(), RegexOption.MULTILINE), findElement, RsDocumentationProvider::generateDoc)
 }

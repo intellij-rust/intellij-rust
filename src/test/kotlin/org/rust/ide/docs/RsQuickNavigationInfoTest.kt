@@ -730,5 +730,5 @@ class RsQuickNavigationInfoTest : RsDocumentationProviderTest() {
     """)
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
-        = doTest(code, expected, RsDocumentationProvider::getQuickNavigateInfo)
+        = doTest(code, expected, block = RsDocumentationProvider::getQuickNavigateInfo)
 }
