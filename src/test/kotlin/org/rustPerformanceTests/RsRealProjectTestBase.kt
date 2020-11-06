@@ -17,7 +17,7 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         val base = openRealProject("testData/${info.path}", info.exclude)
         if (base == null) {
             val name = info.name
-            println("SKIP $name: git clone ${info.gitUrl} testData/$name")
+            println("SKIP $name: git clone ${info.repository} testData/$name")
             return null
         }
         return base
@@ -53,10 +53,10 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         return cargoProjectDirectory
     }
 
-    class RealProjectInfo(
+    data class RealProjectInfo(
         val name: String,
-        val path: String,
-        val gitUrl: String,
+        val path: String = name,
+        val repository: String = "",
         val exclude: List<String> = emptyList()
     )
 
@@ -64,7 +64,7 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         val RUSTC = RealProjectInfo(
             name = "rust",
             path = "rust",
-            gitUrl = "https://github.com/rust-lang/rust",
+            repository = "https://github.com/rust-lang/rust",
             exclude = listOf(
                 "src/llvm",
                 "src/llvm-emscripten",
