@@ -167,11 +167,24 @@ class MacroExpansionSharedCache : Disposable {
     ): Pair<RsFileStub, ExpansionResult>? {
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
         val result = cachedExpand(expander, def.data, call.data, hash) ?: return null
-        val stub = cachedBuildStub(hash) {
+        val serializedStub = cachedBuildStub(hash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
             createFileContent(project, file, result.text)
         } ?: return null
-        return Pair(stub.stub as RsFileStub, result)
+
+        val stub = try {
+            serializedStub.stub
+        } catch (e: SerializerNotFoundException) {
+            // This most likely means that `RsFileStub.Type.stubVersion` was not incremented after stubs change
+            MACRO_LOG.error(e)
+            return null
+        }
+
+        if (stub === SerializedStubTree.NO_STUB) {
+            return null
+        }
+
+        return Pair(stub as RsFileStub, result)
     }
 
     companion object {
