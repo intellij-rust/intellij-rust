@@ -18,6 +18,7 @@ import org.rust.RsTask.TaskType.*
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph
+import org.rust.lang.core.macros.MacroExpansionSharedCache
 import org.rust.openapiext.*
 import org.rust.stdext.getWithRethrow
 import java.util.concurrent.*
@@ -52,6 +53,7 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
             holder.defMap
         } finally {
             pool.shutdown()
+            MacroExpansionSharedCache.getInstance().flush()
         }
     }
 }
