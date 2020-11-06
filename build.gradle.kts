@@ -36,6 +36,8 @@ val baseVersion = when (baseIDE) {
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
 val graziePlugin = if (baseIDE == "idea") "grazie" else "tanvd.grazi:${prop("graziePluginVersion")}"
+// BACKCOMPAT: 2020.2
+val clionPlugins = if (platformVersion < 203) emptyList() else listOf("cidr-base", "clion")
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 
 plugins {
@@ -321,6 +323,7 @@ project(":idea") {
 project(":clion") {
     intellij {
         version = clionVersion
+        setPlugins(*clionPlugins.toTypedArray())
     }
     dependencies {
         implementation(project(":"))
@@ -337,6 +340,7 @@ project(":debugger") {
             setPlugins(nativeDebugPlugin)
         } else {
             version = clionVersion
+            setPlugins(*clionPlugins.toTypedArray())
         }
     }
     dependencies {
