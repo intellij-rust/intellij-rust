@@ -1003,7 +1003,7 @@
                      description="Enable Rust cfg attributes support"/>
         <registryKey key="org.rust.lang.highlight.macro.body" defaultValue="true" restartRequired="false"
                      description="Highlight Rust macro call bodies"/>
-        <registryKey key="org.rust.lang.macros.persistentCache" defaultValue="false" restartRequired="false"
+        <registryKey key="org.rust.lang.macros.persistentCache" defaultValue="true" restartRequired="false"
                      description="Use persistent cache for Rust macro expansions"/>
 
         <!-- Move refactoring -->
