@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -18,6 +19,7 @@ import com.intellij.util.indexing.FileContent
 import com.intellij.util.io.*
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
+import org.rust.lang.core.parser.RustParserDefinition
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.bodyHash
@@ -49,8 +51,9 @@ import java.util.concurrent.atomic.AtomicReference
 @Suppress("UnstableApiUsage")
 @Service
 class MacroExpansionSharedCache : Disposable {
-    private val sm: SerializationManagerEx = SerializationManagerEx.getInstanceEx()
-    private val ex: StubForwardIndexExternalizer<*> = StubForwardIndexExternalizer.createFileLocalExternalizer()
+    private val globalSerMgr: SerializationManagerEx = SerializationManagerEx.getInstanceEx()
+    private val stubExternalizer: StubForwardIndexExternalizer<*> =
+        StubForwardIndexExternalizer.createFileLocalExternalizer()
 
     private val data: AtomicReference<PersistentCacheData?> =
         AtomicReference(if (CACHE_ENABLED.asBoolean()) tryCreateData() else null)
@@ -71,7 +74,7 @@ class MacroExpansionSharedCache : Disposable {
         }, this)
     }
 
-    private fun tryCreateData() = PersistentCacheData.tryCreate(getBaseMacroDir().resolve("cache"), sm, ex)
+    private fun tryCreateData() = PersistentCacheData.tryCreate(getBaseMacroDir().resolve("cache"), stubExternalizer)
 
     val isEnabled: Boolean
         get() = CACHE_ENABLED.asBoolean() && data.get() != null
@@ -90,24 +93,24 @@ class MacroExpansionSharedCache : Disposable {
     private fun <Key, Value : Any> getOrPut(
         getMap: (PersistentCacheData) -> PersistentHashMap<Key, Value>,
         key: Key,
-        computeValue: () -> Value?,
+        computeValue: (SerializationManagerEx) -> Value?,
     ): Value? {
-        if (!CACHE_ENABLED.asBoolean()) return computeValue()
+        if (!CACHE_ENABLED.asBoolean()) return computeValue(globalSerMgr)
 
-        val data = data.get() ?: return computeValue()
+        val data = data.get() ?: return computeValue(globalSerMgr)
         val map = getMap(data)
 
         val existingValue = try {
             map.get(key)
         } catch (e: IOException) {
             onError(data, e)
-            return computeValue()
+            return computeValue(globalSerMgr)
         }
 
         return if (existingValue != null) {
             existingValue
         } else {
-            val newValue: Value = computeValue() ?: return null
+            val newValue: Value = computeValue(data.localSerMgr) ?: return null
 
             try {
                 map.put(key, newValue)
@@ -150,9 +153,9 @@ class MacroExpansionSharedCache : Disposable {
     }
 
     private fun cachedBuildStub(hash: HashCode, fileContent: () -> FileContent?): SerializedStubTree? {
-        return getOrPut(PersistentCacheData::stubs, hash) {
+        return getOrPut(PersistentCacheData::stubs, hash) { serMgr ->
             val stub = StubTreeBuilder.buildStubTree(fileContent() ?: return@getOrPut null) ?: return@getOrPut null
-            SerializedStubTree.serializeStub(stub, sm, ex)
+            SerializedStubTree.serializeStub(stub, serMgr, stubExternalizer)
         }
     }
 
@@ -188,27 +191,12 @@ class RsMacroCallDataWithHash(val data: RsMacroCallData, val bodyHash: HashCode?
 
 @Suppress("UnstableApiUsage")
 private class PersistentCacheData(
-    baseDir: Path,
-    sm: SerializationManagerEx,
-    ex: StubForwardIndexExternalizer<*>,
+    val localSerMgr: SerializationManagerImpl,
+    val expansions: PersistentHashMap<HashCode, ExpansionResult>,
+    val stubs: PersistentHashMap<HashCode, SerializedStubTree>
 ) {
-    val expansions: PersistentHashMap<HashCode, ExpansionResult> = newPersistentHashMap(
-        baseDir.resolve("expansion-cache"),
-        HashCodeKeyDescriptor,
-        ExpansionResultExternalizer,
-        1 * 1024 * 1024,
-        MacroExpander.EXPANDER_VERSION
-    )
-
-    val stubs: PersistentHashMap<HashCode, SerializedStubTree> = newPersistentHashMap(
-        baseDir.resolve("expansion-stubs-cache"),
-        HashCodeKeyDescriptor,
-        newSerializedStubTreeDataExternalizer(sm, ex),
-        1 * 1024 * 1024,
-        MacroExpander.EXPANDER_VERSION + RsFileStub.Type.stubVersion
-    )
-
     fun flush() {
+        localSerMgr.flushNameStorage()
         expansions.force()
         stubs.force()
     }
@@ -216,20 +204,59 @@ private class PersistentCacheData(
     fun close() {
         catchAndWarn(expansions::close)
         catchAndWarn(stubs::close)
+        Disposer.dispose(localSerMgr)
     }
 
     companion object {
         @JvmStatic
-        fun tryCreate(
-            baseDir: Path,
-            sm: SerializationManagerEx,
-            ex: StubForwardIndexExternalizer<*>,
-        ): PersistentCacheData? = try {
+        fun tryCreate(baseDir: Path, stubExternalizer: StubForwardIndexExternalizer<*>): PersistentCacheData? {
             MacroExpansionManager.checkInvalidatedStorage()
-            PersistentCacheData(baseDir, sm, ex)
-        } catch (e: IOException) {
-            MACRO_LOG.warn(e)
-            null
+
+            val cleaners = mutableListOf<() -> Unit>()
+
+            return try {
+                val namesFile = baseDir.resolve("stub.names")
+                val stubCacheFile = baseDir.resolve("expansion-stubs-cache")
+
+                val namesFileExists = namesFile.exists()
+
+                val localSerMgr = SerializationManagerImpl(namesFile, false)
+                cleaners.add { Disposer.dispose(localSerMgr) }
+
+                if (!namesFileExists || localSerMgr.isNameStorageCorrupted) {
+                    if (localSerMgr.isNameStorageCorrupted) {
+                        localSerMgr.repairNameStorage()
+                        if (localSerMgr.isNameStorageCorrupted) {
+                            throw IOException("Serialization Manager is corrupted after repair")
+                        }
+                    }
+                    IOUtil.deleteAllFilesStartingWith(stubCacheFile.toFile())
+                }
+
+                val expansions = newPersistentHashMap(
+                    baseDir.resolve("expansion-cache"),
+                    HashCodeKeyDescriptor,
+                    ExpansionResultExternalizer,
+                    1 * 1024 * 1024,
+                    MacroExpander.EXPANDER_VERSION + RustParserDefinition.PARSER_VERSION
+                )
+                cleaners += expansions::close
+
+                val stubs = newPersistentHashMap(
+                    stubCacheFile,
+                    HashCodeKeyDescriptor,
+                    newSerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer),
+                    1 * 1024 * 1024,
+                    MacroExpander.EXPANDER_VERSION + RsFileStub.Type.stubVersion
+                )
+                cleaners += stubs::close
+
+                PersistentCacheData(localSerMgr, expansions, stubs)
+            } catch (e: IOException) {
+                MACRO_LOG.warn(e)
+                cleaners.forEach(::catchAndWarn)
+                null
+            }
         }
 
         @JvmStatic
@@ -252,6 +279,8 @@ private class PersistentCacheData(
                 runnable()
             } catch (e: IOException) {
                 MACRO_LOG.warn(e)
+            } catch (t: Throwable) {
+                MACRO_LOG.error(t)
             }
         }
     }
