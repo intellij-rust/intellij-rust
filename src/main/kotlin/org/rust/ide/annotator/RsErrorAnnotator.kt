@@ -539,7 +539,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkVis(holder: RsAnnotationHolder, vis: RsVis) {
-        if (vis.parent is RsImplItem || vis.parent is RsForeignModItem || isInTraitImpl(vis) || isInEnumVariantField(vis)) {
+        val parent = vis.parent
+        if (parent is RsImplItem ||
+            parent is RsForeignModItem ||
+            parent is RsEnumVariant ||
+            isInTraitImpl(vis) ||
+            isInEnumVariantField(vis)
+        ) {
             RsDiagnostic.UnnecessaryVisibilityQualifierError(vis).addToHolder(holder)
         }
         checkCrateVisibilityModifier(holder, vis)

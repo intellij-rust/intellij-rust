@@ -345,12 +345,13 @@ sealed class RsDiagnostic(
     }
 
     class UnnecessaryVisibilityQualifierError(
-        element: PsiElement
+        element: RsVis
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0449,
-            "Unnecessary visibility qualifier"
+            "Unnecessary visibility qualifier",
+            fixes = listOf(RemoveElementFix(element, "visibility qualifier"))
         )
     }
 

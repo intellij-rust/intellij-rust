@@ -53,6 +53,7 @@ class RsCompleteParsingTestCase : RsParsingTestCaseBase("complete") {
     fun `test const generics`() = doTest(true)
     fun `test constants`() = doTest(true)
     fun `test raw operator`() = doTest(true)
+    fun `test enum vis`() = doTest(true)
 
     fun `test issue320`() = doTest(true)
     fun `test diesel macros`() = doTest(true)
