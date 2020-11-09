@@ -221,4 +221,41 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         #[track/*caret*/]
         struct Foo;
     """)
+
+    fun `test non_exhaustive on enum`() = doSingleCompletion("""
+        #[non_/*caret*/]
+        enum Foo {}
+    """, """
+        #[non_exhaustive/*caret*/]
+        enum Foo {}
+    """)
+
+    fun `test non_exhaustive on struct`() = doSingleCompletion("""
+        #[non_/*caret*/]
+        struct S {
+            a: u32
+        }
+    """, """
+        #[non_exhaustive/*caret*/]
+        struct S {
+            a: u32
+        }
+    """)
+
+    fun `test non_exhaustive on enum variant`() = doSingleCompletion("""
+        enum Foo {
+            #[non_/*caret*/]
+            A
+        }
+    """, """
+        enum Foo {
+            #[non_exhaustive/*caret*/]
+            A
+        }
+    """)
+
+    fun `test no non_exhaustive on function`() = checkNoCompletion("""
+        #[non_/*caret*/]
+        fn foo() {}
+    """)
 }

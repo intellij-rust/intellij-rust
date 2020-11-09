@@ -106,6 +106,8 @@ object RsPsiPattern {
 
     val onEnum: PsiElementPattern.Capture<PsiElement> = onItem<RsEnumItem>()
 
+    val onEnumVariant: PsiElementPattern.Capture<PsiElement> = onItem<RsEnumVariant>()
+
     val onFn: PsiElementPattern.Capture<PsiElement> = onItem<RsFunction>()
 
     val onMod: PsiElementPattern.Capture<PsiElement> = onItem<RsModItem>() or onItem<RsModDeclItem>()
@@ -149,6 +151,8 @@ object RsPsiPattern {
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
+
+    val onStructLike: PsiElementPattern.Capture<PsiElement> = onStruct or onEnum or onEnumVariant
 
     val inAnyLoop: PsiElementPattern.Capture<PsiElement> =
         psiElement().inside(
