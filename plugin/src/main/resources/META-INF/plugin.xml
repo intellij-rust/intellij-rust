@@ -27,6 +27,7 @@
     <depends optional="true" config-file="duplicates-only.xml">com.intellij.modules.duplicatesDetector</depends>
     <depends optional="true" config-file="coverage-only.xml">com.intellij.modules.coverage</depends>
     <depends optional="true" config-file="grazie-only.xml">tanvd.grazi</depends>
+    <depends optional="true" config-file="js-only.xml">JavaScript</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
