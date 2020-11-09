@@ -19,6 +19,7 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -59,6 +60,7 @@ class CargoSyncTask(
         get() = true
 
     override fun run(indicator: ProgressIndicator) {
+        LOG.info("CargoSyncTask started")
         indicator.isIndeterminate = true
 
         val syncProgress = SyncViewManager.createBuildProgress(project)
@@ -131,6 +133,10 @@ class CargoSyncTask(
         }
     }
 
+    companion object {
+        private val LOG = logger<CargoSyncTask>()
+    }
+
     private class StopAction(private val progress: ProgressIndicator) :
         DumbAwareAction({ "Stop" }, AllIcons.Actions.Suspend) {
 
@@ -200,6 +206,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
         val projectDirectory = childContext.oldCargoProject.workingDirectory
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
         try {
+            CargoEventService.getInstance(childContext.project).onMetadataCall(projectDirectory)
             val projectDescriptionData = cargo.fullProjectDescription(childContext.project, projectDirectory, object : ProcessAdapter() {
                 override fun onTextAvailable(event: ProcessEvent, outputType: Key<Any>) {
                     val text = event.text.trim { it <= ' ' }

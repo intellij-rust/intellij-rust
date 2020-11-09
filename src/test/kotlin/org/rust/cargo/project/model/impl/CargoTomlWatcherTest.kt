@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import org.rust.RsTestBase
+import java.nio.file.Paths
 
 class CargoTomlWatcherTest : RsTestBase() {
     fun `test toml modifications`() {
@@ -28,6 +29,37 @@ class CargoTomlWatcherTest : RsTestBase() {
 
     fun `test lockfile modifications`() {
         val (lockFile, createEvent) = newCreateEvent("Cargo.lock")
+        checkTriggered(createEvent)
+        checkTriggered(newChangeEvent(lockFile))
+    }
+
+    fun `test lockfile modification (outside, outside) just after metadata call`() {
+        val projectDir = Paths.get("/src/proj")
+        CargoEventService.getInstance(project).onMetadataCall(projectDir)
+
+        val (lockFile, createEvent) = newCreateEvent("Cargo.lock")
+
+        checkNotTriggered(createEvent)
+        checkTriggered(newChangeEvent(lockFile))
+    }
+
+    fun `test lockfile modification (inside, inside) just after metadata call`() {
+        val projectDir = Paths.get("/src/proj")
+        CargoEventService.getInstance(project).onMetadataCall(projectDir)
+
+        val requestor = CargoTomlWatcherTest::class.java
+        val (lockFile, createEvent) = newCreateEvent("Cargo.lock", requestor = requestor)
+
+        checkTriggered(createEvent)
+        checkTriggered(newChangeEvent(lockFile, requestor = requestor))
+    }
+
+    fun `test lockfile modification (inside, outside) just after metadata call`() {
+        val projectDir = Paths.get("/src/proj")
+        CargoEventService.getInstance(project).onMetadataCall(projectDir)
+
+        val (lockFile, createEvent) = newCreateEvent("Cargo.lock", requestor = CargoTomlWatcherTest::class.java)
+
         checkTriggered(createEvent)
         checkTriggered(newChangeEvent(lockFile))
     }
@@ -75,27 +107,28 @@ class CargoTomlWatcherTest : RsTestBase() {
     }
 
     private fun checkTriggered(event: VFileEvent) {
-        check(CargoTomlWatcher.isInterestingEvent(event)) {
+        check(CargoTomlWatcher.isInterestingEvent(project, event)) {
             "Watcher ignored $event"
         }
     }
 
     private fun checkNotTriggered(event: VFileEvent) {
-        check(!CargoTomlWatcher.isInterestingEvent(event)) {
+        check(!CargoTomlWatcher.isInterestingEvent(project, event)) {
             "Watcher should have ignored $event"
         }
     }
 
-    private fun newCreateEvent(name: String): Pair<VirtualFile, VFileCreateEvent> {
+    private fun newCreateEvent(name: String, requestor: Any? = null): Pair<VirtualFile, VFileCreateEvent> {
         val vFile = myFixture.tempDirFixture.createFile("proj/$name")
-        return vFile to VFileCreateEvent(null, vFile.parent, vFile.name, false, null, null, true, null)
+        return vFile to VFileCreateEvent(requestor, vFile.parent, vFile.name, false, null, null, true, null)
     }
 
-    private fun newChangeEvent(vFile: VirtualFile) = VFileContentChangeEvent(null, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)
+    private fun newChangeEvent(vFile: VirtualFile, requestor: Any? = null): VFileContentChangeEvent =
+        VFileContentChangeEvent(requestor, vFile, vFile.modificationStamp - 1, vFile.modificationStamp, true)
 
-    private fun newRenameEvent(vFile: VirtualFile, newName: String): VFilePropertyChangeEvent {
+    private fun newRenameEvent(vFile: VirtualFile, newName: String, requestor: Any? = null): VFilePropertyChangeEvent {
         val oldName = vFile.name
         runWriteAction { vFile.rename(null, newName) }
-        return VFilePropertyChangeEvent(null, vFile, VirtualFile.PROP_NAME, oldName, newName, true)
+        return VFilePropertyChangeEvent(requestor, vFile, VirtualFile.PROP_NAME, oldName, newName, true)
     }
 }
