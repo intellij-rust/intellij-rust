@@ -24,8 +24,8 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.messages.Topic
-import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionMode
@@ -113,10 +113,8 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
                 incRustStructureModificationCount()
             }
         })
-        project.messageBus.connect().subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-            override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                incRustStructureModificationCount()
-            }
+        project.messageBus.connect().subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+            incRustStructureModificationCount()
         })
     }
 

@@ -63,7 +63,7 @@ interface CargoProjectsService {
         )
     }
 
-    interface CargoProjectsListener {
+    fun interface CargoProjectsListener {
         fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>)
     }
 }

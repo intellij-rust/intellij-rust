@@ -25,6 +25,7 @@ import com.intellij.ui.content.ContentFactory
 import com.intellij.util.ui.UIUtil
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.runconfig.hasCargoProject
@@ -106,11 +107,9 @@ class CargoToolWindow(
 
     init {
         with(project.messageBus.connect()) {
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                    invokeLater {
-                        projectStructure.updateCargoProjects(projects.toList())
-                    }
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, projects ->
+                invokeLater {
+                    projectStructure.updateCargoProjects(projects.toList())
                 }
             })
         }

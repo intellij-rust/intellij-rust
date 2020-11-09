@@ -38,10 +38,8 @@ class CrateGraphServiceImpl(val project: Project) : CrateGraphService {
     private val cargoProjectsModTracker = SimpleModificationTracker()
 
     init {
-        project.messageBus.connect().subscribe(CARGO_PROJECTS_TOPIC, object : CargoProjectsListener {
-            override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                cargoProjectsModTracker.incModificationCount()
-            }
+        project.messageBus.connect().subscribe(CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+            cargoProjectsModTracker.incModificationCount()
         })
     }
 

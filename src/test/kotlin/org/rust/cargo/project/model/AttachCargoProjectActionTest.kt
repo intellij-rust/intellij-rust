@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.ui.UIUtil
 import org.rust.FileTreeBuilder
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.fileTree
 import org.rust.ide.notifications.RsEditorNotificationPanel
@@ -146,10 +147,8 @@ class AttachCargoProjectActionTest : RsWithToolchainTestBase() {
         assertEquals(shouldBeEnabled, testEvent.presentation.isEnabledAndVisible)
         if (shouldBeEnabled) {
             val latch = CountDownLatch(1)
-            project.messageBus.connect().subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                    latch.countDown()
-                }
+            project.messageBus.connect().subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+                latch.countDown()
             })
 
             action.actionPerformed(testEvent)
