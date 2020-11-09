@@ -101,13 +101,24 @@ private class DefMapUpdater(
         checkReadAccessAllowed()
         val time = measureTimeMillis {
             executeUnderProgress(indicator) {
-                doRun()
+                runWithStrongReferencesToDefMapHolders()
             }
         }
         if (numberUpdatedCrates > 0) {
             val cratesCount = if (numberUpdatedCrates == topSortedCrates.size) "all" else numberUpdatedCrates.toString()
             RESOLVE_LOG.info("Updated $cratesCount DefMaps in $time ms")
         }
+    }
+
+    private fun runWithStrongReferencesToDefMapHolders() {
+        /**
+         * Strong references to all [DefMapHolder]s we need,
+         * so they will not be garbage collected ([DefMapService.defMaps] stores values as soft references)
+         */
+        val holders = crates.mapNotNull { defMapService.getDefMapHolder(it.id ?: return@mapNotNull null) }
+        doRun()
+        /** Pretend we are using `crateHolders`, so it will not be optimized out */
+        check(holders.size <= crates.size)
     }
 
     private fun doRun() {

@@ -29,6 +29,10 @@ class InjectLanguageIntentionTest : RsIntentionTestBase(InjectLanguageAction::cl
         const C: i32 = /*caret*/123;
     """)
 
+    fun `test available in macro call bodies`() = checkAvailable("""
+        foobar!(/*caret*/"abc(def)");
+    """)
+
     fun `test inject RegExp`() = doTest("RegExp", """
         const C: &str = /*caret*/"abc(def)";
     """)

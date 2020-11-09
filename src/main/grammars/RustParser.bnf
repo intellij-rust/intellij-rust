@@ -1452,7 +1452,7 @@ MacroArgument ::= <<any_braces MacroArgumentTT>> {
   elementTypeFactory = "org.rust.lang.core.psi.LazyElementsKt.factory"
   extraRoot = true
 }
-MacroArgumentTT ::= (<<any_braces MacroArgumentTT>> | MacroBodyIdent | MacroBodyQuoteIdent | <<unpairedToken>>)*
+MacroArgumentTT ::= (<<any_braces MacroArgumentTT>> | MacroBodyIdent | MacroBodyQuoteIdent | StringLitExpr | <<unpairedToken>>)*
 MacroBodyIdent ::= identifier {
   implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
   mixin = "org.rust.lang.core.psi.ext.RsMacroBodyIdentMixin"
@@ -1460,6 +1460,10 @@ MacroBodyIdent ::= identifier {
 MacroBodyQuoteIdent ::= QUOTE_IDENTIFIER {
   implements = "org.rust.lang.core.psi.ext.RsReferenceElementBase"
   mixin = "org.rust.lang.core.psi.ext.RsMacroBodyQuoteIdentMixin"
+}
+StringLitExpr ::= STRING_LITERAL | BYTE_STRING_LITERAL
+            | RAW_STRING_LITERAL | RAW_BYTE_STRING_LITERAL {
+  elementType = LitExpr
 }
 
 CompactTT ::= (<<any_braces CompactTT>> | <<unpairedToken>>)*
