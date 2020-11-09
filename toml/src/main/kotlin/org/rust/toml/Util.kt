@@ -92,6 +92,19 @@ class StringValueInsertionHandler(private val keyValue: TomlKeyValue) : InsertHa
     }
 }
 
+/** Wraps inserted string with quotes if needed */
+class StringLiteralInsertionHandler : InsertHandler<LookupElement> {
+    override fun handleInsert(context: InsertionContext, item: LookupElement) {
+        val leaf = context.getElementOfType<PsiElement>() ?: return
+        val hasQuotes = leaf.parent is TomlLiteral && leaf.elementType in TOML_STRING_LITERALS
+
+        if (!hasQuotes) {
+            context.document.insertString(context.startOffset, "\"")
+            context.document.insertString(context.selectionEndOffset, "\"")
+        }
+    }
+}
+
 private val TomlLiteral.literalType: IElementType
     get() = children.first().elementType
 
@@ -118,10 +131,45 @@ fun CargoWorkspace.Package.getPackageTomlFile(project: Project): TomlFile? {
         as? TomlFile
 }
 
+fun PsiElement.findCargoPackageForCargoToml(): CargoWorkspace.Package? {
+    val containingFile = containingFile.originalFile
+    return containingFile.findCargoPackage()?.takeIf { it.getPackageTomlFile(containingFile.project) == containingFile }
+}
+
 fun CargoWorkspace.Package.findDependencyByPackageName(pkgName: String): CargoWorkspace.Package? =
     dependencies.find { it.pkg.name == pkgName }?.pkg
 
 fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
-    element.containingFile.findCargoPackage()
+    element.findCargoPackageForCargoToml()
         ?.findDependencyByPackageName(depName)
         ?.getPackageTomlFile(element.project)
+
+/**
+ * Consider `Cargo.toml`:
+ *
+ * ```
+ * [dependencies]
+ * foo = { version = "*",                 features = [] }
+ * #X                ^ returns `foo` for this value #^ and for this value
+ * ```
+ *
+ * ```
+ * [dependencies.foo]
+ * features = []
+ *           #^ returns `foo` for this value
+ * ```
+ *
+ * @see [org.rust.toml.resolve.CargoTomlDependencyFeaturesReferenceProvider]
+ */
+val TomlValue.containingDependencyKey: TomlKey?
+    get() {
+        val parentParent = parent?.parent as? TomlElement ?: return null
+        return if (parentParent is TomlTable) {
+            // [dependencies.foo]
+            parentParent.header.names.lastOrNull()
+        } else {
+            // [dependencies]
+            // foo = { ... }
+            (parentParent.parent as? TomlKeyValue)?.key
+        }
+    }
