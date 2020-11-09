@@ -604,7 +604,7 @@ PatField ::= PatFieldFull | box? PatBinding
 
 BindingMode ::= ref mut? | mut
 
-upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription [ '=' AnyExpr ] ';' {
+upper Constant ::= (static mut? | const) (identifier | '_') TypeAscription? [ '=' AnyExpr ] ';' {
   pin = 2
   name = ""
   implements = [ "org.rust.lang.core.psi.ext.RsQualifiedNamedElement"
