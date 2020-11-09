@@ -13,16 +13,15 @@ import com.intellij.openapiext.isDispatchThread
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
 import org.rust.cargo.project.model.*
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.lang.core.psi.isRustFile
 
 class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvider(project) {
 
     init {
         project.messageBus.connect().apply {
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                    updateAllNotifications()
-                }
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+                updateAllNotifications()
             })
         }
     }

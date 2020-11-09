@@ -44,6 +44,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
@@ -668,10 +669,8 @@ private class MacroExpansionServiceImplInner(
 
         val connect = project.messageBus.connect(disposable)
 
-        connect.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-            override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                settingsChanged()
-            }
+        connect.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+            settingsChanged()
         })
 
         connect.subscribe(RustProjectSettingsService.RUST_SETTINGS_TOPIC, object : RustProjectSettingsService.RustSettingsListener {
@@ -1043,7 +1042,7 @@ private class MacroExpansionServiceImplInner(
  * [MacroExpansionManager] should be loaded in order to add expansion directory to the index via
  * [RsIndexableSetContributor]
  */
-class MacroExpansionManagerWaker : CargoProjectsService.CargoProjectsListener {
+class MacroExpansionManagerWaker : CargoProjectsListener {
     override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
         if (projects.isNotEmpty()) {
             service.project.macroExpansionManager

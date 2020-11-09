@@ -42,6 +42,7 @@ import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
 import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.setup
 import org.rust.cargo.project.settings.RustProjectSettingsService
@@ -89,13 +90,11 @@ open class CargoProjectsServiceImpl(
                 }
             })
 
-            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsService.CargoProjectsListener {
-                override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                    StartupManager.getInstance(project).runAfterOpened {
-                        GuiUtils.invokeLaterIfNeeded({
-                            initializeToolWindow(project)
-                        }, ModalityState.NON_MODAL)
-                    }
+            subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+                StartupManager.getInstance(project).runAfterOpened {
+                    GuiUtils.invokeLaterIfNeeded({
+                        initializeToolWindow(project)
+                    }, ModalityState.NON_MODAL)
                 }
             })
         }

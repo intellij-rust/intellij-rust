@@ -168,10 +168,8 @@ class DefMapService(val project: Project) : Disposable {
             }
         })
 
-        connection.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, object : CargoProjectsListener {
-            override fun cargoProjectsUpdated(service: CargoProjectsService, projects: Collection<CargoProject>) {
-                scheduleRecheckAllDefMaps()
-            }
+        connection.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
+            scheduleRecheckAllDefMaps()
         })
     }
 
