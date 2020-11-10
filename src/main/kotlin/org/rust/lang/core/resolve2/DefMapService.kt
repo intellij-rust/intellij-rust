@@ -7,6 +7,7 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -21,9 +22,9 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ref.GCWatcher
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
-import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MacroExpansionMode
@@ -219,7 +220,7 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     fun onFileChanged(file: RsFile) {
-        if (!isNewResolveEnabled) return
+        if (!project.isNewResolveEnabled) return
         checkWriteAccessAllowed()
         val crate = findCrate(file) ?: return
         getDefMapHolder(crate).addChangedFile(file)
@@ -232,10 +233,31 @@ class DefMapService(val project: Project) : Disposable {
         return fileIdToCrateId[virtualFile.id]
     }
 
+    private fun scheduleRebuildAllDefMaps() {
+        checkWriteAccessAllowed()
+        for (defMapHolder in defMaps.values) {
+            defMapHolder.shouldRebuild = true
+        }
+    }
+
     private fun scheduleRecheckAllDefMaps() {
         checkWriteAccessAllowed()
         for (defMapHolder in defMaps.values) {
             defMapHolder.shouldRecheck = true
+        }
+    }
+
+    fun onNewResolveEnabledChanged(newResolveEnabled: Boolean) {
+        if (isUnitTestMode) return
+        project.rustPsiManager.incRustStructureModificationCount()
+        if (newResolveEnabled) {
+            runWriteAction {
+                scheduleRebuildAllDefMaps()
+            }
+        } else {
+            defMaps.clear()
+            fileIdToCrateId.clear()
+            missedFiles.clear()
         }
     }
 
@@ -263,7 +285,7 @@ class DefMapService(val project: Project) : Disposable {
 
     private inner class DefMapPsiTreeChangeListener : RsPsiTreeChangeAdapter() {
         override fun handleEvent(event: RsPsiTreeChangeEvent) {
-            if (!isNewResolveEnabled) return
+            if (!project.isNewResolveEnabled) return
             // events for file addition/deletion have null `event.file` and not-null `event.child`
             if (event.file != null) return
             when (event) {
@@ -294,15 +316,11 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     companion object {
-        var forceUseNewResolve: Boolean = false
-            private set
-
         @TestOnly
-        fun setUseNewResolve(): Disposable {
+        fun setUseNewResolve(project: Project, disposable: Disposable) {
             check(isUnitTestMode)
-            forceUseNewResolve = true
-            return Disposable {
-                forceUseNewResolve = false
+            project.rustSettings.modifyTemporary(disposable) {
+                it.newResolveEnabled = true
             }
         }
     }

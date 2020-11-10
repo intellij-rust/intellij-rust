@@ -7,9 +7,8 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.ide.experiments.RsExperiments
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
@@ -23,17 +22,10 @@ import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
-import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.toPsiFile
 
-val isNewResolveEnabled: Boolean
-    get() {
-        if (isUnitTestMode) {
-            if (DefMapService.forceUseNewResolve) return true
-            if (System.getenv("INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE") != null) return true
-        }
-        return isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
-    }
+val Project.isNewResolveEnabled: Boolean
+    get() = rustSettings.newResolveEnabled
 
 /** null return value means that new resolve can't be used */
 fun processItemDeclarations2(
@@ -163,7 +155,7 @@ private fun <T> RsMacroCall.resolveToMacroAndThen(
     withoutNewResolve: (RsMacro) -> T?,
     withNewResolve: (MacroDefInfo, RsModInfo) -> T?
 ): T? {
-    if (!isNewResolveEnabled) {
+    if (!project.isNewResolveEnabled) {
         val def = resolveToMacro() ?: return null
         return withoutNewResolve(def)
     }
@@ -253,7 +245,7 @@ private sealed class RsModInfoBase {
 
 private fun getModInfo(scope: RsMod): RsModInfoBase {
     val project = scope.project
-    if (!isNewResolveEnabled) return CantUseNewResolve("not enabled")
+    if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
     if (scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
     if (scope.isLocal) return CantUseNewResolve("local mod")
     val crate = scope.containingCrate as? CargoBasedCrate ?: return CantUseNewResolve("not CargoBasedCrate")

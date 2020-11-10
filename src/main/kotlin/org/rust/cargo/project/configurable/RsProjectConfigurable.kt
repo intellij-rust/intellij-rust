@@ -41,6 +41,9 @@ class RsProjectConfigurable(
             )
         }
         row {
+            checkBox("Use experimental name resolution engine:", state::newResolveEnabled)
+        }
+        row {
             checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
         }
     }

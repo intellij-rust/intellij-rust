@@ -25,7 +25,7 @@ import org.rust.stdext.mapToSet
 fun buildDefMap(crate: Crate, allDependenciesDefMaps: Map<Crate, CrateDefMap>): CrateDefMap? {
     checkReadAccessAllowed()
     val project = crate.project
-    check(isNewResolveEnabled)
+    check(project.isNewResolveEnabled)
     val context = CollectorContext(crate, project)
     val defMap = buildDefMapContainingExplicitItems(context, allDependenciesDefMaps) ?: return null
     DefCollector(project, defMap, context).collect()

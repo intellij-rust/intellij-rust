@@ -92,7 +92,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 }
             }
         }
-        NameResolutionTestmarks.shadowingStdCrates.ignoreInNewResolve().checkHit {
+        NameResolutionTestmarks.shadowingStdCrates.ignoreInNewResolve(project).checkHit {
             testProject.checkReferenceIsResolved<RsPath>("foo/src/lib.rs")
         }
     }

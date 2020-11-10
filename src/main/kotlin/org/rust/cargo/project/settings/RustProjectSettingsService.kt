@@ -45,6 +45,9 @@ interface RustProjectSettingsService {
         var useOffline: Boolean = false,
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
+        var newResolveEnabled: Boolean = isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
+            || System.getenv("INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE") != null,
+        @AffectsHighlighting
         var doctestInjectionEnabled: Boolean = true,
         var useRustfmt: Boolean = false,
         var runRustfmtOnSave: Boolean = false,
@@ -101,6 +104,7 @@ interface RustProjectSettingsService {
     val compileAllTargets: Boolean
     val useOffline: Boolean
     val macroExpansionEngine: MacroExpansionEngine
+    val newResolveEnabled: Boolean
     val doctestInjectionEnabled: Boolean
     val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean

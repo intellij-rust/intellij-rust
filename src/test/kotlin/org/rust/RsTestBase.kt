@@ -13,6 +13,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.StreamUtil
@@ -77,8 +78,7 @@ abstract class RsTestBase : RsPlatformTestBase() {
             Disposer.register(testRootDisposable, disposable)
         }
         findAnnotationInstance<UseNewResolve>()?.let {
-            val disposable = DefMapService.setUseNewResolve()
-            Disposer.register(testRootDisposable, disposable)
+            DefMapService.setUseNewResolve(project, testRootDisposable)
         }
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         tempDirRoot = myFixture.findFileInTempDir(".")
@@ -181,7 +181,7 @@ abstract class RsTestBase : RsPlatformTestBase() {
 
             return projectDescriptor?.skipTestReason
                 ?: getMinRustVersionReason()
-                ?: getIgnoredInNewResolveReason()
+                ?: getIgnoredInNewResolveReason(project)
         }
 
     private fun runTestEdition2015(context: TestContext) {
@@ -457,8 +457,8 @@ abstract class RsTestBase : RsPlatformTestBase() {
         get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
 }
 
-fun junit.framework.TestCase.getIgnoredInNewResolveReason(): String? {
-    return if (isNewResolveEnabled && findAnnotationInstance<IgnoreInNewResolve>() != null) {
+fun UsefulTestCase.getIgnoredInNewResolveReason(project: Project): String? {
+    return if (project.isNewResolveEnabled && findAnnotationInstance<IgnoreInNewResolve>() != null) {
         "Ignored in new resolve"
     } else {
         null
