@@ -117,6 +117,15 @@ private fun ModData.processMacros(processor: RsResolveProcessor, defMap: CrateDe
     return false
 }
 
+fun RsMacroCall.resolveToMacroUsingNewResolve(): RsMacro? =
+    resolveToMacroAndThen(
+        withNewResolve = { defInfo, info ->
+            val visItem = VisItem(defInfo.path, Visibility.Public)
+            visItem.toPsi(info.defMap, project, Namespace.Macros).singleOrNull() as RsMacro?
+        },
+        withoutNewResolve = { it }
+    )
+
 /**
  * Resolve without PSI is needed to prevent caching incomplete result in [expandedItemsCached].
  * Consider:

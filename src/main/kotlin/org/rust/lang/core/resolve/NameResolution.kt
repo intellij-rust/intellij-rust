@@ -825,12 +825,23 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                     ?.let { return it }
             }
 
-            val resolved = pickFirstResolveVariant(path.referenceName) { processMacroCallVariantsInScope(path, it) }
-                as? RsNamedElement
+            val resolved = pickFirstResolveEntry(path.referenceName) { processMacroCallVariantsInScope(path, it) }
             resolved?.let { processor(it) } ?: false
         }
     } else {
-        processMacrosExportedByCratePath(path, qualifier, processor)
+        val call = path.parent
+        if (path.project.isNewResolveEnabled && call is RsMacroCall && call.isTopLevelExpansion) {
+            if (isCompletion) {
+                /** Note: here we don't have to handle [MACRO_DOLLAR_CRATE_IDENTIFIER] */
+                processQualifiedPathResolveVariants(null, isCompletion, MACROS, qualifier, path, call, processor)
+            } else {
+                val def = call.resolveToMacroUsingNewResolve() ?: return false
+                val name = processor.name ?: def.name ?: return false
+                processor(name, def)
+            }
+        } else {
+            processMacrosExportedByCratePath(path, qualifier, processor)
+        }
     }
 }
 
