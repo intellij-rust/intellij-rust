@@ -47,10 +47,7 @@ import org.rust.lang.core.resolve.NameResolutionTestmarks.selfInGroup
 import org.rust.lang.core.resolve.indexes.RsLangItemIndex
 import org.rust.lang.core.resolve.indexes.RsMacroIndex
 import org.rust.lang.core.resolve.ref.*
-import org.rust.lang.core.resolve2.isNewResolveEnabled
-import org.rust.lang.core.resolve2.processMacros
-import org.rust.lang.core.resolve2.resolveToMacroAndGetContainingCrate
-import org.rust.lang.core.resolve2.resolveToMacroAndProcessLocalInnerMacros
+import org.rust.lang.core.resolve2.*
 import org.rust.lang.core.stubs.index.RsNamedElementIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.consts.CtInferVar
@@ -395,9 +392,13 @@ private fun processQualifiedPathResolveVariants(
         if (result) return true
 
         val containingMod = path.containingMod
-        if (Namespace.Macros in ns && base is RsFile && base.isCrateRoot &&
-            containingMod is RsFile && containingMod.isCrateRoot) {
-            if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
+        if (Namespace.Macros in ns) {
+            val resultWithNewResolve = processMacros(base, processor)
+            if (resultWithNewResolve == true) return true
+            if (resultWithNewResolve == null && base is RsFile && base.isCrateRoot &&
+                containingMod is RsFile && containingMod.isCrateRoot) {
+                if (processAllScopeEntries(exportedMacrosAsScopeEntries(base), processor)) return true
+            }
         }
 
         // Proc macro crates are not allowed to export anything but procedural macros,

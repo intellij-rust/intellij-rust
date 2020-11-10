@@ -112,10 +112,10 @@ class RsMacroExpansionRangeMappingTest : RsTestBase() {
     """)
 
     fun `test expression`() = checkOffset("""
-        macro_rules! foo {
-            ($ e:expr) => { fn foo() { $ e } };
+        macro_rules! gen_foo {
+            ($ e:expr) => { fn foo() { $ e; } };
         }
-        foo! {
+        gen_foo! {
             /*caret*/2 + 2
         }
         use self::foo;
