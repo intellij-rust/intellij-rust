@@ -226,6 +226,56 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro inside import 1`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::foo;
+                        //^ lib.rs
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {} }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro inside import 2`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::foo;
+                        //^ lib.rs
+    //- lib.rs
+        mod inner {
+            #[macro_export]
+            macro_rules! foo { () => {} }
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro inside import 3`() = stubOnlyResolve("""
+    //- main.rs
+        mod inner {
+            use test_package::foo;
+                            //^ lib.rs
+        }
+    //- lib.rs
+        #[macro_export]
+        macro_rules! foo { () => {} }
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro inside import 4`() = stubOnlyResolve("""
+    //- main.rs
+        mod inner1 {
+            use test_package::foo;
+                            //^ lib.rs
+        }
+    //- lib.rs
+        mod inner2 {
+            #[macro_export]
+            macro_rules! foo { () => {} }
+        }
+    """)
+
     fun `test import macro by use item`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_lib_target;

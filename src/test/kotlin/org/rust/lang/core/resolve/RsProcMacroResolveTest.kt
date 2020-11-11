@@ -115,6 +115,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
     """)
     }
 
+    @IgnoreInNewResolve
     fun `test resolve custom derive proc macro in use item`() = stubOnlyResolve("""
     //- dep-proc-macro/lib.rs
         #[proc_macro_derive(ProcMacroName)]
@@ -176,6 +177,7 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                     //^ dep-proc-macro/lib.rs
     """)
 
+    @IgnoreInNewResolve
     fun `test resolve custom derive proc macro reexported from lib to main from use item`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_proc_macro;

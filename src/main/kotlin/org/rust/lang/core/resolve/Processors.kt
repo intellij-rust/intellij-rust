@@ -144,14 +144,17 @@ fun <T : ScopeEntry> collectResolveVariantsAsScopeEntries(
     return result
 }
 
-fun pickFirstResolveVariant(referenceName: String?, f: (RsResolveProcessor) -> Unit): RsElement? {
+fun pickFirstResolveVariant(referenceName: String?, f: (RsResolveProcessor) -> Unit): RsElement? =
+    pickFirstResolveEntry(referenceName, f)?.element
+
+fun pickFirstResolveEntry(referenceName: String?, f: (RsResolveProcessor) -> Unit): ScopeEntry? {
     if (referenceName == null) return null
-    var result: RsElement? = null
+    var result: ScopeEntry? = null
     val processor = createProcessor(referenceName) { e ->
         if (e.name == referenceName) {
             val element = e.element
             if (element != null && (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf)) {
-                result = element
+                result = e
                 return@createProcessor true
             }
         }

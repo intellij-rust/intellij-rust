@@ -83,32 +83,48 @@ fun processItemDeclarations2(
  * We need to get [ModData] to check if we can use new resolve, which is not fast,
  * so we unite check and actual resolve as an optimization.
  */
-fun processMacros(scope: RsMod, processor: RsResolveProcessor, runBeforeResolve: () -> Boolean): Boolean? {
+fun processMacros(
+    scope: RsMod,
+    processor: RsResolveProcessor,
+    runBeforeResolve: (() -> Boolean)? = null
+): Boolean? {
     val (project, defMap, modData) = when (val info = getModInfo(scope)) {
         is CantUseNewResolve -> return null
         InfoNotFound -> return false
         is RsModInfo -> info
     }
-    if (runBeforeResolve()) return true
+    if (runBeforeResolve != null && runBeforeResolve()) return true
 
     return modData.processMacros(processor, defMap, project)
 }
 
 private fun ModData.processMacros(processor: RsResolveProcessor, defMap: CrateDefMap, project: Project): Boolean {
+    val processedMacros = hashSetOf<RsNamedElement>()
     for ((name, macroInfo) in legacyMacros.entriesWithName(processor.name)) {
         val visItem = VisItem(macroInfo.path, Visibility.Public)
-        val macros = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
-        processor(name, macros) && return true
+        val macro = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
+        processedMacros += macro
+        if (processor(name, macro)) return true
     }
 
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
         val visItem = perNs.macros ?: continue
-        val macros = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
-        processor(name, macros) && return true
+        val macro = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
+        if (macro in processedMacros) continue  // TODO: Possible optimization - somehow do check before calling [toPsi]
+        if (processor(name, macro)) return true
     }
 
     return false
 }
+
+fun RsMacroCall.resolveToMacroUsingNewResolve(): RsMacro? =
+    resolveToMacroAndThen(
+        withNewResolve = { defInfo, info ->
+            val visItem = VisItem(defInfo.path, Visibility.Public)
+            visItem.toPsi(info.defMap, project, Namespace.Macros).singleOrNull() as RsMacro?
+        },
+        withoutNewResolve = { it }
+    )
 
 /**
  * Resolve without PSI is needed to prevent caching incomplete result in [expandedItemsCached].

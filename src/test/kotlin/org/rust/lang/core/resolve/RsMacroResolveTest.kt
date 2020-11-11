@@ -5,6 +5,9 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
+import org.rust.UseNewResolve
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.ignoreInNewResolve
 
 class RsMacroResolveTest : RsResolveTestBase() {
@@ -211,5 +214,110 @@ class RsMacroResolveTest : RsResolveTestBase() {
               //^ unresolved
     """)
 
-    // More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest]
+    // TODO
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in nested mod (reexport)`() = expect<IllegalStateException> {
+        checkByCode("""
+            mod inner {
+                #[macro_export]
+                macro_rules! foo_ {
+                           //X
+                    () => {}
+                }
+                pub use foo_ as foo;
+                      //^
+            }
+        """)
+    }
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in nested mod (import)`() = checkByCode("""
+        mod inner {
+            #[macro_export]
+            macro_rules! foo_ {
+                       //X
+                () => {}
+            }
+            pub use foo_ as foo;
+        }
+        mod test {
+            use crate::inner::foo;
+                            //^
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in nested mod (macro call)`() = checkByCode("""
+        mod inner {
+            #[macro_export]
+            macro_rules! foo_ {
+                       //X
+                () => {}
+            }
+            pub use foo_ as foo;
+        }
+
+        inner::foo! {}
+             //^
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in crate root (reexport)`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo_ {
+                   //X
+            () => {}
+        }
+        pub use foo_ as foo;
+              //^
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in crate root (import)`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo_ {
+                   //X
+            () => {}
+        }
+        pub use foo_ as foo;
+        mod test {
+            use crate::foo;
+                     //^
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in crate root (macro call fqn)`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo_ {
+                   //X
+            () => {}
+        }
+        pub use foo_ as foo;
+
+        crate::foo! {}
+             //^
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test legacy textual macro reexported as macro 2 in crate root (macro call)`() = checkByCode("""
+        #[macro_export]
+        macro_rules! foo_ {
+                   //X
+            () => {}
+        }
+        pub use foo_ as foo;
+
+        foo! {}
+        //^
+    """)
+
+    /** More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest] */
 }
