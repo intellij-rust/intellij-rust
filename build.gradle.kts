@@ -35,13 +35,21 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-val graziePlugin = if (baseIDE == "idea") "grazie" else "tanvd.grazi:${prop("graziePluginVersion")}"
+val graziePlugin = if (baseIDE == "idea") "tanvd.grazi" else "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
+val intelliLangPlugin = "org.intellij.intelliLang"
+val copyrightPlugin = "com.intellij.copyright"
+// We can't use `com.intellij.java` here because of
+// https://github.com/JetBrains/gradle-intellij-plugin/issues/565
+val javaPlugin = "java"
+val javaScriptPlugin = "JavaScript"
+// BACKCOMPAT: 2020.2
+val clionPlugins = if (platformVersion < 203) emptyList() else listOf("com.intellij.cidr.base", "com.intellij.clion")
 
 plugins {
     idea
     kotlin("jvm") version "1.4.10"
-    id("org.jetbrains.intellij") version "0.5.0"
+    id("org.jetbrains.intellij") version "0.6.3"
     id("org.jetbrains.grammarkit") version "2020.2.1"
     id("net.saliman.properties") version "1.5.1"
 }
@@ -180,15 +188,15 @@ project(":plugin") {
         pluginName = "intellij-rust"
         val plugins = mutableListOf(
             project(":intellij-toml"),
-            "IntelliLang",
+            intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
-            "JavaScriptLanguage"
+            javaScriptPlugin
         )
         if (baseIDE == "idea") {
             plugins += listOf(
-                "copyright",
-                "java",
+                copyrightPlugin,
+                javaPlugin,
                 nativeDebugPlugin
             )
         }
@@ -254,6 +262,13 @@ project(":") {
         }
     }
 
+    intellij {
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            setPlugins("c-plugin")
+        }
+    }
+
     val testOutput = configurations.create("testOutput")
 
     dependencies {
@@ -308,7 +323,7 @@ project(":") {
 project(":idea") {
     intellij {
         version = ideaVersion
-        setPlugins("java")
+        setPlugins(javaPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -321,6 +336,7 @@ project(":idea") {
 project(":clion") {
     intellij {
         version = clionVersion
+        setPlugins(*clionPlugins.toTypedArray())
     }
     dependencies {
         implementation(project(":"))
@@ -337,6 +353,7 @@ project(":debugger") {
             setPlugins(nativeDebugPlugin)
         } else {
             version = clionVersion
+            setPlugins(*clionPlugins.toTypedArray())
         }
     }
     dependencies {
@@ -349,7 +366,12 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        setPlugins(project(":intellij-toml"))
+        val plugins = mutableListOf<Any>(project(":intellij-toml"))
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            plugins += "c-plugin"
+        }
+        setPlugins(*plugins.toTypedArray())
     }
     dependencies {
         implementation(project(":"))
@@ -361,7 +383,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        setPlugins("IntelliLang")
+        setPlugins(intelliLangPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -374,7 +396,7 @@ project(":intelliLang") {
 project(":copyright") {
     intellij {
         version = ideaVersion
-        setPlugins("copyright")
+        setPlugins(copyrightPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -416,7 +438,7 @@ project(":grazie") {
 
 project(":js") {
     intellij {
-        setPlugins("JavaScriptLanguage")
+        setPlugins(javaScriptPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -428,6 +450,12 @@ project(":js") {
 
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
+    intellij {
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            setPlugins("c-plugin")
+        }
+    }
 
     dependencies {
         implementation(project(":common"))
