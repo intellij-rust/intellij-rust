@@ -262,6 +262,13 @@ project(":") {
         }
     }
 
+    intellij {
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            setPlugins("c-plugin")
+        }
+    }
+
     val testOutput = configurations.create("testOutput")
 
     dependencies {
@@ -359,7 +366,12 @@ project(":debugger") {
 
 project(":toml") {
     intellij {
-        setPlugins(project(":intellij-toml"))
+        val plugins = mutableListOf<Any>(project(":intellij-toml"))
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            plugins += "c-plugin"
+        }
+        setPlugins(*plugins.toTypedArray())
     }
     dependencies {
         implementation(project(":"))
@@ -438,6 +450,12 @@ project(":js") {
 
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
+    intellij {
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion >= 203) {
+            setPlugins("c-plugin")
+        }
+    }
 
     dependencies {
         implementation(project(":common"))
