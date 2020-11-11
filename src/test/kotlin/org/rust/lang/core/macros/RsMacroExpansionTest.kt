@@ -883,6 +883,28 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         foo!(a);
     """ to MacroExpansionMarks.groupMatchedEmptyTT)
 
+    fun `test two sequential groups starting with the same token`() = doTest("""
+        macro_rules! foobar {
+            (
+                $(: foo)?
+                $(: bar)?
+                $ name:ident
+            ) => {
+                fn $ name(){}
+            }
+        }
+
+        foobar!(: foo a);
+        foobar!(: bar b);
+        foobar!(c);
+    """, """
+        fn a(){}
+    """, """
+        fn b(){}
+    """, """
+        fn c(){}
+    """)
+
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     @BothEditions
     fun `test local_inner_macros 1`() = checkSingleMacroByTree("""
