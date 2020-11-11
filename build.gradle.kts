@@ -35,10 +35,16 @@ val baseVersion = when (baseIDE) {
 }
 
 val nativeDebugPlugin = "com.intellij.nativeDebug:${prop("nativeDebugPluginVersion")}"
-val graziePlugin = if (baseIDE == "idea") "grazie" else "tanvd.grazi:${prop("graziePluginVersion")}"
-// BACKCOMPAT: 2020.2
-val clionPlugins = if (platformVersion < 203) emptyList() else listOf("cidr-base", "clion")
+val graziePlugin = if (baseIDE == "idea") "tanvd.grazi" else "tanvd.grazi:${prop("graziePluginVersion")}"
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
+val intelliLangPlugin = "org.intellij.intelliLang"
+val copyrightPlugin = "com.intellij.copyright"
+// We can't use `com.intellij.java` here because of
+// https://github.com/JetBrains/gradle-intellij-plugin/issues/565
+val javaPlugin = "java"
+val javaScriptPlugin = "JavaScript"
+// BACKCOMPAT: 2020.2
+val clionPlugins = if (platformVersion < 203) emptyList() else listOf("com.intellij.cidr.base", "com.intellij.clion")
 
 plugins {
     idea
@@ -182,15 +188,15 @@ project(":plugin") {
         pluginName = "intellij-rust"
         val plugins = mutableListOf(
             project(":intellij-toml"),
-            "IntelliLang",
+            intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
-            "JavaScriptLanguage"
+            javaScriptPlugin
         )
         if (baseIDE == "idea") {
             plugins += listOf(
-                "copyright",
-                "java",
+                copyrightPlugin,
+                javaPlugin,
                 nativeDebugPlugin
             )
         }
@@ -310,7 +316,7 @@ project(":") {
 project(":idea") {
     intellij {
         version = ideaVersion
-        setPlugins("java")
+        setPlugins(javaPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -365,7 +371,7 @@ project(":toml") {
 
 project(":intelliLang") {
     intellij {
-        setPlugins("IntelliLang")
+        setPlugins(intelliLangPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -378,7 +384,7 @@ project(":intelliLang") {
 project(":copyright") {
     intellij {
         version = ideaVersion
-        setPlugins("copyright")
+        setPlugins(copyrightPlugin)
     }
     dependencies {
         implementation(project(":"))
@@ -420,7 +426,7 @@ project(":grazie") {
 
 project(":js") {
     intellij {
-        setPlugins("JavaScriptLanguage")
+        setPlugins(javaScriptPlugin)
     }
     dependencies {
         implementation(project(":"))
