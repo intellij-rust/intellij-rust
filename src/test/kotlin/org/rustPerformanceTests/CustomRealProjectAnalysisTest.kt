@@ -6,6 +6,11 @@
 package org.rustPerformanceTests
 
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.Parameterized
 import java.io.File
 import java.util.*
 
@@ -13,24 +18,27 @@ import java.util.*
  * Provides ability to check plugin analysis on custom real project.
  * It's supposed to be used by CI
  */
-class CustomRealProjectAnalysisTest : RsRealProjectAnalysisTest() {
+@RunWith(Parameterized::class)
+class CustomRealProjectAnalysisTest(
+    @Suppress("unused") private val projectName: String,
+    private val info: RealProjectInfo
+) : RsRealProjectAnalysisTest() {
 
+    @Test
     fun test() {
-        val name = System.getenv(PROJECT_NAME) ?: error("$PROJECT_NAME variable is not specified")
-        val path = System.getenv(PROJECT_PATH) ?: name
-        val url = System.getenv(PROJECT_URL).orEmpty()
-        val exclude = System.getenv(PROJECT_EXCLUDE_PATHS)?.takeIf { it.isNotEmpty() }?.split(",").orEmpty()
-        val info = RealProjectInfo(name, path, url, exclude)
-
         val consumer = JsonConsumer(info)
         doTest(info, consumer)
     }
 
     companion object {
-        const val PROJECT_NAME = "PROJECT_NAME"
-        const val PROJECT_PATH = "PROJECT_PATH"
-        const val PROJECT_URL = "PROJECT_URL"
-        const val PROJECT_EXCLUDE_PATHS = "PROJECT_EXCLUDE_PATHS"
+
+        @Parameterized.Parameters(name = "{0}")
+        @JvmStatic
+        fun data(): Collection<Array<Any>> {
+            val projectsStr = System.getenv("PROJECTS") ?: error("Can't find `PROJECTS` env variable")
+            val projects = JsonMapper().registerKotlinModule().readValue<List<RealProjectInfo>>(projectsStr)
+            return projects.map { arrayOf(it.name, it) }
+        }
     }
 
     private class JsonConsumer(private val info: RealProjectInfo): AnnotationConsumer {
@@ -45,8 +53,9 @@ class CustomRealProjectAnalysisTest : RsRealProjectAnalysisTest() {
         override fun finish() {
             val testDir = File("regressions")
             testDir.mkdirs()
+            val resultSuffix = System.getenv("RESULT_SUFFIX").orEmpty()
             JsonMapper().writerWithDefaultPrettyPrinter()
-                .writeValue(File(testDir, "${info.name}.json"), annotations.sortedWith(
+                .writeValue(File(testDir, "${info.name}$resultSuffix.json"), annotations.sortedWith(
                     Comparator.comparing(Annotation::filePath)
                         .thenComparingInt(Annotation::line)
                         .thenComparingInt(Annotation::column)

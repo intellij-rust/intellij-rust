@@ -48,32 +48,39 @@ def dump_as_json(annotations: Iterable[Annotation], path: str) -> None:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument("--name", type=str, help="project name", required=True)
+    parser.add_argument("--projects", type=str, help="Projects info in JSON format", required=True)
 
     args = parser.parse_args()
+    projects: List[Dict] = json.loads(args.projects)
+    has_regressions = False
 
-    # Should be synchronized with `org.rustPerformanceTests.CustomRealProjectAnalysisTest`
-    without_changes = set(read_data(f"regressions/{args.name}_without_changes.json"))
-    with_changes = set(read_data(f"regressions/{args.name}_with_changes.json"))
+    for project in projects:
+        project_name = project["name"]
+        # Should be synchronized with `org.rustPerformanceTests.CustomRealProjectAnalysisTest`
+        without_changes = set(read_data(f"regressions/{project_name}_without_changes.json"))
+        with_changes = set(read_data(f"regressions/{project_name}_with_changes.json"))
 
-    fixed = sorted(without_changes - with_changes)
-    new = sorted(with_changes - without_changes)
+        fixed = sorted(without_changes - with_changes)
+        new = sorted(with_changes - without_changes)
 
-    dump_as_json(fixed, f"regressions/{args.name}_fixed.json")
-    dump_as_json(new, f"regressions/{args.name}_new.json")
+        dump_as_json(fixed, f"regressions/{project_name}_fixed.json")
+        dump_as_json(new, f"regressions/{project_name}_new.json")
 
-    print(f"total annotations: {len(without_changes)} without changes, {len(with_changes)} with changes")
-    # should be single line (second and subsequent lines are not displayed)
-    print(f"::warning file={args.name}:: {len(new)} annotations introduced, {len(fixed)} annotations fixed")
-    print()
+        print(f"total annotations for {project_name}: {len(without_changes)} without changes, {len(with_changes)} with changes")
+        # should be single line (second and subsequent lines are not displayed)
+        print(f"::warning file={project_name}:: {len(new)} annotations introduced, {len(fixed)} annotations fixed")
+        print()
 
-    print(f"{len(new)} annotations introduced")
-    for ann in new:
-        print(ann)
-    print()
-    print(f"{len(fixed)} annotations fixed")
-    for ann in fixed:
-        print(ann)
+        print(f"{len(new)} annotations introduced")
+        for ann in new:
+            print(ann)
+        print()
+        print(f"{len(fixed)} annotations fixed")
+        for ann in fixed:
+            print(ann)
 
-    if len(new) > 0:
+        if len(new) > 0:
+            has_regressions = True
+
+    if has_regressions:
         raise Exception("New regressions detected")
