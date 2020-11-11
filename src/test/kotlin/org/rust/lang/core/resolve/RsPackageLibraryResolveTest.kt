@@ -111,7 +111,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
     //- lib.rs
         #[macro_export]
         macro_rules! foo_bar { () => {} }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
 
     fun `test macro rules in mod 1`() = stubOnlyResolve("""
     //- main.rs
@@ -238,7 +238,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
 
     fun `test import macro by use item wildcard`() = stubOnlyResolve("""
     //- lib.rs
@@ -252,7 +252,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         macro_rules! foo {
             () => {};
         }
-    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve())
+    """, NameResolutionTestmarks.missingMacroUse.ignoreInNewResolve(project))
 
     fun `test import macro by use item without extern crate`() = stubOnlyResolve("""
     //- lib.rs
@@ -680,7 +680,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target;
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve())
+    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test "extra use of crate name 1" with alias`() = stubOnlyResolve("""
@@ -700,7 +700,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         use dep_lib_target::{self};
         use dep_lib_target::Foo;
                           //^ dep-lib/lib.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve())
+    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import the same name as a crate name`() = stubOnlyResolve("""

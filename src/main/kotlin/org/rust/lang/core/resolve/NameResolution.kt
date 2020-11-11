@@ -865,7 +865,10 @@ private data class MacroResolveResult(val result: Boolean, val usedNewResolve: B
     }
 }
 
-private class MacroResolver private constructor(private val processor: RsResolveProcessor) : RsVisitor() {
+private class MacroResolver private constructor(
+    private val processor: RsResolveProcessor,
+    private val project: Project,
+) : RsVisitor() {
     private val visitor = MacroResolvingVisitor(reverse = true) { processor(it) }
 
     private fun processMacrosInLexicalOrderUpward(startElement: PsiElement): MacroResolveResult {
@@ -969,7 +972,7 @@ private class MacroResolver private constructor(private val processor: RsResolve
 
     /** Try using new resolve if [element] is top-level item or expanded from top-level macro call. */
     private fun tryProcessAllMacrosUsingNewResolve(element: PsiElement): MacroResolveResult? {
-        if (!isNewResolveEnabled) return null
+        if (!project.isNewResolveEnabled) return null
         if (element !is RsElement) return null
         if (element.parent !is RsMod) return null  // we are interested only in top-level elements
 
@@ -989,7 +992,7 @@ private class MacroResolver private constructor(private val processor: RsResolve
 
     companion object {
         fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: RsResolveProcessor): MacroResolveResult =
-            MacroResolver(processor).processMacrosInLexicalOrderUpward(startElement)
+            MacroResolver(processor, startElement.project).processMacrosInLexicalOrderUpward(startElement)
 
         private fun Boolean.toResult(usedNewResolve: Boolean = false): MacroResolveResult =
             MacroResolveResult(this, usedNewResolve)

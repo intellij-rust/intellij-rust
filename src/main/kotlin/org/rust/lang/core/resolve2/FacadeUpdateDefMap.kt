@@ -33,7 +33,7 @@ import kotlin.system.measureTimeMillis
  * other defMaps will be updated in next call to [getOrUpdateIfNeeded].
  */
 fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
-    check(isNewResolveEnabled)
+    check(project.isNewResolveEnabled)
     val holder = getDefMapHolder(crate)
 
     if (holder.hasLatestStamp()) return holder.defMap
@@ -60,7 +60,7 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
 
 /** Called from macro expansion task */
 fun updateDefMapForAllCrates(project: Project, pool: Executor, indicator: ProgressIndicator, multithread: Boolean = true) {
-    if (!isNewResolveEnabled) return
+    if (!project.isNewResolveEnabled) return
     val dumbService = DumbService.getInstance(project)
     val defMapService = project.defMapService
 
@@ -122,7 +122,7 @@ private class DefMapUpdater(
     }
 
     private fun doRun() {
-        check(isNewResolveEnabled)
+        check(defMapService.project.isNewResolveEnabled)
         if (crates.isEmpty()) return
         indicator.checkCanceled()
 

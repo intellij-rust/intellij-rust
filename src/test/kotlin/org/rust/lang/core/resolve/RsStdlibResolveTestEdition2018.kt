@@ -27,5 +27,5 @@ class RsStdlibResolveTestEdition2018 : RsResolveTestBase() {
         fn main() {
             let a = Vec::<i32>::new();
         }         //^ .../vec.rs
-    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve())
+    """, ItemResolutionTestmarks.extraAtomUse.ignoreInNewResolve(project))
 }

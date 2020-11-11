@@ -5,6 +5,7 @@
 
 package org.rust
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapiext.TestmarkPred
 import org.rust.lang.core.resolve2.isNewResolveEnabled
 
@@ -16,8 +17,8 @@ annotation class UseNewResolve
 @Retention(AnnotationRetention.RUNTIME)
 annotation class IgnoreInNewResolve
 
-fun TestmarkPred.ignoreInNewResolve(): TestmarkPred {
-    if (!isNewResolveEnabled) return this
+fun TestmarkPred.ignoreInNewResolve(project: Project): TestmarkPred {
+    if (!project.isNewResolveEnabled) return this
     return object : TestmarkPred {
         override fun <T> checkHit(f: () -> T): T = f()
 
