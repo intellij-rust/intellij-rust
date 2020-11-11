@@ -346,7 +346,7 @@ class MacroExpander(val project: Project) {
     }
 
     companion object {
-        const val EXPANDER_VERSION = 12
+        const val EXPANDER_VERSION = 13
         private val USELESS_PARENS_EXPRS = tokenSetOf(
             LIT_EXPR, MACRO_EXPR, PATH_EXPR, PAREN_EXPR, TUPLE_EXPR, ARRAY_EXPR, UNIT_EXPR
         )
@@ -467,13 +467,13 @@ class MacroPattern private constructor(
         return MacroSubstitution(map)
     }
 
-
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): List<MacroSubstitution>? {
         val groups = mutableListOf<MacroSubstitution>()
         val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return null)
         if (pattern.isEmpty()) return null
         val separator = group.macroBindingGroupSeparator?.node?.firstChildNode
-        var mark: PsiBuilder.Marker? = null
+        macroCallBody.eof() // skip whitespace
+        var mark: PsiBuilder.Marker? = macroCallBody.mark()
 
         while (true) {
             if (macroCallBody.eof()) {
