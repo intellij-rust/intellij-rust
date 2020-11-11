@@ -239,9 +239,6 @@ class MacroExpansionManagerImpl(
     }
 
     override fun getContextOfMacroCallExpandedFrom(element: RsExpandedElement, stubParent: PsiElement?): PsiElement? {
-        // For in-memory expansions
-        element.getUserData(RS_EXPANSION_MACRO_CALL)?.let { return it.context }
-
         val inner = inner
         return if (inner != null && inner.isExpansionModeNew) {
             inner.getContextOfMacroCallExpandedFrom(element, stubParent)
