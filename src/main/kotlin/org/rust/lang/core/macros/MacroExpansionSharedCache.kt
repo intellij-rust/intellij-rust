@@ -25,6 +25,8 @@ import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.bodyHash
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.stdext.HashCode
+import org.rust.stdext.readVarInt
+import org.rust.stdext.writeVarInt
 import java.io.DataInput
 import java.io.DataOutput
 import java.io.IOException
@@ -251,7 +253,7 @@ private class PersistentCacheData(
                     HashCodeKeyDescriptor,
                     ExpansionResultExternalizer,
                     1 * 1024 * 1024,
-                    MacroExpander.EXPANDER_VERSION + RustParserDefinition.PARSER_VERSION
+                    MacroExpander.EXPANDER_VERSION + RustParserDefinition.PARSER_VERSION + 1
                 )
                 cleaners += expansions::close
 
@@ -319,21 +321,39 @@ private object HashCodeKeyDescriptor : KeyDescriptor<HashCode>, DifferentSeriali
     }
 }
 
-data class ExpansionResult(
+class ExpansionResult(
     val text: String,
     val ranges: RangeMap,
+    /** Optimization: occurrences of [MACRO_DOLLAR_CRATE_IDENTIFIER] */
+    val dollarCrateOccurrences: IntArray = MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX.findAll(text)
+        .mapTo(mutableListOf()) { it.range.first }
+        .toIntArray()
 )
 
 private object ExpansionResultExternalizer : DataExternalizer<ExpansionResult> {
     override fun save(out: DataOutput, value: ExpansionResult) {
         IOUtil.writeUTF(out, value.text)
         value.ranges.writeTo(out)
+        out.writeIntArray(value.dollarCrateOccurrences)
     }
 
     override fun read(inp: DataInput): ExpansionResult {
         return ExpansionResult(
             IOUtil.readUTF(inp),
-            RangeMap.readFrom(inp)
+            RangeMap.readFrom(inp),
+            inp.readIntArray()
         )
     }
+}
+
+private fun DataOutput.writeIntArray(array: IntArray) {
+    writeVarInt(array.size)
+    for (element in array) {
+        writeVarInt(element)
+    }
+}
+
+private fun DataInput.readIntArray(): IntArray {
+    val size = readVarInt()
+    return IntArray(size) { readVarInt() }
 }
