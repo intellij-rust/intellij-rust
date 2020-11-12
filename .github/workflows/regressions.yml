@@ -54,7 +54,6 @@ jobs:
                           - name: amethyst
                             repository: amethyst/amethyst
         env:
-            ORG_GRADLE_PROJECT_platformVersion: 203
             ORG_GRADLE_PROJECT_showStandardStreams: true
             PROJECTS: ${{ toJSON(matrix.batch.projects) }}
         steps:
