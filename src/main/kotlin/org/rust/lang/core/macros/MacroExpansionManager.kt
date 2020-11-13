@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -1071,7 +1072,7 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
         call,
         RsPsiFactory(project, markGenerated = false),
         storeRangeMap
-    )
+    ).ok()
     result?.elements?.forEach {
         it.setContext(context)
         it.setExpandedFrom(call)
