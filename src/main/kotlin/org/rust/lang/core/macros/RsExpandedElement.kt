@@ -32,7 +32,7 @@ interface RsExpandedElement : RsElement {
             if (parent is RsFile && !isIndexAccessForbidden) {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
-                    project.macroExpansionManager.getContextOfMacroCallExpandedFrom(psi, parent)?.let { return it }
+                    project.macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
                     RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
                 }
             }
