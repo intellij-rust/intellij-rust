@@ -173,10 +173,11 @@ val RsMacroCall.expansionFlatten: List<RsExpandedElement>
         return list
     }
 
-fun RsMacroCall.expandAllMacrosRecursively(replaceDollarCrate: Boolean): String =
-    expandMacrosRecursively(DEFAULT_RECURSION_LIMIT, replaceDollarCrate)
-
-fun RsMacroCall.expandMacrosRecursively(depthLimit: Int, replaceDollarCrate: Boolean): String {
+fun RsMacroCall.expandMacrosRecursively(
+    depthLimit: Int = DEFAULT_RECURSION_LIMIT,
+    replaceDollarCrate: Boolean = true,
+    expander: (RsMacroCall) -> MacroExpansion? = RsMacroCall::expansion
+): String {
     if (depthLimit == 0) return text
 
     fun toExpandedText(element: PsiElement): String =
@@ -193,7 +194,7 @@ fun RsMacroCall.expandMacrosRecursively(depthLimit: Int, replaceDollarCrate: Boo
             else -> element.text
         }
 
-    return expansion?.elements?.joinToString(" ") { toExpandedText(it) } ?: text
+    return expander(this)?.elements?.joinToString(" ") { toExpandedText(it) } ?: text
 }
 
 fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean =

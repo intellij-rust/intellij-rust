@@ -97,7 +97,7 @@ private fun getMacroExpansions(macroToExpand: RsMacroCall, expandRecursively: Bo
     }
 
     val expansionText = if (expandRecursively) {
-        macroToExpand.expandAllMacrosRecursively(replaceDollarCrate = true)
+        macroToExpand.expandMacrosRecursively(replaceDollarCrate = true)
     } else {
         macroToExpand.expandMacrosRecursively(depthLimit = 1, replaceDollarCrate = true)
     }

@@ -1090,7 +1090,8 @@ private fun nullExpansionResult(call: RsMacroCall): CachedValueProvider.Result<M
 
 private val RS_EXPANSION_MACRO_CALL = Key.create<RsMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
-private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
+@VisibleForTesting
+fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
 
