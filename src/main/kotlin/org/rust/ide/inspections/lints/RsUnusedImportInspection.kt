@@ -44,6 +44,11 @@ private fun getHighlightElement(useSpeck: RsUseSpeck): PsiElement {
     return useSpeck
 }
 
+/**
+ * Returns true if this use speck has at least one usage in its containing owner (module or function).
+ * A usage can be either a path that uses the import of the use speck or a method call/associated item available through
+ * a trait that is imported by this use speck.
+ */
 private fun RsUseSpeck.isUsed(): Boolean {
     val owner = this.parentOfType<RsUseItem>()?.parent as? RsItemsOwner ?: return true
     val usage = owner.pathUsage
@@ -51,6 +56,10 @@ private fun RsUseSpeck.isUsed(): Boolean {
 }
 
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
+    // Use speck with an empty group is always unused
+    val useGroup = useSpeck.useGroup
+    if (useGroup != null && useGroup.useSpeckList.isEmpty()) return false
+
     val (candidateItems: Set<RsElement>, usedItems: Set<RsElement>) = if (useSpeck.isStarImport) {
         val module = useSpeck.path?.reference?.resolve() as? RsMod ?: return true
 

@@ -298,7 +298,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
     """)
 
-    fun `test deny`() = checkByText("""
+    fun `test deny lint`() = checkByText("""
         #![deny(unused_imports)]
 
         mod foo {
@@ -308,7 +308,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         <error descr="Unused import: `foo::S`">use foo::S;</error>
     """)
 
-    fun `test deny group`() = checkByText("""
+    fun `test deny lint group`() = checkByText("""
         #![deny(unused)]
 
         mod foo {
@@ -316,6 +316,14 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         }
 
         <error descr="Unused import: `foo::S`">use foo::S;</error>
+    """)
+
+    fun `test empty group`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+
+        <warning descr="Unused import: `foo::{}`">use foo::{};</warning>
     """)
 
     /*fun `test redundant use speck`() = checkByText("""
