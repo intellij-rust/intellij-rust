@@ -348,4 +348,10 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         <error descr="Macros cannot have the `default` qualifier">default</error> macro j() {}
         <error descr="Macro invocations cannot have the `default` qualifier">default</error> foo!();
     """)
+
+    fun `test constants without a type`() = checkErrors("""
+        <error descr="Missing type for `const` item">const MY_CONST = 1;</error>
+        <error descr="Missing type for `static` item">static MY_STATIC = 1;</error>
+        const PARTIAL_TYPE:<error descr="<type> expected, got '='"> </error> = 1;
+    """)
 }
