@@ -852,6 +852,10 @@
             <className>org.rust.ide.intentions.AddWildcardArmIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ChangeVisibilityIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
