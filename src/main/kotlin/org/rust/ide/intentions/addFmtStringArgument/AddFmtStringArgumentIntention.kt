@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.RsCodeFragmentPopup
 import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.isExprOrStmtContext
@@ -61,9 +62,9 @@ class AddFmtStringArgumentIntention : RsElementBaseIntentionAction<AddFmtStringA
         if (isUnitTestMode) {
             addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)
         } else {
-            RsAddFmtStringArgumentPopup.show(editor, project, codeFragment) {
+            RsCodeFragmentPopup.show(editor, project, codeFragment, {
                 addFmtStringArgument(project, editor, ctx, codeFragment, caretOffsetInLiteral, placeholderNumber)
-            }
+            })
         }
     }
 

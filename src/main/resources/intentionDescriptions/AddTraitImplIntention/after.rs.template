@@ -1,0 +1,12 @@
+trait Trait {
+    fun foo(&self);
+}
+struct <spot>MyStruct</spot> {
+
+}
+
+impl Trait for MyStruct {
+    fun foo(&self) {
+        unimplemented!();
+    }
+}

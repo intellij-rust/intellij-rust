@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions.addFmtStringArgument
+package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.Disposable
@@ -30,10 +30,22 @@ import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 
-object RsAddFmtStringArgumentPopup {
-    fun show(editor: Editor, project: Project, codeFragment: RsCodeFragment, onComplete: () -> Unit) {
+object RsCodeFragmentPopup {
+    /**
+     * Shows a popup with a code fragment.
+     * @param validate: Validate the entered value.
+     *  If it returns null, the value is OK.
+     *  If it returns a string, it is displayed as an error.
+     */
+    fun show(
+        editor: Editor,
+        project: Project,
+        codeFragment: RsCodeFragment,
+        onComplete: () -> Unit,
+        validate: (() -> String?)? = null
+    ) {
         val editorTextField = createEditorTextField(project, codeFragment) ?: return
-        showBalloon(editor, project, editorTextField, onComplete)
+        showBalloon(editor, project, editorTextField, onComplete, validate)
     }
 
     private fun createEditorTextField(project: Project, codeFragment: RsCodeFragment): EditorTextField? {
@@ -70,7 +82,13 @@ object RsAddFmtStringArgumentPopup {
         return editorTextField
     }
 
-    private fun showBalloon(editor: Editor, parent: Disposable, editorTextField: EditorTextField, onComplete: () -> Unit) {
+    private fun showBalloon(
+        editor: Editor,
+        parent: Disposable,
+        editorTextField: EditorTextField,
+        onComplete: () -> Unit,
+        validate: (() -> String?)?
+    ) {
         val balloon = JBPopupFactory.getInstance().createBalloonBuilder(editorTextField)
             .setShadow(true)
             .setAnimationCycle(0)
@@ -85,8 +103,13 @@ object RsAddFmtStringArgumentPopup {
             override fun keyPressed(e: KeyEvent) {
                 when (e.keyCode) {
                     KeyEvent.VK_ENTER -> {
-                        balloon.hide()
-                        onComplete()
+                        val error = validate?.invoke()
+                        if (error == null) {
+                            balloon.hide()
+                            onComplete()
+                        } else {
+                            // TODO: show error
+                        }
                     }
                     KeyEvent.VK_ESCAPE -> balloon.hide()
                 }

@@ -269,6 +269,26 @@ class RsPsiFactory(
             ?: error("Failed to create an inherent impl with name: `$name`")
     }
 
+    fun createTraitImplItem(
+        name: String,
+        trait: String,
+        typeParameterList: RsTypeParameterList? = null,
+        whereClause: RsWhereClause? = null
+    ): RsImplItem {
+        val whereText = whereClause?.text ?: ""
+        val typeParameterListText = typeParameterList?.text ?: ""
+        val typeArgumentListText = if (typeParameterList == null) {
+            ""
+        } else {
+            val parameterNames = typeParameterList.lifetimeParameterList.map { it.quoteIdentifier.text } +
+                typeParameterList.typeParameterList.map { it.name }
+            parameterNames.joinToString(", ", "<", ">")
+        }
+
+        return createFromText("impl $typeParameterListText $trait for $name $typeArgumentListText $whereText {  }")
+            ?: error("Failed to create an inherent impl with name: `$name`")
+    }
+
     fun createWhereClause(
         lifetimeBounds: List<RsLifetimeParameter>,
         typeBounds: List<RsTypeParameter>
