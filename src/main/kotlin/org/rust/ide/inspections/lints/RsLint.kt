@@ -37,6 +37,14 @@ enum class RsLint(
             }
     },
 
+    UnusedImports("unused_imports", listOf("unused")) {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                else -> super.toHighlightingType(level)
+            }
+    },
+
     WhileTrue("while_true") {
         override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
             when (level) {
