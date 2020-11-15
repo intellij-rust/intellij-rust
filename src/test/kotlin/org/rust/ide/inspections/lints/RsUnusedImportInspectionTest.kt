@@ -326,6 +326,14 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         <warning descr="Unused import: `foo::{}`">use foo::{};</warning>
     """)
 
+    fun `test unresolved import`() = checkByText("""
+        use foo::S;
+
+        mod bar {}
+
+        use bar::T;
+    """)
+
     /*fun `test redundant use speck`() = checkByText("""
         mod foo {
             pub struct S;

@@ -21,6 +21,7 @@ class RsUnusedImportInspection : RsLintInspection() {
         override fun visitUseSpeck(o: RsUseSpeck) {
             val item = o.ancestorStrict<RsUseItem>() ?: return
             if (item.isReexport) return
+            if (o.path?.resolveStatus != PathResolveStatus.RESOLVED) return
 
             checkUseSpeck(o, holder)
         }
