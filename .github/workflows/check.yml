@@ -114,9 +114,10 @@ jobs:
               if: matrix.os != 'windows-latest'
               run: ln -s $(rustc --print sysroot)/lib/rustlib/src/rust $RUST_SRC_WITH_SYMLINK
 
-            - name: Create symlink for Rust stdlib Windows
-              if: matrix.os == 'windows-latest'
-              run: New-Item -ItemType Junction -Path "$env:RUST_SRC_WITH_SYMLINK" -Target "$(rustc --print sysroot)/lib/rustlib/src/rust"
+            # FIXME: find out why it doesn't work on CI
+            # - name: Create symlink for Rust stdlib Windows
+            #  if: matrix.os == 'windows-latest'
+            #  run: New-Item -ItemType Junction -Path "$env:RUST_SRC_WITH_SYMLINK" -Target "$(rustc --print sysroot)/lib/rustlib/src/rust"
 
             - name: Download
               uses: eskatos/gradle-command-action@v1
