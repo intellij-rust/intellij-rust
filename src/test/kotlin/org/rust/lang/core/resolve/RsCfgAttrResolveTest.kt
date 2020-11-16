@@ -651,4 +651,105 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         #[cfg(not(intellij_rust))]
         gen_foo!();
      """)
+
+    // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
+    // Goal of these two tests is to check that there are no exceptions during building CrateDefMap.
+    // Actual resolve result is not important, because proper multiresolve is not yet supported in new resolve.
+    @ExpandMacros
+    @UseNewResolve
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import inside expanded shadowed mod 1`() = stubOnlyResolve("""
+    //- lib.rs
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+        as_is! {
+            #[cfg(not(intellij_rust))]
+            mod outer;
+        }
+    //- outer.rs
+        #[cfg(intellij_rust)]
+        mod my {
+            pub mod inner {
+                pub fn func() {}
+            }        //X
+            use inner::func;
+            fn t() {
+                func();
+            } //^ outer.rs
+        }
+        #[cfg(not(intellij_rust))]
+        mod my {}
+     """)
+
+    // From https://github.com/tokio-rs/tokio/blob/97c2c4203cd7c42960cac895987c43a17dff052e/tokio/src/process/mod.rs#L132-L134
+    @ExpandMacros
+    @UseNewResolve
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import inside expanded shadowed mod 2`() = stubOnlyResolve("""
+    //- lib.rs
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+        as_is! {
+            #[cfg(not(intellij_rust))]
+            mod outer;
+        }
+    //- outer.rs
+        #[cfg(not(intellij_rust))]
+        mod my {}
+        #[cfg(intellij_rust)]
+        mod my {
+            pub mod inner {
+                pub fn func() {}
+            }
+            use inner::func;
+            fn t() {
+                func();
+            } //^ unresolved
+        }
+     """)
+
+    // From https://github.com/rust-lang/rust/blob/e0ef0fc392963438af5f0343bf7caa46fb9c3ec3/library/alloc/src/lib.rs#L164-L169
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import to shadowed mod`() = checkByCode("""
+        #[cfg(intellij_rust)]
+        pub mod boxed {
+            pub fn foo() {}
+        }        //X
+        #[cfg(not(intellij_rust))]
+        mod boxed {}
+        use boxed::foo;
+        fn main() {
+            foo();
+        } //^
+     """)
+
+    // We check that there are no exceptions during building CrateDefMap (actual resolve result is not important)
+    @ExpandMacros
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import to mod shadowed by expanded mod`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod my {
+            pub mod inner {
+                pub fn func() {}
+            }
+        }
+
+        #[cfg(not(intellij_rust))]
+        use inner::func;
+        #[cfg(not(intellij_rust))]
+        use my::inner;
+
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* } }
+        as_is! {
+            #[cfg(not(intellij_rust))]
+            mod my {}
+        }
+
+        fn t() {
+            func();
+        } //^ unresolved
+     """)
 }

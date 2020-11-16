@@ -90,7 +90,6 @@ private fun buildDefMapContainingExplicitItems(
     val modCollectorContext = ModCollectorContext(defMap, crateRootData, context)
     collectFileAndCalculateHash(crateRoot, crateRootData, modCollectorContext)
 
-    removeInvalidImportsAndMacroCalls(defMap, context)
     sortImports(context.imports)
     return defMap
 }
@@ -155,20 +154,6 @@ private fun createExternCrateStdImport(crateRoot: RsFile, crateRootData: ModData
         visibility = Visibility.Restricted(crateRootData),
         isExternCrate = true
     )
-}
-
-/**
- * "Invalid" means it belongs to [ModData] which is no longer accessible from `defMap.root` using [ModData.childModules]
- * It could happen if there is cfg-disabled module, which we collect first (with its imports)
- * And then cfg-enabled module overrides previously created [ModData]
- */
-private fun removeInvalidImportsAndMacroCalls(defMap: CrateDefMap, context: CollectorContext) {
-    fun ModData.descendantsMods(): Sequence<ModData> =
-        sequenceOf(this) + childModules.values.asSequence().flatMap { it.descendantsMods() }
-
-    val allMods = defMap.root.descendantsMods().toSet()
-    context.imports.removeIf { it.containingMod !in allMods }
-    context.macroCalls.removeIf { it.containingMod !in allMods }
 }
 
 /**

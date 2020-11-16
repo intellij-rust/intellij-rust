@@ -52,6 +52,11 @@ class DefCollector(
 
     fun collect() {
         do {
+            // Have to call it in loop, because macro can expand to
+            // two cfg-disabled mods with same name (first one will be shadowed).
+            // See [RsCfgAttrResolveTest.`test import inside expanded shadowed mod 1`].
+            removeInvalidImportsAndMacroCalls(defMap, context)
+
             resolveImports()
             val changed = expandMacros()
         } while (changed)
@@ -368,9 +373,9 @@ class DefCollector(
         )
     }
 
-    private fun onAddItem(modData: ModData, name: String, perNs: PerNs) {
+    private fun onAddItem(modData: ModData, name: String, perNs: PerNs): Boolean {
         val visibility = (perNs.types ?: perNs.values ?: perNs.macros)!!.visibility
-        update(modData, listOf(name to perNs), visibility, GLOB)
+        return update(modData, listOf(name to perNs), visibility, GLOB)
     }
 }
 
@@ -454,6 +459,25 @@ class MacroCallInfo(
     val dollarCrateMap: RangeMap = RangeMap.EMPTY,
 ) {
     override fun toString(): String = "${containingMod.path}:  ${path.joinToString("::")}! { $body }"
+}
+
+/**
+ * "Invalid" means it belongs to [ModData] which is no longer accessible from `defMap.root` using [ModData.childModules]
+ * It could happen if there is cfg-disabled module, which we collect first (with its imports)
+ * And then cfg-enabled module overrides previously created [ModData]
+ */
+private fun removeInvalidImportsAndMacroCalls(defMap: CrateDefMap, context: CollectorContext) {
+    fun collectChildMods(mod: ModData, allMods: HashSet<ModData>) {
+        allMods += mod
+        for (child in mod.childModules.values) {
+            collectChildMods(child, allMods)
+        }
+    }
+
+    val allMods = hashSetOf<ModData>()
+    collectChildMods(defMap.root, allMods)
+    context.imports.removeIf { it.containingMod !in allMods }
+    context.macroCalls.removeIf { it.containingMod !in allMods }
 }
 
 /**
