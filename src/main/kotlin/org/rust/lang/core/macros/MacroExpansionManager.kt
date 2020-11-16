@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.macros
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -1071,7 +1072,7 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
         call,
         RsPsiFactory(project, markGenerated = false),
         storeRangeMap
-    )
+    ).ok()
     result?.elements?.forEach {
         it.setContext(context)
         it.setExpandedFrom(call)
@@ -1089,7 +1090,8 @@ private fun nullExpansionResult(call: RsMacroCall): CachedValueProvider.Result<M
 
 private val RS_EXPANSION_MACRO_CALL = Key.create<RsMacroCall>("org.rust.lang.core.psi.RS_EXPANSION_MACRO_CALL")
 
-private fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
+@VisibleForTesting
+fun RsExpandedElement.setExpandedFrom(call: RsMacroCall) {
     putUserData(RS_EXPANSION_MACRO_CALL, call)
 }
 

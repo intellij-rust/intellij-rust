@@ -873,15 +873,14 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
         fn foo() {}
     """ to NameResolutionTestmarks.dollarCrateMagicIdentifier)
 
-    fun `test incorrect "vis" group does not cause OOM`() = doTest("""
+    fun `test incorrect "vis" group does not cause OOM`() = doErrorTest("""
         // error: repetition matches empty token tree
         macro_rules! foo {
             ($($ p:vis)*) => {}
         }
         foo!(a);
-    """, """
-        foo!(a);
-    """ to MacroExpansionMarks.groupMatchedEmptyTT)
+        //^
+    """, MacroExpansionMarks.groupMatchedEmptyTT)
 
     fun `test two sequential groups starting with the same token`() = doTest("""
         macro_rules! foobar {
