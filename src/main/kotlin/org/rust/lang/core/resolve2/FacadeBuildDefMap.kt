@@ -151,7 +151,7 @@ private fun createExternCrateStdImport(crateRoot: RsFile, crateRootData: ModData
         crateRootData,
         arrayOf(name),
         nameInScope = if (crateRoot.edition == CargoWorkspace.Edition.EDITION_2015) name else "_",
-        visibility = Visibility.Restricted(crateRootData),
+        visibility = crateRootData.visibilityInSelf,
         isExternCrate = true
     )
 }

@@ -184,6 +184,9 @@ class ModData(
     val name: String get() = path.name
     val parents: Sequence<ModData> get() = generateSequence(this) { it.parent }
 
+    // Optimization to reduce allocations
+    val visibilityInSelf: Restricted = Restricted.create(this)
+
     // TODO: Compare with storing three maps
     val visibleItems: MutableMap<String, PerNs> = THashMap()
 
@@ -368,8 +371,16 @@ data class VisItem(
 sealed class Visibility {
     object Public : Visibility()
 
-    /** includes private */
-    data class Restricted(val inMod: ModData) : Visibility()
+    /**
+     * Includes private visibility.
+     * Constructor is private because [ModData.visibilityInSelf] must be used instead.
+     * For the same reason [equals] is not overridden.
+     */
+    class Restricted private constructor(val inMod: ModData) : Visibility() {
+        companion object {
+            fun create(inMod: ModData): Restricted = Restricted(inMod)
+        }
+    }
 
     /**
      * Means that we have import to private item
