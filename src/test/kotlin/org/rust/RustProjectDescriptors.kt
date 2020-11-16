@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.LightProjectDescriptor
@@ -44,7 +45,8 @@ object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyR
 
 object WithStdlibWithSymlinkRustProjectDescriptor : WithCustomStdlibRustProjectDescriptor(DefaultDescriptor, {
     val path = System.getenv("RUST_SRC_WITH_SYMLINK")
-    if (System.getenv("CI") != null) {
+    // FIXME: find out why it doesn't work on CI on Windows
+    if (System.getenv("CI") != null && !SystemInfo.isWindows) {
         if (path == null) error("`RUST_SRC_WITH_SYMLINK` environment variable is not set")
         if (!File(path).exists()) error("`$path` doesn't exist")
     }
