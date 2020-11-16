@@ -43,6 +43,7 @@ import org.rust.lang.core.types.infer.containsTyOfClass
 import org.rust.lang.core.types.infer.substitute
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.RsDiagnostic.IncorrectFunctionArgumentCountError.FunctionType
 import org.rust.lang.utils.RsErrorCode
 import org.rust.lang.utils.addToHolder
 import org.rust.lang.utils.evaluation.evaluate
@@ -799,18 +800,19 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
-        val (expectedCount, variadic) = when (val parent = args.parent) {
+        val (expectedCount, functionType) = when (val parent = args.parent) {
             is RsCallExpr -> parent.expectedParamsCount()
             is RsMethodCall -> parent.expectedParamsCount()
             else -> null
         } ?: return
+
         val realCount = args.exprList.size
         if (realCount < expectedCount) {
             val target = args.rparen ?: args
-            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, variadic).addToHolder(holder)
-        } else if (!variadic && realCount > expectedCount) {
+            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, functionType).addToHolder(holder)
+        } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
-                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount).addToHolder(holder)
+                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount, functionType).addToHolder(holder)
             }
         }
     }
@@ -1257,27 +1259,43 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
     return map
 }
 
-
-private fun RsCallExpr.expectedParamsCount(): Pair<Int, Boolean>? {
+private fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     val el = path.reference?.resolve()
     return when (el) {
-        is RsFieldsOwner -> Pair(el.fields.size, false)
+        is RsFieldsOwner -> Pair(el.fields.size, FunctionType.FUNCTION)
         is RsFunction -> {
             val owner = el.owner
             if (owner.isTraitImpl) return null
             val count = el.valueParameterList?.valueParameterList?.size ?: return null
             val s = if (el.selfParameter != null) 1 else 0
-            Pair(count + s, el.isVariadic)
+            val functionType = if (el.isVariadic) {
+                FunctionType.VARIADIC_FUNCTION
+            } else {
+                FunctionType.FUNCTION
+            }
+            Pair(count + s, functionType)
+        }
+        is RsPatBinding -> {
+            val type = el.type.stripReferences()
+            // TODO: replace with more generic solution
+            // when https://github.com/intellij-rust/intellij-rust/issues/6391 will be implemented
+            if (type is TyFunction) {
+                val letDecl = el.parent?.parent as? RsLetDecl
+                if (letDecl?.expr is RsLambdaExpr) type.paramTypes.size to FunctionType.CLOSURE else null
+            } else {
+                null
+            }
         }
         else -> null
     }
 }
 
-private fun RsMethodCall.expectedParamsCount(): Pair<Int, Boolean>? {
+private fun RsMethodCall.expectedParamsCount(): Pair<Int, FunctionType>? {
     val fn = reference.resolve() as? RsFunction ?: return null
-    return fn.valueParameterList?.valueParameterList?.size?.let { Pair(it, fn.isVariadic) }
-        .takeIf { fn.owner.isInherentImpl }
+    return fn.valueParameterList?.valueParameterList?.size?.let {
+        Pair(it, if (fn.isVariadic) FunctionType.VARIADIC_FUNCTION else FunctionType.FUNCTION)
+    }.takeIf { fn.owner.isInherentImpl }
 }
 
 private fun isValidSelfSuperPrefix(path: RsPath): Boolean {

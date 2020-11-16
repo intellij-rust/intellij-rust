@@ -223,6 +223,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl T for S { impl_foo!(); }
     """)
 
+    fun `test invalid parameters number in closures E0057`() = checkErrors("""
+        fn main() {
+            let closure_0 = || ();
+            let closure_1 = |x| x;
+            let closure_2 = |x, y| (x, y);
+
+            closure_0();
+            closure_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0057]">42</error>);
+            closure_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0057]">)</error>;
+            closure_1(42);
+            closure_2(<error descr="This function takes 2 parameters but 0 parameters were supplied [E0057]">)</error>;
+            closure_2(42<error descr="This function takes 2 parameters but 1 parameter was supplied [E0057]">)</error>;
+            closure_2(42, 43);
+        }
+    """)
+
     fun `test invalid parameters number in variadic functions E0060`() = checkErrors("""
         extern {
             fn variadic_1(p1: u32, ...);
