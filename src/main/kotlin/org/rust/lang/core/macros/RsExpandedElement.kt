@@ -68,6 +68,16 @@ fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
     return found?.findMacroCallExpandedFrom() ?: found
 }
 
+fun PsiElement.calculateMacroExpansionDepth(): Int {
+    var macroCall = findMacroCallExpandedFromNonRecursive() ?: return 0
+    var counter = 1
+    while (true) {
+        macroCall = macroCall.findMacroCallExpandedFromNonRecursive() ?: break
+        counter++
+    }
+    return counter
+}
+
 fun PsiElement.findMacroCallExpandedFromNonRecursive(): RsMacroCall? {
     return stubAncestors
         .filterIsInstance<RsExpandedElement>()

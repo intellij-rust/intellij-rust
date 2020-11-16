@@ -5,8 +5,11 @@
 
 package org.rust.lang.core.types.infer
 
+import org.rust.lang.core.macros.MacroExpansion
+import org.rust.lang.core.macros.calculateMacroExpansionDepth
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
@@ -36,7 +39,7 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
                 val primitiveType = TyPrimitive.fromPath(path)
                 if (primitiveType != null) return primitiveType
                 val boundElement = path.reference?.advancedResolve() ?: return TyUnknown
-                val (target, subst) = boundElement
+                val (target, subst, _) = boundElement
 
                 when {
                     target is RsTraitOrImpl && path.hasCself -> {
@@ -107,6 +110,12 @@ fun inferTypeReferenceType(type: RsTypeReference, defaultTraitObjectRegion: Regi
             val lifetimeBounds = type.polyboundList.mapNotNull { it.bound.lifetime }
             val regionBound = lifetimeBounds.firstOrNull()?.resolve() ?: defaultTraitObjectRegion ?: ReStatic
             TyTraitObject(traitBounds, regionBound)
+        }
+
+        is RsMacroType -> {
+            if (type.calculateMacroExpansionDepth() >= DEFAULT_RECURSION_LIMIT) return TyUnknown
+            val expansion = type.macroCall.expansion as? MacroExpansion.Type ?: return TyUnknown
+            inferTypeReferenceType(expansion.type)
         }
 
         else -> TyUnknown
