@@ -98,17 +98,17 @@ jobs:
               if: matrix.rust-version == '1.32.0'
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               run: |
-                  echo "::set-env name=ORG_GRADLE_PROJECT_ideaVersion::IU-2020.2"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_clionVersion::CL-2020.2"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_nativeDebugPluginVersion::202.6397.20"
-                  echo "::set-env name=ORG_GRADLE_PROJECT_graziePluginVersion::202.6397.11"
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2020.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2020.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=202.6397.20" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_graziePluginVersion=202.6397.11" >> $GITHUB_ENV
 
             - name: Set up env variable for new resolve
               if: matrix.resolve-engine == 'resolve-new'
               run: echo "INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE=" >> $GITHUB_ENV
 
             - name: Set up test env variables
-              run: echo "::set-env name=RUST_SRC_WITH_SYMLINK::$HOME/.rust-src"
+              run: echo "RUST_SRC_WITH_SYMLINK=$HOME/.rust-src" >> $GITHUB_ENV
 
             - name: Create symlink for Rust stdlib Unix
               if: matrix.os != 'windows-latest'
