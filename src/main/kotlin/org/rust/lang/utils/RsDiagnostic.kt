@@ -1284,6 +1284,15 @@ sealed class RsDiagnostic(
         )
     }
 
+    class NoAttrParentheses(element: RsMetaItem, private val attrName: String) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "Malformed `$attrName` attribute input: missing parentheses",
+            fixes = listOf(AddAttrParenthesesFix(element as RsMetaItem, attrName))
+        )
+    }
+
     class ReprAttrUnsupportedItem(element: PsiElement,
                                   private val errorText: String
     ) : RsDiagnostic(element) {
