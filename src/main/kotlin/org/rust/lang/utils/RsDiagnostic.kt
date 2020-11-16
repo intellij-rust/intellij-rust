@@ -531,19 +531,25 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int,
-        private val variadic: Boolean = false
+        private val functionType: FunctionType = FunctionType.FUNCTION
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
-            if (variadic) E0060 else E0061,
+            functionType.errorCode,
             errorText()
         )
 
         private fun errorText(): String {
-            return "This function takes${if (variadic) " at least" else ""}" +
+            return "This function takes${if (functionType.variadic) " at least" else ""}" +
                 " $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
                 " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
                 " ${pluralise(realCount, "was", "were")} supplied"
+        }
+
+        enum class FunctionType(val variadic: Boolean, val errorCode: RsErrorCode) {
+            VARIADIC_FUNCTION(true, E0060),
+            FUNCTION(false, E0061),
+            CLOSURE(false, E0057)
         }
     }
 
@@ -1321,7 +1327,7 @@ sealed class RsDiagnostic(
 }
 
 enum class RsErrorCode {
-    E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0060, E0061, E0069, E0081, E0084,
+    E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
     E0106, E0107, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
