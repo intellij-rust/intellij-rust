@@ -102,7 +102,7 @@ class DefCollector(
         if (import.isExternCrate) {
             val externCrateName = import.usePath.single()
             val externCrateDefMap = defMap.resolveExternCrateAsDefMap(externCrateName) ?: return Unresolved
-            val def = externCrateDefMap.rootAsPerNs.withVisibility(import.visibility)
+            val def = externCrateDefMap.rootAsPerNs.adjust(import.visibility, isFromNamedImport = true)
             return Resolved(def)
         }
 
@@ -229,7 +229,8 @@ class DefCollector(
         var changed = false
         for ((name, def) in resolutions) {
             val changedCurrent = if (name != "_") {
-                pushResolutionFromImport(modData, name, def.withVisibility(visibility), importType)
+                val defAdjusted = def.adjust(visibility, isFromNamedImport = importType == NAMED)
+                pushResolutionFromImport(modData, name, defAdjusted, importType)
             } else {
                 // TODO: What if `def` is not trait?
                 pushTraitResolutionFromImport(modData, def, visibility)
@@ -252,16 +253,7 @@ class DefCollector(
         check(!def.isEmpty)
 
         // optimization: fast path
-        val defExisting = modData.visibleItems.putIfAbsent(name, def)
-        if (defExisting == null) {
-            if (importType == GLOB) {
-                val fromGlobImport = modData.fromGlobImport ?: error("fromGlobImport is null during collect")
-                if (def.types != null) fromGlobImport.types += name
-                if (def.values != null) fromGlobImport.values += name
-                if (def.macros != null) fromGlobImport.macros += name
-            }
-            return true
-        }
+        val defExisting = modData.visibleItems.putIfAbsent(name, def) ?: return true
 
         return mergeResolutionFromImport(modData, name, def, defExisting, importType)
     }
@@ -273,35 +265,26 @@ class DefCollector(
         defExisting: PerNs,
         importType: ImportType
     ): Boolean {
-        fun mergeResolutionOneNs(
-            visItem: VisItem?,
-            visItemExisting: VisItem?,
-            fromGlobImport: MutableSet<String>
-        ): VisItem? {
-            if (visItem == null) return visItemExisting
-            if (visItemExisting == null) {
-                if (importType == GLOB) fromGlobImport.add(name)
-                return visItem
-            }
-
-            val importTypeExisting = if (fromGlobImport.contains(name)) GLOB else NAMED
-            if (importType == GLOB && importTypeExisting == NAMED) return visItemExisting
-            if (importType == importTypeExisting) {
-                val isStrictlyMorePermissive = visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)
-                if (!isStrictlyMorePermissive) return visItemExisting
-            }
-            if (importType == NAMED && importTypeExisting == GLOB) fromGlobImport.remove(name)
-            return visItem
-        }
-
         val (typesExisting, valuesExisting, macrosExisting) = defExisting
-        val fromGlobImport = modData.fromGlobImport ?: error("fromGlobImport is null during collect")
-        val typesNew = mergeResolutionOneNs(def.types, defExisting.types, fromGlobImport.types)
-        val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, fromGlobImport.values)
-        val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, fromGlobImport.macros)
+        val typesNew = mergeResolutionOneNs(def.types, defExisting.types, importType)
+        val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, importType)
+        val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, importType)
         if (typesExisting === typesNew && valuesExisting === valuesNew && macrosExisting === macrosNew) return false
         modData.visibleItems[name] = PerNs(typesNew, valuesNew, macrosNew)
         return true
+    }
+
+    private fun mergeResolutionOneNs(visItem: VisItem?, visItemExisting: VisItem?, importType: ImportType): VisItem? {
+        if (visItem == null) return visItemExisting
+        if (visItemExisting == null) return visItem
+
+        val importTypeExisting = if (visItemExisting.isFromNamedImport) NAMED else GLOB
+        if (importType == GLOB && importTypeExisting == NAMED) return visItemExisting
+        if (importType == importTypeExisting) {
+            val isStrictlyMorePermissive = visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)
+            if (!isStrictlyMorePermissive) return visItemExisting
+        }
+        return visItem
     }
 
     private fun pushTraitResolutionFromImport(modData: ModData, def: PerNs, visibility: Visibility): Boolean {
@@ -377,14 +360,6 @@ class DefCollector(
         val visibility = (perNs.types ?: perNs.values ?: perNs.macros)!!.visibility
         return update(modData, listOf(name to perNs), visibility, GLOB)
     }
-}
-
-/** See [ModData.fromGlobImport]. */
-class PerNsGlobImports {
-    /** Stores names added to current scope by glob imports. */
-    val types: MutableSet<String> = hashSetOf()
-    val values: MutableSet<String> = hashSetOf()
-    val macros: MutableSet<String> = hashSetOf()
 }
 
 class Import(

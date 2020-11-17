@@ -34,7 +34,11 @@ class PerNsHashMap<K : Any>(
     private var items: Array<Any? /* ModPath or PerNs */> = THash.EMPTY_OBJECT_ARRAY
 
     /**
-     * Stores namespace, [VisItem.isModOrEnum] and [VisItem.visibility] in encoded form.
+     * Stores [VisItem] data in encoded form:
+     * - First two bits encode namespace and [VisItem.isModOrEnum]
+     * - Next three bits encode [VisItem.visibility]
+     * - Next bit encodes [VisItem.isFromNamedImport] flag
+     * - Last two bits are unused
      * See [encodeMask] and `decode*`
      */
     private var masks: ByteArray = EMPTY_BYTE_ARRAY
@@ -55,7 +59,8 @@ class PerNsHashMap<K : Any>(
         val isModOrEnum = decodeIsModOrEnum(mask)
         val namespace = decodeNamespace(mask)
         val visibility = decodeVisibility(mask)
-        val visItem = VisItem(path, visibility, isModOrEnum)
+        val isFromNamedImport = decodeIsFromNamedImport(mask)
+        val visItem = VisItem(path, visibility, isModOrEnum, isFromNamedImport)
         // === as an optimization
         val types = visItem.takeIf { namespace === Namespace.Types }
         val values = visItem.takeIf { namespace === Namespace.Values }
@@ -129,9 +134,13 @@ class PerNsHashMap<K : Any>(
             else -> error("unreachable")
         }
 
-        val mask = namespaceMask + (visibilityMask shl 2)
+        val isFromNamedImportMask = if (visItem.isFromNamedImport) 1 else 0
+
+        val mask = namespaceMask or (visibilityMask shl 2) or (isFromNamedImportMask shl 5)
         return mask.toByte()
     }
+
+    private fun decodeIsFromNamedImport(mask: Int): Boolean = mask and 0b1_000_00 != 0
 
     private fun decodeIsModOrEnum(mask: Int): Boolean = mask and 0b11 == 0
 
