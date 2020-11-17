@@ -11,6 +11,8 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.singleProject
+import org.rust.workspaceOrFail
 
 /**
  * Mostly tests [org.rust.cargo.project.model.impl.CargoProjectsServiceImpl.modifyFeatures] and
@@ -111,17 +113,16 @@ class CargoFeaturesModificationTest : RsWithToolchainTestBase() {
             feature to line
         }
 
-        var cargoProject = project.cargoProjects.allProjects.singleOrNull() ?: error("Cargo project is not created")
-        val workspace = cargoProject.workspace ?: error("Cargo workspace is not created")
-        var pkg = workspace.packages.single { it.origin == PackageOrigin.WORKSPACE }
+        var cargoProject = project.cargoProjects.singleProject()
+        var pkg = cargoProject.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
 
         assertEquals(tomlTrimmed, baseFeatures.withState(pkg.featureState))
 
         for ((i, action) in checkingSteps.withIndex()) {
             project.cargoProjects.modifyFeatures(cargoProject, setOf(PackageFeature(pkg, action.feature)), action.action)
 
-            cargoProject = project.cargoProjects.allProjects.singleOrNull() ?: error("Cargo project is not created")
-            pkg = cargoProject.workspace!!.packages.find { it.rootDirectory == pkg.rootDirectory }!!
+            cargoProject = project.cargoProjects.singleProject()
+            pkg = cargoProject.workspaceOrFail().packages.find { it.rootDirectory == pkg.rootDirectory }!!
 
             assertEquals("${i + 1}th iteration, just ${action.action.toString().toLowerCase()} `${action.feature}` ",
                 action.result.trimIndent(),

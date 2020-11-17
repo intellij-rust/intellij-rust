@@ -86,8 +86,7 @@ private fun findCrateIdForEachDollarCrate(
     def: MacroDefInfo
 ): Map<Int, CratePersistentId> {
     val ranges = expansion.ranges  // between `call.body` and `expandedText`
-    return MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX.findAll(expansion.text)
-        .map { it.range.first }
+    return expansion.dollarCrateOccurrences.asSequence()
         .mapNotNull { indexInExpandedText ->
             val indexInCallBody = ranges.mapOffsetFromExpansionToCallBody(indexInExpandedText)
             val crateId: CratePersistentId = if (indexInCallBody != null) {

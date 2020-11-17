@@ -11,6 +11,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.runconfig.filters.HighlightFilterTestBase.Companion.checkHighlights
 import org.rust.fileTree
+import org.rust.singleWorkspace
 
 /**
  * Cargo tests for [RsBacktraceFilter]
@@ -18,7 +19,7 @@ import org.rust.fileTree
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterCargoTest : RsWithToolchainTestBase() {
     private val filter: RsBacktraceFilter
-        get() = RsBacktraceFilter(project, cargoProjectDirectory, project.cargoProjects.allProjects.single().workspace)
+        get() = RsBacktraceFilter(project, cargoProjectDirectory, project.cargoProjects.singleWorkspace())
 
     fun `test resolve cargo crate`() {
         fileTree {

@@ -7,7 +7,7 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
+import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -15,7 +15,6 @@ import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.ExternalLinter
-import org.rust.fileTree
 import org.rust.ide.annotator.RsExternalLinterUtils
 
 class RsExternalLinterPassTest : RsWithToolchainTestBase() {
@@ -132,8 +131,8 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
             }
         }.create()
 
-        val path = project.cargoProjects.allProjects.single().workspace
-            ?.findPackage("rand")
+        val path = project.cargoProjects.singleWorkspace()
+            .findPackage("rand")
             ?.contentRoot
             ?.findFileByRelativePath("src/lib.rs")
             ?: error("Can't find 'src/lib.rs' in 'rand' library")
@@ -194,9 +193,8 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
                 file("main.rs", mainRs)
             }
         }.create()
-        val cargoProject = project.cargoProjects.allProjects.singleOrNull() ?: error("Not a single cargo project")
-        val pkg = cargoProject.workspace!!.packages.find { it.origin == PackageOrigin.WORKSPACE }
-            ?: error("Not a single workspace package")
+        val cargoProject = project.cargoProjects.singleProject()
+        val pkg = cargoProject.workspaceOrFail().packages.single { it.origin == PackageOrigin.WORKSPACE }
         project.cargoProjects.modifyFeatures(cargoProject, setOf(PackageFeature(pkg, "disabled_feature")), FeatureState.Disabled)
         myFixture.openFileInEditor(cargoProjectDirectory.findFileByRelativePath("src/main.rs")!!)
         myFixture.checkHighlighting()
