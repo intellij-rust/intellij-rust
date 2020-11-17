@@ -59,6 +59,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
     get() = CachedValuesManager.getCachedValue(this, EXPANDED_ITEMS_KEY) {
         val namedImports = SmartList<CachedNamedImport>()
         val starImports = SmartList<CachedStarImport>()
+        val macros = SmartList<RsMacro>()
         val rest = SmartList<RsItemElement>()
         processExpandedItemsInternal {
             when (it) {
@@ -66,7 +67,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                 is RsImplItem -> Unit
 
                 // Optimization: prepare use items to reduce PSI tree access in hotter code
-                is RsUseItem ->  {
+                is RsUseItem -> {
                     val isPublic = it.isPublic
                     it.useSpeck?.forEachLeafSpeck { speck ->
                         if (speck.isStarImport) {
@@ -81,7 +82,9 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                     }
                 }
 
-                else -> rest.add(it)
+                is RsMacro -> macros.add(it)
+
+                is RsItemElement -> rest.add(it)
             }
             false
         }
@@ -91,7 +94,12 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
             null
         }
         CachedValueProvider.Result.create(
-            RsCachedItems(namedImports.optimizeList(), starImports.optimizeList(), rest.optimizeList()),
+            RsCachedItems(
+                namedImports.optimizeList(),
+                starImports.optimizeList(),
+                macros.optimizeList(),
+                rest.optimizeList()
+            ),
             listOfNotNull(rustStructureOrAnyPsiModificationTracker, localModTracker)
         )
     }
@@ -103,6 +111,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
 class RsCachedItems(
     val namedImports: List<CachedNamedImport>,
     val starImports: List<CachedStarImport>,
+    val macros: List<RsMacro>,
     val rest: List<RsItemElement>
 ) {
     data class CachedNamedImport(
@@ -115,16 +124,18 @@ class RsCachedItems(
     data class CachedStarImport(val isPublic: Boolean, val speck: RsUseSpeck)
 }
 
-private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsItemElement) -> Boolean): Boolean {
+private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsElement) -> Boolean): Boolean {
     return itemsAndMacros.any { it.processItem(processor) }
 }
 
-private fun RsElement.processItem(processor: (RsItemElement) -> Boolean): Boolean {
+private fun RsElement.processItem(processor: (RsElement) -> Boolean): Boolean {
     if (this is RsDocAndAttributeOwner && !this.isEnabledByCfgSelf) return false
 
     return when (this) {
-        is RsMacroCall -> processExpansionRecursively { it is RsItemElement && it.isEnabledByCfgSelf && processor(it) }
-        is RsItemElement -> processor(this)
+        is RsMacroCall -> processExpansionRecursively {
+            it is RsDocAndAttributeOwner && it.isEnabledByCfgSelf && processor(it)
+        }
+        is RsItemElement, is RsMacro -> processor(this)
         else -> false
     }
 }
