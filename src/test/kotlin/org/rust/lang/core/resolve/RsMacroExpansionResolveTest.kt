@@ -914,9 +914,20 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro call expanded to macro def and macro call 1`() = checkByCode("""
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
+        as_is! {
+            macro_rules! foo { () => {}; }
+                       //X
+            foo!();
+        } //^
+    """)
+
     // when resolving macro call expanded from other macro call,
     // firstly left sibling expanded elements should be processed
-    fun `test macro call expanded to macro def and macro call`() = checkByCode("""
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro call expanded to macro def and macro call 2`() = checkByCode("""
         macro_rules! foo {
             (1) => {
                 macro_rules! foo {

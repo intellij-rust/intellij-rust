@@ -309,24 +309,19 @@ private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace):
     return when (containingModOrEnum) {
         is RsMod -> {
             if (ns == Namespace.Macros) {
-                // TODO: expandedItemsIncludingMacros
-                val macros = containingModOrEnum.itemsAndMacros
-                    .filterIsInstance<RsNamedElement>()
-                    .filter {
-                        val procMacroName = if (it is RsFunction) {
-                            // TODO: derive proc macros are currently ignored,
-                            //  because of multiresolve of serde::Serialize
-                            if (it.isProcMacroDef && !it.isCustomDeriveProcMacroDef) it.procMacroName else null
-                        } else {
-                            null
-                        }
-                        val itemName = procMacroName ?: it.name
-                        val isMacro = it is RsMacro || it is RsMacro2 || procMacroName != null
-                        isMacro && itemName == name && matchesIsEnabledByCfg(it, this)
-                    }
+                val macros = containingModOrEnum.expandedItemsCached.macros
+                    .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
                 // TODO: Multiresolve for macro 2.0
-                val macro = macros.lastOrNull()
-                listOfNotNull(macro)
+                if (macros.isNotEmpty()) return listOf(macros.last())
+
+                containingModOrEnum
+                    // Note: name of bang and attribute proc macros is same as name of item
+                    .getExpandedItemsWithName<RsFunction>(name)
+                    .filter {
+                        // TODO: derive proc macros are currently ignored, because of multiresolve of serde::Serialize
+                        val isProcMacro = it.isBangProcMacroDef || it.isAttributeProcMacroDef
+                        isProcMacro && matchesIsEnabledByCfg(it, this)
+                    }
             } else {
                 containingModOrEnum
                     .getExpandedItemsWithName<RsNamedElement>(name)
