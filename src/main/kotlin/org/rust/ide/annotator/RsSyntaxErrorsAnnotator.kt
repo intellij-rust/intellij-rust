@@ -14,10 +14,12 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
 import org.rust.lang.core.C_VARIADIC
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.types.type
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 import org.rust.openapiext.forEachChild
@@ -164,6 +166,28 @@ private fun checkConstant(holder: AnnotationHolder, const: RsConstant) {
             deny(const.static, holder, "Static constants are not allowed in impl blocks")
             require(const.expr, holder, "$title must have a value", const)
         }
+    }
+    checkConstantType(holder, const)
+}
+
+private fun checkConstantType(holder: AnnotationHolder, element: RsConstant) {
+    if (element.colon == null && element.typeReference == null) {
+        val typeText = if (element.isConst) {
+            "const"
+        } else {
+            "static"
+        }
+        val message = "Missing type for `$typeText` item"
+
+        val annotation = holder.newAnnotation(HighlightSeverity.ERROR, message)
+            .range(element.textRange)
+
+        val expr = element.expr
+        if (expr != null) {
+            annotation.withFix(AddTypeFix(element.nameLikeElement, expr.type))
+        }
+
+        annotation.create()
     }
 }
 
