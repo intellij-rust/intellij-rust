@@ -329,7 +329,7 @@ Item ::= AttrsAndVis default_? (Constant
 }
 
 private Item_first ::= '#' | pub | crate | fn | const | extern | unsafe | struct | enum | use | identifier | mod | trait
-  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW
+  | static | TYPE_KW | impl | "union" | "default" | "auto" | "dyn" | "async" | MACRO_KW | self | super | '::'
 
 private RootItem_with_recover ::= !<<eof>> Item {
   pin = 1
