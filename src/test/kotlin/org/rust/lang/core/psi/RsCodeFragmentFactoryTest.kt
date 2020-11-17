@@ -7,13 +7,14 @@ package org.rust.lang.core.psi
 
 import org.rust.RsTestBase
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.singleWorkspace
 import org.rust.stdext.BothEditions
 
 @BothEditions
 class RsCodeFragmentFactoryTest : RsTestBase() {
     fun `test resolve string path`() {
         InlineFile("mod foo { struct S; }")
-        val target = project.cargoProjects.allProjects.single().workspace!!.packages.single().targets.first()
+        val target = project.cargoProjects.singleWorkspace().packages.single().targets.first()
         val path = RsCodeFragmentFactory(project).createCrateRelativePath("foo::S", target)
         val declaration = path!!.reference!!.resolve()
         check((declaration as RsStructItem).name == "S")

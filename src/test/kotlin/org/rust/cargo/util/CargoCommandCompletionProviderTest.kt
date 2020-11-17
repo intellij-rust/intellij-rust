@@ -13,6 +13,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.singleProject
 import java.nio.file.Paths
 
 class CargoCommandCompletionProviderTest : RsTestBase() {
@@ -124,7 +125,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test suggest manifest path`() = checkCompletion(
         "run --manifest-path ",
-        listOf(project.cargoProjects.allProjects.singleOrNull()?.manifest.toString())
+        listOf(project.cargoProjects.singleProject().manifest.toString())
     )
 
     private fun checkCompletion(

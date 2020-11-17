@@ -7,11 +7,8 @@ package org.rust.cargo.runconfig.filters
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.unscramble.AnalyzeStacktraceUtil
-import org.rust.ProjectDescriptor
-import org.rust.WithDependencyRustProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.cargo.project.model.cargoProjects
-import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.stdext.BothEditions
 
 /**
@@ -21,7 +18,7 @@ import org.rust.stdext.BothEditions
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsBacktraceFilterTest : HighlightFilterTestBase() {
     private val filter: RsBacktraceFilter
-        get() = RsBacktraceFilter(project, projectDir, project.cargoProjects.allProjects.single().workspace)
+        get() = RsBacktraceFilter(project, projectDir, project.cargoProjects.singleWorkspace())
 
     fun `test rustc source code link`() =
         checkHighlights(filter,
@@ -88,8 +85,8 @@ stack backtrace:
             "                        at [src/main.rs:22 -> main.rs]", 14)
 
     fun `test full output without explicit project dir and workspace`() {
-        val cargoProject = project.cargoProjects.allProjects.singleOrNull() as? CargoProjectImpl
-        cargoProject?.setRootDir(projectDir)
+        val cargoProject = project.cargoProjects.singleProject()
+        cargoProject.setRootDir(projectDir)
 
         checkHighlights(RsBacktraceFilter(project),
             """    Running `target/debug/test`

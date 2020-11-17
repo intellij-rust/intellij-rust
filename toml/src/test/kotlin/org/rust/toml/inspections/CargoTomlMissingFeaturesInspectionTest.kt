@@ -13,6 +13,8 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.fileTree
+import org.rust.singleProject
+import org.rust.workspaceOrFail
 
 class CargoTomlMissingFeaturesInspectionTest : RsWithToolchainTestBase() {
     fun `test missing dependency feature`() = doTest(
@@ -62,9 +64,9 @@ class CargoTomlMissingFeaturesInspectionTest : RsWithToolchainTestBase() {
     private fun doTest(tree: FileTree, pkgWithFeature: String, featureName: String, vararg filesToCheck: String) {
         tree.create()
 
-        val cargoProject = project.cargoProjects.allProjects.singleOrNull() ?: error("Cargo project is not created")
-        val workspace = cargoProject.workspace ?: error("Workspace is not created")
-        val pkg = workspace.packages.find { it.name == pkgWithFeature } ?: error("Package $pkgWithFeature not found")
+        val cargoProject = project.cargoProjects.singleProject()
+        val pkg = cargoProject.workspaceOrFail().packages.find { it.name == pkgWithFeature }
+            ?: error("Package $pkgWithFeature not found")
 
         project.cargoProjects.modifyFeatures(cargoProject, setOf(PackageFeature(pkg, featureName)), FeatureState.Disabled)
 

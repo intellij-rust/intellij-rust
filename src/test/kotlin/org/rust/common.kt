@@ -5,6 +5,10 @@
 
 package org.rust
 
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.impl.CargoProjectImpl
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.macros.MACRO_EXPANSION_VFS_ROOT
 import org.rust.lang.core.macros.MacroExpansionFileSystem
 
@@ -34,3 +38,17 @@ fun checkMacroExpansionFileSystemAfterTest() {
         error("$incorrectFilePaths should have been removed at the end of the test")
     }
 }
+
+fun CargoProjectsService.singleProject(): CargoProjectImpl {
+    return when (allProjects.size) {
+        0 -> error("No cargo projects found")
+        1 -> allProjects.single() as CargoProjectImpl
+        else -> error("Expected single cargo project, found multiple: $allProjects")
+    }
+}
+
+fun CargoProject.workspaceOrFail(): CargoWorkspace {
+    return workspace ?: error("Failed to get cargo workspace. Status: $workspaceStatus")
+}
+
+fun CargoProjectsService.singleWorkspace(): CargoWorkspace = singleProject().workspaceOrFail()
