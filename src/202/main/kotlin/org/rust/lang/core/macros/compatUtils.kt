@@ -6,6 +6,7 @@
 package org.rust.lang.core.macros
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileAttributes
 import com.intellij.psi.stubs.SerializationManagerEx
 import com.intellij.psi.stubs.SerializedStubTreeDataExternalizer
 import com.intellij.psi.stubs.StubForwardIndexExternalizer
@@ -28,3 +29,6 @@ fun newSerializedStubTreeDataExternalizer(
 @Suppress("UnstableApiUsage")
 fun createFileContent(project: Project, file: ReadOnlyLightVirtualFile, fileContent: String): FileContent =
     FileContentImpl(file, fileContent, file.modificationStamp).also { it.project = project }
+
+fun createFileAttributes(isDir: Boolean, length: Long, lastModified: Long): FileAttributes =
+    FileAttributes(isDir, false, false, false, length, lastModified, true)
