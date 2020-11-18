@@ -227,7 +227,7 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     /** Note: we can't use [RsFile.crate], because it can trigger resolve */
-    private fun findCrate(file: RsFile): CratePersistentId? {
+    fun findCrate(file: RsFile): CratePersistentId? {
         /** Virtual file can be [VirtualFileWindow] if it is doctest injection */
         val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
         return fileIdToCrateId[virtualFile.id]

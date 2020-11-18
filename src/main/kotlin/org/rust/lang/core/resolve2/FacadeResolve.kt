@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve2
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.settings.rustSettings
@@ -262,7 +263,7 @@ private sealed class RsModInfoBase {
 private fun getModInfo(scope: RsMod): RsModInfoBase {
     val project = scope.project
     if (!project.isNewResolveEnabled) return CantUseNewResolve("not enabled")
-    if (scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
+    if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
     if (scope.isLocal) return CantUseNewResolve("local mod")
     val crate = scope.containingCrate as? CargoBasedCrate ?: return CantUseNewResolve("not CargoBasedCrate")
 
@@ -416,4 +417,17 @@ private fun <T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(
         }
     }
     return result
+}
+
+fun findModDataFor(file: RsFile): ModData? {
+    val project = file.project
+    check(project.isNewResolveEnabled)
+    val defMapService = project.defMapService
+    val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
+    // TODO Ensure def maps are up-to-date (`findCrate` may return old crate of def maps haven't updated).
+    //   Now this is used only in the macro expansion engine where all def map are always up-to-date
+    val crateId = defMapService.findCrate(file) ?: return null
+    val defMap = defMapService.getOrUpdateIfNeeded(crateId) ?: return null
+    val fileInfo = defMap.fileInfos[virtualFile.id] ?: return null
+    return fileInfo.modData
 }
