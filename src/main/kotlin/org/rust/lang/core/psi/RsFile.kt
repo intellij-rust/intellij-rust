@@ -39,6 +39,8 @@ import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.resolve2.findModDataFor
+import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -100,11 +102,24 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        val declaration = declaration
-        if (declaration != null) {
-            val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
-            val parentCachedData = (file as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-            return parentCachedData.copy(isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg && isEnabledByCfg)
+        if (project.isNewResolveEnabled && project.macroExpansionManagerIfCreated?.expansionState != null) {
+            // Experimentally use new resolve engine in the case of macro resolve
+            // TODO use it always (see todo in `findModDataFor`)
+
+            // Note: `this` file can be not a module (can be included with `include!()` macro)
+            val modData = findModDataFor(this)
+            if (modData != null) {
+                val crate = project.crateGraph.findCrateById(modData.crate) ?: return EMPTY_CACHED_DATA
+                return CachedData(crate.cargoProject, crate.cargoWorkspace, crate.rootMod, crate, modData.isDeeplyEnabledByCfg)
+            }
+            // Else try injected crate, included file, or fill file info with just project and workspace
+        } else {
+            val declaration = declaration
+            if (declaration != null) {
+                val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
+                val parentCachedData = (file as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
+                return parentCachedData.copy(isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg && isEnabledByCfg)
+            }
         }
 
         val possibleCrateRoot = this
