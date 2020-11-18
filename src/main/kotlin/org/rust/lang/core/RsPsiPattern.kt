@@ -215,6 +215,28 @@ object RsPsiPattern {
             return psiElement().withParent(simplePath)
         }
 
+    /** `#[cfg()]` */
+    private val onCfgAttribute: PsiElementPattern.Capture<RsAttr> = psiElement<RsAttr>()
+        .withChild(metaItem("cfg"))
+
+    /** `#[cfg_attr()]` */
+    private val onCfgAttrAttribute: PsiElementPattern.Capture<RsAttr> = psiElement<RsAttr>()
+        .withChild(metaItem("cfg_attr"))
+
+    /**
+     * ```
+     * #[cfg_attr(condition, attr)]
+     *           //^
+     * ```
+     */
+    private val onCfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .inside(onCfgAttrAttribute)
+        .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
+
+    val onCfgOrAttrFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+        .withParent(metaItem("feature"))
+        .inside(onCfgAttribute or onCfgAttrCondition)
+
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(META_ITEM_IDENTIFIER_DEPTH)
     }
@@ -222,6 +244,11 @@ object RsPsiPattern {
     private fun onItem(pattern: ElementPattern<out RsDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent(META_ITEM_IDENTIFIER_DEPTH, pattern)
     }
+
+    private fun metaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
+        psiElement<RsMetaItem>().withChild(
+            psiElement<RsPath>().withText(key)
+        )
 
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords

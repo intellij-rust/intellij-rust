@@ -14,6 +14,7 @@ import org.rust.toml.CargoTomlPsiPattern.onFeatureDependencyLiteral
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.rust.toml.tomlPluginIsAbiCompatible
 
+/** Provides references for TOML elements in `Cargo.toml` files */
 class CargoTomlReferenceContributor : PsiReferenceContributor() {
 
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
