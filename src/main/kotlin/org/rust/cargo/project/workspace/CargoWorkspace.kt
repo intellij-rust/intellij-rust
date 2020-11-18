@@ -8,7 +8,6 @@ package org.rust.cargo.project.workspace
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
-import com.intellij.util.text.SemVer
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
@@ -17,7 +16,6 @@ import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
-import org.rust.cargo.util.StdLibType
 import org.rust.openapiext.CachedVirtualFile
 import org.rust.stdext.applyWithSymlink
 import org.rust.stdext.mapToSet
@@ -261,32 +259,40 @@ private class WorkspaceImpl(
     override fun findTargetByCrateRoot(root: VirtualFile): CargoWorkspace.Target? =
         root.applyWithSymlink { targetByCrateRootUrl[it.url] }
 
+
     override fun withStdlib(stdlib: StandardLibrary, cfgOptions: CfgOptions, rustcInfo: RustcInfo?): CargoWorkspace {
         // This is a bit trickier than it seems required.
         // The problem is that workspace packages and targets have backlinks
         // so we have to rebuild the whole workspace from scratch instead of
         // *just* adding in the stdlib.
 
-        val (newPackagesData, stdCrates) = if (!stdlib.isPartOfCargoProject) {
+        val (newPackagesData, @Suppress("NAME_SHADOWING") stdlib) = if (!stdlib.isPartOfCargoProject) {
             Pair(
-                packages.map { it.asPackageData() } + stdlib.crates.map { it.asPackageData(rustcInfo) },
-                stdlib.crates
+                packages.map { it.asPackageData() } + stdlib.asPackageData(rustcInfo),
+                stdlib
             )
         } else {
             // In the case of https://github.com/rust-lang/rust project, stdlib
             // is already a part of the project, so no need to add extra packages.
             val oldPackagesData = packages.map { it.asPackageData() }
-            val stdCratePackageRoots = stdlib.crates.mapToSet { it.packageRootUrl }
+            val stdCratePackageRoots = stdlib.crates.mapToSet { it.contentRootUrl }
             val (stdPackagesData, otherPackagesData) = oldPackagesData.partition { it.contentRootUrl in stdCratePackageRoots }
             val stdPackagesByPackageRoot = stdPackagesData.associateBy { it.contentRootUrl }
+            val pkgIdMapping = stdlib.crates.associate { it.id to (stdPackagesByPackageRoot[it.contentRootUrl]?.id ?: it.id) }
+            val newStdlibCrates = stdlib.crates.map { it.copy(id = pkgIdMapping.getValue(it.id)) }
+            val newStdlibDependencies = stdlib.dependencies.map { (oldId, dependency) ->
+                val newDependencies = dependency.mapToSet { it.copy(id = pkgIdMapping.getValue(it.id)) }
+                pkgIdMapping.getValue(oldId) to newDependencies
+            }.toMap()
+
             Pair(
-                otherPackagesData + stdPackagesData.map { it.copy(origin = PackageOrigin.STDLIB) },
-                stdlib.crates.map { it.copy(id = stdPackagesByPackageRoot[it.packageRootUrl]?.id ?: it.id) }
+                otherPackagesData + stdPackagesData.map { it.copy(origin = STDLIB) },
+                stdlib.copy(crates = newStdlibCrates, dependencies = newStdlibDependencies)
             )
         }
 
-        val stdAll = stdCrates.associateBy { it.id }
-        val stdInternalDeps = stdCrates.filter { it.type == StdLibType.DEPENDENCY }.map { it.id }.toSet()
+        val stdAll = stdlib.crates.associateBy { it.id }
+        val stdInternalDeps = stdlib.crates.filter { it.origin == DEPENDENCY }.mapToSet { it.id }
 
         val result = WorkspaceImpl(
             manifestPath,
@@ -312,8 +318,14 @@ private class WorkspaceImpl(
                     pkg.dependencies.addAll(stdlibDependencies.filter { it.name !in explicitDeps && it.pkg.id !in stdInternalDeps })
                 } else {
                     // `pkg` is a crate from stdlib
-                    val stdCrateDeps = stdCrate.dependencies.mapNotNull { stdDep ->
-                        stdlibDependencies.find { it.name == stdDep }
+                    val stdCrateDeps = stdlib.dependencies[id].orEmpty().mapNotNull { dep ->
+                        val dependencyPackage = newIdToPackage[dep.id] ?: return@mapNotNull null
+                        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
+                        DependencyImpl(
+                            dependencyPackage,
+                            depName,
+                            dep.depKinds,
+                        )
                     }
                     pkg.dependencies.addAll(stdCrateDeps)
                 }
@@ -564,7 +576,7 @@ private class DependencyImpl(
  * These hacks are needed for the stdlib that has a weird source structure.
  */
 fun CargoWorkspace.Package.additionalRoots(): List<VirtualFile> {
-    return if (origin == PackageOrigin.STDLIB) {
+    return if (origin == STDLIB) {
         when (name) {
             STD -> listOfNotNull(contentRoot?.parent?.findFileByRelativePath("backtrace"))
             CORE -> contentRoot?.parent?.let {
@@ -605,45 +617,3 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         env = env,
         outDirUrl = outDirUrl
     )
-
-private fun StandardLibrary.StdCrate.asPackageData(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
-    val firstVersionWithEdition2018 = when (name) {
-        CORE -> RUST_1_36
-        STD -> RUST_1_35
-        else -> RUST_1_34
-    }
-
-    val currentRustcVersion = rustcInfo?.version?.semver
-    val edition = if (currentRustcVersion == null || currentRustcVersion < firstVersionWithEdition2018) {
-        CargoWorkspace.Edition.EDITION_2015
-    } else {
-        CargoWorkspace.Edition.EDITION_2018
-    }
-
-    return CargoWorkspaceData.Package(
-        id = id,
-        contentRootUrl = packageRootUrl,
-        name = name,
-        version = "",
-        targets = listOf(CargoWorkspaceData.Target(
-            crateRootUrl = crateRootUrl,
-            name = name,
-            kind = CargoWorkspace.TargetKind.Lib(CargoWorkspace.LibKind.LIB),
-            edition = edition,
-            doctest = true,
-            requiredFeatures = emptyList()
-        )),
-        source = null,
-        origin = STDLIB,
-        edition = edition,
-        features = emptyMap(),
-        enabledFeatures = emptySet(),
-        cfgOptions = CfgOptions.EMPTY,
-        env = emptyMap(),
-        outDirUrl = null
-    )
-}
-
-private val RUST_1_34: SemVer = SemVer.parseFromText("1.34.0")!!
-private val RUST_1_35: SemVer = SemVer.parseFromText("1.35.0")!!
-private val RUST_1_36: SemVer = SemVer.parseFromText("1.36.0")!!

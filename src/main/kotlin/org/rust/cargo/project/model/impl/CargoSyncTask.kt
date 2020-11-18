@@ -240,8 +240,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
         val workingDirectory = childContext.oldCargoProject.workingDirectory
         if (childContext.oldCargoProject.doesProjectLooksLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
-            val std = StandardLibrary.fromPath(workingDirectory.toString())
-                ?.asPartOfCargoProject()
+            val std = StandardLibrary.fromPath(childContext.project, workingDirectory.toString(), isPartOfCargoProject = true)
             if (std != null) {
                 return@runWithChildProgress TaskResult.Ok(std)
             }
@@ -251,7 +250,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
         if (rustup == null) {
             val explicitPath = childContext.project.rustSettings.explicitPathToStdlib
                 ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
-            val lib = explicitPath?.let { StandardLibrary.fromPath(it) }
+            val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it) }
             return@runWithChildProgress when {
                 explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
@@ -259,15 +258,15 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
             }
         }
 
-        rustup.fetchStdlib()
+        rustup.fetchStdlib(childContext.project)
     }
 }
 
 
-private fun Rustup.fetchStdlib(): TaskResult<StandardLibrary> {
+private fun Rustup.fetchStdlib(project: Project): TaskResult<StandardLibrary> {
     return when (val download = downloadStdlib()) {
         is DownloadResult.Ok -> {
-            val lib = StandardLibrary.fromFile(download.value)
+            val lib = StandardLibrary.fromFile(project, download.value)
             if (lib == null) {
                 TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
             } else {

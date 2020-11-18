@@ -321,8 +321,8 @@ object CargoMetadata {
 
     fun clean(
         project: Project,
-        buildScriptsInfo: BuildScriptsInfo?,
-        buildPlan: CargoBuildPlan?
+        buildScriptsInfo: BuildScriptsInfo? = null,
+        buildPlan: CargoBuildPlan? = null
     ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members

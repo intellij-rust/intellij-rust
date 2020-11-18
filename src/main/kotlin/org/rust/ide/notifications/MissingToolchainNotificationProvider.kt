@@ -76,7 +76,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
-            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel(file)
+            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel(project, file)
         }
 
         return null
@@ -94,16 +94,16 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             }
         }
 
-    private fun createLibraryAttachingPanel(file: VirtualFile): RsEditorNotificationPanel =
+    private fun createLibraryAttachingPanel(project: Project, file: VirtualFile): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
-                if (StandardLibrary.fromFile(stdlib) != null) {
-                    project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
+                val stdlib = FileChooser.chooseFile(descriptor, this, this@MissingToolchainNotificationProvider.project, null) ?: return@createActionLabel
+                if (StandardLibrary.fromFile(project, stdlib) != null) {
+                    this@MissingToolchainNotificationProvider.project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
                 } else {
-                    project.showBalloon(
+                    this@MissingToolchainNotificationProvider.project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
                         NotificationType.ERROR
                     )
