@@ -8,6 +8,7 @@ package org.rust.lang.core.completion
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
@@ -41,9 +42,13 @@ object RsReprCompletionProvider : RsCompletionProvider() {
             ?: return
 
         fun Sequence<String>.addToResults() = forEach {
-            val element = LookupElementBuilder.create(it)
-            if (it.endsWith("()")) {
-                // TODO: Caret must land in between parentheses.
+            val element = LookupElementBuilder.create(it).run {
+                if (it.endsWith("()")) {
+                    // If the attribute name ends in parentheses, put the caret in-between those parentheses.
+                    this.withInsertHandler { ctx, _ ->
+                        EditorModificationUtil.moveCaretRelatively(ctx.editor, -1)
+                    }
+                } else this
             }
             result.addElement(element.withPriority(DEFAULT_PRIORITY))
         }
