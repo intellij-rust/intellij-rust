@@ -1,0 +1,5 @@
+<idea-plugin>
+    <depends>com.intellij.completion.ml.ranking</depends>
+    <extensions defaultExtensionNs="com.intellij">
+    </extensions>
+</idea-plugin>
