@@ -13,5 +13,6 @@ include(
     "duplicates",
     "grazie",
     "js",
+    "ml-completion",
     "intellij-toml"
 )

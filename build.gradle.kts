@@ -1,3 +1,4 @@
+import groovy.json.JsonSlurper
 import org.apache.tools.ant.taskdefs.condition.Os.*
 import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.internal.HasConvention
@@ -12,7 +13,6 @@ import org.jetbrains.intellij.tasks.RunIdeTask
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jsoup.Jsoup
-import groovy.json.JsonSlurper
 import java.io.Writer
 import java.net.URL
 import kotlin.concurrent.thread
@@ -45,6 +45,7 @@ val javaPlugin = "java"
 val javaScriptPlugin = "JavaScript"
 // BACKCOMPAT: 2020.2
 val clionPlugins = if (platformVersion < 203) emptyList() else listOf("com.intellij.cidr.base", "com.intellij.clion")
+val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 plugins {
     idea
@@ -194,6 +195,10 @@ project(":plugin") {
             psiViewerPlugin,
             javaScriptPlugin
         )
+        // BACKCOMPAT: 2020.2
+        if (platformVersion >= 203) {
+            plugins += mlCompletionPlugin
+        }
         if (baseIDE == "idea") {
             plugins += listOf(
                 copyrightPlugin,
@@ -216,6 +221,7 @@ project(":plugin") {
         implementation(project(":duplicates"))
         implementation(project(":grazie"))
         implementation(project(":js"))
+        implementation(project(":ml-completion"))
     }
 
     tasks {
@@ -441,6 +447,26 @@ project(":grazie") {
 project(":js") {
     intellij {
         setPlugins(javaScriptPlugin)
+    }
+    dependencies {
+        implementation(project(":"))
+        implementation(project(":common"))
+        testImplementation(project(":", "testOutput"))
+        testImplementation(project(":common", "testOutput"))
+    }
+}
+
+project(":ml-completion") {
+    intellij {
+        // BACKCOMPAT: 2020.2
+        if (platformVersion >= 203) {
+            val plugins = mutableListOf<Any>(mlCompletionPlugin)
+            // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+            if (baseIDE == "clion") {
+                plugins += "c-plugin"
+            }
+            setPlugins(*plugins.toTypedArray())
+        }
     }
     dependencies {
         implementation(project(":"))
