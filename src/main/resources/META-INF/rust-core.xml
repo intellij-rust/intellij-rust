@@ -740,6 +740,10 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
+            <className>org.rust.ide.intentions.JoinWildcardsIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
             <className>org.rust.ide.intentions.ToggleIgnoreTestIntention</className>
             <category>Rust</category>
         </intentionAction>
