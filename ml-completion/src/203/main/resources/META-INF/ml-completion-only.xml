@@ -2,5 +2,6 @@
     <depends>com.intellij.completion.ml.ranking</depends>
     <extensions defaultExtensionNs="com.intellij">
         <completion.ml.ranking.features.policy language="Rust" implementationClass="org.rust.ml.RsCompletionFeaturesPolicy"/>
+        <completion.ml.elementFeatures language="Rust" implementationClass="org.rust.ml.RsElementFeatureProvider"/>
     </extensions>
 </idea-plugin>
