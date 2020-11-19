@@ -20,7 +20,7 @@ jobs:
             build_number: ${{ steps.buildnumber.outputs.build_number }}
         steps:
             - name: Generate build number
-              uses: einaregilsson/build-number@v2
+              uses: einaregilsson/build-number@v3
               id: buildnumber
               with:
                   token: ${{ secrets.github_token }}
