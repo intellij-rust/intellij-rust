@@ -140,7 +140,8 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
             it.toolchain = toolchain
         }
         try {
-            val stdlib = StandardLibrary.fromFile(module.project, stdlib!!)!!
+            val rustcInfo = rustcInfo
+            val stdlib = StandardLibrary.fromFile(module.project, stdlib!!, rustcInfo)!!
             return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT, rustcInfo)
         } finally {
             Disposer.dispose(disposable)
@@ -170,7 +171,7 @@ open class WithCustomStdlibRustProjectDescriptor(
         }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val stdlib = StandardLibrary.fromPath(module.project, explicitStdlibPath()!!)!!
+        val stdlib = StandardLibrary.fromPath(module.project, explicitStdlibPath()!!, rustcInfo)!!
         return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT)
     }
 

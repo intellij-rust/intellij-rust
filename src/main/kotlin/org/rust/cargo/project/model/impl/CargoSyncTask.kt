@@ -107,9 +107,10 @@ class CargoSyncTask(
                             )
                         } else {
                             val context = SyncContext(project, cargoProject, toolchain, indicator, childProgress)
-                            cargoProject.withRustcInfo(fetchRustcInfo(context))
+                            val rustcInfoResult = fetchRustcInfo(context)
+                            cargoProject.withRustcInfo(rustcInfoResult)
                                 .withWorkspace(fetchCargoWorkspace(context))
-                                .withStdlib(fetchStdlib(context))
+                                .withStdlib(fetchStdlib(context, (rustcInfoResult as? TaskResult.Ok)?.value))
                         }
                     }
                 )
@@ -234,13 +235,18 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
     }
 }
 
-private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<StandardLibrary> {
+private fun fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
     return context.runWithChildProgress("Getting Rust stdlib") { childContext ->
 
         val workingDirectory = childContext.oldCargoProject.workingDirectory
         if (childContext.oldCargoProject.doesProjectLooksLikeRustc()) {
             // rust-lang/rust contains stdlib inside the project
-            val std = StandardLibrary.fromPath(childContext.project, workingDirectory.toString(), isPartOfCargoProject = true)
+            val std = StandardLibrary.fromPath(
+                childContext.project,
+                workingDirectory.toString(),
+                rustcInfo,
+                isPartOfCargoProject = true
+            )
             if (std != null) {
                 return@runWithChildProgress TaskResult.Ok(std)
             }
@@ -250,7 +256,7 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
         if (rustup == null) {
             val explicitPath = childContext.project.rustSettings.explicitPathToStdlib
                 ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
-            val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it) }
+            val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it, rustcInfo) }
             return@runWithChildProgress when {
                 explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
                 lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
@@ -258,15 +264,15 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext): TaskResult<Standard
             }
         }
 
-        rustup.fetchStdlib(childContext.project)
+        rustup.fetchStdlib(childContext.project, rustcInfo)
     }
 }
 
 
-private fun Rustup.fetchStdlib(project: Project): TaskResult<StandardLibrary> {
+private fun Rustup.fetchStdlib(project: Project, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
     return when (val download = downloadStdlib()) {
         is DownloadResult.Ok -> {
-            val lib = StandardLibrary.fromFile(project, download.value)
+            val lib = StandardLibrary.fromFile(project, download.value, rustcInfo)
             if (lib == null) {
                 TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
             } else {

@@ -40,10 +40,21 @@ data class StandardLibrary(
         private val SRC_ROOTS: List<String> = listOf("library", "src")
         private val LIB_PATHS: List<String> = listOf("src/lib.rs", "lib.rs")
 
-        fun fromPath(project: Project, path: String, isPartOfCargoProject: Boolean = false): StandardLibrary? =
-            LocalFileSystem.getInstance().findFileByPath(path)?.let { fromFile(project, it, isPartOfCargoProject) }
+        fun fromPath(
+            project: Project,
+            path: String,
+            rustcInfo: RustcInfo?,
+            isPartOfCargoProject: Boolean = false
+        ): StandardLibrary? = LocalFileSystem.getInstance().findFileByPath(path)?.let {
+            fromFile(project, it, rustcInfo, isPartOfCargoProject)
+        }
 
-        fun fromFile(project: Project, sources: VirtualFile, isPartOfCargoProject: Boolean = false): StandardLibrary? {
+        fun fromFile(
+            project: Project,
+            sources: VirtualFile,
+            rustcInfo: RustcInfo?,
+            isPartOfCargoProject: Boolean = false
+        ): StandardLibrary? {
             if (!sources.isDirectory) return null
 
             val srcDir = if (sources.name in SRC_ROOTS) {
@@ -53,7 +64,15 @@ data class StandardLibrary(
             }
 
             val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
-                fetchRealStdlib(project, srcDir)
+                val rustcVersion = rustcInfo?.version?.semver
+                // BACKCOMPAT: rust 1.40
+                // cargo metadata doesn't contain all necessary info before 1.41
+                if (rustcVersion == null || rustcVersion < RUST_1_41) {
+                    LOG.warn("Toolchain version should be at least `${RUST_1_41.parsedVersion}`, current: `${rustcVersion?.parsedVersion}`")
+                    fetchHardcodedStdlib(srcDir)
+                } else {
+                    fetchActualStdlib(project, srcDir)
+                }
             } else {
                 fetchHardcodedStdlib(srcDir)
             }
@@ -61,7 +80,7 @@ data class StandardLibrary(
             return stdlib?.copy(isPartOfCargoProject = isPartOfCargoProject)
         }
 
-        private fun fetchRealStdlib(project: Project, srcDir: VirtualFile): StandardLibrary? {
+        private fun fetchActualStdlib(project: Project, srcDir: VirtualFile): StandardLibrary? {
             val cargo = project.toolchain?.cargo() ?: return null
 
             val testPackageSrcPaths = listOf(AutoInjectedCrates.TEST, "lib${AutoInjectedCrates.TEST}")
@@ -291,3 +310,4 @@ private fun CargoWorkspaceData.Package.withProperEdition(rustcInfo: RustcInfo?):
 private val RUST_1_34: SemVer = SemVer.parseFromText("1.34.0")!!
 private val RUST_1_35: SemVer = SemVer.parseFromText("1.35.0")!!
 private val RUST_1_36: SemVer = SemVer.parseFromText("1.36.0")!!
+private val RUST_1_41: SemVer = SemVer.parseFromText("1.41.0")!!
