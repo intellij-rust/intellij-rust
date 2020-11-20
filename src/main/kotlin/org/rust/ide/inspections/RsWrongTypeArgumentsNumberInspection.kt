@@ -39,7 +39,6 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
 
     private fun checkTypeArguments(holder: RsProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = getTypeArgumentsAndDeclaration(o) ?: return
-        if (declaration !is RsGenericDeclaration) return
         val actualArgs = actualArguments?.typeReferenceList?.size ?: 0
 
         val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size

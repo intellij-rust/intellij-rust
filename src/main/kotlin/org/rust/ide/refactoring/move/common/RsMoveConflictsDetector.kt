@@ -6,8 +6,8 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.RefactoringUIUtil
 import com.intellij.util.containers.MultiMap
 import org.rust.ide.refactoring.move.common.RsMoveUtil.addInner
@@ -268,7 +268,7 @@ fun addVisibilityConflict(conflicts: MultiMap<PsiElement, String>, reference: Rs
     val referenceDescription = RefactoringUIUtil.getDescription(reference.containingMod, true)
     val targetDescription = RefactoringUIUtil.getDescription(target, true)
     val message = "$referenceDescription uses $targetDescription which will be inaccessible after move"
-    conflicts.putValue(reference, CommonRefactoringUtil.capitalize(message))
+    conflicts.putValue(reference, StringUtil.capitalize(message))
 }
 
 private val RsImplItem.implementingType: TyAdt? get() = typeReference?.type as? TyAdt
