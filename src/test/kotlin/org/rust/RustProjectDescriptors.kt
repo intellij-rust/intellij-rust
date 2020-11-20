@@ -8,6 +8,7 @@ package org.rust
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -31,6 +32,8 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
+import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.runWithEnabledFeature
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
@@ -40,6 +43,14 @@ object DefaultDescriptor : RustProjectDescriptorBase()
 object EmptyDescriptor : LightProjectDescriptor()
 
 object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
+
+object WithActualStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor) {
+    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
+        return runWithEnabledFeature(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) {
+            super.testCargoProject(module, contentRoot)
+        }
+    }
+}
 
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)
 
@@ -123,8 +134,17 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         }
 
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        val stdlib = StandardLibrary.fromFile(module.project, stdlib!!)!!
-        return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT, rustcInfo)
+        val disposable = Disposer.newDisposable("testCargoProject")
+        // TODO: use RustupTestFixture somehow
+        module.project.rustSettings.modifyTemporary(disposable) {
+            it.toolchain = toolchain
+        }
+        try {
+            val stdlib = StandardLibrary.fromFile(module.project, stdlib!!)!!
+            return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT, rustcInfo)
+        } finally {
+            Disposer.dispose(disposable)
+        }
     }
 
     override fun setUp(fixture: CodeInsightTestFixture) {
