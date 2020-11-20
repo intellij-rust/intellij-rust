@@ -190,6 +190,8 @@ private class RsCodeFenceProvider(
             }
         }
         if (lastChildWasContent) {
+            // BACKCOMPAT: 2020.2
+            @Suppress("DEPRECATION")
             codeText.appendln()
         }
 

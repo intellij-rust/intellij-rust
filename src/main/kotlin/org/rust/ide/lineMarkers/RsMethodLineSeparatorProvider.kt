@@ -38,6 +38,8 @@ class RsMethodLineSeparatorProvider : LineMarkerProvider {
 
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
+        // BACKCOMPAT: 2020.2
+        @Suppress("DEPRECATION")
         return LineMarkerInfo(anchor, anchor.textRange, null, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
             separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
             separatorPlacement = SeparatorPlacement.TOP

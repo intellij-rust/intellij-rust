@@ -55,6 +55,8 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
             else -> version
         }
 
+        // BACKCOMPAT: 2020.2
+        @Suppress("DEPRECATION")
         return LineMarkerInfo(
             anchor,
             anchor.textRange,

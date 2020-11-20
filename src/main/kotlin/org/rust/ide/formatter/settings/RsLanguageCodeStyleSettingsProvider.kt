@@ -41,6 +41,8 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
             else -> ""
         }
 
+    // BACKCOMPAT: 2020.2
+    @Suppress("DEPRECATION")
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (settingsType) {

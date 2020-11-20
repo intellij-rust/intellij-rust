@@ -129,6 +129,8 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
 
                     val presentation = typeHintsFactory.typeHint(type)
                     val finalPresentation = presentation.withDisableAction(declaration.project)
+                    // BACKCOMPAT: 2020.2
+                    @Suppress("DEPRECATION")
                     sink.addInlineElement(typeElement.endOffset, false, finalPresentation)
                 }
             }
@@ -166,6 +168,8 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
                 val project = binding.project
                 val presentation = typeHintsFactory.typeHint(binding.type)
                 val finalPresentation = presentation.withDisableAction(project)
+                // BACKCOMPAT: 2020.2
+                @Suppress("DEPRECATION")
                 sink.addInlineElement(binding.endOffset, false, finalPresentation)
             }
         }
