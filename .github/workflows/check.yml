@@ -31,7 +31,7 @@ jobs:
             fail-fast: false
             matrix:
                 os: [ ubuntu-latest, windows-latest ]
-                rust-version: [ 1.47.0, nightly-2020-10-04 ]
+                rust-version: [ 1.48.0, nightly-2020-10-04 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 202, 203 ]
                 resolve-engine: [ resolve-stable ]
@@ -43,7 +43,7 @@ jobs:
                       platform-version: 202
                       resolve-engine: resolve-stable
                     - os: ubuntu-latest
-                      rust-version: 1.47.0
+                      rust-version: 1.48.0
                       base-ide: idea
                       platform-version: 203
                       resolve-engine: resolve-new
