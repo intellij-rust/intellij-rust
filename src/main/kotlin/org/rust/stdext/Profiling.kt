@@ -28,6 +28,8 @@ class Timings(
     fun <T: Any> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
 
     private fun <T: Any> measureInternal(name: String, f: () -> T): T {
+        // BACKCOMPAT: 2020.2
+        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
         var result: T? = null
         val time = measureTimeMillis { result = f() }
         valuesTotal.merge(name, time, Long::plus)
@@ -36,6 +38,8 @@ class Timings(
     }
 
     fun <T: Any> measureSum(name: String, f: () -> T): T {
+        // BACKCOMPAT: 2020.2
+        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
         var result: T? = null
         val time = measureTimeMillis { result = f() }
         valuesTotal.merge(name, time, Long::plus)
@@ -157,6 +161,8 @@ class RsStopWatch(
     }
 
     fun <T> measure(block: () -> T): T {
+        // BACKCOMPAT: 2020.2
+        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
         var result: T? = null
         totalNs.addAndGet(measureNanoTime { result = block() })
         @Suppress("UNCHECKED_CAST")
@@ -181,6 +187,8 @@ class RsReentrantStopWatch(override val name: String) : RsWatch {
     }
 
     fun <T> measure(block: () -> T): T {
+        // BACKCOMPAT: 2020.2
+        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
         var result: T? = null
         if (nesting.enter() && started.get()) {
             totalNs.addAndGet(measureNanoTime { result = block() })

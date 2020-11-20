@@ -26,6 +26,8 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         val crate = parent.containingCargoPackage?.findDependency(crateName) ?: return null
         if (crate.pkg.source == null) return null
 
+        // BACKCOMPAT: 2020.2
+        @Suppress("DEPRECATION")
         return LineMarkerInfo(
             element,
             element.textRange,

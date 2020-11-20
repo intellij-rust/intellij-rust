@@ -7,22 +7,25 @@ package org.rust.cargo.icons
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.util.IconLoader
+import javax.swing.Icon
 
 object CargoIcons {
-    val ICON = IconLoader.getIcon("/icons/cargo.svg")
-    val LOCK_ICON = IconLoader.getIcon("/icons/cargo-lock.svg")
-    val BUILD_RS_ICON = IconLoader.getIcon("/icons/build-rs.svg")
-    val EXTERNAL_LINTER = IconLoader.getIcon("/icons/external-linter.svg")
+    val ICON = load("/icons/cargo.svg")
+    val LOCK_ICON = load("/icons/cargo-lock.svg")
+    val BUILD_RS_ICON = load("/icons/build-rs.svg")
+    val EXTERNAL_LINTER = load("/icons/external-linter.svg")
     val TEST = AllIcons.RunConfigurations.TestState.Run
     val TEST_GREEN = AllIcons.RunConfigurations.TestState.Green2
     val TEST_RED = AllIcons.RunConfigurations.TestState.Red2
 
     // Icons for target nodes in cargo toolwindow
-    val TARGETS = IconLoader.getIcon("/icons/targets.svg")
-    val BIN_TARGET = IconLoader.getIcon("/icons/targetBin.svg")
-    val LIB_TARGET = IconLoader.getIcon("/icons/targetLib.svg")
-    val TEST_TARGET = IconLoader.getIcon("/icons/targetTest.svg")
-    val BENCH_TARGET = IconLoader.getIcon("/icons/targetBench.svg")
-    val EXAMPLE_TARGET = IconLoader.getIcon("/icons/targetExample.svg")
-    val CUSTOM_BUILD_TARGET = IconLoader.getIcon("/icons/targetCustomBuild.svg")
+    val TARGETS = load("/icons/targets.svg")
+    val BIN_TARGET = load("/icons/targetBin.svg")
+    val LIB_TARGET = load("/icons/targetLib.svg")
+    val TEST_TARGET = load("/icons/targetTest.svg")
+    val BENCH_TARGET = load("/icons/targetBench.svg")
+    val EXAMPLE_TARGET = load("/icons/targetExample.svg")
+    val CUSTOM_BUILD_TARGET = load("/icons/targetCustomBuild.svg")
+
+    private fun load(path: String): Icon = IconLoader.getIcon(path, CargoIcons::class.java)
 }

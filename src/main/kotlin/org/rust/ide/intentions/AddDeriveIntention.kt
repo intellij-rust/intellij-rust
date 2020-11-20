@@ -59,8 +59,7 @@ class AddDeriveIntention : RsElementBaseIntentionAction<AddDeriveIntention.Conte
 
     private fun moveCaret(editor: Editor, deriveAttr: RsOuterAttr) {
         val offset = deriveAttr.metaItem.metaItemArgs?.rparen?.textOffset ?:
-            deriveAttr.rbrack.textOffset ?:
-            deriveAttr.textOffset
+            deriveAttr.rbrack.textOffset
         editor.caretModel.moveToOffset(offset)
     }
 }

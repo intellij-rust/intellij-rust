@@ -97,6 +97,8 @@ class CargoToolWindow(
     private val projectTree = CargoProjectsTree()
     private val projectStructure = CargoProjectTreeStructure(projectTree, project)
 
+    // BACKCOMPAT: 2020.2
+    @Suppress("UnstableApiUsage", "DEPRECATION")
     val treeExpander: TreeExpander = object : DefaultTreeExpander(projectTree) {
         override fun isVisible(event: AnActionEvent): Boolean = super.isVisible(event) && project.hasCargoProject
     }

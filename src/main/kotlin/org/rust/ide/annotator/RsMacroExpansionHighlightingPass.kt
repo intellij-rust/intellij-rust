@@ -112,7 +112,7 @@ class RsMacroExpansionHighlightingPass(
     override fun doApplyInformationToEditor() {
         UpdateHighlightersUtil.setHighlightersToEditor(
             myProject,
-            myDocument!!,
+            myDocument,
             restrictedRange.startOffset,
             restrictedRange.endOffset,
             results,

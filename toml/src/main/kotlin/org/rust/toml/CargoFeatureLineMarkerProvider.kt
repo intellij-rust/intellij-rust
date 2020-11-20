@@ -104,6 +104,8 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
                     FeatureState.Enabled -> RsIcons.FEATURE_CHECKED_MARK
                     FeatureState.Disabled, null -> RsIcons.FEATURE_UNCHECKED_MARK
                 }
+                // BACKCOMPAT: 2020.2
+                @Suppress("DEPRECATION")
                 LineMarkerInfo(
                     anchor,
                     anchor.textRange,
@@ -119,6 +121,8 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
                     FeatureState.Enabled -> RsIcons.FEATURE_CHECKED_MARK_GRAYED
                     FeatureState.Disabled, null -> RsIcons.FEATURE_UNCHECKED_MARK_GRAYED
                 }
+                // BACKCOMPAT: 2020.2
+                @Suppress("DEPRECATION")
                 LineMarkerInfo(
                     anchor,
                     anchor.textRange,
@@ -134,6 +138,8 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
     private fun genSettingsLineMarkerInfo(header: TomlTableHeader): LineMarkerInfo<PsiElement> {
         val anchor = header.firstChild
 
+        // BACKCOMPAT: 2020.2
+        @Suppress("DEPRECATION")
         return LineMarkerInfo(
             anchor,
             anchor.textRange,
