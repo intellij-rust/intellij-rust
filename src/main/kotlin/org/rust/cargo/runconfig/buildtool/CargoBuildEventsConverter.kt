@@ -6,7 +6,6 @@
 package org.rust.cargo.runconfig.buildtool
 
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
@@ -16,6 +15,7 @@ import com.intellij.build.events.impl.*
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.webcore.util.JsonUtil.tryParseJsonObject
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
@@ -49,7 +49,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         }
 
         return try {
-            val json = parseJsonObject(text)
+            val json = tryParseJsonObject(text)
             tryHandleRustcMessage(json, messageConsumer) || tryHandleRustcArtifact(json)
         } catch (e: JsonSyntaxException) {
             tryHandleCargoMessage(text, messageConsumer)
@@ -62,7 +62,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         messageConsumer: (BuildEvent) -> Unit
     ): Boolean {
         val message = try {
-            val json = parseJsonObject(line)
+            val json = tryParseJsonObject(line)
             val rustcMessage = json?.let { CargoTopMessage.fromJson(it)?.message }
             rustcMessage?.rendered ?: return false
         } catch (e: JsonSyntaxException) {
@@ -91,7 +91,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         val messageEvent = createMessageEvent(parentEventId, kind, message, detailedMessage, filePosition)
         if (messageEvents.add(messageEvent)) {
             if (startEvents.none { it.id == parentEventId }) {
-                handleCompilingMessage("Compiling $parentEventId", true, messageConsumer)
+                handleCompilingMessage("Compiling $parentEventId", false, messageConsumer)
             }
 
             messageConsumer.accept(messageEvent)
@@ -283,9 +283,6 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
 
         private val ERROR_OR_WARNING: List<MessageEvent.Kind> =
             listOf(MessageEvent.Kind.ERROR, MessageEvent.Kind.WARNING)
-
-        private fun parseJsonObject(line: String): JsonObject? =
-            JsonParser.parseString(line).takeIf { it.isJsonObject }?.asJsonObject
 
         private fun getMessageKind(kind: String): MessageEvent.Kind =
             when (kind) {

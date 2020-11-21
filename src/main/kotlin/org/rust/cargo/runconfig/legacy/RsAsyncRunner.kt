@@ -5,8 +5,6 @@
 
 package org.rust.cargo.runconfig.legacy
 
-import com.google.gson.JsonParser
-import com.google.gson.JsonSyntaxException
 import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.RunContentExecutor
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -38,6 +36,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.tools.Cargo.Companion.cargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
+import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.openapiext.saveAllDocuments
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -181,20 +180,9 @@ abstract class RsAsyncRunner(
                                 return
                             }
 
-                            result = output.stdoutLines
-                                .mapNotNull {
-                                    try {
-                                        val jsonElement = JsonParser.parseString(it)
-                                        val jsonObject = if (jsonElement.isJsonObject) {
-                                            jsonElement.asJsonObject
-                                        } else {
-                                            return@mapNotNull null
-                                        }
-                                        CargoMetadata.Artifact.fromJson(jsonObject)
-                                    } catch (e: JsonSyntaxException) {
-                                        null
-                                    }
-                                }
+                            result = output.stdoutLines.asSequence()
+                                .mapNotNull { tryParseJsonObject(it) }
+                                .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
                                 .filter { (target, profile) ->
                                     val isSuitableTarget = when (target.cleanKind) {
                                         CargoMetadata.TargetKind.BIN -> true
@@ -208,8 +196,8 @@ abstract class RsAsyncRunner(
                                     }
                                     isSuitableTarget && (!isTestBuild || profile.test)
                                 }
-                                .flatMap { it.executables }
-                                .let(BuildResult::Binaries)
+                                .flatMap { it.executables.asSequence() }
+                                .let { BuildResult.Binaries(it.toList()) }
                         }
 
                         override fun onSuccess() {
