@@ -56,6 +56,8 @@ private fun RsUseSpeck.isUsed(): Boolean {
     return isUseSpeckUsed(this, usage)
 }
 
+private data class NamedItem(val name: String, val item: RsElement)
+
 private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     // Use speck with an empty group is always unused
     val useGroup = useSpeck.useGroup
@@ -65,20 +67,17 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
         val module = useSpeck.path?.reference?.resolve() as? RsMod ?: return true
 
         // Extract all visible items from the target module
-        val candidateItems = module.itemsAndMacros.filter {
-            (it as? RsVisible)?.isVisibleFrom(useSpeck.containingMod) != null
-        }
+        val candidateItems = module.exportedItems(useSpeck)
 
         // Find path usages with names of the extracted items
         val usedItems = candidateItems.mapNotNull {
-            val name = (it as? RsNamedElement)?.name ?: return@mapNotNull null
-            usage.pathUsages[name]
+            usage.pathUsages[it.name]
         }.fold(mutableSetOf<RsElement>()) { acc, value ->
             acc.addAll(value)
             acc
         }
 
-        Pair(candidateItems.toSet(), usedItems)
+        Pair(candidateItems.map { it.item }.toSet(), usedItems)
     } else {
         val path = useSpeck.path ?: return true
         val items = path.reference?.multiResolve() ?: return true
@@ -90,4 +89,29 @@ private fun isUseSpeckUsed(useSpeck: RsUseSpeck, usage: PathUsageMap): Boolean {
     }
 
     return candidateItems.intersects(usedItems) || candidateItems.intersects(usage.traitUsages)
+}
+
+private fun RsMod.exportedItems(context: RsElement): List<NamedItem> {
+    val allItems = expandedItemsCached
+    val items = allItems.rest.filter {
+        (it as? RsVisible)?.isVisibleFrom(context.containingMod) != null
+    }.mapNotNull {
+        val name = (it as? RsNamedElement)?.name ?: return@mapNotNull null
+        NamedItem(name, it)
+    }
+    val exports = allItems.namedImports.filter {
+        it.isPublic
+    }.mapNotNull {
+        val item = it.path.reference?.resolve() ?: return@mapNotNull null
+        val name = it.nameInScope
+        NamedItem(name, item)
+    }
+    val starExports = allItems.starImports.filter {
+        it.isPublic
+    }.flatMap {
+        val module = it.speck.path?.reference?.resolve() as? RsMod ?: return@flatMap emptyList()
+        module.exportedItems(it.speck)
+    }
+
+    return items + exports + starExports
 }

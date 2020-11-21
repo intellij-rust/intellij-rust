@@ -5,10 +5,6 @@
 
 package org.rust.ide.inspections.lints
 
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.executeCommand
-import com.intellij.psi.PsiDocumentManager
-import org.intellij.lang.annotations.Language
 import org.rust.MockAdditionalCfgOptions
 import org.rust.ide.inspections.RsInspectionsTestBase
 
@@ -258,6 +254,32 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
     fun `test used star import`() = checkByText("""
         mod foo {
             pub struct S;
+        }
+
+        use foo::*;
+
+        fn bar(_: S) {}
+    """)
+
+    fun `test star import reexport`() = checkByText("""
+        mod foo {
+            mod bar {
+                pub struct S;
+            }
+            pub use bar::S as T;
+        }
+
+        use foo::*;
+
+        fn bar(_: T) {}
+    """)
+
+    fun `test star import star reexport`() = checkByText("""
+        mod foo {
+            mod bar {
+                pub struct S;
+            }
+            pub use bar::*;
         }
 
         use foo::*;
