@@ -6,17 +6,17 @@
 package org.rust.ide.inspections.lints
 
 import com.intellij.openapi.util.Key
+import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsItemsOwner
-import org.rust.lang.core.psi.ext.basePath
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.ResolvedPath
 import org.rust.lang.core.types.inference
+import org.rust.openapiext.processElementsWithMacros
 
 data class PathUsageMap(
     val pathUsages: Map<String, Set<RsElement>>,
@@ -35,52 +35,63 @@ private fun calculatePathUsages(owner: RsItemsOwner): PathUsageMap {
     val directUsages = mutableMapOf<String, MutableSet<RsElement>>()
     val traitUsages = mutableSetOf<RsTraitItem>()
 
-    class PathVisitor : RsRecursiveVisitor() {
-        override fun visitElement(element: RsElement) {
-            if (element.isEnabledByCfg) {
-                super.visitElement(element)
-            }
+    for (child in owner.children) {
+        processElementsWithMacros(child) { element ->
+            handleElement(element, directUsages, traitUsages)
         }
+    }
 
-        override fun visitModItem(o: RsModItem) {
-            // stop at module boundaries
+    return PathUsageMap(directUsages, traitUsages)
+}
+
+private fun handleElement(
+    element: PsiElement,
+    directUsages: MutableMap<String, MutableSet<RsElement>>,
+    traitUsages: MutableSet<RsTraitItem>
+): Boolean {
+    fun addItem(name: String, item: RsElement) {
+        directUsages.getOrPut(name) { mutableSetOf() }.add(item)
+    }
+
+    if (!element.isEnabledByCfg) return false
+
+    return when (element) {
+        is RsModItem -> false
+        is RsUseItem -> {
+            val useSpeck = element.useSpeck ?: return false
+
+            if (useSpeck.alias == null) return false
+            val path = useSpeck.path ?: return false
+
+            if (path.qualifier != null) return false
+            val item = path.reference?.resolve() ?: return false
+            val name = path.referenceName ?: return false
+
+            addItem(name, item)
+            false
         }
+        is RsPath -> {
+            val base = element.basePath()
 
-        override fun visitUseItem(o: RsUseItem) {
-            // ignore usages in use items
-        }
-
-        override fun visitPath(path: RsPath) {
-            val base = path.basePath()
-
-            if (base == path) {
-                val name = path.referenceName ?: return
-                val targets = path.reference?.multiResolve().orEmpty()
+            if (base == element) {
+                val name = element.referenceName ?: return false
+                val targets = element.reference?.multiResolve().orEmpty()
                 targets.forEach {
                     addItem(name, it)
                 }
             } else {
-                val requiredTraits = getAssociatedItemRequiredTraits(path).orEmpty()
+                val requiredTraits = getAssociatedItemRequiredTraits(element).orEmpty()
                 traitUsages.addAll(requiredTraits)
-                super.visitPath(path)
             }
+            true
         }
-
-        override fun visitMethodCall(o: RsMethodCall) {
-            val requiredTraits = getMethodRequiredTraits(o).orEmpty()
+        is RsMethodCall -> {
+            val requiredTraits = getMethodRequiredTraits(element).orEmpty()
             traitUsages.addAll(requiredTraits)
-            super.visitMethodCall(o)
+            true
         }
-
-        private fun addItem(name: String, item: RsElement) {
-            directUsages.getOrPut(name) { mutableSetOf() }.add(item)
-        }
+        else -> true
     }
-
-    val visitor = PathVisitor()
-    owner.acceptChildren(visitor)
-
-    return PathUsageMap(directUsages, traitUsages)
 }
 
 private fun getMethodRequiredTraits(call: RsMethodCall): Set<RsTraitItem>? {

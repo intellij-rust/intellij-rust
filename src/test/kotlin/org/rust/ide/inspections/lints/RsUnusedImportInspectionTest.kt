@@ -6,6 +6,8 @@
 package org.rust.ide.inspections.lints
 
 import org.rust.MockAdditionalCfgOptions
+import org.rust.MockEdition
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspection::class) {
@@ -261,6 +263,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         fn bar(_: S) {}
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test star import reexport`() = checkByText("""
         mod foo {
             mod bar {
@@ -274,6 +277,7 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         fn bar(_: T) {}
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test star import star reexport`() = checkByText("""
         mod foo {
             mod bar {
@@ -299,6 +303,34 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         fn bar(_: S) {}
     """)
 
+    /*@MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in child module`() = checkByText("""
+       mod foo {
+            mod bar {
+                pub struct S;
+            }
+            use bar::S;
+
+            mod baz {
+                use super::S;
+                fn fun(_: S) {}
+            }
+        }
+    """)*/
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test private import used in same module`() = checkByText("""
+       mod foo {
+            mod bar {
+                pub struct S;
+            }
+            use bar::S;
+            use S as T;
+
+            fn fun(_: T) {}
+        }
+    """)
+
     fun `test unused import in function`() = checkByText("""
         mod foo {
             pub struct S;
@@ -317,6 +349,23 @@ class RsUnusedImportInspectionTest : RsInspectionsTestBase(RsUnusedImportInspect
         fn bar() {
             use foo::S;
             let _: S;
+        }
+    """)
+
+    fun `test usage inside macro`() = checkByText("""
+        mod foo {
+            pub struct S;
+        }
+        use foo::S;
+
+        macro_rules! handle {
+            (${"$"}p:path) => {
+                let _: ${"$"}p;
+            }
+        }
+
+        fn bar() {
+            handle!(S);
         }
     """)
 
