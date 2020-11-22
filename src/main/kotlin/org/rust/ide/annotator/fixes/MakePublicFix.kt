@@ -53,11 +53,6 @@ class MakePublicFix(
             startElement.addBefore(RsPsiFactory(project).createPub(), anchor)
         } else {
             startElement.addBefore(RsPsiFactory(project).createPubCrateRestricted(), anchor)
-            // External functions and struct fields are special case when inserting pub(crate)
-            // so we have to insert space after `pub(crate)` manually
-            if (anchor is RsExternAbi || anchor?.parent is RsNamedFieldDecl) {
-                startElement.addBefore(RsPsiFactory(project).createPubCrateRestricted().nextSibling, anchor)
-            }
         }
     }
 
