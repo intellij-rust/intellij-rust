@@ -401,6 +401,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkReferenceIsPublic(ref: RsReferenceElement, o: RsElement, holder: RsAnnotationHolder) {
         val reference = ref.reference ?: return
+        val highlightedElement = ref.referenceNameElement ?: return
         val referenceName = ref.referenceName ?: return
         val resolvedElement = reference.resolve() as? RsVisible ?: return
         val oMod = o.contextStrict<RsMod>() ?: return
@@ -416,12 +417,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             element is RsNamedFieldDecl -> {
                 val structName = element.ancestorStrict<RsStructItem>()?.crateRelativePath?.removePrefix("::") ?: ""
                 RsDiagnostic.StructFieldAccessError(
-                    ref, referenceName, structName,
+                    highlightedElement, referenceName, structName,
                     MakePublicFix.createIfCompatible(element, element.name, withinOneCrate)
                 )
             }
             ref is RsMethodCall -> RsDiagnostic.AccessError(
-                ref.identifier, RsErrorCode.E0624, "Method",
+                highlightedElement, RsErrorCode.E0624, "Method",
                 MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
             )
             else -> {
@@ -431,7 +432,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 }
 
                 RsDiagnostic.AccessError(
-                    ref, RsErrorCode.E0603, itemType,
+                    highlightedElement, RsErrorCode.E0603, itemType,
                     MakePublicFix.createIfCompatible(element, referenceName, withinOneCrate)
                 )
             }

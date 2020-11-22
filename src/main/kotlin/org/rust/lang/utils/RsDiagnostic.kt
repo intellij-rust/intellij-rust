@@ -290,7 +290,7 @@ sealed class RsDiagnostic(
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
-            if (element is RsStructLiteralField) E0451 else E0616,
+            if (element.parent is RsStructLiteralField) E0451 else E0616,
             "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private",
             fixes = listOfNotNull(fix)
         )

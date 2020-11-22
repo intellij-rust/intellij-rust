@@ -16,7 +16,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const BAR: i32 = 10;
         }
         fn main() {
-            <error>foo::BAR/*caret*/</error>;
+            foo::<error>BAR/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -33,7 +33,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const BAR: i32 = 10;
         }
         fn main() {
-            <error>foo::BAR/*caret*/</error>;
+            foo::<error>BAR/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -51,7 +51,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const BAR: i32 = 10;
         }
         fn main() {
-            <error>foo::BAR/*caret*/</error>;
+            foo::<error>BAR/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -70,7 +70,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const BAR: i32 = 10;
         }
         fn main() {
-            <error>foo::BAR/*caret*/</error>;
+            foo::<error>BAR/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -90,7 +90,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             static BAR: i32 = 10;
         }
         fn main() {
-            &<error>foo::BAR/*caret*/</error>;
+            &foo::<error>BAR/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -110,7 +110,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             static mut BAR: i32 = 10;
         }
         fn main() {
-            unsafe { &<error>foo::BAR/*caret*/</error> };
+            unsafe { &foo::<error>BAR/*caret*/</error> };
         }
     """, """
         mod foo {
@@ -128,7 +128,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar</error>/*caret*/();
         }
     """, """
         mod foo {
@@ -144,7 +144,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             async fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -160,7 +160,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             unsafe fn bar() {}
         }
         fn main() {
-            unsafe { <error>foo::bar</error>/*caret*/(); };
+            unsafe { foo::<error>bar</error>/*caret*/(); };
         }
     """, """
         mod foo {
@@ -176,7 +176,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -192,7 +192,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             extern "C" fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -209,7 +209,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar</error>/*caret*/();
         }
     """, """
         mod foo {
@@ -228,7 +228,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             async fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -247,7 +247,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             unsafe fn bar() {}
         }
         fn main() {
-            unsafe { <error>foo::bar</error>/*caret*/(); };
+            unsafe { foo::<error>bar</error>/*caret*/(); };
         }
     """, """
         mod foo {
@@ -265,7 +265,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar</error>/*caret*/();
         }
     """, """
         mod foo {
@@ -284,7 +284,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             extern "C" fn bar() {}
         }
         fn main() {
-            <error>foo::bar</error>/*caret*/();
+            foo::<error>bar/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -304,7 +304,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
         fn main() {
-            <error>foo::bar::quux</error>/*caret*/();
+            foo::bar::<error>quux/*caret*/</error>();
         }
     """, """
         mod foo {
@@ -325,7 +325,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
         fn main() {
-            <error>foo::bar::quux</error>/*caret*/();
+            foo::bar::<error>quux</error>/*caret*/();
         }
     """, """
         mod foo {
@@ -345,7 +345,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             struct Bar;
         }
         fn main() {
-            <error>foo::Bar/*caret*/</error>;
+            foo::<error>Bar/*caret*/</error>;
         }
     """, """
         mod foo {
@@ -362,7 +362,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             // Some simple trait
             trait Bar {}
         }
-        fn quux<T: <error>foo::Bar/*caret*/</error>>() {}
+        fn quux<T: foo::<error>Bar/*caret*/</error>>() {}
     """, """
         mod foo {
             // Some simple trait
@@ -376,7 +376,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             // Some unsafe trait
             unsafe trait Bar {}
         }
-        fn quux<T: <error>foo::Bar/*caret*/</error>>() {}
+        fn quux<T: foo::<error>Bar/*caret*/</error>>() {}
     """, """
         mod foo {
             // Some unsafe trait
@@ -390,7 +390,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             // Some auto trait
             auto trait Bar {}
         }
-        fn quux<T: <error>foo::Bar/*caret*/</error>>() {}
+        fn quux<T: foo::<error>Bar/*caret*/</error>>() {}
     """, """
         mod foo {
             // Some auto trait
@@ -405,7 +405,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             #[doc(hidden)]
             unsafe auto trait Bar {}
         }
-        fn quux<T: <error>foo::Bar/*caret*/</error>>() {}
+        fn quux<T: foo::<error>Bar/*caret*/</error>>() {}
     """, """
         mod foo {
             // Some unsafe auto trait
@@ -422,7 +422,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             enum Bar { Baz }
         }
         fn main() {
-            <error><error>foo::Bar/*caret*/</error>::Baz</error>;
+            foo::<error>Bar/*caret*/</error>::<error>Baz</error>;
         }
     """, """
         mod foo {
@@ -464,7 +464,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             pub(crate) struct Bar { baz: i32 }
         }
         fn main() {
-            let foo = foo::Bar { <error>baz/*caret*/: 1</error> };
+            let foo = foo::Bar { <error>baz/*caret*/</error>: 1 };
         }
     """, """
         mod foo {
@@ -504,7 +504,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             type Bar = i32;
         }
         fn main() {
-            let foo : <error>foo::Bar/*caret*/</error> = 1;
+            let foo : foo::<error>Bar/*caret*/</error> = 1;
         }
     """, """
         mod foo {
@@ -523,7 +523,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
         fn main() {
-            <error>foo::bar/*caret*/</error>::quux();
+            foo::<error>bar/*caret*/</error>::quux();
         }
     """, """
         mod foo {
@@ -542,7 +542,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- main.rs
         extern crate test_package;
         fn main() {
-            <error>test_package::foo::bar/*caret*/</error>();
+            test_package::foo::<error>bar/*caret*/</error>();
         }
     //- lib.rs
         pub mod foo {
@@ -566,7 +566,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             mod bar;
         }
         fn main() {
-            <error>foo::bar/*caret*/</error>::baz();
+            foo::<error>bar/*caret*/</error>::baz();
         }
     //- foo/bar.rs
         pub fn baz() {}
@@ -588,7 +588,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
 
         fn main() {
-            <error>foo::A/*caret*/</error>;
+            foo::<error>A/*caret*/</error>;
         }
     """, """
         pub mod foo {
@@ -608,7 +608,7 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- main.rs
         extern crate test_package;
         fn main() {
-            <error>test_package::foo::A/*caret*/</error>;
+            test_package::foo::<error>A/*caret*/</error>;
         }
     """, """
     //- lib.rs

@@ -1114,7 +1114,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
         fn main() {
-            let f = some_module::Foo { <error descr="Field `x` of struct `some_module::Foo` is private [E0451]">x: 0</error> };
+            let f = some_module::Foo { <error descr="Field `x` of struct `some_module::Foo` is private [E0451]">x</error>: 0 };
         }
     """)
 
@@ -1217,7 +1217,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             const BAR: u32 = 0x_a_bad_1dea_u32;
         }
 
-        use <error descr="Constant `foo::BAR` is private [E0603]">foo::BAR</error>;
+        use foo::<error descr="Constant `BAR` is private [E0603]">BAR</error>;
     """)
 
     fun `test not const outside scope E0603`() = checkErrors("""
@@ -1233,7 +1233,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             fn bar() {}
         }
 
-        use <error descr="Function `foo::bar` is private [E0603]">foo::bar</error>;
+        use foo::<error descr="Function `bar` is private [E0603]">bar</error>;
     """)
 
     fun `test not fn outside scope E0603`() = checkErrors("""
@@ -1249,7 +1249,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             struct Bar;
         }
 
-        use <error descr="Struct `foo::Bar` is private [E0603]">foo::Bar</error>;
+        use foo::<error descr="Struct `Bar` is private [E0603]">Bar</error>;
     """)
 
     fun `test struct fn outside scope E0603`() = checkErrors("""
@@ -1268,7 +1268,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         //- main.rs
             mod foo;
 
-            use <error descr="Module `foo::bar` is private [E0603]">foo::bar</error>::Foo;
+            use foo::<error descr="Module `bar` is private [E0603]">bar</error>::Foo;
     """)
 
     fun `test module is public E0603`() = checkDontTouchAstInOtherFiles("""
@@ -1332,7 +1332,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
         mod bar {
             mod baz {
-                use <error descr="Module `foo::qwe` is private [E0603]">foo::qwe</error>::Foo;
+                use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
             }
         }
     """)
@@ -1348,7 +1348,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         //- bar/mod.rs
             mod baz;
         //- bar/baz.rs
-            use <error descr="Module `foo::qwe` is private [E0603]">foo::qwe</error>::Foo;
+            use foo::<error descr="Module `qwe` is private [E0603]">qwe</error>::Foo;
     """, filePath = "bar/baz.rs")
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -1359,8 +1359,8 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             pub(crate) fn bar() {}
         //- main.rs
             extern crate test_package;
-            use <error descr="Function `test_package::foo` is private [E0603]">test_package::foo</error>; /*caret*/
-            use <error descr="Function `test_package::bar` is private [E0603]">test_package::bar</error>; /*caret*/
+            use test_package::<error descr="Function `foo` is private [E0603]">foo</error>; /*caret*/
+            use test_package::<error descr="Function `bar` is private [E0603]">bar</error>;
     """, checkWarn = false)
 
     fun `test item with crate visibility is visible in the same crate E0603`() = checkErrors("""
@@ -1382,13 +1382,13 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                 pub(super) fn spam() {}
                 pub(in foo) fn eggs() {}
             }
-            use <error descr="Function `self::bar::quux` is private [E0603]">self::bar::quux</error>;
+            use self::bar::<error descr="Function `quux` is private [E0603]">quux</error>;
             use self::bar::spam;
             use self::bar::eggs;
         }
-        use <error descr="Function `foo::bar::quux` is private [E0603]">foo::bar::quux</error>;
-        use <error descr="Function `foo::bar::spam` is private [E0603]">foo::bar::spam</error>;
-        use <error descr="Function `foo::bar::eggs` is private [E0603]">foo::bar::eggs</error>;
+        use foo::bar::<error descr="Function `quux` is private [E0603]">quux</error>;
+        use foo::bar::<error descr="Function `spam` is private [E0603]">spam</error>;
+        use foo::bar::<error descr="Function `eggs` is private [E0603]">eggs</error>;
     """)
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3558
@@ -1413,7 +1413,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         mod foo {
             pub(in foo) trait Bar { fn baz(&self); }
         }
-        fn quux(a: &<error descr="Trait `foo::Bar` is private [E0603]">foo::Bar</error>) {
+        fn quux(a: &foo::<error descr="Trait `Bar` is private [E0603]">Bar</error>) {
             a.<error descr="Method `baz` is private [E0624]">baz</error>();
         }
     """)

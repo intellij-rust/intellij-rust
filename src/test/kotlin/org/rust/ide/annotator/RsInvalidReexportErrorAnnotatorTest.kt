@@ -26,7 +26,7 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
             mod bar {
                 mod baz {}
             }
-            pub use <error descr="Module `bar::baz` is private [E0603]">bar::baz</error>;
+            pub use bar::<error descr="Module `baz` is private [E0603]">baz</error>;
         }
     """)
 
