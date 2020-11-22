@@ -192,4 +192,16 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
             use bar as baz;
         }
     """)
+
+    fun `test make public fix`() = checkFixByText("Make `bar` public", """
+        pub mod foo {
+            mod bar {}
+            pub use <error>bar/*caret*/</error> as baz;
+        }
+    """, """
+        pub mod foo {
+            pub mod bar {}
+            pub use bar/*caret*/ as baz;
+        }
+    """)
 }
