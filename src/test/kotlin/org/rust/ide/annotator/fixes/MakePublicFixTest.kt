@@ -581,4 +581,14 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     //- foo/bar.rs
         pub fn baz() {}
     """, stubOnly = false)
+
+    fun `test make public fix for restricted visibility`() = checkFixIsUnavailable("Make `A` public", """
+        pub mod foo {
+            pub(self) struct A;
+        }
+
+        fn main() {
+            <error>foo::A/*caret*/</error>;
+        }
+    """)
 }

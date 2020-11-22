@@ -1331,7 +1331,7 @@ sealed class RsDiagnostic(
             ERROR,
             if (exportedItem is RsMod) E0365 else E0364,
             "`$name` is private, and cannot be re-exported",
-            fixes = listOf(MakePublicFix(exportedItem, exportedItem.name, false))
+            fixes = listOfNotNull(MakePublicFix.createIfCompatible(exportedItem, exportedItem.name, false))
         )
     }
 }

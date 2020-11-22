@@ -204,4 +204,11 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
             pub use bar/*caret*/ as baz;
         }
     """)
+
+    fun `test make public fix for item with restricted visibility`() = checkFixIsUnavailable("Make `bar` public", """
+        pub mod foo {
+            pub(crate) mod bar {}
+            pub use <error>bar/*caret*/</error> as baz;
+        }
+    """)
 }

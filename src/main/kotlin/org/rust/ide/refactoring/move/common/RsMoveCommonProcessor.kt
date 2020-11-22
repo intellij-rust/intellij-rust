@@ -438,8 +438,8 @@ class RsMoveCommonProcessor(
                         LOG.error("Unexpected item to make public: $item")
                         return
                     }
-                    MakePublicFix(item, itemName, withinOneCrate = false)
-                        .invoke(project, null, containingFile)
+                    MakePublicFix.createIfCompatible(item, itemName, withinOneCrate = false)
+                        ?.invoke(project, null, containingFile)
                 }
             }
             is RsVisibility.Restricted -> run {

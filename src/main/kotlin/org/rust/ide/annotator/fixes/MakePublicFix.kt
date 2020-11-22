@@ -14,8 +14,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class MakePublicFix(
-    element: RsVisible,
+class MakePublicFix private constructor(
+    element: RsVisibilityOwner,
     elementName: String?,
     private val withinOneCrate: Boolean
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
@@ -65,7 +65,11 @@ class MakePublicFix(
     }
 
     companion object {
-        fun createIfCompatible(visible: RsVisible, elementName: String?, withinOneCrate: Boolean): MakePublicFix? {
+        fun createIfCompatible(
+            visible: RsVisibilityOwner,
+            elementName: String?,
+            withinOneCrate: Boolean
+        ): MakePublicFix? {
             return when {
                 // TODO: Allow this fix for pub-restricted elements too
                 visible.visibility is RsVisibility.Private
