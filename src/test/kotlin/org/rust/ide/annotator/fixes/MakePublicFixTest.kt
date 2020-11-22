@@ -582,13 +582,43 @@ class MakePublicFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         pub fn baz() {}
     """, stubOnly = false)
 
-    fun `test make public fix for restricted visibility`() = checkFixIsUnavailable("Make `A` public", """
+    fun `test make public fix for restricted visibility 1`() = checkFixByText("Make `A` public", """
         pub mod foo {
             pub(self) struct A;
         }
 
         fn main() {
             <error>foo::A/*caret*/</error>;
+        }
+    """, """
+        pub mod foo {
+            pub(crate) struct A;
+        }
+
+        fn main() {
+            foo::A/*caret*/;
+        }
+    """)
+
+    fun `test make public fix for restricted visibility 2`() = checkFixByFileTree("Make `A` public", """
+    //- lib.rs
+        pub mod foo {
+            pub(self) struct A;
+        }
+    //- main.rs
+        extern crate test_package;
+        fn main() {
+            <error>test_package::foo::A/*caret*/</error>;
+        }
+    """, """
+    //- lib.rs
+        pub mod foo {
+            pub struct A;
+        }
+    //- main.rs
+        extern crate test_package;
+        fn main() {
+            test_package::foo::A/*caret*/;
         }
     """)
 }
