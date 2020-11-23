@@ -11,7 +11,6 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.ext.edition
 import org.rust.lang.core.psi.shouldIndexFile
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.fileId
@@ -83,7 +82,7 @@ private fun buildDefMapContainingExplicitItems(
         crateDescription = crateDescription
     )
 
-    createExternCrateStdImport(crateRoot, crateRootData)?.let {
+    createExternCrateStdImport(crate, crateRoot, crateRootData)?.let {
         context.imports += it
         defMap.importExternCrateMacros(it.usePath.single())
     }
@@ -135,7 +134,7 @@ private fun findPrelude(crate: Crate, allDependenciesDefMaps: Map<Crate, CrateDe
         .firstOrNull()
 }
 
-private fun createExternCrateStdImport(crateRoot: RsFile, crateRootData: ModData): Import? {
+private fun createExternCrateStdImport(crate: Crate, crateRoot: RsFile, crateRootData: ModData): Import? {
     // Rust injects implicit `extern crate std` in every crate root module unless it is
     // a `#![no_std]` crate, in which case `extern crate core` is injected. However, if
     // there is a (unstable?) `#![no_core]` attribute, nothing is injected.
@@ -150,7 +149,7 @@ private fun createExternCrateStdImport(crateRoot: RsFile, crateRootData: ModData
     return Import(
         crateRootData,
         arrayOf(name),
-        nameInScope = if (crateRoot.edition == CargoWorkspace.Edition.EDITION_2015) name else "_",
+        nameInScope = if (crate.edition == CargoWorkspace.Edition.EDITION_2015) name else "_",
         visibility = crateRootData.visibilityInSelf,
         isExternCrate = true
     )

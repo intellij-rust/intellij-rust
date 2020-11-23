@@ -41,7 +41,7 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
     checkReadAccessAllowed()
     checkIsSmartMode(project)
     return defMapsBuildLock.withLockAndCheckingCancelled {
-        check(defMapsBuildLock.holdCount == 1)
+        check(defMapsBuildLock.holdCount == 1) { "Can't use resolve while building CrateDefMap" }
         if (holder.hasLatestStamp()) return@withLockAndCheckingCancelled holder.defMap
 
         val pool = Executors.newWorkStealingPool()
