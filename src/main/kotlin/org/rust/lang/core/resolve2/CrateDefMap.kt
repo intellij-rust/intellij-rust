@@ -235,9 +235,10 @@ class ModData(
         return usualItems + traitItems
     }
 
-    fun addVisibleItem(name: String, def: PerNs) {
-        val defExisting = visibleItems.putIfAbsent(name, def) ?: return
-        defExisting.update(def)
+    /** Returns true if [visibleItems] were changed */
+    fun addVisibleItem(name: String, def: PerNs): Boolean {
+        val defExisting = visibleItems.putIfAbsent(name, def) ?: return true
+        return defExisting.update(def)
     }
 
     fun asVisItem(): VisItem {
@@ -289,15 +290,18 @@ data class PerNs(
         )
 
     // TODO: Consider unite with [DefCollector#pushResolutionFromImport]
-    fun update(other: PerNs) {
+    /** Returns true if `this` was changed */
+    fun update(other: PerNs): Boolean {
         fun merge(existing: VisItem?, new: VisItem?): VisItem? {
             if (existing == null) return new
             if (new == null) return existing
             return if (new.visibility.isStrictlyMorePermissive(existing.visibility)) new else existing
         }
+        val (typesExisting, valuesExisting, macrosExisting) = this
         types = merge(types, other.types)
         values = merge(values, other.values)
         macros = merge(macros, other.macros)
+        return types !== typesExisting || values !== valuesExisting || macros !== macrosExisting
     }
 
     fun or(other: PerNs): PerNs {

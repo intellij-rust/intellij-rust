@@ -41,8 +41,9 @@ class ModCollectorContext(
      * default behaviour: just add it to [ModData.visibleItems]
      * behaviour when processing expanded items:
      * add it to [ModData.visibleItems] and propagate to modules which have glob import from [ModData]
+     * returns true if [ModData.visibleItems] were changed
      */
-    val onAddItem: (ModData, String, PerNs) -> Unit =
+    val onAddItem: (ModData, String, PerNs) -> Boolean =
         { containingMod, name, perNs -> containingMod.addVisibleItem(name, perNs) }
 )
 
@@ -72,7 +73,7 @@ private class ModCollector(
     private val defMap: CrateDefMap = context.defMap
     private val crateRoot: ModData = context.crateRoot
     private val macroDepth: Int = context.macroDepth
-    private val onAddItem: (ModData, String, PerNs) -> Unit = context.onAddItem
+    private val onAddItem: (ModData, String, PerNs) -> Boolean = context.onAddItem
     private val crate: Crate = context.context.crate
     private val project: Project = context.context.project
 
@@ -114,11 +115,12 @@ private class ModCollector(
         val visItem = convertToVisItem(item, stub)
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs(visItem, item.namespaces)
-        onAddItem(modData, name, perNs)
+        val changed = onAddItem(modData, name, perNs)
         if (item.isProcMacroDef) modData.procMacros += name
 
-        // we have to check `modData[name]` to be sure that `childModules` and `visibleItems` are consistent
-        if (childModData != null && perNs.types === modData.getVisibleItem(name).types) {
+        // We have to check `changed` to be sure that `childModules` and `visibleItems` are consistent.
+        // Note that here we choose first mod if there are multiple mods with same visibility (e.g. CfgDisabled).
+        if (childModData != null && changed) {
             modData.childModules[name] = childModData
         }
     }
