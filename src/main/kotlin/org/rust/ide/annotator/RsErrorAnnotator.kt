@@ -917,14 +917,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val owner = attr.owner ?: return
 
-        val metaItem = attr.metaItem
-        val metaItemArgs = metaItem.metaItemArgs
-
-        if (metaItemArgs == null) {
-            RsDiagnostic.NoAttrParentheses(metaItem, "repr").addToHolder(holder)
-        }
-
-        val reprArgs = metaItemArgs?.metaItemList.orEmpty()
+        val reprArgs = attr.metaItem.metaItemArgs?.metaItemList.orEmpty()
 
         check@ for (reprArg in reprArgs) {
             val reprName = reprArg.name ?: continue
