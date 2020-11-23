@@ -203,7 +203,7 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     override fun getAttributes(file: VirtualFile): FileAttributes? {
         val item = convert(file) ?: return null
         val length = ((item as? FSFile)?.length ?: 0).toLong()
-        return FileAttributes(item is FSDir, false, false, false, length, item.timestamp, true)
+        return createFileAttributes(item is FSDir, length, item.timestamp)
     }
 
     sealed class FSItem {
