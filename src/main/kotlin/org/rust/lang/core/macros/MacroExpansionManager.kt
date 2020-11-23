@@ -1021,6 +1021,14 @@ private class MacroExpansionServiceImplInner(
 
         project.taskQueue.cancelTasks(RsTask.TaskType.MACROS_CLEAR)
 
+        val taskQueue = project.taskQueue
+        if (!taskQueue.isEmpty) {
+            while (!taskQueue.isEmpty && !project.isDisposed) {
+                LaterInvocator.dispatchPendingFlushes()
+                Thread.sleep(10)
+            }
+        }
+
         if (saveCacheOnDispose) {
             runBlocking {
                 save()
@@ -1029,9 +1037,10 @@ private class MacroExpansionServiceImplInner(
             dirs.dataFile.delete()
         }
 
-        releaseExpansionDirectory()
         pool.shutdownNow()
         pool.awaitTermination(5, TimeUnit.SECONDS)
+
+        releaseExpansionDirectory()
     }
 }
 
