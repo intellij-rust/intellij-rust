@@ -2150,13 +2150,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test enum with repr annotation without parentheses`() = checkErrors("""
-        #[<error descr="Malformed `repr` attribute input: missing parentheses">repr</error>]
-        enum Bad {
-            X = -1
-        }
-    """)
-
     fun `test duplicate enum discriminant repr type invalid range E0081`() = checkErrors("""
         #[repr(u8)]
         enum Good {
