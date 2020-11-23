@@ -19,6 +19,7 @@ import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve2.Visibility.*
+import org.rust.lang.core.resolve2.util.PerNsHashMap
 import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
@@ -183,9 +184,13 @@ class ModData(
     val isCrateRoot: Boolean get() = parent == null
     val name: String get() = path.name
     val parents: Sequence<ModData> get() = generateSequence(this) { it.parent }
+    private val rootModData: ModData = parent?.rootModData ?: this
 
-    // TODO: Compare with storing three maps
-    val visibleItems: MutableMap<String, PerNs> = THashMap()
+    // Optimization to reduce allocations
+    val visibilityInSelf: Restricted = Restricted.create(this)
+
+    // Type is basically `MutableMap<String, PerNs>`
+    val visibleItems: PerNsHashMap<String> = PerNsHashMap(this, rootModData)
 
     val childModules: MutableMap<String, ModData> = hashMapOf()
 
@@ -238,7 +243,10 @@ class ModData(
     /** Returns true if [visibleItems] were changed */
     fun addVisibleItem(name: String, def: PerNs): Boolean {
         val defExisting = visibleItems.putIfAbsent(name, def) ?: return true
-        return defExisting.update(def)
+        val defNew = defExisting.merge(def)
+        if (defExisting == defNew) return false
+        visibleItems[name] = defNew
+        return true
     }
 
     fun asVisItem(): VisItem {
@@ -262,9 +270,9 @@ class ModData(
 }
 
 data class PerNs(
-    var types: VisItem? = null,
-    var values: VisItem? = null,
-    var macros: VisItem? = null,
+    val types: VisItem? = null,
+    val values: VisItem? = null,
+    val macros: VisItem? = null,
 ) {
     val isEmpty: Boolean get() = types == null && values == null && macros == null
 
@@ -290,18 +298,17 @@ data class PerNs(
         )
 
     // TODO: Consider unite with [DefCollector#pushResolutionFromImport]
-    /** Returns true if `this` was changed */
-    fun update(other: PerNs): Boolean {
-        fun merge(existing: VisItem?, new: VisItem?): VisItem? {
+    fun merge(other: PerNs): PerNs {
+        fun mergeOneNs(existing: VisItem?, new: VisItem?): VisItem? {
             if (existing == null) return new
             if (new == null) return existing
             return if (new.visibility.isStrictlyMorePermissive(existing.visibility)) new else existing
         }
-        val (typesExisting, valuesExisting, macrosExisting) = this
-        types = merge(types, other.types)
-        values = merge(values, other.values)
-        macros = merge(macros, other.macros)
-        return types !== typesExisting || values !== valuesExisting || macros !== macrosExisting
+        return PerNs(
+            mergeOneNs(types, other.types),
+            mergeOneNs(values, other.values),
+            mergeOneNs(macros, other.macros)
+        )
     }
 
     fun or(other: PerNs): PerNs {
@@ -339,9 +346,6 @@ data class PerNs(
  * Could be [RsEnumVariant] (because it can be imported)
  */
 data class VisItem(
-    // TODO:
-    //  Measure memory usage caused by [path]
-    //  Probably it is better to store [containingMod] and [name] separately
     /**
      * Full path to item, including its name.
      * Note: Can't store [containingMod] and [name] separately, because [VisItem] could be used for crate root
@@ -368,8 +372,16 @@ data class VisItem(
 sealed class Visibility {
     object Public : Visibility()
 
-    /** includes private */
-    data class Restricted(val inMod: ModData) : Visibility()
+    /**
+     * Includes private visibility.
+     * Constructor is private because [ModData.visibilityInSelf] must be used instead.
+     * For the same reason [equals] is not overridden.
+     */
+    class Restricted private constructor(val inMod: ModData) : Visibility() {
+        companion object {
+            fun create(inMod: ModData): Restricted = Restricted(inMod)
+        }
+    }
 
     /**
      * Means that we have import to private item

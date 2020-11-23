@@ -243,9 +243,8 @@ private class ModCollector(
         if (!isDeeplyEnabledByCfg) return Visibility.CfgDisabled
         return when (visibility) {
             VisibilityLight.Public -> Visibility.Public
-            // TODO: Optimization - create Visibility.Crate and Visibility.Private to reduce allocations
-            VisibilityLight.RestrictedCrate -> Visibility.Restricted(crateRoot)
-            VisibilityLight.Private -> Visibility.Restricted(modData)
+            VisibilityLight.RestrictedCrate -> crateRoot.visibilityInSelf
+            VisibilityLight.Private -> modData.visibilityInSelf
             is VisibilityLight.Restricted -> resolveRestrictedVisibility(visibility.inPath, crateRoot, modData)
         }
     }
@@ -315,9 +314,9 @@ private fun resolveRestrictedVisibility(
                 "super" -> modData.parent
                 else -> modData.childModules[segment]
             }
-            nextModData ?: return Visibility.Restricted(crateRoot)
+            nextModData ?: return crateRoot.visibilityInSelf
         }
-    return Visibility.Restricted(pathTarget)
+    return pathTarget.visibilityInSelf
 }
 
 private fun ModData.checkChildModulesAndVisibleItemsConsistency() {

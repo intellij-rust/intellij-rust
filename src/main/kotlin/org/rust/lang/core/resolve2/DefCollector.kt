@@ -296,12 +296,12 @@ class DefCollector(
 
         val (typesExisting, valuesExisting, macrosExisting) = defExisting
         val fromGlobImport = modData.fromGlobImport ?: error("fromGlobImport is null during collect")
-        defExisting.types = mergeResolutionOneNs(def.types, defExisting.types, fromGlobImport.types)
-        defExisting.values = mergeResolutionOneNs(def.values, defExisting.values, fromGlobImport.values)
-        defExisting.macros = mergeResolutionOneNs(def.macros, defExisting.macros, fromGlobImport.macros)
-        return typesExisting !== defExisting.types
-            || valuesExisting !== defExisting.values
-            || macrosExisting !== defExisting.macros
+        val typesNew = mergeResolutionOneNs(def.types, defExisting.types, fromGlobImport.types)
+        val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, fromGlobImport.values)
+        val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, fromGlobImport.macros)
+        if (typesExisting === typesNew && valuesExisting === valuesNew && macrosExisting === macrosNew) return false
+        modData.visibleItems[name] = PerNs(typesNew, valuesNew, macrosNew)
+        return true
     }
 
     private fun pushTraitResolutionFromImport(modData: ModData, def: PerNs, visibility: Visibility): Boolean {

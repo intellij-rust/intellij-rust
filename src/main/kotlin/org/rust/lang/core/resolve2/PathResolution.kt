@@ -108,7 +108,7 @@ fun CrateDefMap.resolveExternCrateAsDefMap(name: String): CrateDefMap? =
 private fun CrateDefMap.resolveNameInModule(modData: ModData, name: String): PerNs {
     val fromLegacyMacro = modData.legacyMacros[name]
         ?.let {
-            val visibility = if (it.hasMacroExport) Visibility.Public else Visibility.Restricted(modData)
+            val visibility = if (it.hasMacroExport) Visibility.Public else modData.visibilityInSelf
             val visItem = VisItem(modData.path.append(name), visibility)
             PerNs(macros = visItem)
         } ?: PerNs.Empty
