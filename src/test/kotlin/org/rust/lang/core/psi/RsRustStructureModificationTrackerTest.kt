@@ -14,6 +14,8 @@ import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.INC
 import org.rust.lang.core.psi.RsRustStructureModificationTrackerTest.TestAction.NOT_INC
+import org.rust.lang.core.psi.ext.childOfType
+import org.rust.openapiext.runWriteCommandAction
 
 class RsRustStructureModificationTrackerTest : RsTestBase() {
     private enum class TestAction(val function: (Long, Long) -> Boolean, val comment: String) {
@@ -249,4 +251,16 @@ class RsRustStructureModificationTrackerTest : RsTestBase() {
     fun `test replace expr with block with call`() = doTest(NOT_INC, """
         fn foo() { 2/*caret*/; }
     """, "\b{ foo!() }")
+
+    fun `test delete use item via PSI`() {
+        InlineFile("""
+            use foo::bar;
+        """)
+
+        checkModCount(INC) {
+            project.runWriteCommandAction {
+                myFixture.file.childOfType<RsUseItem>()!!.delete()
+            }
+        }
+    }
 }

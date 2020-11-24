@@ -124,6 +124,7 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
         override fun handleEvent(event: RsPsiTreeChangeEvent) {
             val element = when (event) {
                 is ChildRemoval.Before -> event.child
+                is ChildRemoval.After -> event.parent
                 is ChildReplacement.Before -> event.oldChild
                 is ChildReplacement.After -> event.newChild
                 is ChildAddition.After -> event.child
@@ -163,7 +164,7 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
                 // Most of events means that some element *itself* is changed, but ChildrenChange means
                 // that changed some of element's children, not the element itself. In this case
                 // we should look up for ModificationTrackerOwner a bit differently
-                val isChildrenChange = event is ChildrenChange
+                val isChildrenChange = event is ChildrenChange || event is ChildRemoval.After
 
                 updateModificationCount(file, element, isChildrenChange, isWhitespaceOrComment)
             }
