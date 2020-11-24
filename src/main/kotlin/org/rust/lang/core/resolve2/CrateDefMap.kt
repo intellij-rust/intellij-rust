@@ -215,14 +215,6 @@ class ModData(
      */
     var isShadowedByOtherFile: Boolean = true
 
-    /**
-     * Records names which come from glob-imports
-     * to determine whether we can override them (usual imports overrides glob-imports).
-     * Used only in [DefCollector], but stored in [ModData] as an optimization.
-     * null after DefMap was built.
-     */
-    var fromGlobImport: PerNsGlobImports? = PerNsGlobImports()
-
     fun getVisibleItem(name: String): PerNs = visibleItems.getOrDefault(name, PerNs.Empty)
 
     fun getVisibleItems(filterVisibility: (Visibility) -> Boolean): List<Pair<String, PerNs>> {
@@ -283,11 +275,11 @@ data class PerNs(
             visItem.takeIf { Namespace.Macros in ns }
         )
 
-    fun withVisibility(visibility: Visibility): PerNs =
+    fun adjust(visibility: Visibility, isFromNamedImport: Boolean): PerNs =
         PerNs(
-            types?.withVisibility(visibility),
-            values?.withVisibility(visibility),
-            macros?.withVisibility(visibility)
+            types?.adjust(visibility, isFromNamedImport),
+            values?.adjust(visibility, isFromNamedImport),
+            macros?.adjust(visibility, isFromNamedImport)
         )
 
     fun filterVisibility(filter: (Visibility) -> Boolean): PerNs =
@@ -353,6 +345,12 @@ data class VisItem(
     val path: ModPath,
     val visibility: Visibility,
     val isModOrEnum: Boolean = false,
+    /**
+     * Records whether this item was added to mod scope with named or glob import.
+     * Needed to determine whether we can override it (usual imports overrides glob-imports).
+     * Used only in [DefCollector], but stored here as an optimization.
+     */
+    val isFromNamedImport: Boolean = true,
 ) {
     init {
         check(isModOrEnum || path.segments.isNotEmpty())
@@ -363,8 +361,11 @@ data class VisItem(
     val name: String get() = path.name
     val crate: CratePersistentId get() = path.crate
 
-    fun withVisibility(visibilityNew: Visibility): VisItem =
-        if (visibility == visibilityNew || visibility.isInvisible) this else copy(visibility = visibilityNew)
+    fun adjust(visibilityNew: Visibility, isFromNamedImport: Boolean): VisItem =
+        copy(
+            visibility = if (visibility.isInvisible) visibility else visibilityNew,
+            isFromNamedImport = isFromNamedImport
+        )
 
     override fun toString(): String = "$visibility $path"
 }

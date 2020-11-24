@@ -172,10 +172,6 @@ private fun sortImports(imports: MutableList<Import>) {
 private fun CrateDefMap.afterBuilt() {
     root.visitDescendants {
         it.isShadowedByOtherFile = false
-        it.fromGlobImport = null
-    }
-    for (fileInfo in fileInfos.values) {
-        fileInfo.modData.fromGlobImport = null
     }
 
     // TODO: uncomment when #[cfg_attr] will be supported
