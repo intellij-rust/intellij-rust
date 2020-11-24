@@ -230,7 +230,7 @@ object RsPsiPattern {
      * ```
      */
     private val onCfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .inside(onCfgAttrAttribute)
+        .withSuperParent(3, onCfgAttrAttribute)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
     val onCfgOrAttrFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()

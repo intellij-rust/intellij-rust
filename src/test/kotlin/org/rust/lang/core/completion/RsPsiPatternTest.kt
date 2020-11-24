@@ -379,9 +379,9 @@ class RsPsiPatternTest : RsTestBase() {
         assertTrue(pattern.accepts(element))
     }
 
-    private fun <T> testPatternNegative(@Language("Rust") code: String, pattern: ElementPattern<T>) {
+    private inline fun <reified T : PsiElement> testPatternNegative(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
-        val element = findElementInEditor<PsiElement>()
+        val element = findElementInEditor<T>()
         assertFalse(pattern.accepts(element, null))
     }
 }
