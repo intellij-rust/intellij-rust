@@ -216,12 +216,17 @@ object RsPsiPattern {
         }
 
     /** `#[cfg()]` */
-    private val onCfgAttribute: PsiElementPattern.Capture<RsAttr> = psiElement<RsAttr>()
-        .withChild(metaItem("cfg"))
+    private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
+        .withParent(RsAttr::class.java)
 
     /** `#[cfg_attr()]` */
-    private val onCfgAttrAttribute: PsiElementPattern.Capture<RsAttr> = psiElement<RsAttr>()
-        .withChild(metaItem("cfg_attr"))
+    private val onCfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg_attr")
+        .withParent(RsAttr::class.java)
+
+    /** `#[doc(cfg())]` */
+    private val onDocCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
+        .withSuperParent(2, metaItem("doc"))
+        .withSuperParent(3, RsAttr::class.java)
 
     /**
      * ```
@@ -230,12 +235,12 @@ object RsPsiPattern {
      * ```
      */
     private val onCfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .withSuperParent(3, onCfgAttrAttribute)
+        .withSuperParent(2, onCfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
     val onCfgOrAttrFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
-        .inside(onCfgAttribute or onCfgAttrCondition)
+        .inside(onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta)
 
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(META_ITEM_IDENTIFIER_DEPTH)

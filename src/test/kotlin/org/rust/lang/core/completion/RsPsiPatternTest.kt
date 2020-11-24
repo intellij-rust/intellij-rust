@@ -373,6 +373,11 @@ class RsPsiPatternTest : RsTestBase() {
         fn foo() {}                      //^
     """, RsPsiPattern.onCfgOrAttrFeature)
 
+    fun `test doc cfg`() = testPattern("""
+        #[doc(cfg(feature = "foo"))]
+        fn foo() {}        //^
+    """, RsPsiPattern.onCfgOrAttrFeature)
+
     private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<T>()

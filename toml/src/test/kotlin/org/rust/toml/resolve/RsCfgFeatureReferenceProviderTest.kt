@@ -33,6 +33,17 @@ class RsCfgFeatureReferenceProviderTest : RsResolveTestBase() {
         """)
     }
 
+    fun `test doc cfg simple`() = doResolveTest {
+        toml("Cargo.toml", """
+            [features]
+            foo = []
+        """)
+        rust("main.rs", """
+            #[doc(cfg(feature = "foo"))]
+            fn foo() {}        //^ Cargo.toml
+        """)
+    }
+
     fun `test not resolved`() = doResolveTest {
         toml("Cargo.toml", """
             [features]
