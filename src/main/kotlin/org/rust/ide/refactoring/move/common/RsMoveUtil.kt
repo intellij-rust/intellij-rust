@@ -61,7 +61,8 @@ class RsMoveReferenceInfo(
      * == `pathOld.reference.resolve()`
      * mutable because it can be inside moved elements, so after move we have to change it
      */
-    var target: RsQualifiedNamedElement
+    var target: RsQualifiedNamedElement,
+    val forceReplaceDirectly: Boolean = false,
 ) {
     val pathNew: RsPath? get() = pathNewAccessible ?: pathNewFallback
     val isInsideUseDirective: Boolean get() = pathOldOriginal.ancestorStrict<RsUseItem>() != null
