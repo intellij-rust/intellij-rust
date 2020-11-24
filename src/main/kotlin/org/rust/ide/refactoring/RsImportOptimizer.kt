@@ -50,24 +50,41 @@ class RsImportOptimizer : ImportOptimizer {
 
     companion object {
 
-        private fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck) {
-            if (removeCurlyBraces(psiFactory, useSpeck)) return
-            val useSpeckList = useSpeck.useGroup?.useSpeckList ?: return
-            if (useSpeckList.size < 2) return
-            useSpeckList.forEach { optimizeUseSpeck(psiFactory, it) }
-            val sortedList = useSpeckList
+        /** Returns false if [useSpeck] is empty and should be removed */
+        private fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
+            val useGroup = useSpeck.useGroup ?: return true
+            useGroup.useSpeckList.forEach { optimizeUseSpeck(psiFactory, it) }
+            if (removeUseSpeckIfEmpty(useSpeck)) return false
+            if (removeCurlyBracesIfPossible(psiFactory, useSpeck)) return true
+
+            val sortedList = useGroup.useSpeckList
                 .sortedWith(compareBy<RsUseSpeck> { it.path?.self == null }.thenBy { it.pathText })
                 .map { it.copy() }
-
-            useSpeckList.zip(sortedList).forEach { it.first.replace(it.second) }
+            useGroup.useSpeckList.zip(sortedList).forEach { it.first.replace(it.second) }
+            return true
         }
 
-        private fun removeCurlyBraces(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
+        /** Returns true if successfully removed, e.g. `use aaa::{bbb};` -> `use aaa::bbb;` */
+        private fun removeCurlyBracesIfPossible(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
             val name = useSpeck.useGroup?.asTrivial?.text ?: return false
             val path = useSpeck.path?.text
             val tempPath = "${if (path != null) "$path::" else ""}$name"
             val newUseSpeck = psiFactory.createUseSpeck(tempPath)
             useSpeck.replace(newUseSpeck)
+            return true
+        }
+
+        /**
+         * Returns true if [useSpeck] is empty and was successfully removed,
+         * e.g. `use aaa::{bbb::{}, ccc, ddd};` -> `use aaa::{ccc, ddd};`
+         */
+        private fun removeUseSpeckIfEmpty(useSpeck: RsUseSpeck): Boolean {
+            val useGroup = useSpeck.useGroup ?: return false
+            if (useGroup.useSpeckList.isNotEmpty()) return false
+            if (useSpeck.parent is RsUseGroup) {
+                useSpeck.deleteWithSurroundingComma()
+            }
+            // else can't delete useSpeck.parent if it is RsUseItem, because it will cause invalidation exception
             return true
         }
 
@@ -78,7 +95,12 @@ class RsImportOptimizer : ImportOptimizer {
                 .firstOrNull { it.textOffset >= offset && it !is RsExternCrateItem && it !is RsAttr } ?: return
             val psiFactory = RsPsiFactory(mod.project)
             val sortedUsesGroups = uses
+                .asSequence()
                 .map { UseItemWrapper(it) }
+                .filter {
+                    val useSpeck = it.useItem.useSpeck ?: return@filter false
+                    optimizeUseSpeck(psiFactory, useSpeck)
+                }
                 .groupBy({ it.packageGroupLevel }, { it })
                 .map { (groupLevel, useItemWrapper) ->
                     val useItems = useItemWrapper
@@ -87,11 +109,6 @@ class RsImportOptimizer : ImportOptimizer {
                     groupLevel to useItems
                 }
                 .sortedBy { it.first }
-            sortedUsesGroups.forEach { (_, group) ->
-                group
-                    .mapNotNull { it.useSpeck }
-                    .forEach { optimizeUseSpeck(psiFactory, it) }
-            }
 
             for ((_, sortedUses) in sortedUsesGroups) {
                 var lastAddedUseItem: PsiElement? = null
