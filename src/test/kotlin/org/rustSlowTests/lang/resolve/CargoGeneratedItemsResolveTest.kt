@@ -35,7 +35,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     // because it leads to too long path and compilation of test rust project fails on Windows
     override fun shouldContainTempFiles(): Boolean = false
 
-    @MinRustcVersion("1.32.0")
+    @MinRustcVersion("1.48.0")
     fun `test include in workspace project`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """
@@ -81,7 +81,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/4579
-    @MinRustcVersion("1.32.0")
+    @MinRustcVersion("1.48.0")
     fun `test do not overflow stack 1`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """
@@ -127,7 +127,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/4579
-    @MinRustcVersion("1.32.0")
+    @MinRustcVersion("1.48.0")
     fun `test do not overflow stack 2`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """
@@ -206,7 +206,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.32.0")
+    @MinRustcVersion("1.48.0")
     fun `test include in dependency`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
             toml("Cargo.toml", """

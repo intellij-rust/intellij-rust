@@ -6,12 +6,21 @@
 package org.rust.cargo.runconfig
 
 import com.intellij.execution.process.AnsiEscapeDecoder
+import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import org.rust.stdext.nextOrNull
 import java.awt.Color
 import kotlin.math.roundToInt
+
+fun AnsiEscapeDecoder.removeEscapeSequences(text: String): String {
+    val chunks = mutableListOf<String>()
+    escapeText(text, ProcessOutputTypes.STDOUT) { chunk, _ ->
+        chunks.add(chunk)
+    }
+    return chunks.joinToString("")
+}
 
 /**
  * Currently IntelliJ Platform supports only 16 ANSI colors (standard colors and high intensity colors). The base
@@ -27,7 +36,9 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
 
     companion object {
         const val CSI: String = "\u001B[" // "Control Sequence Initiator"
-        private val ANSI_CONTROL_SEQUENCE_REGEX: Regex = """${StringUtil.escapeToRegexp(CSI)}([^m]*;[^m]*)m""".toRegex()
+
+        @JvmField
+        val ANSI_SGR_RE: Regex = """${StringUtil.escapeToRegexp(CSI)}(\d+(;\d+)*)m""".toRegex()
 
         private const val ANSI_SET_FOREGROUND_ATTR: Int = 38
         private const val ANSI_SET_BACKGROUND_ATTR: Int = 48
@@ -41,8 +52,8 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
          *
          * @param text a string with ANSI escape sequences
          */
-        private fun quantizeAnsiColors(text: String): String = text
-            .replace(ANSI_CONTROL_SEQUENCE_REGEX) {
+        fun quantizeAnsiColors(text: String): String = text
+            .replace(ANSI_SGR_RE) {
                 val rawAttributes = it.destructured.component1().split(";").iterator()
                 val result = mutableListOf<Int>()
                 while (rawAttributes.hasNext()) {

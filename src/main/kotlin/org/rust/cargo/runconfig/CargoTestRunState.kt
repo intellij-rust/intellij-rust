@@ -64,7 +64,7 @@ class CargoTestRunState(
                 post.add("unstable-options")
             }
 
-            addFormatJsonOption(post, "--format")
+            addFormatJsonOption(post, "--format", "json")
 
             if (checkShowOutputSupport(rustcVer)) {
                 post.add("--show-output")

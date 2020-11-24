@@ -12,13 +12,13 @@ import com.intellij.build.DefaultBuildDescriptor
 import com.intellij.build.events.*
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
-import org.rust.cargo.runconfig.buildtool.CargoBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockProgressIndicator
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
 import org.rust.cargo.runconfig.buildtool.CargoBuildResult
 import org.rust.cargo.runconfig.buildtool.MockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.MockProgressIndicator
+import org.rust.cargo.runconfig.buildtool.RsBuildEventsConverter.Companion.RUSTC_MESSAGE_GROUP
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
 abstract class CargoBuildTest : RunConfigurationTestBase() {

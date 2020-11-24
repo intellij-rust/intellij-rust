@@ -94,19 +94,19 @@ fun createFilters(cargoProject: CargoProject?): Collection<Filter> = buildList {
     }
 }
 
-fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: String) {
-    val formatJsonOption = "$formatOption=json"
+fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: String, format: String) {
+    val formatJsonOption = "$formatOption=$format"
     val idx = additionalArguments.indexOf(formatOption)
     val indexArgWithValue = additionalArguments.indexOfFirst { it.startsWith(formatOption) }
     if (idx != -1) {
         if (idx < additionalArguments.size - 1) {
             if (!additionalArguments[idx + 1].startsWith("-")) {
-                additionalArguments[idx + 1] = "json"
+                additionalArguments[idx + 1] = format
             } else {
-                additionalArguments.add(idx + 1, "json")
+                additionalArguments.add(idx + 1, format)
             }
         } else {
-            additionalArguments.add("json")
+            additionalArguments.add(format)
         }
     } else if (indexArgWithValue != -1) {
         additionalArguments[indexArgWithValue] = formatJsonOption

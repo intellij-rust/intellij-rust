@@ -34,7 +34,6 @@ import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.SystemNotifications
 import com.intellij.ui.content.MessageView
-import com.intellij.util.EnvironmentUtil
 import com.intellij.util.concurrency.FutureResult
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.text.SemVer
@@ -62,22 +61,21 @@ object CargoBuildManager {
     val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
-    private val MIN_RUSTC_VERSION: SemVer = SemVer("1.32.0", 1, 32, 0)
+    private val MIN_RUSTC_VERSION: SemVer = SemVer.parseFromText("1.48.0")!!
 
     val Project.isBuildToolWindowEnabled: Boolean
         get() {
             if (!isFeatureEnabled(RsExperiments.BUILD_TOOL_WINDOW)) return false
-            val rustcVersion = cargoProjects
-                .allProjects
+            val minVersion = cargoProjects.allProjects
                 .mapNotNull { it.rustcInfo?.version?.semver }
-                .min()
-                ?: return false
-            return rustcVersion >= MIN_RUSTC_VERSION
+                .min() ?: return false
+            return minVersion >= MIN_RUSTC_VERSION
         }
 
     fun build(buildConfiguration: CargoBuildConfiguration): Future<CargoBuildResult> {
         val configuration = buildConfiguration.configuration
         val environment = buildConfiguration.environment
+        val project = environment.project
 
         environment.cargoPatches += cargoBuildPatch
         val state = CargoRunState(
@@ -89,7 +87,7 @@ object CargoBuildManager {
         val cargoProject = state.cargoProject ?: return CANCELED_BUILD_RESULT
 
         // Make sure build tool window is initialized:
-        ServiceManager.getService(cargoProject.project, BuildContentManager::class.java)
+        ServiceManager.getService(project, BuildContentManager::class.java)
 
         if (isUnitTestMode) {
             lastBuildCommandLine = state.commandLine
@@ -115,7 +113,7 @@ object CargoBuildManager {
                 buildToolWindow.show(null)
             }
 
-            processHandler = state.startProcess(emulateTerminal = true)
+            processHandler = state.startProcess(processColors = false)
             processHandler?.addProcessListener(CargoBuildAdapter(this, buildProgressListener))
             processHandler?.startNotify()
         }
@@ -278,15 +276,26 @@ object CargoBuildManager {
     }
 
     private val cargoBuildPatch: CargoPatch = { commandLine ->
-        val additionalArguments = commandLine.additionalArguments.toMutableList()
-        additionalArguments.remove("-q")
-        additionalArguments.remove("--quiet")
-        addFormatJsonOption(additionalArguments, "--message-format")
+        val additionalArguments = mutableListOf<String>().apply {
+            addAll(commandLine.additionalArguments)
+            remove("-q")
+            remove("--quiet")
+            // If `json-diagnostic-rendered-ansi` is used, `rendered` field of JSON messages contains
+            // embedded ANSI color codes for respecting rustc's default color scheme.
+            addFormatJsonOption(this, "--message-format", "json-diagnostic-rendered-ansi")
+        }
+
+        val oldVariables = commandLine.environmentVariables
         val environmentVariables = EnvironmentVariablesData.create(
-            EnvironmentUtil.getEnvironmentMap() +
-                commandLine.environmentVariables.envs - "CI" + ("TERM" to "ansi"),
-            false
+            // https://doc.rust-lang.org/cargo/reference/environment-variables.html#configuration-environment-variables
+            // These environment variables are needed to force progress bar to non-TTY output
+            oldVariables.envs + mapOf(
+                "CARGO_TERM_PROGRESS_WHEN" to "always",
+                "CARGO_TERM_PROGRESS_WIDTH" to "1000"
+            ),
+            oldVariables.isPassParentEnvs
         )
+
         commandLine.copy(additionalArguments = additionalArguments, environmentVariables = environmentVariables)
     }
 

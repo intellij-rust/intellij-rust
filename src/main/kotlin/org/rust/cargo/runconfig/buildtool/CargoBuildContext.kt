@@ -16,6 +16,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.runconfig.RsExecutableRunner.Companion.binaries
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
 import java.nio.file.Path
@@ -39,15 +40,24 @@ class CargoBuildContext(
     private val buildSemaphore: Semaphore = project.getUserData(BUILD_SEMAPHORE_KEY)
         ?: (project as UserDataHolderEx).putUserDataIfAbsent(BUILD_SEMAPHORE_KEY, Semaphore(1))
 
+    @Volatile
     var indicator: ProgressIndicator? = null
+    @Volatile
     var processHandler: ProcessHandler? = null
 
     val started: Long = System.currentTimeMillis()
+    @Volatile
     var finished: Long = started
     private val duration: Long get() = finished - started
 
+    @Volatile
     var errors: Int = 0
+
+    @Volatile
     var warnings: Int = 0
+
+    @Volatile
+    var binaries: List<Path> = emptyList()
 
     fun waitAndStart(): Boolean {
         indicator?.pushState()
@@ -73,6 +83,8 @@ class CargoBuildContext(
 
     fun finished(isSuccess: Boolean) {
         val isCanceled = indicator?.isCanceled ?: false
+
+        environment.binaries = binaries.takeIf { isSuccess && !isCanceled }
 
         finished = System.currentTimeMillis()
         buildSemaphore.release()
