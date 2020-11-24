@@ -195,9 +195,9 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         assertTrue(pattern.accepts(element))
     }
 
-    private fun <T> testPatternNegative(pattern: ElementPattern<T>, @Language("Toml") code: String) {
+    private inline fun <reified T : PsiElement> testPatternNegative(pattern: ElementPattern<T>, @Language("Toml") code: String) {
         InlineFile(code, "Cargo.toml")
-        val element = findElementInEditor<PsiElement>()
+        val element = findElementInEditor<T>()
         assertFalse(pattern.accepts(element))
     }
 }
