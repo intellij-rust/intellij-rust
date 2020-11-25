@@ -1,6 +1,7 @@
 <!--
 Hello and thank you for the issue!
 If you would like to report a bug, we have added some points below that you can fill out.
+Consider using "Help | Create New Issue" action that fills out all necessary information automatically.
 Feel free to remove all the irrelevant text to request a new feature.
 -->
 
