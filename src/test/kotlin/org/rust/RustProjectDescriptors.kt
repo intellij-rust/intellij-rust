@@ -118,6 +118,10 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
 
+    private val cfgOptions by lazy {
+        toolchain?.rustc()?.getCfgOptions(null)
+    }
+
     override val skipTestReason: String?
         get() {
             if (rustup == null) return "No rustup"
@@ -142,7 +146,8 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
         try {
             val rustcInfo = rustcInfo
             val stdlib = StandardLibrary.fromFile(module.project, stdlib!!, rustcInfo)!!
-            return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, CfgOptions.DEFAULT, rustcInfo)
+            val cfgOptions = cfgOptions!!
+            return delegate.testCargoProject(module, contentRoot).withStdlib(stdlib, cfgOptions, rustcInfo)
         } finally {
             Disposer.dispose(disposable)
         }

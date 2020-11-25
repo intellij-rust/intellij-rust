@@ -219,14 +219,7 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
             })
             val manifestPath = projectDirectory.resolve("Cargo.toml")
 
-            // Running "cargo rustc -- --print cfg" causes an error when run in a project with multiple targets
-            // error: extra arguments to `rustc` can only be passed to one target, consider filtering
-            // the package by passing e.g. `--lib` or `--bin NAME` to specify a single target
-            // Running "cargo rustc --bin=projectname  -- --print cfg" we can get around this
-            // but it also compiles the whole project, which is probably not wanted
-            // TODO: This does not query the target specific cfg flags during cross compilation :-(
-            val rawCfgOptions = toolchain.rustc().getCfgOptions(projectDirectory) ?: emptyList()
-            val cfgOptions = CfgOptions.parse(rawCfgOptions)
+            val cfgOptions = toolchain.rustc().getCfgOptions(projectDirectory)
             val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             TaskResult.Ok(ws)
         } catch (e: ExecutionException) {
