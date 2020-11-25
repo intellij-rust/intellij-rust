@@ -245,9 +245,34 @@ object RsPsiPattern {
         .withSuperParent(2, onCfgAttrAttributeMeta)
         .with("lastItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.lastOrNull() == it }
 
+    private val onAnyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
+        onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta
+
     val onAnyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
-        .inside(onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta)
+        .inside(onAnyCfgCondition)
+
+    /**
+     * A leaf literal inside [onAnyCfgFeature] or an identifier at the same place
+     * ```
+     * #[cfg(feature = "foo")] // Works for "foo" (leaf literal)
+     * #[cfg(feature = foo)]   // Works for "foo" (leaf identifier)
+     * ```
+     */
+    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(onAnyCfgFeature) or
+        psiElement(IDENTIFIER)
+            .withParent(
+                psiElement<RsCompactTT>()
+                    .withParent(
+                        psiElement<RsMetaItem>()
+                            .inside(onAnyCfgCondition)
+                    )
+            )
+            .with("feature") { it, _ ->
+                val eq = it.getPrevNonCommentSibling()
+                val feature = eq?.getPrevNonCommentSibling()
+                eq?.elementType == EQ && feature?.textMatches("feature") == true
+            }
 
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
         return psiElement().withSuperParent<I>(META_ITEM_IDENTIFIER_DEPTH)

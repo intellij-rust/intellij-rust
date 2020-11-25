@@ -22,6 +22,7 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psiElement
 
+/** See also `RsCfgFeatureCompletionProvider` */
 object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
 
     private val NAME_OPTIONS: List<String> = listOf(

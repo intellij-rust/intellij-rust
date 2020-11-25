@@ -55,11 +55,13 @@ abstract class RsCompletionTestFixtureBase<IN>(
     fun doSingleCompletionByFileTree(before: String, after: String) =
         doSingleCompletionByFileTree(fileTreeFromText(before), after)
 
-    fun doSingleCompletionByFileTree(fileTree: FileTree, after: String) {
+    fun doSingleCompletionByFileTree(fileTree: FileTree, after: String, forbidAstLoading: Boolean = true) {
         val testProject = fileTree.createAndOpenFileWithCaretMarker(myFixture)
-        checkAstNotLoaded(VirtualFileFilter { file ->
-            !file.path.endsWith(testProject.fileWithCaret)
-        })
+        if (forbidAstLoading) {
+            checkAstNotLoaded(VirtualFileFilter { file ->
+                !file.path.endsWith(testProject.fileWithCaret)
+            })
+        }
         executeSoloCompletion()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
