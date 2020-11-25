@@ -14,7 +14,7 @@ def classify_rust_type(type):
     if type_class == lldb.eTypeClassStruct:
         return classify_struct(type.name, type.fields)
     if type_class == lldb.eTypeClassUnion:
-        return classify_union(type.fields)
+        return classify_union(type.name, type.fields)
 
     return RustType.OTHER
 
@@ -24,6 +24,8 @@ def summary_lookup(valobj, dict):
     """Returns the summary provider for the given value"""
     rust_type = classify_rust_type(valobj.GetType())
 
+    if rust_type == RustType.STD_OPTION:
+        return StdOptionSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_STRING:
         return StdStringSummaryProvider(valobj, dict)
     if rust_type == RustType.STD_OS_STRING:
@@ -64,6 +66,8 @@ def synthetic_lookup(valobj, dict):
     """Returns the synthetic provider for the given value"""
     rust_type = classify_rust_type(valobj.GetType())
 
+    if rust_type == RustType.STD_OPTION:
+        return StdOptionSyntheticProvider(valobj, dict)
     if rust_type == RustType.STRUCT:
         return StructSyntheticProvider(valobj, dict)
     if rust_type == RustType.STRUCT_VARIANT:

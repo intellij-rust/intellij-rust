@@ -31,6 +31,7 @@ class RustType(object):
     STD_REF_MUT = "StdRefMut"
     STD_REF_CELL = "StdRefCell"
     STD_NONZERO_NUMBER = "StdNonZeroNumber"
+    STD_OPTION = "StdOption"
 
 
 # Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
@@ -50,10 +51,12 @@ STD_REF_REGEX = re.compile(r"^(core::([a-z_]+::)+)Ref<.+>$")
 STD_REF_MUT_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefMut<.+>$")
 STD_REF_CELL_REGEX = re.compile(r"^(core::([a-z_]+::)+)RefCell<.+>$")
 STD_NONZERO_NUMBER_REGEX = re.compile(r"^core::num::([a-z_]+::)*NonZero.+$")
+STD_OPTION_REGEX = re.compile(r"^core::option::Option<.+>(::None)?$")
 
 TUPLE_ITEM_REGEX = re.compile(r"__\d+$")
 
 ENCODED_ENUM_PREFIX = "RUST$ENCODED$ENUM$"
+ENCODED_ENUM_DISCRIMINANT = "RUST$ENUM$DISR"
 ENUM_DISR_FIELD_NAME = "<<variant>>"
 
 STD_TYPE_TO_REGEX = {
@@ -72,7 +75,8 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_REF_MUT: STD_REF_MUT_REGEX,
     RustType.STD_REF_CELL: STD_REF_CELL_REGEX,
     RustType.STD_CELL: STD_CELL_REGEX,
-    RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX
+    RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX,
+    RustType.STD_OPTION: STD_OPTION_REGEX,
 }
 
 def is_tuple_fields(fields):
@@ -97,18 +101,26 @@ def classify_struct(name, fields):
     return RustType.STRUCT
 
 
-def classify_union(fields):
+def classify_union(name, fields):
     if len(fields) == 0:
         return RustType.EMPTY
 
-    first_variant_name = fields[0].name
-    if first_variant_name is None:
+    field_names = [field.name for field in fields]
+    first_field_name = field_names[0]
+
+    for ty, regex in STD_TYPE_TO_REGEX.items():
+        if regex.match(name):
+            return ty
+
+    # for MSVC LLDB
+    if ENCODED_ENUM_DISCRIMINANT in field_names:
+        return RustType.COMPRESSED_ENUM
+    elif first_field_name is not None and first_field_name.startswith(ENCODED_ENUM_PREFIX):
+        return RustType.COMPRESSED_ENUM
+    elif first_field_name is None:
         if len(fields) == 1:
             return RustType.SINGLETON_ENUM
         else:
             return RustType.REGULAR_ENUM
-    elif first_variant_name.startswith(ENCODED_ENUM_PREFIX):
-        assert len(fields) == 1
-        return RustType.COMPRESSED_ENUM
     else:
         return RustType.REGULAR_UNION

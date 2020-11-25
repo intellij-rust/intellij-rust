@@ -1,7 +1,9 @@
 import sys
-
-from lldb import SBValue, SBData, SBError, eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar
+from lldb import SBValue, SBData, SBError
+from lldb import eBasicTypeLong, eBasicTypeUnsignedLong, eBasicTypeUnsignedChar, eTypeClassStruct
 from lldb.formatters import Logger
+
+from rust_types import ENCODED_ENUM_PREFIX, ENCODED_ENUM_DISCRIMINANT
 
 #################################################################################################################
 # This file contains two kinds of pretty-printers: summary and synthetic.
@@ -395,7 +397,7 @@ class StdOldHashMapSyntheticProvider:
         align = self.pair_type_size
         # See `libcore/alloc.rs:padding_needed_for`
         len_rounded_up = (((((hashes + align) % self.modulo - 1) % self.modulo) & ~(
-                (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
+            (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
         # len_rounded_up = ((hashes + align - 1) & ~(align - 1)) - hashes
 
         pairs_offset = hashes + len_rounded_up
@@ -693,3 +695,60 @@ def StdNonZeroNumberSummaryProvider(valobj, dict):
     field = objtype.GetFieldAtIndex(0)
     element = valobj.GetChildMemberWithName(field.name)
     return element.GetValue()
+
+
+def StdOptionSummaryProvider(valobj, dict):
+    # type: (SBValue, dict) -> str
+    fields = valobj.GetType().fields
+    field_names = [field.name for field in fields]
+    first_field_name = field_names[0]
+
+    if ENCODED_ENUM_DISCRIMINANT in field_names:
+        return "None"
+    if first_field_name is not None and first_field_name.startswith(ENCODED_ENUM_PREFIX):
+        return "Some"
+    elif valobj.GetChildMemberWithName("Some") is not None:
+        return "Some"
+    elif valobj.GetTypeName().endswith('::None'):
+        return "None"
+    return "None"
+
+
+class StdOptionSyntheticProvider:
+    def __init__(self, valobj, dict):
+        # type: (SBValue, dict) -> StdOptionSyntheticProvider
+        self.valobj = valobj
+        field_names = [field.name for field in valobj.GetType().fields]
+        first_field_name = field_names[0]
+
+        if first_field_name is not None and first_field_name.startswith(ENCODED_ENUM_PREFIX):
+            self.value = valobj.GetChildAtIndex(0).GetChildAtIndex(0)
+        elif ENCODED_ENUM_DISCRIMINANT in field_names:
+            self.value = SBValue()
+        elif valobj.GetChildMemberWithName("Some") is not None:
+            self.value = valobj.GetChildMemberWithName("Some").GetChildAtIndex(0)
+        else:
+            self.value = SBValue()
+
+    def num_children(self):
+        # type: () -> int
+        return 1
+
+    def get_child_index(self, name):
+        if name == "value":
+            return 0
+        return -1
+
+    def get_child_at_index(self, index):
+        # type: (int) -> SBValue
+        if index == 0:
+            return self.value
+        return None
+
+    def update(self):
+        # type: () -> None
+        pass
+
+    def has_children(self):
+        # type: () -> bool
+        return True
