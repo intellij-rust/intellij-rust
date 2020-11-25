@@ -30,12 +30,18 @@ abstract class RsLazyBlockStubCreationTestBase : RsTestBase() {
 
     protected fun checkRustFiles(directory: VirtualFile, ignored: Collection<String>) {
         val files = collectRustFiles(directory, ignored)
-            .mapNotNull { it.toInMemoryPsiFile() as? RsFile }
 
         var numBlocks = 0
         var numParsedBlocks = 0
 
-        for (psi in files) {
+        for (file in files) {
+            fun check(value: Boolean, lazyMessage: () -> Any) {
+                kotlin.check(value) {
+                    "file: $file\n${lazyMessage()}"
+                }
+            }
+
+            val psi = file.toInMemoryPsiFile() as? RsFile ?: continue
             parseFile(psi)
             val blocks = SyntaxTraverser.psiTraverser(psi).expand { it !is RsBlock }.filterIsInstance<RsBlock>()
 
