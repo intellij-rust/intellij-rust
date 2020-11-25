@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -16,9 +15,10 @@ import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
-import org.rust.lang.RsLanguage
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psiElement
 
@@ -79,7 +79,7 @@ object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
     private val InsertionContext.alreadyHasValue: Boolean
         get() = nextCharIs('=')
 
-    override val elementPattern: ElementPattern<PsiElement>
+    override val elementPattern: ElementPattern<out PsiElement>
         get() {
             val cfgAttr = psiElement<RsMetaItem>()
                 .with(object : PatternCondition<RsMetaItem>("cfg") {
@@ -93,8 +93,10 @@ object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
                         .withParent(cfgAttr)
                 )
 
-            return psiElement()
-                .withLanguage(RsLanguage)
-                .inside(cfgOption)
+            return psiElement(RsElementTypes.IDENTIFIER)
+                .withParent(
+                    psiElement<RsPath>()
+                        .inside(cfgOption)
+                )
         }
 }
