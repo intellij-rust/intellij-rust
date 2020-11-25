@@ -216,17 +216,14 @@ object RsPsiPattern {
         }
 
     /** `#[cfg()]` */
-    private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
-        .withParent(RsAttr::class.java)
+    private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
 
     /** `#[cfg_attr()]` */
-    private val onCfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg_attr")
-        .withParent(RsAttr::class.java)
+    private val onCfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg_attr")
 
     /** `#[doc(cfg())]` */
     private val onDocCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
-        .withSuperParent(2, metaItem("doc"))
-        .withSuperParent(3, RsAttr::class.java)
+        .withSuperParent(2, rootMetaItem("doc"))
 
     /**
      * ```
@@ -238,7 +235,17 @@ object RsPsiPattern {
         .withSuperParent(2, onCfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
-    val onCfgOrAttrFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+    /**
+     * ```
+     * #[cfg_attr(condition, attr)]
+     *                     //^
+     * ```
+     */
+    private val onCfgAttrBody: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .withSuperParent(2, onCfgAttrAttributeMeta)
+        .with("lastItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.lastOrNull() == it }
+
+    val onAnyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
         .inside(onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta)
 
@@ -255,6 +262,10 @@ object RsPsiPattern {
             psiElement<RsPath>().withText(key)
         )
 
+    /** @see OnRootMetaItem */
+    private fun rootMetaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
+        metaItem(key).with(OnRootMetaItem)
+
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords
         override fun accepts(t: PsiElement, context: ProcessingContext?): Boolean {
@@ -263,6 +274,18 @@ object RsPsiPattern {
                 prev == null || prev is PsiWhiteSpace || prev.node.elementType in STATEMENT_BOUNDARIES
             else
                 prev != null && prev.node.text in myStartWords
+        }
+    }
+
+    /**
+     * In the case of `#[foo(bar)]`, the `foo(bar)` meta item is considered "root", but `bar` is not.
+     * In the case of `#[cfg_attr(windows, foo(bar))]`, the `foo(bar)` is also considered "root" meta item
+     * because after `cfg_attr` expanding the `foo(bar)` will turn into `#[foo(bar)]`.
+     * This also applied to nested `cfg_attr`s, e.g. `#[cfg_attr(windows, cfg_attr(foobar, foo(bar)))]`
+     */
+    private object OnRootMetaItem : PatternCondition<RsMetaItem>("rootMetaItem") {
+        override fun accepts(meta: RsMetaItem, context: ProcessingContext?): Boolean {
+            return meta.parent is RsAttr || onCfgAttrBody.accepts(meta)
         }
     }
 }
@@ -282,8 +305,8 @@ inline fun <reified I : PsiElement> PsiElementPattern.Capture<PsiElement>.withSu
     return this.withSuperParent(level, I::class.java)
 }
 
-inline infix fun <reified I : PsiElement> ElementPattern<out I>.or(pattern: ElementPattern<out I>): PsiElementPattern.Capture<PsiElement> {
-    return psiElement().andOr(this, pattern)
+inline infix fun <reified I : PsiElement> ElementPattern<out I>.or(pattern: ElementPattern<out I>): PsiElementPattern.Capture<I> {
+    return psiElement<I>().andOr(this, pattern)
 }
 
 private val PsiElement.prevVisibleOrNewLine: PsiElement?

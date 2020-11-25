@@ -12,6 +12,6 @@ import org.rust.lang.core.RsPsiPattern
 /** Provides references (that point to TOML elements) for Rust elements in Rust files */
 class RsCargoTomlIntegrationReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
-        registrar.registerReferenceProvider(RsPsiPattern.onCfgOrAttrFeature, RsCfgFeatureReferenceProvider())
+        registrar.registerReferenceProvider(RsPsiPattern.onAnyCfgFeature, RsCfgFeatureReferenceProvider())
     }
 }
