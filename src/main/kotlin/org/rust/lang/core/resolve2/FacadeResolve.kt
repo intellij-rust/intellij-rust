@@ -41,6 +41,7 @@ fun processItemDeclarations2(
         is RsModInfo -> info
     }
 
+    val isCompletion = processor.name == null
     for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
         val visItems = arrayOf(
             perNs.types to Namespace.Types,
@@ -53,16 +54,21 @@ fun processItemDeclarations2(
         for ((visItem, namespace) in visItems) {
             if (visItem == null || namespace !in ns) continue
             if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
-            elements += visItem.toPsi(defMap, project, namespace)
+            val visibilityFilter = visItem.visibility.createFilter(project, isCompletion)
+            for (element in visItem.toPsi(defMap, project, namespace)) {
+                if (!elements.add(element)) continue
+                if (processor(name, element, visibilityFilter)) return true
+            }
         }
-        elements.any { processor(name, it) } && return true
     }
 
     if (processor.name == null && Namespace.Types in ns) {
         for ((traitPath, traitVisibility) in modData.unnamedTraitImports) {
             val trait = VisItem(traitPath, traitVisibility)
-            val traitPsi = trait.toPsi(defMap, project, Namespace.Types)
-            traitPsi.any { processor("_", it) } && return true
+            val visibilityFilter = traitVisibility.createFilter(project, isCompletion)
+            for (traitPsi in trait.toPsi(defMap, project, Namespace.Types)) {
+                if (processor("_", traitPsi, visibilityFilter)) return true
+            }
         }
     }
 
@@ -96,23 +102,30 @@ fun processMacros(
     }
     if (runBeforeResolve != null && runBeforeResolve()) return true
 
-    return modData.processMacros(processor, defMap, project)
+    return modData.processMacros(scope, processor, defMap, project)
 }
 
-private fun ModData.processMacros(processor: RsResolveProcessor, defMap: CrateDefMap, project: Project): Boolean {
-    val processedMacros = hashSetOf<RsNamedElement>()
+private fun ModData.processMacros(
+    /** Must be not null during completion */
+    scope: RsMod?,
+    processor: RsResolveProcessor,
+    defMap: CrateDefMap,
+    project: Project,
+): Boolean {
+    val isCompletion = processor.name == null
+    val exactScopeVisibilityFilter = if (isCompletion) { mod: RsMod -> mod == scope } else { _ -> true }
     for ((name, macroInfo) in legacyMacros.entriesWithName(processor.name)) {
         val visItem = VisItem(macroInfo.path, Visibility.Public)
+        if (visItem.path == visibleItems[name]?.macros?.path) continue  // macros will be handled in [visibleItems] loop
         val macro = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
-        processedMacros += macro
-        if (processor(name, macro)) return true
+        if (processor(name, macro, exactScopeVisibilityFilter)) return true
     }
 
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
         val visItem = perNs.macros ?: continue
         val macro = visItem.toPsi(defMap, project, Namespace.Macros).singleOrNull() ?: continue
-        if (macro in processedMacros) continue  // TODO: Possible optimization - somehow do check before calling [toPsi]
-        if (processor(name, macro)) return true
+        val visibilityFilter = visItem.visibility.createFilter(project, isCompletion)
+        if (processor(name, macro, visibilityFilter)) return true
     }
 
     return false
@@ -161,7 +174,7 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
         if (!def.hasLocalInnerMacros) return@resolveToMacroAndThen null
         val project = info.project
         val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
-        defMap.root.processMacros(processor, defMap, project)
+        defMap.root.processMacros(scope = null, processor, defMap, project)
     }
 
 /**
@@ -302,6 +315,19 @@ private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
         val value = this[name] ?: return emptyMap()
         return mapOf(name to value)
     }
+}
+
+/** Creates filter which determines whether item with [this] visibility is visible from specific [RsMod] */
+private fun Visibility.createFilter(project: Project, isCompletion: Boolean): (RsMod) -> Boolean {
+    if (isCompletion && this is Visibility.Restricted) {
+        val inMod = inMod.toRsMod(project)
+        if (inMod != null) return { it.superMods.contains(inMod) }
+    }
+    /**
+     * Note: [Visibility.Invisible] and [Visibility.CfgDisabled] are considered as [Visibility.Public],
+     * because they are handled in other places, e.g. [matchesIsEnabledByCfg]
+     */
+    return { true }
 }
 
 private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {

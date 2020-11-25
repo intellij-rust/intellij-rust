@@ -934,7 +934,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    @IgnoreInNewResolve
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test private extern crate`() = checkNoCompletion("""
         mod foo { extern crate std; }

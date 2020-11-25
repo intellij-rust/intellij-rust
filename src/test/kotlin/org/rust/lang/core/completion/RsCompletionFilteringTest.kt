@@ -5,8 +5,10 @@
 
 package org.rust.lang.core.completion
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionFilteringTest: RsCompletionTestBase() {
     fun `test unsatisfied bound filtered 1`() = doSingleCompletion("""
@@ -160,6 +162,35 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         fn bar(s: S) {
             s.f/*caret*/
         }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test private reexport of public function`() = checkNoCompletion("""
+        mod mod1 {
+            pub fn foo() {}
+        }
+        mod mod2 {
+            use crate::mod1::foo as bar;
+        }
+
+        fn main() {
+            mod2::b/*caret*/
+        }
+    """)
+
+    // there was error in new resolve when legacy textual macros are always completed
+    @MockEdition(Edition.EDITION_2018)
+    fun `test no completion on empty mod 1`() = checkNoCompletion("""
+        macro_rules! empty { () => {}; }
+        mod foo {}
+        pub use foo::empt/*caret*/
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no completion on empty mod 2`() = checkNoCompletion("""
+        mod foo {}
+        pub use foo::asser/*caret*/
     """)
 
     // Issue https://github.com/intellij-rust/intellij-rust/issues/3694
