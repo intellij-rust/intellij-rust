@@ -52,7 +52,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 202
+        private const val STUB_VERSION = 203
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1297,6 +1297,9 @@ class RsLifetimeParameterStub(
     RsNamedStub {
 
     object Type : RsStubElementType<RsLifetimeParameterStub, RsLifetimeParameter>("LIFETIME_PARAMETER") {
+
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
         override fun createPsi(stub: RsLifetimeParameterStub) =
             RsLifetimeParameterImpl(stub, this)
 
