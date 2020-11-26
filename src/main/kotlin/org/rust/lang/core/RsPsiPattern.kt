@@ -235,16 +235,6 @@ object RsPsiPattern {
         .withSuperParent(2, onCfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
-    /**
-     * ```
-     * #[cfg_attr(condition, attr)]
-     *                     //^
-     * ```
-     */
-    private val onCfgAttrBody: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .withSuperParent(2, onCfgAttrAttributeMeta)
-        .with("lastItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.lastOrNull() == it }
-
     private val onAnyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
         onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta
 
@@ -302,15 +292,10 @@ object RsPsiPattern {
         }
     }
 
-    /**
-     * In the case of `#[foo(bar)]`, the `foo(bar)` meta item is considered "root", but `bar` is not.
-     * In the case of `#[cfg_attr(windows, foo(bar))]`, the `foo(bar)` is also considered "root" meta item
-     * because after `cfg_attr` expanding the `foo(bar)` will turn into `#[foo(bar)]`.
-     * This also applied to nested `cfg_attr`s, e.g. `#[cfg_attr(windows, cfg_attr(foobar, foo(bar)))]`
-     */
+    /** @see RsMetaItem.isRootMetaItem */
     private object OnRootMetaItem : PatternCondition<RsMetaItem>("rootMetaItem") {
         override fun accepts(meta: RsMetaItem, context: ProcessingContext?): Boolean {
-            return meta.parent is RsAttr || onCfgAttrBody.accepts(meta)
+            return meta.isRootMetaItem
         }
     }
 }
