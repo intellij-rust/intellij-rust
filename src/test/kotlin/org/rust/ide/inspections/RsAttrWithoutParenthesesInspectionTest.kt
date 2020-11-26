@@ -28,9 +28,8 @@ class RsAttrWithoutParenthesesInspectionTest : RsInspectionsTestBase(RsAttrWitho
         struct Foo(i32);
     """)
 
-    // TODO: detect error in `repr` without parentheses inside `cfg_attr` attribute
     fun `test error in cfg attr items`() = checkErrors("""
-        #[cfg_attr(unix, repr)]
+        #[cfg_attr(unix, <error descr="Malformed `repr` attribute input: missing parentheses">repr</error>)]
         struct Foo(u8);
     """)
 
