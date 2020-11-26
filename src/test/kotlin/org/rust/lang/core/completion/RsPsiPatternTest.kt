@@ -337,6 +337,48 @@ class RsPsiPatternTest : RsTestBase() {
         mod foo {}
     """, RsPsiPattern.pathAttrLiteral)
 
+    fun `test a root meta item 1`() = testPattern("""
+        #[foo]
+        //^
+        fn foo() {}
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test a root meta item 2`() = testPattern("""
+        #![foo]
+         //^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test a root meta item 3`() = testPattern("""
+        #[cfg_attr(foo, bar)]
+        fn foo() {}   //^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test a root meta item 4`() = testPattern("""
+        #[cfg_attr(foo, bar, baz)]
+        fn foo() {}        //^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test a root meta item 5`() = testPattern("""
+        #[cfg_attr(foo, cfg_attr(bar, baz))]
+        fn foo() {}                  //^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test not a root meta item 1`() = testPatternNegative("""
+        #[cfg_attr(foo, bar)]
+        fn foo() {}//^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test not a root meta item 2`() = testPatternNegative("""
+        #[cfg_attr(foo, cfg_attr(bar, baz))]
+        fn foo() {}            //^
+    """, RsPsiPattern.rootMetaItem)
+
+    fun `test not a root meta item 3`() = testPatternNegative("""
+        #[foo(bar())]
+             //^
+        fn foo() {}
+    """, RsPsiPattern.rootMetaItem)
+
     fun `test cfg feature`() = testPattern("""
         #[cfg(feature = "foo")]
         fn foo() {}   //^

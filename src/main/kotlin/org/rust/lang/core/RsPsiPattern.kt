@@ -215,6 +215,10 @@ object RsPsiPattern {
             return psiElement().withParent(simplePath)
         }
 
+    /** @see RsMetaItem.isRootMetaItem */
+    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .with(RootMetaItemCondition)
+
     /** `#[cfg()]` */
     private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
 
@@ -277,9 +281,9 @@ object RsPsiPattern {
             psiElement<RsPath>().withText(key)
         )
 
-    /** @see OnRootMetaItem */
+    /** @see RsMetaItem.isRootMetaItem */
     private fun rootMetaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
-        metaItem(key).with(OnRootMetaItem)
+        metaItem(key).with(RootMetaItemCondition)
 
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords
@@ -293,7 +297,7 @@ object RsPsiPattern {
     }
 
     /** @see RsMetaItem.isRootMetaItem */
-    private object OnRootMetaItem : PatternCondition<RsMetaItem>("rootMetaItem") {
+    private object RootMetaItemCondition : PatternCondition<RsMetaItem>("rootMetaItem") {
         override fun accepts(meta: RsMetaItem, context: ProcessingContext?): Boolean {
             return meta.isRootMetaItem
         }
