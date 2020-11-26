@@ -26,7 +26,7 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
             mod bar {
                 mod baz {}
             }
-            pub use <error descr="Module `bar::baz` is private [E0603]">bar::baz</error>;
+            pub use bar::<error descr="Module `baz` is private [E0603]">baz</error>;
         }
     """)
 
@@ -190,6 +190,30 @@ class RsInvalidReexportErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator
         mod foo {
             mod bar {}
             use bar as baz;
+        }
+    """)
+
+    fun `test make public fix`() = checkFixByText("Make `bar` public", """
+        pub mod foo {
+            mod bar {}
+            pub use <error>bar/*caret*/</error> as baz;
+        }
+    """, """
+        pub mod foo {
+            pub mod bar {}
+            pub use bar/*caret*/ as baz;
+        }
+    """)
+
+    fun `test make public fix for item with restricted visibility`() = checkFixByText("Make `bar` public", """
+        pub mod foo {
+            pub(crate) mod bar {}
+            pub use <error>bar/*caret*/</error> as baz;
+        }
+    """, """
+        pub mod foo {
+            pub mod bar {}
+            pub use bar/*caret*/ as baz;
         }
     """)
 }

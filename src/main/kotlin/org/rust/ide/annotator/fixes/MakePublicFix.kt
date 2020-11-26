@@ -14,8 +14,8 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class MakePublicFix(
-    element: RsVisible,
+class MakePublicFix private constructor(
+    element: RsVisibilityOwner,
     elementName: String?,
     private val withinOneCrate: Boolean
 ) : LocalQuickFixAndIntentionActionOnPsiElement(element) {
@@ -33,31 +33,31 @@ class MakePublicFix(
         startElement: PsiElement,
         endElement: PsiElement
     ) {
-        var anchor = getAnchor(startElement)
-        // Check if there are any elements between `pub` and type keyword like
-        // `extern "C"`, `unsafe`, `const`, `async` etc.
-        // If prevNonCommentSibling is an attribute or null, then
-        // there are no extra words, listed above, and we can
-        // freely insert `pub` element right before keyword element.
-        // Otherwise, there are some of these words and we roll anchor back to
-        // insert `pub` element before them.
-        while (true) {
-            val prevNonCommentSibling = anchor.getPrevNonCommentSibling()
-            if (!(prevNonCommentSibling is RsOuterAttr || prevNonCommentSibling == null)) {
-                anchor = prevNonCommentSibling
-            } else {
-                break
-            }
-        }
-        if (!withinOneCrate) {
-            startElement.addBefore(RsPsiFactory(project).createPub(), anchor)
+        if (startElement !is RsVisibilityOwner) return
+        val psiFactory = RsPsiFactory(project)
+        val newVis = if (withinOneCrate) psiFactory.createPubCrateRestricted() else psiFactory.createPub()
+
+        val currentVis = startElement.vis
+        if (currentVis != null) {
+            currentVis.replace(newVis)
         } else {
-            startElement.addBefore(RsPsiFactory(project).createPubCrateRestricted(), anchor)
-            // External functions and struct fields are special case when inserting pub(crate)
-            // so we have to insert space after `pub(crate)` manually
-            if (anchor is RsExternAbi || anchor?.parent is RsNamedFieldDecl) {
-                startElement.addBefore(RsPsiFactory(project).createPubCrateRestricted().nextSibling, anchor)
+            var anchor = getAnchor(startElement)
+            // Check if there are any elements between `pub` and type keyword like
+            // `extern "C"`, `unsafe`, `const`, `async` etc.
+            // If prevNonCommentSibling is an attribute or null, then
+            // there are no extra words, listed above, and we can
+            // freely insert `pub` element right before keyword element.
+            // Otherwise, there are some of these words and we roll anchor back to
+            // insert `pub` element before them.
+            while (true) {
+                val prevNonCommentSibling = anchor.getPrevNonCommentSibling()
+                if (!(prevNonCommentSibling is RsOuterAttr || prevNonCommentSibling == null)) {
+                    anchor = prevNonCommentSibling
+                } else {
+                    break
+                }
             }
+            startElement.addBefore(newVis, anchor)
         }
     }
 
@@ -70,16 +70,15 @@ class MakePublicFix(
     }
 
     companion object {
-        fun createIfCompatible(visible: RsVisible, elementName: String?, withinOneCrate: Boolean): MakePublicFix? {
-            return when {
-                // TODO: Allow this fix for pub-restricted elements too
-                visible.visibility is RsVisibility.Private
-                    && visible !is RsEnumVariant
-                    && visible.parent.parent !is RsTraitItem
-                    && visible.containingCrate?.origin == PackageOrigin.WORKSPACE
-                -> MakePublicFix(visible, elementName, withinOneCrate)
-                else -> null
-            }
+        fun createIfCompatible(
+            visible: RsVisibilityOwner,
+            elementName: String?,
+            withinOneCrate: Boolean
+        ): MakePublicFix? {
+            if (visible is RsEnumVariant ||
+                visible.parent.parent is RsTraitItem ||
+                visible.containingCrate?.origin != PackageOrigin.WORKSPACE) return null
+            return MakePublicFix(visible, elementName, withinOneCrate)
         }
     }
 }
