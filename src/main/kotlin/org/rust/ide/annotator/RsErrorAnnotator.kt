@@ -21,6 +21,7 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.annotator.fixes.*
 import org.rust.ide.presentation.getStubOnlyText
 import org.rust.ide.refactoring.RsNamesValidator.Companion.RESERVED_LIFETIME_NAMES
+import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.isCfgUnknown
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.*
@@ -107,10 +108,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             override fun visitVariadic(o: RsVariadic) = checkParamAttrs(rsHolder, o)
             override fun visitPatStruct(o: RsPatStruct) = checkRsPatStruct(rsHolder, o)
             override fun visitPatTupleStruct(o: RsPatTupleStruct) = checkRsPatTupleStruct(rsHolder, o)
+            override fun visitPatTup(o: RsPatTup) = checkRsPatTup(rsHolder, o)
             override fun visitStructLiteralField(o: RsStructLiteralField) = checkReferenceIsPublic(o, o, rsHolder)
         }
 
         element.accept(visitor)
+    }
+
+    private fun checkRsPatTup(holder: RsAnnotationHolder, pattern: RsPatTup) {
+        if (pattern.isTopLevel) {
+            checkRepeatedPatIdentifiers(holder, pattern)
+        }
     }
 
     private fun checkOrPat(holder: RsAnnotationHolder, orPat: RsOrPat) {
@@ -129,6 +137,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         if (parent !is RsCondition && parent !is RsMatchArm) {
             OR_PATTERNS.check(holder, orPat, "or-patterns syntax")
+        }
+
+        if (orPat.isTopLevel) {
+            orPat.patList.forEach { checkRepeatedPatIdentifiers(holder, it) }
         }
     }
 
@@ -219,6 +231,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
             checkRepeatedPatStructFields(holder, patStruct.patFieldList)
         }
+
+        if (patStruct.isTopLevel) {
+            checkRepeatedPatIdentifiers(holder, patStruct)
+        }
     }
 
     private fun checkRepeatedPatStructFields(holder: RsAnnotationHolder, pats: List<RsPatField>) {
@@ -241,6 +257,37 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         }
     }
 
+    private fun checkRepeatedPatIdentifiers(holder: RsAnnotationHolder, topPattern: RsPat) {
+        fun check(pattern: RsPat, identifiers: HashSet<String>): HashSet<String> {
+            val visitedIdentifiers = identifiers.toMutableSet()
+            val visitor = object : RsRecursiveVisitor() {
+                override fun visitPatBinding(binding: RsPatBinding) {
+                    val resolved = binding.reference.resolve()
+                    if (resolved == null || resolved is RsNamedFieldDecl) {
+                        val name = binding.identifier.text
+                        if (name in visitedIdentifiers) {
+                            RsDiagnostic.RepeatedIdentifierInPattern(binding, name).addToHolder(holder)
+                        } else {
+                            visitedIdentifiers.add(name)
+                        }
+                    }
+                }
+
+                override fun visitOrPat(pattern: RsOrPat) {
+                    // assumes that all OR branches have the same set of identifiers
+                    val visitedInBranches = mutableSetOf<String>()
+                    for (pat in pattern.patList) {
+                        visitedInBranches += check(pat, visitedIdentifiers.toHashSet())
+                    }
+                    visitedIdentifiers += visitedInBranches
+                }
+            }
+            pattern.accept(visitor)
+            return visitedIdentifiers.toHashSet()
+        }
+        check(topPattern, hashSetOf())
+    }
+
     private fun checkRsPatTupleStruct(holder: RsAnnotationHolder, patTupleStruct: RsPatTupleStruct) {
         val declaration = patTupleStruct.path.reference?.deepResolve() as? RsFieldsOwner ?: return
 
@@ -256,6 +303,10 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         } else if (bodyFieldsAmount > declarationFieldsAmount) {
             RsDiagnostic.ExtraFieldInTupleStructPattern(patTupleStruct, bodyFieldsAmount, declarationFieldsAmount)
                 .addToHolder(holder)
+        }
+
+        if (patTupleStruct.isTopLevel) {
+            checkRepeatedPatIdentifiers(holder, patTupleStruct)
         }
     }
 
@@ -1336,3 +1387,6 @@ private fun RsAttr.isBuiltinWithName(target: String): Boolean {
 
     return !hasInScope(name, MACROS)
 }
+
+private val RsPat.isTopLevel: Boolean
+    get() = findBinding()?.topLevelPattern == this

@@ -3753,7 +3753,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         struct Foo { a: i32, b: i32 }
 
         fn foo(x: Foo) {
-            let Foo { a, <error descr="Field `a` bound multiple times in the pattern [E0025]">a</error>, b } = x;
+            let Foo { a, <error descr="Field `a` bound multiple times in the pattern [E0025]"><error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error></error>, b } = x;
         }
     """)
 
@@ -3762,6 +3762,128 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn foo(x: Foo) {
             let Foo { a, <error descr="Field `a` bound multiple times in the pattern [E0025]">a: c</error>, b } = x;
+        }
+    """)
+
+    fun `test E0025 struct field bound multiple times in nested pattern`() = checkErrors("""
+        struct Foo { c: i32, b: Bar }
+        struct Bar { a: i32, b: i32 }
+
+        fn foo(x: Foo) {
+            let Foo { c, b: Bar { a, <error descr="Field `a` bound multiple times in the pattern [E0025]"><error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error></error>, .. } } = x;
+        }
+    """)
+
+    fun `test E0416 identifier bound multiple times in struct pattern`() = checkErrors("""
+        struct Foo { a: i32, b: i32 }
+
+        fn foo(x: Foo) {
+            let Foo { a, b: <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error> } = x;
+        }
+    """)
+
+    fun `test E0416 identifier bound multiple times in nested struct pattern`() = checkErrors("""
+        struct Foo { a: Bar, b: Bar }
+        struct Bar { a: i32, b: i32 }
+
+        fn foo(x: Foo) {
+            let Foo { a: Bar { a, b }, b: Bar { <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error>, <error descr="Identifier `b` is bound more than once in the same pattern [E0416]">b</error> } } = x;
+        }
+    """)
+
+    fun `test E0416 identifier bound multiple times in nested complex pattern`() = checkErrors("""
+        struct Foo { a: Bar, b: Bar }
+        struct Bar { a: i32, b: (i32, i32) }
+
+        fn foo(x: Foo) {
+            let Foo { a: Bar { a, b }, b: Bar { <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error>, b: (<error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error>, <error descr="Identifier `b` is bound more than once in the same pattern [E0416]">b</error>) } } = x;
+        }
+    """)
+
+    fun `test E0416 identifier bound multiple times in tuple pattern`() = checkErrors("""
+        fn foo() {
+            let (a, <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error>) = (0, 0);
+        }
+    """)
+
+    fun `test E0416 identifier bound multiple times in tuple struct pattern`() = checkErrors("""
+        struct Foo(u32, u32);
+
+        fn foo(x: Foo) {
+            let Foo (a, <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error>) = x;
+        }
+    """)
+
+    fun `test E0416 in or pattern branch`() = checkErrors("""
+        enum E {
+            Bar { a: u32, b: u32 },
+            Baz { a: u32 }
+        }
+
+        fn foo(x: E) {
+            match x {
+                E::Bar { a, b: <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error> } | E::Baz { a } => {}
+            }
+        }
+    """)
+
+    fun `test no E0416 on or pattern in distinct or branches`() = checkErrors("""
+        enum E {
+            Bar { a: u32 },
+            Baz { a: u32 }
+        }
+
+        fn foo(x: E) {
+            match x {
+                E::Bar { a } | E::Baz { a } => {}
+            }
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test E0416 in nested or pattern branches`() = checkErrors("""
+        #![feature(or_patterns)]
+
+        struct Foo { a: i32, b: E }
+
+        enum E {
+            Bar { a: u32 },
+            Baz { a: u32 }
+        }
+
+        fn foo(x: Foo) {
+            let Foo { a, b: E::Bar { <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error> } | E::Baz { <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error> } } = x;
+        }
+    """)
+
+    @MockRustcVersion("1.38.0-nightly")
+    fun `test E0416 in nested or pattern branches in reverse order`() = checkErrors("""
+        #![feature(or_patterns)]
+
+        struct Foo { a: i32, b: E }
+
+        enum E {
+            Bar { a: u32 },
+            Baz { a: u32 }
+        }
+
+        fn foo(x: Foo) {
+            let Foo { b: E::Bar { a } | E::Baz { a }, <error descr="Identifier `a` is bound more than once in the same pattern [E0416]">a</error> } = x;
+        }
+    """)
+
+    fun `test no E0416 with path pattern`() = checkErrors("""
+        enum Option {
+            None,
+            Some
+        }
+        use Option::*;
+
+        fn foo(x: (Option, Option)) {
+            match x {
+                (None, None) => {},
+                _ => {}
+            }
         }
     """)
 }
