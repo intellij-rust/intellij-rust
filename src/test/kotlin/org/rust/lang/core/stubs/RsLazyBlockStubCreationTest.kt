@@ -18,6 +18,14 @@ class RsLazyBlockStubCreationTest : RsLazyBlockStubCreationTestBase() {
         }
     """)
 
+    fun `test lifetime parameter in function body`() = doTest("""
+    //- main.rs
+        struct S<'a, T: ?Sized>(&'a T);
+        fn main() {
+            let lambda: &dyn for<'b> Fn(&'b str) -> S<'b, str> = &|s| S(s);
+        }
+    """)
+
     private fun doTest(@Language("Rust") fileTreeText: String) {
         fileTreeFromText(fileTreeText).create()
         checkRustFiles(myFixture.findFileInTempDir("."), emptyList())
