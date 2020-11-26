@@ -189,6 +189,14 @@ data class SimpleScopeEntry(
     override val subst: Substitution = emptySubstitution
 ) : ScopeEntry
 
+data class ScopeEntryWithVisibility(
+    override val name: String,
+    override val element: RsElement,
+    /** Given a [RsMod] checks if this item is visible from that mod */
+    val visibilityFilter: (RsMod) -> Boolean,
+    override val subst: Substitution = emptySubstitution,
+) : ScopeEntry
+
 interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
     override val element: T
     val selfTy: Ty
@@ -218,6 +226,9 @@ private class LazyScopeEntry(
 
 operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
     this(SimpleScopeEntry(name, e))
+
+operator fun RsResolveProcessor.invoke(name: String, e: RsElement, visibilityFilter: (RsMod) -> Boolean): Boolean =
+    this(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
 fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
     this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.PUBLICATION, e)))
@@ -255,6 +266,7 @@ fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsM
     return createProcessor(processor.name) {
         val element = it.element
         if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
+        if (it is ScopeEntryWithVisibility && !it.visibilityFilter(mod)) return@createProcessor false
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod
