@@ -61,4 +61,14 @@ class RsCfgAttributeCompletionProviderTest : RsCompletionTestBase() {
         #[cfg(not(and(unix, target_endian = "/*caret*/")))]
         fn foo() {}
     """)
+
+    fun `test no completion in feature names 1`() = checkNoCompletion("""
+        #[cfg(feature = "/*caret*/")]
+        fn foo() {}
+    """)
+
+    fun `test no completion in feature names 2`() = checkNoCompletion("""
+        #[cfg(feature = /*caret*/)]
+        fn foo() {}
+    """)
 }

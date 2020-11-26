@@ -403,6 +403,21 @@ class RsPsiPatternTest : RsTestBase() {
         fn foo() {}                          //^
     """, RsPsiPattern.onAnyCfgFeature)
 
+    fun `test in cfg feature`() = testPattern("""
+        #[cfg(feature = "foo")]
+        fn foo() {}    //^
+    """, RsPsiPattern.insideAnyCfgFeature)
+
+    fun `test in cfg feature without literal`() = testPattern("""
+        #[cfg(feature = foo)]
+        fn foo() {}    //^
+    """, RsPsiPattern.insideAnyCfgFeature)
+
+    fun `test not in cfg feature without literal`() = testPatternNegative("""
+        #[cfg( f = foo)]
+        fn foo() {}//^
+    """, RsPsiPattern.insideAnyCfgFeature)
+
     private inline fun <reified T : PsiElement> testPattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
         InlineFile(code)
         val element = findElementInEditor<T>()

@@ -346,6 +346,50 @@ class RsImportOptimizerTest: RsTestBase() {
         fn main() {}
     """)
 
+    fun `test remove empty use item 1`() = doTest("""
+        use foo::{};
+
+        fn main() {}
+    """, """
+        fn main() {}
+    """)
+
+    fun `test remove empty use item 2`() = doTest("""
+        use aaa::foo;
+        use bbb::{};
+        use ccc::foo;
+
+        fn main() {}
+    """, """
+        use aaa::foo;
+        use ccc::foo;
+
+        fn main() {}
+    """)
+
+    fun `test remove empty use group`() = doTest("""
+        use aaa1::{zzz::{}};
+        use aaa2::{zzz::{{}}};
+        use aaa3::{zzz::{}, bbb};
+        use aaa4::{bbb, zzz::{}};
+        use aaa5::{bbb, zzz::{}, ccc};
+        use aaa6::{bbb, yyy::{}, zzz::{}, ccc};
+        use aaa7::{bbb, yyy::{}, ccc, zzz::{}, ddd};
+        use aaa8::{bbb::{ccc::{}, ddd::{{}}}, zzz, eee::{}};
+        use aaa9::{bbb::{ccc::{}, ddd::{{}}}, eee::{}};
+
+        fn main() {}
+    """, """
+        use aaa3::bbb;
+        use aaa4::bbb;
+        use aaa5::{bbb, ccc};
+        use aaa6::{bbb, ccc};
+        use aaa7::{bbb, ccc, ddd};
+        use aaa8::zzz;
+
+        fn main() {}
+    """)
+
     fun `test do not move use items from test mod`() = doTest("""
         use std::io::Read;
 

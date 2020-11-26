@@ -20,6 +20,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
 import org.rust.lang.core.psi.RsConstant
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsEnumVariant
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.resolve.Namespace
@@ -138,3 +139,24 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
 
 fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
     findInScope(name, ns) != null
+
+/**
+ * Delete the element along with a neighbour comma.
+ * If a comma follow the element, it will be deleted.
+ * Else if a comma precedes the element, it will be deleted.
+ *
+ * It is useful to remove elements that are parts of comma separated lists (parameters, arguments, use specks, ...).
+ */
+fun RsElement.deleteWithSurroundingComma() {
+    val followingComma = getNextNonCommentSibling()
+    if (followingComma?.elementType == RsElementTypes.COMMA) {
+        followingComma?.delete()
+    } else {
+        val precedingComma = getPrevNonCommentSibling()
+        if (precedingComma?.elementType == RsElementTypes.COMMA) {
+            precedingComma?.delete()
+        }
+    }
+
+    delete()
+}

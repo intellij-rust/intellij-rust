@@ -6,6 +6,8 @@
                                   implementation="org.rust.toml.resolve.RsCargoTomlIntegrationReferenceContributor"/>
         <completion.contributor language="TOML"
                                 implementationClass="org.rust.toml.completion.CargoTomlCompletionContributor"/>
+        <completion.contributor language="Rust"
+                                implementationClass="org.rust.toml.completion.RsCargoTomlIntegrationCompletionContributor"/>
         <codeInsight.lineMarkerProvider language="TOML"
                                         implementationClass="org.rust.toml.CargoCrateDocLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider language="TOML"
