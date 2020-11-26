@@ -27,7 +27,7 @@ class RsMoveRetargetReferencesProcessor(
 
     fun retargetReferences(referencesAll: List<RsMoveReferenceInfo>) {
         val (referencesDirectly, referencesOther) = referencesAll
-            .partition { it.isInsideUseDirective }
+            .partition { it.isInsideUseDirective || it.forceReplaceDirectly }
 
         for (reference in referencesDirectly) {
             retargetReferenceDirectly(reference)
@@ -135,6 +135,11 @@ class RsMoveRetargetReferencesProcessor(
             if (replacePathOldWithTypeArguments(pathOldOriginal, pathNew.textNormalized)) return
         }
 
+        // when moving `fn foo() { use crate::mod2::bar; ... }` to `mod2`, we can just delete this import
+        if (pathOld.parent is RsUseSpeck && pathOld.parent.parent is RsUseItem && !pathNew.hasColonColon) {
+            pathOld.parent.parent.delete()
+            return
+        }
         pathOldOriginal.replace(pathNew)
     }
 

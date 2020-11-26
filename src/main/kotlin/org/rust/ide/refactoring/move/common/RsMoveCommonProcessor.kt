@@ -231,6 +231,15 @@ class RsMoveCommonProcessor(
     ): RsMoveReferenceInfo? {
         val path = convertFromPathOriginal(pathOriginal, codeFragmentFactory)
 
+        // after move both `path` and its target will belong to `targetMod`
+        // so we can refer to item in `targetMod` just with its name
+        if (path.containingMod == sourceMod && target.containingModStrict == targetMod) {
+            val pathNew = target.name?.toRsPath(psiFactory)
+            if (pathNew != null) {
+                return RsMoveReferenceInfo(path, pathOriginal, pathNew, pathNew, target, forceReplaceDirectly = true)
+            }
+        }
+
         if (path.isAbsolute()) {
             // when moving from binary to library crate, we should change path `library_crate::...` to `crate::...`
             // when moving from one library crate to another, we should change path `crate::...` to `first_library::...`

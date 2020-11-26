@@ -949,6 +949,114 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+
+    fun `test outside references to items in new mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo1/*caret*/() { crate::mod2::bar1(); }
+            fn foo2/*caret*/() {
+                use crate::mod2;
+                mod2::bar1();
+            }
+            mod inner/*caret*/ {
+                fn foo3() { crate::mod2::bar1(); }
+                fn foo4() {
+                    use crate::mod2;
+                    mod2::bar1();
+                }
+            }
+        }
+        mod mod2/*target*/ {
+            pub fn bar1() {}
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn bar1() {}
+
+            fn foo1() { bar1(); }
+
+            fn foo2() {
+                use crate::mod2;
+                bar1();
+            }
+
+            mod inner {
+                fn foo3() { crate::mod2::bar1(); }
+                fn foo4() {
+                    use crate::mod2;
+                    mod2::bar1();
+                }
+            }
+        }
+    """)
+
+    fun `test outside references to items in submodule of new mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo1/*caret*/() {
+                crate::mod2::inner1::bar1();
+                crate::mod2::inner1::bar2();
+            }
+            fn foo2/*caret*/() {
+                use crate::mod2::inner1;
+                inner1::bar1();
+                inner1::bar2();
+            }
+            mod inner/*caret*/ {
+                fn foo3() {
+                    crate::mod2::inner1::bar1();
+                    crate::mod2::inner1::bar2();
+                }
+                fn foo4() {
+                    use crate::mod2::inner1;
+                    inner1::bar1();
+                    inner1::bar2();
+                }
+            }
+        }
+        mod mod2/*target*/ {
+            pub mod inner1 {
+                pub use inner2::*;
+                mod inner2 { pub fn bar2() {} }
+                pub fn bar1() {}
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub mod inner1 {
+                pub use inner2::*;
+                mod inner2 { pub fn bar2() {} }
+                pub fn bar1() {}
+            }
+
+            fn foo1() {
+                crate::mod2::inner1::bar1();
+                crate::mod2::inner1::bar2();
+            }
+
+            fn foo2() {
+                inner1::bar1();
+                inner1::bar2();
+            }
+
+            mod inner {
+                fn foo3() {
+                    crate::mod2::inner1::bar1();
+                    crate::mod2::inner1::bar2();
+                }
+                fn foo4() {
+                    use crate::mod2::inner1;
+                    inner1::bar1();
+                    inner1::bar2();
+                }
+            }
+        }
+    """)
+
     fun `test absolute outside reference which should be changed because of reexports`() = doTest("""
     //- lib.rs
         mod inner1 {
