@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.io.URLUtil
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.ide.icons.RsIcons
@@ -44,8 +45,10 @@ class CreateNewGithubIssue : DumbAwareAction(
         val ideNameAndVersion = ideNameAndVersion
         val os = SystemInfo.getOsNameAndVersion()
         val codeSnippet = e.getData(PlatformDataKeys.EDITOR)?.codeExample ?: ""
+        val macroEngine = project.rustSettings.macroExpansionEngine.name.toLowerCase()
+        val resolveEngine = if (project.rustSettings.newResolveEnabled) "new" else "old"
 
-        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, codeSnippet)
+        val body = ISSUE_TEMPLATE.format(pluginVersion, toolchainVersion, ideNameAndVersion, os, macroEngine, resolveEngine, codeSnippet)
         val link = "https://github.com/intellij-rust/intellij-rust/issues/new?body=${URLUtil.encodeURIComponent(body)}"
         BrowserUtil.browse(link)
     }
@@ -64,6 +67,8 @@ class CreateNewGithubIssue : DumbAwareAction(
             * **Rust toolchain version:** %s
             * **IDE name and version:** %s
             * **Operating system:** %s
+            * **Macro expansion engine:** %s
+            * **Name resolution engine:** %s
 
             ## Problem description
 
