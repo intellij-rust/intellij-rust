@@ -220,13 +220,13 @@ object RsPsiPattern {
         .with(RootMetaItemCondition)
 
     /** `#[cfg()]` */
-    private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
+    private val cfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
 
     /** `#[cfg_attr()]` */
-    private val onCfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg_attr")
+    private val cfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg_attr")
 
     /** `#[doc(cfg())]` */
-    private val onDocCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
+    private val docCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
         .withSuperParent(2, rootMetaItem("doc"))
 
     /**
@@ -235,31 +235,31 @@ object RsPsiPattern {
      *           //^
      * ```
      */
-    private val onCfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .withSuperParent(2, onCfgAttrAttributeMeta)
+    private val cfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .withSuperParent(2, cfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
-    private val onAnyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
-        onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta
+    private val anyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
+        cfgAttributeMeta or cfgAttrCondition or docCfgAttributeMeta
 
-    val onAnyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+    val anyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
-        .inside(onAnyCfgCondition)
+        .inside(anyCfgCondition)
 
     /**
-     * A leaf literal inside [onAnyCfgFeature] or an identifier at the same place
+     * A leaf literal inside [anyCfgFeature] or an identifier at the same place
      * ```
      * #[cfg(feature = "foo")] // Works for "foo" (leaf literal)
      * #[cfg(feature = foo)]   // Works for "foo" (leaf identifier)
      * ```
      */
-    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(onAnyCfgFeature) or
+    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(anyCfgFeature) or
         psiElement(IDENTIFIER)
             .withParent(
                 psiElement<RsCompactTT>()
                     .withParent(
                         psiElement<RsMetaItem>()
-                            .inside(onAnyCfgCondition)
+                            .inside(anyCfgCondition)
                     )
             )
             .with("feature") { it, _ ->

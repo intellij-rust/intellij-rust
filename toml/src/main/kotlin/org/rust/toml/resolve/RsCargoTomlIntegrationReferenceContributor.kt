@@ -14,7 +14,7 @@ import org.rust.toml.tomlPluginIsAbiCompatible
 class RsCargoTomlIntegrationReferenceContributor : PsiReferenceContributor() {
     override fun registerReferenceProviders(registrar: PsiReferenceRegistrar) {
         if (tomlPluginIsAbiCompatible()) {
-            registrar.registerReferenceProvider(RsPsiPattern.onAnyCfgFeature, RsCfgFeatureReferenceProvider())
+            registrar.registerReferenceProvider(RsPsiPattern.anyCfgFeature, RsCfgFeatureReferenceProvider())
         }
     }
 }
