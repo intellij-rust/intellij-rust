@@ -1029,6 +1029,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2 {
             pub mod inner1 {
                 pub use inner2::*;
+
                 mod inner2 { pub fn bar2() {} }
                 pub fn bar1() {}
             }
@@ -1072,6 +1073,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use bar::*;
+
             mod mod1 {}
             // private
             mod bar { pub fn bar_func() {} }
@@ -1095,6 +1097,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             pub use mod1_inner::bar;
+
             mod mod1_inner {
                 pub fn bar() {}
             }
@@ -1123,6 +1126,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner {
             pub use mod1::*;
+
             // private
             mod mod1 {}
             pub mod mod2 {
@@ -1153,6 +1157,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner {
             pub use mod2::*;
+
             pub mod mod1 {}
             // private
             mod mod2 {
@@ -1184,6 +1189,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use inner2::*;
+
             mod inner2 {
                 pub mod mod1 {}
                 pub mod mod2 {
@@ -1216,6 +1222,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod inner1 {
             pub use inner2::*;
+
             mod inner2 {  // private
                 pub mod mod1 {}
                 pub mod mod2 {
@@ -1340,6 +1347,135 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    fun `test inside references from new mod in use group`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub fn foo2/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            use crate::mod1::{foo1, foo2};
+            fn bar() {
+                foo1();
+                foo2();
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn bar() {
+                foo1();
+                foo2();
+            }
+
+            pub fn foo1() {}
+
+            pub fn foo2() {}
+        }
+    """)
+
+    fun `test inside references from use group 1`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub fn foo2/*caret*/() {}
+            pub fn bar() {}
+        }
+        mod mod2/*target*/ {}
+        mod usage {
+            use crate::mod1::{foo1, foo2, bar};
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub fn bar() {}
+        }
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub fn foo2() {}
+        }
+        mod usage {
+            use crate::mod1::bar;
+            use crate::mod2::{foo1, foo2};
+        }
+    """)
+
+    fun `test inside references from use group 2`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub mod foo1/*caret*/ {
+                pub fn foo1_func() {}
+                pub mod foo1_inner {
+                    pub fn foo1_inner_func() {}
+                }
+            }
+            pub mod foo2/*caret*/ {
+                pub fn foo2_func() {}
+            }
+        }
+        mod mod2/*target*/ {}
+        mod usage1 {
+            use crate::mod1::{
+                foo1::{foo1_func, foo1_inner::foo1_inner_func},
+                foo2::foo2_func,
+            };
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub mod foo1 {
+                pub fn foo1_func() {}
+                pub mod foo1_inner {
+                    pub fn foo1_inner_func() {}
+                }
+            }
+
+            pub mod foo2 {
+                pub fn foo2_func() {}
+            }
+        }
+        mod usage1 {
+            use crate::mod2::foo1::{foo1_func, foo1_inner::foo1_inner_func};
+            use crate::mod2::foo2::foo2_func;
+        }
+    """)
+
+    // todo grouping use items with same attributes and visibility
+    fun `test inside references from use group with attributes and visibility`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub fn foo2/*caret*/() {}
+            pub fn bar() {}
+        }
+        mod mod2/*target*/ {}
+        mod usage {
+            #[attr]
+            pub use crate::mod1::{foo1, foo2, bar};
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub fn bar() {}
+        }
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub fn foo2() {}
+        }
+        mod usage {
+            #[attr]
+            pub use crate::mod1::bar;
+            #[attr]
+            pub use crate::mod2::foo1;
+            #[attr]
+            pub use crate::mod2::foo2;
+        }
+    """)
+
     fun `test outside reference to enum variant in old mod`() = doTest("""
     //- lib.rs
         mod mod1 {
@@ -1354,6 +1490,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             use Bar::*;
+
             pub enum Bar { Bar1, Bar2 }
         }
         mod mod2 {
@@ -1410,6 +1547,7 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod1 {
             use Bar::*;
+
             pub enum Bar { Bar1, Bar2 }
         }
         mod mod2 {

@@ -22,8 +22,8 @@ fn test3() {
 }
 
 mod foo_inner1 {
-    use crate::mod1::mod1_inner;
     use crate::mod1;
+    use crate::mod1::mod1_inner;
 
     pub fn foo_inner1_func() {}
 
@@ -38,8 +38,8 @@ mod foo_inner1 {
     }
 
     pub mod foo_inner2 {
-        use crate::mod1::mod1_inner;
         use crate::mod1;
+        use crate::mod1::mod1_inner;
 
         pub fn foo_inner2_func() {}
 

@@ -137,10 +137,6 @@ class RsMoveCommonProcessor(
         val element = reference.element
         val target = reference.resolve() ?: return null
 
-        // `use path1::{path2, path3}`
-        //              ~~~~~  ~~~~~ TODO: don't ignore such paths
-        if (element.ancestorStrict<RsUseGroup>() != null) return null
-
         return when {
             element is RsModDeclItem && target is RsFile -> RsModDeclUsageInfo(element, target)
             element is RsPath && target is RsQualifiedNamedElement -> RsPathUsageInfo(element, reference, target)
@@ -376,6 +372,7 @@ class RsMoveCommonProcessor(
             .map { it.referenceInfo }
         updateInsideReferenceInfosIfNeeded(insideReferences)
         retargetReferencesProcessor.retargetReferences(insideReferences)
+        retargetReferencesProcessor.optimizeImports()
     }
 
     private fun updateOutsideReferencesInVisRestrictions() {
