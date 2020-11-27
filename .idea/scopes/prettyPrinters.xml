@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+    <scope name="prettyPrinters" pattern="file[intellij-rust]:prettyPrinters/*.py*" />
+</component>
