@@ -215,14 +215,18 @@ object RsPsiPattern {
             return psiElement().withParent(simplePath)
         }
 
+    /** @see RsMetaItem.isRootMetaItem */
+    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .with(RootMetaItemCondition)
+
     /** `#[cfg()]` */
-    private val onCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
+    private val cfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
 
     /** `#[cfg_attr()]` */
-    private val onCfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg_attr")
+    private val cfgAttrAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg_attr")
 
     /** `#[doc(cfg())]` */
-    private val onDocCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
+    private val docCfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = metaItem("cfg")
         .withSuperParent(2, rootMetaItem("doc"))
 
     /**
@@ -231,41 +235,31 @@ object RsPsiPattern {
      *           //^
      * ```
      */
-    private val onCfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .withSuperParent(2, onCfgAttrAttributeMeta)
+    private val cfgAttrCondition: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .withSuperParent(2, cfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
-    /**
-     * ```
-     * #[cfg_attr(condition, attr)]
-     *                     //^
-     * ```
-     */
-    private val onCfgAttrBody: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .withSuperParent(2, onCfgAttrAttributeMeta)
-        .with("lastItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.lastOrNull() == it }
+    private val anyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
+        cfgAttributeMeta or cfgAttrCondition or docCfgAttributeMeta
 
-    private val onAnyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
-        onCfgAttributeMeta or onCfgAttrCondition or onDocCfgAttributeMeta
-
-    val onAnyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
+    val anyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
-        .inside(onAnyCfgCondition)
+        .inside(anyCfgCondition)
 
     /**
-     * A leaf literal inside [onAnyCfgFeature] or an identifier at the same place
+     * A leaf literal inside [anyCfgFeature] or an identifier at the same place
      * ```
      * #[cfg(feature = "foo")] // Works for "foo" (leaf literal)
      * #[cfg(feature = foo)]   // Works for "foo" (leaf identifier)
      * ```
      */
-    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(onAnyCfgFeature) or
+    val insideAnyCfgFeature: PsiElementPattern.Capture<PsiElement> = psiElement().withParent(anyCfgFeature) or
         psiElement(IDENTIFIER)
             .withParent(
                 psiElement<RsCompactTT>()
                     .withParent(
                         psiElement<RsMetaItem>()
-                            .inside(onAnyCfgCondition)
+                            .inside(anyCfgCondition)
                     )
             )
             .with("feature") { it, _ ->
@@ -287,9 +281,9 @@ object RsPsiPattern {
             psiElement<RsPath>().withText(key)
         )
 
-    /** @see OnRootMetaItem */
+    /** @see RsMetaItem.isRootMetaItem */
     private fun rootMetaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
-        metaItem(key).with(OnRootMetaItem)
+        metaItem(key).with(RootMetaItemCondition)
 
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords
@@ -302,15 +296,10 @@ object RsPsiPattern {
         }
     }
 
-    /**
-     * In the case of `#[foo(bar)]`, the `foo(bar)` meta item is considered "root", but `bar` is not.
-     * In the case of `#[cfg_attr(windows, foo(bar))]`, the `foo(bar)` is also considered "root" meta item
-     * because after `cfg_attr` expanding the `foo(bar)` will turn into `#[foo(bar)]`.
-     * This also applied to nested `cfg_attr`s, e.g. `#[cfg_attr(windows, cfg_attr(foobar, foo(bar)))]`
-     */
-    private object OnRootMetaItem : PatternCondition<RsMetaItem>("rootMetaItem") {
+    /** @see RsMetaItem.isRootMetaItem */
+    private object RootMetaItemCondition : PatternCondition<RsMetaItem>("rootMetaItem") {
         override fun accepts(meta: RsMetaItem, context: ProcessingContext?): Boolean {
-            return meta.parent is RsAttr || onCfgAttrBody.accepts(meta)
+            return meta.isRootMetaItem
         }
     }
 }
