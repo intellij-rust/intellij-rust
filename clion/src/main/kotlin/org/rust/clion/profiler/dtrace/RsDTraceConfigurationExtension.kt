@@ -16,10 +16,12 @@ import com.intellij.execution.process.UnixProcessManager
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.progress.PerformInBackgroundOption
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.profiler.ProfilerToolWindowManager
+import com.intellij.profiler.*
+import com.intellij.profiler.clion.CPPProfilerSettings
 import com.intellij.profiler.clion.NativeTargetProcess
-import com.intellij.profiler.installErrorHandlers
+import com.intellij.profiler.clion.profilerConfigurable
 import org.rust.cargo.runconfig.CargoCommandConfigurationExtension
 import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -41,6 +43,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
         context: ConfigurationExtensionContext
     ) {
         if (environment.runner.runnerId !in PROFILER_RUNNER_IDS) return
+        validateDTraceSettings(configuration.project)
         val starterPath = profilerStarterPath()
         if (!starterPath.exists()) throw ExecutionException("Internal error: Can't find process starter")
         cmdLine.withEnvironment(DYLD_INSERT_LIBRARIES, starterPath.absolutePath)
@@ -65,6 +68,14 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
                 UnixProcessManager.sendSigIntToProcessTree(targetProcess) //wakeup starter and finally run targetProcess code
                 ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(process)
             }
+    }
+
+    @Throws(MisConfiguredException::class)
+    private fun validateDTraceSettings(project: Project) {
+        val state = CPPProfilerSettings.instance.state
+        throw validateLocalPath(state.executablePath.orEmpty(), "DTrace executable", project, profilerConfigurable::class.java)
+            ?: validateFrequency(state.samplingFrequency, project, profilerConfigurable::class.java)
+            ?: return
     }
 
     companion object {
