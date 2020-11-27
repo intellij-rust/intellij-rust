@@ -1,6 +1,8 @@
 from sys import version_info
 
 import gdb
+from gdb import Value
+from gdb import TYPE_CODE_PTR
 
 if version_info[0] >= 3:
     xrange = range
@@ -10,13 +12,15 @@ FIRST_FIELD = "__1"
 
 
 def unwrap_unique_or_non_null(unique_or_nonnull):
+    # type: (Value) -> Value
     # BACKCOMPAT: rust 1.32 https://github.com/rust-lang/rust/commit/7a0911528058e87d22ea305695f4047572c5e067
     ptr = unique_or_nonnull["pointer"]
-    return ptr if ptr.type.code == gdb.TYPE_CODE_PTR else ptr[ZERO_FIELD]
+    return ptr if ptr.type.code == TYPE_CODE_PTR else ptr[ZERO_FIELD]
 
 
 class StructProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StructProvider
         self.valobj = valobj
         self.fields = self.valobj.type.fields()
 
@@ -25,11 +29,12 @@ class StructProvider:
 
     def children(self):
         for field in self.fields:
-            yield (field.name, self.valobj[field.name])
+            yield field.name, self.valobj[field.name]
 
 
 class TupleProvider:
     def __init__(self, valobj):
+        # type: (Value) -> TupleProvider
         self.valobj = valobj
         self.fields = self.valobj.type.fields()
 
@@ -38,7 +43,7 @@ class TupleProvider:
 
     def children(self):
         for i, field in enumerate(self.fields):
-            yield ((str(i), self.valobj[field.name]))
+            yield str(i), self.valobj[field.name]
 
     @staticmethod
     def display_hint():
@@ -48,6 +53,7 @@ class TupleProvider:
 # BACKCOMPAT: 2020.3 (gdb <= 9.1)
 class OldEnumProvider:
     def __init__(self, valobj):
+        # type: (Value) -> OldEnumProvider
         content = valobj[valobj.type.fields()[0]]
         fields = content.type.fields()
         self.empty = len(fields) == 0
@@ -67,12 +73,13 @@ class OldEnumProvider:
 
     def children(self):
         if not self.empty:
-            yield (self.name, self.active_variant)
+            yield self.name, self.active_variant
 
 
 # gdb >= 10.1
 class NewEnumProvider:
     def __init__(self, valobj):
+        # type: (Value) -> NewEnumProvider
         self.valobj = valobj
         fields = valobj.type.fields()
         variant_field = None
@@ -94,6 +101,7 @@ class NewEnumProvider:
 
 class StdStringProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdStringProvider
         self.valobj = valobj
         vec = valobj["vec"]
         self.length = int(vec["len"])
@@ -109,6 +117,7 @@ class StdStringProvider:
 
 class StdOsStringProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdOsStringProvider
         self.valobj = valobj
         buf = self.valobj["inner"]["inner"]
         is_windows = "Wtf8Buf" in buf.type.name
@@ -120,12 +129,14 @@ class StdOsStringProvider:
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
 
-    def display_hint(self):
+    @staticmethod
+    def display_hint():
         return "string"
 
 
 class StdStrProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdStrProvider
         self.valobj = valobj
         self.length = int(valobj["length"])
         self.data_ptr = valobj["data_ptr"]
@@ -140,6 +151,7 @@ class StdStrProvider:
 
 class StdVecProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdVecProvider
         self.valobj = valobj
         self.length = int(valobj["len"])
         self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
@@ -149,7 +161,7 @@ class StdVecProvider:
 
     def children(self):
         for index in xrange(self.length):
-            yield ("[{}]".format(index), (self.data_ptr + index).dereference())
+            yield "[{}]".format(index), (self.data_ptr + index).dereference()
 
     @staticmethod
     def display_hint():
@@ -158,6 +170,7 @@ class StdVecProvider:
 
 class StdVecDequeProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdVecDequeProvider
         self.valobj = valobj
         self.head = int(valobj["head"])
         self.tail = int(valobj["tail"])
@@ -173,7 +186,7 @@ class StdVecDequeProvider:
 
     def children(self):
         for index in xrange(0, self.size):
-            yield ("[{}]".format(index), (self.data_ptr + ((self.tail + index) % self.cap)).dereference())
+            yield "[{}]".format(index), (self.data_ptr + ((self.tail + index) % self.cap)).dereference()
 
     @staticmethod
     def display_hint():
@@ -182,6 +195,7 @@ class StdVecDequeProvider:
 
 class StdRcProvider:
     def __init__(self, valobj, is_atomic=False):
+        # type: (Value, bool) -> StdRcProvider
         self.valobj = valobj
         self.ptr = unwrap_unique_or_non_null(valobj["ptr"])
         self.value = self.ptr["data" if is_atomic else "value"]
@@ -192,9 +206,9 @@ class StdRcProvider:
         return "strong={}, weak={}".format(int(self.strong), int(self.weak))
 
     def children(self):
-        yield ("value", self.value)
-        yield ("strong", self.strong)
-        yield ("weak", self.weak)
+        yield "value", self.value
+        yield "strong", self.strong
+        yield "weak", self.weak
 
 
 class StdCellProvider:
@@ -202,11 +216,12 @@ class StdCellProvider:
         self.value = valobj["value"]["value"]
 
     def children(self):
-        yield ("value", self.value)
+        yield "value", self.value
 
 
 class StdRefProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdRefProvider
         self.value = valobj["value"].dereference()
         self.borrow = valobj["borrow"]["borrow"]["value"]["value"]
 
@@ -215,12 +230,13 @@ class StdRefProvider:
         return "borrow={}".format(borrow) if borrow >= 0 else "borrow_mut={}".format(-borrow)
 
     def children(self):
-        yield ("*value", self.value)
-        yield ("borrow", self.borrow)
+        yield "*value", self.value
+        yield "borrow", self.borrow
 
 
 class StdRefCellProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdRefCellProvider
         self.value = valobj["value"]["value"]
         self.borrow = valobj["borrow"]["value"]["value"]
 
@@ -229,12 +245,13 @@ class StdRefCellProvider:
         return "borrow={}".format(borrow) if borrow >= 0 else "borrow_mut={}".format(-borrow)
 
     def children(self):
-        yield ("value", self.value)
-        yield ("borrow", self.borrow)
+        yield "value", self.value
+        yield "borrow", self.borrow
 
 
 class StdNonZeroNumberProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdNonZeroNumberProvider
         fields = valobj.type.fields()
         assert len(fields) == 1
         field = list(fields)[0]
@@ -248,6 +265,7 @@ class StdNonZeroNumberProvider:
 # In particular, yields each key/value pair in the node and in any child nodes.
 def children_of_node(boxed_node, height):
     def cast_to_internal(node):
+        # type: (Value) -> Value
         internal_type_name = node.type.target().name.replace("LeafNode", "InternalNode", 1)
         internal_type = gdb.lookup_type(internal_type_name)
         return node.cast(internal_type.pointer())
@@ -285,6 +303,7 @@ def children_of_map(map):
 
 class StdBTreeSetProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdBTreeSetProvider
         self.valobj = valobj
 
     def to_string(self):
@@ -293,7 +312,7 @@ class StdBTreeSetProvider:
     def children(self):
         inner_map = self.valobj["map"]
         for i, (child, _) in enumerate(children_of_map(inner_map)):
-            yield ("[{}]".format(i), child)
+            yield "[{}]".format(i), child
 
     @staticmethod
     def display_hint():
@@ -302,6 +321,7 @@ class StdBTreeSetProvider:
 
 class StdBTreeMapProvider:
     def __init__(self, valobj):
+        # type: (Value) -> StdBTreeMapProvider
         self.valobj = valobj
 
     def to_string(self):
@@ -309,8 +329,8 @@ class StdBTreeMapProvider:
 
     def children(self):
         for i, (key, val) in enumerate(children_of_map(self.valobj)):
-            yield ("key{}".format(i), key)
-            yield ("val{}".format(i), val)
+            yield "key{}".format(i), key
+            yield "val{}".format(i), val
 
     @staticmethod
     def display_hint():
@@ -320,6 +340,7 @@ class StdBTreeMapProvider:
 # BACKCOMPAT: rust 1.35
 class StdOldHashMapProvider:
     def __init__(self, valobj, show_values=True):
+        # type: (Value, bool) -> StdOldHashMapProvider
         self.valobj = valobj
         self.show_values = show_values
 
@@ -359,17 +380,17 @@ class StdOldHashMapProvider:
                 (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
 
         pairs_offset = hashes + len_rounded_up
-        pairs_start = gdb.Value(start + pairs_offset).cast(self.pair_type.pointer())
+        pairs_start = Value(start + pairs_offset).cast(self.pair_type.pointer())
 
         for index in range(self.size):
             table_index = self.valid_indices[index]
             idx = table_index & self.capacity_mask
             element = (pairs_start + idx).dereference()
             if self.show_values:
-                yield ("key{}".format(index), element[ZERO_FIELD])
-                yield ("val{}".format(index), element[FIRST_FIELD])
+                yield "key{}".format(index), element[ZERO_FIELD]
+                yield "val{}".format(index), element[FIRST_FIELD]
             else:
-                yield ("[{}]".format(index), element[ZERO_FIELD])
+                yield "[{}]".format(index), element[ZERO_FIELD]
 
     def display_hint(self):
         return "map" if self.show_values else "array"
@@ -377,6 +398,7 @@ class StdOldHashMapProvider:
 
 class StdHashMapProvider:
     def __init__(self, valobj, show_values=True):
+        # type: (Value, bool) -> StdHashMapProvider
         self.valobj = valobj
         self.show_values = show_values
 
@@ -387,7 +409,7 @@ class StdHashMapProvider:
         self.size = int(table["items"])
         self.pair_type = table.type.template_argument(0).strip_typedefs()
 
-        self.new_layout = not table.type.has_key("data")
+        self.new_layout = "data" not in table.type
         if self.new_layout:
             self.data_ptr = ctrl.cast(self.pair_type.pointer())
         else:
@@ -425,10 +447,10 @@ class StdHashMapProvider:
                 idx = -(idx + 1)
             element = (pairs_start + idx).dereference()
             if self.show_values:
-                yield ("key{}".format(index), element[ZERO_FIELD])
-                yield ("val{}".format(index), element[FIRST_FIELD])
+                yield "key{}".format(index), element[ZERO_FIELD]
+                yield "val{}".format(index), element[FIRST_FIELD]
             else:
-                yield ("[{}]".format(index), element[ZERO_FIELD])
+                yield "[{}]".format(index), element[ZERO_FIELD]
 
     def display_hint(self):
         return "map" if self.show_values else "array"
