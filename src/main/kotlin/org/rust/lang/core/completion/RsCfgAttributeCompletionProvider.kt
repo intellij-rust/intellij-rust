@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.InsertionContext
@@ -54,11 +55,16 @@ object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
 
         for (option in NAME_VALUE_OPTIONS) {
             result.addElement(
-                LookupElementBuilder.create(option).withInsertHandler { ctx, _ ->
-                    if (!ctx.alreadyHasValue) {
+                LookupElementBuilder.create(option).withInsertHandler { ctx, element ->
+                    val alreadyHasValue = ctx.alreadyHasValue
+                    if (!alreadyHasValue) {
                         ctx.document.insertString(ctx.selectionEndOffset, " = \"\"")
                     }
                     EditorModificationUtil.moveCaretRelatively(ctx.editor, 4)
+                    if (!alreadyHasValue && element.lookupString == "feature") {
+                        // Triggers `RsCfgFeatureCompletionProvider`
+                        AutoPopupController.getInstance(ctx.project).scheduleAutoPopup(ctx.editor)
+                    }
                 }
             )
         }
