@@ -629,9 +629,13 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val owner = lifetime.ancestorStrict<RsGenericDeclaration>() ?: return
         val declarationParts = listOfNotNull(
-            owner.typeParameterList,
+            (owner as? RsImplItem)?.traitRef,
+            (owner as? RsImplItem)?.typeReference,
+            (owner as? RsImplItem)?.whereClause,
+
+            (owner as? RsFunction)?.typeParameterList,
             (owner as? RsFunction)?.valueParameterList,
-            owner.whereClause
+            (owner as? RsFunction)?.whereClause
         )
         val inDeclaration = lifetime.ancestors.takeWhile { it != owner }.any { it in declarationParts }
 

@@ -554,28 +554,69 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
     """)
 
     @MockRustcVersion("1.23.0")
-    fun `test in-band lifetimes feature E0658 1`() = checkErrors("""
+    fun `test in-band lifetimes feature E0658 in fn 1`() = checkErrors("""
         fn foo(x: &<error descr="in-band lifetimes is experimental [E0658]">'a</error> str) {}
     """)
 
     @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 2`() = checkErrors("""
+    fun `test in-band lifetimes feature E0658 in fn 2`() = checkErrors("""
         #![feature(in_band_lifetimes)]
         fn foo<T: 'a>(x: &'b str) where 'c: 'd {}
     """)
 
     @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 3`() = checkErrors("""
+    fun `test in-band lifetimes feature E0658 in fn 3`() = checkErrors("""
         #![feature(in_band_lifetimes)]
         fn foo<'b>(x: &<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error> str) {}
     """)
 
     @MockRustcVersion("1.23.0-nightly")
-    fun `test in-band lifetimes feature E0658 4`() = checkErrors("""
+    fun `test in-band lifetimes feature E0658 in let`() = checkErrors("""
         #![feature(in_band_lifetimes)]
         fn foo() {
             let x: &<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str = unimplemented!();
         }
+    """)
+
+    @MockRustcVersion("1.23.0")
+    fun `test in-band lifetimes feature E0658 in impl 1`() = checkErrors("""
+        trait T<'a> {}
+        struct S<'a>(&'a str);
+        impl T<<error descr="in-band lifetimes is experimental [E0658]">'a</error>> for S<<error descr="in-band lifetimes is experimental [E0658]">'a</error>> {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 in impl 2`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        trait T<'a> {}
+        struct S<'a>(&'a str);
+        impl T<'a> for S<'b> where 'c: 'd {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 in impl 3`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        trait T<'a> {}
+        struct S<'a>(&'a str);
+        impl <'b> T<<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error>> for S<<error descr="Cannot mix in-band and explicit lifetime definitions [E0688]">'a</error>> {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 in struct`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        struct S(&<error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error> str);
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 in trait`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        trait S<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
+    """)
+
+    @MockRustcVersion("1.23.0-nightly")
+    fun `test in-band lifetimes feature E0658 in enum`() = checkErrors("""
+        #![feature(in_band_lifetimes)]
+        enum E<T: <error descr="Use of undeclared lifetime name `'a` [E0261]">'a</error>> {}
     """)
 
     fun `test lifetime name duplication in generic params E0263`() = checkErrors("""
