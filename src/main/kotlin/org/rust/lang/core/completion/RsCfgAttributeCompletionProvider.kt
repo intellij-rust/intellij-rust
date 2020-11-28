@@ -11,15 +11,12 @@ import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.patterns.ElementPattern
-import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psiElement
 
 /** See also `RsCfgFeatureCompletionProvider` */
@@ -82,22 +79,10 @@ object RsCfgAttributeCompletionProvider : RsCompletionProvider() {
 
     override val elementPattern: ElementPattern<out PsiElement>
         get() {
-            val cfgAttr = psiElement<RsMetaItem>()
-                .with(object : PatternCondition<RsMetaItem>("cfg") {
-                    override fun accepts(t: RsMetaItem, context: ProcessingContext?): Boolean =
-                        t.name == "cfg"
-                })
-
-            val cfgOption = psiElement<RsMetaItem>()
-                .withParent(
-                    psiElement<RsMetaItemArgs>()
-                        .withParent(cfgAttr)
-                )
-
             return psiElement(RsElementTypes.IDENTIFIER)
                 .withParent(
                     psiElement<RsPath>()
-                        .inside(cfgOption)
+                        .inside(RsPsiPattern.anyCfgCondition)
                 )
         }
 }

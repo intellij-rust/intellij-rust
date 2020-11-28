@@ -71,4 +71,41 @@ class RsCfgAttributeCompletionProviderTest : RsCompletionTestBase() {
         #[cfg(feature = /*caret*/)]
         fn foo() {}
     """)
+
+    fun `test complete in cfg_attr 1`() = doSingleCompletion("""
+        #[cfg_attr(un/*caret*/)]
+        fn foo() {}
+    """, """
+        #[cfg_attr(unix/*caret*/)]
+        fn foo() {}
+    """)
+
+    fun `test complete in cfg_attr 2`() = doSingleCompletion("""
+        #[cfg_attr(un/*caret*/, foo)]
+        fn foo() {}
+    """, """
+        #[cfg_attr(unix/*caret*/, foo)]
+        fn foo() {}
+    """)
+
+    fun `test complete in cfg_attr 3`() = doSingleCompletion("""
+        #[cfg_attr(foobar, cfg_attr(un/*caret*/, foo))]
+        fn foo() {}
+    """, """
+        #[cfg_attr(foobar, cfg_attr(unix/*caret*/, foo))]
+        fn foo() {}
+    """)
+
+    fun `test no completion in second argument of cfg_attr`() = checkNoCompletion("""
+        #[cfg_attr(unix, window/*caret*/)]
+        fn foo() {}
+    """)
+
+    fun `test complete in doc cfg`() = doSingleCompletion("""
+        #[doc(cfg(un/*caret*/))]
+        fn foo() {}
+    """, """
+        #[doc(cfg(unix/*caret*/))]
+        fn foo() {}
+    """)
 }
