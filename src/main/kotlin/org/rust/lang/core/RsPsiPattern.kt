@@ -5,6 +5,7 @@
 
 package org.rust.lang.core
 
+import com.intellij.openapi.util.Key
 import com.intellij.patterns.*
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.StandardPatterns.or
@@ -96,6 +97,8 @@ object RsPsiPattern {
     )
 
     const val META_ITEM_IDENTIFIER_DEPTH = 4
+
+    val META_ITEM_ATTR: Key<RsAttr> = Key.create("META_ITEM_ATTR")
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 
@@ -300,7 +303,7 @@ object RsPsiPattern {
     /** @see RsMetaItem.isRootMetaItem */
     private object RootMetaItemCondition : PatternCondition<RsMetaItem>("rootMetaItem") {
         override fun accepts(meta: RsMetaItem, context: ProcessingContext?): Boolean {
-            return meta.isRootMetaItem
+            return meta.isRootMetaItem(context)
         }
     }
 }
