@@ -77,6 +77,14 @@ class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
         pub fn foo() {}
     """, checkInStringLiterals = true)
 
+    fun `test no typos in injected Rust code in doc comments`() = doTest("""
+        ///
+        /// ```
+        /// foo!(There is two apples);
+        /// ```
+        pub fn foo() {}
+    """, checkInDocumentation = true)
+
     private fun doTest(
         @Language("Rust") text: String,
         checkInStringLiterals: Boolean = false,
