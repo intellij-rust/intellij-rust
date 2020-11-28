@@ -5,14 +5,14 @@
 
 package org.rust.lang.core.completion
 
-class RsLintCompletionProviderTest : RsCompletionTestBase() {
-    fun `test complete inner attribute`() = doSingleCompletion("""
+class RsLintCompletionProviderTest : RsAttributeCompletionTestBase() {
+    fun `test complete inner attribute`() = doSingleAttributeCompletion("""
         #![allow(unused_var/*caret*/)]
     """, """
         #![allow(unused_variables/*caret*/)]
     """)
 
-    fun `test complete outer attribute`() = doSingleCompletion("""
+    fun `test complete outer attribute`() = doSingleAttributeCompletion("""
         #[allow(unused_var/*caret*/)]
         fn foo() {}
     """, """
@@ -20,7 +20,7 @@ class RsLintCompletionProviderTest : RsCompletionTestBase() {
         fn foo() {}
     """)
 
-    fun `test complete clippy group at root`() = doSingleCompletion("""
+    fun `test complete clippy group at root`() = doSingleAttributeCompletion("""
         #[allow(clip/*caret*/)]
         fn foo() {}
     """, """
@@ -39,19 +39,19 @@ class RsLintCompletionProviderTest : RsCompletionTestBase() {
         fn foo() {}
     """)
 
-    fun `test warn`() = doSingleCompletion("""
+    fun `test warn`() = doSingleAttributeCompletion("""
         #![warn(unused_var/*caret*/)]
     """, """
         #![warn(unused_variables/*caret*/)]
     """)
 
-    fun `test deny`() = doSingleCompletion("""
+    fun `test deny`() = doSingleAttributeCompletion("""
         #![deny(unused_var/*caret*/)]
     """, """
         #![deny(unused_variables/*caret*/)]
     """)
 
-    fun `test forbid`() = doSingleCompletion("""
+    fun `test forbid`() = doSingleAttributeCompletion("""
         #![forbid(unused_var/*caret*/)]
     """, """
         #![forbid(unused_variables/*caret*/)]

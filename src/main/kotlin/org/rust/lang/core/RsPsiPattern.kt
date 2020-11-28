@@ -189,8 +189,7 @@ object RsPsiPattern {
             .with("nonStdAttributeCondition") { e -> e.name !in STD_ATTRIBUTES }
 
     val lintAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
-        psiElement<RsMetaItem>()
-            .withParent(RsAttr::class.java)
+        rootMetaItem
             .with("lintAttributeCondition") { e -> e.name in LINT_ATTRIBUTES }
 
     val includeMacroLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()

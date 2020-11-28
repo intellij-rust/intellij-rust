@@ -5,9 +5,7 @@
 
 package org.rust.lang.core.completion
 
-import org.intellij.lang.annotations.Language
-
-class RsAttributeCompletionTest : RsCompletionTestBase() {
+class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
     fun `test derive on struct`() = doSingleAttributeCompletion("""
         #[der/*caret*/]
         struct Bar;
@@ -270,11 +268,4 @@ class RsAttributeCompletionTest : RsCompletionTestBase() {
         #[non_/*caret*/]
         fn foo() {}
     """)
-
-    private fun doSingleAttributeCompletion(@Language("Rust") before: String, @Language("Rust") after: String) {
-        fun String.withCfgAttr(): String = replace("""(#!?)\[(.*/\*caret\*/.*)]""".toRegex(), "$1[cfg_attr(unix, $2)]")
-
-        doSingleCompletion(before, after)
-        doSingleCompletion(before.withCfgAttr(), after.withCfgAttr())
-    }
 }
