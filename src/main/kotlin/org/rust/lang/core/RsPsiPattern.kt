@@ -96,9 +96,11 @@ object RsPsiPattern {
         "forbid"
     )
 
-    const val META_ITEM_IDENTIFIER_DEPTH = 4
-
     val META_ITEM_ATTR: Key<RsAttr> = Key.create("META_ITEM_ATTR")
+
+    /** @see RsMetaItem.isRootMetaItem */
+    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
+        .with(RootMetaItemCondition)
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 
@@ -145,12 +147,12 @@ object RsPsiPattern {
 
     val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RsTraitItem>()
 
-    val onDropFn: PsiElementPattern.Capture<PsiElement>
-        get() {
-            val dropTraitRef = psiElement<RsTraitRef>().withText("Drop")
-            val implBlock = psiElement<RsImplItem>().withChild(dropTraitRef)
-            return psiElement().withSuperParent(6, implBlock)
-        }
+    val onDropFn: PsiElementPattern.Capture<PsiElement> = onItem(
+        psiElement<RsFunction>().withSuperParent(
+            2,
+            psiElement<RsImplItem>().withChild(psiElement<RsTraitRef>().withText("Drop"))
+        )
+    )
 
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
@@ -218,10 +220,6 @@ object RsPsiPattern {
             return psiElement().withParent(simplePath)
         }
 
-    /** @see RsMetaItem.isRootMetaItem */
-    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .with(RootMetaItemCondition)
-
     /** `#[cfg()]` */
     private val cfgAttributeMeta: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem("cfg")
 
@@ -273,11 +271,17 @@ object RsPsiPattern {
             }
 
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent<I>(META_ITEM_IDENTIFIER_DEPTH)
+        return psiElement().withSuperParent(2, rootMetaItem.with("item") { _, context ->
+            val attr = context?.get(META_ITEM_ATTR) ?: return@with false
+            I::class.isInstance(attr.owner)
+        })
     }
 
     private fun onItem(pattern: ElementPattern<out RsDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent(META_ITEM_IDENTIFIER_DEPTH, pattern)
+        return psiElement().withSuperParent(2, rootMetaItem.with("item") { _, context ->
+            val attr = context?.get(META_ITEM_ATTR) ?: return@with false
+            pattern.accepts(attr.owner, context)
+        })
     }
 
     private fun metaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =

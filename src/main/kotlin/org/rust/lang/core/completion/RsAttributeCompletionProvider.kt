@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
@@ -16,8 +15,7 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.RsLanguage
-import org.rust.lang.core.RsPsiPattern
+import org.rust.lang.core.RsPsiPattern.META_ITEM_ATTR
 import org.rust.lang.core.RsPsiPattern.onAnyItem
 import org.rust.lang.core.RsPsiPattern.onCrate
 import org.rust.lang.core.RsPsiPattern.onDropFn
@@ -35,15 +33,13 @@ import org.rust.lang.core.RsPsiPattern.onStructLike
 import org.rust.lang.core.RsPsiPattern.onTestFn
 import org.rust.lang.core.RsPsiPattern.onTrait
 import org.rust.lang.core.RsPsiPattern.onTupleStruct
-import org.rust.lang.core.or
-import org.rust.lang.core.psi.RsInnerAttr
-import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsOuterAttr
+import org.rust.lang.core.RsPsiPattern.rootMetaItem
+import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.psi.ext.queryAttributes
-import org.rust.lang.core.psi.ext.superParent
 import org.rust.lang.core.psiElement
 
 object RsAttributeCompletionProvider : RsCompletionProvider() {
@@ -70,11 +66,12 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
         onStructLike to "non_exhaustive"
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
 
-    override fun addCompletions(parameters: CompletionParameters,
-                                context: ProcessingContext,
-                                result: CompletionResultSet) {
-
-        val elem = parameters.position.superParent(RsPsiPattern.META_ITEM_IDENTIFIER_DEPTH)
+    override fun addCompletions(
+        parameters: CompletionParameters,
+        context: ProcessingContext,
+        result: CompletionResultSet
+    ) {
+        val elem = context[META_ITEM_ATTR]?.owner ?: return
 
         val suggestions = attributes
             .filter { it.appliesTo.accepts(parameters.position) && elem.attrMetaItems.none { item -> item == it.name } }
@@ -84,15 +81,8 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
 
     override val elementPattern: ElementPattern<PsiElement>
         get() {
-            val outerAttrElem = psiElement<RsOuterAttr>()
-            val innerAttrElem = psiElement<RsInnerAttr>()
-            val metaItemElem = psiElement<RsMetaItem>().and(
-                psiElement().withParent(outerAttrElem) or psiElement().withParent(innerAttrElem)
-            )
-
-            return psiElement()
-                .withLanguage(RsLanguage)
-                .withParent(psiElement<RsPath>().withParent(metaItemElem))
+            return psiElement(RsElementTypes.IDENTIFIER)
+                .withParent(psiElement<RsPath>().withParent(rootMetaItem))
         }
 
     private fun createLookupElement(name: String): LookupElement =
