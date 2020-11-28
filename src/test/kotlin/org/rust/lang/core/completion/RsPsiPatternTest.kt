@@ -379,6 +379,54 @@ class RsPsiPatternTest : RsTestBase() {
         fn foo() {}
     """, RsPsiPattern.rootMetaItem)
 
+    fun `test cfg condition in cfg`() = testPattern("""
+        #[cfg(foo)]
+            //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test cfg condition in cfg_attr`() = testPattern("""
+        #[cfg_attr(foo)]
+                 //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test cfg condition in doc cfg`() = testPattern("""
+        #[doc(cfg(foo))]
+                //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test cfg condition in cfg in cfg_attr`() = testPattern("""
+        #[cfg_attr(windows, cfg(foo))]
+                              //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test not cfg condition 1`() = testPatternNegative("""
+        #[cfg(foo)]
+          //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test not cfg condition 2`() = testPatternNegative("""
+        #[cfg_attr(foo)]
+          //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test not cfg condition 3`() = testPatternNegative("""
+        #[doc(cfg(foo))]
+             //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
+    fun `test not cfg condition 4`() = testPatternNegative("""
+        #[cfg_attr(foo, bar)]
+                       //^
+        fn foo() {}
+    """, RsPsiPattern.anyCfgCondition)
+
     fun `test cfg feature`() = testPattern("""
         #[cfg(feature = "foo")]
         fn foo() {}   //^

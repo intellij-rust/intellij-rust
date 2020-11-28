@@ -239,8 +239,9 @@ object RsPsiPattern {
         .withSuperParent(2, cfgAttrAttributeMeta)
         .with("firstItem") { it, _ -> (it.parent as? RsMetaItemArgs)?.metaItemList?.firstOrNull() == it }
 
-    private val anyCfgCondition: PsiElementPattern.Capture<RsMetaItem> =
-        cfgAttributeMeta or cfgAttrCondition or docCfgAttributeMeta
+    val anyCfgCondition: PsiElementPattern.Capture<RsMetaItem> = cfgAttrCondition or
+        psiElement<RsMetaItem>()
+            .withSuperParent(2, cfgAttributeMeta or docCfgAttributeMeta)
 
     val anyCfgFeature: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(metaItem("feature"))
