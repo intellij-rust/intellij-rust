@@ -12,32 +12,46 @@ import org.rust.RsTestBase
 import org.rust.lang.core.RsPsiPattern
 
 class RsPsiPatternTest : RsTestBase() {
-    fun `test on struct attr`() = testPattern("""
+    fun `test on struct attr`() = testAttributePattern("""
         #[foo]
         //^
         struct Bar;
     """, RsPsiPattern.onStruct)
 
-    fun `test on trait attr`() = testPattern("""
+    fun `test on trait attr 1`() = testAttributePattern("""
         #[foo]
         //^
         trait Foo {}
     """, RsPsiPattern.onTrait)
 
-    fun `test on fn attr`() = testPattern("""
+    fun `test on trait attr 2`() = testAttributePattern("""
+        trait Foo {
+            #![foo]
+             //^
+        }
+    """, RsPsiPattern.onTrait)
+
+    fun `test on fn attr 1`() = testAttributePattern("""
         #[foo]
         //^
         fn bar() {
         }
     """, RsPsiPattern.onFn)
 
-    fun `test on tuple struct attr`() = testPattern("""
+    fun `test on fn attr 2`() = testAttributePattern("""
+        fn bar() {
+            #![foo]
+             //^
+        }
+    """, RsPsiPattern.onFn)
+
+    fun `test on tuple struct attr`() = testAttributePattern("""
         #[foo]
         //^
         struct Bar(u8, u8);
     """, RsPsiPattern.onTupleStruct)
 
-    fun `test on any item struct attr`() = testPattern("""
+    fun `test on any item struct attr`() = testAttributePattern("""
         #[foo]
         //^
         struct Bar {
@@ -45,13 +59,13 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item static attr`() = testPattern("""
+    fun `test on any item static attr`() = testAttributePattern("""
         #[foo]
         //^
         static BAR: u8 = 1;
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item enum attr`() = testPattern("""
+    fun `test on any item enum attr`() = testAttributePattern("""
         #[foo]
         //^
         enum Bar {
@@ -60,39 +74,39 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item fn attr`() = testPattern("""
+    fun `test on any item fn attr`() = testAttributePattern("""
         #[foo]
         //^
         fn bar() {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item mod attr`() = testPattern("""
+    fun `test on any item mod attr`() = testAttributePattern("""
         #[foo]
         //^
         mod bar {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item trait attr`() = testPattern("""
+    fun `test on any item trait attr`() = testAttributePattern("""
         #[foo]
         //^
         trait Bar {
         }
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on any item crate attr`() = testPattern("""
+    fun `test on any item crate attr`() = testAttributePattern("""
         #![foo]
          //^
     """, RsPsiPattern.onAnyItem)
 
-    fun `test on crate attr`() = testPattern("""
+    fun `test on crate attr`() = testAttributePattern("""
         #![foo]
          //^
         struct Foo(u8, u8);
     """, RsPsiPattern.onCrate)
 
-    fun `test on drop fn attr`() = testPattern("""
+    fun `test on drop fn attr`() = testAttributePattern("""
         struct HasDrop;
 
         impl Drop for HasDrop {
@@ -104,7 +118,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onDropFn)
 
-    fun `test on enum attr`() = testPattern("""
+    fun `test on enum attr`() = testAttributePattern("""
         #[foo]
         //^
         enum Foo {
@@ -113,7 +127,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onEnum)
 
-    fun `test on enum variant attr`() = testPattern("""
+    fun `test on enum variant attr`() = testAttributePattern("""
         enum Foo {
             #[foo]
             //^
@@ -122,25 +136,25 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onEnumVariant)
 
-    fun `test on struct-like unit struct`() = testPattern("""
+    fun `test on struct-like unit struct`() = testAttributePattern("""
         #[foo]
         //^
         struct S;
     """, RsPsiPattern.onStructLike)
 
-    fun `test on struct-like tuple struct`() = testPattern("""
+    fun `test on struct-like tuple struct`() = testAttributePattern("""
         #[foo]
         //^
         struct S(u32);
     """, RsPsiPattern.onStructLike)
 
-    fun `test on struct-like struct`() = testPattern("""
+    fun `test on struct-like struct`() = testAttributePattern("""
         #[foo]
         //^
         struct S { a: u32 }
     """, RsPsiPattern.onStructLike)
 
-    fun `test on struct-like enum`() = testPattern("""
+    fun `test on struct-like enum`() = testAttributePattern("""
         #[foo]
         //^
         enum Foo {
@@ -148,7 +162,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onStructLike)
 
-    fun `test on struct-like enum variant`() = testPattern("""
+    fun `test on struct-like enum variant`() = testAttributePattern("""
         enum Foo {
             #[foo]
             //^
@@ -156,7 +170,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onStructLike)
 
-    fun `test on extern block attr`() = testPattern("""
+    fun `test on extern block attr`() = testAttributePattern("""
         #[foo]
         //^
         extern {
@@ -164,7 +178,7 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onExternBlock)
 
-    fun `test on extern block decl attr`() = testPattern("""
+    fun `test on extern block decl attr`() = testAttributePattern("""
         extern {
             #[foo]
             //^
@@ -172,45 +186,52 @@ class RsPsiPatternTest : RsTestBase() {
         }
     """, RsPsiPattern.onExternBlockDecl)
 
-    fun `test on extern crate attr`() = testPattern("""
+    fun `test on extern crate attr`() = testAttributePattern("""
         #[foo]
         //^
         extern crate bar;
     """, RsPsiPattern.onExternCrate)
 
-    fun `test onMacroDefinition`() = testPattern("""
+    fun `test on macro definition`() = testAttributePattern("""
         #[foo]
         //^
         macro_rules! bar {
         }
     """, RsPsiPattern.onMacro)
 
-    fun `test on mod attr`() = testPattern("""
+    fun `test on mod attr`() = testAttributePattern("""
         #[foo]
         //^
         mod bar {
         }
     """, RsPsiPattern.onMod)
 
-    fun `test on mod attr 2`() = testPattern("""
+    fun `test on mod attr 2`() = testAttributePattern("""
+        mod bar {
+            #![foo]
+             //^
+        }
+    """, RsPsiPattern.onMod)
+
+    fun `test on mod attr 3`() = testAttributePattern("""
         #[foo]
         //^
         mod bar;
     """, RsPsiPattern.onMod)
 
-    fun `test on static attr`() = testPattern("""
+    fun `test on static attr`() = testAttributePattern("""
         #[foo]
         //^
         static BAR: u8 = 5;
     """, RsPsiPattern.onStatic)
 
-    fun `test on static mut attr`() = testPattern("""
+    fun `test on static mut attr`() = testAttributePattern("""
         #[foo]
         //^
         static mut BAR: u8 = 5;
     """, RsPsiPattern.onStaticMut)
 
-    fun `test on test fn attr`() = testPattern("""
+    fun `test on test fn attr`() = testAttributePattern("""
         #[test]
         #[foo]
         //^
@@ -512,6 +533,15 @@ class RsPsiPatternTest : RsTestBase() {
         InlineFile(code)
         val element = findElementInEditor<T>()
         assertTrue(pattern.accepts(element))
+    }
+
+    private inline fun <reified T : PsiElement> testAttributePattern(@Language("Rust") code: String, pattern: ElementPattern<T>) {
+        testPattern(code, pattern)
+        val cfgAttrPrefix = "cfg_attr(unix, "
+        val codeWithCfgAttr = code.replace("""(#!?)\[foo]""".toRegex(), "$1[${cfgAttrPrefix}foo)]")
+            .replace("//^", " ".repeat(cfgAttrPrefix.length) + "//^")
+
+        testPattern(codeWithCfgAttr, pattern)
     }
 
     private inline fun <reified T : PsiElement> testPatternNegative(@Language("Rust") code: String, pattern: ElementPattern<T>) {

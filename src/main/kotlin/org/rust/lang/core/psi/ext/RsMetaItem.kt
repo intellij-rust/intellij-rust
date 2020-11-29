@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.util.ProcessingContext
+import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.RsTraitItem
@@ -40,8 +42,15 @@ fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
  * because after `cfg_attr` expanding the `foo(bar)` will turn into `#[foo(bar)]`.
  * This also applied to nested `cfg_attr`s, e.g. `#[cfg_attr(windows, cfg_attr(foobar, foo(bar)))]`
  */
-val RsMetaItem.isRootMetaItem: Boolean
-    get() = parent is RsAttr || isCfgAttrBody
+fun RsMetaItem.isRootMetaItem(context: ProcessingContext? = null): Boolean {
+    val parent = parent
+    if (parent is RsAttr) {
+        context?.put(RsPsiPattern.META_ITEM_ATTR, parent)
+        return true
+    }
+
+    return isCfgAttrBody(context)
+}
 
 /**
  * ```
@@ -49,17 +58,17 @@ val RsMetaItem.isRootMetaItem: Boolean
  *                     //^
  * ```
  */
-private val RsMetaItem.isCfgAttrBody: Boolean
-    get() {
-        val parent = parent as? RsMetaItemArgs ?: return false
-        val parentMetaItem = parent.parent as? RsMetaItem ?: return false
+private fun RsMetaItem.isCfgAttrBody(context: ProcessingContext?): Boolean {
+    val parent = parent as? RsMetaItemArgs ?: return false
+    val parentMetaItem = parent.parent as? RsMetaItem ?: return false
 
-        if (!parentMetaItem.isCfgAttrMetaItem) return false
+    if (!parentMetaItem.isCfgAttrMetaItem(context)) return false
 
-        val conditionPart = parent.metaItemList.firstOrNull()
-        return this != conditionPart
-    }
+    val conditionPart = parent.metaItemList.firstOrNull()
+    return this != conditionPart
+}
 
 /** `#[cfg_attr()]` */
-private val RsMetaItem.isCfgAttrMetaItem: Boolean
-    get() = name == "cfg_attr" && isRootMetaItem
+private fun RsMetaItem.isCfgAttrMetaItem(context: ProcessingContext?): Boolean {
+    return name == "cfg_attr" && isRootMetaItem(context)
+}
