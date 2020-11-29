@@ -28,6 +28,9 @@ class RsAttributeTest : RsTestBase() {
             Inner -> check(isInner && !isOuter)
             Outer -> check(!isInner && isOuter)
         }
+
+        check(element !is RsOuterAttributeOwner || element.outerAttrList.all { it.owner == element })
+        check(element !is RsInnerAttributeOwner || element.innerAttrList.all { it.owner == element })
     }
 
     private fun doTest(@Language("Rust") code: String, type: AttributeType) {
@@ -89,7 +92,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-    """, Outer)
+    """, Both)
 
     fun `test struct`() = doTest("""
         #[outer]
