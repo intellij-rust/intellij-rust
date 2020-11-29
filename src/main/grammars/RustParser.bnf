@@ -822,6 +822,7 @@ upper TraitItem ::= unsafe? auto? trait identifier TypeParameterList? TypeParamB
                  "org.rust.lang.core.psi.ext.RsItemElement"
                  "org.rust.lang.core.psi.ext.RsNameIdentifierOwner"
                  "org.rust.lang.core.psi.ext.RsUnsafetyOwner"
+                 "org.rust.lang.core.psi.ext.RsInnerAttributeOwner"
                  "org.rust.lang.core.psi.ext.RsTypeDeclarationElement" ]
   mixin = "org.rust.lang.core.psi.ext.RsTraitItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsTraitItemStub"

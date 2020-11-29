@@ -89,7 +89,7 @@ class RsAttributeTest : RsTestBase() {
         //^
             #![inner]
         }
-    """, Outer)
+    """, Both)
 
     fun `test struct`() = doTest("""
         #[outer]
