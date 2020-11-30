@@ -93,6 +93,16 @@ class RsFilePathResolveTest : RsResolveTestBase() {
         fn bar() {}
     """)
 
+    fun `test resolve path on mod decl under cfg_attr`() = checkResolve("""
+    //- main.rs
+        #[cfg_attr(unix, path="bar.rs")]
+                              //^ bar.rs
+        mod foo;
+
+    //- bar.rs
+        fn bar() {}
+    """)
+
     private fun checkResolve(@Language("Rust") code: String) {
         stubOnlyResolve<RsLitExpr>(fileTreeFromText(code)) { it is PsiFileSystemItem }
     }
