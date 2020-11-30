@@ -130,8 +130,6 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             is RsMacroCall -> RsMacroPathReferenceImpl(this)
             is RsMetaItem -> when {
                 RsPsiPattern.derivedTraitMetaItem.accepts(parent) -> RsDeriveTraitReferenceImpl(this)
-                // FIXME: We assume that attribute proc macros are used only as top level attributes
-                // (so we ignore the fact that attribute proc macro can be nested inside `cfg_attr`)
                 RsPsiPattern.nonStdOuterAttributeMetaItem.accepts(parent) -> RsAttributeProcMacroReferenceImpl(this)
                 else -> null
             }

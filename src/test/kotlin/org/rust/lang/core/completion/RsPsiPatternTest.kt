@@ -335,6 +335,18 @@ class RsPsiPatternTest : RsTestBase() {
         struct Foo(i32);
     """, RsPsiPattern.derivedTraitMetaItem)
 
+    fun `test non std attribute`() = testPattern("""
+        #[example_proc_macro]
+                 //^
+        struct S;
+    """, RsPsiPattern.nonStdOuterAttributeMetaItem)
+
+    fun `test non std attribute under cfg_attr`() = testPattern("""
+        #[cfg_attr(unix, example_proc_macro)]
+                                //^
+        struct S;
+    """, RsPsiPattern.nonStdOuterAttributeMetaItem)
+
     fun `test literal in include macro`() = testPattern("""
         include!("foo.rs");
                   //^
