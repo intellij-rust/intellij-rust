@@ -147,13 +147,6 @@ object RsPsiPattern {
 
     val onTrait: PsiElementPattern.Capture<PsiElement> = onItem<RsTraitItem>()
 
-    val onDropFn: PsiElementPattern.Capture<PsiElement> = onItem(
-        psiElement<RsFunction>().withSuperParent(
-            2,
-            psiElement<RsImplItem>().withChild(psiElement<RsTraitRef>().withText("Drop"))
-        )
-    )
-
     val onTestFn: PsiElementPattern.Capture<PsiElement> = onItem(psiElement<RsFunction>()
         .withChild(psiElement<RsOuterAttr>().withText("#[test]")))
 
