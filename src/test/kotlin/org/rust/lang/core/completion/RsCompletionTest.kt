@@ -934,17 +934,6 @@ class RsCompletionTest : RsCompletionTestBase() {
         }
     """)
 
-    fun `test complete path in path attribute under cfg_attr on mod decl`() = doSingleCompletionByFileTree("""
-    //- main.rs
-        #[cfg_attr(unix, path="b/*caret*/")]
-        mod foo;
-    //- bar.rs
-        fn bar() {}
-    """, """
-        #[cfg_attr(unix, path="bar.rs/*caret*/")]
-        mod foo;
-    """)
-
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test private extern crate`() = checkNoCompletion("""
         mod foo { extern crate std; }
