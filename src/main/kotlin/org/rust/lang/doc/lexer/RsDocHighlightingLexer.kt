@@ -12,7 +12,7 @@ import com.intellij.lexer.MergingLexerAdapter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.TokenSet
-import org.rust.lang.doc.psi.RsDocElementTypes.*
+import org.rust.lang.doc.psi.RsDocHighlightingElementTypes.*
 import org.rust.lang.doc.psi.RsDocKind
 
 class RsDocHighlightingLexer(kind: RsDocKind) :

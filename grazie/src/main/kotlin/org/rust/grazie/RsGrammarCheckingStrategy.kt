@@ -13,10 +13,11 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.grazie.grammar.strategy.impl.RuleGroup
 import com.intellij.grazie.utils.LinkedSet
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiElement
-import org.rust.ide.injected.findDoctestInjectableRanges
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.doc.psi.RsDocComment
 
 class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
 
@@ -29,12 +30,14 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
         typoRange: IntRange,
         ruleRange: IntRange
     ): Boolean {
-        val docCommentRoots = roots.filterIsInstance<RsDocCommentImpl>()
+        val docCommentRoots = roots.filterIsInstance<RsDocComment>()
         if (docCommentRoots.isEmpty()) return true
 
-        return docCommentRoots.flatMap { findDoctestInjectableRanges(it) }
-            .flatten()
-            .none { it.intersects(typoRange.first, typoRange.last) }
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(parent.project)
+        return docCommentRoots.flatMap { it.codeFences }.none {
+            it.textRange.intersects(typoRange.first, typoRange.last) &&
+                !injectedLanguageManager.getInjectedPsiFiles(it).isNullOrEmpty()
+        }
     }
 
     override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup = RuleGroup.LITERALS

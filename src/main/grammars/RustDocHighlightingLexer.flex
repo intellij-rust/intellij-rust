@@ -3,7 +3,7 @@ package org.rust.lang.doc.lexer;
 import com.intellij.lexer.*;
 import com.intellij.psi.tree.IElementType;
 
-import static org.rust.lang.doc.psi.RsDocElementTypes.*;
+import static org.rust.lang.doc.psi.RsDocHighlightingElementTypes.*;
 import static com.intellij.psi.TokenType.*;
 
 %%

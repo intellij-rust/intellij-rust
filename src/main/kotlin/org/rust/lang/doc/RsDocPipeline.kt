@@ -30,6 +30,7 @@ import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyPrimitive
+import org.rust.lang.doc.psi.RsDocComment
 import org.rust.lang.doc.psi.RsDocKind
 import java.net.URI
 
@@ -38,11 +39,11 @@ fun RsDocAndAttributeOwner.documentation(): String =
         .mapNotNull {
             when (it) {
                 is RsAttr -> it.docAttr?.let { text -> RsDocKind.Attr to text }
-                is RsDocCommentImpl -> RsDocKind.of(it.tokenType) to it.text
+                is RsDocComment -> RsDocKind.of(it.tokenType) to it.text
                 else -> null
             }
         }
-        .flatMap { (kind, text) -> kind.removeDecoration(text.lineSequence()) }
+        .flatMap { (kind, text) -> kind.removeDecoration(text) }
         .joinToString("\n")
 
 fun RsDocAndAttributeOwner.documentationAsHtml(
@@ -52,10 +53,10 @@ fun RsDocAndAttributeOwner.documentationAsHtml(
     return documentationAsHtml(documentation(), originalElement, renderMode)
 }
 
-fun RsDocCommentImpl.documentationAsHtml(renderMode: RsDocRenderMode = RsDocRenderMode.QUICK_DOC_POPUP): String? {
+fun RsDocComment.documentationAsHtml(renderMode: RsDocRenderMode = RsDocRenderMode.QUICK_DOC_POPUP): String? {
     val owner = owner ?: return null
     val documentationText = RsDocKind.of(tokenType)
-        .removeDecoration(text.lineSequence())
+        .removeDecoration(text)
         .joinToString("\n")
 
     return documentationAsHtml(documentationText, owner, renderMode)
@@ -107,12 +108,12 @@ fun RsDocAndAttributeOwner.docElements(): Sequence<PsiElement> {
         // All these outer elements have been edge bound; if we reach something that isn't one
         // of these, we have reached the actual parse children of this item.
         .takeWhile { it is RsOuterAttr || it is PsiComment || it is PsiWhiteSpace }
-        .filter { it is RsOuterAttr && it.isDocAttr || it is RsDocCommentImpl && it.tokenType in RS_OUTER_DOC_COMMENTS }
+        .filter { it is RsOuterAttr && it.isDocAttr || it is RsDocComment && it.tokenType in RS_OUTER_DOC_COMMENTS }
     // Next, we have to consider inner comments and meta. These, like the outer case, are appended in
     // lexical order, after the outer elements. This only applies to functions and modules.
     val childBlock = childOfType<RsBlock>() ?: this
     val innerDocs = childBlock.childrenWithLeaves
-        .filter { it is RsInnerAttr && it.isDocAttr || it is RsDocCommentImpl && it.tokenType in RS_INNER_DOC_COMMENTS }
+        .filter { it is RsInnerAttr && it.isDocAttr || it is RsDocComment && it.tokenType in RS_INNER_DOC_COMMENTS }
     return outerDocs + innerDocs
 }
 

@@ -2173,6 +2173,26 @@ class AutoImportFixTest : AutoImportFixTestBase() {
     """, Testmarks.doctestInjectionImport)
 
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test import outer item in doctest injection in star comment`() = checkAutoImportFixByFileTreeWithouHighlighting("""
+    //- lib.rs
+        /**
+         * ```
+         * foo/*caret*/();
+         * ```
+         */
+        pub fn foo() {}
+    """, """
+    //- lib.rs
+        /**
+         * ```
+         * use test_package::foo;
+         * foo();
+         * ```
+         */
+        pub fn foo() {}
+    """,  Testmarks.doctestInjectionImport)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test import second outer item in doctest injection`() = checkAutoImportFixByFileTreeWithouHighlighting("""
     //- lib.rs
         /// ```
