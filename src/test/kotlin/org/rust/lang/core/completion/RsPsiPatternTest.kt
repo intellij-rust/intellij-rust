@@ -358,6 +358,12 @@ class RsPsiPatternTest : RsTestBase() {
         mod foo {}
     """, RsPsiPattern.pathAttrLiteral)
 
+    fun `test literal in path attr on mod under cfg_attr`() = testPattern("""
+        #[cfg_attr(unix, path="bar.rs")]
+                             //^
+        mod foo {}
+    """, RsPsiPattern.pathAttrLiteral)
+
     fun `test a root meta item 1`() = testPattern("""
         #[foo]
         //^

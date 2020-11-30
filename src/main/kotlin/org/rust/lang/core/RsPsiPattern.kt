@@ -196,9 +196,12 @@ object RsPsiPattern {
         .withParent(psiElement<RsIncludeMacroArgument>())
 
     val pathAttrLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
-        .withParent(psiElement<RsMetaItem>()
-            .withSuperParent(2, or(psiElement<RsModDeclItem>(), psiElement<RsModItem>()))
-            .with("pathAttrCondition") { metaItem -> metaItem.name == "path" }
+        .withParent(
+            rootMetaItem("path")
+                .with("onModCondition") { _, context ->
+                    val owner = context?.get(META_ITEM_ATTR)?.owner ?: return@with false
+                    owner is RsModDeclItem || owner is RsModItem
+                }
         )
 
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
