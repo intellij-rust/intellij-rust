@@ -5,7 +5,10 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.*
+import org.rust.ExpandMacros
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.stdext.BothEditions
@@ -429,6 +432,13 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         #[derive(r#Debug)]
                  //^ ...libcore/fmt/mod.rs|...core/src/fmt/mod.rs
+        struct Foo;
+    """)
+
+    fun `test derive trait in cfg_attr`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg_attr(unix, derive(Debug))]
+                              //^ ...libcore/fmt/mod.rs|...core/src/fmt/mod.rs
         struct Foo;
     """)
 

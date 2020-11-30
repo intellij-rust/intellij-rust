@@ -341,6 +341,12 @@ class RsPsiPatternTest : RsTestBase() {
         struct Foo(i32);
     """, RsPsiPattern.derivedTraitMetaItem)
 
+    fun `test derived trait meta item in cfg_attr`() = testPattern("""
+        #[cfg_attr(unix, derive(Debug))]
+                                //^
+        struct Foo(i32);
+    """, RsPsiPattern.derivedTraitMetaItem)
+
     fun `test literal in include macro`() = testPattern("""
         include!("foo.rs");
                   //^
