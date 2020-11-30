@@ -108,4 +108,9 @@ class RsCfgAttributeCompletionProviderTest : RsCompletionTestBase() {
         #[doc(cfg(unix/*caret*/))]
         fn foo() {}
     """)
+
+    fun `test feature`() = checkContainsCompletion("feature", """
+        #[cfg(feat/*caret*/)]
+        fn foo() {}
+    """)
 }
