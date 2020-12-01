@@ -223,7 +223,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             extraFields.forEach { RsDiagnostic.ExtraFieldInStructPattern(it, "struct").addToHolder(holder) }
 
             val bodyFieldNames = bodyFields.map { it.kind.fieldName }
-            val missingFields = declaration.fields.filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
+            val missingFields = declaration.fields.filter { it.name !in bodyFieldNames }
 
             if (missingFields.isNotEmpty() && patStruct.patRest == null) {
                 RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)

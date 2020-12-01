@@ -42,7 +42,7 @@ fun expandStructFields(factory: RsPsiFactory, patStruct: RsPatStruct) {
     val existingFields = patStruct.patFieldList
     val bodyFieldNames = existingFields.map { it.kind.fieldName }.toSet()
     val missingFields = declaration.fields
-        .filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
+        .filter { it.name !in bodyFieldNames }
         .map { factory.createPatField(it.name!!) }
 
     if (existingFields.isEmpty()) {

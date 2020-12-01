@@ -3225,11 +3225,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
-    fun `test no error on missing field with cfg-attribute`() = checkErrors("""
+    fun `test no error on missing field under disabled cfg-attribute`() = checkErrors("""
         struct Foo {
             a: i32,
             b: i32,
-            #[cfg(foo)]
+            #[cfg(intellij_rust)]
             c: i32,
         }
 
