@@ -106,18 +106,6 @@ class RsPsiPatternTest : RsTestBase() {
         struct Foo(u8, u8);
     """, RsPsiPattern.onCrate)
 
-    fun `test on drop fn attr`() = testAttributePattern("""
-        struct HasDrop;
-
-        impl Drop for HasDrop {
-            #[foo]
-            //^
-            fn drop(&mut self) {
-                println!("Dropping!");
-            }
-        }
-    """, RsPsiPattern.onDropFn)
-
     fun `test on enum attr`() = testAttributePattern("""
         #[foo]
         //^

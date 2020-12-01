@@ -18,7 +18,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.RsPsiPattern.META_ITEM_ATTR
 import org.rust.lang.core.RsPsiPattern.onAnyItem
 import org.rust.lang.core.RsPsiPattern.onCrate
-import org.rust.lang.core.RsPsiPattern.onDropFn
 import org.rust.lang.core.RsPsiPattern.onEnum
 import org.rust.lang.core.RsPsiPattern.onExternBlock
 import org.rust.lang.core.RsPsiPattern.onExternBlockDecl
@@ -47,22 +46,23 @@ object RsAttributeCompletionProvider : RsCompletionProvider() {
     private data class RustAttribute(val name: String, val appliesTo: ElementPattern<PsiElement>)
 
     private val attributes = mapOf(
-        onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std plugin recursion_limit",
-        onExternCrate to "macro_use macro_reexport no_link",
+        onCrate to "crate_name crate_type feature() no_builtins no_main no_start no_std recursion_limit " +
+            "type_length_limit windows_subsystem",
+        onExternCrate to "macro_use no_link",
         onMod to "no_implicit_prelude path macro_use",
-        onFn to "main plugin_registrar start test cold naked export_name link_section lang inline track_caller",
-        onTestFn to "should_panic",
+        onFn to "main start test cold naked export_name link_section lang inline track_caller " +
+            "panic_handler must_use",
+        onTestFn to "should_panic ignore",
         onStaticMut to "thread_local",
         onExternBlock to "link_args link() linked_from",
         onExternBlockDecl to "link_name linkage",
-        onStruct to "repr() unsafe_no_drop_flags derive()",
-        onEnum to "repr() derive()",
-        onTrait to "rustc_on_unimplemented",
+        onStruct to "repr() unsafe_no_drop_flags derive() must_use",
+        onEnum to "repr() derive() must_use",
+        onTrait to "must_use",
         onMacro to "macro_export",
-        onStatic to "export_name link_section",
+        onStatic to "export_name link_section used global_allocator",
         onAnyItem to "no_mangle doc cfg() cfg_attr() allow() warn() forbid() deny() deprecated",
         onTupleStruct to "simd",
-        onDropFn to "unsafe_destructor_blind_to_params",
         onStructLike to "non_exhaustive"
     ).flatMap { entry -> entry.value.split(' ').map { attrName -> RustAttribute(attrName, entry.key) } }
 

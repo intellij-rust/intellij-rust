@@ -56,11 +56,11 @@ class RsAttributeCompletionTest : RsAttributeCompletionTestBase() {
         struct Bar(u8, u8);
     """)
 
-    fun `test allow on static`() = doSingleAttributeCompletion("""
-        #[allo/*caret*/]
+    fun `test forbid on static`() = doSingleAttributeCompletion("""
+        #[forb/*caret*/]
         static BAR: u8 = 1;
     """, """
-        #[allow(/*caret*/)]
+        #[forbid(/*caret*/)]
         static BAR: u8 = 1;
     """)
 
