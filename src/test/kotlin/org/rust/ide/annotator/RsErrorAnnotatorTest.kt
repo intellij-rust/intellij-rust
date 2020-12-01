@@ -255,20 +255,27 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test invalid parameters number in free functions E0061`() = checkErrors("""
         fn par_0() {}
         fn par_1(p: bool) {}
         fn par_3(p1: u32, p2: f64, p3: &'static str) {}
+        fn par_0_cfg(#[cfg(not(intellij_rust))] p1: u32) {}
+        fn par_1_cfg(#[cfg(intellij_rust)] p1: u32, #[cfg(not(intellij_rust))] p1: i32) {}
 
         fn main() {
             par_0();
             par_1(true);
             par_3(12, 7.1, "cool");
+            par_0_cfg();
+            par_1_cfg(1);
 
             par_0(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
             par_1(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
             par_1(true, <error descr="This function takes 1 parameter but 2 parameters were supplied [E0061]">false</error>);
             par_3(5, 1.0<error descr="This function takes 3 parameters but 2 parameters were supplied [E0061]">)</error>;
+            par_0_cfg(<error descr="This function takes 0 parameters but 1 parameter was supplied [E0061]">4</error>);
+            par_1_cfg(<error descr="This function takes 1 parameter but 0 parameters were supplied [E0061]">)</error>;
         }
     """)
 
@@ -625,6 +632,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
     fun `test name duplication in param list E0415`() = checkErrors("""
         fn foo(x: u32, X: u32) {}
         fn bar<T>(T: T) {}
@@ -634,6 +642,9 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                   <error>a</error>: f64) {}
         fn tuples(<error>a</error>: u8, (b, (<error>a</error>, c)): (u16, (u32, u64))) {}
         fn fn_ptrs(x: i32, y: fn (x: i32, y: i32), z: fn (x: i32, x: i32)) {}
+        fn cfg_1(#[cfg(intellij_rust)] a: i32, #[cfg(not(intellij_rust))] a: u32) {}
+        fn cfg_2(#[cfg(intellij_rust)] <error>a</error>: i32, #[cfg(intellij_rust)] <error>a</error>: u32) {}
+        fn cfg_3(#[cfg(intellij_rust)] <error>a</error>: i32, <error>a</error>: u32) {}
 
         trait Foo {
             fn foo(&self,

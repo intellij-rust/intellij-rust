@@ -44,4 +44,22 @@ class AddSelfTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             }
         }
     """)
+
+    fun `test has parameters under cfg`() = checkFixByText("Add self to function", """
+        struct S;
+
+        impl S {
+            fn foo(#[cfg(intellij_rust)] a: i32) {
+                <error>self/*caret*/</error>;
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            fn foo(&self, #[cfg(intellij_rust)] a: i32) {
+                self/*caret*/;
+            }
+        }
+    """)
 }

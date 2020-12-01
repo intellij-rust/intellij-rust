@@ -5,6 +5,8 @@
 
 package org.rust.ide.intentions
 
+import org.rust.MockAdditionalCfgOptions
+
 class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntention::class) {
     fun `test unavailable without references`() = doUnavailableTest("""
         fn bar/*caret*/(x: i32) -> i32 {}
@@ -27,6 +29,11 @@ class UnElideLifetimesIntentionTest : RsIntentionTestBase(UnElideLifetimesIntent
 
     fun `test unavailable with explicit lifetime`() = doUnavailableTest("""
         fn bar<'a>(x: &'a /*caret*/ i32) {}
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test unavailable if there are parameters under cfg attributes`() = doUnavailableTest("""
+        fn foo(#[cfg(intellij_rust)] p: &/*caret*/ i32, #[cfg(not(intellij_rust))] p: &/*caret*/ u32) -> & i32 { p }
     """)
 
     fun `test simple`() = doAvailableTest("""

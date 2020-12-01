@@ -76,7 +76,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
      * Then it is necessary to change the names of original parameters to the real (renamed) parameters' names.
      */
     private fun renameFunctionParameters(function: RsFunction, newNames: List<String>) {
-        val parameters = function.valueParameters
+        val parameters = function.rawValueParameters
             .map { it.pat }
             .filterIsInstance(RsPatIdent::class.java)
             .map { it.patBinding }

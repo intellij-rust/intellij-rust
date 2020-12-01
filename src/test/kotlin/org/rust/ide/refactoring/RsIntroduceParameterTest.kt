@@ -5,6 +5,7 @@
 package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsFunction
@@ -27,6 +28,17 @@ class RsIntroduceParameterTest : RsTestBase() {
     """, listOf("10", "param + 10"), 0, 0, """
         fn hello(param: i32, /*caret*/i: i32) {
             let result = param + i;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test function with a cfg disabled params`() = doTest("""
+        fn hello(#[cfg(not(intellij_rust))] param: i32) {
+            foo(5 + /*caret*/10);
+        }
+    """, listOf("10", "5 + 10", "foo(5 + 10)"), 0, 0, """
+        fn hello(#[cfg(not(intellij_rust))] param: i32, /*caret*/i: i32) {
+            foo(5 + i);
         }
     """)
 

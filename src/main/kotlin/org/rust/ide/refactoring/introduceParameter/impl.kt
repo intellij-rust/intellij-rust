@@ -170,7 +170,7 @@ private class ParamIntroducer(
     }
 
     private fun introduceParam(func: RsFunction, name: String, typeRef: RsTypeReference): PsiElement? {
-        val params = func.valueParameters
+        val params = func.rawValueParameters
         val parent = func.valueParameterList ?: return null
         val newParam = createParam(name, typeRef)
         return if (params.isEmpty()) {
