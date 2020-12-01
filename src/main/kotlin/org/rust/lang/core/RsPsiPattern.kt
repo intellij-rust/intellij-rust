@@ -175,9 +175,10 @@ object RsPsiPattern {
     val derivedTraitMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         psiElement<RsMetaItem>().withSuperParent(
             2,
-            psiElement()
-                .withSuperParent<RsStructOrEnumItemElement>(2)
-                .with("deriveCondition") { e -> e is RsMetaItem && e.name == "derive" }
+            rootMetaItem("derive").with("item") { _, context ->
+                val attr = context?.get(META_ITEM_ATTR) ?: return@with false
+                attr.owner is RsStructOrEnumItemElement
+            }
         )
 
     /**
@@ -287,9 +288,9 @@ object RsPsiPattern {
     }
 
     private fun metaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
-        psiElement<RsMetaItem>().withChild(
-            psiElement<RsPath>().withText(key)
-        )
+        psiElement<RsMetaItem>().with("MetaItemName") { item, _ ->
+            item.name == key
+        }
 
     /** @see RsMetaItem.isRootMetaItem */
     private fun rootMetaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
