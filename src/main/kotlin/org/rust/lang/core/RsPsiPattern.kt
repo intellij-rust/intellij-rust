@@ -99,8 +99,7 @@ object RsPsiPattern {
     val META_ITEM_ATTR: Key<RsAttr> = Key.create("META_ITEM_ATTR")
 
     /** @see RsMetaItem.isRootMetaItem */
-    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = psiElement<RsMetaItem>()
-        .with(RootMetaItemCondition)
+    val rootMetaItem: PsiElementPattern.Capture<RsMetaItem> = rootMetaItem()
 
     val onStatementBeginning: PsiElementPattern.Capture<PsiElement> = psiElement().with(OnStatementBeginning())
 
@@ -175,10 +174,7 @@ object RsPsiPattern {
     val derivedTraitMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         psiElement<RsMetaItem>().withSuperParent(
             2,
-            rootMetaItem("derive").with("item") { _, context ->
-                val attr = context?.get(META_ITEM_ATTR) ?: return@with false
-                attr.owner is RsStructOrEnumItemElement
-            }
+            rootMetaItem("derive", psiElement<RsStructOrEnumItemElement>())
         )
 
     /**
@@ -198,11 +194,7 @@ object RsPsiPattern {
 
     val pathAttrLiteral: PsiElementPattern.Capture<RsLitExpr> = psiElement<RsLitExpr>()
         .withParent(
-            rootMetaItem("path")
-                .with("onModCondition") { _, context ->
-                    val owner = context?.get(META_ITEM_ATTR)?.owner ?: return@with false
-                    owner is RsModDeclItem || owner is RsModItem
-                }
+            rootMetaItem("path", psiElement<RsModDeclItem>() or psiElement<RsModItem>())
         )
 
     val whitespace: PsiElementPattern.Capture<PsiElement> = psiElement().whitespace()
@@ -274,17 +266,11 @@ object RsPsiPattern {
             }
 
     private inline fun <reified I : RsDocAndAttributeOwner> onItem(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent(2, rootMetaItem.with("item") { _, context ->
-            val attr = context?.get(META_ITEM_ATTR) ?: return@with false
-            I::class.isInstance(attr.owner)
-        })
+        return psiElement().withSuperParent(2, rootMetaItem(ownerPattern = psiElement<I>()))
     }
 
     private fun onItem(pattern: ElementPattern<out RsDocAndAttributeOwner>): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withSuperParent(2, rootMetaItem.with("item") { _, context ->
-            val attr = context?.get(META_ITEM_ATTR) ?: return@with false
-            pattern.accepts(attr.owner, context)
-        })
+        return psiElement().withSuperParent(2, rootMetaItem(ownerPattern = pattern))
     }
 
     private fun metaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
@@ -292,9 +278,28 @@ object RsPsiPattern {
             item.name == key
         }
 
-    /** @see RsMetaItem.isRootMetaItem */
-    private fun rootMetaItem(key: String): PsiElementPattern.Capture<RsMetaItem> =
-        metaItem(key).with(RootMetaItemCondition)
+    /**
+     * @param key required attribute name. `null` means any root attribute
+     * @param ownerPattern additional requirements for item owned the corresponding attribute
+     *
+     * @see RsMetaItem.isRootMetaItem
+     * @see RsAttr.owner
+     */
+    private fun rootMetaItem(
+        key: String? = null,
+        ownerPattern: ElementPattern<out RsDocAndAttributeOwner>? = null
+    ): PsiElementPattern.Capture<RsMetaItem> {
+        val metaItemPattern = if (key == null) psiElement<RsMetaItem>() else metaItem(key)
+        val rootMetaItem = metaItemPattern.with(RootMetaItemCondition)
+        return if (ownerPattern != null) {
+            rootMetaItem.with("ownerPattern") { _, context ->
+                val attr = context?.get(META_ITEM_ATTR) ?: return@with false
+                ownerPattern.accepts(attr.owner, context)
+            }
+        } else {
+            rootMetaItem
+        }
+    }
 
     private class OnStatementBeginning(vararg startWords: String) : PatternCondition<PsiElement>("on statement beginning") {
         val myStartWords = startWords
