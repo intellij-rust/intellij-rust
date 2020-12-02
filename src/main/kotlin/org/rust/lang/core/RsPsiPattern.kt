@@ -175,8 +175,11 @@ object RsPsiPattern {
      */
     val nonStdOuterAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         psiElement<RsMetaItem>()
-            .withSuperParent(2, RsOuterAttributeOwner::class.java)
             .with("nonStdAttributeCondition") { e -> e.name !in STD_ATTRIBUTES }
+            .with(RootMetaItemCondition)
+            .with("RsOuterAttr") { _, context ->
+                context?.get(META_ITEM_ATTR) is RsOuterAttr
+            }
 
     val lintAttributeMetaItem: PsiElementPattern.Capture<RsMetaItem> =
         rootMetaItem
