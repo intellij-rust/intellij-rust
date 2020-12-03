@@ -379,6 +379,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             createGeneralCommandLine(
                 executable,
                 workingDirectory,
+                redirectInputFrom,
                 backtraceMode,
                 environmentVariables,
                 parameters,

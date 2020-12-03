@@ -5,9 +5,9 @@
 
 package org.rust.cargo.runconfig
 
-import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.LocatableConfigurationBase
+import com.intellij.execution.configurations.RunConfigurationWithSuppressedDefaultDebugAction
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.openapi.project.Project
 import org.jdom.Element
@@ -21,7 +21,7 @@ abstract class RsCommandConfiguration(
     name: String,
     factory: ConfigurationFactory
 ) : LocatableConfigurationBase<RunProfileState>(project, factory, name),
-    InputRedirectAware.InputRedirectOptions {
+    RunConfigurationWithSuppressedDefaultDebugAction {
     abstract var command: String
 
     var workingDirectory: Path? = project.cargoProjects.allProjects.firstOrNull()?.workingDirectory

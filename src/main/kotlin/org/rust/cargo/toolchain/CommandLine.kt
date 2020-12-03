@@ -18,11 +18,13 @@ import org.rust.cargo.runconfig.createCargoCommandRunConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfiguration
 import org.rust.cargo.runconfig.wasmpack.WasmPackCommandConfigurationType
 import org.rust.stdext.buildList
+import java.io.File
 import java.nio.file.Path
 
 abstract class RsCommandLineBase {
     abstract val command: String
     abstract val workingDirectory: Path
+    abstract val redirectInputFrom: File?
     abstract val additionalArguments: List<String>
 
     protected abstract fun createRunConfiguration(runManager: RunManagerEx, name: String? = null): RunnerAndConfigurationSettings
@@ -48,6 +50,7 @@ data class CargoCommandLine(
     override val command: String, // Can't be `enum` because of custom subcommands
     override val workingDirectory: Path, // Note that working directory selects Cargo project as well
     override val additionalArguments: List<String> = emptyList(),
+    override val redirectInputFrom: File? = null,
     val backtraceMode: BacktraceMode = BacktraceMode.DEFAULT,
     val channel: RustChannel = RustChannel.DEFAULT,
     val environmentVariables: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT,
@@ -157,6 +160,8 @@ data class WasmPackCommandLine(
     override val workingDirectory: Path,
     override val additionalArguments: List<String> = emptyList()
 ) : RsCommandLineBase() {
+    override val redirectInputFrom: File? = null
+
     override fun createRunConfiguration(runManager: RunManagerEx, name: String?): RunnerAndConfigurationSettings {
         val runnerAndConfigurationSettings = runManager.createConfiguration(
             name ?: command,

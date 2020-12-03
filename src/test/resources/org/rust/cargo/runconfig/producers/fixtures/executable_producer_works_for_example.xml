@@ -1,12 +1,14 @@
 <configurations>
   <configuration name="Run hello" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="run --package test-package --example hello" />
+    <option name="workingDirectory" value="file:///my-crate" />
+    <option name="channel" value="DEFAULT" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />
-    <option name="workingDirectory" value="file:///my-crate" />
     <envs />
+    <option name="isRedirectInput" value="false" />
+    <option name="redirectInputPath" value="" />
     <method v="2">
       <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
     </method>

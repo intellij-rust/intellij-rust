@@ -5,11 +5,15 @@
 
 package org.rust.cargo.runconfig.ui
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configuration.EnvironmentVariablesComponent
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.CheckBox
@@ -18,6 +22,7 @@ import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.LayoutBuilder
 import com.intellij.ui.layout.Row
 import com.intellij.ui.layout.panel
+import com.intellij.util.text.nullize
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.toolchain
@@ -28,9 +33,9 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
-import java.awt.Dimension
+import org.rust.openapiext.pathTextField
+import javax.swing.JCheckBox
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 class CargoCommandConfigurationEditor(project: Project)
     : RsCommandConfigurationEditor<CargoCommandConfiguration>(project) {
@@ -63,6 +68,16 @@ class CargoCommandConfigurationEditor(project: Project)
         }
     }
 
+    private val redirectInput: TextFieldWithBrowseButton =
+        pathTextField(FileChooserDescriptorFactory.createSingleFileDescriptor(), this, "")
+            .apply { isEnabled = false }
+
+    private val redirectInputPath: String?
+        get() = redirectInput.text.nullize()?.let { FileUtil.toSystemIndependentName(it) }
+
+    private val isRedirectInput: JCheckBox = CheckBox(ExecutionBundle.message("redirect.input.from"), false)
+        .apply { addChangeListener { redirectInput.isEnabled = isSelected } }
+
     private fun setWorkingDirectoryFromSelectedProject() {
         val selectedProject = run {
             val idx = cargoProject.selectedIndex
@@ -78,11 +93,13 @@ class CargoCommandConfigurationEditor(project: Project)
 
     override fun resetEditorFrom(configuration: CargoCommandConfiguration) {
         super.resetEditorFrom(configuration)
+
         channel.selectedIndex = configuration.channel.index
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
         backtraceMode.selectedIndex = configuration.backtrace.index
         environmentVariables.envData = configuration.env
+
         val vFile = currentWorkingDirectory?.let { LocalFileSystem.getInstance().findFileByIoFile(it.toFile()) }
         if (vFile == null) {
             cargoProject.selectedIndex = -1
@@ -90,6 +107,9 @@ class CargoCommandConfigurationEditor(project: Project)
             val projectForWd = project.cargoProjects.findProjectForFile(vFile)
             cargoProject.selectedIndex = allCargoProjects.indexOf(projectForWd)
         }
+
+        isRedirectInput.isSelected = configuration.isRedirectInput
+        redirectInput.text = configuration.redirectInputPath ?: ""
     }
 
     @Throws(ConfigurationException::class)
@@ -109,6 +129,9 @@ class CargoCommandConfigurationEditor(project: Project)
         if (!rustupAvailable && configChannel != RustChannel.DEFAULT) {
             throw ConfigurationException("Channel cannot be set explicitly because rustup is not available")
         }
+
+        configuration.isRedirectInput = isRedirectInput.isSelected
+        configuration.redirectInputPath = redirectInputPath
     }
 
     override fun createEditor(): JComponent = panel {
@@ -125,11 +148,19 @@ class CargoCommandConfigurationEditor(project: Project)
             row { emulateTerminal() }
         }
 
-        row(environmentVariables.label) { environmentVariables.apply { makeWide() }() }
+        row(environmentVariables.label) {
+            environmentVariables(growX)
+        }
         row(workingDirectory.label) {
-            workingDirectory.apply { makeWide() }()
+            workingDirectory(growX)
             if (project.cargoProjects.allProjects.size > 1) {
-                cargoProject()
+                cargoProject(growX)
+            }
+        }
+        row {
+            cell(isFullWidth = true) {
+                isRedirectInput()
+                redirectInput()
             }
         }
         labeledRow("Back&trace:", backtraceMode) { backtraceMode() }
@@ -139,9 +170,5 @@ class CargoCommandConfigurationEditor(project: Project)
         val label = Label(labelText)
         label.labelFor = component
         row(label) { init() }
-    }
-
-    private fun JPanel.makeWide() {
-        preferredSize = Dimension(1000, height)
     }
 }

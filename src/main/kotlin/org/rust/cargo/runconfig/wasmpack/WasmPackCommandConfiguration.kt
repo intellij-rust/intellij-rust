@@ -14,8 +14,9 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.util.execution.ParametersListUtil
+import org.jdom.Element
 import org.rust.cargo.project.settings.toolchain
-import org.rust.cargo.runconfig.RsCommandConfiguration
+import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.ui.WasmPackCommandConfigurationEditor
 import org.rust.cargo.toolchain.WasmPackCommandLine
 import org.rust.cargo.toolchain.tools.wasmPack
@@ -34,15 +35,6 @@ class WasmPackCommandConfiguration(
         val wasmPack = environment.project.toolchain?.wasmPack() ?: return null
         val workingDirectory = workingDirectory?.toFile() ?: return null
         return WasmPackCommandRunState(environment, this, wasmPack, workingDirectory)
-    }
-
-    override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
-        val tasks = super.getBeforeRunTasks()
-        return if (tasks.none { it is WasmPackBuildTaskProvider.BuildTask }) {
-            tasks + WasmPackBuildTaskProvider.BuildTask()
-        } else {
-            tasks
-        }
     }
 
     override fun writeExternal(element: Element) {

@@ -7,6 +7,7 @@ package org.rust.cargo.runconfig.command
 
 import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
+import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
@@ -28,6 +29,7 @@ import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.tools.isRustupAvailable
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
+import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.run
@@ -41,13 +43,29 @@ class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
-) : RsCommandConfiguration(project, name, factory) {
+) : RsCommandConfiguration(project, name, factory),
+    InputRedirectAware.InputRedirectOptions {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var allFeatures: Boolean = false
     var emulateTerminal: Boolean = false
     var backtrace: BacktraceMode = BacktraceMode.SHORT
     var env: EnvironmentVariablesData = EnvironmentVariablesData.DEFAULT
+
+    private var isRedirectInput: Boolean = false
+    private var redirectInputPath: String? = null
+
+    override fun isRedirectInput(): Boolean = isRedirectInput
+
+    override fun setRedirectInput(value: Boolean) {
+        isRedirectInput = value
+    }
+
+    override fun getRedirectInputPath(): String? = redirectInputPath
+
+    override fun setRedirectInputPath(value: String?) {
+        redirectInputPath = value
+    }
 
     override fun getBeforeRunTasks(): List<BeforeRunTask<*>> {
         val tasks = super.getBeforeRunTasks()
@@ -65,6 +83,8 @@ class CargoCommandConfiguration(
         element.writeBool("emulateTerminal", emulateTerminal)
         element.writeEnum("backtrace", backtrace)
         env.writeExternal(element)
+        element.writeBool("isRedirectInput", isRedirectInput)
+        element.writeString("redirectInputPath", redirectInputPath ?: "")
     }
 
     /**
@@ -78,6 +98,8 @@ class CargoCommandConfiguration(
         element.readBool("emulateTerminal")?.let { emulateTerminal = it }
         element.readEnum<BacktraceMode>("backtrace")?.let { backtrace = it }
         env = EnvironmentVariablesData.readExternal(element)
+        element.readBool("isRedirectInput")?.let { isRedirectInput = it }
+        element.readString("redirectInputPath")?.let { redirectInputPath = it }
     }
 
     fun setFromCmd(cmd: CargoCommandLine) {
@@ -88,6 +110,8 @@ class CargoCommandConfiguration(
         backtrace = cmd.backtraceMode
         workingDirectory = cmd.workingDirectory
         env = cmd.environmentVariables
+        isRedirectInput = cmd.redirectInputFrom != null
+        redirectInputPath = cmd.redirectInputFrom?.path
     }
 
     fun canBeFrom(cmd: CargoCommandLine): Boolean =
@@ -131,6 +155,9 @@ class CargoCommandConfiguration(
     fun clean(): CleanConfiguration {
         val workingDirectory = workingDirectory
             ?: return CleanConfiguration.error("No working directory specified")
+        val redirectInputFrom = redirectInputPath
+            ?.takeIf { isRedirectInput && it.isNotBlank() }
+            ?.let { File(it) }
         val cmd = run {
             val args = ParametersListUtil.parse(command)
             if (args.isEmpty()) {
@@ -140,6 +167,7 @@ class CargoCommandConfiguration(
                 args.first(),
                 workingDirectory,
                 args.drop(1),
+                redirectInputFrom,
                 backtrace,
                 channel,
                 env,

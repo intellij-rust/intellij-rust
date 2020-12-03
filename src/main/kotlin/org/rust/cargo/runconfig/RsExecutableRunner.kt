@@ -77,6 +77,7 @@ abstract class RsExecutableRunner(
         val runExecutable = createGeneralCommandLine(
             binaries.single(),
             runCargoCommand.workingDirectory,
+            runCargoCommand.redirectInputFrom,
             runCargoCommand.backtraceMode,
             runCargoCommand.environmentVariables,
             executableArguments,
