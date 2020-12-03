@@ -221,6 +221,7 @@ class TestRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
             channel = RustChannel.NIGHTLY
             allFeatures = true
             emulateTerminal = true
+            isRedirectInput = true
             backtrace = BacktraceMode.FULL
             env = EnvironmentVariablesData.create(mapOf("FOO" to "BAR"), true)
         }

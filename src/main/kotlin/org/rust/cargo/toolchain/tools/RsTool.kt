@@ -16,6 +16,7 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.withProxyIfNeeded
 import org.rust.openapiext.GeneralCommandLine
 import org.rust.openapiext.withWorkDirectory
+import java.io.File
 import java.nio.file.Path
 
 abstract class RsTool(toolName: String, protected val toolchain: RsToolchain) {
@@ -41,6 +42,7 @@ abstract class RsTool(toolName: String, protected val toolchain: RsToolchain) {
         fun createGeneralCommandLine(
             executable: Path,
             workingDirectory: Path,
+            redirectInputFrom: File?,
             backtraceMode: BacktraceMode,
             environmentVariables: EnvironmentVariablesData,
             parameters: List<String>,
@@ -49,6 +51,7 @@ abstract class RsTool(toolName: String, protected val toolchain: RsToolchain) {
         ): GeneralCommandLine {
             var commandLine = GeneralCommandLine(executable)
                 .withWorkDirectory(workingDirectory)
+                .withInput(redirectInputFrom)
                 .withEnvironment("TERM", "ansi")
                 .withParameters(parameters)
                 .withCharset(Charsets.UTF_8)

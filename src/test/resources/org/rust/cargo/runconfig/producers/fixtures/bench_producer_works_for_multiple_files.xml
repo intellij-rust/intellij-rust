@@ -1,12 +1,14 @@
 <configurations>
   <configuration name="Bench multiple selected files" type="CargoCommandRunConfiguration" factoryName="Cargo Command">
-    <option name="channel" value="DEFAULT" />
     <option name="command" value="bench --package test-package --bench foo --bench baz &quot;&quot;" />
+    <option name="workingDirectory" value="file:///my-crate" />
+    <option name="channel" value="DEFAULT" />
     <option name="allFeatures" value="false" />
     <option name="emulateTerminal" value="false" />
     <option name="backtrace" value="SHORT" />
-    <option name="workingDirectory" value="file:///my-crate" />
     <envs />
+    <option name="isRedirectInput" value="false" />
+    <option name="redirectInputPath" value="" />
     <method v="2">
       <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
     </method>

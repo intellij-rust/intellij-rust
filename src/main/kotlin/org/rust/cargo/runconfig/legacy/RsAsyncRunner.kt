@@ -76,6 +76,7 @@ abstract class RsAsyncRunner(
                 createGeneralCommandLine(
                     executablePath,
                     workingDirectory,
+                    redirectInputFrom,
                     backtraceMode,
                     environmentVariables,
                     executableArguments,
