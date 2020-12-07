@@ -1105,6 +1105,26 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>enum</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async keyword doc`() = doTestRegex("""
+        async fn foo() {}
+        //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>async</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dyn keyword doc`() = doTestRegex("""
+        trait Foo {}
+        fn foo(x: &dyn Foo) {}
+                 //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>dyn</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test boolean value doc`() = doTestRegex("""
         fn main() {
