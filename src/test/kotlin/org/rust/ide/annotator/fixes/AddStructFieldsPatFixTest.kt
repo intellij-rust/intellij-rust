@@ -5,6 +5,7 @@
 
 package org.rust.ide.annotator.fixes
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ide.annotator.RsAnnotatorTestBase
 import org.rust.ide.annotator.RsErrorAnnotator
 
@@ -277,6 +278,28 @@ class AddStructFieldsPatFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
             match x {
                 Foo::Bar(a, _0/*caret*/, _1) => {}
             }
+        }
+        """
+    )
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test 123`() = checkFixByText("Add missing fields", """
+        struct Foo {
+            a: i32,
+            #[cfg(intellij_rust)]
+            b: i32,
+        }
+        fn main() {
+            let <error>Foo { a }/*caret*/</error> = foo;
+        }
+        """, """
+        struct Foo {
+            a: i32,
+            #[cfg(intellij_rust)]
+            b: i32,
+        }
+        fn main() {
+            let Foo { a, b }/*caret*/ = foo;
         }
         """
     )

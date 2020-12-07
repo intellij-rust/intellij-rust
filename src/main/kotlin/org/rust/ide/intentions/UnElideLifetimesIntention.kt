@@ -8,6 +8,7 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.rust.ide.intentions.UnElideLifetimesIntention.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.infer.hasReEarlyBounds
@@ -16,15 +17,15 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.type
 
-class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
+class UnElideLifetimesIntention : RsElementBaseIntentionAction<LifetimeContext>() {
     override fun getText() = "Un-elide lifetimes"
     override fun getFamilyName(): String = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsFunction? {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): LifetimeContext? {
         if (element is RsDocCommentImpl) return null
         val fn = element.ancestorOrSelf<RsFunction>(stopAt = RsBlock::class.java) ?: return null
 
-        val ctx = getLifetimeContext(fn)
+        val ctx = getLifetimeContext(fn) ?: return null
         val outputLifetimes = ctx.output?.lifetimes
         if (outputLifetimes != null) {
             if (outputLifetimes.any { it != null } || outputLifetimes.size > 1) return null
@@ -33,11 +34,11 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val refArgs = ctx.inputs + listOfNotNull(ctx.self)
         if (refArgs.isEmpty() || refArgs.any { it.lifetimes.any { lifetime -> lifetime != null } }) return null
 
-        return fn
+        return ctx
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RsFunction) {
-        val (inputs, output, self) = getLifetimeContext(ctx)
+    override fun invoke(project: Project, editor: Editor, ctx: LifetimeContext) {
+        val (fn, inputs, output, self) = ctx
 
         val addedLifetimes = mutableListOf<String>()
         val generator = nameGenerator.iterator()
@@ -48,9 +49,9 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         }
 
         val genericParams = RsPsiFactory(project).createTypeParameterList(
-            addedLifetimes + ctx.typeParameters.map { it.text }
+            addedLifetimes + fn.typeParameters.map { it.text }
         )
-        ctx.typeParameterList?.replace(genericParams) ?: ctx.addAfter(genericParams, ctx.identifier)
+        fn.typeParameterList?.replace(genericParams) ?: fn.addAfter(genericParams, fn.identifier)
 
         // return type
         if (output == null) return
@@ -78,29 +79,36 @@ class UnElideLifetimesIntention : RsElementBaseIntentionAction<RsFunction>() {
         val index = it / abcSize
         return@map if (index == 0) "'$letter" else "'$letter$index"
     }
-}
 
-private sealed class PotentialLifetimeRef(val element: RsElement) {
-    data class Self(val self: RsSelfParameter) : PotentialLifetimeRef(self)
-    data class RefLike(val ref: RsRefLikeType) : PotentialLifetimeRef(ref)
-    data class BaseType(val baseType: RsBaseType, val type: Ty) : PotentialLifetimeRef(baseType) {
-        val typeLifetimes: List<Region>
-            get() = when (val type = baseType.type) {
-                is TyAdt -> type.regionArguments.filter { it.hasReEarlyBounds }
-                else -> emptyList()
+    data class LifetimeContext(
+        val fn: RsFunction,
+        val inputs: List<PotentialLifetimeRef>,
+        val output: PotentialLifetimeRef?,
+        val self: PotentialLifetimeRef?
+    )
+
+    sealed class PotentialLifetimeRef(val element: RsElement) {
+        data class Self(val self: RsSelfParameter) : PotentialLifetimeRef(self)
+        data class RefLike(val ref: RsRefLikeType) : PotentialLifetimeRef(ref)
+        data class BaseType(val baseType: RsBaseType, val type: Ty) : PotentialLifetimeRef(baseType) {
+            val typeLifetimes: List<Region>
+                get() = when (val type = baseType.type) {
+                    is TyAdt -> type.regionArguments.filter { it.hasReEarlyBounds }
+                    else -> emptyList()
+                }
+        }
+
+        val lifetimes: List<RsLifetime?>
+            get() = when (this) {
+                is Self -> listOf(self.lifetime)
+                is RefLike -> listOf(ref.lifetime)
+                is BaseType -> {
+                    val lifetimes = typeLifetimes
+                    val actualLifetimes = baseType.path?.typeArgumentList?.lifetimeList
+                    lifetimes.indices.map { actualLifetimes?.getOrNull(it) }
+                }
             }
     }
-
-    val lifetimes: List<RsLifetime?>
-        get() = when (this) {
-            is Self -> listOf(self.lifetime)
-            is RefLike -> listOf(ref.lifetime)
-            is BaseType -> {
-                val lifetimes = typeLifetimes
-                val actualLifetimes = baseType.path?.typeArgumentList?.lifetimeList
-                lifetimes.indices.map { actualLifetimes?.getOrNull(it) }
-            }
-        }
 }
 
 private fun isPotentialLifetimeAdt(ref: RsTypeReference): Boolean {
@@ -118,17 +126,17 @@ private fun parsePotentialLifetimeType(ref: RsTypeReference): PotentialLifetimeR
     }
 }
 
-private data class LifetimeContext(
-    val inputs: List<PotentialLifetimeRef>,
-    val output: PotentialLifetimeRef?,
-    val self: PotentialLifetimeRef?
-)
+private fun getLifetimeContext(fn: RsFunction): LifetimeContext? {
+    val valueParameters = fn.rawValueParameters
 
-private fun getLifetimeContext(fn: RsFunction): LifetimeContext {
-    val inputArgs = fn.valueParameters.mapNotNull { elem -> elem.typeReference?.let { parsePotentialLifetimeType(it) } }
+    // Current implementation of the intention works incorrectly in the case of function parameters with
+    // `#[cfg]` attributes. Disable the intention in this case for now.
+    if (valueParameters.any { it.queryAttributes.hasCfgAttr() }) return null
+
+    val inputArgs = valueParameters.mapNotNull { elem -> elem.typeReference?.let { parsePotentialLifetimeType(it) } }
     val retType = fn.retType?.typeReference?.let { parsePotentialLifetimeType(it) }
 
-    return LifetimeContext(inputArgs, retType, fn.selfParameter?.let { PotentialLifetimeRef.Self(it) })
+    return LifetimeContext(fn, inputArgs, retType, fn.selfParameter?.let { PotentialLifetimeRef.Self(it) })
 }
 
 private fun addLifetimeParameter(ref: PotentialLifetimeRef, names: List<String>): PsiElement {

@@ -87,7 +87,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val inserted = insertCallable(ctx, function) ?: return
 
         if (inserted.containingFile == ctx.callElement.containingFile) {
-            val toBeReplaced = inserted.valueParameters.flatMap { listOfNotNull(it.pat, it.typeReference) } +
+            val toBeReplaced = inserted.rawValueParameters.flatMap { listOfNotNull(it.pat, it.typeReference) } +
                 listOfNotNull(inserted.block?.expr)
             editor.buildAndRunTemplate(inserted, toBeReplaced.map { it.createSmartPointer() })
         } else {

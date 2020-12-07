@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.MockAdditionalCfgOptions
+
 class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection::class) {
 
     fun `test self in trait not in impl E0186`() = checkErrors("""
@@ -64,6 +66,30 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
             fn bar<error descr="Method `bar` has 2 parameters but the declaration in trait `T` has 1 [E0050]">(a: u32, b: bool)</error> {}
             fn baz<error descr="Method `baz` has 0 parameters but the declaration in trait `T` has 3 [E0050]">()</error> {}
             fn boo<error descr="Method `boo` has 2 parameters but the declaration in trait `T` has 1 [E0050]">(&self, o: isize, x: f16)</error> {}
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test incorrect params number in trait impl E0050 with cfg attributes`() = checkErrors("""
+        trait T {
+            fn foo(#[cfg(intellij_rust)] a: i32);
+            fn bar(#[cfg(not(intellij_rust))] a: i32);
+            fn baz(#[cfg(intellij_rust)] a: i32, #[cfg(not(intellij_rust))] a: u32);
+            fn quux(#[cfg(not(intellij_rust))] a: i32, #[cfg(intellij_rust)] a: u32);
+        }
+        struct S1;
+        impl T for S1 {
+            fn foo(a: i32) {}
+            fn bar() {}
+            fn baz(a: i32);
+            fn quux(a: u32);
+        }
+        struct S2;
+        impl T for S2 {
+            fn foo(#[cfg(intellij_rust)] a: i32) {}
+            fn bar(#[cfg(not(intellij_rust))] a: i32) {}
+            fn baz(#[cfg(intellij_rust)] a: i32, #[cfg(not(intellij_rust))] a: i32) {}
+            fn quux(#[cfg(not(intellij_rust))] a: i32, #[cfg(intellij_rust)] a: u32);
         }
     """)
 

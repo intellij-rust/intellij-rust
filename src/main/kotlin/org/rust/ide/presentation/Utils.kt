@@ -57,7 +57,11 @@ fun getPresentationForStructure(psi: RsElement): ItemPresentation {
         }
     }
     val icon = psi.getIcon(Iconable.ICON_FLAG_VISIBILITY)
-    val textAttributes = if (psi.isExpandedFromMacro) RsColor.GENERATED_ITEM.textAttributesKey else null
+    val textAttributes = when {
+        psi is RsDocAndAttributeOwner && !psi.isEnabledByCfgSelf -> RsColor.CFG_DISABLED_CODE.textAttributesKey
+        psi.isExpandedFromMacro -> RsColor.GENERATED_ITEM.textAttributesKey
+        else -> null
+    }
 
     return PresentationData(presentation, null, icon, textAttributes)
 }

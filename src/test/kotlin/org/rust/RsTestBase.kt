@@ -119,7 +119,7 @@ abstract class RsTestBase : RsPlatformTestBase() {
             CfgOptions.DEFAULT.keyValueOptions,
             CfgOptions.DEFAULT.nameOptions + additionalOptions
         )
-        project.testCargoProjects.setCfgOptions(allOptions)
+        project.testCargoProjects.setCfgOptions(allOptions, testRootDisposable)
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {

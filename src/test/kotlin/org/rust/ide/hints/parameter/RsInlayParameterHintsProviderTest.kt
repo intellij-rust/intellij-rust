@@ -8,6 +8,7 @@ package org.rust.ide.hints.parameter
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.openapi.vfs.VirtualFileFilter
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.psi.RsMethodCall
@@ -21,6 +22,16 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     fun `test arg out of bounds`() = checkByText("""
         fn foo(arg: u32) {}
         fn main() { foo(/*hint text="arg:"*/0, 1); }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test fn args with cfg`() = checkByText("""
+        fn foo(
+            #[cfg(not(intellij_rust))] arg1: u16,
+            #[cfg(intellij_rust)]      arg2: u32,
+            arg3: u64,
+        ) {}
+        fn main() { foo(/*hint text="arg2:"*/0, /*hint text="arg3:"*/1); }
     """)
 
     fun `test method args`() = checkByText("""

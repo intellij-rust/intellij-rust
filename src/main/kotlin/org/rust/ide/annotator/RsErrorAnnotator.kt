@@ -223,7 +223,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             extraFields.forEach { RsDiagnostic.ExtraFieldInStructPattern(it, "struct").addToHolder(holder) }
 
             val bodyFieldNames = bodyFields.map { it.kind.fieldName }
-            val missingFields = declaration.fields.filter { it.name !in bodyFieldNames && !it.queryAttributes.hasCfgAttr() }
+            val missingFields = declaration.fields.filter { it.name !in bodyFieldNames }
 
             if (missingFields.isNotEmpty() && patStruct.patRest == null) {
                 RsDiagnostic.MissingFieldsInStructPattern(patStruct, declaration, missingFields).addToHolder(holder)
@@ -1262,7 +1262,7 @@ private fun AnnotationSession.duplicatesByNamespace(
             + importedNames)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter { it.nameOrImportedName() != null }
-            .filter { it !is RsDocAndAttributeOwner || (it.isEnabledByCfg && !it.isCfgUnknown) }
+            .filter { it.isEnabledByCfg && !it.isCfgUnknown }
             .flatMap { it.namespaced() }
             .groupBy { it.first }       // Group by namespace
             .map { entry ->
@@ -1315,7 +1315,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
         is RsFunction -> {
             val owner = el.owner
             if (owner.isTraitImpl) return null
-            val count = el.valueParameterList?.valueParameterList?.size ?: return null
+            val count = el.valueParameters.size
             val s = if (el.selfParameter != null) 1 else 0
             val functionType = if (el.isVariadic) {
                 FunctionType.VARIADIC_FUNCTION

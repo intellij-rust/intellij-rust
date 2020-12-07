@@ -77,7 +77,14 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     }
 
     @TestOnly
-    fun setCfgOptions(cfgOptions: CfgOptions) {
+    fun setCfgOptions(cfgOptions: CfgOptions, parentDisposable: Disposable) {
+        setCfgOptionsInner(cfgOptions)
+        Disposer.register(parentDisposable, Disposable {
+            setCfgOptionsInner(CfgOptions.DEFAULT)
+        })
+    }
+
+    private fun setCfgOptionsInner(cfgOptions: CfgOptions) {
         modifyProjectsSync { projects ->
             val updatedProjects = projects.map { project ->
                 val ws = project.workspace?.withCfgOptions(cfgOptions)

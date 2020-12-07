@@ -73,7 +73,20 @@ val RsFunction.abiName: String?
         return stub?.abiName ?: abi?.stringLiteral?.text
     }
 
+/**
+ * Those function parameters that are not disabled by cfg attributes.
+ *
+ * Should be used in code analysis: name resolution, type inference, inspections, annotations, etc.
+ */
 val RsFunction.valueParameters: List<RsValueParameter>
+    get() = rawValueParameters.filter { it.isEnabledByCfgSelf }
+
+/**
+ * All function parameters.
+ *
+ * Should be used in code (PSI) manipulations: intentions, quick-fixes, refactorings, code generation, etc.
+ */
+val RsFunction.rawValueParameters: List<RsValueParameter>
     get() = valueParameterList?.valueParameterList.orEmpty()
 
 val RsFunction.selfParameter: RsSelfParameter?
