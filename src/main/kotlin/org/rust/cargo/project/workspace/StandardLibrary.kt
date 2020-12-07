@@ -81,142 +81,7 @@ data class StandardLibrary(
         }
 
         private fun fetchActualStdlib(project: Project, srcDir: VirtualFile): StandardLibrary? {
-            val cargo = project.toolchain?.cargo() ?: return null
-
-            val testPackageSrcPaths = listOf(AutoInjectedCrates.TEST, "lib${AutoInjectedCrates.TEST}")
-            val testPackageSrcDir = srcDir.findFirstFileByRelativePaths(testPackageSrcPaths)?.canonicalFile
-                ?: return null
-            val stdlibDependenciesDir = findStdlibDependencyDirectory(project, cargo, srcDir, testPackageSrcDir)
-                ?: return null
-
-            val workspaceMembers = mutableListOf<PackageId>()
-            val visitedPackages = mutableSetOf<PackageId>()
-
-            val allPackages = mutableListOf<CargoMetadata.Package>()
-            val allNodes = mutableListOf<CargoMetadata.ResolveNode>()
-
-            fun String.remapPath(libName: String, version: String): String {
-                val path = toPath()
-                for (i in path.nameCount - 1 downTo 0) {
-                    val fileName = path.getName(i).fileName.toString()
-                    if (fileName.startsWith(libName) && fileName.endsWith(version)) {
-                        val subpath = path.subpath(i + 1, path.nameCount)
-                        return stdlibDependenciesDir.resolve(libName).resolve(subpath).toString()
-                    }
-                }
-                error("Failed to remap `$this`")
-            }
-
-            fun CargoMetadata.Project.walk(id: PackageId, root: Boolean) {
-                if (id in visitedPackages) return
-                val stdlibId = id.toStdlibId()
-
-                if (root) {
-                    workspaceMembers += stdlibId
-                }
-
-                visitedPackages += id
-
-                val pkg = packages.first { it.id == id }
-
-                val pkgNode = resolve.nodes.first { it.id == id }
-                val nodeDeps = mutableListOf<CargoMetadata.Dep>()
-                val nodeDependencies = mutableListOf<PackageId>()
-
-                for (dep in pkgNode.deps.orEmpty()) {
-                    val depKinds = dep.dep_kinds?.filter { it.kind == null }.orEmpty()
-                    if (depKinds.isNotEmpty()) {
-                        nodeDependencies += dep.pkg.toStdlibId()
-                        nodeDeps += dep.copy(pkg = dep.pkg.toStdlibId(), dep_kinds = depKinds)
-                        walk(dep.pkg, false)
-                    }
-                }
-
-                allNodes += pkgNode.copy(id = stdlibId, dependencies = nodeDependencies, deps = nodeDeps)
-
-                val (newManifestPath, newTargets) = if (pkg.source != null) {
-                    val newTargets = pkg.targets.map { it.copy(src_path = it.src_path.remapPath(pkg.name, pkg.version)) }
-                    pkg.manifest_path.remapPath(pkg.name, pkg.version) to newTargets
-                } else {
-                    pkg.manifest_path to pkg.targets
-                }
-
-                val newPkg = pkg.copy(
-                    id = stdlibId,
-                    manifest_path = newManifestPath,
-                    targets = newTargets,
-                    dependencies = pkg.dependencies.filter { it.kind == null }
-                )
-
-                allPackages += newPkg
-            }
-
-            fun VirtualFile.collectPackageMetadata() {
-                val metadataProject = try {
-                    cargo.fetchMetadata(project, pathAsPath)
-                } catch (e: ExecutionException) {
-                    LOG.error(e)
-                    return
-                }
-
-                val rootPackageId = metadataProject.workspace_members.first()
-                metadataProject.walk(rootPackageId, true)
-            }
-
-            // `test` package depends on all other stdlib packages from `AutoInjectedCrates` (at least on moment of writing)
-            // so let's collect its metadata first to avoid redundant calls of `cargo metadata`
-            testPackageSrcDir.collectPackageMetadata()
-            // if there is a package that is not in dependencies of `test` package,
-            // collect its metadata manually
-            val rootStdlibCrates = AutoInjectedCrates.stdlibCrates.filter { it.type != StdLibType.DEPENDENCY }
-            for (libInfo in rootStdlibCrates) {
-                val packageSrcPaths = listOf(libInfo.name, "lib${libInfo.name}")
-                val packageSrcDir = srcDir.findFirstFileByRelativePaths(packageSrcPaths)?.canonicalFile ?: continue
-
-                val packageManifestPath = packageSrcDir.pathAsPath.resolve(CargoConstants.MANIFEST_FILE).toString()
-                val pkg = allPackages.find { it.manifest_path == packageManifestPath }
-                if (pkg == null) {
-                    packageSrcDir.collectPackageMetadata()
-                } else {
-                    workspaceMembers += pkg.id
-                }
-            }
-
-            val stdlibMetadataProject = CargoMetadata.Project(
-                allPackages,
-                CargoMetadata.Resolve(allNodes),
-                1,
-                workspaceMembers,
-                srcDir.path
-            )
-            val stdlibWorkspaceData = CargoMetadata.clean(stdlibMetadataProject)
-            val stdlibPackages = stdlibWorkspaceData.packages.map {
-                // TODO: introduce PackageOrigin.STDLIB_DEPENDENCY
-                if (it.source == null) it.copy(origin = PackageOrigin.STDLIB) else it
-            }
-            return StandardLibrary(stdlibPackages, stdlibWorkspaceData.dependencies, isHardcoded = false)
-        }
-
-        private fun findStdlibDependencyDirectory(
-            project: Project,
-            cargo: Cargo,
-            srcDir: VirtualFile,
-            testPackageSrcDir: VirtualFile
-        ): Path? {
-            val stdlibDependenciesDir = srcDir.pathAsPath.resolve("../vendor").normalize()
-
-            if (!stdlibDependenciesDir.exists()) {
-                try {
-                    // `test` package depends on all other stdlib packages,
-                    // at least before 1.49 when `vendor` became a part of `rust-src`.
-                    // So it's enough to vendor only its dependencies
-                    cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibDependenciesDir)
-                } catch (e: ExecutionException) {
-                    LOG.error(e)
-                    return null
-                }
-            }
-            return stdlibDependenciesDir
+            return StdlibDataFetcher.create(project, srcDir)?.fetchStdlibData()
         }
 
         private fun fetchHardcodedStdlib(srcDir: VirtualFile): StandardLibrary? {
@@ -271,22 +136,176 @@ data class StandardLibrary(
             if (crates.isEmpty()) return null
             return StandardLibrary(crates.values.toList(), dependencies, isHardcoded = true)
         }
+    }
+}
 
-        private fun VirtualFile.findFirstFileByRelativePaths(paths: List<String>): VirtualFile? {
-            for (path in paths) {
-                val file = findFileByRelativePath(path)
-                if (file != null) return file
+private class StdlibDataFetcher private constructor(
+    private val project: Project,
+    private val cargo: Cargo,
+    private val srcDir: VirtualFile,
+    private val testPackageSrcDir: VirtualFile,
+    private val stdlibDependenciesDir: Path
+) {
+    private val workspaceMembers = mutableListOf<PackageId>()
+    private val visitedPackages = mutableSetOf<PackageId>()
+    private val allPackages = mutableListOf<CargoMetadata.Package>()
+    private val allNodes = mutableListOf<CargoMetadata.ResolveNode>()
+
+    fun fetchStdlibData(): StandardLibrary {
+        // `test` package depends on all other stdlib packages from `AutoInjectedCrates` (at least on moment of writing)
+        // so let's collect its metadata first to avoid redundant calls of `cargo metadata`
+        testPackageSrcDir.collectPackageMetadata()
+        // if there is a package that is not in dependencies of `test` package,
+        // collect its metadata manually
+        val rootStdlibCrates = AutoInjectedCrates.stdlibCrates.filter { it.type != StdLibType.DEPENDENCY }
+        for (libInfo in rootStdlibCrates) {
+            val packageSrcPaths = listOf(libInfo.name, "lib${libInfo.name}")
+            val packageSrcDir = srcDir.findFirstFileByRelativePaths(packageSrcPaths)?.canonicalFile ?: continue
+
+            val packageManifestPath = packageSrcDir.pathAsPath.resolve(CargoConstants.MANIFEST_FILE).toString()
+            val pkg = allPackages.find { it.manifest_path == packageManifestPath }
+            if (pkg == null) {
+                packageSrcDir.collectPackageMetadata()
+            } else {
+                workspaceMembers += pkg.id
             }
-            return null
         }
 
-        private fun PackageId.toStdlibId(): String = "(stdlib) $this"
+        val stdlibMetadataProject = CargoMetadata.Project(
+            allPackages,
+            CargoMetadata.Resolve(allNodes),
+            1,
+            workspaceMembers,
+            srcDir.path
+        )
+        val stdlibWorkspaceData = CargoMetadata.clean(stdlibMetadataProject)
+        val stdlibPackages = stdlibWorkspaceData.packages.map {
+            // TODO: introduce PackageOrigin.STDLIB_DEPENDENCY
+            if (it.source == null) it.copy(origin = PackageOrigin.STDLIB) else it
+        }
+        return StandardLibrary(stdlibPackages, stdlibWorkspaceData.dependencies, isHardcoded = false)
+    }
+
+
+    private fun String.remapPath(libName: String, version: String): String {
+        val path = toPath()
+        for (i in path.nameCount - 1 downTo 0) {
+            val fileName = path.getName(i).fileName.toString()
+            if (fileName.startsWith(libName) && fileName.endsWith(version)) {
+                val subpath = path.subpath(i + 1, path.nameCount)
+                return stdlibDependenciesDir.resolve(libName).resolve(subpath).toString()
+            }
+        }
+        error("Failed to remap `$this`")
+    }
+
+    private fun CargoMetadata.Project.walk(id: PackageId, root: Boolean) {
+        if (id in visitedPackages) return
+        val stdlibId = id.toStdlibId()
+
+        if (root) {
+            workspaceMembers += stdlibId
+        }
+
+        visitedPackages += id
+
+        val pkg = packages.first { it.id == id }
+
+        val pkgNode = resolve.nodes.first { it.id == id }
+        val nodeDeps = mutableListOf<CargoMetadata.Dep>()
+        val nodeDependencies = mutableListOf<PackageId>()
+
+        for (dep in pkgNode.deps.orEmpty()) {
+            val depKinds = dep.dep_kinds?.filter { it.kind == null }.orEmpty()
+            if (depKinds.isNotEmpty()) {
+                nodeDependencies += dep.pkg.toStdlibId()
+                nodeDeps += dep.copy(pkg = dep.pkg.toStdlibId(), dep_kinds = depKinds)
+                walk(dep.pkg, false)
+            }
+        }
+
+        allNodes += pkgNode.copy(id = stdlibId, dependencies = nodeDependencies, deps = nodeDeps)
+
+        val (newManifestPath, newTargets) = if (pkg.source != null) {
+            val newTargets = pkg.targets.map { it.copy(src_path = it.src_path.remapPath(pkg.name, pkg.version)) }
+            pkg.manifest_path.remapPath(pkg.name, pkg.version) to newTargets
+        } else {
+            pkg.manifest_path to pkg.targets
+        }
+
+        val newPkg = pkg.copy(
+            id = stdlibId,
+            manifest_path = newManifestPath,
+            targets = newTargets,
+            dependencies = pkg.dependencies.filter { it.kind == null }
+        )
+
+        allPackages += newPkg
+    }
+
+    private fun VirtualFile.collectPackageMetadata() {
+        val metadataProject = try {
+            cargo.fetchMetadata(project, pathAsPath)
+        } catch (e: ExecutionException) {
+            LOG.error(e)
+            return
+        }
+
+        val rootPackageId = metadataProject.workspace_members.first()
+        metadataProject.walk(rootPackageId, true)
+    }
+
+    companion object {
+        private val LOG: Logger = logger<StdlibDataFetcher>()
+
+        fun create(project: Project, srcDir: VirtualFile): StdlibDataFetcher? {
+            val cargo = project.toolchain?.cargo() ?: return null
+
+            val testPackageSrcPaths = listOf(AutoInjectedCrates.TEST, "lib${AutoInjectedCrates.TEST}")
+            val testPackageSrcDir = srcDir.findFirstFileByRelativePaths(testPackageSrcPaths)?.canonicalFile
+                ?: return null
+            val stdlibDependenciesDir = findStdlibDependencyDirectory(project, cargo, srcDir, testPackageSrcDir)
+                ?: return null
+            return StdlibDataFetcher(project, cargo, srcDir, testPackageSrcDir, stdlibDependenciesDir)
+        }
+
+        private fun findStdlibDependencyDirectory(
+            project: Project,
+            cargo: Cargo,
+            srcDir: VirtualFile,
+            testPackageSrcDir: VirtualFile
+        ): Path? {
+            val stdlibDependenciesDir = srcDir.pathAsPath.resolve("../vendor").normalize()
+
+            if (!stdlibDependenciesDir.exists()) {
+                try {
+                    // `test` package depends on all other stdlib packages,
+                    // at least before 1.49 when `vendor` became a part of `rust-src`.
+                    // So it's enough to vendor only its dependencies
+                    cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibDependenciesDir)
+                } catch (e: ExecutionException) {
+                    LOG.error(e)
+                    return null
+                }
+            }
+            return stdlibDependenciesDir
+        }
     }
 }
 
 fun StandardLibrary.asPackageData(rustcInfo: RustcInfo?): List<CargoWorkspaceData.Package> {
     if (!isHardcoded) return crates
     return crates.map { it.withProperEdition(rustcInfo) }
+}
+
+private fun PackageId.toStdlibId(): String = "(stdlib) $this"
+
+private fun VirtualFile.findFirstFileByRelativePaths(paths: List<String>): VirtualFile? {
+    for (path in paths) {
+        val file = findFileByRelativePath(path)
+        if (file != null) return file
+    }
+    return null
 }
 
 private fun CargoWorkspaceData.Package.withProperEdition(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
