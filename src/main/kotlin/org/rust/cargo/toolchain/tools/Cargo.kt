@@ -134,10 +134,10 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     }
 
     @Throws(ExecutionException::class)
-    private fun fetchMetadata(
+    fun fetchMetadata(
         owner: Project,
         projectDirectory: Path,
-        listener: ProcessListener?
+        listener: ProcessListener? = null
     ): CargoMetadata.Project {
         val additionalArgs = mutableListOf("--verbose", "--format-version", "1", "--all-features")
         val json = CargoCommandLine("metadata", projectDirectory, additionalArgs)
@@ -149,6 +149,16 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }
+    }
+
+    @Throws(ExecutionException::class)
+    fun vendorDependencies(
+        owner: Project,
+        projectDirectory: Path,
+        dstPath: Path
+    ) {
+        val commandLine = CargoCommandLine("vendor", projectDirectory, listOf(dstPath.toString()))
+        commandLine.execute(owner)
     }
 
     private fun fetchBuildScriptsInfo(

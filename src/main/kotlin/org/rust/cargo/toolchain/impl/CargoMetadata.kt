@@ -48,7 +48,7 @@ object CargoMetadata {
         /**
          * Ids of packages that are members of the cargo workspace
          */
-        val workspace_members: List<String>?,
+        val workspace_members: List<String>,
 
         /**
          * Path to workspace root folder. Can be null for old cargo version
@@ -321,15 +321,11 @@ object CargoMetadata {
 
     fun clean(
         project: Project,
-        buildScriptsInfo: BuildScriptsInfo?,
-        buildPlan: CargoBuildPlan?
+        buildScriptsInfo: BuildScriptsInfo? = null,
+        buildPlan: CargoBuildPlan? = null
     ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
         val members = project.workspace_members
-            ?: error(
-                "No `workspace_members` key in the `cargo metadata` output.\n" +
-                    "Your version of Cargo is no longer supported, please upgrade Cargo."
-            )
         val variables = PackageVariables.from(buildPlan)
         val packageIdToNode = project.resolve.nodes.associateBy { it.id }
         return CargoWorkspaceData(

@@ -5,10 +5,8 @@
 
 package org.rust.lang.core.resolve
 
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import org.rust.WithStdlibWithSymlinkRustProjectDescriptor
+import com.intellij.openapi.util.SystemInfo
+import org.rust.*
 import org.rust.lang.core.macros.MacroExpansionScope
 import org.rust.lang.core.types.infer.TypeInferenceMarks
 import org.rust.stdext.BothEditions
@@ -715,4 +713,28 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
                         //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
+
+    @MinRustcVersion("1.41.0")
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
+    fun `test resolve in os module unix`() {
+        if (!SystemInfo.isUnix) return
+        stubOnlyResolve("""
+            //- main.rs
+            use std::os::unix;
+                        //^ ...libstd/sys/unix/ext/mod.rs|...std/src/sys/unix/ext/mod.rs
+        """)
+    }
+
+    @MinRustcVersion("1.41.0")
+    @ExpandMacros(MacroExpansionScope.ALL, "std")
+    @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
+    fun `test resolve in os module windows`() {
+        if (!SystemInfo.isWindows) return
+        stubOnlyResolve("""
+            //- main.rs
+            use std::os::windows;
+                        //^ ...libstd/sys/windows/ext/mod.rs|...std/src/sys/windows/ext/mod.rs
+        """)
+    }
 }

@@ -5,6 +5,9 @@
 
 package org.rust.ide.intentions
 
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
+
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
     fun `test function availability range`() = checkAvailableInSelectionOnly("""
         fn main() {
@@ -37,6 +40,21 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
     fun `test unavailable on path argument`() = doUnavailableTest("""
         fn main() {
             foo(bar::baz/*caret*/);
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test create function unavailable on std`() = doUnavailableTest("""
+        fn main() {
+            std::foo/*caret*/();
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test create method unavailable on std`() = doUnavailableTest("""
+        fn main() {
+            let v: Vec<u32> = Vec::new();
+            v.foo/*caret*/();
         }
     """)
 

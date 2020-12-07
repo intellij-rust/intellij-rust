@@ -71,12 +71,13 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
         if (!cargoProjects.initialized) return null
 
-        val workspace = cargoProjects.findProjectForFile(file)?.workspace ?: return null
+        val cargoProject = cargoProjects.findProjectForFile(file) ?: return null
+        val workspace = cargoProject.workspace ?: return null
         if (!workspace.hasStandardLibrary) {
             // If rustup is not null, the WorkspaceService will use it
             // to add stdlib automatically. This happens asynchronously,
             // so we can't reliably say here if that succeeded or not.
-            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel(file)
+            if (!toolchain.isRustupAvailable) return createLibraryAttachingPanel(project, file, cargoProject.rustcInfo)
         }
 
         return null
@@ -94,16 +95,16 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
             }
         }
 
-    private fun createLibraryAttachingPanel(file: VirtualFile): RsEditorNotificationPanel =
+    private fun createLibraryAttachingPanel(project: Project, file: VirtualFile, rustcInfo: RustcInfo?): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
             setText("Can not attach stdlib sources automatically without rustup.")
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                val stdlib = FileChooser.chooseFile(descriptor, this, project, null) ?: return@createActionLabel
-                if (StandardLibrary.fromFile(stdlib) != null) {
-                    project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
+                val stdlib = FileChooser.chooseFile(descriptor, this, this@MissingToolchainNotificationProvider.project, null) ?: return@createActionLabel
+                if (StandardLibrary.fromFile(project, stdlib, rustcInfo) != null) {
+                    this@MissingToolchainNotificationProvider.project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
                 } else {
-                    project.showBalloon(
+                    this@MissingToolchainNotificationProvider.project.showBalloon(
                         "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
                         NotificationType.ERROR
                     )

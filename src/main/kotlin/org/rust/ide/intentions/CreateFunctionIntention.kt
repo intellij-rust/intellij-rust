@@ -75,6 +75,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
 
             val name = methodCall.identifier.text
             val type = methodCall.parentDotExpr.expr.type.stripReferences() as? TyAdt ?: return null
+            if (type.item.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
 
             text = "Create method `$name`"
             return Context.Method(methodCall, name, type.item)

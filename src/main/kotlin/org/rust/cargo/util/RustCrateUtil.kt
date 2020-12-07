@@ -36,6 +36,7 @@ data class StdLibInfo(
 object AutoInjectedCrates {
     const val STD: String = "std"
     const val CORE: String = "core"
+    const val TEST: String = "test"
     val stdlibCrates = listOf(
         // Roots
         StdLibInfo(CORE, StdLibType.ROOT),
@@ -43,7 +44,7 @@ object AutoInjectedCrates {
             CORE, "libc", "compiler_builtins", "profiler_builtins", "unwind")),
         StdLibInfo("alloc", StdLibType.ROOT, dependencies = listOf(CORE, "compiler_builtins")),
         StdLibInfo("proc_macro", type = StdLibType.ROOT, dependencies = listOf(STD)),
-        StdLibInfo("test", type = StdLibType.ROOT, dependencies = listOf(STD, CORE, "libc", "getopts", "term")),
+        StdLibInfo(TEST, type = StdLibType.ROOT, dependencies = listOf(STD, CORE, "libc", "getopts", "term")),
         // Feature gated
         StdLibInfo("libc", StdLibType.FEATURE_GATED),
         StdLibInfo("panic_unwind", type = StdLibType.FEATURE_GATED, dependencies = listOf(CORE, "libc", "alloc",
