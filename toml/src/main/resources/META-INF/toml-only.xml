@@ -14,6 +14,10 @@
                                         implementationClass="org.rust.toml.CargoFeatureLineMarkerProvider"/>
         <codeInsight.gotoSuper language="TOML" implementationClass="org.rust.toml.CargoTomlGotoSuperHandler"/>
 
+        <findUsagesHandlerFactory implementation="org.rust.toml.search.CargoTomlFindUsagesHandlerFactory"/>
+        <usageTypeProvider implementation="org.rust.toml.search.CargoTomlUsageTypeProvider"/>
+        <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
+
         <localInspection language="TOML" groupName="Rust"
                          displayName="Missing features"
                          enabledByDefault="true" level="WARNING"

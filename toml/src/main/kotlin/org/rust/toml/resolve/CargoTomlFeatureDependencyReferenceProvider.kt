@@ -5,6 +5,7 @@
 
 package org.rust.toml.resolve
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
 import org.rust.toml.findDependencyTomlFile
@@ -49,5 +50,18 @@ private class CargoTomlFeatureDependencyReference(element: TomlLiteral) : PsiPol
             val tomlFile = element.containingFile as? TomlFile ?: return ResolveResult.EMPTY_ARRAY
             tomlFile.resolveFeature(literalValue)
         }
+    }
+
+    override fun handleElementRename(newElementName: String): PsiElement {
+        val valueRange = rangeInElement
+        val unescapedLiteralValue = valueRange.substring(element.node.text)
+        val separatorIndex = unescapedLiteralValue.indexOf("/")
+        val range = if (separatorIndex != -1) {
+            TextRange(valueRange.startOffset + separatorIndex + 1, valueRange.endOffset)
+        } else {
+            rangeInElement
+        }
+        return ElementManipulators.getManipulator(element)!!
+            .handleContentChange(myElement, range, newElementName)!!
     }
 }

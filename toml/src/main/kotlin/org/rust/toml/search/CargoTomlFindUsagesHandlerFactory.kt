@@ -1,0 +1,21 @@
+/*
+ * Use of this source code is governed by the MIT license that can be
+ * found in the LICENSE file.
+ */
+
+package org.rust.toml.search
+
+import com.intellij.find.findUsages.FindUsagesHandler
+import com.intellij.find.findUsages.FindUsagesHandlerFactory
+import com.intellij.psi.PsiElement
+import org.rust.toml.isFeatureDef
+import org.toml.lang.psi.TomlKey
+
+class CargoTomlFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
+    override fun canFindUsages(element: PsiElement): Boolean {
+        return element is TomlKey && element.isFeatureDef
+    }
+
+    override fun createFindUsagesHandler(element: PsiElement, forHighlightUsages: Boolean): FindUsagesHandler =
+        object : FindUsagesHandler(element) {}
+}
