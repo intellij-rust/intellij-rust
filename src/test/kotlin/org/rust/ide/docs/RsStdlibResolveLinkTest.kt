@@ -5,6 +5,7 @@
 
 package org.rust.ide.docs
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
@@ -37,7 +38,17 @@ class RsStdlibResolveLinkTest : RsTestBase() {
     fun `test macro fqn link`() = doTest("std/macro.println.html", "...libstd/macros.rs|...std/src/macros.rs")
     fun `test macro fqn link with reexport`() = doTest("std/macro.assert_eq.html", "...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs")
 
-    private fun doTest(link: String, expectedPaths: String, @Language("Rust") code: String = DEFAULT_TEXT) {
+    fun `test fqn link in keyword doc`() = doTest("std/future/trait.Future.html", "...libcore/future/future.rs|...core/src/future/future.rs", """
+        async fn foo() {}
+        //^
+    """, PsiElement::class.java)
+
+    private fun doTest(
+        link: String,
+        expectedPaths: String,
+        @Language("Rust") code: String = DEFAULT_TEXT,
+        psiClass: Class<out PsiElement> = RsNamedElement::class.java
+    ) {
         val paths = expectedPaths.split("|")
         for (expectedPath in paths) {
             check(expectedPath.startsWith("...")) {
@@ -45,7 +56,7 @@ class RsStdlibResolveLinkTest : RsTestBase() {
             }
         }
         InlineFile(code)
-        val context = findElementInEditor<RsNamedElement>("^")
+        val context = findElementInEditor(psiClass, "^")
         val element = RsDocumentationProvider()
             .getDocumentationElementForLink(PsiManager.getInstance(project), link, context)
             ?: error("Failed to resolve link $link")

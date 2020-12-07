@@ -142,15 +142,15 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
     }
 
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
-        if (context !is RsElement) return null
+        val element = context as? RsElement ?: context.parent as? RsElement ?: return null
         val qualifiedName = RsQualifiedName.from(link)
         return if (qualifiedName == null) {
             RsCodeFragmentFactory(context.project)
-                .createPath(link, context)
+                .createPath(link, element)
                 ?.reference
                 ?.resolve()
         } else {
-            qualifiedName.findPsiElement(psiManager, context)
+            qualifiedName.findPsiElement(psiManager, element)
         }
     }
 
