@@ -5,6 +5,8 @@
 
 package org.rust.ide.inspections
 
+import org.rust.MockAdditionalCfgOptions
+
 class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection::class) {
 
     fun `test self in trait not in impl E0186`() = checkErrors("""
@@ -96,5 +98,16 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         <error descr="Not all trait items implemented, missing: `C` [E0046]">impl A for ()</error> {
             type C = ();
         }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test ignore cfg-disabled item without a default`() = checkErrors("""
+        trait A {
+            #[cfg(intellij_rust)]
+            fn foo() {}
+            #[cfg(not(intellij_rust))]
+            fn foo();
+        }
+        impl A for () {}
     """)
 }
