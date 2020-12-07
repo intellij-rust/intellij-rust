@@ -16,8 +16,8 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.SmartList
-import org.rust.lang.core.psi.RsFile
-import org.rust.lang.core.psi.RsReplCodeFragment
+import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.document
 import org.rust.openapiext.findDescendantsWithMacrosOfAnyType
@@ -285,3 +285,16 @@ fun PsiWhiteSpace.isMultiLine(): Boolean = getLineCount() > 1
 @Suppress("UNCHECKED_CAST")
 inline val <T : StubElement<*>> StubBasedPsiElement<T>.greenStub: T?
     get() = (this as? StubBasedPsiElementBase<T>)?.greenStub
+
+fun PsiElement.isKeywordLike(): Boolean {
+    return when (elementType) {
+        in RS_KEYWORDS,
+        RsElementTypes.BOOL_LITERAL -> true
+        RsElementTypes.IDENTIFIER -> {
+            val parent = parent as? RsFieldLookup ?: return false
+            if (parent.edition == CargoWorkspace.Edition.EDITION_2015) return false
+            text == "await"
+        }
+        else -> false
+    }
+}

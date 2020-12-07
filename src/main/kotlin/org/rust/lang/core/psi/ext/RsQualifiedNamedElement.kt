@@ -7,6 +7,7 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
@@ -236,13 +237,14 @@ data class RsQualifiedName private constructor(
                 val parentItem = element.toParentItem() ?: return null
                 parentItem to emptyList()
             }
-            val crateName = if (parentItem.type == PRIMITIVE) {
+            val parentType = parentItem.type
+            val crateName = if (parentType == PRIMITIVE || parentType == KEYWORD) {
                 STD
             } else {
                 element.containingCrate?.normName ?: return null
             }
 
-            val modSegments = if (parentItem.type == PRIMITIVE || parentItem.type == MACRO) {
+            val modSegments = if (parentType == PRIMITIVE || parentType == KEYWORD || parentType == MACRO) {
                 listOf()
             } else {
                 val parentElement = parentItem.element ?: return null
@@ -277,9 +279,17 @@ data class RsQualifiedName private constructor(
         }
 
         @JvmStatic
-        fun from(path: RsPath): RsQualifiedName? {
-            val primitiveType = TyPrimitive.fromPath(path) ?: return null
-            return RsQualifiedName(STD, emptyList(), Item.primitive(primitiveType.name), emptyList())
+        fun from(element: PsiElement): RsQualifiedName? {
+            return when {
+                element is RsPath -> {
+                    val primitiveType = TyPrimitive.fromPath(element) ?: return null
+                    RsQualifiedName(STD, emptyList(), Item.primitive(primitiveType.name), emptyList())
+                }
+                element.isKeywordLike() -> {
+                    return RsQualifiedName(STD, emptyList(), Item.keyword(element.text), emptyList())
+                }
+                else -> null
+            }
         }
 
         private fun RsQualifiedNamedElement.toItems(): Pair<Item, List<Item>>? {
@@ -414,6 +424,7 @@ data class RsQualifiedName private constructor(
 
         companion object {
             fun primitive(name: String): Item = Item(name, PRIMITIVE)
+            fun keyword(name: String): Item = Item(name, KEYWORD)
         }
     }
 
@@ -428,6 +439,7 @@ data class RsQualifiedName private constructor(
         CONSTANT,
         MACRO,
         PRIMITIVE,
+        KEYWORD,
         // Synthetic types - rustdoc uses different links for mods and crates items
         // It generates `crateName/index.html` and `path/modName/index.html` links for crates and modules respectively
         // instead of `path/type.Name.html`
@@ -448,6 +460,7 @@ data class RsQualifiedName private constructor(
                     "constant" -> CONSTANT
                     "macro" -> MACRO
                     "primitive" -> PRIMITIVE
+                    "keyword" -> KEYWORD
                     else -> {
                         LOG.warn("Unexpected parent item type: `$name`")
                         null
