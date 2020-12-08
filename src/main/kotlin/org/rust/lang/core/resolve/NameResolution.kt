@@ -1637,7 +1637,7 @@ fun findPrelude(element: RsElement): RsFile? {
 
 // Implicit extern crate from stdlib
 private fun implicitStdlibCrate(scope: RsFile): ImplicitStdlibCrate? {
-    val (name, crateRoot) = when (scope.attributes) {
+    val (name, crateRoot) = when (scope.stdlibAttributes) {
         NO_CORE -> return null
         NO_STD -> CORE to scope.findDependencyCrateRoot(CORE)
         NONE -> STD to scope.findDependencyCrateRoot(STD)

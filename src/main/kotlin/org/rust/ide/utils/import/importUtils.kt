@@ -152,7 +152,7 @@ private val RsItemsOwner.firstItem: RsElement get() = itemsAndMacros.first { it 
 val <T : RsElement> List<T>.lastElement: T? get() = maxBy { it.textOffset }
 
 val RsElement.stdlibAttributes: RsFile.Attributes
-    get() = (crateRoot?.containingFile as? RsFile)?.attributes ?: RsFile.Attributes.NONE
+    get() = (crateRoot?.containingFile as? RsFile)?.stdlibAttributes ?: RsFile.Attributes.NONE
 
 val Crate.isStd: Boolean
     get() = origin == PackageOrigin.STDLIB && normName == AutoInjectedCrates.STD

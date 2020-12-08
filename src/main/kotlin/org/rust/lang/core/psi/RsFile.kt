@@ -195,14 +195,17 @@ class RsFile(
         return declaration?.isPublic ?: false
     }
 
-    val attributes: Attributes
-        get() {
-            val stub = greenStub as RsFileStub?
-            if (stub != null) return stub.attributes
-            if (queryAttributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
-            if (queryAttributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
-            return Attributes.NONE
-        }
+    val stdlibAttributes: Attributes
+        get() = getStdlibAttributes(null)
+
+    fun getStdlibAttributes(crate: Crate?): Attributes {
+        val stub = greenStub as RsFileStub?
+        if (stub?.mayHaveStdlibAttributes == false) return Attributes.NONE
+        val attributes = getQueryAttributes(crate)
+        if (attributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
+        if (attributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
+        return Attributes.NONE
+    }
 
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()
 

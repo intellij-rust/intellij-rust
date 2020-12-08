@@ -141,7 +141,7 @@ fun processItemDeclarations(
         //
         // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
         // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
-        when (scope.attributes) {
+        when (scope.stdlibAttributes) {
             RsFile.Attributes.NONE ->
                 if (processor.lazy(STD) { scope.findDependencyCrateRoot(STD) }) return true
 

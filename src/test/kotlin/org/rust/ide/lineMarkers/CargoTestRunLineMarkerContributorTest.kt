@@ -7,6 +7,7 @@ package org.rust.ide.lineMarkers
 
 import com.intellij.psi.PsiFileFactory
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
 import org.rust.cargo.icons.CargoIcons
 import org.rust.fileTree
 import org.rust.lang.RsFileType
@@ -138,6 +139,14 @@ class CargoTestRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
     fun `test ignore attributes with irrelevant test 2`() = doTestByText("""
         #[cfg(not(test))]
         fn has_icon() { assert(true) }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test attribute under cfg_attr`() = doTestByText("""
+        #[cfg_attr(intellij_rust, test)]
+        fn has_icon() { assert(true) } // - Test has_icon
+        #[cfg_attr(not(intellij_rust), test)]
+        fn no_icon() { assert(true) }
     """)
 
     private inline fun <reified E : RsElement> checkElement(@Language("Rust") code: String, callback: (E) -> Unit) {

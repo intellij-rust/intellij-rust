@@ -6,6 +6,8 @@
 package org.rust.lang.core.type
 
 import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 
 class RsCfgAttrTypeInferenceTest : RsTypificationTestBase() {
     @MockAdditionalCfgOptions("intellij_rust")
@@ -31,5 +33,33 @@ class RsCfgAttrTypeInferenceTest : RsTypificationTestBase() {
             foo(a);
             a;
         } //^ i8
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test infer type of derivable trait method call 1`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #[cfg_attr(intellij_rust, derive(Clone))]
+        struct Foo;
+
+        fn bar(foo: Foo) {
+            let foo2 = foo.clone();
+            foo2;
+           //^ Foo
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test infer type of derivable trait method call 2`() = stubOnlyTypeInfer("""
+    //- main.rs
+        #[cfg_attr(not(intellij_rust), derive(Clone))]
+        struct Foo;
+
+        fn bar(foo: Foo) {
+            let foo2 = foo.clone();
+            foo2;
+           //^ <unknown>
+        }
     """)
 }

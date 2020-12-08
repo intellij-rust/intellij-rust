@@ -616,7 +616,6 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         //^ lib.rs
      """)
 
-    // `cfg_attr` is not supported yet, but we test that there are no exceptions
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test cfg_attr with path on mod declaration`() = stubOnlyResolve("""
@@ -628,7 +627,21 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         use foo::*;
         fn main() {
             func();
-        }  //^ unresolved
+        }  //^ bar.rs
+     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled cfg_attr with path on mod declaration`() = stubOnlyResolve("""
+    //- foo.rs
+        pub fn func() {}
+    //- main.rs
+        #[cfg_attr(not(intellij_rust), path = "bar.rs")]
+        mod foo;
+        use foo::*;
+        fn main() {
+            func();
+        }  //^ foo.rs
      """)
 
     @ExpandMacros
@@ -752,4 +765,64 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             func();
         } //^ unresolved
      """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg under cfg_attr 1`() = checkByCode("""
+        #[cfg_attr(intellij_rust, cfg(intellij_rust))]
+        fn foo() {}
+         //X
+        #[cfg(not(intellij_rust))]
+        fn foo() {}
+
+        fn main() {
+            foo();
+          //^
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg under cfg_attr 2`() = checkByCode("""
+        #[cfg_attr(not(intellij_rust), cfg(not(intellij_rust)))]
+        fn foo() {}
+         //X
+        #[cfg(not(intellij_rust))]
+        fn foo() {}
+
+        fn main() {
+            foo();
+          //^
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg under cfg_attr 3`() = checkByCode("""
+        #[cfg_attr(intellij_rust, cfg(not(intellij_rust)))]
+        fn foo() {}
+        fn foo() {}
+         //X
+        fn main() {
+            foo();
+          //^
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve with no_std attribute under enabled cfg_attr`() = stubOnlyResolve("""
+    //- main.rs
+        #![cfg_attr(intellij_rust, no_std)]
+
+        fn foo(v: Vec) {}
+                 //^ unresolved
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test resolve with no_std attribute under disabled cfg_attr`() = stubOnlyResolve("""
+    //- main.rs
+        #![cfg_attr(not(intellij_rust), no_std)]
+
+        fn foo(v: Vec) {}
+                 //^ ...vec.rs
+    """)
 }

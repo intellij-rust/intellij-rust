@@ -231,7 +231,6 @@ class RsProcMacroResolveTest : RsResolveTestBase() {
                              //^ dep-proc-macro/lib.rs
     """)
 
-
     fun `test resolve attribute proc macro reexported from lib to main from macro call`() = stubOnlyResolve("""
     //- lib.rs
         extern crate dep_proc_macro;

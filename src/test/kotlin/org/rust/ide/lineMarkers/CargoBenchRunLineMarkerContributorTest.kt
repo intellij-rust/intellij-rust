@@ -5,6 +5,7 @@
 
 package org.rust.ide.lineMarkers
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.fileTree
 
 /**
@@ -81,5 +82,13 @@ class CargoBenchRunLineMarkerContributorTest : RsLineMarkerProviderTestBase() {
             fn has_test_icon() { assert(true) } // - Test module::has_test_icon
             fn no_icon() { assert(true) }
         }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test attribute under cfg_attr`() = doTestByText("""
+        #[cfg_attr(intellij_rust, bench)]
+        fn has_icon() { assert(true) } // - Bench has_icon
+        #[cfg_attr(not(intellij_rust), bench)]
+        fn no_icon() { assert(true) }
     """)
 }

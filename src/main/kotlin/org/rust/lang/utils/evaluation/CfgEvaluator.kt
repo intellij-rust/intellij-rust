@@ -10,6 +10,7 @@ import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.value
@@ -69,7 +70,14 @@ class CfgEvaluator(
     val origin: PackageOrigin
 ) {
     fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
-        val cfgPredicate = CfgPredicate.fromCfgAttributes(cfgAttributes)
+        return evaluate(CfgPredicate.fromCfgAttributes(cfgAttributes))
+    }
+
+    fun evaluateCondition(predicate: RsMetaItem): ThreeValuedLogic {
+        return evaluate(CfgPredicate.fromMetaItem(predicate))
+    }
+
+    private fun evaluate(cfgPredicate: CfgPredicate): ThreeValuedLogic {
         val result = evaluatePredicate(cfgPredicate)
 
         when (result) {
@@ -137,6 +145,10 @@ class CfgEvaluator(
             "target_pointer_width",
             "target_vendor"
         )
+
+        fun forCrate(crate: Crate): CfgEvaluator {
+            return CfgEvaluator(crate.cargoWorkspace.cfgOptions, crate.cfgOptions, crate.features, crate.origin)
+        }
     }
 }
 
@@ -162,7 +174,7 @@ private sealed class CfgPredicate {
             }
         }
 
-        private fun fromMetaItem(metaItem: RsMetaItem): CfgPredicate {
+        fun fromMetaItem(metaItem: RsMetaItem): CfgPredicate {
             val args = metaItem.metaItemArgs
             val name = metaItem.name
             val value = metaItem.value

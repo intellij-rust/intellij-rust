@@ -70,4 +70,20 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
             let x = 1;
         }
     """, ignoreExtraHighlighting = false)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled under cfg_attr function`() = checkHighlighting("""
+        <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg_attr(intellij_rust, cfg(not(intellij_rust)))]
+        fn foo() {
+            let x = 1;
+        }</CFG_DISABLED_CODE>
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test enabled under cfg_attr function`() = checkHighlighting("""
+        #[cfg_attr(not(intellij_rust), cfg(not(intellij_rust)))]
+        fn foo() {
+            let x = 1;
+        }
+    """)
 }

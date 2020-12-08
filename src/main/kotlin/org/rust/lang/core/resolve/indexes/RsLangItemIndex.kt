@@ -16,7 +16,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.containingCrate
-import org.rust.lang.core.psi.ext.queryAttributes
+import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.openapiext.checkCommitIsNotInProgress
 import org.rust.openapiext.getElements
@@ -42,8 +42,7 @@ class RsLangItemIndex : AbstractStubIndex<String, RsItemElement>() {
         }
 
         fun index(psi: RsItemElement, sink: IndexSink) {
-            val key = psi.queryAttributes.langAttribute
-            if (key != null) {
+            for (key in psi.getTraversedRawAttributes().langAttributes) {
                 sink.occurrence(KEY, key)
             }
         }
