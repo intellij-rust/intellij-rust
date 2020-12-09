@@ -26,10 +26,10 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
         mod mod1;
         mod mod2;
     //- mod1/mod.rs
+        pub use mod1_inner::mod1_func;
         mod mod1_inner {  // private
             pub fn mod1_func() {}
         }
-        pub use mod1_inner::mod1_func;
 
         mod foo;
     //- mod2/mod.rs
@@ -42,10 +42,11 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
         mod mod1;
         mod mod2;
     //- mod1/mod.rs
+        pub use mod1_inner::mod1_func;
+
         mod mod1_inner {  // private
             pub fn mod1_func() {}
         }
-        pub use mod1_inner::mod1_func;
     //- mod2/mod.rs
         mod foo;
     //- mod2/foo.rs

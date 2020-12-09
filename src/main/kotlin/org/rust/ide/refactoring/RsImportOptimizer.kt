@@ -39,7 +39,7 @@ class RsImportOptimizer : ImportOptimizer {
         externCrateItems.forEach { it.delete() }
     }
 
-    private fun executeForUseItem(mod: RsMod) {
+    fun executeForUseItem(mod: RsMod) {
         val uses = mod.childrenOfType<RsUseItem>()
         if (uses.isNotEmpty()) {
             replaceOrderOfUseItems(mod, uses)
@@ -51,7 +51,7 @@ class RsImportOptimizer : ImportOptimizer {
     companion object {
 
         /** Returns false if [useSpeck] is empty and should be removed */
-        private fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
+        fun optimizeUseSpeck(psiFactory: RsPsiFactory, useSpeck: RsUseSpeck): Boolean {
             val useGroup = useSpeck.useGroup ?: return true
             useGroup.useSpeckList.forEach { optimizeUseSpeck(psiFactory, it) }
             if (removeUseSpeckIfEmpty(useSpeck)) return false
