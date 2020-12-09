@@ -336,18 +336,16 @@ private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace):
     return when (containingModOrEnum) {
         is RsMod -> {
             if (ns == Namespace.Macros) {
-                val macros = containingModOrEnum.expandedItemsCached.macros
+                val items = containingModOrEnum.expandedItemsCached
+                val macros = items.macros
                     .filter { it.name == name && matchesIsEnabledByCfg(it, this) }
                 // TODO: Multiresolve for macro 2.0
                 if (macros.isNotEmpty()) return listOf(macros.last())
 
-                containingModOrEnum
-                    // Note: name of bang and attribute proc macros is same as name of item
-                    .getExpandedItemsWithName<RsFunction>(name)
+                items.rest
+                    .filterIsInstance<RsFunction>()
                     .filter {
-                        // TODO: derive proc macros are currently ignored, because of multiresolve of serde::Serialize
-                        val isProcMacro = it.isBangProcMacroDef || it.isAttributeProcMacroDef
-                        isProcMacro && matchesIsEnabledByCfg(it, this)
+                        it.isProcMacroDef && it.procMacroName == name && matchesIsEnabledByCfg(it, this)
                     }
             } else {
                 containingModOrEnum
