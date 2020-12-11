@@ -61,6 +61,8 @@ object ImportCandidatesCollector {
             // check that result after import can be resolved and resolved element is suitable
             // if no, don't add it in candidate list
             .filter { canBeResolvedToSuitableItem(importingPathText, importContext, it.info) }
+            // make items from workspace appear first, std seconds.
+            .sorted()
     }
 
     private fun getReexportedItems(
@@ -129,6 +131,8 @@ object ImportCandidatesCollector {
             .flatMap { it.withModuleReexports(project).asSequence() }
             .mapNotNull { importItem -> importItem.toImportCandidate(superMods) }
             .filterImportCandidates(attributes)
+            // make items from workspace appear first, std seconds.
+            .sorted()
     }
 
     private fun QualifiedNamedItem.toImportCandidate(superMods: LinkedHashSet<RsMod>): ImportCandidate? =
@@ -350,7 +354,22 @@ sealed class ImportInfo {
     }
 }
 
-data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo)
+data class ImportCandidate(val qualifiedNamedItem: QualifiedNamedItem, val info: ImportInfo) : Comparable<ImportCandidate> {
+    override fun compareTo(other: ImportCandidate): Int {
+        val origin = qualifiedNamedItem.containingCrate?.origin
+        val otherOrigin = other.qualifiedNamedItem.containingCrate?.origin
+        val usePath = info.usePath
+        val otherUsePath = other.info.usePath
+        return when {
+            origin == otherOrigin -> usePath.compareTo(otherUsePath)
+            origin == PackageOrigin.WORKSPACE -> -1
+            otherOrigin == PackageOrigin.WORKSPACE -> 1
+            origin == PackageOrigin.STDLIB -> -1
+            otherOrigin == PackageOrigin.STDLIB -> 1
+            else -> usePath.compareTo(otherUsePath)
+        }
+    }
+}
 
 /**
  * If function or constant is defined in a trait

@@ -692,4 +692,54 @@ class AutoImportFixStdTest : AutoImportFixTestBase() {
 
         fn foo(x: FooBar/*caret*/) {}
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from workspace over std and extern crate`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Rc<T> {
+                v: T
+            }
+        }
+
+        //- main.rs
+        mod bar {
+            pub struct Rc<T> {
+                v: T
+            }
+        }
+
+        fn foo(t: <error descr="Unresolved reference: `Rc`">Rc/*caret*/</error><usize>) {}
+    """, listOf("crate::bar::Rc", "std::rc::Rc", "dep_lib_target::foo::Rc"),
+        "crate::bar::Rc","""
+        //- main.rs
+        use crate::bar::Rc;
+
+        mod bar {
+            pub struct Rc<T> {
+                v: T
+            }
+        }
+
+        fn foo(t: Rc/*caret*/<usize>) {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import item from std over extern crate`() = checkAutoImportFixByFileTreeWithMultipleChoice("""
+        //- dep-lib/lib.rs
+        pub mod foo {
+            pub struct Rc<T> {
+                v: T
+            }
+        }
+
+        //- main.rs
+        fn foo(t: <error descr="Unresolved reference: `Rc`">Rc/*caret*/</error><usize>) {}
+    """, listOf("std::rc::Rc", "dep_lib_target::foo::Rc"),
+        "std::rc::Rc","""
+        //- main.rs
+        use std::rc::Rc;
+
+        fn foo(t: Rc/*caret*/<usize>) {}
+    """)
 }

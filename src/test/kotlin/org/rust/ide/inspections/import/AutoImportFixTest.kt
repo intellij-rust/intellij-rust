@@ -865,8 +865,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, setOf("foo::Foo", "foo::bar::Foo", "baz::Foo"), "foo::bar::Foo", """
-        use foo::bar::Foo;
+    """, listOf("baz::Foo", "foo::Foo", "foo::bar::Foo"), "baz::Foo", """
+        use baz::Foo;
 
         mod foo {
             pub struct Foo;
@@ -911,8 +911,8 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let f = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, setOf("foo::Foo", "bar::Foo", "qwe::Foo"), "qwe::Foo", """
-        use qwe::Foo;
+    """, listOf( "bar::Foo","foo::Foo", "qwe::Foo"),  "bar::Foo", """
+        use bar::Foo;
 
         mod foo {
             pub struct Foo;
@@ -959,7 +959,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let a = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
-    """, setOf("foo::bar::FooBar", "baz::qqq::bar::FooBar", "xxx::qqq::bar::FooBar"), "baz::qqq::bar::FooBar", """
+    """, listOf("baz::qqq::bar::FooBar", "foo::bar::FooBar", "xxx::qqq::bar::FooBar"), "baz::qqq::bar::FooBar", """
         use baz::qqq::bar::FooBar;
 
         mod foo {
@@ -996,7 +996,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, setOf("x::Z", "y::x::Z"), "x::Z", """
+    """, listOf("x::Z", "y::x::Z"), "x::Z", """
         use x::Z;
 
         pub mod x {
@@ -1032,15 +1032,15 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let z = <error descr="Unresolved reference: `Z`">Z/*caret*/</error>;
         }
-    """, setOf(
-        "x::y::Z",
-        "x::u::y::Z",
-        "x::u::v::x::y::Z",
-        "u::y::Z",
+    """, listOf(
+        "u::v::x::u::y::Z",
         "u::v::x::y::Z",
-        "u::v::x::u::y::Z"
-    ), "u::y::Z", """
-        use u::y::Z;
+        "u::y::Z",
+        "x::u::v::x::y::Z",
+        "x::u::y::Z",
+        "x::y::Z"
+    ), "u::v::x::u::y::Z", """
+        use u::v::x::u::y::Z;
 
         pub mod x {
             pub use u;
@@ -1082,7 +1082,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `FooBar`">FooBar/*caret*/</error>;
         }
-    """, setOf("foo::FooBar", "baz::FooBar", "quuz::bar::FooBar"), "baz::FooBar", """
+    """, listOf("baz::FooBar", "foo::FooBar", "quuz::bar::FooBar"), "baz::FooBar", """
         use baz::FooBar;
 
         mod foo {
@@ -1158,7 +1158,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error>;
         }
-    """, setOf("struct_mod::Foo", "enum_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_mod::Bar::Foo", """
+    """, listOf("enum_mod::Bar::Foo", "struct_mod::Foo", "type_alias_mod::Foo"), "enum_mod::Bar::Foo", """
         use enum_mod::Bar::Foo;
 
         mod struct_mod {
@@ -1254,7 +1254,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = <error descr="Unresolved reference: `Foo`">Foo/*caret*/</error> { };
         }
-    """, setOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
+    """, listOf("block_struct_mod::Foo", "enum_struct_mod::Bar::Foo", "type_alias_mod::Foo"), "enum_struct_mod::Bar::Foo", """
         use enum_struct_mod::Bar::Foo;
 
         mod struct_mod {
@@ -1627,7 +1627,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
         fn main() {
             let x = 123.<error descr="Unresolved reference: `foo`">foo/*caret*/</error>();
         }
-    """, setOf("foo::Foo", "foo::Bar"), "foo::Bar", """
+    """, listOf("foo::Bar", "foo::Foo"), "foo::Bar", """
         use foo::Bar;
 
         mod foo {
@@ -1879,7 +1879,7 @@ class AutoImportFixTest : AutoImportFixTestBase() {
 
             }
         }
-    """, setOf("a::S", "b::S"), "b::S", """
+    """, listOf("a::S", "b::S"), "b::S", """
         mod a {
             pub struct S;
         }
