@@ -188,6 +188,7 @@
         <!-- Annotator -->
 
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsDoctestAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsDocHighlightingAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsSyntaxErrorsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsEdition2018KeywordsAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsLiteralAnnotator"/>

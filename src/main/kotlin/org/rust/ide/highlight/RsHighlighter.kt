@@ -13,10 +13,10 @@ import org.rust.ide.colors.RsColor
 import org.rust.lang.core.lexer.RsHighlightingLexer
 import org.rust.lang.core.parser.RustParserDefinition.Companion.BLOCK_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
+import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RS_OPERATORS
 import org.rust.lang.core.psi.RsElementTypes.*
-import org.rust.lang.doc.psi.RsDocHighlightingElementTypes.*
 
 class RsHighlighter : SyntaxHighlighterBase() {
 
@@ -44,13 +44,7 @@ class RsHighlighter : SyntaxHighlighterBase() {
             BLOCK_COMMENT -> RsColor.BLOCK_COMMENT
             EOL_COMMENT -> RsColor.EOL_COMMENT
 
-            DOC_TEXT -> RsColor.DOC_COMMENT
-            DOC_HEADING -> RsColor.DOC_HEADING
-            DOC_INLINE_LINK -> RsColor.DOC_LINK
-            DOC_REF_LINK -> RsColor.DOC_LINK
-            DOC_LINK_REF_DEF -> RsColor.DOC_LINK
-            DOC_CODE_SPAN -> RsColor.DOC_CODE
-            DOC_CODE_FENCE -> RsColor.DOC_CODE
+            in RS_DOC_COMMENTS -> RsColor.DOC_COMMENT
 
             LPAREN, RPAREN -> RsColor.PARENTHESES
             LBRACE, RBRACE -> RsColor.BRACES
