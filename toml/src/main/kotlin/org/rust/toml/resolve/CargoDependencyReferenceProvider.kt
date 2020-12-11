@@ -31,7 +31,7 @@ private class CargoDependencyReferenceImpl(key: TomlKeySegment) : PsiReferenceBa
         val project = element.project
         val file = element.containingFile?.virtualFile ?: return null
         val cargoProject = project.cargoProjects.findProjectForFile(file) ?: return null
-        val crateRoot = cargoProject.workspace?.findPackage(element.text)?.libTarget?.crateRoot ?: return null
+        val crateRoot = cargoProject.workspace?.findPackageByName(element.text)?.libTarget?.crateRoot ?: return null
         return crateRoot.toPsiFile(project) as? RsFile
     }
 

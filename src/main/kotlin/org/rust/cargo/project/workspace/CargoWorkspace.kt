@@ -47,7 +47,8 @@ interface CargoWorkspace {
 
     val featureGraph: FeatureGraph
 
-    fun findPackage(name: String): Package? = packages.find { it.name == name || it.normName == name }
+    fun findPackageById(id: PackageId): Package? = packages.find { it.id == id }
+    fun findPackageByName(name: String): Package? = packages.find { it.name == name || it.normName == name }
 
     fun findTargetByCrateRoot(root: VirtualFile): Target?
     fun isCrateRoot(root: VirtualFile) = findTargetByCrateRoot(root) != null
@@ -67,6 +68,7 @@ interface CargoWorkspace {
         val contentRoot: VirtualFile?
         val rootDirectory: Path
 
+        val id: String
         val name: String
         val normName: String get() = name.replace('-', '_')
 
@@ -157,10 +159,13 @@ interface CargoWorkspace {
         Unclassified(null),
 
         Stdlib("stdlib?"),
+
         // [dependencies]
         Normal(null),
+
         // [dev-dependencies]
         Development("dev"),
+
         // [build-dependencies]
         Build("build")
     }
@@ -288,7 +293,9 @@ private class WorkspaceImpl(
             val stdCratePackageRoots = stdlib.crates.mapToSet { it.contentRootUrl }
             val (stdPackagesData, otherPackagesData) = oldPackagesData.partition { it.contentRootUrl in stdCratePackageRoots }
             val stdPackagesByPackageRoot = stdPackagesData.associateBy { it.contentRootUrl }
-            val pkgIdMapping = stdlib.crates.associate { it.id to (stdPackagesByPackageRoot[it.contentRootUrl]?.id ?: it.id) }
+            val pkgIdMapping = stdlib.crates.associate {
+                it.id to (stdPackagesByPackageRoot[it.contentRootUrl]?.id ?: it.id)
+            }
             val newStdlibCrates = stdlib.crates.map { it.copy(id = pkgIdMapping.getValue(it.id)) }
             val newStdlibDependencies = stdlib.dependencies.map { (oldId, dependency) ->
                 val newDependencies = dependency.mapToSet { it.copy(id = pkgIdMapping.getValue(it.id)) }
@@ -505,7 +512,7 @@ private class WorkspaceImpl(
 
 private class PackageImpl(
     override val workspace: WorkspaceImpl,
-    val id: PackageId,
+    override val id: PackageId,
     // Note: In tests, we use in-memory file system,
     // so we can't use `Path` here.
     val contentRootUrl: String,

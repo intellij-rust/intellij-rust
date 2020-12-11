@@ -185,7 +185,7 @@ abstract class RsAsyncRunner(
                             result = output.stdoutLines.asSequence()
                                 .mapNotNull { tryParseJsonObject(it) }
                                 .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
-                                .filter { (target, profile) ->
+                                .filter { (_, target, profile) ->
                                     val isSuitableTarget = when (target.cleanKind) {
                                         CargoMetadata.TargetKind.BIN -> true
                                         CargoMetadata.TargetKind.EXAMPLE -> {

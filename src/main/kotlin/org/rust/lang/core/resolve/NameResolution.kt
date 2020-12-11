@@ -750,7 +750,7 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
     check(!path.startsWith("::"))
     val parts = path.split("::", limit = 2)
     if (parts.size != 2) return null
-    val pkg = workspace.findPackage(parts[0]) ?: run {
+    val pkg = workspace.findPackageByName(parts[0]) ?: run {
         return if (isUnitTestMode) {
             // Allows to set a fake path for some item in tests via
             // lang attribute, e.g. `#[lang = "std::iter::Iterator"]`
