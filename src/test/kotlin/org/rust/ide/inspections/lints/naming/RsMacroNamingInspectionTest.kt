@@ -34,4 +34,9 @@ class RsMacroNamingInspectionTest : RsInspectionsTestBase(RsMacroNamingInspectio
         macro_rules! macro_foo { () => {}; }
         macro_foo!();
     """)
+
+    fun `test macro not support case`() = checkByText("""
+        macro_rules! 宏 { () => {}; }
+        宏!();
+    """)
 }

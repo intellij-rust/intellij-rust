@@ -36,10 +36,16 @@ abstract class RsNamingInspection(
         holder.registerLintProblem(
             id,
             "$elementType `$name` should have $styleName case name such as `$suggestedName`",
-            *fixes)
+            *fixes
+        )
     }
 
     abstract fun checkName(name: String): Pair<Boolean, String?>
+
+    companion object {
+        @JvmStatic
+        protected val OK = Pair(true, null)
+    }
 }
 
 /**
@@ -54,10 +60,11 @@ open class RsCamelCaseNamingInspection(
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
-        if (!str.isEmpty() && str[0].canStartWord && '_' !in str) {
-            return Pair(true, null)
+        return if (str.isCamelCase()) {
+            OK
+        } else {
+            Pair(false, if (str.isEmpty()) "CamelCase" else suggestName(name))
         }
-        return Pair(false, if (str.isEmpty()) "CamelCase" else suggestName(name))
     }
 
     private fun suggestName(name: String): String {
@@ -82,6 +89,17 @@ open class RsCamelCaseNamingInspection(
     }
 
     private val Char.canStartWord: Boolean get() = isUpperCase() || isDigit()
+
+    companion object {
+
+        private val Char.hasCase: Boolean get() = isLowerCase() || isUpperCase()
+
+        private fun String.isCamelCase(): Boolean =
+            isNotEmpty()
+                && !first().isLowerCase()
+                && !contains("__")
+                && !zipWithNext().any { (fst, snd) -> (fst.hasCase && snd == '_') || (snd.hasCase && fst == '_') }
+    }
 }
 
 /**
@@ -93,9 +111,11 @@ open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
-        if (!str.isEmpty() && str.all { !it.isLetter() || it.isLowerCase() }) {
-            return Pair(true, null)
+        // Some characters don't have case so we can't use `isLowerCase` here
+        if (str.isNotEmpty() && str.all { !it.isUpperCase() }) {
+            return OK
         }
+
         return Pair(false, if (str.isEmpty()) "snake_case" else name.toSnakeCase(false))
     }
 }
@@ -109,8 +129,8 @@ open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection
 
     override fun checkName(name: String): Pair<Boolean, String?> {
         val str = name.trim('_')
-        if (!str.isEmpty() && str.all { !it.isLetter() || it.isUpperCase() }) {
-            return Pair(true, null)
+        if (str.isNotEmpty() && str.none { it.isLowerCase() }) {
+            return OK
         }
         return Pair(false, if (str.isEmpty()) "UPPER_CASE" else name.toSnakeCase(true))
     }

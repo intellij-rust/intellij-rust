@@ -64,4 +64,15 @@ class RsArgumentNamingInspectionTest: RsInspectionsTestBase(RsArgumentNamingInsp
             }
         }
     """)
+
+    fun `test fun argument not support case`() = checkByText("""
+        fn test(名字: &str) { }
+    """)
+
+    fun `test method argument not support case`() = checkByText("""
+        struct Foo {}
+        impl Foo {
+            fn fn_par(名字: &str) { }
+        }
+    """)
 }

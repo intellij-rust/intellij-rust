@@ -26,4 +26,9 @@ class RsTypeAliasNamingInspectionTest : RsInspectionsTestBase(RsTypeAliasNamingI
         type ULong = u64;
         const ZERO: ULong = 0;
     """)
+
+    fun `test type alias not support case`() = checkByText("""
+        type 类型别名 = u64;
+        const ZERO: 类型别名 = 0;
+    """)
 }
