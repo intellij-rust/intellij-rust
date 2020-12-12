@@ -13,6 +13,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.psi.ext.value
+import org.rust.lang.core.stubs.index.RsCfgNotTestIndex
 import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
 
 // See https://doc.rust-lang.org/reference/conditional-compilation.html for more information
@@ -66,7 +67,8 @@ class CfgEvaluator(
     private val options: CfgOptions,
     private val features: Map<String, FeatureState>,
     private val origin: PackageOrigin,
-    private val evaluateUnknownCfgToFalse: Boolean
+    private val evaluateUnknownCfgToFalse: Boolean,
+    private val cfgTestValue: ThreeValuedLogic
 ) {
     fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
         return evaluate(CfgPredicate.fromCfgAttributes(cfgAttributes))
@@ -101,7 +103,7 @@ class CfgEvaluator(
         // https://doc.rust-lang.org/nightly/unstable-book/language-features/cfg-panic.html
         name == "cfg_panic" -> Unknown
 
-        name == "test" && origin != PackageOrigin.STDLIB -> Unknown
+        name == "test" -> cfgTestValue
 
         // BACKCOMPAT: rust 1.32 (there are standard macros under `cfg(rustdoc)`)
         name == "rustdoc" && origin == PackageOrigin.STDLIB -> Unknown
@@ -160,11 +162,24 @@ class CfgEvaluator(
         )
 
         fun forCrate(crate: Crate): CfgEvaluator {
+            // `cfg(test)` evaluates to true only if there are no `cfg(not(test))` in the package
+            val cfgTest = when (crate.origin) {
+                PackageOrigin.STDLIB -> False
+
+                PackageOrigin.DEPENDENCY -> ThreeValuedLogic.fromBoolean(
+                    crate.cargoTarget?.pkg?.let { !RsCfgNotTestIndex.hasCfgNotTest(crate.cargoProject.project, it) } ?: false
+                )
+
+                // TODO Provide cfg(test) switching for workspace packages
+                PackageOrigin.WORKSPACE -> Unknown
+            }
+
             return CfgEvaluator(
                 crate.cfgOptions,
                 crate.features,
                 crate.origin,
-                crate.evaluateUnknownCfgToFalse
+                crate.evaluateUnknownCfgToFalse,
+                cfgTest
             )
         }
     }

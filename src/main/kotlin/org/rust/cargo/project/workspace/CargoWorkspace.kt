@@ -5,6 +5,8 @@
 
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapi.util.UserDataHolderBase
+import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
@@ -61,7 +63,7 @@ interface CargoWorkspace {
     fun withCfgOptions(cfgOptions: CfgOptions): CargoWorkspace
 
     /** See docs for [CargoProjectsService] */
-    interface Package {
+    interface Package : UserDataHolderEx {
         val contentRoot: VirtualFile?
         val rootDirectory: Path
 
@@ -519,7 +521,7 @@ private class PackageImpl(
     val cargoEnabledFeatures: Set<FeatureName>,
     override val env: Map<String, String>,
     val outDirUrl: String?
-) : CargoWorkspace.Package {
+) : UserDataHolderBase(), CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
             this,

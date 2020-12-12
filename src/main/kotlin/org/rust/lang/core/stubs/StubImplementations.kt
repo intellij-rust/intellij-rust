@@ -49,7 +49,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 205
+        private const val STUB_VERSION = 206
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1506,6 +1506,10 @@ class RsMetaItemStub(
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemStub =
             RsMetaItemStub(parentStub, this, dataStream.readBoolean())
+
+        override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
+            sink.indexMetaItem(stub)
+        }
     }
 }
 
