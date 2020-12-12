@@ -76,10 +76,15 @@ interface CargoWorkspace {
         val targets: Collection<Target>
         val libTarget: Target? get() = targets.find { it.kind.isLib }
         val customBuildTarget: Target? get() = targets.find { it.kind == TargetKind.CustomBuild }
+        val hasCustomBuildScript: Boolean get() = customBuildTarget != null
 
         val dependencies: Collection<Dependency>
 
-        val cfgOptions: CfgOptions
+        /**
+         * Cfg options from the package custom build script (`build.rs`). `null` if there isn't build script
+         * or the build script was not evaluated successfully or build script evaluation is disabled
+         */
+        val cfgOptions: CfgOptions?
 
         val features: Set<PackageFeature>
 
@@ -117,6 +122,9 @@ interface CargoWorkspace {
 
         /** See [org.rust.cargo.toolchain.impl.CargoMetadata.Target.required_features] */
         val requiredFeatures: List<String>
+
+        /** Complete `cfg` options of the target. Combines compiler options, package options and target options */
+        val cfgOptions: CfgOptions
     }
 
     interface Dependency {
@@ -505,7 +513,7 @@ private class PackageImpl(
     override val source: String?,
     override var origin: PackageOrigin,
     override val edition: CargoWorkspace.Edition,
-    override val cfgOptions: CfgOptions,
+    override val cfgOptions: CfgOptions?,
     /** See [org.rust.cargo.toolchain.impl.CargoMetadata.Package.features] */
     val rawFeatures: Map<FeatureName, List<FeatureDep>>,
     val cargoEnabledFeatures: Set<FeatureName>,
@@ -553,6 +561,8 @@ private class TargetImpl(
 ) : CargoWorkspace.Target {
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
+
+    override val cfgOptions: CfgOptions = pkg.workspace.cfgOptions + (pkg.cfgOptions ?: CfgOptions.EMPTY)
 
     override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }

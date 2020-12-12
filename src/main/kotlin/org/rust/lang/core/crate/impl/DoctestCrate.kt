@@ -34,6 +34,7 @@ class DoctestCrate(
 
     override val cfgOptions: CfgOptions get() = CfgOptions.EMPTY
     override val features: Map<String, FeatureState> get() = emptyMap()
+    override val evaluateUnknownCfgToFalse: Boolean get() = true
     override val env: Map<String, String> get() = emptyMap()
     override val outDir: VirtualFile? get() = null
 

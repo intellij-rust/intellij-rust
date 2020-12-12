@@ -84,7 +84,7 @@ private fun DefMapHolder.processChangedFiles(crate: Crate, defMap: CrateDefMap):
 data class CrateMetaData(
     val edition: CargoWorkspace.Edition,
     private val features: Map<String, FeatureState>,
-    private val cfgOptions: CfgOptions,
+    private val cfgOptions: CfgOptions?,
     private val env: Map<String, String>,
     // TODO: Probably we need to store modificationStamp of DefMap for each dependency
     private val dependencies: Set<CratePersistentId>,

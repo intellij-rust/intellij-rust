@@ -6,7 +6,6 @@
 package org.rust.lang.utils.evaluation
 
 import com.intellij.openapiext.Testmark
-import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
@@ -60,14 +59,14 @@ operator fun ThreeValuedLogic.not(): ThreeValuedLogic = when (this) {
     Unknown -> Unknown
 }
 
-// Note, [options] and [packageOptions] can contain the same option values,
+// Note, [options] can contain conflicting option values,
 // i.e. it's possible to have both `unix` and `windows` values at the same time.
 // See https://doc.rust-lang.org/reference/conditional-compilation.html#set-configuration-options
 class CfgEvaluator(
-    val options: CfgOptions,
-    val packageOptions: CfgOptions,
-    val features: Map<String, FeatureState>,
-    val origin: PackageOrigin
+    private val options: CfgOptions,
+    private val features: Map<String, FeatureState>,
+    private val origin: PackageOrigin,
+    private val evaluateUnknownCfgToFalse: Boolean
 ) {
     fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
         return evaluate(CfgPredicate.fromCfgAttributes(cfgAttributes))
@@ -95,24 +94,32 @@ class CfgEvaluator(
         is CfgPredicate.Not -> !evaluatePredicate(predicate.single)
         is CfgPredicate.NameOption -> evaluateName(predicate.name)
         is CfgPredicate.NameValueOption -> evaluateNameValue(predicate.name, predicate.value)
-        is CfgPredicate.Feature -> evaluateFeature(predicate.name)
         is CfgPredicate.Error -> Unknown
     }
 
     private fun evaluateName(name: String): ThreeValuedLogic = when {
-        name in packageOptions.nameOptions -> True
-        // TODO: convert whitelist to blacklist and merge options with packageOption
-        name in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
-        (name == "test" || name == "bootstrap" || name == "doc") && origin == PackageOrigin.STDLIB -> False
-        name == CfgOptions.TEST && isUnitTestMode -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
-        else -> Unknown
+        // https://doc.rust-lang.org/nightly/unstable-book/language-features/cfg-panic.html
+        name == "cfg_panic" -> Unknown
+
+        name == "test" && origin != PackageOrigin.STDLIB -> Unknown
+
+        // BACKCOMPAT: rust 1.32 (there are standard macros under `cfg(rustdoc)`)
+        name == "rustdoc" && origin == PackageOrigin.STDLIB -> Unknown
+
+        evaluateUnknownCfgToFalse -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
+        else -> when (name) {
+            in SUPPORTED_NAME_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameEnabled(name))
+            else -> Unknown
+        }
     }
 
     private fun evaluateNameValue(name: String, value: String): ThreeValuedLogic = when {
-        packageOptions.isNameValueEnabled(name, value) -> True
-        // TODO: convert whitelist to blacklist and merge options with packageOption
-        name in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
-        else -> Unknown
+        name == "feature" -> evaluateFeature(value)
+        evaluateUnknownCfgToFalse -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
+        else -> when (name) {
+            in SUPPORTED_NAME_VALUE_OPTIONS -> ThreeValuedLogic.fromBoolean(options.isNameValueEnabled(name, value))
+            else -> Unknown
+        }
     }
 
     private fun evaluateFeature(name: String): ThreeValuedLogic {
@@ -124,7 +131,11 @@ class CfgEvaluator(
         return when (features[name]) {
             FeatureState.Enabled -> True
             FeatureState.Disabled -> False
-            null -> if (packageOptions.isNameValueEnabled("feature", name)) True else Unknown
+            null -> when {
+                options.isNameValueEnabled("feature", name) -> True
+                evaluateUnknownCfgToFalse -> False
+                else -> Unknown
+            }
         }
     }
 
@@ -132,7 +143,9 @@ class CfgEvaluator(
         private val SUPPORTED_NAME_OPTIONS: Set<String> = setOf(
             "debug_assertions",
             "unix",
-            "windows"
+            "windows",
+            "test",
+            "doc"
         )
 
         private val SUPPORTED_NAME_VALUE_OPTIONS: Set<String> = setOf(
@@ -147,7 +160,12 @@ class CfgEvaluator(
         )
 
         fun forCrate(crate: Crate): CfgEvaluator {
-            return CfgEvaluator(crate.cargoWorkspace.cfgOptions, crate.cfgOptions, crate.features, crate.origin)
+            return CfgEvaluator(
+                crate.cfgOptions,
+                crate.features,
+                crate.origin,
+                crate.evaluateUnknownCfgToFalse
+            )
         }
     }
 }
@@ -156,7 +174,6 @@ class CfgEvaluator(
 private sealed class CfgPredicate {
     data class NameOption(val name: String) : CfgPredicate()
     data class NameValueOption(val name: String, val value: String) : CfgPredicate()
-    data class Feature(val name: String) : CfgPredicate()
     class All(val list: List<CfgPredicate>) : CfgPredicate()
     class Any(val list: List<CfgPredicate>) : CfgPredicate()
     class Not(val single: CfgPredicate) : CfgPredicate()
@@ -192,10 +209,7 @@ private sealed class CfgPredicate {
                     }
                 }
 
-                // e.g. `#[cfg(feature = "my_feature")]`
-                name == "feature" && value != null -> Feature(value)
-
-                // e.g. `#[cfg(target_os = "macos")]`
+                // e.g. `#[cfg(target_os = "macos")]` or `#[cfg(feature = "my_feature")]`
                 name != null && value != null -> NameValueOption(name, value)
 
                 // e.g. `#[cfg(unix)]`

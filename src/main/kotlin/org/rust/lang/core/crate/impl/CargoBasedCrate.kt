@@ -47,7 +47,12 @@ class CargoBasedCrate(
     override val cargoWorkspace: CargoWorkspace get() = cargoTarget.pkg.workspace
     override val kind: CargoWorkspace.TargetKind get() = cargoTarget.kind
 
-    override val cfgOptions: CfgOptions get() = cargoTarget.pkg.cfgOptions
+    override val cfgOptions: CfgOptions get() = cargoTarget.cfgOptions
+
+    override val evaluateUnknownCfgToFalse: Boolean
+        get() = cargoTarget.pkg.cfgOptions != null   // `true` if there is `build.rs` and it is evaluated
+            || !cargoTarget.pkg.hasCustomBuildScript // `true` if there isn't `build.rs`
+
     override val env: Map<String, String> get() = cargoTarget.pkg.env
     override val outDir: VirtualFile? get() = cargoTarget.pkg.outDir
 
