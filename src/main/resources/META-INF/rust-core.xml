@@ -853,7 +853,15 @@
             <category>Rust</category>
         </intentionAction>
         <intentionAction>
-            <className>org.rust.ide.intentions.ChangeVisibilityIntention</className>
+            <className>org.rust.ide.intentions.visibility.MakePubIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.visibility.MakePubCrateIntention</className>
+            <category>Rust</category>
+        </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.visibility.MakePrivateIntention</className>
             <category>Rust</category>
         </intentionAction>
 

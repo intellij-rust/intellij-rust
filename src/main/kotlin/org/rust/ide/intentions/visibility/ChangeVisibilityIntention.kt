@@ -3,29 +3,33 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions
+package org.rust.ide.intentions.visibility
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
-class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityIntention.Context>() {
+abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityIntention.Context>() {
     override fun getFamilyName(): String = "Change item visibility"
+
+    abstract val visibility: String
+    abstract fun isApplicable(element: RsVisibilityOwner): Boolean
 
     data class Context(val element: RsVisibilityOwner)
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val visibleElement = element.ancestorStrict<RsVisibilityOwner>() ?: return null
-        if (!isAvailable(visibleElement)) return null
+        if (!isValidVisibilityOwner(visibleElement)) return null
+        if (!isValidPlace(visibleElement, element)) return null
+        if (!isApplicable(visibleElement)) return null
 
-        val isVisible = visibleElement.isPublic
         val name = (visibleElement as? RsNamedElement)?.name?.let { " `$it`" } ?: ""
-        val newVisibility = if (isVisible) "private" else "public"
 
-        text = "Make$name $newVisibility"
+        text = "Make$name $visibility"
 
         return Context(visibleElement)
     }
@@ -39,7 +43,7 @@ class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityI
     }
 
     companion object {
-        fun isAvailable(visible: RsVisibilityOwner): Boolean =
+        fun isValidVisibilityOwner(visible: RsVisibilityOwner): Boolean =
             visible !is RsEnumVariant
                 && visible.parent.parent !is RsTraitItem
                 && visible.containingCrate?.origin == PackageOrigin.WORKSPACE
@@ -47,6 +51,7 @@ class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityI
         fun makePrivate(element: RsVisibilityOwner) {
             element.vis?.delete()
         }
+
         fun makePublic(element: RsVisibilityOwner, crateRestricted: Boolean) {
             val project = element.project
 
@@ -73,8 +78,7 @@ class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVisibilityI
             val currentVis = element.vis
             if (currentVis != null) {
                 currentVis.replace(newVis)
-            }
-            else {
+            } else {
                 element.addBefore(newVis, anchor)
 
                 if (crateRestricted) {
@@ -96,4 +100,23 @@ private fun getAnchor(element: PsiElement): PsiElement? {
         is RsUseItem -> element.use
         else -> null
     }
+}
+
+/**
+ * Returns true if `element` is in a valid place in `visibleElement` for running the intention.
+ */
+private fun isValidPlace(visibleElement: RsVisibilityOwner, element: PsiElement): Boolean {
+    val keyword = when (visibleElement) {
+        is RsFunction -> visibleElement.fn
+        is RsStructItem -> visibleElement.struct
+        is RsEnumItem -> visibleElement.enum
+        is RsTraitItem -> visibleElement.trait
+        is RsConstant -> visibleElement.const
+        is RsTypeAlias -> visibleElement.typeKw
+        is RsModDeclItem -> visibleElement.mod
+        is RsModItem -> visibleElement.mod
+        else -> null
+    } ?: return true
+
+    return element == keyword || keyword.leftSiblings.any { it.isAncestorOf(element) }
 }

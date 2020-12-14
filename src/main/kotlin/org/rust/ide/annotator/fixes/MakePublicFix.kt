@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.rust.ide.intentions.ChangeVisibilityIntention
+import org.rust.ide.intentions.visibility.ChangeVisibilityIntention
 import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.RsVisibilityOwner
 
@@ -38,14 +38,11 @@ class MakePublicFix private constructor(
     }
 
     companion object {
-        fun createIfCompatible(visible: RsVisibilityOwner, elementName: String?, withinOneCrate: Boolean): MakePublicFix? {
-            return when {
-                // TODO: Allow this fix for pub-restricted elements too
-                ChangeVisibilityIntention.isAvailable(visible) &&
-                    visible.visibility is RsVisibility.Private ->
-                    MakePublicFix(visible, elementName, withinOneCrate)
-                else -> null
-            }
+        fun createIfCompatible(visible: RsVisibilityOwner,
+                               elementName: String?,
+                               crateRestricted: Boolean): MakePublicFix? {
+            if (!ChangeVisibilityIntention.isValidVisibilityOwner(visible)) return null
+            return MakePublicFix(visible, elementName, crateRestricted)
         }
     }
 }
