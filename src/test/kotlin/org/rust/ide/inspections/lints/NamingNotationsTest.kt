@@ -29,7 +29,8 @@ abstract class NamingNotationTest : TestCase() {
     }
 
     private fun testResult(name: String, expOk: Boolean, expSuggestion: String?) {
-        val (isOk, suggestion) = inspection.checkName(name)
+        val suggestion = inspection.checkName(name)
+        val isOk = suggestion == null
         assertEquals("Name $name acceptance: expected $expOk, but was $isOk", expOk, isOk)
         assertEquals("Suggestion for name $name: expected $expSuggestion, but was $suggestion", expSuggestion, suggestion)
     }
