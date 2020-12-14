@@ -864,7 +864,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val realCount = args.exprList.size
         if (realCount < expectedCount) {
             val target = args.rparen ?: args
-            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, functionType).addToHolder(holder)
+            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, functionType, listOf(
+                FillFunctionArgumentsFix(args)
+            )).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
                 RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount, functionType).addToHolder(holder)
@@ -1307,7 +1309,7 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
     return map
 }
 
-private fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
+fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
     val el = path.reference?.resolve()
     return when (el) {
@@ -1339,7 +1341,7 @@ private fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
     }
 }
 
-private fun RsMethodCall.expectedParamsCount(): Pair<Int, FunctionType>? {
+fun RsMethodCall.expectedParamsCount(): Pair<Int, FunctionType>? {
     val fn = reference.resolve() as? RsFunction ?: return null
     return fn.valueParameterList?.valueParameterList?.size?.let {
         Pair(it, if (fn.isVariadic) FunctionType.VARIADIC_FUNCTION else FunctionType.FUNCTION)

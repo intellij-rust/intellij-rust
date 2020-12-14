@@ -474,6 +474,9 @@ class RsPsiFactory(
     fun tryCreateMethodCall(receiver: RsExpr, methodNameText: String, arguments: List<RsExpr>): RsDotExpr? =
         tryCreateExpressionOfType("${receiver.text}.$methodNameText(${arguments.joinToString(", ") { it.text }})")
 
+    fun tryCreateValueArgumentList(arguments: List<RsExpr>): RsValueArgumentList? =
+        createFromText("fn bar() { foo(${arguments.joinToString(", ") { it.text }}); }")
+
     fun createDerefExpr(expr: RsExpr, nOfDerefs: Int = 1): RsExpr =
         if (nOfDerefs > 0)
             when (expr) {

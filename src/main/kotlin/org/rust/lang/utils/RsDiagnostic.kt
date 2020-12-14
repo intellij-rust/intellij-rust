@@ -532,12 +532,14 @@ sealed class RsDiagnostic(
         element: PsiElement,
         private val expectedCount: Int,
         private val realCount: Int,
-        private val functionType: FunctionType = FunctionType.FUNCTION
+        private val functionType: FunctionType = FunctionType.FUNCTION,
+        private val fixes: List<LocalQuickFix> = emptyList()
     ) : RsDiagnostic(element) {
         override fun prepare() = PreparedAnnotation(
             ERROR,
             functionType.errorCode,
-            errorText()
+            errorText(),
+            fixes = fixes
         )
 
         private fun errorText(): String {
