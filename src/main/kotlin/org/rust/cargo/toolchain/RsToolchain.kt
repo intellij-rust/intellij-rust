@@ -63,6 +63,13 @@ open class RsToolchain(val location: Path) {
     companion object {
         val MIN_SUPPORTED_TOOLCHAIN = SemVer.parseFromText("1.32.0")!!
 
+        /** Environment variable to unlock unstable features of rustc and cargo.
+         *  It doesn't change real toolchain.
+         *
+         * @see <a href="https://github.com/rust-lang/cargo/blob/06ddf3557796038fd87743bd3b6530676e12e719/src/cargo/core/features.rs#L447">features.rs</a>
+         */
+        const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
+
         fun suggest(): RsToolchain? =
             RsToolchainFlavor.getFlavors()
                 .asSequence()
