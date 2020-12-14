@@ -7,6 +7,7 @@ package org.rust.toml.crates.local
 
 import com.google.gson.Gson
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -15,13 +16,23 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.util.io.*
+import org.eclipse.jgit.api.Git
+import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
-import org.eclipse.jgit.revwalk.RevTree
 import org.eclipse.jgit.revwalk.RevWalk
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.treewalk.CanonicalTreeParser
 import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.OrTreeFilter
+import org.eclipse.jgit.treewalk.filter.PathFilter
+import org.eclipse.jgit.treewalk.filter.TreeFilter
+import org.rust.cargo.CargoConstants
 import org.rust.openapiext.pluginDirInSystem
 import org.rust.stdext.cleanDirectory
 import org.rust.toml.crates.local.CratesLocalIndexService.Companion.CratesLocalIndexState
@@ -47,10 +58,11 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         .setGitDir(userCargoIndexDir.toFile())
         .build()
 
-    private val registryHeadCommitHash: String = repository.resolve("origin/master")?.name ?: run {
-        LOG.error("Git revision string cannot be resolved to any object id")
-        INVALID_COMMIT_HASH
-    }
+    private val registryHeadCommitHash: String
+        get() = repository.resolve("origin/master")?.name ?: run {
+            LOG.error("Git revision `origin/master` cannot be resolved to any object id")
+            INVALID_COMMIT_HASH
+        }
 
     private val crates: PersistentHashMap<String, CargoRegistryCrate>? = run {
         resetIndexIfNeeded()
@@ -77,16 +89,26 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
 
     private val isReady: AtomicBoolean = AtomicBoolean(true)
 
+    init {
+        // Check index for update on `Cargo.toml` changes
+        ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            override fun after(events: MutableList<out VFileEvent>) {
+                if (events.any { it.pathEndsWith(CargoConstants.MANIFEST_FILE) }) {
+                    if (isReady.get()) {
+                        updateIfNeeded()
+                    }
+                }
+            }
+        })
+    }
+
     override fun getState(): CratesLocalIndexState = state
     override fun loadState(state: CratesLocalIndexState) {
         this.state = state
     }
 
-    fun isReady(): Boolean = isReady.get()
-
     fun getCrate(crateName: String): CargoRegistryCrate? {
-        updateIfNeeded()
-        if (crates == null) return null
+        if (!isReady.get() || crates == null) return null
 
         return try {
             crates.get(crateName)
@@ -97,8 +119,7 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
     }
 
     fun getAllCrateNames(): List<String> {
-        updateIfNeeded()
-        if (crates == null) return emptyList()
+        if (!isReady.get() || crates == null) return emptyList()
 
         val crateNames = mutableListOf<String>()
 
@@ -115,7 +136,7 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
 
     private fun updateIfNeeded() {
         if (state.indexedCommitHash != registryHeadCommitHash && isReady.compareAndSet(true, false)) {
-            CratesLocalIndexUpdateTask().queue()
+            CratesLocalIndexUpdateTask(registryHeadCommitHash).queue()
         }
     }
 
@@ -133,21 +154,60 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         }
     }
 
-    private fun reloadCrates(revTree: RevTree) {
+    private fun updateCrates(currentHeadHash: String, prevHeadHash: String) {
+        val reader = repository.newObjectReader()
+        val currentTreeIter = CanonicalTreeParser().apply {
+            val currentHeadTree = repository.resolve("$currentHeadHash^{tree}") ?: run {
+                LOG.error("Git revision `$currentHeadHash^{tree}` cannot be resolved to any object id")
+                return
+            }
+            reset(reader, currentHeadTree)
+        }
+
+        val filter = run {
+            val prevHeadTree = repository.resolve("$prevHeadHash^{tree}") ?: return@run TreeFilter.ALL
+
+            val prevTreeIter = CanonicalTreeParser().apply {
+                reset(reader, prevHeadTree)
+            }
+
+            val git = Git(repository)
+
+            val changes = try {
+                git.diff()
+                    .setNewTree(currentTreeIter)
+                    .setOldTree(prevTreeIter)
+                    .call()
+            } catch (e: GitAPIException) {
+                LOG.error("Failed to calculate diff due to Git API error: ${e.message}")
+                return@run TreeFilter.ALL
+            }
+
+            when (changes.size) {
+                0 -> TreeFilter.ALL
+                1 -> PathFilter.create(changes.single().newPath)
+                else -> OrTreeFilter.create(changes.map { PathFilter.create(it.newPath) })
+            }
+        }
+
+        val revTree = RevWalk(repository).parseCommit(ObjectId.fromString(currentHeadHash)).tree
+
         TreeWalk(repository).use { treeWalk ->
             treeWalk.addTree(revTree)
+            treeWalk.filter = filter
             treeWalk.isRecursive = true
             treeWalk.isPostOrderTraversal = false
 
             while (treeWalk.next()) {
-                if (treeWalk.pathString == "config.json") continue
+                if (treeWalk.isSubtree) continue
+                if (treeWalk.nameString == "config.json") continue
 
                 val objectId = treeWalk.getObjectId(0)
                 val loader = repository.open(objectId)
                 val versions = mutableListOf<CargoRegistryCrateVersion>()
-                val reader = BufferedReader(InputStreamReader(loader.openStream()))
+                val fileReader = BufferedReader(InputStreamReader(loader.openStream()))
 
-                reader.forEachLine { line ->
+                fileReader.forEachLine { line ->
                     if (line.isBlank()) return@forEachLine
 
                     try {
@@ -181,15 +241,13 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         }
     }
 
-    private inner class CratesLocalIndexUpdateTask : Task.Backgroundable(null, "Loading cargo registry index", false) {
+    private inner class CratesLocalIndexUpdateTask(val newHead: String) : Task.Backgroundable(null, "Loading cargo registry index", false) {
         override fun run(indicator: ProgressIndicator) {
-            val branch = repository.resolve("origin/master") ?: return
-            val revCommit = RevWalk(repository).parseCommit(ObjectId.fromString(branch.name))
-            reloadCrates(revCommit.tree)
+            updateCrates(newHead, state.indexedCommitHash)
         }
 
         override fun onSuccess() {
-            state = CratesLocalIndexState(registryHeadCommitHash)
+            state.indexedCommitHash = newHead
         }
 
         override fun onFinished() {
@@ -211,11 +269,15 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         private const val CORRUPTION_MARKER_NAME: String = "corruption.marker"
         private const val INVALID_COMMIT_HASH: String = "<invalid>"
         private const val CRATES_INDEX_VERSION: Int = 0
+
         private val LOG: Logger = logger<CratesLocalIndexService>()
 
         fun getInstance(): CratesLocalIndexService = service()
     }
 }
+
+private fun VFileEvent.pathEndsWith(suffix: String): Boolean =
+    path.endsWith(suffix) || (this is VFilePropertyChangeEvent && oldPath.endsWith(suffix))
 
 data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>)
 data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>) {
