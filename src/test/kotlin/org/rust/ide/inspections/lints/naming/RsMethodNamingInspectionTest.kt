@@ -78,4 +78,17 @@ class RsMethodNamingInspectionTest : RsInspectionsTestBase(RsMethodNamingInspect
     //         fn bar_baz() {}
     //     }
     // """)
+
+    fun `test method not support case`() = checkByText("""
+        struct  Foo {}
+        impl Foo {
+            fn 测试函数(&self) { }
+        }
+    """)
+
+    fun `test trait method not support case`() = checkByText("""
+        trait Foo {
+            fn 特质函数(){ }
+        }
+    """)
 }

@@ -31,4 +31,8 @@ class RsLifetimeNamingInspectionTest : RsInspectionsTestBase(RsLifetimeNamingIns
             'lifetime_foo>(x: &'lifetime_foo u32) {
         }
     """)
+
+    fun `test lifetime not support case`() = checkByText("""
+        fn lifetime<'生命周期>() { }
+    """)
 }

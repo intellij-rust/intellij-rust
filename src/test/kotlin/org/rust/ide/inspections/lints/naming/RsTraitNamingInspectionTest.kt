@@ -33,4 +33,10 @@ class RsTraitNamingInspectionTest : RsInspectionsTestBase(RsTraitNamingInspectio
         struct Patch {}
         impl HotFix for Patch {}
     """)
+
+    fun `test trait not support case`() = checkByText("""
+       trait 特质 {}
+       struct 结构体 {}
+       impl 特质 for 结构体 {}
+    """)
 }

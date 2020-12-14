@@ -56,4 +56,12 @@ class RsFunctionNamingInspectionTest : RsInspectionsTestBase(RsFunctionNamingIns
         #[no_mangle]
         pub unsafe extern fn Foo() {}
     """)
+
+    fun `test functions not support case`() = checkByText("""
+        fn 函数() {}
+
+        extern "C" {
+            fn 函数();
+        }
+    """)
 }

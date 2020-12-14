@@ -77,4 +77,19 @@ class RsFieldNamingInspectionTest : RsInspectionsTestBase(RsFieldNamingInspectio
             let a = Foo { is_deleted: false };
         }
     """)
+
+    fun `test enum variant field not support case`() = checkByText("""
+        enum EnumVarField {
+            Variant {
+                字段: u32
+            }
+        }
+        static 静态的: u32 = 12;
+    """)
+
+    fun `test struct field not support case`() = checkByText("""
+        struct Foo {
+            字段: u32
+        }
+    """)
 }

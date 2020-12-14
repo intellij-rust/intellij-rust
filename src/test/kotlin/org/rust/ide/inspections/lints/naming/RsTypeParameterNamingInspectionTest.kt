@@ -39,4 +39,8 @@ class RsTypeParameterNamingInspectionTest : RsInspectionsTestBase(RsTypeParamete
     """, """
         fn type_params<Base>(b: &Base) where Base: Clone {}
     """)
+
+    fun `test type parameter not support case`() = checkByText("""
+        fn type_params<类型: Clone>() { }
+    """)
 }

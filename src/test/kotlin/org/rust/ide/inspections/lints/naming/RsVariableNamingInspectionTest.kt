@@ -86,4 +86,16 @@ class RsVariableNamingInspectionTest : RsInspectionsTestBase(RsVariableNamingIns
             }
         }
     """)
+
+    fun `test variable not support case`() = checkByText("""
+        fn loc_var() {
+            let 变量 = 0;
+        }
+    """)
+
+    fun `test tuple variable not support case`() = checkByText("""
+        fn loc_var() {
+            let (一, 二) = (1, 2);
+        }
+    """)
 }

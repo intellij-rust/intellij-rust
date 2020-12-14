@@ -42,4 +42,11 @@ class RsStructNamingInspectionTest : RsInspectionsTestBase(RsStructNamingInspect
             let a = FooBar;
         }
     """)
+
+    fun `test struct not support case`() = checkByText("""
+       struct 结构体;
+       struct 結構;
+       struct 구조체;
+       struct 構造体;
+    """)
 }

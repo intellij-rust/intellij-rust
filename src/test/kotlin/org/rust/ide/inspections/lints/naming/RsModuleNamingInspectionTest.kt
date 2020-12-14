@@ -53,4 +53,8 @@ class RsModuleNamingInspectionTest : RsInspectionsTestBase(RsModuleNamingInspect
             let a = mod_foo::ONE;
         }
     """)
+
+    fun `test module not support case`() = checkByText("""
+        mod 模块名 {}
+    """)
 }

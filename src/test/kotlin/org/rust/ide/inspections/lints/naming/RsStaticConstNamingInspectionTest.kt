@@ -36,4 +36,8 @@ class RsStaticConstNamingInspectionTest : RsInspectionsTestBase(RsStaticConstNam
             static Bar: i32;
         }
     """)
+
+    fun `test static not support case`() = checkByText("""
+        static 静态的: u32 = 12;
+    """)
 }
