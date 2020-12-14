@@ -14,4 +14,5 @@ object RsExperiments {
     const val MACROS_NEW_ENGINE = "org.rust.macros.new.engine"
     const val RESOLVE_NEW_ENGINE = "org.rust.resolve.new.engine"
     const val FETCH_ACTUAL_STDLIB_METADATA = "org.rust.cargo.fetch.actual.stdlib.metadata"
+    const val CRATES_LOCAL_INDEX = "org.rust.crates.local.index"
 }

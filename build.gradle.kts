@@ -73,6 +73,7 @@ allprojects {
         mavenCentral()
         jcenter()
         maven("https://dl.bintray.com/jetbrains/markdown")
+        maven("http://download.eclipse.org/jgit/maven")
     }
 
     idea {
@@ -376,6 +377,7 @@ project(":toml") {
     dependencies {
         implementation(project(":"))
         implementation(project(":common"))
+        implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
         testImplementation(project(":", "testOutput"))
         testImplementation(project(":common", "testOutput"))
     }
