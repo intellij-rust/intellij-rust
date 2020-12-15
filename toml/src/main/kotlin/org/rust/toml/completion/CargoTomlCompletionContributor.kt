@@ -16,7 +16,6 @@ import org.rust.toml.CargoTomlPsiPattern.inKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.inValueWithKey
-import org.rust.toml.crates.local.completion.DependencyCratesLocalCompletionProvider
 import org.rust.toml.tomlPluginIsAbiCompatible
 
 class CargoTomlCompletionContributor : CompletionContributor() {
@@ -24,16 +23,16 @@ class CargoTomlCompletionContributor : CompletionContributor() {
         val isCratesLocalIndexEnabled = isFeatureEnabled(RsExperiments.CRATES_LOCAL_INDEX)
 
         val dependencyCompletionProvider = if (isCratesLocalIndexEnabled) {
-            DependencyCratesLocalCompletionProvider()
+            LocalCargoTomlDependencyCompletionProvider()
         } else {
-            CargoTomlDependencyCompletionProvider()
+            CratesIoCargoTomlDependencyCompletionProvider()
         }
 
         if (tomlPluginIsAbiCompatible()) {
             extend(BASIC, inKey, CargoTomlKeysCompletionProvider())
             extend(BASIC, inValueWithKey("edition"), CargoTomlKnownValuesCompletionProvider(listOf("2015", "2018")))
-            extend(BASIC, inSpecificDependencyHeaderKey, CargoTomlSpecificDependencyHeaderCompletionProvider())
-            extend(BASIC, inSpecificDependencyKeyValue, CargoTomlSpecificDependencyVersionCompletionProvider())
+            extend(BASIC, inSpecificDependencyHeaderKey, CratesIoCargoTomlSpecificDependencyHeaderCompletionProvider())
+            extend(BASIC, inSpecificDependencyKeyValue, CratesIoCargoTomlSpecificDependencyVersionCompletionProvider())
             extend(BASIC, inFeatureDependencyArray, CargoTomlFeatureDependencyCompletionProvider())
             extend(BASIC, inDependencyPackageFeatureArray, CargoTomlDependencyFeaturesCompletionProvider())
 

@@ -11,32 +11,14 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.toml.CargoTomlPsiPattern
 import org.rust.toml.StringValueInsertionHandler
-import org.rust.toml.getClosestKeyValueAncestor
 import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
 import org.toml.lang.psi.TomlTable
 
-abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<CompletionParameters>() {
-    override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        val parent = parameters.position.parent ?: return
-        if (parent is TomlKey) {
-            val keyValue = parent.parent as? TomlKeyValue
-                ?: error("PsiElementPattern must not allow keys outside of TomlKeyValues")
-            completeKey(keyValue, result)
-        } else {
-            val keyValue = getClosestKeyValueAncestor(parameters.position) ?: return
-            completeValue(keyValue, result)
-        }
-    }
-
-    protected abstract fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet)
-
-    protected abstract fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet)
-}
-
 /** @see CargoTomlPsiPattern.inDependencyKeyValue */
-class CargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
+class CratesIoCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val variants = searchCrate(keyValue.key).map { it.dependencyLine }
         result.addAllElements(variants.map(LookupElementBuilder::create))
@@ -53,7 +35,7 @@ class CargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase
 }
 
 /** @see CargoTomlPsiPattern.inSpecificDependencyHeaderKey */
-class CargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvider<CompletionParameters>() {
+class CratesIoCargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val key = parameters.position.parent as? TomlKey ?: return
         val variants = searchCrate(key)
@@ -77,7 +59,7 @@ class CargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvider<C
 }
 
 /** @see CargoTomlPsiPattern.inSpecificDependencyKeyValue */
-class CargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCompletionProviderBase() {
+class CratesIoCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val dependencyNameKey = getDependencyKeyFromTableHeader(keyValue)
 
