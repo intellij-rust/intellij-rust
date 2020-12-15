@@ -18,10 +18,10 @@
         <usageTypeProvider implementation="org.rust.toml.search.CargoTomlUsageTypeProvider"/>
         <elementDescriptionProvider implementation="org.rust.toml.CargoTomlElementDescriptionProvider"/>
 
-        <localInspection language="TOML" groupName="Rust"
+        <localInspection groupName="Rust"
                          displayName="Missing features"
                          enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.toml.inspections.CargoTomlMissingFeaturesInspection"/>
+                         implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"/>
 
         <applicationService serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexService"/>
         <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>

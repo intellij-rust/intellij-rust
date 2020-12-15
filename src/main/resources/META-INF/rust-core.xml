@@ -570,11 +570,6 @@
                          implementationClass="org.rust.ide.inspections.RsDetachedFileInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Missing features"
-                         enabledByDefault="true" level="WARNING"
-                         implementationClass="org.rust.ide.inspections.RsMissingFeaturesInspection"/>
-
-        <localInspection language="Rust" groupName="Rust"
                          displayName="Duplicate trait method parameter name"
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsDuplicatedTraitMethodBindingInspection"/>

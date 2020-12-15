@@ -3,12 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections
+package org.rust.toml.inspections
 
 import com.intellij.codeInspection.InspectionManager
+import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.psi.PsiFile
+import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
@@ -17,12 +19,29 @@ import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.fixes.EnableCargoFeaturesFix
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.containingCargoTarget
+import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.findCargoProject
+import org.rust.openapiext.pathAsPath
 
-class RsMissingFeaturesInspection : RsLocalInspectionTool() {
+class MissingFeaturesInspection : LocalInspectionTool() {
+
     override fun checkFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
-        if (file !is RsFile) return null
+        return when {
+            file is RsFile -> checkRsFile(file, manager, isOnTheFly)
+            file.name == CargoConstants.MANIFEST_FILE -> checkCargoTomlFile(file, manager, isOnTheFly)
+            else -> null
+        }
+    }
 
+    private fun checkCargoTomlFile(file: PsiFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
+        val cargoProject = file.findCargoProject() ?: return null
+        val pkg = file.findCargoPackage()?.takeIf { it.rootDirectory == file.virtualFile?.parent?.pathAsPath } ?: return null
+        val missingFeatures = collectMissingFeaturesForPackage(pkg)
+
+        return createProblemDescriptors(missingFeatures, manager, file, isOnTheFly, cargoProject)
+    }
+
+    private fun checkRsFile(file: RsFile, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor?>? {
         val cargoProject = file.findCargoProject() ?: return null
         val target = file.containingCargoTarget ?: return null
         if (target.pkg.origin != PackageOrigin.WORKSPACE) return null
@@ -61,13 +80,13 @@ class RsMissingFeaturesInspection : RsLocalInspectionTool() {
             }
         }
 
-        fun collectMissingFeaturesForPackage(pkg: CargoWorkspace.Package): Set<PackageFeature> {
+        private fun collectMissingFeaturesForPackage(pkg: CargoWorkspace.Package): Set<PackageFeature> {
             val missingFeatures = mutableSetOf<PackageFeature>()
             collectMissingFeaturesForPackage(pkg, missingFeatures)
             return missingFeatures
         }
 
-        fun createProblemDescriptors(
+        private fun createProblemDescriptors(
             missingFeatures: Set<PackageFeature>,
             manager: InspectionManager,
             file: PsiFile,
