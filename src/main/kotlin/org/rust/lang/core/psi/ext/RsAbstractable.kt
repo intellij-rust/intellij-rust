@@ -14,7 +14,7 @@ import org.rust.lang.core.psi.*
 import org.rust.openapiext.filterQuery
 import org.rust.openapiext.mapQuery
 
-interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement, RsVisible {
+interface RsAbstractable : RsNameIdentifierOwner, RsExpandedElement, RsVisible, RsDocAndAttributeOwner {
     val isAbstract: Boolean
 }
 

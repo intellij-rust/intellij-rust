@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.KNOWN_DERIVABLE_TRAITS
@@ -159,18 +160,16 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override fun getUseScope(): SearchScope = RsPsiImplUtil.getDeclarationUseScope(this) ?: super.getUseScope()
 }
 
-
 class TraitImplementationInfo private constructor(
     val trait: RsTraitItem,
     val traitName: String,
     traitMembers: RsMembers,
     implMembers: RsMembers
 ) {
-    val declared = traitMembers.abstractable()
+    val declared = traitMembers.abstractable().filter { it.isEnabledByCfgSelf }
     private val implemented = implMembers.abstractable()
     private val declaredByName = declared.associateBy { it.name!! }
     private val implementedByNameAndType = implemented.associateBy { it.name!! to it.elementType }
-
 
     val missingImplementations: List<RsAbstractable> =
         declared.filter { it.isAbstract }.filter { it.name to it.elementType !in implementedByNameAndType }
@@ -185,7 +184,6 @@ class TraitImplementationInfo private constructor(
             val dec = declaredByName[imp.name]
             if (dec != null) imp to dec else null
         }
-
 
     private fun RsMembers.abstractable(): List<RsAbstractable> =
         expandedMembers.filter { it.name != null }

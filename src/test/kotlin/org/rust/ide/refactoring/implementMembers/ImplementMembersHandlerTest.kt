@@ -8,10 +8,7 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
-import org.rust.ProjectDescriptor
-import org.rust.RsTestBase
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
 import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -1192,6 +1189,46 @@ class ImplementMembersHandlerTest : RsTestBase() {
         impl<'a> Baz<'a> for Foo {
             fn baz(self: Pin<&'a mut Self>, bar: &mut Bar) {
                 <selection>unimplemented!()</selection>
+            }
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test do not offer cfg-disabled items`() = doTest("""
+        trait Foo {
+            #[cfg(intellij_rust)]
+            fn foo(&self) {}
+            #[cfg(not(intellij_rust))]
+            fn foo(&self);
+
+            fn baz(&self);
+        }
+
+        struct S;
+        impl Foo for S {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo(&self)", false, isSelected = true),
+        ImplementMemberSelection("baz(&self)", true, isSelected = true)
+    ), """
+        trait Foo {
+            #[cfg(intellij_rust)]
+            fn foo(&self) {}
+            #[cfg(not(intellij_rust))]
+            fn foo(&self);
+
+            fn baz(&self);
+        }
+
+        struct S;
+        impl Foo for S {
+            fn foo(&self) {
+                unimplemented!()
+            }
+
+            fn baz(&self) {
+                unimplemented!()
             }
         }
     """)
