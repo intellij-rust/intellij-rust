@@ -483,4 +483,14 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             std::println!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S, <error descr="Argument never used">S</error>);
         }
     """)
+
+    fun `test custom debug macro`() = checkErrors("""
+        macro_rules! debug {
+            (${'$'}a:expr, ${'$'}b:expr) => {}
+        }
+
+        fn main() {
+            debug!("{}", 1);
+        }
+    """)
 }

@@ -39,10 +39,7 @@ class RsFormatMacroAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
         val formatMacro = element as? RsMacroCall ?: return
 
-        val macroPos = macroToFormatPos(formatMacro.macroName) ?: return
-        val macroArgs = formatMacro.formatMacroArgument?.formatMacroArgList ?: return
-        val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return
-        if (macro.containingCrate?.origin != PackageOrigin.STDLIB) return
+        val (macroPos, macroArgs) = getFormatMacroCtx(formatMacro) ?: return
 
         val formatStr = macroArgs
             .getOrNull(macroPos)
@@ -493,18 +490,38 @@ private fun checkArguments(ctx: FormatContext): List<ErrorAnnotation> {
     return errors
 }
 
-// TODO: handle log, tracing
-private fun macroToFormatPos(macro: String): Int? = when (macro) {
-    "println",
-    "print",
-    "eprintln",
-    "eprint",
-    "format",
-    "format_args",
-    "format_args_nl" -> 0
-    "write",
-    "writeln" -> 1
-    else -> null
+private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormatMacroArg>>? {
+    val macro = formatMacro.path.reference?.resolve() as? RsMacro ?: return null
+    val macroName = macro.name ?: return null
+
+    val crate = macro.containingCrate ?: return null
+    val formatMacroArgs = formatMacro.formatMacroArgument?.formatMacroArgList
+    val logMacroArgs = formatMacro.logMacroArgument?.formatMacroArgList
+
+    val (macroPos, macroArgs) = when {
+        crate.origin == PackageOrigin.STDLIB && formatMacroArgs != null -> {
+            val position = when (macroName) {
+                "println",
+                "print",
+                "eprintln",
+                "eprint",
+                "format",
+                "format_args",
+                "format_args_nl" -> 0
+                "write",
+                "writeln" -> 1
+                else -> return null
+            }
+            Pair(position, formatMacroArgs)
+        }
+        crate.normName == "log" && logMacroArgs != null -> {
+            val index = if (macroName == "log") 1 else 0
+            Pair(index, logMacroArgs)
+        }
+        else -> return null
+    }
+
+    return Pair(macroPos, macroArgs)
 }
 
 private fun RsFormatMacroArg.name(): String? = this.identifier?.text
