@@ -38,12 +38,11 @@ class RemoveParameterFix(binding: RsPatBinding, private val bindingName: String)
 }
 
 private fun removeArguments(function: RsFunction, parameterIndex: Int) {
-    ReferencesSearch.search(function).forEach {
-        val call = it.element.parentOfTypes(RsCallExpr::class, RsDotExpr::class) ?: return@forEach
-
+    val calls = function.findFunctionCalls() + function.findMethodCalls()
+    calls.forEach { call ->
         val arguments = when (call) {
             is RsCallExpr -> call.valueArgumentList
-            is RsDotExpr -> call.methodCall?.valueArgumentList ?: return@forEach
+            is RsMethodCall -> call.valueArgumentList
             else -> return@forEach
         }
         val isMethod = function.hasSelfParameters

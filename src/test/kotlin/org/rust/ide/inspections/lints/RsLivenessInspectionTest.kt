@@ -739,6 +739,23 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
         }
     """)
 
+    // https://github.com/intellij-rust/intellij-rust/issues/6513
+    fun `test remove function argument when function is used as an argument`() = checkFixByText("Remove parameter `x`", """
+        fn foo(<warning>x/*caret*/</warning>: i32) {}
+        fn id<T>(<warning>t</warning>: T) {}
+
+        fn main() {
+            id(foo);
+        }
+    """, """
+        fn foo() {}
+        fn id<T>(t: T) {}
+
+        fn main() {
+            id(foo);
+        }
+    """)
+
     fun `test remove method argument UFCS`() = checkFixByText("Remove parameter `a`", """
         struct S;
         impl S {
