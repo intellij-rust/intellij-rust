@@ -444,7 +444,7 @@ class RsMoveCommonProcessor(
                         LOG.error("Unexpected item to make public: $item")
                         return
                     }
-                    MakePublicFix.createIfCompatible(item, itemName, withinOneCrate = false)
+                    MakePublicFix.createIfCompatible(item, itemName, crateRestricted = false)
                         ?.invoke(project, null, containingFile)
                 }
             }
