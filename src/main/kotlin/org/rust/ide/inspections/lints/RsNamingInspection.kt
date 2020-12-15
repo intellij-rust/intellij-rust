@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints
 
+import com.google.common.annotations.VisibleForTesting
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -18,17 +19,16 @@ import org.rust.lang.core.psi.ext.*
  * and registering problems.
  */
 abstract class RsNamingInspection(
-    val elementType: String,
-    val styleName: String,
+    private val elementType: String,
+    private val styleName: String,
     private val elementTitle: String = elementType
 ) : RsLintInspection() {
-    override fun getDisplayName() = "$elementTitle naming convention"
+    override fun getDisplayName(): String = "$elementTitle naming convention"
 
     fun inspect(id: PsiElement?, holder: RsProblemsHolder, fix: Boolean = true) {
         if (id == null) return
         val name = id.unescapedText
-        val (isOk, suggestedName) = checkName(name)
-        if (isOk || suggestedName == null) return
+        val suggestedName = checkName(name) ?: return
 
         val fixEl = id.parent
         val fixes = if (fix && fixEl is PsiNamedElement) arrayOf(RenameFix(fixEl, suggestedName)) else emptyArray()
@@ -40,12 +40,12 @@ abstract class RsNamingInspection(
         )
     }
 
-    abstract fun checkName(name: String): Pair<Boolean, String?>
-
-    companion object {
-        @JvmStatic
-        protected val OK = Pair(true, null)
-    }
+    /**
+     * Suggests how to rename given [name] according to the corresponding naming convention.
+     * Returns `null` if the [name] matches the naming convention.
+     */
+    @VisibleForTesting
+    abstract fun checkName(name: String): String?
 }
 
 /**
@@ -58,12 +58,12 @@ open class RsCamelCaseNamingInspection(
 
     override fun getLint(element: PsiElement): RsLint = RsLint.NonCamelCaseTypes
 
-    override fun checkName(name: String): Pair<Boolean, String?> {
+    override fun checkName(name: String): String? {
         val str = name.trim('_')
         return if (str.isCamelCase()) {
-            OK
+            null
         } else {
-            Pair(false, if (str.isEmpty()) "CamelCase" else suggestName(name))
+            if (str.isEmpty()) "CamelCase" else suggestName(name)
         }
     }
 
@@ -109,14 +109,14 @@ open class RsSnakeCaseNamingInspection(elementType: String) : RsNamingInspection
 
     override fun getLint(element: PsiElement): RsLint = RsLint.NonSnakeCase
 
-    override fun checkName(name: String): Pair<Boolean, String?> {
+    override fun checkName(name: String): String? {
         val str = name.trim('_')
         // Some characters don't have case so we can't use `isLowerCase` here
-        if (str.isNotEmpty() && str.all { !it.isUpperCase() }) {
-            return OK
+        return if (str.isNotEmpty() && str.all { !it.isUpperCase() }) {
+            null
+        } else {
+            if (str.isEmpty()) "snake_case" else name.toSnakeCase(false)
         }
-
-        return Pair(false, if (str.isEmpty()) "snake_case" else name.toSnakeCase(false))
     }
 }
 
@@ -127,12 +127,13 @@ open class RsUpperCaseNamingInspection(elementType: String) : RsNamingInspection
 
     override fun getLint(element: PsiElement): RsLint = RsLint.NonUpperCaseGlobals
 
-    override fun checkName(name: String): Pair<Boolean, String?> {
+    override fun checkName(name: String): String? {
         val str = name.trim('_')
-        if (str.isNotEmpty() && str.none { it.isLowerCase() }) {
-            return OK
+        return if (str.isNotEmpty() && str.none { it.isLowerCase() }) {
+            null
+        } else {
+            if (str.isEmpty()) "UPPER_CASE" else name.toSnakeCase(true)
         }
-        return Pair(false, if (str.isEmpty()) "UPPER_CASE" else name.toSnakeCase(true))
     }
 }
 
