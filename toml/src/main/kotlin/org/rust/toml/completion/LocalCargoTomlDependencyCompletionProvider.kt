@@ -13,7 +13,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
 import org.rust.toml.StringValueInsertionHandler
 import org.rust.toml.crates.local.CratesLocalIndexService
 import org.rust.toml.crates.local.lastVersion
@@ -23,7 +22,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val prefix = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
-        val indexService = service<CratesLocalIndexService>()
+        val indexService = CratesLocalIndexService.getInstance()
         if (!indexService.isReady()) return
 
         val crateNames = indexService.getAllCrateNames()
@@ -54,7 +53,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
         val name = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
-        val indexService = service<CratesLocalIndexService>()
+        val indexService = CratesLocalIndexService.getInstance()
         if (!indexService.isReady()) return
 
         val versions = indexService.getCrate(name)?.versions ?: return

@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -211,6 +212,8 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         private const val INVALID_COMMIT_HASH: String = "<invalid>"
         private const val CRATES_INDEX_VERSION: Int = 0
         private val LOG: Logger = logger<CratesLocalIndexService>()
+
+        fun getInstance(): CratesLocalIndexService = service()
     }
 }
 
