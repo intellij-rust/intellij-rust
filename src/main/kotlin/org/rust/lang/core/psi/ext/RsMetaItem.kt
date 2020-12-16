@@ -34,7 +34,7 @@ val RsMetaItem.value: String? get() = litExpr?.stringValue
 val RsMetaItem.hasEq: Boolean get() = greenStub?.hasEq ?: (eq != null)
 
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
-    path?.reference?.resolve() as? RsTraitItem
+    path?.reference?.multiResolve()?.filterIsInstance<RsTraitItem>()?.singleOrNull()
 
 /**
  * In the case of `#[foo(bar)]`, the `foo(bar)` meta item is considered "root" but `bar` is not.
