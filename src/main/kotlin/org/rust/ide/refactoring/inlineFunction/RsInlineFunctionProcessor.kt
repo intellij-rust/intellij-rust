@@ -19,11 +19,13 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.NotNull
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.surroundWith.addStatements
 import org.rust.lang.core.cfg.ExitPoint
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.impl.RsCallExprImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineFunctionProcessor(
@@ -70,7 +72,7 @@ class RsInlineFunctionProcessor(
                     return@forEach
                 }
                 usagesAsReference.contains(usage.reference) && removeDefinition -> {
-                    conflicts.putValue(usage.element, "Usage with function pointer inline is't currently supported")
+                    conflicts.putValue(usage.element, "Usage with function pointer inline isn't currently supported")
                     return@forEach
                 }
                 caller == null -> {
@@ -89,7 +91,7 @@ class RsInlineFunctionProcessor(
 
     private fun checkCallerConflicts(function: RsFunction, caller: PsiElement): String? {
         val funcArguments = (function.copy() as RsFunction).valueParameters
-        val callArguments = when (caller) {
+        var callArguments = when (caller) {
             is RsCallExpr -> caller.valueArgumentList.exprList
             is RsDotExpr -> {
                 val methodCall = caller.methodCall
@@ -99,11 +101,17 @@ class RsInlineFunctionProcessor(
             else -> return "Unknown caller expression type"
         }
 
+        if (isDoubleSemicolonMethodCall(function, caller)) {
+            callArguments = callArguments.drop(1)
+        }
         if (funcArguments.size != callArguments.size) {
             return "Cannot inline function to references with mismatching arguments"
         }
         return null
     }
+
+    private fun isDoubleSemicolonMethodCall(function: RsFunction, caller: PsiElement) =
+        function.selfParameter != null && caller is RsCallExpr && caller.firstChild is RsPathExpr
 
     override fun performRefactoring(usages: Array<out UsageInfo>) {
         usages.asIterable().forEach loop@{
@@ -168,12 +176,15 @@ class RsInlineFunctionProcessor(
             }
 
             val caller = ref.element.ancestors.filter { it is RsCallExpr || it is RsDotExpr }.firstOrNull()
-                ?: throw IncorrectOperationException("Usage without caller expression parent bypassed preprocessing: ${ref.element.text}")
+                ?: throw IncorrectOperationException(
+                    "Usage without caller expression parent bypassed preprocessing: ${ref.element.text}")
 
             val funcScope = LocalSearchScope(body)
 
             val selfParam = functionDup.selfParameter
             replaceSelfParamWithExpr(selfParam, caller, funcScope)
+
+            replaceParameterUsages(functionDup, caller, funcScope)
 
             val retExprInside = body.descendantsOfType<RsRetExpr>().firstOrNull()?.expr
             if (retExprInside != null && body.stmtList.size == 1) {
@@ -190,7 +201,13 @@ class RsInlineFunctionProcessor(
                         enclosingStatement.addLeftSibling(it)
                     }
                 } else {
-                    addFunctionBodyToCallerWithCorrectSpacing(leftSibling, rightSibling, blockParent, body, childContainingEnclosingStatement)
+                    addFunctionBodyToCallerWithCorrectSpacing(
+                        leftSibling,
+                        rightSibling,
+                        blockParent,
+                        body,
+                        childContainingEnclosingStatement
+                    )
                 }
 
                 blockParent.children.filter { it.text == ";" }.forEach { it.delete() }
@@ -209,7 +226,91 @@ class RsInlineFunctionProcessor(
         }
     }
 
-    private fun addFunctionBodyToCallerWithCorrectSpacing(leftSibling: PsiElement?, rightSibling: PsiElement?, blockParent: RsBlock, body: RsBlock, childContainingEnclosingStatement: PsiElement?) {
+    private fun replaceParameterUsages(functionDup: RsFunction, caller: PsiElement, funcScope: LocalSearchScope) {
+        val parameterBindingsList = functionDup.valueParameters
+            .filter { it !is RsSelfParameter }
+            .map { it.pat }
+            .filterIsInstance(RsPat::class.java)
+
+        val valueArgumentList = when (caller) {
+            is RsCallExpr -> caller.valueArgumentList
+            is RsDotExpr -> caller.methodCall?.valueArgumentList ?: return
+            else -> return
+        }
+
+        val arguments = if (isDoubleSemicolonMethodCall(functionDup, caller)) {
+            valueArgumentList.exprList.drop(1)
+        } else {
+            valueArgumentList.exprList
+        }
+
+        val paramUsagesToReplace = mutableMapOf<RsExpr?, PsiElement>()
+
+        for ((index, parameter) in parameterBindingsList.withIndex()) {
+            paramUsagesToReplace.putAll(replaceParameterUsage(arguments, index, parameter, caller, funcScope))
+        }
+        paramUsagesToReplace.forEach { it.key?.replace(it.value) }
+    }
+
+    private fun replaceParameterUsage(arguments: List<RsExpr>, index: Int, parameter: RsPat, caller: PsiElement,
+                                      funcScope: LocalSearchScope): Map<RsExpr?, @NotNull PsiElement> {
+        if (arguments.size <= index) {
+            return emptyMap()
+        }
+
+        val argument = arguments[index]
+        var name: String = parameter.text.removePrefix("mut ")
+
+        if (name != argument.text) {
+            if (argument.childrenWithLeaves.any { it.text == name }) {
+                name += "_argument"
+            }
+            val bindingMutability = when (parameter) {
+                is RsPatIdent -> parameter.patBinding.mutability.isMut
+                else -> false
+            }
+            val letDeclaration = factory.createLetDeclaration(name, argument, bindingMutability)
+            addLetDeclarationNearCaller(caller, letDeclaration)
+            return getParamUsagesToReplace(parameter, funcScope, letDeclaration)
+        }
+
+        return emptyMap()
+    }
+
+    private fun addLetDeclarationNearCaller(caller: PsiElement, letDeclaration: RsLetDecl) {
+        val callerParentStmt = caller.ancestorOrSelf<RsStmt>()
+        if (callerParentStmt != null) {
+            callerParentStmt.addLeftSibling(letDeclaration)
+        } else {
+            caller.addLeftSibling(letDeclaration)
+        }
+    }
+
+    private fun getParamUsagesToReplace(parameter: RsPat, funcScope: LocalSearchScope, letDeclaration: RsLetDecl):
+        MutableMap<RsExpr?, PsiElement> {
+        val paramUsagesToReplace = mutableMapOf<RsExpr?, PsiElement>()
+        val paramNavigationElement = (parameter as? RsPatIdent)?.patBinding?.navigationElement
+            ?: parameter.navigationElement
+        ReferencesSearch.search(paramNavigationElement, funcScope).findAll().forEach {
+            val declarationID = when (val declarationVarPat = letDeclaration.pat) {
+                is RsPatIdent -> declarationVarPat.patBinding.identifier
+                else -> declarationVarPat
+            }
+            if (declarationID != null) {
+                val declarationElementExpr: RsExpr? = it.element.ancestorOrSelf()
+                paramUsagesToReplace[declarationElementExpr] = declarationID
+            }
+        }
+        return paramUsagesToReplace
+    }
+
+    private fun addFunctionBodyToCallerWithCorrectSpacing(
+        leftSibling: PsiElement?,
+        rightSibling: PsiElement?,
+        blockParent: RsBlock,
+        body: RsBlock,
+        childContainingEnclosingStatement: PsiElement?
+    ) {
         if (leftSibling != null) {
             val isThereSpaceBeforeFunctionCall = leftSibling.nextSibling.text.startsWith("\n\n")
             val isThereSpaceAfterFunctionCall = rightSibling?.prevSibling?.text?.startsWith("\n\n") == true
@@ -268,7 +369,13 @@ class RsInlineFunctionProcessor(
             val selfExprText = buildString {
                 if (selfParam.mut != null) append("mut")
                 append(" ")
-                append((caller as RsDotExpr).expr.text)
+                val callerText = when {
+                    caller is RsDotExpr -> caller.expr.text
+                    caller is RsCallExpr && caller.expr is RsPathExpr ->
+                        (caller as RsCallExprImpl).valueArgumentList.exprList[0].text
+                    else -> caller.text
+                }
+                append(callerText)
             }
 
             val selfExpr = factory.tryCreateExpression(selfExprText)!!
