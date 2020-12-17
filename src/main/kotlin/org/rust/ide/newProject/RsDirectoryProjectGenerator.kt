@@ -5,7 +5,6 @@
 
 package org.rust.ide.newProject
 
-import com.intellij.facet.ui.ValidationResult
 import com.intellij.ide.util.projectWizard.AbstractNewProjectStep
 import com.intellij.ide.util.projectWizard.CustomStepProjectGenerator
 import com.intellij.openapi.module.Module
@@ -14,11 +13,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.AbstractActionWithPanel
 import com.intellij.platform.DirectoryProjectGenerator
 import com.intellij.platform.DirectoryProjectGeneratorBase
-import com.intellij.platform.ProjectGeneratorPeer
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.ide.icons.RsIcons
 import org.rust.openapiext.computeWithCancelableProgress
-import java.io.File
 import javax.swing.Icon
 
 // We implement `CustomStepProjectGenerator` as well to correctly show settings UI
@@ -26,17 +23,8 @@ import javax.swing.Icon
 class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationData>(),
                                     CustomStepProjectGenerator<ConfigurationData> {
 
-    private var peer: RsProjectGeneratorPeer? = null
-
     override fun getName(): String = "Rust"
     override fun getLogo(): Icon? = RsIcons.RUST
-    override fun createPeer(): ProjectGeneratorPeer<ConfigurationData> = RsProjectGeneratorPeer().also { peer = it }
-
-    override fun validate(baseDirPath: String): ValidationResult {
-        val crateName = File(baseDirPath).nameWithoutExtension
-        val message = peer?.settings?.template?.validateProjectName(crateName) ?: return ValidationResult.OK
-        return ValidationResult(message)
-    }
 
     override fun generateProject(project: Project, baseDir: VirtualFile, data: ConfigurationData, module: Module) {
         val (settings, template) = data

@@ -39,10 +39,12 @@ import kotlin.math.min
 
 class RsNewProjectPanel(
     private val showProjectTypeSelection: Boolean,
-    private val updateListener: (() -> Unit)? = null
+    private val validate: Boolean = false
 ) : Disposable {
 
-    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = updateListener)
+    private val rustProjectSettings = RustProjectSettingsPanel(updateListener = if (validate) ::validateSettings else null).also {
+        Disposer.register(this, it)
+    }
 
     private val cargo: Cargo?
         get() = rustProjectSettings.data.toolchain?.cargo()
@@ -170,7 +172,9 @@ class RsNewProjectPanel(
             onUiThread = { needInstall ->
                 downloadCargoGenerateLink.isVisible = needInstall
                 needInstallCargoGenerate = needInstall
-                updateListener?.invoke()
+                if (validate) {
+                    validateSettings()
+                }
             }
         )
     }
