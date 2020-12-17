@@ -8,7 +8,6 @@ package org.rust.lang.core.resolve2
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.psi.util.PsiTreeUtil
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.crate.Crate
@@ -342,7 +341,8 @@ private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace):
                 // TODO: Multiresolve for macro 2.0
                 if (macros.isNotEmpty()) return listOf(macros.last())
 
-                items.rest
+                items.named.values
+                    .flatten()
                     .filterIsInstance<RsFunction>()
                     .filter {
                         it.isProcMacroDef && it.procMacroName == name && matchesIsEnabledByCfg(it, this)
@@ -418,30 +418,7 @@ private inline fun <reified T : RsElement> List<T>.singleOrCfgEnabled(): T? =
     singleOrNull() ?: singleOrNull { it.isEnabledByCfg }
 
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> =
-    getExpandedItemsWithName(name, T::class.java)
-
-/** [expandedItemsExceptImplsAndUses] with addition of items from [RsForeignModItem]s */
-private fun <T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(
-    name: String,
-    psiClass: Class<T>
-): List<T> {
-    val result = arrayListOf<T>()
-    for (item in expandedItemsExceptImplsAndUses) {
-        if (item is RsForeignModItem) {
-            for (itemInner in PsiTreeUtil.getStubChildrenOfTypeAsList(item, psiClass)) {
-                if (itemInner.name == name) {
-                    result.add(itemInner)
-                }
-            }
-        } else {
-            if (item.name == name && psiClass.isInstance(item)) {
-                @Suppress("UNCHECKED_CAST")
-                result.add(item as T)
-            }
-        }
-    }
-    return result
-}
+    expandedItemsCached.named[name]?.filterIsInstance<T>() ?: emptyList()
 
 fun findModDataFor(file: RsFile): ModData? {
     val project = file.project

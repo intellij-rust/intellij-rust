@@ -12,6 +12,7 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.SmartList
+import gnu.trove.THashMap
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
@@ -51,7 +52,7 @@ inline fun RsItemsOwner.processExpandedItemsExceptImplsAndUses(processor: (RsIte
 }
 
 val RsItemsOwner.expandedItemsExceptImplsAndUses: List<RsItemElement>
-    get() = expandedItemsCached.rest
+    get() = expandedItemsCached.named.values.flatten()
 
 private val EXPANDED_ITEMS_KEY: Key<CachedValue<RsCachedItems>> = Key.create("EXPANDED_ITEMS_KEY")
 
@@ -60,7 +61,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         val namedImports = SmartList<CachedNamedImport>()
         val starImports = SmartList<CachedStarImport>()
         val macros = SmartList<RsMacro>()
-        val rest = SmartList<RsItemElement>()
+        val named: MutableMap<String, SmartList<RsItemElement>> = THashMap()
         processExpandedItemsInternal {
             when (it) {
                 // Optimization: impls are not named elements, so we don't need them for name resolution
@@ -84,7 +85,20 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
 
                 is RsMacro -> macros.add(it)
 
-                is RsItemElement -> rest.add(it)
+                is RsItemElement -> {
+                    if (it is RsForeignModItem) {
+                        for (item in it.stubChildrenOfType<RsItemElement>()) {
+                            val name = item.name ?: continue
+                            named.getOrPut(name) { SmartList() }.add(item)
+                        }
+                    } else {
+                        val name = when (it) {
+                            is RsExternCrateItem -> it.nameWithAlias
+                            else -> it.name
+                        } ?: return@processExpandedItemsInternal false
+                        named.getOrPut(name) { SmartList() }.add(it)
+                    }
+                }
             }
             false
         }
@@ -98,7 +112,7 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                 namedImports.optimizeList(),
                 starImports.optimizeList(),
                 macros.optimizeList(),
-                rest.optimizeList()
+                named
             ),
             listOfNotNull(rustStructureOrAnyPsiModificationTracker, localModTracker)
         )
@@ -112,7 +126,7 @@ class RsCachedItems(
     val namedImports: List<CachedNamedImport>,
     val starImports: List<CachedStarImport>,
     val macros: List<RsMacro>,
-    val rest: List<RsItemElement>
+    val named: Map<String, List<RsItemElement>>
 ) {
     data class CachedNamedImport(
         val isPublic: Boolean,
