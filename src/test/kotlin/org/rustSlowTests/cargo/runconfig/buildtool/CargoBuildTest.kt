@@ -23,8 +23,6 @@ import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
 abstract class CargoBuildTest : RunConfigurationTestBase() {
 
-    override fun shouldRunTest(): Boolean = System.getenv("CI") == null
-
     override fun setUp() {
         super.setUp()
         testBuildId = Any()
