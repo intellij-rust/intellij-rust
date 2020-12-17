@@ -6,7 +6,6 @@
 package org.rust.cargo.toolchain.tools
 
 import com.google.gson.Gson
-import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configuration.EnvironmentVariablesData
@@ -49,6 +48,7 @@ import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.*
+import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.stdext.buildList
 import java.io.File
 import java.nio.file.Files
@@ -180,11 +180,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         val messages = mutableMapOf<PackageId, BuildScriptMessage>()
 
         for (line in processOutput.stdoutLines) {
-            val jsonObject = try {
-                JsonParser.parseString(line).asJsonObject
-            } catch (ignore: JsonSyntaxException) {
-                continue
-            }
+            val jsonObject = tryParseJsonObject(line) ?: continue
             val message = BuildScriptMessage.fromJson(jsonObject) ?: continue
             messages[message.package_id] = message
         }
@@ -563,14 +559,14 @@ sealed class CargoCheckArgs {
         override val cargoProjectDirectory: Path,
         val target: CargoWorkspace.Target,
         override val extraArguments: String
-    ): CargoCheckArgs()
+    ) : CargoCheckArgs()
 
     data class FullWorkspace(
         override val linter: ExternalLinter,
         override val cargoProjectDirectory: Path,
         val allTargets: Boolean,
         override val extraArguments: String
-    ): CargoCheckArgs()
+    ) : CargoCheckArgs()
 
     companion object {
         fun forTarget(project: Project, target: CargoWorkspace.Target): CargoCheckArgs {

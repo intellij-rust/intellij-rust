@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package org.rust.cargo.runconfig.buildtool
 
+import com.google.common.annotations.VisibleForTesting
 import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonSyntaxException
 import com.intellij.build.FilePosition
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
@@ -15,72 +16,56 @@ import com.intellij.build.events.StartEvent
 import com.intellij.build.events.impl.*
 import com.intellij.build.output.BuildOutputInstantReader
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.execution.process.AnsiEscapeDecoder
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.text.StringUtil
+import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.quantizeAnsiColors
+import org.rust.cargo.runconfig.removeEscapeSequences
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
-import java.nio.file.Path
+import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import java.nio.file.Paths
 import java.util.function.Consumer
 
-@Suppress("UnstableApiUsage")
-class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildOutputParser {
+class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutputParser {
+    private val decoder: AnsiEscapeDecoder = AnsiEscapeDecoder()
     private val startEvents: MutableList<StartEvent> = mutableListOf()
     private val messageEvents: MutableSet<MessageEvent> = hashSetOf()
 
-    private var jsonBuffer: String = ""
-
-    private val rawBinaries: MutableSet<String> = hashSetOf()
-    val binaries: List<Path> get() = rawBinaries.map { Paths.get(it) }
+    private val jsonBuffer: StringBuilder = StringBuilder()
 
     override fun parse(
         line: String,
         reader: BuildOutputInstantReader,
         messageConsumer: Consumer<in BuildEvent>
     ): Boolean {
-        val text = jsonBuffer + line
-        if (text.startsWith("{")) {
-            if (text.endsWith("}")) {
-                jsonBuffer = ""
-            } else {
-                jsonBuffer = text + "\n"
-                return true
-            }
+        // If it's not a part of JSON message, process it as a cargo message
+        if (jsonBuffer.isEmpty() && "{\"reason\"" !in line) {
+            return tryHandleCargoMessage(quantizeAnsiColors(line), messageConsumer)
         }
 
-        return try {
-            val json = parseJsonObject(text)
-            tryHandleRustcMessage(json, messageConsumer) || tryHandleRustcArtifact(json)
-        } catch (e: JsonSyntaxException) {
-            tryHandleCargoMessage(text, messageConsumer)
-        }
+        // Add the current line to the JSON buffer and try to parse it as a JSON object
+        // If successful, then process the object as a rustc message / artifact
+        jsonBuffer.append(line.withNewLine())
+        val message = jsonBuffer.dropWhile { it != '{' }.toString()
+        val jsonObject = tryParseJsonObject(message) ?: return false
+        jsonBuffer.clear()
+
+        return tryHandleRustcMessage(jsonObject, messageConsumer) || tryHandleRustcArtifact(jsonObject)
     }
 
-    fun parseOutput(
-        line: String,
-        stdOut: Boolean,
-        messageConsumer: (BuildEvent) -> Unit
-    ): Boolean {
-        val message = try {
-            val json = parseJsonObject(line)
-            val rustcMessage = json?.let { CargoTopMessage.fromJson(it)?.message }
-            rustcMessage?.rendered ?: return false
-        } catch (e: JsonSyntaxException) {
-            line
-        }
-        val formattedMessage = if (message.endsWith('\n')) message else message + '\n'
-        val event = OutputBuildEventImpl(context.buildId, formattedMessage, stdOut)
-        messageConsumer(event)
-        return true
-    }
-
-    private fun tryHandleRustcMessage(json: JsonObject?, messageConsumer: Consumer<in BuildEvent>): Boolean {
-        val topMessage = json?.let { CargoTopMessage.fromJson(it) } ?: return false
+    private fun tryHandleRustcMessage(jsonObject: JsonObject, messageConsumer: Consumer<in BuildEvent>): Boolean {
+        val topMessage = CargoTopMessage.fromJson(jsonObject) ?: return false
         val rustcMessage = topMessage.message
+
+        val detailedMessage = rustcMessage.rendered?.let { quantizeAnsiColors(it) }
+        if (detailedMessage != null) {
+            messageConsumer.acceptText(context.buildId, detailedMessage.withNewLine())
+        }
 
         val message = rustcMessage.message.trim().capitalize().trimEnd('.')
         if (message.startsWith("Aborting due") || message.endsWith("emitted")) return true
-        val detailedMessage = rustcMessage.rendered
 
         val parentEventId = topMessage.package_id.substringBefore("(").trimEnd()
 
@@ -91,23 +76,23 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         val messageEvent = createMessageEvent(parentEventId, kind, message, detailedMessage, filePosition)
         if (messageEvents.add(messageEvent)) {
             if (startEvents.none { it.id == parentEventId }) {
-                handleCompilingMessage("Compiling $parentEventId", true, messageConsumer)
+                handleCompilingMessage("Compiling $parentEventId", false, messageConsumer)
             }
 
             messageConsumer.accept(messageEvent)
 
             if (kind == MessageEvent.Kind.ERROR) {
-                context.errors += 1
+                context.errors.incrementAndGet()
             } else {
-                context.warnings += 1
+                context.warnings.incrementAndGet()
             }
         }
 
         return true
     }
 
-    private fun tryHandleRustcArtifact(json: JsonObject?): Boolean {
-        val rustcArtifact = json?.let { CargoMetadata.Artifact.fromJson(it) } ?: return false
+    private fun tryHandleRustcArtifact(jsonObject: JsonObject): Boolean {
+        val rustcArtifact = CargoMetadata.Artifact.fromJson(jsonObject) ?: return false
 
         val isSuitableTarget = when (rustcArtifact.target.cleanKind) {
             CargoMetadata.TargetKind.BIN -> true
@@ -121,14 +106,17 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         }
         if (!isSuitableTarget || context.isTestBuild && !rustcArtifact.profile.test) return true
 
-        rawBinaries.addAll(rustcArtifact.executables)
+        context.binaries = rustcArtifact.executables.map { Paths.get(it) }
 
         return true
     }
 
     private fun tryHandleCargoMessage(line: String, messageConsumer: Consumer<in BuildEvent>): Boolean {
-        val kind = getMessageKind(line.substringBefore(":"))
-        val message = line
+        val cleanLine = decoder.removeEscapeSequences(line)
+        if (cleanLine.isEmpty()) return true
+
+        val kind = getMessageKind(cleanLine.substringBefore(":"))
+        val message = cleanLine
             .let { if (kind in ERROR_OR_WARNING) it.substringAfter(":") else it }
             .removePrefix(" internal compiler error:")
             .trim()
@@ -139,17 +127,27 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
                 handleCompilingMessage(message, false, messageConsumer)
             message.startsWith("Fresh") ->
                 handleCompilingMessage(message, true, messageConsumer)
-            message.startsWith("Building") ->
-                handleProgressMessage(line, messageConsumer)
+
+            message.startsWith("Building") -> {
+                handleProgressMessage(cleanLine, messageConsumer)
+                return true // don't print the progress bar
+            }
+            message.startsWith("Downloading") || message.startsWith("Checkout") || message.startsWith("Fetch") -> {
+                return true // don't print the progress bar
+            }
+
             message.startsWith("Finished") ->
                 handleFinishedMessage(null, messageConsumer)
             message.startsWith("Could not compile") -> {
                 val taskName = message.substringAfter("`").substringBefore("`")
                 handleFinishedMessage(taskName, messageConsumer)
             }
+
             kind in ERROR_OR_WARNING ->
-                handleProblemMessage(kind, message, line, messageConsumer)
+                handleProblemMessage(kind, message, cleanLine, messageConsumer)
         }
+
+        messageConsumer.acceptText(context.buildId, line.withNewLine())
         return true
     }
 
@@ -248,9 +246,9 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         if (messageEvents.add(messageEvent)) {
             messageConsumer.accept(messageEvent)
             if (kind == MessageEvent.Kind.ERROR) {
-                context.errors += 1
+                context.errors.incrementAndGet()
             } else {
-                context.warnings += 1
+                context.warnings.incrementAndGet()
             }
         }
     }
@@ -274,6 +272,7 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
     }
 
     companion object {
+        @VisibleForTesting
         const val RUSTC_MESSAGE_GROUP: String = "Rust compiler"
 
         private val PROGRESS_TOTAL_RE: Regex = """(\d+)/(\d+)""".toRegex()
@@ -284,8 +283,13 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         private val ERROR_OR_WARNING: List<MessageEvent.Kind> =
             listOf(MessageEvent.Kind.ERROR, MessageEvent.Kind.WARNING)
 
-        private fun parseJsonObject(line: String): JsonObject? =
-            JsonParser.parseString(line).takeIf { it.isJsonObject }?.asJsonObject
+        private val StartEvent.taskName: String?
+            get() = (id as? String)?.substringBefore(" ")?.substringBefore("(")?.trimEnd()
+
+        private fun String.withNewLine(): String = if (StringUtil.endsWithLineBreak(this)) this else this + '\n'
+
+        private fun Consumer<in BuildEvent>.acceptText(parentId: Any?, text: String) =
+            accept(OutputBuildEventImpl(parentId, text, true))
 
         private fun getMessageKind(kind: String): MessageEvent.Kind =
             when (kind) {
@@ -305,9 +309,6 @@ class CargoBuildEventsConverter(private val context: CargoBuildContext) : BuildO
         } else {
             FileMessageEventImpl(parentEventId, kind, RUSTC_MESSAGE_GROUP, message, detailedMessage, filePosition)
         }
-
-        private val StartEvent.taskName: String?
-            get() = (id as? String)?.substringBefore(" ")?.substringBefore("(")?.trimEnd()
 
         private data class Progress(val current: Long, val total: Long) {
             val fraction: Double = current.toDouble() / total

@@ -12,6 +12,7 @@ import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.TestDataProvider
+import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.mockBuildProgressListener
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.testBuildId
@@ -25,6 +26,7 @@ import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyFi
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartBuildEvent
 import org.rustSlowTests.cargo.runconfig.buildtool.CargoBuildTest.Companion.MyStartEvent
 
+@MinRustcVersion("1.48.0")
 class RsBuildActionTest : CargoBuildTest() {
 
     fun `test build first action`() {
