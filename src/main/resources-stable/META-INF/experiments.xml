@@ -1,6 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
-        <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="0">
+        <experimentalFeature id="org.rust.cargo.build.tool.window" percentOfUsers="100">
             <description>Enable Cargo tasks to use Build Tool Window</description>
         </experimentalFeature>
         <experimentalFeature id="org.rust.cargo.test.tool.window" percentOfUsers="100">
