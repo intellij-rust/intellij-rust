@@ -22,6 +22,7 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class CargoBuildContext(
     val cargoProject: CargoProject,
@@ -50,11 +51,8 @@ class CargoBuildContext(
     var finished: Long = started
     private val duration: Long get() = finished - started
 
-    @Volatile
-    var errors: Int = 0
-
-    @Volatile
-    var warnings: Int = 0
+    val errors: AtomicInteger = AtomicInteger()
+    val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
     var binaries: List<Path> = emptyList()
@@ -91,6 +89,9 @@ class CargoBuildContext(
 
         val finishMessage: String
         val finishDetails: String?
+
+        val errors = errors.get()
+        val warnings = warnings.get()
 
         // We report successful builds with errors or warnings correspondingly
         val messageType = if (isCanceled) {
@@ -136,8 +137,8 @@ class CargoBuildContext(
             canceled = true,
             started = started,
             duration = duration,
-            errors = errors,
-            warnings = warnings,
+            errors = errors.get(),
+            warnings = warnings.get(),
             message = "$taskName canceled"
         ))
 

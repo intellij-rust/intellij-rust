@@ -82,9 +82,9 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
             messageConsumer.accept(messageEvent)
 
             if (kind == MessageEvent.Kind.ERROR) {
-                context.errors += 1
+                context.errors.incrementAndGet()
             } else {
-                context.warnings += 1
+                context.warnings.incrementAndGet()
             }
         }
 
@@ -246,9 +246,9 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         if (messageEvents.add(messageEvent)) {
             messageConsumer.accept(messageEvent)
             if (kind == MessageEvent.Kind.ERROR) {
-                context.errors += 1
+                context.errors.incrementAndGet()
             } else {
-                context.warnings += 1
+                context.warnings.incrementAndGet()
             }
         }
     }

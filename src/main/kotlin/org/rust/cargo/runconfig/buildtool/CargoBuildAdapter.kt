@@ -57,7 +57,7 @@ class CargoBuildAdapter(
 
     override fun processTerminated(event: ProcessEvent) {
         instantReader.closeAndGetFuture().whenComplete { _, error ->
-            val isSuccess = event.exitCode == 0 && context.errors == 0
+            val isSuccess = event.exitCode == 0 && context.errors.get() == 0
             val isCanceled = context.indicator?.isCanceled ?: false
 
             val (status, result) = when {
