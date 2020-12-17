@@ -6,10 +6,9 @@
 package org.rust.toml.crates.local
 
 import com.intellij.ide.caches.CachesInvalidator
-import com.intellij.openapi.components.service
 
 class CratesLocalIndexCachesInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
-        service<CratesLocalIndexService>().invalidateCaches()
+        CratesLocalIndexService.getInstance().invalidateCaches()
     }
 }
