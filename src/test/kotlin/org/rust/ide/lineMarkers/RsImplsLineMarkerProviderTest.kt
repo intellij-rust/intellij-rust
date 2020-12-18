@@ -19,13 +19,13 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         trait Foo {} // - Has implementations
     """)
 
-    fun testOneImpl() = doTestByText("""
+    fun `test one impl`() = doTestByText("""
         trait Foo {}  // - Has implementations
         struct Bar {} // - Has implementations
         impl Foo for Bar {}
     """)
 
-    fun testMultipleImpl() = doTestByText("""
+    fun `test multiple impls`() = doTestByText("""
         trait Foo {}  // - Has implementations
         mod bar {
             use super::Foo;
@@ -39,7 +39,7 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         }
     """)
 
-    fun testIconPosition() = doTestByText("""
+    fun `test icon position`() = doTestByText("""
         ///
         /// Documentation
         ///
