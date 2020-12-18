@@ -14,12 +14,15 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.util.Query
+import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsStructItem
@@ -103,15 +106,20 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
 
             Arrays.sort(targets, Comparator.comparing(renderer::getComparingObject))
 
-            val escapedName = StringUtil.escapeXmlEntities(elt.text)
-            @Suppress("DialogTitleCapitalization")
-            PsiElementListNavigator.openTargets(
-                event,
-                targets,
-                CodeInsightBundle.message("goto.implementation.chooserTitle", escapedName, targets.size, ""),
-                CodeInsightBundle.message("goto.implementation.findUsages.title", escapedName, targets.size),
-                renderer
-            )
+            if (isUnitTestMode) {
+                val renderedItems = targets.map(renderer::getElementText)
+                elt.putUserData(RENDERED_IMPLS, renderedItems)
+            } else {
+                val escapedName = StringUtil.escapeXmlEntities(elt.text)
+                @Suppress("DialogTitleCapitalization")
+                PsiElementListNavigator.openTargets(
+                    event,
+                    targets,
+                    CodeInsightBundle.message("goto.implementation.chooserTitle", escapedName, targets.size, ""),
+                    CodeInsightBundle.message("goto.implementation.findUsages.title", escapedName, targets.size),
+                    renderer
+                )
+            }
         }
     }
 
@@ -135,6 +143,9 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
     }
 
     companion object {
+        @TestOnly
+        val RENDERED_IMPLS: Key<List<String>> = Key.create("RENDERED_IMPLS")
+
         fun implsQuery(psi: PsiElement): Query<RsElement>? {
             val parent = psi.parent
             val query: Query<RsElement> = when {

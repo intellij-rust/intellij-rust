@@ -5,6 +5,12 @@
 
 package org.rust.ide.lineMarkers
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.psi.PsiElement
+import org.intellij.lang.annotations.Language
+import java.awt.event.MouseEvent
+import javax.swing.JLabel
+
 
 class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
@@ -46,4 +52,26 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         {}
         impl Foo for Bar {}
     """)
+
+    fun `test impls sorting`() = doPopupTest("""
+        trait Bar {}
+        trait Foo {}
+        struct FooBar/*caret*/;
+
+        impl Foo for FooBar {}
+        impl Bar for FooBar {}
+    """,
+        "Bar for FooBar",
+        "Foo for FooBar"
+    )
+
+    private fun doPopupTest(@Language("Rust") code: String, vararg expectedItems: String) {
+        InlineFile(code)
+        val element = myFixture.file.findElementAt(myFixture.caretOffset)!!
+        @Suppress("UNCHECKED_CAST")
+        val markerInfo = (myFixture.findGuttersAtCaret().first() as LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>).lineMarkerInfo
+        markerInfo.navigationHandler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), element)
+        val renderedImpls = element.getUserData(RsImplsLineMarkerProvider.RENDERED_IMPLS)!!
+        assertEquals(expectedItems.toList(), renderedImpls)
+    }
 }
