@@ -14,7 +14,6 @@ import com.intellij.codeInsight.navigation.NavigationGutterIconRenderer
 import com.intellij.ide.util.DefaultPsiElementCellRenderer
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.NavigatablePsiElement
@@ -149,7 +148,7 @@ class RsImplsLineMarkerProvider : LineMarkerProvider {
                     parent.owner is RsAbstractableOwner.Trait -> parent.searchForImplementations().mapQuery { it }
                 else -> return null
             }
-            return query.filterQuery(Condition { it != null })
+            return query.filterQuery { it != null }
         }
     }
 }
