@@ -562,7 +562,9 @@ private class TargetImpl(
 
     override val crateRoot: VirtualFile? by CachedVirtualFile(crateRootUrl)
 
-    override val cfgOptions: CfgOptions = pkg.workspace.cfgOptions + (pkg.cfgOptions ?: CfgOptions.EMPTY)
+    override val cfgOptions: CfgOptions = pkg.workspace.cfgOptions + (pkg.cfgOptions ?: CfgOptions.EMPTY) +
+        // https://doc.rust-lang.org/reference/conditional-compilation.html#proc_macro
+        if (kind.isProcMacro) CfgOptions(emptyMap(), setOf("proc_macro")) else CfgOptions.EMPTY
 
     override fun toString(): String = "Target(name='$name', kind=$kind, crateRootUrl='$crateRootUrl')"
 }
