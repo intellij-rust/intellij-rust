@@ -20,7 +20,7 @@ import org.rust.cargo.toolchain.tools.rustc
  */
 abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
 
-    private lateinit var rustupFixture: RustupTestFixture
+    protected lateinit var rustupFixture: RustupTestFixture
 
     open val dataPath: String = ""
 
