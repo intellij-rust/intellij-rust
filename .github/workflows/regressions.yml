@@ -53,6 +53,9 @@ jobs:
                             repository: tokio-rs/tokio
                           - name: amethyst
                             repository: amethyst/amethyst
+                    - name: regressions-2
+                      projects:
+                          - name: stdlib
         env:
             ORG_GRADLE_PROJECT_showStandardStreams: true
             PROJECTS: ${{ toJSON(matrix.batch.projects) }}
