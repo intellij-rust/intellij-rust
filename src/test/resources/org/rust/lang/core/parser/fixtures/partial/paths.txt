@@ -1,18 +1,24 @@
 FILE
   RsUseItemImpl(USE_ITEM)
     PsiElement(use)('use')
+  PsiErrorElement:'::' or ';' expected, got '::'
+    <empty list>
   PsiWhiteSpace(' ')
   PsiElement(::)('::')
-  PsiErrorElement:'*', Self, crate, identifier, self, super or '{' expected, got ';'
+  PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
     PsiElement(use)('use')
+  PsiErrorElement:'::' or ';' expected, got '::'
+    <empty list>
   PsiWhiteSpace(' ')
   PsiElement(::)('::')
-  PsiErrorElement:'*', Self, crate, identifier, self, super or '{' expected, got '::'
-    PsiElement(::)('::')
-  PsiElement(;)(';')
+  PsiErrorElement:Self, crate, identifier, self or super expected, got '::'
+    <empty list>
+  PsiElement(::)('::')
+  PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+    PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
     PsiElement(use)('use')
