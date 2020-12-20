@@ -44,6 +44,12 @@ const BYTES: &[u8] = include_bytes!("data.data",);
 
 include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
 
+std::include!("path/to/rust/file.rs");
+::std::include!("path/to/rust/file.rs");
+crate::foo! {}
+self::foo! {}
+super::foo! {}
+
 fn foo() {
     #[cfg(foo)]
     foo! {}
@@ -82,6 +88,7 @@ fn foo() {
     todo!("it's too {epithet} to implement", epithet = "boring");
     std::println!("{}", 92); // fully qualified macro call
     std::println /*comment*/ !("{}", 92); // fully qualified macro call with comment
+    ::std::println!("{}", 92); // fully qualified macro call beginning with double colon
     eprintln!(Foo[]); // custom format macro
     // -------------------
 
