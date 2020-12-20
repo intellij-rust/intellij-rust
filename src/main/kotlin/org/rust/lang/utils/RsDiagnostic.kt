@@ -509,7 +509,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            return "Method `${fn.name}` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitName` has $superParamsCount"
+            return "Method `${fn.name}` has $paramsCount ${pluralize("parameter", paramsCount)} but the declaration in trait `$traitName` has $superParamsCount"
         }
     }
 
@@ -538,9 +538,9 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             return "This function takes${if (functionType.variadic) " at least" else ""}" +
-                " $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
-                " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
-                " ${pluralise(realCount, "was", "were")} supplied"
+                " $expectedCount ${pluralize("parameter", expectedCount)}" +
+                " but $realCount ${pluralize("parameter", realCount)}" +
+                " ${if (realCount == 1) "was" else "were"} supplied"
         }
 
         enum class FunctionType(val variadic: Boolean, val errorCode: RsErrorCode) {
@@ -1449,9 +1449,6 @@ private fun htmlHeader(error: RsErrorCode?, description: String): String =
     } else {
         "$description [<a href='${error.infoUrl}'>${error.code}</a>]"
     }
-
-private fun pluralise(count: Int, singular: String, plural: String): String =
-    if (count == 1) singular else plural
 
 private val RsSelfParameter.canonicalDecl: String
     get() = buildString {
