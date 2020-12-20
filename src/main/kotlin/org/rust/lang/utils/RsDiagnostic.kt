@@ -202,7 +202,7 @@ sealed class RsDiagnostic(
 
         private fun expectedFound(element: PsiElement, expectedTy: Ty, actualTy: Ty): String {
             val useQualifiedName = getConflictingNames(element, expectedTy, actualTy)
-            return "expected `${expectedTy.escaped(useQualifiedName)}`, found `${actualTy.escaped(useQualifiedName)}`"
+            return "expected `${expectedTy.rendered(useQualifiedName)}`, found `${actualTy.rendered(useQualifiedName)}`"
         }
 
         /**
@@ -264,7 +264,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0614,
-            "type ${ty.escaped(getConflictingNames(element, ty))} cannot be dereferenced"
+            "type ${ty.rendered(getConflictingNames(element, ty))} cannot be dereferenced"
         )
     }
 
@@ -277,7 +277,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             errorCode,
-            "$itemType `${escapeString(element.text)}` is private",
+            "$itemType `${element.text}` is private",
             fixes = listOfNotNull(fix)
         )
     }
@@ -291,7 +291,7 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             if (element.parent is RsStructLiteralField) E0451 else E0616,
-            "Field `${escapeString(fieldName)}` of struct `${escapeString(structName)}` is private",
+            "Field `$fieldName` of struct `$structName` is private",
             fixes = listOfNotNull(fix)
         )
     }
@@ -376,8 +376,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val traitNameS = escapeString(traitName)
-            return "Implementing the trait `$traitNameS` is not unsafe"
+            return "Implementing the trait `$traitName` is not unsafe"
         }
     }
 
@@ -392,8 +391,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val traitNameS = escapeString(traitName)
-            return "The trait `$traitNameS` requires an `unsafe impl` declaration"
+            return "The trait `$traitName` requires an `unsafe impl` declaration"
         }
     }
 
@@ -436,9 +434,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val memberNameS = escapeString(member.name)
-            val traitNameS = escapeString(traitName)
-            return "Method `$memberNameS` is not a member of trait `$traitNameS`"
+            return "Method `${member.name}` is not a member of trait `$traitName`"
         }
     }
 
@@ -513,9 +509,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val fnName = escapeString(fn.name)
-            val traitNameS = escapeString(traitName)
-            return "Method `$fnName` has $paramsCount ${pluralise(paramsCount, "parameter", "parameters")} but the declaration in trait `$traitNameS` has $superParamsCount"
+            return "Method `${fn.name}` has $paramsCount ${pluralize("parameter", paramsCount)} but the declaration in trait `$traitName` has $superParamsCount"
         }
     }
 
@@ -544,9 +538,9 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             return "This function takes${if (functionType.variadic) " at least" else ""}" +
-                " $expectedCount ${pluralise(expectedCount, "parameter", "parameters")}" +
-                " but $realCount ${pluralise(realCount, "parameter", "parameters")}" +
-                " ${pluralise(realCount, "was", "were")} supplied"
+                " $expectedCount ${pluralize("parameter", expectedCount)}" +
+                " but $realCount ${pluralize("parameter", realCount)}" +
+                " ${if (realCount == 1) "was" else "were"} supplied"
         }
 
         enum class FunctionType(val variadic: Boolean, val errorCode: RsErrorCode) {
@@ -650,8 +644,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(fieldName)
-            return "Enum variant `$name` is already declared"
+            return "Enum variant `$fieldName` is already declared"
         }
     }
 
@@ -666,8 +659,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(lifetimeName)
-            return "`$name` is a reserved lifetime name"
+            return "`$lifetimeName` is a reserved lifetime name"
         }
     }
 
@@ -682,8 +674,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(fieldName)
-            return "Lifetime name `$name` declared twice in the same scope"
+            return "Lifetime name `$fieldName` declared twice in the same scope"
         }
     }
 
@@ -718,8 +709,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(fieldName)
-            return "Identifier `$name` is bound more than once in this parameter list"
+            return "Identifier `$fieldName` is bound more than once in this parameter list"
         }
     }
 
@@ -747,8 +737,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(fieldName)
-            return "The name `$name` is already used for a type parameter in this type parameter list"
+            return "The name `$fieldName` is already used for a type parameter in this type parameter list"
         }
     }
 
@@ -764,7 +753,7 @@ sealed class RsDiagnostic(
 
         private fun errorText(): String {
             val itemKind = found.itemKindName
-            val name = escapeString(found.name)
+            val name = found.name
             return "Expected trait, found $itemKind `$name`"
         }
     }
@@ -780,8 +769,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val name = escapeString(fieldName)
-            return "Duplicate definitions with name `$name`"
+            return "Duplicate definitions with name `$fieldName`"
         }
     }
 
@@ -798,10 +786,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val itemTypeS = escapeString(itemType)
-            val fieldNameS = escapeString(fieldName)
-            val scopeTypeS = escapeString(scopeType)
-            return "A $itemTypeS named `$fieldNameS` has already been defined in this $scopeTypeS"
+            return "A $itemType named `$fieldName` has already been defined in this $scopeType"
         }
     }
 
@@ -869,8 +854,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val labelText = escapeString(element.text)
-            return "Use of undeclared label `$labelText`"
+            return "Use of undeclared label `${element.text}`"
         }
     }
 
@@ -887,8 +871,7 @@ sealed class RsDiagnostic(
         }
 
         private fun errorText(): String {
-            val lifetimeText = escapeString(element.text)
-            return "Use of undeclared lifetime name `$lifetimeText`"
+            return "Use of undeclared lifetime name `${element.text}`"
         }
     }
 
@@ -921,8 +904,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val missingS = escapeString(missing)
-            return "Not all trait items implemented, missing: $missingS"
+            return "Not all trait items implemented, missing: $missing"
         }
     }
 
@@ -937,8 +919,7 @@ sealed class RsDiagnostic(
         )
 
         private fun errorText(): String {
-            val elTextS = escapeString(crateName)
-            return "Can't find crate for `$elTextS`"
+            return "Can't find crate for `$crateName`"
         }
     }
 
@@ -949,8 +930,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0277,
-            header = escapeString("the trait bound `$ty: std::marker::Sized` is not satisfied"),
-            description = escapeString("`$ty` does not have a constant size known at compile-time"),
+            header = "the trait bound `$ty: std::marker::Sized` is not satisfied",
+            description = "`$ty` does not have a constant size known at compile-time",
             fixes = listOf(ConvertToReferenceFix(element), ConvertToBoxFix(element))
         )
     }
@@ -965,8 +946,8 @@ sealed class RsDiagnostic(
         override fun prepare() = PreparedAnnotation(
             ERROR,
             E0277,
-            header = escapeString("the trait bound `$typeText: $missingTrait` is not satisfied"),
-            description = escapeString("the trait `$missingTrait` is not implemented for `$typeText`")
+            header = "the trait bound `$typeText: $missingTrait` is not satisfied",
+            description = "the trait `$missingTrait` is not implemented for `$typeText`"
         )
     }
 
@@ -979,7 +960,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0658,
-            header = escapeString(message),
+            header = message,
             fixes = fixes
         )
     }
@@ -990,7 +971,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0433,
-            header = escapeString(errorText())
+            header = errorText()
         )
 
         private fun errorText(): String {
@@ -1130,7 +1111,7 @@ sealed class RsDiagnostic(
         override fun prepare(): PreparedAnnotation = PreparedAnnotation(
             ERROR,
             E0618,
-            escapeString("Expected function, found `${element.text}`")
+            "Expected function, found `${element.text}`"
         )
     }
 
@@ -1203,7 +1184,7 @@ sealed class RsDiagnostic(
     ) : RsDiagnostic(pat) {
         override fun prepare(): PreparedAnnotation {
             val itemType = if (declaration is RsEnumVariant) "Enum variant" else "Struct"
-            val missingFieldNames = escapeString(missingFields.joinToString(", ") { "`${it.name!!}`" })
+            val missingFieldNames = missingFields.joinToString(", ") { "`${it.name!!}`" }
             return PreparedAnnotation(
                 ERROR,
                 E0027,
@@ -1400,7 +1381,7 @@ fun RsDiagnostic.addToHolder(holder: AnnotationHolder) {
     val message = simpleHeader(prepared.errorCode, prepared.header)
 
     val annotationBuilder = holder.newAnnotation(prepared.severity.toHighlightSeverity(), message)
-        .tooltip("<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>")
+        .tooltip(prepared.fullDescription)
         .range(textRange)
         .highlightType(prepared.severity.toProblemHighlightType())
 
@@ -1430,12 +1411,16 @@ fun RsDiagnostic.addToHolder(holder: RsProblemsHolder) {
     val descriptor = holder.manager.createProblemDescriptor(
         element,
         endElement ?: element,
-        "<html>${htmlHeader(prepared.errorCode, prepared.header)}<br>${prepared.description}</html>",
+        prepared.fullDescription,
         prepared.severity.toProblemHighlightType(),
         holder.isOnTheFly,
         *prepared.fixes.toTypedArray()
     )
     holder.registerProblem(descriptor)
+}
+
+private val PreparedAnnotation.fullDescription: String get() {
+    return "<html>${htmlHeader(errorCode, escapeString(header))}<br>${escapeString(description)}</html>"
 }
 
 private fun Severity.toProblemHighlightType(): ProblemHighlightType = when (this) {
@@ -1465,9 +1450,6 @@ private fun htmlHeader(error: RsErrorCode?, description: String): String =
         "$description [<a href='${error.infoUrl}'>${error.code}</a>]"
     }
 
-private fun pluralise(count: Int, singular: String, plural: String): String =
-    if (count == 1) singular else plural
-
 private val RsSelfParameter.canonicalDecl: String
     get() = buildString {
         if (isRef) append('&')
@@ -1475,8 +1457,8 @@ private val RsSelfParameter.canonicalDecl: String
         append("self")
     }
 
-private fun Ty.escaped(useQualifiedName: Set<RsQualifiedNamedElement> = emptySet()): String =
-    escapeString(render(useQualifiedName = useQualifiedName, useAliasNames = true))
+private fun Ty.rendered(useQualifiedName: Set<RsQualifiedNamedElement> = emptySet()): String =
+    render(useQualifiedName = useQualifiedName, useAliasNames = true)
 
 private fun getConflictingNames(element: PsiElement, vararg tys: Ty): Set<RsQualifiedNamedElement> {
     val context = element.ancestorOrSelf<RsElement>()

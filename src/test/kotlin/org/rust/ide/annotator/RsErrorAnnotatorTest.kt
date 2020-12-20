@@ -1493,11 +1493,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         trait C<T>: A<T> {}
 
         struct S1;
-        impl <error descr="the trait bound `S1: A&lt;u32&gt;` is not satisfied [E0277]">B</error> for S1 {}
+        impl <error descr="the trait bound `S1: A<u32>` is not satisfied [E0277]">B</error> for S1 {}
 
         struct S2;
         impl A<bool> for S2 {}
-        impl <error descr="the trait bound `S2: A&lt;u32&gt;` is not satisfied [E0277]">B</error> for S2 {}
+        impl <error descr="the trait bound `S2: A<u32>` is not satisfied [E0277]">B</error> for S2 {}
 
         struct S3;
         impl A<bool> for S3 {}
@@ -1505,11 +1505,11 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl B for S3 {}
 
         struct S4;
-        impl<T> <error descr="the trait bound `S4: A&lt;T&gt;` is not satisfied [E0277]">C<T></error> for S4 {}
+        impl<T> <error descr="the trait bound `S4: A<T>` is not satisfied [E0277]">C<T></error> for S4 {}
 
         struct S5;
         impl A<u32> for S5 {}
-        impl<T> <error descr="the trait bound `S5: A&lt;T&gt;` is not satisfied [E0277]">C<T></error> for S5 {}
+        impl<T> <error descr="the trait bound `S5: A<T>` is not satisfied [E0277]">C<T></error> for S5 {}
 
         struct S6;
         impl<T> A<T> for S6 {}
@@ -1521,7 +1521,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         struct S8;
         impl A<bool> for S8 {}
-        impl <error descr="the trait bound `S8: A&lt;u32&gt;` is not satisfied [E0277]">C<u32></error> for S8 {}
+        impl <error descr="the trait bound `S8: A<u32>` is not satisfied [E0277]">C<u32></error> for S8 {}
 
         struct S9;
         impl A<u32> for S9 {}
