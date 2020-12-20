@@ -23,6 +23,11 @@
                          enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.toml.inspections.MissingFeaturesInspection"/>
 
+        <localInspection language="TOML" groupName="Rust"
+                         displayName="Cyclic feature dependency"
+                         enabledByDefault="true" level="ERROR"
+                         implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"/>
+
         <applicationService serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexService"/>
         <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
     </extensions>
