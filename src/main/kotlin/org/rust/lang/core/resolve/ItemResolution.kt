@@ -86,7 +86,9 @@ fun processItemDeclarations(
 
     val cachedItems = scope.expandedItemsCached
 
-    loop@ for (item in cachedItems.rest) {
+    val items = processor.name?.let { cachedItems.named[it].orEmpty().asSequence() }
+        ?: cachedItems.named.values.asSequence().flatten()
+    loop@ for (item in items) {
         when (item) {
             // Unit like structs are both types and values
             is RsStructItem -> {
@@ -104,14 +106,6 @@ fun processItemDeclarations(
 
             is RsFunction, is RsConstant ->
                 if (Namespace.Values in ns && processor(item as RsNamedElement)) return true
-
-            is RsForeignModItem -> if (Namespace.Values in ns) {
-                for (child in item.stubChildrenOfType<RsNamedElement>()) {
-                    if (child is RsFunction || child is RsConstant) {
-                        if (processor(child)) return true
-                    }
-                }
-            }
 
             is RsExternCrateItem -> {
                 if (processExternCrateItem(item, processor, withPrivateImports)) return true
