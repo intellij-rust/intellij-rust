@@ -8,6 +8,7 @@ package org.rust.ide.docs
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.lang.documentation.DocumentationMarkup
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.hitOnFalse
@@ -38,7 +39,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             is RsDocAndAttributeOwner -> generateDoc(element, buffer)
             is RsPatBinding -> definition(buffer) { generateDoc(element, it) }
             is RsPath -> generateDoc(element, buffer)
-            else -> return null
+            else -> generateCustomDoc(element, buffer)
         }
         return if (buffer.isEmpty()) null else buffer.toString()
     }
@@ -122,28 +123,47 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         content(buffer) { it += mod.documentationAsHtml(element) }
     }
 
+    private fun generateCustomDoc(element: PsiElement, buffer: StringBuilder) {
+        if (element.isKeywordLike()) {
+            val keywordDocs = element.project.findFileInStdCrate("keyword_docs.rs") ?: return
+            val keywordName = element.text
+            val mod = keywordDocs.childrenOfType<RsModItem>().find {
+                it.queryAttributes.hasAttributeWithKeyValue("doc", "keyword", keywordName)
+            } ?: return
+
+            definition(buffer) {
+                it += STD
+                it += "\n"
+                it += "keyword "
+                it.b { it += keywordName }
+            }
+            content(buffer) { it += mod.documentationAsHtml(element) }
+        }
+    }
+
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement): PsiElement? {
-        if (context !is RsElement) return null
+        val element = context as? RsElement ?: context.parent as? RsElement ?: return null
         val qualifiedName = RsQualifiedName.from(link)
         return if (qualifiedName == null) {
             RsCodeFragmentFactory(context.project)
-                .createPath(link, context)
+                .createPath(link, element)
                 ?.reference
                 ?.resolve()
         } else {
-            qualifiedName.findPsiElement(psiManager, context)
+            qualifiedName.findPsiElement(psiManager, element)
         }
     }
 
     override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String> {
-        val (qualifiedName, origin) = if (element is RsPath) {
-            (RsQualifiedName.from(element) ?: return emptyList()) to STDLIB
-        } else {
-            if (element !is RsDocAndAttributeOwner ||
-                element !is RsQualifiedNamedElement ||
-                !element.hasExternalDocumentation) return emptyList()
-            val origin = element.containingCrate?.origin
-            RsQualifiedName.from(element) to origin
+        val (qualifiedName, origin) = when {
+            element is RsDocAndAttributeOwner && element is RsQualifiedNamedElement && element.hasExternalDocumentation -> {
+                val origin = element.containingCrate?.origin
+                RsQualifiedName.from(element) to origin
+            }
+            else -> {
+                val qualifiedName = RsQualifiedName.from(element) ?: return emptyList()
+                qualifiedName to STDLIB
+            }
         }
 
         val pagePrefix = when (origin) {
@@ -165,6 +185,18 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         val pagePath = qualifiedName?.toUrlPath() ?: return emptyList()
         return listOf("$pagePrefix/$pagePath")
+    }
+
+    override fun getCustomDocumentationElement(
+        editor: Editor,
+        file: PsiFile,
+        contextElement: PsiElement?,
+        targetOffset: Int
+    ): PsiElement? {
+        // Don't show documentation for keywords like `self`, `super`, etc. when they are part of path.
+        // We want to show documentation for the corresponding item that path references to
+        if (contextElement?.isKeywordLike() == true && contextElement.parent !is RsPath) return contextElement
+        return null
     }
 
     @Suppress("UnstableApiUsage")

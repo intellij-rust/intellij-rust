@@ -6,8 +6,10 @@
 package org.rust.ide.docs
 
 import junit.framework.AssertionFailedError
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
@@ -105,4 +107,24 @@ class RsExternalDocUrlStdTest : RsDocumentationProviderTest() {
         fn foo() -> bool {}
                    //^
     """, "https://doc.rust-lang.org/std/primitive.bool.html")
+
+    fun `test keyword`() = doUrlTestByText("""
+        struct Foo;
+          //^
+    """, "https://doc.rust-lang.org/std/keyword.struct.html")
+
+    fun `test boolean value`() = doUrlTestByText("""
+        fn main() {
+            let a = true;
+                   //^
+        }
+    """, "https://doc.rust-lang.org/std/keyword.true.html")
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test await`() = doUrlTestByText("""
+        fn main() {
+            foo().await;
+                 //^
+        }
+    """, "https://doc.rust-lang.org/std/keyword.await.html")
 }

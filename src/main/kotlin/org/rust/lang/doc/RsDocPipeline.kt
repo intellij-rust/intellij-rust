@@ -47,7 +47,7 @@ fun RsDocAndAttributeOwner.documentation(): String =
         .joinToString("\n")
 
 fun RsDocAndAttributeOwner.documentationAsHtml(
-    originalElement: RsElement = this,
+    originalElement: PsiElement = this,
     renderMode: RsDocRenderMode = RsDocRenderMode.QUICK_DOC_POPUP
 ): String? {
     return documentationAsHtml(documentation(), originalElement, renderMode)
@@ -64,7 +64,7 @@ fun RsDocCommentImpl.documentationAsHtml(renderMode: RsDocRenderMode = RsDocRend
 
 private fun documentationAsHtml(
     rawDocumentationText: String,
-    context: RsElement,
+    context: PsiElement,
     renderMode: RsDocRenderMode
 ): String? {
     // We need some host with unique scheme to
@@ -75,10 +75,12 @@ private fun documentationAsHtml(
     // We can't use `DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL` scheme here
     // because it contains `_` and it is invalid symbol for URI scheme
     val tmpUriPrefix = "psi://element/"
-    val path = when (context) {
-        is RsQualifiedNamedElement -> RsQualifiedName.from(context)?.toUrlPath()
-        // generating documentation for primitive types via the corresponding module
-        is RsPath -> if (TyPrimitive.fromPath(context) != null) "$STD/" else return null
+    val path = when {
+        context is RsQualifiedNamedElement -> RsQualifiedName.from(context)?.toUrlPath()
+        // documentation generation for primitive types via the corresponding module
+        context is RsPath -> if (TyPrimitive.fromPath(context) != null) "$STD/" else return null
+        // documentation generation for keywords
+        context.isKeywordLike() -> "$STD/"
         else -> return null
     }
     val baseURI = if (path != null) {

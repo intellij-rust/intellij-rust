@@ -7,9 +7,8 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.ExpandMacros
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstant
 import org.rust.lang.core.psi.ext.RsElement
@@ -1094,6 +1093,87 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         originalElement to originalElement.textOffset
     }
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test keyword doc`() = doTestRegex("""
+        enum Foo { V1 }
+        //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>enum</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @MinRustcVersion("1.36.0")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test async keyword doc`() = doTestRegex("""
+        async fn foo() {}
+        //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>async</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @MinRustcVersion("1.36.0")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test dyn keyword doc`() = doTestRegex("""
+        trait Foo {}
+        fn foo(x: &dyn Foo) {}
+                 //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>dyn</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @MinRustcVersion("1.36.0")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test boolean value doc`() = doTestRegex("""
+        fn main() {
+            let a = false;
+                    //^
+        }
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>false</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2015)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test await doc 1`() = doTest("""
+        fn main() {
+            foo().await;
+                  //^
+        }
+    """, null)
+
+    @MinRustcVersion("1.36.0")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test await doc 2`() = doTestRegex("""
+        fn main() {
+            foo().await;
+                  //^
+        }
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>await</b></pre></div><div class='content'><p>.+</p></div>
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test keyword doc in stdlib`() = doTestRegex("""
+        const C: u32 = std::f64::DIGITS;
+                                //^
+    """, """
+        <div class='definition'><pre>std
+        keyword <b>const</b></pre></div><div class='content'><p>.+</p></div>
+    """) {
+        val element = findElementWithDataAndOffsetInEditor<RsElement>().first
+        val const = element.reference?.resolve() as? RsConstant ?: error("Failed to resolve `${element.text}`")
+        val originalElement = const.const!!
+
+        myFixture.openFileInEditor(const.containingFile.virtualFile)
+        originalElement to originalElement.textOffset
+    }
+
     @ExpandMacros
     fun `test documentation provided via macro definition 1`() = doTest("""
         macro_rules! foobar {
@@ -1167,12 +1247,12 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """)
 
 
-    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String)
+    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?)
         = doTest(code, expected, block = RsDocumentationProvider::generateDoc)
 
     private fun doTestRegex(
         @Language("Rust") code: String,
         @Language("Html") expected: String,
         findElement: () -> Pair<PsiElement, Int> = { findElementAndOffsetInEditor() }
-    ) = doTest(code, Regex(expected.trimIndent(), RegexOption.MULTILINE), findElement, RsDocumentationProvider::generateDoc)
+    ) = doTest(code, Regex(expected.trimIndent(), setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL)), findElement, RsDocumentationProvider::generateDoc)
 }

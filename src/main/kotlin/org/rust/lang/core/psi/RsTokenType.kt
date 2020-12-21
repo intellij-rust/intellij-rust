@@ -22,10 +22,10 @@ open class RsTokenType(debugName: String) : IElementType(debugName, RsLanguage)
 fun tokenSetOf(vararg tokens: IElementType) = TokenSet.create(*tokens)
 
 val RS_KEYWORDS = tokenSetOf(
-    AS,
+    AS, ASYNC, AUTO,
     BOX, BREAK,
     CONST, CONTINUE, CRATE, CSELF,
-    DEFAULT,
+    DEFAULT, DYN,
     ELSE, ENUM, EXTERN,
     FN, FOR,
     IF, IMPL, IN,
@@ -33,7 +33,7 @@ val RS_KEYWORDS = tokenSetOf(
     LET, LOOP,
     MATCH, MOD, MOVE, MUT,
     PUB,
-    REF, RETURN,
+    RAW, REF, RETURN,
     SELF, STATIC, STRUCT, SUPER,
     TRAIT, TYPE_KW,
     UNION, UNSAFE, USE,
