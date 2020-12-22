@@ -198,6 +198,7 @@ The current Rust plugin modules:
 * `:coverage` - integration with [coverage](https://github.com/JetBrains/intellij-community/tree/master/plugins/coverage-common) plugin
 * `:grazie` - integration with [grazie](https://plugins.jetbrains.com/plugin/12175-grazie) plugin 
 * `:js` - interop with JavaScript language
+* `:ml-completion` - integration with [Machine Learning Code Completion](https://github.com/JetBrains/intellij-community/tree/master/plugins/completion-ml-ranking) plugin
 
 If you want to implement integration with another plugin/IDE, you should create a new gradle module for that.
 
