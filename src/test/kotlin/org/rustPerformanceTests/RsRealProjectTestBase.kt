@@ -87,6 +87,7 @@ abstract class RsRealProjectTestBase : RsWithToolchainTestBase() {
         val RUST_ANALYZER = RealProjectInfo("rust-analyzer", "rust-analyzer", "https://github.com/rust-analyzer/rust-analyzer")
         val XI_EDITOR = RealProjectInfo("xi-editor", "xi-editor/rust", "https://github.com/xi-editor/xi-editor")
         val JUNIPER = RealProjectInfo("juniper", "juniper", "https://github.com/graphql-rust/juniper")
+        val STDARCH = RealProjectInfo("stdarch", "stdarch", "https://github.com/rust-lang/stdarch")
 
         private val EXCLUDED_DIRECTORY_NAMES = setOf("target")
     }

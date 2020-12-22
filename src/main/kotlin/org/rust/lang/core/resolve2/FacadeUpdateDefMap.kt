@@ -7,13 +7,12 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
@@ -59,18 +58,44 @@ fun DefMapService.getOrUpdateIfNeeded(crate: CratePersistentId): CrateDefMap? {
 }
 
 /** Called from macro expansion task */
-fun updateDefMapForAllCrates(project: Project, pool: Executor, indicator: ProgressIndicator, multithread: Boolean = true) {
+fun updateDefMapForAllCrates(
+    project: Project,
+    pool: Executor,
+    indicator: ProgressIndicator,
+    multithread: Boolean = true
+) {
     if (!project.isNewResolveEnabled) return
+    executeUnderProgressWithWriteActionPriorityWithRetries(indicator) {
+        doUpdateDefMapForAllCrates(project, pool, indicator, multithread)
+    }
+}
+
+private fun doUpdateDefMapForAllCrates(
+    project: Project,
+    pool: Executor,
+    indicator: ProgressIndicator,
+    multithread: Boolean
+) {
     val dumbService = DumbService.getInstance(project)
     val defMapService = project.defMapService
-
-    executeUnderProgressWithWriteActionPriorityWithRetries(indicator) {
-        runReadActionInSmartMode(dumbService) {
-            defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
-                check(defMapService.defMapsBuildLock.holdCount == 1)
-                DefMapUpdater(rootCrateId = null, defMapService, pool, indicator, multithread).run()
-            }
+    runReadActionInSmartMode(dumbService) {
+        defMapService.defMapsBuildLock.withLockAndCheckingCancelled {
+            check(defMapService.defMapsBuildLock.holdCount == 1)
+            DefMapUpdater(rootCrateId = null, defMapService, pool, indicator, multithread).run()
         }
+    }
+}
+
+@TestOnly
+fun Project.forceRebuildDefMapForAllCrates(multithread: Boolean) {
+    val pool = Executors.newWorkStealingPool()
+    try {
+        runWriteAction {
+            defMapService.scheduleRebuildAllDefMaps()
+        }
+        doUpdateDefMapForAllCrates(this, pool, EmptyProgressIndicator(), multithread)
+    } finally {
+        pool.shutdown()
     }
 }
 
