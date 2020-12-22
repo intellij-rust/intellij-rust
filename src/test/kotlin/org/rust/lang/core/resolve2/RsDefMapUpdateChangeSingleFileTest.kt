@@ -61,6 +61,42 @@ class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
         fn foo() {}
     """)
 
+    fun `test change enum name`() = doTestChanged("""
+        enum E1 {}
+    """, """
+        enum E2 {}
+    """)
+
+    fun `test change enum variant name`() = doTestChanged("""
+        enum E { V1 }
+    """, """
+        enum E { V2 }
+    """)
+
+    fun `test add enum variant`() = doTestChanged("""
+        enum E { V1 }
+    """, """
+        enum E { V1, V2 }
+    """)
+
+    fun `test swap enum variants`() = doTestNotChanged("""
+        enum E { V1, V2 }
+    """, """
+        enum E { V2, V1 }
+    """)
+
+    fun `test enum variant add tuple fields`() = doTestNotChanged("""
+        enum E { V1 }
+    """, """
+        enum E { V1(i32) }
+    """)
+
+    fun `test enum variant add block fields`() = doTestChanged("""
+        enum E { V1 }
+    """, """
+        enum E { V1 { x: i32 } }
+    """)
+
     fun `test change item visibility`() = doTestChanged("""
         fn foo() {}
     """, """
