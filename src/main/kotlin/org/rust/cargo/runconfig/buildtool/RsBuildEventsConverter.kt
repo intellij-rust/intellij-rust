@@ -144,7 +144,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
             }
 
             kind in ERROR_OR_WARNING ->
-                handleProblemMessage(kind, message, cleanLine, messageConsumer)
+                handleProblemMessage(kind, message, line, messageConsumer)
         }
 
         messageConsumer.acceptText(context.buildId, line.withNewLine())
