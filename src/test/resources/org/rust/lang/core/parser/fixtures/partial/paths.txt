@@ -1,23 +1,26 @@
 FILE
   RsUseItemImpl(USE_ITEM)
     PsiElement(use)('use')
-  PsiErrorElement:'::' or ';' expected, got '::'
-    <empty list>
-  PsiWhiteSpace(' ')
-  PsiElement(::)('::')
-  PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+    PsiWhiteSpace(' ')
+    RsUseSpeckImpl(USE_SPECK)
+      RsPathImpl(PATH)
+        PsiElement(::)('::')
+        PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+          <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
     PsiElement(use)('use')
-  PsiErrorElement:'::' or ';' expected, got '::'
-    <empty list>
-  PsiWhiteSpace(' ')
-  PsiElement(::)('::')
-  PsiErrorElement:Self, crate, identifier, self or super expected, got '::'
-    <empty list>
-  PsiElement(::)('::')
-  PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+    PsiWhiteSpace(' ')
+    RsUseSpeckImpl(USE_SPECK)
+      RsPathImpl(PATH)
+        RsPathImpl(PATH)
+          PsiElement(::)('::')
+          PsiErrorElement:Self, crate, identifier, self or super expected, got '::'
+            <empty list>
+        PsiElement(::)('::')
+        PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+          <empty list>
     PsiElement(;)(';')
   PsiWhiteSpace('\n')
   RsUseItemImpl(USE_ITEM)
@@ -89,19 +92,24 @@ FILE
     RsBlockImpl(BLOCK)
       PsiElement({)('{')
       PsiWhiteSpace('\n    ')
-      PsiElement(::)('::')
-      PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
-        <empty list>
-      RsEmptyStmtImpl(EMPTY_STMT)
+      RsExprStmtImpl(EXPR_STMT)
+        RsPathExprImpl(PATH_EXPR)
+          RsPathImpl(PATH)
+            PsiElement(::)('::')
+            PsiErrorElement:'!', '::', Self, crate, identifier, self, super or '{' expected, got ';'
+              <empty list>
         PsiElement(;)(';')
       PsiWhiteSpace('\n    ')
-      PsiElement(::)('::')
-      PsiErrorElement:Self, crate, identifier, self or super expected, got '::'
-        <empty list>
-      PsiElement(::)('::')
-      PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
-        <empty list>
-      RsEmptyStmtImpl(EMPTY_STMT)
+      RsExprStmtImpl(EXPR_STMT)
+        RsPathExprImpl(PATH_EXPR)
+          RsPathImpl(PATH)
+            RsPathImpl(PATH)
+              PsiElement(::)('::')
+              PsiErrorElement:'::', <, Self, crate, identifier, self or super expected, got '::'
+                <empty list>
+            PsiElement(::)('::')
+            PsiErrorElement:'!', '::', <, Self, crate, identifier, self, super or '{' expected, got ';'
+              <empty list>
         PsiElement(;)(';')
       PsiWhiteSpace('\n    ')
       RsExprStmtImpl(EXPR_STMT)
@@ -189,6 +197,26 @@ FILE
                 PsiElement(>)('>')
             PsiElement(::)('::')
             PsiElement(identifier)('baz')
+        PsiElement(;)(';')
+      PsiWhiteSpace('\n    ')
+      RsExprStmtImpl(EXPR_STMT)
+        RsPathExprImpl(PATH_EXPR)
+          RsPathImpl(PATH)
+            RsTypeQualImpl(TYPE_QUAL)
+              PsiElement(<)('<')
+              RsBaseTypeImpl(BASE_TYPE)
+                RsPathImpl(PATH)
+                  PsiElement(identifier)('Foo')
+              PsiWhiteSpace(' ')
+              PsiElement(as)('as')
+              PsiWhiteSpace(' ')
+              RsTraitRefImpl(TRAIT_REF)
+                RsPathImpl(PATH)
+                  PsiElement(identifier)('Bar')
+              PsiElement(>)('>')
+              PsiElement(::)('::')
+            PsiErrorElement:Self, crate, identifier, self or super expected, got ';'
+              <empty list>
         PsiElement(;)(';')
       PsiWhiteSpace('\n')
       PsiElement(})('}')
