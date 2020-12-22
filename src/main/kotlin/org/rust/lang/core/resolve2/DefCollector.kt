@@ -311,9 +311,7 @@ class DefCollector(
     }
 
     private fun tryExpandMacroCall(call: MacroCallInfo): Boolean {
-        val legacyMacroDef = call.macroDef
-        val def = legacyMacroDef
-            ?: defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path)
+        val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
             ?: return false
         val defData = RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash)
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body), call.bodyHash)
@@ -323,7 +321,7 @@ class DefCollector(
         processDollarCrate(call, def, expandedFile, expansion)
 
         val context = getModCollectorContextForExpandedElements(call) ?: return true
-        collectExpandedElements(expandedFile, call.containingMod, context)
+        collectExpandedElements(expandedFile, call, context)
         return true
     }
 
@@ -338,7 +336,7 @@ class DefCollector(
             ?.rustFile
         if (includingFile != null) {
             val context = getModCollectorContextForExpandedElements(call) ?: return
-            collectFileAndCalculateHash(includingFile, call.containingMod, context)
+            collectFileAndCalculateHash(includingFile, call.containingMod, call.macroIndex, context)
         } else {
             val filePath = parentDirectory.pathAsPath.resolve(includePath)
             defMap.missedFiles.add(filePath)
@@ -407,6 +405,7 @@ sealed class PartialResolvedImport {
 class MacroDefInfo(
     val crate: CratePersistentId,
     val path: ModPath,
+    val macroIndex: MacroIndex,
     private val bodyText: String,
     val bodyHash: HashCode,
     val hasMacroExport: Boolean,
@@ -422,11 +421,11 @@ class MacroDefInfo(
 
 class MacroCallInfo(
     val containingMod: ModData,
+    val macroIndex: MacroIndex,
     val path: Array<String>,
     val body: String,
     val bodyHash: HashCode?,  // null for `include!` macro
     val depth: Int,
-    val macroDef: MacroDefInfo?,  // for textual scoped macros
     /**
      * `srcOffset` - [CratePersistentId]
      * `dstOffset` - index of [MACRO_DOLLAR_CRATE_IDENTIFIER] in [body]

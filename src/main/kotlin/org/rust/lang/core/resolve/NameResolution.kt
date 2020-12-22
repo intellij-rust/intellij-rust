@@ -33,6 +33,7 @@ import org.rust.ide.injected.isDoctestInjection
 import org.rust.lang.RsConstants
 import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.IN_BAND_LIFETIMES
+import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.*
@@ -393,7 +394,7 @@ private fun processQualifiedPathResolveVariants(
 
         val containingMod = path.containingMod
         if (Namespace.Macros in ns) {
-            val resultWithNewResolve = processMacros(base, processor)
+            val resultWithNewResolve = processMacros(base, processor, null)
             if (resultWithNewResolve == true) return true
             if (resultWithNewResolve == null && base is RsFile && base.isCrateRoot &&
                 containingMod is RsFile && containingMod.isCrateRoot) {
@@ -879,9 +880,11 @@ private data class MacroResolveResult(val result: Boolean, val usedNewResolve: B
 
 private class MacroResolver private constructor(
     private val processor: RsResolveProcessor,
-    private val project: Project,
+    /** `RsPath` in resolve, `PsiElement(identifier)` in completion by [RsMacroCompletionProvider] */
+    private val macroPath: PsiElement,
 ) : RsVisitor() {
     private val visitor = MacroResolvingVisitor(reverse = true) { processor(it) }
+    private val project: Project = macroPath.project
 
     private fun processMacrosInLexicalOrderUpward(startElement: PsiElement): MacroResolveResult {
         val result = processScopesInLexicalOrderUpward(startElement)
@@ -992,7 +995,7 @@ private class MacroResolver private constructor(
         val item = expandedFrom ?: element
         val scope = item.parent as? RsMod ?: return null
         /** [processRemainedExportedMacros] processes local imports */
-        return processMacros(scope, processor, ::processRemainedExportedMacros)
+        return processMacros(scope, processor, macroPath, ::processRemainedExportedMacros)
             ?.toResult(usedNewResolve = true)
     }
 
@@ -1004,7 +1007,7 @@ private class MacroResolver private constructor(
 
     companion object {
         fun processMacrosInLexicalOrderUpward(startElement: PsiElement, processor: RsResolveProcessor): MacroResolveResult =
-            MacroResolver(processor, startElement.project).processMacrosInLexicalOrderUpward(startElement)
+            MacroResolver(processor, startElement).processMacrosInLexicalOrderUpward(startElement)
 
         private fun Boolean.toResult(usedNewResolve: Boolean = false): MacroResolveResult =
             MacroResolveResult(this, usedNewResolve)

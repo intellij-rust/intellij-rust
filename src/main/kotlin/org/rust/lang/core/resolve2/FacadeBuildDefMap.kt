@@ -62,14 +62,17 @@ private fun buildDefMapContainingExplicitItems(
     val crateRootOwnedDirectory = crateRoot.virtualFile?.parent
         ?: error("Can't find parent directory for crate root of $crate crate")
     val crateDescription = crate.toString()
+    val rootModMacroIndex = allDependenciesDefMaps.values.map { it.rootModMacroIndex + 1 }.max() ?: 0
     val crateRootData = ModData(
         parent = null,
         crate = crateId,
         path = ModPath(crateId, emptyArray()),
+        macroIndex = MacroIndex(intArrayOf(rootModMacroIndex)),
         isDeeplyEnabledByCfg = true,
         fileId = crateRoot.virtualFile.fileId,
         fileRelativePath = "",
         ownedDirectoryId = crateRootOwnedDirectory.fileId,
+        hasMacroUse = false,
         crateDescription = crateDescription
     )
     val defMap = CrateDefMap(
@@ -79,6 +82,7 @@ private fun buildDefMapContainingExplicitItems(
         allDependenciesDefMaps = allDependenciesDefMapsById,
         prelude = findPrelude(crate, allDependenciesDefMaps),
         metaData = CrateMetaData(crate),
+        rootModMacroIndex = rootModMacroIndex,
         crateDescription = crateDescription
     )
 
@@ -87,7 +91,7 @@ private fun buildDefMapContainingExplicitItems(
         defMap.importExternCrateMacros(it.usePath.single())
     }
     val modCollectorContext = ModCollectorContext(defMap, crateRootData, context)
-    collectFileAndCalculateHash(crateRoot, crateRootData, modCollectorContext)
+    collectFileAndCalculateHash(crateRoot, crateRootData, crateRootData.macroIndex, modCollectorContext)
 
     sortImports(context.imports)
     return defMap
@@ -176,11 +180,4 @@ private fun CrateDefMap.afterBuilt() {
 
     // TODO: uncomment when #[cfg_attr] will be supported
     // testAssert { missedFiles.isEmpty() }
-}
-
-private fun ModData.visitDescendants(visitor: (ModData) -> Unit) {
-    visitor(this)
-    for (childMod in childModules.values) {
-        childMod.visitDescendants(visitor)
-    }
 }

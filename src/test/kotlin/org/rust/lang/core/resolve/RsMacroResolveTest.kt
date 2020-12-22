@@ -149,6 +149,58 @@ class RsMacroResolveTest : RsResolveTestBase() {
         } //^
     """)
 
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve macro in lexical order 4`() = checkByCode("""
+        mod a {
+            macro_rules! foo { () => {} }
+                       //X
+            fn main() {
+                foo!();
+            } //^
+            macro_rules! foo { () => {} }
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve macro in lexical order 5`() = checkByCode("""
+        mod a {
+            macro_rules! foo { () => {} }
+            macro_rules! foo { () => {} }
+                       //X
+            fn main() {
+                foo!();
+            } //^
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test expand macro in lexical order 6`() = checkByCode("""
+        mod a {
+            struct Foo1;
+                 //X
+            macro_rules! foo { () => { use Foo1 as Foo2; } }
+            foo!();
+            macro_rules! foo { () => {} }
+            fn main() {
+                let x = Foo2;
+            }         //^
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test resolve macro in lexical order 7`() = checkByCode("""
+        mod a {
+            struct Foo1;
+                 //X
+            macro_rules! foo { () => {} }
+            macro_rules! foo { () => { use Foo1 as Foo2; } }
+            foo!();
+            fn main() {
+                let x = Foo2;
+            }         //^
+        }
+    """)
+
     fun `test resolve macro missing macro_use`() = checkByCode("""
         // Missing #[macro_use] here
         mod a {
@@ -317,6 +369,66 @@ class RsMacroResolveTest : RsResolveTestBase() {
 
         foo! {}
         //^
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test propagate expanded macro def`() = checkByCode("""
+        mod outer {
+            #[macro_use]
+            mod inner {
+                macro_rules! gen_foo {
+                    () => {
+                        macro_rules! foo { () => { use Bar1 as Bar2; } }
+                    }
+                }
+                gen_foo!();
+            }
+            foo!();
+            struct Bar1;
+                 //X
+            fn main() {
+                Bar2;
+            } //^
+        }
+    """)
+
+    // From https://github.com/seed-rs/seed/blob/d9935ee25148c151931160d188d5f0e67c746cba/src/shortcuts.rs#L9-L45
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test generate two macro defs with same name`() = checkByCode("""
+        mod outer {
+            macro_rules! with_dollar_sign {
+                ($($ body:tt)*) => {
+                    macro_rules! __with_dollar_sign { $($ body)* }
+                    __with_dollar_sign!($);
+                }
+            }
+
+            macro_rules! gen {
+                ($ name:ident) => {
+                    // This replaces $ d with $ in the inner macro.
+                    with_dollar_sign! {
+                        ($ d:tt) => {
+                            macro_rules! $ name {
+                                ($ d i:item) => { $ d i };
+                            }
+                        }
+                    }
+                };
+            }
+
+            struct Foo1;
+                 //X
+            gen!(foo1);
+            foo1!(use Foo1 as Foo2;);
+            gen!(foo2);
+            foo2!(use Foo2 as Foo3;);
+
+            fn main() {
+                Foo3;
+            } //^
+        }
     """)
 
     /** More macro tests in [RsPackageLibraryResolveTest] and [RsStubOnlyResolveTest] */
