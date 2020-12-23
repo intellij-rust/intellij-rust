@@ -8,6 +8,8 @@ package org.rust.lang.core.resolve2
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.psi.RsMacro
+import org.rust.lang.core.psi.ext.hasMacroExport
 
 enum class ResolveMode { IMPORT, OTHER }
 
@@ -49,7 +51,8 @@ fun CrateDefMap.resolvePathFp(
         }
         pathKind == PathKind.Plain -> {
             val firstSegment = path[firstSegmentIndex++]
-            resolveNameInModule(containingMod, firstSegment)
+            val withLegacyMacros = mode == ResolveMode.IMPORT && path.size == 1
+            resolveNameInModule(containingMod, firstSegment, withLegacyMacros)
         }
         else -> error("unreachable")
     }
@@ -77,7 +80,18 @@ fun CrateDefMap.resolvePathFp(
     return ResolvePathResult(resultPerNs, reachedFixedPoint = true, visitedOtherCrate = visitedOtherCrate)
 }
 
-fun CrateDefMap.resolveMacroCallToMacroDefInfo(containingMod: ModData, macroPath: Array<String>): MacroDefInfo? {
+fun CrateDefMap.resolveMacroCallToMacroDefInfo(
+    containingMod: ModData,
+    macroPath: Array<String>,
+    macroIndex: MacroIndex
+): MacroDefInfo? {
+    if (macroPath.size == 1) {
+        val name = macroPath.single()
+        containingMod.legacyMacros[name]
+            ?.getLastBefore(macroIndex)
+            ?.let { return it }
+    }
+
     val perNs = resolvePathFp(
         containingMod,
         macroPath,
@@ -87,6 +101,9 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(containingMod: ModData, macroPath
     val defItem = perNs.resolvedDef.macros ?: return null
     return getMacroInfo(defItem)
 }
+
+fun List<MacroDefInfo>.getLastBefore(macroIndex: MacroIndex): MacroDefInfo? =
+    filter { it.macroIndex < macroIndex }.maxBy { it.macroIndex }
 
 private fun CrateDefMap.resolveNameInExternPrelude(name: String): PerNs {
     val defMap = externPrelude[name] ?: return PerNs.Empty
@@ -105,18 +122,45 @@ fun CrateDefMap.resolveExternCrateAsDefMap(name: String): CrateDefMap? =
  * - extern prelude
  * - std prelude
  */
-private fun CrateDefMap.resolveNameInModule(modData: ModData, name: String): PerNs {
-    val fromLegacyMacro = modData.legacyMacros[name]
-        ?.let {
-            val visibility = if (it.hasMacroExport) Visibility.Public else modData.visibilityInSelf
-            val visItem = VisItem(modData.path.append(name), visibility)
-            PerNs(macros = visItem)
-        } ?: PerNs.Empty
+private fun CrateDefMap.resolveNameInModule(modData: ModData, name: String, withLegacyMacros: Boolean): PerNs {
+    val fromLegacyMacro = if (withLegacyMacros) modData.getFirstLegacyMacro(name) ?: PerNs.Empty else PerNs.Empty
     val fromScope = modData.getVisibleItem(name)
     val fromExternPrelude = resolveNameInExternPrelude(name)
     val fromPrelude = resolveNameInPrelude(name)
     return fromLegacyMacro.or(fromScope).or(fromExternPrelude).or(fromPrelude)
 }
+
+/**
+ * We take first macro, because this code is used for resolution inside import:
+ * ```
+ * macro_rules! name_ { ... }
+ * use name_ as name;
+ * ```
+ *
+ * Multiple macro definitions before import will cause compiler error:
+ * ```
+ * macro_rules! name_ { ... }
+ * macro_rules! name_ { ... }
+ * use name_ as name;
+ * // error[E0659]: `name_` is ambiguous
+ * ```
+ */
+private fun ModData.getFirstLegacyMacro(name: String): PerNs? {
+    val def = legacyMacros[name]?.firstOrNull() ?: return null
+    val visibility = if (def.hasMacroExport) Visibility.Public else visibilityInSelf
+    val visItem = VisItem(path.append(name), visibility)
+    return PerNs(macros = visItem)
+}
+
+/**
+ * Used when macro path is qualified.
+ * - It is either macro from other crate,
+ *   then it will have `macro_export` attribute
+ *   (and there can't be two `macro_export` macros with same name in same mod).
+ * - Or it is reexport of legacy macro, then we peek first (see [getFirstLegacyMacro] for details)
+ */
+fun List<MacroDefInfo>.singlePublicOrFirst(): MacroDefInfo = singleOrNull { it.hasMacroExport } ?: first()
+fun List<RsMacro>.singlePublicOrFirst(): RsMacro = singleOrNull { it.hasMacroExport } ?: first()
 
 private fun CrateDefMap.resolveNameInCrateRootOrExternPrelude(name: String): PerNs {
     val fromCrateRoot = root.getVisibleItem(name)

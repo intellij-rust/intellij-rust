@@ -9,9 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.util.io.IOUtil
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.psi.RsForeignModItem
-import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.RsModItem
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.namespaces
@@ -19,10 +17,7 @@ import org.rust.lang.core.resolve2.util.forEachLeafSpeck
 import org.rust.lang.core.resolve2.util.getPathWithAdjustedDollarCrate
 import org.rust.lang.core.resolve2.util.getRestrictedPath
 import org.rust.lang.core.stubs.*
-import org.rust.stdext.HashCode
-import org.rust.stdext.exhaustive
-import org.rust.stdext.makeBitMask
-import org.rust.stdext.writeHashCodeNullable
+import org.rust.stdext.*
 import java.io.DataOutput
 
 /**
@@ -48,14 +43,19 @@ class ModCollectorBase private constructor(
                 collectExternCrate(item)
             }
         }
+
+        var macroIndexInParent = 0
         for (item in items) {
             if (item !is RsExternCrateItemStub) {
-                collectElement(item)
+                collectElement(item, macroIndexInParent)
+                if (item.hasMacroIndex()) {
+                    ++macroIndexInParent
+                }
             }
         }
     }
 
-    private fun collectElement(element: StubElement<out PsiElement>) {
+    private fun collectElement(element: StubElement<out PsiElement>, macroIndexInParent: Int) {
         when (element) {
             // impls are not named elements, so we don't need them for name resolution
             is RsImplItemStub -> Unit
@@ -65,11 +65,11 @@ class ModCollectorBase private constructor(
             is RsUseItemStub -> collectUseItem(element)
             is RsExternCrateItemStub -> error("extern crates are processed eagerly")
 
-            is RsMacroCallStub -> collectMacroCall(element)
-            is RsMacroStub -> collectMacroDef(element)
+            is RsMacroCallStub -> collectMacroCall(element, macroIndexInParent)
+            is RsMacroStub -> collectMacroDef(element, macroIndexInParent)
 
             // Should be after macro stubs (they are [RsNamedStub])
-            is RsNamedStub -> collectItem(element)
+            is RsNamedStub -> collectItem(element, macroIndexInParent)
 
             // `RsOuterAttr`, `RsInnerAttr` or `RsVis` when `itemsOwner` is `RsModItem`
             // `RsExternAbi` when `itemsOwner` is `RsForeignModItem`
@@ -110,7 +110,7 @@ class ModCollectorBase private constructor(
         visitor.collectImport(import)
     }
 
-    private fun collectItem(item: RsNamedStub) {
+    private fun collectItem(item: RsNamedStub, macroIndexInParent: Int) {
         val procMacroName = if (item is RsFunctionStub && item.isProcMacroDef) item.psi.procMacroName else null
         val name = procMacroName ?: item.name ?: return
         if (item !is RsAttributeOwnerStub) return
@@ -127,6 +127,7 @@ class ModCollectorBase private constructor(
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
             namespaces = item.namespaces,
             isProcMacroDef = procMacroName != null,
+            macroIndexInParent = macroIndexInParent,
             isModItem = item is RsModItemStub,
             isModDecl = item is RsModDeclItemStub,
             hasMacroUse = hasMacroUse,
@@ -135,16 +136,16 @@ class ModCollectorBase private constructor(
         visitor.collectItem(itemLight, item)
     }
 
-    private fun collectMacroCall(call: RsMacroCallStub) {
+    private fun collectMacroCall(call: RsMacroCallStub, macroIndexInParent: Int) {
         val isCallDeeplyEnabledByCfg = isDeeplyEnabledByCfg && call.isEnabledByCfgSelf(crate)
         if (!isCallDeeplyEnabledByCfg) return
         val body = call.getIncludeMacroArgument(crate) ?: call.macroBody ?: return
         val path = call.getPathWithAdjustedDollarCrate() ?: return
-        val callLight = MacroCallLight(path, body, call.bodyHash)
+        val callLight = MacroCallLight(path, body, call.bodyHash, macroIndexInParent)
         visitor.collectMacroCall(callLight, call)
     }
 
-    private fun collectMacroDef(def: RsMacroStub) {
+    private fun collectMacroDef(def: RsMacroStub, macroIndexInParent: Int) {
         val isDefDeeplyEnabledByCfg = isDeeplyEnabledByCfg && def.isEnabledByCfgSelf(crate)
         if (!isDefDeeplyEnabledByCfg) return
         val defLight = MacroDefLight(
@@ -152,7 +153,8 @@ class ModCollectorBase private constructor(
             body = def.macroBody ?: return,
             bodyHash = def.bodyHash,
             hasMacroExport = def.hasMacroExport,
-            hasLocalInnerMacros = def.hasMacroExportLocalInnerMacros
+            hasLocalInnerMacros = def.hasMacroExportLocalInnerMacros,
+            macroIndexInParent = macroIndexInParent
         )
         visitor.collectMacroDef(defLight)
     }
@@ -250,6 +252,8 @@ data class ItemLight(
     val isDeeplyEnabledByCfg: Boolean,
     val namespaces: Set<Namespace>,
     val isProcMacroDef: Boolean,
+    /** See [MacroIndex] */
+    val macroIndexInParent: Int,
 
     val isModItem: Boolean,
     val isModDecl: Boolean,
@@ -260,6 +264,7 @@ data class ItemLight(
     override fun writeTo(data: DataOutput) {
         IOUtil.writeUTF(data, name)
         visibility.writeTo(data)
+        data.writeVarInt(macroIndexInParent)
 
         var flags = 0
         if (Namespace.Types in namespaces) flags += NAMESPACE_TYPES_MASK
@@ -325,11 +330,14 @@ class MacroCallLight(
     val path: Array<String>,
     val body: String,
     val bodyHash: HashCode?,
+    /** See [MacroIndex] */
+    val macroIndexInParent: Int
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {
         data.writePath(path)
         data.writeHashCodeNullable(bodyHash)
+        data.writeVarInt(macroIndexInParent)
     }
 }
 
@@ -339,11 +347,14 @@ data class MacroDefLight(
     val bodyHash: HashCode?,
     val hasMacroExport: Boolean,
     val hasLocalInnerMacros: Boolean,
+    /** See [MacroIndex] */
+    val macroIndexInParent: Int,
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {
         IOUtil.writeUTF(data, name)
         data.writeHashCodeNullable(bodyHash)
+        data.writeVarInt(macroIndexInParent)
 
         var flags = 0
         if (hasMacroExport) flags += HAS_MACRO_EXPORT_MASK
@@ -363,3 +374,9 @@ private fun DataOutput.writePath(path: Array<String>) {
         writeChar(':'.toInt())
     }
 }
+
+fun StubElement<*>.hasMacroIndex(): Boolean =
+    this is RsMacroCallStub || this is RsMacroStub || this is RsModItemStub || this is RsModDeclItemStub
+
+fun PsiElement.hasMacroIndex(): Boolean =
+    this is RsMacroCall || this is RsMacro || this is RsModItem || this is RsModDeclItem

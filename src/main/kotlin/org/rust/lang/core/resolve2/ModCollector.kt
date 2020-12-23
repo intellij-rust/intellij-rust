@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
+import com.intellij.util.SmartList
 import org.rust.lang.RsConstants
 import org.rust.lang.RsFileType
 import org.rust.lang.core.crate.Crate
@@ -47,17 +48,25 @@ class ModCollectorContext(
         { containingMod, name, perNs -> containingMod.addVisibleItem(name, perNs) }
 )
 
-fun collectFileAndCalculateHash(file: RsFile, modData: ModData, context: ModCollectorContext) {
+typealias LegacyMacros = Map<String, MacroDefInfo>
+
+fun collectFileAndCalculateHash(
+    file: RsFile,
+    modData: ModData,
+    modMacroIndex: MacroIndex,
+    context: ModCollectorContext
+): LegacyMacros {
     val hashCalculator = HashCalculator()
-    val collector = ModCollector(modData, context, hashCalculator)
-    collector.collectMod(file.getOrBuildStub() ?: return)
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator)
+    collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
     val fileHash = hashCalculator.getFileHash()
     context.defMap.addVisitedFile(file, modData, fileHash)
+    return collector.legacyMacros
 }
 
-fun collectExpandedElements(expandedFile: RsFileStub, modData: ModData, context: ModCollectorContext) {
-    val collector = ModCollector(modData, context, hashCalculator = null)
-    collector.collectMod(expandedFile)
+fun collectExpandedElements(expandedFile: RsFileStub, call: MacroCallInfo, context: ModCollectorContext) {
+    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null)
+    collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
 /**
@@ -67,6 +76,11 @@ fun collectExpandedElements(expandedFile: RsFileStub, modData: ModData, context:
 private class ModCollector(
     private val modData: ModData,
     private val context: ModCollectorContext,
+    /**
+     * When collecting explicit items in [modData] - equal to `modData.macroIndex`.
+     * When collecting expanded items - equal to macroIndex of macro call.
+     */
+    private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
 ) : ModVisitor {
 
@@ -77,7 +91,14 @@ private class ModCollector(
     private val crate: Crate = context.context.crate
     private val project: Project = context.context.project
 
-    fun collectMod(mod: StubElement<out RsMod>) {
+    /**
+     * Stores collected legacy macros, as well as macros from collected mods with macro_use attribute.
+     * Will be propagated to (lexically) succeeding modules.
+     * See [propagateLegacyMacros].
+     */
+    val legacyMacros: MutableMap<String, MacroDefInfo> = hashMapOf()
+
+    fun collectMod(mod: StubElement<out RsMod>, propagateLegacyMacros: Boolean = false) {
         val visitor = if (hashCalculator != null) {
             val hashVisitor = hashCalculator.getVisitor(crate, modData.fileRelativePath)
             CompositeModVisitor(hashVisitor, this)
@@ -85,6 +106,7 @@ private class ModCollector(
             this
         }
         ModCollectorBase.collectMod(mod, modData.isDeeplyEnabledByCfg, visitor, crate)
+        if (propagateLegacyMacros) propagateLegacyMacros(modData)
         if (isUnitTestMode) {
             modData.checkChildModulesAndVisibleItemsConsistency()
         }
@@ -110,7 +132,7 @@ private class ModCollector(
         val name = item.name
 
         // could be null if `.resolve()` on `RsModDeclItem` returns null
-        val childModData = tryCollectChildModule(item, stub)
+        val childModData = tryCollectChildModule(item, stub, item.macroIndexInParent)
 
         val visItem = convertToVisItem(item, stub)
         if (visItem.isModOrEnum && childModData == null) return
@@ -132,7 +154,7 @@ private class ModCollector(
         return VisItem(itemPath, visibility, isModOrEnum)
     }
 
-    private fun tryCollectChildModule(item: ItemLight, stub: RsNamedStub): ModData? {
+    private fun tryCollectChildModule(item: ItemLight, stub: RsNamedStub, index: Int): ModData? {
         if (stub is RsEnumItemStub) return collectEnumAsModData(item, stub)
 
         val childMod = when (stub) {
@@ -144,16 +166,22 @@ private class ModCollector(
             else -> return null
         }
         val isDeeplyEnabledByCfg = item.isDeeplyEnabledByCfg
-        val childModData = collectChildModule(childMod, isDeeplyEnabledByCfg, item.pathAttribute)
-        if (item.hasMacroUse && isDeeplyEnabledByCfg) modData.legacyMacros += childModData.legacyMacros
+        val (childModData, childModLegacyMacros) =
+            collectChildModule(childMod, isDeeplyEnabledByCfg, item.pathAttribute, item.hasMacroUse, index)
+        if (item.hasMacroUse && isDeeplyEnabledByCfg) {
+            modData.addLegacyMacros(childModLegacyMacros)
+            legacyMacros += childModLegacyMacros
+        }
         return childModData
     }
 
     private fun collectChildModule(
         childMod: ChildMod,
         isDeeplyEnabledByCfg: Boolean,
-        pathAttribute: String?
-    ): ModData {
+        pathAttribute: String?,
+        hasMacroUse: Boolean,
+        index: Int
+    ): Pair<ModData, LegacyMacros> {
         ProgressManager.checkCanceled()
         val childModPath = modData.path.append(childMod.name)
         val (fileId, fileRelativePath) = when (childMod) {
@@ -164,22 +192,32 @@ private class ModCollector(
             parent = modData,
             crate = modData.crate,
             path = childModPath,
+            macroIndex = parentMacroIndex.append(index),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg,
             fileId = fileId,
             fileRelativePath = fileRelativePath,
             ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
+            hasMacroUse = hasMacroUse,
             crateDescription = defMap.crateDescription
         )
-        childModData.legacyMacros += modData.legacyMacros
-
-        when (childMod) {
-            is ChildMod.Inline -> {
-                val collector = ModCollector(childModData, context, hashCalculator)
-                collector.collectMod(childMod.mod)
-            }
-            is ChildMod.File -> collectFileAndCalculateHash(childMod.file, childModData, context)
+        for ((name, defs) in modData.legacyMacros) {
+            childModData.legacyMacros[name] = SmartList(defs)
         }
-        return childModData
+
+        val childModLegacyMacros = when (childMod) {
+            is ChildMod.Inline -> {
+                val collector = ModCollector(childModData, context, childModData.macroIndex, hashCalculator)
+                collector.collectMod(childMod.mod)
+                collector.legacyMacros
+            }
+            is ChildMod.File -> collectFileAndCalculateHash(
+                childMod.file,
+                childModData,
+                childModData.macroIndex,
+                context
+            )
+        }
+        return Pair(childModData, childModLegacyMacros)
     }
 
     private fun collectEnumAsModData(enum: ItemLight, enumStub: RsEnumItemStub): ModData {
@@ -189,11 +227,13 @@ private class ModCollector(
             parent = modData,
             crate = modData.crate,
             path = enumPath,
+            macroIndex = MacroIndex(intArrayOf() /* Not used anyway */),
             isDeeplyEnabledByCfg = enum.isDeeplyEnabledByCfg,
             fileId = modData.fileId,
             fileRelativePath = "${modData.fileRelativePath}::$enumName",
             ownedDirectoryId = modData.ownedDirectoryId,  // actually can use any value here
             isEnum = true,
+            hasMacroUse = false,
             crateDescription = defMap.crateDescription
         )
         for (variantPsi in enumStub.variants) {
@@ -212,30 +252,65 @@ private class ModCollector(
         check(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
         val bodyHash = call.bodyHash
         if (bodyHash == null && call.path.last() != "include") return
-        val macroDef = call.path.singleOrNull()?.let { modData.legacyMacros[it] }
         val dollarCrateMap = stub.getUserData(RESOLVE_RANGE_MAP_KEY) ?: RangeMap.EMPTY
-        context.context.macroCalls += MacroCallInfo(modData, call.path, call.body, bodyHash, macroDepth, macroDef, dollarCrateMap)
+        val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
+        context.context.macroCalls += MacroCallInfo(
+            modData,
+            macroIndex,
+            call.path,
+            call.body,
+            bodyHash,
+            macroDepth,
+            dollarCrateMap
+        )
     }
 
     override fun collectMacroDef(def: MacroDefLight) {
         val bodyHash = def.bodyHash ?: return
         val macroPath = modData.path.append(def.name)
+        val macroIndex = parentMacroIndex.append(def.macroIndexInParent)
 
         val defInfo = MacroDefInfo(
             modData.crate,
             macroPath,
+            macroIndex,
             def.body,
             bodyHash,
             def.hasMacroExport,
             def.hasLocalInnerMacros,
             project
         )
-        modData.legacyMacros[def.name] = defInfo
+        modData.addLegacyMacro(def.name, defInfo)
+        legacyMacros[def.name] = defInfo
 
         if (def.hasMacroExport) {
             val visItem = VisItem(macroPath, Visibility.Public)
             val perNs = PerNs(macros = visItem)
             onAddItem(crateRoot, def.name, perNs)
+        }
+    }
+
+    /**
+     * Propagates macro defs expanded from `foo!()` to `mod2`:
+     * ```
+     * mod mod1;
+     * foo!();
+     * mod mod2;
+     * ```
+     */
+    private fun propagateLegacyMacros(modData: ModData) {
+        if (legacyMacros.isEmpty()) return
+        for (childMod in modData.childModules.values) {
+            if (!childMod.isEnum && MacroIndex.shouldPropagate(parentMacroIndex, childMod.macroIndex)) {
+                childMod.visitDescendants {
+                    it.addLegacyMacros(legacyMacros)
+                }
+            }
+        }
+        if (modData.hasMacroUse) {
+            val parent = this.modData.parent ?: return
+            parent.addLegacyMacros(legacyMacros)
+            propagateLegacyMacros(parent)
         }
     }
 

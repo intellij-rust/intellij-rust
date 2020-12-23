@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
+import com.intellij.util.SmartList
 import gnu.trove.THashMap
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.RsEnumVariant
@@ -24,6 +25,7 @@ import org.rust.openapiext.fileId
 import org.rust.openapiext.testAssert
 import org.rust.stdext.HashCode
 import java.nio.file.Path
+import java.util.*
 
 class CrateDefMap(
     val crate: CratePersistentId,
@@ -40,6 +42,8 @@ class CrateDefMap(
      */
     var prelude: ModData?,
     val metaData: CrateMetaData,
+    /** Equal to `root.macroIndex.single()` */
+    val rootModMacroIndex: Int,
     /** Only for debug */
     val crateDescription: String,
 ) {
@@ -94,7 +98,7 @@ class CrateDefMap(
             val fileInfo = fileInfos[virtualFile.fileId]
             // TODO: Exception here does not fail [RsBuildDefMapTest]
             // Note: we don't expand cfg-disabled macros (it can contain mod declaration)
-            testAssert { fileInfo != null || !mod.isDeeplyEnabledByCfg }
+            testAssert({ fileInfo != null || !mod.isDeeplyEnabledByCfg }, { "todo" })
             return fileInfo?.modData
         }
         val parentMod = mod.`super` ?: return null
@@ -111,7 +115,9 @@ class CrateDefMap(
     private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo? {
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
         if (macroDef.name in containingMod.procMacros) return null
-        return containingMod.legacyMacros[macroDef.name] ?: error("Can't find definition for macro $macroDef")
+        val macroInfos = containingMod.legacyMacros[macroDef.name]
+            ?: error("Can't find definition for macro $macroDef")
+        return macroInfos.singlePublicOrFirst()
     }
 
     /**
@@ -123,9 +129,10 @@ class CrateDefMap(
      */
     fun importAllMacrosExported(from: CrateDefMap) {
         for ((name, def) in from.root.visibleItems) {
-            val macroDef = def.macros ?: continue
             // `macro_use` only bring things into legacy scope.
-            root.legacyMacros[name] = from.getMacroInfo(macroDef) ?: continue
+            val macroDef = def.macros ?: continue
+            val macroInfo = from.getMacroInfo(macroDef) ?: continue
+            root.addLegacyMacro(name, macroInfo)
         }
     }
 
@@ -163,10 +170,53 @@ class FileInfo(
     val hash: HashCode,
 )
 
+/**
+ * We give macro index to each macro def, macro call, and mod.
+ *
+ * Consider macro call `foo1` inside `mod1::mod2`.
+ * Then `foo1` will have macro index `[crateIndex, index1, index2, localIndex1]`, where
+ * - `crateIndex` - unique index of crate, greater then all indexes of all crate dependencies
+ * - `index1` - local index of `mod1` (in crate root)
+ * - `index2` - local index of `mod2` (in `mod1`)
+ * - `localIndex1` - local index of macro call (in `mod2`)
+ *
+ * Consider `foo1` macro call expands to `foo2` macro call, which expands to `foo3` macro call.
+ * Then `foo2` will have macro index `[crateIndex, index1, index2, localIndex1, localIndex2, localIndex3]`, where
+ * - `localIndex2` - local index of `foo2` inside elements expanded from `foo1`
+ *
+ * MacroIndex is used:
+ * - when resolving macro call, to choose macro def lexically before macro call
+ * - when propagating macros from mod with `macro_use` attribute,
+ *   to determine modules to which propagate
+ */
+@Suppress("EXPERIMENTAL_FEATURE_WARNING")
+inline class MacroIndex(private val indices: IntArray) : Comparable<MacroIndex> {
+    fun append(index: Int): MacroIndex = MacroIndex(indices + index)
+
+    override fun compareTo(other: MacroIndex): Int = Arrays.compare(indices, other.indices)
+
+    companion object {
+        /** Equivalent to `call < mod && !isPrefix(call, mod)` */
+        fun shouldPropagate(call: MacroIndex, mod: MacroIndex): Boolean {
+            val callIndices = call.indices
+            val modIndices = mod.indices
+            val commonPrefix = Arrays.mismatch(callIndices, modIndices)
+            return commonPrefix != callIndices.size
+                && commonPrefix != modIndices.size
+                && callIndices[commonPrefix] < modIndices[commonPrefix]
+        }
+
+        fun equals(index1: MacroIndex, index2: MacroIndex): Boolean = index1.indices.contentEquals(index2.indices)
+    }
+
+    override fun toString(): String = indices.contentToString()
+}
+
 class ModData(
     val parent: ModData?,
     val crate: CratePersistentId,
     val path: ModPath,
+    val macroIndex: MacroIndex,
     val isDeeplyEnabledByCfg: Boolean,
     /** id of containing file */
     val fileId: FileId,
@@ -175,6 +225,7 @@ class ModData(
     val fileRelativePath: String,
     /** `fileId` of owning directory */
     val ownedDirectoryId: FileId?,
+    val hasMacroUse: Boolean,
     val isEnum: Boolean = false,
     /** Only for debug */
     val crateDescription: String,
@@ -199,7 +250,8 @@ class ModData(
      * Module scoped macros will be inserted into [visibleItems] instead of here.
      * Currently stores only cfg-enabled macros.
      */
-    val legacyMacros: MutableMap<String, MacroDefInfo> = THashMap()
+    // TODO: Custom map? (Profile memory usage)
+    val legacyMacros: THashMap<String, SmartList<MacroDefInfo>> = THashMap()
 
     /** Explicitly declared proc macros */
     val procMacros: MutableSet<String> = hashSetOf()
@@ -256,6 +308,24 @@ class ModData(
             current = current.parent ?: return null
         }
         return current
+    }
+
+    fun addLegacyMacro(name: String, defInfo: MacroDefInfo) {
+        val existing = legacyMacros.putIfAbsent(name, SmartList(defInfo)) ?: return
+        existing += defInfo
+    }
+
+    fun addLegacyMacros(defs: Map<String, MacroDefInfo>) {
+        for ((name, def) in defs) {
+            addLegacyMacro(name, def)
+        }
+    }
+
+    fun visitDescendants(visitor: (ModData) -> Unit) {
+        visitor(this)
+        for (childMod in childModules.values) {
+            childMod.visitDescendants(visitor)
+        }
     }
 
     override fun toString(): String = "ModData($path, crate=$crateDescription)"
