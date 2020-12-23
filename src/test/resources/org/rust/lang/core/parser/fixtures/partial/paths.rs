@@ -14,4 +14,5 @@ fn foo() {
     Foo::bar::;
     Foo::<bar>::;
     Foo::<bar::>::baz;
+    <Foo as Bar>::;
 }

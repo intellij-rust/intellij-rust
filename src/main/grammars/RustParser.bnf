@@ -195,7 +195,10 @@ private Path_first ::= identifier | self | 'Self' | super | '::' | '<' | crate
 
 private PathImpl ::= PathStart PathSegment*
 
-PathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual)? PathIdent PathTypeArguments? { elementType = Path }
+PathStart ::= (PathIdent | FQPathStart) PathTypeArguments? { elementType = Path }
+private FQPathStart ::= ('::' | <<checkTypeQualAllowed>> TypeQual) !('{' | '*') PathIdent {
+  pin = 2
+}
 //    <T as Foo>::bar::baz::<i32>
 //    ^~~~~~~~~~~^ TypeQual
 TypeQual ::= '<' TypeReference [ as TraitRef] '>' '::' {
