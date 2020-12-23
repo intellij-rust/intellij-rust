@@ -7,13 +7,19 @@ package org.rust.lang.core.resolve2
 
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.IOUtil
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
+import org.rust.lang.core.psi.ext.variants
+import org.rust.lang.core.stubs.RsEnumItemStub
 import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.lang.core.stubs.RsModItemStub
 import org.rust.lang.core.stubs.RsNamedStub
 import org.rust.openapiext.fileId
 import org.rust.stdext.HashCode
+import org.rust.stdext.makeBitMask
+import org.rust.stdext.writeVarInt
 import java.io.DataOutput
 import java.io.DataOutputStream
 import java.io.OutputStream
@@ -53,18 +59,12 @@ private fun calculateModHash(modData: ModDataLight): HashCode {
     val digest = DigestUtil.sha1()
     val data = DataOutputStream(DigestOutputStream(OutputStream.nullOutputStream(), digest))
 
-    fun writeElements(elements: List<Writeable>) {
-        for (element in elements) {
-            element.writeTo(data)
-        }
-        data.writeByte(0)  // delimiter
-    }
-
     modData.sort()
-    writeElements(modData.items)
-    writeElements(modData.imports)
-    writeElements(modData.macroCalls)
-    writeElements(modData.macroDefs)
+    data.writeElements(modData.items)
+    data.writeElements(modData.enums)
+    data.writeElements(modData.imports)
+    data.writeElements(modData.macroCalls)
+    data.writeElements(modData.macroDefs)
     data.writeByte(modData.attributes?.ordinal ?: RsFile.Attributes.values().size)
 
     return HashCode.fromByteArray(digest.digest())
@@ -72,6 +72,7 @@ private fun calculateModHash(modData: ModDataLight): HashCode {
 
 private class ModDataLight {
     val items: MutableList<ItemLight> = mutableListOf()
+    val enums: MutableList<EnumLight> = mutableListOf()
     val imports: MutableList<ImportLight> = mutableListOf()
     val macroCalls: MutableList<MacroCallLight> = mutableListOf()
     val macroDefs: MutableList<MacroDefLight> = mutableListOf()
@@ -79,6 +80,7 @@ private class ModDataLight {
 
     fun sort() {
         items.sortBy { it.name }
+        enums.sortBy { it.item.name }
         imports.sortWith(compareBy(Arrays::compare) { it.usePath })
         // TODO: Smart sort for macro calls & defs
     }
@@ -121,10 +123,27 @@ private class ModLightCollector(
     val modData: ModDataLight = ModDataLight()
 
     override fun collectItem(item: ItemLight, stub: RsNamedStub) {
+        if (stub is RsEnumItemStub) {
+            collectEnum(item, stub)
+            return
+        }
+
         modData.items += item
         if (collectChildModules && stub is RsModItemStub) {
             collectMod(stub, item.name, item.isDeeplyEnabledByCfg)
         }
+    }
+
+    private fun collectEnum(enum: ItemLight, enumStub: RsEnumItemStub) {
+        val variants = enumStub.variants.mapNotNullTo(mutableListOf()) {
+            EnumVariantLight(
+                name = it.name ?: return@mapNotNullTo null,
+                isDeeplyEnabledByCfg = enum.isDeeplyEnabledByCfg && it.isEnabledByCfgSelf(crate),
+                hasBlockFields = it.blockFields != null
+            )
+        }
+        variants.sortBy { it.name }
+        modData.enums += EnumLight(enum, variants)
     }
 
     override fun collectImport(import: ImportLight) {
@@ -153,5 +172,42 @@ private class ModLightCollector(
             collectChildModules = true
         )
         ModCollectorBase.collectMod(mod, isDeeplyEnabledByCfg, visitor, crate)
+    }
+}
+
+private class EnumVariantLight(
+    val name: String,
+    val isDeeplyEnabledByCfg: Boolean,
+    val hasBlockFields: Boolean,
+) : Writeable {
+    override fun writeTo(data: DataOutput) {
+        IOUtil.writeUTF(data, name)
+
+        var flags = 0
+        if (isDeeplyEnabledByCfg) flags += IS_DEEPLY_ENABLED_BY_CFG_MASK
+        if (hasBlockFields) flags += HAS_BLOCK_FIELDS
+        data.writeByte(flags)
+    }
+
+    companion object {
+        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = makeBitMask(0)
+        private val HAS_BLOCK_FIELDS: Int = makeBitMask(1)
+    }
+}
+
+private class EnumLight(
+    val item: ItemLight,
+    val variants: List<EnumVariantLight>,
+) : Writeable {
+    override fun writeTo(data: DataOutput) {
+        item.writeTo(data)
+        data.writeElements(variants)
+    }
+}
+
+private fun DataOutput.writeElements(elements: List<Writeable>) {
+    writeVarInt(elements.size)
+    for (element in elements) {
+        element.writeTo(this)
     }
 }
