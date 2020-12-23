@@ -287,8 +287,7 @@ object RustParserUtil : GeneratedParserUtilBase() {
             }
             else -> {
                 // error message
-                val consumed = consumeToken(b, IDENTIFIER) || consumeToken(b, SELF) ||
-                    consumeToken(b, SUPER) || consumeToken(b, CSELF) || consumeToken(b, CRATE)
+                val consumed = consumeToken(b, IDENTIFIER)
                 check(!consumed)
                 false
             }

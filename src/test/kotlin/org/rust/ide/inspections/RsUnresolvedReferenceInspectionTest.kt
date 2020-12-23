@@ -188,12 +188,12 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
     """)
 
     fun `test no unresolved reference for a path after incomplete path 1`() = checkByText("""
-        use <error descr="Unresolved reference: `foo`">foo</error>::<error descr="Self, crate, identifier, self or super expected, got '::'">:</error>:bar;
+        use <error descr="Unresolved reference: `foo`">foo</error>::<error descr="identifier expected, got '::'">:</error>:bar;
     """, false)
 
     fun `test no unresolved reference for a path after incomplete path 2`() = checkByText("""
         mod foo {}
-        use foo::<error descr="Self, crate, identifier, self or super expected, got '::'">:</error>:bar;
+        use foo::<error descr="identifier expected, got '::'">:</error>:bar;
     """, false)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
