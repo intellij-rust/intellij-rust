@@ -493,4 +493,25 @@ If you intended to print `{` symbol, you can escape it using `{{`">{</error>"###
             debug!("{}", 1);
         }
     """)
+
+    fun `test panic macro`() = checkErrors("""
+        use std::fmt;
+
+        struct S;
+        impl fmt::Display for S {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { unimplemented!() }
+        }
+
+        fn main() {
+            panic!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S);
+            panic!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER> <error descr="Invalid reference to positional argument 1 (there is 1 argument)">{}</error>", S);
+            panic!("<FORMAT_SPECIFIER>{}</FORMAT_SPECIFIER>", S, <error descr="Argument never used">S</error>);
+        }
+    """)
+
+    fun `test panic with single literal`() = checkErrors("""
+        fn main() {
+            panic!("{}");
+        }
+    """)
 }

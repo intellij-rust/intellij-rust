@@ -508,10 +508,12 @@ private fun getFormatMacroCtx(formatMacro: RsMacroCall): Pair<Int, List<RsFormat
                 "format",
                 "format_args",
                 "format_args_nl" -> 0
+                // panic macro handle any literal (even with `{}`) if it's single argument
+                "panic" -> if (formatMacroArgs.size < 2) null else 0
                 "write",
                 "writeln" -> 1
-                else -> return null
-            }
+                else -> null
+            } ?: return null
             Pair(position, formatMacroArgs)
         }
         crate.normName == "log" && logMacroArgs != null -> {
