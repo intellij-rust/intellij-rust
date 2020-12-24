@@ -1,4 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+    <resource-bundle>messages.RsBundle</resource-bundle>
+
     <depends>com.intellij.modules.lang</depends>
 
     <xi:include href="/META-INF/platform-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -1096,21 +1098,18 @@
 
     <actions>
         <action id="Rust.NewRustFile"
-                class="org.rust.ide.actions.RsCreateFileAction"
-                text="Rust File"
-                description="Create new Rust file">
+                class="org.rust.ide.actions.RsCreateFileAction">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
-        <action id="Rust.NewCargoCrate" class="org.rust.ide.actions.RsCreateCrateAction"
-                text="Cargo Crate" description="Create new Cargo crate">
+        <action id="Rust.NewCargoCrate"
+                class="org.rust.ide.actions.RsCreateCrateAction"
+                icon="/icons/cargo.svg">
             <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
         </action>
 
         <action id="Rust.Build"
                 class="org.rust.ide.actions.RsBuildAction"
-                text="Build"
-                description="Build project"
                 icon="AllIcons.Actions.Compile"
                 use-shortcut-of="CompileDirty">
             <add-to-group group-id="ToolbarRunGroup" relative-to-action="RunConfiguration" anchor="before"/>
@@ -1118,50 +1117,37 @@
         </action>
 
         <action id="Rust.RsPromoteModuleToDirectoryAction"
-                class="org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction"
-                text="Promote Module to Directory"
-                description="Move this module to a dedicated directory">
+                class="org.rust.ide.refactoring.RsPromoteModuleToDirectoryAction">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsDowngradeModuleToFile"
-                class="org.rust.ide.refactoring.RsDowngradeModuleToFile"
-                text="Downgrade Module to File"
-                description="Move this module to a single file">
+                class="org.rust.ide.refactoring.RsDowngradeModuleToFile">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToNamedFields"
-                class="org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction"
-                text="Convert to Named Fields"
-                description="Converts tuple struct to named fields">
+                class="org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsConvertToTuple"
-                class="org.rust.ide.refactoring.convertStruct.RsConvertToTupleAction"
-                text="Convert to Tuple"
-                description="Converts struct to tuple representation">
+                class="org.rust.ide.refactoring.convertStruct.RsConvertToTupleAction">
             <add-to-group group-id="RefactoringMenu"/>
         </action>
 
         <action id="Rust.RsExtractEnumVariant"
-                class="org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction"
-                text="Extract Enum Variant"
-                description="Extract a single enum variant into a separate struct">
+                class="org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction">
             <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
         </action>
 
         <action id="Rust.ShowSingleStepMacroExpansionAction"
-                class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction"
-                text="Show Expanded Macro">
+                class="org.rust.ide.actions.macroExpansion.RsShowSingleStepMacroExpansionAction">
         </action>
         <action id="Rust.ShowRecursiveMacroExpansionAction"
-                class="org.rust.ide.actions.macroExpansion.RsShowRecursiveMacroExpansionAction"
-                text="Show Recursively Expanded Macro">
+                class="org.rust.ide.actions.macroExpansion.RsShowRecursiveMacroExpansionAction">
         </action>
         <group id="Rust.MacroExpansionActions"
-               text="Show Macro Expansion"
                class="org.rust.ide.actions.macroExpansion.RsShowMacroExpansionGroup">
             <add-to-group group-id="EditorPopupMenu"/>
             <separator/>
@@ -1170,30 +1156,27 @@
         </group>
 
         <action class="org.rust.ide.refactoring.generate.constructor.GenerateConstructorAction"
-                id="Rust.GenerateConstructor"
-                text="Constructor">
+                id="Rust.GenerateConstructor">
             <add-to-group group-id="GenerateGroup"/>
         </action>
 
         <action class="org.rust.ide.refactoring.generate.getter.GenerateGetterAction"
-                id="Rust.GenerateGetter"
-                text="Getter">
+                id="Rust.GenerateGetter">
             <add-to-group group-id="GenerateGroup"/>
         </action>
 
         <action class="org.rust.ide.refactoring.generate.setter.GenerateSetterAction"
-                id="Rust.GenerateSetter"
-                text="Setter">
+                id="Rust.GenerateSetter">
             <add-to-group group-id="GenerateGroup"/>
         </action>
 
         <action id="Rust.ReexpandMacrosAction"
-                class="org.rust.lang.core.macros.ReexpandMacrosAction"
-                text="Re-Expand All Rust Macros">
+                class="org.rust.lang.core.macros.ReexpandMacrosAction">
         </action>
 
         <action id="Rust.CreateNewGithubIssue"
-                class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue">
+                class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue"
+                icon="/icons/rust.svg">
             <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ReportProblem"/>
         </action>
 
@@ -1201,16 +1184,12 @@
 
         <action id="Cargo.RustfmtFile"
                 class="org.rust.ide.actions.RustfmtFileAction"
-                text="Reformat File with Rustfmt"
-                description="Reformat current file with rustfmt"
                 icon="AllIcons.Actions.RealIntentionBulb">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
 
         <action id="Cargo.RustfmtCargoProject"
                 class="org.rust.ide.actions.RustfmtCargoProjectAction"
-                text="Reformat Cargo Project with Rustfmt"
-                description="Reformat cargo project with rustfmt"
                 icon="AllIcons.Actions.RealIntentionBulb">
             <add-to-group group-id="CodeMenu" anchor="last"/>
         </action>
@@ -1221,30 +1200,26 @@
 
         <action id="Cargo.AttachCargoProject"
                 class="org.rust.cargo.project.model.AttachCargoProjectAction"
-                text="Attach Cargo Project"
                 icon="AllIcons.General.Add"/>
 
         <action id="Cargo.DetachCargoProject"
                 class="org.rust.cargo.project.model.DetachCargoProjectAction"
-                text="Detach Cargo Project"
                 icon="AllIcons.General.Remove"
                 use-shortcut-of="$Delete"/>
 
         <action id="Cargo.RunCargoCommand"
                 class="org.rust.cargo.runconfig.command.RunCargoCommandAction"
-                text="Run Cargo Command"/>
+                icon="/icons/cargo.svg"/>
 
         <action id="Cargo.RunExternalLinter"
                 class="org.rust.ide.actions.RsRunExternalLinterAction"
-                text="Run External Linter"/>
+                icon="/icons/external-linter.svg"/>
 
         <action id="Cargo.ToggleExternalLinterOnTheFlyAction"
-                class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"
-                text="Run External Linter (Cargo Check / Clippy) on the Fly"/>
+                class="org.rust.ide.actions.ToggleExternalLinterOnTheFlyAction"/>
 
         <action id="Cargo.ShowSettings"
-                class="org.rust.ide.actions.CargoEditSettingsAction" text="Cargo Settings"
-                description="Edit Cargo settings for the current project"
+                class="org.rust.ide.actions.CargoEditSettingsAction"
                 icon="AllIcons.General.Settings">
         </action>
 
@@ -1272,15 +1247,15 @@
 
         <action id="Rust.ConsoleREPL"
                 class="org.rust.ide.console.RunRustConsoleAction"
-                text="Rust REPL"
                 icon="/icons/repl.svg">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 
         <!-- Internal -->
 
-        <action id="RsGenerateDictionaries" class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
-                text="Generate Rust Spellchecker Dictionaries" internal="true">
+        <action id="Rust.GenerateDictionaries"
+                class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
+                internal="true">
             <add-to-group group-id="Internal"/>
         </action>
 

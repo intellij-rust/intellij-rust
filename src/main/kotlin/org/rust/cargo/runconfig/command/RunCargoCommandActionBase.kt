@@ -8,9 +8,8 @@ package org.rust.cargo.runconfig.command
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.rust.cargo.runconfig.hasCargoProject
-import javax.swing.Icon
 
-abstract class RunCargoCommandActionBase(icon: Icon) : DumbAwareAction(null, null, icon) {
+abstract class RunCargoCommandActionBase : DumbAwareAction() {
     override fun update(e: AnActionEvent) {
         val hasCargoProject = e.project?.hasCargoProject == true
         e.presentation.isEnabledAndVisible = hasCargoProject

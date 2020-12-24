@@ -12,13 +12,12 @@ import com.intellij.codeInspection.ex.InspectionManagerEx
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.Key
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
-import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.command.RunCargoCommandActionBase
 import org.rust.cargo.runconfig.getAppropriateCargoProject
 import org.rust.ide.inspections.RsExternalLinterInspection
 
-class RsRunExternalLinterAction : RunCargoCommandActionBase(CargoIcons.EXTERNAL_LINTER) {
+class RsRunExternalLinterAction : RunCargoCommandActionBase() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
