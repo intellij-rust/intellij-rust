@@ -18,16 +18,11 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.runconfig.hasCargoProject
 import org.rust.cargo.toolchain.impl.RustcVersion
-import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.isRustFile
 import org.rust.openapiext.plugin
 import org.rust.openapiext.virtualFile
 
-class CreateNewGithubIssue : DumbAwareAction(
-    "Create New Issue",
-    "Creates new issue in https://github.com/intellij-rust/intellij-rust repo",
-    RsIcons.RUST
-) {
+class CreateNewGithubIssue : DumbAwareAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabledAndVisible = e.project?.hasCargoProject == true
