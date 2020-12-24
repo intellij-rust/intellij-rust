@@ -20,6 +20,7 @@ import org.toml.lang.psi.ext.kind
 object CargoTomlPsiPattern {
     private const val TOML_KEY_CONTEXT_NAME = "key"
     private const val TOML_KEY_VALUE_CONTEXT_NAME = "keyValue"
+    private val PACKAGE_URL_ATTRIBUTES = setOf("homepage", "repository", "documentation")
 
     private inline fun <reified I : PsiElement> cargoTomlPsiElement(): PsiElementPattern.Capture<I> {
         return psiElement<I>().inVirtualFile(
@@ -284,6 +285,16 @@ object CargoTomlPsiPattern {
     val onDependencyPackageFeature: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
         .withParent(
             onDependencyPackageFeatureArray
+        )
+
+    val dependencyGitUrl: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
+        .withParent(dependencyProperty("git"))
+
+    val packageUrl: PsiElementPattern.Capture<TomlLiteral> = cargoTomlStringLiteral()
+        .withParent(
+            psiElement<TomlKeyValue>()
+                .withParent(tomlTable("package"))
+                .with("name") { e, _ -> e.key.name in PACKAGE_URL_ATTRIBUTES }
         )
 
     private fun cargoTomlStringLiteral() = cargoTomlPsiElement<TomlLiteral>()

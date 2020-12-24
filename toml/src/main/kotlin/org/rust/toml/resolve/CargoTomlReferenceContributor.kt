@@ -10,7 +10,9 @@ import com.intellij.psi.PsiReferenceRegistrar
 import org.rust.lang.core.or
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onDependencyPackageFeature
+import org.rust.toml.CargoTomlPsiPattern.dependencyGitUrl
 import org.rust.toml.CargoTomlPsiPattern.onFeatureDependencyLiteral
+import org.rust.toml.CargoTomlPsiPattern.packageUrl
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.rust.toml.tomlPluginIsAbiCompatible
 
@@ -28,6 +30,7 @@ class CargoTomlReferenceContributor : PsiReferenceContributor() {
             }
             registrar.registerReferenceProvider(onFeatureDependencyLiteral, CargoTomlFeatureDependencyReferenceProvider())
             registrar.registerReferenceProvider(onDependencyPackageFeature, CargoTomlDependencyFeaturesReferenceProvider())
+            registrar.registerReferenceProvider(dependencyGitUrl or packageUrl, CargoTomlUrlReferenceProvider())
         }
     }
 }

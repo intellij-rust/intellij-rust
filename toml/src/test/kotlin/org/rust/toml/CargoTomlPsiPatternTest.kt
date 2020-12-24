@@ -16,7 +16,9 @@ import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.inSpecificDependencyKeyValue
 import org.rust.toml.CargoTomlPsiPattern.onDependencyKey
 import org.rust.toml.CargoTomlPsiPattern.onDependencyPackageFeature
+import org.rust.toml.CargoTomlPsiPattern.dependencyGitUrl
 import org.rust.toml.CargoTomlPsiPattern.onFeatureDependencyLiteral
+import org.rust.toml.CargoTomlPsiPattern.packageUrl
 import org.rust.toml.CargoTomlPsiPattern.onSpecificDependencyHeaderKey
 import org.rust.toml.CargoTomlPsiPattern.packageWorkspacePath
 import org.rust.toml.CargoTomlPsiPattern.path
@@ -195,6 +197,30 @@ class CargoTomlPsiPatternTest : RsTestBase() {
         [dependencies.foo]
         features = []
                 #^
+    """)
+
+    fun `test dependency git url link`() = testPattern(dependencyGitUrl, """
+        [dependencies]
+        foo = { git = "foo" }
+                       #^
+    """)
+
+    fun `test package homepage url link`() = testPattern(packageUrl, """
+        [package]
+        homepage = "foo"
+                    #^
+    """)
+
+    fun `test package repository url link`() = testPattern(packageUrl, """
+        [package]
+        repository = "foo"
+                      #^
+    """)
+
+    fun `test package documentation url link`() = testPattern(packageUrl, """
+        [package]
+        documentation = "foo"
+                         #^
     """)
 
     private inline fun <reified T : PsiElement> testPattern(
