@@ -185,6 +185,18 @@ class CargoTomlPsiPatternTest : RsTestBase() {
                     #^
     """)
 
+    fun `test dependency key in inline table`() = testPattern(CargoTomlPsiPattern.dependencyProperty("features"), """
+        [dependencies]
+        foo = { features = [] }
+                        #^
+    """)
+
+    fun `test dependency key in specific dependency`() = testPattern(CargoTomlPsiPattern.dependencyProperty("features"), """
+        [dependencies.foo]
+        features = []
+                #^
+    """)
+
     private inline fun <reified T : PsiElement> testPattern(
         pattern: ElementPattern<T>,
         @Language("Toml") code: String,
