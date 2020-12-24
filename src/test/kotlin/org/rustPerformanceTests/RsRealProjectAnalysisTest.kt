@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolRegistrar
 import com.intellij.ide.annotator.AnnotatorBase
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
 import org.rust.ide.annotator.RsErrorAnnotator
 import org.rust.ide.inspections.RsLocalInspectionTool
 import org.rust.ide.inspections.RsUnresolvedReferenceInspection
@@ -60,14 +61,21 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
         val base = openRealProject(info) ?: return
 
         println("Collecting files to analyze")
-        val filesToCheck = base.findDescendants {
+
+        val baseDirToCheck = if (info.name == STDLIB) rustupFixture.stdlib!! else base
+
+        val filesToCheck = baseDirToCheck.findDescendants {
             it.fileType == RsFileType && run {
                 val file = it.toPsiFile(project)
                 file is RsFile && file.crateRoot != null && file.cargoWorkspace != null
             }
         }
         for (file in filesToCheck) {
-            val path = file.path.substring(base.path.length + 1)
+            val path = if (VfsUtil.isAncestor(base, file, true)) {
+                file.path.substring(base.path.length + 1)
+            } else {
+                file.path
+            }
             println("Analyzing $path")
             myFixture.openFileInEditor(file)
             val infos = myFixture.doHighlighting(HighlightSeverity.ERROR)
@@ -101,6 +109,8 @@ open class RsRealProjectAnalysisTest : RsRealProjectTestBase() {
     }
 
     companion object {
+
+        private const val STDLIB = "stdlib"
 
         val FAIL_FAST = object : AnnotationConsumer {
             override fun consumeAnnotation(annotation: Annotation) {
