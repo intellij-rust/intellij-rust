@@ -948,6 +948,7 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         } //^
     """)
 
+    @UseNewResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test propagate expanded macro def to grandparent mod`() = checkByCode("""
         mod inner {
