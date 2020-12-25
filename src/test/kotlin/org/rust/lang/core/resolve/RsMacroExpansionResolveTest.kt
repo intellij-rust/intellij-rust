@@ -947,4 +947,25 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
             func();
         } //^
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test propagate expanded macro def to grandparent mod`() = checkByCode("""
+        mod inner {
+            #[macro_use]
+            mod mod1 {
+                #[macro_use]
+                mod mod2 {
+                    macro_rules! gen {
+                        ($ name:ident) => {
+                            macro_rules! $ name { () => {} }
+                        };
+                    }
+                    gen!(foo);
+                       //X
+                }
+            }
+            foo!();
+            //^
+        }
+    """)
 }

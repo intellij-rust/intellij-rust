@@ -308,7 +308,7 @@ private class ModCollector(
             }
         }
         if (modData.hasMacroUse) {
-            val parent = this.modData.parent ?: return
+            val parent = modData.parent ?: return
             parent.addLegacyMacros(legacyMacros)
             propagateLegacyMacros(parent)
         }
