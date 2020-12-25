@@ -25,6 +25,7 @@ import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.function.Consumer
 
@@ -73,7 +74,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         if (kind == MessageEvent.Kind.SIMPLE) return true
 
         val filePosition = getFilePosition(rustcMessage)
-        val messageEvent = createMessageEvent(parentEventId, kind, message, detailedMessage, filePosition)
+        val messageEvent = createMessageEvent(context.workingDirectory, parentEventId, kind, message, detailedMessage, filePosition)
         if (messageEvents.add(messageEvent)) {
             if (startEvents.none { it.id == parentEventId }) {
                 handleCompilingMessage("Compiling $parentEventId", false, messageConsumer)
@@ -144,7 +145,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
             }
 
             kind in ERROR_OR_WARNING ->
-                handleProblemMessage(kind, message, cleanLine, messageConsumer)
+                handleProblemMessage(kind, message, line, messageConsumer)
         }
 
         messageConsumer.acceptText(context.buildId, line.withNewLine())
@@ -242,7 +243,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         messageConsumer: Consumer<in BuildEvent>
     ) {
         if (message in MESSAGES_TO_IGNORE) return
-        val messageEvent = createMessageEvent(context.buildId, kind, message, detailedMessage)
+        val messageEvent = createMessageEvent(context.workingDirectory, context.buildId, kind, message, detailedMessage)
         if (messageEvents.add(messageEvent)) {
             messageConsumer.accept(messageEvent)
             if (kind == MessageEvent.Kind.ERROR) {
@@ -299,16 +300,24 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
             }
 
         private fun createMessageEvent(
+            workingDirectory: Path,
             parentEventId: Any,
             kind: MessageEvent.Kind,
             message: String,
             detailedMessage: String?,
             filePosition: FilePosition? = null
-        ): MessageEvent = if (filePosition == null) {
-            MessageEventImpl(parentEventId, kind, RUSTC_MESSAGE_GROUP, message, detailedMessage)
-        } else {
-            FileMessageEventImpl(parentEventId, kind, RUSTC_MESSAGE_GROUP, message, detailedMessage, filePosition)
-        }
+        ): MessageEvent = FileMessageEventImpl(
+            parentEventId,
+            kind,
+            RUSTC_MESSAGE_GROUP,
+            message,
+            detailedMessage,
+
+            // We are using `FileMessageEventImpl` instead of `MessageEventImpl`
+            // even if `filePosition` is `null` because of the issue with `MessageEventImpl`:
+            // https://youtrack.jetbrains.com/issue/IDEA-258407
+            filePosition ?: FilePosition(workingDirectory.toFile(), 0, 0)
+        )
 
         private data class Progress(val current: Long, val total: Long) {
             val fraction: Double = current.toDouble() / total
