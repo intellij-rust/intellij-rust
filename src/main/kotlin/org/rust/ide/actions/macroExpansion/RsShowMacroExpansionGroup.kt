@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions.macroExpansion
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import org.rust.lang.core.psi.RsMacroCall
@@ -16,6 +17,7 @@ import org.rust.lang.core.psi.RsMacroCall
  */
 class RsShowMacroExpansionGroup : DefaultActionGroup() {
     override fun update(event: AnActionEvent) {
-        event.presentation.isEnabledAndVisible = getMacroUnderCaret(event.dataContext) != null
+        val inEditorPopupMenu = event.place == ActionPlaces.EDITOR_POPUP
+        event.presentation.isEnabledAndVisible = inEditorPopupMenu && getMacroUnderCaret(event.dataContext) != null
     }
 }
