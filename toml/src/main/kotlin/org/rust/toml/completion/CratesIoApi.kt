@@ -16,6 +16,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.notifications.showBalloon
+import org.rust.ide.utils.USER_AGENT
 import org.rust.openapiext.runWithCheckCanceled
 import org.toml.lang.psi.TomlKeySegment
 import java.io.IOException
@@ -61,7 +62,7 @@ private fun <T> requestCratesIo(context: PsiElement, path: String, cls: Class<T>
     return try {
         runWithCheckCanceled {
             val response = HttpRequests.request("https://crates.io/api/v1/$path")
-                .userAgent("IntelliJ Rust Plugin (https://github.com/intellij-rust/intellij-rust)")
+                .userAgent(USER_AGENT)
                 .readString(ProgressManager.getInstance().progressIndicator)
             Gson().fromJson(response, cls)
         }
