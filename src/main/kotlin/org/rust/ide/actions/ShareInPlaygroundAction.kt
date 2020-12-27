@@ -5,6 +5,7 @@
 
 package org.rust.ide.actions
 
+import com.google.common.annotations.VisibleForTesting
 import com.google.gson.Gson
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationListener
@@ -16,7 +17,9 @@ import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.TestOnly
 import org.rust.RsBundle
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.notifications.showBalloon
@@ -52,7 +55,7 @@ class ShareInPlaygroundAction : DumbAwareAction() {
             override fun shouldStartInBackground(): Boolean = true
             override fun run(indicator: ProgressIndicator) {
                 val json = Gson().toJson(PlaygroundCode(text))
-                val response = HttpRequests.post("https://play.rust-lang.org/meta/gist/", "application/json")
+                val response = HttpRequests.post("$playgroundHost/meta/gist/", "application/json")
                     .userAgent(USER_AGENT)
                     .connect {
                         it.write(json)
@@ -77,7 +80,9 @@ class ShareInPlaygroundAction : DumbAwareAction() {
             }
 
             override fun onThrowable(error: Throwable) {
-                super.onThrowable(error)
+                if (!isUnitTestMode) {
+                    super.onThrowable(error)
+                }
                 project.showBalloon(
                     RsBundle.message("action.Rust.ShareInPlayground.notification.title"),
                     RsBundle.message("action.Rust.ShareInPlayground.notification.error"),
@@ -87,5 +92,26 @@ class ShareInPlaygroundAction : DumbAwareAction() {
         }.queue()
     }
 
-    private data class PlaygroundCode(val code: String)
+    @VisibleForTesting
+    data class PlaygroundCode(val code: String)
+}
+
+private var MOCK: String? = null
+
+private val playgroundHost: String get() {
+    return if (isUnitTestMode) {
+        MOCK ?: error("Use `withMockPlaygroundHost`")
+    } else {
+        "https://play.rust-lang.org"
+    }
+}
+
+@TestOnly
+fun withMockPlaygroundHost(host: String, action: () -> Unit) {
+    MOCK = host
+    try {
+        action()
+    } finally {
+        MOCK = null
+    }
 }
