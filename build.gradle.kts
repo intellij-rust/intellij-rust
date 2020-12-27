@@ -285,6 +285,7 @@ project(":") {
             exclude(module = "kotlin-stdlib")
         }
         testImplementation(project(":common", "testOutput"))
+        testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
         testOutput(sourceSets.getByName("test").output.classesDirs)
     }
 
