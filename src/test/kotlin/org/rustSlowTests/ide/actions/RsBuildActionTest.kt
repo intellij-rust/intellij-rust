@@ -10,7 +10,7 @@ package org.rustSlowTests.ide.actions
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testFramework.TestDataProvider
 import org.rust.MinRustcVersion
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.lastBuildCommandLine
@@ -71,7 +71,7 @@ class RsBuildActionTest : CargoBuildTest() {
         }.create()
 
         setUpSelectedConfigurationFromContext(testProject.fileWithCaret)
-        RsBuildAction().performForContext(dataContext)
+        performBuildAction()
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
@@ -143,7 +143,7 @@ class RsBuildActionTest : CargoBuildTest() {
         }.create()
 
         setUpSelectedConfigurationFromContext(testProject.fileWithCaret)
-        RsBuildAction().performForContext(dataContext)
+        performBuildAction()
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
@@ -217,7 +217,7 @@ class RsBuildActionTest : CargoBuildTest() {
             }
         }.create()
 
-        RsBuildAction().performForContext(dataContext)
+        performBuildAction()
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
@@ -258,8 +258,10 @@ class RsBuildActionTest : CargoBuildTest() {
         )
     }
 
-    private val dataContext: DataContext
-        get() = TestDataProvider(project)
+    private fun performBuildAction() {
+        val action = ActionManager.getInstance().getAction("Rust.Build") as RsBuildAction
+        action.performForContext(TestDataProvider(project))
+    }
 
     private fun setUpSelectedConfigurationFromContext(fileWithCaret: String) {
         val runManager = RunManager.getInstance(project) as RunManagerImpl

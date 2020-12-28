@@ -18,6 +18,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -42,7 +43,6 @@ import org.rust.cargo.toolchain.tools.cargoOrWrapper
 import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
-import org.rust.ide.actions.RefreshCargoProjectsAction
 import org.rust.openapiext.TaskResult
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
@@ -124,9 +124,10 @@ class CargoSyncTask(
         val buildContentDescriptor = BuildContentDescriptor(null, null, object : JComponent() {}, "Cargo")
         buildContentDescriptor.isActivateToolWindowWhenFailed = true
         buildContentDescriptor.isActivateToolWindowWhenAdded = false
+        val refreshAction = ActionManager.getInstance().getAction("Cargo.RefreshCargoProject")
         val descriptor = DefaultBuildDescriptor("Cargo", "Cargo", project.basePath!!, System.currentTimeMillis())
             .withContentDescriptor { buildContentDescriptor }
-            .withRestartAction(RefreshCargoProjectsAction())
+            .withRestartAction(refreshAction)
             .withRestartAction(StopAction(progress))
         return object : BuildProgressDescriptor {
             override fun getTitle(): String = descriptor.title

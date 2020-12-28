@@ -7,14 +7,13 @@ package org.rust.ide.actions
 
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.MapDataContext
-import com.intellij.testFramework.TestActionEvent
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.fileTree
 import org.rust.ide.actions.ui.CargoNewCrateSettings
 import org.rust.ide.actions.ui.CargoNewCrateUI
 import org.rust.ide.actions.ui.withMockCargoNewCrateUi
+import org.rust.launchAction
 
 class RsCreateCrateActionTest : RsWithToolchainTestBase() {
     fun `test create with file context`() {
@@ -35,24 +34,12 @@ class RsCreateCrateActionTest : RsWithToolchainTestBase() {
     }
 
     private fun createCrate(file: VirtualFile, name: String, binary: Boolean = true) {
-        val action = RsCreateCrateAction()
-
-        val dataContext = MapDataContext(mapOf(
-            CommonDataKeys.PROJECT to project,
-            CommonDataKeys.VIRTUAL_FILE to file
-        ))
-        val e = TestActionEvent(dataContext, action)
-        action.beforeActionPerformedUpdate(e)
-        check(e.presentation.isEnabledAndVisible) {
-            "Failed to run `${RsCreateCrateAction::class.java.simpleName}` action"
-        }
-
         withMockCargoNewCrateUi(object : CargoNewCrateUI {
-            override fun selectCargoCrateSettings(): CargoNewCrateSettings? {
+            override fun selectCargoCrateSettings(): CargoNewCrateSettings {
                 return CargoNewCrateSettings(binary, name)
             }
         }) {
-            action.actionPerformed(e)
+            myFixture.launchAction("Rust.NewCargoCrate", CommonDataKeys.VIRTUAL_FILE to file)
         }
 
         val src = if (binary) "main" else "lib"

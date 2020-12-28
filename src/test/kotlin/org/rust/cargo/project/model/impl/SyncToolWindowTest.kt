@@ -7,13 +7,11 @@ package org.rust.cargo.project.model.impl
 
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.MapDataContext
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.project.model.AttachCargoProjectAction
 import org.rust.cargo.project.model.cargoProjects
+import org.rust.launchAction
 
 class SyncToolWindowTest : RsWithToolchainTestBase() {
 
@@ -176,14 +174,7 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
     }
 
     private fun attachCargoProject(cargoProjectRoot: VirtualFile) {
-        val context = MapDataContext().apply {
-            put(PlatformDataKeys.PROJECT, project)
-            put(PlatformDataKeys.VIRTUAL_FILE, cargoProjectRoot)
-        }
-        val testEvent = TestActionEvent(context)
-        val action = AttachCargoProjectAction()
-        action.beforeActionPerformedUpdate(testEvent)
-        action.actionPerformed(testEvent)
+        myFixture.launchAction("Cargo.AttachCargoProject", PlatformDataKeys.VIRTUAL_FILE to cargoProjectRoot)
     }
 
     private fun checkSyncViewTree(expected: String) {
