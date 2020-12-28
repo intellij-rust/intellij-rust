@@ -7,7 +7,7 @@ package org.rust.ide.refactoring
 
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
-import org.rust.ide.refactoring.convertStruct.RsConvertToNamedFieldsAction
+import org.rust.launchAction
 
 class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
 
@@ -184,7 +184,7 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
 
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
-        myFixture.testAction(RsConvertToNamedFieldsAction())
+        myFixture.launchAction("Rust.RsConvertToNamedFields")
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
 }

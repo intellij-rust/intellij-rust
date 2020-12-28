@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.model
 
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -142,7 +143,7 @@ class AttachCargoProjectActionTest : RsWithToolchainTestBase() {
             put(AttachCargoProjectAction.MOCK_CHOSEN_FILE_KEY, mockChosenFile)
         }
         val testEvent = TestActionEvent(context, place)
-        val action = AttachCargoProjectAction()
+        val action = ActionManager.getInstance().getAction("Cargo.AttachCargoProject")
         action.beforeActionPerformedUpdate(testEvent)
         assertEquals(shouldBeEnabled, testEvent.presentation.isEnabledAndVisible)
         if (shouldBeEnabled) {
