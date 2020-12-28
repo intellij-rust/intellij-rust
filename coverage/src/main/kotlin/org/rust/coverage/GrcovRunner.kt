@@ -141,7 +141,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             var channel: RustChannel? = config.cmd.channel
             if (channel == RustChannel.DEFAULT) {
                 channel = project.computeWithCancelableProgress("Fetching rustc version...") {
-                    config.toolchain.rustc().queryVersion()?.channel
+                    config.toolchain.rustc().queryVersion(config.cmd.workingDirectory)?.channel
                 }
             }
             if (channel == RustChannel.NIGHTLY) return true

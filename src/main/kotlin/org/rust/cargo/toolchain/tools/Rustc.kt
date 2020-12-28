@@ -22,11 +22,13 @@ fun RsToolchain.rustc(): Rustc = Rustc(this)
 
 class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
 
-    fun queryVersion(): RustcVersion? {
+    fun queryVersion(workingDirectory: Path? = null): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        val lines = createBaseCommandLine("--version", "--verbose").execute()?.stdoutLines
+        val lines = createBaseCommandLine("--version", "--verbose", workingDirectory = workingDirectory)
+            .execute()
+            ?.stdoutLines
         return lines?.let { parseRustcVersion(it) }
     }
 
