@@ -93,6 +93,6 @@ fun RsVisStub.getRestrictedPath(): Array<String>? {
     val path = visRestrictionPath ?: error("no visibility restriction")
     val segments = arrayListOf<String>()
     if (!addPathSegments(path, segments)) return null
-    if (segments.first().isEmpty()) segments.removeAt(0)
+    if (segments.first().let { it.isEmpty() || it == "crate" }) segments.removeAt(0)
     return segments.toTypedArray()
 }

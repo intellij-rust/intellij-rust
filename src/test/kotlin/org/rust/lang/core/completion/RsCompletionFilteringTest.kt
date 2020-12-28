@@ -7,6 +7,7 @@ package org.rust.lang.core.completion
 
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
+import org.rust.UseNewResolve
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
@@ -161,6 +162,34 @@ class RsCompletionFilteringTest: RsCompletionTestBase() {
         }
         fn bar(s: S) {
             s.f/*caret*/
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test public item reexported with restricted visibility 1`() = checkNoCompletion("""
+        pub mod inner1 {
+            pub mod inner2 {
+                pub fn foo() {}
+                pub(in crate::inner1) use foo as bar;
+            }
+        }
+        fn main() {
+            crate::inner1::inner2::ba/*caret*/
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test public item reexported with restricted visibility 2`() = checkContainsCompletion("bar2", """
+        pub mod inner1 {
+            pub mod inner2 {
+                pub fn bar1() {}
+                pub(in crate::inner1) use bar1 as bar2;
+            }
+            fn main() {
+                crate::inner1::inner2::ba/*caret*/
+            }
         }
     """)
 

@@ -320,7 +320,9 @@ private class ModCollector(
             VisibilityLight.Public -> Visibility.Public
             VisibilityLight.RestrictedCrate -> crateRoot.visibilityInSelf
             VisibilityLight.Private -> modData.visibilityInSelf
-            is VisibilityLight.Restricted -> resolveRestrictedVisibility(visibility.inPath, crateRoot, modData)
+            is VisibilityLight.Restricted -> {
+                resolveRestrictedVisibility(visibility.inPath, modData) ?: crateRoot.visibilityInSelf
+            }
         }
     }
 
@@ -373,25 +375,19 @@ fun CrateDefMap.importExternCrateMacros(externCrateName: String) {
 }
 
 // https://doc.rust-lang.org/reference/visibility-and-privacy.html#pubin-path-pubcrate-pubsuper-and-pubself
-private fun resolveRestrictedVisibility(
-    path: Array<String>,
-    crateRoot: ModData,
-    containingMod: ModData
-): Visibility.Restricted {
-    val initialModData = when (path.first()) {
-        "super", "self" -> containingMod
-        else -> crateRoot
+private fun resolveRestrictedVisibility(path: Array<String>, containingMod: ModData): Visibility.Restricted? {
+    // Note: complex cases like `pub(in self::super::foo)` are not supported
+    return if (path.all { it == "super" }) {
+        val modData = containingMod.getNthParent(path.size)
+        modData?.visibilityInSelf
+    } else {
+        // Note: Can't use `childModules` here, because it will not contain our parent modules (yet)
+        val parents = containingMod.parents.toMutableList()
+        parents.reverse()
+        parents.getOrNull(path.size)
+            ?.takeIf { path.contentEquals(it.path.segments) }
+            ?.visibilityInSelf
     }
-    val pathTarget = path
-        .fold(initialModData) { modData, segment ->
-            val nextModData = when (segment) {
-                "self" -> modData
-                "super" -> modData.parent
-                else -> modData.childModules[segment]
-            }
-            nextModData ?: return crateRoot.visibilityInSelf
-        }
-    return pathTarget.visibilityInSelf
 }
 
 private fun ModData.checkChildModulesAndVisibleItemsConsistency() {
