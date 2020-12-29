@@ -8,9 +8,12 @@ package org.rust.lang.core.psi.ext
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.Query
 import org.rust.ide.icons.RsIcons
 import org.rust.ide.icons.addTestMark
 import org.rust.lang.core.macros.RsExpandedElement
@@ -178,6 +181,31 @@ val QueryAttributes.isProcMacroDef
         "proc_macro_attribute",
         "proc_macro_derive"
     )
+
+fun RsFunction.findFunctionCalls(scope: SearchScope? = null): Sequence<RsCallExpr> {
+    return searchReferences(scope)
+        .asSequence()
+        .mapNotNull {
+            val path = it.element
+            val pathExpr = path.parent
+            pathExpr.parent as? RsCallExpr
+        }
+}
+
+fun RsFunction.findMethodCalls(scope: SearchScope? = null): Sequence<RsMethodCall> {
+    return searchReferences(scope)
+        .asSequence()
+        .map { it.element }
+        .filterIsInstance<RsMethodCall>()
+}
+
+private fun RsElement.searchReferences(scope: SearchScope? = null): Query<PsiReference> {
+    return if (scope == null) {
+        ReferencesSearch.search(this)
+    } else {
+        ReferencesSearch.search(this, scope)
+    }
+}
 
 abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, RsFunction, RsModificationTrackerOwner {
 

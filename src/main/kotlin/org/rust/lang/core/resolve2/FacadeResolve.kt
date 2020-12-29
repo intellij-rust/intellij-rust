@@ -158,14 +158,15 @@ private fun filterMacrosByIndex(macroInfos: List<MacroDefInfo>, macroIndex: Macr
         else -> macroInfos.last()  // this is kind of error, can choose anything here
     }
 
-fun RsMacroCall.resolveToMacroUsingNewResolve(): RsNamedElement? =
-    resolveToMacroAndThen(
-        withNewResolve = { defInfo, info ->
-            val visItem = VisItem(defInfo.path, Visibility.Public)
-            visItem.scopedMacroToPsi(info.defMap, info.project)
-        },
-        withoutNewResolve = { it }
-    )
+fun <T> RsMacroCall.resolveToMacroUsingNewResolveAndThen(
+    withNewResolve: (RsNamedElement?) -> T,
+    withoutNewResolve: () -> T
+): T? =
+    resolveToMacroAndThen(withoutNewResolve) { defInfo, info ->
+        val visItem = VisItem(defInfo.path, Visibility.Public)
+        val def = visItem.scopedMacroToPsi(info.defMap, info.project)
+        withNewResolve(def)
+    }
 
 /**
  * Resolve without PSI is needed to prevent caching incomplete result in [expandedItemsCached].
@@ -182,20 +183,20 @@ fun RsMacroCall.resolveToMacroUsingNewResolve(): RsNamedElement? =
 fun RsMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash? =
     resolveToMacroAndThen(
         withNewResolve = { def, _ -> RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash) },
-        withoutNewResolve = { def -> RsMacroDataWithHash(def) }
+        withoutNewResolve = { resolveToMacro()?.let { RsMacroDataWithHash(it) } }
     )
 
 /** See [resolveToMacroWithoutPsi] */
 fun RsMacroCall.resolveToMacroAndGetContainingCrate(): Crate? =
     resolveToMacroAndThen(
         withNewResolve = { def, _ -> project.crateGraph.findCrateById(def.crate) },
-        withoutNewResolve = { def -> def.containingCrate }
+        withoutNewResolve = { resolveToMacro()?.containingCrate }
     )
 
 /** See [resolveToMacroWithoutPsi] */
 fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
     processor: RsResolveProcessor,
-    withoutNewResolve: (RsMacro) -> Boolean?
+    withoutNewResolve: () -> Boolean?
 ): Boolean? =
     resolveToMacroAndThen(withoutNewResolve) { def, info ->
         if (!def.hasLocalInnerMacros) return@resolveToMacroAndThen null
@@ -215,20 +216,16 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
  * Otherwise fallbacks to [withoutNewResolve].
  */
 private fun <T> RsMacroCall.resolveToMacroAndThen(
-    withoutNewResolve: (RsMacro) -> T?,
+    withoutNewResolve: () -> T?,
     withNewResolve: (MacroDefInfo, RsModInfo) -> T?
 ): T? {
-    if (!project.isNewResolveEnabled) {
-        val def = resolveToMacro() ?: return null
-        return withoutNewResolve(def)
+    val info = when {
+        !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
+        isTopLevelExpansion || path.qualifier != null -> getModInfo(containingMod)
+        else -> CantUseNewResolve("not top level")
     }
-    @Suppress("MoveVariableDeclarationIntoWhen")
-    val info = if (isTopLevelExpansion) getModInfo(containingMod) else CantUseNewResolve("not top level")
     return when (info) {
-        is CantUseNewResolve -> {
-            val def = resolveToMacro() ?: return null
-            withoutNewResolve(def)
-        }
+        is CantUseNewResolve -> withoutNewResolve()
         InfoNotFound -> null
         is RsModInfo -> {
             val def = resolveToMacroDefInfo(info) ?: return null

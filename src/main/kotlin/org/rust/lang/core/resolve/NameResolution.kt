@@ -817,8 +817,9 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 // 2. we expand macros step-by-step, so the result of such resolution should be cached already
                 val expandedFrom = path.findMacroCallExpandedFromNonRecursive()
                 expandedFrom
-                    ?.resolveToMacroAndProcessLocalInnerMacros(processor) { def ->
+                    ?.resolveToMacroAndProcessLocalInnerMacros(processor) {
                         /* this code will be executed if new resolve can't be used */
+                        val def = expandedFrom.resolveToMacro() ?: return@resolveToMacroAndProcessLocalInnerMacros null
                         if (!def.hasMacroExportLocalInnerMacros) return@resolveToMacroAndProcessLocalInnerMacros null
                         val crateRoot = def.crateRoot as? RsFile ?: return@resolveToMacroAndProcessLocalInnerMacros false
                         processAll(exportedMacros(crateRoot), processor)
@@ -831,14 +832,21 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
         }
     } else {
         val call = path.parent
-        if (path.project.isNewResolveEnabled && call is RsMacroCall && call.isTopLevelExpansion) {
+        if (path.project.isNewResolveEnabled && call is RsMacroCall) {
             if (isCompletion) {
                 /** Note: here we don't have to handle [MACRO_DOLLAR_CRATE_IDENTIFIER] */
                 processQualifiedPathResolveVariants(null, isCompletion, MACROS, qualifier, path, call, processor)
             } else {
-                val def = call.resolveToMacroUsingNewResolve() ?: return false
-                val name = processor.name ?: def.name ?: return false
-                processor(name, def)
+                call.resolveToMacroUsingNewResolveAndThen(
+                    withNewResolve = { def ->
+                        if (def == null) return@resolveToMacroUsingNewResolveAndThen false
+                        val name = processor.name ?: def.name ?: return@resolveToMacroUsingNewResolveAndThen false
+                        processor(name, def)
+                    },
+                    withoutNewResolve = {
+                        processMacrosExportedByCratePath(path, qualifier, processor)
+                    }
+                ) ?: false
             }
         } else {
             processMacrosExportedByCratePath(path, qualifier, processor)

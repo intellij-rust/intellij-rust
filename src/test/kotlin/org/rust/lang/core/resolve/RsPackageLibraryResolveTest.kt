@@ -443,21 +443,32 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    // TODO
-    fun `test import macro by qualified path with aliased extern crate`() = expect<IllegalStateException> {
-        stubOnlyResolve("""
-        //- lib.rs
-            extern crate dep_lib_target as aliased;
-            fn bar() {
-                aliased::foo!();
-            }          //^ dep-lib/lib.rs
-        //- dep-lib/lib.rs
-            #[macro_export]
-            macro_rules! foo {
-                () => {};
-            }
-        """)
-    }
+    @UseNewResolve
+    fun `test import macro by qualified path with aliased extern crate`() = stubOnlyResolve("""
+    //- lib.rs
+        extern crate dep_lib_target as aliased;
+        fn bar() {
+            aliased::foo!();
+        }          //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test import macro 2 by qualified path`() = stubOnlyResolve("""
+    //- lib.rs
+        fn bar() {
+            dep_lib_target::foo!();
+        }                 //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo_ { () => {}; }
+        pub use foo_ as foo;
+    """)
 
     fun `test import from crate root without 'pub' vis`() = stubOnlyResolve("""
     //- lib.rs

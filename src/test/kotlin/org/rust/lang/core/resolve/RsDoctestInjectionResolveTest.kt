@@ -5,9 +5,11 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsDoctestInjectionResolveTest : RsResolveTestBase() {
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
@@ -75,5 +77,21 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
         /// }
         /// ```
         pub fn foo() {}
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test qualified macro call inside function`() = stubOnlyResolve("""
+    //- lib.rs
+        /// ```
+        /// fn test() {
+        ///     dep_lib_target::bar!();
+        /// }                 //^ dep-lib/lib.rs
+        /// ```
+        pub fn foo() {}
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! bar { () => {}; }
+                   //X
     """)
 }
