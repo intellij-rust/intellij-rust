@@ -145,7 +145,7 @@ private fun createExternCrateStdImport(crate: Crate, crateRoot: RsFile, crateRoo
     //
     // https://doc.rust-lang.org/book/using-rust-without-the-standard-library.html
     // The stdlib lib itself is `#![no_std]`, and the core is `#![no_core]`
-    val name = when (crateRoot.attributes) {
+    val name = when (crateRoot.getStdlibAttributes(crate)) {
         RsFile.Attributes.NONE -> AutoInjectedCrates.STD
         RsFile.Attributes.NO_STD -> AutoInjectedCrates.CORE
         RsFile.Attributes.NO_CORE -> return null

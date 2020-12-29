@@ -17,8 +17,10 @@ import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsModItemStub
 import javax.swing.Icon
 
-val RsModItem.hasMacroUse: Boolean get() =
-    greenStub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")
+val RsModItem.hasMacroUse: Boolean get() = MOD_ITEM_HAS_MACRO_USE_PROP.getByPsi(this)
+
+val MOD_ITEM_HAS_MACRO_USE_PROP: StubbedAttributeProperty<RsModItem, RsModItemStub> =
+    StubbedAttributeProperty({ it.hasAttribute("macro_use") }, RsModItemStub::mayHaveMacroUse)
 
 abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
                                     RsModItem {

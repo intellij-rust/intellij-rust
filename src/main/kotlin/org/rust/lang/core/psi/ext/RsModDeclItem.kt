@@ -43,8 +43,10 @@ private val RsModDeclItem.implicitPaths: List<String> get() {
 
 val RsModDeclItem.pathAttribute: String? get() = queryAttributes.lookupStringValueForKey("path")
 
-val RsModDeclItem.hasMacroUse: Boolean get() =
-    greenStub?.hasMacroUse ?: queryAttributes.hasAttribute("macro_use")
+val RsModDeclItem.hasMacroUse: Boolean get() = MOD_DECL_HAS_MACRO_USE_PROP.getByPsi(this)
+
+val MOD_DECL_HAS_MACRO_USE_PROP: StubbedAttributeProperty<RsModDeclItem, RsModDeclItemStub> =
+    StubbedAttributeProperty({ it.hasAttribute("macro_use") }, RsModDeclItemStub::mayHaveMacroUse)
 
 abstract class RsModDeclItemImplMixin : RsStubbedNamedElementImpl<RsModDeclItemStub>,
                                         RsModDeclItem {

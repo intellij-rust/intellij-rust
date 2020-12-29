@@ -18,6 +18,7 @@ import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.RsMod
+import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.psi.ext.hasMacroExport
 import org.rust.lang.core.psi.ext.isRustcDocOnlyMacro
 import org.rust.lang.core.psi.isValidProjectMember
@@ -40,7 +41,8 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
         private const val SINGLE_KEY = "#"
 
         fun index(stub: RsMacroStub, sink: IndexSink) {
-            if (stub.name != null && (stub.psi.hasMacroExport || stub.psi.isRustcDocOnlyMacro)) {
+            val attributes = stub.psi.getTraversedRawAttributes()
+            if (stub.name != null && (attributes.hasMacroExport || attributes.isRustcDocOnlyMacro)) {
                 sink.occurrence(KEY, SINGLE_KEY)
             }
         }
@@ -54,7 +56,7 @@ class RsMacroIndex : StringStubIndexExtension<RsMacro>() {
                 for (key in keys) {
                     val elements = getElements(KEY, key, project, GlobalSearchScope.allScope(project))
                     for (element in elements) {
-                        if (element.isValidProjectMember) {
+                        if (element.isValidProjectMember && (element.hasMacroExport || element.isRustcDocOnlyMacro)) {
                             val crateRoot = element.crateRoot ?: continue
                             result.getOrPut(crateRoot, ::ArrayList) += element
                         }

@@ -22,8 +22,6 @@ import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.lang.core.types.type
 import javax.swing.Icon
 
-private val FUNCTION_TEST_REGEX = Regex("""^[\w:]*test.*""")
-
 val RsFunction.block: RsBlock? get() = PsiTreeUtil.getChildOfType(this, RsBlock::class.java)
 val RsFunction.stubOnlyBlock: RsBlock? get() = PsiTreeUtil.getStubChildOfType(this, RsBlock::class.java)
 
@@ -31,23 +29,13 @@ val RsFunction.isAssocFn: Boolean get() = !hasSelfParameters && owner.isImplOrTr
 val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrait
 
 val RsFunction.isTest: Boolean
-    get() {
-        val stub = greenStub
-        return stub?.isTest
-            ?: (queryAttributes.isTest)
-    }
+    get() = queryAttributes.isTest
 
-val QueryAttributes.isTest
-    get() = hasAttribute(FUNCTION_TEST_REGEX) || hasAtomAttribute("quickcheck")
+private val QueryAttributes.isTest
+    get() = metaItems.mapNotNull { it.path?.referenceName }.any { it.contains("test") } || hasAtomAttribute("quickcheck")
 
 val RsFunction.isBench: Boolean
-    get() {
-        val stub = greenStub
-        return stub?.isBench ?: queryAttributes.isBench
-    }
-
-val QueryAttributes.isBench
-    get() = hasAtomAttribute("bench")
+    get() = queryAttributes.hasAtomAttribute("bench")
 
 val RsFunction.isConst: Boolean
     get() {
@@ -162,10 +150,16 @@ val RsFunction.isAttributeProcMacroDef: Boolean
     get() = queryAttributes.hasAtomAttribute("proc_macro_attribute")
 
 val RsFunction.isCustomDeriveProcMacroDef: Boolean
-    get() = queryAttributes.hasAttribute("proc_macro_derive")
+    get() = queryAttributes.isCustomDeriveProcMacroDef
+
+val QueryAttributes.isCustomDeriveProcMacroDef: Boolean
+    get() = hasAttribute("proc_macro_derive")
 
 val RsFunction.isProcMacroDef: Boolean
-    get() = greenStub?.isProcMacroDef ?: (queryAttributes.isProcMacroDef)
+    get() = IS_PROC_MACRO_DEF_PROP.getByPsi(this)
+
+val IS_PROC_MACRO_DEF_PROP: StubbedAttributeProperty<RsFunction, RsFunctionStub> =
+    StubbedAttributeProperty(QueryAttributes::isProcMacroDef, RsFunctionStub::mayBeProcMacroDef)
 
 val RsFunction.procMacroName: String?
     get() = when {

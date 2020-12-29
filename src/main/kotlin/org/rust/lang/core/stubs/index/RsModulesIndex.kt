@@ -17,7 +17,7 @@ import org.rust.lang.RsConstants
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsModDeclItem
-import org.rust.lang.core.psi.ext.pathAttribute
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsModDeclItemStub
@@ -59,8 +59,7 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
         }
 
         fun index(stub: RsModDeclItemStub, indexSink: IndexSink) {
-            val key = key(stub.psi)
-            if (key != null) {
+            for (key in keys(stub.psi)) {
                 indexSink.occurrence(KEY, key)
             }
         }
@@ -76,19 +75,31 @@ class RsModulesIndex : StringStubIndexExtension<RsModDeclItem>() {
             return name?.toLowerCase()
         }
 
-        private fun key(mod: RsModDeclItem): String? {
-            val pathAttribute = mod.pathAttribute
-            return if (pathAttribute != null) {
-                val fileName = PathUtil.getFileName(pathAttribute)
-                if (fileName == RsConstants.MOD_RS_FILE)
-                // Use the name of the parent directory for files named mod.rs
-                // Will be empty string for #[path = "mod.rs"]
-                    PathUtil.getFileName(PathUtil.getParentPath(pathAttribute))
-                else
-                    FileUtil.getNameWithoutExtension(fileName)
+        private fun keys(mod: RsModDeclItem): Sequence<String> {
+            val pathAttributes = mod.getTraversedRawAttributes()
+                .attrsByName("path")
+                .toList()
+            return if (pathAttributes.isNotEmpty()) {
+                val isUnderCfgAttr = pathAttributes.any { it.parent !is RsAttr }
+                val attrKeys = pathAttributes.asSequence().mapNotNull { pathAttribute ->
+                    val pathAttributeValue = pathAttribute.value ?: return@mapNotNull null
+                    val fileName = PathUtil.getFileName(pathAttributeValue)
+                    if (fileName == RsConstants.MOD_RS_FILE) {
+                        // Use the name of the parent directory for files named mod.rs
+                        // Will be empty string for #[path = "mod.rs"]
+                        PathUtil.getFileName(PathUtil.getParentPath(pathAttributeValue))
+                    } else {
+                        FileUtil.getNameWithoutExtension(fileName)
+                    }
+                }
+                if (isUnderCfgAttr) {
+                    sequenceOf(mod.name) + attrKeys
+                } else {
+                    attrKeys
+                }
             } else {
-                mod.name
-            }?.toLowerCase()
+                sequenceOf(mod.name)
+            }.mapNotNull { it?.toLowerCase() }
         }
     }
 }

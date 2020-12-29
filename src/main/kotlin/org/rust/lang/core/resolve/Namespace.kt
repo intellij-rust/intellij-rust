@@ -6,7 +6,9 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.psi.stubs.StubElement
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.ext.IS_PROC_MACRO_DEF_PROP
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.RsNamedElement
 import org.rust.lang.core.psi.ext.isProcMacroDef
@@ -50,7 +52,7 @@ val RsNamedElement.namespaces: Set<Namespace> get() = when (this) {
     else -> TYPES_N_VALUES
 }
 
-val StubElement<*>.namespaces: Set<Namespace> get() = when (this) {
+fun StubElement<*>.getNamespaces(crate: Crate): Set<Namespace> = when (this) {
     is RsModItemStub,
     is RsModDeclItemStub,
     is RsEnumItemStub,
@@ -59,7 +61,7 @@ val StubElement<*>.namespaces: Set<Namespace> get() = when (this) {
     is RsTypeAliasStub -> TYPES
 
     is RsConstantStub -> VALUES
-    is RsFunctionStub -> if (isProcMacroDef) MACROS else VALUES
+    is RsFunctionStub -> if (IS_PROC_MACRO_DEF_PROP.getByStub(this, crate)) MACROS else VALUES
 
     is RsEnumVariantStub -> namespaces
 

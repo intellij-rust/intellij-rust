@@ -143,13 +143,11 @@ class RsDeriveCompletionProviderTest : RsCompletionTestBase() {
     """)
 
     @MockAdditionalCfgOptions("intellij_rust")
-    fun `test no completion if already derived under cfg_attr`() = expect<IllegalStateException> {
-    checkNoCompletion("""
+    fun `test no completion if already derived under cfg_attr`() = checkNoCompletion("""
         #[cfg_attr(intellij_rust, derive(Debug))]
         #[cfg_attr(intellij_rust, derive(Debu/*caret*/))]
         struct Test {
             foo: u8
         }
     """)
-    }
 }

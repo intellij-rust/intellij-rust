@@ -12,7 +12,7 @@ import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.Namespace
-import org.rust.lang.core.resolve.namespaces
+import org.rust.lang.core.resolve.getNamespaces
 import org.rust.lang.core.resolve2.util.forEachLeafSpeck
 import org.rust.lang.core.resolve2.util.getPathWithAdjustedDollarCrate
 import org.rust.lang.core.resolve2.util.getRestrictedPath
@@ -111,7 +111,7 @@ class ModCollectorBase private constructor(
     }
 
     private fun collectItem(item: RsNamedStub, macroIndexInParent: Int) {
-        val procMacroName = if (item is RsFunctionStub && item.isProcMacroDef) item.psi.procMacroName else null
+        val procMacroName = if (item is RsFunctionStub && item.isProcMacroDef) item.procMacroName else null
         val name = procMacroName ?: item.name ?: return
         if (item !is RsAttributeOwnerStub) return
 
@@ -125,7 +125,7 @@ class ModCollectorBase private constructor(
             name = name,
             visibility = VisibilityLight.from(item as StubElement<out RsVisibilityOwner>),
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && item.isEnabledByCfgSelf(crate),
-            namespaces = item.namespaces,
+            namespaces = item.getNamespaces(crate),
             isProcMacroDef = procMacroName != null,
             macroIndexInParent = macroIndexInParent,
             isModItem = item is RsModItemStub,
@@ -152,12 +152,36 @@ class ModCollectorBase private constructor(
             name = def.name ?: return,
             body = def.macroBody ?: return,
             bodyHash = def.bodyHash,
-            hasMacroExport = def.hasMacroExport,
-            hasLocalInnerMacros = def.hasMacroExportLocalInnerMacros,
+            hasMacroExport = HAS_MACRO_EXPORT_PROP.getByStub(def, crate),
+            hasLocalInnerMacros = HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getByStub(def, crate),
             macroIndexInParent = macroIndexInParent
         )
         visitor.collectMacroDef(defLight)
     }
+
+    private val RsExternCrateItemStub.hasMacroUse: Boolean
+        get() = EXTERN_CRATE_HAS_MACRO_USE_PROP.getByStub(this, crate)
+
+    private val RsModItemStub.hasMacroUse: Boolean
+        get() = MOD_ITEM_HAS_MACRO_USE_PROP.getByStub(this, crate)
+
+    private val RsModDeclItemStub.hasMacroUse: Boolean
+        get() = MOD_DECL_HAS_MACRO_USE_PROP.getByStub(this, crate)
+
+    private val RsAttributeOwnerStubBase<out RsDocAndAttributeOwner>.pathAttribute: String?
+        get() = psi.getQueryAttributes(crate, this).lookupStringValueForKey("path")
+
+    private val RsFunctionStub.isProcMacroDef: Boolean
+        get() = IS_PROC_MACRO_DEF_PROP.getByStub(this, crate)
+
+    private val RsFunctionStub.procMacroName: String?
+        get() {
+            val attributes = psi.getQueryAttributes(crate, this)
+            return attributes.getFirstArgOfSingularAttribute("proc_macro_derive") ?: name
+        }
+
+    private val RsUseItemStub.hasPreludeImport: Boolean
+        get() = HAS_PRELUDE_IMPORT_PROP.getByStub(this, crate)
 
     companion object {
         fun collectMod(mod: StubElement<out RsMod>, isDeeplyEnabledByCfg: Boolean, visitor: ModVisitor, crate: Crate) {

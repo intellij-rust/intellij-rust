@@ -41,18 +41,18 @@ import org.rust.stdext.readHashCodeNullable
 import org.rust.stdext.writeHashCodeNullable
 
 class RsFileStub : PsiFileStubImpl<RsFile> {
-    val attributes: RsFile.Attributes
+    val mayHaveStdlibAttributes: Boolean
 
-    constructor(file: RsFile) : this(file, file.attributes)
+    constructor(file: RsFile) : this(file, file.getTraversedRawAttributes().hasAnyOfAttributes("no_std", "no_core"))
 
-    constructor(file: RsFile?, attributes: RsFile.Attributes) : super(file) {
-        this.attributes = attributes
+    constructor(file: RsFile?, mayHaveStdlibAttributes: Boolean) : super(file) {
+        this.mayHaveStdlibAttributes = mayHaveStdlibAttributes
     }
 
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 203
+        private const val STUB_VERSION = 204
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -62,7 +62,7 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
                 TreeUtil.ensureParsed(file.node) // profiler hint
                 return when (file) {
                     // for tests related to rust console
-                    is RsReplCodeFragment -> RsFileStub(null, RsFile.Attributes.NONE)
+                    is RsReplCodeFragment -> RsFileStub(null, false)
                     else -> RsFileStub(file as RsFile)
                 }
             }
@@ -79,11 +79,11 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         }
 
         override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
-            dataStream.writeEnum(stub.attributes)
+            dataStream.writeBoolean(stub.mayHaveStdlibAttributes)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub {
-            return RsFileStub(null, dataStream.readEnum())
+            return RsFileStub(null, dataStream.readBoolean())
         }
 
         override fun getExternalId(): String = "Rust.file"
@@ -309,9 +309,11 @@ abstract class RsAttributeOwnerStubBase<T: RsElement>(
 
     override val hasAttrs: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
-    override val hasCfg: Boolean
+    override val mayHaveCfg: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_MASK)
-    override val hasMacroUse: Boolean
+    override val hasCfgAttr: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
+    override val mayHaveMacroUse: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
 
     protected abstract val flags: Int
@@ -360,7 +362,7 @@ class RsUseItemStub(
     val useSpeck: RsUseSpeckStub?
         get() = findChildStubByType(RsUseSpeckStub.Type)
     // stored in stub as an optimization
-    val hasPreludeImport: Boolean
+    val mayHavePreludeImport: Boolean
         get() = BitUtil.isSet(flags, HAS_PRELUDE_IMPORT_MASK)
 
     object Type : RsStubElementType<RsUseItemStub, RsUseItem>("USE_ITEM") {
@@ -377,7 +379,7 @@ class RsUseItemStub(
 
         override fun createStub(psi: RsUseItem, parentStub: StubElement<*>?): RsUseItemStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, HAS_PRELUDE_IMPORT_MASK, psi.hasPreludeImport)
+            flags = BitUtil.set(flags, HAS_PRELUDE_IMPORT_MASK, HAS_PRELUDE_IMPORT_PROP.getDuringIndexing(psi))
             return RsUseItemStub(parentStub, this, flags)
         }
     }
@@ -557,10 +559,6 @@ class RsModDeclItemStub(
 ) : RsAttributeOwnerStubBase<RsModDeclItem>(parent, elementType),
     RsNamedStub {
 
-    val pathAttribute: String?
-        // TODO: Don't use psi
-        get() = if (hasAttrs) psi.pathAttribute else null
-
     object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
             RsModDeclItemStub(parentStub, this,
@@ -592,10 +590,6 @@ class RsModItemStub(
     override val flags: Int
 ) : RsAttributeOwnerStubBase<RsModItem>(parent, elementType),
     RsNamedStub {
-
-    val pathAttribute: String?
-        // TODO: Don't use psi
-        get() = if (hasAttrs) psi.pathAttribute else null
 
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
@@ -741,9 +735,7 @@ class RsFunctionStub(
 ) : RsAttributeOwnerStubBase<RsFunction>(parent, elementType),
     RsNamedStub {
 
-    val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK) // TODO get rid of it
-    val isTest: Boolean get() = BitUtil.isSet(flags, TEST_MASK) // TODO get rid of it
-    val isBench: Boolean get() = BitUtil.isSet(flags, BENCH_MASK) // TODO get rid of it
+    val isAbstract: Boolean get() = BitUtil.isSet(flags, ABSTRACT_MASK)
     val isConst: Boolean get() = BitUtil.isSet(flags, CONST_MASK)
     val isUnsafe: Boolean get() = BitUtil.isSet(flags, UNSAFE_MASK)
     val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
@@ -751,7 +743,7 @@ class RsFunctionStub(
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
     // Method resolve optimization: stub field access is much faster than PSI traversing
     val hasSelfParameters: Boolean get() = BitUtil.isSet(flags, HAS_SELF_PARAMETER_MASK)
-    val isProcMacroDef: Boolean get() = BitUtil.isSet(flags, IS_PROC_MACRO_DEF)
+    val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, IS_PROC_MACRO_DEF)
 
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
@@ -778,15 +770,17 @@ class RsFunctionStub(
                 BlockMayHaveStubsHeuristic.computeAndCache(block.node))
             val attrs = if (useInnerAttrs && block != null) {
                 TreeUtil.ensureParsed(block.node) // profiler hint
-                psi.queryAttributes
+                psi.getTraversedRawAttributes(withCfgAttrAttribute = true)
             } else {
-                QueryAttributes(psi.outerAttrList.asSequence())
+                QueryAttributes(
+                    psi.outerAttrList.asSequence()
+                        .map { it.metaItem }
+                        .withFlattenCfgAttrsAttributes(withCfgAttrAttribute = true)
+                )
             }
 
             var flags = RsAttributeOwnerStub.extractFlags(attrs)
             flags = BitUtil.set(flags, ABSTRACT_MASK, block == null)
-            flags = BitUtil.set(flags, TEST_MASK, attrs.isTest)
-            flags = BitUtil.set(flags, BENCH_MASK, attrs.isBench)
             flags = BitUtil.set(flags, CONST_MASK, psi.isConst)
             flags = BitUtil.set(flags, UNSAFE_MASK, psi.isUnsafe)
             flags = BitUtil.set(flags, EXTERN_MASK, psi.isExtern)
@@ -806,15 +800,13 @@ class RsFunctionStub(
 
     companion object {
         private val ABSTRACT_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val TEST_MASK: Int =               makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
-        private val BENCH_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 2)
-        private val CONST_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 3)
-        private val UNSAFE_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 4)
-        private val EXTERN_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 5)
-        private val VARIADIC_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 6)
-        private val ASYNC_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 7)
-        private val HAS_SELF_PARAMETER_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 8)
-        private val IS_PROC_MACRO_DEF: Int =       makeBitMask(RsAttributeOwnerStub.USED_BITS + 9)
+        private val CONST_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
+        private val UNSAFE_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 2)
+        private val EXTERN_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 3)
+        private val VARIADIC_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 4)
+        private val ASYNC_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 5)
+        private val HAS_SELF_PARAMETER_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 6)
+        private val IS_PROC_MACRO_DEF: Int =       makeBitMask(RsAttributeOwnerStub.USED_BITS + 7)
     }
 }
 
@@ -1329,10 +1321,10 @@ class RsMacroStub(
     RsNamedStub {
 
     // stored in stub as an optimization
-    val hasMacroExport: Boolean
+    val mayHaveMacroExport: Boolean
         get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT)
     // stored in stub as an optimization
-    val hasMacroExportLocalInnerMacros: Boolean
+    val mayHaveMacroExportLocalInnerMacros: Boolean
         get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS)
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
@@ -1362,8 +1354,8 @@ class RsMacroStub(
 
         override fun createStub(psi: RsMacro, parentStub: StubElement<*>?): RsMacroStub {
             var flags = RsAttributeOwnerStub.extractFlags(psi)
-            flags = BitUtil.set(flags, HAS_MACRO_EXPORT, psi.hasMacroExport)
-            flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, psi.hasMacroExportLocalInnerMacros)
+            flags = BitUtil.set(flags, HAS_MACRO_EXPORT, HAS_MACRO_EXPORT_PROP.getDuringIndexing(psi))
+            flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getDuringIndexing(psi))
             return RsMacroStub(
                 parentStub,
                 this,
