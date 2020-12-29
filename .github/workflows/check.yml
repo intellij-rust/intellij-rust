@@ -70,6 +70,15 @@ jobs:
                   components: rust-src, rustfmt, clippy
                   default: true
 
+            # Requires for tests with overridden toolchain
+            - name: Set up nightly Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: nightly
+                  components: rust-src
+                  default: false
+
             - name: Cache evcxr
               uses: actions/cache@v2
               with:
