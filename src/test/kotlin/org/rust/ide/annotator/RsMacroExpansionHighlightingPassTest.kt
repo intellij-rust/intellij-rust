@@ -46,7 +46,7 @@ class RsMacroExpansionHighlightingPassTest : RsAnnotationTestBase() {
         annotationFixture.registerSeverities(RsColor.values().map(RsColor::testSeverity))
     }
 
-    override fun createAnnotationFixture(): RsAnnotationTestFixture =
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =
         RsAnnotationTestFixture(
             this,
             myFixture,

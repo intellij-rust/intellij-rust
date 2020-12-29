@@ -75,6 +75,7 @@
 
         <lang.refactoringSupport language="Rust"
                                  implementationClass="org.rust.ide.refactoring.RsRefactoringSupportProvider"/>
+        <suggestedRefactoringSupport language="Rust" implementationClass="org.rust.ide.refactoring.suggested.RsSuggestedRefactoringSupport"/>
 
         <!-- Commenter -->
 

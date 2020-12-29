@@ -14,7 +14,7 @@ abstract class RsMultipleInspectionsTestBase(
     private vararg val inspectionClasses: KClass<out InspectionProfileEntry>
 ) : RsAnnotationTestBase() {
 
-    override fun createAnnotationFixture(): RsAnnotationTestFixture {
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> {
         return RsAnnotationTestFixture(this, myFixture, inspectionClasses = inspectionClasses.toList())
     }
 }

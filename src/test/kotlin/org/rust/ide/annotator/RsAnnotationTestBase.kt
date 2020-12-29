@@ -14,7 +14,7 @@ import org.rust.fileTreeFromText
 
 abstract class RsAnnotationTestBase : RsTestBase() {
 
-    protected lateinit var annotationFixture: RsAnnotationTestFixture
+    protected lateinit var annotationFixture: RsAnnotationTestFixture<Unit>
 
     override fun setUp() {
         super.setUp()
@@ -27,7 +27,7 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         super.tearDown()
     }
 
-    protected abstract fun createAnnotationFixture(): RsAnnotationTestFixture
+    protected abstract fun createAnnotationFixture(): RsAnnotationTestFixture<Unit>
 
     protected fun checkHighlighting(@Language("Rust") text: String, ignoreExtraHighlighting: Boolean = true) =
         annotationFixture.checkHighlighting(text, ignoreExtraHighlighting)
