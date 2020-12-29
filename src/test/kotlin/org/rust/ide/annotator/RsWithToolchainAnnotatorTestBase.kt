@@ -8,8 +8,10 @@ package org.rust.ide.annotator
 import com.intellij.ide.annotator.AnnotatorBase
 import kotlin.reflect.KClass
 
-abstract class RsAnnotatorTestBase(private val annotatorClass: KClass<out AnnotatorBase>) : RsAnnotationTestBase() {
+abstract class RsWithToolchainAnnotatorTestBase<C>(
+    private val annotatorClass: KClass<out AnnotatorBase>
+) : RsWithToolchainAnnotationTestBase<C>() {
 
-    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<C> =
         RsAnnotationTestFixture(this, myFixture, annotatorClasses = listOf(annotatorClass))
 }

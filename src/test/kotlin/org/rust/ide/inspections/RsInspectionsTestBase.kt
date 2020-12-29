@@ -15,7 +15,7 @@ abstract class RsInspectionsTestBase(
     protected val inspectionClass: KClass<out InspectionProfileEntry>
 ) : RsAnnotationTestBase() {
 
-    override fun createAnnotationFixture(): RsAnnotationTestFixture =
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =
         RsAnnotationTestFixture(this, myFixture, inspectionClasses = listOf(inspectionClass))
 
     protected lateinit var inspection: InspectionProfileEntry

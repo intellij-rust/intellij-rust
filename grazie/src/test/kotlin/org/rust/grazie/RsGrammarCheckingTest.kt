@@ -20,7 +20,7 @@ import org.rust.ide.inspections.RsInspectionsTestBase
 
 class RsGrammarCheckingTest : RsInspectionsTestBase(GrazieInspection::class) {
 
-    override fun createAnnotationFixture(): RsAnnotationTestFixture =
+    override fun createAnnotationFixture(): RsAnnotationTestFixture<Unit> =
         RsAnnotationTestFixture(this, myFixture, inspectionClasses = listOf(inspectionClass), baseFileName = "lib.rs")
 
     override fun setUp() {

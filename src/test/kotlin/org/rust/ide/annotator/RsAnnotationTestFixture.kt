@@ -8,6 +8,7 @@ package org.rust.ide.annotator
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.ide.annotator.AnnotationTestFixtureBase
 import com.intellij.ide.annotator.AnnotatorBase
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture.*
@@ -19,7 +20,7 @@ import org.rust.createAndOpenFileWithCaretMarker
 import org.rust.fileTreeFromText
 import kotlin.reflect.KClass
 
-class RsAnnotationTestFixture(
+open class RsAnnotationTestFixture<C>(
     testCase: TestCase,
     codeInsightFixture: CodeInsightTestFixture,
     annotatorClasses: List<KClass<out AnnotatorBase>> = emptyList(),
@@ -87,35 +88,21 @@ class RsAnnotationTestFixture(
         configure = { configureByFileTree(it, stubOnly) },
         testmark = testmark)
 
-    override fun check(
-        text: String,
-        checkWarn: Boolean,
-        checkInfo: Boolean,
-        checkWeakWarn: Boolean,
-        ignoreExtraHighlighting: Boolean,
-        configure: (String) -> Unit,
-        testmark: Testmark?
-    ) {
-        val newConfigure: (String) -> Unit = {
-            configure(it)
-        }
-        super.check(text, checkWarn, checkInfo, checkWeakWarn, ignoreExtraHighlighting, newConfigure, testmark)
-    }
-
-    override fun checkFix(
-        fixName: String,
-        before: String,
-        after: String,
-        configure: (String) -> Unit,
-        checkBefore: () -> Unit,
-        checkAfter: (String) -> Unit,
-        testmark: Testmark?
-    ) {
-        val newConfigure: (String) -> Unit = {
-            configure(it)
-        }
-        super.checkFix(fixName, before, after, newConfigure, checkBefore, checkAfter, testmark)
-    }
+    fun checkByFile(
+        file: VirtualFile,
+        context: C? = null,
+        checkWarn: Boolean = true,
+        checkInfo: Boolean = false,
+        checkWeakWarn: Boolean = false,
+        ignoreExtraHighlighting: Boolean = false,
+        testmark: Testmark? = null,
+    ) = check(file,
+        checkWarn = checkWarn,
+        checkInfo = checkInfo,
+        checkWeakWarn = checkWeakWarn,
+        ignoreExtraHighlighting = ignoreExtraHighlighting,
+        configure = { configureByFile(file, context) },
+        testmark = testmark)
 
     private fun checkByFileTree(text: String) {
         fileTreeFromText(replaceCaretMarker(text)).check(codeInsightFixture)
@@ -131,6 +118,10 @@ class RsAnnotationTestFixture(
             (codeInsightFixture as CodeInsightTestFixtureImpl)
                 .setVirtualFileFilter { !it.path.endsWith(testProject.fileWithCaret) }
         }
+    }
+
+    protected open fun configureByFile(file: VirtualFile, context: C?) {
+        codeInsightFixture.configureFromExistingVirtualFile(file)
     }
 
     private fun configureByFileTree(text: String): TestProject {
