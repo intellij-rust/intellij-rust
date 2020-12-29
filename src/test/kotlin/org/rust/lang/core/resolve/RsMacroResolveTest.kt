@@ -85,6 +85,20 @@ class RsMacroResolveTest : RsResolveTestBase() {
         }
     """)
 
+    fun `test resolve macro mod inner macro_use`() = checkByCode("""
+        mod a {
+            #![macro_use]
+            macro_rules! foo_bar { () => () }
+            //X
+        }
+        mod b {
+            fn main() {
+                foo_bar!();
+                //^
+            }
+        }
+    """)
+
     // Macros are scoped by lexical order
     // see https://github.com/intellij-rust/intellij-rust/issues/1474
     fun `test resolve macro mod wrong order`() = checkByCode("""

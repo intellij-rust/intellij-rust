@@ -207,6 +207,13 @@ class RsFile(
         return Attributes.NONE
     }
 
+    /** ```#![macro_use]``` inside file (in contrast to ```#[macro_use]``` on mod declaration) */
+    fun hasMacroUseInner(crate: Crate?): Boolean {
+        val stub = greenStub as RsFileStub?
+        if (stub?.mayHaveMacroUse == false) return false
+        return getQueryAttributes(crate).hasAtomAttribute("macro_use")
+    }
+
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()
 
     val declarations: List<RsModDeclItem> get() {
