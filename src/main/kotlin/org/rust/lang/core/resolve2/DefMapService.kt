@@ -233,7 +233,7 @@ class DefMapService(val project: Project) : Disposable {
         return fileIdToCrateId[virtualFile.id]
     }
 
-    private fun scheduleRebuildAllDefMaps() {
+    fun scheduleRebuildAllDefMaps() {
         checkWriteAccessAllowed()
         for (defMapHolder in defMaps.values) {
             defMapHolder.shouldRebuild = true
