@@ -684,6 +684,124 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
+    fun `test enabled cfg feature in renamed package`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+                edition = "2018"
+
+            [dependencies]
+            foo = { path = "./foo", features = ["foo_feature"] }
+        """)
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    let _ = foo::bar();
+                               //^
+                }
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                edition = "2018"
+
+                [features]
+                foo_feature = ["bar_renamed/bar_feature"]
+
+                [dependencies]
+                bar_renamed = { package = "bar", path = "../bar"}
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub use bar_renamed::bar;
+                """)
+            }
+        }
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "1.0.0"
+
+                [features]
+                bar_feature = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature="foobar")]
+                    pub fn bar() -> u32 { 42 }
+                """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
+    fun `test enabled cfg feature with changed target name`() = buildProject {
+        toml("Cargo.toml", """
+            [package]
+            name = "hello"
+            version = "0.1.0"
+            edition = "2018"
+
+            [dependencies]
+            foo = { path = "./foo", features = ["foo_feature"] }
+        """)
+        dir("src") {
+            rust("main.rs", """
+                fn main() {
+                    let _ = foo::bar();
+                               //^
+                }
+            """)
+        }
+        dir("foo") {
+            toml("Cargo.toml", """
+                [package]
+                name = "foo"
+                version = "1.0.0"
+                edition = "2018"
+
+                [features]
+                foo_feature = ["bar/bar_feature"]
+
+                [dependencies]
+                bar = { path = "../bar"}
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    pub use bar_target::bar;
+                """)
+            }
+        }
+        dir("bar") {
+            toml("Cargo.toml", """
+                [package]
+                name = "bar"
+                version = "1.0.0"
+
+                [lib]
+                path = "src/lib.rs"
+                name = "bar_target"
+
+                [features]
+                bar_feature = []
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    #[cfg(feature="foobar")]
+                    pub fn bar() -> u32 { 42 }
+                """)
+            }
+        }
+    }.run {
+        checkReferenceIsResolved<RsPath>("src/main.rs")
+    }
+
     fun `test 2 cargo projects with common dependency with different features`() = fileTree {
         dir("project_1") {
             toml("Cargo.toml", """
