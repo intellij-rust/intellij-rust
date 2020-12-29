@@ -40,19 +40,16 @@ import org.rust.stdext.makeBitMask
 import org.rust.stdext.readHashCodeNullable
 import org.rust.stdext.writeHashCodeNullable
 
-class RsFileStub : PsiFileStubImpl<RsFile> {
-    val mayHaveStdlibAttributes: Boolean
-
-    constructor(file: RsFile) : this(file, file.getTraversedRawAttributes().hasAnyOfAttributes("no_std", "no_core"))
-
-    constructor(file: RsFile?, mayHaveStdlibAttributes: Boolean) : super(file) {
-        this.mayHaveStdlibAttributes = mayHaveStdlibAttributes
-    }
+class RsFileStub(
+    file: RsFile?,
+    val mayHaveStdlibAttributes: Boolean,
+    val mayHaveMacroUse: Boolean,
+) : PsiFileStubImpl<RsFile>(file) {
 
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 204
+        private const val STUB_VERSION = 205
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -60,11 +57,19 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
         override fun getBuilder(): StubBuilder = object : DefaultStubBuilder() {
             override fun createStubForFile(file: PsiFile): StubElement<*> {
                 TreeUtil.ensureParsed(file.node) // profiler hint
-                return when (file) {
-                    // for tests related to rust console
-                    is RsReplCodeFragment -> RsFileStub(null, false)
-                    else -> RsFileStub(file as RsFile)
+
+                // for tests related to rust console
+                if (file is RsReplCodeFragment) {
+                    return RsFileStub(null, mayHaveStdlibAttributes = false, mayHaveMacroUse = false)
                 }
+
+                check(file is RsFile)
+                val rawAttributes = file.getTraversedRawAttributes()
+                return RsFileStub(
+                    file,
+                    rawAttributes.hasAnyOfAttributes("no_std", "no_core"),
+                    rawAttributes.hasAtomAttribute("macro_use")
+                )
             }
 
             override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, child: ASTNode): Boolean {
@@ -80,10 +85,11 @@ class RsFileStub : PsiFileStubImpl<RsFile> {
 
         override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
             dataStream.writeBoolean(stub.mayHaveStdlibAttributes)
+            dataStream.writeBoolean(stub.mayHaveMacroUse)
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub {
-            return RsFileStub(null, dataStream.readBoolean())
+            return RsFileStub(null, dataStream.readBoolean(), dataStream.readBoolean())
         }
 
         override fun getExternalId(): String = "Rust.file"

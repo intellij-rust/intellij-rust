@@ -158,17 +158,18 @@ private class ModCollector(
         if (stub is RsEnumItemStub) return collectEnumAsModData(item, stub)
 
         val childMod = when (stub) {
-            is RsModItemStub -> ChildMod.Inline(stub, item.name)
+            is RsModItemStub -> ChildMod.Inline(stub, item.name, item.hasMacroUse)
             is RsModDeclItemStub -> {
                 val childModPsi = resolveModDecl(item.name, item.pathAttribute) ?: return null
-                ChildMod.File(childModPsi, item.name)
+                val hasMacroUse = item.hasMacroUse || childModPsi.hasMacroUseInner(crate)
+                ChildMod.File(childModPsi, item.name, hasMacroUse)
             }
             else -> return null
         }
         val isDeeplyEnabledByCfg = item.isDeeplyEnabledByCfg
         val (childModData, childModLegacyMacros) =
-            collectChildModule(childMod, isDeeplyEnabledByCfg, item.pathAttribute, item.hasMacroUse, index)
-        if (item.hasMacroUse && isDeeplyEnabledByCfg) {
+            collectChildModule(childMod, isDeeplyEnabledByCfg, item.pathAttribute, index)
+        if (childMod.hasMacroUse && isDeeplyEnabledByCfg) {
             modData.addLegacyMacros(childModLegacyMacros)
             legacyMacros += childModLegacyMacros
         }
@@ -179,7 +180,6 @@ private class ModCollector(
         childMod: ChildMod,
         isDeeplyEnabledByCfg: Boolean,
         pathAttribute: String?,
-        hasMacroUse: Boolean,
         index: Int
     ): Pair<ModData, LegacyMacros> {
         ProgressManager.checkCanceled()
@@ -197,7 +197,7 @@ private class ModCollector(
             fileId = fileId,
             fileRelativePath = fileRelativePath,
             ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
-            hasMacroUse = hasMacroUse,
+            hasMacroUse = childMod.hasMacroUse,
             crateDescription = defMap.crateDescription
         )
         for ((name, defs) in modData.legacyMacros) {
@@ -412,9 +412,9 @@ private fun ModData.asVirtualFile(): VirtualFile? {
         }
 }
 
-private sealed class ChildMod(val name: String) {
-    class Inline(val mod: RsModItemStub, name: String) : ChildMod(name)
-    class File(val file: RsFile, name: String) : ChildMod(name)
+private sealed class ChildMod(val name: String, val hasMacroUse: Boolean) {
+    class Inline(val mod: RsModItemStub, name: String, hasMacroUse: Boolean) : ChildMod(name, hasMacroUse)
+    class File(val file: RsFile, name: String, hasMacroUse: Boolean) : ChildMod(name, hasMacroUse)
 }
 
 /**

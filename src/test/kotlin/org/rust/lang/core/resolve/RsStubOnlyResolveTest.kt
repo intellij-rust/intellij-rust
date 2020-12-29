@@ -5,6 +5,8 @@
 
 package org.rust.lang.core.resolve
 
+import org.rust.UseNewResolve
+
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun `test child mod`() = stubOnlyResolve("""
     //- main.rs
@@ -548,6 +550,19 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
     //- main.rs
         #[macro_use]
         mod b;
+    """)
+
+    @UseNewResolve
+    fun `test resolve macro multi file 4`() = stubOnlyResolve("""
+    //- b.rs
+        #![macro_use]
+        macro_rules! foo_bar { () => () }
+    //- lib.rs
+        mod b;
+        mod c {
+            foo_bar!();
+            //^ b.rs
+        }
     """)
 
     fun `test resolve crate keyword in path to crate root mod`() = stubOnlyResolve("""
