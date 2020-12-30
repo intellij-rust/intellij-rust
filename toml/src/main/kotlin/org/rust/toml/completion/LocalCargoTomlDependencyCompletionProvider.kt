@@ -23,7 +23,6 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
         val prefix = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
         val indexService = CratesLocalIndexService.getInstance()
-        if (!indexService.isReady()) return
 
         val crateNames = indexService.getAllCrateNames()
         val elements = crateNames.mapNotNull { crateName ->
@@ -54,7 +53,6 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
         val name = CompletionUtil.getOriginalElement(keyValue.key)?.text ?: return
 
         val indexService = CratesLocalIndexService.getInstance()
-        if (!indexService.isReady()) return
 
         val versions = indexService.getCrate(name)?.versions ?: return
         val elements = versions.mapIndexed { index, variant ->
