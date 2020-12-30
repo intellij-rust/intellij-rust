@@ -122,6 +122,7 @@ interface CargoWorkspace {
     interface Dependency {
         val pkg: Package
         val name: String
+        val cargoFeatureDependencyPackageName: String
         val depKinds: List<DepKindInfo>
 
         /**
@@ -231,8 +232,7 @@ private class WorkspaceImpl(
                         "/" in featureDep -> {
                             val (crateName, name) = featureDep.split('/', limit = 2)
 
-                            // Features are linked by a `Package` name, not by dependency name
-                            val dep = pkg.dependencies.find { it.pkg.name == crateName }
+                            val dep = pkg.dependencies.find { it.cargoFeatureDependencyPackageName == crateName }
                                 ?: return@flatMap emptyList()
 
                             if (name in dep.pkg.rawFeatures) {
@@ -412,7 +412,7 @@ private class WorkspaceImpl(
         }
         for ((feature, state) in inferFeatureState(UserDisabledFeatures.EMPTY)) {
             if (feature in enabledByCargo != state.isEnabled) {
-                error("Feature ${feature.name} in package ${feature.pkg.name} should be ${!state}, but it is $state")
+                error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
             }
         }
     }
@@ -565,6 +565,9 @@ private class DependencyImpl(
     val areDefaultFeaturesEnabled: Boolean = true,
     override val requiredFeatures: Set<String> = emptySet()
 ) : CargoWorkspace.Dependency {
+    override val cargoFeatureDependencyPackageName: String
+        get() = if (name == pkg.libTarget?.normName) pkg.name else name
+
     fun withPackage(newPkg: PackageImpl): DependencyImpl =
         DependencyImpl(newPkg, name, depKinds, isOptional, areDefaultFeaturesEnabled, requiredFeatures)
 

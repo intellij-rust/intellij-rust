@@ -43,7 +43,6 @@ private class CargoTomlFeatureDependencyReference(element: TomlLiteral) : PsiPol
                 .takeIf { it.size == 2 }
                 ?: return ResolveResult.EMPTY_ARRAY
 
-            // Features are linked by a `Package` name, not by dependency name
             val depToml = findDependencyTomlFile(element, depName) ?: return ResolveResult.EMPTY_ARRAY
             depToml.resolveFeature(featureName)
         } else {
