@@ -67,8 +67,8 @@ interface RsInferenceData {
  */
 class RsInferenceResult(
     val exprTypes: Map<RsExpr, Ty>,
-    val patTypes: MutableMap<RsPat, Ty>,
-    val patFieldTypes: MutableMap<RsPatField, Ty>,
+    val patTypes: Map<RsPat, Ty>,
+    val patFieldTypes: Map<RsPatField, Ty>,
     private val expectedExprTypes: Map<RsExpr, Ty>,
     private val resolvedPaths: Map<RsPathExpr, List<ResolvedPath>>,
     private val resolvedMethods: Map<RsMethodCall, List<MethodResolveVariant>>,
