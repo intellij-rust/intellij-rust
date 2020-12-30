@@ -183,7 +183,7 @@ class RsCoverageTest : RunConfigurationTestBase() {
                 name = "hello"
                 version = "0.1.0"
                 authors = []
-                
+
                 [lib]
                 proc-macro = true
             """)
@@ -239,10 +239,7 @@ class RsCoverageTest : RunConfigurationTestBase() {
             true
         }
 
-        val configuration = createConfiguration()
-        if (runTests) {
-            configuration.command = "test"
-        }
+        val configuration = createConfiguration(if (runTests) "test" else "run")
 
         executeWithCoverage(configuration)
         runWithInvocationEventsDispatching("Failed to fetch coverage data", retries = 10000) { coverageData != null }
