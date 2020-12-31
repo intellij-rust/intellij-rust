@@ -37,6 +37,7 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
@@ -438,13 +439,6 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
-
-        /** Environment variable to unlock unstable features of rustc and cargo.
-         *  It doesn't change real toolchain.
-         *
-         * @see <a href="https://github.com/rust-lang/cargo/blob/06ddf3557796038fd87743bd3b6530676e12e719/src/cargo/core/features.rs#L447">features.rs</a>
-         */
-        private const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
 
         data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
 

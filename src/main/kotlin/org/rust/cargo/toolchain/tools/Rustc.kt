@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.impl.parseRustcVersion
 import org.rust.openapiext.checkIsBackgroundThread
@@ -52,8 +53,8 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
         val timeoutMs = 10000
         val output = createBaseCommandLine(
             "--print", "cfg",
-            workingDirectory = projectDirectory
-        ).execute(timeoutMs)
+            workingDirectory = projectDirectory,
+        ).withEnvironment(RUSTC_BOOTSTRAP, "1").execute(timeoutMs)
         return if (output?.isSuccess == true) output.stdoutLines else null
     }
 

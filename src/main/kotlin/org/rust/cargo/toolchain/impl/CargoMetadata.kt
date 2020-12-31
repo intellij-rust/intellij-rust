@@ -376,7 +376,7 @@ object CargoMetadata {
             }
         }
 
-        val cfgOptions = CfgOptions.parse(buildScriptMessage?.cfgs.orEmpty())
+        val cfgOptions = buildScriptMessage?.cfgs?.let { CfgOptions.parse(it) }
 
         val env = buildScriptMessage?.env.orEmpty()
             .filter { it.size == 2 }

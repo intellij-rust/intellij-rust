@@ -37,6 +37,13 @@ interface Crate {
     val cfgOptions: CfgOptions
     val features: Map<String, FeatureState>
 
+    /**
+     * `true` if there isn't a custom build script (`build.rs`) in the package or if the build script is
+     * successfully evaluated (hence [cfgOptions] is filled). The value affects `#[cfg()]` and `#[cfg_attr()]`
+     * attributes evaluation.
+     */
+    val evaluateUnknownCfgToFalse: Boolean
+
     /** A map of compile-time environment variables, needed for `env!("FOO")` macros expansion */
     val env: Map<String, String>
 

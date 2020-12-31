@@ -825,4 +825,30 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         fn foo(v: Vec) {}
                  //^ ...vec.rs
     """)
+
+    fun `test unknown cfg options are disabled`() = checkByCode("""
+        #[cfg(unknown_cfg_option)]
+        fn foo() {}
+        #[cfg(not(unknown_cfg_option))]
+        fn foo() {}
+         //X
+
+        fn main() {
+            foo();
+          //^
+        }
+    """)
+
+    fun `test unknown cargo features are disabled`() = checkByCode("""
+        #[cfg(feature = "unknown_cargo_feature")]
+        fn foo() {}
+        #[cfg(not(feature = "unknown_cargo_feature"))]
+        fn foo() {}
+         //X
+
+        fn main() {
+            foo();
+          //^
+        }
+    """)
 }

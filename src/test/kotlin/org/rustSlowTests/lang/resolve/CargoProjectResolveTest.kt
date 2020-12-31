@@ -732,7 +732,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             """)
             dir("src") {
                 rust("lib.rs", """
-                    #[cfg(feature="foobar")]
+                    #[cfg(feature="bar_feature")]
                     pub fn bar() -> u32 { 42 }
                 """)
             }
@@ -793,7 +793,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             """)
             dir("src") {
                 rust("lib.rs", """
-                    #[cfg(feature="foobar")]
+                    #[cfg(feature="bar_feature")]
                     pub fn bar() -> u32 { 42 }
                 """)
             }

@@ -55,7 +55,7 @@ data class CargoWorkspaceData(
         val features: Map<FeatureName, List<FeatureDep>>,
         /** Enabled features (from Cargo point of view) */
         val enabledFeatures: Set<FeatureName>,
-        val cfgOptions: CfgOptions,
+        val cfgOptions: CfgOptions?,
         val env: Map<String, String>,
         val outDirUrl: String?
     )
