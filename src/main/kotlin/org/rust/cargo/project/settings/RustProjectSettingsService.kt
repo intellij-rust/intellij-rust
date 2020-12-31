@@ -15,6 +15,7 @@ import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RustToolchain
+import org.rust.ide.docs.RsDocumentationProvider
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import java.nio.file.Paths
@@ -51,6 +52,7 @@ interface RustProjectSettingsService {
         var doctestInjectionEnabled: Boolean = true,
         var useRustfmt: Boolean = false,
         var runRustfmtOnSave: Boolean = false,
+        var externalDocumentationBaseUrl: String = RsDocumentationProvider.DOCS_RS_HOST
     ) {
         @get:Transient
         @set:Transient
@@ -108,6 +110,7 @@ interface RustProjectSettingsService {
     val doctestInjectionEnabled: Boolean
     val useRustfmt: Boolean
     val runRustfmtOnSave: Boolean
+    val externalDocumentationBaseUrl: String
 
     @Suppress("DEPRECATION")
     @Deprecated("Use toolchain property")

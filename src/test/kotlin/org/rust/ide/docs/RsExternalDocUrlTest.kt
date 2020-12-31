@@ -5,9 +5,11 @@
 
 package org.rust.ide.docs
 
+import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.docs.RsDocumentationProvider.Testmarks
+import org.rust.cargo.project.settings.rustSettings
 
 @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
 class RsExternalDocUrlTest : RsDocumentationProviderTest() {
@@ -125,4 +127,32 @@ class RsExternalDocUrlTest : RsDocumentationProviderTest() {
         pub enum Foo { FOO, BAR }
                 //^
     """, null, Testmarks.pkgWithoutSource)
+
+    fun `test custom documentation URL`() = doCustomUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+                    //^
+            () => { unimplemented!() };
+        }
+    """, "file:///mydoc/", "file:///mydoc/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
+    fun `test custom documentation URL add slash`() = doCustomUrlTestByFileTree("""
+        //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+                    //^
+            () => { unimplemented!() };
+        }
+    """, "file:///mydoc", "file:///mydoc/dep-lib/0.0.1/dep_lib_target/macro.foo.html")
+
+    private fun doCustomUrlTestByFileTree(@Language("Rust") text: String, docBaseUrl: String, expectedUrl: String) {
+        val originalUrl = project.rustSettings.externalDocumentationBaseUrl
+        try {
+            project.rustSettings.modify { it.externalDocumentationBaseUrl = docBaseUrl }
+            doUrlTestByFileTree(text, expectedUrl)
+        } finally {
+            project.rustSettings.modify { it.externalDocumentationBaseUrl = originalUrl }
+        }
+    }
 }

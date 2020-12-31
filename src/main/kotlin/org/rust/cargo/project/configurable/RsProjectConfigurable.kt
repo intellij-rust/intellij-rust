@@ -46,6 +46,10 @@ class RsProjectConfigurable(
         row {
             checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
         }
+        row {
+            label("External documentation base URL:")
+            textField(state::externalDocumentationBaseUrl)
+        }
     }
 
     private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {

@@ -10,9 +10,11 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.containingCargoPackage
+import org.rust.stdext.withSlash
 
 /**
  * Provides an external crate imports with gutter icons that open documentation on docs.rs.
@@ -26,6 +28,8 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
         val crate = parent.containingCargoPackage?.findDependency(crateName) ?: return null
         if (crate.pkg.source == null) return null
 
+        val baseUrl = element.project.rustSettings.externalDocumentationBaseUrl
+
         // BACKCOMPAT: 2020.2
         @Suppress("DEPRECATION")
         return LineMarkerInfo(
@@ -33,7 +37,7 @@ class RsCrateDocLineMarkerProvider : LineMarkerProvider {
             element.textRange,
             RsIcons.DOCS_MARK,
             { "Open documentation for `${crate.pkg.normName}`" },
-            { _, _ -> BrowserUtil.browse("https://docs.rs/${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
+            { _, _ -> BrowserUtil.browse("${baseUrl.withSlash()}${crate.pkg.name}/${crate.pkg.version}/${crate.normName}") },
             GutterIconRenderer.Alignment.LEFT
         )
     }

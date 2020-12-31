@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.*
+import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin.DEPENDENCY
 import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
 import org.rust.cargo.util.AutoInjectedCrates.STD
@@ -28,6 +29,7 @@ import org.rust.lang.doc.RsDocRenderMode
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.escaped
 import org.rust.stdext.joinToWithBuffer
+import org.rust.stdext.withSlash
 
 @Suppress("UnstableApiUsage")
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -166,6 +168,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
             }
         }
 
+        val baseUrl = element.project.rustSettings.externalDocumentationBaseUrl
         val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
             DEPENDENCY -> {
@@ -175,7 +178,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
                     Testmarks.pkgWithoutSource.hit()
                     return emptyList()
                 }
-                "$DOCS_RS_HOST/${pkg.name}/${pkg.version}"
+                "${baseUrl.withSlash()}${pkg.name}/${pkg.version}"
             }
             else -> {
                 Testmarks.nonDependency.hit()
@@ -249,7 +252,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
     companion object {
         const val STD_DOC_HOST = "https://doc.rust-lang.org"
-        const val DOCS_RS_HOST = "https://docs.rs"
+        const val DOCS_RS_HOST = "https://docs.rs/"
     }
 
     object Testmarks {

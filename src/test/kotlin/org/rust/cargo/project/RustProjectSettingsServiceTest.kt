@@ -28,6 +28,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
               <option name="compileAllTargets" value="false" />
               <option name="doctestInjectionEnabled" value="false" />
               <option name="explicitPathToStdlib" value="/stdlib" />
+              <option name="externalDocumentationBaseUrl" value="http://custom.rs" />
               <option name="externalLinter" value="Clippy" />
               <option name="externalLinterArguments" value="--no-default-features" />
               <option name="macroExpansionEngine" value="DISABLED" />
@@ -57,6 +58,7 @@ class RustProjectSettingsServiceTest : LightPlatformTestCase() {
         assertEquals(false, service.doctestInjectionEnabled)
         assertEquals(true, service.useRustfmt)
         assertEquals(true, service.runRustfmtOnSave)
+        assertEquals("http://custom.rs", service.externalDocumentationBaseUrl)
     }
 
     fun `test update from version 1`() {

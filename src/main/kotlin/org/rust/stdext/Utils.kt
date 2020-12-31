@@ -48,6 +48,8 @@ fun Path.list(): Sequence<Path> = Files.list(this).asSequence()
 
 fun String.pluralize(): String = StringUtil.pluralize(this)
 
+fun String.withSlash(): String = if (endsWith("/")) this else "$this/"
+
 fun randomLowercaseAlphabetic(length: Int): String =
     RandomStringUtils.random(length, "0123456789abcdefghijklmnopqrstuvwxyz")
 
