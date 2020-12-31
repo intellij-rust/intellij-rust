@@ -100,6 +100,10 @@ fun IndexSink.indexInnerAttr(stub: RsInnerAttrStub) {
     RsFeatureIndex.index(stub, this)
 }
 
+fun IndexSink.indexMetaItem(stub: RsMetaItemStub) {
+    RsCfgNotTestIndex.index(stub, this)
+}
+
 private fun IndexSink.indexNamedStub(stub: RsNamedStub) {
     stub.name?.let {
         occurrence(RsNamedElementIndex.KEY, it)

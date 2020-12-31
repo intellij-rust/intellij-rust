@@ -851,4 +851,24 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
           //^
         }
     """)
+
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test resolve to 'cfg(not(test))' in external dependencies`() = stubOnlyResolve("""
+    //- dep-lib/lib.rs
+        #[cfg(test)]
+        #[path = "test.rs"]
+        mod foo;
+        #[cfg(not(test))]
+        #[path = "not_test.rs"]
+        mod foo;
+    //- dep-lib/test.rs
+        pub fn bar() {}
+    //- dep-lib/not_test.rs
+        pub fn bar() {}
+    //- lib.rs
+        fn main() {
+            dep_lib_target::foo::bar();
+        }                      //^ dep-lib/not_test.rs
+     """)
 }
