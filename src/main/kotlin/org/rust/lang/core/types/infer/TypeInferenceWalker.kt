@@ -1438,19 +1438,9 @@ val RsFunction.type: TyFunction
 private fun Sequence<Ty>.infiniteWithTyUnknown(): Sequence<Ty> =
     this + generateSequence { TyUnknown }
 
-private fun KnownItems.findVecForElementTy(elementTy: Ty): Ty {
-    val ty = Vec?.declaredType ?: TyUnknown
+private fun KnownItems.findVecForElementTy(elementTy: Ty): Ty = Vec.makeTy("T", elementTy)
 
-    val typeParameter = ty.getTypeParameter("T") ?: return ty
-    return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
-}
-
-private fun KnownItems.findOptionForElementTy(elementTy: Ty): Ty {
-    val ty = Option?.declaredType ?: TyUnknown
-
-    val typeParameter = ty.getTypeParameter("T") ?: return ty
-    return ty.substitute(mapOf(typeParameter to elementTy).toTypeSubst())
-}
+private fun KnownItems.findOptionForElementTy(elementTy: Ty): Ty = Option.makeTy("T", elementTy)
 
 private fun KnownItems.findRangeTy(rangeName: String, indexType: Ty?): Ty {
     val ty = findItem<RsNamedElement>("core::ops::$rangeName")?.asTy() ?: TyUnknown
@@ -1461,10 +1451,32 @@ private fun KnownItems.findRangeTy(rangeName: String, indexType: Ty?): Ty {
     return ty.substitute(mapOf(typeParameter to indexType).toTypeSubst())
 }
 
-private fun KnownItems.makeBox(innerTy: Ty): Ty {
-    val box = Box ?: return TyUnknown
-    val boxTy = TyAdt.valueOf(box)
-    return boxTy.substitute(mapOf(boxTy.typeArguments[0] as TyTypeParameter to innerTy).toTypeSubst())
+private fun KnownItems.makeBox(innerTy: Ty): Ty = Box.makeTy("T", innerTy)
+
+private fun <T> T?.makeTy(typeParamName: String, innerTy: Ty): Ty where T : RsTypeDeclarationElement,
+                                                                        T : RsGenericDeclaration {
+    if (this == null) return TyUnknown
+    val itemTy = declaredType
+
+    val typeParameter = itemTy.getTypeParameter(typeParamName) ?: return itemTy
+    val substitutionMap = mutableMapOf(typeParameter to innerTy)
+
+    val typeParameters = typeParameters
+    if (typeParameters.size > 1) {
+        // Potentially, it's O(n^2) if item contains O(n) type parameters with default value.
+        // But all known stdlib items contain at most one type parameter with default value
+        // so it doesn't matter
+        for (param in typeParameters) {
+            val name = param.name ?: continue
+            val typeReference = param.typeReference ?: continue
+            if (name != typeParamName) {
+                val typeParam = itemTy.getTypeParameter(name) ?: continue
+                substitutionMap[typeParam] = typeReference.type
+            }
+        }
+    }
+
+    return itemTy.substitute(substitutionMap.toTypeSubst())
 }
 
 private fun KnownItems.makeGenerator(yieldTy: Ty, returnTy: Ty): Ty {
