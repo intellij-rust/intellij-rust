@@ -7,10 +7,12 @@ package org.rust.cargo
 
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.openapiext.pathAsPath
 
 /**
  * This class allows executing real Cargo during the tests.
@@ -30,6 +32,11 @@ abstract class RsWithToolchainTestBase : RsWithToolchainPlatformTestBase() {
 
     protected fun FileTree.create(): TestProject =
         create(project, cargoProjectDirectory).apply {
+            rustupFixture.toolchain
+                ?.rustc()
+                ?.getStdlibPathFromSysroot(cargoProjectDirectory.pathAsPath)
+                ?.let { VfsRootAccess.allowRootAccess(testRootDisposable, it) }
+
             refreshWorkspace()
         }
 
