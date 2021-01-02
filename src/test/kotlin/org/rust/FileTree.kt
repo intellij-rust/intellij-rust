@@ -243,7 +243,7 @@ private class FileTreeBuilderImpl(val directory: MutableMap<String, Entry> = mut
     }
 
     override fun file(name: String, code: String) {
-        check('/' !in name && '.' in name) { "Bad file name `$name`" }
+        check('/' !in name) { "Bad file name `$name`" }
         directory[name] = Entry.File(code.trimIndent())
     }
 

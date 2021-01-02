@@ -23,11 +23,13 @@ fun RsToolchain.rustc(): Rustc = Rustc(this)
 
 class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
 
-    fun queryVersion(): RustcVersion? {
+    fun queryVersion(workingDirectory: Path? = null): RustcVersion? {
         if (!isUnitTestMode) {
             checkIsBackgroundThread()
         }
-        val lines = createBaseCommandLine("--version", "--verbose").execute()?.stdoutLines
+        val lines = createBaseCommandLine("--version", "--verbose", workingDirectory = workingDirectory)
+            .execute()
+            ?.stdoutLines
         return lines?.let { parseRustcVersion(it) }
     }
 
@@ -43,10 +45,15 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
         return if (output?.isSuccess == true) output.stdout.trim() else null
     }
 
-    fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
+    fun getStdlibPathFromSysroot(projectDirectory: Path): String? {
         val sysroot = getSysroot(projectDirectory) ?: return null
+        return FileUtil.join(sysroot, "lib/rustlib/src/rust")
+    }
+
+    fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
+        val stdlibPath = getStdlibPathFromSysroot(projectDirectory) ?: return null
         val fs = LocalFileSystem.getInstance()
-        return fs.refreshAndFindFileByPath(FileUtil.join(sysroot, "lib/rustlib/src/rust"))
+        return fs.refreshAndFindFileByPath(stdlibPath)
     }
 
     private fun getRawCfgOption(projectDirectory: Path?): List<String>? {

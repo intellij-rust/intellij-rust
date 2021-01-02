@@ -189,10 +189,11 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
             return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
         }
 
-        val sysroot = childContext.toolchain.rustc().getSysroot(childContext.oldCargoProject.workingDirectory)
+        val workingDirectory = childContext.oldCargoProject.workingDirectory
+        val sysroot = childContext.toolchain.rustc().getSysroot(workingDirectory)
             ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
 
-        val rustcVersion = childContext.toolchain.rustc().queryVersion()
+        val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
 
         TaskResult.Ok(RustcInfo(sysroot, rustcVersion))
     }
