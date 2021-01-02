@@ -21,7 +21,7 @@ class RsHighlightingAnnotatorTest : RsAnnotatorTestBase(RsHighlightingAnnotator:
     }
 
     fun `test attributes`() = checkHighlighting("""
-        <ATTRIBUTE>#[cfg_attr(foo)]</ATTRIBUTE>
+        <ATTRIBUTE>#[foo(foo)]</ATTRIBUTE>
         <ATTRIBUTE>#[foo(<STRING>"bar"</STRING>)]</ATTRIBUTE>
         fn <FUNCTION>main</FUNCTION>() {
             <ATTRIBUTE>#![crate_type = <STRING>"lib"</STRING>]</ATTRIBUTE>

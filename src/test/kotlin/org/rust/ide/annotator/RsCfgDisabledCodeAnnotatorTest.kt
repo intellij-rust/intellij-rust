@@ -86,4 +86,21 @@ class RsCfgDisabledCodeAnnotatorTest : RsAnnotatorTestBase(RsCfgDisabledCodeAnno
             let x = 1;
         }
     """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled cfg_attr`() = checkHighlighting("""
+        <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg_attr(not(intellij_rust), deny(unused_variables))]</CFG_DISABLED_CODE>
+        fn foo() {
+            let x = 1;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test disabled cfg_attr annotation is not duplicated if the item is disabled`() = checkHighlighting("""
+        <CFG_DISABLED_CODE descr="Conditionally disabled code">#[cfg(not(intellij_rust))]
+        #[cfg_attr(not(intellij_rust), deny(unused_variables))]
+        fn foo() {
+            let x = 1;
+        }</CFG_DISABLED_CODE>
+    """)
 }
