@@ -354,7 +354,24 @@ fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: 
         typeQual != null ->
             processExplicitTypeQualifiedPathResolveVariants(lookup, path, ns, typeQual, processor)
 
-        else -> processUnqualifiedPathResolveVariants(isCompletion, ns, path, parent, processor)
+        else -> processUnqualifiedPathResolveVariants(isCompletion, ns, path, parent, processor.withIgnoringSecondaryCSelf())
+    }
+}
+
+private fun RsResolveProcessor.withIgnoringSecondaryCSelf(): RsResolveProcessor {
+    var hasSelfItem = false
+
+    return createProcessor {
+        if (it.name == "Self") {
+            if (hasSelfItem) {
+                false
+            } else {
+                hasSelfItem = true
+                this(it)
+            }
+        } else {
+            this(it)
+        }
     }
 }
 
