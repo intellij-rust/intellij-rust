@@ -33,11 +33,17 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
             }
 
             for (member in implInfo.nonExistentInTrait) {
+                // ignore members expanded from macros
+                if (member.containingFile != impl.containingFile) continue
+
                 RsDiagnostic.UnknownMethodInTraitError(member.nameIdentifier!!, member, traitName)
                     .addToHolder(holder)
             }
 
             for ((imp, dec) in implInfo.implementationToDeclaration) {
+                // ignore members expanded from macros
+                if (imp.containingFile != impl.containingFile) continue
+
                 if (imp is RsFunction && dec is RsFunction) {
                     checkTraitFnImplParams(holder, imp, dec, traitName)
                 }

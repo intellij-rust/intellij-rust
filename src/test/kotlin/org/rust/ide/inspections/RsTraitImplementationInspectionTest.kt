@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections
 
+import org.rust.ExpandMacros
 import org.rust.MockAdditionalCfgOptions
 
 class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImplementationInspection::class) {
@@ -111,6 +112,22 @@ class RsTraitImplementationInspectionTest : RsInspectionsTestBase(RsTraitImpleme
         impl T for () {
             fn foo() {}
             fn <error descr="Method `quux` is not a member of trait `T` [E0407]">quux</error>() {}
+        }
+    """)
+
+    @ExpandMacros
+    fun `test ignore expanded methods`() = checkErrors("""
+        macro_rules! as_is { ($($ t:tt)*) => {$($ t)*}; }
+        trait T {
+            fn foo1(&self);
+            fn foo2();
+            fn foo3(a: i32);
+        }
+        impl T for () {
+            as_is! { fn foo1() {} }       // self in trait not in impl E0186
+            as_is! { fn foo2(&self) {} }  // self in impl not in trait E0185
+            as_is! { fn foo3() {} }       // incorrect params number in trait impl E0050
+            as_is! { fn bar() {} }        // unknown method E0407
         }
     """)
 
