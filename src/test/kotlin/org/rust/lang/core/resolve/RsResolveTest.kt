@@ -9,6 +9,7 @@ import org.rust.MockEdition
 import org.rust.MockRustcVersion
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ignoreInNewResolve
+import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.RsFieldDecl
 
 class RsResolveTest : RsResolveTestBase() {
@@ -1431,6 +1432,27 @@ class RsResolveTest : RsResolveTestBase() {
                     //X
             V([usize; AAA]),
                      //^
+        }
+    """)
+
+    fun `test Self with nested impls`() = checkByCodeGeneric<RsImplItem>("""
+        struct A;
+
+        impl A {
+            fn foo() {
+                struct E {
+                    value: i32
+                }
+                impl E {
+                //X
+                    fn new() -> Self {
+                                //^
+                        Self {
+                            value: h
+                        }
+                    }
+                }
+            }
         }
     """)
 }

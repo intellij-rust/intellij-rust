@@ -280,6 +280,32 @@ class RsCompletionTest : RsCompletionTestBase() {
         trait T { fn foo() -> Self/*caret*/ }
     """)
 
+    fun `test complete Self type in nested impls`() = doSingleCompletion("""
+        struct A;
+        impl A {
+            fn foo() {
+                struct E {
+                    value: i32
+                }
+                impl E {
+                    fn new() -> Se/*caret*/ {}
+                }
+            }
+        }
+    """, """
+        struct A;
+        impl A {
+            fn foo() {
+                struct E {
+                    value: i32
+                }
+                impl E {
+                    fn new() -> Self/*caret*/ {}
+                }
+            }
+        }
+    """)
+
     fun `test complete self method`() = doSingleCompletion("""
         struct S;
         impl S { fn foo(&se/*caret*/) {}}
