@@ -537,7 +537,11 @@ class RsPsiFactory(
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).renderInsertionSafe(includeLifetimeArguments = true, useAliasNames = true)
+    type.substitute(subst).renderInsertionSafe(
+        includeLifetimeArguments = true,
+        useAliasNames = true,
+        skipUnchangedDefaultTypeArguments = true
+    )
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {
