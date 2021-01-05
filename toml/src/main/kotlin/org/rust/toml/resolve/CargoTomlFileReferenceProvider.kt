@@ -23,6 +23,7 @@ import org.toml.lang.psi.TomlHeaderOwner
 import org.toml.lang.psi.TomlLiteral
 import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
+import org.toml.lang.psi.ext.name
 
 class CargoTomlFileReferenceProvider(private val patternType: PathPatternType) : PsiReferenceProvider() {
     override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<FileReference> {
@@ -31,7 +32,7 @@ class CargoTomlFileReferenceProvider(private val patternType: PathPatternType) :
             WORKSPACE -> true to false
             GENERAL -> {
                 val table = element.ancestorStrict<TomlHeaderOwner>()
-                val completeRustFiles = table != null && table.header.names.singleOrNull()?.text in TARGET_TABLE_NAMES
+                val completeRustFiles = table != null && table.header.key?.name in TARGET_TABLE_NAMES
                 true to completeRustFiles
             }
             BUILD -> false to true

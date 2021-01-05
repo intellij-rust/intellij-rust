@@ -13,19 +13,21 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.toml.CargoTomlPsiPattern
 import org.rust.toml.StringValueInsertionHandler
-import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlKeySegment
 import org.toml.lang.psi.TomlTable
 
 /** @see CargoTomlPsiPattern.inDependencyKeyValue */
 class CratesIoCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
     override fun completeKey(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val variants = searchCrate(keyValue.key).map { it.dependencyLine }
+        val key = keyValue.key.segments.singleOrNull() ?: return
+        val variants = searchCrate(key).map { it.dependencyLine }
         result.addAllElements(variants.map(LookupElementBuilder::create))
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
-        val version = getCrateLastVersion(keyValue.key) ?: return
+        val key = keyValue.key.segments.singleOrNull() ?: return
+        val version = getCrateLastVersion(key) ?: return
 
         result.addElement(
             LookupElementBuilder.create(version)
@@ -37,7 +39,7 @@ class CratesIoCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProv
 /** @see CargoTomlPsiPattern.inSpecificDependencyHeaderKey */
 class CratesIoCargoTomlSpecificDependencyHeaderCompletionProvider : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-        val key = parameters.position.parent as? TomlKey ?: return
+        val key = parameters.position.parent as? TomlKeySegment ?: return
         val variants = searchCrate(key)
 
         val elements = variants.map { variant ->
@@ -77,10 +79,10 @@ class CratesIoCargoTomlSpecificDependencyVersionCompletionProvider : TomlKeyValu
         )
     }
 
-    private fun getDependencyKeyFromTableHeader(keyValue: TomlKeyValue): TomlKey {
+    private fun getDependencyKeyFromTableHeader(keyValue: TomlKeyValue): TomlKeySegment {
         val table = keyValue.parent as? TomlTable
             ?: error("PsiElementPattern must not allow keys outside of TomlTable")
-        return table.header.names.lastOrNull()
+        return table.header.key?.segments?.lastOrNull()
             ?: error("PsiElementPattern must not allow KeyValues in tables without header")
     }
 }

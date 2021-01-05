@@ -10,14 +10,14 @@ import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.ProcessingContext
 import org.rust.toml.getClosestKeyValueAncestor
-import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlKeyValue
+import org.toml.lang.psi.TomlKeySegment
 
 abstract class TomlKeyValueCompletionProviderBase : CompletionProvider<CompletionParameters>() {
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val parent = parameters.position.parent ?: return
-        if (parent is TomlKey) {
-            val keyValue = parent.parent as? TomlKeyValue
+        if (parent is TomlKeySegment) {
+            val keyValue = parent.parent?.parent as? TomlKeyValue
                 ?: error("PsiElementPattern must not allow keys outside of TomlKeyValues")
             completeKey(keyValue, result)
         } else {

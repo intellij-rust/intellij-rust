@@ -27,11 +27,11 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
         val schema = cachedSchema
             ?: TomlSchema.parse(parameters.position.project, EXAMPLE_CARGO_TOML).also { cachedSchema = it }
 
-        val key = parameters.position.parent as? TomlKey ?: return
+        val key = parameters.position.parent as? TomlKeySegment ?: return
         val table = key.topLevelTable ?: return
-        val variants = when (val parent = key.parent) {
+        val variants = when (val parent = key.parent?.parent) {
             is TomlTableHeader -> {
-                if (key != parent.names.firstOrNull()) return
+                if (key != parent.key?.segments?.firstOrNull()) return
                 val isArray = when (table) {
                     is TomlArrayTable -> true
                     is TomlTable -> false
@@ -53,7 +53,7 @@ class CargoTomlKeysCompletionProvider : CompletionProvider<CompletionParameters>
     }
 }
 
-private val TomlKey.topLevelTable: TomlKeyValueOwner?
+private val TomlKeySegment.topLevelTable: TomlKeyValueOwner?
     get() {
         val table = ancestorStrict<TomlKeyValueOwner>() ?: return null
         if (table.parent !is TomlFile) return null
@@ -61,7 +61,7 @@ private val TomlKey.topLevelTable: TomlKeyValueOwner?
     }
 
 private val TomlHeaderOwner.name: String?
-    get() = header.names.firstOrNull()?.text
+    get() = header.key?.segments?.firstOrNull()?.name
 
 // Example from http://doc.crates.io/manifest.html,
 // basic completion is automatically generated from it.

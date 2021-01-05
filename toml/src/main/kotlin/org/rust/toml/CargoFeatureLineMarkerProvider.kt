@@ -56,15 +56,14 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
 
         loop@ for (element in elements) {
             val parent = element.parent
-            if (parent is TomlKey) {
-                val key = parent
-                val isFeatureKey = key.isFeatureKey
-                if (!isFeatureKey && !key.isDependencyName) continue@loop
-                val featureName = key.text
+            if (parent is TomlKeySegment) {
+                val isFeatureKey = parent.isFeatureKey
+                if (!isFeatureKey && !parent.isDependencyName) continue@loop
+                val featureName = parent.text
                 if ("." in featureName) continue@loop
                 if (!isFeatureKey && featureName !in features) continue@loop
                 result += genFeatureLineMarkerInfo(
-                    key,
+                    parent,
                     featureName,
                     features[featureName],
                     cargoPackage
@@ -83,15 +82,15 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
         get() = CargoTomlPsiPattern.onDependencyKey.accepts(this) ||
             CargoTomlPsiPattern.onSpecificDependencyHeaderKey.accepts(this)
 
-    private val TomlKey.isFeatureKey: Boolean
+    private val TomlKeySegment.isFeatureKey: Boolean
         get() {
-            val keyValue = parent as? TomlKeyValue ?: return false
+            val keyValue = parent?.parent as? TomlKeyValue ?: return false
             val table = keyValue.parent as? TomlTable ?: return false
             return table.header.isFeatureListHeader
         }
 
     private fun genFeatureLineMarkerInfo(
-        element: TomlKey,
+        element: TomlKeySegment,
         name: String,
         featureState: FeatureState?,
         cargoPackage: CargoWorkspace.Package
