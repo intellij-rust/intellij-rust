@@ -355,6 +355,3 @@ class CachedValueDelegate<T>(provider: () -> CachedValueProvider.Result<T>) {
         return cachedValue.value
     }
 }
-
-// BACKCOMPAT: 2020.1
-val BUILD_202 = BuildNumber.fromString("202")!!
