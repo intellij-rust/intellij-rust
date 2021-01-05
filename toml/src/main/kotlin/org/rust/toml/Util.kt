@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -25,8 +24,6 @@ import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.*
-import org.toml.lang.psi.ext.TomlLiteralKind
-import org.toml.lang.psi.ext.kind
 import kotlin.reflect.KProperty
 
 
@@ -34,14 +31,7 @@ fun tomlPluginIsAbiCompatible(): Boolean = computeOnce
 
 private val computeOnce: Boolean by lazy {
     try {
-        load<TomlLiteralKind>()
-        load(TomlLiteral::kind)
-        if (!PsiNamedElement::class.java.isAssignableFrom(TomlKey::class.java)) {
-            showBalloonWithoutProject(
-                "Incompatible TOML plugin version, \"Find Usages\" for cargo features is not available.",
-                NotificationType.WARNING
-            )
-        }
+        load<TomlKeySegment>()
         true
     } catch (e: LinkageError) {
         showBalloonWithoutProject(
