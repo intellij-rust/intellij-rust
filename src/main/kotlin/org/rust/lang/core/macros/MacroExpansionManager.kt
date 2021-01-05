@@ -32,8 +32,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.util.indexing.FileBasedIndex
-import com.intellij.util.indexing.IndexableFileSet
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -660,11 +658,6 @@ private class MacroExpansionServiceImplInner(
         PsiManager.getInstance(project).addPsiTreeChangeListener(treeChangeListener, disposable)
         ApplicationManager.getApplication().addApplicationListener(treeChangeListener, disposable)
 
-        // BACKCOMPAT: 2020.1
-        if (ApplicationInfo.getInstance().build < BUILD_202) {
-            registerIndexableSet(disposable)
-        }
-
         val connect = project.messageBus.connect(disposable)
 
         connect.subscribe(CargoProjectsService.CARGO_PROJECTS_TOPIC, CargoProjectsListener { _, _ ->
@@ -682,40 +675,6 @@ private class MacroExpansionServiceImplInner(
         })
 
         project.rustPsiManager.subscribeRustPsiChange(connect, treeChangeListener)
-    }
-
-    /**
-     * Work together with [RsIndexableSetContributor]. Really looks
-     * like a platform bug that [RsIndexableSetContributor] is not enough.
-     */
-    // BACKCOMPAT: 2020.1
-    private fun registerIndexableSet(disposable: Disposable) {
-        FileBasedIndex.getInstance().registerIndexableSet(object : IndexableFileSet {
-            override fun isInSet(file: VirtualFile): Boolean =
-                isExpansionFileOfCurrentProject(file)
-
-            override fun iterateIndexableFilesIn(file: VirtualFile, iterator: ContentIterator) {
-                VfsUtilCore.visitChildrenRecursively(file, object : VirtualFileVisitor<Any>() {
-                    override fun visitFile(file: VirtualFile): Boolean {
-                        if (!isInSet(file)) {
-                            return false
-                        }
-
-                        if (!file.isDirectory) {
-                            iterator.processFile(file)
-                        }
-
-                        return true
-                    }
-                })
-            }
-        }, disposable)
-    }
-
-    // BACKCOMPAT: 2020.1
-    private fun FileBasedIndex.registerIndexableSet(indexableSet: IndexableFileSet, disposable: Disposable) {
-        registerIndexableSet(indexableSet, project)
-        Disposer.register(disposable, Disposable { removeIndexableSet(indexableSet) })
     }
 
     // Previous plugin versions stored expansion to this directory
