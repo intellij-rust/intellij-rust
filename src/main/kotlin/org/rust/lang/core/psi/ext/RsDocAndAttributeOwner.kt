@@ -111,7 +111,7 @@ private fun RsDocAndAttributeOwner.getExpandedAttributesNoStub(explicitCrate: Cr
     return QueryAttributes(evaluator.expandCfgAttrs(rawMetaItems))
 }
 
-private fun CfgEvaluator.expandCfgAttrs(rawMetaItems: Sequence<RsMetaItem>): Sequence<RsMetaItem> {
+fun CfgEvaluator.expandCfgAttrs(rawMetaItems: Sequence<RsMetaItem>): Sequence<RsMetaItem> {
     return rawMetaItems.flatMap {
         if (it.name == "cfg_attr") {
             val list = it.metaItemArgs?.metaItemList?.iterator() ?: return@flatMap emptySequence()
