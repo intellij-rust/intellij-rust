@@ -136,4 +136,40 @@ class FillFunctionArgumentsFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class
             S(0, 0);
         }
     """)
+
+    fun `test closure known parameter`() = checkFixByText("Fill missing arguments", """
+        fn main() {
+            let closure = |x: i32| (x);
+            closure(<error>/*caret*/)</error>;
+        }
+    """, """
+        fn main() {
+            let closure = |x: i32| (x);
+            closure(0);
+        }
+    """)
+
+    fun `test closure unknown parameter`() = checkFixByText("Fill missing arguments", """
+        fn main() {
+            let closure = |x| (x);
+            closure(<error>/*caret*/)</error>;
+        }
+    """, """
+        fn main() {
+            let closure = |x| (x);
+            closure(());
+        }
+    """)
+
+    fun `test generic parameter turbofish`() = checkFixByText("Fill missing arguments", """
+        fn foo<T>(a: T) {}
+        fn main() {
+            foo::<bool>(<error>/*caret*/)</error>;
+        }
+    """, """
+        fn foo<T>(a: T) {}
+        fn main() {
+            foo::<bool>(false);
+        }
+    """)
 }

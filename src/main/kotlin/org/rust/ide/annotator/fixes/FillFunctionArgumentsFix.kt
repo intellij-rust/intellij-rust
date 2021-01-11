@@ -15,9 +15,8 @@ import org.rust.ide.annotator.expectedParamsCount
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyReference
+import org.rust.lang.core.types.ty.TyFunction
 import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
@@ -64,44 +63,10 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
 
 private fun getParameterTypes(element: PsiElement): List<Ty?>? {
     return when (element) {
-        is RsCallExpr -> {
-            when (val target = (element.expr as? RsPathExpr)?.path?.reference?.resolve()) {
-                is RsFunction -> {
-                    val valueParameters = target.valueParameters.map { it.typeReference?.type }
-                    if (target.isMethod) {
-                        listOf(getSelfType(target, element)) + valueParameters
-                    }
-                    else {
-                        valueParameters
-                    }
-                }
-                is RsFieldsOwner -> target.tupleFields?.tupleFieldDeclList?.map { it.typeReference.type }
-                else -> null
-            }
-        }
+        is RsCallExpr -> (element.expr.type as? TyFunction)?.paramTypes
         is RsMethodCall -> (element.reference.resolve() as? RsFunction)?.valueParameterList?.valueParameterList?.map {
             it.typeReference?.type
         }
         else -> null
-    }
-}
-
-fun getSelfType(function: RsFunction, call: RsCallExpr): Ty? {
-    val selfParameter = function.selfParameter ?: return null
-    if (selfParameter.typeReference?.type != null) {
-        return selfParameter.typeReference?.type
-    }
-    val owner = when (val owner = function.owner) {
-        is RsAbstractableOwner.Impl -> owner.impl.selfType
-        is RsAbstractableOwner.Trait -> {
-            val pathExpr = call.expr as? RsPathExpr
-            val typeOwner = pathExpr?.path?.qualifier?.reference?.resolve() as? RsTypeDeclarationElement
-            typeOwner?.declaredType ?: owner.trait.selfType
-        }
-        else -> return null
-    }
-    return when {
-        selfParameter.isRef -> TyReference(owner, selfParameter.mutability)
-        else -> owner
     }
 }
