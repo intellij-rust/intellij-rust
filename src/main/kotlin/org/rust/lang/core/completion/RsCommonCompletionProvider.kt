@@ -11,6 +11,7 @@ import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PlatformPatterns
@@ -200,7 +201,6 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             }
 
             candidates
-                .distinctBy { it.qualifiedNamedItem.item }
                 .map { candidate ->
                     val item = candidate.qualifiedNamedItem.item
                     createLookupElement(
@@ -221,7 +221,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                                 }
                             }
                         }
-                    )
+                    ).withImportCandidate(candidate)
                 }
                 .forEach(result::addElement)
         }
@@ -376,4 +376,38 @@ private fun getExpectedTypeForEnclosingPathOrDotExpr(element: RsReferenceElement
         }
     }
     return null
+}
+
+private fun LookupElement.withImportCandidate(candidate: ImportCandidate): RsImportLookupElement {
+    return RsImportLookupElement(this, candidate)
+}
+
+/**
+ * Provides [equals] and [hashCode] that take into account the corresponding [ImportCandidate].
+ * We need to distinguish lookup elements with the same psi element and the same lookup text
+ * but belong to different import candidates, otherwise the platform shows only one such item.
+ *
+ * See [#5415](https://github.com/intellij-rust/intellij-rust/issues/5415)
+ */
+private class RsImportLookupElement(
+    delegate: LookupElement,
+    private val candidate: ImportCandidate
+) : LookupElementDecorator<LookupElement>(delegate) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        if (!super.equals(other)) return false
+
+        other as RsImportLookupElement
+
+        if (candidate != other.candidate) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = super.hashCode()
+        result = 31 * result + candidate.hashCode()
+        return result
+    }
 }

@@ -5,10 +5,13 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.openapiext.Testmark
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.hasCaretMarker
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.completion.RsCommonCompletionProvider.Testmarks
@@ -316,6 +319,31 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         fn foo(x: FooBar/*caret*/) {}
     """)
 
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test show all re-exports of single item`() {
+        withOutOfScopeSettings {
+            checkContainsCompletionByFileTree(listOf(
+                "Bar (crate::foo::Bar)",
+                "Bar (dep_lib_target::Bar)"
+            ), """
+                //- dep-lib/lib.rs
+                pub struct Bar;
+                //- lib.rs
+
+                pub mod foo {
+                    pub use dep_lib_target::Bar;
+                }
+                fn foo(x: Ba/*caret*/) {}
+            """) {
+                val presentation = LookupElementPresentation()
+                renderElement(presentation)
+
+                "${presentation.itemText}${presentation.tailText}"
+            }
+        }
+    }
+
     private fun doTestByText(
         @Language("Rust") before: String,
         @Language("Rust") after: String,
@@ -336,6 +364,12 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         suggestOutOfScopeItems: Boolean = true,
         importOutOfScopeItems: Boolean = true,
         check: (String, String) -> Unit
+    ) = withOutOfScopeSettings(suggestOutOfScopeItems, importOutOfScopeItems) { check(before, after) }
+
+    private fun withOutOfScopeSettings(
+        suggestOutOfScopeItems: Boolean = true,
+        importOutOfScopeItems: Boolean = true,
+        action: () -> Unit
     ) {
         val settings = RsCodeInsightSettings.getInstance()
         val suggestInitialValue = settings.suggestOutOfScopeItems
@@ -343,7 +377,7 @@ class RsPathCompletionFromIndexTest : RsCompletionTestBase() {
         settings.suggestOutOfScopeItems = suggestOutOfScopeItems
         settings.importOutOfScopeItems = importOutOfScopeItems
         try {
-            check(before, after)
+            action()
         } finally {
             settings.suggestOutOfScopeItems = suggestInitialValue
             settings.importOutOfScopeItems = importInitialValue
