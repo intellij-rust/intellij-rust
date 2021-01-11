@@ -7,9 +7,7 @@ package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapiext.Testmark
-import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.impl.BaseFixture
 import org.intellij.lang.annotations.Language
@@ -19,7 +17,7 @@ abstract class RsCompletionTestFixtureBase<IN>(
     protected val myFixture: CodeInsightTestFixture
 ) : BaseFixture() {
 
-    private val project: Project get() = myFixture.project
+    protected val project: Project get() = myFixture.project
 
     fun executeSoloCompletion() {
         val lookups = myFixture.completeBasic()
@@ -52,20 +50,6 @@ abstract class RsCompletionTestFixtureBase<IN>(
         checkByText(code, after.trimIndent()) { executeSoloCompletion() }
     }
 
-    fun doSingleCompletionByFileTree(before: String, after: String) =
-        doSingleCompletionByFileTree(fileTreeFromText(before), after)
-
-    fun doSingleCompletionByFileTree(fileTree: FileTree, after: String, forbidAstLoading: Boolean = true) {
-        val testProject = fileTree.createAndOpenFileWithCaretMarker(myFixture)
-        if (forbidAstLoading) {
-            checkAstNotLoaded(VirtualFileFilter { file ->
-                !file.path.endsWith(testProject.fileWithCaret)
-            })
-        }
-        executeSoloCompletion()
-        myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
-    }
-
     fun checkCompletion(
         lookupString: String,
         before: IN,
@@ -90,14 +74,6 @@ abstract class RsCompletionTestFixtureBase<IN>(
         noCompletionCheck()
     }
 
-    fun checkNoCompletionByFileTree(code: String) {
-        val testProject = fileTreeFromText(code).createAndOpenFileWithCaretMarker(myFixture)
-        checkAstNotLoaded(VirtualFileFilter { file ->
-            !file.path.endsWith(testProject.fileWithCaret)
-        })
-        noCompletionCheck()
-    }
-
     protected fun noCompletionCheck() {
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
@@ -109,30 +85,40 @@ abstract class RsCompletionTestFixtureBase<IN>(
         }
     }
 
-    fun checkContainsCompletion(code: IN, variant: String) = checkContainsCompletion(code, listOf(variant))
-
-    fun checkContainsCompletion(code: IN, variants: List<String>) {
+    fun checkContainsCompletion(
+        code: IN,
+        variants: List<String>,
+        render: LookupElement.() -> String = { lookupString }
+    ) {
         prepare(code)
+        doContainsCompletion(variants, render)
+    }
+
+    fun doContainsCompletion(variants: List<String>, render: LookupElement.() -> String) {
         val lookups = myFixture.completeBasic()
 
         checkNotNull(lookups) {
             "Expected completions that contain $variants, but no completions found"
         }
         for (variant in variants) {
-            if (lookups.all { it.lookupString != variant }) {
-                error("Expected completions that contain $variant, but got ${lookups.map { it.lookupString }}")
+            if (lookups.all { it.render() != variant }) {
+                error("Expected completions that contain $variant, but got ${lookups.map { it.render() }}")
             }
         }
     }
 
-    fun checkNotContainsCompletion(code: IN, variant: String) {
+    fun checkNotContainsCompletion(
+        code: IN,
+        variant: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) {
         prepare(code)
         val lookups = myFixture.completeBasic()
         checkNotNull(lookups) {
             "Expected completions that contain $variant, but no completions found"
         }
-        if (lookups.any { it.lookupString == variant }) {
-            error("Expected completions that don't contain $variant, but got ${lookups.map { it.lookupString }}")
+        if (lookups.any { it.render() == variant }) {
+            error("Expected completions that don't contain $variant, but got ${lookups.map { it.render() }}")
         }
     }
 
@@ -140,10 +126,6 @@ abstract class RsCompletionTestFixtureBase<IN>(
         prepare(code)
         action()
         myFixture.checkResult(replaceCaretMarker(after))
-    }
-
-    private fun checkAstNotLoaded(fileFilter: VirtualFileFilter) {
-        PsiManagerEx.getInstanceEx(project).setAssertOnFileLoadingFilter(fileFilter, testRootDisposable)
     }
 
     protected abstract fun prepare(code: IN)
