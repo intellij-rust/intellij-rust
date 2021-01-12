@@ -19,6 +19,7 @@ import com.intellij.psi.search.PsiTodoSearchHelper
 import org.rust.ide.colors.RsColor
 import org.rust.ide.highlight.RsHighlighter
 import org.rust.ide.todo.isTodoPattern
+import org.rust.ide.utils.isDisabledCfgAttrAttribute
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
@@ -37,6 +38,7 @@ class RsHighlightingAnnotator : AnnotatorBase() {
         } ?: return
 
         if (!element.isEnabledByCfg) return
+        if (element.ancestors.any { it is RsAttr && it.isDisabledCfgAttrAttribute }) return
 
         val severity = if (isUnitTestMode) color.testSeverity else HighlightSeverity.INFORMATION
 
