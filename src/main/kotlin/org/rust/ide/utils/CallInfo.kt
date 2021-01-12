@@ -6,12 +6,10 @@
 package org.rust.ide.utils
 
 import org.rust.ide.presentation.getStubOnlyText
-import org.rust.lang.core.psi.RsCallExpr
-import org.rust.lang.core.psi.RsFunction
-import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.RsPathExpr
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.ty.TyFunction
+import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
 
 class CallInfo private constructor(
@@ -27,8 +25,16 @@ class CallInfo private constructor(
             if (fn is RsFunction) return CallInfo(fn)
 
             val ty = call.expr.type
-            if (ty is TyFunction) return CallInfo(ty)
+            if (ty is TyFunction) {
+                val parameterNames = getParameterNames(fn) ?: List(ty.paramTypes.size) { "_" }
+                return CallInfo(ty, parameterNames)
+            }
             return null
+        }
+
+        private fun getParameterNames(fn: RsElement): List<String>? {
+            val variant = fn as? RsEnumVariant ?: return null
+            return variant.positionalFields.map { (it.typeReference.type as? TyTypeParameter)?.name ?: "_" }
         }
 
         fun resolve(methodCall: RsMethodCall): CallInfo? {
@@ -48,9 +54,9 @@ class CallInfo private constructor(
         fn.valueParameters.map { Parameter(it.patText ?: "_", it.typeReference?.getStubOnlyText() ?: "?") }
     )
 
-    private constructor(fn: TyFunction) : this(
+    private constructor(fn: TyFunction, parameterNames: List<String>) : this(
         null,
         null,
-        fn.paramTypes.map { Parameter("_", it.toString()) }
+        fn.paramTypes.zip(parameterNames).map { (type, name) -> Parameter(name, type.toString()) }
     )
 }
