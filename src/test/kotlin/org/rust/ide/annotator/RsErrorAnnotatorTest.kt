@@ -1591,6 +1591,30 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 under cfg_attr 1`() = checkErrors("""
+        #![cfg_attr(intellij_rust, feature(crate_visibility_modifier))]
+
+        crate struct Foo;
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 under cfg_attr 2`() = checkErrors("""
+        #![cfg_attr(not(intellij_rust), feature(crate_visibility_modifier))]
+
+        <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.29.0-nightly")
+    fun `test crate visibility feature E0658 under nested cfg_attr`() = checkErrors("""
+        #![cfg_attr(intellij_rust, cfg_attr(intellij_rust, feature(crate_visibility_modifier)))]
+
+        crate struct Foo;
+    """)
+
     fun `test parenthesized lifetime bounds`() = checkErrors("""
         fn foo<'a, T: <error descr="Parenthesized lifetime bounds are not supported">('a)</error>>(t: T) {
             unimplemented!();
@@ -1711,6 +1735,28 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         struct S;
         fn main() {
             let x = box S;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test box expression feature E0658 with cfg_attr with several attributes 1`() = checkErrors("""
+        #![cfg_attr(intellij_rust, feature(generators), feature(box_syntax))]
+
+        struct S;
+        fn main() {
+            let x = box S;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockRustcVersion("1.0.0-nightly")
+    fun `test box expression feature E0658 with cfg_attr with several attributes 2`() = checkErrors("""
+        #![cfg_attr(not(intellij_rust), feature(generators), feature(box_syntax))]
+
+        struct S;
+        fn main() {
+            let x = <error descr="`box` expression syntax is experimental [E0658]">box</error> S;
         }
     """)
 

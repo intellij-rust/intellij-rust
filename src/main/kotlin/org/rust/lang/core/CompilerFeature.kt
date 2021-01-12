@@ -14,12 +14,11 @@ import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
 import org.rust.lang.core.FeatureAvailability.*
 import org.rust.lang.core.FeatureState.ACCEPTED
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.cargoProject
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
+import org.rust.lang.utils.evaluation.CfgEvaluator
 
 class CompilerFeature(
     val name: String,
@@ -48,9 +47,19 @@ class CompilerFeature(
         if (state == ACCEPTED && (since == null || version.semver >= since)) return AVAILABLE
         if (version.channel != RustChannel.NIGHTLY) return NOT_AVAILABLE
 
-        val crateRoot = rsElement.crateRoot ?: return UNKNOWN
+        val crate = rsElement.containingCrate ?: return UNKNOWN
+        val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
-        return if (attrs.any { it.crateRoot == crateRoot }) AVAILABLE else CAN_BE_ADDED
+        val possibleFeatureAttrs = attrs.asSequence()
+            .filter { it.containingCrate == crate }
+            .flatMap { cfgEvaluator.expandCfgAttrs(sequenceOf(it.metaItem)) }
+
+        for (featureAttr in possibleFeatureAttrs) {
+            if (featureAttr.name != "feature") continue
+            val metaItems = featureAttr.metaItemArgs?.metaItemList.orEmpty()
+            if (metaItems.any { feature -> feature.name == name }) return AVAILABLE
+        }
+        return CAN_BE_ADDED
     }
 
     fun check(

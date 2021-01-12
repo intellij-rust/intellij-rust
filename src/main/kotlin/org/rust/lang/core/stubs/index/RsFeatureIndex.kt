@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.rust.lang.core.psi.RsInnerAttr
+import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.RsInnerAttrStub
@@ -28,15 +29,32 @@ class RsFeatureIndex : StringStubIndexExtension<RsInnerAttr>() {
 
         fun index(stub: RsInnerAttrStub, sink: IndexSink) {
             val metaItem = stub.psi.metaItem
-            if (metaItem.name == "feature") {
-                val features = metaItem.metaItemArgs?.metaItemList.orEmpty()
-                for (feature in features) {
-                    val featureName = feature.name ?: continue
-                    sink.occurrence(KEY, featureName)
+            index(metaItem, sink)
+        }
+
+        private fun index(metaItem: RsMetaItem, sink: IndexSink) {
+            when (metaItem.name) {
+                "feature" -> {
+                    val features = metaItem.metaItemArgs?.metaItemList.orEmpty()
+                    for (feature in features) {
+                        val featureName = feature.name ?: continue
+                        sink.occurrence(KEY, featureName)
+                    }
+                }
+                "cfg_attr" -> {
+                    val children = metaItem.metaItemArgs?.metaItemList.orEmpty().drop(1)
+                    for (child in children) {
+                        index(child, sink)
+                    }
                 }
             }
         }
 
+        /**
+         * Returns collection of [RsInnerAttr] contained `feature` attribute with desired [featureName]
+         * including `feature` attributes under `cfg_attr`.
+         * Note, it doesn't evaluate `cfg_attr`
+         */
         fun getFeatureAttributes(project: Project, featureName: String): Collection<RsInnerAttr> {
             checkCommitIsNotInProgress(project)
             return getElements(KEY, featureName, project, GlobalSearchScope.allScope(project))
