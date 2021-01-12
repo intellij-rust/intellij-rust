@@ -1261,6 +1261,11 @@
             <add-to-group group-id="Internal"/>
         </action>
 
+        <action id="Rust.ToggleNewResolve"
+                class="org.rust.lang.core.resolve2.actions.RsToggleNewResolveAction"
+                internal="true">
+        </action>
+
     </actions>
 
 </idea-plugin>
