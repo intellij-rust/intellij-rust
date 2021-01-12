@@ -18,6 +18,7 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.AutoInjectedCrates
@@ -25,6 +26,8 @@ import org.rust.cargo.util.StdLibType
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.pluginDirInSystem
+import org.rust.stdext.HashCode
 import org.rust.stdext.toPath
 import java.nio.file.Path
 
@@ -64,14 +67,15 @@ data class StandardLibrary(
             }
 
             val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
-                val rustcVersion = rustcInfo?.version?.semver
+                val rustcVersion = rustcInfo?.version
+                val semverVersion = rustcVersion?.semver
                 // BACKCOMPAT: rust 1.40
                 // cargo metadata doesn't contain all necessary info before 1.41
-                if (rustcVersion == null || rustcVersion < RUST_1_41) {
-                    LOG.warn("Toolchain version should be at least `${RUST_1_41.parsedVersion}`, current: `${rustcVersion?.parsedVersion}`")
+                if (semverVersion == null || semverVersion < RUST_1_41) {
+                    LOG.warn("Toolchain version should be at least `${RUST_1_41.parsedVersion}`, current: `${semverVersion?.parsedVersion}`")
                     fetchHardcodedStdlib(srcDir)
                 } else {
-                    fetchActualStdlib(project, srcDir)
+                    fetchActualStdlib(project, srcDir, rustcVersion)
                 }
             } else {
                 fetchHardcodedStdlib(srcDir)
@@ -80,8 +84,8 @@ data class StandardLibrary(
             return stdlib?.copy(isPartOfCargoProject = isPartOfCargoProject)
         }
 
-        private fun fetchActualStdlib(project: Project, srcDir: VirtualFile): StandardLibrary? {
-            return StdlibDataFetcher.create(project, srcDir)?.fetchStdlibData()
+        private fun fetchActualStdlib(project: Project, srcDir: VirtualFile, version: RustcVersion): StandardLibrary? {
+            return StdlibDataFetcher.create(project, srcDir, version)?.fetchStdlibData()
         }
 
         private fun fetchHardcodedStdlib(srcDir: VirtualFile): StandardLibrary? {
@@ -258,13 +262,13 @@ private class StdlibDataFetcher private constructor(
     companion object {
         private val LOG: Logger = logger<StdlibDataFetcher>()
 
-        fun create(project: Project, srcDir: VirtualFile): StdlibDataFetcher? {
+        fun create(project: Project, srcDir: VirtualFile, version: RustcVersion): StdlibDataFetcher? {
             val cargo = project.toolchain?.cargo() ?: return null
 
             val testPackageSrcPaths = listOf(AutoInjectedCrates.TEST, "lib${AutoInjectedCrates.TEST}")
             val testPackageSrcDir = srcDir.findFirstFileByRelativePaths(testPackageSrcPaths)?.canonicalFile
                 ?: return null
-            val stdlibDependenciesDir = findStdlibDependencyDirectory(project, cargo, srcDir, testPackageSrcDir)
+            val stdlibDependenciesDir = findStdlibDependencyDirectory(project, cargo, srcDir, testPackageSrcDir, version)
                 ?: return null
             return StdlibDataFetcher(project, cargo, srcDir, testPackageSrcDir, stdlibDependenciesDir)
         }
@@ -273,22 +277,32 @@ private class StdlibDataFetcher private constructor(
             project: Project,
             cargo: Cargo,
             srcDir: VirtualFile,
-            testPackageSrcDir: VirtualFile
+            testPackageSrcDir: VirtualFile,
+            version: RustcVersion
         ): Path? {
             val stdlibDependenciesDir = srcDir.pathAsPath.resolve("../vendor").normalize()
+            if (stdlibDependenciesDir.exists()) return stdlibDependenciesDir
 
-            if (!stdlibDependenciesDir.exists()) {
+            val stdlibHash = stdlibHash(srcDir, version)
+
+            val stdlibVendor = pluginDirInSystem().resolve("stdlib/${version.semver.parsedVersion}-$stdlibHash/vendor")
+            if (!stdlibVendor.exists()) {
                 try {
                     // `test` package depends on all other stdlib packages,
-                    // at least before 1.49 when `vendor` became a part of `rust-src`.
-                    // So it's enough to vendor only its dependencies
-                    cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibDependenciesDir)
+                    // so it's enough to vendor only its dependencies
+                    cargo.vendorDependencies(project, testPackageSrcDir.pathAsPath, stdlibVendor)
                 } catch (e: ExecutionException) {
                     LOG.error(e)
                     return null
                 }
             }
-            return stdlibDependenciesDir
+            return stdlibVendor
+        }
+
+        private fun stdlibHash(srcDir: VirtualFile, version: RustcVersion): String {
+            val pathHash = HashCode.compute(srcDir.path)
+            val versionHash = HashCode.compute(version.commitHash ?: version.semver.parsedVersion)
+            return HashCode.mix(pathHash, versionHash).toString()
         }
     }
 }
