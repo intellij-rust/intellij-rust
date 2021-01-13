@@ -5,6 +5,7 @@
 
 package org.rust.lang.core.completion
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -70,13 +71,21 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun checkContainsCompletion(
         variant: String,
-        @Language("Rust") code: String
-    ) = completionFixture.checkContainsCompletion(code, variant)
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkContainsCompletion(code, listOf(variant), render)
 
     protected fun checkContainsCompletion(
         variants: List<String>,
-        @Language("Rust") code: String
-    ) = completionFixture.checkContainsCompletion(code, variants)
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkContainsCompletion(code, variants, render)
+
+    protected fun checkContainsCompletionByFileTree(
+        variants: List<String>,
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkContainsCompletionByFileTree(code, variants, render)
 
     protected fun checkCompletion(
         lookupString: String,
@@ -88,8 +97,9 @@ abstract class RsCompletionTestBase : RsTestBase() {
 
     protected fun checkNotContainsCompletion(
         variant: String,
-        @Language("Rust") code: String
-    ) = completionFixture.checkNotContainsCompletion(code, variant)
+        @Language("Rust") code: String,
+        render: LookupElement.() -> String = { lookupString }
+    ) = completionFixture.checkNotContainsCompletion(code, variant, render)
 
     protected open fun checkNoCompletion(@Language("Rust") code: String) = completionFixture.checkNoCompletion(code)
 
