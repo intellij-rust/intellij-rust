@@ -1,6 +1,7 @@
 import argparse
+from urllib.request import urlopen
 
-from common import env
+from common import env, get_patch_version_from_text
 from github import get_current_milestone, set_milestone
 
 if __name__ == '__main__':
@@ -11,6 +12,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     repo = env("GITHUB_REPOSITORY")
-    milestone = get_current_milestone(repo)
+    text = urlopen(f"https://github.com/{repo}/raw/master/gradle.properties").read().decode("utf-8")
+    patch_version = get_patch_version_from_text(text)
+    milestone = get_current_milestone(repo, patch_version)
 
     set_milestone(args.token, repo, args.pull_request, milestone["number"])
