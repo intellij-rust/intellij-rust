@@ -234,10 +234,14 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     fun scheduleRebuildAllDefMaps() {
-        checkWriteAccessAllowed()
         for (defMapHolder in defMaps.values) {
             defMapHolder.shouldRebuild = true
         }
+    }
+
+    fun scheduleRebuildDefMap(crateId: CratePersistentId) {
+        val holder = getDefMapHolder(crateId)
+        holder.shouldRebuild = true
     }
 
     private fun scheduleRecheckAllDefMaps() {

@@ -1176,6 +1176,14 @@
                 class="org.rust.lang.core.macros.ReexpandMacrosAction">
         </action>
 
+        <action id="Rust.RebuildAllDefMaps"
+                class="org.rust.lang.core.resolve2.actions.RsRebuildAllDefMapsAction">
+        </action>
+
+        <action id="Rust.RebuildCurrentDefMap"
+                class="org.rust.lang.core.resolve2.actions.RsRebuildCurrentDefMapAction">
+        </action>
+
         <action id="Rust.CreateNewGithubIssue"
                 class="org.rust.ide.actions.diagnostic.CreateNewGithubIssue"
                 icon="/icons/rust.svg">
@@ -1259,6 +1267,11 @@
                 class="org.rust.ide.spelling.RsSpellCheckerGenerateDictionariesAction"
                 internal="true">
             <add-to-group group-id="Internal"/>
+        </action>
+
+        <action id="Rust.ToggleNewResolve"
+                class="org.rust.lang.core.resolve2.actions.RsToggleNewResolveAction"
+                internal="true">
         </action>
 
     </actions>
