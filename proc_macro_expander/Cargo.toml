@@ -1,0 +1,12 @@
+[package]
+name = "proc_macro_expander"
+version = "0.1.0"
+edition = "2018"
+
+[dependencies]
+ra_ap_proc_macro_srv = "=0.0.29"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+debug = false
