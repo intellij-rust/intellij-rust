@@ -6,6 +6,8 @@
 package org.rust.lang.core.resolve
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.SmartList
+import gnu.trove.THashMap
 import org.rust.cargo.project.model.CargoProject
 import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
@@ -29,6 +31,7 @@ import org.rust.openapiext.testAssert
 import org.rust.stdext.Cache
 import org.rust.stdext.buildList
 import kotlin.LazyThreadSafetyMode.NONE
+import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 private val RsTraitItem.typeParamSingle: TyTypeParameter?
     get() = typeParameters.singleOrNull()?.let { TyTypeParameter.named(it) }
@@ -111,7 +114,14 @@ sealed class TraitImplSource {
     open val implementedTrait: BoundElement<RsTraitItem>? get() = value.implementedTrait
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overridden by the impl */
-    open val implAndTraitExpandedMembers: List<RsAbstractable> get() = value.members?.expandedMembers.orEmpty()
+    open val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazy(PUBLICATION) {
+        val membersMap = THashMap<String, MutableList<RsAbstractable>>()
+        for (member in value.members?.expandedMembers.orEmpty()) {
+            val name = member.name ?: continue
+            membersMap.getOrPut(name) { SmartList() }.add(member)
+        }
+        membersMap
+    }
 
     open val isInherent: Boolean get() = false
 
@@ -133,7 +143,8 @@ sealed class TraitImplSource {
         override val value: RsImplItem get() = cachedImpl.impl
         override val isInherent: Boolean get() = cachedImpl.isInherent
         override val implementedTrait: BoundElement<RsTraitItem>? get() = cachedImpl.implementedTrait
-        override val implAndTraitExpandedMembers: List<RsAbstractable> get() = cachedImpl.implAndTraitExpandedMembers
+        override val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>>
+            get() = cachedImpl.implAndTraitExpandedMembers
         val type: Ty? get() = cachedImpl.typeAndGenerics?.first
     }
 

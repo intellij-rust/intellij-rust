@@ -17,6 +17,7 @@ import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.ty.TyUnknown
+import org.rust.stdext.newHashMapWithExpectedSize
 import org.rust.stdext.zipValues
 
 open class Substitution(
@@ -93,4 +94,11 @@ val emptySubstitution: Substitution = EmptySubstitution
 fun Map<TyTypeParameter, Ty>.toTypeSubst(): Substitution = Substitution(typeSubst = this)
 
 private fun <K, V> mergeMaps(map1: Map<K, V>, map2: Map<K, V>): Map<K, V> =
-    if (map1.isEmpty() && map2.isEmpty()) emptyMap() else HashMap(map1).apply { putAll(map2) }
+    when {
+        map1.isEmpty() -> map2
+        map2.isEmpty() -> map1
+        else -> newHashMapWithExpectedSize<K, V>(map1.size + map2.size).apply {
+            putAll(map1)
+            putAll(map2)
+        }
+    }

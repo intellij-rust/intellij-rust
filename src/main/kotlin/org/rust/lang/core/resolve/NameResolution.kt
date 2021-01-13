@@ -599,22 +599,22 @@ private fun processTypeQualifiedPathResolveVariants(
     @Suppress("NAME_SHADOWING")
     val lookup = lookup ?: ImplLookup.relativeTo(path)
     val shadowingProcessor = if (restrictedTraits != null) {
-        fun(e: AssocItemScopeEntry): Boolean {
-            if (e.element !is RsTypeAlias) return processor(e)
+        createProcessorGeneric<AssocItemScopeEntry>(processor.name) { e ->
+            if (e.element !is RsTypeAlias) return@createProcessorGeneric processor(e)
 
             val implementedTrait = e.source.implementedTrait
                 ?.foldTyTypeParameterWith { TyInfer.TyVar(it) }
                 ?.foldCtConstParameterWith { CtInferVar(it) }
-                ?: return processor(e)
+                ?: return@createProcessorGeneric processor(e)
 
             val isAppropriateTrait = restrictedTraits.any {
                 lookup.ctx.probe { lookup.ctx.combineBoundElements(it, implementedTrait) }
             }
-            return if (isAppropriateTrait) processor(e) else false
+            if (isAppropriateTrait) processor(e) else false
         }
     } else {
-        fun(e: AssocItemScopeEntry): Boolean {
-            return if (e.element is RsTypeAlias && baseTy is TyTypeParameter &&
+        createProcessorGeneric<AssocItemScopeEntry>(processor.name) { e ->
+            if (e.element is RsTypeAlias && baseTy is TyTypeParameter &&
                 e.source is TraitImplSource.ExplicitImpl) {
                 NameResolutionTestmarks.skipAssocTypeFromImpl.hit()
                 false
@@ -1294,7 +1294,7 @@ private fun processMethodDeclarationsWithDeref(
     processor: RsMethodResolveProcessor
 ): Boolean {
     return lookup.coercionSequence(receiver).withIndex().any { (i, ty) ->
-        val methodProcessor: (AssocItemScopeEntry) -> Boolean = { (name, element, _, _, source) ->
+        val methodProcessor = createProcessorGeneric<AssocItemScopeEntry>(processor.name) { (name, element, _, _, source) ->
             // We intentionally use `hasSelfParameters` instead of `isMethod` because we already know that
             // it is an associated item and so if it is a function with self parameter - it is a method.
             // Also, this place is very hot and `hasSelfParameters` is cheaper than `isMethod`
@@ -1310,7 +1310,7 @@ private fun processAssociatedItems(
     type: Ty,
     ns: Set<Namespace>,
     context: RsElement,
-    processor: (AssocItemScopeEntry) -> Boolean
+    processor: RsResolveProcessorBase<AssocItemScopeEntry>
 ): Boolean {
     val nsFilter: (RsAbstractable) -> Boolean = when {
         Namespace.Types in ns && Namespace.Values in ns -> {
@@ -1332,9 +1332,8 @@ private fun processAssociatedItems(
     for (traitOrImpl in lookup.findImplsAndTraits(type)) {
         val isInherent = traitOrImpl.isInherent
 
-        for (member in traitOrImpl.implAndTraitExpandedMembers) {
+        for ((name, member) in traitOrImpl.implAndTraitExpandedMembers.entriesWithName(processor.name)) {
             if (!nsFilter(member)) continue
-            val name = member.name ?: continue
 
             // In Rust, inherent impl members (`impl Foo {}`) wins over trait impl members (`impl T for Foo {}`).
             // Note that `findImplsAndTraits` returns ordered sequence: inherent impls are placed to the head
@@ -1360,17 +1359,26 @@ private fun processAssociatedItems(
     return false
 }
 
+private fun Map<String, List<RsAbstractable>>.entriesWithName(name: String?): Sequence<Pair<String, RsAbstractable>> {
+    return if (name == null) {
+        entries.asSequence()
+            .flatMap { (name, list) -> list.asSequence().map { name to it } }
+    } else {
+        this[name].orEmpty().asSequence().map { name to it }
+    }
+}
+
 private fun processAssociatedItemsWithSelfSubst(
     lookup: ImplLookup,
     path: RsPath,
     type: Ty,
     ns: Set<Namespace>,
     selfSubst: Substitution,
-    processor: (AssocItemScopeEntry) -> Boolean
+    processor: RsResolveProcessorBase<AssocItemScopeEntry>
 ): Boolean {
-    return processAssociatedItems(lookup, type, ns, path) {
+    return processAssociatedItems(lookup, type, ns, path, createProcessorGeneric(processor.name) {
         processor(it.copy(subst = it.subst + selfSubst))
-    }
+    })
 }
 
 private fun processLexicalDeclarations(

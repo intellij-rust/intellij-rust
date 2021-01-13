@@ -88,6 +88,9 @@ fun mapCapacity(expectedSize: Int): Int {
     return Int.MAX_VALUE // any large value
 }
 
+fun <K, V> newHashMapWithExpectedSize(size: Int): HashMap<K, V> =
+    HashMap<K, V>(mapCapacity(size))
+
 /* Copied from Kotlin's internal Iterables.kt */
 fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int =
     if (this is Collection<*>) size else default
