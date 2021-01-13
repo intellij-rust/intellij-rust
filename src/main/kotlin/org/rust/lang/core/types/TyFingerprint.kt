@@ -49,7 +49,11 @@ data class TyFingerprint constructor(
                         return type.typeReference?.let { create(it, typeParameters) } ?: emptyList()
                     }
                 }
-                is RsArrayType -> TyFingerprint("[T]")
+                is RsArrayType -> if (type.isSlice) {
+                    TyFingerprint("[T]")
+                } else {
+                    TyFingerprint("[T;]")
+                }
                 is RsFnPointerType -> TyFingerprint("fn()")
                 is RsTraitType -> if (!type.isImpl) {
                     TyFingerprint("dyn T")
@@ -63,7 +67,8 @@ data class TyFingerprint constructor(
 
         fun create(type: Ty): TyFingerprint? = when (type) {
             is TyAdt -> type.item.name?.let(::TyFingerprint)
-            is TySlice, is TyArray -> TyFingerprint("[T]")
+            is TySlice -> TyFingerprint("[T]")
+            is TyArray -> TyFingerprint("[T;]")
             is TyPointer -> TyFingerprint("*T")
             is TyReference -> create(type.referenced)
             is TyTuple -> TyFingerprint("(tuple)")
