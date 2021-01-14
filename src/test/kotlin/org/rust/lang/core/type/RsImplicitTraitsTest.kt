@@ -174,6 +174,23 @@ class RsImplicitTraitsTest : RsTypificationTestBase() {
                //^ !Copy
     """)
 
+    fun `test invalid self-containing struct 1`() = doTest("""
+        struct S {
+            field: Self
+        }
+        type T = S;
+               //^ Sized
+    """)
+
+    fun `test invalid self-containing struct 2`() = doTest("""
+        struct Rc<T>(T);
+        struct S {
+            field: Rc<Self>
+        }
+        type T = S;
+               //^ Sized
+    """)
+
     private fun checkPrimitiveTypes(traitName: String) {
         val allIntegers = TyInteger.VALUES.toTypedArray()
         val allFloats = TyFloat.VALUES.toTypedArray()
