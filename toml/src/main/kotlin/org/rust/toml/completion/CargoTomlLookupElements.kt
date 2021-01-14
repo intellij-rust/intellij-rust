@@ -7,9 +7,9 @@ package org.rust.toml.completion
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.rust.toml.StringLiteralInsertionHandler
-import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
 
-fun lookupElementForFeature(feature: TomlKey): LookupElementBuilder {
+fun lookupElementForFeature(feature: TomlKeySegment): LookupElementBuilder {
     return LookupElementBuilder
         .createWithSmartPointer(feature.text, feature)
         .withInsertHandler(StringLiteralInsertionHandler())

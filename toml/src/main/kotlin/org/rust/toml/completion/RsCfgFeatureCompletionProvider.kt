@@ -25,7 +25,7 @@ import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.toml.getPackageTomlFile
 import org.rust.toml.resolve.allFeatures
-import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
 
 /**
  * Provides completion for cargo features in Rust cfg attributes:
@@ -50,7 +50,7 @@ object RsCfgFeatureCompletionProvider : RsCompletionProvider() {
         get() = RsPsiPattern.insideAnyCfgFeature
 }
 
-private fun rustLookupElementForFeature(feature: TomlKey): LookupElementBuilder {
+private fun rustLookupElementForFeature(feature: TomlKeySegment): LookupElementBuilder {
     return LookupElementBuilder
         .createWithSmartPointer(feature.text, feature)
         .withInsertHandler(RustStringLiteralInsertionHandler())

@@ -28,18 +28,17 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
 
         loop@ for (element in elements) {
             val parent = element.parent
-            if (parent is TomlKey) {
-                val key = parent
-                val keyValue = key.parent as? TomlKeyValue ?: continue@loop
+            if (parent is TomlKeySegment) {
+                val keyValue = parent.parent?.parent as? TomlKeyValue ?: continue@loop
                 val table = keyValue.parent as? TomlTable ?: continue@loop
                 if (!table.header.isDependencyListHeader) continue@loop
-                if (key.firstChild?.nextSibling != null) continue@loop
+                if (parent.firstChild?.nextSibling != null) continue@loop
                 val pkgName = keyValue.crateName
                 val pkgVersion = keyValue.version ?: continue@loop
                 result += genLineMarkerInfo(element, pkgName, pkgVersion)
             } else if (element.elementType == TomlElementTypes.L_BRACKET) {
                 val header = parent as? TomlTableHeader ?: continue@loop
-                val names = header.names
+                val names = header.key?.segments.orEmpty()
                 if (names.getOrNull(names.size - 2)?.isDependencyKey != true) continue@loop
                 val table = parent.parent as? TomlTable ?: continue@loop
                 val version = table.entries.find { it.name == "version" }?.value?.stringValue ?: continue@loop

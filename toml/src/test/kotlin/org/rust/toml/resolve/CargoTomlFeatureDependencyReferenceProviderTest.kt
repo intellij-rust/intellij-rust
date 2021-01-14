@@ -8,8 +8,8 @@ package org.rust.toml.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.toml.lang.psi.TomlKey
 import org.toml.lang.psi.TomlLiteral
+import org.toml.lang.psi.TomlKeySegment
 
 class CargoTomlFeatureDependencyReferenceProviderTest : CargoTomlResolveTestBase() {
     fun `test feature in the same package 1`() = checkResolve("""
@@ -139,5 +139,5 @@ class CargoTomlFeatureDependencyReferenceProviderTest : CargoTomlResolveTestBase
         }
     }
 
-    private fun checkResolve(@Language("TOML") code: String) = checkByCodeToml<TomlLiteral, TomlKey>(code)
+    private fun checkResolve(@Language("TOML") code: String) = checkByCodeToml<TomlLiteral, TomlKeySegment>(code)
 }

@@ -23,14 +23,14 @@ fun TomlFile.resolveFeature(featureName: String): Array<ResolveResult> =
         .toList()
         .toTypedArray()
 
-fun TomlFile.allFeatures(): Sequence<TomlKey> = childrenOfType<TomlTable>()
+fun TomlFile.allFeatures(): Sequence<TomlKeySegment> = childrenOfType<TomlTable>()
     .asSequence()
     .flatMap { table ->
         val header = table.header
         when {
             // [features]
             header.isFeatureListHeader -> {
-                table.entries.asSequence().map { it.key }
+                table.entries.asSequence().mapNotNull { it.key.segments.singleOrNull() }
             }
 
             // # Optional dependencies are features too:
@@ -42,7 +42,7 @@ fun TomlFile.allFeatures(): Sequence<TomlKey> = childrenOfType<TomlTable>()
                     .filter {
                         (it.value as? TomlInlineTable)?.getValueWithKey("optional")?.asBoolean() == true
                     }
-                    .map { it.key }
+                    .mapNotNull { it.key.segments.singleOrNull() }
             }
 
             // [dependencies.bar]
@@ -50,7 +50,8 @@ fun TomlFile.allFeatures(): Sequence<TomlKey> = childrenOfType<TomlTable>()
             // optional = true
             header.isSpecificDependencyTableHeader -> {
                 if (table.getValueWithKey("optional")?.asBoolean() == true) {
-                    sequenceOf(header.names.last())
+                    val lastKey = header.key?.segments?.last()
+                    if (lastKey != null) sequenceOf(lastKey) else emptySequence()
                 } else {
                     emptySequence()
                 }

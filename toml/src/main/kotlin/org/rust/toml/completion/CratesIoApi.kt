@@ -17,7 +17,7 @@ import com.intellij.util.io.HttpRequests
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.notifications.showBalloon
 import org.rust.openapiext.runWithCheckCanceled
-import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
 import java.io.IOException
 
 data class SearchResult(val crates: List<CrateDescription>)
@@ -33,7 +33,7 @@ data class CrateDescription(
 val CrateDescription.dependencyLine: String
     get() = "$name = \"$maxVersion\""
 
-fun searchCrate(key: TomlKey): Collection<CrateDescription> {
+fun searchCrate(key: TomlKeySegment): Collection<CrateDescription> {
     if (isUnitTestMode) return MOCK!!
 
     val name = CompletionUtil.getOriginalElement(key)?.text ?: ""
@@ -43,7 +43,7 @@ fun searchCrate(key: TomlKey): Collection<CrateDescription> {
     return response.crates
 }
 
-fun getCrateLastVersion(key: TomlKey): String? {
+fun getCrateLastVersion(key: TomlKeySegment): String? {
     if (isUnitTestMode) return MOCK!!.first().maxVersion
 
     val name = CompletionUtil.getOriginalElement(key)?.text ?: ""

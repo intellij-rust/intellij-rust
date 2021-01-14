@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.tree.IElementType
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -25,8 +24,6 @@ import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.*
-import org.toml.lang.psi.ext.TomlLiteralKind
-import org.toml.lang.psi.ext.kind
 import kotlin.reflect.KProperty
 
 
@@ -34,14 +31,7 @@ fun tomlPluginIsAbiCompatible(): Boolean = computeOnce
 
 private val computeOnce: Boolean by lazy {
     try {
-        load<TomlLiteralKind>()
-        load(TomlLiteral::kind)
-        if (!PsiNamedElement::class.java.isAssignableFrom(TomlKey::class.java)) {
-            showBalloonWithoutProject(
-                "Incompatible TOML plugin version, \"Find Usages\" for cargo features is not available.",
-                NotificationType.WARNING
-            )
-        }
+        load<TomlKeySegment>()
         true
     } catch (e: LinkageError) {
         showBalloonWithoutProject(
@@ -57,35 +47,35 @@ private fun load(p: KProperty<*>): String = p.name
 
 val PsiFile.isCargoToml: Boolean get() = virtualFile?.name == CargoConstants.MANIFEST_FILE
 
-val TomlKey.isDependencyKey: Boolean
+val TomlKeySegment.isDependencyKey: Boolean
     get() {
-        val text = text
-        return text == "dependencies" || text == "dev-dependencies" || text == "build-dependencies"
+        val name = name
+        return name == "dependencies" || name == "dev-dependencies" || name == "build-dependencies"
     }
 
-val TomlKey.isFeaturesKey: Boolean
+val TomlKeySegment.isFeaturesKey: Boolean
     get() {
-        val text = text
-        return text == "features"
+        val name = name
+        return name == "features"
     }
 
-val TomlKey.isFeatureDef: Boolean
+val TomlKeySegment.isFeatureDef: Boolean
     get() {
-        val table = (parent as? TomlKeyValue)?.parent as? TomlTable ?: return false
+        val table = (parent?.parent as? TomlKeyValue)?.parent as? TomlTable ?: return false
         return table.header.isFeatureListHeader && table.containingFile.isCargoToml
     }
 
 val TomlTableHeader.isDependencyListHeader: Boolean
-    get() = names.lastOrNull()?.isDependencyKey == true
+    get() = key?.segments?.lastOrNull()?.isDependencyKey == true
 
 val TomlTableHeader.isSpecificDependencyTableHeader: Boolean
     get() {
-        val names = names
+        val names = key?.segments.orEmpty()
         return names.getOrNull(names.size - 2)?.isDependencyKey == true
     }
 
 val TomlTableHeader.isFeatureListHeader: Boolean
-    get() = names.lastOrNull()?.isFeaturesKey == true
+    get() = key?.segments?.lastOrNull()?.isFeaturesKey == true
 
 /** Inserts `=` between key and value if missed and wraps inserted string with quotes if needed */
 class StringValueInsertionHandler(private val keyValue: TomlKeyValue) : InsertHandler<LookupElement> {
@@ -177,15 +167,15 @@ fun findDependencyTomlFile(element: TomlElement, depName: String): TomlFile? =
  *
  * @see [org.rust.toml.resolve.CargoTomlDependencyFeaturesReferenceProvider]
  */
-val TomlValue.containingDependencyKey: TomlKey?
+val TomlValue.containingDependencyKey: TomlKeySegment?
     get() {
         val parentParent = parent?.parent as? TomlElement ?: return null
         return if (parentParent is TomlTable) {
             // [dependencies.foo]
-            parentParent.header.names.lastOrNull()
+            parentParent.header.key?.segments?.lastOrNull()
         } else {
             // [dependencies]
             // foo = { ... }
-            (parentParent.parent as? TomlKeyValue)?.key
+            (parentParent.parent as? TomlKeyValue)?.key?.segments?.singleOrNull()
         }
     }

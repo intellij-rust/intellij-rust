@@ -8,7 +8,7 @@ package org.rust.toml.resolve
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
-import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
 
 @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
 class CargoTomlKeyResolveTest : CargoTomlResolveTestBase() {
@@ -46,7 +46,7 @@ class CargoTomlKeyResolveTest : CargoTomlResolveTestBase() {
 
     """)
 
-    private fun checkResolve(@Language("TOML") code: String) = doResolveTest<TomlKey> {
+    private fun checkResolve(@Language("TOML") code: String) = doResolveTest<TomlKeySegment> {
         toml("Cargo.toml", code)
     }
 }

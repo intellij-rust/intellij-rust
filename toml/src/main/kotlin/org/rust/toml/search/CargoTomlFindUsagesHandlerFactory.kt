@@ -9,11 +9,11 @@ import com.intellij.find.findUsages.FindUsagesHandler
 import com.intellij.find.findUsages.FindUsagesHandlerFactory
 import com.intellij.psi.PsiElement
 import org.rust.toml.isFeatureDef
-import org.toml.lang.psi.TomlKey
+import org.toml.lang.psi.TomlKeySegment
 
 class CargoTomlFindUsagesHandlerFactory : FindUsagesHandlerFactory() {
     override fun canFindUsages(element: PsiElement): Boolean {
-        return element is TomlKey && element.isFeatureDef
+        return element is TomlKeySegment && element.isFeatureDef
     }
 
     override fun createFindUsagesHandler(element: PsiElement, forHighlightUsages: Boolean): FindUsagesHandler =
