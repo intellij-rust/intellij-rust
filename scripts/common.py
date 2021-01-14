@@ -11,7 +11,11 @@ PATCH_VERSION_RE: str = r"patchVersion=(\d+)"
 def __get_patch_version() -> Tuple[str, int]:
     with open(GRADLE_PROPERTIES) as properties:
         text = properties.read()
-    return text, int(re.search(PATCH_VERSION_RE, text).group(1))
+    return text, get_patch_version_from_text(text)
+
+
+def get_patch_version_from_text(text: str) -> int:
+    return int(re.search(PATCH_VERSION_RE, text).group(1))
 
 
 def get_patch_version() -> int:
