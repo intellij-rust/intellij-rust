@@ -53,7 +53,6 @@ abstract class ListIntentionBase<TList : RsElement, TElement : RsElement>(
         element.getNextNonCommentSibling()?.takeIf { it.elementType == COMMA }
 
     private fun Sequence<PsiElement>.lineBreak(): PsiWhiteSpace? =
-        dropWhile { it !is PsiWhiteSpace && it !is PsiComment }
-            .takeWhile { it is PsiWhiteSpace || it is PsiComment }
+        takeWhile { !elementClass.isInstance(it) }
             .firstOrNull { it is PsiWhiteSpace && it.textContains('\n') } as? PsiWhiteSpace
 }
