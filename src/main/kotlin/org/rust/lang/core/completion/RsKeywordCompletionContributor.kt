@@ -127,8 +127,11 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     private fun letPattern(): PsiElementPattern.Capture<PsiElement> =
         baseCodeStatementPattern().and(statementBeginningPattern("let"))
 
-    private fun loopFlowCommandPattern(): PsiElementPattern.Capture<PsiElement> =
-        RsPsiPattern.inAnyLoop.and(newCodeStatementPattern())
+    private fun loopFlowCommandPattern(): PsiElementPattern.Capture<PsiElement>
+        = RsPsiPattern.inAnyLoop.and(
+            newCodeStatementPattern() or
+            pathExpressionPattern()
+        )
 
     private fun baseDeclarationPattern(): PsiElementPattern.Capture<PsiElement> =
         psiElement()

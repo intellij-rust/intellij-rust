@@ -127,6 +127,26 @@ class RsKeywordCompletionContributorTest : RsCompletionTestBase() {
         }
     """)
 
+    fun `test continue expression`() = checkCompletion("continue", """
+        fn foo() {
+            loop {
+                let x = cont/*caret*/;
+            }
+        }
+    """, """
+        fn foo() {
+            loop {
+                let x = continue/*caret*/;
+            }
+        }
+    """)
+
+    fun `test continue expression outside loop`() = checkNoCompletion("""
+        fn foo() {
+            let x = cont/*caret*/;
+        }
+    """)
+
     fun `test const`() = checkCompletion("const", """
         con/*caret*/
     """, """
