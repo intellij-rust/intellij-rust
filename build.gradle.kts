@@ -74,7 +74,6 @@ allprojects {
         mavenCentral()
         jcenter()
         maven("https://dl.bintray.com/jetbrains/markdown")
-        maven("http://download.eclipse.org/jgit/maven")
         maven("https://dl.bintray.com/jetbrains/intellij-third-party-dependencies")
     }
 
