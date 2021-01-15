@@ -13,10 +13,10 @@ It's also very inspirational to browse existing plugins. Check out [Erlang] and
 [Go] plugins. There is also [plugin repository] and, of course, [Kotlin plugin].
 
 [Kotlin]: https://kotlinlang.org/
-[sdk-docs]: http://www.jetbrains.org/intellij/sdk/docs/
+[sdk-docs]: https://www.jetbrains.org/intellij/sdk/docs/
 
-[lang-reference]: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support.html
-[lang-tutorial]: http://www.jetbrains.org/intellij/sdk/docs/tutorials/custom_language_support_tutorial.html
+[lang-reference]: https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support.html
+[lang-tutorial]: https://www.jetbrains.org/intellij/sdk/docs/tutorials/custom_language_support_tutorial.html
 
 [sdk-YouTrack]: https://youtrack.jetbrains.com/issues/IJSDK
 [sdk-contributing]: https://github.com/JetBrains/intellij-sdk-docs/blob/master/CONTRIBUTING.md
@@ -105,7 +105,7 @@ attribute which specifies the tokens to skip after completing (successfully or
 not!) some rule. For example, `!(FN | STRUCT)` would work for language where
 each declaration starts either with `fn` or with `struct`.
 
-[JFlex]: http://www.jflex.de/
+[JFlex]: https://www.jflex.de/
 [Grammar Kit]: https://github.com/JetBrains/Grammar-Kit
 [GK-docs]: https://github.com/JetBrains/Grammar-Kit/blob/master/HOWTO.md
 
@@ -132,7 +132,7 @@ dispatched statically, so you can't override methods and implement interfaces.
 
 Read more about parse and PSI in the [sdk documentation][psi-doc]
 
-[psi-doc]: http://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/implementing_parser_and_psi.html
+[psi-doc]: https://www.jetbrains.org/intellij/sdk/docs/reference_guide/custom_language_support/implementing_parser_and_psi.html
 
 # Name resolution
 
@@ -288,7 +288,7 @@ resolve each candidate and check if it indeed points to our file.
 
 Read more about [indexing].
 
-[indexing]: http://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs.html
+[indexing]: https://www.jetbrains.org/intellij/sdk/docs/basics/indexing_and_psi_stubs.html
 [stub-switch]: https://github.com/intellij-rust/intellij-rust/blob/1cc9e40248bd36e43cc016d008270d0e0f4d7f8a/src/main/kotlin/org/rust/lang/core/psi/impl/RustStubbedNamedElementImpl.kt#L27
 
 

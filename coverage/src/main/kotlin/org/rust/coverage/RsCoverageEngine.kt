@@ -141,10 +141,11 @@ class RsCoverageEngine : CoverageEngine() {
             val output = File(outputDir, outputFileName)
             writeLcov(coverageReport, output)
             refresh(output)
-            val url = "http://ltp.sourceforge.net/coverage/lcov.php"
+            // TODO: generate html report ourselves
+            val url = "https://github.com/linux-test-project/lcov"
             Messages.showInfoMessage(
                 "<html>Coverage report has been successfully saved as '$outputFileName' file.<br>" +
-                    "Use <a href='$url'>$url</a> to generate HTML output.</html>",
+                    "Use instruction in <a href='$url'>$url</a> to generate HTML output.</html>",
                 title
             )
         } catch (e: IOException) {

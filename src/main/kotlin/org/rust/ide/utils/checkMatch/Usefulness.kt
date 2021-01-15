@@ -81,7 +81,7 @@ sealed class Usefulness {
 /**
  * See detailed description in [rust/src/librustc_mir_build/thir/pattern/_match.rs](https://github.com/rust-lang/rust/blob/dfe1e3b641abbede6230e3931d14f0d43e5b8e54/src/librustc_mir_build/thir/pattern/_match.rs).
  *
- * Original algorithm from [INRIA](http://moscova.inria.fr/~maranget/papers/warn/warn004.html)
+ * Original algorithm from [INRIA](https://moscova.inria.fr/~maranget/papers/warn/warn004.html)
  */
 fun isUseful(
     matrix: Matrix,

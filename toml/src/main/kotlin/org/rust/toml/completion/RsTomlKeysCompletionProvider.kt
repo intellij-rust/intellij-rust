@@ -63,7 +63,7 @@ private val TomlKey.topLevelTable: TomlKeyValueOwner?
 private val TomlHeaderOwner.name: String?
     get() = header.names.firstOrNull()?.text
 
-// Example from http://doc.crates.io/manifest.html,
+// Example from https://doc.crates.io/manifest.html,
 // basic completion is automatically generated from it.
 @Language("TOML")
 private val EXAMPLE_CARGO_TOML = """

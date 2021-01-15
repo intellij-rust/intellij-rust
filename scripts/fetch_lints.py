@@ -54,7 +54,7 @@ def get_rustc_lints():
 
 
 def get_clippy_lints():
-    data = request.urlopen("http://rust-lang.github.io/rust-clippy/master/lints.json")
+    data = request.urlopen("https://rust-lang.github.io/rust-clippy/master/lints.json")
     clippy_lints = json.loads(data.read())
 
     groups = set()
