@@ -8,6 +8,7 @@ package org.rust.ide.actions
 import com.google.gson.Gson
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
+import com.intellij.openapi.ui.TestDialog
 import okhttp3.mockwebserver.MockResponse
 import org.intellij.lang.annotations.Language
 import org.rust.*
@@ -65,10 +66,20 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
             fn main() {
                 println!("Hello!");/*caret*/
             }
-        """) {
+        """, TestDialog.OK) {
             MockResponse().setResponseCode(404)
         }
         assertEquals(notificationContent, RsBundle.message("action.Rust.ShareInPlayground.notification.error"))
+    }
+
+    fun `test do not perform network request without user confirmation`() {
+        launchAction(Edition.EDITION_2018, """
+            fn main() {
+                println!("Hello!");/*caret*/
+            }
+        """, TestDialog.NO) {
+            error("Unexpected network request without user confirmation")
+        }
     }
 
     private fun doTest(
@@ -77,7 +88,7 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
         @Language("Rust") codeToShare: String
     ) {
         var requestCode: String? = null
-        val notificationContent = launchAction(edition, code) {
+        val notificationContent = launchAction(edition, code, TestDialog.OK) {
             val gson = Gson()
             requestCode = gson.fromJson(it.body.inputStream().reader(), ShareInPlaygroundAction.PlaygroundCode::class.java).code
 
@@ -91,6 +102,7 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
                 .setBody(response)
                 .addHeader("Content-Type", "application/json")
         }
+        check(notificationContent != null) { "Notification is not shown" }
 
         assertEquals(codeToShare.trimIndent(), requestCode)
 
@@ -100,7 +112,12 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
         assertEquals("https://play.rust-lang.org/?version=$channel&edition=${edition.presentation}&gist=$MOCK_GIST_ID", url)
     }
 
-    private fun launchAction(edition: Edition, @Language("Rust") code: String, handler: ResponseHandler): String {
+    private fun launchAction(
+        edition: Edition,
+        @Language("Rust") code: String,
+        testDialog: TestDialog,
+        handler: ResponseHandler
+    ): String? {
         val testProject = fileTree {
             toml("Cargo.toml", """
                 [package]
@@ -125,12 +142,13 @@ class ShareInPlaygroundActionTest : RsWithToolchainTestBase() {
             }
         })
 
-        withMockPlaygroundHost(mockServerFixture.baseUrl) {
-            myFixture.launchAction("Rust.ShareInPlayground")
+        withTestDialog(testDialog) {
+            withMockPlaygroundHost(mockServerFixture.baseUrl) {
+                myFixture.launchAction("Rust.ShareInPlayground")
+            }
         }
 
-        assertNotNull("Notification is not shown", notificationContent != null)
-        return notificationContent!!
+        return notificationContent
     }
 
     companion object {
