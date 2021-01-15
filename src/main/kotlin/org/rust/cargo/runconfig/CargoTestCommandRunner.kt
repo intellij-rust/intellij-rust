@@ -21,6 +21,7 @@ import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
+import org.rust.cargo.runconfig.buildtool.isActivateToolWindowBeforeRun
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.openapiext.saveAllDocuments
 
@@ -57,8 +58,7 @@ class CargoTestCommandRunner : AsyncProgramRunner<RunnerSettings>() {
             }
             val exitCode = AsyncPromise<Int?>()
 
-            val activateToolWindow = environment.runnerAndConfigurationSettings?.isActivateToolWindowBeforeRun == true
-            if (activateToolWindow) {
+            if (environment.isActivateToolWindowBeforeRun) {
                 RunContentExecutor(environment.project, buildProcessHandler)
                     .apply { createFilters(state.cargoProject).forEach { withFilter(it) } }
                     .withAfterCompletion { exitCode.setResult(buildProcessHandler.exitCode) }
