@@ -630,6 +630,18 @@ class RsResolveTest : RsResolveTestBase() {
                                         //^
     """)
 
+    fun `test enum Self in impl block for invalid self-containing struct`() = checkByCodeGeneric<RsImplItem>("""
+        struct E {
+            value: Self
+        }
+        impl E {
+           //X
+            fn new() -> Self {
+                Self
+            } //^
+        }
+    """)
+
     fun `test enum variant 2`() = checkByCode("""
         enum E { X, Y(X) }
                     //^ unresolved

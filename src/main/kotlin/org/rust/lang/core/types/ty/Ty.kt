@@ -67,28 +67,40 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
 /**
  * See [org.rust.lang.core.type.RsImplicitTraitsTest]
  */
-tailrec fun Ty.isSized(): Boolean {
-    return when (this) {
-        is TyNumeric,
-        is TyBool,
-        is TyChar,
-        is TyUnit,
-        is TyNever,
-        is TyReference,
-        is TyPointer,
-        is TyArray,
-        is TyFunction -> true
-        is TyStr, is TySlice, is TyTraitObject -> false
-        is TyTypeParameter -> isSized
-        is TyAdt -> {
-            val item = item as? RsStructItem ?: return true
-            val typeRef = item.fields.lastOrNull()?.typeReference
-            val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
-            type.isSized()
+fun Ty.isSized(): Boolean {
+    val ancestors = mutableSetOf(this)
+
+    fun Ty.isSizedInner(): Boolean {
+        return when (this) {
+            is TyNumeric,
+            is TyBool,
+            is TyChar,
+            is TyUnit,
+            is TyNever,
+            is TyReference,
+            is TyPointer,
+            is TyArray,
+            is TyFunction -> true
+
+            is TyStr, is TySlice, is TyTraitObject -> false
+
+            is TyTypeParameter -> isSized
+
+            is TyAdt -> {
+                val item = item as? RsStructItem ?: return true
+                val typeRef = item.fields.lastOrNull()?.typeReference
+                val type = typeRef?.type?.substitute(typeParameterValues) ?: return true
+                if (!ancestors.add(type)) return true
+                type.isSizedInner()
+            }
+
+            is TyTuple -> types.last().isSizedInner()
+
+            else -> true
         }
-        is TyTuple -> types.last().isSized()
-        else -> true
     }
+
+    return isSizedInner()
 }
 
 val Ty.isSelf: Boolean
