@@ -116,8 +116,6 @@ electronically at https://www.jetbrains.com/agreements/cla/ via DocuSign. The pr
 consists of a couple of emails and clicks: no need to scan or print or snail-mail anything :)
 `CONTRIBUTORS.txt` file stores GitHub usernames of people who already signed a CLA.
   
-The text of the agreement can be found [here](http://www.jetbrains.org/download/attachments/983565/JB_ContributorLicenseAgreement.pdf). 
-
 ## Code style
 
 Please use **reformat code** action to maintain consistent style. Pay attention
