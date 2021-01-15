@@ -79,7 +79,12 @@ fun findStatementsOrExprInRange(file: PsiFile, startOffset: Int, endOffset: Int)
         .last { it.textRange == parent.textRange }
 
     if (mostDistantParent is RsExpr || mostDistantParent is RsStmt)
-        return arrayOf(mostDistantParent)
+    {
+        val isContained = startOffset == mostDistantParent.startOffset && endOffset == mostDistantParent.endOffset
+        if (mostDistantParent !is RsBlockExpr || isContained) {
+            return arrayOf(mostDistantParent)
+        }
+    }
 
     return findStatementsInRange(element1, element2)
 }
