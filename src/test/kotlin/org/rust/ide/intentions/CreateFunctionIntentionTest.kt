@@ -58,6 +58,14 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     """)
 
+    fun `test unavailable on trait associated function`() = doUnavailableTest("""
+        trait Trait {}
+
+        fn foo() {
+            Trait::baz/*caret*/();
+        }
+    """)
+
     fun `test create function`() = doAvailableTest("""
         fn main() {
             /*caret*/foo();
@@ -651,6 +659,67 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             pub fn foo(&self) {
                 unimplemented!()
             }
+        }
+    """)
+
+    fun `test create associated function for struct`() = doAvailableTest("""
+        struct S;
+        fn foo() {
+            S::bar/*caret*/(1, 2);
+        }
+    """, """
+        struct S;
+
+        impl S {
+            fn bar(p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo() {
+            S::bar(1, 2);
+        }
+    """)
+
+    fun `test create associated function for enum`() = doAvailableTest("""
+        enum S {
+            V1
+        }
+        fn foo() {
+            S::bar/*caret*/(1, 2);
+        }
+    """, """
+        enum S {
+            V1
+        }
+
+        impl S {
+            fn bar(p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo() {
+            S::bar(1, 2);
+        }
+    """)
+
+    fun `test create associated function for generic struct`() = doAvailableTest("""
+        struct S<T>(T);
+        fn foo() {
+            S::<u32>::bar/*caret*/(1, 2);
+        }
+    """, """
+        struct S<T>(T);
+
+        impl<T> S<T> {
+            fn bar(p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        fn foo() {
+            S::<u32>::bar(1, 2);
         }
     """)
 }
