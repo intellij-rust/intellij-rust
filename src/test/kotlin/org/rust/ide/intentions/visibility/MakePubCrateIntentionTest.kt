@@ -83,9 +83,9 @@ class MakePubCrateIntentionTest : RsIntentionTestBase(MakePubCrateIntention::cla
     """)
 
     fun `test make constant pub(crate)`() = doAvailableTest("""
-        /*caret*/const Foo: u32 = u32;
+        /*caret*/const FOO: u32 = u32;
     """, """
-        /*caret*/pub(crate) const Foo: u32 = u32;
+        /*caret*/pub(crate) const FOO: u32 = u32;
     """)
 
     fun `test make use pub(crate)`() = doAvailableTest("""

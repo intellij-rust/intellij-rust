@@ -93,30 +93,40 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
     }
 }
 
-private fun getAnchor(element: PsiElement): PsiElement? {
-    return when (element) {
-        is RsNameIdentifierOwner -> element.nameIdentifier
-        is RsTupleFieldDecl -> element.typeReference
-        is RsUseItem -> element.use
-        else -> null
-    }
+private fun getAnchor(element: PsiElement): PsiElement? = when (element) {
+    is RsNameIdentifierOwner -> element.nameIdentifier
+    is RsTupleFieldDecl -> element.typeReference
+    is RsUseItem -> element.use
+    else -> null
 }
 
 /**
  * Returns true if `element` is in a valid place in `visibleElement` for running the intention.
  */
 private fun isValidPlace(visibleElement: RsVisibilityOwner, element: PsiElement): Boolean {
-    val keyword = when (visibleElement) {
-        is RsFunction -> visibleElement.fn
-        is RsStructItem -> visibleElement.struct
-        is RsEnumItem -> visibleElement.enum
-        is RsTraitItem -> visibleElement.trait
+    /**
+     * Parent trait owner is checked by [ChangeVisibilityIntention.isValidVisibilityOwner].
+     */
+    if (visibleElement is RsAbstractable) {
+        val owner = visibleElement.owner
+        if (owner is RsAbstractableOwner.Impl && owner.isTraitImpl) return false
+    }
+
+    val anchor = when (visibleElement) {
         is RsConstant -> visibleElement.const
-        is RsTypeAlias -> visibleElement.typeKw
+        is RsEnumItem -> visibleElement.enum
+        is RsFieldDecl -> element
+        is RsFunction -> visibleElement.fn
+        is RsMacro2 -> visibleElement.macroKw
         is RsModDeclItem -> visibleElement.mod
         is RsModItem -> visibleElement.mod
+        is RsStructItem -> visibleElement.struct
+        is RsTraitAlias -> visibleElement.trait
+        is RsTraitItem -> visibleElement.trait
+        is RsTypeAlias -> visibleElement.typeKw
+        is RsUseItem -> element
         else -> null
-    } ?: return true
+    } ?: return false
 
-    return element == keyword || keyword.leftSiblings.any { it.isAncestorOf(element) }
+    return element == anchor || anchor.leftSiblings.any { it.isAncestorOf(element) }
 }

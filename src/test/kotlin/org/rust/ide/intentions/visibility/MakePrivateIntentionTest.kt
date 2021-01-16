@@ -61,9 +61,9 @@ class MakePrivateIntentionTest : RsIntentionTestBase(MakePrivateIntention::class
     """)
 
     fun `test make constant private`() = doAvailableTest("""
-        pub /*caret*/const Foo: u32 = u32;
+        pub /*caret*/const FOO: u32 = u32;
     """, """
-        /*caret*/const Foo: u32 = u32;
+        /*caret*/const FOO: u32 = u32;
     """)
 
     fun `test make use private`() = doAvailableTest("""

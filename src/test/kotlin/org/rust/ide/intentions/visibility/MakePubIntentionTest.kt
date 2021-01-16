@@ -28,6 +28,34 @@ class MakePubIntentionTest : RsIntentionTestBase(MakePubIntention::class) {
         }
     """)
 
+    fun `test unavailable on trait impl function`() = doUnavailableTest("""
+        trait Foo {
+            fn foo() {}
+        }
+        impl Foo for () {
+            f/*caret*/n foo() {}
+        }
+    """)
+
+    fun `test unavailable on impl block`() = doUnavailableTest("""
+        struct Foo;
+        impl Foo {
+            fn foo() {}
+        }/*caret*/
+    """)
+
+    fun `test available on impl function`() = doAvailableTest("""
+        struct Foo;
+        impl Foo {
+            fn/*caret*/ foo() {}
+        }
+    """, """
+        struct Foo;
+        impl Foo {
+            pub fn/*caret*/ foo() {}
+        }
+    """)
+
     fun `test unavailable on pub item`() = doUnavailableTest("""
         pub /*caret*/fn foo() {}
     """)
@@ -85,9 +113,9 @@ class MakePubIntentionTest : RsIntentionTestBase(MakePubIntention::class) {
     """)
 
     fun `test make constant public`() = doAvailableTest("""
-        /*caret*/const Foo: u32 = u32;
+        /*caret*/const FOO: u32 = u32;
     """, """
-        /*caret*/pub const Foo: u32 = u32;
+        /*caret*/pub const FOO: u32 = u32;
     """)
 
     fun `test make use public`() = doAvailableTest("""
