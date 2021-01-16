@@ -1228,7 +1228,7 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
-    fun `test selection inside a block`() = doTest("""
+    fun `test selection inside a block expression`() = doTest("""
         fn foo() {
             {
                 <selection>let a = 1;
@@ -1244,6 +1244,37 @@ class RsExtractFunctionTest : RsTestBase() {
 
                 let c = a + b;
             }
+        }
+
+        fn bar() -> (i32, i32) {
+            let a = 1;
+            let b = 2;
+            (a, b)
+        }
+    """,
+        false,
+        "bar")
+
+    fun `test selection inside a block statement`() = doTest("""
+        fn foo() {
+            {
+                <selection>let a = 1;
+                let b = 2;</selection>
+                let c = a + b;
+                ()
+            }
+
+            ()
+        }
+    """, """
+        fn foo() {
+            {
+                let (a, b) = bar();
+                let c = a + b;
+                ()
+            }
+
+            ()
         }
 
         fn bar() -> (i32, i32) {
