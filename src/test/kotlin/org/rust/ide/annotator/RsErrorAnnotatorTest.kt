@@ -418,7 +418,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn foo(a: <error descr="The type placeholder `_` is not allowed within types on item signatures [E0121]">_</error>) {}
         fn bar() -> <error>_</error> {}
-        fn baz(t: (u32, <error>_</error>)) -> (bool, (f64, <error>_</error>)) {}
+        fn baz(t: (u32, <error>_</error>)) -> (bool, (f64, <error>_</error>)) { unreachable!() }
         static FOO: <error>_</error> = 42;
     """)
 
@@ -3333,7 +3333,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="`aaa` is unstable [E0658]">S</error> {
             #[unstable(feature = "ccc", reason = "bar \
                 baz")]
-            fn foo(self) -> Self {}
+            fn foo(self) -> Self { unreachable!() }
         }
 
         fn main() {
@@ -3363,7 +3363,7 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl S {
             #[unstable(feature = "ccc", reason = "bar \
                 baz")]
-            fn foo(self) -> Self {}
+            fn foo(self) -> Self { unreachable!() }
         }
 
         fn main() {
@@ -3942,5 +3942,16 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
                 _ => {}
             }
         }
+    """)
+
+    fun `test empty function E0308 wrong return type`() = checkByText("""
+        fn foo() -> u32 {<error descr="mismatched types [E0308]">}</error>
+    """)
+
+    fun `test empty function ignore impl trait return type`() = checkByText("""
+        trait FooBar {}
+        impl FooBar for () {}
+
+        fn foo() -> impl FooBar {}
     """)
 }
