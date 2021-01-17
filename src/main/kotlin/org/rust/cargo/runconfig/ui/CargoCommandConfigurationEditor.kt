@@ -88,6 +88,7 @@ class CargoCommandConfigurationEditor(project: Project)
     }
 
     private val environmentVariables = EnvironmentVariablesComponent()
+    private val requiredFeatures = CheckBox("Implicitly add required features if possible", true)
     private val allFeatures = CheckBox("Use all features in tests", false)
     private val emulateTerminal = CheckBox("Emulate terminal in output console", false)
 
@@ -95,6 +96,7 @@ class CargoCommandConfigurationEditor(project: Project)
         super.resetEditorFrom(configuration)
 
         channel.selectedIndex = configuration.channel.index
+        requiredFeatures.isSelected = configuration.requiredFeatures
         allFeatures.isSelected = configuration.allFeatures
         emulateTerminal.isSelected = configuration.emulateTerminal
         backtraceMode.selectedIndex = configuration.backtrace.index
@@ -119,6 +121,7 @@ class CargoCommandConfigurationEditor(project: Project)
         val configChannel = RustChannel.fromIndex(channel.selectedIndex)
 
         configuration.channel = configChannel
+        configuration.requiredFeatures = requiredFeatures.isSelected
         configuration.allFeatures = allFeatures.isSelected
         configuration.emulateTerminal = emulateTerminal.isSelected && !SystemInfo.isWindows
         configuration.backtrace = BacktraceMode.fromIndex(backtraceMode.selectedIndex)
@@ -142,6 +145,7 @@ class CargoCommandConfigurationEditor(project: Project)
             channel()
         }
 
+        row { requiredFeatures() }
         row { allFeatures() }
 
         if (!SystemInfo.isWindows) {

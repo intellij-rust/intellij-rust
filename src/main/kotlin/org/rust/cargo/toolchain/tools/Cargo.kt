@@ -32,7 +32,9 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.PackageId
 import org.rust.cargo.runconfig.buildtool.CargoPatch
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoPackage
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoProject
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration.Companion.findCargoTargets
 import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.ExternalLinter
@@ -365,7 +367,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         toGeneralCommandLine(project, commandLine, colors = false)
 
     private fun toGeneralCommandLine(project: Project, commandLine: CargoCommandLine, colors: Boolean): GeneralCommandLine =
-        with(patchArgs(commandLine, colors)) {
+        with(commandLine.patchArgs(project, colors)) {
             val parameters = buildList<String> {
                 if (channel != RustChannel.DEFAULT) {
                     add("+$channel")
@@ -436,29 +438,54 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         const val NAME: String = "cargo"
         const val WRAPPER_NAME: String = "xargo"
 
+        private val FEATURES_ACCEPTING_COMMANDS: List<String> = listOf(
+            "bench", "build", "check", "doc", "fix", "run", "rustc", "rustdoc", "test", "metadata", "tree", "install", "package", "publish"
+        )
+
         private val COLOR_ACCEPTING_COMMANDS: List<String> = listOf(
             "bench", "build", "check", "clean", "clippy", "doc", "install", "publish", "run", "rustc", "test", "update"
         )
 
         data class GeneratedFilesHolder(val manifest: VirtualFile, val sourceFiles: List<VirtualFile>)
 
-        val cargoCommonPatch: CargoPatch = { patchArgs(it, true) }
+        fun getCargoCommonPatch(project: Project): CargoPatch = { it.patchArgs(project, true) }
 
-        fun patchArgs(commandLine: CargoCommandLine, colors: Boolean): CargoCommandLine {
-            val (pre, post) = commandLine.splitOnDoubleDash()
+        fun CargoCommandLine.patchArgs(project: Project, colors: Boolean): CargoCommandLine {
+            val (pre, post) = splitOnDoubleDash()
                 .let { (pre, post) -> pre.toMutableList() to post.toMutableList() }
 
-            if (commandLine.command == "test" && commandLine.allFeatures && !pre.contains("--all-features")) {
+            if (command == "test" && allFeatures && !pre.contains("--all-features")) {
                 pre.add("--all-features")
+            }
+
+            if (requiredFeatures && command in FEATURES_ACCEPTING_COMMANDS) {
+                run {
+                    val cargoProject = findCargoProject(project, additionalArguments, workingDirectory) ?: return@run
+                    val cargoPackage = findCargoPackage(cargoProject, additionalArguments, workingDirectory) ?: return@run
+                    if (workingDirectory != cargoPackage.rootDirectory) {
+                        val manifestIdx = pre.indexOf("--manifest-path")
+                        val packageIdx = pre.indexOf("--package")
+                        if (manifestIdx == -1 && packageIdx != -1) {
+                            pre.removeAt(packageIdx) // remove `--package`
+                            pre.removeAt(packageIdx) // remove package name
+                            pre.add("--manifest-path")
+                            val manifest = cargoPackage.rootDirectory.resolve(CargoConstants.MANIFEST_FILE)
+                            pre.add(manifest.toAbsolutePath().toString())
+                        }
+                    }
+                    val cargoTargets = findCargoTargets(cargoPackage, additionalArguments)
+                    val features = cargoTargets.flatMap { it.requiredFeatures }.distinct().joinToString(",")
+                    if (features.isNotEmpty()) pre.add("--features=$features")
+                }
             }
 
             // Force colors
             val forceColors = colors &&
-                commandLine.command in COLOR_ACCEPTING_COMMANDS &&
-                commandLine.additionalArguments.none { it.startsWith("--color") }
+                command in COLOR_ACCEPTING_COMMANDS &&
+                additionalArguments.none { it.startsWith("--color") }
             if (forceColors) pre.add(0, "--color=always")
 
-            return commandLine.copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
+            return copy(additionalArguments = if (post.isEmpty()) pre else pre + "--" + post)
         }
 
         fun checkNeedInstallGrcov(project: Project): Boolean {

@@ -201,6 +201,7 @@ class BenchRunConfigurationProducerTest : RunConfigurationProducerTestBase() {
 
         modifyTemplateConfiguration {
             channel = RustChannel.NIGHTLY
+            requiredFeatures = false
             allFeatures = true
             emulateTerminal = true
             isRedirectInput = true
