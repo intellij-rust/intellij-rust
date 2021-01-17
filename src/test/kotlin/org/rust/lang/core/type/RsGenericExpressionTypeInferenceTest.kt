@@ -1851,4 +1851,36 @@ class RsGenericExpressionTypeInferenceTest : RsTypificationTestBase() {
             a;
         } //^ i32
     """)
+
+    fun `test infer type parameter from blank impl 1`() = testExpr("""
+        struct S;
+        trait Foo<O> {}
+
+        impl<T> Foo<S> for T {}
+
+        fn foo<T: Foo<B>, B>(t: T) -> B {
+            todo!()
+        }
+
+        fn bar<T>(t: T) {
+            let a = foo(t);
+            a;
+        } //^ S
+    """)
+
+    fun `test infer type parameter from blank impl 2`() = testExpr("""
+        struct S;
+        trait Foo<O> {}
+
+        impl<T> Foo<S> for T {}
+
+        fn foo<T: Foo<B>, B>(t: T) -> B {
+            todo!()
+        }
+
+        fn bar<T: Foo<S>>(t: T) {
+            let a = foo(t);
+            a;
+        } //^ S
+    """)
 }

@@ -655,7 +655,7 @@ class ImplLookup(
                     .filter { ctx.probe { ctx.combineBoundElements(it, ref.trait) } }
                     .map { SelectionCandidate.TypeParameter(it) }
                     .forEach(::add)
-                if (ref.selfTy is TyTypeParameter) return@buildList
+
                 if (ref.selfTy is TyProjection) {
                     val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
                     for (bound in ref.selfTy.trait.element.bounds) {
