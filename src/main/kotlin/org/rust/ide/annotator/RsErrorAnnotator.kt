@@ -898,6 +898,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         collectDiagnostics(holder, fn)
         checkDuplicates(holder, fn)
         checkTypesAreSized(holder, fn)
+        checkEmptyFunctionReturnType(holder, fn)
 
         fn.innerAttrList.forEach { checkStartAttribute(holder, it) }
         fn.outerAttrList.forEach { checkStartAttribute(holder, it) }
@@ -1367,7 +1368,7 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     val owner = fn.owner
 
     fun isError(ty: Ty): Boolean = !ty.isSized() &&
-        // '?Sized' type paramter types in abstract trait method is not an error
+        // '?Sized' type parameter types in abstract trait method is not an error
         !(owner is RsAbstractableOwner.Trait && fn.isAbstract)
 
     for (arg in arguments) {
@@ -1382,6 +1383,21 @@ private fun checkTypesAreSized(holder: RsAnnotationHolder, fn: RsFunction) {
     val ty = typeReference.type
     if (isError(ty)) {
         RsDiagnostic.SizedTraitIsNotImplemented(typeReference, ty).addToHolder(holder)
+    }
+}
+
+private fun checkEmptyFunctionReturnType(holder: RsAnnotationHolder, fn: RsFunction) {
+    val block = fn.block ?: return
+    val rbrace = block.rbrace ?: return
+    val returnType = fn.returnType
+    if (returnType is TyInfer.TyVar ||
+        returnType is TyUnit ||
+        returnType is TyAnon ||
+        returnType.containsTyOfClass(TyUnknown::class.java)) return
+
+    val (stmts, expr) = block.expandedStmtsAndTailExpr
+    if (stmts.isEmpty() && expr == null) {
+        RsDiagnostic.TypeError(rbrace, returnType, TyUnit).addToHolder(holder)
     }
 }
 
