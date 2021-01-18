@@ -5,13 +5,10 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.psi.PsiElement
-import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.psi.RsImplItem
-import org.rust.lang.core.psi.RsTraitItem
-import org.rust.lang.core.psi.RsTraitRef
+import com.intellij.util.SmartList
+import gnu.trove.THashMap
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.isValidProjectMember
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.infer.constGenerics
@@ -19,7 +16,6 @@ import org.rust.lang.core.types.infer.generics
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyTypeParameter
 import org.rust.lang.core.types.type
-import org.rust.stdext.mapToSet
 import kotlin.LazyThreadSafetyMode.PUBLICATION
 
 /**
@@ -39,12 +35,21 @@ class RsCachedImplItem(
     }
 
     /** For `impl T for Foo` returns union of impl members and trait `T` members that are not overriden by the impl */
-    val implAndTraitExpandedMembers: List<RsAbstractable> by lazy(PUBLICATION) {
-        val implMembers = impl.members?.expandedMembers.orEmpty()
+    val implAndTraitExpandedMembers: Map<String, List<RsAbstractable>> by lazy(PUBLICATION) {
+        val membersMap = THashMap<String, MutableList<RsAbstractable>>()
+        for (member in impl.members?.expandedMembers.orEmpty()) {
+            val name = member.name ?: continue
+            membersMap.getOrPut(name) { SmartList() }.add(member)
+        }
         val traitMembers = implementedTrait?.element?.members?.expandedMembers
-            ?: return@lazy implMembers
-        val implMemberNames = implMembers.mapToSet { it.name }
-        implMembers + traitMembers.filter { it.name !in implMemberNames }
+            ?: return@lazy membersMap
+        val implMemberNames = HashSet<String>(membersMap.keys)
+        for (member in traitMembers) {
+            val name = member.name ?: continue
+            if (name in implMemberNames) continue
+            membersMap.getOrPut(name) { SmartList() }.add(member)
+        }
+        membersMap
     }
 
     companion object {
