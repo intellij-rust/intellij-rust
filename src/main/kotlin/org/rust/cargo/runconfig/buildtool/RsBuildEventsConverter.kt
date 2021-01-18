@@ -124,7 +124,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
             .capitalize()
             .trimEnd('.')
         when {
-            message.startsWith("Compiling") ->
+            message.startsWith("Compiling") || message.startsWith("Checking") ->
                 handleCompilingMessage(message, false, messageConsumer)
             message.startsWith("Fresh") ->
                 handleCompilingMessage(message, true, messageConsumer)

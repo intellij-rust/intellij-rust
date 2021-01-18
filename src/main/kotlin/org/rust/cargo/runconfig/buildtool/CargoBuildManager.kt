@@ -203,7 +203,7 @@ object CargoBuildManager {
     fun isBuildConfiguration(configuration: CargoCommandConfiguration): Boolean {
         val args = ParametersListUtil.parse(configuration.command)
         return when (val command = args.firstOrNull()) {
-            "build" -> true
+            "build", "check", "clippy" -> true
             "test" -> {
                 val additionalArguments = args.drop(1)
                 val (commandArguments, _) = parseArgs(command, additionalArguments)
