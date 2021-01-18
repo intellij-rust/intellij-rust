@@ -132,7 +132,7 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }.create()
 
         val path = project.cargoProjects.singleWorkspace()
-            .findPackage("rand")
+            .findPackageByName("rand")
             ?.contentRoot
             ?.findFileByRelativePath("src/lib.rs")
             ?: error("Can't find 'src/lib.rs' in 'rand' library")

@@ -16,9 +16,10 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.util.concurrency.FutureResult
 import org.rust.cargo.project.model.CargoProject
-import org.rust.cargo.runconfig.RsExecutableRunner.Companion.binaries
+import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifact
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -55,7 +56,7 @@ class CargoBuildContext(
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
-    var binaries: List<Path> = emptyList()
+    var artifact: CargoMetadata.Artifact? = null
 
     fun waitAndStart(): Boolean {
         indicator?.pushState()
@@ -82,7 +83,7 @@ class CargoBuildContext(
     fun finished(isSuccess: Boolean) {
         val isCanceled = indicator?.isCanceled ?: false
 
-        environment.binaries = binaries.takeIf { isSuccess && !isCanceled }
+        environment.artifact = artifact.takeIf { isSuccess && !isCanceled }
 
         finished = System.currentTimeMillis()
         buildSemaphore.release()

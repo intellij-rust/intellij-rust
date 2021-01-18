@@ -284,6 +284,7 @@ object CargoMetadata {
     // The next two things do not belong here,
     // see `machine_message` in Cargo.
     data class Artifact(
+        val package_id: PackageId?,
         val target: Target,
         val profile: Profile,
         val filenames: List<String>,

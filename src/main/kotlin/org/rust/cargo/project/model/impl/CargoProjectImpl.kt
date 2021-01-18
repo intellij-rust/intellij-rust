@@ -483,9 +483,9 @@ data class CargoProjectImpl(
         // "rustc" package was renamed to "rustc_middle" in https://github.com/rust-lang/rust/pull/70536
         // so starting with rustc 1.42 a stable way to identify it is to try to find any of some possible packages
         val possiblePackages = listOf("rustc", "rustc_middle", "rustc_typeck")
-        return workspace.findPackage(AutoInjectedCrates.STD) != null &&
-            workspace.findPackage(AutoInjectedCrates.CORE) != null &&
-            possiblePackages.any { workspace.findPackage(it) != null }
+        return workspace.findPackageByName(AutoInjectedCrates.STD) != null &&
+            workspace.findPackageByName(AutoInjectedCrates.CORE) != null &&
+            possiblePackages.any { workspace.findPackageByName(it) != null }
     }
 
     fun withStdlib(result: TaskResult<StandardLibrary>): CargoProjectImpl = when (result) {

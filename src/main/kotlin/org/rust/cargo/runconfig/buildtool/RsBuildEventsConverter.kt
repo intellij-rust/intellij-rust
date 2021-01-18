@@ -107,7 +107,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
         }
         if (!isSuitableTarget || context.isTestBuild && !rustcArtifact.profile.test) return true
 
-        context.binaries = rustcArtifact.executables.map { Paths.get(it) }
+        context.artifact = rustcArtifact
 
         return true
     }
