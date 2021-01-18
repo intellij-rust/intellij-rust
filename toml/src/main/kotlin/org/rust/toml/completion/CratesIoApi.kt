@@ -39,7 +39,7 @@ fun searchCrate(key: TomlKeySegment): Collection<CrateDescription> {
     val name = CompletionUtil.getOriginalElement(key)?.text ?: ""
     if (name.isEmpty()) return emptyList()
 
-    val response = requestCratesIo<SearchResult>(key, "crates?page=1&per_page=20&q=$name&sort=") ?: return emptyList()
+    val response = requestCratesIo<SearchResult>(key, "crates?page=1&per_page=100&q=$name") ?: return emptyList()
     return response.crates
 }
 
