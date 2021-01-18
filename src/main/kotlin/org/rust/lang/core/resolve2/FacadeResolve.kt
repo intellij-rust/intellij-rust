@@ -112,24 +112,19 @@ fun processMacros(
     }
     if (runBeforeResolve != null && runBeforeResolve()) return true
 
-    return modData.processMacros(scope, macroPath, processor, defMap, project)
+    return modData.processMacros(macroPath, processor, defMap, project)
 }
 
 private fun ModData.processMacros(
-    /** Must be not null during completion */
-    scope: RsMod?,
     /** null if path is qualified */
     macroPath: PsiElement?,
     processor: RsResolveProcessor,
     defMap: CrateDefMap,
     project: Project,
 ): Boolean {
-    val isCompletion = processor.name == null
-
     val isQualified = macroPath == null || macroPath is RsPath && macroPath.qualifier != null
     if (!isQualified) {
         check(macroPath != null)
-        val exactScopeVisibilityFilter = if (isCompletion) { mod: RsMod -> mod == scope } else { _ -> true }
         val macroIndex = getMacroIndex(macroPath, defMap)
         for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
             val macroInfo = filterMacrosByIndex(macroInfos, macroIndex) ?: continue
@@ -138,10 +133,11 @@ private fun ModData.processMacros(
             val macroContainingMod = visItem.containingMod.toRsMod(defMap, project) ?: continue
             val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap) ?: continue
-            if (processor(name, macro, exactScopeVisibilityFilter)) return true
+            if (processor(name, macro)) return true
         }
     }
 
+    val isCompletion = processor.name == null
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
         val visItem = perNs.macros ?: continue
         val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
@@ -203,7 +199,6 @@ fun RsMacroCall.resolveToMacroAndProcessLocalInnerMacros(
         val project = info.project
         val defMap = project.defMapService.getOrUpdateIfNeeded(def.crate) ?: return@resolveToMacroAndThen null
         defMap.root.processMacros(
-            scope = null,  // null because it is not completion
             macroPath = null,  // null because we resolve qualified macro path
             processor = processor,
             defMap = defMap,
