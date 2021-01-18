@@ -36,7 +36,7 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
 
     protected fun checkAutoImportFixByTextWithMultipleChoice(
         @Language("Rust") before: String,
-        expectedElements: Set<String>,
+        expectedElements: List<String>,
         choice: String,
         @Language("Rust") after: String
     ) = doTest {
@@ -45,13 +45,35 @@ abstract class AutoImportFixTestBase : RsInspectionsTestBase(RsUnresolvedReferen
         withMockImportItemUi(object : ImportItemUi {
             override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
                 chooseItemWasCalled = true
-                val actualItems = items.mapTo(HashSet()) { it.info.usePath }
+                val actualItems = items.map { it.info.usePath }
                 assertEquals(expectedElements, actualItems)
                 val selectedValue = items.find { it.info.usePath == choice }
                     ?: error("Can't find `$choice` in `$actualItems`")
                 callback(selectedValue)
             }
         }) { checkFixByText(AutoImportFix.NAME, before, after) }
+
+        check(chooseItemWasCalled) { "`chooseItem` was not called" }
+    }
+
+    protected fun checkAutoImportFixByFileTreeWithMultipleChoice(
+        @Language("Rust") before: String,
+        expectedElements: List<String>,
+        choice: String,
+        @Language("Rust") after: String,
+    ) = doTest {
+        var chooseItemWasCalled = false
+
+        withMockImportItemUi(object : ImportItemUi {
+            override fun chooseItem(items: List<ImportCandidate>, callback: (ImportCandidate) -> Unit) {
+                chooseItemWasCalled = true
+                val actualItems = items.map { it.info.usePath }
+                assertEquals(expectedElements, actualItems)
+                val selectedValue = items.find { it.info.usePath == choice }
+                    ?: error("Can't find `$choice` in `$actualItems`")
+                callback(selectedValue)
+            }
+        }) { checkFixByFileTree(AutoImportFix.NAME, before, after) }
 
         check(chooseItemWasCalled) { "`chooseItem` was not called" }
     }
