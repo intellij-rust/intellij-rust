@@ -165,6 +165,50 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
         fn main() { foo(/*hint text="S(x, y):"*/0); }
     """)
 
+    fun `test generic enum variant single parameter smart mode disabled`() = checkByText("""
+        enum Result<T, E> {
+            Ok(T),
+            Err(E)
+        }
+
+        fn main() {
+            Result::Ok(/*hint text="T:"*/0);
+            Result::Err(/*hint text="E:"*/0);
+        }
+    """, smart = false)
+
+    fun `test generic enum variant single parameter smart mode enabled`() = checkByText("""
+        enum Result<T, E> {
+            Ok(T),
+            Err(E)
+        }
+
+        fn main() {
+            Result::Ok(0);
+            Result::Err(0);
+        }
+    """, smart = true)
+
+    fun `test generic enum variant multiple parameters smart mode disabled`() = checkByText("""
+        enum Foo<T, E> {
+            Bar(T, E),
+        }
+
+        fn main() {
+            Foo::Bar(/*hint text="T:"*/0, /*hint text="E:"*/0);
+        }
+    """, smart = false)
+
+    fun `test generic enum variant multiple parameters smart mode enabled`() = checkByText("""
+        enum Foo<T, E> {
+            Bar(T, E),
+        }
+
+        fn main() {
+            Foo::Bar(/*hint text="T:"*/0, /*hint text="E:"*/0);
+        }
+    """, smart = true)
+
     fun `test don't touch ast`() {
         fileTreeFromText("""
         //- main.rs
@@ -187,11 +231,11 @@ class RsInlayParameterHintsProviderTest : RsTestBase() {
     }
 
     @Suppress("UnstableApiUsage")
-    private fun checkByText(@Language("Rust") code: String) {
+    private fun checkByText(@Language("Rust") code: String, smart: Boolean = true) {
         InlineFile(code.replace(HINT_COMMENT_PATTERN, "<$1/>"))
 
         RsInlayParameterHints.enabledOption.set(true)
-        RsInlayParameterHints.smartOption.set(true)
+        RsInlayParameterHints.smartOption.set(smart)
 
         myFixture.testInlays({ (it.renderer as HintRenderer).text }) { it.renderer is HintRenderer }
     }
