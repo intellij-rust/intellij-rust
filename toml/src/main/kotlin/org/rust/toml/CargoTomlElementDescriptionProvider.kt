@@ -17,6 +17,7 @@ import org.toml.lang.psi.TomlKeySegment
 
 class CargoTomlElementDescriptionProvider : ElementDescriptionProvider {
     override fun getElementDescription(element: PsiElement, location: ElementDescriptionLocation): String? {
+        if (!tomlPluginIsAbiCompatible()) return null
         return if (element is TomlKeySegment) {
             if (element.isFeatureDef) {
                 when (location) {
