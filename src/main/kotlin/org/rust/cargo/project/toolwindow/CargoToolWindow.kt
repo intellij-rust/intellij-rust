@@ -135,7 +135,7 @@ class CargoToolWindow(
 
     companion object {
         @JvmStatic
-        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create<CargoProject>("SELECTED_CARGO_PROJECT")
+        val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create("SELECTED_CARGO_PROJECT")
 
         const val CARGO_TOOLBAR_PLACE: String = "Cargo Toolbar"
 
