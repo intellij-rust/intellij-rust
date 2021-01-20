@@ -7,16 +7,23 @@ package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.COMMA
 import org.rust.lang.core.psi.ext.*
 
-class RsConvertToTupleProcessor(project: Project, val element: RsFieldsOwner, val convertUsages: Boolean = true) : BaseRefactoringProcessor(project) {
+class RsConvertToTupleProcessor(
+    project: Project,
+    val element: RsFieldsOwner,
+    val convertUsages: Boolean = true
+) : BaseRefactoringProcessor(project) {
     private val rsPsiFactory = RsPsiFactory(project)
     private val fieldDeclList = element.blockFields!!.namedFieldDeclList
     override fun findUsages(): Array<UsageInfo> {
@@ -32,7 +39,7 @@ class RsConvertToTupleProcessor(project: Project, val element: RsFieldsOwner, va
                 ProgressManager.checkCanceled()
                 ReferencesSearch
                     .search(rsNamedFieldDecl)
-                    //other references will be handled from main struct usages
+                    // Other references will be handled from main struct usages
                     .filter { it.element.parent is RsDotExpr }
                     .map { MyUsageInfo(it, index) }
             }.flatten()
@@ -110,19 +117,24 @@ class RsConvertToTupleProcessor(project: Project, val element: RsFieldsOwner, va
 
         val newTuplePsiElement = rsPsiFactory.createStruct("struct A$types;")
 
-        element.blockFields!!.replace(newTuplePsiElement.tupleFields!!)
-        (element as? RsStructItem)?.addAfter(rsPsiFactory.createSemicolon(), element.tupleFields!!)
+        val blockFields = element.blockFields ?: return
+        val tupleFields = newTuplePsiElement.tupleFields ?: return
+        val whereClause = (element as? RsStructItem)?.whereClause
+        if (whereClause == null) {
+            blockFields.replace(tupleFields)
+        } else {
+            element.addAfter(tupleFields, whereClause.getPrevNonWhitespaceSibling())
+            (blockFields.prevSibling as? PsiWhiteSpace)?.delete()
+            blockFields.delete()
+            whereClause.lastChild.takeIf { it.elementType == COMMA }?.delete()
+        }
+        if (element is RsStructItem) element.addAfter(rsPsiFactory.createSemicolon(), element.lastChild)
     }
 
-    override fun getCommandName(): String {
-        return "Converting ${element.name} to tuple"
-    }
+    override fun getCommandName(): String = "Converting ${element.name} to tuple"
 
-    override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor {
-        return BaseUsageViewDescriptor(element)
-    }
+    override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
+        BaseUsageViewDescriptor(element)
 
-    override fun getRefactoringId(): String? {
-        return "refactoring.convertToTuple"
-    }
+    override fun getRefactoringId(): String = "refactoring.convertToTuple"
 }

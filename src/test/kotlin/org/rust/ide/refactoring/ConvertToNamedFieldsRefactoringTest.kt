@@ -182,6 +182,32 @@ class ConvertToNamedFieldsRefactoringTest : RsTestBase() {
         }
     """)
 
+    fun `test where clause`() = doAvailableTest("""
+        trait Trait {}
+        struct Test/*caret*/<T>(T) where T: Trait ;
+    """, """
+        trait Trait {}
+        struct Test<T> where T: Trait { _0: T }
+    """)
+
+    fun `test where clause (multiline)`() = doAvailableTest("""
+        trait Trait {}
+        struct Test/*caret*/<T1, T2>(T1, T2)
+            where
+                T1: Trait,
+                T2: Trait;
+    """, """
+        trait Trait {}
+        struct Test<T1, T2>
+            where
+                T1: Trait,
+                T2: Trait
+        {
+            _0: T1,
+            _1: T2
+        }
+    """)
+
     private fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
         InlineFile(before.trimIndent()).withCaret()
         myFixture.launchAction("Rust.RsConvertToNamedFields")
