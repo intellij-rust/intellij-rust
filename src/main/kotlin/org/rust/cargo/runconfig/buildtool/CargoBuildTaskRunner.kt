@@ -40,7 +40,6 @@ import java.util.concurrent.*
 private val LOG: Logger = Logger.getInstance(CargoBuildTaskRunner::class.java)
 
 class CargoBuildTaskRunner : ProjectTaskRunner() {
-    private val buildSessionsQueue: BackgroundTaskQueue = BackgroundTaskQueue(null, "Building...")
 
     override fun run(
         project: Project,
@@ -70,7 +69,9 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
             WaitingTask(project, waitingIndicator, queuedTask.executionStarted).queue()
         }
 
-        buildSessionsQueue.run(queuedTask, null, EmptyProgressIndicator())
+        CargoBuildSessionsQueueManager.getInstance(project)
+            .buildSessionsQueue
+            .run(queuedTask, null, EmptyProgressIndicator())
     }
 
     override fun canRun(projectTask: ProjectTask): Boolean =
@@ -137,11 +138,13 @@ class CargoBuildTaskRunner : ProjectTaskRunner() {
         if (callback != null) {
             try {
                 val buildResult = result.get()
-                callback.finished(ProjectTaskResult(
-                    buildResult.canceled,
-                    if (buildResult.succeeded) 0 else Integer.max(1, buildResult.errors),
-                    buildResult.warnings
-                ))
+                callback.finished(
+                    ProjectTaskResult(
+                        buildResult.canceled,
+                        if (buildResult.succeeded) 0 else Integer.max(1, buildResult.errors),
+                        buildResult.warnings
+                    )
+                )
             } catch (e: ExecutionException) {
                 callback.finished(ProjectTaskResult(false, 1, 0))
             }
