@@ -529,9 +529,14 @@ private fun isExistingProject(projects: Collection<CargoProject>, manifest: Path
 
 private fun doRefresh(project: Project, projects: List<CargoProjectImpl>): CompletableFuture<List<CargoProjectImpl>> {
     // TODO: get rid of `result` here
-    val result = CompletableFuture<List<CargoProjectImpl>>()
-    val syncTask = CargoSyncTask(project, projects, result)
-    project.taskQueue.run(syncTask)
+    val result = if (projects.isEmpty()) {
+        CompletableFuture.completedFuture(emptyList())
+    } else {
+        val result = CompletableFuture<List<CargoProjectImpl>>()
+        val syncTask = CargoSyncTask(project, projects, result)
+        project.taskQueue.run(syncTask)
+        result
+    }
 
     return result.thenApply { updatedProjects ->
         runWithNonLightProject(project) {

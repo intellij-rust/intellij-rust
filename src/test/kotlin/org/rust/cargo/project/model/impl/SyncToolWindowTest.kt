@@ -10,7 +10,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BuildViewTestFixture
 import org.rust.cargo.RsWithToolchainTestBase
-import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.toolwindow.CargoToolWindow
+import org.rust.fileTree
 import org.rust.launchAction
 
 class SyncToolWindowTest : RsWithToolchainTestBase() {
@@ -173,13 +175,51 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
         """)
     }
 
+    fun `test no projects`() {
+        val testProject = fileTree {
+            dir("crate") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "crate"
+                    version = "0.1.0"
+                    authors = []
+                """)
+
+                dir("src") {
+                    rust("main.rs", """
+                        fn main() {}
+                    """)
+                }
+            }
+        }.create(project, cargoProjectDirectory)
+        val crateRoot = testProject.root.findChild("crate")!!
+        attachCargoProject(crateRoot)
+        val cargoProject = project.testCargoProjects.refreshAllProjectsSync().single()
+        detachCargoProject(cargoProject)
+
+        // This refresh shouldn't change Sync view since there isn't any Cargo project
+        project.testCargoProjects.refreshAllProjectsSync()
+
+        checkSyncViewTree("""
+            -
+             -finished
+              -Sync crate project
+               Getting toolchain version
+               Updating workspace info
+               Getting Rust stdlib
+        """)
+    }
+
     private fun attachCargoProject(cargoProjectRoot: VirtualFile) {
         myFixture.launchAction("Cargo.AttachCargoProject", PlatformDataKeys.VIRTUAL_FILE to cargoProjectRoot)
     }
 
+    private fun detachCargoProject(cargoProject: CargoProject) {
+        myFixture.launchAction("Cargo.DetachCargoProject", CargoToolWindow.SELECTED_CARGO_PROJECT to cargoProject)
+    }
+
     private fun checkSyncViewTree(expected: String) {
-        val service = project.cargoProjects as TestCargoProjectsServiceImpl
-        service.discoverAndRefreshSync()
+        project.testCargoProjects.discoverAndRefreshSync()
         PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
         buildViewTestFixture.assertSyncViewTreeEquals(expected.trimIndent())
     }

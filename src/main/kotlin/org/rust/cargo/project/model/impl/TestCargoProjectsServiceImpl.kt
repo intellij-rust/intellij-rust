@@ -103,4 +103,10 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
         return discoverAndRefresh().get(1, TimeUnit.MINUTES)
             ?: error("Timeout when refreshing a test Cargo project")
     }
+
+    @TestOnly
+    fun refreshAllProjectsSync(): List<CargoProject> {
+        return refreshAllProjects().get(1, TimeUnit.MINUTES)
+            ?: error("Timeout when refreshing a test Cargo project")
+    }
 }
