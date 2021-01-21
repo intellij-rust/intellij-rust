@@ -62,4 +62,12 @@ class JoinParameterListIntentionTest : RsIntentionTestBase(JoinParameterListInte
             p2: i32
         ) {}
     """)
+
+    fun `test no space between parameters`() = doAvailableTest("""
+        fn foo(/*caret*/parameter1: u64,parameter2: u64,
+               parameter3: u64
+        ) {}
+    """, """
+        fn foo(parameter1: u64,parameter2: u64, parameter3: u64) {}
+    """)
 }
