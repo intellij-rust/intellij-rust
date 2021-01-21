@@ -6,19 +6,29 @@
 package org.rust.ide.notifications
 
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
 
+// BACKCOMPAT: 2020.2
+@Suppress("DEPRECATION")
 private val pluginNotifications = NotificationGroup.balloonGroup("Rust Plugin")
 
 fun Project.showBalloon(content: String, type: NotificationType, action: AnAction? = null) {
     showBalloon("", content, type, action)
 }
-fun Project.showBalloon(title: String, content: String, type: NotificationType, action: AnAction? = null) {
-    val notification = pluginNotifications.createNotification(title, content, type, null)
+
+fun Project.showBalloon(
+    title: String,
+    content: String,
+    type: NotificationType,
+    action: AnAction? = null,
+    listener: NotificationListener? = null
+) {
+    val notification = pluginNotifications.createNotification(title, content, type, listener)
     if (action != null) {
         notification.addAction(action)
     }

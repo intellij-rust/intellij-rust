@@ -1149,13 +1149,6 @@
         <action id="Rust.ShowRecursiveMacroExpansionAction"
                 class="org.rust.ide.actions.macroExpansion.RsShowRecursiveMacroExpansionAction">
         </action>
-        <group id="Rust.MacroExpansionActions"
-               class="org.rust.ide.actions.macroExpansion.RsShowMacroExpansionGroup">
-            <add-to-group group-id="EditorPopupMenu"/>
-            <separator/>
-            <reference id="Rust.ShowRecursiveMacroExpansionAction"/>
-            <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
-        </group>
 
         <action class="org.rust.ide.refactoring.generate.constructor.GenerateConstructorAction"
                 id="Rust.GenerateConstructor">
@@ -1189,6 +1182,9 @@
                 icon="/icons/rust.svg">
             <add-to-group group-id="HelpMenu" anchor="after" relative-to-action="ReportProblem"/>
         </action>
+
+        <action id="Rust.ShareInPlayground"
+                class="org.rust.ide.actions.ShareInPlaygroundAction"/>
 
         <!-- Cargo-->
 
@@ -1253,13 +1249,32 @@
             <add-to-group group-id="ProjectViewPopupMenu"/>
         </group>
 
-        <!-- Repl -->
-
         <action id="Rust.ConsoleREPL"
                 class="org.rust.ide.console.RunRustConsoleAction"
                 icon="/icons/repl.svg">
-            <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
+
+        <group id="Rust.Tools"
+               class="org.rust.ide.actions.RsToolsActionGroup"
+               icon="/icons/rust.svg"
+               popup="true">
+            <group id="Rust.MacroExpansionActions"
+                   class="org.rust.ide.actions.macroExpansion.RsShowMacroExpansionGroup">
+                <reference id="Rust.ShowRecursiveMacroExpansionAction"/>
+                <reference id="Rust.ShowSingleStepMacroExpansionAction"/>
+                <separator/>
+            </group>
+
+            <reference id="Cargo.RustfmtFile"/>
+            <reference id="Cargo.RustfmtCargoProject"/>
+            <reference id="Rust.ConsoleREPL"/>
+            <reference id="Rust.ShareInPlayground"/>
+
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <add-to-group group-id="EditorTabPopupMenu" anchor="last"/>
+        </group>
 
         <!-- Internal -->
 
