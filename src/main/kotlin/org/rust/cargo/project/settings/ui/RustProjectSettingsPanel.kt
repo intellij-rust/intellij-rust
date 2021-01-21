@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
+import org.rust.RsBundle
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.rustc
@@ -41,23 +42,27 @@ class RustProjectSettingsPanel(
 
     private val versionUpdateDebouncer = UiDebouncer(this)
 
-    private val pathToToolchainField = pathToDirectoryTextField(this,
-        "Select directory with cargo binary") { update() }
+    private val pathToToolchainField = pathToDirectoryTextField(
+        this,
+        RsBundle.message("rs.toolchain.select.cargo.bin.dir")
+    ) { update() }
 
-    private val pathToStdlibField = pathToDirectoryTextField(this,
-        "Select directory with standard library source code")
+    private val pathToStdlibField = pathToDirectoryTextField(
+        this,
+        RsBundle.message("rs.toolchain.select.stdlib.source.code.dir")
+    )
 
     private var fetchedSysroot: String? = null
 
-    private val downloadStdlibLink = Link("Download via rustup") {
+    private val downloadStdlibLink = Link(RsBundle.message("rs.toolchain.download.via.rustup")) {
         val rustup = RsToolchain(Paths.get(pathToToolchainField.text)).rustup
         if (rustup != null) {
-            object : Task.Modal(null, "Downloading Rust standard library", true) {
+            object : Task.Modal(null, RsBundle.message("rs.toolchain.downloading.rust.stdlib"), true) {
                 override fun onSuccess() = update()
 
                 override fun run(indicator: ProgressIndicator) {
                     indicator.isIndeterminate = true
-                    indicator.text = "Installing using Rustup..."
+                    indicator.text = RsBundle.message("rs.toolchain.installing.using.rustup")
 
                     rustup.downloadStdlib(this@RustProjectSettingsPanel, listener = object : ProcessAdapter() {
                         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
@@ -93,9 +98,9 @@ class RustProjectSettingsPanel(
             explicitPathToStdlib = null
         )
 
-        row("Toolchain location:") { wrapComponent(pathToToolchainField)(growX, pushX) }
-        row("Toolchain version:") { toolchainVersion() }
-        row("Standard library:") { wrapComponent(pathToStdlibField)(growX, pushX) }
+        row(RsBundle.message("rs.toolchain.location")) { wrapComponent(pathToToolchainField)(growX, pushX) }
+        row(RsBundle.message("rs.toolchain.version")) { toolchainVersion() }
+        row(RsBundle.message("rs.toolchain.stdlib")) { wrapComponent(pathToStdlibField)(growX, pushX) }
         row("") { downloadStdlibLink() }
     }
 

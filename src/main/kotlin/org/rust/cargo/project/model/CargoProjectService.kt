@@ -16,6 +16,7 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.Topic
+import org.rust.CargoBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.impl.UserDisabledFeatures
 import org.rust.cargo.project.settings.rustSettings
@@ -58,7 +59,7 @@ interface CargoProjectsService {
 
     companion object {
         val CARGO_PROJECTS_TOPIC: Topic<CargoProjectsListener> = Topic(
-            "cargo projects changes",
+            CargoBundle.message("project.changes"),
             CargoProjectsListener::class.java
         )
     }
@@ -154,8 +155,12 @@ private fun discoverToolchain(project: Project) {
             project.rustSettings.modify { it.toolchain = toolchain }
         }
 
-        val tool = if (toolchain.isRustupAvailable) "rustup" else "Cargo at ${toolchain.presentableLocation}"
-        project.showBalloon("Using $tool", NotificationType.INFORMATION)
+        val content = if (toolchain.isRustupAvailable)
+            CargoBundle.message("project.discover.toolchain.rustup")
+        else
+            CargoBundle.message("project.discover.toolchain.cargo", toolchain.presentableLocation)
+
+        project.showBalloon(content, NotificationType.INFORMATION)
         project.cargoProjects.discoverAndRefresh()
     }
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.panel
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
@@ -31,29 +32,29 @@ class RsProjectConfigurable(
 
     override fun createPanel(): DialogPanel = panel {
         rustProjectSettings.attachTo(this)
-        row("Expand declarative macros:") {
+        row(RsBundle.message("rs.expand.declarative.macros")) {
             comboBox(
                 EnumComboBoxModel(MacroExpansionEngine::class.java),
                 state::macroExpansionEngine,
                 createExpansionEngineListRenderer()
             ).comment(
-                "Allow plugin to process declarative macro invocations to extract information for name resolution and type inference"
+                RsBundle.getMessage("rs.expand.declarative.macros.comment")
             )
         }
         row {
-            checkBox("Use experimental name resolution engine", state::newResolveEnabled)
+            checkBox(RsBundle.message("rs.use.experimental.name.resolution.engine"), state::newResolveEnabled)
         }
         row {
-            checkBox("Inject Rust language into documentation comments", state::doctestInjectionEnabled)
+            checkBox(RsBundle.message("rs.inject.rust.language.into.documentation.comments"), state::doctestInjectionEnabled)
         }
     }
 
     private fun createExpansionEngineListRenderer(): ListCellRenderer<MacroExpansionEngine?> {
         return SimpleListCellRenderer.create("") {
             when (it) {
-                MacroExpansionEngine.DISABLED -> "Disable (select only if you have problems with macro expansion)"
-                MacroExpansionEngine.OLD -> "Use old engine (some features are not supported) "
-                MacroExpansionEngine.NEW -> "Use new engine"
+                MacroExpansionEngine.DISABLED -> RsBundle.message("rs.macro.expansion.engine.disabled")
+                MacroExpansionEngine.OLD -> RsBundle.message("rs.macro.expansion.engine.old")
+                MacroExpansionEngine.NEW -> RsBundle.message("rs.macro.expansion.engine.new")
                 null -> error("Unreachable")
             }
         }

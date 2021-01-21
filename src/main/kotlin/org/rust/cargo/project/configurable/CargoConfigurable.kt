@@ -11,6 +11,7 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.layout.CCFlags
 import com.intellij.ui.layout.panel
 import com.intellij.ui.layout.toBinding
+import org.rust.RsBundle
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.util.CargoCommandCompletionProvider
@@ -28,37 +29,37 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo")
         return panel {
             row {
                 checkBox(
-                    "Update project automatically if Cargo.toml changes",
+                    RsBundle.message("cargo.update.project.automatically.if.cargo.toml.changes"),
                     state::autoUpdateEnabled
                 )
             }
             row {
                 checkBox(
-                    "Compile all project targets if possible",
+                    RsBundle.message("cargo.compile.all.project.targets.if.possible"),
                     state::compileAllTargets,
-                    comment = "Pass <b>--target-all</b> option to Сargo <b>build</b>/<b>check</b> command"
+                    comment = RsBundle.message("cargo.compile.all.project.targets.if.possible.comment")
                 )
             }
             row {
                 checkBox(
-                    "Offline mode",
+                    RsBundle.message("cargo.offline.mode"),
                     state::useOffline,
-                    comment = "Pass <b>--offline</b> option to Cargo not to perform network requests"
+                    comment = RsBundle.message("cargo.offline.mode.comment")
                 )
             }
 
-            titledRow("External Linter") {
+            titledRow(RsBundle.message("cargo.external.linter")) {
                 subRowIndent = 0
-                row("External tool:") {
+                row(RsBundle.message("cargo.external.linter.tool")) {
                     comboBox(
                         EnumComboBoxModel(ExternalLinter::class.java),
                         state::externalLinter,
-                    ).comment("External tool to use for code analysis")
+                    ).comment(RsBundle.message("cargo.external.linter.tool.comment"))
                 }
 
-                row("Additional arguments:") {
+                row(RsBundle.message("cargo.external.linter.tool.arguments")) {
                     externalLinterArguments(CCFlags.growX)
-                        .comment("Additional arguments to pass to <b>cargo check</b> or <b>cargo clippy</b> command")
+                        .comment(RsBundle.message("cargo.external.linter.tool.arguments.comment"))
                         .withBinding(
                             componentGet = { it.text },
                             componentSet = { component, value -> component.text = value },
@@ -67,12 +68,9 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo")
                 }
                 row {
                     checkBox(
-                        "Run external linter to analyze code on the fly",
+                        RsBundle.message("cargo.run.external.linter"),
                         state::runExternalLinterOnTheFly,
-                        comment = """
-                            Enable external linter to add code highlighting based on the used linter result.
-                            Can be CPU-consuming
-                        """.trimIndent()
+                        comment = RsBundle.message("cargo.run.external.linter.comment")
                     )
                 }
             }

@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
+import org.rust.CargoBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.toolwindow.CargoToolWindow
 import org.rust.ide.notifications.RsEditorNotificationPanel
@@ -48,8 +49,8 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
         if (!project.cargoProjects.attachCargoProject(cargoToml.pathAsPath)) {
             Messages.showErrorDialog(
                 project,
-                "This Cargo package is already a part of an attached workspace.",
-                "Unable to attach Cargo project"
+                CargoBundle.message("attach.project.error.message"),
+                CargoBundle.message("attach.project.error")
             )
         }
     }
@@ -116,7 +117,7 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
     init {
         // The filter is not used for directories
         withFileFilter { it.isCargoToml }
-        withTitle("Select Cargo.toml")
+        withTitle(CargoBundle.message("attach.project.select.cargo.toml"))
     }
 
     override fun isFileSelectable(file: VirtualFile): Boolean {

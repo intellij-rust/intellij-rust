@@ -7,6 +7,7 @@ package org.rust.cargo.project.toolwindow
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.treeStructure.SimpleTree
+import org.rust.CargoBundle
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNode
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -29,7 +30,7 @@ class CargoProjectsTree : SimpleTree() {
     init {
         isRootVisible = false
         showsRootHandles = true
-        emptyText.text = "There are no Cargo projects to display."
+        emptyText.text = CargoBundle.message("toolWindow.no.cargo.projects")
         selectionModel.selectionMode = TreeSelectionModel.SINGLE_TREE_SELECTION
         addMouseListener(object : MouseAdapter() {
             override fun mouseClicked(e: MouseEvent) {

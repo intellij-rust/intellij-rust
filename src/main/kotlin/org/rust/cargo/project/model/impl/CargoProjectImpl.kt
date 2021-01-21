@@ -38,6 +38,7 @@ import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import org.rust.CargoBundle
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProject.UpdateStatus
@@ -356,18 +357,16 @@ open class CargoProjectsServiceImpl(
         val minToolchainVersion = projects.asSequence()
             .mapNotNull { it.rustcInfo?.version?.semver }
             .min()
-        val isUnsupportedRust = minToolchainVersion != null &&
-            minToolchainVersion < RsToolchain.MIN_SUPPORTED_TOOLCHAIN
-        if (isUnsupportedRust) {
+        val isUnsupportedRust = minToolchainVersion != null
+            && minToolchainVersion < RsToolchain.MIN_SUPPORTED_TOOLCHAIN
+        isLegacyRustNotificationShowed = if (isUnsupportedRust) {
             if (!isLegacyRustNotificationShowed) {
-                val content = "Rust <b>$minToolchainVersion</b> is no longer supported. " +
-                    "It may lead to unexpected errors. " +
-                    "Consider upgrading your toolchain to at least <b>${RsToolchain.MIN_SUPPORTED_TOOLCHAIN}</b>"
+                val content = CargoBundle.message("project.unsupported.rust.version", minToolchainVersion!!, RsToolchain.MIN_SUPPORTED_TOOLCHAIN)
                 project.showBalloon(content, NotificationType.WARNING)
             }
-            isLegacyRustNotificationShowed = true
+            true
         } else {
-            isLegacyRustNotificationShowed = false
+            false
         }
     }
 
