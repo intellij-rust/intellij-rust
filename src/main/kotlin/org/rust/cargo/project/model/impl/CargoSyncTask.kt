@@ -28,8 +28,8 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
+import org.rust.CargoBundle
 import org.rust.RsTask
-import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.rustSettings
@@ -51,7 +51,7 @@ class CargoSyncTask(
     project: Project,
     private val cargoProjects: List<CargoProjectImpl>,
     private val result: CompletableFuture<List<CargoProjectImpl>>
-) : Task.Backgroundable(project, "Reloading Cargo projects", true), RsTask {
+) : Task.Backgroundable(project, CargoBundle.message("task.reloading.cargo.projects"), true), RsTask {
 
     override val taskType: RsTask.TaskType
         get() = RsTask.TaskType.CARGO_SYNC
@@ -92,18 +92,19 @@ class CargoSyncTask(
         syncProgress: BuildProgress<BuildProgressDescriptor>
     ): List<CargoProjectImpl> {
         val toolchain = project.toolchain
-        val refreshedProjects = if (toolchain == null) {
-            syncProgress.fail(System.currentTimeMillis(), "Cargo project update failed:\nNo Rust toolchain")
+
+        return if (toolchain == null) {
+            syncProgress.fail(System.currentTimeMillis(), CargoBundle.message("task.project.update.failed"))
             cargoProjects
         } else {
             cargoProjects.map { cargoProject ->
                 syncProgress.runWithChildProgress(
-                    "Sync ${cargoProject.presentableName} project",
+                    CargoBundle.message("task.sync.project", cargoProject.presentableName),
                     createContext = { it },
                     action = { childProgress ->
                         if (!cargoProject.workingDirectory.exists()) {
                             cargoProject.copy(
-                                stdlibStatus = CargoProject.UpdateStatus.UpdateFailed("Project directory does not exist")
+                                stdlibStatus = CargoProject.UpdateStatus.UpdateFailed(CargoBundle.message("task.sync.update.failed"))
                             )
                         } else {
                             val context = SyncContext(project, cargoProject, toolchain, indicator, childProgress)
@@ -116,8 +117,6 @@ class CargoSyncTask(
                 )
             }
         }
-
-        return refreshedProjects
     }
 
     private fun createSyncProgressDescriptor(progress: ProgressIndicator): BuildProgressDescriptor {
@@ -184,14 +183,14 @@ class CargoSyncTask(
 }
 
 private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<RustcInfo> {
-    return context.runWithChildProgress("Getting toolchain version") { childContext ->
+    return context.runWithChildProgress(CargoBundle.message("task.getting.toolchain.version")) { childContext ->
         if (!childContext.toolchain.looksLikeValidToolchain()) {
-            return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${childContext.toolchain.presentableLocation}")
+            return@runWithChildProgress TaskResult.Err(CargoBundle.message("task.invalid.rust.toolchain", childContext.toolchain.presentableLocation))
         }
 
         val workingDirectory = childContext.oldCargoProject.workingDirectory
         val sysroot = childContext.toolchain.rustc().getSysroot(workingDirectory)
-            ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
+            ?: return@runWithChildProgress TaskResult.Err(CargoBundle.message("task.failed.to.get.project.sysroot"))
 
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
 
@@ -200,11 +199,11 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
 }
 
 private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<CargoWorkspace> {
-    return context.runWithChildProgress("Updating workspace info") { childContext ->
+    return context.runWithChildProgress(CargoBundle.message("task.updating.workspace.info")) { childContext ->
 
         val toolchain = childContext.toolchain
         if (!toolchain.looksLikeValidToolchain()) {
-            return@runWithChildProgress TaskResult.Err("Invalid Rust toolchain ${toolchain.presentableLocation}")
+            return@runWithChildProgress TaskResult.Err(CargoBundle.message("task.invalid.rust.toolchain", toolchain.presentableLocation))
         }
         val projectDirectory = childContext.oldCargoProject.workingDirectory
         val cargo = toolchain.cargoOrWrapper(projectDirectory)
@@ -225,13 +224,13 @@ private fun fetchCargoWorkspace(context: CargoSyncTask.SyncContext): TaskResult<
             val ws = CargoWorkspace.deserialize(manifestPath, projectDescriptionData, cfgOptions)
             TaskResult.Ok(ws)
         } catch (e: ExecutionException) {
-            TaskResult.Err("Failed to run Cargo", e.message)
+            TaskResult.Err(CargoBundle.message("task.failed.to.run.cargo"), e.message)
         }
     }
 }
 
 private fun fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo?): TaskResult<StandardLibrary> {
-    return context.runWithChildProgress("Getting Rust stdlib") { childContext ->
+    return context.runWithChildProgress(CargoBundle.message("task.getting.rust.stdlib")) { childContext ->
 
         val workingDirectory = childContext.oldCargoProject.workingDirectory
         if (childContext.oldCargoProject.doesProjectLooksLikeRustc()) {
@@ -253,8 +252,8 @@ private fun fetchStdlib(context: CargoSyncTask.SyncContext, rustcInfo: RustcInfo
                 ?: childContext.toolchain.rustc().getStdlibFromSysroot(workingDirectory)?.path
             val lib = explicitPath?.let { StandardLibrary.fromPath(childContext.project, it, rustcInfo) }
             return@runWithChildProgress when {
-                explicitPath == null -> TaskResult.Err("no explicit stdlib or rustup found")
-                lib == null -> TaskResult.Err("invalid standard library: $explicitPath")
+                explicitPath == null -> TaskResult.Err(CargoBundle.message("task.no.explicit.or.rustup.found"))
+                lib == null -> TaskResult.Err(CargoBundle.message("task.invalid.stdlib", explicitPath))
                 else -> TaskResult.Ok(lib)
             }
         }
@@ -269,12 +268,12 @@ private fun Rustup.fetchStdlib(project: Project, rustcInfo: RustcInfo?): TaskRes
         is DownloadResult.Ok -> {
             val lib = StandardLibrary.fromFile(project, download.value, rustcInfo)
             if (lib == null) {
-                TaskResult.Err("Corrupted standard library: ${download.value.presentableUrl}")
+                TaskResult.Err(CargoBundle.message("task.corrupted.stdlib", download.value.presentableUrl))
             } else {
                 TaskResult.Ok(lib)
             }
         }
-        is DownloadResult.Err -> TaskResult.Err("Download failed: ${download.error}")
+        is DownloadResult.Err -> TaskResult.Err(CargoBundle.message("task.download.failed", download.error))
     }
 }
 

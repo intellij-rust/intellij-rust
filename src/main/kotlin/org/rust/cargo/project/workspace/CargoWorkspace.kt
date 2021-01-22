@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.annotations.TestOnly
+import org.rust.CargoBundle
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.RustcInfo
@@ -429,7 +430,7 @@ private class WorkspaceImpl(
         }
         for ((feature, state) in inferFeatureState(UserDisabledFeatures.EMPTY)) {
             if (feature in enabledByCargo != state.isEnabled) {
-                error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
+                error(CargoBundle.message("workspace.feature.state.error", feature.name, feature.pkg.name, !state, state))
             }
         }
     }
