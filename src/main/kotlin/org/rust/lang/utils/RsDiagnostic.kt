@@ -8,12 +8,16 @@ package org.rust.lang.utils
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.RsErrorAnnotator
@@ -32,10 +36,14 @@ import org.rust.ide.refactoring.implementMembers.ImplementMembersFix
 import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.utils.import.RsImportHelper.getTypeReferencesInfoFromTys
 import org.rust.ide.utils.isEnabledByCfg
+import org.rust.lang.core.CONST_GENERICS
+import org.rust.lang.core.CompilerFeature
+import org.rust.lang.core.MIN_CONST_GENERICS
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.resolve.KnownItems
+import org.rust.lang.core.stubs.index.RsFeatureIndex
 import org.rust.lang.core.types.*
 import org.rust.lang.core.types.infer.*
 import org.rust.lang.core.types.ty.*
@@ -1330,6 +1338,18 @@ sealed class RsDiagnostic(
             fixes = listOfNotNull(MakePublicFix.createIfCompatible(exportedItem, exportedItem.name, false))
         )
     }
+
+    class ForbiddenConstGenericType(
+        private val typeReference: RsTypeReference
+    ) : RsDiagnostic(typeReference) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "the only supported types are integers, `bool` and `char`",
+            "`${typeReference.text}` is forbidden as the type of a const generic parameter",
+            fixes = listOf(createAddOrReplaceFeatureFix(typeReference, CONST_GENERICS, MIN_CONST_GENERICS))
+        )
+    }
 }
 
 enum class RsErrorCode {
@@ -1468,3 +1488,21 @@ private fun getConflictingNames(element: PsiElement, vararg tys: Ty): Set<RsQual
         emptySet()
     }
 }
+
+private fun createAddOrReplaceFeatureFix(element: RsElement, newFix: CompilerFeature, oldFix: CompilerFeature): LocalQuickFix {
+    val project = element.project
+    val crateRoot = element.crateRoot
+    val oldAttr = RsFeatureIndex.getFeatureAttributes(project, oldFix.name)
+        .find { it.crateRoot == crateRoot }
+        ?: return AddFeatureAttributeFix(newFix.name, element)
+    return object : LocalQuickFixAndIntentionActionOnPsiElement(element) {
+        override fun getFamilyName(): String = "Replace feature attribute"
+        override fun getText(): String = "Replace `${oldFix.name}` feature with `${newFix.name}` feature"
+        override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
+            val psiFactory = RsPsiFactory(project)
+            val attr = psiFactory.createInnerAttr("feature(${newFix.name})")
+            oldAttr.replace(attr)
+        }
+    }
+}
+
