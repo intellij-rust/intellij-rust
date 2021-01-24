@@ -44,7 +44,10 @@ class CompilerFeature(
         val rsElement = element.ancestorOrSelf<RsElement>() ?: return UNKNOWN
         val version = rsElement.cargoProject?.rustcInfo?.version ?: return UNKNOWN
 
-        if (state == ACCEPTED && (since == null || version.semver >= since)) return AVAILABLE
+        if (state == ACCEPTED && (since == null || version.semver.isGreaterOrEqualThan(since.major, since.minor, since.patch))) {
+            return AVAILABLE
+        }
+
         if (version.channel != RustChannel.NIGHTLY) return NOT_AVAILABLE
 
         val crate = rsElement.containingCrate ?: return UNKNOWN
