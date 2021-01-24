@@ -182,22 +182,56 @@ val QueryAttributes.isProcMacroDef
         "proc_macro_derive"
     )
 
-fun RsFunction.findFunctionCalls(scope: SearchScope? = null): Sequence<RsCallExpr> {
-    return searchReferences(scope)
-        .asSequence()
-        .mapNotNull {
-            val path = it.element
-            val pathExpr = path.parent
-            pathExpr.parent as? RsCallExpr
-        }
+private fun PsiReference.getFunctionCallUsage(): RsCallExpr? {
+    val path = element
+    val pathExpr = path.parent
+    return pathExpr.parent as? RsCallExpr
 }
 
-fun RsFunction.findMethodCalls(scope: SearchScope? = null): Sequence<RsMethodCall> {
-    return searchReferences(scope)
-        .asSequence()
-        .map { it.element }
-        .filterIsInstance<RsMethodCall>()
+private fun PsiReference.getMethodCallUsage(): RsMethodCall? = element as? RsMethodCall
+
+private fun PsiReference.getReferenceUsage(): RsPath? {
+    val path = element as? RsPath ?: return null
+    return if (path.parent.parent is RsCallExpr) null
+    else path
 }
+
+/**
+ * Find all function calls that call this function.
+ */
+fun RsFunction.findFunctionCalls(scope: SearchScope? = null): Sequence<RsCallExpr> = searchReferences(scope)
+    .asSequence()
+    .mapNotNull { it.getFunctionCallUsage() }
+
+/**
+ * Find all method calls that call this function.
+ */
+fun RsFunction.findMethodCalls(scope: SearchScope? = null): Sequence<RsMethodCall> = searchReferences(scope)
+    .asSequence()
+    .mapNotNull { it.getMethodCallUsage() }
+
+fun RsFunction.findCalls(scope: SearchScope? = null): Sequence<RsElement> = searchReferences(scope)
+    .asSequence()
+    .mapNotNull { it.getMethodCallUsage() ?: it.getFunctionCallUsage() }
+
+/**
+ * Find all reference usages of this function, for example when the function is passed as a parameter to another
+ * function.
+ */
+fun RsFunction.findReferenceUsages(scope: SearchScope? = null): Sequence<RsPath> = searchReferences(scope)
+    .asSequence()
+    .mapNotNull { it.getReferenceUsage() }
+
+
+/**
+ * Find all usages of this function. Depending on the type of the returned element, the usage is either:
+ * RsCallExpr - function call (see [findFunctionCalls]).
+ * RsMethodCall - method call (see [findMethodCalls]).
+ * RsPath - reference usage (see [findReferenceUsages]).
+ */
+fun RsFunction.findUsages(scope: SearchScope? = null): Sequence<RsElement> = searchReferences(scope)
+    .asSequence()
+    .mapNotNull { it.getMethodCallUsage() ?: it.getFunctionCallUsage() ?: it.getReferenceUsage() }
 
 private fun RsElement.searchReferences(scope: SearchScope? = null): Query<PsiReference> {
     return if (scope == null) {

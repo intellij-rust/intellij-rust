@@ -26,20 +26,23 @@ abstract class RsCodeFragment(
     fileViewProvider: FileViewProvider,
     contentElementType: IElementType,
     open val context: RsElement,
-    forceCachedPsi: Boolean = true
-) : RsFileBase(fileViewProvider), PsiCodeFragment {
+    forceCachedPsi: Boolean = true,
+    val importTarget: RsItemsOwner? = null,
+) : RsFileBase(fileViewProvider), PsiCodeFragment, RsItemsOwner {
 
     constructor(
         project: Project,
         text: CharSequence,
         contentElementType: IElementType,
-        context: RsElement
+        context: RsElement,
+        importTarget: RsItemsOwner? = null,
     ) : this(
         PsiManagerEx.getInstanceEx(project).fileManager.createFileViewProvider(
             LightVirtualFile("fragment.rs", RsLanguage, text), true
         ),
         contentElementType,
-        context
+        context,
+        importTarget = importTarget
     )
 
     override val containingMod: RsMod
@@ -123,8 +126,13 @@ class RsStatementCodeFragment(project: Project, text: CharSequence, context: RsE
     val stmt: RsStmt? get() = childOfType()
 }
 
-class RsTypeReferenceCodeFragment(project: Project, text: CharSequence, context: RsElement)
-    : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context),
+class RsTypeReferenceCodeFragment(
+    project: Project,
+    text: CharSequence,
+    context: RsElement,
+    importTarget: RsItemsOwner? = null,
+)
+    : RsCodeFragment(project, text, RsCodeFragmentElementType.TYPE_REF, context, importTarget = importTarget),
       RsNamedElement {
     val typeReference: RsTypeReference? get() = childOfType()
 }

@@ -59,17 +59,20 @@ fun ImportCandidate.import(context: RsElement) {
         else -> "super::".repeat(relativeDepth)
     }
 
-    val insertionScope = if (context.isDoctestInjection) {
-        // In doctest injections all our code is located inside one invisible (main) function.
-        // If we try to change PSI outside of that function, we'll take a crash.
-        // So here we limit the module search with the last function (and never inert to an RsFile)
-        Testmarks.doctestInjectionImport.hit()
-        val scope = context.ancestors.find { it is RsMod && it !is RsFile }
-            ?: context.ancestors.findLast { it is RsFunction }
-        ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
-    } else {
-        context.containingMod
-    }
+    val containingFile = context.containingFile
+    val insertionScope = when {
+        context.isDoctestInjection -> {
+            // In doctest injections all our code is located inside one invisible (main) function.
+            // If we try to change PSI outside of that function, we'll take a crash.
+            // So here we limit the module search with the last function (and never inert to an RsFile)
+            Testmarks.doctestInjectionImport.hit()
+            val scope = context.ancestors.find { it is RsMod && it !is RsFile }
+                ?: context.ancestors.findLast { it is RsFunction }
+            ((scope as? RsFunction)?.block ?: scope) as RsItemsOwner
+        }
+        containingFile is RsCodeFragment -> containingFile.importTarget
+        else -> null
+    } ?: context.containingMod
     insertionScope.insertUseItem(psiFactory, "$prefix${info.usePath}")
 }
 
