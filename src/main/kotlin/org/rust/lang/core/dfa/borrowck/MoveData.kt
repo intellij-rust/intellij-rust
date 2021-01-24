@@ -151,7 +151,7 @@ class MoveData(
         return paths.last()
     }
 
-    private fun processUnionFields(lpKind: LoanPathKind.Extend, action: (LoanPath) -> Unit) {
+    private fun processUnionFields(lpKind: Extend, action: (LoanPath) -> Unit) {
         val base = lpKind.loanPath
         val baseType = base.ty as? TyAdt ?: return
         val lpElement = lpKind.lpElement as? Interior ?: return
@@ -248,6 +248,7 @@ class MoveData(
 class FlowedMoveData private constructor(
     private val moveData: MoveData,
     private val dfcxMoves: MoveDataFlow,
+    @Suppress("unused")
     private val dfcxAssign: AssignDataFlow // will be used during borrow checking
 ) {
     fun eachMoveOf(element: RsElement, loanPath: LoanPath, predicate: (Move, LoanPath) -> Boolean): Boolean {

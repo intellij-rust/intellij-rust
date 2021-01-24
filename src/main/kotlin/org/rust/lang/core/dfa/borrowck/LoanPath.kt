@@ -94,11 +94,11 @@ sealed class LoanPathElement {
         data class Pattern(override val element: RsElement?) : Interior()
 
         companion object {
-            fun fromCategory(category: Categorization.Interior, element: RsElement?): LoanPathElement.Interior =
+            fun fromCategory(category: Categorization.Interior, element: RsElement?): Interior =
                 when (category) {
-                    is Categorization.Interior.Field -> Interior.Field(element, category.name)
-                    is Categorization.Interior.Index -> Interior.Index(element)
-                    is Categorization.Interior.Pattern -> Interior.Pattern(element)
+                    is Categorization.Interior.Field -> Field(element, category.name)
+                    is Categorization.Interior.Index -> Index(element)
+                    is Categorization.Interior.Pattern -> Pattern(element)
                 }
         }
     }

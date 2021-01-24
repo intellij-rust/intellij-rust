@@ -2,22 +2,29 @@
   <dictionary name="intellij_rust">
     <words>
       <w>abstractable</w>
+      <w>aliasability</w>
+      <w>aliasable</w>
       <w>autoderef</w>
       <w>backcompat</w>
       <w>backgroundable</w>
       <w>backtick</w>
       <w>balancer</w>
+      <w>bccx</w>
       <w>bindgen</w>
       <w>cdylib</w>
       <w>cidr</w>
+      <w>clcx</w>
       <w>clippy</w>
       <w>debouncer</w>
       <w>decl</w>
       <w>demangle</w>
       <w>dep</w>
       <w>deps</w>
+      <w>deref</w>
       <w>dereferenced</w>
+      <w>derefs</w>
       <w>destructure</w>
+      <w>dfcx</w>
       <w>env</w>
       <w>escaper</w>
       <w>evcxr</w>
@@ -26,6 +33,8 @@
       <w>fixup</w>
       <w>foldable</w>
       <w>frobnicate</w>
+      <w>glcx</w>
+      <w>gmcx</w>
       <w>grazie</w>
       <w>grcov</w>
       <w>ide</w>
@@ -53,6 +62,7 @@
       <w>polybound</w>
       <w>popup</w>
       <w>pred</w>
+      <w>preds</w>
       <w>prefetched</w>
       <w>qual</w>
       <w>rbrace</w>

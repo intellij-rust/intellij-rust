@@ -31,7 +31,7 @@ class LivenessContext private constructor(
         deadDeclarations.add(DeadDeclaration(binding, kind))
     }
 
-    fun check(): Liveness? {
+    fun check(): Liveness {
         val gatherLivenessContext = GatherLivenessContext(this)
         val livenessData = gatherLivenessContext.gather()
         val flowedLiveness = FlowedLivenessData.buildFor(this, livenessData, cfg)

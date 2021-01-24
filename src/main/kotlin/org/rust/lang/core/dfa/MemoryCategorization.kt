@@ -74,6 +74,7 @@ sealed class BorrowKind {
                 Mutability.MUTABLE -> MutableBorrow
             }
 
+        @Suppress("unused")
         fun isCompatible(firstKind: BorrowKind, secondKind: BorrowKind): Boolean =
             firstKind == ImmutableBorrow && secondKind == ImmutableBorrow
     }
@@ -172,7 +173,8 @@ class Cmt(
     val mutabilityCategory: MutabilityCategory = MutabilityCategory.from(Mutability.DEFAULT_MUTABILITY),
     val ty: Ty
 ) {
-    val immutabilityBlame: ImmutabilityBlame?
+    @Suppress("unused")
+    private val immutabilityBlame: ImmutabilityBlame?
         get() = when (category) {
             is Deref -> {
                 // try to figure out where the immutable reference came from
@@ -198,7 +200,8 @@ class Cmt(
 
     val isMutable: Boolean get() = mutabilityCategory.isMutable
 
-    val aliasability: Aliasability
+    @Suppress("unused")
+    private val aliasability: Aliasability
         get() = when {
             category is Deref && category.pointerKind is BorrowedPointer ->
                 when (category.pointerKind.borrowKind) {
@@ -313,7 +316,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     // `rvalue_promotable_map` is needed to distinguish rvalues with static region and rvalue with temporary region,
     // so now all rvalues have static region
-    fun processRvalue(expr: RsExpr, ty: Ty = inference.getExprType(expr)): Cmt =
+    private fun processRvalue(expr: RsExpr, ty: Ty = inference.getExprType(expr)): Cmt =
         Cmt(expr, Rvalue(ReStatic), Declared, ty)
 
     fun processRvalue(element: RsElement, tempScope: Region, ty: Ty): Cmt =

@@ -35,7 +35,7 @@ class BorrowCheckContext private constructor(
         }
     }
 
-    fun check(): BorrowCheckResult? {
+    fun check(): BorrowCheckResult {
         val data = buildAnalysisData(this)
         if (data != null) {
             val clcx = CheckLoanContext(this, data.moveData)
