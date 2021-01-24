@@ -554,4 +554,29 @@ class RsPreciseTraitMatchingTest : RsResolveTestBase() {
             S.foo();
         }      //^
     """)
+
+    fun `test trait method and private inherent method`() = checkByCode("""
+        use foo::{Foo, Trait};
+
+        mod foo {
+            pub struct Foo;
+            impl Foo {
+                // Private
+                fn get(&self) { println!("struct"); }
+            }
+
+            pub trait Trait {
+                fn get(&self);
+            }
+            impl Trait for Foo {
+                fn get(&self) { println!("trait"); }
+            }    //X
+        }
+
+        fn main() {
+            let f = foo::Foo;
+            f.get();
+            //^
+        }
+    """)
 }

@@ -670,7 +670,8 @@ class RsTypeInferenceWalker(
         return methodType.retType
     }
 
-    private fun <T : AssocItemScopeEntryBase<E>, E> filterAssocItems(variants: List<T>, context: RsElement): List<T> {
+    private fun <T : AssocItemScopeEntryBase<*>> filterAssocItems(variants: List<T>, context: RsElement): List<T> {
+        val containingMod = context.containingMod
         return variants.singleOrLet { list ->
             // 1. filter traits that are not imported
             TypeInferenceMarks.methodPickTraitScope.hit()
@@ -694,7 +695,12 @@ class RsTypeInferenceWalker(
                 list
             }
         }.singleOrFilter { callee ->
-            // 2. Filter methods by trait bounds (try to select all obligations for each impl)
+            // 2. filter non-visible (private) items
+            val source = callee.source
+            source !is TraitImplSource.ExplicitImpl || !source.isInherent
+                || callee.element.isVisibleFrom(containingMod)
+        }.singleOrFilter { callee ->
+            // 3. Filter methods by trait bounds (try to select all obligations for each impl)
             TypeInferenceMarks.methodPickCheckBounds.hit()
             ctx.canEvaluateBounds(callee.source, callee.selfTy)
         }
@@ -706,7 +712,7 @@ class RsTypeInferenceWalker(
         methodCall: RsMethodCall
     ): MethodResolveVariant? {
         val filtered = filterAssocItems(variants, methodCall).singleOrLet { list ->
-            // 3. Pick results matching receiver type
+            // 4. Pick results matching receiver type
             TypeInferenceMarks.methodPickDerefOrder.hit()
 
             fun pick(ty: Ty): List<MethodResolveVariant> =
@@ -726,7 +732,7 @@ class RsTypeInferenceWalker(
             0 -> null
             1 -> filtered.single()
             else -> {
-                // 4. Try to collapse multiple resolved methods of the same trait, e.g.
+                // 5. Try to collapse multiple resolved methods of the same trait, e.g.
                 // ```rust
                 // trait Foo<T> { fn foo(&self, _: T) {} }
                 // impl Foo<Bar> for S { fn foo(&self, _: Bar) {} }
