@@ -133,7 +133,7 @@ const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
 private const val CORRUPTION_MARKER_NAME = "corruption.marker"
 
 fun getBaseMacroDir(): Path =
-    pluginDirInSystem().resolve("macros")
+    RsPathManager.pluginDirInSystem().resolve("macros")
 
 private fun getCorruptionMarkerFile(): Path =
     getBaseMacroDir().resolve(CORRUPTION_MARKER_NAME)

@@ -33,7 +33,7 @@ import org.eclipse.jgit.treewalk.filter.OrTreeFilter
 import org.eclipse.jgit.treewalk.filter.PathFilter
 import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.rust.cargo.CargoConstants
-import org.rust.openapiext.pluginDirInSystem
+import org.rust.openapiext.RsPathManager
 import org.rust.stdext.cleanDirectory
 import org.rust.toml.crates.local.CratesLocalIndexService.Companion.CratesLocalIndexState
 import java.io.*
@@ -262,7 +262,7 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
             get() = baseCratesLocalRegistryDir.resolve(CORRUPTION_MARKER_NAME)
 
         private val baseCratesLocalRegistryDir: Path
-            get() = pluginDirInSystem().resolve("crates-local-index")
+            get() = RsPathManager.pluginDirInSystem().resolve("crates-local-index")
 
         // TODO: Determine how path to index is created
         private const val CARGO_REGISTRY_INDEX_LOCATION: String = ".cargo/registry/index/github.com-1ecc6299db9ec823/.git/"
