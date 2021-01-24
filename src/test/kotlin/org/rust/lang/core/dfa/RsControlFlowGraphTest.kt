@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.cfg
+package org.rust.lang.core.dfa
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language

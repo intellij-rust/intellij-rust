@@ -3,21 +3,23 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.infer
+package org.rust.lang.core.dfa
 
+import org.rust.lang.core.dfa.Aliasability.FreelyAliasable
+import org.rust.lang.core.dfa.Aliasability.NonAliasable
+import org.rust.lang.core.dfa.AliasableReason.*
+import org.rust.lang.core.dfa.BorrowKind.ImmutableBorrow
+import org.rust.lang.core.dfa.BorrowKind.MutableBorrow
+import org.rust.lang.core.dfa.Categorization.*
+import org.rust.lang.core.dfa.ImmutabilityBlame.*
+import org.rust.lang.core.dfa.MutabilityCategory.Declared
+import org.rust.lang.core.dfa.PointerKind.BorrowedPointer
+import org.rust.lang.core.dfa.PointerKind.UnsafePointer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.infer.Aliasability.FreelyAliasable
-import org.rust.lang.core.types.infer.Aliasability.NonAliasable
-import org.rust.lang.core.types.infer.AliasableReason.*
-import org.rust.lang.core.types.infer.BorrowKind.ImmutableBorrow
-import org.rust.lang.core.types.infer.BorrowKind.MutableBorrow
-import org.rust.lang.core.types.infer.Categorization.*
-import org.rust.lang.core.types.infer.ImmutabilityBlame.*
-import org.rust.lang.core.types.infer.MutabilityCategory.Declared
-import org.rust.lang.core.types.infer.PointerKind.BorrowedPointer
-import org.rust.lang.core.types.infer.PointerKind.UnsafePointer
+import org.rust.lang.core.types.infer.Adjustment
+import org.rust.lang.core.types.infer.RsInferenceData
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*

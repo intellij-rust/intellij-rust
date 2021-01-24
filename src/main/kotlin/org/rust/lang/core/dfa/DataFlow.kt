@@ -3,12 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core
+package org.rust.lang.core.dfa
 
-import org.rust.lang.core.FlowDirection.Backward
-import org.rust.lang.core.FlowDirection.Forward
-import org.rust.lang.core.cfg.CFGNode
-import org.rust.lang.core.cfg.ControlFlowGraph
+import org.rust.lang.core.dfa.FlowDirection.Backward
+import org.rust.lang.core.dfa.FlowDirection.Forward
 import org.rust.lang.core.psi.ext.RsElement
 import java.util.*
 

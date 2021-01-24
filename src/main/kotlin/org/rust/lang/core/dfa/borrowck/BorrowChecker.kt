@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck
+package org.rust.lang.core.dfa.borrowck
 
-import org.rust.lang.core.cfg.ControlFlowGraph
+import org.rust.lang.core.dfa.Cmt
+import org.rust.lang.core.dfa.ControlFlowGraph
+import org.rust.lang.core.dfa.borrowck.gatherLoans.GatherLoanContext
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.borrowck.gatherLoans.GatherLoanContext
 import org.rust.lang.core.types.controlFlowGraph
-import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.infer.RsInferenceResult
 import org.rust.lang.core.types.inference
 

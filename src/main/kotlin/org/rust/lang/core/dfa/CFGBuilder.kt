@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.cfg
+package org.rust.lang.core.dfa
 
 import com.intellij.psi.util.PsiTreeUtil
-import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Break
-import org.rust.lang.core.cfg.CFGBuilder.ScopeCFKind.Continue
+import org.rust.lang.core.dfa.CFGBuilder.ScopeCFKind.Break
+import org.rust.lang.core.dfa.CFGBuilder.ScopeCFKind.Continue
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT

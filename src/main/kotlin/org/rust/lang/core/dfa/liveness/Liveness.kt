@@ -3,21 +3,16 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types
+package org.rust.lang.core.dfa.liveness
 
-import org.rust.lang.core.DataFlowContext
-import org.rust.lang.core.DataFlowOperator
-import org.rust.lang.core.FlowDirection
-import org.rust.lang.core.KillFrom
-import org.rust.lang.core.cfg.ControlFlowGraph
+import org.rust.lang.core.dfa.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.borrowck.*
-import org.rust.lang.core.types.infer.Categorization
-import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.infer.MemoryCategorizationContext
+import org.rust.lang.core.types.controlFlowGraph
+import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.infer.RsInferenceResult
+import org.rust.lang.core.types.inference
 
 enum class DeclarationKind { Parameter, Variable }
 

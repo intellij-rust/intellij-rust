@@ -3,17 +3,19 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck.gatherLoans
+package org.rust.lang.core.dfa.borrowck.gatherLoans
 
+import org.rust.lang.core.dfa.Categorization.*
+import org.rust.lang.core.dfa.Cmt
+import org.rust.lang.core.dfa.MoveReason
+import org.rust.lang.core.dfa.MoveReason.*
+import org.rust.lang.core.dfa.MutateMode
+import org.rust.lang.core.dfa.borrowck.*
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatIdent
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsStructOrEnumItemElement
-import org.rust.lang.core.types.borrowck.*
-import org.rust.lang.core.types.borrowck.MoveReason.*
-import org.rust.lang.core.types.infer.Categorization.*
-import org.rust.lang.core.types.infer.Cmt
 import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TySlice

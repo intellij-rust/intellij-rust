@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.type
+package org.rust.lang.core.dfa
 
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
