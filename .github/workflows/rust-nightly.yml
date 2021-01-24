@@ -51,8 +51,58 @@ jobs:
                   echo "toml-commit: ${{ steps.fetch-commits.outputs.toml-commit }}"
                   echo "toml-nightly: ${{ steps.fetch-commits.outputs.toml-nightly }}"
 
+
+    build-native-code:
+        needs: [ fetch-latest-changes ]
+        strategy:
+            fail-fast: true
+            matrix:
+                config:
+                    - name: linux
+                      arch: x86-64
+                      os: ubuntu-latest
+                      target: x86_64-unknown-linux-gnu
+                      artifact_path: proc_macro_expander/target/release/proc_macro_expander
+                    - name: windows
+                      arch: x86-64
+                      os: windows-latest
+                      target: x86_64-pc-windows-msvc
+                      artifact_path: proc_macro_expander/target/release/proc_macro_expander.exe
+                    - name: macos
+                      arch: x86-64
+                      os: macos-latest
+                      target: x86_64-apple-darwin
+                      artifact_path: proc_macro_expander/target/release/proc_macro_expander
+
+        name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
+        runs-on: ${{ matrix.config.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  target: ${{ matrix.config.target }}
+                  default: true
+
+            - name: Build
+              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
+              uses: actions-rs/cargo@v1
+              with:
+                  command: build
+                  args: --manifest-path proc_macro_expander/Cargo.toml --release
+
+            - name: Publish
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
+                  path: ${{ matrix.config.artifact_path }}
+
     build:
-        needs: [ generate-build-number, fetch-latest-changes ]
+        needs: [ generate-build-number, fetch-latest-changes, build-native-code ]
         runs-on: ubuntu-latest
         strategy:
             fail-fast: true
@@ -64,6 +114,7 @@ jobs:
             ORG_GRADLE_PROJECT_enableBuildSearchableOptions: true
             ORG_GRADLE_PROJECT_publishChannel: nightly
             ORG_GRADLE_PROJECT_publishToken: ${{ secrets.plugin_bot_token }}
+            ORG_GRADLE_PROJECT_compileNativeCode: false
 
         steps:
             - name: Checkout
@@ -73,6 +124,24 @@ jobs:
               uses: actions/setup-java@v1
               with:
                   java-version: 11
+
+            - name: Load linux binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: linux-x86-64
+                  path: bin/linux/x86-64
+
+            - name: Load windows binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: windows-x86-64
+                  path: bin/windows/x86-64
+
+            - name: Load macos binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: macos-x86-64
+                  path: bin/macos/x86-64
 
             - name: Publish rust plugin
               if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
