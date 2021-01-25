@@ -18,6 +18,7 @@ import org.rust.lang.core.psi.ext.RsCachedItems.CachedNamedImport
 import org.rust.lang.core.psi.ext.RsCachedItems.CachedStarImport
 import org.rust.openapiext.testAssert
 import org.rust.stdext.optimizeList
+import org.rust.stdext.replaceTrivialMap
 
 interface RsItemsOwner : RsElement
 
@@ -61,14 +62,15 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
         val namedImports = SmartList<CachedNamedImport>()
         val starImports = SmartList<CachedStarImport>()
         val macros = SmartList<RsMacro>()
-        val named: MutableMap<String, SmartList<RsItemElement>> = THashMap()
-        processExpandedItemsInternal {
-            when (it) {
+        val namedCfgEnabled: MutableMap<String, SmartList<RsItemElement>> = THashMap()
+        val namedCfgDisabled: MutableMap<String, SmartList<RsItemElement>> = THashMap()
+        processExpandedItemsInternal { it, isEnabledByCfgSelf ->
+            when {
                 // Optimization: impls are not named elements, so we don't need them for name resolution
-                is RsImplItem -> Unit
+                it is RsImplItem -> Unit
 
                 // Optimization: prepare use items to reduce PSI tree access in hotter code
-                is RsUseItem -> {
+                isEnabledByCfgSelf && it is RsUseItem -> {
                     val isPublic = it.isPublic
                     it.useSpeck?.forEachLeafSpeck { speck ->
                         if (speck.isStarImport) {
@@ -83,9 +85,10 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                     }
                 }
 
-                is RsMacro -> macros.add(it)
+                isEnabledByCfgSelf && it is RsMacro -> macros.add(it)
 
-                is RsItemElement -> {
+                it is RsItemElement -> {
+                    val named = if (isEnabledByCfgSelf) namedCfgEnabled else namedCfgDisabled
                     if (it is RsForeignModItem) {
                         for (item in it.stubChildrenOfType<RsItemElement>()) {
                             val name = item.name ?: continue
@@ -112,7 +115,8 @@ val RsItemsOwner.expandedItemsCached: RsCachedItems
                 namedImports.optimizeList(),
                 starImports.optimizeList(),
                 macros.optimizeList(),
-                named
+                namedCfgEnabled.replaceTrivialMap(),
+                namedCfgDisabled.replaceTrivialMap()
             ),
             listOfNotNull(rustStructureOrAnyPsiModificationTracker, localModTracker)
         )
@@ -126,7 +130,8 @@ class RsCachedItems(
     val namedImports: List<CachedNamedImport>,
     val starImports: List<CachedStarImport>,
     val macros: List<RsMacro>,
-    val named: Map<String, List<RsItemElement>>
+    val named: Map<String, List<RsItemElement>>,
+    val namedCfgDisabled: Map<String, List<RsItemElement>>,
 ) {
     data class CachedNamedImport(
         val isPublic: Boolean,
@@ -138,18 +143,21 @@ class RsCachedItems(
     data class CachedStarImport(val isPublic: Boolean, val speck: RsUseSpeck)
 }
 
-private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsElement) -> Boolean): Boolean {
+private fun RsItemsOwner.processExpandedItemsInternal(processor: (RsElement, Boolean) -> Boolean): Boolean {
     return itemsAndMacros.any { it.processItem(processor) }
 }
 
-private fun RsElement.processItem(processor: (RsElement) -> Boolean): Boolean {
-    if (this is RsDocAndAttributeOwner && !this.isEnabledByCfgSelf) return false
+private fun RsElement.processItem(processor: (RsElement, Boolean) -> Boolean): Boolean {
+    val isEnabledByCfgSelf = this !is RsDocAndAttributeOwner || this.isEnabledByCfgSelf
 
     return when (this) {
-        is RsMacroCall -> processExpansionRecursively {
-            it is RsDocAndAttributeOwner && it.isEnabledByCfgSelf && processor(it)
+        is RsMacroCall -> {
+            if (!isEnabledByCfgSelf) return false
+            processExpansionRecursively {
+                it is RsDocAndAttributeOwner && processor(it, it.isEnabledByCfgSelf)
+            }
         }
-        is RsItemElement, is RsMacro -> processor(this)
+        is RsItemElement, is RsMacro -> processor(this, isEnabledByCfgSelf)
         else -> false
     }
 }
