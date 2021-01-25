@@ -270,6 +270,23 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         type A7 = B<0, C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
     """)
 
+    fun `test generic arguments after constraints`() = checkErrors("""
+        type A1 = B<C=D, <error descr="Generic arguments must come before the first constraint">E</error>>;
+
+        type A2 = B<C=D, <error descr="Generic arguments must come before the first constraint">E</error>,
+                         <error descr="Generic arguments must come before the first constraint">F</error>>;
+
+        type A3 = B<C=D, <error descr="Generic arguments must come before the first constraint">'e</error>>;
+
+        type A4 = B<C=D, <error descr="Generic arguments must come before the first constraint">'e</error>,
+                         <error descr="Generic arguments must come before the first constraint">'f</error>>;
+
+        type A5 = B<C=D, <error descr="Generic arguments must come before the first constraint">1</error>>;
+
+        type A6 = B<C=D, <error descr="Generic arguments must come before the first constraint">1</error>,
+                         <error descr="Generic arguments must come before the first constraint">2</error>>;
+    """)
+
     fun `test default type parameters in impl`() = checkErrors("""
         struct S<T=String>{ f: T }
         impl<T=<error descr="Defaults for type parameters are only allowed in `struct`, `enum`, `type`, or `trait` definitions">String</error>> S<T> {}
