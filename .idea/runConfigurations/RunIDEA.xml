@@ -1,6 +1,5 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RunIDEA" type="GradleRunConfiguration" factoryName="Gradle" singleton="true">
-    <log_file alias="idea-202.log" path="$PROJECT_DIR$/plugin/build/idea-sandbox-202/system/log/idea.log" />
     <log_file alias="idea-203.log" path="$PROJECT_DIR$/plugin/build/idea-sandbox-203/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />

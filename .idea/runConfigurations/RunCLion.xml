@@ -1,6 +1,5 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="RunCLion" type="GradleRunConfiguration" factoryName="Gradle">
-    <log_file alias="idea-202.log" path="$PROJECT_DIR$/plugin/build/clion-sandbox-202/system/log/idea.log" />
     <log_file alias="idea-203.log" path="$PROJECT_DIR$/plugin/build/clion-sandbox-203/system/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />

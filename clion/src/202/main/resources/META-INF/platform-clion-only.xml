@@ -1,5 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="clion">
-        <buildConfigurationProvider implementation="org.rust.clion.cargo.CargoBuildConfigurationProvider"/>
-    </extensions>
-</idea-plugin>
