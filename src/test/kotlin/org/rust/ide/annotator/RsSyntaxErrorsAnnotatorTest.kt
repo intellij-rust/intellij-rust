@@ -256,20 +256,18 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         type A1 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
 
         type A2 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>,
-                      <error descr="Lifetime arguments must be declared prior to type arguments">'e</error>>;
+                       <error descr="Lifetime arguments must be declared prior to type arguments">'e</error>>;
 
-        type A3 = B<C=D, <error descr="Type arguments must be declared prior to associated type bindings">E</error>>;
+        type A3 = B<0, <error descr="Lifetime arguments must be declared prior to const arguments">'d</error>>;
 
-        type A4 = B<C=D, <error descr="Type arguments must be declared prior to associated type bindings">E</error>,
-                         <error descr="Type arguments must be declared prior to associated type bindings">F</error>>;
+        type A4 = B<0, <error descr="Lifetime arguments must be declared prior to const arguments">'d</error>,
+                       <error descr="Lifetime arguments must be declared prior to const arguments">'e</error>>;
 
-        type A3 = B<C=D, <error descr="Lifetime arguments must be declared prior to associated type bindings">'e</error>>;
+        type A4 = B<C, 0, 1>;
+        type A5 = B<0, C1, C2>;
 
-        type A4 = B<C=D, <error descr="Lifetime arguments must be declared prior to associated type bindings">'e</error>,
-                         <error descr="Lifetime arguments must be declared prior to associated type bindings">'f</error>>;
-
-        type A5 = B<1, <error descr="Type arguments must be declared prior to const arguments">C</error>,
-                         <error descr="Lifetime arguments must be declared prior to const arguments">'d</error>>;
+        type A6 = B<C, 0, <error descr="Lifetime arguments must be declared prior to const arguments">'d</error>>;
+        type A7 = B<0, C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
     """)
 
     fun `test default type parameters in impl`() = checkErrors("""

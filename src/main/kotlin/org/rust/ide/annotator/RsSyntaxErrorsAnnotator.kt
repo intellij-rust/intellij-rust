@@ -277,14 +277,36 @@ private fun checkTypeParameterList(holder: AnnotationHolder, element: RsTypePara
                     .range(it).create()
             }
     }
-    val lifetimeParams = element.lifetimeParameterList
-    if (lifetimeParams.isEmpty()) return
-    val startOfTypeParams = element.typeParameterList.firstOrNull()?.textOffset ?: return
-    for (e in lifetimeParams) {
-        if (e.textOffset > startOfTypeParams) {
-            holder.newAnnotation(HighlightSeverity.ERROR, "Lifetime parameters must be declared prior to type parameters")
-                .range(e).create()
+
+    var kind = TypeParameterKind.LIFETIME
+    element.forEachChild { child ->
+        val newKind = TypeParameterKind.forType(child) ?: return@forEachChild
+        if (newKind.canStandAfter(kind)) {
+            kind = newKind
+        } else {
+            val newStateName = newKind.parameterNameCapitalized
+
+            holder.newAnnotation(HighlightSeverity.ERROR, "$newStateName must be declared prior to ${kind.parameterName}")
+                .range(child).create()
         }
+    }
+}
+
+private enum class TypeParameterKind(private val elementClass: KClass<*>, val parameterName: String) {
+    LIFETIME(RsLifetimeParameter::class, "lifetime parameters"),
+    TYPE(RsTypeParameter::class, "type parameters"),
+    CONST(RsConstParameter::class, "const parameters");
+
+    val parameterNameCapitalized: String
+        get() = StringUtil.capitalize(parameterName)
+
+    fun canStandAfter(prevArgument: TypeParameterKind): Boolean =
+        this !== LIFETIME || prevArgument === LIFETIME
+
+    companion object {
+        private val VALUES = values()
+        fun forType(seekingElement: PsiElement): TypeParameterKind? =
+            VALUES.find { it.elementClass.isInstance(seekingElement) }
     }
 }
 
