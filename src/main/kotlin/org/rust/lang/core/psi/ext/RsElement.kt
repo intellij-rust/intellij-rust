@@ -8,8 +8,10 @@ package org.rust.lang.core.psi.ext
 import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.lang.ASTNode
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import org.rust.cargo.project.model.CargoProject
@@ -142,7 +144,7 @@ fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
 
 /**
  * Delete the element along with a neighbour comma.
- * If a comma follow the element, it will be deleted.
+ * If a comma follows the element, it will be deleted.
  * Else if a comma precedes the element, it will be deleted.
  *
  * It is useful to remove elements that are parts of comma separated lists (parameters, arguments, use specks, ...).
@@ -160,3 +162,20 @@ fun RsElement.deleteWithSurroundingComma() {
 
     delete()
 }
+
+/**
+ * Delete the element along with all surrounding whitespace and a single surrounding comma.
+ * See [deleteWithSurroundingComma].
+ */
+fun RsElement.deleteWithSurroundingCommaAndWhitespace() {
+    while (nextSibling?.isWhitespaceOrComment == true) {
+        nextSibling?.delete()
+    }
+    while (prevSibling?.isWhitespaceOrComment == true) {
+        prevSibling?.delete()
+    }
+    deleteWithSurroundingComma()
+}
+
+private val PsiElement.isWhitespaceOrComment
+    get(): Boolean = this is PsiWhiteSpace || this is PsiComment

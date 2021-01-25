@@ -9,9 +9,7 @@ import com.intellij.codeInspection.LocalQuickFixOnPsiElement
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentOfTypes
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -32,7 +30,7 @@ class RemoveParameterFix(binding: RsPatBinding, private val bindingName: String)
         val parameterIndex = function.valueParameterList?.valueParameterList?.indexOf(parameter) ?: -1
         if (parameterIndex == -1) return
 
-        parameter.deleteWithSurroundingComma()
+        parameter.deleteWithSurroundingCommaAndWhitespace()
         removeArguments(function, parameterIndex)
     }
 }
@@ -50,6 +48,6 @@ private fun removeArguments(function: RsFunction, parameterIndex: Int) {
             isMethod && call is RsCallExpr -> parameterIndex + 1 // UFCS
             else -> parameterIndex
         }
-        arguments.exprList.getOrNull(argumentIndex)?.deleteWithSurroundingComma()
+        arguments.exprList.getOrNull(argumentIndex)?.deleteWithSurroundingCommaAndWhitespace()
     }
 }

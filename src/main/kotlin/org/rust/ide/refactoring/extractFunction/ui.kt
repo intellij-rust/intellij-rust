@@ -117,7 +117,8 @@ private class DialogExtractFunctionUi(
 }
 
 private class RsSignatureComponent(
-    signature: String, project: Project
+    signature: String,
+    project: Project
 ) : MethodSignatureComponent(signature, project, RsFileType) {
     private val myFileName = "dummy." + RsFileType.defaultExtension
 

@@ -8,6 +8,8 @@ package org.rust.ide.refactoring
 import com.intellij.lang.refactoring.RefactoringSupportProvider
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.RefactoringActionHandler
+import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
+import org.rust.ide.refactoring.changeSignature.RsChangeSignatureHandler
 import org.rust.ide.refactoring.extractFunction.RsExtractFunctionHandler
 import org.rust.ide.refactoring.introduceConstant.RsIntroduceConstantHandler
 import org.rust.ide.refactoring.introduceParameter.RsIntroduceParameterHandler
@@ -16,7 +18,6 @@ import org.rust.lang.core.macros.isExpandedFromMacro
 import org.rust.lang.core.psi.ext.RsNameIdentifierOwner
 
 class RsRefactoringSupportProvider : RefactoringSupportProvider() {
-
     override fun isMemberInplaceRenameAvailable(element: PsiElement, context: PsiElement?): Boolean =
         element is RsNameIdentifierOwner && !element.isExpandedFromMacro
 
@@ -31,4 +32,6 @@ class RsRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getExtractMethodHandler(): RefactoringActionHandler = RsExtractFunctionHandler()
 
     override fun getIntroduceParameterHandler(): RefactoringActionHandler = RsIntroduceParameterHandler()
+
+    override fun getChangeSignatureHandler(): ChangeSignatureHandler = RsChangeSignatureHandler()
 }

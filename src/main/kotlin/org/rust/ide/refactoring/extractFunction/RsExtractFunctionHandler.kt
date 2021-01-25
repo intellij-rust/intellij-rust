@@ -47,7 +47,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
     }
 
     private fun addExtractedFunction(project: Project, config: RsExtractFunctionConfig, psiFactory: RsPsiFactory): RsFunction? {
-        val owner = config.containingFunction.owner
+        val owner = config.function.owner
 
         val function = psiFactory.createFunction(config.functionText)
         val psiParserFacade = PsiParserFacade.SERVICE.getInstance(project)
@@ -65,8 +65,8 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             }
             else -> {
                 val newline = psiParserFacade.createWhiteSpaceFromText("\n\n")
-                val end = config.containingFunction.block?.rbrace ?: return null
-                config.containingFunction.addAfter(function, config.containingFunction.addAfter(newline, end)) as? RsFunction
+                val end = config.function.block?.rbrace ?: return null
+                config.function.addAfter(function, config.function.addAfter(newline, end)) as? RsFunction
             }
         }
     }
@@ -99,7 +99,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
         stmt += if (firstParameter != null && firstParameter.isSelf) {
             "self.${config.name}(${config.argumentsText})"
         } else {
-            val type = when (val owner = config.containingFunction.owner) {
+            val type = when (val owner = config.function.owner) {
                 is RsAbstractableOwner.Impl -> {
                     owner.impl.typeReference?.text?.let {
                         if (owner.impl.typeParameterList == null) it else "<$it>"

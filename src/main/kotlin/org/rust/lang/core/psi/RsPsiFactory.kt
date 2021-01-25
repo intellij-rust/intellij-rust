@@ -370,6 +370,10 @@ class RsPsiFactory(
         createFromText<RsFunction>("unsafe fn foo(){}")?.unsafe
             ?: error("Failed to create unsafe element")
 
+    fun createAsyncKeyword(): PsiElement =
+        createFromText<RsFunction>("async fn foo(){}")?.node?.findChildByType(RsElementTypes.ASYNC)?.psi
+            ?: error("Failed to create async element")
+
     fun createFunction(text: String): RsFunction =
         tryCreateFunction(text) ?: error("Failed to create function element: $text")
 
@@ -389,8 +393,17 @@ class RsPsiFactory(
             ?: error("Failed to create parameter element")
     }
 
-    fun createValueParameter(name: String, type: RsTypeReference, mutable: Boolean = false, lifetime: RsLifetime? = null): RsValueParameter {
-        return createFromText<RsFunction>("fn main($name: &${if (lifetime != null) lifetime.text + " " else ""}${if (mutable) "mut " else ""}${type.text}){}")
+    fun createValueParameter(
+        name: String,
+        type: RsTypeReference,
+        mutable: Boolean = false,
+        reference: Boolean = true,
+        lifetime: RsLifetime? = null
+    ): RsValueParameter {
+        val referenceText = if (reference) "&" else ""
+        val lifetimeText = if (lifetime != null) "${lifetime.text} " else ""
+        val mutText = if (mutable) "mut " else ""
+        return createFromText<RsFunction>("fn main($name: $referenceText$lifetimeText$mutText${type.text}){}")
             ?.valueParameterList?.valueParameterList?.get(0)
             ?: error("Failed to create parameter element")
     }
@@ -502,8 +515,9 @@ class RsPsiFactory(
             ?: error("Failed to create vis restriction element")
     }
 
-    fun createVis(text: String): RsVis =
-        createFromText("$text fn foo() {}") ?: error("Failed to create vis")
+    fun tryCreateVis(text: String): RsVis? = createFromText("$text fn foo() {}")
+
+    fun createVis(text: String): RsVis = tryCreateVis(text) ?: error("Failed to create vis")
 
     private inline fun <reified E : RsExpr> createExpressionOfType(text: String): E =
         createExpression(text) as? E
@@ -514,6 +528,10 @@ class RsPsiFactory(
     fun createDynTraitType(pathText: String): RsTraitType =
         createFromText("type T = &dyn $pathText;}")
             ?: error("Failed to create trait type")
+
+    fun createPat(patText: String): RsPat = tryCreatePat(patText) ?: error("Failed to create pat element")
+
+    fun tryCreatePat(patText: String): RsPat? = (createStatement("let $patText;") as RsLetDecl).pat
 }
 
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
