@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
@@ -262,8 +261,6 @@ inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, default
 const val PLUGIN_ID: String = "org.rust.lang"
 
 fun plugin(): IdeaPluginDescriptor = PluginManagerCore.getPlugin(PluginId.getId(PLUGIN_ID))!!
-
-fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("intellij-rust")
 
 val String.escaped: String get() = StringUtil.escapeXmlEntities(this)
 

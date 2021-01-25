@@ -24,9 +24,9 @@ import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.cargo.util.StdLibType
 import org.rust.ide.experiments.RsExperiments
+import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.pathAsPath
-import org.rust.openapiext.pluginDirInSystem
 import org.rust.stdext.HashCode
 import org.rust.stdext.toPath
 import java.nio.file.Path
@@ -285,7 +285,7 @@ private class StdlibDataFetcher private constructor(
 
             val stdlibHash = stdlibHash(srcDir, version)
 
-            val stdlibVendor = pluginDirInSystem().resolve("stdlib/${version.semver.parsedVersion}-$stdlibHash/vendor")
+            val stdlibVendor = RsPathManager.pluginDirInSystem().resolve("stdlib/${version.semver.parsedVersion}-$stdlibHash/vendor")
             if (!stdlibVendor.exists()) {
                 try {
                     // `test` package depends on all other stdlib packages,

@@ -58,7 +58,7 @@ plugins {
 idea {
     module {
         // https://github.com/gradle/kotlin-dsl/issues/537/
-        excludeDirs = excludeDirs + file("testData") + file("deps")
+        excludeDirs = excludeDirs + file("testData") + file("deps") + file("bin")
     }
 }
 
@@ -114,6 +114,40 @@ allprojects {
 
         test {
             testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
+        }
+
+        val compileNativeCode = task<Exec>("compileNativeCode") {
+            workingDir = rootDir.resolve("proc_macro_expander")
+            executable = "cargo"
+            // Hack to use unstable `--out-dir` option work for stable toolchain
+            // https://doc.rust-lang.org/cargo/commands/cargo-build.html#output-options
+            environment("RUSTC_BOOTSTRAP", "1")
+
+            val hostPlatform = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.host()
+            val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/${hostPlatform.architecture.name}"
+            args("build", "--release", "-Z", "unstable-options", "--out-dir", outDir)
+
+            // It may be useful to disable compilation of native code.
+            // For example, CI builds native code for each platform in separate tasks and puts it into `bin` dir manually
+            // so there is no need to do it again.
+            enabled = prop("compileNativeCode").toBoolean()
+        }
+
+        // It makes sense to copy native binaries only for root ("intellij-rust") and "plugin" projects' sandboxes
+        // because:
+        // - `intellij-rust` is supposed to provide all necessary functionality related to procedural macro expander.
+        //   So the binaries are required for the corresponding tests.
+        //   `gradle-intellij-plugin` creates separate test plugin for each module to run tests and
+        //   prepares test sandbox for it.
+        // - `plugin` is root project to build plugin artifact and exactly its sandbox is included into the plugin artifact
+        if (project.name in listOf("intellij-rust", "plugin")) {
+            withType<PrepareSandboxTask> {
+                dependsOn(compileNativeCode)
+                from("${rootDir}/bin") {
+                    into("intellij-rust/bin")
+                    include("**")
+                }
+            }
         }
     }
 

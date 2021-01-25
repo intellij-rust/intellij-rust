@@ -23,7 +23,7 @@ import com.intellij.util.download.DownloadableFileService
 import com.intellij.util.io.Decompressor
 import com.jetbrains.cidr.execution.debugger.backend.lldb.LLDBBinUrlProvider
 import org.rust.debugger.settings.RsDebuggerSettings
-import org.rust.openapiext.pluginDirInSystem
+import org.rust.openapiext.RsPathManager
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -190,7 +190,7 @@ class RsDebuggerToolchainService {
         const val RUST_DEBUGGER_GROUP_ID = "Rust Debugger"
 
         private fun downloadPath(): Path = Paths.get(PathManager.getTempPath())
-        private fun lldbPath(): Path = pluginDirInSystem().resolve("lldb")
+        private fun lldbPath(): Path = RsPathManager.pluginDirInSystem().resolve("lldb")
 
         fun getInstance(): RsDebuggerToolchainService = service()
     }

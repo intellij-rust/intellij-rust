@@ -5,9 +5,9 @@
 
 package org.rust.debugger
 
-import org.rust.openapiext.plugin
+import org.rust.openapiext.RsPathManager
 
-val PP_PATH: String get() = plugin().pluginPath.resolve("prettyPrinters").toString()
+val PP_PATH: String get() = RsPathManager.prettyPrintersDir().toString()
 const val LLDB_LOOKUP: String = "lldb_lookup"
 const val GDB_LOOKUP: String = "gdb_lookup"
 
@@ -20,7 +20,7 @@ enum class LLDBRenderers(private val description: String) {
 
     companion object {
         val DEFAULT: LLDBRenderers = BUNDLED
-        fun fromIndex(index: Int): LLDBRenderers = LLDBRenderers.values().getOrElse(index) { DEFAULT }
+        fun fromIndex(index: Int): LLDBRenderers = values().getOrElse(index) { DEFAULT }
     }
 }
 
@@ -33,6 +33,6 @@ enum class GDBRenderers(private val description: String) {
 
     companion object {
         val DEFAULT: GDBRenderers = BUNDLED
-        fun fromIndex(index: Int): GDBRenderers = GDBRenderers.values().getOrElse(index) { DEFAULT }
+        fun fromIndex(index: Int): GDBRenderers = values().getOrElse(index) { DEFAULT }
     }
 }
