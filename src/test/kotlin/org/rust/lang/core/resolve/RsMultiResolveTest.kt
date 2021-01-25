@@ -6,7 +6,9 @@
 package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockEdition
 import org.rust.UseNewResolve
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.lang.core.psi.ext.RsReferenceElement
 
 class RsMultiResolveTest : RsResolveTestBase() {
@@ -88,6 +90,30 @@ class RsMultiResolveTest : RsResolveTestBase() {
         fn main() {
             let _ = A;
         }         //^
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    fun `test use multi reference, item in duplicated inline mod`() = doTest("""
+        mod m {
+            pub fn foo() {}
+        }
+        mod m {
+            pub fn foo() {}
+        }
+        use m::foo;
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test duplicated inline mod`() = doTest("""
+        mod m {}
+        mod m {}
+        fn main() {
+            m::func();
+        } //^
     """)
 
     fun `test other mod trait bound method`() = doTest("""
