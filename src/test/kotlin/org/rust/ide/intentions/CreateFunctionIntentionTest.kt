@@ -5,8 +5,10 @@
 
 package org.rust.ide.intentions
 
+import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.workspace.CargoWorkspace
 
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
     fun `test function availability range`() = checkAvailableInSelectionOnly("""
@@ -721,5 +723,230 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         fn foo() {
             S::<u32>::bar(1, 2);
         }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test function call type to create async function`() = doAvailableTest("""
+        async fn foo() {
+            /*caret*/bar().await;
+        }
+    ""","""
+        async fn foo() {
+            bar().await;
+        }
+
+        async fn bar() {
+            unimplemented!()
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test function call type create async function in blocks`() = doAvailableTest("""
+        fn foo() {
+            async {
+                /*caret*/bar().await
+            };
+        }
+    """, """
+        fn foo() {
+            async {
+                bar().await
+            };
+        }
+
+        async fn bar() {
+            unimplemented!()
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test function call type create async function in nested blocks`() = doAvailableTest("""
+        fn foo() {
+            async {
+                {
+                    /*caret*/bar().await
+                }
+            };
+        }
+    """, """
+        fn foo() {
+            async {
+                {
+                    bar().await
+                }
+            };
+        }
+
+        async fn bar() {
+            unimplemented!()
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test function call type create async function in nested function`() = doAvailableTest("""
+        fn main() {
+            async fn foo() {
+                /*caret*/bar().await;
+            }
+        }
+    """, """
+        fn main() {
+            async fn foo() {
+                bar().await;
+            }
+            async fn bar() {
+                unimplemented!()
+            }
+        }
+    """)
+
+
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test method call type to create async function`() = doAvailableTest("""
+        struct S;
+
+        impl S {
+            async fn foo(&self) {
+                self./*caret*/bar(1, 2).await;
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            async fn foo(&self) {
+                self.bar(1, 2).await;
+            }
+            async fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test method call type create async function in blocks`() = doAvailableTest("""
+        struct S;
+
+        impl S {
+            fn foo(&self) {
+                async {
+                    self./*caret*/bar(1, 2).await;
+                };
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            fn foo(&self) {
+                async {
+                    self.bar(1, 2).await;
+                };
+            }
+            async fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test method call type create async function in nested blocks`() = doAvailableTest("""
+        struct S;
+
+        impl S {
+            fn foo(&self) {
+                async {
+                    {
+                        self./*caret*/bar(1, 2).await;
+                    }
+                };
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            fn foo(&self) {
+                async {
+                    {
+                        self.bar(1, 2).await;
+                    }
+                };
+            }
+            async fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test method call type create async function in nested function`() = doAvailableTest("""
+        struct S;
+
+        impl S {
+            fn foo(&self) {
+                async fn foo_a(s: &S) {
+                    s./*caret*/bar(1, 2).await;
+                }
+            }
+        }
+    """, """
+        struct S;
+
+        impl S {
+            async fn bar(&self, p0: i32, p1: i32) {
+                unimplemented!()
+            }
+        }
+
+        impl S {
+            fn foo(&self) {
+                async fn foo_a(s: &S) {
+                    s.bar(1, 2).await;
+                }
+            }
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test function call type create in the async function call`() = doAvailableTest("""
+        async fn foo() {
+            baz(/*caret*/bar()).await;
+        }
+        async fn baz(a: u32) {}
+    """, """
+        async fn foo() {
+            baz(bar()).await;
+        }
+
+        fn bar() -> u32 {
+            unimplemented!()
+        }
+
+        async fn baz(a: u32) {}
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test method call type create in the async function call`() = doAvailableTest("""
+        struct S;
+
+        async fn foo(s: S) {
+            baz(s./*caret*/bar()).await;
+        }
+        async fn baz(a: u32) {}
+    """, """
+        struct S;
+
+        impl S {
+            pub(crate) fn bar(&self) -> u32 {
+                unimplemented!()
+            }
+        }
+
+        async fn foo(s: S) {
+            baz(s.bar()).await;
+        }
+        async fn baz(a: u32) {}
     """)
 }

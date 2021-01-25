@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.parentsOfType
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
@@ -37,16 +38,19 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
 
     sealed class Context(val name: String, val callElement: PsiElement) {
         abstract val visibility: String
+        open val isAsync: Boolean = callElement.isEdition2018
         abstract val arguments: RsValueArgumentList
         abstract val returnType: Ty?
         open val implItem: RsImplItem? = null
 
-        open class Function(val callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
+        open class Function(callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
             override val visibility: String = when {
                 callExpr.containingCrate != module.containingCrate -> "pub "
                 callExpr.containingMod != module -> "pub(crate) "
                 else -> ""
             }
+            override val isAsync: Boolean = super.isAsync
+                && (callExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
             override val arguments: RsValueArgumentList = callExpr.valueArgumentList
             override val returnType: Ty? = callExpr.expectedType
         }
@@ -73,6 +77,8 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                         else -> "pub(crate)"
                     }
                 }
+            override val isAsync: Boolean = super.isAsync
+                && (methodCall.parentDotExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
             override val arguments: RsValueArgumentList = methodCall.valueArgumentList
             override val returnType: Ty? = methodCall.parentDotExpr.expectedType
         }
@@ -91,8 +97,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             return if (target is FunctionInsertionTarget.Item) {
                 text = "Create associated function `${target.item.name}::$name`"
                 Context.AssociatedFunction(functionCall, name, target.module, target.item)
-            }
-            else {
+            } else {
                 text = "Create function `$name`"
                 Context.Function(functionCall, name, target.module)
             }
@@ -136,6 +141,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         val parameters = config.parameters.toMutableList()
         val whereClause = config.genericConstraints.buildWhereClause()
         val visibility = ctx.visibility
+        val async = if (ctx.isAsync) "async" else ""
         if (ctx is Context.Method) {
             parameters.add(0, "&self")
         }
@@ -144,7 +150,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         } else ""
         val paramsText = parameters.joinToString(", ")
 
-        return factory.tryCreateFunction("$visibility fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    unimplemented!()\n}")
+        return factory.tryCreateFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    unimplemented!()\n}")
     }
 
     private fun getTargetItemForFunction(path: RsPath): FunctionInsertionTarget? {
