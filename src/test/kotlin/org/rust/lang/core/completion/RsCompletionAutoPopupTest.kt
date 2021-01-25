@@ -6,13 +6,18 @@
 package org.rust.lang.core.completion
 
 import com.intellij.testFramework.fixtures.CompletionAutoPopupTester
+import com.intellij.util.ThrowableRunnable
 
-abstract class RsCompletionAutoPopupTestBase : RsCompletionTestBase() {
-    protected lateinit var tester: CompletionAutoPopupTester
+class RsCompletionAutoPopupTest : RsCompletionTestBase() {
+    private lateinit var tester: CompletionAutoPopupTester
 
     override fun setUp() {
         super.setUp()
         tester = CompletionAutoPopupTester(myFixture)
+    }
+
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
+        tester.runWithAutoPopupEnabled(testRunnable)
     }
 
     override fun runInDispatchThread(): Boolean = false

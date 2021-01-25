@@ -127,7 +127,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         val outputPanel = getUserData<MemoryProfileOutputPanel>(OUTPUT_PANEL_KEY, configuration, context) ?: return
         try {
             val valgrindHandler = ValgrindHandler(treeDataModel, CidrToolEnvironment())
-            val outputFileConsumer = createValgrindConsumer(valgrindHandler)
+            val outputFileConsumer = ValgrindOutputConsumer(valgrindHandler, null)
             val accumulator = MemoryProfileStringAccumulator()
             val compositeConsumer = MemoryProfileCompositeConsumer(outputFileConsumer, accumulator)
             val fileReader = MemoryProfileFileReader(outputFile, compositeConsumer, ValgrindUtil.PROFILER_NAME)

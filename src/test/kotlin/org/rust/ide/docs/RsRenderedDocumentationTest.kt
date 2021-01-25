@@ -5,8 +5,49 @@
 
 package org.rust.ide.docs
 
-// BACKCOMPAT: 2020.2. Merge with `RsDocumentationProviderTestBase`
-class RsRenderedDocumentationTest : RsDocumentationProviderTestBase() {
+import org.intellij.lang.annotations.Language
+import org.rust.lang.core.psi.RsDocCommentImpl
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.doc.docElements
+
+class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
+
+    fun `test outer comment`() = doTest("""
+        /// Adds one to the number given.
+        ///
+        /// # Examples
+        ///
+        /// Some text
+        ///
+        fn add_one(x: i32) -> i32 {
+            //^
+            x + 1
+        }
+    """, """
+        <p>Adds one to the number given.</p><h2>Examples</h2><p>Some text</p>
+    """)
+
+    fun `test inner comment`() = doTest("""
+        fn add_one(x: i32) -> i32 {
+            //^
+            //! Inner comment
+            x + 1
+        }
+    """, """
+        <p>Inner comment</p>
+    """)
+
+    fun `test several comments`() = doTest("""
+        /// Outer comment
+        fn add_one(x: i32) -> i32 {
+            //^
+            //! Inner comment
+            x + 1
+        }
+    """, """
+        <p>Outer comment</p>
+        <p>Inner comment</p>
+    """)
 
     fun `test code highlighting`() = doTest("""
         /// A cheap, reference-to-reference conversion.
@@ -63,4 +104,15 @@ class RsRenderedDocumentationTest : RsDocumentationProviderTestBase() {
         <h2>Generic Impls</h2><ul><li><code>AsRef</code> auto-dereference if the inner type is a reference or a mutable
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul>
     """)
+
+    protected fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
+        doTest(code, expected) { originalItem, _ ->
+            (originalItem as? RsDocAndAttributeOwner)
+                ?.docElements()
+                ?.filterIsInstance<RsDocCommentImpl>()
+                ?.mapNotNull { generateRenderedDoc(it) }
+                ?.joinToString("\n")
+                ?.hideSpecificStyles()
+        }
+    }
 }

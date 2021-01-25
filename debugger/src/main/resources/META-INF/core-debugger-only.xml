@@ -1,8 +1,6 @@
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
     <depends>com.intellij.modules.cidr.debugger</depends>
 
-    <xi:include href="/META-INF/platform-core-debugger-only.xml" xpointer="xpointer(/idea-plugin/*)"/>
-
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.debugger.driverConfigurationProvider"
                         interface="org.rust.debugger.RsDebuggerDriverConfigurationProvider"

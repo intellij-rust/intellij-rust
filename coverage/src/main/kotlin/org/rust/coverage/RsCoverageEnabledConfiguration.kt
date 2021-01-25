@@ -6,10 +6,11 @@
 package org.rust.coverage
 
 import com.intellij.coverage.CoverageRunner
+import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.configurations.coverage.CoverageEnabledConfiguration
 import com.intellij.execution.process.ProcessHandler
 
-class RsCoverageEnabledConfiguration(configuration: RunConfigurationType)
+class RsCoverageEnabledConfiguration(configuration: RunConfigurationBase<*>)
     : CoverageEnabledConfiguration(configuration) {
     var coverageProcess: ProcessHandler? = null
 

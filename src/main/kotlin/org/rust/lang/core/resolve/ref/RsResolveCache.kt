@@ -26,6 +26,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.containers.ConcurrentWeakKeySoftValueHashMap
+import com.intellij.util.containers.HashingStrategy
 import org.rust.lang.core.macros.MacroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsModificationTrackerOwner
@@ -270,7 +271,7 @@ private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
         100,
         0.75f,
         Runtime.getRuntime().availableProcessors(),
-        canonicalStrategy()
+        HashingStrategy.canonical()
     ) {
         override fun createValueReference(
             value: V,

@@ -28,6 +28,7 @@ import org.rust.lang.doc.RsDocRenderMode
 import org.rust.lang.doc.documentationAsHtml
 import org.rust.openapiext.escaped
 import org.rust.stdext.joinToWithBuffer
+import java.util.function.Consumer
 
 @Suppress("UnstableApiUsage")
 class RsDocumentationProvider : AbstractDocumentationProvider() {
@@ -60,7 +61,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
         }
     }
 
-    override fun collectDocComments(file: PsiFile, sink: DocCommentConsumer) {
+    override fun collectDocComments(file: PsiFile, sink: Consumer<in PsiDocCommentBase>) {
         if (file !is RsFile) return
         for (element in SyntaxTraverser.psiTraverser(file)) {
             if (element is RsDocCommentImpl) {

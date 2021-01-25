@@ -8,9 +8,11 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileSystem
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.rust.checkMacroExpansionFileSystemAfterTest
 
-class MacroExpansionFileSystemTest : MacroExpansionFileSystemTestBase() {
+class MacroExpansionFileSystemTest : BasePlatformTestCase() {
     fun `test simple`() {
         batch {
             createFile("/foo", "bar.txt", "bar content")
@@ -82,6 +84,10 @@ class MacroExpansionFileSystemTest : MacroExpansionFileSystemTestBase() {
     override fun tearDown() {
         super.tearDown()
         checkMacroExpansionFileSystemAfterTest()
+    }
+
+    private val persistentFSFlagsHolder: Class<*> get() {
+        return PersistentFS::class.java.declaredClasses.first { it.simpleName == "Flags" }
     }
 }
 

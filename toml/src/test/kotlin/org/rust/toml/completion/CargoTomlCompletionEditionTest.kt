@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 @RunWith(Parameterized::class)
-class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTomlCompletionEditionTestBase() {
+class CargoTomlCompletionEditionTest(private val sectionName: String) : CargoTomlCompletionTestBase() {
 
     @Test
     fun `key completion`() = doSingleCompletion("""
