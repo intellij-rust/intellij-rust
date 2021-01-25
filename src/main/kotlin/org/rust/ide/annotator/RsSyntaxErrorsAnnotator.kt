@@ -313,7 +313,7 @@ private enum class TypeArgumentKind(private val elementClass: KClass<*>, val arg
         get() = StringUtil.capitalize(argumentName)
 
     fun canStandAfter(prevArgument: TypeArgumentKind): Boolean =
-        ordinal >= prevArgument.ordinal
+        this !== LIFETIME || prevArgument === LIFETIME
 
     companion object {
         private val VALUES = values()

@@ -244,6 +244,14 @@ class RsSyntaxErrorsAnnotatorTest : RsAnnotatorTestBase(RsSyntaxErrorsAnnotator:
         fn foo<T, <error descr="Lifetime parameters must be declared prior to type parameters">'a</error>>(bar: &'a T) {}
     """)
 
+    fun `test lifetime params after const params`() = checkErrors("""
+        fn foo<const C: usize, <error descr="Lifetime parameters must be declared prior to const parameters">'a</error>>(bar: &'a usize) {}
+    """)
+
+    fun `test type params after const params`() = checkErrors("""
+        fn foo<const C: usize, T>(bar: T) {}
+    """)
+
     fun `test type arguments order`() = checkErrors("""
         type A1 = B<C, <error descr="Lifetime arguments must be declared prior to type arguments">'d</error>>;
 
