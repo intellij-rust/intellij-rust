@@ -1108,4 +1108,29 @@ class RsTypeAwareGenericResolveTest : RsResolveTestBase() {
             b.foo();
         }   //^
     """)
+
+    fun `test assoc type bound method 2`() = checkByCode("""
+        trait Foo { type Item: Bar; }
+        trait Bar: Baz {}
+        trait Baz {
+            fn baz(&self) {}
+        }    //X
+
+        fn foobar<T: Foo>(a: T::Item) {
+            a.baz();
+        }   //^
+    """)
+
+    fun `test assoc type bound method 3`() = checkByCode("""
+        trait Foo { type Item: Bar1 + Bar2; }
+        trait Bar1: Baz {}
+        trait Bar2: Baz {}
+        trait Baz {
+            fn baz(&self) {}
+        }    //X
+
+        fn foobar<T: Foo>(a: T::Item) {
+            a.baz();
+        }   //^
+    """)
 }
