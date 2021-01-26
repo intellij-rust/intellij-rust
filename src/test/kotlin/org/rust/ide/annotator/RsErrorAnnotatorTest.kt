@@ -1565,6 +1565,14 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <T> Trait2 for X<T> where T: Trait<T> {}
     """)
 
+    fun `test supertrait is not implemented E0277 self substitution 4`() = checkErrors("""
+        trait Foo {}
+        trait Baz: Foo {}
+
+        impl<T> Foo for T {}
+        impl<T> Baz for T {}
+    """)
+
     @MockRustcVersion("1.27.1")
     fun `test crate visibility feature E0658`() = checkErrors("""
         <error descr="`crate` visibility modifier is experimental [E0658]">crate</error> struct Foo;

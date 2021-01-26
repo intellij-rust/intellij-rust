@@ -17,8 +17,11 @@ import org.rust.RsTestBase
 import org.rust.TestProject
 import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.isExpandedFromMacro
+import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.ref.RsMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
+import org.rust.lang.core.types.inference
 
 abstract class RsResolveTestBase : RsTestBase() {
     protected open fun checkByCode(@Language("Rust") code: String) =
