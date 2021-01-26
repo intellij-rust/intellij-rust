@@ -330,11 +330,11 @@ class ImplLookup(
             }
             is TyProjection -> {
                 val subst = ty.trait.subst + mapOf(TyTypeParameter.self() to ty.type).toTypeSubst()
-                for (bound in ty.trait.element.bounds) {
-                    if (ctx.probe { ctx.combineTypes(bound.selfTy.substitute(subst), ty) }.isOk) {
-                        implsAndTraits += TraitImplSource.ProjectionBound(bound.trait.element)
-                    }
-                }
+                implsAndTraits += ty.trait.element.bounds.asSequence()
+                    .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), ty) }.isOk }
+                    .flatMap { it.trait.flattenHierarchy.asSequence() }
+                    .map { TraitImplSource.ProjectionBound(it.element) }
+                    .distinct()
 
             }
             is TyUnknown -> Unit
@@ -658,11 +658,12 @@ class ImplLookup(
 
                 if (ref.selfTy is TyProjection) {
                     val subst = ref.selfTy.trait.subst + mapOf(TyTypeParameter.self() to ref.selfTy.type).toTypeSubst()
-                    for (bound in ref.selfTy.trait.element.bounds) {
-                        if (ctx.probe { ctx.combineTraitRefs(bound.substitute(subst), ref) }) {
-                            add(SelectionCandidate.Projection(bound))
-                        }
-                    }
+                    ref.selfTy.trait.element.bounds.asSequence()
+                        .filter { ctx.probe { ctx.combineTypes(it.selfTy.substitute(subst), ref.selfTy) }.isOk }
+                        .flatMap { it.trait.flattenHierarchy.asSequence() }
+                        .distinct()
+                        .filter { ctx.probe { ctx.combineBoundElements(it.substitute(subst), ref.trait) } }
+                        .forEach { add(SelectionCandidate.Projection(TraitRef(ref.selfTy, it))) }
                     return@buildList
                 }
                 assembleImplCandidates(ref) { add(it); false }
