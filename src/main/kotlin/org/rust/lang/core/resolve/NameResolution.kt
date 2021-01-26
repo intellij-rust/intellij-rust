@@ -747,10 +747,8 @@ fun processLocalVariables(place: RsElement, originalProcessor: (RsPatBinding) ->
  * Resolves an absolute path.
  */
 fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project): Pair<RsNamedElement, CargoWorkspace.Package>? {
-    check(!path.startsWith("::"))
-    val parts = path.split("::", limit = 2)
-    if (parts.size != 2) return null
-    val pkg = workspace.findPackageByName(parts[0]) ?: run {
+    val (pkgName, crateRelativePath) = splitAbsolutePath(path) ?: return null
+    val pkg = workspace.findPackageByName(pkgName) ?: run {
         return if (isUnitTestMode) {
             // Allows to set a fake path for some item in tests via
             // lang attribute, e.g. `#[lang = "std::iter::Iterator"]`
@@ -761,11 +759,26 @@ fun resolveStringPath(path: String, workspace: CargoWorkspace, project: Project)
     }
 
     val el = pkg.targets.asSequence()
-        .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(parts[1], it) }
+        .mapNotNull { RsCodeFragmentFactory(project).createCrateRelativePath(crateRelativePath, it) }
+        .filter {
+            if (!project.isNewResolveEnabled) return@filter true
+            val crateRoot = it.containingFile.context as RsFile
+            val crateId = crateRoot.containingCrate?.id ?: return@filter false
+            // ignore e.g. test/bench non-workspace crates
+            project.defMapService.getOrUpdateIfNeeded(crateId) != null
+        }
         .mapNotNull { it.reference?.resolve() }
         .filterIsInstance<RsNamedElement>()
         .firstOrNull() ?: return null
     return el to pkg
+}
+
+/** 'crate_name::mod1::mod2' -> ('crate_name', 'mod1::mod2') */
+fun splitAbsolutePath(path: String): Pair<String, String>? {
+    check(!path.startsWith("::"))
+    val parts = path.split("::", limit = 2)
+    if (parts.size != 2) return null
+    return parts[0] to parts[1]
 }
 
 fun processMacroReferenceVariants(ref: RsMacroReference, processor: RsResolveProcessor): Boolean {

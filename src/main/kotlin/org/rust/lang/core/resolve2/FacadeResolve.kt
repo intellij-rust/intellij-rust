@@ -359,7 +359,9 @@ private fun Project.getDefMap(crate: Crate): CrateDefMap? {
     check(crate !is DoctestCrate) { "doc test crates are not supported by CrateDefMap" }
     val crateId = crate.id ?: return null
     val defMap = defMapService.getOrUpdateIfNeeded(crateId)
-    if (defMap == null) RESOLVE_LOG.error("DefMap is null for $crate during resolve")
+    if (defMap == null) {
+        RESOLVE_LOG.warn("DefMap is null for $crate during resolve")
+    }
     return defMap
 }
 
