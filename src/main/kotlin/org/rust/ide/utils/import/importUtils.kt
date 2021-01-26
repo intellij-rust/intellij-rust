@@ -99,7 +99,8 @@ fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
             addBefore(psiFactory.createNewline(), insertedUseItem)
         }
     } else {
-        addBefore(useItem, firstItem)
+        // `if` is needed to support adding import to empty inline mod (see `RsCodeFragment#importTarget`)
+        addBefore(useItem, if (this is RsModItem && itemsAndMacros.none()) rbrace else firstItem)
         addAfter(psiFactory.createNewline(), firstItem)
     }
 }
