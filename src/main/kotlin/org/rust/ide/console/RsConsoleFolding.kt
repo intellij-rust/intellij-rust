@@ -15,7 +15,7 @@ import org.rust.cargo.runconfig.filters.FilterUtils
 import org.rust.cargo.runconfig.filters.RegexpFileLinkFilter
 import org.rust.cargo.runconfig.filters.RsBacktraceFilter
 import org.rust.cargo.runconfig.filters.RsBacktraceItemFilter
-import org.rust.lang.core.resolve.resolveStringPath
+import org.rust.lang.core.resolve.splitAbsolutePath
 
 /**
  * Folds backtrace items (function names and source code locations) that do not belong to the
@@ -37,7 +37,8 @@ class RsConsoleFolding : ConsoleFolding() {
             val functionName = RsBacktraceItemFilter.parseBacktraceRecord(line)?.functionName ?: return@any false
             val func = FilterUtils.normalizeFunctionPath(functionName)
             val workspace = it.workspace ?: return@any false
-            val (_, pkg) = resolveStringPath(func, workspace, project) ?: return@any true
+            val (pkgName, _) = splitAbsolutePath(func) ?: return@any true
+            val pkg = workspace.findPackageByName(pkgName) ?: return@any true
 
             pkg.origin != PackageOrigin.WORKSPACE
         }
