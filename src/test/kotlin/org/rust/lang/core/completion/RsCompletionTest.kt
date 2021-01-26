@@ -6,6 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.rust.*
+import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 
 class RsCompletionTest : RsCompletionTestBase() {
     fun `test local variable`() = doSingleCompletion("""
@@ -570,6 +571,17 @@ class RsCompletionTest : RsCompletionTestBase() {
         macro_rules! foo_bar { () => () }
         fn main() {
             foo_bar!(/*caret*/)
+        }
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test complete macro 3`() = checkContainsCompletion("foobar1", """
+        mod inner {
+            macro_rules! foobar1 { () => {} }
+            macro_rules! foobar2 { () => {} }
+            fn test() {
+                foo/*caret*/ba!();
+            }
         }
     """)
 
