@@ -10,4 +10,4 @@ exampleProject
 testData
 .DS_Store
 /pretty_printers_tests/target
-/proc_macro_expander/target
+/native-helper/target

@@ -116,7 +116,7 @@ allprojects {
         }
 
         val compileNativeCode = task<Exec>("compileNativeCode") {
-            workingDir = rootDir.resolve("proc_macro_expander")
+            workingDir = rootDir.resolve("native-helper")
             executable = "cargo"
             // Hack to use unstable `--out-dir` option work for stable toolchain
             // https://doc.rust-lang.org/cargo/commands/cargo-build.html#output-options

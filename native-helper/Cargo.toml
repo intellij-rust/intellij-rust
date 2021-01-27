@@ -1,5 +1,5 @@
 [package]
-name = "proc_macro_expander"
+name = "intellij-rust-native-helper"
 version = "0.1.0"
 edition = "2018"
 
