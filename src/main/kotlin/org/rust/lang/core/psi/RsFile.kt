@@ -201,7 +201,7 @@ class RsFile(
     fun getStdlibAttributes(crate: Crate?): Attributes {
         val stub = greenStub as RsFileStub?
         if (stub?.mayHaveStdlibAttributes == false) return Attributes.NONE
-        val attributes = getQueryAttributes(crate)
+        val attributes = getQueryAttributes(crate, stub)
         if (attributes.hasAtomAttribute("no_core")) return Attributes.NO_CORE
         if (attributes.hasAtomAttribute("no_std")) return Attributes.NO_STD
         return Attributes.NONE
@@ -211,7 +211,7 @@ class RsFile(
     fun hasMacroUseInner(crate: Crate?): Boolean {
         val stub = greenStub as RsFileStub?
         if (stub?.mayHaveMacroUse == false) return false
-        return getQueryAttributes(crate).hasAtomAttribute("macro_use")
+        return getQueryAttributes(crate, stub).hasAtomAttribute("macro_use")
     }
 
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()

@@ -42,14 +42,25 @@ import org.rust.stdext.writeHashCodeNullable
 
 class RsFileStub(
     file: RsFile?,
-    val mayHaveStdlibAttributes: Boolean,
-    val mayHaveMacroUse: Boolean,
-) : PsiFileStubImpl<RsFile>(file) {
+    private val flags: Int,
+) : PsiFileStubImpl<RsFile>(file), RsAttributeOwnerStub {
+
+    val mayHaveStdlibAttributes: Boolean
+        get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
+
+    override val hasAttrs: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
+    override val mayHaveCfg: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_MASK)
+    override val hasCfgAttr: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.CFG_ATTR_MASK)
+    override val mayHaveMacroUse: Boolean
+        get() = BitUtil.isSet(flags, RsAttributeOwnerStub.HAS_MACRO_USE_MASK)
 
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 208
+        private const val STUB_VERSION = 209
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -60,16 +71,15 @@ class RsFileStub(
 
                 // for tests related to rust console
                 if (file is RsReplCodeFragment) {
-                    return RsFileStub(null, mayHaveStdlibAttributes = false, mayHaveMacroUse = false)
+                    return RsFileStub(null, flags = 0)
                 }
 
                 check(file is RsFile)
-                val rawAttributes = file.getTraversedRawAttributes()
-                return RsFileStub(
-                    file,
-                    rawAttributes.hasAnyOfAttributes("no_std", "no_core"),
-                    rawAttributes.hasAtomAttribute("macro_use")
-                )
+                val rawAttributes = file.getTraversedRawAttributes(withCfgAttrAttribute = true)
+                var flags = RsAttributeOwnerStub.extractFlags(rawAttributes)
+                val mayHaveStdlibAttributes = rawAttributes.hasAnyOfAttributes("no_std", "no_core")
+                flags = BitUtil.set(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK, mayHaveStdlibAttributes)
+                return RsFileStub(file, flags)
             }
 
             override fun skipChildProcessingWhenBuildingStubs(parent: ASTNode, child: ASTNode): Boolean {
@@ -84,13 +94,11 @@ class RsFileStub(
         }
 
         override fun serialize(stub: RsFileStub, dataStream: StubOutputStream) {
-            dataStream.writeBoolean(stub.mayHaveStdlibAttributes)
-            dataStream.writeBoolean(stub.mayHaveMacroUse)
+            dataStream.writeByte(stub.flags)
         }
 
-        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub {
-            return RsFileStub(null, dataStream.readBoolean(), dataStream.readBoolean())
-        }
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsFileStub =
+            RsFileStub(null, dataStream.readUnsignedByte())
 
         override fun getExternalId(): String = "Rust.file"
 
@@ -110,6 +118,10 @@ class RsFileStub(
 //            }
 //            return super.doParseContents(chameleon, psi)
 //        }
+    }
+
+    companion object {
+        private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
     }
 }
 

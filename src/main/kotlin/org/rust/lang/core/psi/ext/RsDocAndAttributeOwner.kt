@@ -77,7 +77,11 @@ data class Attribute(val name: String, val argText: String? = null) {
 }
 
 inline val RsDocAndAttributeOwner.attributeStub: RsAttributeOwnerStub?
-    get() = (this as? StubBasedPsiElementBase<*>)?.greenStub as? RsAttributeOwnerStub
+    get() = when (this) {
+        is StubBasedPsiElementBase<*> -> greenStub
+        is RsFile -> greenStub
+        else -> null
+    } as? RsAttributeOwnerStub
 
 /**
  * Returns [QueryAttributes] for given PSI element after `#[cfg_attr()]` expansion
