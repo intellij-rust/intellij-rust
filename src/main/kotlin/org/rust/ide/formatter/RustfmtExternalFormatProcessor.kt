@@ -27,7 +27,6 @@ import org.rust.cargo.runconfig.command.workingDirectory
 import org.rust.cargo.toolchain.tools.Rustfmt
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallRustfmt
 import org.rust.cargo.toolchain.tools.rustfmt
-import org.rust.ide.formatter.RustfmtExternalFormatProcessor.Companion.formatWithRustfmtOrBuiltinFormatter
 import org.rust.ide.formatter.processors.RsPostFormatProcessor
 import org.rust.ide.formatter.processors.RsTrailingCommaFormatProcessor
 import org.rust.ide.notifications.showBalloon
@@ -61,7 +60,7 @@ import org.rust.openapiext.document
  * builtin formatter
  */
 @Suppress("UnstableApiUsage")
-class RustfmtExternalFormatProcessor : ExternalFormatProcessor {
+abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
 
     override fun getId(): String = "rustfmt"
 
@@ -69,15 +68,6 @@ class RustfmtExternalFormatProcessor : ExternalFormatProcessor {
 
     // Never used by the platform?
     override fun indent(source: PsiFile, lineStartOffset: Int): String? = null
-
-    override fun format(
-        source: PsiFile,
-        range: TextRange,
-        canChangeWhiteSpacesOnly: Boolean,
-        keepLineBreaks: Boolean // Always `false`?
-    ): TextRange? {
-        return formatWithRustfmtOrBuiltinFormatter(source, range, canChangeWhiteSpacesOnly)
-    }
 
     companion object {
         fun isActiveForFile(source: PsiFile): Boolean =

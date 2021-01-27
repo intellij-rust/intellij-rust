@@ -300,8 +300,9 @@ project(":") {
     }
 
     intellij {
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             setPlugins("c-plugin")
         }
     }
@@ -346,6 +347,22 @@ project(":") {
             generateRustLexer, generateRustDocHighlightingLexer,
             generateRustParser
         )
+
+        doFirst {
+            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+            // that conflicts with the corresponding project dependency
+            // TODO: find out a better way to avoid wrong dependency during compilation
+            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+        }
+    }
+
+    tasks.withType<Test> {
+        doFirst {
+            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+            // that conflicts with the corresponding project dependency
+            // TODO: find out a better way to avoid wrong dependency during test execution
+            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+        }
     }
 
     task("resolveDependencies") {
@@ -405,8 +422,9 @@ project(":debugger") {
 project(":toml") {
     intellij {
         val plugins = mutableListOf<Any>(project(":intellij-toml"))
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             plugins += "c-plugin"
         }
         setPlugins(*plugins.toTypedArray())
@@ -490,8 +508,9 @@ project(":js") {
 project(":ml-completion") {
     intellij {
         val plugins = mutableListOf<Any>(mlCompletionPlugin)
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion") {
+        if (baseIDE == "clion" && platformVersion == 203) {
             plugins += "c-plugin"
         }
         setPlugins(*plugins.toTypedArray())
@@ -508,8 +527,9 @@ project(":ml-completion") {
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             setPlugins("c-plugin")
         }
     }

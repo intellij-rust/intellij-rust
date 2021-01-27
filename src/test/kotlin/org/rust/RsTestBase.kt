@@ -222,7 +222,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
         action(beforeDir)
 
-        val afterDir = getVirtualFileByName("$testDataPath/$after")
+        val afterDir = getVirtualFileByName("$testDataPath/$after") ?: error("Failed find `$testDataPath/$after`")
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 

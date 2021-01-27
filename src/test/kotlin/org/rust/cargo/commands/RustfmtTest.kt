@@ -19,6 +19,7 @@ import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
 import org.rust.ide.formatter.RustfmtExternalFormatProcessor
+import org.rust.ide.formatter.RustfmtExternalFormatProcessorBase
 import org.rust.launchAction
 import org.rust.openapiext.saveAllDocuments
 
@@ -311,7 +312,7 @@ class RustfmtTest : RsWithToolchainTestBase() {
 
     private fun reformatRange(file: PsiFile, textRange: TextRange = file.textRange, shouldHitTestmark: Boolean = true) {
         project.rustSettings.modifyTemporary(testRootDisposable) { it.useRustfmt = true }
-        val testmark = RustfmtExternalFormatProcessor.Testmarks.rustfmtUsed
+        val testmark = RustfmtExternalFormatProcessorBase.Testmarks.rustfmtUsed
         val checkMark: (() -> Unit) -> Unit = if (shouldHitTestmark) testmark::checkHit else testmark::checkNotHit
         checkMark {
             WriteCommandAction.runWriteCommandAction(project, ReformatCodeProcessor.getCommandName(), null, {
