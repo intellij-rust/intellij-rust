@@ -35,7 +35,7 @@ class CargoTomlFeatureDependencyCompletionProvider : CompletionProvider<Completi
         val element = parameters.position
         val tomlFile = element.containingFile as? TomlFile ?: return
 
-        val parentFeature = element.parentOfType<TomlKeyValueImpl>()?.key ?: return
+        val parentFeature = element.parentOfType<TomlKeyValueImpl>()?.key?.segments?.singleOrNull() ?: return
         for (feature in tomlFile.allFeatures()) {
             if (feature == parentFeature) continue
             result.addElement(lookupElementForFeature(feature))
