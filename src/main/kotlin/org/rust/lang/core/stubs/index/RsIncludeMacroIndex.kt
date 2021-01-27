@@ -20,7 +20,6 @@ import com.intellij.util.io.KeyDescriptor
 import org.rust.ide.search.RsWithMacrosProjectScope
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsMod
 import org.rust.lang.core.psi.ext.findIncludingFile
 import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.stringValue
@@ -40,8 +39,8 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
         val KEY : StubIndexKey<IncludeMacroKey, RsMacroCall> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RsIncludeMacroIndex")
 
-        private val INCLUDING_MOD_KEY: Key<CachedValue<RsMod?>> = Key.create("INCLUDING_MOD_KEY")
-        private val INCLUDING_MOD_MACROS_KEY: Key<CachedValue<RsMod?>> = Key.create("INCLUDING_MOD_MACROS_KEY")
+        private val INCLUDING_MOD_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("INCLUDING_MOD_KEY")
+        private val INCLUDING_MOD_MACROS_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("INCLUDING_MOD_MACROS_KEY")
 
         fun index(stub: RsMacroCallStub, indexSink: IndexSink) {
             val key = key(stub.psi) ?: return
@@ -49,9 +48,9 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
         }
 
         /**
-         * Returns mod item that includes given [file] via `include!()` macro
+         * Returns `include!()` macro call which includes [file]
          */
-        fun getIncludingMod(file: RsFile): RsMod? {
+        fun getIncludedFrom(file: RsFile): RsMacroCall? {
             val originalFile = file.originalFile as? RsFile ?: return null
             val state = file.project.macroExpansionManagerIfCreated?.expansionState
 
@@ -63,36 +62,36 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
 
             return CachedValuesManager.getCachedValue(originalFile, key) {
                 CachedValueProvider.Result.create(
-                    getIncludingModInternal(originalFile),
+                    getIncludedFromInternal(originalFile),
                     originalFile.rustStructureOrAnyPsiModificationTracker,
                     cacheDependency
                 )
             }
         }
 
-        private fun getIncludingModInternal(file: RsFile): RsMod? {
+        private fun getIncludedFromInternal(file: RsFile): RsMacroCall? {
             return makeIndexLookup(IncludeMacroKey(file.name), file)
                 ?: makeIndexLookup(IncludeMacroKey.UNKNOWN_FILE_NAME, file)
         }
 
-        private fun makeIndexLookup(key: IncludeMacroKey, file: RsFile): RsMod? {
+        private fun makeIndexLookup(key: IncludeMacroKey, file: RsFile): RsMacroCall? {
             return recursionGuard(file, Computable {
                 val project = file.project
                 checkCommitIsNotInProgress(project)
 
-                var parentMod: RsMod? = null
+                var includedFrom: RsMacroCall? = null
                 val scope = project.macroExpansionManagerIfCreated?.expansionState?.expandedSearchScope
                     ?: RsWithMacrosProjectScope(project)
                 StubIndex.getInstance().processElements(KEY, key, project, scope, RsMacroCall::class.java) { macroCall ->
                     val includingFile = macroCall.findIncludingFile()
                     if (includingFile == file) {
-                        parentMod = macroCall.containingMod
+                        includedFrom = macroCall
                         false
                     } else {
                         true
                     }
                 }
-                parentMod
+                includedFrom
             })
         }
 

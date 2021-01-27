@@ -141,7 +141,7 @@ class RsFile(
             return cached.copy(crateRoot = possibleCrateRoot, crate = doctestCrate)
         }
 
-        val includingMod = RsIncludeMacroIndex.getIncludingMod(possibleCrateRoot)
+        val includingMod = RsIncludeMacroIndex.getIncludedFrom(possibleCrateRoot)?.containingMod
         if (includingMod != null) return (includingMod.contextualFile as? RsFile)?.cachedData ?: EMPTY_CACHED_DATA
 
         // This occurs if the file is not included to the project's module structure, i.e. it's
@@ -160,8 +160,8 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
-            val includingMod = RsIncludeMacroIndex.getIncludingMod(this) ?: return declaration?.containingMod
-            return includingMod.`super`
+            val includedFrom = RsIncludeMacroIndex.getIncludedFrom(this) ?: return declaration?.containingMod
+            return includedFrom.containingMod.`super`
         }
 
     // We can't just return file name here because

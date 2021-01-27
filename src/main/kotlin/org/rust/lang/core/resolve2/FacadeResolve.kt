@@ -242,7 +242,7 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
 private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap): MacroIndex? {
     val itemAndCallExpandedFrom = element.stubAncestors
         .filterIsInstance<RsExpandedElement>()
-        .mapNotNull { it to (it.expandedFrom ?: return@mapNotNull null) }
+        .mapNotNull { it to (it.expandedOrIncludedFrom ?: return@mapNotNull null) }
         .firstOrNull()
     if (itemAndCallExpandedFrom == null) {
         if (element.containingFile is RsCodeFragment) return MacroIndex(intArrayOf(Int.MAX_VALUE))
