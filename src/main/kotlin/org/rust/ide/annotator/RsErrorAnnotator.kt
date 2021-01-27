@@ -409,7 +409,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
     private fun checkTraitRef(holder: RsAnnotationHolder, o: RsTraitRef) {
         val item = o.path.reference?.resolve() as? RsItemElement ?: return
-        if (item !is RsTraitItem) {
+        if (item !is RsTraitItem && item !is RsTraitAlias) {
             RsDiagnostic.NotTraitError(o, item).addToHolder(holder)
         }
     }
