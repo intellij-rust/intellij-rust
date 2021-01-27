@@ -868,7 +868,9 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
             )).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
-                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount, functionType).addToHolder(holder)
+                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount, functionType, listOf(
+                    RemoveFunctionArgumentFix(it)
+                )).addToHolder(holder)
             }
         }
     }
