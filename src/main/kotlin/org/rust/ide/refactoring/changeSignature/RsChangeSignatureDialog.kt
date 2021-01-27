@@ -26,6 +26,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
+import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.openapiext.document
@@ -356,14 +357,14 @@ private fun createTypeCodeFragment(
     context: RsElement,
     type: RsTypeReference?
 ): PsiCodeFragment {
-    val freshFile = RsPsiFactory(context.project).createFile("fn main() {}")
-    freshFile.originalFile = context.containingFile as RsFile
+    val freshMod = RsPsiFactory(context.project).createModItem(TMP_MOD_NAME, "")
+    freshMod.setContext(context.containingFile as RsFile)
 
     val fragment = RsTypeReferenceCodeFragment(
         context.project,
         type?.text.orEmpty(),
-        context = freshFile,
-        importTarget = freshFile
+        context = freshMod,
+        importTarget = freshMod
     )
     val document = fragment.document!!
     document.addDocumentListener(object : DocumentListener {
