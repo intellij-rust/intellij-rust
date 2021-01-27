@@ -11,6 +11,7 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
 import org.rust.lang.core.psi.shouldIndexFile
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.fileId
@@ -68,7 +69,8 @@ private fun buildDefMapContainingExplicitItems(
         crate = crateId,
         path = ModPath(crateId, emptyArray()),
         macroIndex = MacroIndex(intArrayOf(rootModMacroIndex)),
-        isDeeplyEnabledByCfg = true,
+        isDeeplyEnabledByCfgOuter = true,
+        isEnabledByCfgInner = crateRoot.isEnabledByCfgSelf(crate),
         fileId = crateRoot.virtualFile.fileId,
         fileRelativePath = "",
         ownedDirectoryId = crateRootOwnedDirectory.fileId,

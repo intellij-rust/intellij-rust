@@ -118,7 +118,10 @@ class RsFile(
             if (declaration != null) {
                 val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
                 val parentCachedData = (file as? RsFile)?.cachedData ?: return EMPTY_CACHED_DATA
-                return parentCachedData.copy(isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg && isEnabledByCfg)
+                val isEnabledByCfgInner = parentCachedData.crate?.let { file.isEnabledByCfgSelf(it) } ?: true
+                val isDeeplyEnabledByCfg = parentCachedData.isDeeplyEnabledByCfg
+                    && isEnabledByCfg && isEnabledByCfgInner
+                return parentCachedData.copy(isDeeplyEnabledByCfg = isDeeplyEnabledByCfg)
             }
         }
 
@@ -128,7 +131,8 @@ class RsFile(
         val crate = project.crateGraph.findCrateByRootMod(crateRootVFile)
         if (crate != null) {
             // `possibleCrateRoot` is a "real" crate root only if we're able to find a `crate` for it
-            return CachedData(crate.cargoProject, crate.cargoWorkspace, possibleCrateRoot, crate)
+            val isEnabledByCfg = possibleCrateRoot.isEnabledByCfgSelf(crate)
+            return CachedData(crate.cargoProject, crate.cargoWorkspace, possibleCrateRoot, crate, isEnabledByCfg)
         }
 
         val injectedFromFile = crateRootVFile.getInjectedFromIfDoctestInjection(project)

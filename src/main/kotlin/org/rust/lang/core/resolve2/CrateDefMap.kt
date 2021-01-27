@@ -217,7 +217,16 @@ class ModData(
     val crate: CratePersistentId,
     val path: ModPath,
     val macroIndex: MacroIndex,
-    val isDeeplyEnabledByCfg: Boolean,
+    /**
+     * For [RsMod]:
+     * - [isEnabledByCfgInner] is always true
+     * - [isDeeplyEnabledByCfgOuter] equals to [isDeeplyEnabledByCfg]
+     * For [RsFile]:
+     * - [isEnabledByCfgInner] corresponds to file level cfg attributes - `#![cfg(...)]`
+     * - [isDeeplyEnabledByCfgOuter] corresponds to `parent.isDeeplyEnabledByCfg` plus cfg attributes on mod declaration
+     */
+    val isDeeplyEnabledByCfgOuter: Boolean,
+    val isEnabledByCfgInner: Boolean,
     /** id of containing file */
     val fileId: FileId,
     // TODO: Possible optimization - store as Array<String>
@@ -234,6 +243,7 @@ class ModData(
     val isRsFile: Boolean get() = fileRelativePath.isEmpty()
     val isCrateRoot: Boolean get() = parent == null
     val name: String get() = path.name
+    val isDeeplyEnabledByCfg: Boolean get() = isDeeplyEnabledByCfgOuter && isEnabledByCfgInner
     val parents: Sequence<ModData> get() = generateSequence(this) { it.parent }
     private val rootModData: ModData = parent?.rootModData ?: this
 

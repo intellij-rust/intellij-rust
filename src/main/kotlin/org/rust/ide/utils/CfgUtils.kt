@@ -6,12 +6,16 @@
 package org.rust.ide.utils
 
 import com.intellij.psi.PsiElement
+import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.utils.evaluation.CfgEvaluator
 import org.rust.lang.utils.evaluation.ThreeValuedLogic
 
 val PsiElement.isEnabledByCfg: Boolean
     get() = ancestors.filterIsInstance<RsDocAndAttributeOwner>().all { it.isEnabledByCfgSelf }
+
+fun PsiElement.isEnabledByCfg(crate: Crate): Boolean =
+    ancestors.filterIsInstance<RsDocAndAttributeOwner>().all { it.isEnabledByCfgSelf(crate) }
 
 val PsiElement.isCfgUnknown: Boolean
     get() = ancestors.filterIsInstance<RsDocAndAttributeOwner>().any { it.isCfgUnknownSelf }
