@@ -1028,6 +1028,9 @@
         <registryKey key="org.rust.cargo.lock.update.delay.threshold" defaultValue="5000" restartRequired="false"
                      description="Delay in ms between Cargo metadata call and changes in Cargo.lock
                      when automatic project structure reload doesn't occur"/>
+        <registryKey key="org.rust.cargo.evaluate.build.scripts.wrapper" defaultValue="true" restartRequired="false"
+                     description="Use RUSTC_WRAPPER when fetching build script info (if experimental feature
+                     `org.rust.cargo.evaluate.build.scripts` is enabled)"/>
 
         <!-- Move refactoring -->
 
