@@ -1,4 +1,7 @@
 // min-version: 1.30.0
+// Temporarily disable this test because it fails on 2021.1
+// https://github.com/intellij-rust/intellij-rust/issues/6746
+// max-version: 1.30.0
 
 // === GDB TESTS ===================================================================================
 
