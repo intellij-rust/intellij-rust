@@ -8,6 +8,8 @@ package org.rust
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.ui.TestDialog
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -81,4 +83,13 @@ fun CodeInsightTestFixture.launchAction(
         check(!presentation.isEnabledAndVisible) { "`${action.javaClass.simpleName}` action shouldn't be enabled"}
     }
     return presentation
+}
+
+fun <T> withTestDialog(testDialog: TestDialog, action: () -> T): T {
+    val oldDialog = TestDialogManager.setTestDialog(testDialog)
+    return try {
+        action()
+    } finally {
+        TestDialogManager.setTestDialog(oldDialog)
+    }
 }

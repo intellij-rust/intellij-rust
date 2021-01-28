@@ -16,6 +16,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.psi.stubs.*
 import com.intellij.testFramework.ReadOnlyLightVirtualFile
 import com.intellij.util.indexing.FileContent
+import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.*
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
@@ -171,7 +172,9 @@ class MacroExpansionSharedCache : Disposable {
         val result = cachedExpand(expander, def.data, call.data, hash) ?: return null
         val serializedStub = cachedBuildStub(hash) {
             val file = ReadOnlyLightVirtualFile("macro.rs", RsLanguage, result.text)
-            createFileContent(project, file, result.text)
+            FileContentImpl.createByText(file, result.text).also {
+                (it as FileContentImpl).project = project
+            }
         } ?: return null
 
         val stub = try {
@@ -260,7 +263,7 @@ private class PersistentCacheData(
                 val stubs = newPersistentHashMap(
                     stubCacheFile,
                     HashCodeKeyDescriptor,
-                    newSerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer),
+                    SerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer),
                     1 * 1024 * 1024,
                     MacroExpander.EXPANDER_VERSION + RsFileStub.Type.stubVersion
                 )

@@ -8,6 +8,7 @@ package org.rust.clion.cargo
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.project.Project
+import com.jetbrains.cidr.execution.build.CidrBuildConfigurationProvider
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration

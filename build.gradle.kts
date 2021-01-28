@@ -43,8 +43,7 @@ val copyrightPlugin = "com.intellij.copyright"
 // https://github.com/JetBrains/gradle-intellij-plugin/issues/565
 val javaPlugin = "java"
 val javaScriptPlugin = "JavaScript"
-// BACKCOMPAT: 2020.2
-val clionPlugins = if (platformVersion < 203) emptyList() else listOf("com.intellij.cidr.base", "com.intellij.clion")
+val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
 
 plugins {
@@ -227,12 +226,9 @@ project(":plugin") {
             intelliLangPlugin,
             graziePlugin,
             psiViewerPlugin,
-            javaScriptPlugin
+            javaScriptPlugin,
+            mlCompletionPlugin
         )
-        // BACKCOMPAT: 2020.2
-        if (platformVersion >= 203) {
-            plugins += mlCompletionPlugin
-        }
         if (baseIDE == "idea") {
             plugins += listOf(
                 copyrightPlugin,
@@ -304,8 +300,9 @@ project(":") {
     }
 
     intellij {
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             setPlugins("c-plugin")
         }
     }
@@ -350,6 +347,22 @@ project(":") {
             generateRustLexer, generateRustDocHighlightingLexer,
             generateRustParser
         )
+
+        doFirst {
+            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+            // that conflicts with the corresponding project dependency
+            // TODO: find out a better way to avoid wrong dependency during compilation
+            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+        }
+    }
+
+    tasks.withType<Test> {
+        doFirst {
+            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+            // that conflicts with the corresponding project dependency
+            // TODO: find out a better way to avoid wrong dependency during test execution
+            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+        }
     }
 
     task("resolveDependencies") {
@@ -409,8 +422,9 @@ project(":debugger") {
 project(":toml") {
     intellij {
         val plugins = mutableListOf<Any>(project(":intellij-toml"))
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             plugins += "c-plugin"
         }
         setPlugins(*plugins.toTypedArray())
@@ -493,15 +507,13 @@ project(":js") {
 
 project(":ml-completion") {
     intellij {
-        // BACKCOMPAT: 2020.2
-        if (platformVersion >= 203) {
-            val plugins = mutableListOf<Any>(mlCompletionPlugin)
-            // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-            if (baseIDE == "clion") {
-                plugins += "c-plugin"
-            }
-            setPlugins(*plugins.toTypedArray())
+        val plugins = mutableListOf<Any>(mlCompletionPlugin)
+        // BACKCOMPAT: 2020.3
+        // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
+        if (baseIDE == "clion" && platformVersion == 203) {
+            plugins += "c-plugin"
         }
+        setPlugins(*plugins.toTypedArray())
     }
     dependencies {
         implementation("org.jetbrains.intellij.deps.completion:completion-ranking-rust:0.0.4")
@@ -515,8 +527,9 @@ project(":ml-completion") {
 project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
     intellij {
+        // BACKCOMPAT: 2020.3
         // TODO: drop it when CLion move `navigation.class.hierarchy` property from c-plugin to CLion resources
-        if (baseIDE == "clion" && platformVersion >= 203) {
+        if (baseIDE == "clion" && platformVersion == 203) {
             setPlugins("c-plugin")
         }
     }
@@ -562,11 +575,10 @@ project(":common") {
 
 task("runPrettyPrintersTests") {
     doLast {
-        val pythonVersion = if (platformVersion < 203) "3.6" else "3.8"
         val lldbPath = when {
             // TODO: Use `lldb` Python module from CLion distribution
             isFamily(FAMILY_MAC) -> "/Applications/Xcode.app/Contents/SharedFrameworks/LLDB.framework/Resources/Python"
-            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python$pythonVersion/site-packages"
+            isFamily(FAMILY_UNIX) -> "$projectDir/deps/${clionVersion.replaceFirst("CL", "clion")}/bin/lldb/linux/lib/python3.8/site-packages"
             else -> error("Unsupported OS")
         }
         "cargo run --package pretty_printers_test --bin pretty_printers_test -- lldb $lldbPath".execute("pretty_printers_tests")

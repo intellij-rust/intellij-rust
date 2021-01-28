@@ -7,6 +7,7 @@ package org.rust.lang.core.macros
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream
 import com.intellij.openapi.util.io.FileAttributes
+import com.intellij.openapi.util.io.FileAttributes.CaseSensitivity
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -203,7 +204,9 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     override fun getAttributes(file: VirtualFile): FileAttributes? {
         val item = convert(file) ?: return null
         val length = ((item as? FSFile)?.length ?: 0).toLong()
-        return createFileAttributes(item is FSDir, length, item.timestamp)
+        val isDir = item is FSDir
+        val caseSensitivity = if (isDir) CaseSensitivity.SENSITIVE else CaseSensitivity.UNKNOWN
+        return FileAttributes(isDir, false, false, false, length, item.timestamp, true, caseSensitivity)
     }
 
     sealed class FSItem {

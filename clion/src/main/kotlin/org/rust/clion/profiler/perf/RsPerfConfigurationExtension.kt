@@ -17,6 +17,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.profiler.*
 import com.intellij.profiler.clion.CPPProfilerSettings
+import com.intellij.profiler.clion.perf.PerfProfilerProcess
 import com.intellij.profiler.clion.profilerConfigurable
 import com.intellij.profiler.linux.HasInvalidVariables
 import com.intellij.profiler.linux.KernelVariable
@@ -27,6 +28,7 @@ import org.rust.cargo.runconfig.ConfigurationExtensionContext
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.clion.profiler.RsProfilerRunner
 import org.rust.clion.profiler.legacy.RsProfilerRunnerLegacy
+import org.rust.lang.core.psi.RsFunction
 import java.io.File
 
 class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
@@ -69,11 +71,13 @@ class RsPerfConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Can't get output perf data file")
 
         val project = configuration.project
-        val profilerProcess = createPerfProfilerProcess(
+        val profilerProcess = PerfProfilerProcess(
             handler,
             outputFile,
             configuration.name,
-            project
+            project,
+            System.currentTimeMillis(),
+            RsFunction::class.java
         )
         ProfilerToolWindowManager.getInstance(project).addProfilerProcessTab(profilerProcess)
     }

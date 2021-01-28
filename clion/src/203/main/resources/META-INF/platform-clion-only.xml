@@ -1,8 +1,0 @@
-<idea-plugin>
-    <depends>com.intellij.cidr.base</depends>
-    <depends>com.intellij.clion</depends>
-
-    <extensions defaultExtensionNs="cidr">
-        <buildConfigurationProvider implementation="org.rust.clion.cargo.CargoBuildConfigurationProvider"/>
-    </extensions>
-</idea-plugin>

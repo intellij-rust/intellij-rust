@@ -48,7 +48,7 @@ class RsCoverageEngine : CoverageEngine() {
 
     override fun coverageEditorHighlightingApplicableTo(psiFile: PsiFile): Boolean = psiFile is RsFile
 
-    override fun createCoverageEnabledConfiguration(conf: RunConfigurationType): CoverageEnabledConfiguration =
+    override fun createCoverageEnabledConfiguration(conf: RunConfigurationBase<*>): CoverageEnabledConfiguration =
         RsCoverageEnabledConfiguration(conf)
 
     override fun getQualifiedName(outputFile: File, sourceFile: PsiFile): String? = getQName(sourceFile)
@@ -67,7 +67,7 @@ class RsCoverageEngine : CoverageEngine() {
 
     override fun getCoverageAnnotator(project: Project): CoverageAnnotator = RsCoverageAnnotator.getInstance(project)
 
-    override fun isApplicableTo(conf: RunConfigurationType): Boolean = conf is CargoCommandConfiguration
+    override fun isApplicableTo(conf: RunConfigurationBase<*>): Boolean = conf is CargoCommandConfiguration
 
     override fun createEmptyCoverageSuite(coverageRunner: CoverageRunner): CoverageSuite = RsCoverageSuite()
 
@@ -110,7 +110,7 @@ class RsCoverageEngine : CoverageEngine() {
         chooseSuiteAction: Runnable
     ): Boolean = false
 
-    override fun canHavePerTestCoverage(conf: RunConfigurationType): Boolean = false
+    override fun canHavePerTestCoverage(conf: RunConfigurationBase<*>): Boolean = false
 
     override fun findTestsByNames(testNames: Array<out String>, project: Project): List<PsiElement> = emptyList()
 

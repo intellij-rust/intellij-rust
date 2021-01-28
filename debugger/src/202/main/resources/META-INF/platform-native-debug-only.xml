@@ -1,6 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij">
-        <xdebugger.breakpointType implementation="com.jetbrains.cidr.execution.debugger.breakpoints.CidrLineBreakpointType"/>
-        <xdebugger.breakpointType implementation="com.jetbrains.cidr.execution.debugger.breakpoints.CidrExceptionBreakpointType"/>
-    </extensions>
-</idea-plugin>

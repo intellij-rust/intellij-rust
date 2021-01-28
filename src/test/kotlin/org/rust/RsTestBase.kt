@@ -29,6 +29,8 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.text.SemVer
 import junit.framework.AssertionFailedError
 import org.intellij.lang.annotations.Language
@@ -47,7 +49,7 @@ import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
 
-abstract class RsTestBase : RsPlatformTestBase() {
+abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     // Needed for assertion that the directory doesn't acidentally renamed during the test
     private var tempDirRootUrl: String? = null
@@ -139,7 +141,7 @@ abstract class RsTestBase : RsPlatformTestBase() {
         return semVer to channel
     }
 
-    override fun runTestInternal(context: TestContext) {
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         val reason = skipTestReason
         if (reason != null) {
             System.err.println("SKIP \"$name\": $reason")
@@ -160,10 +162,10 @@ abstract class RsTestBase : RsPlatformTestBase() {
                 error("Can't mix `BothEditions` and `MockEdition` annotations")
             }
             // These functions exist to simplify stacktrace analyzing
-            runTestEdition2015(context)
-            runTestEdition2018(context)
+            runTestEdition2015(testRunnable)
+            runTestEdition2018(testRunnable)
         } else {
-            super.runTestInternal(context)
+            super.runTestRunnable(testRunnable)
         }
     }
 
@@ -184,14 +186,14 @@ abstract class RsTestBase : RsPlatformTestBase() {
                 ?: getIgnoredInNewResolveReason(project)
         }
 
-    private fun runTestEdition2015(context: TestContext) {
+    private fun runTestEdition2015(testRunnable: ThrowableRunnable<Throwable>) {
         project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2015, testRootDisposable)
-        super.runTestInternal(context)
+        super.runTestRunnable(testRunnable)
     }
 
-    private fun runTestEdition2018(context: TestContext) {
+    private fun runTestEdition2018(testRunnable: ThrowableRunnable<Throwable>) {
         project.testCargoProjects.setEdition(CargoWorkspace.Edition.EDITION_2018, testRootDisposable)
-        super.runTestInternal(context)
+        super.runTestRunnable(testRunnable)
     }
 
     protected val fileName: String
@@ -220,7 +222,7 @@ abstract class RsTestBase : RsPlatformTestBase() {
 
         action(beforeDir)
 
-        val afterDir = getVirtualFileByName("$testDataPath/$after")
+        val afterDir = getVirtualFileByName("$testDataPath/$after") ?: error("Failed find `$testDataPath/$after`")
         PlatformTestUtil.assertDirectoriesEqual(afterDir, beforeDir)
     }
 

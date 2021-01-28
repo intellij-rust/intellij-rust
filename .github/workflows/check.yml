@@ -33,14 +33,14 @@ jobs:
                 os: [ ubuntu-latest, windows-latest ]
                 rust-version: [ 1.48.0, nightly-2020-10-04 ]
                 base-ide: [ idea, clion ]
-                platform-version: [ 202, 203 ]
+                platform-version: [ 203, 211 ]
                 resolve-engine: [ resolve-stable ]
                 include:
                     - os: ubuntu-latest
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.32.0
                       base-ide: idea
-                      platform-version: 202
+                      platform-version: 203
                       resolve-engine: resolve-stable
                     - os: ubuntu-latest
                       rust-version: 1.48.0
@@ -108,10 +108,10 @@ jobs:
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               # BACKCOMPAT: 1.45.0. Don't redefine `compileNativeCode` property
               run: |
-                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2020.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2020.2" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=202.6397.20" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_graziePluginVersion=202.6397.11" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_ideaVersion=IU-2020.3.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_clionVersion=CL-2020.3.2" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=203.7148.57" >> $GITHUB_ENV
+                  echo "ORG_GRADLE_PROJECT_graziePluginVersion=203.7148.20" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_compileNativeCode=false" >> $GITHUB_ENV
 
             - name: Set up env variable for new resolve

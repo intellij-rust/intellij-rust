@@ -6,8 +6,8 @@
 package org.rust.debugger
 
 import com.intellij.util.PlatformUtils
+import com.intellij.util.ThrowableRunnable
 import org.rust.RsTestBase
-import org.rust.TestContext
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import java.io.File
 
@@ -15,9 +15,9 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
 
     private var lldbDir: File? = null
 
-    override fun runTestInternal(context: TestContext) {
+    override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         if (PlatformUtils.isIdeaUltimate()) {
-            super.runTestInternal(context)
+            super.runTestRunnable(testRunnable)
         }
     }
 

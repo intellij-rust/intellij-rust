@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import org.rust.ide.formatter.RustfmtExternalFormatProcessor
+import org.rust.ide.formatter.RustfmtExternalFormatProcessorBase
 import org.rust.lang.core.psi.RsFile
 
 /**
@@ -29,8 +30,8 @@ class RsPostFormatProcessor : PostFormatProcessor {
     override fun processText(source: PsiFile, rangeToReformat: TextRange, settings: CodeStyleSettings): TextRange {
         if (source !is RsFile) return rangeToReformat
 
-        return if (RustfmtExternalFormatProcessor.isActiveForFile(source)) {
-            RustfmtExternalFormatProcessor.formatWithRustfmtOrBuiltinFormatter(
+        return if (RustfmtExternalFormatProcessorBase.isActiveForFile(source)) {
+            RustfmtExternalFormatProcessorBase.formatWithRustfmtOrBuiltinFormatter(
                 source,
                 rangeToReformat,
                 canChangeWhiteSpacesOnly = false

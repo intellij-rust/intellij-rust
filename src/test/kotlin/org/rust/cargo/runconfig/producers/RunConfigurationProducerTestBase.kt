@@ -65,9 +65,10 @@ abstract class RunConfigurationProducerTestBase : RsTestBase() {
     }
 
     protected inline fun <reified T : PsiElement> checkOnElement() {
-        val configurationContext = ConfigurationContext(
-            myFixture.file.findElementAt(myFixture.caretOffset)?.ancestorOrSelf<T>()
-        )
+        val element = myFixture.file.findElementAt(myFixture.caretOffset)
+            ?.ancestorOrSelf<T>()
+            ?: error("Failed to find element of `${T::class.simpleName}` class at caret")
+        val configurationContext = ConfigurationContext(element)
         check(configurationContext)
     }
 
