@@ -3,21 +3,23 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.infer
+package org.rust.lang.core.dfa
 
+import org.rust.lang.core.dfa.Aliasability.FreelyAliasable
+import org.rust.lang.core.dfa.Aliasability.NonAliasable
+import org.rust.lang.core.dfa.AliasableReason.*
+import org.rust.lang.core.dfa.BorrowKind.ImmutableBorrow
+import org.rust.lang.core.dfa.BorrowKind.MutableBorrow
+import org.rust.lang.core.dfa.Categorization.*
+import org.rust.lang.core.dfa.ImmutabilityBlame.*
+import org.rust.lang.core.dfa.MutabilityCategory.Declared
+import org.rust.lang.core.dfa.PointerKind.BorrowedPointer
+import org.rust.lang.core.dfa.PointerKind.UnsafePointer
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.infer.Aliasability.FreelyAliasable
-import org.rust.lang.core.types.infer.Aliasability.NonAliasable
-import org.rust.lang.core.types.infer.AliasableReason.*
-import org.rust.lang.core.types.infer.BorrowKind.ImmutableBorrow
-import org.rust.lang.core.types.infer.BorrowKind.MutableBorrow
-import org.rust.lang.core.types.infer.Categorization.*
-import org.rust.lang.core.types.infer.ImmutabilityBlame.*
-import org.rust.lang.core.types.infer.MutabilityCategory.Declared
-import org.rust.lang.core.types.infer.PointerKind.BorrowedPointer
-import org.rust.lang.core.types.infer.PointerKind.UnsafePointer
+import org.rust.lang.core.types.infer.Adjustment
+import org.rust.lang.core.types.infer.RsInferenceData
 import org.rust.lang.core.types.regions.ReStatic
 import org.rust.lang.core.types.regions.Region
 import org.rust.lang.core.types.ty.*
@@ -72,6 +74,7 @@ sealed class BorrowKind {
                 Mutability.MUTABLE -> MutableBorrow
             }
 
+        @Suppress("unused")
         fun isCompatible(firstKind: BorrowKind, secondKind: BorrowKind): Boolean =
             firstKind == ImmutableBorrow && secondKind == ImmutableBorrow
     }
@@ -170,7 +173,8 @@ class Cmt(
     val mutabilityCategory: MutabilityCategory = MutabilityCategory.from(Mutability.DEFAULT_MUTABILITY),
     val ty: Ty
 ) {
-    val immutabilityBlame: ImmutabilityBlame?
+    @Suppress("unused")
+    private val immutabilityBlame: ImmutabilityBlame?
         get() = when (category) {
             is Deref -> {
                 // try to figure out where the immutable reference came from
@@ -196,7 +200,8 @@ class Cmt(
 
     val isMutable: Boolean get() = mutabilityCategory.isMutable
 
-    val aliasability: Aliasability
+    @Suppress("unused")
+    private val aliasability: Aliasability
         get() = when {
             category is Deref && category.pointerKind is BorrowedPointer ->
                 when (category.pointerKind.borrowKind) {
@@ -311,7 +316,7 @@ class MemoryCategorizationContext(val lookup: ImplLookup, val inference: RsInfer
 
     // `rvalue_promotable_map` is needed to distinguish rvalues with static region and rvalue with temporary region,
     // so now all rvalues have static region
-    fun processRvalue(expr: RsExpr, ty: Ty = inference.getExprType(expr)): Cmt =
+    private fun processRvalue(expr: RsExpr, ty: Ty = inference.getExprType(expr)): Cmt =
         Cmt(expr, Rvalue(ReStatic), Declared, ty)
 
     fun processRvalue(element: RsElement, tempScope: Region, ty: Ty): Cmt =

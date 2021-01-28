@@ -3,25 +3,22 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck
+package org.rust.lang.core.dfa
 
+import org.rust.lang.core.dfa.Categorization.Interior
+import org.rust.lang.core.dfa.Categorization.Local
+import org.rust.lang.core.dfa.ConsumeMode.Copy
+import org.rust.lang.core.dfa.ConsumeMode.Move
+import org.rust.lang.core.dfa.MatchMode.*
+import org.rust.lang.core.dfa.MoveReason.DirectRefMove
+import org.rust.lang.core.dfa.MoveReason.PatBindingMove
+import org.rust.lang.core.dfa.liveness.GatherLivenessContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByReference
 import org.rust.lang.core.psi.ext.RsBindingModeKind.BindByValue
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.VALUES
-import org.rust.lang.core.types.GatherLivenessContext
-import org.rust.lang.core.types.borrowck.ConsumeMode.Copy
-import org.rust.lang.core.types.borrowck.ConsumeMode.Move
-import org.rust.lang.core.types.borrowck.MatchMode.*
-import org.rust.lang.core.types.borrowck.MoveReason.DirectRefMove
-import org.rust.lang.core.types.borrowck.MoveReason.PatBindingMove
-import org.rust.lang.core.types.infer.Categorization.Interior
-import org.rust.lang.core.types.infer.Categorization.Local
-import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.infer.MemoryCategorizationContext
-import org.rust.lang.core.types.infer.MutabilityCategory
 import org.rust.lang.core.types.infer.substituteOrUnknown
 import org.rust.lang.core.types.regions.ReScope
 import org.rust.lang.core.types.regions.Scope

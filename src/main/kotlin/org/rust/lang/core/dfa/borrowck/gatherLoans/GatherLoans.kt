@@ -3,14 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck.gatherLoans
+package org.rust.lang.core.dfa.borrowck.gatherLoans
 
+import org.rust.lang.core.dfa.*
+import org.rust.lang.core.dfa.borrowck.BorrowCheckContext
+import org.rust.lang.core.dfa.borrowck.LoanPath
+import org.rust.lang.core.dfa.borrowck.MoveData
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.types.borrowck.*
-import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.infer.MemoryCategorizationContext
 import org.rust.lang.core.types.type
 
 class GatherLoanContext(private val bccx: BorrowCheckContext, private val moveData: MoveData = MoveData()) : Delegate {

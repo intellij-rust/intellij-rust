@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck
+package org.rust.lang.core.dfa.borrowck
 
+import org.rust.lang.core.dfa.Categorization
+import org.rust.lang.core.dfa.Cmt
+import org.rust.lang.core.dfa.MutabilityCategory
+import org.rust.lang.core.dfa.PointerKind
+import org.rust.lang.core.dfa.borrowck.LoanPathElement.Deref
+import org.rust.lang.core.dfa.borrowck.LoanPathKind.*
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.types.borrowck.LoanPathElement.Deref
-import org.rust.lang.core.types.borrowck.LoanPathKind.*
-import org.rust.lang.core.types.infer.Categorization
-import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.infer.MutabilityCategory
-import org.rust.lang.core.types.infer.PointerKind
 import org.rust.lang.core.types.regions.Scope
 import org.rust.lang.core.types.ty.Ty
 import java.util.*
@@ -94,11 +94,11 @@ sealed class LoanPathElement {
         data class Pattern(override val element: RsElement?) : Interior()
 
         companion object {
-            fun fromCategory(category: Categorization.Interior, element: RsElement?): LoanPathElement.Interior =
+            fun fromCategory(category: Categorization.Interior, element: RsElement?): Interior =
                 when (category) {
-                    is Categorization.Interior.Field -> Interior.Field(element, category.name)
-                    is Categorization.Interior.Index -> Interior.Index(element)
-                    is Categorization.Interior.Pattern -> Interior.Pattern(element)
+                    is Categorization.Interior.Field -> Field(element, category.name)
+                    is Categorization.Interior.Index -> Index(element)
+                    is Categorization.Interior.Pattern -> Pattern(element)
                 }
         }
     }

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.cfg
+package org.rust.lang.core.dfa
 
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*

@@ -22,7 +22,7 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NotNull
 import org.rust.ide.refactoring.RsInlineUsageViewDescriptor
 import org.rust.ide.surroundWith.addStatements
-import org.rust.lang.core.cfg.ExitPoint
+import org.rust.lang.core.dfa.ExitPoint
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsCallExprImpl

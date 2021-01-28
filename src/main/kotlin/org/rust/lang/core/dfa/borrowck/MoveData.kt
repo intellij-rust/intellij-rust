@@ -3,19 +3,15 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck
+package org.rust.lang.core.dfa.borrowck
 
-import org.rust.lang.core.DataFlowContext
-import org.rust.lang.core.DataFlowOperator
-import org.rust.lang.core.FlowDirection
-import org.rust.lang.core.KillFrom
-import org.rust.lang.core.KillFrom.Execution
-import org.rust.lang.core.KillFrom.ScopeEnd
-import org.rust.lang.core.cfg.ControlFlowGraph
+import org.rust.lang.core.dfa.*
+import org.rust.lang.core.dfa.KillFrom.Execution
+import org.rust.lang.core.dfa.KillFrom.ScopeEnd
+import org.rust.lang.core.dfa.borrowck.LoanPathElement.Interior
+import org.rust.lang.core.dfa.borrowck.LoanPathKind.*
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.types.borrowck.LoanPathElement.Interior
-import org.rust.lang.core.types.borrowck.LoanPathKind.*
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyUnknown
 import org.rust.openapiext.testAssert
@@ -155,7 +151,7 @@ class MoveData(
         return paths.last()
     }
 
-    private fun processUnionFields(lpKind: LoanPathKind.Extend, action: (LoanPath) -> Unit) {
+    private fun processUnionFields(lpKind: Extend, action: (LoanPath) -> Unit) {
         val base = lpKind.loanPath
         val baseType = base.ty as? TyAdt ?: return
         val lpElement = lpKind.lpElement as? Interior ?: return
@@ -252,6 +248,7 @@ class MoveData(
 class FlowedMoveData private constructor(
     private val moveData: MoveData,
     private val dfcxMoves: MoveDataFlow,
+    @Suppress("unused")
     private val dfcxAssign: AssignDataFlow // will be used during borrow checking
 ) {
     fun eachMoveOf(element: RsElement, loanPath: LoanPath, predicate: (Move, LoanPath) -> Boolean): Boolean {

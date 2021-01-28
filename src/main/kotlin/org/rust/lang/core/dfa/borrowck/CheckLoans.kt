@@ -3,20 +3,19 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.types.borrowck
+package org.rust.lang.core.dfa.borrowck
 
+import org.rust.lang.core.dfa.*
+import org.rust.lang.core.dfa.borrowck.LoanPathElement.Interior
+import org.rust.lang.core.dfa.borrowck.LoanPathKind.Downcast
+import org.rust.lang.core.dfa.borrowck.LoanPathKind.Extend
+import org.rust.lang.core.dfa.borrowck.gatherLoans.isAdtWithDestructor
 import org.rust.lang.core.psi.RsBlock
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatBinding
 import org.rust.lang.core.psi.RsPatSlice
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.types.borrowck.LoanPathElement.Interior
-import org.rust.lang.core.types.borrowck.LoanPathKind.Downcast
-import org.rust.lang.core.types.borrowck.LoanPathKind.Extend
-import org.rust.lang.core.types.borrowck.gatherLoans.isAdtWithDestructor
-import org.rust.lang.core.types.infer.Cmt
-import org.rust.lang.core.types.infer.MemoryCategorizationContext
 
 class CheckLoanContext(private val bccx: BorrowCheckContext, private val moveData: FlowedMoveData) : Delegate {
     override fun consume(element: RsElement, cmt: Cmt, mode: ConsumeMode) {
