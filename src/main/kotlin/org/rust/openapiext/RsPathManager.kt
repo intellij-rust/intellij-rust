@@ -28,7 +28,7 @@ object RsPathManager {
             "x86_64" == SystemInfo.OS_ARCH || "amd64" == SystemInfo.OS_ARCH -> "x86-64"
             else -> return null
         }
-        // TODO: find out why `pluginDir` returns unexpected dir in tests
+
         return pluginDir().resolve("bin/$os/$arch/$binaryName").takeIf { Files.exists(it) }
     }
 
