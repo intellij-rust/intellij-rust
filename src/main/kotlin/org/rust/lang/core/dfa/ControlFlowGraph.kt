@@ -40,7 +40,7 @@ sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
 
     override val text: String
         get() = when (this) {
-            is AST -> element?.cfgText()?.trim() ?: "AST"
+            is AST -> element!!.cfgText().trim()
             Entry -> "Entry"
             Exit -> "Exit"
             Termination -> "Termination"
@@ -56,6 +56,7 @@ sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
             is RsLoopExpr -> "LOOP"
             is RsForExpr -> "FOR"
             is RsMatchExpr -> "MATCH"
+            is RsLambdaExpr -> "CLOSURE"
             is RsExprStmt -> expr.cfgText() + ";"
             else -> this.text
         }
@@ -64,10 +65,11 @@ sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
 class CFGEdgeData(val exitingScopes: List<RsElement>)
 
 typealias CFGNode = Node<CFGNodeData, CFGEdgeData>
+typealias CFGGraph = PresentableGraph<CFGNodeData, CFGEdgeData>
 
 class ControlFlowGraph private constructor(
     val owner: RsElement,
-    val graph: PresentableGraph<CFGNodeData, CFGEdgeData>,
+    val graph: CFGGraph,
     val body: RsBlock,
     val regionScopeTree: ScopeTree,
     val entry: CFGNode,
@@ -97,7 +99,7 @@ class ControlFlowGraph private constructor(
          *
          * Only collects [RsExprStmt]s, [RsLetDecl]s and tail expressions, ignoring conditionally disabled.
          */
-        private fun collectUnreachableElements(graph: PresentableGraph<CFGNodeData, CFGEdgeData>, entry: CFGNode): Set<RsElement> {
+        private fun collectUnreachableElements(graph: CFGGraph, entry: CFGNode): Set<RsElement> {
             /**
              * In terms of our control-flow graph, a [RsElement]'s node is not reachable if it cannot be fully executed,
              * since [CFGBuilder] processes elements in post-order.
