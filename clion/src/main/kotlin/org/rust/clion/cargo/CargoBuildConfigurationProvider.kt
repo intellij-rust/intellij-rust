@@ -8,12 +8,11 @@ package org.rust.clion.cargo
 import com.intellij.execution.RunManager
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.project.Project
-import com.jetbrains.cidr.cpp.execution.build.CLionBuildConfigurationProvider
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.createBuildEnvironment
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.getBuildConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
-class CargoBuildConfigurationProvider : CLionBuildConfigurationProvider {
+class CargoBuildConfigurationProvider : CidrBuildConfigurationProvider {
     override fun getBuildableConfigurations(project: Project): List<CLionCargoBuildConfiguration> {
         val runManager = RunManager.getInstance(project) as? RunManagerImpl ?: return emptyList()
         val configuration = runManager.selectedConfiguration?.configuration as? CargoCommandConfiguration
