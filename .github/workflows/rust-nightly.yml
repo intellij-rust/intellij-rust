@@ -53,6 +53,7 @@ jobs:
 
 
     build-native-code:
+        if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
         needs: [ fetch-latest-changes ]
         strategy:
             fail-fast: true
@@ -89,7 +90,6 @@ jobs:
                   default: true
 
             - name: Build
-              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
               uses: actions-rs/cargo@v1
               with:
                   command: build
@@ -102,6 +102,7 @@ jobs:
                   path: ${{ matrix.config.artifact_path }}
 
     build:
+        if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
         needs: [ generate-build-number, fetch-latest-changes, build-native-code ]
         runs-on: ubuntu-latest
         strategy:
@@ -144,7 +145,6 @@ jobs:
                   path: bin/macos/x86-64
 
             - name: Publish rust plugin
-              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: ":plugin:publishPlugin"

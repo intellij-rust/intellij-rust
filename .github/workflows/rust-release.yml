@@ -116,6 +116,7 @@ jobs:
                   echo "toml-release: ${{ steps.fetch-commits.outputs.toml-release }}"
 
     build-native-code:
+        if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
         needs: [ fetch-latest-changes ]
         strategy:
             fail-fast: true
@@ -152,7 +153,6 @@ jobs:
                   default: true
 
             - name: Build
-              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
               uses: actions-rs/cargo@v1
               with:
                   command: build
@@ -165,6 +165,7 @@ jobs:
                   path: ${{ matrix.config.artifact_path }}
 
     build:
+        if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
         needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel, fetch-latest-changes, build-native-code ]
         runs-on: ubuntu-latest
         strategy:
@@ -209,7 +210,6 @@ jobs:
                   path: bin/macos/x86-64
 
             - name: Publish rust plugin
-              if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: ":plugin:publishPlugin"
