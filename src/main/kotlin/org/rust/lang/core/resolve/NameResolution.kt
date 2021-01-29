@@ -359,9 +359,12 @@ fun processPathResolveVariants(lookup: ImplLookup?, path: RsPath, isCompletion: 
 }
 
 private fun RsResolveProcessor.withIgnoringSecondaryCSelf(): RsResolveProcessor {
+    val name = name
+    if (name != null && name != "Self") return this
+
     var hasSelfItem = false
 
-    return createProcessor {
+    return createProcessor(name) {
         if (it.name == "Self") {
             if (hasSelfItem) {
                 false

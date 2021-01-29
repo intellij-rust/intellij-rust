@@ -74,6 +74,7 @@ fun <T : ScopeEntry> createProcessorGeneric(
     return object : RsResolveProcessorBase<T> {
         override fun invoke(entry: T): Boolean = processor(entry)
         override val name: String? = name
+        override fun toString(): String = "Processor(name=$name)"
     }
 }
 
