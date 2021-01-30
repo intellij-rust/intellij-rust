@@ -20,7 +20,7 @@ class RsModuleType : ModuleType<RsModuleBuilder>(ID) {
     override fun getName(): String = "Rust"
 
     companion object {
-        private const val ID = "RUST_MODULE"
+        const val ID = "RUST_MODULE"
         val INSTANCE: RsModuleType by lazy { ModuleTypeManager.getInstance().findByID(ID) as RsModuleType }
     }
 }

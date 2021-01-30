@@ -576,7 +576,7 @@ private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject
                         if (pkg in alreadySetUp) return
                         alreadySetUp += pkg
                         if (pkg.origin == PackageOrigin.WORKSPACE) {
-                            pkg.contentRoot?.setupContentRoots(module, ContentEntry::setup)
+                            pkg.contentRoot?.setupContentRoots(project, ContentEntry::setup)
                         }
                         val outDir = pkg.outDir
                         if (outDir != null) {

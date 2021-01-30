@@ -5,9 +5,15 @@
 
 package org.rustSlowTests
 
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.cargo.project.model.impl.testCargoProjects
+import org.rust.fileTree
+import org.rust.ide.module.RsModuleType
 
 class RsContentRootsTest : RsWithToolchainTestBase() {
 
@@ -60,7 +66,7 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
             ProjectFolder.Excluded(project.file("subproject/target"))
         )
 
-        check(projectFolders)
+        check(myModule, projectFolders)
     }
 
     fun `test do not add non existing roots`() {
@@ -84,9 +90,8 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
             ProjectFolder.Excluded(project.file("target"))
         )
 
-        check(projectFolders)
+        check(myModule, projectFolders)
     }
-
 
     fun `test workspace without root package`() {
         val project = buildProject {
@@ -144,12 +149,79 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
             ProjectFolder.Excluded(project.file("package2/target"))
         )
 
-        check(projectFolders)
+        check(myModule, projectFolders)
     }
 
+    fun `test several modules in workspace`() {
+        val testProject = fileTree {
+            toml("Cargo.toml", """
+                [workspace]
+                members = [
+                    "a",
+                    "b",
+                ]
+            """)
 
-    private fun check(projectFolders: List<ProjectFolder>) {
-        ModuleRootModificationUtil.updateModel(myModule) { model ->
+            dir("target") {}
+            dir("a") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "a"
+                    version = "0.1.0"
+                    authors = []
+
+                    [dependencies]
+                    b = { path = "../b" }
+                """)
+                dir("src") {
+                    rust("lib.rs", "")
+                }
+                dir("examples") {}
+                dir("tests") {}
+                dir("benches") {}
+                dir("target") {}
+            }
+            dir("b") {
+                toml("Cargo.toml", """
+                    [package]
+                    name = "b"
+                    version = "0.1.0"
+                    authors = []
+                """)
+                dir("src") {
+                    rust("lib.rs", "")
+                }
+                dir("examples") {}
+                dir("tests") {}
+                dir("benches") {}
+                dir("target") {}
+            }
+        }.create(project, cargoProjectDirectory)
+
+        val moduleA = createModule(testProject.file("a"))
+        val moduleB = createModule(testProject.file("b"))
+
+        project.testCargoProjects.discoverAndRefreshSync()
+
+        check(myModule, listOf(ProjectFolder.Excluded(testProject.file("target"))))
+        check(moduleA, listOf(
+            ProjectFolder.Source(testProject.file("a/src"), false),
+            ProjectFolder.Source(testProject.file("a/examples"), false),
+            ProjectFolder.Source(testProject.file("a/tests"), true),
+            ProjectFolder.Source(testProject.file("a/benches"), true),
+            ProjectFolder.Excluded(testProject.file("a/target")),
+        ))
+        check(moduleB, listOf(
+            ProjectFolder.Source(testProject.file("b/src"), false),
+            ProjectFolder.Source(testProject.file("b/examples"), false),
+            ProjectFolder.Source(testProject.file("b/tests"), true),
+            ProjectFolder.Source(testProject.file("b/benches"), true),
+            ProjectFolder.Excluded(testProject.file("b/target"))
+        ))
+    }
+
+    private fun check(module: Module, projectFolders: List<ProjectFolder>) {
+        ModuleRootModificationUtil.updateModel(module) { model ->
             val contentEntry = model.contentEntries.firstOrNull() ?: error("Can't find any content entry")
             val sourceFiles = contentEntry.sourceFolders.associateBy {
                 it.file ?: error("Can't find file with `${it.url}`")
@@ -173,6 +245,13 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
                 }
             }
         }
+    }
+
+    private fun createModule(contentRoot: VirtualFile): Module {
+        val moduleManager = ModuleManager.getInstance(project)
+        val module = runWriteAction { moduleManager.newModule(contentRoot.path, RsModuleType.ID) }
+        ModuleRootModificationUtil.addContentRoot(module, contentRoot)
+        return module
     }
 
     private sealed class ProjectFolder {
