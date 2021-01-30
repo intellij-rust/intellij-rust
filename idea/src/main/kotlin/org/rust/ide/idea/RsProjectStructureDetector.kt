@@ -13,6 +13,8 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector
 import org.rust.cargo.CargoConstants
+import org.rust.ide.module.CargoConfigurationWizardStep
+import org.rust.ide.module.RsModuleType
 import java.io.File
 import javax.swing.Icon
 
