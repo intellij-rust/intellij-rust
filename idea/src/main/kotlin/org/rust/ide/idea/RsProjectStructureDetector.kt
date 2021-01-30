@@ -46,8 +46,13 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         projectDescriptor.modules = listOf(moduleDescriptor)
     }
 
-    override fun createWizardSteps(builder: ProjectFromSourcesBuilder,
-                                   projectDescriptor: ProjectDescriptor,
-                                   stepIcon: Icon?): List<ModuleWizardStep> =
-        listOf(CargoConfigurationWizardStep.importExistingProject(builder.context, projectDescriptor))
+    override fun createWizardSteps(
+        builder: ProjectFromSourcesBuilder,
+        projectDescriptor: ProjectDescriptor,
+        stepIcon: Icon?
+    ): List<ModuleWizardStep> {
+        return listOf(CargoConfigurationWizardStep(builder.context) {
+            projectDescriptor.modules.firstOrNull()?.addConfigurationUpdater(it)
+        })
+    }
 }
