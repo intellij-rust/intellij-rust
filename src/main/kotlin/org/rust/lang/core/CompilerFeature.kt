@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.psi.PsiElement
 import com.intellij.util.text.SemVer
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.ide.annotator.RsAnnotationHolder
 import org.rust.ide.annotator.fixes.AddFeatureAttributeFix
@@ -48,9 +49,9 @@ class CompilerFeature(
             return AVAILABLE
         }
 
-        if (version.channel != RustChannel.NIGHTLY) return NOT_AVAILABLE
-
         val crate = rsElement.containingCrate ?: return UNKNOWN
+        if (version.channel != RustChannel.NIGHTLY && crate.origin != PackageOrigin.STDLIB) return NOT_AVAILABLE
+
         val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
         val possibleFeatureAttrs = attrs.asSequence()
