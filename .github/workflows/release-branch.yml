@@ -29,3 +29,7 @@ jobs:
             - name: Make release branch
               if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
               run: python scripts/make_release_branch.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
+
+            - name: Create new milestone
+              if: github.event_name != 'schedule' || fromJSON(steps.check-date.outputs.result).create_release_branch
+              run: python scripts/make_next_milestone.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}

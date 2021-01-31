@@ -1,14 +1,13 @@
 # TODO: think about using library for GitHub API
 import json
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from urllib.request import Request, urlopen
 
 from common import get_patch_version
 
 
 def get_current_milestone(repo: str, patch_version: Optional[int] = None) -> Dict:
-    response = urlopen(f"https://api.github.com/repos/{repo}/milestones")
-    milestones = json.load(response)
+    milestones = get_all_milestones(repo)
     if patch_version is None:
         patch_version = get_patch_version()
     milestone_version = f"v{patch_version}"
@@ -23,4 +22,20 @@ def set_milestone(token: str, repo: str, issue_number: int, milestone_number: in
     headers = {"Authorization": f"token {token}",
                "Accept": "application/vnd.github.v3+json"}
     request = Request(f"https://api.github.com/repos/{repo}/issues/{issue_number}", data, headers, method="PATCH")
+    urlopen(request)
+
+
+def get_all_milestones(repo: str, state: str = "open") -> List[Dict]:
+    response = urlopen(f"https://api.github.com/repos/{repo}/milestones?state={state}")
+    return json.load(response)
+
+
+def create_milestone(repo: str, token: str, title: str, description: str = "", due_on: Optional[str] = None) -> None:
+    headers = {"Authorization": f"token {token}",
+               "Accept": "application/vnd.github.v3+json"}
+    params = {"title": title, "description": description}
+    if due_on is not None:
+        params["due_on"] = due_on
+    data = json.dumps(params).encode()
+    request = Request(f"https://api.github.com/repos/{repo}/milestones", data, headers, method="POST")
     urlopen(request)
