@@ -85,7 +85,7 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
             }
         }
 
-        attachCargoProject(project.root.findChild("crate2")!!)
+        attachCargoProject(project.file("crate2"))
 
         checkSyncViewTree("""
             -
@@ -132,8 +132,8 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
                 }
             }
         }
-        attachCargoProject(project.root.findChild("crate1")!!)
-        attachCargoProject(project.root.findChild("crate2")!!)
+        attachCargoProject(project.file("crate1"))
+        attachCargoProject(project.file("crate2"))
 
         checkSyncViewTree("""
             -
@@ -192,7 +192,7 @@ class SyncToolWindowTest : RsWithToolchainTestBase() {
                 }
             }
         }.create(project, cargoProjectDirectory)
-        val crateRoot = testProject.root.findChild("crate")!!
+        val crateRoot = testProject.file("crate")
         attachCargoProject(crateRoot)
         val cargoProject = project.testCargoProjects.refreshAllProjectsSync().single()
         detachCargoProject(cargoProject)

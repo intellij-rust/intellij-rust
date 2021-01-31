@@ -59,13 +59,13 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
 
     private fun doNothing(): (p: TestProject) -> Unit = {}
     private fun touchFile(path: String): (p: TestProject) -> Unit = { p ->
-        val file = p.root.findFileByRelativePath(path)!!
+        val file = p.file(path)
         runWriteAction {
             VfsUtil.saveText(file, VfsUtil.loadText(file) + " ")
         }
     }
     private fun replaceInFile(path: String, find: String, replace: String): (p: TestProject) -> Unit = { p ->
-        val file = p.root.findFileByRelativePath(path)!!
+        val file = p.file(path)
         runWriteAction {
             VfsUtil.saveText(file, VfsUtil.loadText(file).replace(find, replace))
         }
@@ -90,7 +90,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         }.create(project, dirFixture.getFile(".")!!)
 
         attachCargoProjectAndExpandMacros(p)
-        myFixture.openFileInEditor(p.root.findFileByRelativePath("src/main.rs")!!)
+        myFixture.openFileInEditor(p.file("src/main.rs"))
         val oldStamps = myFixture.file.childrenOfType<RsMacroCall>().collectStamps()
 
         macroExpansionServiceDisposable?.let { Disposer.dispose(it) } // also save
@@ -100,7 +100,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         super.setUp()
 
         attachCargoProjectAndExpandMacros(p)
-        myFixture.openFileInEditor(p.root.findFileByRelativePath("src/main.rs")!!)
+        myFixture.openFileInEditor(p.file("src/main.rs"))
         val changed = myFixture.file.childrenOfType<RsMacroCall>().collectStamps().entries
             .filter { oldStamps[it.key] != it.value }
             .map { it.key }
@@ -117,7 +117,7 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
 
     private fun attachCargoProjectAndExpandMacros(p: TestProject) {
         macroExpansionServiceDisposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(MacroExpansionScope.WORKSPACE, "mocked")
-        check(project.cargoProjects.attachCargoProject(p.root.findFileByRelativePath("Cargo.toml")!!.pathAsPath))
+        check(project.cargoProjects.attachCargoProject(p.file("Cargo.toml").pathAsPath))
         val future = project.cargoProjects.refreshAllProjects()
         while (!future.isDone) {
             Thread.sleep(10)

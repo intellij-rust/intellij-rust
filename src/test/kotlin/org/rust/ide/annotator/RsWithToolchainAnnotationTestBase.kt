@@ -47,6 +47,6 @@ abstract class RsWithToolchainAnnotationTestBase<C> : RsWithToolchainTestBase() 
      */
     protected open fun configureProject(fileTree: FileTree, context: C?): VirtualFile {
         val testProject = fileTree.create()
-        return testProject.root.findFileByRelativePath(testProject.fileWithCaret)!!
+        return testProject.file(testProject.fileWithCaret)
     }
 }

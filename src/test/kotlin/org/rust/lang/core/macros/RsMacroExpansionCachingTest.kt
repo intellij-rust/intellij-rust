@@ -34,12 +34,12 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
     }
 
     private fun touchFile(path: String): (TestProject) -> Unit = { p ->
-        val file = p.root.findFileByRelativePath(path)!!
+        val file = p.file(path)
         VfsUtil.saveText(file, VfsUtil.loadText(file) + " ")
     }
 
     private fun replaceInFile(path: String, find: String, replace: String): (TestProject) -> Unit = { p ->
-        val file = p.root.findFileByRelativePath(path)!!
+        val file = p.file(path)
         runWriteAction {
             VfsUtil.saveText(file, VfsUtil.loadText(file).replace(find, replace))
         }
@@ -92,7 +92,7 @@ class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {
         names: List<String>
     ) {
         val p = fileTreeFromText(code).create()
-        val file = p.root.findChild("main.rs")!!.toPsiFile(project)!! as RsFile
+        val file = p.psiFile("main.rs") as RsFile
         checkAstNotLoaded()
         val oldStamps = file.collectMacros().collectStamps()
         action(p)
