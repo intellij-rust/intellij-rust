@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -49,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * persistent state [CratesLocalIndexState].
  */
 @State(name = "CratesLocalIndexState", storages = [Storage("rust.crateslocalindex.xml")])
-class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexState>, Disposable {
+class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexState>, CratesLocalIndexService, Disposable {
     private val userCargoIndexDir: Path
         get() = Paths.get(System.getProperty("user.home"), CARGO_REGISTRY_INDEX_LOCATION)
 
@@ -107,7 +106,7 @@ class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexSta
         this.state = state
     }
 
-    fun getCrate(crateName: String): CargoRegistryCrate? {
+    override fun getCrate(crateName: String): CargoRegistryCrate? {
         if (!isReady.get() || crates == null) return null
 
         return try {
@@ -118,7 +117,7 @@ class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexSta
         }
     }
 
-    fun getAllCrateNames(): List<String> {
+    override fun getAllCrateNames(): List<String> {
         if (!isReady.get() || crates == null) return emptyList()
 
         val crateNames = mutableListOf<String>()
@@ -211,7 +210,7 @@ class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexSta
                     if (line.isBlank()) return@forEachLine
 
                     try {
-                        versions.add(CargoRegistryCrateVersion.fromJson(line))
+                        versions.add(crateFromJson(line))
                     } catch (e: Exception) {
                         LOG.warn("Failed to parse JSON from ${treeWalk.pathString}, line ${line}: ${e.message}")
                     }
@@ -271,35 +270,11 @@ class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexSta
         private const val CRATES_INDEX_VERSION: Int = 0
 
         private val LOG: Logger = logger<CratesLocalIndexServiceImpl>()
-
-        fun getInstance(): CratesLocalIndexServiceImpl = service()
     }
 }
 
 private fun VFileEvent.pathEndsWith(suffix: String): Boolean =
     path.endsWith(suffix) || (this is VFilePropertyChangeEvent && oldPath.endsWith(suffix))
-
-data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>)
-data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>) {
-    companion object {
-        private data class ParsedVersion(
-            val name: String,
-            val vers: String,
-            val yanked: Boolean,
-            val features: HashMap<String, List<String>>
-        )
-
-        fun fromJson(json: String): CargoRegistryCrateVersion {
-            val parsedVersion = Gson().fromJson(json, ParsedVersion::class.java)
-
-            return CargoRegistryCrateVersion(
-                parsedVersion.vers,
-                parsedVersion.yanked,
-                parsedVersion.features.map { it.key }
-            )
-        }
-    }
-}
 
 val CargoRegistryCrate.lastVersion: String?
     // TODO: Last version sometimes can differ from latest major
@@ -336,4 +311,21 @@ private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
         }
         return CargoRegistryCrate(versions)
     }
+}
+
+private data class ParsedVersion(
+    val name: String,
+    val vers: String,
+    val yanked: Boolean,
+    val features: HashMap<String, List<String>>
+)
+
+private fun crateFromJson(json: String): CargoRegistryCrateVersion {
+    val parsedVersion = Gson().fromJson(json, ParsedVersion::class.java)
+
+    return CargoRegistryCrateVersion(
+        parsedVersion.vers,
+        parsedVersion.yanked,
+        parsedVersion.features.map { it.key }
+    )
 }
