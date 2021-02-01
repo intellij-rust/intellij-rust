@@ -42,6 +42,16 @@ class CargoTomlFeatureDependencyCompletionProviderTest : CargoTomlCompletionTest
         baz = ["bar", "foo<caret>"]
     """)
 
+    fun `test feature single completion without itself`() = doSingleCompletion("""
+        [features]
+        foo = []
+        bar = [<caret>]
+    """, """
+        [features]
+        foo = []
+        bar = ["foo<caret>"]
+    """)
+
     // TODO the test should fail because of AST loading
     @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
     fun `test feature in another package`() {
