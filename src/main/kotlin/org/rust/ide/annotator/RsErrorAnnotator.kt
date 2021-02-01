@@ -930,10 +930,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
 
         val realCount = args.exprList.size
         if (realCount < expectedCount) {
-            val target = args.rparen ?: args
+            // Mark only the right parenthesis
+            val rparen = args.rparen
+            if (rparen != null) {
+                holder.newErrorAnnotation(rparen, null)?.create()
+            }
+
+            // But enable the quick fix on the whole argument range
             RsDiagnostic.IncorrectFunctionArgumentCountError(
-                target, expectedCount, realCount, functionType,
-                listOf(FillFunctionArgumentsFix(args))
+                args, expectedCount, realCount, functionType,
+                listOf(FillFunctionArgumentsFix(args)),
+                textAttributes = TextAttributesKey.createTextAttributesKey("DEFAULT_TEXT_ATTRIBUTES")
             ).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
