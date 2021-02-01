@@ -27,11 +27,15 @@
                          displayName="Cyclic feature dependency"
                          enabledByDefault="true" level="ERROR"
                          implementationClass="org.rust.toml.inspections.CargoTomlCyclicFeatureInspection"/>
+        <localInspection language="TOML" groupName="Rust"
+                         displayName="Crate not found"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.toml.inspections.CrateNotFoundInspection"/>
 
-        <applicationService
-            serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
-            serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
-            testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
+        <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
+                            serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
+                            testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
+
         <backgroundPostStartupActivity implementation="org.rust.toml.crates.local.CratesLocalIndexStartupActivity"/>
         <cachesInvalidator implementation="org.rust.toml.crates.local.CratesLocalIndexCachesInvalidator"/>
     </extensions>

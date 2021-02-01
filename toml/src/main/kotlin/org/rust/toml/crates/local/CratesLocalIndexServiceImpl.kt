@@ -48,7 +48,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * persistent state [CratesLocalIndexState].
  */
 @State(name = "CratesLocalIndexState", storages = [Storage("rust.crateslocalindex.xml")])
-class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexState>, CratesLocalIndexService, Disposable {
+class CratesLocalIndexServiceImpl
+    : CratesLocalIndexService, PersistentStateComponent<CratesLocalIndexState>, Disposable {
     private val userCargoIndexDir: Path
         get() = Paths.get(System.getProperty("user.home"), CARGO_REGISTRY_INDEX_LOCATION)
 
@@ -313,14 +314,14 @@ private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
     }
 }
 
-private data class ParsedVersion(
-    val name: String,
-    val vers: String,
-    val yanked: Boolean,
-    val features: HashMap<String, List<String>>
-)
-
 private fun crateFromJson(json: String): CargoRegistryCrateVersion {
+    data class ParsedVersion(
+        val name: String,
+        val vers: String,
+        val yanked: Boolean,
+        val features: HashMap<String, List<String>>
+    )
+
     val parsedVersion = Gson().fromJson(json, ParsedVersion::class.java)
 
     return CargoRegistryCrateVersion(
