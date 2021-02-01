@@ -431,11 +431,54 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    fun `test import macro by qualified path without extern crate`() = stubOnlyResolve("""
+    fun `test import macro by qualified path without extern crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        dep_lib_target::foo!();
+                      //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    fun `test import macro by qualified path without extern crate 2`() = stubOnlyResolve("""
     //- lib.rs
         fn bar() {
             dep_lib_target::foo!();
         }                 //^ dep-lib/lib.rs
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    @UseNewResolve
+    fun `test import macro by multi-segment path without extern crate 1`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target;
+        mod inner {
+            crate::dep_lib_target::foo!();
+                                 //^ dep-lib/lib.rs
+        }
+    //- dep-lib/lib.rs
+        #[macro_export]
+        macro_rules! foo {
+            () => {};
+        }
+    """)
+
+    @UseNewResolve
+    fun `test import macro by multi-segment path without extern crate 2`() = stubOnlyResolve("""
+    //- lib.rs
+        use dep_lib_target;
+        mod inner {
+            fn bar() {
+                crate::dep_lib_target::foo!();
+                                     //^ dep-lib/lib.rs
+            }
+        }
     //- dep-lib/lib.rs
         #[macro_export]
         macro_rules! foo {
