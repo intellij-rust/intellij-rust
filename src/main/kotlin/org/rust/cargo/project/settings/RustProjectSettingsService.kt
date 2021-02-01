@@ -46,7 +46,7 @@ interface RustProjectSettingsService {
         var macroExpansionEngine: MacroExpansionEngine = defaultMacroExpansionEngine,
         @AffectsHighlighting
         var newResolveEnabled: Boolean = isFeatureEnabled(RsExperiments.RESOLVE_NEW_ENGINE)
-            || System.getenv("INTELLIJ_RUST_FORCE_USE_NEW_RESOLVE") != null,
+            && System.getenv("INTELLIJ_RUST_FORCE_USE_OLD_RESOLVE") == null,
         @AffectsHighlighting
         var doctestInjectionEnabled: Boolean = true,
         var useRustfmt: Boolean = false,
