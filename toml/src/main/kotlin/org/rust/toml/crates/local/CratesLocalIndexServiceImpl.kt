@@ -35,7 +35,7 @@ import org.eclipse.jgit.treewalk.filter.TreeFilter
 import org.rust.cargo.CargoConstants
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.cleanDirectory
-import org.rust.toml.crates.local.CratesLocalIndexService.Companion.CratesLocalIndexState
+import org.rust.toml.crates.local.CratesLocalIndexServiceImpl.Companion.CratesLocalIndexState
 import java.io.*
 import java.nio.file.Files
 import java.nio.file.Path
@@ -49,7 +49,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * persistent state [CratesLocalIndexState].
  */
 @State(name = "CratesLocalIndexState", storages = [Storage("rust.crateslocalindex.xml")])
-class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>, Disposable {
+class CratesLocalIndexServiceImpl : PersistentStateComponent<CratesLocalIndexState>, Disposable {
     private val userCargoIndexDir: Path
         get() = Paths.get(System.getProperty("user.home"), CARGO_REGISTRY_INDEX_LOCATION)
 
@@ -270,9 +270,9 @@ class CratesLocalIndexService : PersistentStateComponent<CratesLocalIndexState>,
         private const val INVALID_COMMIT_HASH: String = "<invalid>"
         private const val CRATES_INDEX_VERSION: Int = 0
 
-        private val LOG: Logger = logger<CratesLocalIndexService>()
+        private val LOG: Logger = logger<CratesLocalIndexServiceImpl>()
 
-        fun getInstance(): CratesLocalIndexService = service()
+        fun getInstance(): CratesLocalIndexServiceImpl = service()
     }
 }
 
