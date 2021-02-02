@@ -4027,4 +4027,45 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl LocalStruct {}
         impl LocalStructAlias {}
     """)
+
+    @MinRustcVersion("1.33.0")  // for Pin
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test E0117 trait impls orphan rules`() = checkByFileTree("""
+    //- lib.rs
+        pub struct ForeignStruct {}
+        pub trait ForeignTrait {}
+        pub trait ForeignTrait0 {}
+        pub trait ForeignTrait1<T> {}
+    //- main.rs
+        /*caret*/
+        use std::pin::Pin;
+        use test_package::*;
+
+        pub struct LocalStruct {}
+        pub trait LocalTrait {}
+
+        // simple
+        impl LocalTrait for LocalStruct {}
+        impl LocalTrait for ForeignStruct {}
+        impl ForeignTrait for LocalStruct {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for ForeignStruct {}
+
+        // trait has type parameters
+        impl ForeignTrait1<LocalStruct> for ForeignStruct {}
+        impl ForeignTrait1<ForeignStruct> for LocalStruct {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait1<ForeignStruct></error> for ForeignStruct {}
+
+        // uncovering
+        impl ForeignTrait for &LocalStruct {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for &ForeignStruct {}
+        impl ForeignTrait for Box<LocalStruct> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<ForeignStruct> {}
+        impl ForeignTrait for Pin<LocalStruct> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Pin<ForeignStruct> {}
+
+        // trait objects
+        impl ForeignTrait for Box<dyn LocalTrait> {}
+        impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0> {}
+    """)
 }

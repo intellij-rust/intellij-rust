@@ -694,6 +694,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         checkImplDropForNonAdtError(holder, impl, traitRef, trait)
         checkSuperTraitImplemented(holder, impl, trait)
         checkImplBothCopyAndDrop(holder, impl, trait)
+        checkTraitImplOrphanRules(holder, impl)
         val traitName = trait.name ?: return
 
         fun mayDangleOnTypeOrLifetimeParameters(impl: RsImplItem): Boolean {
@@ -819,6 +820,15 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val struct = (typeReference.type as? TyAdt)?.item ?: return
         if (impl.containingCrate != struct.containingCrate) {
             RsDiagnostic.InherentImplDifferentCrateError(typeReference).addToHolder(holder)
+        }
+    }
+
+    // E0117: Only traits defined in the current crate can be implemented for arbitrary types
+    private fun checkTraitImplOrphanRules(holder: RsAnnotationHolder, impl: RsImplItem) {
+        val implContainingCrate = impl.containingCrate
+        if (!checkOrphanRules(impl) { it.containingCrate == implContainingCrate }) {
+            val traitRef = impl.traitRef ?: return
+            RsDiagnostic.TraitImplOrphanRulesError(traitRef).addToHolder(holder)
         }
     }
 

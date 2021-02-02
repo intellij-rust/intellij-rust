@@ -20,10 +20,12 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.DEFAULT
 import org.rust.lang.core.psi.RsElementTypes.EXCL
 import org.rust.lang.core.resolve.RsCachedImplItem
+import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.stubs.RsImplItemStub
 import org.rust.lang.core.types.BoundElement
 import org.rust.lang.core.types.RsPsiTypeImplUtil
-import org.rust.lang.core.types.ty.Ty
+import org.rust.lang.core.types.ty.*
+import org.rust.lang.core.types.type
 
 val RsImplItem.default: PsiElement?
     get() = node.findChildByType(DEFAULT)?.psi
@@ -34,6 +36,9 @@ val RsImplItem.isNegativeImpl: Boolean
 
 val RsImplItem.isReservationImpl: Boolean
     get() = queryAttributes.hasAttribute("rustc_reservation_impl")
+
+val RsImplItem.implementingType: TyAdt?
+    get() = typeReference?.type as? TyAdt
 
 abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImplItem {
 
@@ -79,4 +84,40 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
     val cachedImplItem: CachedValue<RsCachedImplItem> = CachedValueImpl {
         CachedValueProvider.Result(RsCachedImplItem(this), project.rustStructureModificationTracker)
     }
+}
+
+// https://doc.rust-lang.org/reference/items/implementations.html#orphan-rules
+fun checkOrphanRules(impl: RsImplItem, isSameCrate: (RsElement) -> Boolean): Boolean {
+    val traitRef = impl.traitRef ?: return true
+    val (trait, subst, _) = traitRef.resolveToBoundTrait() ?: return true
+    if (isSameCrate(trait)) return true
+    val typeParameters = subst.typeSubst.values + (impl.typeReference?.type ?: return true)
+    return typeParameters.any { tyWrapped ->
+        val ty = tyWrapped.unwrapFundamentalTypes()
+        ty is TyUnknown
+            // `impl ForeignTrait<LocalStruct> for ForeignStruct`
+            || ty is TyAdt && isSameCrate(ty.item)
+            // `impl ForeignTrait for Box<dyn LocalTrait>`
+            || ty is TyTraitObject && (ty.traits.isEmpty() || isSameCrate(ty.traits.first().element))
+            // `impl<T> ForeignTrait for Box<T>` in stdlib
+            || tyWrapped is TyAdt && isSameCrate(tyWrapped.item)
+    }
+    // TODO uncovering
+}
+
+// https://doc.rust-lang.org/reference/glossary.html#fundamental-type-constructors
+private fun Ty.unwrapFundamentalTypes(): Ty {
+    when (this) {
+        // &T -> T
+        // &mut T -> T
+        is TyReference -> return referenced
+        // Box<T> -> T
+        // Pin<T> -> T
+        is TyAdt -> {
+            if (item == item.knownItems.Box || item == item.knownItems.Pin) {
+                return typeArguments.firstOrNull() ?: this
+            }
+        }
+    }
+    return this
 }

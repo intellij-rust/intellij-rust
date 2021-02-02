@@ -1358,11 +1358,19 @@ sealed class RsDiagnostic(
             "Cannot define inherent `impl` for a type outside of the crate where the type is defined"
         )
     }
+
+    class TraitImplOrphanRulesError(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare() = PreparedAnnotation(
+            ERROR,
+            E0117,
+            "Only traits defined in the current crate can be implemented for arbitrary types"
+        )
+    }
 }
 
 enum class RsErrorCode {
     E0004, E0015, E0023, E0025, E0026, E0027, E0040, E0046, E0050, E0054, E0057, E0060, E0061, E0069, E0081, E0084,
-    E0106, E0107, E0116, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
+    E0106, E0107, E0116, E0117, E0118, E0120, E0121, E0124, E0132, E0133, E0184, E0185, E0186, E0198, E0199,
     E0200, E0201, E0202, E0252, E0261, E0262, E0263, E0267, E0268, E0277,
     E0308, E0322, E0328, E0364, E0365, E0379, E0384,
     E0403, E0404, E0407, E0415, E0416, E0424, E0426, E0428, E0433, E0435, E0449, E0451, E0463,
