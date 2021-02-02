@@ -6,6 +6,7 @@
 package org.rust.lang.core.dfa
 
 import com.intellij.psi.PsiElement
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.regions.ScopeTree
@@ -14,6 +15,7 @@ import org.rust.lang.core.types.type
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph
 import org.rust.lang.utils.PresentableNodeData
+import org.rust.stdext.buildSet
 
 sealed class CFGNodeData(val element: RsElement? = null) : PresentableNodeData {
 
@@ -69,7 +71,8 @@ class ControlFlowGraph private constructor(
     val body: RsBlock,
     val regionScopeTree: ScopeTree,
     val entry: CFGNode,
-    val exit: CFGNode
+    val exit: CFGNode,
+    val unreachableElements: Set<RsElement>
 ) {
     companion object {
         fun buildFor(body: RsBlock, regionScopeTree: ScopeTree): ControlFlowGraph {
@@ -84,13 +87,108 @@ class ControlFlowGraph private constructor(
             cfgBuilder.addContainedEdge(bodyExit, fnExit)
             cfgBuilder.addContainedEdge(fnExit, termination)
 
-            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit)
+            val unreachableElements = collectUnreachableElements(graph, entry)
+
+            return ControlFlowGraph(owner, graph, body, regionScopeTree, entry, fnExit, unreachableElements)
+        }
+
+        /**
+         * Collects unreachable elements, i.e. elements cannot be reached by execution of [body].
+         *
+         * Only collects [RsExprStmt]s, [RsLetDecl]s and tail expressions, ignoring conditionally disabled.
+         */
+        private fun collectUnreachableElements(graph: PresentableGraph<CFGNodeData, CFGEdgeData>, entry: CFGNode): Set<RsElement> {
+            /**
+             * In terms of our control-flow graph, a [RsElement]'s node is not reachable if it cannot be fully executed,
+             * since [CFGBuilder] processes elements in post-order.
+             * But partially executed elements should not be treated as unreachable because the execution
+             * actually reaches them; only some parts of such elements should be treated as unreachable instead.
+             *
+             * So, first of all, collect all the unexecuted [RsElement]s (including partially executed)
+             */
+            val unexecutedElements = buildSet<RsElement> {
+                val fullyExecutedNodeIndices = graph.depthFirstTraversal(entry).map { it.index }.toSet()
+                graph.forEachNode { node ->
+                    if (node.index !in fullyExecutedNodeIndices) {
+                        val element = node.data.element ?: return@forEachNode
+                        add(element)
+                    }
+                }
+            }
+            val unexecutedStmts = unexecutedElements
+                .filterIsInstance<RsStmt>()
+            val unexecutedTailExprs = unexecutedElements
+                .filterIsInstance<RsBlock>()
+                .mapNotNull { block ->
+                    block.expr?.takeIf { expr ->
+                        when (expr) {
+                            is RsMacroExpr -> expr.macroCall in unexecutedElements
+                            else -> expr in unexecutedElements
+                        }
+                    }
+                }
+
+            /**
+             * If [unexecuted] produces termination by itself
+             * (which means its inner expression type is [TyNever], see the corresponding checks below),
+             * it should be treated as unreachable only if the execution does not reach the beginning of [unexecuted].
+             * The latter means that previous statement is not fully executed.
+             * This is needed in order not to treat the first, basically reachable, `return` as unreachable
+             */
+            fun isUnreachable(unexecuted: RsElement, innerExpr: RsExpr?): Boolean {
+                // Ignore conditionally disabled elements
+                if (!unexecuted.isEnabledByCfg) {
+                    return false
+                }
+                if (innerExpr != null && !innerExpr.isEnabledByCfg) {
+                    return false
+                }
+
+                // Unexecuted element is definitely unreachable if its inner expression does not produce termination
+                if (innerExpr != null && innerExpr.type !is TyNever) {
+                    return true
+                }
+
+                // Otherwise, unexecuted element's child produces termination and therefore
+                // we should check if it is really unreachable or just not fully executed
+                val parentBlock = unexecuted.ancestorStrict<RsBlock>() ?: return false
+                val blockStmts = parentBlock.stmtList.takeIf { it.isNotEmpty() } ?: return false
+                val blockTailExpr = parentBlock.expr
+                val index = blockStmts.indexOf(unexecuted)
+                return when {
+                    index >= 1 -> {
+                        // `{ ... <unreachable>; <element>; ... }`
+                        blockStmts[index - 1] in unexecutedElements
+                    }
+                    unexecuted == blockTailExpr -> {
+                        // `{ ... <unreachable>; <element> }`
+                        blockStmts.last() in unexecutedElements
+                    }
+                    else -> false
+                }
+            }
+
+            val unreachableElements = mutableSetOf<RsElement>()
+
+            for (stmt in unexecutedStmts) {
+                when {
+                    stmt is RsExprStmt && isUnreachable(stmt, stmt.expr) -> {
+                        unreachableElements.add(stmt)
+                    }
+                    stmt is RsLetDecl && isUnreachable(stmt, stmt.expr) -> {
+                        unreachableElements.add(stmt)
+                    }
+                }
+            }
+            for (tailExpr in unexecutedTailExprs) {
+                if (isUnreachable(tailExpr, tailExpr)) {
+                    unreachableElements.add(tailExpr)
+                }
+            }
+
+            return unreachableElements
         }
     }
-
-    // TODO: Implement dead code elimination
-    @Suppress("unused")
-    fun isNodeReachable(item: RsElement) = graph.depthFirstTraversal(entry).any { it.data.element == item }
 
     fun buildLocalIndex(): HashMap<RsElement, MutableList<CFGNode>> {
         val table = hashMapOf<RsElement, MutableList<CFGNode>>()

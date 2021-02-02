@@ -583,8 +583,9 @@ class CFGBuilder(
         }
     }
 
-    override fun visitLitExpr(litExpr: RsLitExpr) =
-        finishWith { straightLine(litExpr, pred, emptyList()) }
+    override fun visitLitExpr(litExpr: RsLitExpr) = finishWithAstNode(litExpr, pred)
+
+    override fun visitUnitExpr(unitExpr: RsUnitExpr) = finishWithAstNode(unitExpr, pred)
 
     override fun visitMatchExpr(matchExpr: RsMatchExpr) {
         fun processGuard(guard: RsMatchArmGuard, prevGuards: ArrayDeque<CFGNode>, guardStart: CFGNode): CFGNode {
