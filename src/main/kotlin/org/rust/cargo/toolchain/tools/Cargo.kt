@@ -16,6 +16,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isDispatchThread
@@ -40,6 +41,7 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
+import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.BuildScriptMessage
 import org.rust.cargo.toolchain.impl.BuildScriptsInfo
@@ -171,7 +173,14 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     ): BuildScriptsInfo? {
         if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
-        val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs)
+        val nativeHelper = RsPathManager.nativeHelper()
+        val envs = if (nativeHelper != null && Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper")) {
+            EnvironmentVariablesData.create(mapOf(RUSTC_WRAPPER to nativeHelper.toString()), true)
+        } else {
+            EnvironmentVariablesData.DEFAULT
+        }
+
+        val commandLine = CargoCommandLine("check", projectDirectory, additionalArgs, environmentVariables = envs)
 
         val processOutput = try {
             commandLine.execute(owner, listener = listener)

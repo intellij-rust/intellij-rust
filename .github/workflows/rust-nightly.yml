@@ -63,17 +63,17 @@ jobs:
                       arch: x86-64
                       os: ubuntu-latest
                       target: x86_64-unknown-linux-gnu
-                      artifact_path: proc_macro_expander/target/release/proc_macro_expander
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper
                     - name: windows
                       arch: x86-64
                       os: windows-latest
                       target: x86_64-pc-windows-msvc
-                      artifact_path: proc_macro_expander/target/release/proc_macro_expander.exe
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper.exe
                     - name: macos
                       arch: x86-64
                       os: macos-latest
                       target: x86_64-apple-darwin
-                      artifact_path: proc_macro_expander/target/release/proc_macro_expander
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper
 
         name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
         runs-on: ${{ matrix.config.os }}
@@ -93,7 +93,7 @@ jobs:
               uses: actions-rs/cargo@v1
               with:
                   command: build
-                  args: --manifest-path proc_macro_expander/Cargo.toml --release
+                  args: --manifest-path native-helper/Cargo.toml --release
 
             - name: Publish
               uses: actions/upload-artifact@v2

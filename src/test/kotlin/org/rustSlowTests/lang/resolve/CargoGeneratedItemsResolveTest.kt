@@ -6,6 +6,7 @@
 package org.rustSlowTests.lang.resolve
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import org.rust.IgnoreInNewResolve
 import org.rust.MinRustcVersion
@@ -250,6 +251,31 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
                     fn main() {
                         println!("{}", code_generation_example::message());
                                                                //^
+                    }
+                """)
+            }
+        }.checkReferenceIsResolved<RsPath>("src/lib.rs")
+    }
+
+    @MinRustcVersion("1.41.0")
+    fun `test include with build script info with invalid code`() = withEnabledEvaluateBuildScriptsFeature {
+        assertTrue(Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper"))
+        buildProject {
+            toml("Cargo.toml", """
+                [package]
+                name = "intellij-rust-test"
+                version = "0.1.0"
+                authors = []
+
+                [dependencies]
+                code-generation-example = "0.1.0"
+            """)
+            dir("src") {
+                rust("lib.rs", """
+                    fn main() {
+                        println!("{}", code_generation_example::message());
+                                                               //^
+                        some syntax errors here
                     }
                 """)
             }

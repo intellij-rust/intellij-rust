@@ -16,11 +16,11 @@ object RsPathManager {
     fun pluginDir(): Path = plugin().pluginPath
     fun prettyPrintersDir(): Path = pluginDir().resolve("prettyPrinters")
 
-    fun procMacroExpander(): Path? {
+    fun nativeHelper(): Path? {
         val (os, binaryName) = when {
-            SystemInfo.isLinux -> "linux" to "proc_macro_expander"
-            SystemInfo.isMac -> "macos" to "proc_macro_expander"
-            SystemInfo.isWindows -> "windows" to "proc_macro_expander.exe"
+            SystemInfo.isLinux -> "linux" to "intellij-rust-native-helper"
+            SystemInfo.isMac -> "macos" to "intellij-rust-native-helper"
+            SystemInfo.isWindows -> "windows" to "intellij-rust-native-helper.exe"
             else -> return null
         }
         val arch = when {
@@ -28,7 +28,7 @@ object RsPathManager {
             "x86_64" == SystemInfo.OS_ARCH || "amd64" == SystemInfo.OS_ARCH -> "x86-64"
             else -> return null
         }
-        // TODO: find out why `pluginDir` returns unexpected dir in tests
+
         return pluginDir().resolve("bin/$os/$arch/$binaryName").takeIf { Files.exists(it) }
     }
 

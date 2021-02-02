@@ -69,6 +69,7 @@ open class RsToolchain(val location: Path) {
          * @see <a href="https://github.com/rust-lang/cargo/blob/06ddf3557796038fd87743bd3b6530676e12e719/src/cargo/core/features.rs#L447">features.rs</a>
          */
         const val RUSTC_BOOTSTRAP: String = "RUSTC_BOOTSTRAP"
+        const val RUSTC_WRAPPER: String = "RUSTC_WRAPPER"
 
         fun suggest(): RsToolchain? =
             RsToolchainFlavor.getFlavors()
