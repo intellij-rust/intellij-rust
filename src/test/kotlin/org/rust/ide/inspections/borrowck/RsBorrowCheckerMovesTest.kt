@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.borrowck
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
@@ -726,11 +727,33 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test move in async block`() = checkByText("""
         struct S;
-        
+
         fn foo() {
             let s = S;
             async { s; };
             <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test move in conditionally enabled code`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let s = S;
+            #[cfg(intellij_rust)] s;
+            <error descr="Use of moved value">s</error>;
+        }
+    """, checkWarn = false)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test move in conditionally disabled code`() = checkByText("""
+        struct S;
+
+        fn main() {
+            let s = S;
+            #[cfg(not(intellij_rust))] s;
+            s;
         }
     """, checkWarn = false)
 }
