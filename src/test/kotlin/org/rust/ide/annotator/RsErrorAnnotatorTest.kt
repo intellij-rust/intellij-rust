@@ -4009,4 +4009,22 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         fn foo() -> impl FooBar {}
     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test E0116 inherent impls should be in same crate`() = checkByFileTree("""
+    //- lib.rs
+        pub struct ForeignStruct {}
+    //- main.rs
+        /*caret*/
+        use test_package::ForeignStruct;
+
+        struct LocalStruct {}
+        type ForeignStructAlias = ForeignStruct;
+        type LocalStructAlias = LocalStruct;
+
+        impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">ForeignStruct</error> {}
+        impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">ForeignStructAlias</error> {}
+        impl LocalStruct {}
+        impl LocalStructAlias {}
+    """)
 }
