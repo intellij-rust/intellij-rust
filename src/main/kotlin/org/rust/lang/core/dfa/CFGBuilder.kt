@@ -28,7 +28,7 @@ class CFGBuilder(
 ) : RsVisitor() {
     data class BlockScope(val blockExpr: RsBlockExpr, val breakNode: CFGNode)
 
-    data class LoopScope(val loop: RsLabeledExpression, val continueNode: CFGNode, val breakNode: CFGNode)
+    data class LoopScope(val loop: RsLooplikeExpr, val continueNode: CFGNode, val breakNode: CFGNode)
 
     enum class ScopeCFKind {
         Break, Continue;
@@ -135,7 +135,7 @@ class CFGBuilder(
             }
         } else {
             // otherwise, try to find the corresponding loop
-            val exprBlock = expr.ancestors.filterIsInstance<RsLabeledExpression>().firstOrNull()?.block
+            val exprBlock = expr.ancestors.filterIsInstance<RsLooplikeExpr>().firstOrNull()?.block
 
             for ((loop, continueNode, breakNode) in loopScopes) {
                 if (loop.block == exprBlock) {

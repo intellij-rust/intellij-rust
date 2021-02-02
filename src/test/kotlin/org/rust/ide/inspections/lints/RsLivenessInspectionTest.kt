@@ -803,4 +803,16 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             a;
         }
     """)
+
+    fun `test use after loop with break inside block expr`() = checkByText("""
+        fn main() {
+            let x = 1;
+            loop {
+                {
+                    break;
+                }
+            }
+            x;
+        }
+    """)
 }

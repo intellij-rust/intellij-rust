@@ -998,6 +998,28 @@ class RsControlFlowGraphTest : RsTestBase() {
         Exit
     """)
 
+    fun `test loop with break inside block expr`() = testCFG("""
+        fn main() {
+            loop {
+                {
+                    break;
+                }
+            }
+            1;
+        }
+    """, """
+        Entry
+        Dummy
+        break
+        LOOP
+        LOOP;
+        1
+        1;
+        BLOCK
+        Exit
+        Termination
+    """)
+
     private fun testCFG(@Language("Rust") code: String, expectedIndented: String) {
         InlineFile(code)
         val function = myFixture.file.descendantsOfType<RsFunction>().firstOrNull() ?: return
