@@ -40,9 +40,7 @@ val graziePlugin = if (baseIDE == "idea") "tanvd.grazi" else "tanvd.grazi:${prop
 val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
-// We can't use `com.intellij.java` here because of
-// https://github.com/JetBrains/gradle-intellij-plugin/issues/565
-val javaPlugin = "java"
+val javaPlugin = "com.intellij.java"
 val javaScriptPlugin = "JavaScript"
 val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
@@ -52,8 +50,8 @@ val compileNativeCodeTaskName = "compileNativeCode"
 plugins {
     idea
     kotlin("jvm") version "1.4.10"
-    id("org.jetbrains.intellij") version "0.6.3"
-    id("org.jetbrains.grammarkit") version "2020.2.1"
+    id("org.jetbrains.intellij") version "0.6.5"
+    id("org.jetbrains.grammarkit") version "2020.3.2"
     id("net.saliman.properties") version "1.5.1"
 }
 
