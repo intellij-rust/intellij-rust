@@ -13,6 +13,8 @@ import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot
 import com.intellij.ide.util.projectWizard.importSources.ProjectFromSourcesBuilder
 import com.intellij.ide.util.projectWizard.importSources.ProjectStructureDetector
 import org.rust.cargo.CargoConstants
+import org.rust.ide.module.CargoConfigurationWizardStep
+import org.rust.ide.module.RsModuleType
 import java.io.File
 import javax.swing.Icon
 
@@ -46,8 +48,13 @@ class RsProjectStructureDetector : ProjectStructureDetector() {
         projectDescriptor.modules = listOf(moduleDescriptor)
     }
 
-    override fun createWizardSteps(builder: ProjectFromSourcesBuilder,
-                                   projectDescriptor: ProjectDescriptor,
-                                   stepIcon: Icon?): List<ModuleWizardStep> =
-        listOf(CargoConfigurationWizardStep.importExistingProject(builder.context, projectDescriptor))
+    override fun createWizardSteps(
+        builder: ProjectFromSourcesBuilder,
+        projectDescriptor: ProjectDescriptor,
+        stepIcon: Icon?
+    ): List<ModuleWizardStep> {
+        return listOf(CargoConfigurationWizardStep(builder.context) {
+            projectDescriptor.modules.firstOrNull()?.addConfigurationUpdater(it)
+        })
+    }
 }

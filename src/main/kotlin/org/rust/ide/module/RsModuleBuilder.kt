@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.idea
+package org.rust.ide.module
 
 import com.intellij.execution.ExecutionException
 import com.intellij.ide.util.projectWizard.ModuleBuilder
@@ -28,13 +28,13 @@ import org.rust.ide.newProject.openFiles
  */
 class RsModuleBuilder : ModuleBuilder() {
 
-    override fun getModuleType(): ModuleType<*>? = RsModuleType.INSTANCE
+    override fun getModuleType(): ModuleType<*> = RsModuleType.INSTANCE
 
     override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean = true
 
     override fun getCustomOptionsStep(context: WizardContext, parentDisposable: Disposable): ModuleWizardStep =
-        CargoConfigurationWizardStep.newProject(context).apply {
-            Disposer.register(parentDisposable, Disposable { this.disposeUIResources() })
+        CargoConfigurationWizardStep(context).apply {
+            Disposer.register(parentDisposable, this::disposeUIResources)
         }
 
     override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {

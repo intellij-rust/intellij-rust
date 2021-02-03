@@ -9,6 +9,12 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Rust -->
 
+        <!-- Modules -->
+        <!-- although Rust module type is only created by IDEA, we need it in other IDEs as well
+        to be able to open a project created in IDEA without errors -->
+        <moduleType id="RUST_MODULE" implementationClass="org.rust.ide.module.RsModuleType"/>
+        <moduleBuilder builderClass="org.rust.ide.module.RsModuleBuilder"/>
+
         <!-- Project Creation -->
         <projectOpenProcessor id="Cargo" implementation="org.rust.cargo.project.CargoProjectOpenProcessor"/>
         <directoryProjectGenerator implementation="org.rust.ide.newProject.RsDirectoryProjectGenerator"/>

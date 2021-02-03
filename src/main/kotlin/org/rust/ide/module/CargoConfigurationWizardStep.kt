@@ -3,9 +3,8 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.idea
+package org.rust.ide.module
 
-import com.intellij.ide.util.importProject.ProjectDescriptor
 import com.intellij.ide.util.projectWizard.ModuleBuilder.ModuleConfigurationUpdater
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -23,12 +22,12 @@ import org.rust.ide.newProject.ui.RsNewProjectPanel
 import org.rust.openapiext.pathAsPath
 import javax.swing.JComponent
 
-class CargoConfigurationWizardStep private constructor(
+class CargoConfigurationWizardStep(
     private val context: WizardContext,
-    private val projectDescriptor: ProjectDescriptor? = null
+    private val configurationUpdaterConsumer: ((ModuleConfigurationUpdater) -> Unit)? = null
 ) : ModuleWizardStep() {
 
-    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = projectDescriptor == null)
+    private val newProjectPanel = RsNewProjectPanel(showProjectTypeSelection = configurationUpdaterConsumer == null)
 
     override fun getComponent(): JComponent = panel {
         newProjectPanel.attachTo(this)
@@ -45,7 +44,7 @@ class CargoConfigurationWizardStep private constructor(
             projectBuilder.configurationData = data
             projectBuilder.addModuleConfigurationUpdater(ConfigurationUpdater)
         } else {
-            projectDescriptor?.modules?.firstOrNull()?.addConfigurationUpdater(ConfigurationUpdater)
+            configurationUpdaterConsumer?.invoke(ConfigurationUpdater)
         }
     }
 
@@ -82,13 +81,5 @@ class CargoConfigurationWizardStep private constructor(
                 contentEntry.setup(projectRoot)
             }
         }
-    }
-
-    companion object {
-        fun newProject(context: WizardContext) =
-            CargoConfigurationWizardStep(context, null)
-
-        fun importExistingProject(context: WizardContext, projectDescriptor: ProjectDescriptor) =
-            CargoConfigurationWizardStep(context, projectDescriptor)
     }
 }
