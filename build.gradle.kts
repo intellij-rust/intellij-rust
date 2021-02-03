@@ -52,6 +52,7 @@ plugins {
     id("org.jetbrains.intellij") version "0.6.3"
     id("org.jetbrains.grammarkit") version "2020.2.1"
     id("net.saliman.properties") version "1.5.1"
+    id("org.gradle.test-retry") version "1.2.0"
 }
 
 idea {
@@ -67,6 +68,7 @@ allprojects {
         plugin("kotlin")
         plugin("org.jetbrains.grammarkit")
         plugin("org.jetbrains.intellij")
+        plugin("org.gradle.test-retry")
     }
 
     repositories {
@@ -113,6 +115,12 @@ allprojects {
 
         test {
             testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
+            if (CI) {
+                retry {
+                    maxRetries.set(3)
+                    maxFailures.set(5)
+                }
+            }
         }
 
         val compileNativeCode = task<Exec>("compileNativeCode") {
