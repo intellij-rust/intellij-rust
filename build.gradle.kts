@@ -4,6 +4,7 @@ import org.gradle.api.JavaVersion.VERSION_1_8
 import org.gradle.api.internal.HasConvention
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.jetbrains.grammarkit.tasks.GenerateLexer
 import org.jetbrains.grammarkit.tasks.GenerateParser
 import org.jetbrains.intellij.tasks.PatchPluginXmlTask
@@ -45,6 +46,8 @@ val javaPlugin = "java"
 val javaScriptPlugin = "JavaScript"
 val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
+
+val compileNativeCodeTaskName = "compileNativeCode"
 
 plugins {
     idea
@@ -115,46 +118,26 @@ allprojects {
             testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
         }
 
-        val compileNativeCode = task<Exec>("compileNativeCode") {
-            workingDir = rootDir.resolve("native-helper")
-            executable = "cargo"
-            // Hack to use unstable `--out-dir` option work for stable toolchain
-            // https://doc.rust-lang.org/cargo/commands/cargo-build.html#output-options
-            environment("RUSTC_BOOTSTRAP", "1")
-
-            val hostPlatform = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.host()
-            val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/${hostPlatform.architecture.name}"
-            args("build", "--release", "-Z", "unstable-options", "--out-dir", outDir)
-
-            // It may be useful to disable compilation of native code.
-            // For example, CI builds native code for each platform in separate tasks and puts it into `bin` dir manually
-            // so there is no need to do it again.
-            enabled = prop("compileNativeCode").toBoolean()
-        }
-
-        // It makes sense to copy native binaries only for root ("intellij-rust") and "plugin" projects' sandboxes
-        // because:
+        // It makes sense to copy native binaries only for root ("intellij-rust") and "plugin" projects because:
         // - `intellij-rust` is supposed to provide all necessary functionality related to procedural macro expander.
         //   So the binaries are required for the corresponding tests.
-        //   `gradle-intellij-plugin` creates separate test plugin for each module to run tests and
-        //   prepares test sandbox for it.
         // - `plugin` is root project to build plugin artifact and exactly its sandbox is included into the plugin artifact
         if (project.name in listOf("intellij-rust", "plugin")) {
-            withType<PrepareSandboxTask> {
-                dependsOn(compileNativeCode)
-                from("${rootDir}/bin") {
-                    into("intellij-rust/bin")
-                    include("**")
-                }
-            }
+            task<Exec>(compileNativeCodeTaskName) {
+                workingDir = rootDir.resolve("native-helper")
+                executable = "cargo"
+                // Hack to use unstable `--out-dir` option work for stable toolchain
+                // https://doc.rust-lang.org/cargo/commands/cargo-build.html#output-options
+                environment("RUSTC_BOOTSTRAP", "1")
 
-            // In tests `resources` directory is used instead of `sandbox`
-            processTestResources {
-                dependsOn(compileNativeCode)
-                from("${rootDir}/bin") {
-                    into("bin")
-                    include("**")
-                }
+                val hostPlatform = DefaultNativePlatform.host()
+                val outDir = "${rootDir}/bin/${hostPlatform.operatingSystem.toFamilyName()}/${hostPlatform.architecture.name}"
+                args("build", "--release", "-Z", "unstable-options", "--out-dir", outDir)
+
+                // It may be useful to disable compilation of native code.
+                // For example, CI builds native code for each platform in separate tasks and puts it into `bin` dir manually
+                // so there is no need to do it again.
+                enabled = prop("compileNativeCode").toBoolean()
             }
         }
     }
@@ -271,6 +254,14 @@ project(":plugin") {
         }
 
         withType<PrepareSandboxTask> {
+            dependsOn(named(compileNativeCodeTaskName))
+
+            // Copy native binaries
+            from("${rootDir}/bin") {
+                into("intellij-rust/bin")
+                include("**")
+            }
+            // Copy pretty printers
             from("$rootDir/prettyPrinters") {
                 into("${intellij.pluginName}/prettyPrinters")
                 include("*.py")
@@ -351,26 +342,37 @@ project(":") {
         purgeOldFiles = true
     }
 
-    tasks.withType<KotlinCompile> {
-        dependsOn(
-            generateRustLexer, generateRustDocHighlightingLexer,
-            generateRustParser
-        )
+    tasks {
+        withType<KotlinCompile> {
+            dependsOn(
+                generateRustLexer, generateRustDocHighlightingLexer,
+                generateRustParser
+            )
 
-        doFirst {
-            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
-            // that conflicts with the corresponding project dependency
-            // TODO: find out a better way to avoid wrong dependency during compilation
-            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+            doFirst {
+                // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+                // that conflicts with the corresponding project dependency
+                // TODO: find out a better way to avoid wrong dependency during compilation
+                classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+            }
         }
-    }
 
-    tasks.withType<Test> {
-        doFirst {
-            // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
-            // that conflicts with the corresponding project dependency
-            // TODO: find out a better way to avoid wrong dependency during test execution
-            classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+        withType<Test> {
+            doFirst {
+                // Since 2021.1 the platform contains markdown-0.1.41.jar as a dependency
+                // that conflicts with the corresponding project dependency
+                // TODO: find out a better way to avoid wrong dependency during test execution
+                classpath = classpath.filter { it.name != "markdown-0.1.41.jar" }
+            }
+        }
+
+        // In tests `resources` directory is used instead of `sandbox`
+        processTestResources {
+            dependsOn(named(compileNativeCodeTaskName))
+            from("${rootDir}/bin") {
+                into("bin")
+                include("**")
+            }
         }
     }
 
