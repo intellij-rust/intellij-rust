@@ -48,7 +48,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     }
 
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
-        val skipReason = rustupFixture.skipTestReason ?: getIgnoredInNewResolveReason(project)
+        val skipReason = rustupFixture.skipTestReason
         if (skipReason != null) {
             System.err.println("SKIP \"$name\": $skipReason")
             return
@@ -77,6 +77,7 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
         if (disableMissedCacheAssertions) {
             RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         }
+        setupResolveEngine(project, testRootDisposable)
     }
 
     override fun tearDown() {

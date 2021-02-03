@@ -71,7 +71,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @IgnoreInNewResolve
+    @UseOldResolve
     fun `test duplicated macro_export macro`() = stubOnlyResolve("""
     //- main.rs
         #[macro_use]
@@ -742,7 +742,7 @@ class RsPackageLibraryResolveTest : RsResolveTestBase() {
         }
     """)
 
-    @IgnoreInNewResolve
+    @UseOldResolve
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test ambiguity of extern crate alias and other item with the same name`() {
         stubOnlyResolve("""

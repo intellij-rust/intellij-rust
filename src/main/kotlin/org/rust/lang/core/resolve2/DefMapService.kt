@@ -321,10 +321,10 @@ class DefMapService(val project: Project) : Disposable {
 
     companion object {
         @TestOnly
-        fun setUseNewResolve(project: Project, disposable: Disposable) {
+        fun setNewResolveEnabled(project: Project, disposable: Disposable, value: Boolean) {
             check(isUnitTestMode)
             project.rustSettings.modifyTemporary(disposable) {
-                it.newResolveEnabled = true
+                it.newResolveEnabled = value
             }
         }
     }
