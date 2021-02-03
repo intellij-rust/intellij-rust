@@ -175,8 +175,7 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
             return needInstall
         }
 
-        @Suppress("SameParameterValue")
-        private fun checkNeedInstallTarget(
+        fun checkNeedInstallTarget(
             project: Project,
             cargoProjectDirectory: Path,
             targetName: String
