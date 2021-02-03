@@ -57,8 +57,14 @@ import org.rust.cargo.util.AutoInjectedCrates
 import org.rust.ide.notifications.showBalloon
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.macroExpansionManager
-import org.rust.openapiext.*
-import org.rust.stdext.*
+import org.rust.openapiext.CachedVirtualFile
+import org.rust.openapiext.TaskResult
+import org.rust.openapiext.modules
+import org.rust.openapiext.pathAsPath
+import org.rust.stdext.AsyncValue
+import org.rust.stdext.applyWithSymlink
+import org.rust.stdext.exhaustive
+import org.rust.stdext.mapNotNullToSet
 import org.rust.taskQueue
 import java.nio.file.Path
 import java.nio.file.Paths

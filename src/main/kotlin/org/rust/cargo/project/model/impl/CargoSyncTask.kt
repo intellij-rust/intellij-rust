@@ -197,8 +197,9 @@ private fun fetchRustcInfo(context: CargoSyncTask.SyncContext): TaskResult<Rustc
             ?: return@runWithChildProgress TaskResult.Err("failed to get project sysroot")
 
         val rustcVersion = childContext.toolchain.rustc().queryVersion(workingDirectory)
+        val rustcTargets = childContext.toolchain.rustc().getTargets(workingDirectory)
 
-        TaskResult.Ok(RustcInfo(sysroot, rustcVersion))
+        TaskResult.Ok(RustcInfo(sysroot, rustcVersion, rustcTargets))
     }
 }
 

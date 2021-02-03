@@ -114,7 +114,7 @@ interface CargoProject : UserDataHolderEx {
     }
 }
 
-data class RustcInfo(val sysroot: String, val version: RustcVersion?)
+data class RustcInfo(val sysroot: String, val version: RustcVersion?, val targets: List<String>? = null)
 
 fun guessAndSetupRustProject(project: Project, explicitRequest: Boolean = false): Boolean {
     if (!explicitRequest) {

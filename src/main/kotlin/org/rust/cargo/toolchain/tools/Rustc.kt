@@ -76,6 +76,18 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
         return CfgOptions.parse(rawCfgOptions)
     }
 
+    fun getTargets(projectDirectory: Path?): List<String>? {
+        if (!isUnitTestMode) {
+            checkIsBackgroundThread()
+        }
+        val timeoutMs = 10000
+        val output = createBaseCommandLine(
+            "--print", "target-list",
+            workingDirectory = projectDirectory
+        ).execute(timeoutMs)
+        return if (output?.isSuccess == true) output.stdout.trim().lines() else null
+    }
+
     companion object {
         const val NAME: String = "rustc"
     }

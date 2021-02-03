@@ -62,7 +62,15 @@ private fun getCompleterForOption(name: String): ArgCompleter? = when (name) {
     "bench" -> targetCompleter(CargoWorkspace.TargetKind.Bench)
     "package" -> { ctx -> ctx.currentWorkspace?.packages.orEmpty().map { it.lookupElement } }
     "manifest-path" -> { ctx -> ctx.projects.map { it.lookupElement } }
+    "target" -> { ctx -> getTargetTripleCompletions(ctx) }
     else -> null
+}
+
+private fun getTargetTripleCompletions(ctx: Context): List<LookupElement> {
+    val cargoProject = ctx.projects.firstOrNull() ?: return emptyList()
+    val targets = cargoProject.rustcInfo?.targets ?: return emptyList()
+
+    return targets.map { LookupElementBuilder.create(it) }
 }
 
 private val CargoProject.lookupElement: LookupElement
