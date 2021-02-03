@@ -10,6 +10,8 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.deleteWithSurroundingComma
+import org.rust.lang.core.psi.ext.getNextNonCommentSibling
 
 class RemoveTypeArguments(
     private val startIndex: Int,
@@ -32,14 +34,13 @@ class RemoveTypeArguments(
     }
 
     private fun RsTypeArgumentList.removeTypeParameters() {
-        if (lifetimeList.size > 0) return
-
-        if (startIndex == 0) delete()
-        else {
-            val startElement = typeReferenceList[startIndex - 1].nextSibling
-            val endElement = typeReferenceList[endIndex - 1]
-
-            deleteChildRange(startElement, endElement)
+        val count = endIndex - startIndex
+        for (i in 0 until count) {
+            typeReferenceList[startIndex].deleteWithSurroundingComma()
+        }
+        // If the type argument list is empty, delete it
+        if (lt.getNextNonCommentSibling() == gt) {
+            delete()
         }
     }
 }

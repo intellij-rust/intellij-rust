@@ -391,4 +391,32 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
             let x: foo::   S<T>;
         }
     """)
+
+    fun `test remove type arguments with lifetime 1`() = checkFixByText("Remove redundant type arguments", """
+        struct B<'a, T>(&'a T);
+
+        struct C<'a> {
+            a: <error descr="Wrong number of type arguments: expected 1, found 2 [E0107]">B<'a, u32, i32>/*caret*/</error>
+        }
+    """, """
+        struct B<'a, T>(&'a T);
+
+        struct C<'a> {
+            a: B<'a, u32>
+        }
+    """)
+
+    fun `test remove type arguments with lifetime 2`() = checkFixByText("Remove redundant type arguments", """
+        struct B<'a>(&'a u32);
+
+        struct C<'a> {
+            a: <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">B<'a, i32>/*caret*/</error>
+        }
+    """, """
+        struct B<'a>(&'a u32);
+
+        struct C<'a> {
+            a: B<'a>
+        }
+    """)
 }
