@@ -82,7 +82,7 @@ class CargoProjectServiceTest : RsWithToolchainTestBase() {
         }
 
         fun checkFile(relpath: String, projectName: String?) {
-            val vFile = testProject.root.findFileByRelativePath(relpath)!!
+            val vFile = testProject.file(relpath)
             val project = projects.findProjectForFile(vFile)
             if (project?.presentableName != projectName) {
                 error("Expected $projectName, found $project for $relpath")

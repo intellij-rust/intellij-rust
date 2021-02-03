@@ -216,17 +216,19 @@ class TestProject(
     }
 
     fun doFindElementInFile(path: String): PsiElement {
-        val vFile = root.findFileByRelativePath(path)
-            ?: error("No `$path` file in test project")
+        val vFile = file(path)
         val file = vFile.toPsiFile(project)!!
         return findElementInFile(file, "^")
     }
 
     fun psiFile(path: String): PsiFileSystemItem {
-        val vFile = root.findFileByRelativePath(path)
-            ?: error("Can't find `$path`")
+        val vFile = file(path)
         val psiManager = PsiManager.getInstance(project)
         return if (vFile.isDirectory) psiManager.findDirectory(vFile)!! else psiManager.findFile(vFile)!!
+    }
+
+    fun file(path: String): VirtualFile {
+        return root.findFileByRelativePath(path) ?: error("Can't find `$path`")
     }
 }
 

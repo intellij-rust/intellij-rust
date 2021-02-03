@@ -75,8 +75,8 @@ class CargoTomlFindUsagesTest : RsWithToolchainTestBase() {
             }
             true
         }
-        val vFile = testProject.root.findFileByRelativePath(testProject.fileWithCaret)
-        val psiFile = vFile!!.toPsiFile(project)!!
+        val vFile = testProject.file(testProject.fileWithCaret)
+        val psiFile = vFile.toPsiFile(project)!!
 
         myFixture.openFileInEditor(vFile)
 

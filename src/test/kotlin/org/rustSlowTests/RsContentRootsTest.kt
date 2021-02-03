@@ -7,7 +7,6 @@ package org.rustSlowTests
 
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.rust.TestProject
 import org.rust.cargo.RsWithToolchainTestBase
 
 class RsContentRootsTest : RsWithToolchainTestBase() {
@@ -49,16 +48,16 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
         }
 
         val projectFolders = listOf(
-            ProjectFolder.Source(project.findFile("src"), false),
-            ProjectFolder.Source(project.findFile("examples"), false),
-            ProjectFolder.Source(project.findFile("tests"), true),
-            ProjectFolder.Source(project.findFile("benches"), true),
-            ProjectFolder.Excluded(project.findFile("target")),
-            ProjectFolder.Source(project.findFile("subproject/src"), false),
-            ProjectFolder.Source(project.findFile("subproject/examples"), false),
-            ProjectFolder.Source(project.findFile("subproject/tests"), true),
-            ProjectFolder.Source(project.findFile("subproject/benches"), true),
-            ProjectFolder.Excluded(project.findFile("subproject/target"))
+            ProjectFolder.Source(project.file("src"), false),
+            ProjectFolder.Source(project.file("examples"), false),
+            ProjectFolder.Source(project.file("tests"), true),
+            ProjectFolder.Source(project.file("benches"), true),
+            ProjectFolder.Excluded(project.file("target")),
+            ProjectFolder.Source(project.file("subproject/src"), false),
+            ProjectFolder.Source(project.file("subproject/examples"), false),
+            ProjectFolder.Source(project.file("subproject/tests"), true),
+            ProjectFolder.Source(project.file("subproject/benches"), true),
+            ProjectFolder.Excluded(project.file("subproject/target"))
         )
 
         check(projectFolders)
@@ -80,9 +79,9 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
         }
 
         val projectFolders = listOf(
-            ProjectFolder.Source(project.findFile("src"), false),
-            ProjectFolder.Source(project.findFile("tests"), true),
-            ProjectFolder.Excluded(project.findFile("target"))
+            ProjectFolder.Source(project.file("src"), false),
+            ProjectFolder.Source(project.file("tests"), true),
+            ProjectFolder.Excluded(project.file("target"))
         )
 
         check(projectFolders)
@@ -130,19 +129,19 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
         }
 
         val projectFolders = listOf(
-            ProjectFolder.Excluded(project.findFile("target")),
+            ProjectFolder.Excluded(project.file("target")),
 
-            ProjectFolder.Source(project.findFile("package1/src"), false),
-            ProjectFolder.Source(project.findFile("package1/examples"), false),
-            ProjectFolder.Source(project.findFile("package1/tests"), true),
-            ProjectFolder.Source(project.findFile("package1/benches"), true),
-            ProjectFolder.Excluded(project.findFile("package1/target")),
+            ProjectFolder.Source(project.file("package1/src"), false),
+            ProjectFolder.Source(project.file("package1/examples"), false),
+            ProjectFolder.Source(project.file("package1/tests"), true),
+            ProjectFolder.Source(project.file("package1/benches"), true),
+            ProjectFolder.Excluded(project.file("package1/target")),
 
-            ProjectFolder.Source(project.findFile("package2/src"), false),
-            ProjectFolder.Source(project.findFile("package2/examples"), false),
-            ProjectFolder.Source(project.findFile("package2/tests"), true),
-            ProjectFolder.Source(project.findFile("package2/benches"), true),
-            ProjectFolder.Excluded(project.findFile("package2/target"))
+            ProjectFolder.Source(project.file("package2/src"), false),
+            ProjectFolder.Source(project.file("package2/examples"), false),
+            ProjectFolder.Source(project.file("package2/tests"), true),
+            ProjectFolder.Source(project.file("package2/benches"), true),
+            ProjectFolder.Excluded(project.file("package2/target"))
         )
 
         check(projectFolders)
@@ -175,9 +174,6 @@ class RsContentRootsTest : RsWithToolchainTestBase() {
             }
         }
     }
-
-    private fun TestProject.findFile(path: String): VirtualFile =
-        root.findFileByRelativePath(path) ?: error("Can't find `$path` in `$root`")
 
     private sealed class ProjectFolder {
         data class Source(val file: VirtualFile, val isTest: Boolean) : ProjectFolder()

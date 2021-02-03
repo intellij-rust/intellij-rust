@@ -61,7 +61,7 @@ class CargoTomlWatcherIntegrationTest : RsWithToolchainTestBase() {
         p.checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
         project.testCargoProjects.discoverAndRefreshSync()
 
-        val toml = p.root.findFileByRelativePath("Cargo.toml")!!
+        val toml = p.file("Cargo.toml")
         runWriteAction {
             VfsUtil.saveText(toml, VfsUtil.loadText(toml).replace("#", ""))
         }

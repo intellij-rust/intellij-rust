@@ -159,7 +159,7 @@ class MissingFeaturesInspectionTest : RsWithToolchainInspectionTestBase<Context>
             ?: error("Package ${context.pkgWithFeature} not found")
 
         project.cargoProjects.modifyFeatures(cargoProject, setOf(PackageFeature(pkg, context.featureName)), FeatureState.Disabled)
-        return testProject.root.findFileByRelativePath(context.fileToCheck)!!
+        return testProject.file(context.fileToCheck)
     }
 
     private fun doTest(
