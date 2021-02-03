@@ -26,6 +26,20 @@ class RsChangeSignatureTest : RsTestBase() {
     """, """Cannot perform refactoring.
 Cannot change signature of function with cfg-disabled parameters""")
 
+    fun `test unavailable inside function`() = checkError("""
+        fn foo() {
+            let a/*caret*/ = 5;
+        }
+    """, "The caret should be positioned at a function or method")
+
+
+    fun `test unavailable on unresolved function call`() = checkError("""
+        fn bar(a: u32) {}
+        fn baz() {
+            bar(foo(/*caret*/));
+        }
+    """, "The caret should be positioned at a function or method")
+
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test available if a parameter is cfg-enabled`() = doTest("""
         fn foo/*caret*/(#[cfg(intellij_rust)] a: u32) {}
@@ -1004,6 +1018,56 @@ Cannot change signature of function with cfg-disabled parameters""")
     ) {
         name = "bar"
         returnTypeDisplay = createType("u32")
+    }
+
+    fun `test change called function`() = doTest("""
+        fn foo() {}
+        fn baz() {
+            foo/*caret*/();
+        }
+    """, """
+        fn foo2() {}
+        fn baz() {
+            foo2();
+        }
+    """) {
+        name = "foo2"
+    }
+
+    fun `test change nested called function`() = doTest("""
+        fn foo() -> u32 { 0 }
+        fn bar(a: u32) {}
+        fn baz() {
+            bar(foo(/*caret*/));
+        }
+    """, """
+        fn foo2() -> u32 { 0 }
+        fn bar(a: u32) {}
+        fn baz() {
+            bar(foo2());
+        }
+    """) {
+        name = "foo2"
+    }
+
+    fun `test change called method`() = doTest("""
+        struct S;
+        impl S {
+            fn foo(&self) {}
+        }
+        fn baz(s: S) {
+            s.foo/*caret*/();
+        }
+    """, """
+        struct S;
+        impl S {
+            fn foo2(&self) {}
+        }
+        fn baz(s: S) {
+            s.foo2();
+        }
+    """) {
+        name = "foo2"
     }
 
     private fun RsChangeFunctionSignatureConfig.swapParameters(a: Int, b: Int) {

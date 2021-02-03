@@ -16,7 +16,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import org.rust.RsBundle
-import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
@@ -24,7 +24,18 @@ import org.rust.openapiext.elementUnderCaretInEditor
 class RsChangeSignatureHandler : ChangeSignatureHandler {
     override fun getTargetNotFoundMessage(): String = "The caret should be positioned at a function or method"
 
-    override fun findTargetMember(element: PsiElement): RsFunction? = element.ancestorOrSelf()
+    override fun findTargetMember(element: PsiElement): RsFunction? {
+        for (el in element.ancestors) {
+            return when (el) {
+                is RsFunction -> el
+                is RsCallExpr -> (el.expr as? RsPathExpr)?.path?.reference?.resolve() as? RsFunction
+                is RsMethodCall -> el.reference.resolve() as? RsFunction
+                is RsBlock -> return null
+                else -> continue
+            }
+        }
+        return null
+    }
 
     override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
         val function = elements.singleOrNull() as? RsFunction ?: return

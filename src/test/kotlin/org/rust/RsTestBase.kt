@@ -13,7 +13,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.io.StreamUtil
@@ -43,8 +42,6 @@ import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.macros.findExpansionElements
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.ext.startOffset
-import org.rust.lang.core.resolve2.DefMapService
-import org.rust.lang.core.resolve2.isNewResolveEnabled
 import org.rust.openapiext.saveAllDocuments
 import org.rust.stdext.BothEditions
 import kotlin.reflect.KMutableProperty0
@@ -75,12 +72,10 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockRustcVersion()
         setupMockEdition()
         setupMockCfgOptions()
+        setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
             Disposer.register(testRootDisposable, disposable)
-        }
-        findAnnotationInstance<UseNewResolve>()?.let {
-            DefMapService.setUseNewResolve(project, testRootDisposable)
         }
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         tempDirRoot = myFixture.findFileInTempDir(".")
@@ -183,7 +178,6 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
             return projectDescriptor?.skipTestReason
                 ?: getMinRustVersionReason()
-                ?: getIgnoredInNewResolveReason(project)
         }
 
     private fun runTestEdition2015(testRunnable: ThrowableRunnable<Throwable>) {
@@ -457,12 +451,4 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
 
     protected val PsiElement.lineNumber: Int
         get() = myFixture.getDocument(myFixture.file).getLineNumber(textOffset)
-}
-
-fun UsefulTestCase.getIgnoredInNewResolveReason(project: Project): String? {
-    return if (project.isNewResolveEnabled && findAnnotationInstance<IgnoreInNewResolve>() != null) {
-        "Ignored in new resolve"
-    } else {
-        null
-    }
 }

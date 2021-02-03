@@ -8,8 +8,8 @@ package org.rustSlowTests.lang.resolve
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import org.rust.IgnoreInNewResolve
 import org.rust.MinRustcVersion
+import org.rust.UseOldResolve
 import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.openapiext.runWithEnabledFeature
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
-@IgnoreInNewResolve
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
     private val tempDirFixture = TempDirTestFixtureImpl()
@@ -36,6 +35,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     // because it leads to too long path and compilation of test rust project fails on Windows
     override fun shouldContainTempFiles(): Boolean = false
 
+    @UseOldResolve
     @MinRustcVersion("1.48.0")
     fun `test include in workspace project`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
@@ -82,6 +82,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/4579
+    @UseOldResolve
     @MinRustcVersion("1.48.0")
     fun `test do not overflow stack 1`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
@@ -128,6 +129,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     }
 
     // https://github.com/intellij-rust/intellij-rust/issues/4579
+    @UseOldResolve
     @MinRustcVersion("1.48.0")
     fun `test do not overflow stack 2`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {
@@ -207,6 +209,7 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
+    @UseOldResolve
     @MinRustcVersion("1.48.0")
     fun `test include in dependency`() = withEnabledFetchOutDirFeature {
         val testProject = buildProject {

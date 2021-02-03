@@ -5,9 +5,10 @@
 
 package org.rustPerformanceTests
 
-import org.rust.lang.core.resolve2.DefMapService
+import org.rust.UseNewResolve
 import org.rust.lang.core.resolve2.forceRebuildDefMapForAllCrates
 
+@UseNewResolve
 class RsProfileBuildDefMapTest : RsPerformanceTestBase() {
 
     fun `test rustc`() = doTest(RUSTC)
@@ -23,7 +24,6 @@ class RsProfileBuildDefMapTest : RsPerformanceTestBase() {
     fun `test juniper`() = doTest(JUNIPER)
 
     private fun doTest(info: RealProjectInfo) {
-        DefMapService.setUseNewResolve(project, testRootDisposable)
         openProject(info)
         profile("buildDefMap") {
             project.forceRebuildDefMapForAllCrates(multithread = false)
