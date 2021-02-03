@@ -9,6 +9,6 @@ import com.intellij.ide.caches.CachesInvalidator
 
 class CratesLocalIndexCachesInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
-        CratesLocalIndexService.getInstance().invalidateCaches()
+        (CratesLocalIndexService.getInstance() as? CratesLocalIndexServiceImpl)?.invalidateCaches()
     }
 }
