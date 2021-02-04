@@ -18,35 +18,32 @@ import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 import org.toml.lang.psi.ext.name
 
-class CrateNotFoundInspection : TomlLocalInspectionToolBase() {
-    override fun buildVisitorInternal(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
-        if (!isFeatureEnabled(RsExperiments.CRATES_LOCAL_INDEX)) return null
-        if (holder.file.name != CargoConstants.MANIFEST_FILE) return null
+class CrateNotFoundInspection : CargoTomlInspectionToolBase() {
+    override val requiresLocalCrateIndex: Boolean = true
 
-        return object : TomlVisitor() {
-            override fun visitKeyValue(element: TomlKeyValue) {
-                val table = element.parent as? TomlTable ?: return
-                val depTable = DependencyTable.fromTomlTable(table) ?: return
-                if (depTable !is DependencyTable.General) return
+    override fun buildCargoTomlVisitor(holder: ProblemsHolder): PsiElementVisitor = object : TomlVisitor() {
+        override fun visitKeyValue(element: TomlKeyValue) {
+            val table = element.parent as? TomlTable ?: return
+            val depTable = DependencyTable.fromTomlTable(table) ?: return
+            if (depTable !is DependencyTable.General) return
 
-                val segment = element.key.segments.getOrNull(0) ?: return
-                val name = segment.name ?: return
-                val value = element.value ?: return
-                if (value is TomlLiteral && value.kind is TomlLiteralKind.String) {
-                    handleDependency(DependencyCrate(name, segment, mapOf("version" to value)), holder)
-                } else if (value is TomlInlineTable) {
-                    handleDependency(DependencyCrate(name, segment, collectProperties(value)), holder)
-                }
+            val segment = element.key.segments.getOrNull(0) ?: return
+            val name = segment.name ?: return
+            val value = element.value ?: return
+            if (value is TomlLiteral && value.kind is TomlLiteralKind.String) {
+                handleDependency(DependencyCrate(name, segment, mapOf("version" to value)), holder)
+            } else if (value is TomlInlineTable) {
+                handleDependency(DependencyCrate(name, segment, collectProperties(value)), holder)
             }
+        }
 
-            override fun visitTable(element: TomlTable) {
-                val depTable = DependencyTable.fromTomlTable(element) ?: return
-                if (depTable !is DependencyTable.Specific) return
+        override fun visitTable(element: TomlTable) {
+            val depTable = DependencyTable.fromTomlTable(element) ?: return
+            if (depTable !is DependencyTable.Specific) return
 
-                handleDependency(
-                    DependencyCrate(depTable.crateName, depTable.crateNameElement, collectProperties(element)), holder
-                )
-            }
+            handleDependency(
+                DependencyCrate(depTable.crateName, depTable.crateNameElement, collectProperties(element)), holder
+            )
         }
     }
 
