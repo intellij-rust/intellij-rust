@@ -19,11 +19,6 @@ import org.rust.ide.utils.getTopmostParentInside
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyAdt
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.type
 
 class RsMoveConflictsDetector(
     private val conflicts: MultiMap<PsiElement, String>,
@@ -210,15 +205,7 @@ class RsMoveConflictsDetector(
         fun RsElement.isLocalAfterMove(): Boolean =
             crateRoot == targetMod.crateRoot || isInsideMovedElements(elementsToMove)
 
-        val traitRef = impl.traitRef!!
-        val (trait, subst, _) = traitRef.resolveToBoundTrait() ?: return
-        if (trait.isLocalAfterMove()) return
-        val typeParameters = subst.typeSubst.values + (impl.typeReference?.type ?: return)
-        val anyTypeParameterIsLocal = typeParameters.any {
-            val ty = it.unwrapFundamentalTypes()
-            if (ty is TyAdt) ty.item.isLocalAfterMove() else false
-        }
-        if (!anyTypeParameterIsLocal) {
+        if (!checkOrphanRules(impl, RsElement::isLocalAfterMove)) {
             conflicts.putValue(impl, "Orphan rules check failed for trait implementation after move")
         }
     }
@@ -269,23 +256,4 @@ fun addVisibilityConflict(conflicts: MultiMap<PsiElement, String>, reference: Rs
     val targetDescription = RefactoringUIUtil.getDescription(target, true)
     val message = "$referenceDescription uses $targetDescription which will be inaccessible after move"
     conflicts.putValue(reference, StringUtil.capitalize(message))
-}
-
-private val RsImplItem.implementingType: TyAdt? get() = typeReference?.type as? TyAdt
-
-// https://doc.rust-lang.org/reference/glossary.html#fundamental-type-constructors
-private fun Ty.unwrapFundamentalTypes(): Ty {
-    when (this) {
-        // &T -> T
-        // &mut T -> T
-        is TyReference -> return referenced
-        // Box<T> -> T
-        // Pin<T> -> T
-        is TyAdt -> {
-            if (item == item.knownItems.Box || item == item.knownItems.Pin) {
-                return typeArguments.singleOrNull() ?: this
-            }
-        }
-    }
-    return this
 }
