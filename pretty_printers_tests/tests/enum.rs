@@ -1,14 +1,11 @@
 // min-version: 1.30.0
-// Temporarily disable this test because it fails on 2021.1
-// https://github.com/intellij-rust/intellij-rust/issues/6746
-// max-version: 1.30.0
 
 // === GDB TESTS ===================================================================================
 
 // gdb-command:run
 
 // gdb-command:print a
-// gdbg-check:[...]$1 = enum::EnumA::Var3 = {Var3 = enum::EnumA::Var3 = {a = 5, b = enum::TestEnumB::Var2 = {Var2 = enum::TestEnumB::Var2 = {a = 5, b = "hello", c = enum::EnumC::Var1 = {Var1 = size=1 = {8}}}}}}
+// gdbg-check:[...]$1 = enum::EnumA::Var3 = {Var3 = enum::EnumA::Var3 = {a = 5, b = enum::TestEnumB::Var2 = {Var2 = enum::TestEnumB::Var2 = {a = 5, b = "hello", c = enum::EnumC[...] = {Var1 = size=1 = {8}}}}}}
 
 // gdb-command:print d
 // gdbg-check:[...]$2 = enum::EnumD
