@@ -687,6 +687,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkImpl(holder: RsAnnotationHolder, impl: RsImplItem) {
         checkImplForNonAdtError(holder, impl)
         checkConstTraitImpl(holder, impl)
+        checkInherentImplSameCrate(holder, impl)
         val traitRef = impl.traitRef ?: return
         val trait = traitRef.resolveToTrait() ?: return
         checkForbiddenImpl(holder, traitRef, trait)
@@ -809,6 +810,16 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         if (!trait.implLookup.canSelect(TraitRef(self, oppositeTrait.withSubst()))) return
 
         RsDiagnostic.ImplBothCopyAndDropError(element).addToHolder(holder)
+    }
+
+    // E0116: Cannot define inherent `impl` for a type outside of the crate where the type is defined
+    private fun checkInherentImplSameCrate(holder: RsAnnotationHolder, impl: RsImplItem) {
+        if (impl.traitRef != null) return  // checked in [checkTraitImplOrphanRules]
+        val typeReference = impl.typeReference ?: return
+        val struct = (typeReference.type as? TyAdt)?.item ?: return
+        if (impl.containingCrate != struct.containingCrate) {
+            RsDiagnostic.InherentImplDifferentCrateError(typeReference).addToHolder(holder)
+        }
     }
 
     private fun checkTypeAlias(holder: RsAnnotationHolder, ta: RsTypeAlias) {
