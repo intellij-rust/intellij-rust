@@ -14,6 +14,7 @@ import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.withMockedCrates
 
 class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspection::class) {
+class CrateNotFoundInspectionTest : CargoTomlCrateInspectionTestBase(CrateNotFoundInspection::class) {
     fun `test missing crate in dependencies`() = doTest("""
         [dependencies]
         <warning descr="Crate foo not found">foo</warning> = "1"
