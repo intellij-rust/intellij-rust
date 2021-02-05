@@ -12,6 +12,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
+import org.rust.cargo.project.workspace.PackageId
 import org.rust.ide.annotator.isValid
 
 // https://docs.rs/cargo/0.33.0/cargo/util/machine_message/struct.FromCompiler.html
@@ -139,21 +140,79 @@ enum class Applicability {
     UNSPECIFIED
 }
 
+sealed class CompilerMessage {
+    @Suppress("PropertyName")
+    abstract val package_id: PackageId
+
+    companion object {
+        fun fromJson(json: JsonObject): CompilerMessage? {
+            val reason = json.getAsJsonPrimitive("reason")?.asString ?: return null
+            val cls: Class<out CompilerMessage> = when (reason) {
+                BuildScriptMessage.REASON -> BuildScriptMessage::class.java
+                CompilerArtifactMessage.REASON -> CompilerArtifactMessage::class.java
+                else -> return null
+            }
+            return Gson().fromJson(json, cls)
+        }
+    }
+}
+
 /**
  * Represents execution result of build script
  *
  * @see <a href="https://github.com/rust-lang/cargo/blob/f0f73f04d104b67f982c3e24f074f48308c0afd0/src/cargo/util/machine_message.rs#L62-L70">machine_message.rs</a>
  */
 data class BuildScriptMessage(
-    val package_id: String,
+    override val package_id: PackageId,
     val cfgs: List<String>,
     val env: List<List<String>>,
     val out_dir: String?
-) {
+) : CompilerMessage() {
     companion object {
-        fun fromJson(json: JsonObject): BuildScriptMessage? {
-            if (json.getAsJsonPrimitive("reason")?.asString != "build-script-executed") return null
-            return Gson().fromJson(json, BuildScriptMessage::class.java)
+        const val REASON: String = "build-script-executed"
+    }
+}
+
+/**
+ * Represents some compiled artifact
+ *
+ * @see <a href="https://github.com/rust-lang/cargo/blob/f0f73f04d104b67f982c3e24f074f48308c0afd0/src/cargo/util/machine_message.rs#L33-L42">machine_message.rs</a>
+ */
+data class CompilerArtifactMessage(
+    override val package_id: PackageId,
+    val target: CargoMetadata.Target,
+    val profile: Profile,
+    val filenames: List<String>,
+    val executable: String?
+) : CompilerMessage() {
+
+    val executables: List<String>
+        get() {
+            return if (executable != null) {
+                listOf(executable)
+            } else {
+                /**
+                 * `.dSYM` and `.pdb` files are binaries, but they should not be used when starting debug session.
+                 * Without this filtering, CLion shows error message about several binaries
+                 * in case of disabled build tool window
+                 */
+                // BACKCOMPAT: Cargo 0.34.0
+                filenames.filter { !it.endsWith(".dSYM") && !it.endsWith(".pdb") }
+            }
+        }
+
+    companion object {
+        const val REASON: String = "compiler-artifact"
+
+        fun fromJson(json: JsonObject): CompilerArtifactMessage? {
+            if (json.getAsJsonPrimitive("reason").asString != REASON) {
+                return null
+            }
+            return Gson().fromJson(json, CompilerArtifactMessage::class.java)
         }
     }
 }
+
+data class Profile(
+    val test: Boolean
+)

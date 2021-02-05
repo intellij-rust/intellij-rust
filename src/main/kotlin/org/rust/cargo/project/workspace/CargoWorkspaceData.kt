@@ -7,6 +7,7 @@ package org.rust.cargo.project.workspace
 
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.stdext.HashCode
 import java.nio.file.Path
 
 typealias PackageId = String
@@ -57,7 +58,8 @@ data class CargoWorkspaceData(
         val enabledFeatures: Set<FeatureName>,
         val cfgOptions: CfgOptions?,
         val env: Map<String, String>,
-        val outDirUrl: String?
+        val outDirUrl: String?,
+        val procMacroArtifact: ProcMacroArtifact? = null,
     )
 
     data class Target(
@@ -73,5 +75,10 @@ data class CargoWorkspaceData(
         val id: PackageId,
         val name: String? = null,
         val depKinds: List<CargoWorkspace.DepKindInfo> = listOf(CargoWorkspace.DepKindInfo(CargoWorkspace.DepKind.Unclassified))
+    )
+
+    data class ProcMacroArtifact(
+        val path: Path,
+        val hash: HashCode
     )
 }
