@@ -113,7 +113,7 @@ abstract class RsAsyncRunner(
         manager.patchCommandLine(runConfiguration, environment, cmd, context)
         manager.patchCommandLineState(runConfiguration, environment, state, context)
 
-        val handler = RsKillableColoredProcessHandler(cmd)
+        val handler = state.toolchain.startProcess(cmd)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
 
         manager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
@@ -143,10 +143,11 @@ abstract class RsAsyncRunner(
         isTestBuild: Boolean
     ): Promise<Binary?> {
         val promise = AsyncPromise<Binary?>()
-        val cargo = state.cargo()
+        val toolchain = state.toolchain
+        val cargo = toolchain.cargo()
 
         val processForUserOutput = ProcessOutput()
-        val processForUser = RsKillableColoredProcessHandler(cargo.toColoredCommandLine(project, command))
+        val processForUser = toolchain.startProcess(cargo.toColoredCommandLine(project, command))
 
         processForUser.addProcessListener(CapturingProcessAdapter(processForUserOutput))
 

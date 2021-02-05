@@ -5,6 +5,8 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.io.exists
 import com.intellij.util.text.SemVer
@@ -32,6 +34,8 @@ abstract class RsToolchain(val location: Path) {
     abstract val fileSeparator: String
 
     fun looksLikeValidToolchain(): Boolean = RsToolchainFlavor.getFlavor(location) != null
+
+    abstract fun startProcess(commandLine: GeneralCommandLine): ProcessHandler
 
     abstract fun toLocalPath(remotePath: String): String
 

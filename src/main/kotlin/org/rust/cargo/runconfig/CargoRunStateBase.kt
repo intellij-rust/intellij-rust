@@ -65,11 +65,7 @@ abstract class CargoRunStateBase(
      */
     fun startProcess(processColors: Boolean): ProcessHandler {
         val commandLine = cargo().toColoredCommandLine(environment.project, prepareCommandLine())
-        val handler = if (processColors) {
-            RsKillableColoredProcessHandler(commandLine)
-        } else {
-            KillableProcessHandler(commandLine)
-        }
+        val handler = if (processColors) RsProcessHandler(commandLine) else KillableProcessHandler(commandLine)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
         return handler
     }

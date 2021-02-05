@@ -5,9 +5,12 @@
 
 package org.rust.cargo.toolchain
 
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import org.rust.cargo.runconfig.RsProcessHandler
 import org.rust.cargo.util.hasExecutable
 import org.rust.cargo.util.pathToExecutable
 import org.rust.stdext.isExecutable
@@ -24,6 +27,8 @@ class RsLocalToolchainProvider : RsToolchainProvider {
 
 open class RsLocalToolchain(location: Path) : RsToolchain(location) {
     override val fileSeparator: String get() = File.separator
+
+    override fun startProcess(commandLine: GeneralCommandLine): ProcessHandler = RsProcessHandler(commandLine)
 
     override fun toLocalPath(remotePath: String): String = remotePath
 

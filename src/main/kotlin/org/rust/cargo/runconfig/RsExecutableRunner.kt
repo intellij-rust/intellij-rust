@@ -123,7 +123,7 @@ abstract class RsExecutableRunner(
         extensionManager.patchCommandLine(runConfiguration, environment, commandLine, context)
         extensionManager.patchCommandLineState(runConfiguration, environment, state, context)
 
-        val handler = RsKillableColoredProcessHandler(commandLine)
+        val handler = state.toolchain.startProcess(commandLine)
         ProcessTerminatedListener.attach(handler) // shows exit code upon termination
 
         extensionManager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
