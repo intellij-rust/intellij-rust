@@ -29,6 +29,8 @@ interface RsToolchainProvider {
 abstract class RsToolchain(val location: Path) {
     val presentableLocation: String get() = pathToExecutable(Cargo.NAME).toString()
 
+    abstract val fileSeparator: String
+
     fun looksLikeValidToolchain(): Boolean = RsToolchainFlavor.getFlavor(location) != null
 
     abstract fun expandUserHome(remotePath: String): String

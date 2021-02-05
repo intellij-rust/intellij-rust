@@ -18,6 +18,7 @@ import com.intellij.util.execution.ParametersListUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.allPackages
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.test.CargoTestEventsConverter.State.*
@@ -81,7 +82,7 @@ class CargoTestEventsConverter(
             EXECUTABLE_NAME -> {
                 val executableName = text
                     .trim()
-                    .substringAfterLast(File.separator)
+                    .substringAfterLast(project.toolchain?.fileSeparator ?: File.separator)
                     .substringBeforeLast(".")
                     .takeIf { it.isNotEmpty() }
                     ?: error("Can't parse the executable name")

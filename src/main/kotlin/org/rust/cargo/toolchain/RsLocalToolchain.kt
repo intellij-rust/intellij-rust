@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import org.rust.cargo.util.hasExecutable
 import org.rust.cargo.util.pathToExecutable
 import org.rust.stdext.isExecutable
+import java.io.File
 import java.nio.file.Path
 
 class RsLocalToolchainProvider : RsToolchainProvider {
@@ -22,6 +23,7 @@ class RsLocalToolchainProvider : RsToolchainProvider {
 }
 
 open class RsLocalToolchain(location: Path) : RsToolchain(location) {
+    override val fileSeparator: String get() = File.separator
 
     override fun expandUserHome(remotePath: String): String = FileUtil.expandUserHome(remotePath)
 
