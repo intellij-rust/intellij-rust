@@ -11,11 +11,9 @@ import com.intellij.psi.tree.TokenSet
 import org.rust.lang.core.parser.RustParser
 import org.rust.lang.core.parser.RustParserUtil
 import org.rust.lang.core.parser.clearFrame
-import org.rust.lang.core.psi.RS_KEYWORDS
-import org.rust.lang.core.psi.RsElementTypes
+import org.rust.lang.core.psi.RS_IDENTIFIER_TOKENS
 import org.rust.lang.core.psi.RsElementTypes.QUOTE_IDENTIFIER
 import org.rust.lang.core.psi.RsElementTypes.TT
-import org.rust.lang.core.psi.tokenSetOf
 
 enum class FragmentKind(private val kind: String) {
     Ident("ident"),
@@ -51,7 +49,7 @@ enum class FragmentKind(private val kind: String) {
         }
     }
 
-    private fun parseIdentifier(b: PsiBuilder): Boolean = b.consumeToken(IDENTIFIER_TOKENS)
+    private fun parseIdentifier(b: PsiBuilder): Boolean = b.consumeToken(RS_IDENTIFIER_TOKENS)
 
     private fun parseStatement(b: PsiBuilder): Boolean =
         RustParser.LetDecl(b, 0) || RustParser.Expr(b, 0, -1)
@@ -84,14 +82,5 @@ enum class FragmentKind(private val kind: String) {
         val kinds: Set<String> = fragmentKinds.keys
 
         fun fromString(s: String): FragmentKind? = fragmentKinds[s]
-
-        /**
-         * Some tokens that treated as keywords by our lexer,
-         * but rustc's macro parser treats them as identifiers
-         */
-        private val IDENTIFIER_TOKENS = TokenSet.orSet(
-            tokenSetOf(RsElementTypes.IDENTIFIER, RsElementTypes.BOOL_LITERAL),
-            RS_KEYWORDS
-        )
     }
 }

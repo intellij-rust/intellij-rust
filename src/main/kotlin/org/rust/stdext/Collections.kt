@@ -188,6 +188,32 @@ private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<
     }
 }
 
+typealias WithNextValue<T> = Pair<T, T?>
+
+fun <T: Any> Sequence<T>.withNext(): Sequence<WithNextValue<T>> = WithNextSequence(this)
+
+private class WithNextSequence<T: Any>(private val sequence: Sequence<T>) : Sequence<WithNextValue<T>> {
+
+    override fun iterator(): Iterator<WithNextValue<T>> = WithNextIterator(sequence.iterator())
+}
+
+private class WithNextIterator<T: Any>(private val iterator: Iterator<T>) : Iterator<WithNextValue<T>> {
+
+    private var next: T? = null
+
+    override fun hasNext() = next != null || iterator.hasNext()
+
+    override fun next(): WithNextValue<T> {
+        if (next == null) { // The first invocation (or illegal after-the-last invocation)
+            next = iterator.next()
+        }
+        val next = next ?: throw NoSuchElementException()
+        val nextNext = iterator.nextOrNull()
+        this.next = nextNext
+        return WithNextValue(next, nextNext)
+    }
+}
+
 fun <K, V> MutableMap<K, MutableList<V>>.putGrouped(key: K, value: V) {
     getOrPut(key) { mutableListOf() }.add(value)
 }

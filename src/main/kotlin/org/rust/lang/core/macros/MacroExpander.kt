@@ -323,23 +323,6 @@ class MacroExpander(val project: Project) {
         append(str)
     }
 
-    private fun MutableList<MappedTextRange>.mergeAdd(range: MappedTextRange) {
-        val last = lastOrNull() ?: run {
-            add(range)
-            return
-        }
-
-        if (last.srcEndOffset == range.srcOffset && last.dstEndOffset == range.dstOffset) {
-            set(size - 1, MappedTextRange(
-                last.srcOffset,
-                last.dstOffset,
-                last.length + range.length
-            ))
-        } else {
-            add(range)
-        }
-    }
-
     private fun checkRanges(call: RsMacroCallData, expandedText: CharSequence, ranges: RangeMap) {
         if (!isUnitTestMode) return
         val callBody = call.macroBody ?: return
