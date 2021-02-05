@@ -1089,9 +1089,20 @@
 
     </extensions>
 
+    <extensions defaultExtensionNs="org.rust">
+
+        <!-- Toolchains -->
+
+        <toolchainProvider implementation="org.rust.cargo.toolchain.RsLocalToolchainProvider"/>
+
+    </extensions>
+
     <extensionPoints>
         <extensionPoint qualifiedName="org.rust.runConfigurationExtension"
                         interface="org.rust.cargo.runconfig.CargoCommandConfigurationExtension"
+                        dynamic="true"/>
+        <extensionPoint qualifiedName="org.rust.toolchainProvider"
+                        interface="org.rust.cargo.toolchain.RsToolchainProvider"
                         dynamic="true"/>
         <extensionPoint qualifiedName="org.rust.toolchainFlavor"
                         interface="org.rust.cargo.toolchain.flavors.RsToolchainFlavor"

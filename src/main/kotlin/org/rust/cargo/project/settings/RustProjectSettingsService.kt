@@ -14,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.TestOnly
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.cargo.toolchain.RsToolchainProvider
 import org.rust.cargo.toolchain.RustToolchain
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.isFeatureEnabled
@@ -55,7 +56,7 @@ interface RustProjectSettingsService {
         @get:Transient
         @set:Transient
         var toolchain: RsToolchain?
-            get() = toolchainHomeDirectory?.let { RsToolchain(Paths.get(it)) }
+            get() = toolchainHomeDirectory?.let { RsToolchainProvider.getToolchain(Paths.get(it)) }
             set(value) {
                 toolchainHomeDirectory = value?.location?.systemIndependentPath
             }

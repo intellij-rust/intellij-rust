@@ -421,7 +421,7 @@ open class CargoProjectsServiceImpl(
      */
     override fun noStateLoaded() {
         // Do nothing: in theory, we might try to do [discoverAndRefresh]
-        // here, but the `RustToolchain` is most likely not ready.
+        // here, but the `RsToolchain` is most likely not ready.
         //
         // So the actual "Let's guess a project model if it is not imported
         // explicitly" happens in [org.rust.ide.notifications.MissingToolchainNotificationProvider]
