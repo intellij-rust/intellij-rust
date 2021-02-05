@@ -55,12 +55,12 @@ class CargoTestRunStatePatchArgsTest(
         @Parameterized.Parameters(name = "{index}: {0}")
         @JvmStatic
         fun data(): Collection<Array<String>> = listOf(
-            arrayOf("", "--no-fail-fast -- -Z unstable-options --format=json"),
-            arrayOf("foo", "foo --no-fail-fast -- -Z unstable-options --format=json"),
-            arrayOf("foo bar", "foo bar --no-fail-fast -- -Z unstable-options --format=json"),
-            arrayOf("--", "--no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("", "--no-fail-fast -- --format=json -Z unstable-options"),
+            arrayOf("foo", "foo --no-fail-fast -- --format=json -Z unstable-options"),
+            arrayOf("foo bar", "foo bar --no-fail-fast -- --format=json -Z unstable-options"),
+            arrayOf("--", "--no-fail-fast -- --format=json -Z unstable-options"),
 
-            arrayOf("-- -Z unstable-options", "--no-fail-fast -- -Z unstable-options --format=json"),
+            arrayOf("-- -Z unstable-options", "--no-fail-fast -- --format=json -Z unstable-options"),
             arrayOf("-- --format=json", "--no-fail-fast -- --format=json -Z unstable-options"),
             arrayOf("-- --format json", "--no-fail-fast -- --format json -Z unstable-options"),
             arrayOf("-- --format pretty", "--no-fail-fast -- --format json -Z unstable-options"),

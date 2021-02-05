@@ -9,6 +9,7 @@ package org.rustSlowTests.ide.actions
 
 import com.intellij.build.events.impl.SuccessResultImpl
 import com.intellij.execution.RunManager
+import com.intellij.execution.configuration.EnvironmentVariablesData
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.testFramework.TestDataProvider
@@ -75,7 +76,12 @@ class RsBuildActionTest : CargoBuildTest() {
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
-        val expectedCommandLine = CargoCommandLine("build", actualCommandLine.workingDirectory, listOf("--package", "first", "--bin", "first"))
+        val expectedCommandLine = CargoCommandLine(
+            "build",
+            actualCommandLine.workingDirectory,
+            listOf("--message-format=json-diagnostic-rendered-ansi", "--package", "first", "--bin", "first"),
+            environmentVariables = BUILD_VARIABLES
+        )
         assertEquals(expectedCommandLine, actualCommandLine)
 
         checkEvents(
@@ -147,7 +153,12 @@ class RsBuildActionTest : CargoBuildTest() {
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
-        val expectedCommandLine = CargoCommandLine("build", actualCommandLine.workingDirectory, listOf("--package", "second", "--bin", "second"))
+        val expectedCommandLine = CargoCommandLine(
+            "build",
+            actualCommandLine.workingDirectory,
+            listOf("--message-format=json-diagnostic-rendered-ansi", "--package", "second", "--bin", "second"),
+            environmentVariables = BUILD_VARIABLES
+        )
         assertEquals(expectedCommandLine, actualCommandLine)
 
         checkEvents(
@@ -221,7 +232,12 @@ class RsBuildActionTest : CargoBuildTest() {
         mockBuildProgressListener!!.waitFinished()
 
         val actualCommandLine = lastBuildCommandLine!!
-        val expectedCommandLine = CargoCommandLine("build", actualCommandLine.workingDirectory, listOf("--all", "--all-targets"))
+        val expectedCommandLine = CargoCommandLine(
+            "build",
+            actualCommandLine.workingDirectory,
+            listOf("--message-format=json-diagnostic-rendered-ansi", "--all", "--all-targets"),
+            environmentVariables = BUILD_VARIABLES
+        )
         assertEquals(expectedCommandLine, actualCommandLine)
 
         checkEvents(
@@ -270,5 +286,16 @@ class RsBuildActionTest : CargoBuildTest() {
         val settings = createRunnerAndConfigurationSettingsFromContext(producer, null)
         runManager.addConfiguration(settings)
         runManager.selectedConfiguration = settings
+    }
+
+    companion object {
+        private val BUILD_VARIABLES: EnvironmentVariablesData =
+            EnvironmentVariablesData.create(
+                mapOf(
+                    "CARGO_TERM_PROGRESS_WHEN" to "always",
+                    "CARGO_TERM_PROGRESS_WIDTH" to "1000"
+                ),
+                true
+            )
     }
 }
