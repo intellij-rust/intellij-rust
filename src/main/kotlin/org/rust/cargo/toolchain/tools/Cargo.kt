@@ -151,6 +151,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             .dropWhile { it != '{' }
         try {
             return Gson().fromJson(json, CargoMetadata.Project::class.java)
+                .convertPaths(toolchain::toLocalPath)
         } catch (e: JsonSyntaxException) {
             throw ExecutionException(e)
         }

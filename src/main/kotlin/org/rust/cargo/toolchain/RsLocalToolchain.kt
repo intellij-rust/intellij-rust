@@ -25,6 +25,10 @@ class RsLocalToolchainProvider : RsToolchainProvider {
 open class RsLocalToolchain(location: Path) : RsToolchain(location) {
     override val fileSeparator: String get() = File.separator
 
+    override fun toLocalPath(remotePath: String): String = remotePath
+
+    override fun toRemotePath(localPath: String): String = localPath
+
     override fun expandUserHome(remotePath: String): String = FileUtil.expandUserHome(remotePath)
 
     override fun getExecutableName(toolName: String): String = if (SystemInfo.isWindows) "$toolName.exe" else toolName
