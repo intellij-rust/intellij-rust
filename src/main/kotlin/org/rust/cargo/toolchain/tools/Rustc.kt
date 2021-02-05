@@ -51,7 +51,9 @@ class Rustc(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
     }
 
     fun getStdlibFromSysroot(projectDirectory: Path): VirtualFile? {
-        val stdlibPath = getStdlibPathFromSysroot(projectDirectory) ?: return null
+        val stdlibPath = getStdlibPathFromSysroot(projectDirectory)
+            ?.let { toolchain.toLocalPath(it) }
+            ?: return null
         val fs = LocalFileSystem.getInstance()
         return fs.refreshAndFindFileByPath(stdlibPath)
     }
