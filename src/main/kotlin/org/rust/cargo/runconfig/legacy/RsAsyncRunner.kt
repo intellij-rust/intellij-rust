@@ -34,7 +34,7 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
-import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
+import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.openapiext.JsonUtils.tryParseJsonObject
 import org.rust.openapiext.saveAllDocuments
@@ -74,14 +74,15 @@ abstract class RsAsyncRunner(
 
         val getRunCommand = { executablePath: Path ->
             with(commandLine) {
-                createGeneralCommandLine(
+                state.toolchain.createGeneralCommandLine(
                     executablePath,
                     workingDirectory,
                     redirectInputFrom,
                     backtraceMode,
                     environmentVariables,
                     executableArguments,
-                    emulateTerminal
+                    emulateTerminal,
+                    patchToRemote = false
                 )
             }
         }

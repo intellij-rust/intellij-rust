@@ -28,6 +28,8 @@ class RsLocalToolchainProvider : RsToolchainProvider {
 open class RsLocalToolchain(location: Path) : RsToolchain(location) {
     override val fileSeparator: String get() = File.separator
 
+    override fun <T : GeneralCommandLine> patchCommandLine(commandLine: T): T = commandLine
+
     override fun startProcess(commandLine: GeneralCommandLine): ProcessHandler = RsProcessHandler(commandLine)
 
     override fun toLocalPath(remotePath: String): String = remotePath

@@ -395,7 +395,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
                 addAll(additionalArguments)
             }
             val rustcExecutable = toolchain.rustc().executable.toString()
-            createGeneralCommandLine(
+            toolchain.createGeneralCommandLine(
                 executable,
                 workingDirectory,
                 redirectInputFrom,
@@ -403,7 +403,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
                 environmentVariables,
                 parameters,
                 emulateTerminal,
-                http
+                http = http
             ).withEnvironment("RUSTC", rustcExecutable)
         }
 
