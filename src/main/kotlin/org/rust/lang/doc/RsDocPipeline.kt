@@ -127,7 +127,7 @@ private class RustDocMarkdownFlavourDescriptor(
     private val context: PsiElement,
     private val uri: URI? = null,
     private val renderMode: RsDocRenderMode,
-    private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor()
+    private val gfm: MarkdownFlavourDescriptor = GFMFlavourDescriptor(absolutizeAnchorLinks = true)
 ) : MarkdownFlavourDescriptor by gfm {
 
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {

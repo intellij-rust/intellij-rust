@@ -73,7 +73,6 @@ allprojects {
     repositories {
         mavenCentral()
         jcenter()
-        maven("https://dl.bintray.com/jetbrains/markdown")
         maven("https://dl.bintray.com/jetbrains/intellij-third-party-dependencies")
     }
 
@@ -309,7 +308,7 @@ project(":") {
 
     dependencies {
         implementation(project(":common"))
-        implementation("org.jetbrains:markdown:0.1.30") {
+        implementation("org.jetbrains:markdown:0.2.0") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
         }
