@@ -17,11 +17,8 @@ import org.toml.lang.psi.ext.TomlLiteralKind
 import org.toml.lang.psi.ext.kind
 import org.toml.lang.psi.ext.name
 
-class CrateNotFoundInspection : LocalInspectionTool() {
-    override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
-        buildVisitor(holder) ?: super.buildVisitor(holder, isOnTheFly)
-
-    private fun buildVisitor(holder: ProblemsHolder): PsiElementVisitor? {
+class CrateNotFoundInspection : TomlLocalInspectionToolBase() {
+    override fun buildVisitorInternal(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
         if (!isFeatureEnabled(RsExperiments.CRATES_LOCAL_INDEX)) return null
         if (holder.file.name != CargoConstants.MANIFEST_FILE) return null
 
