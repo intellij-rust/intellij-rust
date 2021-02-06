@@ -8,7 +8,6 @@ package org.rust.debugger.settings
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.SimpleConfigurable
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory
@@ -68,7 +67,7 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     private val needToShowToolchainSettings: Boolean
         get() {
-            return !PlatformUtils.isCLion() && (SystemInfo.isLinux || SystemInfo.isMac)
+            return !PlatformUtils.isCLion()
         }
 
     companion object {
