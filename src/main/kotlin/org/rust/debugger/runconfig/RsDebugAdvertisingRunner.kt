@@ -11,13 +11,15 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.InstalledPluginsState
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
-import com.intellij.util.PlatformUtils
+import com.intellij.openapi.util.BuildNumber
+import com.intellij.util.PlatformUtils.*
 import org.rust.cargo.runconfig.RsDefaultProgramRunnerBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 
@@ -26,7 +28,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
     override fun canRun(executorId: String, profile: RunProfile): Boolean {
         if (executorId != DefaultDebugExecutor.EXECUTOR_ID) return false
         if (profile !is CargoCommandConfiguration) return false
-        if (!(PlatformUtils.isIdeaUltimate() || PlatformUtils.isRubyMine())) return false
+        if (!isSupportedPlatform()) return false
         val id = PluginId.getId(NATIVE_DEBUG_PLUGIN_ID)
         val plugin = PluginManagerCore.getPlugin(id)
         val loadedPlugins = PluginManagerCore.getLoadedPlugins()
@@ -64,9 +66,20 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     override fun getRunnerId(): String = RUNNER_ID
 
+    private fun isSupportedPlatform(): Boolean {
+        return when {
+            isIdeaUltimate() || isRubyMine() -> true
+            ApplicationInfo.getInstance().build >= BUILD_211 && isGoIde() -> true
+            else -> false
+        }
+    }
+
     companion object {
         const val RUNNER_ID: String = "RsDebugAdvertisingRunner"
         private const val NATIVE_DEBUG_PLUGIN_ID: String = "com.intellij.nativeDebug"
+
+        // BACKCOMPAT: 2020.3
+        private val BUILD_211: BuildNumber = BuildNumber.fromString("211")!!
     }
 
     private enum class Action {
