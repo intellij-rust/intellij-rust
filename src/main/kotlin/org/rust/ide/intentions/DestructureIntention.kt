@@ -5,17 +5,28 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.parentOfType
 import org.rust.ide.presentation.render
+import org.rust.ide.refactoring.RsMultipleVariableRenamer
+import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTy
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.resolve.VALUES
+import org.rust.lang.core.resolve.createProcessor
+import org.rust.lang.core.resolve.processNestedScopesUpwards
 import org.rust.lang.core.types.ty.TyAdt
 import org.rust.lang.core.types.ty.TyTuple
 import org.rust.lang.core.types.type
-import org.rust.openapiext.buildAndRunTemplate
 import org.rust.openapiext.createSmartPointer
 
 class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.Context>() {
@@ -42,35 +53,77 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
-        when (ctx) {
-            is Context.Struct -> handleStruct(project, editor, ctx.patIdent, ctx.struct, ctx.type)
-            is Context.Tuple -> handleTuple(project, editor, ctx.patIdent, ctx.tuple.types.size)
+        val patBinding = ctx.patIdent.patBinding
+        val factory = RsPsiFactory(patBinding.project)
+        val usages = ReferencesSearch.search(patBinding, patBinding.getSearchScope())
+            .map { it.element }
+            .filterIsInstance<RsPath>()
+
+        val bindings = findBindings(usages, patBinding)
+
+        val toRename = mutableListOf<PsiNamedElement>()
+        val (newPat, replaceContext) = createDestructuredPat(ctx, factory, toRename, bindings)
+
+        if (ctx is Context.Struct) {
+            importTypeReferencesFromTy(newPat, ctx.type, true)
         }
+
+        when (replaceContext) {
+            is ReplaceContext.Tuple -> replaceTupleUsages(replaceContext, factory, usages)
+            is ReplaceContext.Struct -> replaceStructUsages(replaceContext, factory, usages)
+        }
+
+        renameNewBindings(editor, toRename)
     }
 
-    private fun handleStruct(project: Project, editor: Editor, patIdent: RsPatIdent, struct: RsStructItem, type: TyAdt) {
-        val factory = RsPsiFactory(project)
-
-        val typeName = type.render(includeTypeArguments = false, useAliasNames = true)
-        val patStruct = if (struct.isTupleStruct) {
-            factory.createPatTupleStruct(struct, typeName)
-        } else {
-            factory.createPatStruct(struct, typeName)
+    private fun findBindings(usages: List<RsPath>, patBinding: RsPatBinding): HashSet<String> {
+        val bindings = HashSet<String>()
+        usages.forEach {
+            bindings.addAll(it.getAllVisibleBindings())
         }
-        val newPatStruct = patIdent.replace(patStruct) as? RsPat ?: return
-
-        importTypeReferencesFromTy(newPatStruct, type, true)
-
-        if (newPatStruct !is RsPatTupleStruct) return
-        if (struct.positionalFields.isNotEmpty()) {
-            replaceFieldPatsWithPlaceholders(editor, newPatStruct)
-        }
+        // The binding itself will be removed
+        bindings.remove(patBinding.identifier.text)
+        return bindings
     }
 
-    private fun handleTuple(project: Project, editor: Editor, patIdent: RsPatIdent, fieldNum: Int) {
-        val patTuple = RsPsiFactory(project).createPatTuple(fieldNum)
-        val newPatTuple = patIdent.replace(patTuple) as? RsPatTup ?: return
-        replaceFieldPatsWithPlaceholders(editor, newPatTuple)
+    private fun createDestructuredPat(
+        ctx: Context,
+        factory: RsPsiFactory,
+        toRename: MutableList<PsiNamedElement>,
+        bindings: HashSet<String>
+    ): Pair<RsElement, ReplaceContext> {
+        return when (ctx) {
+            is Context.Struct -> {
+                val typeName = ctx.type.render(includeTypeArguments = false, useAliasNames = true)
+                val struct = ctx.struct
+
+                if (struct.isTupleStruct) {
+                    val newStruct = factory.createPatTupleStruct(struct, typeName)
+                    val replaced = ctx.patIdent.replace(newStruct) as RsPatTupleStruct
+
+                    val fieldNames = allocateTupleFieldNames(bindings, replaced, toRename, struct.positionalFields.size)
+                    replaced to ReplaceContext.Tuple(struct.positionalFields.size, fieldNames, struct.name)
+                } else {
+                    val newStruct = factory.createPatStruct(struct, typeName)
+                    val replaced = ctx.patIdent.replace(newStruct) as RsPatStruct
+
+                    val fieldNames = allocateStructFieldNames(bindings, replaced, toRename,
+                        struct.blockFields?.namedFieldDeclList?.mapNotNull {
+                            it.name
+                        }.orEmpty()
+                    )
+                    replaced to ReplaceContext.Struct(struct, fieldNames)
+                }
+            }
+            is Context.Tuple -> {
+                val fieldCount = ctx.tuple.types.size
+                val patTuple = factory.createPatTuple(fieldCount)
+                val replaced = ctx.patIdent.replace(patTuple) as RsPatTup
+
+                val fieldNames = allocateTupleFieldNames(bindings, replaced, toRename, fieldCount)
+                replaced to ReplaceContext.Tuple(fieldCount, fieldNames)
+            }
+        }
     }
 
     companion object {
@@ -78,8 +131,141 @@ class DestructureIntention : RsElementBaseIntentionAction<DestructureIntention.C
          * Creates a replacement boxes for the pat (struct / tuple) fields.
          * Then shows the live template and initiates editing process.
          */
-        private fun replaceFieldPatsWithPlaceholders(editor: Editor, newPat: RsPat) {
-            editor.buildAndRunTemplate(newPat, newPat.childrenOfType<RsPat>().map { it.createSmartPointer() })
+        private fun renameNewBindings(editor: Editor, toBeRenamed: List<PsiNamedElement>) {
+            val first = toBeRenamed.firstOrNull() ?: return
+
+            val project = first.project
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
+
+            editor.caretModel.moveToOffset(first.textRange.startOffset)
+            RsMultipleVariableRenamer(toBeRenamed.map { it.createSmartPointer() })
+                .doRename(first, editor, DataContext.EMPTY_CONTEXT)
         }
     }
+}
+
+private fun PsiElement.getSearchScope(): SearchScope =
+    LocalSearchScope(ancestorStrict<RsBlock>() ?: ancestorStrict<RsFunction>() ?: this)
+
+private fun allocateStructFieldNames(
+    bindings: HashSet<String>,
+    destructuredElement: RsPatStruct,
+    toRename: MutableList<PsiNamedElement>,
+    fieldNames: List<String>
+): Map<String, String> {
+    val factory = RsPsiFactory(destructuredElement.project)
+    val allocatedNames = fieldNames.associateWith { allocateName(bindings, it) }
+
+    destructuredElement.patFieldList.forEach {
+        val binding = it.patBinding ?: return@forEach
+        val name = binding.name ?: return@forEach
+        val newName = allocatedNames.getOrDefault(name, name)
+        if (name != newName) {
+            val patField = binding.replace(factory.createPatFieldFull(name, newName)) as RsPatFieldFull
+            val newBinding = patField.findBinding()
+            if (newBinding != null) {
+                toRename.add(newBinding)
+            }
+        }
+    }
+    return allocatedNames
+}
+
+private fun allocateTupleFieldNames(
+    bindings: HashSet<String>,
+    destructuredElement: RsElement,
+    toRename: MutableList<PsiNamedElement>,
+    fieldCount: Int
+): List<String> {
+    val factory = RsPsiFactory(destructuredElement.project)
+
+    val fieldNames = (0..fieldCount).map { allocateName(bindings, "_$it") }
+    val fields = destructuredElement.childrenOfType<RsPatIdent>()
+    fields.zip(fieldNames).forEach { (field, name) ->
+        val inserted = field.patBinding.identifier.replace(factory.createIdentifier(name))
+        val binding = inserted.parentOfType<RsPatBinding>()
+        if (binding != null) {
+            toRename.add(binding)
+        }
+    }
+    return fieldNames
+}
+
+private fun replaceStructUsages(context: ReplaceContext.Struct, factory: RsPsiFactory, usages: List<RsPath>) {
+    usages.forEach { element ->
+        val dot = element.parent.parent as? RsDotExpr
+        if (dot?.methodCall != null) return@forEach
+
+        val field = dot?.fieldLookup?.identifier
+        if (field != null) {
+            val name = field.text
+            dot.replace(factory.createExpression(context.fieldNames.getOrDefault(name, name)))
+        } else if (element.parent is RsPathExpr) {
+            val name = context.struct.name ?: return@forEach
+            val fields = context.struct.blockFields?.namedFieldDeclList?.mapNotNull { f ->
+                val fieldName = context.fieldNames.getOrDefault(f.name, f.name)
+                if (fieldName == f.name) {
+                    fieldName
+                } else {
+                    "${f.name}: $fieldName"
+                }
+            } ?: return@forEach
+            val structLiteral = factory.createStructLiteral(
+                name,
+                fields.joinToString(", ", prefix = "{ ", postfix = " }")
+            )
+            element.parent.replace(structLiteral)
+        }
+    }
+}
+
+private fun replaceTupleUsages(context: ReplaceContext.Tuple, factory: RsPsiFactory, usages: List<RsPath>) {
+    usages.forEach { element ->
+        val dot = element.parent.parent as? RsDotExpr
+        if (dot?.methodCall != null) return@forEach
+
+        val index = dot?.fieldLookup?.integerLiteral
+        val indexNumber = index?.text?.toIntOrNull()
+        if (indexNumber != null) {
+            dot.replace(factory.createExpression(context.fieldNames.getOrNull(indexNumber) ?: "_${index.text}"))
+        } else if (element.parent is RsPathExpr) {
+            val prefix = "${context.structName ?: ""}("
+            val tupleExpr = factory.createExpression(List(context.fieldCount) { i ->
+                context.fieldNames.getOrNull(i) ?: "_$i"
+            }.joinToString(", ", prefix = prefix, postfix = ")"))
+            element.parent.replace(tupleExpr)
+        }
+    }
+}
+
+private fun allocateName(bindings: HashSet<String>, baseName: String): String {
+    var name = baseName
+    var index = 0
+    while (name in bindings) {
+        name = "$baseName${index}"
+        index += 1
+    }
+    bindings.add(name)
+    return name
+}
+
+private sealed class ReplaceContext {
+    data class Struct(val struct: RsStructItem, val fieldNames: Map<String, String>) : ReplaceContext()
+    data class Tuple(
+        val fieldCount: Int,
+        val fieldNames: List<String>,
+        val structName: String? = null
+    ) : ReplaceContext()
+}
+
+private fun RsElement.getAllVisibleBindings(): Set<String> {
+    val bindings = mutableSetOf<String>()
+    val processor = createProcessor { entry ->
+        val element = entry.element as? RsNameIdentifierOwner ?: return@createProcessor false
+        val name = element.name ?: return@createProcessor false
+        bindings.add(name)
+        false
+    }
+    processNestedScopesUpwards(this, VALUES, processor)
+    return bindings
 }

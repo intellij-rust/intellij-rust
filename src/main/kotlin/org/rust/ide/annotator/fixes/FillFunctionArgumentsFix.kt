@@ -48,7 +48,7 @@ class FillFunctionArgumentsFix(element: PsiElement) : LocalQuickFixAndIntentionA
 
         val factory = RsPsiFactory(project)
         val builder = RsDefaultValueBuilder(parent.knownItems, parent.containingMod, factory)
-        val bindings = RsDefaultValueBuilder.getVisibleBindings(parent)
+        val bindings = parent.getVisibleBindings()
 
         val missingArguments = parameters.drop(actualArgumentCount).take(missingCount).map {
             builder.buildFor(it ?: return@map factory.createExpression("()"), bindings)

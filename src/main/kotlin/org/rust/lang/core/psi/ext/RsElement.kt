@@ -21,12 +21,10 @@ import org.rust.lang.core.completion.getOriginalOrSelf
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.findDependency
 import org.rust.lang.core.macros.findNavigationTargetIfMacroExpansion
-import org.rust.lang.core.psi.RsConstant
-import org.rust.lang.core.psi.RsElementTypes
-import org.rust.lang.core.psi.RsEnumVariant
-import org.rust.lang.core.psi.RsFile
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.resolve.Namespace
 import org.rust.lang.core.resolve.createProcessor
+import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.resolve.processNestedScopesUpwards
 
 interface RsElement : PsiElement {
@@ -141,6 +139,16 @@ fun RsElement.findInScope(name: String, ns: Set<Namespace>): PsiElement? {
 
 fun RsElement.hasInScope(name: String, ns: Set<Namespace>): Boolean =
     findInScope(name, ns) != null
+
+fun RsElement.getVisibleBindings(): Map<String, RsPatBinding> {
+    val bindings = HashMap<String, RsPatBinding>()
+    processLocalVariables(this) { variable ->
+        variable.name?.let {
+            bindings[it] = variable
+        }
+    }
+    return bindings
+}
 
 /**
  * Delete the element along with a neighbour comma.

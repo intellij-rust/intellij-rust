@@ -8,7 +8,6 @@ package org.rust.lang.core.psi
 import org.rust.ide.inspections.RsFieldInitShorthandInspection
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.KnownItems
-import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.types.implLookup
 import org.rust.lang.core.types.ty.*
 import org.rust.lang.core.types.type
@@ -238,17 +237,5 @@ class RsDefaultValueBuilder(
         val fieldType = fieldDecl.typeReference?.type ?: return null
         val fieldLiteral = buildFor(fieldType, bindings)
         return psiFactory.createStructLiteralField(fieldName, fieldLiteral)
-    }
-
-    companion object {
-        fun getVisibleBindings(place: RsElement): Map<String, RsPatBinding> {
-            val bindings = HashMap<String, RsPatBinding>()
-            processLocalVariables(place) { variable ->
-                variable.name?.let {
-                    bindings[it] = variable
-                }
-            }
-            return bindings
-        }
     }
 }
