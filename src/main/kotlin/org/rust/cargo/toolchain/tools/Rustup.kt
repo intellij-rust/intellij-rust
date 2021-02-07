@@ -43,11 +43,11 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
         }
     }
 
-    fun listComponents(): List<Component> =
+    private fun listComponents(): List<Component> =
         createBaseCommandLine(
-            "component", "list",
+            "component", "list", "--installed",
             workingDirectory = projectDirectory
-        ).execute()?.stdoutLines?.map { Component.from(it) }.orEmpty()
+        ).execute()?.stdoutLines?.map { Component(it.trim(), true) }.orEmpty()
 
     fun downloadStdlib(owner: Disposable? = null, listener: ProcessListener? = null): DownloadResult<VirtualFile> {
         // Sometimes we have stdlib but don't have write access to install it (for example, github workflow)
@@ -94,7 +94,7 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
         val isInstalled = listComponents()
             .find { (name, _) -> name.startsWith(componentName) }
             ?.isInstalled
-            ?: return false
+            ?: return true
 
         return !isInstalled
     }
