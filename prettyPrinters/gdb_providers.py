@@ -45,7 +45,8 @@ class TupleProvider:
         return "array"
 
 
-class EnumProvider:
+# BACKCOMPAT: 2020.3 (gdb <= 9.1)
+class OldEnumProvider:
     def __init__(self, valobj):
         content = valobj[valobj.type.fields()[0]]
         fields = content.type.fields()
@@ -67,6 +68,28 @@ class EnumProvider:
     def children(self):
         if not self.empty:
             yield (self.name, self.active_variant)
+
+
+# gdb >= 10.1
+class NewEnumProvider:
+    def __init__(self, valobj):
+        self.valobj = valobj
+        fields = valobj.type.fields()
+        variant_field = None
+        for field in fields:
+            if not field.artificial:
+                # The active variant is simply the first non-artificial field
+                # https://github.com/bminor/binutils-gdb/blob/9c6a1327ad9a92b8584f0501dd25bf8ba9e84ac6/gdb/rust-lang.c#L93
+                variant_field = field
+        self.active_variant = valobj[variant_field]
+        self.name = variant_field.name
+        self.full_name = "{}::{}".format(valobj.type.name, self.name)
+
+    def to_string(self):
+        return self.full_name
+
+    def children(self):
+        yield self.name, self.active_variant
 
 
 class StdStringProvider:
