@@ -41,7 +41,7 @@ import kotlin.run
  * It is basically a bunch of values which are persisted to .xml files inside .idea,
  * or displayed in the GUI form. It has to be mutable to satisfy various IDE's APIs.
  */
-class CargoCommandConfiguration(
+open class CargoCommandConfiguration(
     project: Project,
     name: String,
     factory: ConfigurationFactory
