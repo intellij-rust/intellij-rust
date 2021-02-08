@@ -112,7 +112,7 @@ fun addFormatJsonOption(additionalArguments: MutableList<String>, formatOption: 
     } else if (indexArgWithValue != -1) {
         additionalArguments[indexArgWithValue] = formatJsonOption
     } else {
-        additionalArguments.add(formatJsonOption)
+        additionalArguments.add(0, formatJsonOption)
     }
 }
 

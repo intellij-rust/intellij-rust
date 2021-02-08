@@ -90,7 +90,7 @@ object CargoBuildManager {
         ServiceManager.getService(project, BuildContentManager::class.java)
 
         if (isUnitTestMode) {
-            lastBuildCommandLine = state.commandLine
+            lastBuildCommandLine = state.prepareCommandLine()
         }
 
         return execute(CargoBuildContext(
