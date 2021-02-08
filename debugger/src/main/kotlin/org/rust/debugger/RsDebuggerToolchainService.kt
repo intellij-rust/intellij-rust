@@ -37,11 +37,15 @@ import java.util.*
 class RsDebuggerToolchainService {
 
     fun getLLDBStatus(): LLDBStatus {
-        val bundledPath = bundledLLDBDirPath()?.toString()
-        val status = getLLDBStatus(bundledPath, checkVersions = false)
+        val status = getBundledLLDBStatus()
         if (status is LLDBStatus.Binaries) return status
 
         return getLLDBStatus(RsDebuggerSettings.getInstance().lldbPath)
+    }
+
+    fun getBundledLLDBStatus(): LLDBStatus {
+        val bundledPath = bundledLLDBDirPath()?.toString()
+        return getLLDBStatus(bundledPath, checkVersions = false)
     }
 
     fun getLLDBStatus(lldbPath: String?, checkVersions: Boolean = true): LLDBStatus {
