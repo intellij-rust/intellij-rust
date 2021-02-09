@@ -156,6 +156,12 @@ class CFGBuilder(
     fun process(element: RsElement?, pred: CFGNode): CFGNode {
         if (element == null) return pred
 
+        // Conditionally disabled code should be ignored since it does not affect the execution
+        // https://doc.rust-lang.org/reference/expressions.html#expression-attributes
+        if (element is RsOuterAttributeOwner && !element.isEnabledByCfgSelf) {
+            return pred
+        }
+
         result = null
         val oldPredsSize = preds.size
         preds.push(pred)
@@ -247,7 +253,7 @@ class CFGBuilder(
     override fun visitMacroExpr(macroExpr: RsMacroExpr) {
         val macroCallExit = process(macroExpr.macroCall, pred)
 
-        if (macroExpr.type is TyNever) {
+        if (macroCallExit != pred && macroExpr.type is TyNever) {
             finishWithUnreachableNode(macroCallExit)
         } else {
             finishWith(macroCallExit)
@@ -554,13 +560,16 @@ class CFGBuilder(
 
     override fun visitStructLiteral(structLiteral: RsStructLiteral) {
         val structLiteralBody = structLiteral.structLiteralBody
-        val subExprs = structLiteralBody.structLiteralFieldList.map { it.expr ?: it }.plus(structLiteralBody.expr)
-        val subExprsExit = subExprs.fold(pred) { acc, subExpr -> process(subExpr, acc) }
-        finishWithAstNode(structLiteral, subExprsExit)
+        val fields = structLiteralBody.structLiteralFieldList
+        val fieldsExit = fields.fold(pred) { acc, subExpr -> process(subExpr, acc) }
+        val exprExit = process(structLiteralBody.expr, fieldsExit)
+        finishWithAstNode(structLiteral, exprExit)
     }
 
-    override fun visitStructLiteralField(structLiteralField: RsStructLiteralField) =
-        finishWithAstNode(structLiteralField, pred)
+    override fun visitStructLiteralField(field: RsStructLiteralField) {
+        val exprExit = process(field.expr, pred)
+        finishWithAstNode(field, exprExit)
+    }
 
     override fun visitCastExpr(castExpr: RsCastExpr) =
         finishWith { straightLine(castExpr, pred, listOf(castExpr.expr)) }

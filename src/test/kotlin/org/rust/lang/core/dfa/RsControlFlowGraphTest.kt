@@ -7,8 +7,7 @@ package org.rust.lang.core.dfa
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
-import org.rust.MockEdition
-import org.rust.RsTestBase
+import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.ext.block
@@ -658,7 +657,9 @@ class RsControlFlowGraphTest : RsTestBase() {
     """, """
         Entry
         42
+        data1: 42
         24
+        data2: 24
         S { data1: 42, data2: 24 }
         x
         x
@@ -1017,6 +1018,51 @@ class RsControlFlowGraphTest : RsTestBase() {
         1;
         BLOCK
         Exit
+        Termination
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test conditional code`() = testCFG("""
+        fn main() {
+            1;
+            #[cfg(intellij_rust)] 2;
+            #[cfg(not(intellij_rust))] unreachable;
+            #[cfg(not(intellij_rust))] return;
+            #[cfg(not(intellij_rust))] let x = unreachable();
+            let s = S { #[cfg(not(intellij_rust))] x: unreachable() };
+            foo(#[cfg(not(intellij_rust))] unreachable);
+            #[cfg(intellij_rust)] println!("{}", a);
+            #[cfg(not(intellij_rust))] println!("{}", unreachable);
+            #[cfg(not(intellij_rust))] panic!();
+            4;
+            #[cfg(intellij_rust)] panic!();
+            5;
+        }
+    """, """
+        Entry
+        1
+        1;
+        #[cfg(intellij_rust)] 2
+        #[cfg(intellij_rust)] 2;
+        #[cfg(not(intellij_rust))] unreachable;
+        #[cfg(not(intellij_rust))] return;
+        S { #[cfg(not(intellij_rust))] x: unreachable() }
+        s
+        s
+        let s = S { #[cfg(not(intellij_rust))] x: unreachable() };
+        foo
+        foo(#[cfg(not(intellij_rust))] unreachable)
+        foo(#[cfg(not(intellij_rust))] unreachable);
+        "{}"
+        a
+        #[cfg(intellij_rust)] println!("{}", a)
+        #[cfg(intellij_rust)] println!("{}", a);
+        #[cfg(not(intellij_rust))] println!("{}", unreachable);
+        #[cfg(not(intellij_rust))] panic!();
+        4
+        4;
+        #[cfg(intellij_rust)] panic!()
         Termination
     """)
 

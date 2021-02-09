@@ -5,6 +5,7 @@
 
 package org.rust.ide.inspections.lints
 
+import org.rust.MockAdditionalCfgOptions
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsInspectionsTestBase
@@ -813,6 +814,22 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
                 }
             }
             x;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test use in conditionally enabled code`() = checkByText("""
+        fn foo() {
+            let a = 1;
+            #[cfg(intellij_rust)] a;
+        }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test use in conditionally disabled code`() = checkByText("""
+        fn foo() {
+            let <warning>a/*caret*/</warning> = 1;
+            #[cfg(not(intellij_rust))] a;
         }
     """)
 }
