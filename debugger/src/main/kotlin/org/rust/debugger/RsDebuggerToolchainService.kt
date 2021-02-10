@@ -74,7 +74,7 @@ class RsDebuggerToolchainService {
                     NotificationType.INFORMATION
                 ))
             }
-            DownloadResult.Failed -> {
+            is DownloadResult.Failed -> {
                 Notifications.Bus.notify(Notification(
                     RUST_DEBUGGER_GROUP_ID,
                     "Debugger",
@@ -94,7 +94,7 @@ class RsDebuggerToolchainService {
             DownloadResult.Ok(lldbDir)
         } catch (e: IOException) {
             LOG.warn("Can't download debugger", e)
-            DownloadResult.Failed
+            DownloadResult.Failed(e.message)
         }
     }
 
@@ -221,7 +221,7 @@ class RsDebuggerToolchainService {
     sealed class DownloadResult {
         class Ok(val lldbDir: File) : DownloadResult()
         object NoUrls : DownloadResult()
-        object Failed : DownloadResult()
+        class Failed(val message: String?) : DownloadResult()
     }
 
     sealed class LLDBStatus {
