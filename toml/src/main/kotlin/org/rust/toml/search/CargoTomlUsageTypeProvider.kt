@@ -16,7 +16,7 @@ import org.rust.toml.tomlPluginIsAbiCompatible
 import org.toml.lang.psi.TomlLiteral
 
 class CargoTomlUsageTypeProvider : UsageTypeProviderEx {
-    override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
+    override fun getUsageType(element: PsiElement): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
 
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         if (!tomlPluginIsAbiCompatible()) return null
