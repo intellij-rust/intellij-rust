@@ -45,7 +45,10 @@ class RsDebuggerToolchainServiceTest : RsTestBase() {
     private fun downloadDebugger() {
         val toolchainService = RsDebuggerToolchainService.getInstance()
         val result = toolchainService.downloadDebugger()
-        check(result is RsDebuggerToolchainService.DownloadResult.Ok) { "Failed to load debugger" }
+        check(result is RsDebuggerToolchainService.DownloadResult.Ok) {
+            val message = (result as? RsDebuggerToolchainService.DownloadResult.Failed)?.message.orEmpty()
+            "Failed to load debugger\n$message"
+        }
         lldbDir = result.lldbDir
         val lldbStatus = toolchainService.getLLDBStatus(result.lldbDir.absolutePath)
         check(lldbStatus is LLDBStatus.Binaries) {
