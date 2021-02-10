@@ -119,7 +119,7 @@ class RsStructureViewElement(
         }
 
     // Used in `RsStructureViewTest`
-    override fun putInfo(info: MutableMap<String, String>) {
+    override fun putInfo(info: QueryableInfo) {
         if (!isUnitTestMode) return
 
         val presentation = presentation
