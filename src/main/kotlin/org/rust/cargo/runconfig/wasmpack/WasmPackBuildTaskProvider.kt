@@ -13,6 +13,7 @@ import com.intellij.util.execution.ParametersListUtil
 import org.rust.cargo.runconfig.buildtool.RsBuildTaskProvider
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.command.CargoCommandConfigurationType
+import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.util.splitOnDoubleDash
 import org.rust.openapiext.project
 import org.rust.stdext.buildList
@@ -32,6 +33,9 @@ class WasmPackBuildTaskProvider : RsBuildTaskProvider<WasmPackBuildTaskProvider.
         if (configuration !is WasmPackCommandConfiguration) return false
 
         val project = context.project ?: return false
+        val cargoProjectDirectory = configuration.workingDirectory ?: return false
+        if (Rustup.checkNeedInstallWasmTarget(project, cargoProjectDirectory)) return false
+
         val configurationArgs = ParametersListUtil.parse(configuration.command)
         val (preArgs, postArgs) = splitOnDoubleDash(configurationArgs)
         val configurationCommand = configurationArgs.firstOrNull() ?: return false
@@ -70,6 +74,6 @@ class WasmPackBuildTaskProvider : RsBuildTaskProvider<WasmPackBuildTaskProvider.
     companion object {
         val ID: Key<BuildTask> = Key.create("WASM_PACK.BUILD_TASK_PROVIDER")
 
-        private const val WASM_TARGET: String = "wasm32-unknown-unknown"
+        const val WASM_TARGET: String = "wasm32-unknown-unknown"
     }
 }
