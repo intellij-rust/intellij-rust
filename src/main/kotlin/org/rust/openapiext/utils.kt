@@ -273,13 +273,17 @@ fun <T> runReadActionInSmartMode(dumbService: DumbService, action: () -> T): T {
     })
 }
 
-fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(indicator: ProgressIndicator, action: () -> T): T {
+fun <T : Any> executeUnderProgressWithWriteActionPriorityWithRetries(
+    indicator: ProgressIndicator,
+    action: (ProgressIndicator) -> T
+): T {
     checkReadAccessNotAllowed()
     indicator.checkCanceled()
     var result: T? = null
     do {
-        val success = runWithWriteActionPriority(SensitiveProgressWrapper(indicator)) {
-            result = action()
+        val wrappedIndicator = SensitiveProgressWrapper(indicator)
+        val success = runWithWriteActionPriority(wrappedIndicator) {
+            result = action(wrappedIndicator)
         }
         if (!success) {
             indicator.checkCanceled()

@@ -65,8 +65,8 @@ fun updateDefMapForAllCrates(
     multithread: Boolean = true
 ) {
     if (!project.isNewResolveEnabled) return
-    executeUnderProgressWithWriteActionPriorityWithRetries(indicator) {
-        doUpdateDefMapForAllCrates(project, pool, indicator, multithread)
+    executeUnderProgressWithWriteActionPriorityWithRetries(indicator) { wrappedIndicator ->
+        doUpdateDefMapForAllCrates(project, pool, wrappedIndicator, multithread)
     }
 }
 
