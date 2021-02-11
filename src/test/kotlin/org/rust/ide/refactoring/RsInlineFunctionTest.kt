@@ -835,241 +835,311 @@ class RsInlineFunctionTest : RsTestBase() {
     """)
 
     fun `test inline function with differently named function parameters`() = doTest("""
-            fn main() {
-                let a = foo(bar());
-            }
-            fn /*caret*/foo(i: i32) -> i32 {
-                return i + bar();
-            }
+        fn main() {
+            let a = foo(bar());
+        }
+        fn /*caret*/foo(i: i32) -> i32 {
+            return i + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """, """
-            fn main() {
-                let i = bar();
-                let a = i + bar();
-            }
+        fn bar() -> i32 {
+            5
+        }
+    """, """
+        fn main() {
+            let i = bar();
+            let a = i + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """)
+        fn bar() -> i32 {
+            5
+        }
+    """)
 
     fun `test inline function with differently named function parameters with inlined references`() = doTest("""
-            fn main() {
-                let b = 6;
-                let _a = foo(b);
-            }
-            fn /*caret*/foo(i: i32) -> i32 {
-                return i + bar(&i);
-            }
+        fn main() {
+            let b = 6;
+            let _a = foo(b);
+        }
+        fn /*caret*/foo(i: i32) -> i32 {
+            return i + bar(&i);
+        }
 
-            fn bar(i: &i32) -> &i32 {
-                return i;
-            }
-            """, """
-            fn main() {
-                let b = 6;
-                let i = b;
-                let _a = i + bar(&i);
-            }
+        fn bar(i: &i32) -> &i32 {
+            return i;
+        }
+    """, """
+        fn main() {
+            let b = 6;
+            let i = b;
+            let _a = i + bar(&i);
+        }
 
-            fn bar(i: &i32) -> &i32 {
-                return i;
-            }
-            """)
+        fn bar(i: &i32) -> &i32 {
+            return i;
+        }
+    """)
 
     fun `test inline function with differently named reference and mutable function parameters`() = doTest("""
-            fn main() {
-                let _a = foo(&bar(), &mut qux(), corge());
-            }
+        fn main() {
+            let _a = foo(&bar(), &mut qux(), corge());
+        }
 
-            fn /*caret*/foo(i: &i32, j: &mut i32, mut k: i32) -> i32 {
-                return *i + *j + k + bar();
-            }
+        fn /*caret*/foo(i: &i32, j: &mut i32, mut k: i32) -> i32 {
+            return *i + *j + k + bar();
+        }
 
-            fn bar() -> i32 {
-                let baz = 5;
-                return baz;
-            }
+        fn bar() -> i32 {
+            let baz = 5;
+            return baz;
+        }
 
-            fn qux() -> i32 {
-                let quux = 5;
-                return quux;
-            }
+        fn qux() -> i32 {
+            let quux = 5;
+            return quux;
+        }
 
-            fn corge() -> i32 {
-                let grault = 5;
-                return grault;
-            }
-            """, """
-            fn main() {
-                let i = &bar();
-                let j = &mut qux();
-                let mut k = corge();
-                let _a = *i + *j + k + bar();
-            }
+        fn corge() -> i32 {
+            let grault = 5;
+            return grault;
+        }
+    """, """
+        fn main() {
+            let i = &bar();
+            let j = &mut qux();
+            let mut k = corge();
+            let _a = *i + *j + k + bar();
+        }
 
-            fn bar() -> i32 {
-                let baz = 5;
-                return baz;
-            }
+        fn bar() -> i32 {
+            let baz = 5;
+            return baz;
+        }
 
-            fn qux() -> i32 {
-                let quux = 5;
-                return quux;
-            }
+        fn qux() -> i32 {
+            let quux = 5;
+            return quux;
+        }
 
-            fn corge() -> i32 {
-                let grault = 5;
-                return grault;
-            }
-            """)
+        fn corge() -> i32 {
+            let grault = 5;
+            return grault;
+        }
+    """)
 
     fun `test inline function with differently named reference and function argument inlined into multiple places`() = doTest("""
-            fn main() {
-                let mut foo = 1024;
-                let a = divide(bar(&mut foo), bar(&mut foo));
-            }
+        fn main() {
+            let mut foo = 1024;
+            let a = divide(bar(&mut foo), bar(&mut foo));
+        }
 
-            // Notice Parameters are supplied and consumed in a different order
-            fn /*caret*/divide(i: &i32, j: &i32) -> i32 {
-                return j / i;
-            }
+        // Notice Parameters are supplied and consumed in a different order
+        fn /*caret*/divide(i: &i32, j: &i32) -> i32 {
+            return j / i;
+        }
 
-            fn bar(foo: &mut i32) -> &mut i32 {
-                let foo = foo / 2;
-                return foo;
-            }
-            """, """
-            fn main() {
-                let mut foo = 1024;
-                let i = bar(&mut foo);
-                let j = bar(&mut foo);
-                let a = j / i;
-            }
+        fn bar(foo: &mut i32) -> &mut i32 {
+            let foo = foo / 2;
+            return foo;
+        }
+    """, """
+        fn main() {
+            let mut foo = 1024;
+            let i = bar(&mut foo);
+            let j = bar(&mut foo);
+            let a = j / i;
+        }
 
-            fn bar(foo: &mut i32) -> &mut i32 {
-                let foo = foo / 2;
-                return foo;
-            }
-            """)
+        fn bar(foo: &mut i32) -> &mut i32 {
+            let foo = foo / 2;
+            return foo;
+        }
+    """)
 
     fun `test inline function with differently named parameters in a tuple deconstruction`() = doTest("""
-            fn main() {
-                let c = foo((bar(), bar()));
-            }
-            fn /*caret*/foo((a, b): (i32, i32)) -> i32 {
-                return a + b + bar();
-            }
+        fn main() {
+            let c = foo((bar(), bar()));
+        }
+        fn /*caret*/foo((a, b): (i32, i32)) -> i32 {
+            return a + b + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """, """
-            fn main() {
-                let (a, b) = (bar(), bar());
-                let c = a + b + bar();
-            }
+        fn bar() -> i32 {
+            5
+        }
+    """, """
+        fn main() {
+            let (a, b) = (bar(), bar());
+            let c = a + b + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """)
+        fn bar() -> i32 {
+            5
+        }
+    """)
 
     fun `test inline function with differently named tuple parameter`() = doTest("""
-            fn main() {
-                let c = foo((bar(), bar()));
-            }
-            fn /*caret*/foo(a: (i32, i32)) -> i32 {
-                return a.0 + a.1 + bar();
-            }
+        fn main() {
+            let c = foo((bar(), bar()));
+        }
+        fn /*caret*/foo(a: (i32, i32)) -> i32 {
+            return a.0 + a.1 + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """, """
-            fn main() {
-                let a = (bar(), bar());
-                let c = a.0 + a.1 + bar();
-            }
+        fn bar() -> i32 {
+            5
+        }
+    """, """
+        fn main() {
+            let a = (bar(), bar());
+            let c = a.0 + a.1 + bar();
+        }
 
-            fn bar() -> i32 {
-                5
-            }
-            """)
+        fn bar() -> i32 {
+            5
+        }
+    """)
 
     fun `test inline function with differently named struct parameter`() = doTest("""
-            fn main() {
-                let _c = foo(bar());
-            }
-            fn /*caret*/foo(a: S) -> i32 {
-                return a.a + a.b + bar().a + bar().b;
-            }
+        fn main() {
+            let _c = foo(bar());
+        }
+        fn /*caret*/foo(a: S) -> i32 {
+            return a.a + a.b + bar().a + bar().b;
+        }
 
-            fn bar() -> S {
-                S{ a:5, b:5 }
-            }
+        fn bar() -> S {
+            S{ a:5, b:5 }
+        }
 
-            struct S { a: i32, b: i32 }
-            """, """
-            fn main() {
-                let a = bar();
-                let _c = a.a + a.b + bar().a + bar().b;
-            }
+        struct S { a: i32, b: i32 }
+    """, """
+        fn main() {
+            let a = bar();
+            let _c = a.a + a.b + bar().a + bar().b;
+        }
 
-            fn bar() -> S {
-                S{ a:5, b:5 }
-            }
+        fn bar() -> S {
+            S{ a:5, b:5 }
+        }
 
-            struct S { a: i32, b: i32 }
-            """)
+        struct S { a: i32, b: i32 }
+    """)
 
     fun `test inline function with differently named struct deconstruction`() = doTest("""
-            fn main() {
-                let _c = foo(bar());
-            }
-            fn /*caret*/foo(S { a, b }: S) -> i32 {
-                return a + b + bar().a;
-            }
+        fn main() {
+            let _c = foo(bar());
+        }
+        fn /*caret*/foo(S { a, b }: S) -> i32 {
+            return a + b + bar().a;
+        }
 
-            fn bar() -> S {
-                S{ a:5, b:5 }
-            }
+        fn bar() -> S {
+            S{ a:5, b:5 }
+        }
 
-            struct S { a: i32, b: i32 }
-            """, """
-            fn main() {
-                let S { a, b } = bar();
-                let _c = a + b + bar().a;
-            }
+        struct S { a: i32, b: i32 }
+    """, """
+        fn main() {
+            let S { a, b } = bar();
+            let _c = a + b + bar().a;
+        }
 
-            fn bar() -> S {
-                S{ a:5, b:5 }
-            }
+        fn bar() -> S {
+            S{ a:5, b:5 }
+        }
 
-            struct S { a: i32, b: i32 }
-            """)
+        struct S { a: i32, b: i32 }
+    """)
 
     fun `test inline function with unary reference expression that can't be removed`() = doTest("""
-            fn main() {
-                let a = 5;
-                foo(&a);
-            }
+        fn main() {
+            let a = 5;
+            foo(&a);
+        }
 
-            fn /*caret*/foo(x: &i32) {
-                println!("{}", *x);
-            }
-            """, """
-            fn main() {
-                let a = 5;
-                let x = &a;
-                println!("{}", *x);
-            }
+        fn /*caret*/foo(x: &i32) {
+            println!("{}", *x);
+        }
+    """, """
+        fn main() {
+            let a = 5;
+            let x = &a;
+            println!("{}", *x);
+        }
 
 
-            """)
+    """)
+
+    fun `test inline function from different module with two single use statements`() = doTest("""
+        use foo::bar::test;
+        use foo::bar::test2;
+        fn main() {
+            test();
+            test2();
+        }
+        mod foo {
+            pub mod bar {
+                pub fn /*caret*/test() {
+                    println!("test");
+                }
+                pub fn test2() {
+                    println!("test2");
+                }
+            }
+        }
+    """, """
+        use foo::bar::test2;
+        fn main() {
+            println!("test");
+            test2();
+        }
+        mod foo {
+            pub mod bar {
+                pub fn test2() {
+                    println!("test2");
+                }
+            }
+        }
+    """)
+
+    fun `test inline function from different module with group usage statements and different use orders inside`() = doTest("""
+        use foo::bar::{test};
+        use foo::bar::{test, test2};
+        use foo::bar::{test2, test};
+        use foo::bar::{test2, test, test2};
+        use foo::{bar::{test}, bar::test2};
+        fn main() {
+            test();
+            test2();
+        }
+        mod foo {
+            pub mod bar {
+                pub fn /*caret*/test() {
+                    println!("test");
+                }
+                pub fn test2() {
+                    println!("test2");
+                }
+            }
+        }
+    """, """
+        use foo::bar::{test2};
+        use foo::bar::{test2};
+        use foo::bar::{test2, test2};
+        use foo::{bar::test2};
+        fn main() {
+            println!("test");
+            test2();
+        }
+        mod foo {
+            pub mod bar {
+                pub fn test2() {
+                    println!("test2");
+                }
+            }
+        }
+    """)
 
     private fun doTest(@Language("Rust") before: String,
                        @Language("Rust") after: String) {

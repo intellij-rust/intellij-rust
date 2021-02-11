@@ -14,6 +14,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.anyDescendantOfType
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
@@ -183,6 +184,9 @@ class RsInlineFunctionProcessor(
 
             val selfParam = functionDup.selfParameter
             replaceSelfParamWithExpr(selfParam, caller, funcScope)
+            if (removeDefinition) {
+                removeFunctionUseStatements()
+            }
 
             replaceParameterUsages(functionDup, caller, funcScope)
 
@@ -224,6 +228,40 @@ class RsInlineFunctionProcessor(
         } catch (e: IncorrectOperationException) {
             logger.error(e)
         }
+    }
+
+    private fun removeFunctionUseStatements() {
+        usagesAsReference.filter {
+            it.element.ancestorOrSelf<RsUseSpeck>() != null
+        }.forEach {
+            val useGroup = getLowestGroupWithMultipleChildren(it)
+            val useGroupChildrenSize = useGroup?.useSpeckList?.size
+
+            if (useGroupChildrenSize != null && useGroupChildrenSize > 1) {
+                val useSpeck = it.element.ancestorOrSelf<RsUseSpeck>()
+                val extendedSpeck = getExtendedUseSpeck(useGroup, useSpeck)
+                extendedSpeck?.deleteWithSurroundingComma()
+            } else {
+                it.element.ancestorOrSelf<RsUseItem>()?.delete()
+            }
+        }
+    }
+
+    private fun getExtendedUseSpeck(element: PsiElement, useSpeck: RsUseSpeck?): RsUseSpeck? {
+        return when (element) {
+            is RsUseGroup -> element.children.map { getExtendedUseSpeck(it, useSpeck) }
+                .firstOrNull { it != null }
+            is RsUseSpeck -> if (element == useSpeck || element.anyDescendantOfType<RsUseSpeck> { it == useSpeck }) {
+                element
+            } else {
+                null
+            }
+            else -> null
+        }
+    }
+
+    private fun getLowestGroupWithMultipleChildren(it: PsiReference): RsUseGroup? {
+        return it.element.ancestors.filterIsInstance<RsUseGroup>().firstOrNull { it.children.size > 1 }
     }
 
     private fun replaceParameterUsages(functionDup: RsFunction, caller: PsiElement, funcScope: LocalSearchScope) {
