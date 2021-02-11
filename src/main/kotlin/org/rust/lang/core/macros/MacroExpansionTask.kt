@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.RsTask
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.RsMod
@@ -59,7 +60,7 @@ abstract class MacroExpansionTaskBase(
     private val resolveCache = RsResolveCache.getInstance(project)
     private val dumbService = DumbService.getInstance(project)
     private val macroExpansionManager = project.macroExpansionManager
-    private val expander = MacroExpander(project)
+    private val expander = DeclMacroExpander(project)
     private val sync = CountDownLatch(1)
     private val estimateStages = AtomicInteger()
     private val doneStages = AtomicInteger()
@@ -347,7 +348,7 @@ object Pipeline {
 
     interface Stage1ResolveAndExpand {
         /** must be a pure function */
-        fun expand(project: Project, expander: MacroExpander): Stage2WriteToFs
+        fun expand(project: Project, expander: DeclMacroExpander): Stage2WriteToFs
     }
 
     interface Stage2WriteToFs {
@@ -366,7 +367,7 @@ object EmptyPipeline : Pipeline.Stage2WriteToFs, Pipeline.Stage3SaveToStorage {
 
 object InvalidationPipeline {
     class Stage1(val info: ExpandedMacroInfo) : Pipeline.Stage1ResolveAndExpand {
-        override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = Stage2(info)
+        override fun expand(project: Project, expander: DeclMacroExpander): Pipeline.Stage2WriteToFs = Stage2(info)
     }
 
     class Stage2(val info: ExpandedMacroInfo) : Pipeline.Stage2WriteToFs {
@@ -391,7 +392,7 @@ class RemoveSourceFileIfEmptyPipeline(private val sf: SourceFile) : Pipeline.Sta
                                                                     Pipeline.Stage2WriteToFs,
                                                                     Pipeline.Stage3SaveToStorage {
 
-    override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs = this
+    override fun expand(project: Project, expander: DeclMacroExpander): Pipeline.Stage2WriteToFs = this
     override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage = this
     override fun save(storage: ExpandedMacroStorage) {
         checkWriteAccessAllowed()
@@ -404,7 +405,7 @@ object ExpansionPipeline {
         val call: RsMacroCall,
         val info: ExpandedMacroInfo
     ) : Pipeline.Stage1ResolveAndExpand {
-        override fun expand(project: Project, expander: MacroExpander): Pipeline.Stage2WriteToFs {
+        override fun expand(project: Project, expander: DeclMacroExpander): Pipeline.Stage2WriteToFs {
             checkReadAccessAllowed() // Needed to access PSI (including resolve & expansion)
             checkIsSmartMode(project) // Needed to resolve macros
             if (!call.isValid) {

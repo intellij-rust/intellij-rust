@@ -6,7 +6,7 @@
 package org.rust.lang.core.completion
 
 import org.intellij.lang.annotations.Language
-import org.rust.lang.core.macros.FragmentKind
+import org.rust.lang.core.macros.decl.FragmentKind
 
 class RsFragmentSpecifierCompletionTest : RsCompletionTestBase() {
     fun `test fragment specifiers`() = checkContains("""

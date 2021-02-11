@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.PsiBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.rust.lang.core.macros.MGNodeData.*
+import org.rust.lang.core.macros.decl.MGNodeData.*
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
 import java.util.*
 import kotlin.math.min

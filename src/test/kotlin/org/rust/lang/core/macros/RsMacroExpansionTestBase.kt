@@ -13,6 +13,7 @@ import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsPsiFactory
@@ -115,8 +116,8 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     }
 
     private fun expandMacroAsTextWithErr(call: RsMacroCall, def: RsMacro): RsResult<MacroExpansion, MacroExpansionAndParsingError> {
-        val expander = MacroExpander(project)
-        return expander.expandMacro(RsMacroData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
+        val expander = DeclMacroExpander(project)
+        return expander.expandMacro(RsMacroDefData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
             it.elements.forEach { el ->
                 el.setContext(call.context as RsElement)
                 el.setExpandedFrom(call)

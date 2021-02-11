@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFileWithId
 import org.rust.lang.core.macros.MacroExpansionAndParsingError.ExpansionError
 import org.rust.lang.core.macros.MacroExpansionAndParsingError.ParsingError
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.stubChildrenOfType
 import org.rust.lang.core.psi.ext.stubDescendantOfTypeOrStrict
@@ -119,8 +120,8 @@ fun getExpansionFromExpandedFile(context: MacroExpansionContext, expandedFile: R
     }
 }
 
-fun MacroExpander.expandMacro(
-    def: RsMacroData,
+fun DeclMacroExpander.expandMacro(
+    def: RsMacroDefData,
     call: RsMacroCall,
     factory: RsPsiFactory,
     storeRangeMap: Boolean

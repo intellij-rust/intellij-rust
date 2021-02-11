@@ -19,6 +19,7 @@ import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.crate.impl.CargoBasedCrate
 import org.rust.lang.core.crate.impl.DoctestCrate
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.*
@@ -179,10 +180,10 @@ fun <T> RsMacroCall.resolveToMacroUsingNewResolveAndThen(
  *   which is prevented by returning null from macro expansion,
  *   therefore result of [expandedItemsCached] is incomplete (and cached)
  */
-fun RsMacroCall.resolveToMacroWithoutPsi(): RsMacroDataWithHash? =
+fun RsMacroCall.resolveToMacroWithoutPsi(): RsMacroDefDataWithHash? =
     resolveToMacroAndThen(
-        withNewResolve = { def, _ -> RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash) },
-        withoutNewResolve = { resolveToMacro()?.let { RsMacroDataWithHash(it) } }
+        withNewResolve = { def, _ -> RsMacroDefDataWithHash(RsMacroDefData(def.body), def.bodyHash) },
+        withoutNewResolve = { resolveToMacro()?.let { RsMacroDefDataWithHash(it) } }
     )
 
 /** See [resolveToMacroWithoutPsi] */

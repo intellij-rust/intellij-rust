@@ -14,8 +14,8 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.ide.icons.RsIcons
-import org.rust.lang.core.macros.MacroGraph
-import org.rust.lang.core.macros.MacroGraphBuilder
+import org.rust.lang.core.macros.decl.MacroGraph
+import org.rust.lang.core.macros.decl.MacroGraphBuilder
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.stubs.RsMacroStub
 import org.rust.lang.doc.documentation

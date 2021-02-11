@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapiext.isUnitTestMode
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.RsMacroBody
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.body
@@ -47,7 +48,7 @@ class DefCollector(
     private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
 
     /** Created once as optimization */
-    private val macroExpander: MacroExpander = MacroExpander(project)
+    private val macroExpander: DeclMacroExpander = DeclMacroExpander(project)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
     fun collect() {
@@ -275,7 +276,7 @@ class DefCollector(
     private fun tryExpandMacroCall(call: MacroCallInfo): Boolean {
         val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
             ?: return false
-        val defData = RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash)
+        val defData = RsMacroDefDataWithHash(RsMacroDefData(def.body), def.bodyHash)
         val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body), call.bodyHash)
         val (expandedFile, expansion) =
             macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return true

@@ -20,8 +20,9 @@ import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.*
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABLED
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER_REGEX
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
-import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.bodyHash
 import org.rust.lang.core.stubs.RsFileStub
@@ -132,15 +133,15 @@ class MacroExpansionSharedCache : Disposable {
         MACRO_LOG.warn(e)
     }
 
-    fun cachedExpand(expander: MacroExpander, def: RsMacroDataWithHash, call: RsMacroCall): ExpansionResult? {
+    fun cachedExpand(expander: DeclMacroExpander, def: RsMacroDefDataWithHash, call: RsMacroCall): ExpansionResult? {
         val callData = RsMacroCallData(call)
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
         return cachedExpand(expander, def.data, callData, hash)
     }
 
     private fun cachedExpand(
-        expander: MacroExpander,
-        def: RsMacroData,
+        expander: DeclMacroExpander,
+        def: RsMacroDefData,
         call: RsMacroCallData,
         /** mixed hash of [def] and [call], passed as optimization */
         hash: HashCode
@@ -176,8 +177,8 @@ class MacroExpansionSharedCache : Disposable {
 
     fun createExpansionStub(
         project: Project,
-        expander: MacroExpander,
-        def: RsMacroDataWithHash,
+        expander: DeclMacroExpander,
+        def: RsMacroDefDataWithHash,
         call: RsMacroCallDataWithHash
     ): Pair<RsFileStub, ExpansionResult>? {
         val hash = HashCode.mix(def.bodyHash ?: return null, call.bodyHash ?: return null)
@@ -212,12 +213,6 @@ class MacroExpansionSharedCache : Disposable {
         private val CACHE_ENABLED = Registry.get("org.rust.lang.macros.persistentCache")
     }
 }
-
-class RsMacroDataWithHash(val data: RsMacroData, val bodyHash: HashCode?) {
-    constructor(def: RsMacro) : this(RsMacroData(def), def.bodyHash)
-}
-
-class RsMacroCallDataWithHash(val data: RsMacroCallData, val bodyHash: HashCode?)
 
 @Suppress("UnstableApiUsage")
 private class PersistentCacheData(
@@ -268,7 +263,7 @@ private class PersistentCacheData(
                     HashCodeKeyDescriptor,
                     ExpansionResultExternalizer,
                     1 * 1024 * 1024,
-                    MacroExpander.EXPANDER_VERSION + RustParserDefinition.PARSER_VERSION + 1
+                    DeclMacroExpander.EXPANDER_VERSION + RustParserDefinition.PARSER_VERSION + 1
                 )
                 cleaners += expansions::close
 
@@ -277,7 +272,7 @@ private class PersistentCacheData(
                     HashCodeKeyDescriptor,
                     SerializedStubTreeDataExternalizer(localSerMgr, stubExternalizer),
                     1 * 1024 * 1024,
-                    MacroExpander.EXPANDER_VERSION + RsFileStub.Type.stubVersion
+                    DeclMacroExpander.EXPANDER_VERSION + RsFileStub.Type.stubVersion
                 )
                 cleaners += stubs::close
 

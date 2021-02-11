@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.decl
 
 import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language

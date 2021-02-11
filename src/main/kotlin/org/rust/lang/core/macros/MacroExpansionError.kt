@@ -8,6 +8,7 @@ package org.rust.lang.core.macros
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.psi.tree.IElementType
+import org.rust.lang.core.macros.decl.FragmentKind
 
 sealed class MacroExpansionAndParsingError {
     data class ExpansionError(val error: MacroExpansionError) : MacroExpansionAndParsingError()

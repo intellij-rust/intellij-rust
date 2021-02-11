@@ -3,13 +3,12 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.ASTNode
 import com.intellij.lang.PsiBuilder
 import com.intellij.lang.PsiBuilderUtil
 import com.intellij.lang.parser.GeneratedParserUtilBase
-import com.intellij.lang.parser.rawLookupText
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
@@ -19,6 +18,7 @@ import com.intellij.psi.TokenType
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.util.SmartList
+import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.MacroMatchingError.*
 import org.rust.lang.core.parser.RustParserUtil.collapsedTokenType
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
@@ -26,9 +26,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.fragmentSpecifier
-import org.rust.lang.core.psi.ext.macroBody
-import org.rust.lang.core.psi.ext.macroBodyStubbed
-import org.rust.lang.doc.psi.RsDocKind
 import org.rust.openapiext.forEachChild
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.*
@@ -125,20 +122,12 @@ private class NestingState(
     var atTheEnd: Boolean = false
 )
 
-class RsMacroData(val macroBody: Lazy<RsMacroBody?>) {
-    constructor(def: RsMacro) : this(lazy(LazyThreadSafetyMode.PUBLICATION) { def.macroBodyStubbed })
-}
-
-class RsMacroCallData(val macroBody: String?) {
-    constructor(call: RsMacroCall) : this(call.macroBody)
-}
-
-class MacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacroData, call: RsMacroCallData): Pair<CharSequence, RangeMap>? {
+class DeclMacroExpander(val project: Project) {
+    fun expandMacroAsText(def: RsMacroDefData, call: RsMacroCallData): Pair<CharSequence, RangeMap>? {
         return expandMacroAsTextWithErr(def, call).ok()
     }
 
-    fun expandMacroAsTextWithErr(def: RsMacroData, call: RsMacroCallData): RsResult<Pair<CharSequence, RangeMap>, MacroExpansionError> {
+    fun expandMacroAsTextWithErr(def: RsMacroDefData, call: RsMacroCallData): RsResult<Pair<CharSequence, RangeMap>, MacroExpansionError> {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call).unwrapOrElse { return Err(it) }
         val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return Err(MacroExpansionError.DefSyntax)
 
@@ -156,11 +145,13 @@ class MacroExpander(val project: Project) {
     }
 
     private fun findMatchingPattern(
-        def: RsMacroData,
+        def: RsMacroDefData,
         call: RsMacroCallData
     ): RsResult<MatchedPattern, MacroExpansionError> {
         val macroCallBodyText = call.macroBody ?: return Err(MacroExpansionError.DefSyntax)
-        val (macroCallBody, ranges) = project.createAdaptedRustPsiBuilder(macroCallBodyText).lowerDocComments()
+        val (macroCallBody, ranges) = project
+            .createAdaptedRustPsiBuilder(macroCallBodyText)
+            .lowerDocComments(project)
         macroCallBody.eof() // skip whitespace
         var start = macroCallBody.mark()
         val macroCaseList = def.macroBody.value?.macroCaseList ?: return Err(MacroExpansionError.DefSyntax)
@@ -182,51 +173,6 @@ class MacroExpander(val project: Project) {
     }
 
     private data class MatchedPattern(val case: RsMacroCase, val subst: MacroSubstitution, val ranges: RangeMap)
-
-    /** Rustc replaces doc comments like `/// foo` to attributes `#[doc = "foo"]` before macro expansion */
-    private fun PsiBuilder.lowerDocComments(): Pair<PsiBuilder, RangeMap> {
-        if (!hasDocComments()) {
-            return this to if (originalText.isNotEmpty()) {
-                RangeMap.from(SmartList(MappedTextRange(0, 0, originalText.length)))
-            } else {
-                RangeMap.EMPTY
-            }
-        }
-
-        MacroExpansionMarks.docsLowering.hit()
-
-        val sb = StringBuilder((originalText.length * 1.1).toInt())
-        val ranges = SmartList<MappedTextRange>()
-
-        var i = 0
-        while (true) {
-            val token = rawLookup(i) ?: break
-            val text = rawLookupText(i)
-            val start = rawTokenTypeStart(i)
-            i++
-
-            if (token in RS_DOC_COMMENTS) {
-                // TODO calculate how many `#` we should insert
-                sb.append("#[doc=r###\"")
-                RsDocKind.of(token).removeDecoration(text.splitToSequence("\n")).joinTo(sb, separator = "\n")
-                sb.append("\"###]")
-            } else {
-                ranges.mergeAdd(MappedTextRange(start, sb.length, text.length))
-                sb.append(text)
-            }
-        }
-
-        return this@MacroExpander.project.createAdaptedRustPsiBuilder(sb) to RangeMap.from(ranges)
-    }
-
-    private fun PsiBuilder.hasDocComments(): Boolean {
-        var i = 0
-        while (true) {
-            val token = rawLookup(i++) ?: break
-            if (token in RS_DOC_COMMENTS) return true
-        }
-        return false
-    }
 
     private fun substituteMacro(root: PsiElement, subst: MacroSubstitution): Pair<CharSequence, RangeMap>? {
         val sb = StringBuilder()
@@ -261,11 +207,13 @@ class MacroExpander(val project: Project) {
                                 sb.safeAppend(value.value)
                             }
                             if (value.offsetInCallBody != -1 && value.value.isNotEmpty()) {
-                                ranges.mergeAdd(MappedTextRange(
+                                ranges.mergeAdd(
+                                    MappedTextRange(
                                     value.offsetInCallBody,
                                     sb.length - value.value.length - if (parensNeeded) 1 else 0,
                                     value.value.length
-                                ))
+                                )
+                                )
                             }
                         }
                         VarLookupResult.None -> {
@@ -463,7 +411,7 @@ class MacroPattern private constructor(
 
     private fun matchGroup(group: RsMacroBindingGroup, macroCallBody: PsiBuilder): GroupMatchingResult {
         val groups = mutableListOf<MacroSubstitution>()
-        val pattern = MacroPattern.valueOf(group.macroPatternContents ?: return Err(PatternSyntax(macroCallBody)))
+        val pattern = valueOf(group.macroPatternContents ?: return Err(PatternSyntax(macroCallBody)))
         if (pattern.isEmpty()) return Err(PatternSyntax(macroCallBody))
         val separator = group.macroBindingGroupSeparator?.node?.firstChildNode
         macroCallBody.eof() // skip whitespace

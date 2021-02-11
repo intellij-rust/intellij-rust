@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapiext.Testmark
 import com.intellij.patterns.ElementPattern
@@ -15,9 +14,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.FragmentKind.*
+import org.rust.lang.core.macros.decl.FragmentKind.*
 import org.rust.lang.core.macros.MacroExpansionContext.EXPR
 import org.rust.lang.core.macros.MacroExpansionContext.STMT
+import org.rust.lang.core.macros.decl.FragmentKind
+import org.rust.lang.core.macros.decl.MacroGraphWalker
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement

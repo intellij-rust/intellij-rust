@@ -48,6 +48,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.*
@@ -1032,7 +1033,7 @@ private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): 
     val context = call.context as? RsElement ?: return nullExpansionResult(call)
     val def = call.resolveToMacroWithoutPsi() ?: return nullExpansionResult(call)
     val project = call.project
-    val result = MacroExpander(project).expandMacro(
+    val result = DeclMacroExpander(project).expandMacro(
         def.data,
         call,
         RsPsiFactory(project, markGenerated = false),

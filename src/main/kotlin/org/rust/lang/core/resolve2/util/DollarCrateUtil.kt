@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsUseItem
