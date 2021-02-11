@@ -6,6 +6,7 @@
 package org.rust.toml.crates.local
 
 import com.intellij.openapi.components.service
+import org.jetbrains.annotations.TestOnly
 
 interface CratesLocalIndexService {
     fun getCrate(crateName: String): CargoRegistryCrate?
@@ -16,5 +17,14 @@ interface CratesLocalIndexService {
     }
 }
 
-data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>)
+data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>) {
+    companion object {
+        @TestOnly
+        fun of(vararg versions: String): CargoRegistryCrate =
+            CargoRegistryCrate(versions.map {
+                CargoRegistryCrateVersion(it, false, listOf())
+            })
+    }
+}
+
 data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>)
