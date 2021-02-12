@@ -5,54 +5,25 @@
 
 package org.rust.ide.lineMarkers
 
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
 import org.rust.FileTree
 import org.rust.RsTestBase
 
 abstract class RsLineMarkerProviderTestBase : RsTestBase() {
+
+    private lateinit var lineMarkerTestHelper: LineMarkerTestHelper
+
+    override fun setUp() {
+        super.setUp()
+        lineMarkerTestHelper = LineMarkerTestHelper(myFixture)
+    }
+
     protected fun doTestByText(@Language("Rust") source: String) {
-        myFixture.configureByText("lib.rs", source)
-        myFixture.doHighlighting()
-        val expected = markersFrom(source)
-        val actual = markersFrom(myFixture.editor, myFixture.project)
-        assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
+        lineMarkerTestHelper.doTestByText("lib.rs", source)
     }
 
     protected fun doTestFromFile(filePath: String, fileTree: FileTree) {
-        fileTree.create()
-        myFixture.configureFromTempProjectFile(filePath)
-        myFixture.doHighlighting()
-        val expected = markersFrom(myFixture.editor.document.text)
-        val actual = markersFrom(myFixture.editor, myFixture.project)
-        assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
-    }
-
-    private fun markersFrom(text: String) =
-        text.split('\n')
-            .withIndex()
-            .filter { it.value.contains(MARKER) }
-            .flatMap { row ->
-                row.value
-                    .substring(row.value.indexOf(MARKER) + MARKER.length)
-                    .trim()
-                    .split(',')
-                    .map { Pair(row.index, it) }
-            }
-            .sortedWith(compareBy({ it.first }, { it.second }))
-
-    private fun markersFrom(editor: Editor, project: Project) =
-        DaemonCodeAnalyzerImpl.getLineMarkers(editor.document, project)
-            .map {
-                Pair(editor.document.getLineNumber(it.element?.textRange?.startOffset as Int),
-                    it.lineMarkerTooltip ?: "null")
-            }
-            .sortedWith(compareBy({ it.first }, { it.second }))
-
-    private companion object {
-        val MARKER = "// - "
-        val COMPARE_SEPARATOR = " | "
+        val testProject = fileTree.create()
+        lineMarkerTestHelper.doTestFromFile(testProject.file(filePath))
     }
 }

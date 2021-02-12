@@ -69,5 +69,5 @@ class CargoCrateDocLineMarkerProviderTest : CargoTomlLineMarkerProviderTestBase(
     fun `test exact version`() = doTestByText("""
         [dependencies]
         base64 = "=0.8.0"  # - Open documentation for `base64@=0.8.0`
-    """.trimIndent())
+    """)
 }
