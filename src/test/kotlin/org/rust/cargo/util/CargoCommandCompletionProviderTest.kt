@@ -8,6 +8,7 @@ package org.rust.cargo.util
 import com.intellij.codeInsight.completion.PlainPrefixMatcher
 import org.rust.RsTestBase
 import org.rust.cargo.CfgOptions
+import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.CargoWorkspace.*
@@ -131,12 +132,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         text: String,
         expectedCompletions: List<String>
     ) {
+        val actual = complete(text, project.cargoProjects, testWorkspace)
 
-        val provider = CargoCommandCompletionProvider(project.cargoProjects, testWorkspace)
-        val (ctx, prefix) = provider.splitContextPrefix(text)
-        val matcher = PlainPrefixMatcher(prefix)
-
-        val actual = provider.complete(ctx).filter { matcher.isStartMatch(it) }.map { it.lookupString }
         check(actual == expectedCompletions) {
             "\nExpected:\n$expectedCompletions\n\nActual:\n$actual"
         }
@@ -194,5 +191,15 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
             ),
             CfgOptions.DEFAULT
         )
+    }
+
+    companion object {
+        fun complete(text: String, cargoProjects: CargoProjectsService, testWorkspace: CargoWorkspace?): List<String> {
+            val provider = CargoCommandCompletionProvider(cargoProjects, testWorkspace)
+            val (ctx, prefix) = provider.splitContextPrefix(text)
+            val matcher = PlainPrefixMatcher(prefix)
+
+            return provider.complete(ctx).filter { matcher.isStartMatch(it) }.map { it.lookupString }
+        }
     }
 }
