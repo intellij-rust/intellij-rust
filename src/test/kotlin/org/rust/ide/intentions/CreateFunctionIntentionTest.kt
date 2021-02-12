@@ -9,6 +9,7 @@ import org.rust.MockEdition
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.ide.intentions.createFromUsage.CreateFunctionIntention
 
 class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention::class) {
     fun `test function availability range`() = checkAvailableInSelectionOnly("""

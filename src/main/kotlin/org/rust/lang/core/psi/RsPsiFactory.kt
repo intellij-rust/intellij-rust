@@ -189,8 +189,10 @@ class RsPsiFactory(
             ?: error("Failed to create enum from text: `$text`")
 
     fun createStruct(text: String): RsStructItem =
-        createFromText(text)
+        tryCreateStruct(text)
             ?: error("Failed to create struct from text: `$text`")
+
+    fun tryCreateStruct(text: String): RsStructItem? = createFromText(text)
 
     fun createStatement(text: String): RsStmt =
         createFromText("fn main() { $text 92; }")

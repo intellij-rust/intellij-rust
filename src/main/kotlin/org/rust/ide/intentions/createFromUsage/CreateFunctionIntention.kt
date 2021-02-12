@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.intentions
+package org.rust.ide.intentions.createFromUsage
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.rust.cargo.project.workspace.PackageOrigin
+import org.rust.ide.intentions.RsElementBaseIntentionAction
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
 import org.rust.lang.core.psi.*
@@ -36,7 +36,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         }
     }
 
-    sealed class Context(val name: String, val callElement: PsiElement) {
+    sealed class Context(val name: String, val callElement: RsElement) {
         abstract val visibility: String
         open val isAsync: Boolean = callElement.isAtLeastEdition2018
         abstract val arguments: RsValueArgumentList
@@ -44,11 +44,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         open val implItem: RsImplItem? = null
 
         open class Function(callExpr: RsCallExpr, name: String, val module: RsMod) : Context(name, callExpr) {
-            override val visibility: String = when {
-                callExpr.containingCrate != module.containingCrate -> "pub "
-                callExpr.containingMod != module -> "pub(crate) "
-                else -> ""
-            }
+            override val visibility: String = getVisibility(module, callExpr.containingMod)
             override val isAsync: Boolean = super.isAsync
                 && (callExpr.parent as? RsDotExpr)?.fieldLookup?.isAsync == true
             override val arguments: RsValueArgumentList = callExpr.valueArgumentList
@@ -65,7 +61,11 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                 get() = super.implItem
         }
 
-        class Method(val methodCall: RsMethodCall, name: String, val item: RsStructOrEnumItemElement) : Context(name, methodCall) {
+        class Method(
+            val methodCall: RsMethodCall,
+            name: String,
+            val item: RsStructOrEnumItemElement
+        ) : Context(name, methodCall) {
             override val visibility: String
                 get() {
                     val parentImpl = methodCall.parentOfType<RsImplItem>()
@@ -154,11 +154,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
 
     private fun getTargetItemForFunction(path: RsPath): FunctionInsertionTarget? {
         if (path.qualifier != null) {
-            val item = path.qualifier?.reference?.resolve() as? RsQualifiedNamedElement
-            if (item?.containingCargoPackage?.origin != PackageOrigin.WORKSPACE) return null
-            if (!isUnitTestMode && !item.isWritable) return null
-
-            return when (item) {
+            return when (val item = getWritablePathTarget(path)) {
                 is RsMod -> FunctionInsertionTarget.Module(item)
                 is RsStructOrEnumItemElement -> FunctionInsertionTarget.Item(item)
                 else -> null
@@ -234,16 +230,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             return target.parent.addAfter(function, target) as RsFunction
         }
 
-        // add to the end of module/file
-        return if (targetModule is RsModItem) {
-            targetModule.addBefore(function, targetModule.rbrace)
-        } else {
-            if (targetModule.lastChild == null) {
-                targetModule.add(function)
-            } else {
-                targetModule.addAfter(function, targetModule.lastChild)
-            }
-        } as RsFunction
+        return addToModule(targetModule, function)
     }
 
     private fun insertMethod(
@@ -267,7 +254,9 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         }
 
         val newImpl = RsPsiFactory(item.project).createInherentImplItem(
-            item.name ?: "?", item.typeParameterList, item.whereClause
+            item.name ?: "?",
+            item.typeParameterList,
+            item.whereClause
         )
         return item.parent.addAfter(newImpl, item) as RsImplItem
     }

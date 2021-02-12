@@ -1,0 +1,8 @@
+struct Foo {
+    a: i32,
+    b: bool
+}
+
+fn bar() {
+    let x = Foo { a: 0, b: true };
+}
