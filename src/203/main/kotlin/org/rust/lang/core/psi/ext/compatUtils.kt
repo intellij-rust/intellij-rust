@@ -11,3 +11,7 @@ import com.intellij.psi.util.findDescendantOfType
 inline fun <reified T : PsiElement> PsiElement.descendantOfType(noinline predicate: (T) -> Boolean): T? {
     return findDescendantOfType({true}, predicate)
 }
+
+inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(noinline predicate: (T) -> Boolean): Boolean {
+    return descendantOfType(predicate) != null
+}

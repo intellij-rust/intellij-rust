@@ -11,3 +11,7 @@ import com.intellij.psi.util.descendantsOfType
 inline fun <reified T : PsiElement> PsiElement.descendantOfType(predicate: (T) -> Boolean): T? {
     return descendantsOfType<T>().firstOrNull(predicate)
 }
+
+inline fun <reified T : PsiElement> PsiElement.anyDescendantOfType(predicate: (T) -> Boolean): Boolean {
+    return descendantOfType(predicate) != null
+}
