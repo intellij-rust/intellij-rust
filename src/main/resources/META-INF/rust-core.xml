@@ -938,6 +938,10 @@
             <className>org.rust.ide.intentions.AddImplTraitIntention</className>
             <category>Rust</category>
         </intentionAction>
+        <intentionAction>
+            <className>org.rust.ide.intentions.ExtractStructFieldsIntention</className>
+            <category>Rust</category>
+        </intentionAction>
 
         <!-- Run Configurations -->
 
@@ -1249,6 +1253,11 @@
         <action id="Rust.RsExtractEnumVariant"
                 class="org.rust.ide.refactoring.extractEnumVariant.RsExtractEnumVariantAction">
             <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+        </action>
+
+        <action id="Rust.RsExtractStructFields"
+                class="org.rust.ide.refactoring.extractStructFields.RsExtractStructFieldsAction">
+            <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="Rust.RsExtractEnumVariant"/>
         </action>
 
         <action id="Rust.ShowSingleStepMacroExpansionAction"
