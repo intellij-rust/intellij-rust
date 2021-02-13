@@ -21,12 +21,6 @@ import kotlin.streams.asSequence
 private val LOG = Logger.getInstance("#org.rust.stdext")
 
 /**
- * Just a way to nudge Kotlin's type checker in the right direction
- */
-@Suppress("NOTHING_TO_INLINE")
-inline fun <T> typeAscription(t: T): T = t
-
-/**
  * Just a way to force exhaustiveness analysis for Kotlin's `when` expression.
  *
  * Use it like this:

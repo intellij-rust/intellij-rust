@@ -12,15 +12,13 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ImplLookup
 import org.rust.lang.core.types.selfType
 import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.stdext.typeAscription
 
 class RsSelfConventionInspection : RsLocalInspectionTool() {
-
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitFunction(m: RsFunction) {
                 val traitOrImpl = when (val owner = m.owner) {
-                    is RsAbstractableOwner.Trait -> typeAscription<RsTraitOrImpl>(owner.trait)
+                    is RsAbstractableOwner.Trait -> owner.trait
                     is RsAbstractableOwner.Impl -> owner.impl.takeIf { owner.isInherent }
                     else -> null
                 } ?: return
@@ -44,7 +42,10 @@ class RsSelfConventionInspection : RsLocalInspectionTool() {
             SelfConvention("from_", listOf(SelfSignature.NO_SELF)),
             SelfConvention("into_", listOf(SelfSignature.BY_VAL)),
             SelfConvention("is_", listOf(SelfSignature.BY_REF, SelfSignature.NO_SELF)),
-            SelfConvention("to_", listOf(SelfSignature.BY_REF))
+            SelfConvention("to_", listOf(SelfSignature.BY_REF)),
+            SelfConvention("get_", listOf(SelfSignature.BY_REF)),
+            SelfConvention("set_", listOf(SelfSignature.BY_MUT_REF)),
+            SelfConvention("with_", listOf(SelfSignature.BY_VAL, SelfSignature.BY_MUT_REF))
         )
     }
 }

@@ -12,8 +12,7 @@ import org.rust.WithStdlibRustProjectDescriptor
  * Tests for Self Convention inspection
  */
 class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionInspection::class) {
-
-    fun testFrom() = checkByText("""
+    fun `test from`() = checkByText("""
         struct Foo;
         impl Foo {
             fn from_nothing(<warning descr="methods called `from_*` usually take no self; consider choosing a less ambiguous name">self</warning>) -> T { T() }
@@ -21,7 +20,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    fun testInto() = checkByText("""
+    fun `test into`() = checkByText("""
         struct Foo;
         impl Foo {
             fn into_u32(self) -> u32 { 0 }
@@ -31,7 +30,7 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    fun testTo() = checkByText("""
+    fun `test to`() = checkByText("""
         struct Foo;
         impl Foo {
             fn to_something(<warning descr="methods called `to_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) -> u32 { 0 }
@@ -39,11 +38,36 @@ class RsSelfConventionInspectionTest : RsInspectionsTestBase(RsSelfConventionIns
         }
     """)
 
-    fun testIs() = checkByText("""
+    fun `test is`() = checkByText("""
         struct Foo;
         impl Foo {
             fn is_awesome(<warning descr="methods called `is_*` usually take self by reference or no self; consider choosing a less ambiguous name">self</warning>) {}
             fn is_awesome_ref(&self) {}
+        }
+    """)
+
+    fun `test get`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn get_foo(<warning descr="methods called `get_*` usually take self by reference; consider choosing a less ambiguous name">self</warning>) {}
+            fn get_bar(&self) {}
+        }
+    """)
+
+    fun `test set`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn set_foo(<warning descr="methods called `set_*` usually take self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
+            fn set_bar(&mut self) {}
+        }
+    """)
+
+    fun `test with`() = checkByText("""
+        struct Foo;
+        impl Foo {
+            fn with_foo(<warning descr="methods called `with_*` usually take self by value or self by mutable reference; consider choosing a less ambiguous name">&self</warning>) {}
+            fn with_bar(&mut self) {}
+            fn with_baz(self) {}
         }
     """)
 
