@@ -199,6 +199,7 @@
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsErrorAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsUnsafeExpressionAnnotator"/>
         <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsCfgDisabledCodeAnnotator"/>
+        <annotator language="Rust" implementationClass="org.rust.ide.annotator.RsImplicitCopyAnnotator"/>
         <highlightRangeExtension implementation="org.rust.ide.annotator.RsErrorAnnotator"/>
 
         <highlightingPassFactory implementation="org.rust.ide.annotator.RsHighlightingPassFactoryRegistrar"/>
