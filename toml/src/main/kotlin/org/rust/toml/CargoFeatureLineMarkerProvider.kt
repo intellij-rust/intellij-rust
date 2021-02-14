@@ -59,8 +59,7 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
             if (parent is TomlKeySegment) {
                 val isFeatureKey = parent.isFeatureKey
                 if (!isFeatureKey && !parent.isDependencyName) continue@loop
-                val featureName = parent.text
-                if ("." in featureName) continue@loop
+                val featureName = parent.name ?: continue@loop
                 if (!isFeatureKey && featureName !in features) continue@loop
                 result += genFeatureLineMarkerInfo(
                     parent,
@@ -153,7 +152,7 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
 private object ToggleFeatureAction : GutterIconNavigationHandler<PsiElement> {
     override fun navigate(e: MouseEvent, element: PsiElement) {
         val context = getContext(element) ?: return
-        val featureName = element.ancestorStrict<TomlKey>()?.text ?: return
+        val featureName = element.ancestorStrict<TomlKeySegment>()?.name ?: return
         val oldState = context.cargoPackage.featureState.getOrDefault(featureName, FeatureState.Disabled)
         val newState = !oldState
         val tomlDoc = PsiDocumentManager.getInstance(context.cargoProject.project).getDocument(element.containingFile)

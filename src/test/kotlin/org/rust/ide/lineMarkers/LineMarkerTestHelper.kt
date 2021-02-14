@@ -5,13 +5,17 @@
 
 package org.rust.ide.lineMarkers
 
+import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import java.awt.event.MouseEvent
+import javax.swing.JLabel
 
 class LineMarkerTestHelper(private val fixture: CodeInsightTestFixture) {
 
@@ -59,4 +63,8 @@ class LineMarkerTestHelper(private val fixture: CodeInsightTestFixture) {
     private companion object {
         private const val COMPARE_SEPARATOR = " | "
     }
+}
+
+fun LineMarkerInfo<PsiElement>.invokeNavigationHandler(element: PsiElement?) {
+    navigationHandler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), element)
 }

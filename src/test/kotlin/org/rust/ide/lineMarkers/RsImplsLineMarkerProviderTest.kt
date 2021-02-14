@@ -70,7 +70,7 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
         val element = myFixture.file.findElementAt(myFixture.caretOffset)!!
         @Suppress("UNCHECKED_CAST")
         val markerInfo = (myFixture.findGuttersAtCaret().first() as LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>).lineMarkerInfo
-        markerInfo.navigationHandler.navigate(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false), element)
+        markerInfo.invokeNavigationHandler(element)
         val renderedImpls = element.getUserData(RsImplsLineMarkerProvider.RENDERED_IMPLS)!!
         assertEquals(expectedItems.toList(), renderedImpls)
     }
