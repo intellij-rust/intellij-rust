@@ -3,7 +3,7 @@ import re
 from datetime import datetime, timedelta
 
 from common import env, get_patch_version
-from github import get_all_milestones, create_milestone
+from github import get_latest_milestones, create_milestone
 
 RELEASE_MANAGER_RE = re.compile("Release manager: @(\\w+)")
 
@@ -15,7 +15,7 @@ def main():
     args = parser.parse_args()
 
     repo = env("GITHUB_REPOSITORY")
-    milestones = get_all_milestones(repo, state="all")
+    milestones = get_latest_milestones(repo, state="all")
     milestones.sort(key=lambda milestone: milestone["title"], reverse=True)
 
     patch_version = get_patch_version()
