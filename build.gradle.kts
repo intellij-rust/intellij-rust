@@ -448,12 +448,17 @@ project(":toml") {
         setPlugins(project(":intellij-toml"))
     }
     dependencies {
-        implementation(project(":"))
-        implementation(project(":common"))
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
         implementation("com.vdurmont:semver4j:3.1.0")
+
+        implementation(project(":"))
+        implementation(project(":common"))
         testImplementation(project(":", "testOutput"))
         testImplementation(project(":common", "testOutput"))
+
+        // TODO: Drop when gradle-intellij-plugin will be adding add all transitive dependencies
+        compileOnly(project(":intellij-toml:core"))
+        testCompileOnly(project(":intellij-toml:core"))
     }
 }
 
@@ -543,6 +548,19 @@ project(":intellij-toml") {
     version = "0.2.$patchVersion.${prop("buildNumber")}$versionSuffix"
 
     dependencies {
+        implementation(project(":intellij-toml:core"))
+    }
+
+    tasks {
+        withType<PublishTask> {
+            token(prop("publishToken"))
+            channels(channel)
+        }
+    }
+}
+
+project(":intellij-toml:core") {
+    dependencies {
         implementation(project(":common"))
         testImplementation(project(":common", "testOutput"))
     }
@@ -565,10 +583,6 @@ project(":intellij-toml") {
     tasks {
         withType<KotlinCompile> {
             dependsOn(generateTomlLexer, generateTomlParser)
-        }
-        withType<PublishTask> {
-            token(prop("publishToken"))
-            channels(channel)
         }
     }
 }

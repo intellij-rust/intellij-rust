@@ -13,7 +13,8 @@ include(
     "duplicates",
     "grazie",
     "ml-completion",
-    "intellij-toml"
+    "intellij-toml",
+    "intellij-toml:core"
 )
 
 val platformVersion: String by extra
