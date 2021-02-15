@@ -817,8 +817,12 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     private fun checkInherentImplSameCrate(holder: RsAnnotationHolder, impl: RsImplItem) {
         if (impl.traitRef != null) return  // checked in [checkTraitImplOrphanRules]
         val typeReference = impl.typeReference ?: return
-        val struct = (typeReference.type as? TyAdt)?.item ?: return
-        if (impl.containingCrate != struct.containingCrate) {
+        val element = when (val type = typeReference.type) {
+            is TyAdt -> type.item
+            is TyTraitObject -> type.traits.first().element
+            else -> return
+        }
+        if (impl.containingCrate != element.containingCrate) {
             RsDiagnostic.InherentImplDifferentCrateError(typeReference).addToHolder(holder)
         }
     }
