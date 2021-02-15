@@ -151,6 +151,18 @@ class MacroExpansionSharedCache : Disposable {
         }
     }
 
+    fun getExpansionIfCached(hash: HashCode): ExpansionResult? {
+        if (!CACHE_ENABLED.asBoolean()) return null
+        val data = data.get() ?: return null
+        val map = data.expansions
+        return try {
+            map.get(hash)
+        } catch (e: IOException) {
+            onError(data, e)
+            null
+        }
+    }
+
     fun cachedBuildStub(fileContent: FileContent, hash: HashCode): SerializedStubTree? {
         return cachedBuildStub(hash) { fileContent }
     }
