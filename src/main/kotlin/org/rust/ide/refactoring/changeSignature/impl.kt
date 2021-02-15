@@ -124,6 +124,10 @@ private fun changeArguments(
         is RsFunctionUsage.MethodCall -> usage.call.valueArgumentList
         else -> error("unreachable")
     }
+    for (parameter in config.parameters) {
+        val defaultValue = parameter.defaultValue.item ?: continue
+        RsImportHelper.importTypeReferencesFromElements(arguments, setOf(defaultValue), useAliases = true)
+    }
     val argumentsCopy = arguments.copy() as RsValueArgumentList
     val argumentsList = argumentsCopy.exprList
     val isUFCS = isMethod && usage is RsFunctionUsage.FunctionCall
@@ -134,7 +138,7 @@ private fun changeArguments(
         if (isUFCS) argumentsList.first() else null,
         if (isUFCS) argumentsList.drop(1) else argumentsList,
         config
-    ) { null }
+    ) { it.defaultValue.item }
 }
 
 private fun changeParameters(factory: RsPsiFactory, function: RsFunction, config: RsChangeFunctionSignatureConfig) {

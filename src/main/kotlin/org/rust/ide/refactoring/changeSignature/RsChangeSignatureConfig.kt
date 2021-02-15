@@ -39,26 +39,28 @@ class RsSignatureChangeInfo(val config: RsChangeFunctionSignatureConfig) : Chang
 }
 
 /**
- * This type is needed to distinguish from empty and invalid type references entered in the dialog.
+ * This type is needed to distinguish between empty, invalid and valid type references or expressions entered
+ * in the dialog.
  */
-sealed class ParameterType {
-    object Empty: ParameterType()
-    class Invalid(override val text: String): ParameterType()
-    class Valid(val typeReference: RsTypeReference): ParameterType() {
-        override val text: String = typeReference.text
+sealed class ParameterProperty<T: RsElement> {
+    class Empty<T: RsElement> : ParameterProperty<T>()
+    class Invalid<T: RsElement>(override val text: String) : ParameterProperty<T>()
+    class Valid<T: RsElement>(override val item: T) : ParameterProperty<T>() {
+        override val text: String = item.text
     }
 
     open val text: String = ""
+    open val item: T? = null
 
     companion object {
-        fun fromTypeReference(typeReference: RsTypeReference?): ParameterType {
-            if (typeReference == null) return Empty
-            return Valid(typeReference)
+        fun <T: RsElement> fromItem(item: T?): ParameterProperty<T> = when (item) {
+            null -> Empty()
+            else -> Valid(item)
         }
-        fun fromText(typeReference: RsTypeReference?, text: String): ParameterType = when {
-            text.isBlank() -> Empty
-            typeReference == null -> Invalid(text)
-            else -> Valid(typeReference)
+        fun <T: RsElement> fromText(item: T?, text: String): ParameterProperty<T> = when {
+            text.isBlank() -> Empty()
+            item == null -> Invalid(text)
+            else -> Valid(item)
         }
     }
 }
@@ -69,13 +71,14 @@ sealed class ParameterType {
 class Parameter(
     val factory: RsPsiFactory,
     var patText: String,
-    var type: ParameterType,
-    val index: Int = NEW_PARAMETER
+    var type: ParameterProperty<RsTypeReference>,
+    val index: Int = NEW_PARAMETER,
+    var defaultValue: ParameterProperty<RsExpr> = ParameterProperty.Empty()
 ) {
     val typeReference: RsTypeReference
         get() = parseTypeReference() ?: factory.createType("()")
 
-    fun parseTypeReference(): RsTypeReference? = (type as? ParameterType.Valid)?.typeReference
+    fun parseTypeReference(): RsTypeReference? = type.item
     fun parsePat(): RsPat? = factory.tryCreatePat(patText)
 
     val pat: RsPat
@@ -145,7 +148,7 @@ class RsChangeFunctionSignatureConfig private constructor(
             val factory = RsPsiFactory(function.project)
             val parameters = function.valueParameters.mapIndexed { index, parameter ->
                 val patText = parameter.pat?.text ?: "_"
-                val type = ParameterType.fromTypeReference(parameter.typeReference)
+                val type = ParameterProperty.fromItem(parameter.typeReference)
                 Parameter(factory, patText, type, index)
             }
             return RsChangeFunctionSignatureConfig(

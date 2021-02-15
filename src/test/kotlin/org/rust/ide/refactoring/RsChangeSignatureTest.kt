@@ -11,10 +11,7 @@ import org.rust.MockAdditionalCfgOptions
 import org.rust.MockEdition
 import org.rust.RsTestBase
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.ide.refactoring.changeSignature.Parameter
-import org.rust.ide.refactoring.changeSignature.ParameterType
-import org.rust.ide.refactoring.changeSignature.RsChangeFunctionSignatureConfig
-import org.rust.ide.refactoring.changeSignature.withMockChangeFunctionSignature
+import org.rust.ide.refactoring.changeSignature.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.stdext.removeLast
@@ -510,6 +507,98 @@ Cannot change signature of function with cfg-disabled parameters""")
         parameters.add(parameter("a", "u32"))
     }
 
+    fun `test add only parameter with default value`() = doTest("""
+        fn foo/*caret*/() {}
+        fn bar() {
+            foo();
+        }
+    """, """
+        fn foo(a: u32) {}
+        fn bar() {
+            foo(10);
+        }
+    """) {
+        parameters.add(parameter("a", "u32", defaultValue = createExpr("10")))
+    }
+
+    fun `test add last parameter with default value`() = doTest("""
+        fn foo/*caret*/(a: u32) {}
+        fn bar() {
+            foo(0);
+        }
+    """, """
+        fn foo(a: u32, b: u32) {}
+        fn bar() {
+            foo(0, 10);
+        }
+    """) {
+        parameters.add(parameter("b", "u32", defaultValue = createExpr("10")))
+    }
+
+    fun `test import default value type`() = doTest("""
+        mod foo {
+            pub struct S(u32);
+            pub fn bar/*caret*/(a: u32) {}
+                 //^
+        }
+
+        fn baz() {
+            foo::bar(0);
+        }
+    """, """
+        use foo::S;
+
+        mod foo {
+            pub struct S(u32);
+            pub fn bar(a: u32, b: S) {}
+                 //^
+        }
+
+        fn baz() {
+            foo::bar(0, S(1));
+        }
+    """) {
+        parameters.add(parameter("b", "S", defaultValue = createExprWithContext("S(1)", function)))
+    }
+
+    fun `test import default value type inside path`() = doTest("""
+        mod foo {
+            pub enum Option<T> {
+                Some(T),
+                None
+            }
+
+            pub struct S1<T>(pub Option<T>);
+            pub struct S2;
+            pub fn bar/*caret*/(a: u32) {}
+                 //^
+        }
+
+        fn baz() {
+            foo::bar(0);
+        }
+    """, """
+        use foo::{Option, S1, S2};
+
+        mod foo {
+            pub enum Option<T> {
+                Some(T),
+                None
+            }
+
+            pub struct S1<T>(pub Option<T>);
+            pub struct S2;
+            pub fn bar/*caret*/(a: u32, b: S1<S2>) {}
+                 //^
+        }
+
+        fn baz() {
+            foo::bar(0, S1::<S2>(Option::None));
+        }
+    """) {
+        parameters.add(parameter("b", "S1<S2>", defaultValue = createExprWithContext("S1::<S2>(Option::None)", function)))
+    }
+
     fun `test swap parameters`() = doTest("""
         fn foo/*caret*/(a: u32, b: u32) {}
         fn bar() {
@@ -865,7 +954,7 @@ Cannot change signature of function with cfg-disabled parameters""")
             fn baz/*caret*/(s: S) {}
         }
     """) {
-        parameters[0].type = ParameterType.Valid(referToType("S", findElementInEditor<RsStructItem>()))
+        parameters[0].type = ParameterProperty.Valid(referToType("S", findElementInEditor<RsStructItem>()))
     }
 
     fun `test name conflict module`() = checkConflicts("""
@@ -1078,16 +1167,28 @@ Cannot change signature of function with cfg-disabled parameters""")
 
     private fun createVisibility(vis: String): RsVis = RsPsiFactory(project).createVis(vis)
     private fun createType(text: String): RsTypeReference = RsPsiFactory(project).createType(text)
-    private fun createParamType(text: String): ParameterType = ParameterType.Valid(createType(text))
-    private fun parameter(patText: String, type: String): Parameter = parameter(patText, createType(type))
-    private fun parameter(patText: String, type: RsTypeReference): Parameter
-        = Parameter(RsPsiFactory(project), patText, ParameterType.Valid(type))
+    private fun createExpr(text: String): RsExpr = RsPsiFactory(project).createExpression(text)
+    private fun createParamType(text: String): ParameterProperty<RsTypeReference> = ParameterProperty.Valid(createType(text))
+    private fun parameter(patText: String, type: String, defaultValue: RsExpr? = null): Parameter
+        = parameter(patText, createType(type), defaultValue = defaultValue)
+    private fun parameter(patText: String, type: RsTypeReference, defaultValue: RsExpr? = null): Parameter {
+        val parameterDefaultValue = if (defaultValue != null) {
+            ParameterProperty.Valid(defaultValue)
+        } else {
+            ParameterProperty.Empty()
+        }
+        return Parameter(RsPsiFactory(project), patText, ParameterProperty.Valid(type),
+            defaultValue = parameterDefaultValue)
+    }
 
     /**
      * Refer to existing type in the test code snippet.
      */
     private fun referToType(text: String, context: RsElement): RsTypeReference
         = RsTypeReferenceCodeFragment(myFixture.project, text, context).typeReference!!
+
+    private fun createExprWithContext(text: String, context: RsElement): RsExpr
+        = RsExpressionCodeFragment(myFixture.project, text, context).expr!!
 
     private fun doTest(
         @Language("Rust") code: String,
@@ -1097,7 +1198,7 @@ Cannot change signature of function with cfg-disabled parameters""")
         withMockChangeFunctionSignature({ config ->
             modifyConfig.invoke(config)
         }) {
-            checkEditorAction(code, expected, "ChangeSignature", trimIndent = false)
+            checkEditorAction(code, expected, "ChangeSignature")
         }
     }
 
