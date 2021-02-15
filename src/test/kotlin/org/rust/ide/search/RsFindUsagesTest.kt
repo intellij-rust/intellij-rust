@@ -263,10 +263,12 @@ class RsFindUsagesTest : RsTestBase() {
         assertEquals(expected.joinToString(COMPARE_SEPARATOR), actual.joinToString(COMPARE_SEPARATOR))
     }
 
-    private fun markersActual(source: RsNamedElement) =
+    private fun markersActual(source: RsNamedElement): List<Pair<Int, String>> =
         myFixture.findUsages(source)
-            .filter { it.element != null }
-            .map { Pair(it.element?.line ?: -1, RsUsageTypeProvider.getUsageType(it.element).toString()) }
+            .flatMap {
+                val element = it.element ?: return@flatMap emptyList()
+                listOf(Pair(element.line ?: -1, RsUsageTypeProvider.getUsageType(element).toString()))
+            }
             .sortedBy { it.first }
 
     private fun markersFrom(text: String) =

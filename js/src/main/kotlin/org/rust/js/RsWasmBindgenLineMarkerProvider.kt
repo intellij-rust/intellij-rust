@@ -19,16 +19,12 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.findDescendantOfType
 import icons.JavaScriptPsiIcons
 import org.rust.lang.core.psi.RsEnumItem
 import org.rust.lang.core.psi.RsFunction
 import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.psi.ext.RsOuterAttributeOwner
-import org.rust.lang.core.psi.ext.RsVisibilityOwner
-import org.rust.lang.core.psi.ext.containingCargoPackage
-import org.rust.lang.core.psi.ext.findOuterAttr
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsBaseTypeImpl
 import java.nio.file.InvalidPathException
 import java.nio.file.Paths
@@ -91,9 +87,9 @@ class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
 
     private fun findRelatedTsElement(element: RsOuterAttributeOwner, tsPsiFile: PsiFile): JSElement? =
         when (element) {
-            is RsFunction -> tsPsiFile.findDescendantOfType<TypeScriptFunction> { it.name == element.name }
-            is RsEnumItem -> tsPsiFile.findDescendantOfType<TypeScriptEnum> { it.name == element.name }
-            is RsStructItem -> tsPsiFile.findDescendantOfType<TypeScriptClass> { it.name == element.name }
+            is RsFunction -> tsPsiFile.descendantOfType<TypeScriptFunction> { it.name == element.name }
+            is RsEnumItem -> tsPsiFile.descendantOfType<TypeScriptEnum> { it.name == element.name }
+            is RsStructItem -> tsPsiFile.descendantOfType<TypeScriptClass> { it.name == element.name }
             else -> null
         }
 

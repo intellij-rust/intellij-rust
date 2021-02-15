@@ -1005,8 +1005,6 @@ private fun VirtualFile.writeMixHash(hash: HashCode) {
 }
 
 fun VirtualFile.loadMixHash(): HashCode? {
-    checkReadAccessAllowed()
-
     val data = MACRO_MIX_HASH_ATTRIBUTE.readAttribute(this) ?: return null
     return data.readHashCode()
 }

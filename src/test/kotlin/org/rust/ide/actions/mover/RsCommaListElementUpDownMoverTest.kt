@@ -5,6 +5,15 @@
 
 package org.rust.ide.actions.mover
 
+import org.rust.UseOldResolve
+
+// These test may implicitly invoke `RsSuggestedRefactoringSupport.isDeclaration` during indexing.
+// `RsSuggestedRefactoringSupport.isDeclaration` may invoke name resolution and in combination with new name resolution engine
+// (which loads stubs itself) lead to "Outdated stub in index" error
+//
+// So force using old name resolution engine here for now.
+// Annotation should be removed when https://github.com/intellij-rust/intellij-rust/issues/6833 will be fixed
+@UseOldResolve
 class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
     fun `test function parameter`() = moveDownAndBackUp("""
         fn foo(

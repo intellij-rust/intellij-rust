@@ -41,7 +41,7 @@ object RsUsageTypeProvider : UsageTypeProviderEx {
     private val USE = UsageType { "use" }
     private val MOD = UsageType { "mod" }
 
-    override fun getUsageType(element: PsiElement?): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
+    override fun getUsageType(element: PsiElement): UsageType? = getUsageType(element, UsageTarget.EMPTY_ARRAY)
 
     override fun getUsageType(element: PsiElement?, targets: Array<out UsageTarget>): UsageType? {
         val refinedElement = element?.findExpansionElements()?.firstOrNull()?.parent ?: element

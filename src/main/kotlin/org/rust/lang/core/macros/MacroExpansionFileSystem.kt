@@ -177,9 +177,17 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         val fsItem = convert(file) ?: throw FileNotFoundException(file.path + " (No such file or directory)")
         if (fsItem !is FSFile) throw FileNotFoundException(file.path + " (Is a directory)")
         return fsItem.fetchAndRemoveContent() ?: run {
-            val e = FileNotFoundException(file.path + " (Content is not provided)")
-            MACRO_LOG.warn("The file content has already been fetched", e)
-            throw e
+            val cachedExpansion = file.loadMixHash()?.let {
+                MacroExpansionSharedCache.getInstance().getExpansionIfCached(it)
+            }
+            if (cachedExpansion != null) {
+                cachedExpansion.text.toByteArray()
+            } else {
+                fsItem.delete()
+                val e = FileNotFoundException(file.path + " (Content is not provided)")
+                MACRO_LOG.warn("The file content has already been fetched", e)
+                throw e
+            }
         }
     }
 
@@ -318,12 +326,14 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
 
             @Synchronized
             fun fetchAndRemoveContent(): ByteArray? {
-                val tmp = tempContent ?: run {
-                    parent.removeChild(name, bump = true)
-                    return null
-                }
+                val tmp = tempContent
                 tempContent = null
                 return tmp
+            }
+
+            @Synchronized
+            fun delete() {
+                parent.removeChild(name, bump = true)
             }
         }
     }
