@@ -13,17 +13,18 @@ import com.intellij.ui.layout.panel
 import org.rust.debugger.RsDebuggerToolchainService
 import org.rust.debugger.RsDebuggerToolchainService.LLDBStatus
 import org.rust.openapiext.pathToDirectoryTextField
+import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Disposable {
 
-    private val downloadLink: JLabel = Link("Download") {
+    private val downloadLink: JComponent = Link("Download") {
         val result = RsDebuggerToolchainService.getInstance().downloadDebugger()
         if (result is RsDebuggerToolchainService.DownloadResult.Ok) {
             lldbPathField.text = result.lldbDir.absolutePath
         }
-    } as JLabel
+    }
 
     private val lldbPathField = pathToDirectoryTextField(
         this,
@@ -72,7 +73,11 @@ class RsDebuggerToolchainConfigurableUi : ConfigurableUi<RsDebuggerSettings>, Di
             LLDBStatus.NeedToUpdate -> "Update" to true
             is LLDBStatus.Binaries -> "" to false
         }
-        downloadLink.text = text
+        when (downloadLink) {
+            is JLabel -> downloadLink.text = text
+            is AbstractButton -> downloadLink.text = text
+        }
+
         downloadLink.isVisible = isVisible
     }
 }
