@@ -4073,4 +4073,15 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl ForeignTrait for Box<dyn LocalTrait> {}
         impl <error descr="Only traits defined in the current crate can be implemented for arbitrary types [E0117]">ForeignTrait</error> for Box<dyn ForeignTrait0> {}
     """)
+
+    fun `test no E0252 multiple underscore aliases`() = checkErrors("""
+        mod foo {
+            pub trait T1 {}
+        }
+        mod bar {
+            pub trait T2 {}
+        }
+        use foo::T1 as _;
+        use bar::T2 as _;
+    """)
 }

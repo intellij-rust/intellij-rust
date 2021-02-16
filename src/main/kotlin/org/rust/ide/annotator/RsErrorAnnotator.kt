@@ -1322,7 +1322,10 @@ private fun AnnotationSession.duplicatesByNamespace(
         (owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
             + importedNames)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
-            .filter { it.nameOrImportedName() != null }
+            .filter {
+                val name = it.nameOrImportedName()
+                name != null && name != "_"
+            }
             .filter { it.isEnabledByCfg && !it.isCfgUnknown }
             .flatMap { it.namespaced() }
             .groupBy { it.first }       // Group by namespace
