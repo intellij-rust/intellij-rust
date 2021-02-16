@@ -4,5 +4,25 @@
     <inspection_tool class="PluginXmlDynamicPlugin" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="highlightNonDynamicEPUsages" value="true" />
     </inspection_tool>
+    <inspection_tool class="PyAttributeOutsideInitInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="prettyPrinters" level="INFORMATION" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="PyMethodMayBeStaticInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="prettyPrinters" level="INFORMATION" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="PyPep8NamingInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="prettyPrinters" level="INFORMATION" enabled="true" />
+    </inspection_tool>
+    <inspection_tool class="PyShadowingBuiltinsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true">
+      <scope name="prettyPrinters" level="WEAK WARNING" enabled="true">
+        <option name="ignoredNames">
+          <list>
+            <option value="dict" />
+            <option value="type" />
+            <option value="map" />
+          </list>
+        </option>
+      </scope>
+    </inspection_tool>
   </profile>
 </component>

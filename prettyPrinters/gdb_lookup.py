@@ -1,7 +1,9 @@
-import gdb
+from gdb import Type
+from gdb import TYPE_CODE_STRUCT, TYPE_CODE_UNION, TYPE_CODE_INT
 
 from gdb_providers import *
 from rust_types import *
+
 
 def register_printers(objfile):
     objfile.pretty_printers.append(lookup)
@@ -15,7 +17,7 @@ def is_hashbrown_hashmap(hash_map):
 # Enum representation in gdb <= 9.1
 def is_old_enum(valobj):
     content = valobj[valobj.type.fields()[0]]
-    if content.type.code != gdb.TYPE_CODE_UNION:
+    if content.type.code != TYPE_CODE_UNION:
         return False
     fields = content.type.fields()
     if len(fields) > 1:
@@ -32,24 +34,26 @@ def is_new_enum(type):
     fields = type.fields()
     if len(fields) > 1:
         field0 = fields[0]
-        if field0.artificial and field0.name is None and field0.type.code == gdb.TYPE_CODE_INT:
+        if field0.artificial and field0.name is None and field0.type.code == TYPE_CODE_INT:
             return True
     return False
 
 
 def classify_rust_type(type):
+    # type: (Type) -> RustType
     type_class = type.code
-    if type_class == gdb.TYPE_CODE_STRUCT:
+    if type_class == TYPE_CODE_STRUCT:
         if is_new_enum(type):
             return RustType.ENUM
         return classify_struct(type.tag, type.fields())
-    if type_class == gdb.TYPE_CODE_UNION:
+    if type_class == TYPE_CODE_UNION:
         return classify_union(type.fields())
 
     return RustType.OTHER
 
 
 def lookup(valobj):
+    # type: (Value) -> object
     rust_type = classify_rust_type(valobj.type)
 
     if rust_type == RustType.STRUCT:

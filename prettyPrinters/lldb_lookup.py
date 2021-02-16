@@ -1,4 +1,5 @@
-import lldb
+from lldb import SBType
+from lldb import eTypeClassStruct, eTypeClassUnion
 
 from lldb_providers import *
 from rust_types import RustType, classify_struct, classify_union
@@ -10,10 +11,11 @@ def is_hashbrown_hashmap(hash_map):
 
 
 def classify_rust_type(type):
+    # type: (SBType) -> RustType
     type_class = type.GetTypeClass()
-    if type_class == lldb.eTypeClassStruct:
+    if type_class == eTypeClassStruct:
         return classify_struct(type.name, type.fields)
-    if type_class == lldb.eTypeClassUnion:
+    if type_class == eTypeClassUnion:
         return classify_union(type.fields)
 
     return RustType.OTHER
@@ -111,4 +113,4 @@ def synthetic_lookup(valobj, dict):
     if rust_type == RustType.STD_REF_CELL:
         return StdRefSyntheticProvider(valobj, dict, is_cell=True)
 
-    return DefaultSynthteticProvider(valobj, dict)
+    return DefaultSyntheticProvider(valobj, dict)

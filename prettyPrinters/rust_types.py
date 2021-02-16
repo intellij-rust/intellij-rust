@@ -75,6 +75,7 @@ STD_TYPE_TO_REGEX = {
     RustType.STD_NONZERO_NUMBER: STD_NONZERO_NUMBER_REGEX
 }
 
+
 def is_tuple_fields(fields):
     # type: (list) -> bool
     return all(TUPLE_ITEM_REGEX.match(str(field.name)) for field in fields)
