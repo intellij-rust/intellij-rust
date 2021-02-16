@@ -224,6 +224,7 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
         }
     """, checkWarn = false)
 
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test no move error E0382 when closure used twice`() = checkByText("""
         fn main() {
             let f = |x: i32| {};
@@ -754,6 +755,17 @@ class RsBorrowCheckerMovesTest : RsInspectionsTestBase(RsBorrowCheckerInspection
             let s = S;
             #[cfg(not(intellij_rust))] s;
             s;
+        }
+    """, checkWarn = false)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test no move function type parameter`() = checkByText("""
+        #[derive(Copy, Clone)]
+        struct Bar<Fn> { a: Fn }
+
+        fn bar(x: Bar<fn()>) {
+            x;
+            x;
         }
     """, checkWarn = false)
 }

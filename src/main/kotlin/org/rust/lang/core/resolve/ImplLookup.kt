@@ -365,7 +365,7 @@ class ImplLookup(
      * @see <a href="https://doc.rust-lang.org/std/marker/trait.Copy.html#additional-implementors">Copy additional implementors</a>
      */
     private fun getHardcodedImpls(ty: Ty): Collection<BoundElement<RsTraitItem>> {
-        if (ty is TyTuple || ty is TyArray) {
+        if (ty is TyTuple || ty is TyArray || ty is TyFunction) {
             return listOfNotNull(items.Clone, items.Copy).map { BoundElement(it) }
         }
 
