@@ -163,6 +163,16 @@ fun RsElement.deleteWithSurroundingComma() {
     delete()
 }
 
+fun RsElement.deleteWithSurroundingWhitespace() {
+    if (prevSibling is PsiWhiteSpace) {
+        prevSibling.delete()
+    }
+    if (nextSibling is PsiWhiteSpace) {
+        nextSibling.delete()
+    }
+    delete()
+}
+
 /**
  * Delete the element along with all surrounding whitespace and a single surrounding comma.
  * See [deleteWithSurroundingComma].

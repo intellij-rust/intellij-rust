@@ -8,16 +8,14 @@ package org.rust.ide.refactoring.convertStruct
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiReference
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsFieldsOwner
-import org.rust.lang.core.psi.ext.RsMandatoryReferenceElement
-import org.rust.lang.core.psi.ext.ancestorOrSelf
-import org.rust.lang.core.psi.ext.descendantOfTypeStrict
+import org.rust.lang.core.psi.ext.*
 
 class RsConvertToNamedFieldsProcessor(
     project: Project,
@@ -137,20 +135,26 @@ class RsConvertToNamedFieldsProcessor(
             }
         val newFieldsElement = rsPsiFactory.createStruct("struct A$fields")
 
-        element.tupleFields!!.replace(newFieldsElement.blockFields!!)
+        val tupleFields = element.tupleFields ?: return
+        val blockFields = newFieldsElement.blockFields ?: return
+        val whereClause = (element as? RsStructItem)?.whereClause
+        if (whereClause == null) {
+            tupleFields.replace(blockFields)
+        } else {
+            (whereClause.nextSibling as? PsiWhiteSpace)?.delete()
+            element.addAfter(blockFields, whereClause)
+            tupleFields.delete()
+            if (whereClause.textContains('\n')) {
+                element.addAfter(rsPsiFactory.createNewline(), whereClause)
+            }
+        }
         (element as? RsStructItem)?.semicolon?.delete()
-
     }
 
-    override fun getCommandName(): String {
-        return "Converting ${element.name} to named fields"
-    }
+    override fun getCommandName(): String = "Converting ${element.name} to named fields"
 
-    override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor {
-        return BaseUsageViewDescriptor(element)
-    }
+    override fun createUsageViewDescriptor(usages: Array<UsageInfo>): UsageViewDescriptor =
+        BaseUsageViewDescriptor(element)
 
-    override fun getRefactoringId(): String? {
-        return "refactoring.convertToNamedFields"
-    }
+    override fun getRefactoringId(): String = "refactoring.convertToNamedFields"
 }
