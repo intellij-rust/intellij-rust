@@ -38,9 +38,10 @@ fun isFileChanged(file: RsFile, defMap: CrateDefMap, crate: Crate): Boolean {
         return false
     }
 
-    val hashCalculator = HashCalculator()
+    val isEnabledByCfgInner = file.isEnabledByCfgSelf(crate)
     // Don't use `file.isDeeplyEnabledByCfg` - it can trigger resolve (and cause infinite recursion)
-    val isDeeplyEnabledByCfg = fileInfo.modData.isDeeplyEnabledByCfg
+    val isDeeplyEnabledByCfg = fileInfo.modData.isDeeplyEnabledByCfgOuter && isEnabledByCfgInner
+    val hashCalculator = HashCalculator(isEnabledByCfgInner)
     val visitor = ModLightCollector(
         crate,
         hashCalculator,
@@ -87,7 +88,7 @@ private class ModDataLight {
 }
 
 /** Calculates hash of single file (including all inline modules) */
-class HashCalculator {
+class HashCalculator(private val isEnabledByCfgInner: Boolean) {
     // We can't use `Map<String /* fileRelativePath */, HashCode>`,
     // because two modules with different cfg attributes can have same `fileRelativePath`
     private val modulesHash: MutableList<ModHash> = mutableListOf()
@@ -109,6 +110,7 @@ class HashCalculator {
             digest.update(fileRelativePath.toByteArray())
             digest.update(modHash.toByteArray())
         }
+        digest.update(if (isEnabledByCfgInner) 1 else 0)
         return HashCode.fromByteArray(digest.digest())
     }
 }

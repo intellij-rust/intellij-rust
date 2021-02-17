@@ -345,7 +345,7 @@ private fun getModInfo(scope: RsMod): RsModInfoBase {
     val defMap = project.getDefMap(crate) ?: return InfoNotFound
     val modData = defMap.getModData(scope) ?: return InfoNotFound
 
-    if (isModShadowedByOtherMod(scope, modData)) return CantUseNewResolve("mod shadowed by other mod")
+    if (isModShadowedByOtherMod(scope, modData, crate)) return CantUseNewResolve("mod shadowed by other mod")
 
     return RsModInfo(project, defMap, modData)
 }
@@ -365,8 +365,8 @@ private val RsMod.isLocal: Boolean
     get() = ancestorStrict<RsBlock>() != null
 
 /** "shadowed by other mod" means that [ModData] is not accessible from [CrateDefMap.root] through [ModData.childModules] */
-private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData): Boolean {
-    val isDeeplyEnabledByCfg = (mod.containingFile as RsFile).isDeeplyEnabledByCfg && mod.isEnabledByCfg
+private fun isModShadowedByOtherMod(mod: RsMod, modData: ModData, crate: Crate): Boolean {
+    val isDeeplyEnabledByCfg = (mod.containingFile as RsFile).isDeeplyEnabledByCfg && mod.isEnabledByCfg(crate)
     val isShadowedByOtherInlineMod = isDeeplyEnabledByCfg != modData.isDeeplyEnabledByCfg
 
     return modData.isShadowedByOtherFile || isShadowedByOtherInlineMod

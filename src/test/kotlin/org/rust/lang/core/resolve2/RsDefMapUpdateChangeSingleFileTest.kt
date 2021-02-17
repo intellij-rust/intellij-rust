@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiDocumentManager
 import org.intellij.lang.annotations.Language
 import org.rust.ExpandMacros
+import org.rust.MockAdditionalCfgOptions
 import org.rust.UseNewResolve
 
 /** Tests whether or not [CrateDefMap] should be updated after file modification */
@@ -322,6 +323,12 @@ class RsDefMapUpdateChangeSingleFileTest : RsDefMapUpdateTestBase() {
         macro_rules! foo {
             () => {};
         }
+    """)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test add file level cfg attribute`() = doTestChanged("""
+    """, """
+        #![cfg(not(intellij_rust))]
     """)
 
     private fun type(text: String = "a"): () -> Unit = {

@@ -77,7 +77,11 @@ data class Attribute(val name: String, val argText: String? = null) {
 }
 
 inline val RsDocAndAttributeOwner.attributeStub: RsAttributeOwnerStub?
-    get() = (this as? StubBasedPsiElementBase<*>)?.greenStub as? RsAttributeOwnerStub
+    get() = when (this) {
+        is StubBasedPsiElementBase<*> -> greenStub
+        is RsFile -> greenStub
+        else -> null
+    } as? RsAttributeOwnerStub
 
 /**
  * Returns [QueryAttributes] for given PSI element after `#[cfg_attr()]` expansion
@@ -303,6 +307,9 @@ class QueryAttributes(
 val RsDocAndAttributeOwner.isEnabledByCfgSelf: Boolean
     get() = evaluateCfg() != ThreeValuedLogic.False
 
+fun RsDocAndAttributeOwner.isEnabledByCfgSelf(crate: Crate): Boolean =
+    evaluateCfg(crate) != ThreeValuedLogic.False
+
 val RsDocAndAttributeOwner.isCfgUnknownSelf: Boolean
     get() = evaluateCfg() == ThreeValuedLogic.Unknown
 
@@ -318,9 +325,12 @@ fun RsAttributeOwnerStub.isEnabledByCfgSelf(crate: Crate): Boolean {
 private fun RsDocAndAttributeOwner.evaluateCfg(crateOrNull: Crate? = null): ThreeValuedLogic {
     if (!CFG_ATTRIBUTES_ENABLED_KEY.asBoolean()) return ThreeValuedLogic.True
 
-    // TODO: add cfg to RsFile's stub and remove this line
-    if (this is RsFile) return ThreeValuedLogic.True
+    // We return true because otherwise we have recursion cycle:
+    // [RsFile.crate] -> [RsFile.cachedData] -> [RsFile.declaration] ->
+    //  -> [RsModDeclItem.resolve] -> [RsFile.isEnabledByCfg] -> [RsFile.crate]
+    if (crateOrNull == null && this is RsFile) return ThreeValuedLogic.True
 
+    val attributeStub = attributeStub
     if (attributeStub?.mayHaveCfg == false) return ThreeValuedLogic.True
 
     val crate = crateOrNull ?: containingCrate ?: return ThreeValuedLogic.True // TODO: maybe unknown?

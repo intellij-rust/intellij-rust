@@ -56,7 +56,7 @@ fun collectFileAndCalculateHash(
     modMacroIndex: MacroIndex,
     context: ModCollectorContext
 ): LegacyMacros {
-    val hashCalculator = HashCalculator()
+    val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
     val collector = ModCollector(modData, context, modMacroIndex, hashCalculator)
     collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
     val fileHash = hashCalculator.getFileHash()
@@ -134,7 +134,8 @@ private class ModCollector(
         // could be null if `.resolve()` on `RsModDeclItem` returns null
         val childModData = tryCollectChildModule(item, stub, item.macroIndexInParent)
 
-        val visItem = convertToVisItem(item, stub)
+        val forceCfgDisabledVisibility = childModData != null && !childModData.isEnabledByCfgInner
+        val visItem = convertToVisItem(item, stub, forceCfgDisabledVisibility)
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs(visItem, item.namespaces)
         val changed = onAddItem(modData, name, perNs)
@@ -147,8 +148,12 @@ private class ModCollector(
         }
     }
 
-    private fun convertToVisItem(item: ItemLight, stub: RsNamedStub): VisItem {
-        val visibility = convertVisibility(item.visibility, item.isDeeplyEnabledByCfg)
+    private fun convertToVisItem(item: ItemLight, stub: RsNamedStub, forceCfgDisabledVisibility: Boolean): VisItem {
+        val visibility = if (forceCfgDisabledVisibility) {
+            Visibility.CfgDisabled
+        } else {
+            convertVisibility(item.visibility, item.isDeeplyEnabledByCfg)
+        }
         val itemPath = modData.path.append(item.name)
         val isModOrEnum = stub is RsModItemStub || stub is RsModDeclItemStub || stub is RsEnumItemStub
         return VisItem(itemPath, visibility, isModOrEnum)
@@ -166,10 +171,12 @@ private class ModCollector(
             }
             else -> return null
         }
-        val isDeeplyEnabledByCfg = item.isDeeplyEnabledByCfg
+
+        val isDeeplyEnabledByCfgOuter = item.isDeeplyEnabledByCfg
+        val isEnabledByCfgInner = childMod !is ChildMod.File || childMod.file.isEnabledByCfgSelf(crate)
         val (childModData, childModLegacyMacros) =
-            collectChildModule(childMod, isDeeplyEnabledByCfg, item.pathAttribute, index)
-        if (childMod.hasMacroUse && isDeeplyEnabledByCfg) {
+            collectChildModule(childMod, isDeeplyEnabledByCfgOuter, isEnabledByCfgInner, item.pathAttribute, index)
+        if (childMod.hasMacroUse && childModData.isDeeplyEnabledByCfg) {
             modData.addLegacyMacros(childModLegacyMacros)
             legacyMacros += childModLegacyMacros
         }
@@ -178,7 +185,8 @@ private class ModCollector(
 
     private fun collectChildModule(
         childMod: ChildMod,
-        isDeeplyEnabledByCfg: Boolean,
+        isDeeplyEnabledByCfgOuter: Boolean,
+        isEnabledByCfgInner: Boolean,
         pathAttribute: String?,
         index: Int
     ): Pair<ModData, LegacyMacros> {
@@ -193,7 +201,8 @@ private class ModCollector(
             crate = modData.crate,
             path = childModPath,
             macroIndex = parentMacroIndex.append(index),
-            isDeeplyEnabledByCfg = isDeeplyEnabledByCfg,
+            isDeeplyEnabledByCfgOuter = isDeeplyEnabledByCfgOuter,
+            isEnabledByCfgInner = isEnabledByCfgInner,
             fileId = fileId,
             fileRelativePath = fileRelativePath,
             ownedDirectoryId = childMod.getOwnedDirectory(modData, pathAttribute)?.fileId,
@@ -228,7 +237,8 @@ private class ModCollector(
             crate = modData.crate,
             path = enumPath,
             macroIndex = MacroIndex(intArrayOf() /* Not used anyway */),
-            isDeeplyEnabledByCfg = enum.isDeeplyEnabledByCfg,
+            isDeeplyEnabledByCfgOuter = enum.isDeeplyEnabledByCfg,
+            isEnabledByCfgInner = true,
             fileId = modData.fileId,
             fileRelativePath = "${modData.fileRelativePath}::$enumName",
             ownedDirectoryId = modData.ownedDirectoryId,  // actually can use any value here

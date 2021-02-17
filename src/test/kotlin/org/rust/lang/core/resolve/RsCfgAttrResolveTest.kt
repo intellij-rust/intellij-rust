@@ -884,4 +884,44 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             dep_lib_target::foo::bar();
         }                      //^ dep-lib/not_test.rs
      """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test file level cfg attribute 1`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="foo1.rs"]
+        mod foo;
+        #[path="foo2.rs"]
+        mod foo;
+        fn main() {
+            foo::func();
+        }      //^ foo1.rs
+    //- foo1.rs
+        #![cfg(intellij_rust)]
+        pub fn func() {}
+    //- foo2.rs
+        #![cfg(not(intellij_rust))]
+        pub fn func() {}
+     """)
+
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test file level cfg attribute 2`() = stubOnlyResolve("""
+    //- main.rs
+        #[path="foo1.rs"]
+        mod foo;
+        #[path="foo2.rs"]
+        mod foo;
+        fn main() {
+            foo::func();
+        }      //^ foo2.rs
+    //- foo1.rs
+        #![cfg(not(intellij_rust))]
+        pub fn func() {}
+    //- foo2.rs
+        #![cfg(intellij_rust)]
+        pub fn func() {}
+     """)
 }
