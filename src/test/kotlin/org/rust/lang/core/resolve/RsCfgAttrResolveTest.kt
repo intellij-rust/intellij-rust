@@ -102,6 +102,19 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         }
      """)
 
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test inline mod with cfg 2`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod my {
+            fn bar() {}
+             //X
+            fn t() {
+                bar();
+            } //^
+        }
+     """)
+
     // From https://github.com/rust-lang/hashbrown/blob/09e43a8cf97f37b17768b98f28291a24c5767847/src/lib.rs#L52-L68
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
