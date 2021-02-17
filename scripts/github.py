@@ -7,7 +7,7 @@ from common import get_patch_version
 
 
 def get_current_milestone(repo: str, patch_version: Optional[int] = None) -> Dict:
-    milestones = get_all_milestones(repo)
+    milestones = get_latest_milestones(repo)
     if patch_version is None:
         patch_version = get_patch_version()
     milestone_version = f"v{patch_version}"
@@ -25,8 +25,8 @@ def set_milestone(token: str, repo: str, issue_number: int, milestone_number: in
     urlopen(request)
 
 
-def get_all_milestones(repo: str, state: str = "open") -> List[Dict]:
-    response = urlopen(f"https://api.github.com/repos/{repo}/milestones?state={state}")
+def get_latest_milestones(repo: str, state: str = "open") -> List[Dict]:
+    response = urlopen(f"https://api.github.com/repos/{repo}/milestones?state={state}&sort=due_on&direction=desc")
     return json.load(response)
 
 

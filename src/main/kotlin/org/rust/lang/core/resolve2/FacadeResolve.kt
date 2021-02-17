@@ -344,6 +344,9 @@ private fun getModInfo(scope: RsMod): RsModInfoBase {
     if (scope is RsModItem && scope.modName == TMP_MOD_NAME) return CantUseNewResolve("__tmp__ mod")
     if (scope.isLocal) return CantUseNewResolve("local mod")
     val crate = scope.containingCrate as? CargoBasedCrate ?: return CantUseNewResolve("not CargoBasedCrate")
+    if (crate.rootModFile != null && !shouldIndexFile(project, crate.rootModFile)) {
+        return CantUseNewResolve("crate root isn't indexed")
+    }
 
     val defMap = project.getDefMap(crate) ?: return InfoNotFound
     val modData = defMap.getModData(scope) ?: return InfoNotFound

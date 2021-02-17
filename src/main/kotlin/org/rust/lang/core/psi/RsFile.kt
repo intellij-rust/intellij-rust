@@ -295,6 +295,7 @@ val RsElement.isValidProjectMember: Boolean
         return isEnabledByCfg && file.isDeeplyEnabledByCfg && file.crateRoot != null
     }
 
+/** Usually used to filter out test/bench non-workspace crates */
 fun shouldIndexFile(project: Project, file: VirtualFile): Boolean {
     val index = ProjectFileIndex.getInstance(project)
     return (index.isInContent(file) || index.isInLibrary(file))
