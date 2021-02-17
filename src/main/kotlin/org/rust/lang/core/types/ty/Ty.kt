@@ -186,7 +186,7 @@ tailrec fun Ty.stripReferences(): Ty =
  */
 fun Ty.isMovesByDefault(lookup: ImplLookup): Boolean =
     when (this) {
-        is TyUnknown, is TyReference, is TyPointer, is TyFunction -> false
+        is TyUnknown, is TyReference, is TyPointer -> false
         is TyTuple -> types.any { it.isMovesByDefault(lookup) }
         is TyArray -> base.isMovesByDefault(lookup)
         is TySlice -> elementType.isMovesByDefault(lookup)
