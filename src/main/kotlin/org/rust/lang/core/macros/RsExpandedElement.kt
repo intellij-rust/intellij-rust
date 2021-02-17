@@ -33,7 +33,7 @@ interface RsExpandedElement : RsElement {
                 val project = parent.project
                 if (!DumbService.isDumb(project)) {
                     project.macroExpansionManager.getContextOfMacroCallExpandedFrom(parent)?.let { return it }
-                    RsIncludeMacroIndex.getIncludingMod(parent)?.let { return it }
+                    RsIncludeMacroIndex.getIncludedFrom(parent)?.let { return it.containingMod }
                 }
             }
             return parent
@@ -47,7 +47,8 @@ fun RsExpandedElement.setContext(context: RsElement) {
 
 /**
  * The [RsMacroCall] that directly expanded to this element or
- * null if this element is not directly produced by a macro
+ * null if this element is not directly produced by a macro.
+ * Doesn't support `include!` macro - see [RsExpandedElement.expandedOrIncludedFrom]
  */
 val RsExpandedElement.expandedFrom: RsMacroCall?
     get() = project.macroExpansionManager.getExpandedFrom(this)
@@ -64,6 +65,15 @@ val RsExpandedElement.expandedFromRecursively: RsMacroCall?
 
 val RsExpandedElement.expandedFromSequence: Sequence<RsMacroCall>
     get() = generateSequence(expandedFrom) { it.expandedFrom }
+
+val PsiElement.includedFrom: RsMacroCall?
+    get() {
+        val containingFile = stubParent as? RsFile ?: return null
+        return RsIncludeMacroIndex.getIncludedFrom(containingFile)
+    }
+
+val RsExpandedElement.expandedOrIncludedFrom: RsMacroCall?
+    get() = expandedFrom ?: includedFrom
 
 fun PsiElement.findMacroCallExpandedFrom(): RsMacroCall? {
     val found = findMacroCallExpandedFromNonRecursive()
@@ -91,10 +101,7 @@ val PsiElement.isExpandedFromMacro: Boolean
     get() = findMacroCallExpandedFromNonRecursive() != null
 
 val PsiElement.isExpandedFromIncludeMacro: Boolean
-    get() {
-        val parent = stubParent
-        return parent is RsFile && RsIncludeMacroIndex.getIncludingMod(parent) != null
-    }
+    get() = includedFrom != null
 
 private data class MacroCallAndOffset(val call: RsMacroCall, val absoluteOffset: Int)
 

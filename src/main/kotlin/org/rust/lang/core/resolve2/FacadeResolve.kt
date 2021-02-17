@@ -79,7 +79,10 @@ fun processItemDeclarations2(
     if (ipm.withExternCrates && Namespace.Types in ns) {
         for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
             if (modData.visibleItems[name]?.types != null) continue
-            val externCrateRoot = externCrateDefMap.root.toRsMod(project) ?: continue
+            val externCrateRoot = externCrateDefMap.root.toRsMod(project)
+                // crate root can't multiresolve
+                .singleOrNull()
+                ?: continue
             processor(name, externCrateRoot) && return true
         }
     }
@@ -130,7 +133,7 @@ private fun ModData.processMacros(
             val macroInfo = filterMacrosByIndex(macroInfos, macroIndex) ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
             if (visItem.path == visibleItems[name]?.macros?.path) continue  // macros will be handled in [visibleItems] loop
-            val macroContainingMod = visItem.containingMod.toRsMod(defMap, project) ?: continue
+            val macroContainingMod = visItem.containingMod.toRsMod(defMap, project).singleOrNull() ?: continue
             val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap) ?: continue
             if (processor(name, macro)) return true
@@ -242,7 +245,7 @@ private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): Mac
 private fun getMacroIndex(element: PsiElement, defMap: CrateDefMap): MacroIndex? {
     val itemAndCallExpandedFrom = element.stubAncestors
         .filterIsInstance<RsExpandedElement>()
-        .mapNotNull { it to (it.expandedFrom ?: return@mapNotNull null) }
+        .mapNotNull { it to (it.expandedOrIncludedFrom ?: return@mapNotNull null) }
         .firstOrNull()
     if (itemAndCallExpandedFrom == null) {
         if (element.containingFile is RsCodeFragment) return MacroIndex(intArrayOf(Int.MAX_VALUE))
@@ -385,7 +388,11 @@ private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
 private fun Visibility.createFilter(project: Project, isCompletion: Boolean): (RsMod) -> Boolean {
     if (isCompletion && this is Visibility.Restricted) {
         val inMod = inMod.toRsMod(project)
-        if (inMod != null) return { it.superMods.contains(inMod) }
+        if (inMod.isNotEmpty()) {
+            return { modOpenedInEditor ->
+                inMod.any(modOpenedInEditor.superMods::contains)
+            }
+        }
     }
     /**
      * Note: [Visibility.Invisible] and [Visibility.CfgDisabled] are considered as [Visibility.Public],
@@ -395,7 +402,7 @@ private fun Visibility.createFilter(project: Project, isCompletion: Boolean): (R
 }
 
 private fun VisItem.scopedMacroToPsi(defMap: CrateDefMap, project: Project): RsNamedElement? {
-    val containingMod = containingMod.toRsMod(defMap, project) ?: return null
+    val containingMod = containingMod.toRsMod(defMap, project).singleOrNull() ?: return null
     return scopedMacroToPsi(containingMod)
 }
 
@@ -425,23 +432,26 @@ private fun MacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDef
 
 private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {
     if (isModOrEnum) return path.toRsModOrEnum(defMap, project)
-    val containingModOrEnum = containingMod.toRsModOrEnum(defMap, project).singleOrNull() ?: return emptyList()
-    return when (containingModOrEnum) {
-        is RsMod -> {
+
+    val containingModData = defMap.getModData(containingMod) ?: return emptyList()
+    return if (containingModData.isEnum) {
+        val containingEnums = containingModData.toRsEnum(project)
+        containingEnums.flatMap { containingEnum ->
+            containingEnum.variants
+                .filter { it.name == name && ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
+        }
+    } else {
+        val containingMods = containingModData.toRsMod(project)
+        containingMods.flatMap { containingMod ->
             if (ns == Namespace.Macros) {
-                val macro = scopedMacroToPsi(containingModOrEnum)
+                val macro = scopedMacroToPsi(containingMod)
                 listOfNotNull(macro)
             } else {
-                containingModOrEnum
+                containingMod
                     .getExpandedItemsWithName<RsNamedElement>(name)
                     .filter { ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
             }
         }
-        is RsEnumItem -> {
-            containingModOrEnum.variants
-                .filter { it.name == name && ns in it.namespaces && matchesIsEnabledByCfg(it, this) }
-        }
-        else -> error("Expected mod or enum, got: $containingModOrEnum")
     }
 }
 
@@ -456,9 +466,9 @@ private fun matchesIsEnabledByCfg(itemPsi: RsNamedElement, item: VisItem): Boole
 
 private val VisItem.isEnabledByCfg: Boolean get() = visibility != Visibility.CfgDisabled
 
-private fun ModPath.toRsMod(defMap: CrateDefMap, project: Project): RsMod? {
-    val modData = defMap.getModData(this) ?: return null
-    if (modData.isEnum) return null
+private fun ModPath.toRsMod(defMap: CrateDefMap, project: Project): List<RsMod> {
+    val modData = defMap.getModData(this)
+    if (modData == null || modData.isEnum) return emptyList()
     return modData.toRsMod(project)
 }
 
@@ -467,45 +477,47 @@ private fun ModPath.toRsModOrEnum(defMap: CrateDefMap, project: Project): List<R
     return if (modData.isEnum) {
         modData.toRsEnum(project)
     } else {
-        val mod = modData.toRsMod(project)
-        listOfNotNull(mod)
+        modData.toRsMod(project)
     }
 }
 
 private fun ModData.toRsEnum(project: Project): List<RsEnumItem> {
-    if (!isEnum) return emptyList()
-    val containingMod = parent?.toRsMod(project) ?: return emptyList()
+    if (!isEnum || parent == null) return emptyList()
+    val containingMods = parent.toRsMod(project)
     val visItem = asVisItem()
-    return containingMod
-        .getExpandedItemsWithName<RsEnumItem>(name)
-        .filter { matchesIsEnabledByCfg(it, visItem) }
+    return containingMods.flatMap { containingMod ->
+        containingMod
+            .getExpandedItemsWithName<RsEnumItem>(name)
+            .filter { matchesIsEnabledByCfg(it, visItem) }
+    }
 }
 
-private fun ModData.toRsMod(project: Project): RsMod? = toRsModNullable(project)
-    ?: run {
-        RESOLVE_LOG.warn("Can't find RsMod for $this")
-        null
+private fun ModData.toRsMod(project: Project): List<RsMod> = toRsModNullable(project)
+    .also {
+        if (it.isEmpty()) {
+            RESOLVE_LOG.warn("Can't find RsMod for $this")
+        }
     }
 
-private fun ModData.toRsModNullable(project: Project): RsMod? {
-    if (isEnum) return null
+private fun ModData.toRsModNullable(project: Project): List<RsMod> {
+    if (isEnum) return emptyList()
     val file = PersistentFS.getInstance().findFileById(fileId)
         ?.toPsiFile(project) as? RsFile
-        ?: return null
+        ?: return emptyList()
+    if (isRsFile) return listOf(file)
+
+    val visItem = asVisItem()
     val fileRelativeSegments = fileRelativePath.split("::")
     return fileRelativeSegments
         .subList(1, fileRelativeSegments.size)
-        .fold(file as RsMod) { mod, segment ->
-            mod
-                .getExpandedItemsWithName<RsModItem>(segment)
-                .singleOrCfgEnabled()
-                ?: return null
+        .fold(listOf<RsMod>(file)) { mods, segment ->
+            mods.flatMap { mod ->
+                mod
+                    .getExpandedItemsWithName<RsModItem>(segment)
+                    .filter { matchesIsEnabledByCfg(it, visItem) }
+            }
         }
 }
-
-// TODO: Multiresolve
-private inline fun <reified T : RsElement> List<T>.singleOrCfgEnabled(): T? =
-    singleOrNull() ?: singleOrNull { it.isEnabledByCfg }
 
 private inline fun <reified T : RsNamedElement> RsItemsOwner.getExpandedItemsWithName(name: String): List<T> {
     val itemsCfgEnabled = expandedItemsCached.named[name]?.filterIsInstance<T>()

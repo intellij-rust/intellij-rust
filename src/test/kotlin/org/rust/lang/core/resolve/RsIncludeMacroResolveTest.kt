@@ -191,7 +191,21 @@ class RsIncludeMacroResolveTest : RsResolveTestBase() {
     @UseNewResolve
     @ExpandMacros
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
-    fun `test macro call in included file`() = checkResolve("""
+    fun `test macro call in included file 1`() = checkResolve("""
+    //- main.rs
+        macro_rules! foo {
+            () => {};
+        }
+        include!("foo.rs");
+    //- foo.rs
+        foo!();
+        //^ main.rs
+    """)
+
+    @UseNewResolve
+    @ExpandMacros
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test macro call in included file 2`() = checkResolve("""
     //- main.rs
         macro_rules! gen_use {
             () => { use inner::func; };

@@ -760,7 +760,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         mod my {
             pub mod inner {
                 pub fn func() {}
-            }
+            }        //X
         }
 
         #[cfg(not(intellij_rust))]
@@ -776,7 +776,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
         fn t() {
             func();
-        } //^ unresolved
+        } //^
      """)
 
     @MockAdditionalCfgOptions("intellij_rust")
