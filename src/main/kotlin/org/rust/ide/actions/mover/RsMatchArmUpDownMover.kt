@@ -5,12 +5,16 @@
 
 package org.rust.ide.actions.mover
 
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import org.rust.ide.actions.mover.RsLineMover.Companion.RangeEndpoint
-import org.rust.lang.core.psi.RsMatchArm
-import org.rust.lang.core.psi.RsMatchBody
+import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.elementType
+import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsMatchArmUpDownMover : RsLineMover() {
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
@@ -29,5 +33,23 @@ class RsMatchArmUpDownMover : RsLineMover() {
             return null
         }
         return sibling
+    }
+
+    override fun beforeMove(editor: Editor, info: MoveInfo, down: Boolean) {
+        val project = editor.project!!
+        val psiFactory = RsPsiFactory(project)
+        val matchArms = listOfNotNull(info.toMove.firstElement, info.toMove.lastElement, info.toMove2.firstElement)
+            .filterIsInstance<RsMatchArm>()
+        for (matchArm in matchArms) {
+            val matchBody = matchArm.parent as? RsMatchBody
+            if (matchBody != null &&
+                matchBody.lastChild.getPrevNonCommentSibling() == matchArm &&
+                matchArm.lastChild.elementType != COMMA &&
+                matchArm.expr?.lastChild?.elementType != BLOCK
+            ) {
+                matchBody.addAfter(psiFactory.createComma(), matchArm)
+            }
+        }
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.document)
     }
 }

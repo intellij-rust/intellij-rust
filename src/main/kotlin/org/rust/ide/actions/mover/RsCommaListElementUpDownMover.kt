@@ -14,11 +14,14 @@ import org.rust.ide.formatter.impl.CommaList
 import org.rust.ide.formatter.processors.addTrailingCommaForElement
 import org.rust.ide.formatter.processors.isLastElement
 import org.rust.lang.core.psi.RsElementTypes.COMMA
+import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.ancestorPairs
 import org.rust.lang.core.psi.ext.elementType
 
 class RsCommaListElementUpDownMover : RsLineMover() {
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? {
+        if (psi is RsMatchArm) return null
+
         @Suppress("NAME_SHADOWING")
         val psi = if (endpoint == RangeEndpoint.END && psi.elementType == COMMA) {
             psi.prevSibling
