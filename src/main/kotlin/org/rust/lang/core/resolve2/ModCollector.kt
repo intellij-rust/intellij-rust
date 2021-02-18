@@ -48,7 +48,7 @@ class ModCollectorContext(
         { containingMod, name, perNs, visibility -> containingMod.addVisibleItem(name, perNs, visibility) }
 )
 
-typealias LegacyMacros = Map<String, MacroDefInfo>
+typealias LegacyMacros = Map<String, DeclMacroDefInfo>
 
 fun collectFileAndCalculateHash(
     file: RsFile,
@@ -96,7 +96,7 @@ private class ModCollector(
      * Will be propagated to (lexically) succeeding modules.
      * See [propagateLegacyMacros].
      */
-    val legacyMacros: MutableMap<String, MacroDefInfo> = hashMapOf()
+    val legacyMacros: MutableMap<String, DeclMacroDefInfo> = hashMapOf()
 
     fun collectMod(mod: StubElement<out RsMod>, propagateLegacyMacros: Boolean = false) {
         val visitor = if (hashCalculator != null) {
@@ -280,7 +280,7 @@ private class ModCollector(
         val macroPath = modData.path.append(def.name)
         val macroIndex = parentMacroIndex.append(def.macroIndexInParent)
 
-        val defInfo = MacroDefInfo(
+        val defInfo = DeclMacroDefInfo(
             modData.crate,
             macroPath,
             macroIndex,

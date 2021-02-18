@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
@@ -85,16 +86,18 @@ data class CrateMetaData(
     val edition: CargoWorkspace.Edition,
     private val features: Map<String, FeatureState>,
     private val cfgOptions: CfgOptions?,
-    private val env: Map<String, String>,
+    val env: Map<String, String>,
     // TODO: Probably we need to store modificationStamp of DefMap for each dependency
     private val dependencies: Set<CratePersistentId>,
+    val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
 ) {
     constructor(crate: Crate) : this(
         edition = crate.edition,
         features = crate.features,
         cfgOptions = crate.cfgOptions,
         env = crate.env,
-        dependencies = crate.flatDependencies.mapNotNullToSet { it.id }
+        dependencies = crate.flatDependencies.mapNotNullToSet { it.id },
+        procMacroArtifact = crate.cargoTarget?.pkg?.procMacroArtifact
     )
 }
 

@@ -6,8 +6,18 @@
 package org.rust.lang.core.macros
 
 import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.macroBody
 
-class RsMacroCallData(val macroBody: String?) {
-    constructor(call: RsMacroCall) : this(call.macroBody)
+class RsMacroCallData(
+    val macroBody: String?,
+    val packageEnv: Map<String, String>
+) {
+
+    companion object {
+        fun fromPsi(call: RsMacroCall): RsMacroCallData = RsMacroCallData(
+            call.macroBody,
+            call.containingCargoPackage?.env.orEmpty()
+        )
+    }
 }

@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.cargo.CargoConstants.MANIFEST_FILE
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.openapiext.runWithEnabledFeature
+import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.toml.crates.local.CargoRegistryCrate
 import org.rust.toml.crates.local.CargoRegistryCrateVersion
 import org.rust.toml.crates.local.withMockedCrates
@@ -86,7 +86,7 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
         val crateMap = crates.toList().associate { it.name to it.crate }
         myFixture.configureByText(MANIFEST_FILE, code)
 
-        runWithEnabledFeature(RsExperiments.CRATES_LOCAL_INDEX) {
+        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
             withMockedCrates(crateMap) {
                 myFixture.checkHighlighting()
             }

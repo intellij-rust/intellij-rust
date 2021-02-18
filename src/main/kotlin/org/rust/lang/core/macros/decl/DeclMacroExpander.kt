@@ -122,14 +122,13 @@ private class NestingState(
     var atTheEnd: Boolean = false
 )
 
-class DeclMacroExpander(val project: Project) {
-    fun expandMacroAsText(def: RsMacroDefData, call: RsMacroCallData): Pair<CharSequence, RangeMap>? {
-        return expandMacroAsTextWithErr(def, call).ok()
-    }
-
-    fun expandMacroAsTextWithErr(def: RsMacroDefData, call: RsMacroCallData): RsResult<Pair<CharSequence, RangeMap>, MacroExpansionError> {
+class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, DeclMacroExpansionError>() {
+   override fun expandMacroAsTextWithErr(
+       def: RsDeclMacroData,
+       call: RsMacroCallData
+    ): RsResult<Pair<CharSequence, RangeMap>, DeclMacroExpansionError> {
         val (case, subst, loweringRanges) = findMatchingPattern(def, call).unwrapOrElse { return Err(it) }
-        val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return Err(MacroExpansionError.DefSyntax)
+        val macroExpansion = case.macroExpansion?.macroExpansionContents ?: return Err(DeclMacroExpansionError.DefSyntax)
 
         val substWithGlobalVars = MacroSubstitution(
             subst.variables + singletonMap("crate", MetaVarValue.Fragment(MACRO_DOLLAR_CRATE_IDENTIFIER, null, null, -1))
@@ -137,7 +136,7 @@ class DeclMacroExpander(val project: Project) {
 
         val result = substituteMacro(macroExpansion, substWithGlobalVars)?.let { (text, ranges) ->
             text to loweringRanges.mapAll(ranges)
-        } ?: return Err(MacroExpansionError.DefSyntax)
+        } ?: return Err(DeclMacroExpansionError.DefSyntax)
 
         checkRanges(call, result.first, result.second)
 
@@ -145,16 +144,16 @@ class DeclMacroExpander(val project: Project) {
     }
 
     private fun findMatchingPattern(
-        def: RsMacroDefData,
+        def: RsDeclMacroData,
         call: RsMacroCallData
-    ): RsResult<MatchedPattern, MacroExpansionError> {
-        val macroCallBodyText = call.macroBody ?: return Err(MacroExpansionError.DefSyntax)
+    ): RsResult<MatchedPattern, DeclMacroExpansionError> {
+        val macroCallBodyText = call.macroBody ?: return Err(DeclMacroExpansionError.DefSyntax)
         val (macroCallBody, ranges) = project
             .createAdaptedRustPsiBuilder(macroCallBodyText)
-            .lowerDocComments(project)
+            .lowerDocCommentsToAdaptedPsiBuilder(project)
         macroCallBody.eof() // skip whitespace
         var start = macroCallBody.mark()
-        val macroCaseList = def.macroBody.value?.macroCaseList ?: return Err(MacroExpansionError.DefSyntax)
+        val macroCaseList = def.macroBody.value?.macroCaseList ?: return Err(DeclMacroExpansionError.DefSyntax)
 
         val errors = mutableListOf<MacroMatchingError>()
 
@@ -169,7 +168,7 @@ class DeclMacroExpander(val project: Project) {
             }
         }
 
-        return Err(MacroExpansionError.Matching(errors))
+        return Err(DeclMacroExpansionError.Matching(errors))
     }
 
     private data class MatchedPattern(val case: RsMacroCase, val subst: MacroSubstitution, val ranges: RangeMap)

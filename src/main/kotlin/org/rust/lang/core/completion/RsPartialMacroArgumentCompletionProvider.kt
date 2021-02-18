@@ -13,12 +13,14 @@ import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.psi.PsiElement
 import com.intellij.util.ProcessingContext
 import org.rust.lang.RsLanguage
-import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.decl.FragmentKind.*
 import org.rust.lang.core.macros.MacroExpansionContext.EXPR
 import org.rust.lang.core.macros.MacroExpansionContext.STMT
+import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.decl.FragmentKind
+import org.rust.lang.core.macros.decl.FragmentKind.*
 import org.rust.lang.core.macros.decl.MacroGraphWalker
+import org.rust.lang.core.macros.expansionContext
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psiElement

@@ -115,9 +115,12 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun expandMacroAsTextWithErr(call: RsMacroCall, def: RsMacro): RsResult<MacroExpansion, MacroExpansionAndParsingError> {
+    private fun expandMacroAsTextWithErr(
+        call: RsMacroCall,
+        def: RsMacro
+    ): RsResult<MacroExpansion, MacroExpansionAndParsingError<DeclMacroExpansionError>> {
         val expander = DeclMacroExpander(project)
-        return expander.expandMacro(RsMacroDefData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
+        return expander.expandMacro(RsDeclMacroData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
             it.elements.forEach { el ->
                 el.setContext(call.context as RsElement)
                 el.setExpandedFrom(call)
@@ -126,19 +129,19 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         }
     }
 
-    private fun MacroExpansionAndParsingError.formatError(call: RsMacroCall) = when (this) {
+    private fun MacroExpansionAndParsingError<DeclMacroExpansionError>.formatError(call: RsMacroCall) = when (this) {
         is MacroExpansionAndParsingError.ExpansionError -> error.formatError(call)
         is MacroExpansionAndParsingError.ParsingError -> "can't parse expansion text `$expansionText` as $context"
     }
 
-    private fun MacroExpansionError.formatError(call: RsMacroCall) = when (this) {
-        is MacroExpansionError.Matching -> {
+    private fun DeclMacroExpansionError.formatError(call: RsMacroCall) = when (this) {
+        is DeclMacroExpansionError.Matching -> {
             val macroBody = call.macroBody ?: ""
             errors.withIndex().joinToString(prefix = "no matching patterns:\n", separator = "\n") { (i, e) ->
                 val tail = macroBody.substring(e.offsetInCallBody, min(e.offsetInCallBody + 10, macroBody.length))
                 "\t#${i + 1} $e at `$tail`"
             }
         }
-        MacroExpansionError.DefSyntax -> "syntax error in the macro definition"
+        DeclMacroExpansionError.DefSyntax -> "syntax error in the macro definition"
     }
 }

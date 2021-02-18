@@ -5,6 +5,7 @@
 
 package org.rust.cargo
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
@@ -15,6 +16,7 @@ import com.intellij.util.ui.UIUtil
 import org.rust.*
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.toolchain.tools.rustc
+import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.openapiext.pathAsPath
 
 /**
@@ -32,6 +34,8 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
     open val disableMissedCacheAssertions: Boolean get() = true
 
     protected val cargoProjectDirectory: VirtualFile get() = myFixture.findFileInTempDir(".")
+
+    private val earlyTestRootDisposable = Disposer.newDisposable()
 
     protected fun FileTree.create(): TestProject =
         create(project, cargoProjectDirectory).apply {
@@ -78,9 +82,19 @@ abstract class RsWithToolchainTestBase : CodeInsightFixtureTestCase<ModuleFixtur
             RecursionManager.disableMissedCacheAssertions(testRootDisposable)
         }
         setupResolveEngine(project, testRootDisposable)
+        findAnnotationInstance<ExpandMacros>()?.let { ann ->
+            Disposer.register(
+                earlyTestRootDisposable,
+                project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(
+                    ann.mode,
+                    ann.cache.takeIf { it.isNotEmpty() } ?: name
+                )
+            )
+        }
     }
 
     override fun tearDown() {
+        Disposer.dispose(earlyTestRootDisposable)
         rustupFixture.tearDown()
         super.tearDown()
         checkMacroExpansionFileSystemAfterTest()

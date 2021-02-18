@@ -9,7 +9,6 @@ import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import org.rust.RsTask.TaskType.*
@@ -19,9 +18,9 @@ import org.rust.lang.core.crate.crateGraph
 import org.rust.lang.core.macros.MacroExpansionSharedCache
 import org.rust.openapiext.*
 import org.rust.stdext.getWithRethrow
+import org.rust.stdext.withLockAndCheckingCancelled
 import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.locks.Lock
 import kotlin.concurrent.withLock
 import kotlin.system.measureTimeMillis
 
@@ -280,6 +279,3 @@ private fun <T> Collection<T>.filterAsync(pool: Executor, predicate: (T) -> Bool
     future.getWithRethrow()
     return result.toList()
 }
-
-private fun <T> Lock.withLockAndCheckingCancelled(timeoutMilliseconds: Int = 10, action: () -> T): T =
-    ProgressIndicatorUtils.computeWithLockAndCheckingCanceled<T, Exception>(this, timeoutMilliseconds, TimeUnit.MILLISECONDS, action)

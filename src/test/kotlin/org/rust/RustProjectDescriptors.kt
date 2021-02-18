@@ -33,7 +33,7 @@ import org.rust.cargo.toolchain.tools.rustc
 import org.rust.cargo.toolchain.tools.rustup
 import org.rust.cargo.util.DownloadResult
 import org.rust.ide.experiments.RsExperiments
-import org.rust.openapiext.runWithEnabledFeature
+import org.rust.openapiext.runWithEnabledFeatures
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
@@ -46,7 +46,7 @@ object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 
 object WithActualStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor) {
     override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        return runWithEnabledFeature(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) {
+        return runWithEnabledFeatures(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) {
             super.testCargoProject(module, contentRoot)
         }
     }

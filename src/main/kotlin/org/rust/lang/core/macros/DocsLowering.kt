@@ -11,17 +11,30 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.SmartList
 import org.rust.lang.core.macros.decl.MacroExpansionMarks
 import org.rust.lang.core.parser.createAdaptedRustPsiBuilder
+import org.rust.lang.core.parser.createRustPsiBuilder
 import org.rust.lang.core.psi.RS_DOC_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
 
+fun PsiBuilder.lowerDocCommentsToAdaptedPsiBuilder(project: Project): Pair<PsiBuilder, RangeMap> {
+    val lowered = lowerDocComments() ?: return this to defaultRangeMap()
+    return project.createAdaptedRustPsiBuilder(lowered.first) to lowered.second
+}
+
+fun PsiBuilder.lowerDocCommentsToPsiBuilder(project: Project): Pair<PsiBuilder, RangeMap> {
+    val lowered = lowerDocComments() ?: return this to defaultRangeMap()
+    return project.createRustPsiBuilder(lowered.first) to lowered.second
+}
+
+private fun PsiBuilder.defaultRangeMap(): RangeMap= if (originalText.isNotEmpty()) {
+    RangeMap.from(SmartList(MappedTextRange(0, 0, originalText.length)))
+} else {
+    RangeMap.EMPTY
+}
+
 /** Rustc replaces doc comments like `/// foo` to attributes `#[doc = "foo"]` before macro expansion */
-fun PsiBuilder.lowerDocComments(project: Project): Pair<PsiBuilder, RangeMap> {
+private fun PsiBuilder.lowerDocComments(): Pair<CharSequence, RangeMap>? {
     if (!hasDocComments()) {
-        return this to if (originalText.isNotEmpty()) {
-            RangeMap.from(SmartList(MappedTextRange(0, 0, originalText.length)))
-        } else {
-            RangeMap.EMPTY
-        }
+        return null
     }
 
     MacroExpansionMarks.docsLowering.hit()
@@ -47,7 +60,7 @@ fun PsiBuilder.lowerDocComments(project: Project): Pair<PsiBuilder, RangeMap> {
         }
     }
 
-    return project.createAdaptedRustPsiBuilder(sb) to RangeMap.from(ranges)
+    return sb to RangeMap.from(ranges)
 }
 
 private fun PsiBuilder.hasDocComments(): Boolean {
