@@ -47,7 +47,10 @@ def main():
         desc = m["description"]
         res = re.search(RELEASE_MANAGER_RE, desc)
         if res is not None:
-            maintainers.remove(res.group(1))
+            try:
+                maintainers.remove(res.group(1))
+            except ValueError:
+                pass
 
     description = f"Release manager: @{maintainers[0]}"
     create_milestone(repo, args.token, milestone_version, description=description, due_on=due_on)
