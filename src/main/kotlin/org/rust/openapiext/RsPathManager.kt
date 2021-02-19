@@ -29,7 +29,12 @@ object RsPathManager {
             else -> return null
         }
 
-        return pluginDir().resolve("bin/$os/$arch/$binaryName").takeIf { Files.exists(it) }
+        val nativeHelperPath = pluginDir().resolve("bin/$os/$arch/$binaryName").takeIf { Files.exists(it) } ?: return null
+        return if (Files.isExecutable(nativeHelperPath) || nativeHelperPath.toFile().setExecutable(true)) {
+            nativeHelperPath
+        } else {
+            null
+        }
     }
 
     fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("intellij-rust")
