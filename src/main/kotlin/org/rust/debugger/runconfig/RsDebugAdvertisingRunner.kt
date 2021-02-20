@@ -69,7 +69,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
     private fun isSupportedPlatform(): Boolean {
         return when {
             isIdeaUltimate() || isRubyMine() -> true
-            ApplicationInfo.getInstance().build >= BUILD_211 && isGoIde() -> true
+            ApplicationInfo.getInstance().build >= BUILD_211 && (isGoIde() || isPyCharmPro()) -> true
             else -> false
         }
     }
