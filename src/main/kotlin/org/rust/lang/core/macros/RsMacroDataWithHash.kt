@@ -22,14 +22,19 @@ class RsMacroDataWithHash<T : RsMacroData>(
         val callHash = when (data as RsMacroData) {
             is RsDeclMacroData -> call.bodyHash
             is RsProcMacroData -> call.hashWithEnv()
+            is RsBuiltinMacroData -> call.bodyHash
         }
         return HashCode.mix(bodyHash ?: return null, callHash ?: return null)
     }
 
     companion object {
-        fun fromPsi(def: RsNamedElement): RsMacroDataWithHash<RsMacroData>? {
+        fun fromPsi(def: RsNamedElement): RsMacroDataWithHash<out RsMacroData>? {
             return when {
-                def is RsMacro -> RsMacroDataWithHash(RsDeclMacroData(def), def.bodyHash)
+                def is RsMacro -> if (def.hasRustcBuiltinMacro) {
+                    RsBuiltinMacroData(def.name ?: return null).withHash()
+                } else {
+                    RsMacroDataWithHash(RsDeclMacroData(def), def.bodyHash)
+                }
                 def is RsFunction && def.isProcMacroDef -> {
                     val name = def.procMacroName ?: return null
                     val procMacro = def.containingCargoPackage?.procMacroArtifact ?: return null
@@ -40,9 +45,13 @@ class RsMacroDataWithHash<T : RsMacroData>(
             }
         }
 
-        fun fromDefInfo(def: MacroDefInfo): RsMacroDataWithHash<RsMacroData>? {
+        fun fromDefInfo(def: MacroDefInfo): RsMacroDataWithHash<out RsMacroData>? {
             return when (def) {
-                is DeclMacroDefInfo -> RsMacroDataWithHash(RsDeclMacroData(def.body), def.bodyHash)
+                is DeclMacroDefInfo -> if (def.hasRustcBuiltinMacro) {
+                    RsBuiltinMacroData(def.path.name).withHash()
+                } else {
+                    RsMacroDataWithHash(RsDeclMacroData(def.body), def.bodyHash)
+                }
                 is ProcMacroDefInfo -> {
                     val name = def.path.name
                     val procMacroArtifact = def.procMacroArtifact ?: return null

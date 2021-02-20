@@ -62,7 +62,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 209
+        private const val STUB_VERSION = 210
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -1342,9 +1342,14 @@ class RsMacroStub(
     // stored in stub as an optimization
     val mayHaveMacroExport: Boolean
         get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT)
+
     // stored in stub as an optimization
     val mayHaveMacroExportLocalInnerMacros: Boolean
         get() = BitUtil.isSet(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS)
+
+    // stored in stub as an optimization
+    val mayHaveRustcBuiltinMacro: Boolean
+        get() = BitUtil.isSet(flags, HAS_RUSTC_BUILTIN_MACRO)
 
     object Type : RsStubElementType<RsMacroStub, RsMacro>("MACRO") {
         override fun shouldCreateStub(node: ASTNode): Boolean =
@@ -1375,6 +1380,7 @@ class RsMacroStub(
             var flags = RsAttributeOwnerStub.extractFlags(psi)
             flags = BitUtil.set(flags, HAS_MACRO_EXPORT, HAS_MACRO_EXPORT_PROP.getDuringIndexing(psi))
             flags = BitUtil.set(flags, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS, HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getDuringIndexing(psi))
+            flags = BitUtil.set(flags, HAS_RUSTC_BUILTIN_MACRO, HAS_RUSTC_BUILTIN_MACRO_PROP.getDuringIndexing(psi))
             return RsMacroStub(
                 parentStub,
                 this,
@@ -1392,6 +1398,7 @@ class RsMacroStub(
     companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
         private val HAS_MACRO_EXPORT: Int = nextBitMask()
         private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = nextBitMask()
+        private val HAS_RUSTC_BUILTIN_MACRO: Int = nextBitMask()
     }
 }
 

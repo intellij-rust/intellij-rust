@@ -154,6 +154,7 @@ class ModCollectorBase private constructor(
             bodyHash = def.bodyHash,
             hasMacroExport = HAS_MACRO_EXPORT_PROP.getByStub(def, crate),
             hasLocalInnerMacros = HAS_MACRO_EXPORT_LOCAL_INNER_MACROS_PROP.getByStub(def, crate),
+            hasRustcBuiltinMacro = HAS_RUSTC_BUILTIN_MACRO_PROP.getByStub(def, crate),
             macroIndexInParent = macroIndexInParent
         )
         visitor.collectMacroDef(defLight)
@@ -371,6 +372,7 @@ data class MacroDefLight(
     val bodyHash: HashCode?,
     val hasMacroExport: Boolean,
     val hasLocalInnerMacros: Boolean,
+    val hasRustcBuiltinMacro: Boolean,
     /** See [MacroIndex] */
     val macroIndexInParent: Int,
 ) : Writeable {
@@ -383,12 +385,14 @@ data class MacroDefLight(
         var flags = 0
         if (hasMacroExport) flags += HAS_MACRO_EXPORT_MASK
         if (hasLocalInnerMacros) flags += HAS_LOCAL_INNER_MACROS_MASK
+        if (hasRustcBuiltinMacro) flags += HAS_RUSTC_BUILTIN_MACRO_MASK
         data.writeByte(flags)
     }
 
     companion object : BitFlagsBuilder(Limit.BYTE) {
         private val HAS_MACRO_EXPORT_MASK: Int = nextBitMask()
         private val HAS_LOCAL_INNER_MACROS_MASK: Int = nextBitMask()
+        private val HAS_RUSTC_BUILTIN_MACRO_MASK: Int = nextBitMask()
     }
 }
 

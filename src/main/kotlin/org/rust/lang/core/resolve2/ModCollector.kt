@@ -288,6 +288,7 @@ private class ModCollector(
             bodyHash,
             def.hasMacroExport,
             def.hasLocalInnerMacros,
+            def.hasRustcBuiltinMacro,
             project
         )
         modData.addLegacyMacro(def.name, defInfo)
