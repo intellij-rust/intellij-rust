@@ -31,11 +31,12 @@ import org.rust.stdext.toPath
 import java.nio.file.Path
 
 data class StandardLibrary(
-    val crates: List<CargoWorkspaceData.Package>,
-    val dependencies: Map<PackageId, Set<CargoWorkspaceData.Dependency>>,
+    val workspaceData: CargoWorkspaceData,
     val isHardcoded: Boolean,
     val isPartOfCargoProject: Boolean = false
 ) {
+    val crates: List<CargoWorkspaceData.Package> get() = workspaceData.packages
+
     companion object {
         private val LOG: Logger = logger<StandardLibrary>()
 
@@ -135,7 +136,8 @@ data class StandardLibrary(
             }
 
             if (crates.isEmpty()) return null
-            return StandardLibrary(crates.values.toList(), dependencies, isHardcoded = true)
+            val data = CargoWorkspaceData(crates.values.toList(), dependencies, emptyMap())
+            return StandardLibrary(workspaceData = data, isHardcoded = true)
         }
     }
 }
@@ -184,7 +186,7 @@ private class StdlibDataFetcher private constructor(
             // TODO: introduce PackageOrigin.STDLIB_DEPENDENCY
             if (it.source == null) it.copy(origin = PackageOrigin.STDLIB) else it
         }
-        return StandardLibrary(stdlibPackages, stdlibWorkspaceData.dependencies, isHardcoded = false)
+        return StandardLibrary(stdlibWorkspaceData.copy(packages = stdlibPackages), isHardcoded = false)
     }
 
 

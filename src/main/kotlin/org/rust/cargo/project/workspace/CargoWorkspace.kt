@@ -303,14 +303,19 @@ private class WorkspaceImpl(
                 it.id to (stdPackagesByPackageRoot[it.contentRootUrl]?.id ?: it.id)
             }
             val newStdlibCrates = stdlib.crates.map { it.copy(id = pkgIdMapping.getValue(it.id)) }
-            val newStdlibDependencies = stdlib.dependencies.map { (oldId, dependency) ->
+            val newStdlibDependencies = stdlib.workspaceData.dependencies.map { (oldId, dependency) ->
                 val newDependencies = dependency.mapToSet { it.copy(id = pkgIdMapping.getValue(it.id)) }
                 pkgIdMapping.getValue(oldId) to newDependencies
             }.toMap()
 
             Pair(
                 otherPackagesData + stdPackagesData.map { it.copy(origin = STDLIB) },
-                stdlib.copy(crates = newStdlibCrates, dependencies = newStdlibDependencies)
+                stdlib.copy(
+                    workspaceData = stdlib.workspaceData.copy(
+                        packages = newStdlibCrates,
+                        dependencies = newStdlibDependencies
+                    )
+                )
             )
         }
 
@@ -341,16 +346,7 @@ private class WorkspaceImpl(
                     pkg.dependencies.addAll(stdlibDependencies.filter { it.name !in explicitDeps && it.pkg.id !in stdInternalDeps })
                 } else {
                     // `pkg` is a crate from stdlib
-                    val stdCrateDeps = stdlib.dependencies[id].orEmpty().mapNotNull { dep ->
-                        val dependencyPackage = newIdToPackage[dep.id] ?: return@mapNotNull null
-                        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
-                        DependencyImpl(
-                            dependencyPackage,
-                            depName,
-                            dep.depKinds,
-                        )
-                    }
-                    pkg.dependencies.addAll(stdCrateDeps)
+                    pkg.addDependencies(stdlib.workspaceData, newIdToPackage)
                 }
             }
         }
@@ -434,8 +430,21 @@ private class WorkspaceImpl(
             pkg.cargoEnabledFeatures.map { PackageFeature(pkg, it) }
         }
         for ((feature, state) in inferFeatureState(UserDisabledFeatures.EMPTY)) {
-            if (feature in enabledByCargo != state.isEnabled) {
-                error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
+            if (feature.pkg.origin == STDLIB) {
+                // All features of stdlib package should be considered as enabled by default.
+                // If `RsExperiments.FETCH_ACTUAL_STDLIB_METADATA` is enabled,
+                // the plugin invokes `cargo metadata` for `test` crate of stdlib to get actual info.
+                // And since stdlib packages are not a single workspace,
+                // `cargo` considers that all stdlib crates except test one are dependencies and
+                // as a result, enabled only features required by `test` package (i.e. `pkg.cargoEnabledFeatures` are not expected)
+                // It doesn't make sense to fix `pkg.cargoEnabledFeatures` so let's just adjust this check
+                if (!state.isEnabled) {
+                    error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
+                }
+            } else {
+                if (feature in enabledByCargo != state.isEnabled) {
+                    error("Feature `${feature.name}` in package `${feature.pkg.name}` should be ${!state}, but it is $state")
+                }
             }
         }
     }
@@ -495,33 +504,7 @@ private class WorkspaceImpl(
             // Fill package dependencies
             run {
                 val idToPackage = result.packages.associateBy { it.id }
-                idToPackage.forEach { (id, pkg) ->
-                    val pkgDeps = data.dependencies[id].orEmpty()
-                    val pkgRawDeps = data.rawDependencies[id].orEmpty()
-                    pkg.dependencies += pkgDeps.mapNotNull { dep ->
-                        val dependencyPackage = idToPackage[dep.id] ?: return@mapNotNull null
-
-                        // There can be multiple appropriate raw dependencies because a dependency can be mentioned
-                        // in `Cargo.toml` in different sections, e.g. [dev-dependencies] and [build-dependencies]
-                        val rawDeps = pkgRawDeps.filter { rawDep ->
-                            rawDep.name == dependencyPackage.name && dep.depKinds.any {
-                                it.kind == CargoWorkspace.DepKind.Unclassified ||
-                                    it.target == rawDep.target && it.kind.cargoName == rawDep.kind
-                            }
-                        }
-
-                        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
-
-                        DependencyImpl(
-                            dependencyPackage,
-                            depName,
-                            dep.depKinds,
-                            rawDeps.any { it.optional },
-                            rawDeps.any { it.uses_default_features },
-                            rawDeps.flatMap { it.features }.toSet()
-                        )
-                    }
-                }
+                idToPackage.forEach { (_, pkg) -> pkg.addDependencies(data, idToPackage) }
             }
 
             return result
@@ -579,6 +562,33 @@ private class PackageImpl(
     override fun toString() = "Package(name='$name', contentRootUrl='$contentRootUrl', outDirUrl='$outDirUrl')"
 }
 
+private fun PackageImpl.addDependencies(workspaceData: CargoWorkspaceData, packagesMap: Map<PackageId, PackageImpl>) {
+    val pkgDeps = workspaceData.dependencies[id].orEmpty()
+    val pkgRawDeps = workspaceData.rawDependencies[id].orEmpty()
+    dependencies += pkgDeps.mapNotNull { dep ->
+        val dependencyPackage = packagesMap[dep.id] ?: return@mapNotNull null
+
+        // There can be multiple appropriate raw dependencies because a dependency can be mentioned
+        // in `Cargo.toml` in different sections, e.g. [dev-dependencies] and [build-dependencies]
+        val rawDeps = pkgRawDeps.filter { rawDep ->
+            rawDep.name == dependencyPackage.name && dep.depKinds.any {
+                it.kind == CargoWorkspace.DepKind.Unclassified ||
+                    it.target == rawDep.target && it.kind.cargoName == rawDep.kind
+            }
+        }
+
+        val depName = dep.name ?: (dependencyPackage.libTarget?.normName ?: dependencyPackage.normName)
+
+        DependencyImpl(
+            dependencyPackage,
+            depName,
+            dep.depKinds,
+            rawDeps.any { it.optional },
+            rawDeps.any { it.uses_default_features },
+            rawDeps.flatMap { it.features }.toSet()
+        )
+    }
+}
 
 private class TargetImpl(
     override val pkg: PackageImpl,
