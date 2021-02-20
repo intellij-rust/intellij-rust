@@ -1024,7 +1024,9 @@
         <!-- Registry keys -->
 
         <registryKey key="org.rust.lang.type.alias.threshold" defaultValue="10" restartRequired="false"
-                     description="Maximum number of type aliases to take into account during `impl`s search"/>
+                     description="Maximum number of type aliases to take into account during `impl`s search (old resolve)"/>
+        <registryKey key="org.rust.lang.type.alias.threshold.new.resolve" defaultValue="2147483647" restartRequired="false"
+                     description="Maximum number of type aliases to take into account during `impl`s search (new resolve)"/>
         <registryKey key="org.rust.lang.cfg.attributes" defaultValue="true" restartRequired="false"
                      description="Enable Rust cfg attributes support"/>
         <registryKey key="org.rust.lang.highlight.macro.body" defaultValue="true" restartRequired="false"
