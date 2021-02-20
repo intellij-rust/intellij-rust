@@ -7,9 +7,7 @@ package org.rust.ide.utils.import
 
 import org.rust.ide.settings.RsCodeInsightSettings
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsMod
-import org.rust.lang.core.psi.ext.RsQualifiedNamedElement
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.TYPES
 import org.rust.lang.core.resolve.createProcessor
 import org.rust.lang.core.resolve.processNestedScopesUpwards
@@ -100,6 +98,17 @@ object RsImportHelper {
         useAliases: Boolean
     ) {
         context.accept(object : RsVisitor() {
+            override fun visitPath(path: RsPath) {
+                val qualifier = path.path
+                if (qualifier == null) {
+                    val item = path.reference?.resolve() as? RsQualifiedNamedElement
+                    if (item != null) {
+                        result += item
+                    }
+                }
+                super.visitPath(path)
+            }
+
             override fun visitTypeReference(reference: RsTypeReference) =
                 collectImportSubjectsFromTy(reference.type, subst, result, useAliases)
 

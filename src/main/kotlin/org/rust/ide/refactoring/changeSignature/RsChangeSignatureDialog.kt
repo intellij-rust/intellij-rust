@@ -28,7 +28,7 @@ import org.rust.ide.refactoring.isValidRustVariableIdentifier
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsElement
+import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.document
 import java.awt.BorderLayout
 import java.awt.GridBagConstraints
@@ -68,7 +68,7 @@ fun withMockChangeFunctionSignature(mock: ChangeFunctionSignatureMock, action: (
 private class SignatureParameter(val factory: RsPsiFactory, val parameter: Parameter) : ParameterInfo {
     override fun getName(): String = parameter.patText
     override fun getOldIndex(): Int = parameter.index
-    override fun getDefaultValue(): String? = null
+    override fun getDefaultValue(): String = parameter.defaultValue.text
     override fun setName(name: String?) {
         if (name != null) {
             parameter.patText = name
@@ -81,8 +81,9 @@ private class SignatureParameter(val factory: RsPsiFactory, val parameter: Param
     override fun setUseAnySingleVariable(b: Boolean) {}
 }
 
-private class SignatureDescriptor(val config: RsChangeFunctionSignatureConfig)
-    : MethodDescriptor<SignatureParameter, String> {
+private class SignatureDescriptor(
+    val config: RsChangeFunctionSignatureConfig
+) : MethodDescriptor<SignatureParameter, String> {
     val function: RsFunction = config.function
 
     override fun getName(): String = config.name
@@ -108,23 +109,29 @@ private class SignatureDescriptor(val config: RsChangeFunctionSignatureConfig)
     override fun canChangeReturnType(): MethodDescriptor.ReadWriteOption = MethodDescriptor.ReadWriteOption.ReadWrite
 }
 
-private class ModelItem(val function: RsFunction, parameter: SignatureParameter)
-    : ParameterTableModelItemBase<SignatureParameter>(
+private class ModelItem(
+    importContext: RsMod,
+    parameter: SignatureParameter
+) : ParameterTableModelItemBase<SignatureParameter>(
     parameter,
-    createTypeCodeFragment(function, parameter.parameter.parseTypeReference()),
-    createTypeCodeFragment(function, parameter.parameter.parseTypeReference()),
+    createTypeCodeFragment(importContext, parameter.parameter.parseTypeReference()),
+    createExprCodeFragment(importContext),
 ) {
     override fun isEllipsisType(): Boolean = false
 }
 
-private class TableModel(val descriptor: SignatureDescriptor, val onUpdate: () -> Unit)
-    : ParameterTableModelBase<SignatureParameter, ModelItem>(
+private class TableModel(
+    val descriptor: SignatureDescriptor,
+    val onUpdate: () -> Unit
+) : ParameterTableModelBase<SignatureParameter, ModelItem>(
     descriptor.function,
     descriptor.function,
     NameColumn<SignatureParameter, ModelItem>(descriptor.function.project, "Pattern:"),
-    SignatureTypeColumn(descriptor)
+    SignatureTypeColumn(descriptor),
+    SignatureDefaultValueColumn(descriptor)
 ) {
     private val factory: RsPsiFactory = RsPsiFactory(descriptor.function.project)
+    private val importContext: RsMod = descriptor.function.createImportContext()
 
     init {
         addTableModelListener {
@@ -139,7 +146,7 @@ private class TableModel(val descriptor: SignatureDescriptor, val onUpdate: () -
             SignatureParameter(factory, newParameter)
         } else parameterInfo
 
-        return ModelItem(descriptor.function, parameter)
+        return ModelItem(importContext, parameter)
     }
 
     override fun removeRow(index: Int) {
@@ -160,14 +167,24 @@ private class TableModel(val descriptor: SignatureDescriptor, val onUpdate: () -
     }
 
     private fun createNewParameter(descriptor: SignatureDescriptor): Parameter =
-        Parameter(factory, "p${descriptor.parametersCount}", ParameterType.Empty)
+        Parameter(factory, "p${descriptor.parametersCount}", ParameterProperty.Empty())
 
     private class SignatureTypeColumn(descriptor: SignatureDescriptor)
         : TypeColumn<SignatureParameter, ModelItem>(descriptor.function.project, RsFileType) {
         override fun setValue(item: ModelItem?, value: PsiCodeFragment?) {
             val fragment = value as? RsTypeReferenceCodeFragment ?: return
             if (item != null) {
-                item.parameter.parameter.type = ParameterType.fromText(fragment.typeReference, fragment.text)
+                item.parameter.parameter.type = ParameterProperty.fromText(fragment.typeReference, fragment.text)
+            }
+        }
+    }
+
+    private class SignatureDefaultValueColumn(descriptor: SignatureDescriptor)
+        : DefaultValueColumn<SignatureParameter, ModelItem>(descriptor.function.project, RsFileType) {
+        override fun setValue(item: ModelItem?, value: PsiCodeFragment?) {
+            val fragment = value as? RsExpressionCodeFragment ?: return
+            if (item != null) {
+                item.parameter.parameter.defaultValue = ParameterProperty.fromText(fragment.expr, fragment.text)
             }
         }
     }
@@ -180,7 +197,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         SignatureDescriptor,
         ModelItem,
         TableModel
-        >(project, descriptor, false, descriptor.method) {
+        >(project, descriptor, false, descriptor.function) {
     private var isValid: Boolean = true
 
     private val config: RsChangeFunctionSignatureConfig
@@ -219,11 +236,13 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
             returnTypeConstraints.gridx = 2
             layout.setConstraints(myReturnTypePanel, returnTypeConstraints)
 
-            val gbc = GridBagConstraints(0, 0, 1, 1, 1.0, 1.0,
+            val gbc = GridBagConstraints(
+                0, 0, 1, 1, 1.0, 1.0,
                 GridBagConstraints.WEST,
                 GridBagConstraints.HORIZONTAL,
                 Insets(0, 0, 0, 0),
-                0, 0)
+                0, 0
+            )
             panel.add(visibilityPanel, gbc)
         }
         return panel
@@ -256,7 +275,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         RsChangeSignatureProcessor(project, config.createChangeInfo())
 
     override fun createReturnTypeCodeFragment(): PsiCodeFragment =
-        createTypeCodeFragment(myMethod.function, myMethod.function.retType?.typeReference)
+        createTypeCodeFragment(myMethod.function.createImportContext(), myMethod.function.retType?.typeReference)
 
     override fun createCallerChooser(
         title: String?,
@@ -269,12 +288,14 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         config.function.project.rustPsiManager.incRustStructureModificationCount()
         return validateAndUpdateData()
     }
+
     override fun areButtonsValid(): Boolean = isValid
 
     override fun updateSignature() {
         updateState()
         super.updateSignature()
     }
+
     override fun updateSignatureAlarmFired() {
         super.updateSignatureAlarmFired()
         validateButtons()
@@ -333,11 +354,14 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
             if (parameter.parsePat() == null) {
                 return "Parameter $index has invalid pattern"
             }
-            if (parameter.type is ParameterType.Empty) {
+            if (parameter.type is ParameterProperty.Empty) {
                 return "Please enter type for parameter $index"
             }
-            if (parameter.type is ParameterType.Invalid) {
+            if (parameter.type is ParameterProperty.Invalid) {
                 return "Type entered for parameter $index is invalid"
+            }
+            if (parameter.defaultValue is ParameterProperty.Invalid) {
+                return "Default value entered for parameter $index is invalid"
             }
         }
 
@@ -354,22 +378,36 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
 }
 
 private fun createTypeCodeFragment(
-    context: RsElement,
+    importContext: RsMod,
     type: RsTypeReference?
-): PsiCodeFragment {
-    val freshMod = RsPsiFactory(context.project).createModItem(TMP_MOD_NAME, "")
-    freshMod.setContext(context.containingFile as RsFile)
-
-    val fragment = RsTypeReferenceCodeFragment(
-        context.project,
+): PsiCodeFragment = createCodeFragment(importContext) { importTarget ->
+    RsTypeReferenceCodeFragment(
+        importContext.project,
         type?.text.orEmpty(),
-        context = freshMod,
-        importTarget = freshMod
+        context = importTarget,
+        importTarget = importTarget
     )
+}
+
+private fun createExprCodeFragment(importContext: RsMod): PsiCodeFragment
+    = createCodeFragment(importContext) { importTarget ->
+    RsExpressionCodeFragment(
+        importContext.project,
+        "",
+        context = importTarget,
+        importTarget = importTarget
+    )
+}
+
+private fun createCodeFragment(
+    importContext: RsMod,
+    factory: (importTarget: RsItemsOwner) -> RsCodeFragment
+): PsiCodeFragment {
+    val fragment = factory(importContext)
     val document = fragment.document!!
     document.addDocumentListener(object : DocumentListener {
         override fun documentChanged(event: DocumentEvent) {
-            PsiDocumentManager.getInstance(context.project).commitDocument(document)
+            PsiDocumentManager.getInstance(importContext.project).commitDocument(document)
         }
     })
     return fragment
@@ -399,3 +437,19 @@ private class VisibilityComboBox(project: Project, initialVis: RsVis?, onChange:
 
 private fun createVisibilityHints(initialVis: RsVis?): Array<String> =
     setOf(initialVis?.text.orEmpty(), "", "pub", "pub(crate)", "pub(super)").toTypedArray()
+
+private fun RsElement.createImportContext(): RsMod {
+    val factory = RsPsiFactory(project)
+    val sourceContext = containingFile as RsFile
+
+    val qualifiedPath = containingMod.qualifiedNameInCrate(this)
+    val defaultUseItem = if (qualifiedPath != null) {
+        "use $qualifiedPath::*;"
+    } else {
+        ""
+    }
+    val module = factory.createModItem(TMP_MOD_NAME, defaultUseItem)
+
+    module.setContext(sourceContext)
+    return module
+}
