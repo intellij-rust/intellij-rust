@@ -41,6 +41,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.RsReference
 import org.rust.lang.core.resolve2.findModDataFor
 import org.rust.lang.core.resolve2.isNewResolveEnabled
+import org.rust.lang.core.resolve2.toRsMod
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.lang.core.stubs.index.RsIncludeMacroIndex
 import org.rust.lang.core.stubs.index.RsModulesIndex
@@ -102,10 +103,7 @@ class RsFile(
     private fun doGetCachedData(): CachedData {
         check(originalFile == this)
 
-        if (project.isNewResolveEnabled && project.macroExpansionManagerIfCreated?.expansionState != null) {
-            // Experimentally use new resolve engine in the case of macro resolve
-            // TODO use it always (see todo in `findModDataFor`)
-
+        if (project.isNewResolveEnabled) {
             // Note: `this` file can be not a module (can be included with `include!()` macro)
             val modData = findModDataFor(this)
             if (modData != null) {
@@ -113,7 +111,12 @@ class RsFile(
                 return CachedData(crate.cargoProject, crate.cargoWorkspace, crate.rootMod, crate, modData.isDeeplyEnabledByCfg)
             }
             // Else try injected crate, included file, or fill file info with just project and workspace
-        } else {
+        }
+
+        // if new resolve is enabled and we are called not from macro expansion engine,
+        // then [ModData] may be not found because some [CrateDefMap]s are not up-to-date,
+        // so we have to fallback to use [declaration]
+        if (!project.isNewResolveEnabled || project.macroExpansionManagerIfCreated?.expansionState == null) {
             val declaration = declaration
             if (declaration != null) {
                 val (file, isEnabledByCfg) = declaration.contextualFileAndIsEnabledByCfgOnThisWay()
@@ -164,6 +167,14 @@ class RsFile(
 
     override val `super`: RsMod?
         get() {
+            if (project.isNewResolveEnabled) {
+                val modData = findModDataFor(this)
+                if (modData != null) {
+                    val parenModData = modData.parent ?: return null
+                    return parenModData.toRsMod(project).firstOrNull()
+                }
+            }
+
             val includedFrom = RsIncludeMacroIndex.getIncludedFrom(this) ?: return declaration?.containingMod
             return includedFrom.containingMod.`super`
         }

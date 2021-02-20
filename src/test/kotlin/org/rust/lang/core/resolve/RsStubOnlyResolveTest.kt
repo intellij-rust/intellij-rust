@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.rust.UseNewResolve
+import org.rust.ignoreInNewResolve
 
 class RsStubOnlyResolveTest : RsResolveTestBase() {
     fun `test child mod`() = stubOnlyResolve("""
@@ -86,7 +87,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- foo/baz.rs
         pub fn baz() {}
-    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule.ignoreInNewResolve(project))
 
     fun `test module path in non crate root`() = stubOnlyResolve("""
     //- main.rs
@@ -101,7 +102,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- baz.rs
         pub fn baz() {}
-    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule.ignoreInNewResolve(project))
 
     fun `test module path to different directory 1`() = stubOnlyResolve("""
     //- main.rs
@@ -114,7 +115,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         pub mod bar;
     //- src2/bar/mod.rs
         pub struct S;
-    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInNonInlineModule.ignoreInNewResolve(project))
 
     fun `test module path to different directory 2`() = stubOnlyResolve("""
     //- main.rs
@@ -317,7 +318,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- foo/baz.rs
         pub fn foo() {}
-    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule.ignoreInNewResolve(project))
 
     fun `test path inside inline module in mod rs`() = stubOnlyResolve("""
     //- main.rs
@@ -334,7 +335,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- foo/bar/qwe.rs
         pub fn baz() {}
-    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule.ignoreInNewResolve(project))
 
     fun `test path inside inline module in non crate root`() = stubOnlyResolve("""
     //- main.rs
@@ -351,7 +352,7 @@ class RsStubOnlyResolveTest : RsResolveTestBase() {
         }
     //- foo/bar/qwe.rs
         pub fn baz() {}
-    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule)
+    """, NameResolutionTestmarks.modDeclExplicitPathInInlineModule.ignoreInNewResolve(project))
 
     fun `test inline module path in non crate root`() = stubOnlyResolve("""
     //- main.rs
