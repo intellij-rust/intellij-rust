@@ -530,10 +530,17 @@ fun findModDataFor(file: RsFile): ModData? {
     check(project.isNewResolveEnabled)
     val defMapService = project.defMapService
     val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
-    // TODO Ensure def maps are up-to-date (`findCrate` may return old crate of def maps haven't updated).
+    // TODO Ensure def maps are up-to-date (`findCrates` may return old crate of def maps haven't updated).
     //   Now this is used only in the macro expansion engine where all def map are always up-to-date
-    val crateId = defMapService.findCrate(file) ?: return null
-    val defMap = defMapService.getOrUpdateIfNeeded(crateId) ?: return null
-    val fileInfo = defMap.fileInfos[virtualFile.id] ?: return null
-    return fileInfo.modData
+    return defMapService
+        .findCrates(file)
+        .mapNotNull { crateId ->
+            val defMap = defMapService.getOrUpdateIfNeeded(crateId) ?: return@mapNotNull null
+            val fileInfo = defMap.fileInfos[virtualFile.id] ?: return@mapNotNull null
+            fileInfo.modData
+        }
+        .singleOrFirstCfgEnabled()
 }
+
+private fun List<ModData>.singleOrFirstCfgEnabled(): ModData? =
+    singleOrNull() ?: firstOrNull { it.isDeeplyEnabledByCfg } ?: firstOrNull()

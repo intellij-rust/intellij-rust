@@ -19,6 +19,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.ref.GCWatcher
 import org.jetbrains.annotations.TestOnly
 import org.rust.RsTask.TaskType.*
@@ -140,7 +141,7 @@ class DefMapService(val project: Project) : Disposable {
     private val defMaps: ConcurrentMap<CratePersistentId, DefMapHolder> = ContainerUtil.createConcurrentSoftValueMap()
     val defMapsBuildLock: ReentrantLock = ReentrantLock()
 
-    private val fileIdToCrateId: ConcurrentHashMap<FileId, CratePersistentId> = ConcurrentHashMap()
+    private val fileIdToCrateId: MultiMap<FileId, CratePersistentId> = MultiMap.createConcurrent()
 
     /** Merged map of [CrateDefMap.missedFiles] for all crates */
     private val missedFiles: ConcurrentHashMap<Path, CratePersistentId> = ConcurrentHashMap()
@@ -194,11 +195,11 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     private fun updateFilesMaps(crate: CratePersistentId, defMap: CrateDefMap?) {
-        fileIdToCrateId.values.remove(crate)
+        fileIdToCrateId.values().remove(crate)
         missedFiles.values.remove(crate)
         if (defMap != null) {
             for (fileId in defMap.fileInfos.keys) {
-                fileIdToCrateId[fileId] = crate
+                fileIdToCrateId.putValue(fileId, crate)
             }
             for (missedFile in defMap.missedFiles) {
                 missedFiles[missedFile] = crate
@@ -215,21 +216,23 @@ class DefMapService(val project: Project) : Disposable {
 
     private fun onFileRemoved(file: RsFile) {
         checkWriteAccessAllowed()
-        val crate = findCrate(file) ?: return
-        getDefMapHolder(crate).shouldRebuild = true
+        for (crate in findCrates(file)) {
+            getDefMapHolder(crate).shouldRebuild = true
+        }
     }
 
     fun onFileChanged(file: RsFile) {
         if (!project.isNewResolveEnabled) return
         checkWriteAccessAllowed()
-        val crate = findCrate(file) ?: return
-        getDefMapHolder(crate).addChangedFile(file)
+        for (crate in findCrates(file)) {
+            getDefMapHolder(crate).addChangedFile(file)
+        }
     }
 
     /** Note: we can't use [RsFile.crate], because it can trigger resolve */
-    fun findCrate(file: RsFile): CratePersistentId? {
+    fun findCrates(file: RsFile): Collection<CratePersistentId> {
         /** Virtual file can be [VirtualFileWindow] if it is doctest injection */
-        val virtualFile = file.virtualFile as? VirtualFileWithId ?: return null
+        val virtualFile = file.virtualFile as? VirtualFileWithId ?: return emptyList()
         return fileIdToCrateId[virtualFile.id]
     }
 
@@ -275,7 +278,7 @@ class DefMapService(val project: Project) : Disposable {
             isStale
         }
         for (staleCrate in staleCrates) {
-            fileIdToCrateId.values.remove(staleCrate)
+            fileIdToCrateId.values().remove(staleCrate)
             missedFiles.values.remove(staleCrate)
         }
     }
