@@ -304,15 +304,15 @@ data class ItemLight(
         if (pathAttribute != null) data.writeUTF(pathAttribute)
     }
 
-    companion object {
-        private val NAMESPACE_TYPES_MASK: Int = makeBitMask(0)
-        private val NAMESPACE_VALUES_MASK: Int = makeBitMask(1)
-        private val NAMESPACE_MACROS_MASK: Int = makeBitMask(2)
-        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = makeBitMask(3)
-        private val IS_MOD_ITEM_MASK: Int = makeBitMask(4)
-        private val IS_MOD_DECL_MASK: Int = makeBitMask(5)
-        private val HAS_MACRO_USE_MASK: Int = makeBitMask(6)
-        private val PATH_ATTRIBUTE_MASK: Int = makeBitMask(7)
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        private val NAMESPACE_TYPES_MASK: Int = nextBitMask()
+        private val NAMESPACE_VALUES_MASK: Int = nextBitMask()
+        private val NAMESPACE_MACROS_MASK: Int = nextBitMask()
+        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
+        private val IS_MOD_ITEM_MASK: Int = nextBitMask()
+        private val IS_MOD_DECL_MASK: Int = nextBitMask()
+        private val HAS_MACRO_USE_MASK: Int = nextBitMask()
+        private val PATH_ATTRIBUTE_MASK: Int = nextBitMask()
     }
 }
 
@@ -341,12 +341,12 @@ class ImportLight(
         data.writeByte(flags)
     }
 
-    companion object {
-        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = makeBitMask(0)
-        private val IS_GLOB_MASK: Int = makeBitMask(1)
-        private val IS_EXTERN_CRATE_MASK: Int = makeBitMask(2)
-        private val IS_MACRO_USE_MASK: Int = makeBitMask(3)
-        private val IS_PRELUDE_MASK: Int = makeBitMask(4)
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
+        private val IS_GLOB_MASK: Int = nextBitMask()
+        private val IS_EXTERN_CRATE_MASK: Int = nextBitMask()
+        private val IS_MACRO_USE_MASK: Int = nextBitMask()
+        private val IS_PRELUDE_MASK: Int = nextBitMask()
     }
 }
 
@@ -386,9 +386,9 @@ data class MacroDefLight(
         data.writeByte(flags)
     }
 
-    companion object {
-        private val HAS_MACRO_EXPORT_MASK: Int = makeBitMask(0)
-        private val HAS_LOCAL_INNER_MACROS_MASK: Int = makeBitMask(1)
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        private val HAS_MACRO_EXPORT_MASK: Int = nextBitMask()
+        private val HAS_LOCAL_INNER_MACROS_MASK: Int = nextBitMask()
     }
 }
 
