@@ -271,16 +271,14 @@ class DefMapService(val project: Project) : Disposable {
     /** Removes DefMaps for crates not in crate graph */
     fun removeStaleDefMaps(allCrates: List<Crate>) {
         val allCrateIds = allCrates.mapToSet { it.id }
-        val staleCrates = mutableListOf<CratePersistentId>()
+        val staleCrates = hashSetOf<CratePersistentId>()
         defMaps.keys.removeIf { crate ->
             val isStale = crate !in allCrateIds
             if (isStale) staleCrates += crate
             isStale
         }
-        for (staleCrate in staleCrates) {
-            fileIdToCrateId.values().remove(staleCrate)
-            missedFiles.values.remove(staleCrate)
-        }
+        fileIdToCrateId.values().removeIf { it in staleCrates }
+        missedFiles.values.removeIf { it in staleCrates }
     }
 
     @TestOnly
