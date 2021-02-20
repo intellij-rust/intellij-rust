@@ -1154,6 +1154,28 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
+    fun `test extract a function can't skip default type parameter`() = doTest("""
+        struct S<R=u32, T=u32>(R, T);
+
+        fn main() {
+            let s: S<u32, i32> = S(1u32, 2i32);
+            <selection>println!(s)</selection>;
+        }
+    """, """
+        struct S<R=u32, T=u32>(R, T);
+
+        fn main() {
+            let s: S<u32, i32> = S(1u32, 2i32);
+            foo(s);
+        }
+
+        fn foo(s: S<u32, i32>) {
+            println!(s)
+        }
+    """,
+        false,
+        "foo")
+
     fun `test extract set value to mutable`() = doTest("""
         fn main() {
             let a = 1u32;

@@ -219,9 +219,10 @@ private data class TypeRenderer(
         val typeArguments = adt.typeArguments
 
         val typeArgumentNames = if (skipUnchangedDefaultTypeArguments) {
-            adt.item.typeParameters.zip(typeArguments).filter { (param, argument) ->
-                param.typeReference == null || param.typeReference?.type != argument
-            }.map { (_, argument) -> render(argument) }
+            adt.item.typeParameters
+                .zip(typeArguments)
+                .dropLastWhile { (param, argument) -> param.typeReference?.type == argument }
+                .map { (_, argument) -> render(argument) }
         } else {
             typeArguments.map(render)
         }
