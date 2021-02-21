@@ -144,16 +144,16 @@ jobs:
                   name: macos-x86-64
                   path: bin/macos/x86-64
 
-            - name: Publish rust plugin
-              uses: eskatos/gradle-command-action@v1
-              with:
-                  arguments: ":plugin:publishPlugin"
-
             - name: Publish toml plugin
               if: needs.fetch-latest-changes.outputs.toml-commit != needs.fetch-latest-changes.outputs.toml-nightly
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: ":intellij-toml:publishPlugin"
+
+            - name: Publish rust plugin
+              uses: eskatos/gradle-command-action@v1
+              with:
+                  arguments: ":plugin:publishPlugin"
 
     save-commit:
         needs: [ build, fetch-latest-changes ]
