@@ -9,8 +9,13 @@ import com.intellij.execution.BeforeRunTask
 import com.intellij.execution.Executor
 import com.intellij.execution.InputRedirectAware
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.execution.configurations.*
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.RunConfiguration
+import com.intellij.execution.configurations.RunProfileState
+import com.intellij.execution.configurations.RuntimeConfigurationError
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -23,6 +28,7 @@ import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.runconfig.*
 import org.rust.cargo.runconfig.buildtool.CargoBuildTaskProvider
+import org.rust.cargo.runconfig.test.CargoTestConsoleProperties
 import org.rust.cargo.runconfig.ui.CargoCommandConfigurationEditor
 import org.rust.cargo.toolchain.BacktraceMode
 import org.rust.cargo.toolchain.CargoCommandLine
@@ -34,7 +40,6 @@ import org.rust.openapiext.isFeatureEnabled
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.run
 
 /**
  * This class describes a Run Configuration.
@@ -46,7 +51,7 @@ open class CargoCommandConfiguration(
     name: String,
     factory: ConfigurationFactory
 ) : RsCommandConfiguration(project, name, factory),
-    InputRedirectAware.InputRedirectOptions {
+    InputRedirectAware.InputRedirectOptions, ConsolePropertiesProvider {
     override var command: String = "run"
     var channel: RustChannel = RustChannel.DEFAULT
     var requiredFeatures: Boolean = true
@@ -134,14 +139,21 @@ open class CargoCommandConfiguration(
 
     override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
         val config = clean().ok ?: return null
-        return if (command.startsWith("test") &&
-            isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
-            !command.contains("--nocapture")) {
+        return if (showTestToolWindow()) {
             CargoTestRunState(environment, this, config)
         } else {
             CargoRunState(environment, this, config)
         }
     }
+
+    private fun showTestToolWindow() = command.startsWith("test") &&
+        isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
+        !command.contains("--nocapture")
+
+
+    override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties? =
+        if (showTestToolWindow()) CargoTestConsoleProperties(this, executor) else null
+
 
     sealed class CleanConfiguration {
         class Ok(
