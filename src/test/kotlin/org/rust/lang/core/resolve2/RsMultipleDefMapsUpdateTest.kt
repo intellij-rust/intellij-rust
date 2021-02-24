@@ -10,12 +10,9 @@ import org.junit.Assert
 import org.rust.*
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.crateGraph
-import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsPsiFactory
-import org.rust.lang.core.psi.ext.containingCrate
 import org.rust.lang.core.psi.rustStructureModificationTracker
 import org.rust.lang.core.resolve2.CrateInfo.*
-import org.rust.openapiext.toPsiFile
 
 /** Tests which exactly [CrateDefMap]s are updated when we modify some crate and then run resolve in some other crate */
 @UseNewResolve
@@ -64,8 +61,8 @@ class RsMultipleDefMapsUpdateTest : RsTestBase() {
 
     private val CrateInfo.crate: Crate
         get() {
-            val crateRoot = myFixture.findFileInTempDir(crateRootPath).toPsiFile(project) as RsFile
-            return crateRoot.containingCrate!!
+            val crateRoot = myFixture.findFileInTempDir(crateRootPath)
+            return project.crateGraph.findCrateByRootMod(crateRoot)!!
         }
 
     fun `test no modifications`() {
