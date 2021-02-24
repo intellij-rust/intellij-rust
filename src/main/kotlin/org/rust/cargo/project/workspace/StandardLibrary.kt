@@ -183,8 +183,8 @@ private class StdlibDataFetcher private constructor(
         )
         val stdlibWorkspaceData = CargoMetadata.clean(stdlibMetadataProject)
         val stdlibPackages = stdlibWorkspaceData.packages.map {
-            // TODO: introduce PackageOrigin.STDLIB_DEPENDENCY
-            if (it.source == null) it.copy(origin = PackageOrigin.STDLIB) else it
+            val newOrigin = if (it.source == null) PackageOrigin.STDLIB else PackageOrigin.STDLIB_DEPENDENCY
+            it.copy(origin = newOrigin)
         }
         return StandardLibrary(stdlibWorkspaceData.copy(packages = stdlibPackages), isHardcoded = false)
     }

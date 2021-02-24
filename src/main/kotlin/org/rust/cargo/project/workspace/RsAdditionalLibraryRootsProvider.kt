@@ -72,7 +72,7 @@ private val CargoProject.ideaLibraries: Collection<CargoLibrary>
         val dependencyPackages = mutableListOf<CargoWorkspace.Package>()
         for (pkg in workspace.packages) {
             when (pkg.origin) {
-                STDLIB -> stdlibPackages += pkg
+                STDLIB, STDLIB_DEPENDENCY -> stdlibPackages += pkg
                 DEPENDENCY -> dependencyPackages += pkg
                 WORKSPACE -> Unit
             }.exhaustive

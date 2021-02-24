@@ -300,7 +300,7 @@ fun processExternCrateResolveVariants(
                 NameResolutionTestmarks.shadowingStdCrates.hit()
                 0
             }
-            PackageOrigin.STDLIB -> 1
+            PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> 1
         }
     }
     for (dependency in explicitDepsFirst) {

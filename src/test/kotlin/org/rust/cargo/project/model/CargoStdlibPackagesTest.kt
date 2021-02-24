@@ -9,6 +9,7 @@ import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.FeatureState
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.experiments.RsExperiments
 import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.singleProject
@@ -36,6 +37,7 @@ class CargoStdlibPackagesTest : RsWithToolchainTestBase() {
         val cargoProject = project.cargoProjects.singleProject()
         val workspace = cargoProject.workspaceOrFail()
         val hashbrownPkg = workspace.packages.first { it.name == "hashbrown" }
+        assertEquals(PackageOrigin.STDLIB_DEPENDENCY, hashbrownPkg.origin)
         hashbrownPkg.checkFeature("rustc-dep-of-std", FeatureState.Enabled)
         hashbrownPkg.checkFeature("default", FeatureState.Disabled)
     }

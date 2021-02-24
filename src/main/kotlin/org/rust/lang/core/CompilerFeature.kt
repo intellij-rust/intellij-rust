@@ -50,7 +50,9 @@ class CompilerFeature(
         }
 
         val crate = rsElement.containingCrate ?: return UNKNOWN
-        if (version.channel != RustChannel.NIGHTLY && crate.origin != PackageOrigin.STDLIB) return NOT_AVAILABLE
+        val origin = crate.origin
+        val isStdlibPart = origin == PackageOrigin.STDLIB || origin == PackageOrigin.STDLIB_DEPENDENCY
+        if (version.channel != RustChannel.NIGHTLY && !isStdlibPart) return NOT_AVAILABLE
 
         val cfgEvaluator = CfgEvaluator.forCrate(crate)
         val attrs = RsFeatureIndex.getFeatureAttributes(element.project, name)
