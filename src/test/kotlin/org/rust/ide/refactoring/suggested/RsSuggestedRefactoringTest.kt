@@ -11,11 +11,12 @@ import com.intellij.openapi.command.executeCommand
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.refactoring.RefactoringBundle
+import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 
 abstract class RsSuggestedRefactoringTestBase : RsTestBase() {
     protected fun doUnavailableTest(
-        initialText: String,
+        @Language("Rust") initialText: String,
         editingAction: () -> Unit
     ) {
         InlineFile(initialText).withCaret()
@@ -28,8 +29,8 @@ abstract class RsSuggestedRefactoringTestBase : RsTestBase() {
     }
 
     protected fun doTestRename(
-        initialText: String,
-        textAfterRefactoring: String,
+        @Language("Rust") initialText: String,
+        @Language("Rust") textAfterRefactoring: String,
         oldName: String,
         newName: String,
         editingAction: () -> Unit

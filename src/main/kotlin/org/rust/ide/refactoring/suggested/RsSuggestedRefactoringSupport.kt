@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.isReferenceToConstant
 
 class RsSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     override val availability: SuggestedRefactoringAvailability
-        get() = SuggestedRefactoringAvailability.RenameOnly(this)
+        get() = RsSuggestedRefactoringAvailability(this)
     override val execution: SuggestedRefactoringExecution
         get() = SuggestedRefactoringExecution.RenameOnly(this)
     override val stateChanges: SuggestedRefactoringStateChanges
@@ -27,7 +27,10 @@ class RsSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     override fun importsRange(psiFile: PsiFile): TextRange? = null
 
     override fun isDeclaration(psiElement: PsiElement): Boolean = when (psiElement) {
-        is RsPatBinding -> psiElement.parent is RsPatIdent && !psiElement.isReferenceToConstant
+        // May return true for const pat binding since we can't distinguish them
+        // without name resolution that forbidden here.
+        // Refactoring for constants is suppressed by `RsSuggestedRefactoringAvailability`
+        is RsPatBinding -> psiElement.parent is RsPatIdent
         is RsNameIdentifierOwner -> true
         else -> false
     }
@@ -40,4 +43,15 @@ class RsSuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
     private fun getRange(declaration: PsiElement): TextRange? =
         (declaration as? RsNameIdentifierOwner)?.nameIdentifier?.textRange
+}
+
+private class RsSuggestedRefactoringAvailability(
+    refactoringSupport: SuggestedRefactoringSupport
+) : SuggestedRefactoringAvailability.RenameOnly(refactoringSupport) {
+
+    override fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
+        if (state.declaration !is RsPatBinding) return false
+        val restoredDeclaration = state.restoredDeclarationCopy() as? RsPatBinding ?: return false
+        return restoredDeclaration.isReferenceToConstant
+    }
 }

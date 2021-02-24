@@ -56,9 +56,21 @@ class RsRenameSuggestedRefactoringTest : RsSuggestedRefactoringTestBase() {
             let b = a;
         }
     """) {
-            myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
-            myFixture.type("5")
+        myFixture.performEditorAction(IdeActions.ACTION_EDITOR_DELETE)
+        myFixture.type("5")
+    }
+
+    fun `test do not rename constant`() = doUnavailableTest("""
+        const C: i32 = 1;
+        fn foo() {
+            match 1 {
+                C/*caret*/ => println!("Oops"),
+                X => println!("{}", X)
+            };
         }
+    """) {
+        myFixture.type("1")
+    }
 
     fun `test rename nested binding`() = doTestRename("""
         fn foo() {
