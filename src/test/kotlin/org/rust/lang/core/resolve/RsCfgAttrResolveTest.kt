@@ -924,4 +924,24 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         #![cfg(intellij_rust)]
         pub fn func() {}
      """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-enabled glob import overrides cfg-disabled named import`() = checkByCode("""
+        #[cfg(not(intellij_rust))]
+        mod mod1 {
+            pub fn func() {}
+        }
+        mod mod2 {
+            pub fn func() {}
+        }        //X
+
+        #[cfg(not(intellij_rust))]
+        use mod1::func;
+        use mod2::*;
+
+        fn main() {
+            func();
+        } //^
+     """)
 }

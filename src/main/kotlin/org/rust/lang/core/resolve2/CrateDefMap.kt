@@ -295,8 +295,8 @@ class ModData(
     }
 
     /** Returns true if [visibleItems] were changed */
-    fun addVisibleItem(name: String, def: PerNs): Boolean =
-        pushResolutionFromImport(this, name, def, ImportType.NAMED)
+    fun addVisibleItem(name: String, def: PerNs, visibility: Visibility): Boolean =
+        pushResolutionFromImport(this, name, def, ImportType.NAMED, visibility)
 
     fun asVisItem(): VisItem {
         val parent = parent ?: error("Use CrateDefMap.rootAsPerNs for root ModData")
@@ -480,6 +480,14 @@ sealed class Visibility {
         }
     }
 
+    val type: VisibilityType
+        get() = when (this) {
+            Public -> VisibilityType.Normal
+            is Restricted -> VisibilityType.Normal
+            Invisible -> VisibilityType.Invisible
+            CfgDisabled -> VisibilityType.CfgDisabled
+        }
+
     val isInvisible: Boolean get() = this == Invisible || this == CfgDisabled
 
     override fun toString(): String =
@@ -489,6 +497,14 @@ sealed class Visibility {
             Invisible -> "Invisible"
             CfgDisabled -> "CfgDisabled"
         }
+}
+
+enum class VisibilityType {
+    CfgDisabled,
+    Invisible,
+    Normal;
+
+    fun isWider(other: VisibilityType): Boolean = ordinal > other.ordinal
 }
 
 /** Path to a module or an item in module */
