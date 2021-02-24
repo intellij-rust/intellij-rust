@@ -249,44 +249,6 @@ class DefCollector(
         return changed
     }
 
-    private fun pushResolutionFromImport(modData: ModData, name: String, def: PerNs, importType: ImportType): Boolean {
-        check(!def.isEmpty)
-
-        // optimization: fast path
-        val defExisting = modData.visibleItems.putIfAbsent(name, def) ?: return true
-
-        return mergeResolutionFromImport(modData, name, def, defExisting, importType)
-    }
-
-    private fun mergeResolutionFromImport(
-        modData: ModData,
-        name: String,
-        def: PerNs,
-        defExisting: PerNs,
-        importType: ImportType
-    ): Boolean {
-        val (typesExisting, valuesExisting, macrosExisting) = defExisting
-        val typesNew = mergeResolutionOneNs(def.types, defExisting.types, importType)
-        val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, importType)
-        val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, importType)
-        if (typesExisting === typesNew && valuesExisting === valuesNew && macrosExisting === macrosNew) return false
-        modData.visibleItems[name] = PerNs(typesNew, valuesNew, macrosNew)
-        return true
-    }
-
-    private fun mergeResolutionOneNs(visItem: VisItem?, visItemExisting: VisItem?, importType: ImportType): VisItem? {
-        if (visItem == null) return visItemExisting
-        if (visItemExisting == null) return visItem
-
-        val importTypeExisting = if (visItemExisting.isFromNamedImport) NAMED else GLOB
-        if (importType == GLOB && importTypeExisting == NAMED) return visItemExisting
-        if (importType == importTypeExisting) {
-            val isStrictlyMorePermissive = visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)
-            if (!isStrictlyMorePermissive) return visItemExisting
-        }
-        return visItem
-    }
-
     private fun pushTraitResolutionFromImport(modData: ModData, def: PerNs, visibility: Visibility): Boolean {
         check(!def.isEmpty)
         val trait = def.types?.takeIf { !it.isModOrEnum } ?: return false
@@ -472,4 +434,51 @@ private inline fun <T> MutableList<T>.inPlaceRemoveIf(filter: (T) -> Boolean): B
         }
     }
     return removed
+}
+
+fun pushResolutionFromImport(
+    modData: ModData,
+    name: String,
+    def: PerNs,
+    importType: ImportType
+): Boolean {
+    check(!def.isEmpty)
+
+    // optimization: fast path
+    val defExisting = modData.visibleItems.putIfAbsent(name, def) ?: return true
+
+    return mergeResolutionFromImport(modData, name, def, defExisting, importType)
+}
+
+private fun mergeResolutionFromImport(
+    modData: ModData,
+    name: String,
+    def: PerNs,
+    defExisting: PerNs,
+    importType: ImportType
+): Boolean {
+    val (typesExisting, valuesExisting, macrosExisting) = defExisting
+    val typesNew = mergeResolutionOneNs(def.types, defExisting.types, importType)
+    val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, importType)
+    val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, importType)
+    if (typesExisting === typesNew && valuesExisting === valuesNew && macrosExisting === macrosNew) return false
+    modData.visibleItems[name] = PerNs(typesNew, valuesNew, macrosNew)
+    return true
+}
+
+private fun mergeResolutionOneNs(
+    visItem: VisItem?,
+    visItemExisting: VisItem?,
+    importType: ImportType
+): VisItem? {
+    if (visItem == null) return visItemExisting
+    if (visItemExisting == null) return visItem
+
+    val importTypeExisting = if (visItemExisting.isFromNamedImport) NAMED else GLOB
+    if (importType == GLOB && importTypeExisting == NAMED) return visItemExisting
+    if (importType == importTypeExisting) {
+        val isStrictlyMorePermissive = visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)
+        if (!isStrictlyMorePermissive) return visItemExisting
+    }
+    return visItem
 }

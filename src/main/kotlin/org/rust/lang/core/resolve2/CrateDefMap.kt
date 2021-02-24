@@ -295,13 +295,8 @@ class ModData(
     }
 
     /** Returns true if [visibleItems] were changed */
-    fun addVisibleItem(name: String, def: PerNs): Boolean {
-        val defExisting = visibleItems.putIfAbsent(name, def) ?: return true
-        val defNew = defExisting.merge(def)
-        if (defExisting == defNew) return false
-        visibleItems[name] = defNew
-        return true
-    }
+    fun addVisibleItem(name: String, def: PerNs): Boolean =
+        pushResolutionFromImport(this, name, def, ImportType.NAMED)
 
     fun asVisItem(): VisItem {
         val parent = parent ?: error("Use CrateDefMap.rootAsPerNs for root ModData")
@@ -368,20 +363,6 @@ data class PerNs(
             values?.takeIf { filter(it.visibility) },
             macros?.takeIf { filter(it.visibility) }
         )
-
-    // TODO: Consider unite with [DefCollector#pushResolutionFromImport]
-    fun merge(other: PerNs): PerNs {
-        fun mergeOneNs(existing: VisItem?, new: VisItem?): VisItem? {
-            if (existing == null) return new
-            if (new == null) return existing
-            return if (new.visibility.isStrictlyMorePermissive(existing.visibility)) new else existing
-        }
-        return PerNs(
-            mergeOneNs(types, other.types),
-            mergeOneNs(values, other.values),
-            mergeOneNs(macros, other.macros)
-        )
-    }
 
     fun or(other: PerNs): PerNs {
         if (isEmpty) return other
