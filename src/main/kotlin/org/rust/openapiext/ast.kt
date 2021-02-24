@@ -22,3 +22,6 @@ val ASTNode.ancestors: Sequence<ASTNode>
     get() = generateSequence(this) {
         if (it is FileASTNode) null else it.treeParent
     }
+
+val ASTNode.childrenWithLeaves: Sequence<ASTNode>
+    get() = generateSequence(firstChildNode) { it.treeNext }

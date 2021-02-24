@@ -13,6 +13,7 @@ import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
+import org.rust.lang.core.macros.builtin.BuiltinMacroExpander
 import org.rust.lang.core.macros.decl.DeclMacroExpander
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
@@ -70,7 +71,7 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
     fun checkSingleMacroByTree(@Language("Rust") code: String, @Language("Rust") expectedExpansion: String) {
         fileTreeFromText(code).createAndOpenFileWithCaretMarker()
         val call = findElementInEditor<RsMacroCall>("^")
-        checkMacroExpansion(call, expectedExpansion, "Macro comparision failed")
+        checkMacroExpansion(call, expectedExpansion, "Macro comparison failed")
     }
 
     fun doErrorTest(@Language("Rust") code: String, mark: Testmark) {
@@ -119,8 +120,14 @@ abstract class RsMacroExpansionTestBase : RsTestBase() {
         call: RsMacroCall,
         def: RsMacro
     ): RsResult<MacroExpansion, MacroExpansionAndParsingError<DeclMacroExpansionError>> {
-        val expander = DeclMacroExpander(project)
-        return expander.expandMacro(RsDeclMacroData(def), call, RsPsiFactory(project, markGenerated = false), true).map {
+        val factory = RsPsiFactory(project, markGenerated = false)
+        val result = when (val defData = RsMacroDataWithHash.fromPsi(def)?.data) {
+            is RsBuiltinMacroData -> BuiltinMacroExpander(project).expandMacro(defData, call, factory, true)
+            is RsDeclMacroData -> DeclMacroExpander(project).expandMacro(defData, call, factory, true)
+            is RsProcMacroData -> error("The test is unsuitable for procedural macros")
+            null -> error("Can't extract the macro definition data")
+        }
+        return result.map {
             it.elements.forEach { el ->
                 el.setContext(call.context as RsElement)
                 el.setExpandedFrom(call)
