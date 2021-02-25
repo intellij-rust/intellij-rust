@@ -44,8 +44,8 @@ class ModCollectorContext(
      * add it to [ModData.visibleItems] and propagate to modules which have glob import from [ModData]
      * returns true if [ModData.visibleItems] were changed
      */
-    val onAddItem: (ModData, String, PerNs) -> Boolean =
-        { containingMod, name, perNs -> containingMod.addVisibleItem(name, perNs) }
+    val onAddItem: (ModData, String, PerNs, Visibility) -> Boolean =
+        { containingMod, name, perNs, visibility -> containingMod.addVisibleItem(name, perNs, visibility) }
 )
 
 typealias LegacyMacros = Map<String, MacroDefInfo>
@@ -87,7 +87,7 @@ private class ModCollector(
     private val defMap: CrateDefMap = context.defMap
     private val crateRoot: ModData = context.crateRoot
     private val macroDepth: Int = context.macroDepth
-    private val onAddItem: (ModData, String, PerNs) -> Boolean = context.onAddItem
+    private val onAddItem: (ModData, String, PerNs, Visibility) -> Boolean = context.onAddItem
     private val crate: Crate = context.context.crate
     private val project: Project = context.context.project
 
@@ -138,7 +138,7 @@ private class ModCollector(
         val visItem = convertToVisItem(item, stub, forceCfgDisabledVisibility)
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs(visItem, item.namespaces)
-        val changed = onAddItem(modData, name, perNs)
+        val changed = onAddItem(modData, name, perNs, visItem.visibility)
         if (item.isProcMacroDef) modData.procMacros += name
 
         // We have to check `changed` to be sure that `childModules` and `visibleItems` are consistent.
@@ -253,7 +253,7 @@ private class ModCollector(
             val variantVisibility = if (isVariantDeeplyEnabledByCfg) Visibility.Public else Visibility.CfgDisabled
             val variant = VisItem(variantPath, variantVisibility)
             val variantPerNs = PerNs(variant, variantPsi.namespaces)
-            enumData.addVisibleItem(variantName, variantPerNs)
+            enumData.addVisibleItem(variantName, variantPerNs, variantVisibility)
         }
         return enumData
     }
@@ -294,9 +294,10 @@ private class ModCollector(
         legacyMacros[def.name] = defInfo
 
         if (def.hasMacroExport) {
-            val visItem = VisItem(macroPath, Visibility.Public)
+            val visibility = Visibility.Public
+            val visItem = VisItem(macroPath, visibility)
             val perNs = PerNs(macros = visItem)
-            onAddItem(crateRoot, def.name, perNs)
+            onAddItem(crateRoot, def.name, perNs, visibility)
         }
     }
 
