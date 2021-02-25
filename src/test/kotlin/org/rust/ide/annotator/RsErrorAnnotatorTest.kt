@@ -920,6 +920,21 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         macro_rules! foo { () => {} }
     """)
 
+    @UseNewResolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test no duplicates with import E0252 private item`() = checkErrors("""
+        mod mod1 {
+            fn foo() {}
+            pub struct foo {}
+        }
+        mod mod2 {
+            pub fn foo() {}
+        }
+
+        use mod1::foo;
+        use mod2::foo;
+    """)
+
     fun `test unnecessary pub E0449`() = checkErrors("""
         <error descr="Unnecessary visibility qualifier [E0449]">pub</error> extern "C" { }
 
