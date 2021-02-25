@@ -10,9 +10,11 @@ import com.intellij.util.SmartList
 import org.rust.lang.core.completion.RsCompletionContext
 import org.rust.lang.core.completion.createLookupElement
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.ref.MethodResolveVariant
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.BoundElementWithVisibility
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.emptySubstitution
 import org.rust.lang.core.types.ty.Ty
@@ -81,11 +83,12 @@ fun <T : ScopeEntry> createProcessorGeneric(
 typealias RsMethodResolveProcessor = RsResolveProcessorBase<MethodResolveVariant>
 
 fun collectPathResolveVariants(
-    referenceName: String?,
+    path: RsPath,
     f: (RsResolveProcessor) -> Unit
-): List<BoundElement<RsElement>> {
-    if (referenceName == null) return emptyList()
-    val result = SmartList<BoundElement<RsElement>>()
+): List<BoundElementWithVisibility<RsElement>> {
+    val referenceName = path.referenceName ?: return emptyList()
+    val containingMod = path.containingMod
+    val result = SmartList<BoundElementWithVisibility<RsElement>>()
     val processor = createProcessor(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
             return@createProcessor true
@@ -94,7 +97,9 @@ fun collectPathResolveVariants(
         if (e.name == referenceName) {
             val element = e.element ?: return@createProcessor false
             if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
-                result += BoundElement(element, e.subst)
+                val boundElement = BoundElement(element, e.subst)
+                val isVisible = e.isVisibleFrom(containingMod)
+                result += BoundElementWithVisibility(boundElement, isVisible)
             }
         }
         false
@@ -198,6 +203,13 @@ data class ScopeEntryWithVisibility(
     override val subst: Substitution = emptySubstitution,
 ) : ScopeEntry
 
+fun ScopeEntry.isVisibleFrom(mod: RsMod): Boolean =
+    if (this is ScopeEntryWithVisibility) {
+        visibilityFilter(mod)
+    } else {
+        true
+    }
+
 interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
     override val element: T
     val selfTy: Ty
@@ -267,7 +279,7 @@ fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsM
     return createProcessor(processor.name) {
         val element = it.element
         if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
-        if (it is ScopeEntryWithVisibility && !it.visibilityFilter(mod)) return@createProcessor false
+        if (!it.isVisibleFrom(mod)) return@createProcessor false
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod

@@ -45,7 +45,6 @@ fun processItemDeclarations2(
         is RsModInfo -> info
     }
 
-    val isCompletion = processor.name == null
     for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
         val visItems = arrayOf(
             perNs.types to Namespace.Types,
@@ -58,7 +57,7 @@ fun processItemDeclarations2(
         for ((visItem, namespace) in visItems) {
             if (visItem == null || namespace !in ns) continue
             if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
-            val visibilityFilter = visItem.visibility.createFilter(project, isCompletion)
+            val visibilityFilter = visItem.visibility.createFilter(project)
             for (element in visItem.toPsi(defMap, project, namespace)) {
                 if (!elements.add(element)) continue
                 if (processor(name, element, visibilityFilter)) return true
@@ -69,7 +68,7 @@ fun processItemDeclarations2(
     if (processor.name == null && Namespace.Types in ns) {
         for ((traitPath, traitVisibility) in modData.unnamedTraitImports) {
             val trait = VisItem(traitPath, traitVisibility)
-            val visibilityFilter = traitVisibility.createFilter(project, isCompletion)
+            val visibilityFilter = traitVisibility.createFilter(project)
             for (traitPsi in trait.toPsi(defMap, project, Namespace.Types)) {
                 if (processor("_", traitPsi, visibilityFilter)) return true
             }
@@ -140,11 +139,10 @@ private fun ModData.processMacros(
         }
     }
 
-    val isCompletion = processor.name == null
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
         val visItem = perNs.macros ?: continue
         val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
-        val visibilityFilter = visItem.visibility.createFilter(project, isCompletion)
+        val visibilityFilter = visItem.visibility.createFilter(project)
         if (processor(name, macro, visibilityFilter)) return true
     }
 
@@ -391,8 +389,8 @@ private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
 }
 
 /** Creates filter which determines whether item with [this] visibility is visible from specific [RsMod] */
-private fun Visibility.createFilter(project: Project, isCompletion: Boolean): (RsMod) -> Boolean {
-    if (isCompletion && this is Visibility.Restricted) {
+private fun Visibility.createFilter(project: Project): (RsMod) -> Boolean {
+    if (this is Visibility.Restricted) {
         val inMod = inMod.toRsMod(project)
         if (inMod.isNotEmpty()) {
             return { modOpenedInEditor ->
