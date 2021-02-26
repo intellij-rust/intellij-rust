@@ -146,7 +146,7 @@ open class CargoCommandConfiguration(
         }
     }
 
-    private fun showTestToolWindow() = command.startsWith("test") &&
+    private fun showTestToolWindow(): Boolean = command.startsWith("test") &&
         isFeatureEnabled(RsExperiments.TEST_TOOL_WINDOW) &&
         !command.contains("--nocapture")
 
