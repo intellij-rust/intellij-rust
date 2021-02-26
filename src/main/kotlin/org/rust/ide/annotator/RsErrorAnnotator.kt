@@ -1318,9 +1318,11 @@ private fun AnnotationSession.duplicatesByNamespace(
         ?.asSequence()
         ?.mapNotNull { it.path.parent as? RsUseSpeck }
         .orEmpty()
+    val namedChildren = owner
+        .namedChildren(recursively, stopAt = RsFnPointerType::class.java)
+        .filter { it !is RsMacro }
     val duplicates: Map<Namespace, Set<PsiElement>> =
-        (owner.namedChildren(recursively, stopAt = RsFnPointerType::class.java)
-            + importedNames)
+        (namedChildren + importedNames)
             .filter { it !is RsExternCrateItem } // extern crates can have aliases.
             .filter {
                 val name = it.nameOrImportedName()
