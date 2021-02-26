@@ -250,7 +250,7 @@ class CratesLocalIndexServiceImpl
         }
 
         override fun onSuccess() {
-            state.indexedCommitHash = newHead
+            state = CratesLocalIndexState(newHead)
         }
 
         override fun onFinished() {
@@ -259,7 +259,7 @@ class CratesLocalIndexServiceImpl
     }
 
     companion object {
-        data class CratesLocalIndexState(var indexedCommitHash: String = "")
+        data class CratesLocalIndexState(val indexedCommitHash: String = "")
 
         private val corruptionMarkerFile: Path
             get() = baseCratesLocalRegistryDir.resolve(CORRUPTION_MARKER_NAME)
