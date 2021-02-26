@@ -1222,6 +1222,68 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
+    fun `test import parameter types`() = doTest("""
+        use a::{S, foo};
+
+        mod a {
+            pub struct A;
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            let s = foo();
+            <selection>s;</selection>
+        }
+    """, """
+        use a::{S, foo, A};
+
+        mod a {
+            pub struct A;
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            let s = foo();
+            bar(s);
+        }
+
+        fn bar(s: A) {
+            s;
+        }
+    """,
+        false,
+        "bar")
+
+    fun `test import return type`() = doTest("""
+        use a::{S, foo};
+
+        mod a {
+            pub struct A;
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            <selection>foo()</selection>;
+        }
+    """, """
+        use a::{S, foo, A};
+
+        mod a {
+            pub struct A;
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            bar();
+        }
+
+        fn bar() -> A {
+            foo()
+        }
+    """,
+        false,
+        "bar")
+
     fun `test extract set value to mutable`() = doTest("""
         fn main() {
             let a = 1u32;
