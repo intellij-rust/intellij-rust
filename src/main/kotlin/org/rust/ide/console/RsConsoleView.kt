@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.JBSplitter
+import org.rust.ide.utils.RsHelpID
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.psi.RsReplCodeFragment
 import org.rust.openapiext.toPsiFile
@@ -42,6 +43,7 @@ class RsConsoleView(project: Project) : LanguageConsoleImpl(project, VIRTUAL_FIL
         super.setPrompt(PROMPT)
         consolePromptDecorator.indentPrompt = INDENT_PROMPT
         setUpdateFoldingsEnabled(false)
+        setHelpId(RsHelpID.REPL_CONSOLE)
     }
 
     override fun requestFocus() {

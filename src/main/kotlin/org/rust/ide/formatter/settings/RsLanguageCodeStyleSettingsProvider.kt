@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable.*
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*
+import org.rust.ide.utils.RsHelpID
 import org.rust.lang.RsLanguage
 
 class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() {
@@ -29,6 +30,8 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
         return object : CodeStyleAbstractConfigurable(baseSettings, modelSettings, configurableDisplayName) {
             override fun createPanel(settings: CodeStyleSettings): CodeStyleAbstractPanel =
                 RsCodeStyleMainPanel(currentSettings, settings)
+
+            override fun getHelpTopic(): String = RsHelpID.RUST_CODE_STYLE_SETTINGS
         }
     }
 

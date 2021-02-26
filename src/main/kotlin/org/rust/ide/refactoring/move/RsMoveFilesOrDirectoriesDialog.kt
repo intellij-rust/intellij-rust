@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.refactoring.move.RsMoveFilesOrDirectoriesHandler.Companion.adjustForMove
+import org.rust.ide.utils.RsHelpID
 import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.ext.RsMod
@@ -117,6 +118,8 @@ class RsMoveFilesOrDirectoriesDialog(
         )
         return result == Messages.OK
     }
+
+    override fun getHelpId(): String = RsHelpID.RUST_MOVE_REFACTORING
 }
 
 private fun PsiDirectory.getOwningMod(crateRoot: RsMod): RsMod? {

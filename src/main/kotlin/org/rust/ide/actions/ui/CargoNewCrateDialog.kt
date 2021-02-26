@@ -15,6 +15,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.panel
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.newProject.RsPackageNameValidator
+import org.rust.ide.utils.RsHelpID
 import javax.swing.JComponent
 
 data class CargoNewCrateSettings(val binary: Boolean, val crateName: String)
@@ -82,4 +83,6 @@ class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : Dia
         if (root.findChild(name) != null) return ValidationInfo("Directory $name already exists.", this.name)
         return null
     }
+
+    override fun getHelpId(): String = RsHelpID.RUST_NEW_CRATE_ACTION
 }

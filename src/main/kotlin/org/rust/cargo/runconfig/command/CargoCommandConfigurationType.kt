@@ -10,8 +10,8 @@ import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.project.Project
-import com.intellij.util.PlatformUtils
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.utils.RsHelpID
 
 class CargoCommandConfigurationType : ConfigurationTypeBase(
     "CargoCommandRunConfiguration",
@@ -25,9 +25,7 @@ class CargoCommandConfigurationType : ConfigurationTypeBase(
 
     val factory: ConfigurationFactory get() = configurationFactories.single()
 
-    override fun getHelpTopic(): String? =
-        // Only IDEA and CLion have special page about IntelliJ Rust in their help
-        if (PlatformUtils.isIntelliJ() || PlatformUtils.isCLion()) "rundebugconfigs.cargocommand" else null
+    override fun getHelpTopic(): String = RsHelpID.CARGO_RUN_CONFIGURATION
 
     companion object {
         fun getInstance(): CargoCommandConfigurationType =

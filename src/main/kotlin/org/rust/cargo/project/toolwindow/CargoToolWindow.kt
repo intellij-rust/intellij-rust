@@ -29,6 +29,7 @@ import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.guessAndSetupRustProject
 import org.rust.cargo.runconfig.hasCargoProject
+import org.rust.ide.utils.RsHelpID
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
@@ -77,6 +78,7 @@ private class CargoToolWindowPanel(project: Project) : SimpleToolWindowPanel(tru
         when {
             CargoToolWindow.SELECTED_CARGO_PROJECT.`is`(dataId) -> cargoTab.selectedProject
             PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> cargoTab.treeExpander
+            PlatformDataKeys.HELP_ID.`is`(dataId) -> RsHelpID.CARGO_TOOL_WINDOW
             else -> super.getData(dataId)
         }
 }

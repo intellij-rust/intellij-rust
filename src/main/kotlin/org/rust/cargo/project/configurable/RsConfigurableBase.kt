@@ -8,7 +8,6 @@ package org.rust.cargo.project.configurable
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.Project
-import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.Nls
 import org.rust.cargo.project.settings.RustProjectSettingsService
 import org.rust.cargo.project.settings.rustSettings
@@ -17,9 +16,6 @@ abstract class RsConfigurableBase(protected val project: Project, @Nls displayNa
     BoundConfigurable(displayName) {
 
     protected val state: RustProjectSettingsService.State = project.rustSettings.settingsState
-
-    // Currently, we have help page only for CLion
-    override fun getHelpTopic(): String? = if (PlatformUtils.isCLion()) "rustsupport" else null
 
     @Throws(ConfigurationException::class)
     final override fun apply() {

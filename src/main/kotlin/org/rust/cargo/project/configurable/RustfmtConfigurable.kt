@@ -8,10 +8,13 @@ package org.rust.cargo.project.configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.panel
+import org.rust.ide.utils.RsHelpID
 
 class RustfmtConfigurable(project: Project) : RsConfigurableBase(project, "Rustfmt") {
     override fun createPanel(): DialogPanel = panel {
         row { checkBox("Use rustfmt instead of built-in formatter", state::useRustfmt) }
         row { checkBox("Run rustfmt on Save", state::runRustfmtOnSave) }
     }
+
+    override fun getHelpTopic(): String = RsHelpID.RUSTFMT_SETTINGS
 }

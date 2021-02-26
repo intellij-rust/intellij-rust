@@ -21,6 +21,7 @@ import com.intellij.ui.layout.panel
 import com.intellij.util.IncorrectOperationException
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.ide.docs.signature
+import org.rust.ide.utils.RsHelpID
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
@@ -50,6 +51,8 @@ class RsMoveTopLevelItemsDialog(
         title = "Move Module Items"
         validateButtons()
     }
+
+    override fun getHelpId(): String = RsHelpID.RUST_MOVE_REFACTORING
 
     private fun createTargetFileChooser(project: Project): TextFieldWithBrowseButton {
         return pathToRsFileTextField(disposable, "Choose Destination File", project, ::validateButtons)

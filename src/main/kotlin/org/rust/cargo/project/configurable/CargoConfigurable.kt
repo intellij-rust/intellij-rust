@@ -15,6 +15,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.toolchain.ExternalLinter
 import org.rust.cargo.util.CargoCommandCompletionProvider
 import org.rust.cargo.util.RsCommandLineEditor
+import org.rust.ide.utils.RsHelpID
 
 class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo") {
 
@@ -78,4 +79,6 @@ class CargoConfigurable(project: Project) : RsConfigurableBase(project, "Cargo")
             }
         }
     }
+
+    override fun getHelpTopic(): String = RsHelpID.CARGO_SETTINGS
 }

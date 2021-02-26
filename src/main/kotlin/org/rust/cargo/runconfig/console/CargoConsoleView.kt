@@ -13,9 +13,15 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.rust.ide.utils.RsHelpID
 
 class CargoConsoleView(project: Project, searchScope: GlobalSearchScope, viewer: Boolean, usePredefinedMessageFilter: Boolean)
     : ConsoleViewImpl(project, searchScope, viewer, usePredefinedMessageFilter) {
+
+    init {
+        setHelpId(RsHelpID.CARGO_RUN_CONSOLE)
+    }
+
     private var hasErrors = false
 
     override fun doCreateConsoleEditor(): EditorEx {

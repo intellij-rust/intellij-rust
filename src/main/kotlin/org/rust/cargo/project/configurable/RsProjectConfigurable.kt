@@ -17,6 +17,7 @@ import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.RustProjectSettingsService.MacroExpansionEngine
 import org.rust.cargo.project.settings.ui.RustProjectSettingsPanel
 import org.rust.cargo.toolchain.RsToolchain
+import org.rust.ide.utils.RsHelpID
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Paths
 import javax.swing.ListCellRenderer
@@ -87,4 +88,6 @@ class RsProjectConfigurable(
         state.toolchain = rustProjectSettings.data.toolchain
         state.explicitPathToStdlib = rustProjectSettings.data.explicitPathToStdlib
     }
+
+    override fun getHelpTopic(): String = RsHelpID.RUST_SETTINGS
 }

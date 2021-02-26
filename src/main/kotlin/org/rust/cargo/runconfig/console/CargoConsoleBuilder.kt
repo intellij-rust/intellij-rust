@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.rust.cargo.runconfig.RsCommandConfiguration
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_FRAMEWORK_NAME
+import org.rust.ide.utils.RsHelpID
 
 open class CargoConsoleBuilder(project: Project, scope: GlobalSearchScope) : TextConsoleBuilderImpl(project, scope) {
     override fun createConsole(): ConsoleView = CargoConsoleView(project, scope, isViewer, true)
@@ -35,6 +36,7 @@ class CargoTestConsoleBuilder(
     override fun getConsole(): ConsoleView {
         val consoleProperties = config.createTestConsoleProperties(executor)
         val consoleView = SMTestRunnerConnectionUtil.createConsole(TEST_FRAMEWORK_NAME, consoleProperties)
+        consoleView.setHelpId(RsHelpID.CARGO_TEST_CONSOLE)
         filters.forEach { consoleView.addMessageFilter(it) }
         return consoleView
     }
