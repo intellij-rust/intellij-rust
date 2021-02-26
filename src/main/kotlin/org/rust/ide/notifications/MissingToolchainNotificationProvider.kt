@@ -85,7 +85,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createBadToolchainPanel(file: VirtualFile): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_RUST_TOOLCHAIN).apply {
-            setText("No Rust toolchain configured")
+            text = "No Rust toolchain configured"
             createActionLabel("Setup toolchain") {
                 project.rustSettings.configureToolchain()
             }
@@ -97,7 +97,7 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createLibraryAttachingPanel(project: Project, file: VirtualFile, rustcInfo: RustcInfo?): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
-            setText("Can not attach stdlib sources automatically without rustup.")
+            text = "Can not attach stdlib sources automatically without rustup."
             createActionLabel("Attach manually") {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 val stdlib = FileChooser.chooseFile(descriptor, this, this@MissingToolchainNotificationProvider.project, null) ?: return@createActionLabel

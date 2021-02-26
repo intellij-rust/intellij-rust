@@ -63,7 +63,7 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
 
     private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, message: String): RsEditorNotificationPanel =
         RsEditorNotificationPanel(debugId).apply {
-            setText(message)
+            text = message
             createActionLabel("Attach", "Cargo.AttachCargoProject")
             createActionLabel("Do not show again") {
                 disableNotification(file)
