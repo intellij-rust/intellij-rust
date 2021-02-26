@@ -33,7 +33,7 @@ class CargoTestRunState(
     }
 
     init {
-        consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as RsCommandConfiguration, environment.executor)
+        consoleBuilder = CargoTestConsoleBuilder(environment.runProfile as CargoCommandConfiguration, environment.executor)
         commandLinePatches.add(cargoTestPatch)
         createFilters(cargoProject).forEach { consoleBuilder.addFilter(it) }
     }

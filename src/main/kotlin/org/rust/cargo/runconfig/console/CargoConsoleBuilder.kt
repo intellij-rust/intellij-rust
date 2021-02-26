@@ -14,6 +14,7 @@ import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.rust.cargo.runconfig.RsCommandConfiguration
+import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.runconfig.test.CargoTestConsoleProperties.Companion.TEST_FRAMEWORK_NAME
 
 open class CargoConsoleBuilder(project: Project, scope: GlobalSearchScope) : TextConsoleBuilderImpl(project, scope) {
@@ -21,7 +22,7 @@ open class CargoConsoleBuilder(project: Project, scope: GlobalSearchScope) : Tex
 }
 
 class CargoTestConsoleBuilder(
-    private val config: RsCommandConfiguration,
+    private val config: CargoCommandConfiguration,
     private val executor: Executor
 ) : TextConsoleBuilder() {
     private val filters: MutableList<Filter> = mutableListOf()
@@ -34,7 +35,7 @@ class CargoTestConsoleBuilder(
 
     override fun getConsole(): ConsoleView {
         val consoleProperties = config.createTestConsoleProperties(executor)
-        val consoleView = SMTestRunnerConnectionUtil.createConsole(TEST_FRAMEWORK_NAME, consoleProperties)
+        val consoleView = SMTestRunnerConnectionUtil.createConsole(TEST_FRAMEWORK_NAME, consoleProperties!!)
         filters.forEach { consoleView.addMessageFilter(it) }
         return consoleView
     }
