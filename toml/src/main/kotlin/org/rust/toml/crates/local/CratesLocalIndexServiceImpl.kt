@@ -90,14 +90,17 @@ class CratesLocalIndexServiceImpl
     @Volatile
     private var state: CratesLocalIndexState = CratesLocalIndexState()
 
-    private val isReady: AtomicBoolean = AtomicBoolean(true)
+    /**
+     * [isUpdating] will be true when index is performing [CratesLocalIndexUpdateTask]
+     */
+    private val isUpdating: AtomicBoolean = AtomicBoolean(false)
 
     init {
         // Check index for update on `Cargo.toml` changes
         ApplicationManager.getApplication().messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: MutableList<out VFileEvent>) {
                 if (events.any { it.pathEndsWith(CargoConstants.MANIFEST_FILE) }) {
-                    if (isReady.get()) {
+                    if (!isUpdating.get()) {
                         updateIfNeeded()
                     }
                 }
@@ -111,7 +114,7 @@ class CratesLocalIndexServiceImpl
     }
 
     override fun getCrate(crateName: String): CargoRegistryCrate? {
-        if (!isReady.get() || crates == null) return null
+        if (isUpdating.get() || crates == null) return null
 
         return try {
             crates.get(crateName)
@@ -122,7 +125,7 @@ class CratesLocalIndexServiceImpl
     }
 
     override fun getAllCrateNames(): List<String> {
-        if (!isReady.get() || crates == null) return emptyList()
+        if (isUpdating.get() || crates == null) return emptyList()
 
         val crateNames = mutableListOf<String>()
 
@@ -138,7 +141,7 @@ class CratesLocalIndexServiceImpl
     }
 
     private fun updateIfNeeded() {
-        if (state.indexedCommitHash != registryHeadCommitHash && isReady.compareAndSet(true, false)) {
+        if (state.indexedCommitHash != registryHeadCommitHash && isUpdating.compareAndSet(false, true)) {
             CratesLocalIndexUpdateTask(registryHeadCommitHash).queue()
         }
     }
@@ -254,7 +257,7 @@ class CratesLocalIndexServiceImpl
         }
 
         override fun onFinished() {
-            isReady.set(true)
+            isUpdating.set(false)
         }
     }
 
