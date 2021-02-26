@@ -181,7 +181,7 @@ class RsExtractFunctionConfig private constructor(
         }
         append("fn $name$typeParametersText(${if (isOriginal) originalParametersText else parametersText})")
         if (returnValue != null && returnValue.type !is TyUnit) {
-            append(" -> ${returnValue.type.renderInsertionSafe()}")
+            append(" -> ${returnValue.type.renderInsertionSafe(skipUnchangedDefaultTypeArguments = true)}")
         }
         append(whereClausesText)
     }
