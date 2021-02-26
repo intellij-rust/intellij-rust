@@ -15,6 +15,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
+import org.rust.RsBundle
 import org.rust.cargo.project.model.*
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.settings.RustProjectSettingsService
@@ -85,11 +86,11 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createBadToolchainPanel(file: VirtualFile): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_RUST_TOOLCHAIN).apply {
-            setText("No Rust toolchain configured")
-            createActionLabel("Setup toolchain") {
+            text = RsBundle.message("notification.no.toolchain.configured")
+            createActionLabel(RsBundle.message("notification.action.set.up.toolchain.text")) {
                 project.rustSettings.configureToolchain()
             }
-            createActionLabel("Do not show again") {
+            createActionLabel(RsBundle.message("notification.action.do.not.show.again.text")) {
                 disableNotification(file)
                 updateAllNotifications()
             }
@@ -97,22 +98,22 @@ class MissingToolchainNotificationProvider(project: Project) : RsNotificationPro
 
     private fun createLibraryAttachingPanel(project: Project, file: VirtualFile, rustcInfo: RustcInfo?): RsEditorNotificationPanel =
         RsEditorNotificationPanel(NO_ATTACHED_STDLIB).apply {
-            setText("Can not attach stdlib sources automatically without rustup.")
-            createActionLabel("Attach manually") {
+            text = RsBundle.message("notification.can.not.attach.stdlib.sources")
+            createActionLabel(RsBundle.message("notification.action.attach.manually.text")) {
                 val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
                 val stdlib = FileChooser.chooseFile(descriptor, this, this@MissingToolchainNotificationProvider.project, null) ?: return@createActionLabel
                 if (StandardLibrary.fromFile(project, stdlib, rustcInfo) != null) {
                     this@MissingToolchainNotificationProvider.project.rustSettings.modify { it.explicitPathToStdlib = stdlib.path }
                 } else {
                     this@MissingToolchainNotificationProvider.project.showBalloon(
-                        "Invalid Rust standard library source path: `${stdlib.presentableUrl}`",
+                        RsBundle.message("notification.invalid.stdlib.source.path", stdlib.presentableUrl),
                         NotificationType.ERROR
                     )
                 }
                 updateAllNotifications()
             }
 
-            createActionLabel("Do not show again") {
+            createActionLabel(RsBundle.message("notification.action.do.not.show.again.text")) {
                 disableNotification(file)
                 updateAllNotifications()
             }
