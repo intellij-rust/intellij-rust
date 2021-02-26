@@ -8,12 +8,17 @@ package org.rust.ide.notifications
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.LinkLabel
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isDispatchThread
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.ui.EditorNotificationPanel
-import org.rust.cargo.project.model.*
+import org.rust.RsBundle
+import org.rust.cargo.project.model.AttachCargoProjectAction
+import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
+import org.rust.cargo.project.model.cargoProjects
+import org.rust.cargo.project.model.isCargoToml
 import org.rust.lang.core.psi.isRustFile
 
 class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvider(project) {
@@ -56,16 +61,17 @@ class NoCargoProjectNotificationProvider(project: Project) : RsNotificationProvi
     }
 
     private fun createNoCargoProjectsPanel(file: VirtualFile): RsEditorNotificationPanel =
-        createAttachCargoProjectPanel(NO_CARGO_PROJECTS, file, "No Cargo projects found")
+        createAttachCargoProjectPanel(NO_CARGO_PROJECTS, file, RsBundle.message("notification.no.cargo.projects.found"))
 
     private fun createNoCargoProjectForFilePanel(file: VirtualFile): RsEditorNotificationPanel =
-        createAttachCargoProjectPanel(FILE_NOT_IN_CARGO_PROJECT, file, "File does not belong to any known Cargo project")
+        createAttachCargoProjectPanel(FILE_NOT_IN_CARGO_PROJECT, file, RsBundle.message("notification.file.not.belong.to.cargo.project"))
 
-    private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, message: String): RsEditorNotificationPanel =
+    @Suppress("UnstableApiUsage")
+    private fun createAttachCargoProjectPanel(debugId: String, file: VirtualFile, @LinkLabel message: String): RsEditorNotificationPanel =
         RsEditorNotificationPanel(debugId).apply {
             text = message
-            createActionLabel("Attach", "Cargo.AttachCargoProject")
-            createActionLabel("Do not show again") {
+            createActionLabel(RsBundle.message("notification.action.attach.text"), "Cargo.AttachCargoProject")
+            createActionLabel(RsBundle.message("notification.action.do.not.show.again.text")) {
                 disableNotification(file)
                 updateAllNotifications()
             }
