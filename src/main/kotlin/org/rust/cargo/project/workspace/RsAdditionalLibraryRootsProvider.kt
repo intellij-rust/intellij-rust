@@ -98,7 +98,14 @@ private fun makeStdlibLibrary(packages: List<CargoWorkspace.Package>, rustcVersi
     }
 
     for (root in sourceRoots) {
-        excludedRoots += listOfNotNull(root.findChild("tests"), root.findChild("benches"))
+        excludedRoots += listOfNotNull(
+            root.findChild("tests"),
+            root.findChild("benches"),
+            root.findChild("examples"),
+            root.findChild("ci"), // From `backtrace`
+            root.findChild(".github"), // From `backtrace`
+            root.findChild("libc-test") // From Rust 1.32.0 `liblibc`
+        )
     }
 
     val version = rustcVersion?.semver?.parsedVersion
