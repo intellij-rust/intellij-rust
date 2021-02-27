@@ -17,6 +17,8 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.impl.CargoProjectImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureName
+import org.rust.cargo.project.workspace.FeatureState
 import org.rust.lang.core.macros.MACRO_EXPANSION_VFS_ROOT
 import org.rust.lang.core.macros.MacroExpansionFileSystem
 
@@ -60,6 +62,24 @@ fun CargoProject.workspaceOrFail(): CargoWorkspace {
 }
 
 fun CargoProjectsService.singleWorkspace(): CargoWorkspace = singleProject().workspaceOrFail()
+
+fun CargoProjectsService.singlePackage(name: String): CargoWorkspace.Package =
+    singleWorkspace().packages.singleOrNull { it.name == name } ?: error("Package with name `$name` does not exists")
+
+fun CargoWorkspace.Package.checkFeatureEnabled(featureName: FeatureName) =
+    checkFeatureState(featureName, FeatureState.Enabled)
+
+fun CargoWorkspace.Package.checkFeatureDisabled(featureName: FeatureName) =
+    checkFeatureState(featureName, FeatureState.Disabled)
+
+fun CargoWorkspace.Package.checkFeatureState(featureName: FeatureName, expectedState: FeatureState) {
+    val state = featureState[featureName]
+        ?: error("Feature `$featureName` does not exists in package `$name:$version`")
+    check(state == expectedState) {
+        "Feature `${featureName}` in package `$name:$version` is expected to be ${!state}, but it is $state"
+    }
+}
+
 
 fun CodeInsightTestFixture.launchAction(
     actionId: String,

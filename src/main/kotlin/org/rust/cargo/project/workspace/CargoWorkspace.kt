@@ -255,7 +255,7 @@ private class WorkspaceImpl(
 
                             if (name in dep.pkg.rawFeatures) {
                                 if (dep.isOptional) {
-                                    listOf(PackageFeature(pkg, dep.pkg.name), PackageFeature(dep.pkg, name))
+                                    listOf(PackageFeature(pkg, dep.cargoFeatureDependencyPackageName), PackageFeature(dep.pkg, name))
                                 } else {
                                     listOf(PackageFeature(dep.pkg, name))
                                 }

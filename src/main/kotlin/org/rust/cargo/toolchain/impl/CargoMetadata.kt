@@ -130,6 +130,7 @@ object CargoMetadata {
     data class RawDependency(
         /** A `package` name (non-normalized) of the dependency */
         val name: String,
+        val rename: String?,
         val kind: String?,
         val target: String?,
         val optional: Boolean,
@@ -350,8 +351,9 @@ object CargoMetadata {
 
         // Optional dependencies are features implicitly
         for (dependency in dependencies) {
-            if (dependency.optional && dependency.name !in features) {
-                features[dependency.name] = emptyList()
+            val featureName = dependency.rename ?: dependency.name
+            if (dependency.optional && featureName !in features) {
+                features[featureName] = emptyList()
             }
         }
 

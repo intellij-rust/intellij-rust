@@ -5,6 +5,7 @@
 
 package org.rust.cargo.project.workspace
 
+import com.intellij.openapiext.isUnitTestMode
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph
 
@@ -93,11 +94,11 @@ class FeatureGraph private constructor(
 
             // Add edges
             for ((feature, dependencies) in features) {
+                val targetNode = featureToNode[feature]
+                    ?: if (isUnitTestMode) error("Unknown feature $feature") else continue
                 for (dependency in dependencies) {
-                    addFeatureIfNeeded(feature)
-                    addFeatureIfNeeded(dependency)
-                    val sourceNode = featureToNode[dependency]!!
-                    val targetNode = featureToNode[feature]!!
+                    val sourceNode = featureToNode[dependency]
+                        ?: if (isUnitTestMode) error("Unknown feature $dependency (dependency of $feature)") else continue
                     graph.addEdge(sourceNode, targetNode, Unit)
                 }
             }
