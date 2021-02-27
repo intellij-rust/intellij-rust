@@ -162,4 +162,57 @@ class RsCommaListElementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
         }
     """)
 
+    fun `test move vec argument`() = moveDownAndBackUp("""
+        fn foo() {
+            bar(
+                Baz {
+                    x
+                }, vec![
+                    1,/*caret*/
+                    2,
+                    3,
+                ],
+            );
+        }
+    """, """
+        fn foo() {
+            bar(
+                Baz {
+                    x
+                }, vec![
+                    2,
+                    1,/*caret*/
+                    3,
+                ],
+            );
+        }
+    """)
+
+    fun `test move up first vec argument`() = moveUp("""
+        fn foo() {
+            bar(
+                Baz {
+                    x
+                }, vec![
+                    1,/*caret*/
+                    2,
+                    3,
+                ],
+            );
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBlock)
+
+    fun `test move down last vec argument`() = moveDown("""
+        fn foo() {
+            bar(
+                Baz {
+                    x
+                }, vec![
+                    1,
+                    2,
+                    3,/*caret*/
+                ],
+            );
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBlock)
 }

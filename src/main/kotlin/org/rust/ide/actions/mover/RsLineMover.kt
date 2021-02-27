@@ -88,6 +88,9 @@ abstract class RsLineMover : LineMover() {
         fun isMovingOutOfParenBlock(sibling: PsiElement, down: Boolean): Boolean =
             sibling.elementType == (if (down) RsElementTypes.RPAREN else RsElementTypes.LPAREN)
 
+        fun isMovingOutOfBracketBlock(sibling: PsiElement, down: Boolean): Boolean =
+            sibling.elementType == (if (down) RsElementTypes.RBRACK else RsElementTypes.LBRACK)
+
         fun isMovingOutOfFunctionBody(sibling: PsiElement, down: Boolean): Boolean =
             isMovingOutOfBraceBlock(sibling, down) && sibling.parent?.parent is RsFunction
 
@@ -100,4 +103,5 @@ object UpDownMoverTestMarks {
     val moveOutOfImpl = Testmark("moveOutOfImpl")
     val moveOutOfMatch = Testmark("moveOutOfMatch")
     val moveOutOfBody = Testmark("moveOutOfBody")
+    val moveOutOfBlock = Testmark("moveOutOfBlock")
 }

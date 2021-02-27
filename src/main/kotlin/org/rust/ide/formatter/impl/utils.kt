@@ -130,7 +130,9 @@ class CommaList(
 
             CommaList(TUPLE_FIELDS, RPAREN) { it.elementType == TUPLE_FIELD_DECL },
             CommaList(VALUE_PARAMETER_LIST, RPAREN) { it.elementType == VALUE_PARAMETER },
-            CommaList(VALUE_ARGUMENT_LIST, RPAREN) { it is RsExpr }
+            CommaList(VALUE_ARGUMENT_LIST, RPAREN) { it is RsExpr },
+
+            CommaList(VEC_MACRO_ARGUMENT, RBRACK) { it is RsExpr }
         )
     }
 }
