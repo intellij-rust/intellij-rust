@@ -17,7 +17,7 @@ import com.intellij.util.ProcessingContext
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFieldLookup
 import org.rust.lang.core.psi.ext.findAssociatedType
-import org.rust.lang.core.psi.ext.isEdition2018
+import org.rust.lang.core.psi.ext.isAtLeastEdition2018
 import org.rust.lang.core.psi.ext.receiver
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.psiElement
@@ -36,7 +36,7 @@ object RsAwaitCompletionProvider : RsCompletionProvider() {
             val parent = psiElement<RsFieldLookup>()
                 .with(object : PatternCondition<RsFieldLookup>("RsPostfixAwait") {
                     override fun accepts(t: RsFieldLookup, context: ProcessingContext?): Boolean {
-                        if (context == null || !t.isEdition2018) return false
+                        if (context == null || !t.isAtLeastEdition2018) return false
                         val receiver = t.receiver.safeGetOriginalOrSelf()
                         val lookup = ImplLookup.relativeTo(receiver)
                         val awaitTy = receiver.type.lookupFutureOutputTy(lookup)

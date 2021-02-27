@@ -123,7 +123,7 @@ class RsPathReferenceImpl(
     }
 
     private fun bindToMod(target: RsMod): PsiElement? {
-        if (!element.isEdition2018) return null
+        if (!element.isAtLeastEdition2018) return null
         var targetPath = target.qualifiedNameRelativeTo(element.containingMod) ?: return null
 
         // consider old target (`element.reference.resolve()`) was `bar1::bar2::bar3::bar4::foo`

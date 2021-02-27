@@ -554,7 +554,7 @@ private fun processUnqualifiedPathResolveVariants(
         }
     }
 
-    val isEdition2018 = (crateRoot ?: containingMod).isEdition2018
+    val isAtLeastEdition2018 = (crateRoot ?: containingMod).isAtLeastEdition2018
 
     // In 2015 edition a path is crate-relative (global) if it's inside use item,
     // inside "visibility restriction" or if it starts with `::`
@@ -564,13 +564,13 @@ private fun processUnqualifiedPathResolveVariants(
     // pub(in foo::bar) fn baz() {}
     //       //^ crate-relative path too
     // ```
-    // In 2018 edition a path is crate-relative if it starts with `crate::` (handled above)
-    // or if it's inside "visibility restriction". `::`-qualified path on 2018 edition means that
+    // Starting 2018 edition a path is crate-relative if it starts with `crate::` (handled above)
+    // or if it's inside "visibility restriction". `::`-qualified path since 2018 edition means that
     // such path is a name of some dependency crate (that should be resolved without `extern crate`)
-    val isCrateRelative = !isEdition2018 && (hasColonColon || path.rootPath().parent is RsUseSpeck)
+    val isCrateRelative = !isAtLeastEdition2018 && (hasColonColon || path.rootPath().parent is RsUseSpeck)
         || path.rootPath().parent is RsVisRestriction
     // see https://doc.rust-lang.org/edition-guide/rust-2018/module-system/path-clarity.html#the-crate-keyword-refers-to-the-current-crate
-    val isExternCrate = isEdition2018 && hasColonColon
+    val isExternCrate = isAtLeastEdition2018 && hasColonColon
     return when {
         isCrateRelative -> if (crateRoot != null) {
             processItemOrEnumVariantDeclarations(crateRoot, ns, processor, withPrivateImports = { true })
