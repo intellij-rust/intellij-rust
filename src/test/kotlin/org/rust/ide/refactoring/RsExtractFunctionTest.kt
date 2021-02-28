@@ -1115,7 +1115,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         fn main() {
             let s: S<u32> = S(1u32, 2u32);
-            <selection>println!(s)</selection>;
+            <selection>s</selection>;
         }
     """, """
         struct S<R, T=u32>(R, T);
@@ -1125,8 +1125,8 @@ class RsExtractFunctionTest : RsTestBase() {
             foo(s);
         }
 
-        fn foo(s: S<u32>) {
-            println!(s)
+        fn foo(s: S<u32>) -> S<u32> {
+            s
         }
     """,
         false,
@@ -1137,7 +1137,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         fn main() {
             let s: S<u32, bool> = S(1u32, true);
-            <selection>println!(s)</selection>;
+            <selection>s</selection>;
         }
     """, """
         struct S<R, T=u32>(R, T);
@@ -1147,8 +1147,8 @@ class RsExtractFunctionTest : RsTestBase() {
             foo(s);
         }
 
-        fn foo(s: S<u32, bool>) {
-            println!(s)
+        fn foo(s: S<u32, bool>) -> S<u32, bool> {
+            s
         }
     """,
         false,
@@ -1159,7 +1159,7 @@ class RsExtractFunctionTest : RsTestBase() {
 
         fn main() {
             let s: S<u32, i32> = S(1u32, 2i32);
-            <selection>println!(s)</selection>;
+            <selection>s</selection>;
         }
     """, """
         struct S<R=u32, T=u32>(R, T);
@@ -1169,8 +1169,8 @@ class RsExtractFunctionTest : RsTestBase() {
             foo(s);
         }
 
-        fn foo(s: S<u32, i32>) {
-            println!(s)
+        fn foo(s: S<u32, i32>) -> S<u32, i32> {
+            s
         }
     """,
         false,
