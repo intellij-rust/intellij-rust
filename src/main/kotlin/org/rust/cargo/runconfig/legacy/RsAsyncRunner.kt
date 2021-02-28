@@ -32,6 +32,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
@@ -184,7 +185,7 @@ abstract class RsAsyncRunner(
 
                             result = output.stdoutLines.asSequence()
                                 .mapNotNull { tryParseJsonObject(it) }
-                                .mapNotNull { CargoMetadata.Artifact.fromJson(it) }
+                                .mapNotNull { CompilerArtifactMessage.fromJson(it) }
                                 .filter { (_, target, profile) ->
                                     val isSuitableTarget = when (target.cleanKind) {
                                         CargoMetadata.TargetKind.BIN -> true

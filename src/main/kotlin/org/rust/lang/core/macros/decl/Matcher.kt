@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.ASTNode
 import org.rust.lang.core.psi.RsElementTypes

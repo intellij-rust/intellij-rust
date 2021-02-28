@@ -7,7 +7,7 @@ package org.rust.lang.core.resolve2
 
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.crate.CratePersistentId
-import org.rust.lang.core.macros.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.ext.hasMacroExport
 
@@ -102,7 +102,7 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(
     return getMacroInfo(defItem)
 }
 
-fun List<MacroDefInfo>.getLastBefore(macroIndex: MacroIndex): MacroDefInfo? =
+fun List<DeclMacroDefInfo>.getLastBefore(macroIndex: MacroIndex): DeclMacroDefInfo? =
     filter { it.macroIndex < macroIndex }.maxBy { it.macroIndex }
 
 private fun CrateDefMap.resolveNameInExternPrelude(name: String): PerNs {
@@ -159,7 +159,7 @@ private fun ModData.getFirstLegacyMacro(name: String): PerNs? {
  *   (and there can't be two `macro_export` macros with same name in same mod).
  * - Or it is reexport of legacy macro, then we peek first (see [getFirstLegacyMacro] for details)
  */
-fun List<MacroDefInfo>.singlePublicOrFirst(): MacroDefInfo = singleOrNull { it.hasMacroExport } ?: first()
+fun List<DeclMacroDefInfo>.singlePublicOrFirst(): DeclMacroDefInfo = singleOrNull { it.hasMacroExport } ?: first()
 fun List<RsMacro>.singlePublicOrFirst(): RsMacro = singleOrNull { it.hasMacroExport } ?: first()
 
 private fun CrateDefMap.resolveNameInCrateRootOrExternPrelude(name: String): PerNs {

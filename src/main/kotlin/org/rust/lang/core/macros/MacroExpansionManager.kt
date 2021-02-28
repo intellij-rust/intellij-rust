@@ -1031,9 +1031,10 @@ private fun expandMacroOld(call: RsMacroCall): CachedValueProvider.Result<MacroE
 private fun expandMacroToMemoryFile(call: RsMacroCall, storeRangeMap: Boolean): CachedValueProvider.Result<MacroExpansion?> {
     val context = call.context as? RsElement ?: return nullExpansionResult(call)
     val def = call.resolveToMacroWithoutPsi() ?: return nullExpansionResult(call)
+    val defData = def.data
     val project = call.project
-    val result = MacroExpander(project).expandMacro(
-        def.data,
+    val result = FunctionLikeMacroExpander.new(project).expandMacro(
+        defData,
         call,
         RsPsiFactory(project, markGenerated = false),
         storeRangeMap

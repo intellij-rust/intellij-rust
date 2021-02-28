@@ -106,15 +106,17 @@ class CrateDefMap(
         return parentModData.childModules[mod.modName]
     }
 
-    fun getMacroInfo(macroDef: VisItem): MacroDefInfo? {
+    fun getMacroInfo(macroDef: VisItem): MacroDefInfo {
         val defMap = getDefMap(macroDef.crate) ?: error("Can't find DefMap for macro $macroDef")
         return defMap.doGetMacroInfo(macroDef)
     }
 
     // TODO: [RsMacro2]
-    private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo? {
+    private fun doGetMacroInfo(macroDef: VisItem): MacroDefInfo {
         val containingMod = getModData(macroDef.containingMod) ?: error("Can't find ModData for macro $macroDef")
-        if (macroDef.name in containingMod.procMacros) return null
+        if (macroDef.name in containingMod.procMacros) {
+            return ProcMacroDefInfo(containingMod.crate, macroDef.path, metaData.procMacroArtifact)
+        }
         val macroInfos = containingMod.legacyMacros[macroDef.name]
             ?: error("Can't find definition for macro $macroDef")
         return macroInfos.singlePublicOrFirst()
@@ -131,7 +133,7 @@ class CrateDefMap(
         for ((name, def) in from.root.visibleItems) {
             // `macro_use` only bring things into legacy scope.
             val macroDef = def.macros ?: continue
-            val macroInfo = from.getMacroInfo(macroDef) ?: continue
+            val macroInfo = from.getMacroInfo(macroDef) as? DeclMacroDefInfo ?: continue
             root.addLegacyMacro(name, macroInfo)
         }
     }
@@ -261,7 +263,7 @@ class ModData(
      * Currently stores only cfg-enabled macros.
      */
     // TODO: Custom map? (Profile memory usage)
-    val legacyMacros: THashMap<String, SmartList<MacroDefInfo>> = THashMap()
+    val legacyMacros: THashMap<String, SmartList<DeclMacroDefInfo>> = THashMap()
 
     /** Explicitly declared proc macros */
     val procMacros: MutableSet<String> = hashSetOf()
@@ -315,12 +317,12 @@ class ModData(
         return current
     }
 
-    fun addLegacyMacro(name: String, defInfo: MacroDefInfo) {
+    fun addLegacyMacro(name: String, defInfo: DeclMacroDefInfo) {
         val existing = legacyMacros.putIfAbsent(name, SmartList(defInfo)) ?: return
         existing += defInfo
     }
 
-    fun addLegacyMacros(defs: Map<String, MacroDefInfo>) {
+    fun addLegacyMacros(defs: Map<String, DeclMacroDefInfo>) {
         for ((name, def) in defs) {
             addLegacyMacro(name, def)
         }

@@ -24,7 +24,6 @@ import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.psi.ext.expansion
 import org.rust.lang.core.psi.ext.stubChildrenOfType
 import org.rust.lang.core.psi.ext.stubDescendantsOfTypeOrSelf
-import org.rust.openapiext.toPsiFile
 
 @ExpandMacros
 class RsMacroExpansionCachingTest : RsMacroExpansionTestBase() {

@@ -19,7 +19,7 @@ import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.runconfig.RsExecutableRunner.Companion.artifact
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.showBuildNotification
 import org.rust.cargo.runconfig.command.workingDirectory
-import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -56,7 +56,7 @@ class CargoBuildContext(
     val warnings: AtomicInteger = AtomicInteger()
 
     @Volatile
-    var artifact: CargoMetadata.Artifact? = null
+    var artifact: CompilerArtifactMessage? = null
 
     fun waitAndStart(): Boolean {
         indicator?.pushState()

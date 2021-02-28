@@ -43,10 +43,7 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.impl.BuildScriptMessage
-import org.rust.cargo.toolchain.impl.BuildScriptsInfo
-import org.rust.cargo.toolchain.impl.CargoBuildPlan
-import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.*
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
 import org.rust.ide.actions.InstallBinaryCrateAction
@@ -170,7 +167,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         owner: Project,
         projectDirectory: Path,
         listener: ProcessListener?
-    ): BuildScriptsInfo? {
+    ): BuildMessages? {
         if (!isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)) return null
         val additionalArgs = listOf("--message-format", "json")
         val nativeHelper = RsPathManager.nativeHelper()
@@ -189,14 +186,13 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             return null
         }
 
-        val messages = mutableMapOf<PackageId, BuildScriptMessage>()
+        val messages = mutableMapOf<PackageId, MutableList<CompilerMessage>>()
 
         for (line in processOutput.stdoutLines) {
             val jsonObject = tryParseJsonObject(line) ?: continue
-            val message = BuildScriptMessage.fromJson(jsonObject) ?: continue
-            messages[message.package_id] = message
+            CompilerMessage.fromJson(jsonObject)?.let { messages.getOrPut(it.package_id) { mutableListOf() } += it }
         }
-        return BuildScriptsInfo(messages)
+        return BuildMessages(messages)
     }
 
     private fun fetchBuildPlan(
@@ -230,13 +226,13 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
      */
     private fun replacePathsSymlinkIfNeeded(
         project: CargoMetadata.Project,
-        buildScriptsInfo: BuildScriptsInfo?,
+        buildMessages: BuildMessages?,
         projectDirectory: Path
-    ): Pair<CargoMetadata.Project, BuildScriptsInfo?> {
+    ): Pair<CargoMetadata.Project, BuildMessages?> {
         val workspaceRoot = project.workspace_root
 
         if (projectDirectory.toString() == workspaceRoot) {
-            return Pair(project, buildScriptsInfo)
+            return Pair(project, buildMessages)
         }
 
         val workspaceRootPath = Paths.get(workspaceRoot)
@@ -244,7 +240,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         // If the selected projectDirectory doesn't resolve directly to the directory that Cargo spat out at us,
         // then there's something a bit special with the cargo workspace, and we don't want to assume anything.
         if (!Files.isSameFile(projectDirectory, workspaceRootPath)) {
-            return Pair(project, buildScriptsInfo)
+            return Pair(project, buildMessages)
         }
 
         // Otherwise, it's just a normal symlink.
@@ -253,7 +249,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
             if (!it.startsWith(workspaceRoot)) return@replacer it
             normalisedWorkspace + it.removePrefix(workspaceRoot)
         }
-        return Pair(project.replacePaths(replacer), buildScriptsInfo?.replacePaths(replacer))
+        return Pair(project.replacePaths(replacer), buildMessages?.replacePaths(replacer))
     }
 
     @Throws(ExecutionException::class)

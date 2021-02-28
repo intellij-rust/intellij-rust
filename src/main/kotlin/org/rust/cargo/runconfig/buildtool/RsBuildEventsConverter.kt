@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.text.StringUtil
 import org.rust.cargo.runconfig.RsAnsiEscapeDecoder.Companion.quantizeAnsiColors
 import org.rust.cargo.runconfig.removeEscapeSequences
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoTopMessage
 import org.rust.cargo.toolchain.impl.RustcMessage
@@ -93,7 +94,7 @@ class RsBuildEventsConverter(private val context: CargoBuildContext) : BuildOutp
     }
 
     private fun tryHandleRustcArtifact(jsonObject: JsonObject): Boolean {
-        val rustcArtifact = CargoMetadata.Artifact.fromJson(jsonObject) ?: return false
+        val rustcArtifact = CompilerArtifactMessage.fromJson(jsonObject) ?: return false
 
         val isSuitableTarget = when (rustcArtifact.target.cleanKind) {
             CargoMetadata.TargetKind.BIN -> true

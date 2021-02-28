@@ -11,13 +11,14 @@ import com.intellij.psi.stubs.StubElement
 import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.psi.ext.basePath
 import org.rust.lang.core.psi.ext.bodyTextRange
+import org.rust.lang.core.resolve2.DeclMacroDefInfo
 import org.rust.lang.core.resolve2.MacroCallInfo
-import org.rust.lang.core.resolve2.MacroDefInfo
 import org.rust.lang.core.resolve2.RESOLVE_LOG
 import org.rust.lang.core.stubs.*
 import org.rust.openapiext.testAssert
@@ -40,18 +41,18 @@ val RESOLVE_DOLLAR_CRATE_ID_KEY: Key<CratePersistentId> = Key("RESOLVE_DOLLAR_CR
 val RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY: Key<CratePersistentId> = Key("RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY")
 
 /**
- * Algorithm: for each [MacroDefInfo] and [MacroCallInfo] maintain map
+ * Algorithm: for each [DeclMacroDefInfo] and [MacroCallInfo] maintain map
  * from index of [MACRO_DOLLAR_CRATE_IDENTIFIER] occurrence in text to corresponding [CratePersistentId].
  * When expand macro call, we want for each occurrence
  * of [MACRO_DOLLAR_CRATE_IDENTIFIER] in `expansion.text` to find corresponding [CratePersistentId].
  * [MACRO_DOLLAR_CRATE_IDENTIFIER] could come from:
- * - '$crate' from macro itself (macro_rules) - use [MacroDefInfo.crate]
- * - [MACRO_DOLLAR_CRATE_IDENTIFIER] from macro itself (macro_rules) - use map from [MacroDefInfo]
+ * - '$crate' from macro itself (macro_rules) - use [DeclMacroDefInfo.crate]
+ * - [MACRO_DOLLAR_CRATE_IDENTIFIER] from macro itself (macro_rules) - use map from [DeclMacroDefInfo]
  * - [MACRO_DOLLAR_CRATE_IDENTIFIER] from macro call - use map from [MacroCallInfo]
  */
 fun processDollarCrate(
     call: MacroCallInfo,
-    def: MacroDefInfo,
+    def: DeclMacroDefInfo,
     file: RsFileStub,
     expansion: ExpansionResult
 ) {
@@ -83,7 +84,7 @@ fun processDollarCrate(
 private fun findCrateIdForEachDollarCrate(
     expansion: ExpansionResult,
     call: MacroCallInfo,
-    def: MacroDefInfo
+    def: DeclMacroDefInfo
 ): Map<Int, CratePersistentId> {
     val ranges = expansion.ranges  // between `call.body` and `expandedText`
     return expansion.dollarCrateOccurrences.asSequence()

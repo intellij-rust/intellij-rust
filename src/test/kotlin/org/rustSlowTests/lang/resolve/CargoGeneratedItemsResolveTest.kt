@@ -14,7 +14,7 @@ import org.rust.cargo.toolchain.tools.Cargo
 import org.rust.fileTree
 import org.rust.ide.experiments.RsExperiments
 import org.rust.lang.core.psi.RsPath
-import org.rust.openapiext.runWithEnabledFeature
+import org.rust.openapiext.runWithEnabledFeatures
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
@@ -848,8 +848,8 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
     }
 
     private fun withEnabledFetchOutDirFeature(action: () -> Unit) =
-        runWithEnabledFeature(RsExperiments.FETCH_OUT_DIR, action)
+        runWithEnabledFeatures(RsExperiments.FETCH_OUT_DIR, action = action)
 
     private fun withEnabledEvaluateBuildScriptsFeature(action: () -> Unit) =
-        runWithEnabledFeature(RsExperiments.EVALUATE_BUILD_SCRIPTS, action)
+        runWithEnabledFeatures(RsExperiments.EVALUATE_BUILD_SCRIPTS, action = action)
 }

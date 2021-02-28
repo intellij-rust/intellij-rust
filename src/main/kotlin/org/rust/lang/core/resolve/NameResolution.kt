@@ -36,6 +36,7 @@ import org.rust.lang.core.IN_BAND_LIFETIMES
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsFile.Attributes.*
 import org.rust.lang.core.psi.ext.*

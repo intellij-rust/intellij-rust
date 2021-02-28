@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapiext.isUnitTestMode
+import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.psi.RsMacroBody
@@ -47,7 +48,7 @@ class DefCollector(
     private val macroCallsToExpand: MutableList<MacroCallInfo> = context.macroCalls
 
     /** Created once as optimization */
-    private val macroExpander: MacroExpander = MacroExpander(project)
+    private val macroExpander = FunctionLikeMacroExpander.new(project)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
     fun collect() {
@@ -275,12 +276,15 @@ class DefCollector(
     private fun tryExpandMacroCall(call: MacroCallInfo): Boolean {
         val def = defMap.resolveMacroCallToMacroDefInfo(call.containingMod, call.path, call.macroIndex)
             ?: return false
-        val defData = RsMacroDataWithHash(RsMacroData(def.body), def.bodyHash)
-        val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body), call.bodyHash)
+        val defData = RsMacroDataWithHash.fromDefInfo(def)
+            ?: return false
+        val callData = RsMacroCallDataWithHash(RsMacroCallData(call.body, defMap.metaData.env), call.bodyHash)
         val (expandedFile, expansion) =
             macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return true
 
-        processDollarCrate(call, def, expandedFile, expansion)
+        if (def is DeclMacroDefInfo) {
+            processDollarCrate(call, def, expandedFile, expansion)
+        }
 
         val context = getModCollectorContextForExpandedElements(call) ?: return true
         collectExpandedElements(expandedFile, call, context)
@@ -363,22 +367,33 @@ sealed class PartialResolvedImport {
     data class Resolved(val perNs: PerNs) : PartialResolvedImport()
 }
 
-class MacroDefInfo(
-    val crate: CratePersistentId,
-    val path: ModPath,
+sealed class MacroDefInfo {
+    abstract val crate: CratePersistentId
+    abstract val path: ModPath
+}
+
+class DeclMacroDefInfo(
+    override val crate: CratePersistentId,
+    override val path: ModPath,
     val macroIndex: MacroIndex,
     private val bodyText: String,
     val bodyHash: HashCode,
     val hasMacroExport: Boolean,
     val hasLocalInnerMacros: Boolean,
     project: Project,
-) {
+): MacroDefInfo() {
     /** Lazy because usually it should not be used (thanks to macro expansion cache) */
     val body: Lazy<RsMacroBody?> = lazy(LazyThreadSafetyMode.PUBLICATION) {
         val psiFactory = RsPsiFactory(project, markGenerated = false)
         psiFactory.createMacroBody(bodyText)
     }
 }
+
+class ProcMacroDefInfo(
+    override val crate: CratePersistentId,
+    override val path: ModPath,
+    val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
+): MacroDefInfo()
 
 class MacroCallInfo(
     val containingMod: ModData,

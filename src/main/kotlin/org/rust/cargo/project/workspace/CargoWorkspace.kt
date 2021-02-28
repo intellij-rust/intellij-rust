@@ -102,6 +102,8 @@ interface CargoWorkspace {
 
         val featureState: Map<FeatureName, FeatureState>
 
+        val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?
+
         fun findDependency(normName: String): Target? =
             if (this.normName == normName) libTarget else dependencies.find { it.name == normName }?.pkg?.libTarget
     }
@@ -228,7 +230,8 @@ private class WorkspaceImpl(
             pkg.features,
             pkg.enabledFeatures,
             pkg.env,
-            pkg.outDirUrl
+            pkg.outDirUrl,
+            pkg.procMacroArtifact,
         )
     }
 
@@ -527,7 +530,8 @@ private class PackageImpl(
     val rawFeatures: Map<FeatureName, List<FeatureDep>>,
     val cargoEnabledFeatures: Set<FeatureName>,
     override val env: Map<String, String>,
-    val outDirUrl: String?
+    val outDirUrl: String?,
+    override val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
 ) : UserDataHolderBase(), CargoWorkspace.Package {
     override val targets = targetsData.map {
         TargetImpl(
@@ -639,5 +643,6 @@ private fun PackageImpl.asPackageData(edition: CargoWorkspace.Edition? = null): 
         enabledFeatures = cargoEnabledFeatures,
         cfgOptions = cfgOptions,
         env = env,
-        outDirUrl = outDirUrl
+        outDirUrl = outDirUrl,
+        procMacroArtifact = procMacroArtifact
     )

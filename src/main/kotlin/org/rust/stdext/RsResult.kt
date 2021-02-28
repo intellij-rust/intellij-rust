@@ -17,6 +17,11 @@ sealed class RsResult<T, E> {
         is Err -> null
     }
 
+    fun err(): E? = when (this) {
+        is Ok -> null
+        is Err -> err
+    }
+
     inline fun <U> map(mapper: (T) -> U): RsResult<U, E> = when (this) {
         is Ok -> Ok(mapper(ok))
         is Err -> Err(err)

@@ -8,6 +8,9 @@ package org.rust.stdext
 import com.intellij.util.io.DigestUtil
 import org.apache.commons.codec.binary.Hex
 import java.io.*
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.DigestInputStream
 
 /**
  * Abstracts byte array of cryptographic hash to provide appropriate equals/hashCode methods.
@@ -41,6 +44,15 @@ import java.io.*
 
         fun compute(input: String): HashCode =
             HashCode(SHA1.digest(input.toByteArray()))
+
+        @Throws(IOException::class)
+        fun ofFile(path: Path): HashCode {
+            val digest = SHA1
+            DigestInputStream(Files.newInputStream(path), digest).use {
+                OutputStream.nullOutputStream().writeStream(it)
+            }
+            return HashCode(digest.digest())
+        }
 
         fun mix(hash1: HashCode, hash2: HashCode): HashCode {
             val md = SHA1

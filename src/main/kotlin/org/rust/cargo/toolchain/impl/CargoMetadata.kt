@@ -5,19 +5,25 @@
 
 package org.rust.cargo.toolchain.impl
 
-import com.google.gson.Gson
-import com.google.gson.JsonObject
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
+import com.intellij.util.io.exists
+import com.intellij.util.text.SemVer
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.*
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
 import org.rust.cargo.project.workspace.CargoWorkspace.LibKind
+import org.rust.openapiext.RsPathManager
 import org.rust.openapiext.findFileByMaybeRelativePath
+import org.rust.stdext.HashCode
 import org.rust.stdext.mapToSet
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.*
 
 private val LOG = Logger.getInstance(CargoMetadata::class.java)
@@ -64,6 +70,16 @@ object CargoMetadata {
          * SemVer version
          */
         val version: String,
+
+        val authors: List<String>,
+
+        val description: String?,
+
+        val repository: String?,
+
+        val license: String?,
+
+        val license_file: String?,
 
         /**
          * Where did this package comes from? Local file system, crates.io, github repository.
@@ -281,48 +297,9 @@ object CargoMetadata {
         )
     }
 
-    // The next two things do not belong here,
-    // see `machine_message` in Cargo.
-    data class Artifact(
-        val package_id: PackageId?,
-        val target: Target,
-        val profile: Profile,
-        val filenames: List<String>,
-        val executable: String?
-    ) {
-
-        val executables: List<String>
-            get() {
-                return if (executable != null) {
-                    listOf(executable)
-                } else {
-                    /**
-                     * `.dSYM` and `.pdb` files are binaries, but they should not be used when starting debug session.
-                     * Without this filtering, CLion shows error message about several binaries
-                     * in case of disabled build tool window
-                     */
-                    // BACKCOMPAT: Cargo 0.34.0
-                    filenames.filter { !it.endsWith(".dSYM") && !it.endsWith(".pdb") }
-                }
-            }
-
-        companion object {
-            fun fromJson(json: JsonObject): Artifact? {
-                if (json.getAsJsonPrimitive("reason").asString != "compiler-artifact") {
-                    return null
-                }
-                return Gson().fromJson(json, Artifact::class.java)
-            }
-        }
-    }
-
-    data class Profile(
-        val test: Boolean
-    )
-
     fun clean(
         project: Project,
-        buildScriptsInfo: BuildScriptsInfo? = null,
+        buildMessages: BuildMessages? = null,
         buildPlan: CargoBuildPlan? = null
     ): CargoWorkspaceData {
         val fs = LocalFileSystem.getInstance()
@@ -337,8 +314,8 @@ object CargoMetadata {
                     LOG.error("Could not find package with `id` '${pkg.id}' in `resolve` section of the `cargo metadata` output.")
                 }
                 val enabledFeatures = resolveNode?.features.orEmpty().toSet() // features enabled by Cargo
-                val buildScriptMessage = buildScriptsInfo?.get(pkg.id)
-                pkg.clean(fs, pkg.id in members, variables, enabledFeatures, buildScriptMessage)
+                val pkgBuildMessages = buildMessages?.get(pkg.id).orEmpty()
+                pkg.clean(fs, pkg.id in members, variables, enabledFeatures, pkgBuildMessages)
             },
             project.resolve.nodes.associate { node ->
                 val dependencySet = if (node.deps != null) {
@@ -362,9 +339,10 @@ object CargoMetadata {
         isWorkspaceMember: Boolean,
         variables: PackageVariables,
         enabledFeatures: Set<String>,
-        buildScriptMessage: BuildScriptMessage?
+        buildMessages: List<CompilerMessage>
     ): CargoWorkspaceData.Package? {
-        val root = fs.refreshAndFindFileByPath(PathUtil.getParentPath(manifest_path))
+        val rootPath = PathUtil.getParentPath(manifest_path)
+        val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }
         checkNotNull(root) { "`cargo metadata` reported a package which does not exist at `$manifest_path`" }
 
@@ -377,11 +355,34 @@ object CargoMetadata {
             }
         }
 
+        val buildScriptMessage = buildMessages.find { it is BuildScriptMessage } as? BuildScriptMessage
+        val procMacroArtifact = getProcMacroArtifact(buildMessages)
+
         val cfgOptions = buildScriptMessage?.cfgs?.let { CfgOptions.parse(it) }
 
-        val env = buildScriptMessage?.env.orEmpty()
+        val envFromBuildscript = buildScriptMessage?.env.orEmpty()
             .filter { it.size == 2 }
             .associate { (key, value) -> key to value }
+
+        val semver = SemVer.parseFromText(version)
+
+        // https://doc.rust-lang.org/cargo/reference/environment-variables.html#environment-variables-cargo-sets-for-crates
+        val env: Map<String, String> = envFromBuildscript + mapOf(
+            "CARGO_MANIFEST_DIR" to rootPath,
+            "CARGO" to "cargo", // TODO get from toolchain
+            "CARGO_PKG_VERSION" to version,
+            "CARGO_PKG_VERSION_MAJOR" to semver?.major?.toString().orEmpty(),
+            "CARGO_PKG_VERSION_MINOR" to semver?.minor?.toString().orEmpty(),
+            "CARGO_PKG_VERSION_PATCH" to semver?.patch?.toString().orEmpty(),
+            "CARGO_PKG_VERSION_PRE" to semver?.preRelease.orEmpty(),
+            "CARGO_PKG_AUTHORS" to authors.joinToString(separator = ";"),
+            "CARGO_PKG_NAME" to name,
+            "CARGO_PKG_DESCRIPTION" to description.orEmpty(),
+            "CARGO_PKG_REPOSITORY" to repository.orEmpty(),
+            "CARGO_PKG_LICENSE" to license.orEmpty(),
+            "CARGO_PKG_LICENSE_FILE" to license_file.orEmpty(),
+            "CARGO_CRATE_NAME" to name.replace('-', '_'),
+        )
 
         val outDirPath = buildScriptMessage?.out_dir ?: variables.getOutDirPath(this)
         val outDir = outDirPath
@@ -401,9 +402,63 @@ object CargoMetadata {
             enabledFeatures = enabledFeatures,
             cfgOptions = cfgOptions,
             env = env,
-            outDirUrl = outDir?.url
+            outDirUrl = outDir?.url,
+            procMacroArtifact = procMacroArtifact
         )
     }
+
+    private fun getProcMacroArtifact(buildMessages: List<CompilerMessage>): CargoWorkspaceData.ProcMacroArtifact? {
+        val procMacroArtifacts = buildMessages
+            .filterIsInstance<CompilerArtifactMessage>()
+            .filter {
+                it.target.kind.contains("proc-macro") && it.target.crate_types.contains("proc-macro")
+            }
+
+        val procMacroArtifactPath = procMacroArtifacts
+            .flatMap { it.filenames }
+            .find { file -> DYNAMIC_LIBRARY_EXTENSIONS.any { file.endsWith(it) } }
+
+        return procMacroArtifactPath?.let {
+            val originPath = Path.of(procMacroArtifactPath)
+
+            val hash = try {
+                HashCode.ofFile(originPath)
+            } catch (e: IOException) {
+                LOG.warn(e)
+                return@let null
+            }
+
+            val path = copyProcMacroArtifactToTempDir(originPath, hash)
+
+            CargoWorkspaceData.ProcMacroArtifact(path, hash)
+        }
+    }
+
+    /**
+     * Copy the artifact to a temporary directory in order to allow a user to overwrite or delete the artifact.
+     *
+     * It's `@Synchronized` because it can be called from different IDEA projects simultaneously,
+     * and different projects may want to write the same files
+     */
+    @Synchronized
+    private fun copyProcMacroArtifactToTempDir(originPath: Path, hash: HashCode): Path {
+        return try {
+            val temp = RsPathManager.tempPluginDirInSystem().resolve("proc_macros")
+            Files.createDirectories(temp) // throws IOException
+            val filename = originPath.fileName.toString()
+            val extension = PathUtil.getFileExtension(filename)
+            val targetPath = temp.resolve("$filename.$hash.$extension")
+            if (!targetPath.exists() || Files.size(originPath) != Files.size(targetPath)) {
+                Files.copy(originPath, targetPath, StandardCopyOption.REPLACE_EXISTING) // throws IOException
+            }
+            targetPath
+        } catch (e: IOException) {
+            LOG.warn(e)
+            originPath
+        }
+    }
+
+    private val DYNAMIC_LIBRARY_EXTENSIONS: List<String> = listOf(".dll", ".so", ".dylib")
 
     private fun Target.clean(root: VirtualFile, isWorkspaceMember: Boolean): CargoWorkspaceData.Target? {
         val mainFile = root.findFileByMaybeRelativePath(src_path)

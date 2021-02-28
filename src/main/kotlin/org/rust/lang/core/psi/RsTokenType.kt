@@ -115,3 +115,12 @@ val RS_ITEMS = tokenSetOf(
 )
 
 val RS_MOD_OR_FILE = tokenSetOf(MOD_ITEM, RsFileStub.Type)
+
+/**
+ * Some tokens that treated as keywords by our lexer,
+ * but rustc's macro parser treats them as identifiers
+ */
+val RS_IDENTIFIER_TOKENS = TokenSet.orSet(
+    tokenSetOf(IDENTIFIER, BOOL_LITERAL),
+    RS_KEYWORDS
+)

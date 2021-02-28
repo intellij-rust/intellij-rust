@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.resolve2.util
 
-import org.rust.lang.core.macros.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.resolve2.RESOLVE_LOG
 import org.rust.lang.core.stubs.*
 

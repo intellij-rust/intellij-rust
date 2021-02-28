@@ -23,7 +23,7 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEna
 import org.rust.cargo.runconfig.buildtool.cargoPatches
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -95,7 +95,7 @@ abstract class RsExecutableRunner(
     private fun getWorkingDirectory(
         project: Project,
         runCargoCommand: CargoCommandLine,
-        artifact: CargoMetadata.Artifact?
+        artifact: CompilerArtifactMessage?
     ): Path {
         if (runCargoCommand.command != "test") return runCargoCommand.workingDirectory
         val packageId = artifact?.package_id ?: return runCargoCommand.workingDirectory
@@ -146,10 +146,10 @@ abstract class RsExecutableRunner(
     }
 
     companion object {
-        private val ARTIFACT: Key<CompletableFuture<CargoMetadata.Artifact>> =
+        private val ARTIFACT: Key<CompletableFuture<CompilerArtifactMessage>> =
             Key.create("CARGO.CONFIGURATION.ARTIFACT")
 
-        var ExecutionEnvironment.artifact: CargoMetadata.Artifact?
+        var ExecutionEnvironment.artifact: CompilerArtifactMessage?
             get() = getUserData(this@Companion.ARTIFACT)?.get()
             set(value) {
                 getUserData(this@Companion.ARTIFACT)?.complete(value)

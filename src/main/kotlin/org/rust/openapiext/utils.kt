@@ -339,13 +339,13 @@ val DataContext.elementUnderCaretInEditor: PsiElement?
 fun isFeatureEnabled(featureId: String): Boolean = Experiments.getInstance().isFeatureEnabled(featureId)
 fun setFeatureEnabled(featureId: String, enabled: Boolean) = Experiments.getInstance().setFeatureEnabled(featureId, enabled)
 
-fun <T> runWithEnabledFeature(featureId: String, action: () -> T): T {
-    val currentValue = isFeatureEnabled(featureId)
-    setFeatureEnabled(featureId, true)
+fun <T> runWithEnabledFeatures(vararg featureIds: String, action: () -> T): T {
+    val currentValues = featureIds.map { it to isFeatureEnabled(it) }
+    featureIds.forEach { setFeatureEnabled(it, true) }
     return try {
         action()
     } finally {
-        setFeatureEnabled(featureId, currentValue)
+        currentValues.forEach { (featureId, currentValue) -> setFeatureEnabled(featureId, currentValue) }
     }
 }
 

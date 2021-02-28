@@ -3,11 +3,10 @@
  * found in the LICENSE file.
  */
 
-package org.rust.lang.core.macros
+package org.rust.lang.core.macros.decl
 
 import com.intellij.lang.ASTNode
-import com.intellij.psi.PsiElement
-import org.rust.lang.core.macros.MGNodeData.*
+import org.rust.lang.core.macros.decl.MGNodeData.*
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.utils.Node
 import org.rust.lang.utils.PresentableGraph

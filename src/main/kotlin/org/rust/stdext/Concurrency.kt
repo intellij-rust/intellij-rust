@@ -8,8 +8,11 @@ package org.rust.stdext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.locks.Condition
+import java.util.concurrent.locks.Lock
 import kotlin.reflect.KProperty
 
 
@@ -91,13 +94,38 @@ class ThreadLocalDelegate<T>(initializer: () -> T) {
     }
 }
 
-fun <V> Future<V>.waitForWithCheckCanceled(): V {
+fun <V> Future<V>.getWithCheckCanceled(): V {
     while (true) {
         try {
             return get(10, TimeUnit.MILLISECONDS)
         } catch (ignored: TimeoutException) {
             ProgressManager.checkCanceled()
         }
+    }
+}
+
+@Throws(TimeoutException::class, ExecutionException::class, InterruptedException::class)
+fun <V> Future<V>.getWithCheckCanceled(timeoutMillis: Long): V {
+    val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMillis)
+    while (true) {
+        try {
+            return get(10, TimeUnit.MILLISECONDS)
+        } catch (e: TimeoutException) {
+            ProgressManager.checkCanceled()
+            if (System.nanoTime() >= deadline) {
+                throw e
+            }
+        }
+    }
+}
+
+fun <T> Lock.withLockAndCheckingCancelled(action: () -> T): T =
+    ProgressIndicatorUtils.computeWithLockAndCheckingCanceled<T, Exception>(this, 10, TimeUnit.MILLISECONDS, action)
+
+fun Condition.awaitWithCheckCancelled() {
+    // BACKCOMPAT: 2020.3. Use com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(java.util.concurrent.locks.Condition)
+    while (!await(10, TimeUnit.MILLISECONDS)) {
+        ProgressManager.checkCanceled()
     }
 }
 
