@@ -27,7 +27,6 @@ import org.rust.lang.core.resolve.ItemProcessingMode.WITHOUT_PRIVATE_IMPORTS
 import org.rust.lang.core.resolve.ref.RsMacroPathReferenceImpl
 import org.rust.lang.core.resolve.ref.RsResolveCache
 import org.rust.lang.core.resolve2.RsModInfoBase.*
-import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 
 val Project.isNewResolveEnabled: Boolean
@@ -429,12 +428,11 @@ private fun VisItem.scopedMacroToPsi(containingMod: RsMod): RsNamedElement? {
 
 private fun DeclMacroDefInfo.legacyMacroToPsi(containingMod: RsMod, defMap: CrateDefMap): RsMacro? {
     val items = containingMod.expandedItemsCached
-    val macro = items.macros.singleOrNull {
+    return items.macros.singleOrNull {
         val defIndex = getMacroIndex(it, defMap) ?: return@singleOrNull false
         MacroIndex.equals(defIndex, macroIndex)
     }
-    testAssert({ macro != null }, { "Can't convert MacroDefInfo to RsMacro using global MacroIndex" })
-    return macro
+    // Note that we can return null, e.g. if old macro engine is enabled and macro definition is itself expanded
 }
 
 private fun VisItem.toPsi(defMap: CrateDefMap, project: Project, ns: Namespace): List<RsNamedElement> {

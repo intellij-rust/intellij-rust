@@ -51,6 +51,13 @@ class DefCollector(
     private val macroExpander = FunctionLikeMacroExpander.new(project)
     private val macroExpanderShared: MacroExpansionSharedCache = MacroExpansionSharedCache.getInstance()
 
+    private val shouldExpandMacros: Boolean =
+        when (val mode = project.macroExpansionManager.macroExpansionMode) {
+            MacroExpansionMode.Disabled -> false
+            is MacroExpansionMode.New -> mode.scope != MacroExpansionScope.NONE
+            MacroExpansionMode.Old -> true
+        }
+
     fun collect() {
         do {
             // Have to call it in loop, because macro can expand to
@@ -262,6 +269,7 @@ class DefCollector(
     }
 
     private fun expandMacros(): Boolean {
+        if (!shouldExpandMacros) return false
         return macroCallsToExpand.inPlaceRemoveIf { call ->
             ProgressManager.checkCanceled()
             // TODO: Actually resolve macro instead of name check
