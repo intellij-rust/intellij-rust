@@ -22,10 +22,10 @@ search for _Rust_ and install the plugin. To open an existing project, use **Fil
 
 ## Compatible IDEs
 
-The plugin is compatible with all IntelliJ-based IDEs starting from the version 2020.2, with the following differences in the sets of the available features:
+The plugin is compatible with all IntelliJ-based IDEs starting from the version 2020.3, with the following differences in the sets of the available features:
 
 
-|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate (commercial) | [PyCharm] Professional, [GoLand], other commercial IDEs |
+|                        | Open-source and Educational IDEs<sup>*</sup> | [CLion] (commercial) | [IntelliJ IDEA] Ultimate, [PyCharm] Professional, [GoLand] (commercial) | [WebStorm], [PhpStorm], other commercial IDEs |
 |------------------------|---|---|---|---|
 | Language support       | + | + | + | + |
 | Cargo support          | + | + | + | + |
@@ -40,7 +40,7 @@ The plugin is compatible with all IntelliJ-based IDEs starting from the version 
 
 \** Requires the
 [Native Debugging Support](https://plugins.jetbrains.com/plugin/12775-native-debugging-support) plugin. 
-LLDB only.
+LLDB only. [PyCharm] Professional and [GoLand] support debugging starting from 2021.1
 
 ## TOML
 
@@ -85,5 +85,7 @@ understand the high-level structure of the codebase. If you are not sure where t
 [CLion]: https://www.jetbrains.com/clion/
 [PyCharm]: https://www.jetbrains.com/pycharm/
 [GoLand]: https://www.jetbrains.com/go/
+[WebStorm]: https://www.jetbrains.com/webstorm/
+[PhpStorm]: https://www.jetbrains.com/phpstorm/
 [PyCharm Edu and IntelliJ IDEA Edu]: https://www.jetbrains.com/education
 [Detecting duplicates]: https://www.jetbrains.com/help/idea/analyzing-duplicates.html
