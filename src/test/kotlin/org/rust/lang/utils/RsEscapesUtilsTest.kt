@@ -107,3 +107,31 @@ class UnescapeRsWithOffsetsTest(
         )
     }
 }
+
+@RunWith(Parameterized::class)
+class EscapeRsTest(
+    private val input: String,
+    private val expected: String,
+    private val escapeNonPrintable: Boolean,
+) {
+    @Test
+    fun test() = assertEquals(expected, input.escapeRust(escapeNonPrintable))
+
+    companion object {
+        private const val STX = 2.toChar().toString()
+
+        @Parameters(name = "{index}: \"{0}\" → \"{1}\" P:{2}")
+        @JvmStatic fun data(): Collection<Array<Any>> = listOf(
+            arrayOf("aaa", "aaa", true),
+            arrayOf("aaa", "aaa", false),
+            arrayOf("\"", "\\\"", true),
+            arrayOf("\'", "\\\'", true),
+            arrayOf("\n", "\\n", true),
+            arrayOf("\r", "\\r", true),
+            arrayOf("\t", "\\t", true),
+            arrayOf("\u0000", "\\0", true),
+            arrayOf(STX, "\\u{2}", true),
+            arrayOf(STX, STX, false),
+        )
+    }
+}
