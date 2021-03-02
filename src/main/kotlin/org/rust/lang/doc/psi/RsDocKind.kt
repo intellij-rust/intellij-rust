@@ -17,7 +17,7 @@ enum class RsDocKind {
         override val infix: String = ""
 
         override fun removeDecoration(lines: Sequence<String>): Sequence<String> =
-            lines // nothing to do here
+            removeAttrDecoration(lines)
     },
 
     InnerBlock {
@@ -89,6 +89,73 @@ enum class RsDocKind {
             ll[ll.lastIndex] = ll[ll.lastIndex].trimTrailingAsterisks()
             ll.asSequence()
         }
+    }
+
+    // https://github.com/rust-lang/rust/blob/edeee915b1c52f97411e57ef6b1a8bd46548a37a/compiler/rustc_ast/src/util/comments.rs#L28
+    protected fun removeAttrDecoration(linesSequence: Sequence<String>): Sequence<String> {
+        /** Removes whitespace-only lines from the start/end of lines */
+        fun doVerticalTrim(lines: List<String>): List<String> {
+            var start = 0
+            var end = lines.size
+
+            // First line of all-stars should be omitted
+            if (lines[0].all { it == '*' }) {
+                start++
+            }
+
+            while (start < end && lines[start].isBlank()) {
+                start++
+            }
+
+            // Like the first, a last line of all stars should be omitted
+            // The first character is skipped by Rustc for some reason
+            if (end > start && (lines[end - 1].isEmpty() || lines[end - 1].substring(1).all { it == '*' })) {
+                end--
+            }
+
+            while (end > start && lines[end - 1].isBlank()) {
+                end--
+            }
+
+            return lines.subList(start, end)
+        }
+
+        /** Calculates common indent before `*`, if possible */
+        fun calculateCommonIndentBeforeAsterisk(lines: List<String>): Int? {
+            var indent = Int.MAX_VALUE
+            var first = true
+
+            for (line in lines) {
+                for ((j, c) in line.withIndex()) {
+                    if (j > indent || !"* \t".contains(c)) {
+                        return null
+                    }
+                    if (c == '*') {
+                        if (first) {
+                            indent = j
+                            first = false
+                        } else if (indent != j) {
+                            return null
+                        }
+                        break
+                    }
+                }
+                if (indent >= line.length) {
+                    return null
+                }
+            }
+            return indent
+        }
+
+        val lines = linesSequence.toList()
+        if (lines.size <= 1) return lines.asSequence()
+        val lines2 = doVerticalTrim(lines)
+        val indent = calculateCommonIndentBeforeAsterisk(lines2)
+        return removeEolDecoration(if (indent != null) {
+            lines2.map { it.substring(indent + 1) }
+        } else {
+            lines2
+        }.asSequence(), infix = "")
     }
 
     companion object {

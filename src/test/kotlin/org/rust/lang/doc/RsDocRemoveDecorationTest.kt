@@ -21,15 +21,15 @@ class RsDocRemoveDecorationTest(
 ) {
     @Test
     fun test() {
-        val commentNorm = StringUtil.convertLineSeparators(comment).trim()
-        val contentNorm = StringUtil.convertLineSeparators(content).trim()
+        val commentNorm = StringUtil.convertLineSeparators(comment)
+        val contentNorm = StringUtil.convertLineSeparators(content)
 
         assertEquals(contentNorm,
             kind.removeDecoration(commentNorm.splitToSequence('\n')).joinToString("\n").trim())
     }
 
     companion object {
-        @Parameterized.Parameters(name = "{index}: \"{0}\" → \"{1}\"")
+        @Parameterized.Parameters(name = "{index}: {0} \"{1}\" → \"{2}\"")
         @JvmStatic fun data(): Collection<Array<Any>> = listOf(
             arrayOf(InnerEol, "//! foo", "foo"),
             arrayOf(OuterEol, "/// foo", "foo"),
@@ -140,7 +140,16 @@ code {
                    |*/""".trimMargin(),
                 "foo\nbar * bar"),
 
-            arrayOf(Attr, "foo\nbar", "foo\nbar")
+            arrayOf(Attr, "foo\nbar", "foo\nbar"),
+            arrayOf(Attr, " *foo1", "*foo1"),
+            arrayOf(Attr, "\n * foo2\n", "foo2"),
+            arrayOf(Attr, "\n * foo3\n * foo4\n ", "foo3\nfoo4"),
+            arrayOf(Attr, "\n  * foo5\n  * foo6\n  ", "foo5\nfoo6"),
+            arrayOf(Attr, "\n   * foo7\n * foo8\n ", "* foo7\n* foo8"),
+            arrayOf(Attr, "\n  * foo9\n \n  *\n  *", "* foo9\n\n*\n*"),
+            arrayOf(Attr, "\n  * foo10\na\n  *\n  *", "* foo10\na\n*\n*"),
+            arrayOf(Attr, "\n \n foo11\n", "foo11"),
+            arrayOf(Attr, "\n foo12\n ", "foo12"),
         )
     }
 }
