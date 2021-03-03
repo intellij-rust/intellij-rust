@@ -86,7 +86,7 @@ fn test(debugger: Debugger, path: String) -> Result<(), ()> {
 
     for path in src_paths {
         let path = Path::new(&path);
-        let test_runner: Box<TestRunner> = create_test_runner(&config, path);
+        let test_runner: Box<dyn TestRunner> = create_test_runner(&config, path);
         let result = test_runner.run();
         let path_string = path.file_name().unwrap().to_str().unwrap();
 
