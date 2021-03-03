@@ -457,7 +457,6 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("bar/src/lib.rs", toCrate = "rand 54.0.0")
     }
 
-    @MinRustcVersion("1.31.0")
     fun `test cargo rename`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -478,7 +477,6 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs", toCrate = "log 0.4.7")
 
-    @MinRustcVersion("1.31.0")
     fun `test cargo rename of local dependency`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -514,7 +512,6 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }.checkReferenceIsResolved<RsPath>("src/main.rs")
 
-    @MinRustcVersion("1.31.0")
     fun `test cargo rename of local dependency with custom lib target name`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -934,7 +931,6 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         }
     }
 
-    @MinRustcVersion("1.41.0") // In this version Cargo starts providing `[build-dependencies]` info
     fun `test build-dependency is resolved in 'build rs' and not resolved in 'main rs'`() = buildProject {
         toml("Cargo.toml", """
             [package]
@@ -976,7 +972,6 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
     }
 
-    @MinRustcVersion("1.41.0") // In this version Cargo starts providing `[build-dependencies]` info
     fun `test normal dependency is not resolved in 'build rs' and resolved in 'main rs'`() = buildProject {
         toml("Cargo.toml", """
             [package]

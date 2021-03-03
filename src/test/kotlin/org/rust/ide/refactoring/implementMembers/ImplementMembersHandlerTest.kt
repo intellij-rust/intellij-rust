@@ -8,7 +8,10 @@ package org.rust.ide.refactoring.implementMembers
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.rust.*
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.ide.inspections.RsTraitImplementationInspection
 
 class ImplementMembersHandlerTest : RsTestBase() {
@@ -1138,7 +1141,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @MinRustcVersion("1.33.0")
     fun `test Pin self type`() = doTest("""
         use std::pin::Pin;
         struct Foo;
@@ -1166,7 +1168,6 @@ class ImplementMembersHandlerTest : RsTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    @MinRustcVersion("1.33.0")
     fun `test Pin self type with lifetime`() = doTest("""
         use std::pin::Pin;
         struct Foo;

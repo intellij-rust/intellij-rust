@@ -7,7 +7,10 @@ package org.rust.ide.docs
 
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import org.rust.*
+import org.rust.ExpandMacros
+import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.lang.core.psi.RsBaseType
 import org.rust.lang.core.psi.RsConstant
@@ -1118,7 +1121,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>enum</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
-    @MinRustcVersion("1.36.0")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test async keyword doc`() = doTestRegex("""
@@ -1129,7 +1131,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>async</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
-    @MinRustcVersion("1.36.0")
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test dyn keyword doc`() = doTestRegex("""
         trait Foo {}
@@ -1140,7 +1141,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         keyword <b>dyn</b></pre></div><div class='content'><p>.+</p></div>
     """)
 
-    @MinRustcVersion("1.36.0")
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test boolean value doc`() = doTestRegex("""
         fn main() {
@@ -1161,7 +1161,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         }
     """, null)
 
-    @MinRustcVersion("1.36.0")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test await doc 2`() = doTestRegex("""

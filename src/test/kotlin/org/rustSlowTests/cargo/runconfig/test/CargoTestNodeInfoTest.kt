@@ -12,7 +12,6 @@ import com.intellij.execution.testframework.Printer
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.ui.ConsoleViewContentType
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
 
 class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
 
@@ -56,12 +55,10 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
        assert_eq!("a\\\\b", "a\\b", "`a\\\\b` != `a\\b`");
     """, "`a\\\\b` != `a\\b`", Diff("a\\\\b", "a\\b"))
 
-    @MinRustcVersion("1.39.0")
     fun `test don't unescape test output`() = checkOutput("""
         println!("a\\\\b");
     """, "a\\\\b\n")
 
-    @MinRustcVersion("1.39.0")
     fun `test successful output`() = checkOutput("""
         println!("
                   aaa - bbb");

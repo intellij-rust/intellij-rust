@@ -714,7 +714,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                         //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module unix`() {
@@ -726,7 +725,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module windows`() {

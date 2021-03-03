@@ -6,7 +6,6 @@
 package org.rustSlowTests.console
 
 import com.intellij.util.ThrowableRunnable
-import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.tools.Cargo
@@ -16,7 +15,6 @@ import org.rust.openapiext.pathAsPath
 import java.io.PrintWriter
 import java.util.*
 
-@MinRustcVersion("1.40.0")  // Evcxr supports 1.40 and above
 class RsEvcxrTest : RsWithToolchainTestBase() {
     override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable>) {
         if (Cargo.checkNeedInstallEvcxr(project)) {

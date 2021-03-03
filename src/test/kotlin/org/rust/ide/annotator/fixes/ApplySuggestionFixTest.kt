@@ -6,7 +6,6 @@
 package org.rust.ide.annotator.fixes
 
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.cargo.toolchain.ExternalLinter
@@ -70,7 +69,6 @@ class ApplySuggestionFixTest : RsWithToolchainTestBase() {
         }
     """)
 
-    @MinRustcVersion("1.29.0")
     fun `test clippy suggestion`() = checkFixByText("""
         pub fn main() {
             <weak_warning>if true { true } else { false }</weak_warning>;

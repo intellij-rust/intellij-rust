@@ -14,11 +14,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.intellij.lang.annotations.Language
 import org.rust.FileTreeBuilder
-import org.rust.MinRustcVersion
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.settings.rustSettings
 import org.rust.fileTree
-import org.rust.ide.formatter.RustfmtExternalFormatProcessor
 import org.rust.ide.formatter.RustfmtExternalFormatProcessorBase
 import org.rust.launchAction
 import org.rust.openapiext.saveAllDocuments
@@ -100,7 +98,6 @@ class RustfmtTest : RsWithToolchainTestBase() {
         }
     """) { reformatFile(myFixture.editor) }
 
-    @MinRustcVersion("1.31.0")
     fun `test rustfmt file action edition 2018`() = doTest({
         toml("Cargo.toml", """
             [package]

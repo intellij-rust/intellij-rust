@@ -7,7 +7,6 @@ package org.rustSlowTests
 
 import com.intellij.lang.annotation.HighlightSeverity
 import org.intellij.lang.annotations.Language
-import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
@@ -15,7 +14,11 @@ import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.cargo.toolchain.ExternalLinter
+import org.rust.fileTree
 import org.rust.ide.annotator.RsExternalLinterUtils
+import org.rust.singleProject
+import org.rust.singleWorkspace
+import org.rust.workspaceOrFail
 
 class RsExternalLinterPassTest : RsWithToolchainTestBase() {
 
@@ -35,7 +38,6 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     """)
 
-    @MinRustcVersion("1.32.0")
     fun `test highlights errors from macro`() = doTest("""
         fn main() {
             let mut x = 42;
@@ -54,7 +56,6 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     """)
 
-    @MinRustcVersion("1.29.0")
     fun `test highlights clippy errors`() = doTest("""
         fn main() {
             <weak_warning descr="${RsExternalLinterUtils.TEST_MESSAGE}">if true { true } else { false }</weak_warning>;
@@ -101,12 +102,6 @@ class RsExternalLinterPassTest : RsWithToolchainTestBase() {
         }
     }
 
-    // https://github.com/intellij-rust/intellij-rust/issues/1497
-    //
-    // We don't want to run this test with rust below 1.30.0
-    // because the corresponding cargo can fail to run `metadata` command
-    // due to `edition` property in `Cargo.toml` in some dependency of `rand` crate
-    @MinRustcVersion("1.30.0")
     fun `test don't try to highlight non project files`() {
         fileTree {
             toml("Cargo.toml", """
