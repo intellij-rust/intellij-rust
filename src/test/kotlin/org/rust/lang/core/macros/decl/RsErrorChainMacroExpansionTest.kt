@@ -1023,10 +1023,10 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                 &self.0
             }
         }
-        #[doc = r###"The kind of an error."###]
+        #[doc = " The kind of an error."]
         #[derive(Debug)]
         pub enum ErrorKind {
-            #[doc = r###"A convenient variant for String."###]
+            #[doc = " A convenient variant for String."]
             Msg(String),
             #[cfg(unix)]
             Another(other_error::ErrorKind),
@@ -1045,7 +1045,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
                    -> ::std::fmt::Result
             {
                 match *self {
-                    #[doc = r###"A convenient variant for String."###]
+                    #[doc = " A convenient variant for String."]
                     ErrorKind::Msg(ref s) => {
                         let display_fn = |_, f: &mut ::std::fmt::Formatter| { write!(f, "{}", s) };
 
@@ -1088,7 +1088,7 @@ class RsErrorChainMacroExpansionTest : RsMacroExpansionTestBase() {
             /// A string describing the error kind.
             pub fn description(&self) -> &str {
                 match *self {
-                    #[doc = r###"A convenient variant for String."###]
+                    #[doc = " A convenient variant for String."]
                     ErrorKind::Msg(ref s) => {
                         (&s)
                     }

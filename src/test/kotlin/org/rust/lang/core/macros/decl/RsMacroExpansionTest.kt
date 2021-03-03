@@ -1023,7 +1023,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
             fn foo() {}
         }
     """, """
-        #[doc = r###"Some docs"###]
+        #[doc = " Some docs"]
         fn foo() {}
     """ to MacroExpansionMarks.docsLowering)
 
@@ -1038,7 +1038,7 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
             /// Some docs
         }
     """, """
-        #[doc = r###"Some docs"###]
+        #[doc = " Some docs"]
         fn foo() {}
     """ to MacroExpansionMarks.docsLowering)
 
