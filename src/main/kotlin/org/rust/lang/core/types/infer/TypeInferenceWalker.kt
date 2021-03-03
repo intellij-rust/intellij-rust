@@ -357,7 +357,7 @@ class RsTypeInferenceWalker(
             resolveVariants
         }
 
-        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it) })
+        ctx.writePath(expr, filteredVariants.mapNotNull { ResolvedPath.from(it, expr) })
 
         val first = filteredVariants.singleOrNull() ?: return TyUnknown
         return instantiatePath(first.element ?: return TyUnknown, first, expr)

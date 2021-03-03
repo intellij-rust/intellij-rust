@@ -26,7 +26,7 @@ fun RsPat.extractBindings(fcx: RsTypeInferenceWalker, type: Ty, defBm: RsBinding
             val expr = expr
             val expected = when {
                 expr is RsLitExpr && expr.kind is RsLiteralKind.String -> type
-                expr is RsPathExpr && resolvePath(expr.path).singleOrNull()?.element is RsConstant -> type
+                expr is RsPathExpr && resolvePath(expr.path).singleOrNull()?.inner?.element is RsConstant -> type
                 else -> type.stripReferences(defBm).first
             }
             fcx.writePatTy(this, expected)

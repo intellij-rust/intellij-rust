@@ -66,3 +66,17 @@ val BoundElement<RsGenericDeclaration>.positionalTypeArguments: List<Ty>
 
 val BoundElement<RsGenericDeclaration>.positionalConstArguments: List<Const>
     get() = element.constParameters.map { subst[it] ?: CtConstParameter(it) }
+
+data class BoundElementWithVisibility<T : RsElement>(
+    val inner: BoundElement<T>,
+    val isVisible: Boolean,
+) {
+    override fun toString(): String {
+        val visibility = if (isVisible) "public" else "private"
+        return "$visibility $inner"
+    }
+}
+
+fun <T : RsElement> BoundElementWithVisibility<T>.map(
+    f: (BoundElement<T>) -> BoundElement<T>
+): BoundElementWithVisibility<T> = BoundElementWithVisibility(f(inner), isVisible)

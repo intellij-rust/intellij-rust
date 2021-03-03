@@ -967,7 +967,7 @@ fun <T> TyWithObligations<T>.withObligations(addObligations: List<Obligation>) =
 sealed class ResolvedPath {
     abstract val element: RsElement
 
-    class Item(override val element: RsElement) : ResolvedPath()
+    class Item(override val element: RsElement, val isVisible: Boolean) : ResolvedPath()
 
     class AssocItem(
         override val element: RsAbstractable,
@@ -975,11 +975,14 @@ sealed class ResolvedPath {
     ) : ResolvedPath()
 
     companion object {
-        fun from(entry: ScopeEntry): ResolvedPath? {
+        fun from(entry: ScopeEntry, context: RsElement): ResolvedPath? {
             return if (entry is AssocItemScopeEntry) {
                 AssocItem(entry.element, entry.source)
             } else {
-                entry.element?.let { Item(it) }
+                entry.element?.let {
+                    val isVisible = entry.isVisibleFrom(context.containingMod)
+                    Item(it, isVisible)
+                }
             }
         }
 
