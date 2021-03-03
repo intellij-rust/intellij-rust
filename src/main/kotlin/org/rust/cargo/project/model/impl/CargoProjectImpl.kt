@@ -6,6 +6,7 @@
 package org.rust.cargo.project.model.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.execution.RunManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -20,6 +21,7 @@ import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.EmptyRunnable
@@ -306,6 +308,7 @@ open class CargoProjectsServiceImpl(
         projects.updateAsync(f)
             .thenApply { projects ->
                 invokeAndWaitIfNeeded {
+                    val fileTypeManager = FileTypeManager.getInstance()
                     runWriteAction {
                         if (projects.isNotEmpty()) {
                             checkRustVersion(projects)
@@ -316,7 +319,7 @@ open class CargoProjectsServiceImpl(
                             // See https://youtrack.jetbrains.com/issue/IDEA-237376
                             //
                             // It's a hack to provide proper mapping when we are sure that it's Rust project
-                            FileTypeManager.getInstance().associateExtension(RsFileType, RsFileType.defaultExtension)
+                            fileTypeManager.associateExtension(RsFileType, RsFileType.defaultExtension)
                         }
 
                         directoryIndex.resetIndex()
@@ -340,11 +343,12 @@ open class CargoProjectsServiceImpl(
         projects.updateSync(f)
             .thenApply { projects ->
                 invokeAndWaitIfNeeded {
+                    val psiManager = PsiManager.getInstance(project)
                     runWriteAction {
                         directoryIndex.resetIndex()
                         project.messageBus.syncPublisher(CargoProjectsService.CARGO_PROJECTS_TOPIC)
                             .cargoProjectsUpdated(this, projects)
-                        (PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl).incCounter()
+                        (psiManager.modificationTracker as PsiModificationTrackerImpl).incCounter()
                         DaemonCodeAnalyzer.getInstance(project).restart()
                     }
                 }
@@ -556,6 +560,11 @@ private inline fun runWithNonLightProject(project: Project, action: () -> Unit) 
 
 private fun setupProjectRoots(project: Project, cargoProjects: List<CargoProject>) {
     invokeAndWaitIfNeeded {
+        // Initialize services that we use (probably indirectly) in write action below.
+        // Otherwise, they can be initialized in write action that may lead to deadlock
+        RunManager.getInstance(project)
+        ProjectFileIndex.getInstance(project)
+
         runWriteAction {
             if (project.isDisposed) return@runWriteAction
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
