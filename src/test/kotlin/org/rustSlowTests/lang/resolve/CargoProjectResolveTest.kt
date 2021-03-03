@@ -12,11 +12,10 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
-import org.rust.MinRustcVersion
+import org.rust.*
 import org.rust.cargo.RsWithToolchainTestBase
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.model.impl.testCargoProjects
-import org.rust.fileTree
-import org.rust.ignoreInNewResolve
 import org.rust.lang.core.crate.impl.CrateGraphTestmarks
 import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.resolve.NameResolutionTestmarks
@@ -643,6 +642,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureDisabled("foobar")
         checkReferenceIsResolved<RsPath>("src/main.rs", shouldNotResolve = true)
     }
 
@@ -681,6 +681,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("foobar")
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
@@ -689,7 +690,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             [package]
             name = "hello"
             version = "0.1.0"
-                edition = "2018"
+            edition = "2018"
 
             [dependencies]
             foo = { path = "./foo", features = ["foo_feature"] }
@@ -712,11 +713,14 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 [features]
                 foo_feature = ["bar_renamed/bar_feature"]
 
-                [dependencies]
-                bar_renamed = { package = "bar", path = "../bar"}
+                [dependencies.bar_renamed]
+                package = "bar"
+                path = "../bar"
+                optional = true
             """)
             dir("src") {
                 rust("lib.rs", """
+                    #[cfg(feature="bar_renamed")]
                     pub use bar_renamed::bar;
                 """)
             }
@@ -738,6 +742,9 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("foo_feature")
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("bar_renamed")
+        project.cargoProjects.singlePackage("bar").checkFeatureEnabled("bar_feature")
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
@@ -799,6 +806,8 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             }
         }
     }.run {
+        project.cargoProjects.singlePackage("foo").checkFeatureEnabled("foo_feature")
+        project.cargoProjects.singlePackage("bar").checkFeatureEnabled("bar_feature")
         checkReferenceIsResolved<RsPath>("src/main.rs")
     }
 
