@@ -284,7 +284,7 @@ private class StdlibDataFetcher private constructor(
 
             val stdlibHash = stdlibHash(srcDir, version)
 
-            val stdlibVendor = RsPathManager.pluginDirInSystem().resolve("stdlib/${version.semver.parsedVersion}-$stdlibHash/vendor")
+            val stdlibVendor = RsPathManager.stdlibDependenciesDir().resolve("${version.semver.parsedVersion}-$stdlibHash/vendor")
             if (!stdlibVendor.exists()) {
                 try {
                     // `test` package depends on all other stdlib packages,
