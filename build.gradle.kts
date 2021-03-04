@@ -319,6 +319,7 @@ project(":") {
         implementation("org.jetbrains:markdown:0.2.0") {
             exclude(module = "kotlin-runtime")
             exclude(module = "kotlin-stdlib")
+            exclude(module = "kotlin-stdlib-common")
         }
         testImplementation(project(":common", "testOutput"))
         testImplementation("com.squareup.okhttp3:mockwebserver:4.9.0")
