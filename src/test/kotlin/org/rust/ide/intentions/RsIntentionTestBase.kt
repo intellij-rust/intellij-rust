@@ -7,6 +7,7 @@ package org.rust.ide.intentions
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
+import com.intellij.codeInsight.intention.IntentionManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapiext.Testmark
 import com.intellij.util.ui.UIUtil
@@ -16,7 +17,6 @@ import org.rust.fileTreeFromText
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.reflect.KClass
-import kotlin.reflect.full.createInstance
 import kotlin.reflect.full.isSubclassOf
 
 abstract class RsIntentionTestBase(private val intentionClass: KClass<out IntentionAction>) : RsTestBase() {
@@ -93,7 +93,9 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
             model.blockSelectionStarts.zip(model.blockSelectionEnds)
                 .map { TextRange(it.first, it.second + 1) }
         }
-        val intention = intentionClass.createInstance()
+        val intention = IntentionManager.getInstance().intentionActions.find {
+            IntentionActionDelegate.unwrap(it).javaClass == intentionClass.java
+        } ?: error("Intention action with class $intentionClass is not registered")
         for (pos in myFixture.file.text.indices) {
             myFixture.editor.caretModel.moveToOffset(pos)
             val expectAvailable = selections.any { it.contains(pos) }

@@ -10,6 +10,21 @@ import org.rust.WithStdlibRustProjectDescriptor
 
 @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
 class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::class) {
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        enum MyOption { Some(x) }
+
+        fn main() {
+            let color = MyOption::Some(52);
+
+            <selection>match</selection> color {
+                MyOption::Some(42) => {
+                    let a = x + 1;
+                }
+                _ => {}
+            }
+        }
+    """)
+
     fun `test unavailable all void arms`() = doUnavailableTest("""
         enum MyOption {
             Nothing,
@@ -19,8 +34,8 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         fn main() {
             let a = MyOption::Some(52);
 
-            match a {
-                MyOption::Some(x) => {}/*caret*/
+            /*caret*/match a {
+                MyOption::Some(x) => {}
                 Nothing => {}
             }
         }
@@ -51,7 +66,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         fn main() {
             let color = OptionColor::Color(255, 255, 255);
 
-            match color {/*caret*/
+            /*caret*/match color {
                 OptionColor::Color(_, _, _) => {}
                 _ => {print!("No color")}
             };
@@ -77,12 +92,12 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         fn main() {
             let color = MyOption::Some(52);
 
-            match color {
+            /*caret*/match color {
                 MyOption::Some(42) => {
                     let a = x + 1;
                     let b = x + 2;
                     let c = a + b;
-                }/*caret*/
+                }
                 _ => {}
             }
         }
@@ -111,7 +126,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
         fn main() {
             let color = OptionColor::Color(255, 255, 255);
 
-            match color {/*caret*/
+            /*caret*/match color {
                 OptionColor::Color(255, 255, 255) => print!("White"),
                 OptionColor::Color(_,   _,   _  ) => {}
                 OptionColor::NoColor => {}
@@ -135,7 +150,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test simple with range`() = doAvailableTest("""
         fn main() {
             let e = 4;
-            match e {/*caret*/
+            /*caret*/match e {
                 1..=5 => println!("got {}", e),
                 _ => {}
             };
@@ -152,7 +167,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test simple with const`() = doAvailableTest("""
         fn main() {
             let e = 4;
-            match e {/*caret*/
+            /*caret*/match e {
                 4 => println!("got {}", e),
                 _ => {}
             };
@@ -174,7 +189,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
 
         fn main() {
             let point = Point { x: false, y: true };
-            match point {/*caret*/
+            /*caret*/match point {
                 Point { x: true, .. } => println!("42"),
                 _ => {}
             }
@@ -201,7 +216,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
 
         fn main() {
             let point = Point { x: false, y: true };
-            match point {/*caret*/
+            /*caret*/match point {
                 Point { x: true, y: f } => println!("42"),
                 _ => {}
             }
@@ -228,7 +243,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
 
         fn main() {
             let point = Point { x: false, y: true };
-            match point {/*caret*/
+            /*caret*/match point {
                 Point { x, .. } => println!("42"),
                 _ => {}
             }
@@ -250,7 +265,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with ident`() = doAvailableTest("""
         fn main() {
             let e = Some(32);
-            match e {/*caret*/
+            /*caret*/match e {
                 a => println!("got {}", a.unwrap()),
                 _ => ()
             }
@@ -267,7 +282,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with tup`() = doAvailableTest("""
         fn main() {
             let e = Some(32);
-            match e {/*caret*/
+            /*caret*/match e {
                 (a) => println!("got {:?}", a),
                 _ => ()
             }
@@ -284,7 +299,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available pattern with tup`() = doAvailableTest("""
         fn main() {
             let e = Some(32);
-            match e {/*caret*/
+            /*caret*/match e {
                 (Some(42)) => println!("got {:?}", a),
                 _ => ()
             }
@@ -301,7 +316,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available pattern with tup 2`() = doAvailableTest("""
         fn main() {
             let e = (42, 50);
-            match e {/*caret*/
+            /*caret*/match e {
                 (a, 50) => println!("got {:?}", a),
                 _ => ()
             }
@@ -318,7 +333,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test unavailable pattern with guard`() = doUnavailableTest("""
         fn main() {
             let e = 42;
-            match e {/*caret*/
+            /*caret*/match e {
                 a if a < 6 => println!("got {}", a),
                 _ => ()
             }
@@ -328,7 +343,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test unavailable pattern with attr`() = doUnavailableTest("""
         fn main() {
             let e = Some(42);
-            match e {/*caret*/
+            /*caret*/match e {
                 #[cold] Some(a) => println!("got {}", a),
                 _ => ()
             }
@@ -338,7 +353,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with slice`() = doAvailableTest("""
         fn main() {
             let x = [1, 2];
-            match x {/*caret*/
+            /*caret*/match x {
                 [f] => println!("42"),
                 _ => {}
             }
@@ -355,7 +370,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with slice 1`() = doAvailableTest("""
         fn main() {
             let x = [1, 2];
-            match x {/*caret*/
+            /*caret*/match x {
                 [..] => println!("42"),
                 _ => {}
             }
@@ -372,7 +387,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with slice 2`() = doAvailableTest("""
         fn main() {
             let x = [1, 2];
-            match x {/*caret*/
+            /*caret*/match x {
                 [f @ ..] => println!("42"),
                 _ => {}
             }
@@ -389,7 +404,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with box`() = doAvailableTest("""
         fn main() {
             let x = box 42;
-            match x {/*caret*/
+            /*caret*/match x {
                 box 42 => println!("42"),
                 _ => {}
             }
@@ -406,7 +421,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with box`() = doAvailableTest("""
         fn main() {
             let x = box 42;
-            match x {/*caret*/
+            /*caret*/match x {
                 box a => println!("42"),
                 _ => {}
             }
@@ -423,7 +438,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with ref`() = doAvailableTest("""
         fn main() {
             let x = &42;
-            match x {/*caret*/
+            /*caret*/match x {
                 &42 => println!("42"),
                 _ => {}
             }
@@ -440,7 +455,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test irrefutable pattern with ref`() = doAvailableTest("""
         fn main() {
             let x = &42;
-            match x {/*caret*/
+            /*caret*/match x {
                 &a => println!("42"),
                 _ => {}
             }
@@ -457,7 +472,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with some`() = doAvailableTest("""
         fn main() {
             let x = Some(42);
-            match x {/*caret*/
+            /*caret*/match x {
                 Some(a) => println!("42"),
                 _ => {}
             }
@@ -474,7 +489,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with none`() = doAvailableTest("""
         fn main() {
             let x = Some(42);
-            match x {/*caret*/
+            /*caret*/match x {
                 None => println!("42"),
                 _ => {}
             }
@@ -491,7 +506,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with ok`() = doAvailableTest("""
         fn main() {
             let x: Result<i32, i32> = Ok(42);
-            match x {/*caret*/
+            /*caret*/match x {
                 Ok(a) => println!("42"),
                 _ => {}
             }
@@ -508,7 +523,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with err`() = doAvailableTest("""
         fn main() {
             let x: Result<i32, i32> = Ok(42);
-            match x {/*caret*/
+            /*caret*/match x {
                 Err(e) => println!("42"),
                 _ => {}
             }
@@ -525,7 +540,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test available with unnecessary parentheses around pattern`() = doAvailableTest("""
         fn main() {
             let x: Result<i32, i32> = Ok(42);
-            match x {/*caret*/
+            /*caret*/match x {
                 (((Err(e)))) => println!("42"),
                 _ => {}
             }
@@ -542,7 +557,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test multiple if let pattern`() = doAvailableTest("""
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
-            match v {/*caret*/
+            /*caret*/match v {
                 V1(x) | V2(x) => {
                     println!("{}", x);
                 }
@@ -561,7 +576,7 @@ class MatchToIfLetIntentionTest : RsIntentionTestBase(MatchToIfLetIntention::cla
     fun `test multiple if let pattern with leading |`() = doAvailableTest("""
         enum V { V1(i32), V2(i32), V3 }
         fn foo(v: V) {
-            match v {/*caret*/
+            /*caret*/match v {
                 | V1(x) | V2(x) => {
                     println!("{}", x);
                 }

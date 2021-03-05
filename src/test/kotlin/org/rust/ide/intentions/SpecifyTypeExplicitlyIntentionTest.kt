@@ -9,6 +9,19 @@ import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
 class SpecifyTypeExplicitlyIntentionTest : RsIntentionTestBase(SpecifyTypeExplicitlyIntention::class) {
+    fun `test availability range 1`() = checkAvailableInSelectionOnly("""
+        fn foo() {
+            <selection>let mut a;</selection>
+            a = 1;
+        }
+    """)
+
+    fun `test availability range 2`() = checkAvailableInSelectionOnly("""
+        fn foo() {
+            <selection>let a =</selection> 1;
+        }
+    """)
+
     fun `test inferred type`() = doAvailableTest(
         """ fn main() { let var/*caret*/ = 42; } """,
         """ fn main() { let var: i32 = 42; } """

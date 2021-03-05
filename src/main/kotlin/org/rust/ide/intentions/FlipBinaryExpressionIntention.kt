@@ -22,6 +22,7 @@ class FlipBinaryExpressionIntention : RsElementBaseIntentionAction<RsBinaryExpr>
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsBinaryExpr? {
         val binaryExpr = element.ancestorStrict<RsBinaryExpr>() ?: return null
+        if (element.parent != binaryExpr.binaryOp) return null
         if (binaryExpr.right == null) return null
         val op = binaryExpr.operator
         val opText = op.text

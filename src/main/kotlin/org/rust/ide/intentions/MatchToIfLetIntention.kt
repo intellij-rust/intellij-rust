@@ -25,6 +25,7 @@ class MatchToIfLetIntention : RsElementBaseIntentionAction<MatchToIfLetIntention
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val matchExpr = element.ancestorStrict<RsMatchExpr>() ?: return null
+        if (element != matchExpr.match) return null
         val matchTarget = matchExpr.expr ?: return null
         val matchBody = matchExpr.matchBody ?: return null
         val matchArmList = matchBody.matchArmList

@@ -6,11 +6,17 @@
 package org.rust.ide.intentions
 
 import org.rust.FileTree
-import org.rust.RsTestBase
 import org.rust.fileTree
 
-class ExtractInlineModuleIntentionTest : RsTestBase() {
+class ExtractInlineModuleIntentionTest : RsIntentionTestBase(ExtractInlineModuleIntention::class) {
     override val dataPath = "org/rust/ide/intentions/fixtures/"
+
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        #[attr]
+        <selection>pub mod foo</selection> {
+            fn bar() {}
+        }
+    """)
 
     fun `test valid extract inline module`() = doTest(
         fileTree {

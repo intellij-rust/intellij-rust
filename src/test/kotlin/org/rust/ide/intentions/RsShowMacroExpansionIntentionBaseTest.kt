@@ -22,6 +22,12 @@ class RsShowMacroExpansionIntentionBaseTest : RsIntentionTestBase(RsShowMacroExp
         super.tearDown()
     }
 
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        <selection>foo!</selection> {
+            bar baz
+        }
+    """)
+
     fun `test that intention is not available outside of the macros`() = doUnavailableTest("""
         foo!();
         /*caret*/foo();

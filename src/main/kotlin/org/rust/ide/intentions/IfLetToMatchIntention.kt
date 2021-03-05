@@ -35,6 +35,13 @@ class IfLetToMatchIntention : RsElementBaseIntentionAction<IfLetToMatchIntention
         //1) Check that we have an if statement
         var ifStatement = element.ancestorStrict<RsIfExpr>() ?: return null
 
+        // if let Some(value) = x {}
+        // ~~~~~~             ~
+        // ^ available here   ^ and here
+        if (element != ifStatement.`if`
+            && element != ifStatement.condition?.let
+            && element != ifStatement.condition?.eq) return null
+
         // We go up in the tree to detect cases like `... else if let Some(value) = x { ... }`
         // and select the correct if statement
 

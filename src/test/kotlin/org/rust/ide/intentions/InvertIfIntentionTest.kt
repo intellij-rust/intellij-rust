@@ -30,6 +30,12 @@ class InvertIfIntentionTest : RsIntentionTestBase(InvertIfIntention::class) {
         }
     """)
 
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        fn foo() {
+            <selection>if</selection> 2 == 2 { Ok(()) } else { Err(()) }
+        }
+    """)
+
     fun `test simple inversion`() = doAvailableTest("""
         fn foo() {
             if/*caret*/ 2 == 2 { Ok(()) } else { Err(()) }

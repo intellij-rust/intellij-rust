@@ -6,10 +6,23 @@
 package org.rust.ide.intentions
 
 class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        fn main() {
+            <selection>if false {</selection>
 
-    fun test1() = doUnavailableTest("""
+            <selection>}</selection>
+        }
+    """)
+
+    fun `test unavailable without if expression`() = doUnavailableTest("""
         fn main() {
             42/*caret*/;
+        }
+    """)
+
+    fun `test unavailable in incomplete if expression`() = doUnavailableTest("""
+        fn main() {
+            if 1 == 2/*caret*/;
         }
     """)
 
@@ -25,8 +38,8 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
 
     fun `test simple`() = doAvailableTest("""
         fn foo(a: i32, b: i32) {
-            if a == b {
-                println!("Equally");/*caret*/
+            if a == b {/*caret*/
+                println!("Equally");
             }
         }
     """, """
@@ -82,16 +95,16 @@ class AddElseIntentionTest : RsIntentionTestBase(AddElseIntention::class) {
             if true {
                 if true {
                     42
-                }
-            } else {/*caret*/}
+                } else {/*caret*/}
+            }
         }
     """)
 
     fun `test reformat`() = doAvailableTest("""
         fn main() {
             if true {
-            /*caret*/
-            }
+
+            }/*caret*/
         }
     """, """
         fn main() {
