@@ -10,7 +10,7 @@ import org.rust.lang.core.psi.ext.QueryAttributes
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.psi.ext.name
-import org.rust.stdext.makeBitMask
+import org.rust.stdext.BitFlagsBuilder
 
 interface RsNamedStub {
     val name: String?
@@ -32,12 +32,11 @@ interface RsAttributeOwnerStub {
     // #[macro_use]
     val mayHaveMacroUse: Boolean
 
-    companion object {
-        val ATTRS_MASK: Int = makeBitMask(0)
-        val CFG_MASK: Int = makeBitMask(1)
-        val CFG_ATTR_MASK: Int = makeBitMask(2)
-        val HAS_MACRO_USE_MASK: Int = makeBitMask(3)
-        const val USED_BITS: Int = 4
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        val ATTRS_MASK: Int = nextBitMask()
+        val CFG_MASK: Int = nextBitMask()
+        val CFG_ATTR_MASK: Int = nextBitMask()
+        val HAS_MACRO_USE_MASK: Int = nextBitMask()
 
         fun extractFlags(element: RsDocAndAttributeOwner): Int =
             extractFlags(element.getTraversedRawAttributes(withCfgAttrAttribute = true))

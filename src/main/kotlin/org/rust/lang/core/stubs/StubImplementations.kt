@@ -35,8 +35,10 @@ import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
+import org.rust.stdext.BitFlagsBuilder
+import org.rust.stdext.BitFlagsBuilder.Limit.BYTE
+import org.rust.stdext.BitFlagsBuilder.Limit.INT
 import org.rust.stdext.HashCode
-import org.rust.stdext.makeBitMask
 import org.rust.stdext.readHashCodeNullable
 import org.rust.stdext.writeHashCodeNullable
 
@@ -120,8 +122,8 @@ class RsFileStub(
 //        }
     }
 
-    companion object {
-        private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val MAY_HAVE_STDLIB_ATTRIBUTES_MASK: Int = nextBitMask()
     }
 }
 
@@ -402,8 +404,8 @@ class RsUseItemStub(
         }
     }
 
-    companion object {
-        private val HAS_PRELUDE_IMPORT_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val HAS_PRELUDE_IMPORT_MASK: Int = nextBitMask()
     }
 }
 
@@ -448,9 +450,9 @@ class RsUseSpeckStub(
         override fun indexStub(stub: RsUseSpeckStub, sink: IndexSink) = sink.indexUseSpeck(stub)
     }
 
-    companion object {
-        private val IS_STAR_IMPORT_MASK: Int = makeBitMask(0)
-        private val HAS_COLON_COLON_MASK: Int = makeBitMask(1)
+    companion object : BitFlagsBuilder(BYTE) {
+        private val IS_STAR_IMPORT_MASK: Int = nextBitMask()
+        private val HAS_COLON_COLON_MASK: Int = nextBitMask()
     }
 }
 
@@ -488,12 +490,11 @@ class RsStructItemStub(
             return RsStructItemStub(parentStub, this, psi.name, flags)
         }
 
-
         override fun indexStub(stub: RsStructItemStub, sink: IndexSink) = sink.indexStructItem(stub)
     }
 
-    companion object {
-        private val IS_UNION_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val IS_UNION_MASK: Int = nextBitMask()
     }
 }
 
@@ -674,9 +675,9 @@ class RsTraitItemStub(
         override fun indexStub(stub: RsTraitItemStub, sink: IndexSink) = sink.indexTraitItem(stub)
     }
 
-    companion object {
-        private val UNSAFE_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val AUTO_MASK: Int =   makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val UNSAFE_MASK: Int = nextBitMask()
+        private val AUTO_MASK: Int = nextBitMask()
     }
 }
 
@@ -710,8 +711,8 @@ class RsImplItemStub(
         override fun indexStub(stub: RsImplItemStub, sink: IndexSink) = sink.indexImplItem(stub)
     }
 
-    companion object {
-        private val NEGATIVE_IMPL_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val NEGATIVE_IMPL_MASK: Int = nextBitMask()
     }
 }
 
@@ -816,15 +817,15 @@ class RsFunctionStub(
         override fun indexStub(stub: RsFunctionStub, sink: IndexSink) = sink.indexFunction(stub)
     }
 
-    companion object {
-        private val ABSTRACT_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val CONST_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
-        private val UNSAFE_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 2)
-        private val EXTERN_MASK: Int =             makeBitMask(RsAttributeOwnerStub.USED_BITS + 3)
-        private val VARIADIC_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 4)
-        private val ASYNC_MASK: Int =              makeBitMask(RsAttributeOwnerStub.USED_BITS + 5)
-        private val HAS_SELF_PARAMETER_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 6)
-        private val IS_PROC_MACRO_DEF: Int =       makeBitMask(RsAttributeOwnerStub.USED_BITS + 7)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, INT) {
+        private val ABSTRACT_MASK: Int = nextBitMask()
+        private val CONST_MASK: Int = nextBitMask()
+        private val UNSAFE_MASK: Int = nextBitMask()
+        private val EXTERN_MASK: Int = nextBitMask()
+        private val VARIADIC_MASK: Int = nextBitMask()
+        private val ASYNC_MASK: Int = nextBitMask()
+        private val HAS_SELF_PARAMETER_MASK: Int = nextBitMask()
+        private val IS_PROC_MACRO_DEF: Int = nextBitMask()
     }
 }
 
@@ -867,9 +868,9 @@ class RsConstantStub(
         override fun indexStub(stub: RsConstantStub, sink: IndexSink) = sink.indexConstant(stub)
     }
 
-    companion object {
-        private val IS_MUT_MASK: Int =   makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val IS_CONST_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val IS_MUT_MASK: Int = nextBitMask()
+        private val IS_CONST_MASK: Int = nextBitMask()
     }
 }
 
@@ -1058,8 +1059,8 @@ class RsTypeParameterStub(
         }
     }
 
-    companion object {
-        private val IS_SIZED_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val IS_SIZED_MASK: Int = nextBitMask()
     }
 }
 
@@ -1154,10 +1155,10 @@ class RsSelfParameterStub(
         }
     }
 
-    companion object {
-        private val IS_MUT_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val IS_REF_MASK: Int =           makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
-        private val IS_EXPLICIT_TYPE_MASK: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 2)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val IS_MUT_MASK: Int = nextBitMask()
+        private val IS_REF_MASK: Int = nextBitMask()
+        private val IS_EXPLICIT_TYPE_MASK: Int = nextBitMask()
     }
 }
 
@@ -1388,9 +1389,9 @@ class RsMacroStub(
         override fun indexStub(stub: RsMacroStub, sink: IndexSink) = sink.indexMacro(stub)
     }
 
-    companion object {
-        private val HAS_MACRO_EXPORT: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 0)
-        private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = makeBitMask(RsAttributeOwnerStub.USED_BITS + 1)
+    companion object : BitFlagsBuilder(RsAttributeOwnerStub, BYTE) {
+        private val HAS_MACRO_EXPORT: Int = nextBitMask()
+        private val HAS_MACRO_EXPORT_LOCAL_INNER_MACROS: Int = nextBitMask()
     }
 }
 
@@ -1672,10 +1673,10 @@ class RsBlockExprStub(
         override fun createPsi(stub: RsBlockExprStub): RsBlockExpr = RsBlockExprImpl(stub, this)
     }
 
-    companion object {
-        private val UNSAFE_MASK: Int = makeBitMask(0)
-        private val ASYNC_MASK: Int = makeBitMask(1)
-        private val TRY_MASK: Int = makeBitMask(2)
+    companion object : BitFlagsBuilder(BYTE) {
+        private val UNSAFE_MASK: Int = nextBitMask()
+        private val ASYNC_MASK: Int = nextBitMask()
+        private val TRY_MASK: Int = nextBitMask()
     }
 }
 

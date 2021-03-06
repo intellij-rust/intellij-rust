@@ -17,8 +17,8 @@ import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.lang.core.stubs.RsModItemStub
 import org.rust.lang.core.stubs.RsNamedStub
 import org.rust.openapiext.fileId
+import org.rust.stdext.BitFlagsBuilder
 import org.rust.stdext.HashCode
-import org.rust.stdext.makeBitMask
 import org.rust.stdext.writeVarInt
 import java.io.DataOutput
 import java.io.DataOutputStream
@@ -191,9 +191,9 @@ private class EnumVariantLight(
         data.writeByte(flags)
     }
 
-    companion object {
-        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = makeBitMask(0)
-        private val HAS_BLOCK_FIELDS: Int = makeBitMask(1)
+    companion object : BitFlagsBuilder(Limit.BYTE) {
+        private val IS_DEEPLY_ENABLED_BY_CFG_MASK: Int = nextBitMask()
+        private val HAS_BLOCK_FIELDS: Int = nextBitMask()
     }
 }
 
