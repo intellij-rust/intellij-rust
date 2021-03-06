@@ -12,16 +12,16 @@ import org.rust.RsTestBase
 
 abstract class RsSelectionHandlerTestBase : RsTestBase() {
     fun doTest(@Language("Rust") before: String, @Language("Rust") vararg after: String) {
-        doTestWithoutMacro(before, after)
+        doTestWithoutMacro(before, *after)
         doTestWithMacro(before, after)
     }
 
-    private fun doTestWithoutMacro(before: String, after: Array<out String>) =
+    fun doTestWithoutMacro(@Language("Rust") before: String, @Language("Rust") vararg after: String) =
         doTestInner(before, after.toList())
 
     private fun doTestWithMacro(before: String, after: Array<out String>) {
         val wrap = fun(s: String) = """
-           macro_rules! foo { ($ i:item) => { $ i } }
+           macro_rules! foo { ($($ t:tt)*) => { $($ t)* } }
            foo! {
            $s
            }

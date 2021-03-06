@@ -244,7 +244,7 @@ fun PsiElement.findExpansionElements(): List<PsiElement>? {
 fun PsiElement.findExpansionElementOrSelf(): PsiElement =
     findExpansionElements()?.singleOrNull() ?: this
 
-private fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
+fun PsiElement.findExpansionElementsNonRecursive(): List<PsiElement>? {
     val call = ancestorStrict<RsMacroArgument>()?.ancestorStrict<RsMacroCall>() ?: return null
     val expansion = call.expansion ?: return null
     val mappedOffsets = mapOffsetFromCallBodyToExpansion(call, expansion, startOffset) ?: return null
@@ -300,6 +300,13 @@ fun RsMacroCall.mapRangeFromExpansionToCallBodyRelaxed(rangeInExpansion: TextRan
     val unitedRanges = mapRangeFromExpansionToCallBodyRelaxedInner(rangeInExpansion) ?: return null
     return unitedRanges.first.takeIf { unitedRanges.second.length == rangeInExpansion.length }
 }
+
+/**
+ * Like [mapRangeFromExpansionToCallBodyRelaxed], but tries to map any subrange of [rangeInExpansion]
+ * from the macro expansion to the macro call body (recursively).
+ */
+fun RsMacroCall.mapAnySubRangeFromExpansionToCallBodyRelaxed(rangeInExpansion: TextRange): TextRange? =
+    mapRangeFromExpansionToCallBodyRelaxedInner(rangeInExpansion)?.first
 
 private fun RsMacroCall.mapRangeFromExpansionToCallBodyRelaxedInner(rangeInExpansion: TextRange): Pair<TextRange, TextRange>? {
     // Well, the implementation can be much simpler, I guess

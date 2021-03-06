@@ -29,9 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.util.ui.ButtonlessScrollBarUI
 import org.rust.ide.highlight.RsHighlighter
-import org.rust.lang.core.macros.findExpansionElements
+import org.rust.lang.core.macros.findExpansionElementsNonRecursive
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
-import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
+import org.rust.lang.core.macros.mapAnySubRangeFromExpansionToCallBodyRelaxed
 import org.rust.lang.core.psi.RsMacroArgument
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.expansion
@@ -48,21 +48,31 @@ class RsMacroCallSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement): Boolean = e.ancestorStrict<RsMacroArgument>() != null
 
     override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
-        val elementInExpansion = e.findExpansionElements()?.firstOrNull() ?: return null
-        val offsetInExpansion = elementInExpansion.startOffset + (cursorOffset - e.startOffset)
-        val macroCall = elementInExpansion.findMacroCallExpandedFromNonRecursive() ?: return null // impossible?
-        val expansion = macroCall.expansion ?: return null // impossible?
-        val expansionText = expansion.file.text
+        if (editor is FakeEditorEx) return null // Avoid recursive run
+        val leaf = e.containingFile.findElementAt(cursorOffset) ?: return null
+        return generateSequence(leaf) { it.findExpansionElementsNonRecursive()?.firstOrNull() }
+            .drop(1) // Skip `leaf`
+            .toList()
+            .asReversed()
+            .flatMap { leafInExpansion ->
+                val target = leafInExpansion.ancestorStrict<RsMacroArgument>() ?: leafInExpansion
+                val offsetInExpansion = leafInExpansion.startOffset
+                val macroCall = leafInExpansion.findMacroCallExpandedFromNonRecursive() ?: return null // impossible?
+                val expansion = macroCall.expansion ?: return null // impossible?
+                val expansionText = expansion.file.text
 
-        // A real EditorImpl can't be created outside of EDT (`select` is called outside of EDT since 2020.3)
-        val expansionEditor = FakeEditorEx(e.project, expansionText, editor)
+                // A real EditorImpl can't be created outside of EDT (`select` is called outside of EDT since 2020.3)
+                val expansionEditor = FakeEditorEx(e.project, expansionText, editor)
 
-        val ranges = mutableListOf<TextRange>()
-        SelectWordUtil.processRanges(elementInExpansion, expansionText, offsetInExpansion, expansionEditor) {
-            ranges.add(it)
-            false // Continue processing (do not believe `Processor`'s docs)
-        }
-        return ranges.mapNotNull { macroCall.mapRangeFromExpansionToCallBodyStrict(it) }
+                val ranges = mutableListOf<TextRange>()
+                SelectWordUtil.processRanges(target, expansionText, offsetInExpansion, expansionEditor) {
+                    if (!it.isEmpty) {
+                        ranges.add(it)
+                    }
+                    false // Continue processing (do not believe `Processor`'s docs)
+                }
+                ranges.mapNotNull { macroCall.mapAnySubRangeFromExpansionToCallBodyRelaxed(it) }
+            }
     }
 }
 
