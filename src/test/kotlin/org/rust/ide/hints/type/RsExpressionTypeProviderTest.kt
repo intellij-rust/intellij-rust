@@ -137,6 +137,33 @@ class RsExpressionTypeProviderTest : RsTestBase() {
         }
     """, "i32, i32, i32")
 
+    fun `test complex expression in macro call constructed from separate tokens 2`() = doTest("""
+        macro_rules! foo {
+            ($($ t:tt)*) => { let a = $($ t)*; };
+        }
+
+        mod foo {
+            struct Bar;
+        }
+
+        fn main() {
+            foo!(/*caret*/foo::Bar);
+        }
+    """, "Bar")
+
+    // To be honest, such behavior is a side-effect of non-strict expansion/source range mapping
+    fun `test complex expression in macro call constructed from separate tokens 3`() = doTest("""
+        #[lang = "add"]
+        pub trait Add<Rhs = Self> { type Output; }
+
+        macro_rules! foo {
+            ($ e1:tt + $ e2:tt + $ e3:tt) => { let a = $ e1+$ e2+$ e3; };
+        }
+        fn foo() {
+            foo!(/*caret*/2 + 2 + 2);
+        }
+    """, "i32, i32, i32")
+
     private fun doTest(@Language("Rust") code: String, type: String) {
         InlineFile(code).withCaret()
 

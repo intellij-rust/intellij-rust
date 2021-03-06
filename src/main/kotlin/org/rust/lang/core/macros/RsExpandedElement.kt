@@ -291,6 +291,29 @@ fun RsMacroCall.mapRangeFromExpansionToCallBodyStrict(range: TextRange): TextRan
     return mapRangeFromExpansionToCallBody(range).singleOrNull()?.takeIf { it.length == range.length }
 }
 
+/**
+ * Separately maps start and end offsets of the [rangeInExpansion] from the macro expansion to
+ * the macro call body (recursively) so that they (start and end offsets) can be mapped through different
+ * fragments (like `$e:expr`). Hence `relaxed`
+ */
+fun RsMacroCall.mapRangeFromExpansionToCallBodyRelaxed(rangeInExpansion: TextRange): TextRange? {
+    val unitedRanges = mapRangeFromExpansionToCallBodyRelaxedInner(rangeInExpansion) ?: return null
+    return unitedRanges.first.takeIf { unitedRanges.second.length == rangeInExpansion.length }
+}
+
+private fun RsMacroCall.mapRangeFromExpansionToCallBodyRelaxedInner(rangeInExpansion: TextRange): Pair<TextRange, TextRange>? {
+    // Well, the implementation can be much simpler, I guess
+    val ranges = mapRangeFromExpansionToCallBody(
+        expansion ?: return null,
+        this,
+        MappedTextRange(rangeInExpansion.startOffset, rangeInExpansion.startOffset, rangeInExpansion.length)
+    )
+    if (ranges.isEmpty()) return null
+    return ranges.asSequence()
+        .map { it.srcRange to it.dstRange }
+        .reduce { (a1, a2), (b1, b2) -> a1.union(b1) to a2.union(b2) }
+}
+
 private fun RsMacroCall.mapRangeFromExpansionToCallBody(range: TextRange): List<TextRange> {
     val expansion = expansion ?: return emptyList()
     return mapRangeFromExpansionToCallBody(expansion, this, range)

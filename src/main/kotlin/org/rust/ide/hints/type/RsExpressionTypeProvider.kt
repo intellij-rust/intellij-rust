@@ -12,7 +12,7 @@ import com.intellij.psi.impl.FakePsiElement
 import org.rust.ide.presentation.render
 import org.rust.lang.core.macros.findExpansionElementOrSelf
 import org.rust.lang.core.macros.findMacroCallExpandedFromNonRecursive
-import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyStrict
+import org.rust.lang.core.macros.mapRangeFromExpansionToCallBodyRelaxed
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsPat
 import org.rust.lang.core.psi.RsPatField
@@ -53,7 +53,7 @@ private fun PsiElement.wrapExpandedElements(): PsiElement? {
     val macroCall = findMacroCallExpandedFromNonRecursive()
     return if (macroCall != null) {
         val rangeInExpansion = textRange
-        val rangeInMacroCall = macroCall.mapRangeFromExpansionToCallBodyStrict(rangeInExpansion)
+        val rangeInMacroCall = macroCall.mapRangeFromExpansionToCallBodyRelaxed(rangeInExpansion)
             ?: return null
         MyFakePsiElement(this, rangeInMacroCall)
     } else {
