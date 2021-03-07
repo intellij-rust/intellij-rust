@@ -4374,4 +4374,23 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
 
         extern "x86-interrupt"/*caret*/ fn extern_fn() {}
     """)
+
+    fun `test edition 2015 keyword as lifetime name`() = checkErrors("""
+        struct Me<<error descr="Lifetimes cannot use keyword names">'type</error>> {
+            name: &<error descr="Lifetimes cannot use keyword names">'type</error> str,
+        }
+    """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test edition 2018 keyword as lifetime name`() = checkErrors("""
+        struct Me<<error descr="Lifetimes cannot use keyword names">'async</error>> {
+            name: &<error descr="Lifetimes cannot use keyword names">'async</error> str,
+        }
+    """)
+
+    fun `test use edition 2018 keyword as lifetime name in the edition 2015`() = checkErrors("""
+        struct Me<'async>  {
+            name: &'async str,
+        }
+    """)
 }

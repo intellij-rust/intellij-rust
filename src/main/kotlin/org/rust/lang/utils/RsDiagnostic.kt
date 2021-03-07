@@ -1431,6 +1431,14 @@ sealed class RsDiagnostic(
             fixes = listOf(EncloseExprInBracesFix(element as RsExpr))
         )
     }
+
+    class IllegalLifetimeName(element: PsiElement) : RsDiagnostic(element) {
+        override fun prepare(): PreparedAnnotation = PreparedAnnotation(
+            ERROR,
+            null,
+            "Lifetimes cannot use keyword names"
+        )
+    }
 }
 
 enum class RsErrorCode {
