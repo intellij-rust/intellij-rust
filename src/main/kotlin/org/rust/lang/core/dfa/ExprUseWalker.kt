@@ -414,6 +414,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                 val type = binding.type
                 val cmt = Cmt(field, Local(binding), MutabilityCategory.from(mutability), type)
                 delegateConsume(field, cmt)
+                delegate.useElement(field, cmt)
             }
         }
 
@@ -432,6 +433,7 @@ class ExprUseWalker(private val delegate: Delegate, private val mc: MemoryCatego
                         val interior = Interior.Field(withCmt, withField.name)
                         val fieldCmt = Cmt(withExpr, interior, withCmt.mutabilityCategory.inherit(), withFieldType)
                         delegateConsume(withExpr, fieldCmt)
+                        delegate.useElement(withExpr, fieldCmt)
                     }
                 }
             }

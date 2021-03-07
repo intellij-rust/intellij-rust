@@ -18,17 +18,27 @@ enum class DeclarationKind { Parameter, Variable }
 
 data class DeadDeclaration(val binding: RsPatBinding, val kind: DeclarationKind)
 
-data class Liveness(val deadDeclarations: List<DeadDeclaration>)
+data class DeadAssignment(val binding: RsPatBinding, val element: RsElement)
+
+data class Liveness(
+    val deadDeclarations: List<DeadDeclaration>,
+    val deadAssignments: List<DeadAssignment>
+)
 
 class LivenessContext private constructor(
     val inference: RsInferenceResult,
     val body: RsBlock,
     val cfg: ControlFlowGraph,
     val implLookup: ImplLookup = ImplLookup.relativeTo(body),
-    private val deadDeclarations: MutableList<DeadDeclaration> = mutableListOf()
+    private val deadDeclarations: MutableList<DeadDeclaration> = mutableListOf(),
+    private val deadAssignments: MutableList<DeadAssignment> = mutableListOf(),
 ) {
     fun reportDeadDeclaration(binding: RsPatBinding, kind: DeclarationKind) {
         deadDeclarations.add(DeadDeclaration(binding, kind))
+    }
+
+    fun reportDeadAssignment(binding: RsPatBinding, element: RsElement) {
+        deadAssignments.add(DeadAssignment(binding, element))
     }
 
     fun check(): Liveness {
@@ -36,7 +46,7 @@ class LivenessContext private constructor(
         val livenessData = gatherLivenessContext.gather()
         val flowedLiveness = FlowedLivenessData.buildFor(this, livenessData, cfg)
         flowedLiveness.check()
-        return Liveness(deadDeclarations)
+        return Liveness(deadDeclarations, deadAssignments)
     }
 
     companion object {
@@ -58,11 +68,29 @@ typealias LivenessDataFlow = DataFlowContext<LiveDataFlowOperator>
 class FlowedLivenessData(
     private val ctx: LivenessContext,
     private val livenessData: LivenessData,
-    private val dfcxLivePaths: LivenessDataFlow
+    private val dfcxLivePaths: LivenessDataFlow,
+    private val dfcxLiveAssignments: LivenessDataFlow,
 ) {
     private fun isDead(usagePath: UsagePath): Boolean {
         var isDead = true
         return dfcxLivePaths.eachBitOnEntry(usagePath.declaration) { index ->
+            val path = livenessData.paths[index]
+            // declaration/assignment of `a`, use of `a`
+            if (usagePath == path) {
+                isDead = false
+            } else {
+                // declaration/assignment of `a`, use of `a.b.c`
+                val isEachExtensionDead = livenessData.eachBasePath(path) { it != usagePath }
+                if (!isEachExtensionDead) isDead = false
+            }
+            isDead
+        }
+    }
+
+    private fun isDeadAssignment(assignment: Assignment): Boolean {
+        val usagePath = assignment.path
+        var isDead = true
+        return dfcxLiveAssignments.eachBitOnEntry(assignment.element) { index ->
             val path = livenessData.paths[index]
             // declaration/assignment of `a`, use of `a`
             if (usagePath == path) {
@@ -82,16 +110,23 @@ class FlowedLivenessData(
                 ctx.reportDeadDeclaration(path.declaration, path.declarationKind)
             }
         }
+        for (assignment in livenessData.assignments) {
+            if (isDeadAssignment(assignment)) {
+                ctx.reportDeadAssignment(assignment.path.declaration, assignment.element)
+            }
+        }
     }
 
     companion object {
         fun buildFor(ctx: LivenessContext, livenessData: LivenessData, cfg: ControlFlowGraph): FlowedLivenessData {
             val dfcxLivePaths = DataFlowContext(cfg, LiveDataFlowOperator, livenessData.paths.size, FlowDirection.Backward)
+            val dfcxLiveAssignments = DataFlowContext(cfg, LiveDataFlowOperator, livenessData.paths.size, FlowDirection.Backward)
 
-            livenessData.addGenKills(dfcxLivePaths)
+            livenessData.addGenKills(dfcxLivePaths, dfcxLiveAssignments)
             dfcxLivePaths.propagate()
+            dfcxLiveAssignments.propagate()
 
-            return FlowedLivenessData(ctx, livenessData, dfcxLivePaths)
+            return FlowedLivenessData(ctx, livenessData, dfcxLivePaths, dfcxLiveAssignments)
         }
     }
 }
@@ -101,9 +136,7 @@ class GatherLivenessContext(
     private val livenessData: LivenessData = LivenessData()
 ) : Delegate {
 
-    override fun consume(element: RsElement, cmt: Cmt, mode: ConsumeMode) {
-        livenessData.addUsage(element, cmt)
-    }
+    override fun consume(element: RsElement, cmt: Cmt, mode: ConsumeMode) {}
 
     override fun matchedPat(pat: RsPat, cmt: Cmt, mode: MatchMode) {}
 
@@ -111,7 +144,6 @@ class GatherLivenessContext(
         pat.descendantsOfType<RsPatBinding>().forEach { binding ->
             livenessData.addDeclaration(binding)
         }
-        livenessData.addUsage(pat, cmt)
     }
 
     override fun declarationWithoutInit(binding: RsPatBinding) {
@@ -119,12 +151,27 @@ class GatherLivenessContext(
     }
 
     override fun mutate(assignmentElement: RsElement, assigneeCmt: Cmt, mode: MutateMode) {
-        if (mode == MutateMode.WriteAndRead) {
-            livenessData.addUsage(assignmentElement, assigneeCmt)
+        val category = assigneeCmt.category
+        if (category is Categorization.Local) {
+            val binding = category.declaration as? RsPatBinding ?: return
+            when (assignmentElement) {
+                is RsBinaryExpr -> livenessData.addAssignment(binding, assignmentElement, false)
+                is RsPatIdent -> {
+                    val letDecl = assignmentElement.ancestorStrict<RsLetDecl>() ?: return
+                    val letDeclPat = letDecl.pat ?: return
+                    if (letDeclPat.isAncestorOf(assignmentElement)) {
+                        livenessData.addAssignment(binding, assignmentElement, true)
+                    }
+                }
+            }
         }
     }
 
     override fun useElement(element: RsElement, cmt: Cmt) {
+        val binaryExpr = element.ancestorStrict<RsBinaryExpr>()
+        if (binaryExpr != null && binaryExpr.left == element && binaryExpr.binaryOp.operatorType is AssignmentOp) {
+            return
+        }
         livenessData.addUsage(element, cmt)
     }
 
@@ -190,18 +237,23 @@ sealed class UsagePath {
     }
 }
 
-data class Usage(val path: UsagePath, val element: RsElement) {
-    override fun toString(): String = "Usage($path)"
-}
-
 data class Declaration(val path: UsagePath.Base, val element: RsElement = path.declaration) {
     override fun toString(): String = "Declaration($path)"
 }
 
+data class Usage(val path: UsagePath, val element: RsElement) {
+    override fun toString(): String = "Usage($path)"
+}
+
+data class Assignment(val path: UsagePath.Base, val element: RsElement, val isInit: Boolean) {
+    override fun toString(): String = "Assignment($path)"
+}
+
 class LivenessData(
-    val usages: MutableSet<Usage> = linkedSetOf(),
-    val declarations: MutableSet<Declaration> = linkedSetOf(),
     val paths: MutableList<UsagePath> = mutableListOf(),
+    val declarations: MutableSet<Declaration> = linkedSetOf(),
+    val usages: MutableSet<Usage> = linkedSetOf(),
+    val assignments: MutableSet<Assignment> = linkedSetOf(),
     private val pathToIndex: MutableMap<UsagePath, Int> = mutableMapOf()
 ) {
     private fun addUsagePath(usagePath: UsagePath) {
@@ -223,15 +275,29 @@ class LivenessData(
         }
     }
 
-    fun addGenKills(dfcxLiveness: LivenessDataFlow) {
+    fun addGenKills(dfcxLivePaths: LivenessDataFlow, dfcxLiveAssignments: LivenessDataFlow) {
         for (usage in usages) {
             val bit = pathToIndex[usage.path] ?: error("No such usage path in pathToIndex")
-            dfcxLiveness.addGen(usage.element, bit)
+            dfcxLivePaths.addGen(usage.element, bit)
+            dfcxLiveAssignments.addGen(usage.element, bit)
+        }
+        for (assignment in assignments) {
+            val bit = pathToIndex[assignment.path] ?: error("No such usage path in pathToIndex")
+            if (!assignment.isInit) {
+                dfcxLivePaths.addGen(assignment.element, bit)
+            }
+            dfcxLiveAssignments.addKill(KillFrom.Execution, assignment.element, bit)
         }
         for (declaration in declarations) {
             val bit = pathToIndex[declaration.path] ?: error("No such declaration path in pathToIndex")
-            dfcxLiveness.addKill(KillFrom.ScopeEnd, declaration.element, bit)
+            dfcxLivePaths.addKill(KillFrom.ScopeEnd, declaration.element, bit)
         }
+    }
+
+    fun addDeclaration(binding: RsPatBinding) {
+        val usagePath = UsagePath.Base(binding)
+        addUsagePath(usagePath)
+        declarations.add(Declaration(usagePath))
     }
 
     fun addUsage(element: RsElement, cmt: Cmt) {
@@ -240,9 +306,12 @@ class LivenessData(
         usages.add(Usage(usagePath, element))
     }
 
-    fun addDeclaration(element: RsPatBinding) {
-        val usagePath = UsagePath.Base(element)
-        addUsagePath(usagePath)
-        declarations.add(Declaration(usagePath))
+    fun addAssignment(binding: RsPatBinding, element: RsElement, isInit: Boolean) {
+        val usagePath = UsagePath.Base(binding)
+        if (isInit) {
+            addUsagePath(usagePath)
+        }
+        if (!pathToIndex.containsKey(usagePath)) return
+        assignments.add(Assignment(usagePath, element, isInit))
     }
 }

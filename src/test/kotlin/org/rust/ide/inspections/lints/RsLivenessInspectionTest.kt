@@ -832,4 +832,70 @@ class RsLivenessInspectionTest : RsInspectionsTestBase(RsLivenessInspection::cla
             #[cfg(not(intellij_rust))] a;
         }
     """)
+
+    fun `test dead assignment`() = checkByText("""
+        fn foo() {
+            let mut a: i32;
+            <warning descr="value assigned to `a` is never read">a = 1</warning>;
+            a = 2;
+            a;
+        }
+    """)
+
+    fun `test dead assignment in declaration`() = checkByText("""
+        fn foo() {
+            let <warning descr="value assigned to `a` is never read">mut a</warning> = 1;
+            a = 2;
+            a;
+        }
+    """)
+
+    fun `test dead assignment in declaration with complex pattern`() = checkByText("""
+        fn foo() {
+            let (<warning descr="value assigned to `a` is never read">mut a</warning>, b) = (1, 1);
+            a = 2;
+            a;
+            b;
+        }
+    """)
+
+    fun `test live assignment 123`() = checkByText("""
+        fn foo() {
+            let mut x = 42;
+            x = bar(x);
+            x;
+        }
+        
+        fn bar(a: i32) -> i32 { a + 1 }
+    """)
+
+    fun `test live assignment user macro call`() = checkByText("""
+        macro_rules! my_macro {
+            ($ e:expr) => ($ e);
+        }
+
+        fn foo() {
+            let x = 42;
+            my_macro!(x);
+        }
+    """)
+
+    fun `test 123`() = checkByText("""
+        struct S { x: i32, y: i32 }
+        
+        fn foo() {
+            let mut s = S { x: 10, y: 20 };
+            s.x = 42;
+            s;
+        }
+    """)
+
+    fun `test upvar`() = checkByText("""
+        fn foo() {
+            let mut x = 42;
+            let _ = || {
+                x = 123;
+            };
+        }
+    """)
 }

@@ -17,10 +17,7 @@ import org.rust.lang.core.dfa.liveness.DeclarationKind
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Parameter
 import org.rust.lang.core.dfa.liveness.DeclarationKind.Variable
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.ancestorStrict
-import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
-import org.rust.lang.core.psi.ext.expansion
-import org.rust.lang.core.psi.ext.topLevelPattern
+import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.liveness
 
 class RsLivenessInspection : RsLintInspection() {
@@ -44,15 +41,26 @@ class RsLivenessInspection : RsLintInspection() {
 
                 val liveness = func.liveness ?: return
 
+                val reported = mutableSetOf<RsPatBinding>()
+
                 for (deadDeclaration in liveness.deadDeclarations) {
-                    val name = deadDeclaration.binding.name ?: continue
+                    val binding = deadDeclaration.binding
+                    val name = binding.name ?: continue
                     if (name.startsWith("_")) continue
-                    registerUnusedProblem(holder, deadDeclaration.binding, name, deadDeclaration.kind)
+                    registerUnusedBindingProblem(holder, binding, name, deadDeclaration.kind)
+                    reported.add(binding)
+                }
+                for (deadAssignment in liveness.deadAssignments) {
+                    val (binding, element) = deadAssignment
+                    val name = binding.name ?: continue
+                    if (name.startsWith("_")) continue
+                    if (binding in reported) continue
+                    registerUnusedAssignmentProblem(holder, element, name)
                 }
             }
         }
 
-    private fun registerUnusedProblem(
+    private fun registerUnusedBindingProblem(
         holder: RsProblemsHolder,
         binding: RsPatBinding,
         name: String,
@@ -84,5 +92,22 @@ class RsLivenessInspection : RsLintInspection() {
         }
 
         holder.registerLintProblem(binding, message, *fixes.toTypedArray())
+    }
+
+    private fun registerUnusedAssignmentProblem(
+        holder: RsProblemsHolder,
+        element: RsElement,
+        name: String,
+    ) {
+        if (!element.isPhysical) return
+
+        if (element.isCfgUnknown) return
+
+        // TODO: remove this check when multi-resolve for `RsOrPat` is implemented
+        if (element.ancestorStrict<RsOrPat>() != null) return
+
+        val message = "value assigned to `$name` is never read"
+        val fixes = mutableListOf<LocalQuickFix>() //TODO: add fixes
+        holder.registerLintProblem(element, message, *fixes.toTypedArray())
     }
 }

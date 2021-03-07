@@ -33,8 +33,12 @@ sealed class Categorization {
     /** Static value */
     object StaticItem : Categorization()
 
-    /** Local variable */
-    data class Local(val declaration: RsElement) : Categorization()
+    /**
+     * Local variable
+     *
+     * [declaration] is either [RsPatBinding] or [RsSelfParameter]
+     */
+    data class Local(val declaration: RsNameIdentifierOwner) : Categorization()
 
     /** Dereference of a pointer */
     data class Deref(val cmt: Cmt, val pointerKind: PointerKind) : Categorization() {
