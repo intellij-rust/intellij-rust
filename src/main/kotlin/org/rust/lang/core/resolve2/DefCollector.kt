@@ -388,6 +388,7 @@ class DeclMacroDefInfo(
     val bodyHash: HashCode,
     val hasMacroExport: Boolean,
     val hasLocalInnerMacros: Boolean,
+    val hasRustcBuiltinMacro: Boolean,
     project: Project,
 ): MacroDefInfo() {
     /** Lazy because usually it should not be used (thanks to macro expansion cache) */

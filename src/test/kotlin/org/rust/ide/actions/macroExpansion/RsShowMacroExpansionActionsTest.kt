@@ -9,7 +9,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import org.intellij.lang.annotations.Language
+import org.rust.MinRustcVersion
+import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.macros.RsExpandedElement
 
 class RsShowMacroExpansionActionsTest : RsTestBase() {
@@ -95,6 +98,19 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     fun `test that single step expansion of macro without body is just its name`() = testMacroExpansionFail("""
         /*caret*/foo!();
     """, expandRecursively = false)
+
+    @MinRustcVersion("1.37.0")
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test recursive expansion does not expand compile_error!()`() = testRecursiveExpansion("""
+        fn foo() {
+            macro_rules! foo {
+                () => { compile_error!(""); }
+            }
+            /*caret*/foo!();
+        }
+    """, """
+        compile_error!("");
+    """)
 
     private fun testNoExpansionHappens(@Language("Rust") code: String) {
         InlineFile(code)
