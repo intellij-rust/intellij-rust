@@ -17,6 +17,7 @@ import org.rust.ide.formatter.blocks.RsMultilineStringLiteralBlock
 import org.rust.lang.core.psi.RS_RAW_LITERALS
 import org.rust.lang.core.psi.RS_STRING_LITERALS
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.tokenSetOf
 
 class RsFormattingModelBuilder : FormattingModelBuilder {
     override fun getRangeAffectingIndent(file: PsiFile?, offset: Int, elementAtOffset: ASTNode?): TextRange? = null
@@ -29,6 +30,13 @@ class RsFormattingModelBuilder : FormattingModelBuilder {
     }
 
     companion object {
+        private val MACRO_COMPOSITE_NODES = tokenSetOf(
+            MACRO_BODY, MACRO_CASE, MACRO_PATTERN, MACRO_PATTERN_CONTENTS, MACRO_BINDING, MACRO_BINDING_GROUP,
+            MACRO_EXPANSION, MACRO_EXPANSION_CONTENTS, MACRO_REFERENCE, MACRO_EXPANSION_REFERENCE_GROUP,
+            MACRO_BINDING_GROUP_SEPARATOR, META_VAR_IDENTIFIER,
+            MACRO_ARGUMENT, MACRO_ARGUMENT_TT
+        )
+
         fun createBlock(
             node: ASTNode,
             alignment: Alignment?,
@@ -38,7 +46,7 @@ class RsFormattingModelBuilder : FormattingModelBuilder {
         ): ASTBlock {
             val type = node.elementType
 
-            if (type == MACRO_BODY || type == MACRO_ARGUMENT) {
+            if (type in MACRO_COMPOSITE_NODES) {
                 return RsMacroArgFmtBlock(node, alignment, indent, wrap, ctx)
             }
 
