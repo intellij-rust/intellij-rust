@@ -80,8 +80,6 @@ FILE
               PsiElement(!)('!')
               RsMacroArgumentImpl(MACRO_ARGUMENT)
                 PsiElement(()('(')
-                RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-                  <empty list>
                 PsiElement())(')')
         PsiElement(;)(';')
       PsiWhiteSpace('\n')

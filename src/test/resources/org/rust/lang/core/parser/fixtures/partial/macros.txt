@@ -5,8 +5,6 @@ FILE
     PsiElement(!)('!')
     RsMacroArgumentImpl(MACRO_ARGUMENT)
       PsiElement(()('(')
-      RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-        <empty list>
       PsiElement())(')')
     PsiErrorElement:`;` expected, got 'fn'
       <empty list>
@@ -30,8 +28,6 @@ FILE
             PsiElement(!)('!')
             RsMacroArgumentImpl(MACRO_ARGUMENT)
               PsiElement(()('(')
-              RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-                <empty list>
               PsiElement())(')')
         PsiErrorElement:'(', ';', <operator> or '[' expected, got 'let'
           <empty list>
@@ -61,9 +57,8 @@ FILE
       PsiWhiteSpace(' ')
       RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
         PsiElement(()('(')
-        RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-          RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
-            PsiElement(identifier)('a')
+        RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
+          PsiElement(identifier)('a')
         PsiErrorElement:')' expected
           <empty list>
       PsiWhiteSpace(' ')
@@ -82,9 +77,8 @@ FILE
         PsiWhiteSpace(' ')
         RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
           PsiElement(()('(')
-          RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-            RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
-              PsiElement(identifier)('a')
+          RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
+            PsiElement(identifier)('a')
           PsiErrorElement:')' expected
             <empty list>
         PsiWhiteSpace(' ')
@@ -103,9 +97,8 @@ FILE
       RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
         PsiElement([)('[')
         PsiWhiteSpace(' ')
-        RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-          RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
-            PsiElement(identifier)('a')
+        RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
+          PsiElement(identifier)('a')
         PsiErrorElement:']' expected
           <empty list>
       PsiWhiteSpace(' ')
@@ -124,9 +117,8 @@ FILE
       RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
         PsiElement({)('{')
         PsiWhiteSpace(' ')
-        RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-          RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
-            PsiElement(identifier)('a')
+        RsMacroBodyIdentImpl(MACRO_BODY_IDENT)
+          PsiElement(identifier)('a')
         PsiErrorElement:'}' expected
           <empty list>
       PsiWhiteSpace(' ')
@@ -147,7 +139,5 @@ FILE
       PsiWhiteSpace(' ')
       RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
         PsiElement(()('(')
-        RsMacroArgumentTTImpl(MACRO_ARGUMENT_TT)
-          <empty list>
         PsiErrorElement:')' expected
           <empty list>
