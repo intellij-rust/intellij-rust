@@ -259,4 +259,17 @@ class RsAutoIndentTest : RsTypingTestBase() {
             /*caret*/
         }
     """)
+
+    // A test for `enterBetweenBracesDelegate` extension point
+    fun `test array literal`() = doTestByText("""
+        fn main() {
+            let _ = [/*caret*/];
+        }
+    """, """
+        fn main() {
+            let _ = [
+                /*caret*/
+            ];
+        }
+    """)
 }
