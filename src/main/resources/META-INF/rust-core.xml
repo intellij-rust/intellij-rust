@@ -266,6 +266,9 @@
         <enterHandlerDelegate implementation="org.rust.ide.typing.RsEnterInStringLiteralHandler"
                               id="RustEnterInStringLiterals"/>
 
+        <enterBetweenBracesDelegate language="Rust"
+                                    implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+
         <typedHandler implementation="org.rust.ide.typing.RsRawLiteralHashesInserter"
                       id="RsRawLiteralHashesInserter"/>
         <typedHandler implementation="org.rust.ide.typing.RsAngleBraceTypedHandler"
