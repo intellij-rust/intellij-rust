@@ -7,6 +7,8 @@ package org.rust.ide.refactoring.move
 
 import org.rust.ExpandMacros
 import org.rust.MockEdition
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.cargo.project.workspace.CargoWorkspace
 
 @MockEdition(CargoWorkspace.Edition.EDITION_2018)
@@ -815,6 +817,8 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    // looks like these two tests always pass,
+    // regardless of actual behaviour in real IDEA
     fun `test remove double newline at end of target file`() = doTest("""
     //- lib.rs
         mod mod1;
@@ -857,6 +861,153 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         fn mod2_func() {}
 
         fn foo() {}
+    """)
+
+    fun `test move doc comments together with items`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            /// comment 1
+            fn foo1/*caret*/() {}
+            /// comment 2
+            struct Foo2/*caret*/ {}
+            /// comment 3
+            impl Foo2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            /// comment 1
+            fn foo1() {}
+
+            /// comment 2
+            struct Foo2 {}
+
+            /// comment 3
+            impl Foo2 {}
+        }
+    """)
+
+    fun `test move usual comments together with items`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            // comment 1
+            fn foo1/*caret*/() {}
+            // comment 2
+            struct Foo2/*caret*/ {}
+            // comment 3
+            impl Foo2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            // comment 1
+            fn foo1() {}
+
+            // comment 2
+            struct Foo2 {}
+
+            // comment 3
+            impl Foo2 {}
+        }
+    """)
+
+    fun `test copy usual imports from old mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use crate::bar;
+            use crate::bar::BarStruct;
+            fn foo/*caret*/() {
+                bar::bar_func();
+                let _ = BarStruct {};
+            }
+        }
+        mod mod2/*target*/ {}
+        mod bar {
+            pub fn bar_func() {}
+            pub struct BarStruct {}
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::bar;
+            use crate::bar::BarStruct;
+        }
+        mod mod2 {
+            use crate::bar;
+            use crate::bar::BarStruct;
+
+            fn foo() {
+                bar::bar_func();
+                let _ = BarStruct {};
+            }
+        }
+        mod bar {
+            pub fn bar_func() {}
+            pub struct BarStruct {}
+        }
+    """)
+
+    // it is idiomatic to import parent mod for functions, and directly import structs/enums
+    // https://doc.rust-lang.org/book/ch07-04-bringing-paths-into-scope-with-the-use-keyword.html#creating-idiomatic-use-paths
+    fun `test add usual imports for items in old mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use inner::Bar4;
+            fn foo/*caret*/() {
+                bar1();
+                let _ = Bar2 {};
+                inner::bar3();
+                let _ = Bar4 {};
+            }
+            pub mod inner {
+                pub fn bar3() {}
+                pub struct Bar4 {}
+            }
+            pub fn bar1() {}
+            pub struct Bar2 {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use inner::Bar4;
+
+            pub mod inner {
+                pub fn bar3() {}
+                pub struct Bar4 {}
+            }
+            pub fn bar1() {}
+            pub struct Bar2 {}
+        }
+        mod mod2 {
+            use crate::mod1;
+            use crate::mod1::{Bar2, inner};
+            use crate::mod1::inner::Bar4;
+
+            fn foo() {
+                mod1::bar1();
+                let _ = Bar2 {};
+                inner::bar3();
+                let _ = Bar4 {};
+            }
+        }
+    """)
+
+    fun `test outside reference to function in old mod when move from crate root`() = doTest("""
+    //- lib.rs
+        fn foo/*caret*/() { bar(); }
+        fn bar() {}
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        fn bar() {}
+        mod mod2 {
+            fn foo() { crate::bar(); }
+        }
     """)
 
     fun `test copy trait imports from old mod`() = doTest("""
@@ -949,6 +1100,94 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         }
     """)
 
+    fun `test outside references which starts with super 1`() = doTest("""
+    //- lib.rs
+        mod inner1 {
+            pub fn inner1_func() {}
+            pub mod inner2 {
+                pub fn inner2_func() {}
+                mod mod1 {
+                    fn foo/*caret*/() {
+                        super::super::inner1_func();
+                        super::inner2_func();
+                    }
+                }
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod inner1 {
+            pub fn inner1_func() {}
+            pub mod inner2 {
+                pub fn inner2_func() {}
+                mod mod1 {}
+            }
+        }
+        mod mod2 {
+            use crate::inner1;
+            use crate::inner1::inner2;
+
+            fn foo() {
+                inner1::inner1_func();
+                inner2::inner2_func();
+            }
+        }
+    """)
+
+    fun `test outside references which starts with super 2`() = doTest("""
+    //- lib.rs
+        mod inner1 {
+            pub fn inner1_func() {}
+            pub mod inner2 {
+                pub fn inner2_func() {}
+                mod mod1 {
+                    fn foo1/*caret*/() {
+                        use super::super::inner1_func;
+                        inner1_func();
+
+                        use super::inner2_func;
+                        inner2_func();
+                    }
+
+                    fn foo2/*caret*/() {
+                        use super::super::*;
+                        inner1_func();
+
+                        use super::*;
+                        inner2_func();
+                    }
+                }
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod inner1 {
+            pub fn inner1_func() {}
+            pub mod inner2 {
+                pub fn inner2_func() {}
+                mod mod1 {}
+            }
+        }
+        mod mod2 {
+            fn foo1() {
+                use crate::inner1::inner1_func;
+                inner1_func();
+
+                use crate::inner1::inner2::inner2_func;
+                inner2_func();
+            }
+
+            fn foo2() {
+                use crate::inner1::*;
+                inner1_func();
+
+                use crate::inner1::inner2::*;
+                inner2_func();
+            }
+        }
+    """)
 
     fun `test outside references to items in new mod`() = doTest("""
     //- lib.rs
@@ -1054,6 +1293,691 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
                     inner1::bar1();
                     inner1::bar2();
                 }
+            }
+        }
+    """)
+
+    fun `test outside reference to static method`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                Bar::func();
+            }
+            pub struct Bar {}
+            impl Bar { pub fn func() {} }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub struct Bar {}
+            impl Bar { pub fn func() {} }
+        }
+        mod mod2 {
+            use crate::mod1::Bar;
+
+            fn foo() {
+                Bar::func();
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test outside reference to items from prelude`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                let _ = String::new();
+                let _ = Some(1);
+                let _ = Vec::<i32>::new();
+                let _: Vec<i32> = Vec::new();
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn foo() {
+                let _ = String::new();
+                let _ = Some(1);
+                let _ = Vec::<i32>::new();
+                let _: Vec<i32> = Vec::new();
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test outside references to macros from prelude`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                println!("foo");
+                let _ = format!("{}", 1);
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn foo() {
+                println!("foo");
+                let _ = format!("{}", 1);
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test outside reference to items from stdlib`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use std::fs;
+            fn foo/*caret*/() {
+                let _ = fs::read_dir(".");
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use std::fs;
+        }
+        mod mod2 {
+            use std::fs;
+
+            fn foo() {
+                let _ = fs::read_dir(".");
+            }
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test outside reference to Arc from stdlib`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            use std::sync::Arc;
+            fn foo/*caret*/(_: Arc<i32>) {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use std::sync::Arc;
+        }
+        mod mod2 {
+            use std::sync::Arc;
+
+            fn foo(_: Arc<i32>) {}
+        }
+    """)
+
+    @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
+    fun `test outside reference to Debug trait in derive`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            #[derive(Debug)]
+            struct Foo/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            #[derive(Debug)]
+            struct Foo {}
+        }
+    """)
+
+    fun `test outside reference inside println macro`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                println!("{}", BAR);
+            }
+            pub const BAR: i32 = 0;
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub const BAR: i32 = 0;
+        }
+        mod mod2 {
+            use crate::mod1::BAR;
+
+            fn foo() {
+                println!("{}", BAR);
+            }
+        }
+    """)
+
+    fun `test outside references, should add import for parent mod when target mod has same name in scope`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                let _ = Bar {};
+            }
+            pub struct Bar {}
+        }
+        mod mod2/*target*/ {
+            struct Bar {}
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            pub struct Bar {}
+        }
+        mod mod2 {
+            use crate::mod1;
+
+            struct Bar {}
+
+            fn foo() {
+                let _ = mod1::Bar {};
+            }
+        }
+    """)
+
+    fun `test self references 1`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo1/*caret*/() { bar1(); }
+            fn foo2/*caret*/() { crate::mod1::bar2(); }
+            fn bar1/*caret*/() {}
+            fn bar2/*caret*/() {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn foo1() { bar1(); }
+
+            fn foo2() { bar2(); }
+
+            fn bar1() {}
+
+            fn bar2() {}
+        }
+    """)
+
+    fun `test self references from inner mod 1`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod foo1/*caret*/ {
+                use crate::mod1;
+                fn test() { mod1::bar1(); }
+            }
+            mod foo2/*caret*/ {
+                use crate::mod1::*;
+                fn test() { bar2(); }
+            }
+            fn bar1/*caret*/() {}
+            fn bar2/*caret*/() {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod foo1 {
+                use crate::{mod1, mod2};
+
+                fn test() { mod2::bar1(); }
+            }
+
+            mod foo2 {
+                use crate::mod1::*;
+                use crate::mod2::bar2;
+
+                fn test() { bar2(); }
+            }
+
+            fn bar1() {}
+
+            fn bar2() {}
+        }
+    """)
+
+    fun `test self references from inner mod 2`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod foo1/*caret*/ {
+                use crate::mod1::Bar1;
+                fn test() { let _ = Bar1 {}; }
+            }
+            mod foo2/*caret*/ {
+                use crate::mod1::*;
+                fn test() { let _ = Bar2 {}; }
+            }
+            struct Bar1/*caret*/ {}
+            struct Bar2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod foo1 {
+                use crate::mod2::Bar1;
+
+                fn test() { let _ = Bar1 {}; }
+            }
+
+            mod foo2 {
+                use crate::mod1::*;
+                use crate::mod2::Bar2;
+
+                fn test() { let _ = Bar2 {}; }
+            }
+
+            struct Bar1 {}
+
+            struct Bar2 {}
+        }
+    """)
+
+    fun `test self references from inner mod using super`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod foo/*caret*/ {
+                mod test {
+                    use super::*;
+                }
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod foo {
+                mod test {
+                    use super::*;
+                }
+            }
+        }
+    """)
+
+    fun `test self references to inner mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod foo1/*caret*/ {
+                pub fn func() {}
+            }
+            fn foo2/*caret*/() { foo1::func(); }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod foo1 {
+                pub fn func() {}
+            }
+
+            fn foo2() { foo1::func(); }
+        }
+    """)
+
+    fun `test inside references from new mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub mod inner1/*caret*/ {
+                pub use inner2::*;
+                mod inner2 { pub fn foo3() {} }
+                pub fn foo2() {}
+            }
+            pub fn foo1/*caret*/() {}
+            pub fn foo4/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            fn bar1() {
+                crate::mod1::foo1();
+                crate::mod1::inner1::foo2();
+                crate::mod1::inner1::foo3();
+            }
+            fn bar2() {
+                use crate::mod1::foo4;
+                foo4();
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            fn bar1() {
+                foo1();
+                inner1::foo2();
+                inner1::foo3();
+            }
+            fn bar2() {
+                foo4();
+            }
+
+            pub mod inner1 {
+                pub use inner2::*;
+
+                mod inner2 { pub fn foo3() {} }
+                pub fn foo2() {}
+            }
+
+            pub fn foo1() {}
+
+            pub fn foo4() {}
+        }
+    """)
+
+    fun `test inside references from child mod of new mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {
+            mod inner1 {
+                fn test() { crate::mod1::foo(); }
+            }
+            mod inner2 {
+                fn test() {
+                    use crate::mod1;
+                    mod1::foo();
+                }
+            }
+            mod inner3 {
+                fn test() {
+                    use crate::mod1::*;
+                    foo();
+                }
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod inner1 {
+                fn test() { crate::mod2::foo(); }
+            }
+            mod inner2 {
+                fn test() {
+                    use crate::{mod1, mod2};
+                    mod2::foo();
+                }
+            }
+            mod inner3 {
+                fn test() {
+                    use crate::mod1::*;
+                    use crate::mod2::foo;
+                    foo();
+                }
+            }
+
+            pub fn foo() {}
+        }
+    """)
+
+    // it is idiomatic to import parent mod for functions, and directly import structs/enums
+    // https://doc.rust-lang.org/book/ch07-04-bringing-paths-into-scope-with-the-use-keyword.html#creating-idiomatic-use-paths
+    fun `test inside references from old mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub struct Foo2/*caret*/ {}
+            pub enum Foo3/*caret*/ { V1 }
+            fn bar() {
+                foo1();
+                let _ = Foo2 {};
+                let _ = Foo3::V1;
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::mod2;
+            use crate::mod2::{Foo2, Foo3};
+
+            fn bar() {
+                mod2::foo1();
+                let _ = Foo2 {};
+                let _ = Foo3::V1;
+            }
+        }
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub struct Foo2 {}
+
+            pub enum Foo3 { V1 }
+        }
+    """)
+
+    fun `test inside references absolute`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub struct Foo2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+
+        mod usage {
+            fn test() {
+                crate::mod1::foo1();
+                let _ = crate::mod1::Foo2 {};
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub struct Foo2 {}
+        }
+
+        mod usage {
+            fn test() {
+                crate::mod2::foo1();
+                let _ = crate::mod2::Foo2 {};
+            }
+        }
+    """)
+
+    fun `test inside references starting with super`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub struct Foo2/*caret*/ {}
+
+            mod usage {
+                fn test() {
+                    super::foo1();
+                    let _ = super::Foo2 {};
+                }
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {
+            mod usage {
+                use crate::mod2;
+                use crate::mod2::Foo2;
+
+                fn test() {
+                    mod2::foo1();
+                    let _ = Foo2 {};
+                }
+            }
+        }
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub struct Foo2 {}
+        }
+    """)
+
+    fun `test inside references, should add fully qualified import`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub struct Foo2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+
+        mod usage {
+            use crate::mod1::foo1;
+            use crate::mod1::Foo2;
+            fn test() {
+                foo1();
+                let _ = Foo2 {};
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub struct Foo2 {}
+        }
+
+        mod usage {
+            use crate::mod2::foo1;
+            use crate::mod2::Foo2;
+
+            fn test() {
+                foo1();
+                let _ = Foo2 {};
+            }
+        }
+    """)
+
+    fun `test inside references, should add import for parent mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo1/*caret*/() {}
+            pub struct Foo2/*caret*/ {}
+        }
+        mod mod2/*target*/ {}
+
+        mod usage {
+            use crate::mod1;
+            fn test() {
+                mod1::foo1();
+                let _ = mod1::Foo2 {};
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo1() {}
+
+            pub struct Foo2 {}
+        }
+
+        mod usage {
+            use crate::{mod1, mod2};
+
+            fn test() {
+                mod2::foo1();
+                let _ = mod2::Foo2 {};
+            }
+        }
+    """)
+
+    fun `test inside references, should add import for grandparent mod`() = doTest("""
+    //- lib.rs
+        mod inner1 {
+            pub mod mod1 {
+                pub fn foo1/*caret*/() {}
+                pub struct Foo2/*caret*/ {}
+            }
+        }
+        mod inner2 {
+            pub mod mod2/*target*/ {}
+        }
+
+        mod usage {
+            use crate::inner1;
+
+            fn test() {
+                inner1::mod1::foo1();
+                let _ = inner1::mod1::Foo2 {};
+            }
+        }
+    """, """
+    //- lib.rs
+        mod inner1 {
+            pub mod mod1 {}
+        }
+        mod inner2 {
+            pub mod mod2 {
+                pub fn foo1() {}
+
+                pub struct Foo2 {}
+            }
+        }
+
+        mod usage {
+            use crate::{inner1, inner2};
+
+            fn test() {
+                inner2::mod2::foo1();
+                let _ = inner2::mod2::Foo2 {};
+            }
+        }
+    """)
+
+    fun `test inside reference when parent of public target mod reexports item from target mod`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {}
+            fn bar() {
+                foo();
+            }
+        }
+        mod inner {
+            // can't use this reexport for foo
+            pub use mod2::bar;
+            pub mod mod2/*target*/ {
+                pub fn bar() {}
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {
+            use crate::inner::mod2;
+
+            fn bar() {
+                mod2::foo();
+            }
+        }
+        mod inner {
+            // can't use this reexport for foo
+            pub use mod2::bar;
+
+            pub mod mod2 {
+                pub fn bar() {}
+
+                pub fn foo() {}
+            }
+        }
+    """)
+
+    fun `test inside reference when parent of private target mod reexports item from target mod`() = doTestConflictsError("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {}
+            fn bar() {
+                foo();
+            }
+        }
+        mod inner {
+            pub use mod2::bar;  // can't use this reexport for foo
+            mod mod2/*target*/ {
+                pub fn bar() {}
             }
         }
     """)
@@ -1576,5 +2500,111 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
         mod mod2 {
             fn foo() {}
         }
+    """)
+
+    fun `test move to other crate 1`() = doTest("""
+    //- main.rs
+        mod mod1 {
+            pub fn foo/*caret*/() {}
+            fn bar() {
+                foo();
+            }
+        }
+    //- lib.rs
+        pub mod mod2/*target*/ {}
+    """, """
+    //- main.rs
+        mod mod1 {
+            use test_package::mod2;
+
+            fn bar() {
+                mod2::foo();
+            }
+        }
+    //- lib.rs
+        pub mod mod2 {
+            pub fn foo() {}
+        }
+    """)
+
+    fun `test move to other crate 2`() = doTest("""
+    //- lib.rs
+        pub mod mod1 {
+            fn foo/*caret*/() {
+                bar();
+            }
+            pub fn bar() {}
+        }
+    //- main.rs
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        pub mod mod1 {
+            pub fn bar() {}
+        }
+    //- main.rs
+        mod mod2 {
+            use test_package::mod1;
+
+            fn foo() {
+                mod1::bar();
+            }
+        }
+    """)
+
+    fun `test absolute reference to library crate when move from library to binary`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                crate::bar();
+            }
+        }
+        pub fn bar() {}
+    //- main.rs
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        pub fn bar() {}
+    //- main.rs
+        mod mod2 {
+            fn foo() {
+                test_package::bar();
+            }
+        }
+    """)
+
+    fun `test absolute reference to library crate when move from binary to library`() = doTest("""
+    //- main.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                test_package::bar();
+            }
+        }
+    //- lib.rs
+        mod mod2/*target*/ {}
+        pub fn bar() {}
+    """, """
+    //- main.rs
+        mod mod1 {}
+    //- lib.rs
+        mod mod2 {
+            fn foo() {
+                crate::bar();
+            }
+        }
+        pub fn bar() {}
+    """)
+
+    fun `test absolute reference to binary crate when move from binary to library`() = doTestConflictsError("""
+    //- main.rs
+        mod mod1 {
+            fn foo/*caret*/() {
+                crate::bar();
+            }
+        }
+        pub fn bar() {}
+    //- lib.rs
+        mod mod2/*target*/ {}
     """)
 }
