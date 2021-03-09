@@ -19,6 +19,13 @@ class SplitIfIntentionTest : RsIntentionTestBase(SplitIfIntention::class) {
         }
     """)
 
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        fn foo() {
+            if true <selection>&&</selection> false {}
+            if true <selection>&&</selection> false <selection>&&</selection> true {}
+        }
+    """)
+
     fun `test simple &&`() = doAvailableTest("""
         fn main() {
             if true &/*caret*/& false {

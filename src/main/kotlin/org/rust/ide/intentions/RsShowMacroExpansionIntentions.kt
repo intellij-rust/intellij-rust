@@ -16,14 +16,18 @@ import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.isAncestorOf
 
 abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
     RsElementBaseIntentionAction<RsMacroCall>() {
 
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? =
-        element.ancestorOrSelf()
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? {
+        val macroCall = element.ancestorOrSelf<RsMacroCall>() ?: return null
+        if (!macroCall.path.isAncestorOf(element) && element != macroCall.excl) return null
+        return macroCall
+    }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
         val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)

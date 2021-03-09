@@ -14,14 +14,18 @@ import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.getOrCreateModuleFile
+import org.rust.lang.core.psi.ext.isAncestorOf
 
 //TODO: make context more precise here
 class ExtractInlineModuleIntention : RsElementBaseIntentionAction<RsModItem>() {
     override fun getFamilyName() = "Extract inline module structure"
     override fun getText() = "Extract inline module"
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? =
-        element.ancestorOrSelf()
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsModItem? {
+        val mod = element.ancestorOrSelf<RsModItem>() ?: return null
+        if (element != mod.mod && element != mod.identifier && mod.vis?.isAncestorOf(element) != true) return null
+        return mod
+    }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsModItem) {
         val modName = ctx.name ?: return

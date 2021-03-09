@@ -29,7 +29,7 @@ class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>(
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val binExpr = element.ancestorStrict<RsBinaryExpr>() ?: return null
         if (binExpr.operatorType !is LogicOp) return null
-
+        if (element.parent != binExpr.binaryOp) return null
         val condition = binExpr.findCondition() ?: return null
         return Context(binExpr.binaryOp, condition)
     }

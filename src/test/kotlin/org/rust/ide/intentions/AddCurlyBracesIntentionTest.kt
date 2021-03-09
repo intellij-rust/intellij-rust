@@ -50,4 +50,8 @@ class AddCurlyBracesIntentionTest : RsIntentionTestBase(AddCurlyBracesIntention:
         "use std::/*caret*/;",
         "use std::{/*caret*/};"
     )
+
+    fun `test not available if already has braces`() = doUnavailableTest("""
+        use foo::{bar/*caret*/};
+    """)
 }

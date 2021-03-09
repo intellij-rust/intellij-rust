@@ -11,6 +11,8 @@ import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.RsIfExpr
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.endOffset
+import org.rust.lang.core.psi.ext.startOffset
 
 class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
     override fun getText() = "Add else branch to this if statement"
@@ -18,7 +20,10 @@ class AddElseIntention : RsElementBaseIntentionAction<RsIfExpr>() {
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsIfExpr? {
         val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return null
-        return if (ifExpr.elseBranch == null) ifExpr else null
+        if (ifExpr.elseBranch != null) return null
+        val block = ifExpr.block ?: return null
+        if (element.startOffset >= block.lbrace.endOffset && element != block.rbrace) return null
+        return ifExpr
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: RsIfExpr) {

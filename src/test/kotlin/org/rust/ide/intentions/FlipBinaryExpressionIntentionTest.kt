@@ -8,6 +8,11 @@ package org.rust.ide.intentions
 import org.rust.lang.core.psi.RsElementTypes.*
 
 class FlipBinaryExpressionIntentionTest : RsIntentionTestBase(FlipBinaryExpressionIntention::class) {
+    fun `test availability range`() = checkAvailableInSelectionOnly("""
+        fn test(x: i32, y: i32) {
+            x <selection><</selection> y;
+        }
+    """)
 
     fun `test all available operators`() {
         val operators = FlipBinaryExpressionIntention.COMMUNICATIVE_OPERATORS +

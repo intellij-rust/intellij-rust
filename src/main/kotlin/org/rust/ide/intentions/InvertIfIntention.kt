@@ -23,6 +23,7 @@ class InvertIfIntention : RsElementBaseIntentionAction<InvertIfIntention.Context
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val ifExpr = element.ancestorStrict<RsIfExpr>() ?: return null
+        if (element != ifExpr.`if`) return null
         val condition = getSuitableCondition(ifExpr) ?: return null
         val thenBlock = ifExpr.block ?: return null
         val elseBlock = ifExpr.elseBranch?.block ?: return null
