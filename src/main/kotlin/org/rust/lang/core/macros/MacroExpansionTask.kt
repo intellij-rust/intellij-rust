@@ -424,7 +424,10 @@ object ExpansionPipeline {
                 return EmptyPipeline // old expansion is up-to-date
             }
 
-            val expansion = MacroExpansionSharedCache.getInstance().cachedExpand(expander, def, call)
+            val callData = RsMacroCallData.fromPsi(call)
+            val mixHash = def.mixHash(RsMacroCallDataWithHash(callData, call.bodyHash))
+                ?: return nextStageFail(callHash, defHash)
+            val expansion = MacroExpansionSharedCache.getInstance().cachedExpand(expander, def.data, callData, mixHash)
             if (expansion == null) {
                 MACRO_LOG.debug("Failed to expand macro: `${call.path.referenceName.orEmpty()}!(${call.macroBody})`")
                 return nextStageFail(callHash, defHash)
@@ -444,11 +447,11 @@ object ExpansionPipeline {
                 if (expansionBytes.contentEquals(oldExpansionBytes)) {
                     // Expansion text isn't changed, but [callHash] or [defHash] or [ranges]
                     // are changed and should be updated
-                    return Stage2OkRangesOnly(info, callHash, defHash, oldExpansionFile, ranges, expansionBytesHash)
+                    return Stage2OkRangesOnly(info, callHash, defHash, mixHash, oldExpansionFile, ranges, expansionBytesHash)
                 }
             }
 
-            return Stage2Ok(info, callHash, defHash, expansionBytes, ranges, expansionBytesHash)
+            return Stage2Ok(info, callHash, defHash, mixHash, expansionBytes, ranges, expansionBytesHash)
         }
 
         private fun nextStageFail(callHash: HashCode?, defHash: HashCode?): Pipeline.Stage2WriteToFs =
@@ -462,6 +465,7 @@ object ExpansionPipeline {
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
+        private val mixHash: HashCode,
         private val expansionBytes: ByteArray,
         private val ranges: RangeMap,
         private val expansionBytesHash: Long
@@ -474,7 +478,7 @@ object ExpansionPipeline {
             } else {
                 batch.createFileWithContent(expansionBytes, stepNumber)
             }
-            return Stage3(info, callHash, defHash, file, ranges, expansionBytesHash)
+            return Stage3(info, callHash, defHash, mixHash, file, ranges, expansionBytesHash)
         }
     }
 
@@ -482,13 +486,14 @@ object ExpansionPipeline {
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
+        private val mixHash: HashCode,
         private val oldExpansionFile: VirtualFile,
         private val ranges: RangeMap,
         private val expansionBytesHash: Long
     ) : Pipeline.Stage2WriteToFs {
         override fun writeExpansionToFs(batch: MacroExpansionVfsBatch, stepNumber: Int): Pipeline.Stage3SaveToStorage {
             val file = batch.resolve(oldExpansionFile)
-            return Stage3(info, callHash, defHash, file, ranges, expansionBytesHash)
+            return Stage3(info, callHash, defHash, mixHash, file, ranges, expansionBytesHash)
         }
     }
 
@@ -502,7 +507,7 @@ object ExpansionPipeline {
             if (oldExpansionFile != null && oldExpansionFile.isValid) {
                 batch.deleteFile(oldExpansionFile)
             }
-            return Stage3(info, callHash, defHash, null, null, 0)
+            return Stage3(info, callHash, defHash, null, null, null, 0)
         }
     }
 
@@ -510,6 +515,7 @@ object ExpansionPipeline {
         private val info: ExpandedMacroInfo,
         private val callHash: HashCode?,
         private val defHash: HashCode?,
+        private val mixHash: HashCode?,
         private val expansionFile: MacroExpansionVfsBatch.Path?,
         private val ranges: RangeMap?,
         private val expansionBytesHash: Long
@@ -519,7 +525,7 @@ object ExpansionPipeline {
             val virtualFile = expansionFile?.toVirtualFile()
                 // Optimization: skip charset guessing in `VirtualFileImpl.contentToByteArray()`
                 ?.also { it.setCharset(Charsets.UTF_8, null, false) }
-            storage.addExpandedMacro(info, callHash, defHash, virtualFile, ranges, expansionBytesHash)
+            storage.addExpandedMacro(info, callHash, defHash, mixHash, virtualFile, ranges, expansionBytesHash)
             // If a document exists for expansion file (e.g. when AST tree is loaded), the changes in
             // a virtual file will not be committed to the PSI immediately. We have to commit it manually
             // to see the changes (or somehow wait for DocumentCommitThread, but it isn't possible for now)

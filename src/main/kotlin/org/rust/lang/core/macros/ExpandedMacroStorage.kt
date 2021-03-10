@@ -132,6 +132,7 @@ class ExpandedMacroStorage(val project: Project) {
         oldInfo: ExpandedMacroInfo,
         callHash: HashCode?,
         defHash: HashCode?,
+        mixHash: HashCode?,
         expansionFile: VirtualFile?,
         ranges: RangeMap?,
         expansionTextHash: Long
@@ -167,8 +168,8 @@ class ExpandedMacroStorage(val project: Project) {
             newInfo.expansionFile.writeRangeMap(ranges)
         }
 
-        if (newInfo.expansionFile != null && defHash != null && callHash != null) {
-            newInfo.expansionFile.writeMixHash(HashCode.mix(defHash, callHash))
+        if (newInfo.expansionFile != null && mixHash != null) {
+            newInfo.expansionFile.writeMixHash(mixHash)
         }
 
         return newInfo
