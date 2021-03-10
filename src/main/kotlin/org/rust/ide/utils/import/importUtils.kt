@@ -89,6 +89,10 @@ private fun RsMod.insertExternCrateItem(psiFactory: RsPsiFactory, crateName: Str
 
 fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, usePath: String) {
     val useItem = psiFactory.createUseItem(usePath)
+    insertUseItem(psiFactory, useItem)
+}
+
+fun RsItemsOwner.insertUseItem(psiFactory: RsPsiFactory, useItem: RsUseItem) {
     if (tryGroupWithOtherUseItems(psiFactory, useItem)) return
     val anchor = childrenOfType<RsUseItem>().lastElement ?: childrenOfType<RsExternCrateItem>().lastElement
     if (anchor != null) {

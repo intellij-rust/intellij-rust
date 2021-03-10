@@ -220,9 +220,11 @@ class RsPsiFactory(
     fun tryCreateModDeclItem(modName: String): RsModDeclItem? =
         createFromText("mod $modName;")
 
-    fun createUseItem(text: String, visibility: String = ""): RsUseItem =
-        createFromText("$visibility use $text;")
+    fun createUseItem(text: String, visibility: String = "", alias: String? = null): RsUseItem {
+        val aliasText = if (!alias.isNullOrEmpty()) " as $alias" else ""
+        return createFromText("$visibility use $text$aliasText;")
             ?: error("Failed to create use item from text: `$text`")
+    }
 
     fun createUseSpeck(text: String): RsUseSpeck =
         createFromText("use $text;")
