@@ -23,7 +23,6 @@ import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABL
 import org.rust.lang.core.macros.decl.*
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
-import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.stdext.HashCode
@@ -133,13 +132,7 @@ class MacroExpansionSharedCache : Disposable {
         MACRO_LOG.warn(e)
     }
 
-    fun <T : RsMacroData> cachedExpand(expander: MacroExpander<T, *>, def: RsMacroDataWithHash<T>, call: RsMacroCall): ExpansionResult? {
-        val callData = RsMacroCallData.fromPsi(call)
-        val hash = def.mixHash(RsMacroCallDataWithHash(callData, call.bodyHash)) ?: return null
-        return cachedExpand(expander, def.data, callData, hash)
-    }
-
-    private fun <T : RsMacroData> cachedExpand(
+    fun <T : RsMacroData> cachedExpand(
         expander: MacroExpander<T, *>,
         def: T,
         call: RsMacroCallData,
