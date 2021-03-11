@@ -14,6 +14,7 @@ import com.intellij.xdebugger.settings.DebuggerSettingsCategory
 import com.intellij.xdebugger.settings.XDebuggerSettings
 import org.rust.debugger.GDBRenderers
 import org.rust.debugger.LLDBRenderers
+import org.rust.debugger.RsDebuggerToolchainService
 
 class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
@@ -67,7 +68,11 @@ class RsDebuggerSettings : XDebuggerSettings<RsDebuggerSettings>("Rust") {
 
     private val needToShowToolchainSettings: Boolean
         get() {
-            return !PlatformUtils.isCLion()
+            // CLion has own Toolchain settings
+            if (PlatformUtils.isCLion()) return false
+            val status = RsDebuggerToolchainService.getInstance().getBundledLLDBStatus()
+            // If there is bundled LLDB, no need to show this toolchain settings
+            return status !is RsDebuggerToolchainService.LLDBStatus.Binaries
         }
 
     companion object {
