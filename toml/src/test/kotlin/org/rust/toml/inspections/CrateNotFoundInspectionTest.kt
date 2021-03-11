@@ -11,7 +11,6 @@ import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.inspections.RsInspectionsTestBase
 import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.toml.crates.local.CargoRegistryCrate
-import org.rust.toml.crates.local.CargoRegistryCrateVersion
 import org.rust.toml.crates.local.withMockedCrates
 
 class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspection::class) {
@@ -37,7 +36,7 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
     fun `test existing crate in dependencies`() = doTest("""
         [dependencies]
         foo = "1"
-    """, crate("foo", "1"))
+    """, "foo" to CargoRegistryCrate.of("1"))
 
     fun `test multiple missing crates`() = doTest("""
         [dependencies]
@@ -46,13 +45,16 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
         <warning descr="Crate foo2 not found">foo2</warning> = "2"
         bar = "1"
         <warning descr="Crate bar1 not found">bar1</warning> = "1"
-    """, crate("foo", "1"), crate("bar", "1"))
+    """,
+        "foo" to CargoRegistryCrate.of("1"),
+        "bar" to CargoRegistryCrate.of("1")
+    )
 
     fun `test dependency inline table`() = doTest("""
         [dependencies]
         <warning descr="Crate foo1 not found">foo1</warning> = { version = "1" }
         foo = { version = "1" }
-    """, crate("foo", "1"))
+    """, "foo" to CargoRegistryCrate.of("1"))
 
     fun `test do not check dependencies with local, custom, git property`() = doTest("""
         [dependencies]
@@ -75,19 +77,11 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
         registry = "foo"
     """)
 
-    private fun crate(name: String, vararg versions: String): Crate =
-        Crate(name, CargoRegistryCrate(versions.toList().map {
-            CargoRegistryCrateVersion(it, false, listOf())
-        }))
-
-    private data class Crate(val name: String, val crate: CargoRegistryCrate)
-
-    private fun doTest(@Language("TOML") code: String, vararg crates: Crate) {
-        val crateMap = crates.toList().associate { it.name to it.crate }
+    private fun doTest(@Language("TOML") code: String, vararg crates: Pair<String, CargoRegistryCrate>) {
         myFixture.configureByText(MANIFEST_FILE, code)
 
         runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
-            withMockedCrates(crateMap) {
+            withMockedCrates(crates.toMap()) {
                 myFixture.checkHighlighting()
             }
         }

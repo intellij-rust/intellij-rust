@@ -46,7 +46,7 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
                 (-crateName.length).toDouble()
             )
         }
-        result.withPrefixMatcher(CargoNormalizedNamesPrefixMatcher(prefix)).addAllElements(elements)
+        result.withPrefixMatcher(CargoDependenciesPrefixMatcher(prefix)).addAllElements(elements)
     }
 
     override fun completeValue(keyValue: TomlKeyValue, result: CompletionResultSet) {
