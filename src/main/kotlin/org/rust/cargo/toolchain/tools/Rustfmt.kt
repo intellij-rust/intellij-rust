@@ -11,7 +11,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapiext.isUnitTestMode
-import com.intellij.util.text.SemVer
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -54,7 +53,7 @@ class Rustfmt(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
             }
 
             val currentRustcVersion = cargoProject.rustcInfo?.version?.semver
-            if (currentRustcVersion != null && currentRustcVersion >= RUST_1_31) {
+            if (currentRustcVersion != null) {
                 val edition = runReadAction {
                     val psiFile = file.toPsiFile(cargoProject.project)
                     psiFile?.edition ?: CargoWorkspace.Edition.EDITION_2018
@@ -84,8 +83,6 @@ class Rustfmt(toolchain: RsToolchain) : RustupComponent(NAME, toolchain) {
 
     companion object {
         const val NAME: String = "rustfmt"
-
-        private val RUST_1_31: SemVer = SemVer.parseFromText("1.31.0")!!
 
         private val CONFIG_FILES: List<String> = listOf("rustfmt.toml", ".rustfmt.toml")
 
