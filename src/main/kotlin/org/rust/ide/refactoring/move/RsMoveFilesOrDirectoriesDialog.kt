@@ -119,14 +119,14 @@ class RsMoveFilesOrDirectoriesDialog(
     }
 }
 
-private fun PsiDirectory.getOwningMod(crateRoot: RsMod): RsMod? {
+fun PsiDirectory.getOwningMod(crateRoot: RsMod?): RsMod? {
     // TODO: if crateRoot is binary crate (main.rs) and directory is root (src/)
     //  Should we return binary crate or library crate (lib.rs)?
-    if (crateRoot.getOwnedDirectory() == this) return crateRoot
+    if (crateRoot != null && crateRoot.getOwnedDirectory() == this) return crateRoot
 
     val mod = getOwningModAtDefaultLocation()
-        ?: getOwningModWalkingFromCrateRoot(crateRoot)
-        ?: crateRoot.cargoWorkspace?.let { getOwningModWalkingFromAllCrateRoots(it) }
+        ?: crateRoot?.let { getOwningModWalkingFromCrateRoot(it) }
+        ?: crateRoot?.cargoWorkspace?.let { getOwningModWalkingFromAllCrateRoots(it) }
         ?: return null
 
     return if (mod.getOwnedDirectory() == this) {

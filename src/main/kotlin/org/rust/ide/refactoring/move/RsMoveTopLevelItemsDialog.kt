@@ -5,11 +5,14 @@
 
 package org.rust.ide.refactoring.move
 
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.*
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.refactoring.RefactoringBundle.message
 import com.intellij.refactoring.ui.RefactoringDialog
@@ -21,14 +24,17 @@ import com.intellij.ui.layout.panel
 import com.intellij.util.IncorrectOperationException
 import org.apache.commons.lang.StringEscapeUtils
 import org.rust.ide.docs.signature
+import org.rust.lang.RsConstants
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsItemElement
 import org.rust.lang.core.psi.ext.RsMod
 import org.rust.openapiext.pathToRsFileTextField
+import org.rust.openapiext.runWriteCommandAction
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.mapToSet
+import org.rust.stdext.toPath
 import java.awt.Dimension
-import java.io.File
+import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -124,29 +130,65 @@ class RsMoveTopLevelItemsDialog(
             .mapToSet { it.member }
 
     public override fun doAction() {
+        // we want that file creation is undo together with actual move
+        CommandProcessor.getInstance().executeCommand(
+            project,
+            { doActionUndoCommand() },
+            message("move.title"),
+            null
+        )
+    }
+
+    private fun doActionUndoCommand() {
         val itemsToMove = getSelectedItems()
-        val targetFilePath = targetFileChooser.text
-
-        val targetMod = findTargetMod(targetFilePath)
-        if (targetMod == null) {
-            val message = "Target file must be a Rust file"
-            CommonRefactoringUtil.showErrorMessage(message("error.title"), message, null, project)
-            return
-        }
-
+        val targetFilePath = targetFileChooser.text.toPath()
+        val targetMod = getOrCreateTargetMod(targetFilePath) ?: return
         try {
             val processor = RsMoveTopLevelItemsProcessor(project, itemsToMove, targetMod, searchForReferences)
             invokeRefactoring(processor)
-        } catch (e: IncorrectOperationException) {
+        } catch (e: Exception) {
             if (isUnitTestMode) throw e
-            CommonRefactoringUtil.showErrorMessage(message("error.title"), e.message, null, project)
+            if (e !is IncorrectOperationException) {
+                Logger.getInstance(RsMoveTopLevelItemsDialog::class.java).error(e)
+            }
+            showErrorMessage(e.message)
         }
     }
 
-    private fun findTargetMod(targetFilePath: String): RsMod? {
-        if (isUnitTestMode) return sourceMod.containingFile.getUserData(MOVE_TARGET_MOD_KEY)
-        val targetFile = LocalFileSystem.getInstance().findFileByIoFile(File(targetFilePath))
-        return targetFile?.toPsiFile(project) as? RsMod
+    private fun getOrCreateTargetMod(targetFilePath: Path): RsMod? {
+        if (isUnitTestMode) {
+            val sourceFile = sourceMod.containingFile
+            return sourceFile.getUserData(MOVE_TARGET_MOD_KEY)
+                ?: doGetOrCreateTargetMod(sourceFile.getUserData(MOVE_TARGET_FILE_PATH_KEY)!!)!!
+        }
+        return doGetOrCreateTargetMod(targetFilePath)
+    }
+
+    private fun doGetOrCreateTargetMod(targetFilePath: Path): RsMod? {
+        val targetFile = LocalFileSystem.getInstance().findFileByNioFile(targetFilePath)
+        return if (targetFile != null) {
+            targetFile.toPsiFile(project) as? RsMod
+                ?: run {
+                    showErrorMessage("Target file must be a Rust file")
+                    null
+                }
+        } else {
+            try {
+                createNewRustFile(targetFilePath, project, sourceMod.crateRoot, this)
+                    ?: run {
+                        showErrorMessage("Can't create new Rust file or attach it to module tree")
+                        null
+                    }
+            } catch (e: Exception) {
+                showErrorMessage("Error during creating new Rust file: ${e.message}")
+                null
+            }
+        }
+    }
+
+    private fun showErrorMessage(message: String?) {
+        val title = message("error.title")
+        CommonRefactoringUtil.showErrorMessage(title, message, null, project)
     }
 }
 
@@ -196,3 +238,59 @@ class RsMoveItemAndImplsInfo(
 }
 
 val MOVE_TARGET_MOD_KEY: Key<RsMod> = Key("RS_MOVE_TARGET_MOD_KEY")
+val MOVE_TARGET_FILE_PATH_KEY: Key<Path> = Key("RS_MOVE_TARGET_FILE_PATH_KEY")
+
+/** Creates new rust file and attaches it to parent mod */
+private fun createNewRustFile(filePath: Path, project: Project, crateRoot: RsMod?, requestor: Any?): RsFile? {
+    return project.runWriteCommandAction {
+        val fileSystem = (crateRoot as? RsFile)?.virtualFile?.fileSystem ?: LocalFileSystem.getInstance()
+        createNewFile(filePath, fileSystem, requestor) { virtualFile ->
+            val file = virtualFile.toPsiFile(project)?.rustFile ?: return@createNewFile null
+            if (!attachFileToParentMod(file, project, crateRoot)) return@createNewFile null
+            file
+        }
+    }
+}
+
+/** Finds parent mod of [file] and adds mod declaration to it */
+private fun attachFileToParentMod(file: RsFile, project: Project, crateRoot: RsMod?): Boolean {
+    val (parentModOwningDirectory, modName) = if (file.name == RsConstants.MOD_RS_FILE) {
+        file.parent?.parent to file.parent?.name
+    } else {
+        file.parent to FileUtil.getNameWithoutExtension(file.name)
+    }
+    val parentMod = parentModOwningDirectory?.getOwningMod(crateRoot)
+    if (parentMod == null || modName == null) return false
+    val psiFactory = RsPsiFactory(project)
+    parentMod.insertModDecl(psiFactory, psiFactory.createModDeclItem(modName))
+    return true
+}
+
+/**
+ * Creates new file (along with parent directories).
+ * Then computes [action] on created [VirtualFile].
+ * If [action] returns `null`, then rollbacks any changes, that is deletes created file and directories.
+ */
+private fun <T> createNewFile(
+    filePath: Path,
+    // needed for correct work in tests
+    fileSystem: VirtualFileSystem,
+    requestor: Any?,
+    action: (VirtualFile) -> T?
+): T? {
+    val directoryPath = filePath.parent
+    val directoriesToCreate = generateSequence(directoryPath) { it.parent }
+        .takeWhile { fileSystem.findFileByPath(it.toString()) == null }
+        .toList()
+
+    val parentDirectory = VfsUtil.createDirectoryIfMissing(fileSystem, directoryPath.toString()) ?: return null
+    val file = parentDirectory.createChildData(requestor, filePath.fileName.toString())
+    action(file)?.let { return it }
+
+    // else we need to delete created file and directories
+    file.delete(null)
+    for (directory in directoriesToCreate) {
+        fileSystem.findFileByPath(directory.toString())?.delete(requestor)
+    }
+    return null
+}

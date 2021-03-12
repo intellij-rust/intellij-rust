@@ -2687,4 +2687,52 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
             }
         }
     """)
+
+    fun `test move create file 1`() = doTestCreateFile("foo.rs", """
+    //- lib.rs
+        fn func/*caret*/() {}
+    """, """
+    //- lib.rs
+        mod foo;
+    //- foo.rs
+        fn func() {}
+    """)
+
+    fun `test move create file 2`() = doTestCreateFile("foo/mod.rs", """
+    //- lib.rs
+        fn func/*caret*/() {}
+    """, """
+    //- lib.rs
+        mod foo;
+    //- foo/mod.rs
+        fn func() {}
+    """)
+
+    fun `test move create file 3`() = doTestCreateFile("inner/foo.rs", """
+    //- lib.rs
+        mod inner;
+        fn func/*caret*/() {}
+    //- inner.rs
+    """, """
+    //- lib.rs
+        mod inner;
+    //- inner.rs
+        mod foo;
+    //- inner/foo.rs
+        fn func() {}
+    """)
+
+    fun `test move create file 4`() = doTestCreateFile("inner/foo/mod.rs", """
+    //- lib.rs
+        mod inner;
+        fn func/*caret*/() {}
+    //- inner.rs
+    """, """
+    //- lib.rs
+        mod inner;
+    //- inner.rs
+        mod foo;
+    //- inner/foo/mod.rs
+        fn func() {}
+    """)
 }

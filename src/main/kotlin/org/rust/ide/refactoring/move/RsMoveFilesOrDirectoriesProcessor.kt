@@ -115,7 +115,7 @@ class RsMoveFilesOrDirectoriesProcessor(
     }
 }
 
-private fun RsMod.insertModDecl(psiFactory: RsPsiFactory, modDecl: PsiElement) {
+fun RsMod.insertModDecl(psiFactory: RsPsiFactory, modDecl: PsiElement) {
     val anchor = childrenOfType<RsModDeclItem>().lastElement ?: childrenOfType<RsUseItem>().lastElement
     if (anchor != null) {
         addAfter(modDecl, anchor)
