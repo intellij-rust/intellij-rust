@@ -57,6 +57,14 @@ class RemoveElementFixTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         }
     """, checkWeakWarn = true)
 
+    fun `test remove colon colon in array size expr`() = checkFixIsUnavailable("Remove `::`", """
+        use std::mem::size_of;
+
+        fn main() {
+            let b: &[u8; size_of::/*caret*/<i32>()];
+        }
+    """, checkWeakWarn = true)
+
     fun `test derive on function`() = checkFixByText("Remove attribute `derive`","""
         <error descr="`derive` may only be applied to structs, enums and unions">#[derive(Debug)]</error>
         fn foo() { }

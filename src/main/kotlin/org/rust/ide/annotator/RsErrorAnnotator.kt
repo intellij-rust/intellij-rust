@@ -872,10 +872,17 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         // So we have to use low level ASTNode API to avoid code duplication
         val coloncolon = args.node.findChildByType(RsElementTypes.COLONCOLON)?.psi ?: return
         // `::` is redundant only in types
-        if (PsiTreeUtil.getParentOfType(args, RsTypeReference::class.java, RsTraitRef::class.java) == null) return
+        if (!isTypePart(args)) return
         val annotation = holder.newWeakWarningAnnotation(coloncolon, "Redundant `::`", RemoveElementFix(coloncolon))
             ?: return
         annotation.highlightType(ProblemHighlightType.LIKE_UNUSED_SYMBOL).create()
+    }
+
+    private fun isTypePart(args: RsElement): Boolean {
+        val ancestor = args.ancestors.firstOrNull {
+            PsiTreeUtil.instanceOf(it, RsTypeReference::class.java, RsTraitRef::class.java, RsExpr::class.java)
+        }
+        return ancestor != null && ancestor !is RsExpr
     }
 
     private fun checkValueArgumentList(holder: RsAnnotationHolder, args: RsValueArgumentList) {
