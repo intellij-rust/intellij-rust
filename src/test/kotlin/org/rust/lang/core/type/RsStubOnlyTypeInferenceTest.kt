@@ -255,4 +255,31 @@ class RsStubOnlyTypeInferenceTest : RsTypificationTestBase() {
         impl <const N2: usize> foo::T<{ N2 }> for foo::S {}
                                        //^ usize
     """)
+
+    fun `test const generic rendering order`() = stubOnlyTypeInfer("""
+    //- foo.rs
+        #![feature(const_generics)]
+
+        pub struct S<
+            'a,
+            'b,
+            'c,
+            const A: usize,
+            R,
+            const B: usize,
+            T,
+            const C: usize,
+            U=u32
+        >(&'a [R; A], &'b [T; B], &'c [U; C]);
+
+    //- mod.rs
+        mod foo;
+
+        fn main() {
+            let s = foo::S(&[1i32], &[2u32], &[3u32]);
+            s;
+          //^ S<1, i32, 1, u32, 1, u32>
+        }
+
+    """)
 }

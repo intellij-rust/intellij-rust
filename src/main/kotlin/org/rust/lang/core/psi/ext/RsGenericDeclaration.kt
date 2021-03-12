@@ -12,6 +12,9 @@ interface RsGenericDeclaration : RsElement {
     val whereClause: RsWhereClause?
 }
 
+val RsGenericDeclaration.genericParameters: List<RsGenericParameter>
+    get() = typeParameterList?.genericParameterList.orEmpty()
+
 val RsGenericDeclaration.typeParameters: List<RsTypeParameter>
     get() = typeParameterList?.typeParameterList.orEmpty()
 
