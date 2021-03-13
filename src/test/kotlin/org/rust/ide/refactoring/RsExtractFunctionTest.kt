@@ -1176,6 +1176,52 @@ class RsExtractFunctionTest : RsTestBase() {
         false,
         "foo")
 
+    fun `test extract a function with unset default type parameters and const parameters`() = doTest("""
+        #![feature(const_generics)]
+
+        struct S<
+            'a,
+            'b,
+            'c,
+            const A: usize,
+            R,
+            const B: usize,
+            T=u32, // it's not allowed
+            const C: usize,
+            U=u32
+        >(&'a [R; A], &'b [T; B], &'c [U; C]);
+
+        fn main() {
+            let s = S(&[1u32], &[2i32], &[3u32]);
+            <selection>s</selection>;
+        }
+    """, """
+        #![feature(const_generics)]
+
+        struct S<
+            'a,
+            'b,
+            'c,
+            const A: usize,
+            R,
+            const B: usize,
+            T=u32, // it's not allowed
+            const C: usize,
+            U=u32
+        >(&'a [R; A], &'b [T; B], &'c [U; C]);
+
+        fn main() {
+            let s = S(&[1u32], &[2i32], &[3u32]);
+            foo(s);
+        }
+
+        fn foo(s: S<1, u32, 1, i32, 1>) -> S<1, u32, 1, i32, 1> {
+            s
+        }
+    """,
+        false,
+        "foo")
+
     fun `test extract set value to mutable`() = doTest("""
         fn main() {
             let a = 1u32;

@@ -7,9 +7,13 @@ package org.rust.ide.presentation
 
 import org.rust.ide.utils.import.ImportCandidatesCollector.findImportCandidate
 import org.rust.ide.utils.import.ImportContext
+import org.rust.lang.core.psi.RsConstParameter
+import org.rust.lang.core.psi.RsLifetimeParameter
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.psi.RsTypeParameter
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.BoundElement
+import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.consts.Const
 import org.rust.lang.core.types.consts.CtConstParameter
 import org.rust.lang.core.types.consts.CtUnknown
@@ -164,7 +168,7 @@ private data class TypeRenderer(
                     append(formatBoundElement(ty.aliasedBy, render))
                 } else {
                     append(getName(ty.item) ?: return anonymous)
-                    if (includeTypeArguments) append(formatGenerics(ty, render))
+                    if (includeTypeArguments) append(formatAdtGenerics(ty, render))
                 }
             }
             is TyInfer -> when (ty) {
@@ -215,22 +219,9 @@ private data class TypeRenderer(
         }
     }
 
-    private fun formatGenerics(adt: TyAdt, render: (Ty) -> String): String {
-        val typeArguments = adt.typeArguments
-
-        val typeArgumentNames = if (skipUnchangedDefaultTypeArguments) {
-            adt.item.typeParameters
-                .zip(typeArguments)
-                .dropLastWhile { (param, argument) -> param.typeReference?.type == argument }
-                .map { (_, argument) -> render(argument) }
-        } else {
-            typeArguments.map(render)
-        }
-
-        val regionArgumentNames = if (includeLifetimeArguments) adt.regionArguments.map { render(it) } else emptyList()
-        val constArgumentNames = adt.constArguments.map { render(it, wrapParameterInBraces = true) }
-        val generics = regionArgumentNames + typeArgumentNames + constArgumentNames
-        return if (generics.isEmpty()) "" else generics.joinToString(", ", "<", ">")
+    private fun formatAdtGenerics(adt: TyAdt, render: (Ty) -> String): String {
+        val visibleTypes = formatGenerics(adt.item, adt.typeParameterValues, render)
+        return if (visibleTypes.isEmpty()) "" else visibleTypes.joinToString(", ", "<", ">")
     }
 
     private fun formatTraitGenerics(
@@ -266,15 +257,36 @@ private data class TypeRenderer(
     private fun formatBoundElementGenerics(
         boundElement: BoundElement<RsGenericDeclaration>,
         render: (Ty) -> String
+    ): List<String> = formatGenerics(boundElement.element, boundElement.subst, render)
+
+    private fun formatGenerics(
+        declaration: RsGenericDeclaration,
+        subst: Substitution,
+        render: (Ty) -> String
     ): List<String> {
-        val tySubst = boundElement.element.typeParameters.map { render(boundElement.subst[it] ?: TyUnknown) }
-        val regionSubst = if (includeLifetimeArguments) {
-            boundElement.element.lifetimeParameters.map { render(boundElement.subst[it] ?: ReUnknown) }
-        } else {
-            emptyList()
+        val renderedList = mutableListOf<String>()
+        var nonDefaultParamFound = false
+        for (parameter in declaration.genericParameters.asReversed()) {
+            if (skipUnchangedDefaultTypeArguments && !nonDefaultParamFound) {
+                if (parameter is RsTypeParameter &&
+                    parameter.typeReference != null &&
+                    parameter.typeReference?.type == subst[parameter]) {
+                    continue
+                } else {
+                    nonDefaultParamFound = true
+                }
+            }
+
+            val rendered = when (parameter) {
+                is RsLifetimeParameter -> if (includeLifetimeArguments) render(subst[parameter] ?: ReUnknown) else continue
+                is RsTypeParameter -> render(subst[parameter] ?: TyUnknown)
+                is RsConstParameter -> render(subst[parameter] ?: CtUnknown, wrapParameterInBraces = true)
+                else -> error("unreachable")
+            }
+            renderedList.add(rendered)
         }
-        val constSubst = boundElement.element.constParameters.map { render(boundElement.subst[it] ?: CtUnknown) }
-        return regionSubst + tySubst + constSubst
+        renderedList.reverse()
+        return renderedList
     }
 
     private fun getName(element: RsNamedElement): String? =
