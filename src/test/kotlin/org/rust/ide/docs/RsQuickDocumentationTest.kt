@@ -121,6 +121,14 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         fn <b>foo</b>&lt;T&gt;(t: T)<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,</pre></div>
     """)
 
+    fun `test generic fn with const generic`() = doTest("""
+        fn foo<'a, const N: usize, T>(x: &'a [T; N]) {}
+          //^
+    """, """
+        <div class='definition'><pre>test_package
+        fn <b>foo</b>&lt;&#39;a, const N: usize, T&gt;(x: &amp;&#39;a [T; N])</pre></div>
+    """)
+
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test complex fn`() = doTest("""
         /// Docs
@@ -192,6 +200,14 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
     """, """
         <div class='definition'><pre>test_package<br>impl&lt;T, F&gt; <a href="psi_element://Foo">Foo</a>&lt;T, F&gt;<br>where<br>&nbsp;&nbsp;&nbsp;&nbsp;T: <a href="psi_element://Ord">Ord</a>,<br>&nbsp;&nbsp;&nbsp;&nbsp;F: <a href="psi_element://Into">Into</a>&lt;<a href="psi_element://String">String</a>&gt;,
         pub fn <b>foo</b>(&amp;self)</pre></div>
+    """)
+
+    fun `test generic struct with const generic`() = doTest("""
+        struct Foo<'a, T, const N: usize>(&'a [T; N]);
+              //^
+    """, """
+        <div class='definition'><pre>test_package
+        struct <b>Foo</b>&lt;&#39;a, T, const N: usize&gt;</pre></div>
     """)
 
     fun `test different comments`() = doTest("""
@@ -1245,7 +1261,6 @@ class RsQuickDocumentationTest : RsDocumentationProviderTest() {
         fn <b>foo</b>()</pre></div>
         <div class='content'><p>Some docs</p></div>
     """)
-
 
     private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?)
         = doTest(code, expected, block = RsDocumentationProvider::generateDoc)
