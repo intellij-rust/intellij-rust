@@ -49,10 +49,28 @@ class RsMoveLeftRightHandlerTest : RsTestBase() {
         fn foo<'b, 'a/*caret*/>(p1: &'a str, p2: &'b str) {}
     """)
 
-    fun `test lifetime and type parameters`() = doMoveRightTest("""
-        fn foo<'a/*caret*/, T>(p1: &'a str, p2: T) {}
+    fun `test const parameters`() = doRightLeftTest("""
+        fn foo<const C1/*caret*/: i32, const C2: usize>() {}
     """, """
-        fn foo<T, 'a/*caret*/>(p1: &'a str, p2: T) {}
+        fn foo<const C2: usize, const C1/*caret*/: i32>() {}
+    """)
+
+    fun `test generic parameters 1`() = doMoveRightTest("""
+        fn foo<'a/*caret*/, T, const C: usize>(p1: &'a str, p2: T, p3: [T; C]) {}
+    """, """
+        fn foo<T, 'a/*caret*/, const C: usize>(p1: &'a str, p2: T, p3: [T; C]) {}
+    """)
+
+    fun `test generic parameters 2`() = doMoveRightTest("""
+        fn foo<T, 'a/*caret*/, const C: usize>(p1: &'a str, p2: T, p3: [T; C]) {}
+    """, """
+        fn foo<T, const C: usize, 'a/*caret*/>(p1: &'a str, p2: T, p3: [T; C]) {}
+    """)
+
+    fun `test generic parameters 3`() = doMoveRightTest("""
+        fn foo<'a, T/*caret*/, const C: usize>(p1: &'a str, p2: T, p3: [T; C]) {}
+    """, """
+        fn foo<'a, const C: usize, T/*caret*/>(p1: &'a str, p2: T, p3: [T; C]) {}
     """)
 
     fun `test type param bounds`() = doRightLeftTest("""
