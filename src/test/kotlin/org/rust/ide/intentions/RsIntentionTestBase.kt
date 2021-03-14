@@ -38,8 +38,12 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
     private fun checkFileExists(path: Path): String = getResourceAsString(path.toString())
         ?: error("No ${path.fileName} found for $intentionClass ($path)")
 
-    protected fun doAvailableTest(@Language("Rust") before: String, @Language("Rust") after: String) {
-        InlineFile(before.trimIndent()).withCaret()
+    protected fun doAvailableTest(
+        @Language("Rust") before: String,
+        @Language("Rust") after: String,
+        fileName: String = "main.rs"
+    ) {
+        InlineFile(before.trimIndent(), fileName).withCaret()
         launchAction()
         myFixture.checkResult(replaceCaretMarker(after.trimIndent()))
     }
@@ -74,8 +78,8 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         testmark: Testmark
     ) = testmark.checkHit { doAvailableTest(before, after) }
 
-    protected fun doUnavailableTest(@Language("Rust") before: String) {
-        InlineFile(before).withCaret()
+    protected fun doUnavailableTest(@Language("Rust") before: String, fileName: String = "main.rs") {
+        InlineFile(before, fileName).withCaret()
         val intention = findIntention()
         check(intention == null) {
             "\"${intentionClass.simpleName}\" should not be available"
@@ -89,8 +93,8 @@ abstract class RsIntentionTestBase(private val intentionClass: KClass<out Intent
         }
     }
 
-    protected fun checkAvailableInSelectionOnly(@Language("Rust") code: String) {
-        InlineFile(code.replace("<selection>", "<selection><caret>"))
+    protected fun checkAvailableInSelectionOnly(@Language("Rust") code: String, fileName: String = "main.rs") {
+        InlineFile(code.replace("<selection>", "<selection><caret>"), fileName)
         val selections = myFixture.editor.selectionModel.let { model ->
             model.blockSelectionStarts.zip(model.blockSelectionEnds)
                 .map { TextRange(it.first, it.second + 1) }
