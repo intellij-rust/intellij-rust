@@ -1233,11 +1233,141 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     """)
 
+    fun `test default type params 1`() = doTest("""
+        struct S<T = i32>(T);
+        trait Foo {
+            fn foo() -> S;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo() -> S", byDefault = true)
+    ), """
+        struct S<T = i32>(T);
+        trait Foo {
+            fn foo() -> S;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo() -> S {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test default type params 2`() = doTest("""
+        struct S<T = i32>(T);
+        trait Foo {
+            fn foo() -> S<u64>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo() -> S<u64>", byDefault = true)
+    ), """
+        struct S<T = i32>(T);
+        trait Foo {
+            fn foo() -> S<u64>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo() -> S<u64> {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test default type params 3`() = doTest("""
+        mod m {
+            pub struct Q;
+        }
+        struct S<T = m::Q>(T);
+        trait Foo {
+            fn foo() -> S;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo() -> S", byDefault = true)
+    ), """
+        mod m {
+            pub struct Q;
+        }
+        struct S<T = m::Q>(T);
+        trait Foo {
+            fn foo() -> S;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo() -> S {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test default type params 4`() = doTest("""
+        struct S<T1 = i32, T2 = i32, T3 = i32>(T1, T2, T3);
+        trait Foo {
+            fn foo() -> S<i32, u32, i32>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo() -> S<i32, u32, i32>", byDefault = true)
+    ), """
+        struct S<T1 = i32, T2 = i32, T3 = i32>(T1, T2, T3);
+        trait Foo {
+            fn foo() -> S<i32, u32, i32>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo() -> S<i32, u32> {
+                unimplemented!()
+            }
+        }
+    """)
+
+    fun `test default type params for type alias`() = doTest("""
+        struct S<T = i32>(T);
+        type A<T = u32> = S<T>;
+        trait Foo {
+            fn foo(_: A<i32>) -> A<u32>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            /*caret*/
+        }
+    """, listOf(
+        ImplementMemberSelection("foo(_: A<i32>) -> A<u32>", byDefault = true)
+    ), """
+        struct S<T = i32>(T);
+        type A<T = u32> = S<T>;
+        trait Foo {
+            fn foo(_: A<i32>) -> A<u32>;
+        }
+        struct Bar;
+        impl Foo for Bar {
+            fn foo(_: A<i32>) -> A {
+                unimplemented!()
+            }
+        }
+    """)
+
     private data class ImplementMemberSelection(val member: String, val byDefault: Boolean, val isSelected: Boolean = byDefault)
 
-    private fun doTest(@Language("Rust") code: String,
-                       chooser: List<ImplementMemberSelection>,
-                       @Language("Rust") expected: String) {
+    private fun doTest(
+        @Language("Rust") code: String,
+        chooser: List<ImplementMemberSelection>,
+        @Language("Rust") expected: String
+    ) {
 
         checkByText(code.trimIndent(), expected.trimIndent()) {
             withMockTraitMemberChooser({ _, all, selectedByDefault ->
@@ -1250,7 +1380,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         }
     }
 
-    private fun extractSelected(all: List<RsTraitMemberChooserMember>, chooser: List<ImplementMemberSelection>): List<RsTraitMemberChooserMember> {
+    private fun extractSelected(
+        all: List<RsTraitMemberChooserMember>,
+        chooser: List<ImplementMemberSelection>
+    ): List<RsTraitMemberChooserMember> {
         val selected = chooser.filter { it.isSelected }.map { it.member }
         return all.filter { selected.contains(it.formattedText()) }
     }

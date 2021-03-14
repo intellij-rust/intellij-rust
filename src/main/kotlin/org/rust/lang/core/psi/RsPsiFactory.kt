@@ -8,8 +8,8 @@ package org.rust.lang.core.psi
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.util.LocalTimeCounter
-import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.ide.presentation.renderInsertionSafe
+import org.rust.ide.utils.checkMatch.Pattern
 import org.rust.lang.RsFileType
 import org.rust.lang.RsLanguage
 import org.rust.lang.core.macros.MacroExpansionContext
@@ -537,7 +537,11 @@ class RsPsiFactory(
 private fun String.iff(cond: Boolean) = if (cond) "$this " else " "
 
 fun RsTypeReference.substAndGetText(subst: Substitution): String =
-    type.substitute(subst).renderInsertionSafe(includeLifetimeArguments = true, useAliasNames = true)
+    type.substitute(subst).renderInsertionSafe(
+        includeLifetimeArguments = true,
+        useAliasNames = true,
+        skipUnchangedDefaultTypeArguments = true
+    )
 
 private fun mutsToRefs(mutability: List<Mutability>): String =
     mutability.joinToString("", "", "") {
