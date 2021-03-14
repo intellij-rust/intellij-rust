@@ -428,7 +428,7 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
         }
         is RsTypeArgumentList -> (lifetimeList + typeReferenceList + assocTypeBindingList)
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
-        is RsTypeParameterList -> (lifetimeParameterList + typeParameterList)
+        is RsTypeParameterList -> genericParameterList
             .joinToWithBuffer(buffer, ", ", "&lt;", "&gt;") { generateDocumentation(it) }
         is RsValueParameterList -> (listOfNotNull(selfParameter) + valueParameterList + listOfNotNull(variadic))
             .joinToWithBuffer(buffer, ", ", "(", ")") { generateDocumentation(it) }
@@ -440,6 +440,11 @@ private fun PsiElement.generateDocumentation(buffer: StringBuilder, prefix: Stri
             buffer += name
             typeParamBounds?.generateDocumentation(buffer)
             typeReference?.generateDocumentation(buffer, " = ")
+        }
+        is RsConstParameter -> {
+            buffer += "const "
+            buffer += name
+            typeReference?.generateDocumentation(buffer, ": ")
         }
         is RsValueParameter -> {
             pat?.generateDocumentation(buffer, suffix = ": ")
@@ -509,7 +514,9 @@ private fun generateTypeReferenceDocumentation(element: RsTypeReference, buffer:
             typeElement.typeReference?.generateDocumentation(buffer)
             if (!typeElement.isSlice) {
                 buffer += "; "
-                buffer.append(typeElement.arraySize ?: "<unknown>")
+                // Try to render raw text of expression when array size cannot be inferred.
+                // It may be useful when array size is defined with const generic
+                buffer.append(typeElement.arraySize ?: typeElement.expr?.text?.escaped ?: "<unknown>")
             }
             buffer += "]"
         }
