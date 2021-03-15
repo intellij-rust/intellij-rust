@@ -77,6 +77,24 @@ class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspectio
         registry = "foo"
     """)
 
+    fun `test renamed package inline`() = doTest("""
+        [dependencies]
+        foo1 = { version = "1", package = "foo" }
+        foo2 = { version = "1", package = <warning descr="Crate bar not found">"bar"</warning> }
+    """,
+        "foo" to CargoRegistryCrate.of("1"),
+    )
+
+    fun `test renamed package table`() = doTest("""
+        [dependencies.foo1]
+        package = "foo"
+
+        [dependencies.foo2]
+        package = <warning descr="Crate bar not found">"bar"</warning>
+    """,
+        "foo" to CargoRegistryCrate.of("1"),
+    )
+
     private fun doTest(@Language("TOML") code: String, vararg crates: Pair<String, CargoRegistryCrate>) {
         myFixture.configureByText(MANIFEST_FILE, code)
 
