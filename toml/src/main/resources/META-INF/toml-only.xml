@@ -37,6 +37,11 @@
             <category>Rust/Cargo.toml</category>
         </intentionAction>
 
+        <intentionAction>
+            <className>org.rust.toml.intentions.ExtractDependencySpecificationIntention</className>
+            <category>Rust/Cargo.toml</category>
+        </intentionAction>
+
         <applicationService serviceInterface="org.rust.toml.crates.local.CratesLocalIndexService"
                             serviceImplementation="org.rust.toml.crates.local.CratesLocalIndexServiceImpl"
                             testServiceImplementation="org.rust.toml.crates.local.TestCratesLocalIndexServiceImpl"/>
