@@ -15,8 +15,6 @@ import org.rust.ide.icons.RsIcons
 import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
 import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
-import org.toml.lang.psi.ext.TomlLiteralKind
-import org.toml.lang.psi.ext.kind
 
 class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
@@ -81,10 +79,4 @@ private val TomlKeyValue.version: String?
             is TomlInlineTable -> value.entries.find { it.name == "version" }?.value?.stringValue
             else -> null
         }
-    }
-
-private val TomlValue.stringValue: String?
-    get() {
-        val kind = (this as? TomlLiteral)?.kind
-        return (kind as? TomlLiteralKind.String)?.value
     }

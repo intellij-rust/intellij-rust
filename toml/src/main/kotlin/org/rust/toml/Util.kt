@@ -24,6 +24,8 @@ import org.rust.lang.core.psi.ext.findCargoPackage
 import org.rust.lang.core.psi.ext.isAncestorOf
 import org.rust.openapiext.toPsiFile
 import org.toml.lang.psi.*
+import org.toml.lang.psi.ext.TomlLiteralKind
+import org.toml.lang.psi.ext.kind
 import kotlin.reflect.KProperty
 
 
@@ -180,4 +182,10 @@ val TomlValue.containingDependencyKey: TomlKeySegment?
             // foo = { ... }
             (parentParent.parent as? TomlKeyValue)?.key?.segments?.singleOrNull()
         }
+    }
+
+val TomlValue.stringValue: String?
+    get() {
+        val kind = (this as? TomlLiteral)?.kind
+        return (kind as? TomlLiteralKind.String)?.value
     }

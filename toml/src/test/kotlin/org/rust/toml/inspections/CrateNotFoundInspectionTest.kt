@@ -5,15 +5,8 @@
 
 package org.rust.toml.inspections
 
-import org.intellij.lang.annotations.Language
-import org.rust.cargo.CargoConstants.MANIFEST_FILE
-import org.rust.ide.experiments.RsExperiments
-import org.rust.ide.inspections.RsInspectionsTestBase
-import org.rust.openapiext.runWithEnabledFeatures
 import org.rust.toml.crates.local.CargoRegistryCrate
-import org.rust.toml.crates.local.withMockedCrates
 
-class CrateNotFoundInspectionTest : RsInspectionsTestBase(CrateNotFoundInspection::class) {
 class CrateNotFoundInspectionTest : CargoTomlCrateInspectionTestBase(CrateNotFoundInspection::class) {
     fun `test missing crate in dependencies`() = doTest("""
         [dependencies]
@@ -95,14 +88,4 @@ class CrateNotFoundInspectionTest : CargoTomlCrateInspectionTestBase(CrateNotFou
     """,
         "foo" to CargoRegistryCrate.of("1"),
     )
-
-    private fun doTest(@Language("TOML") code: String, vararg crates: Pair<String, CargoRegistryCrate>) {
-        myFixture.configureByText(MANIFEST_FILE, code)
-
-        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
-            withMockedCrates(crates.toMap()) {
-                myFixture.checkHighlighting()
-            }
-        }
-    }
 }

@@ -6,7 +6,6 @@
 package org.rust.toml.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.psi.PsiElementVisitor
 import org.rust.toml.isFeatureListHeader
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -21,7 +20,7 @@ import org.toml.lang.psi.ext.kind
  * ```
  */
 class CargoTomlCyclicFeatureInspection : CargoTomlInspectionToolBase() {
-    override fun buildCargoTomlVisitor(holder: ProblemsHolder): PsiElementVisitor {
+    override fun buildCargoTomlVisitor(holder: ProblemsHolder): TomlVisitor {
         return object : TomlVisitor() {
             override fun visitLiteral(element: TomlLiteral) {
                 val parentArray = element.parent as? TomlArray ?: return

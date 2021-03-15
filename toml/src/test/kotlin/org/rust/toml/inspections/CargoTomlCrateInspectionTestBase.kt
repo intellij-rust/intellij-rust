@@ -19,19 +19,11 @@ import kotlin.reflect.KClass
 abstract class CargoTomlCrateInspectionTestBase(
     inspectionClass: KClass<out InspectionProfileEntry>
 ) : RsInspectionsTestBase(inspectionClass) {
-    protected fun crate(name: String, vararg versions: String): Crate =
-        Crate(name, CargoRegistryCrate(versions.toList().map {
-            CargoRegistryCrateVersion(it, false, listOf())
-        }))
-
-    protected data class Crate(val name: String, val crate: CargoRegistryCrate)
-
-    protected fun doTest(@Language("TOML") code: String, vararg crates: Crate) {
-        val crateMap = crates.toList().associate { it.name to it.crate }
+    protected fun doTest(@Language("TOML") code: String, vararg crates: Pair<String, CargoRegistryCrate>) {
         myFixture.configureByText(CargoConstants.MANIFEST_FILE, code)
 
         runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
-            withMockedCrates(crateMap) {
+            withMockedCrates(crates.toMap()) {
                 myFixture.checkHighlighting()
             }
         }

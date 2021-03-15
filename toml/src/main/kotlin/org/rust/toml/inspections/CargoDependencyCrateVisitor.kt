@@ -5,6 +5,7 @@
 
 package org.rust.toml.inspections
 
+import org.rust.stdext.intersects
 import org.rust.toml.isDependencyKey
 import org.rust.toml.stringValue
 import org.toml.lang.psi.*
@@ -61,12 +62,7 @@ data class DependencyCrate(
     /**
      * Is this crate from another source than crates.io?
      */
-    fun isForeign(): Boolean {
-        for (property in FOREIGN_PROPERTIES) {
-            if (property in properties) return true
-        }
-        return false
-    }
+    fun isForeign(): Boolean = properties.keys.intersects(FOREIGN_PROPERTIES)
 
     companion object {
         private val FOREIGN_PROPERTIES = listOf("git", "path", "registry")
