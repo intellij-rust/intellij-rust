@@ -12,6 +12,7 @@ import com.intellij.openapiext.isUnitTestMode
 import org.rust.cargo.project.workspace.CargoWorkspaceData
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacroBody
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.body
@@ -20,7 +21,7 @@ import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve2.ImportType.GLOB
 import org.rust.lang.core.resolve2.ImportType.NAMED
 import org.rust.lang.core.resolve2.PartialResolvedImport.*
-import org.rust.lang.core.resolve2.util.processDollarCrate
+import org.rust.lang.core.resolve2.util.createDollarCrateHelper
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.pathAsPath
 import org.rust.openapiext.toPsiFile
@@ -290,12 +291,14 @@ class DefCollector(
         val (expandedFile, expansion) =
             macroExpanderShared.createExpansionStub(project, macroExpander, defData, callData) ?: return true
 
-        if (def is DeclMacroDefInfo) {
-            processDollarCrate(call, def, expandedFile, expansion)
+        val dollarCrateHelper = if (def is DeclMacroDefInfo) {
+            createDollarCrateHelper(call, def, expansion)
+        } else {
+            null
         }
 
         val context = getModCollectorContextForExpandedElements(call) ?: return true
-        collectExpandedElements(expandedFile, call, context)
+        collectExpandedElements(expandedFile, call, context, dollarCrateHelper)
         return true
     }
 
