@@ -16,3 +16,11 @@ include(
     "ml-completion",
     "intellij-toml"
 )
+
+pluginManagement {
+    repositories {
+        maven("https://jetbrains.bintray.com/intellij-plugin-service")
+        maven("https://plugins.gradle.org/m2/")
+        mavenCentral()
+    }
+}

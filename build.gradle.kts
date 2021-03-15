@@ -74,7 +74,6 @@ allprojects {
 
     repositories {
         mavenCentral()
-        jcenter()
         maven("https://dl.bintray.com/jetbrains/intellij-third-party-dependencies")
     }
 
