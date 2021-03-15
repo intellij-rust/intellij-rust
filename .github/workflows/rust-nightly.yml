@@ -7,7 +7,7 @@ on:
 
 jobs:
     generate-build-number:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             build_number: ${{ steps.buildnumber.outputs.build_number }}
         steps:
@@ -19,7 +19,7 @@ jobs:
                   prefix: rust
 
     fetch-latest-changes:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
             rust-nightly: ${{ steps.fetch-commits.outputs.rust-nightly }}
@@ -61,7 +61,7 @@ jobs:
                 config:
                     - name: linux
                       arch: x86-64
-                      os: ubuntu-latest
+                      os: ubuntu-18.04
                       target: x86_64-unknown-linux-gnu
                       artifact_path: native-helper/target/release/intellij-rust-native-helper
                     - name: windows
@@ -104,7 +104,7 @@ jobs:
     build:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-nightly
         needs: [ generate-build-number, fetch-latest-changes, build-native-code ]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         strategy:
             fail-fast: true
             matrix:
@@ -157,7 +157,7 @@ jobs:
 
     save-commit:
         needs: [ build, fetch-latest-changes ]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - name: Checkout
               uses: actions/checkout@v2

@@ -15,7 +15,7 @@ on:
 
 jobs:
     generate-build-number:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             build_number: ${{ steps.buildnumber.outputs.build_number }}
         steps:
@@ -27,7 +27,7 @@ jobs:
                   prefix: rust
 
     get-release-branch:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             release-branch: ${{ steps.get-release-branch.outputs.release-branch }}
         steps:
@@ -45,7 +45,7 @@ jobs:
                   echo "::set-output name=release-branch::$branch"
 
     update-changelog-link:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - name: Checkout
               uses: actions/checkout@v2
@@ -67,7 +67,7 @@ jobs:
               run: python scripts/update-changelog-link.py --token ${{ secrets.WORKFLOW_GITHUB_TOKEN }}
 
     get-channel:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             channel: ${{ steps.get-channel.outputs.channel }}
         steps:
@@ -81,7 +81,7 @@ jobs:
                 fi
 
     fetch-latest-changes:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         needs: [ get-release-branch, update-changelog-link, get-channel ]
         outputs:
             rust-commit: ${{ steps.fetch-commits.outputs.rust-commit }}
@@ -124,7 +124,7 @@ jobs:
                 config:
                     - name: linux
                       arch: x86-64
-                      os: ubuntu-latest
+                      os: ubuntu-18.04
                       target: x86_64-unknown-linux-gnu
                       artifact_path: native-helper/target/release/intellij-rust-native-helper
                     - name: windows
@@ -167,7 +167,7 @@ jobs:
     build:
         if: needs.fetch-latest-changes.outputs.rust-commit != needs.fetch-latest-changes.outputs.rust-release
         needs: [ generate-build-number, get-release-branch, update-changelog-link, get-channel, fetch-latest-changes, build-native-code ]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         strategy:
             fail-fast: true
             matrix:
@@ -222,7 +222,7 @@ jobs:
 
     save-commit:
         needs: [ get-channel, fetch-latest-changes, build ]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - name: Checkout
               uses: actions/checkout@v2
