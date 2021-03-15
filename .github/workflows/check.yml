@@ -11,7 +11,7 @@ on:
 jobs:
     # TODO: drop it when GitHub supports its by itself
     cancel-previous:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - name: Cancel Previous Runs
               uses: styfle/cancel-workflow-action@0.4.1
@@ -19,7 +19,7 @@ jobs:
                   access_token: ${{ github.token }}
 
     check-license:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - uses: actions/checkout@v2
 
@@ -30,19 +30,19 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                os: [ ubuntu-latest, windows-latest ]
+                os: [ ubuntu-18.04, windows-latest ]
                 rust-version: [ 1.48.0, nightly-2020-10-04 ]
                 base-ide: [ idea, clion ]
                 platform-version: [ 203, 211 ]
                 resolve-engine: [ resolve-new ]
                 include:
-                    - os: ubuntu-latest
+                    - os: ubuntu-18.04
                       # Don't forget to update condition in `Set up additional env variables` step
                       rust-version: 1.32.0
                       base-ide: idea
                       platform-version: 203
                       resolve-engine: resolve-old
-                    - os: ubuntu-latest
+                    - os: ubuntu-18.04
                       rust-version: 1.48.0
                       base-ide: idea
                       platform-version: 203
@@ -167,7 +167,7 @@ jobs:
 
     check:
         needs: [ check-license, check-plugin ]
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         steps:
             - name: Finish check
               run: echo "Check finished successfully!"
