@@ -128,7 +128,7 @@ private fun insertNewTraitMembers(
         }
     }
 
-    importTypeReferencesFromElements(existingMembers, selected, trait.subst, true)
+    importTypeReferencesFromElements(existingMembers, selected, trait.subst, useAliases = true, skipUnchangedDefaultTypeArguments = true)
 
     if (needToSelect != null && editor != null) {
         selectElement(needToSelect, editor)
