@@ -195,8 +195,8 @@ class DefMapService(val project: Project) : Disposable {
     }
 
     private fun updateFilesMaps(crate: CratePersistentId, defMap: CrateDefMap?) {
-        fileIdToCrateId.values().remove(crate)
-        missedFiles.values.remove(crate)
+        fileIdToCrateId.values().removeIf { it == crate }
+        missedFiles.values.removeIf { it == crate }
         if (defMap != null) {
             for (fileId in defMap.fileInfos.keys) {
                 fileIdToCrateId.putValue(fileId, crate)
