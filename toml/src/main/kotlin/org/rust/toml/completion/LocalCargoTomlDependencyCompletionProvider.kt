@@ -5,17 +5,16 @@
 
 package org.rust.toml.completion
 
+import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.PrioritizedLookupElement
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.editor.EditorModificationUtil
+import org.rust.lang.core.completion.nextCharIs
 import org.rust.toml.StringValueInsertionHandler
 import org.rust.toml.crates.local.CratesLocalIndexService
-import org.rust.toml.crates.local.lastVersion
 import org.toml.lang.psi.TomlKeyValue
 
 class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProviderBase() {
@@ -26,22 +25,23 @@ class LocalCargoTomlDependencyCompletionProvider : TomlKeyValueCompletionProvide
 
         val crateNames = indexService.getAllCrateNames()
         val elements = crateNames.mapNotNull { crateName ->
-            val crate = indexService.getCrate(crateName) ?: return@mapNotNull null
-
             PrioritizedLookupElement.withPriority(
                 LookupElementBuilder
                     .create(crateName)
                     .withIcon(AllIcons.Nodes.PpLib)
-                    .withExpensiveRenderer(object : LookupElementRenderer<LookupElement>() {
-                        override fun renderElement(element: LookupElement, presentation: LookupElementPresentation) {
-                            presentation.itemText = "$crateName = \"${crate.lastVersion.orEmpty()}\""
+                    .withInsertHandler { ctx, _ ->
+                        val alreadyHasValue = ctx.nextCharIs('=')
+
+                        if (!alreadyHasValue) {
+                            ctx.document.insertString(ctx.selectionEndOffset, " = \"\"")
                         }
-                    })
-                    .withInsertHandler { context, _ ->
-                        context.document.insertString(context.tailOffset, " = \"${crate.lastVersion}\"")
-                        val endLineOffset = context.editor.caretModel.visualLineEnd
-                        // TODO: Currently moves caret to the next line
-                        context.editor.caretModel.moveToOffset(endLineOffset)
+
+                        EditorModificationUtil.moveCaretRelatively(ctx.editor, 4)
+
+                        if (!alreadyHasValue) {
+                            // Triggers dependency version completion
+                            AutoPopupController.getInstance(ctx.project).scheduleAutoPopup(ctx.editor)
+                        }
                     },
                 (-crateName.length).toDouble()
             )

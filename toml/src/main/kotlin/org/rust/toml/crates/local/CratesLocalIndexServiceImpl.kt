@@ -283,11 +283,6 @@ class CratesLocalIndexServiceImpl
 private fun VFileEvent.pathEndsWith(suffix: String): Boolean =
     path.endsWith(suffix) || (this is VFilePropertyChangeEvent && oldPath.endsWith(suffix))
 
-val CargoRegistryCrate.lastVersion: String?
-    // TODO: Last version sometimes can differ from latest major
-    //  (e.g. if developer uploaded a patch to previous major)
-    get() = versions.lastOrNull()?.version
-
 private object CrateExternalizer : DataExternalizer<CargoRegistryCrate> {
     override fun save(out: DataOutput, value: CargoRegistryCrate) {
         out.writeInt(value.versions.size)
