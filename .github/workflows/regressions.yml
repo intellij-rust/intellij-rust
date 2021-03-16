@@ -4,7 +4,7 @@ on: [ workflow_dispatch, pull_request ]
 
 jobs:
     calculate-base-commit:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         outputs:
             base-commit: ${{ steps.base-commit.outputs.base-commit }}
         steps:
@@ -40,7 +40,7 @@ jobs:
     check:
         needs: [ calculate-base-commit ]
         name: ${{ matrix.batch.name }}
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-18.04
         strategy:
             fail-fast: false
             matrix:
