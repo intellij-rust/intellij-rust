@@ -76,20 +76,6 @@ class DerefPostfixTemplate(provider: RsPostfixTemplateProvider) :
         }
     )
 
-class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("match", "match expr {...}", RsExprParentsSelector(), provider) {
-
-    override fun getTemplateString(element: PsiElement): String = "match ${element.text} {\n\$PAT\$ => {\$END\$}\n}"
-
-    override fun getElementToRemove(expr: PsiElement): PsiElement = expr
-
-    override fun setVariables(template: Template, element: PsiElement) {
-        with(template) {
-            addVariable("PAT", TextExpression("_"), true)
-        }
-    }
-}
-
 class IterPostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate(
         name,
