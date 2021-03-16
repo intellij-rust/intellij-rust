@@ -148,7 +148,7 @@ private AttrUpper ::= MetaItemWithoutTT ']' |  MetaItemWithTT ']'
 private OuterAttr_first ::= '#'
 
 fake MetaItem ::= Path [ '=' LitExpr | MetaItemArgs ] | CompactTT {
-  implements = [ "org.rust.lang.core.psi.ext.RsElement"
+  implements = [ "org.rust.lang.core.psi.ext.RsPossibleMacroCall"
                  "org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub" ]
   mixin = "org.rust.lang.core.psi.ext.RsMetaItemImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMetaItemStub"
@@ -1436,6 +1436,7 @@ fake MacroCall ::= AttrsAndVis PathWithoutTypeArgs '!' identifier? (
     ) ';'? {
   implements = [ "org.rust.lang.core.psi.ext.RsOuterAttributeOwner"
                  "org.rust.lang.core.macros.RsExpandedElement"
+                 "org.rust.lang.core.psi.ext.RsPossibleMacroCall"
                  "org.rust.lang.core.psi.ext.RsModificationTrackerOwner" ]
   mixin = "org.rust.lang.core.psi.ext.RsMacroCallImplMixin"
   stubClass = "org.rust.lang.core.stubs.RsMacroCallStub"

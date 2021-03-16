@@ -26,12 +26,12 @@ import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionMode
-import org.rust.lang.core.macros.isTopLevelExpansion
 import org.rust.lang.core.macros.macroExpansionManagerIfCreated
 import org.rust.lang.core.psi.RsPsiManager.Companion.isIgnorePsiEvents
 import org.rust.lang.core.psi.RsPsiTreeChangeEvent.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.findModificationTrackerOwner
+import org.rust.lang.core.psi.ext.isTopLevelExpansion
 
 /** Don't subscribe directly or via plugin.xml lazy listeners. Use [RsPsiManager.subscribeRustStructureChange] */
 private val RUST_STRUCTURE_CHANGE_TOPIC: Topic<RustStructureChangeListener> = Topic.create(
@@ -192,7 +192,9 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
 
         // Whitespace/comment changes are meaningful for macros only
         // (b/c they affect range mappings and body hashes)
-        if (isWhitespaceOrComment && owner !is RsMacroCall && owner !is RsMacro) return
+        if (isWhitespaceOrComment) {
+            if (owner !is RsMacroCall && owner !is RsMacro && !RsProcMacroPsiUtil.canBeInProcMacroCallBody(psi)) return
+        }
 
         val isStructureModification = owner == null || !owner.incModificationCount(psi)
 

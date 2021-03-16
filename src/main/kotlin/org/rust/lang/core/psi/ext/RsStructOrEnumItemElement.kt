@@ -26,8 +26,10 @@ val RsStructOrEnumItemElement.derivedTraitsToMetaItems: Map<RsTraitItem, RsMetaI
         .toMap()
 
 private val RsStructOrEnumItemElement.deriveMetaItems: Sequence<RsMetaItem>
-    get() = queryAttributes
-        .deriveAttributes
+    get() = queryAttributes.deriveMetaItems
+
+val QueryAttributes<RsMetaItem>.deriveMetaItems: Sequence<RsMetaItem>
+    get() = deriveAttributes
         .flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
 
 val RsStructOrEnumItemElement.firstKeyword: PsiElement?

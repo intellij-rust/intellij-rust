@@ -18,7 +18,7 @@ class ProcMacroApplicationService : Disposable {
 
     @Synchronized
     fun getServer(): ProcMacroServerPool? {
-        if (!isFeatureEnabled(RsExperiments.PROC_MACROS)) return null
+        if (!isEnabled()) return null
 
         var server = sharedServer
         if (server == null) {
@@ -32,5 +32,7 @@ class ProcMacroApplicationService : Disposable {
 
     companion object {
         fun getInstance(): ProcMacroApplicationService = service()
+        fun isEnabled(): Boolean = isFeatureEnabled(RsExperiments.PROC_MACROS)
+            && isFeatureEnabled(RsExperiments.EVALUATE_BUILD_SCRIPTS)
     }
 }

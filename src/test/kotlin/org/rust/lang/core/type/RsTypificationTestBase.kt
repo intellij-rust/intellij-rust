@@ -11,6 +11,7 @@ import org.rust.RsTestBase
 import org.rust.fileTreeFromText
 import org.rust.lang.core.macros.expandedFrom
 import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.RsInferenceContextOwner
 import org.rust.lang.core.psi.ext.descendantsOfType
 import org.rust.lang.core.psi.ext.descendantsWithMacrosOfType
@@ -78,7 +79,7 @@ abstract class RsTypificationTestBase : RsTestBase() {
             .filter { expr ->
                 expr.inference?.isExprTypeInferred(expr) == false
             }.filter { expr ->
-                expr.expandedFrom?.let { it.macroName in BUILTIN_MACRO_NAMES } != true
+                expr.expandedFrom?.let { it is RsMacroCall && it.macroName in BUILTIN_MACRO_NAMES } != true
             }
         if (notTypifiedExprs.isNotEmpty()) {
             error(

@@ -10,8 +10,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import org.rust.lang.core.macros.MacroExpansionAndParsingError.ExpansionError
 import org.rust.lang.core.macros.MacroExpansionAndParsingError.ParsingError
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.stubChildrenOfType
-import org.rust.lang.core.psi.ext.stubDescendantOfTypeOrStrict
+import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.RsResult
 import org.rust.stdext.RsResult.Err
 import org.rust.stdext.RsResult.Ok
@@ -27,6 +26,12 @@ val RsMacroCall.expansionContext: MacroExpansionContext
         is RsPatMacro -> MacroExpansionContext.PAT
         is RsMacroType -> MacroExpansionContext.TYPE
         else -> MacroExpansionContext.ITEM
+    }
+
+val RsPossibleMacroCall.expansionContext: MacroExpansionContext
+    get() = when (val kind = kind) {
+        is RsPossibleMacroCallKind.MacroCall -> kind.call.expansionContext
+        is RsPossibleMacroCallKind.MetaItem -> MacroExpansionContext.ITEM
     }
 
 val RsMacroCall.isExprOrStmtContext: Boolean

@@ -36,6 +36,9 @@ val RsMetaItem.id: String?
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
     path?.reference?.multiResolve()?.filterIsInstance<RsTraitItem>()?.singleOrNull()
 
+val RsMetaItem.owner: RsDocAndAttributeOwner?
+    get() = ancestorStrict<RsAttr>()?.owner
+
 /**
  * In the case of `#[foo(bar)]`, the `foo(bar)` meta item is considered "root" but `bar` is not.
  * In the case of `#[cfg_attr(windows, foo(bar))]`, the `foo(bar)` is also considered "root" meta item

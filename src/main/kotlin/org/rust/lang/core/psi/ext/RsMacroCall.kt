@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.psi.ext
 
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.TextRange
@@ -15,12 +14,13 @@ import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.macros.*
-import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
+import org.rust.lang.core.macros.MacroExpansionContext
+import org.rust.lang.core.macros.RsExpandedElement
+import org.rust.lang.core.macros.expansionContext
+import org.rust.lang.core.macros.findMacroCallExpandedFrom
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
-import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
 import org.rust.lang.core.stubs.RsMacroCallStub
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.toPsiFile
@@ -46,6 +46,9 @@ abstract class RsMacroCallImplMixin : RsStubbedElementImpl<RsMacroCallStub>,
 
 val RsMacroCall.macroName: String
     get() = path.referenceName.orEmpty() // TODO return null if `referenceName` is null
+
+val RsMacroCall.isTopLevelExpansion: Boolean
+    get() = parent is RsMod || parent is RsMembers
 
 val RsMacroCall.bracesKind: MacroBraces?
     get() = macroArgumentElement?.firstChild?.let { MacroBraces.fromToken(it.elementType) }
@@ -148,21 +151,6 @@ val RsMacroCall.bodyHash: HashCode?
 
 fun RsMacroCall.resolveToMacro(): RsMacro? =
     path.reference?.resolve() as? RsMacro
-
-val RsMacroCall.expansion: MacroExpansion?
-    get() {
-        val mgr = project.macroExpansionManager
-        if (mgr.expansionState != null) return mgr.getExpansionFor(this).value
-
-        return CachedValuesManager.getCachedValue(this) {
-            val originalOrSelf = CompletionUtil.getOriginalElement(this)?.takeIf {
-                // Use the original element only if macro bodies are equal. They
-                // will be different if completion invoked inside the macro body.
-                it.macroBody == this.macroBody
-            } ?: this
-            mgr.getExpansionFor(originalOrSelf)
-        }
-    }
 
 val RsMacroCall.expansionFlatten: List<RsExpandedElement>
     get() {

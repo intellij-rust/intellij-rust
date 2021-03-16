@@ -587,8 +587,7 @@ private fun processUnqualifiedPathResolveVariants(
 fun RsPath.resolveDollarCrateIdentifier(): Crate? {
     NameResolutionTestmarks.dollarCrateMagicIdentifier.hit()
     val dollarCrateSource = findMacroCallFromWhichLeafIsExpanded() ?: this
-    return dollarCrateSource
-        .findMacroCallExpandedFromNonRecursive()
+    return (dollarCrateSource.findMacroCallExpandedFromNonRecursive() as? RsMacroCall)
         ?.resolveToMacroAndGetContainingCrate()
 }
 
@@ -852,7 +851,7 @@ fun processMacroCallPathResolveVariants(path: RsPath, isCompletion: Boolean, pro
                 // this "recursive" macro resolve should not be a problem because
                 // 1. we resolve the macro from which [path] is expanded, so it can't run into infinite recursion
                 // 2. we expand macros step-by-step, so the result of such resolution should be cached already
-                val expandedFrom = path.findMacroCallExpandedFromNonRecursive()
+                val expandedFrom = path.findMacroCallExpandedFromNonRecursive() as? RsMacroCall
                 expandedFrom
                     ?.resolveToMacroAndProcessLocalInnerMacros(processor) {
                         /* this code will be executed if new resolve can't be used */
@@ -975,7 +974,7 @@ private class MacroResolver private constructor(
         // But we want to process macro definition before `bar!` macro call, so we have to use
         // a macro call as a "parent"
         val expandedFrom = (element as? RsExpandedElement)?.expandedFrom
-        if (expandedFrom != null && processExpandedFrom(expandedFrom)) return MacroResolveResult.True
+        if (expandedFrom is RsMacroCall && processExpandedFrom(expandedFrom)) return MacroResolveResult.True
         val context = expandedFrom ?: element.context ?: return MacroResolveResult.False
         return when {
             context is RsFile -> {
@@ -1001,7 +1000,7 @@ private class MacroResolver private constructor(
         }
         // See comment in psiBasedProcessScopesInLexicalOrderUpward
         val expandedFrom = (element.psi as? RsExpandedElement)?.expandedFrom
-        if (expandedFrom != null && processExpandedFrom(expandedFrom)) return MacroResolveResult.True
+        if (expandedFrom is RsMacroCall && processExpandedFrom(expandedFrom)) return MacroResolveResult.True
         val parentPsi = expandedFrom ?: parentStub.psi
         return when {
             parentPsi is RsFile -> {

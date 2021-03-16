@@ -147,7 +147,10 @@ private class ModCollector(
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs.from(visItem, item.namespaces)
         val changed = onAddItem(modData, name, perNs, visItem.visibility)
-        if (item.isProcMacroDef) modData.procMacros += name
+
+        if (item.procMacroKind != null) {
+            modData.procMacros[name] = item.procMacroKind
+        }
 
         // We have to check `changed` to be sure that `childModules` and `visibleItems` are consistent.
         // Note that here we choose first mod if there are multiple mods with same visibility (e.g. CfgDisabled).

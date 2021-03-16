@@ -242,11 +242,34 @@ private fun <T> RsMacroCall.resolveToMacroAndThen(
     }
 }
 
+fun RsMetaItem.resolveToProcMacroWithoutPsi(): ProcMacroDefInfo? {
+    val info = when {
+        !project.isNewResolveEnabled -> CantUseNewResolve("not enabled")
+        RsProcMacroPsiUtil.canBeCustomDerive(this) -> getModInfo(containingMod)
+        else -> CantUseNewResolve("not a proc macro")
+    }
+    return when (info) {
+        is CantUseNewResolve, InfoNotFound -> null
+        is RsModInfo -> {
+            val (_, defMap, modData) = info
+            val macroPath = path?.pathSegmentsAdjustedForAttrMacro?.toTypedArray() ?: return null
+            val perNs = defMap.resolvePathFp(
+                modData,
+                macroPath,
+                ResolveMode.OTHER,
+                withInvisibleItems = false  // because we expand only cfg-enabled macros
+            )
+            val defItem = perNs.resolvedDef.macros.singleOrNull() ?: return null
+            return defMap.getMacroInfo(defItem) as? ProcMacroDefInfo
+        }
+    }
+}
+
 private fun RsMacroCall.resolveToMacroDefInfo(containingModInfo: RsModInfo): MacroDefInfo? {
     val (project, defMap, modData) = containingModInfo
     return RsResolveCache.getInstance(project)
         .resolveWithCaching(this, RsMacroPathReferenceImpl.cacheDep) {
-            val callPath = pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
+            val callPath = path.pathSegmentsAdjusted?.toTypedArray() ?: return@resolveWithCaching null
             val macroIndex = getMacroIndex(this, defMap) ?: return@resolveWithCaching null
             defMap.resolveMacroCallToMacroDefInfo(modData, callPath, macroIndex)
         }
@@ -288,10 +311,10 @@ private fun getMacroIndexInParent(item: PsiElement, parent: PsiElement): Int {
     }
 }
 
-private val RsMacroCall.pathSegments: List<String>?
+private val RsPath.pathSegments: List<String>?
     get() {
         val segments = mutableListOf<String>()
-        var path: RsPath? = path
+        var path: RsPath? = this
         while (path != null) {
             segments += path.referenceName ?: return null
             val qualifier = path.path
@@ -318,11 +341,11 @@ private val RsMacroCall.pathSegments: List<String>?
  *
  * See also [processMacroCallPathResolveVariants] and [findDependencyCrateByNamePath]
  */
-private val RsMacroCall.pathSegmentsAdjusted: List<String>?
+private val RsPath.pathSegmentsAdjusted: List<String>?
     get() {
         val segments = pathSegments ?: return null
 
-        val callExpandedFrom = findMacroCallExpandedFromNonRecursive() ?: return segments
+        val callExpandedFrom = findMacroCallExpandedFromNonRecursive() as? RsMacroCall ?: return segments
         val (defExpandedFromHasLocalInnerMacros, defExpandedFromCrateId) =
             when (val info = getModInfo(callExpandedFrom.containingMod)) {
                 is CantUseNewResolve -> {
@@ -337,11 +360,26 @@ private val RsMacroCall.pathSegmentsAdjusted: List<String>?
                 }
             }
         return when {
-            segments.size == 1 && !path.cameFromMacroCall() && defExpandedFromHasLocalInnerMacros -> {
+            segments.size == 1 && !cameFromMacroCall() && defExpandedFromHasLocalInnerMacros -> {
                 listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, defExpandedFromCrateId.toString()) + segments
             }
             segments.first() == MACRO_DOLLAR_CRATE_IDENTIFIER -> {
-                val crate = path.resolveDollarCrateIdentifier()?.id ?: return segments
+                val crate = resolveDollarCrateIdentifier()?.id ?: return segments
+                listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, crate.toString()) + segments.subList(1, segments.size)
+            }
+            else -> segments
+        }
+    }
+
+/**
+ * Similar to [pathSegmentsAdjusted], but doesn't take into account `#[macro_export(local_inner_macros)]`
+ */
+private val RsPath.pathSegmentsAdjustedForAttrMacro: List<String>?
+    get() {
+        val segments = pathSegments ?: return null
+        return when {
+            segments.first() == MACRO_DOLLAR_CRATE_IDENTIFIER -> {
+                val crate = this.resolveDollarCrateIdentifier()?.id ?: return segments
                 listOf(MACRO_DOLLAR_CRATE_IDENTIFIER, crate.toString()) + segments.subList(1, segments.size)
             }
             else -> segments

@@ -88,7 +88,7 @@ fun IndexSink.indexMacroDef(stub: RsMacro2Stub) {
 }
 
 fun IndexSink.indexMacroCall(stub: RsMacroCallStub) {
-    RsMacroCallIndex.index(this)
+    RsMacroCallIndex.indexMacroCall(this)
     RsIncludeMacroIndex.index(stub, this)
 }
 
@@ -101,6 +101,7 @@ fun IndexSink.indexInnerAttr(stub: RsInnerAttrStub) {
 }
 
 fun IndexSink.indexMetaItem(stub: RsMetaItemStub) {
+    RsMacroCallIndex.indexMetaItem(this, stub)
     RsCfgNotTestIndex.index(stub, this)
 }
 

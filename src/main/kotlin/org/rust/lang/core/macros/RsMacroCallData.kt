@@ -5,7 +5,7 @@
 
 package org.rust.lang.core.macros
 
-import org.rust.lang.core.psi.RsMacroCall
+import org.rust.lang.core.psi.ext.RsPossibleMacroCall
 import org.rust.lang.core.psi.ext.containingCargoPackage
 import org.rust.lang.core.psi.ext.macroBody
 
@@ -15,7 +15,7 @@ class RsMacroCallData(
 ) {
 
     companion object {
-        fun fromPsi(call: RsMacroCall): RsMacroCallData = RsMacroCallData(
+        fun fromPsi(call: RsPossibleMacroCall): RsMacroCallData = RsMacroCallData(
             call.macroBody,
             call.containingCargoPackage?.env.orEmpty()
         )

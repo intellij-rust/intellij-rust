@@ -14,6 +14,7 @@ import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacroBody
+import org.rust.lang.core.psi.RsProcMacroKind
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.body
 import org.rust.lang.core.psi.rustFile
@@ -405,6 +406,7 @@ class DeclMacroDefInfo(
 class ProcMacroDefInfo(
     override val crate: CratePersistentId,
     override val path: ModPath,
+    val procMacroKind: RsProcMacroKind,
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
 ) : MacroDefInfo()
 
