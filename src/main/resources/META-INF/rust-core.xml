@@ -471,7 +471,7 @@
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Simplify boolean expression"
-                         enabledByDefault="false" level="WARNING"
+                         enabledByDefault="true" level="WARNING"
                          implementationClass="org.rust.ide.inspections.RsSimplifyBooleanExpressionInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
