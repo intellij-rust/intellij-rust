@@ -162,30 +162,6 @@ val RsMacroCall.expansionFlatten: List<RsExpandedElement>
         return list
     }
 
-fun RsMacroCall.expandMacrosRecursively(
-    depthLimit: Int = DEFAULT_RECURSION_LIMIT,
-    replaceDollarCrate: Boolean = true,
-    expander: (RsMacroCall) -> MacroExpansion? = RsMacroCall::expansion
-): String {
-    if (depthLimit == 0) return text
-
-    fun toExpandedText(element: PsiElement): String =
-        when (element) {
-            is RsMacroCall -> element.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate)
-            is RsElement -> if (replaceDollarCrate && element is RsPath && element.referenceName == MACRO_DOLLAR_CRATE_IDENTIFIER
-                && element.qualifier == null && element.typeQual == null && !element.hasColonColon) {
-                // Replace `$crate` to a crate name. Note that the name can be incorrect because of crate renames
-                // and the fact that `$crate` can come from a transitive dependency
-                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName.orEmpty())
-            } else {
-                element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
-            }
-            else -> element.text
-        }
-
-    return expander(this)?.elements?.joinToString(" ") { toExpandedText(it) } ?: text
-}
-
 fun RsMacroCall.processExpansionRecursively(processor: (RsExpandedElement) -> Boolean): Boolean =
     processExpansionRecursively(processor, 0)
 

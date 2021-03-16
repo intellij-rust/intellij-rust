@@ -23,7 +23,9 @@ import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.expansionContext
 import org.rust.lang.core.macros.getExpansionFromExpandedFile
 import org.rust.lang.core.macros.parseExpandedTextWithContext
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.RsProcMacroPsiUtil
+import org.rust.lang.core.psi.RsPsiFactory
+import org.rust.lang.core.psi.RsPsiManager
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.computeWithCancelableProgress
 import java.awt.BorderLayout
@@ -84,14 +86,13 @@ private fun expandMacroForView(macroToExpand: RsPossibleMacroCall, expandRecursi
 
 private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): String {
     val path = macroToExpand.path?.text
-    val name = when (macroToExpand) {
-        is RsMacroCall -> "$path! macro"
-        is RsMetaItem -> if (RsProcMacroPsiUtil.canBeCustomDerive(macroToExpand)) {
+    val name = when (val kind = macroToExpand.kind) {
+        is RsPossibleMacroCallKind.MacroCall -> "$path! macro"
+        is RsPossibleMacroCallKind.MetaItem -> if (RsProcMacroPsiUtil.canBeCustomDerive(kind.meta)) {
             "#[derive($path)]"
         } else {
             "#[$path]"
         }
-        else -> ""
     }
     return if (expandRecursively) {
         "Recursive expansion of $name"
@@ -101,9 +102,9 @@ private fun getMacroExpansionViewTitle(macroToExpand: RsPossibleMacroCall, expan
 }
 
 private fun getMacroExpansions(macroToExpand: RsPossibleMacroCall, expandRecursively: Boolean): MacroExpansion? {
-    val expansion = macroToExpand.expansion ?: return null
-
-    if (macroToExpand !is RsMacroCall) return expansion
+    if (macroToExpand.expansion == null) {
+        return null
+    }
 
     val expansionText = if (expandRecursively) {
         macroToExpand.expandMacrosRecursively(replaceDollarCrate = true)

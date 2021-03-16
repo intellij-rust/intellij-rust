@@ -13,7 +13,8 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.RsPossibleMacroCall
+import org.rust.lang.core.psi.ext.ancestorMacroCall
 import org.rust.openapiext.editor
 import org.rust.openapiext.elementUnderCaretInEditor
 import org.rust.openapiext.project
@@ -65,8 +66,8 @@ class RsShowRecursiveMacroExpansionAction : RsShowMacroExpansionActionBase(expan
 class RsShowSingleStepMacroExpansionAction : RsShowMacroExpansionActionBase(expandRecursively = false)
 
 /** Returns closest [RsMacroCall] under cursor in the [DataContext.editor] if it's present. */
-fun getMacroUnderCaret(event: DataContext): RsMacroCall? {
+fun getMacroUnderCaret(event: DataContext): RsPossibleMacroCall? {
     val elementUnderCaret = event.elementUnderCaretInEditor ?: return null
 
-    return elementUnderCaret.ancestorOrSelf()
+    return elementUnderCaret.ancestorMacroCall
 }

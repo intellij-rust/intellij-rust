@@ -16,12 +16,15 @@ import com.intellij.psi.util.PsiModificationTracker
 import org.rust.lang.core.macros.MacroExpansion
 import org.rust.lang.core.macros.RsExpandedElement
 import org.rust.lang.core.macros.RsMacroDataWithHash
+import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.macros.proc.ProcMacroApplicationService
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
 import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
+import org.rust.lang.core.resolve.DEFAULT_RECURSION_LIMIT
 import org.rust.lang.core.resolve.KnownDerivableTrait
+import org.rust.lang.core.resolve.resolveDollarCrateIdentifier
 import org.rust.lang.core.resolve2.resolveToMacroWithoutPsi
 import org.rust.lang.core.resolve2.resolveToProcMacroWithoutPsi
 import org.rust.lang.core.stubs.RsAttrProcMacroOwnerStub
@@ -230,3 +233,27 @@ val RsPossibleMacroCall.expansion: MacroExpansion?
             mgr.getExpansionFor(originalOrSelf)
         }
     }
+
+fun RsPossibleMacroCall.expandMacrosRecursively(
+    depthLimit: Int = DEFAULT_RECURSION_LIMIT,
+    replaceDollarCrate: Boolean = true,
+    expander: (RsPossibleMacroCall) -> MacroExpansion? = RsPossibleMacroCall::expansion
+): String {
+    if (depthLimit == 0) return text
+
+    fun toExpandedText(element: PsiElement): String =
+        when (element) {
+            is RsMacroCall -> element.expandMacrosRecursively(depthLimit - 1, replaceDollarCrate)
+            is RsElement -> if (replaceDollarCrate && element is RsPath && element.referenceName == MACRO_DOLLAR_CRATE_IDENTIFIER
+                && element.qualifier == null && element.typeQual == null && !element.hasColonColon) {
+                // Replace `$crate` to a crate name. Note that the name can be incorrect because of crate renames
+                // and the fact that `$crate` can come from a transitive dependency
+                "::" + (element.resolveDollarCrateIdentifier()?.normName ?: element.referenceName.orEmpty())
+            } else {
+                element.childrenWithLeaves.joinToString(" ") { toExpandedText(it) }
+            }
+            else -> element.text
+        }
+
+    return expander(this)?.elements?.joinToString(" ") { toExpandedText(it) } ?: text
+}

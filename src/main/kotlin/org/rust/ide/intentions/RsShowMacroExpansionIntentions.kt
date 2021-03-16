@@ -14,22 +14,31 @@ import org.rust.ide.actions.macroExpansion.FAILED_TO_EXPAND_MESSAGE
 import org.rust.ide.actions.macroExpansion.MacroExpansionViewDetails
 import org.rust.ide.actions.macroExpansion.expandMacroForViewWithProgress
 import org.rust.ide.actions.macroExpansion.showMacroExpansionPopup
-import org.rust.lang.core.psi.RsMacroCall
-import org.rust.lang.core.psi.ext.ancestorOrSelf
+import org.rust.lang.core.psi.ext.RsPossibleMacroCall
+import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MacroCall
+import org.rust.lang.core.psi.ext.RsPossibleMacroCallKind.MetaItem
+import org.rust.lang.core.psi.ext.ancestorMacroCall
 import org.rust.lang.core.psi.ext.isAncestorOf
+import org.rust.lang.core.psi.ext.kind
 
 abstract class RsShowMacroExpansionIntentionBase(private val expandRecursively: Boolean) :
-    RsElementBaseIntentionAction<RsMacroCall>() {
+    RsElementBaseIntentionAction<RsPossibleMacroCall>() {
 
     override fun getFamilyName() = text
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsMacroCall? {
-        val macroCall = element.ancestorOrSelf<RsMacroCall>() ?: return null
-        if (!macroCall.path.isAncestorOf(element) && element != macroCall.excl) return null
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RsPossibleMacroCall? {
+        val macroCall = element.ancestorMacroCall ?: return null
+
+        val isValidContext = when (val kind = macroCall.kind) {
+            is MacroCall -> kind.call.path.isAncestorOf(element) || element == kind.call.excl
+            is MetaItem -> true
+            else -> error("unreachable")
+        }
+        if (!isValidContext) return null
         return macroCall
     }
 
-    override fun invoke(project: Project, editor: Editor, ctx: RsMacroCall) {
+    override fun invoke(project: Project, editor: Editor, ctx: RsPossibleMacroCall) {
         val expansionDetails = expandMacroForViewWithProgress(project, ctx, expandRecursively)
 
         if (expansionDetails != null) {
