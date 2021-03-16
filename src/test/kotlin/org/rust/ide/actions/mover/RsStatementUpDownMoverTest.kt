@@ -516,4 +516,108 @@ class RsStatementUpDownMoverTest : RsStatementUpDownMoverTestBase() {
             5;
         }
     """)
+
+    fun `test move up statement in match arm body`() = moveUp("""
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     2;
+                     /*caret*/3;
+                     4;
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """, """
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     /*caret*/3;
+                     2;
+                     4;
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """)
+
+    fun `test move down statement in match arm body`() = moveDown("""
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     2;
+                     3;/*caret*/
+                     4;
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """, """
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     2;
+                     4;
+                     3;/*caret*/
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """)
+
+    fun `test move up first statement in match arm body`() = moveUp("""
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     2;/*caret*/
+                     3;
+                     4;
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
+
+    fun `test move down last statement in match arm body`() = moveDown("""
+        fn main() {
+             match x {
+                 foo => {
+                     1;
+                 }
+                 bar => {
+                     2;
+                     3;
+                     4;/*caret*/
+                 }
+                 baz => {
+                     5;
+                 }
+             };
+        }
+    """, testmark = UpDownMoverTestMarks.moveOutOfBody)
 }

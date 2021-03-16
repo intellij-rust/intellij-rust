@@ -14,24 +14,29 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.isMultiLine
 
 class RsStatementUpDownMover : RsLineMover() {
-    private val movableItems = tokenSetOf(
-        RsElementTypes.STMT,
-        RsElementTypes.EXPR_STMT,
-        RsElementTypes.EMPTY_STMT,
-        RsElementTypes.LET_DECL
-    )
+    companion object {
+        private val movableItems = tokenSetOf(
+            RsElementTypes.STMT,
+            RsElementTypes.EXPR_STMT,
+            RsElementTypes.EMPTY_STMT,
+            RsElementTypes.LET_DECL
+        )
 
-    private val PsiElement.isBlockExpr: Boolean
-        get() = this is RsExpr && parent is RsBlock
+        private val PsiElement.isBlockExpr: Boolean
+            get() = this is RsExpr && parent is RsBlock
 
-    private val PsiElement.isComment: Boolean
-        get() = elementType in RS_COMMENTS
+        private val PsiElement.isComment: Boolean
+            get() = elementType in RS_COMMENTS
+
+        fun isMovableElement(element: PsiElement): Boolean =
+            element.elementType in movableItems || element.isBlockExpr || element.isComment
+    }
 
     override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
-        psi.ancestors.find { it.elementType in movableItems || it.isBlockExpr || it.isComment }
+        psi.ancestors.find(::isMovableElement)
 
     override fun findTargetElement(sibling: PsiElement, down: Boolean): PsiElement? {
-        if (isMovingOutOfFunctionBody(sibling, down)) {
+        if (isMovingOutOfFunctionBody(sibling, down) || isMovingOutOfMatchArmBlock(sibling, down)) {
             UpDownMoverTestMarks.moveOutOfBody.hit()
             return null
         }

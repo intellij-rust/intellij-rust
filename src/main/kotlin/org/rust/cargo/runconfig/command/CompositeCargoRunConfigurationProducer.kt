@@ -113,7 +113,6 @@ class CompositeCargoRunConfigurationProducer : CargoRunConfigurationProducer() {
             command != other.command -> false
             backtrace != other.backtrace -> false
             workingDirectory != other.workingDirectory -> false
-            env != other.env -> false
             else -> true
         }
 }

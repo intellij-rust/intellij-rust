@@ -16,6 +16,7 @@ import com.intellij.psi.PsiWhiteSpace
 import org.rust.lang.core.psi.RsElementTypes
 import org.rust.lang.core.psi.RsFile
 import org.rust.lang.core.psi.RsFunction
+import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.ext.elementType
 
 abstract class RsLineMover : LineMover() {
@@ -89,6 +90,9 @@ abstract class RsLineMover : LineMover() {
 
         fun isMovingOutOfFunctionBody(sibling: PsiElement, down: Boolean): Boolean =
             isMovingOutOfBraceBlock(sibling, down) && sibling.parent?.parent is RsFunction
+
+        fun isMovingOutOfMatchArmBlock(sibling: PsiElement, down: Boolean): Boolean =
+            isMovingOutOfBraceBlock(sibling, down) && sibling.parent?.parent?.parent is RsMatchArm
     }
 }
 

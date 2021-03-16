@@ -17,8 +17,10 @@ import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.getPrevNonCommentSibling
 
 class RsMatchArmUpDownMover : RsLineMover() {
-    override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? =
-        psi.ancestorOrSelf<RsMatchArm>()
+    override fun findMovableAncestor(psi: PsiElement, endpoint: RangeEndpoint): PsiElement? {
+        if (RsStatementUpDownMover.isMovableElement(psi)) return null
+        return psi.ancestorOrSelf<RsMatchArm>()
+    }
 
     override fun canApply(firstMovableElement: PsiElement, secondMovableElement: PsiElement): Boolean {
         val firstMatchBody = firstMovableElement.ancestorStrict<RsMatchBody>() ?: return false
