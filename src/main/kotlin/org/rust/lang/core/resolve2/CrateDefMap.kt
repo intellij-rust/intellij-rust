@@ -279,6 +279,8 @@ class ModData(
      */
     var isShadowedByOtherFile: Boolean = true
 
+    lateinit var asVisItem: VisItem
+
     fun getVisibleItem(name: String): PerNs = visibleItems.getOrDefault(name, PerNs.Empty)
 
     fun getVisibleItems(filterVisibility: (Visibility) -> Boolean): List<Pair<String, PerNs>> {
@@ -301,9 +303,8 @@ class ModData(
         pushResolutionFromImport(this, name, def, ImportType.NAMED, visibility)
 
     fun asVisItem(): VisItem {
-        val parent = parent ?: error("Use CrateDefMap.rootAsPerNs for root ModData")
-        return parent.visibleItems[name]?.types?.takeIf { it.isModOrEnum }
-            ?: error("Inconsistent `visibleItems` and `childModules` in parent of $this")
+        if (isCrateRoot) error("Use CrateDefMap.rootAsPerNs for root ModData")
+        return asVisItem
     }
 
     fun asPerNs(): PerNs = PerNs(types = asVisItem())

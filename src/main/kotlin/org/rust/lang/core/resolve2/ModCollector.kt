@@ -143,6 +143,7 @@ private class ModCollector(
 
         val forceCfgDisabledVisibility = childModData != null && !childModData.isEnabledByCfgInner
         val visItem = convertToVisItem(item, stub, forceCfgDisabledVisibility)
+        childModData?.asVisItem = visItem
         if (visItem.isModOrEnum && childModData == null) return
         val perNs = PerNs(visItem, item.namespaces)
         val changed = onAddItem(modData, name, perNs, visItem.visibility)
