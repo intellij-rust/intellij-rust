@@ -183,4 +183,126 @@ class RsMoveFileReexportTest : RsMoveFileTestBase() {
     //- inner1/inner2/mod2/foo.rs
         pub fn func() {}
     """)
+
+    fun `test outside references to item in old parent mod`() = doTest(
+        "mod1/foo.rs",
+        "mod2",
+        """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+        pub mod inner1 {
+            pub use inner2::*;
+            mod inner2 {
+                pub fn inner2_func() {}
+            }
+            pub fn inner1_func() {}
+        }
+        mod foo;
+
+        pub fn mod1_func() {}
+    //- mod2/mod.rs
+    //- mod1/foo.rs
+        mod test1 {
+            fn func() {
+                super::super::mod1_func();
+                super::super::inner1::inner1_func();
+                super::super::inner1::inner2_func();
+            }
+        }
+        fn test2() {
+            use super::inner1::inner2_func;
+            inner2_func();
+        }
+        fn test3() {
+            use super::inner1::*;
+            inner2_func();
+        }
+    """, """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+        pub mod inner1 {
+            pub use inner2::*;
+
+            mod inner2 {
+                pub fn inner2_func() {}
+            }
+            pub fn inner1_func() {}
+        }
+
+        pub fn mod1_func() {}
+    //- mod2/mod.rs
+        mod foo;
+    //- mod2/foo.rs
+        mod test1 {
+            use crate::mod1;
+            use crate::mod1::inner1;
+
+            fn func() {
+                mod1::mod1_func();
+                inner1::inner1_func();
+                inner1::inner2_func();
+            }
+        }
+        fn test2() {
+            use crate::mod1::inner1::inner2_func;
+            inner2_func();
+        }
+        fn test3() {
+            use crate::mod1::inner1::*;
+            inner2_func();
+        }
+    """)
+
+    fun `test outside references to item in new parent mod`() = doTest(
+        "mod1/foo.rs",
+        "mod2",
+        """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+        mod foo;
+    //- mod2/mod.rs
+        pub mod inner1 {
+            use inner2::*;
+            mod inner2 {
+                pub fn inner2_func() {}
+            }
+            pub fn inner1_func() {}
+        }
+        pub fn mod2_func() {}
+    //- mod1/foo.rs
+        fn func() {
+            crate::mod2::mod2_func();
+            crate::mod2::inner1::inner1_func();
+            crate::mod2::inner1::inner2_func();
+        }
+    """, """
+    //- main.rs
+        mod mod1;
+        mod mod2;
+    //- mod1/mod.rs
+    //- mod2/mod.rs
+        mod foo;
+
+        pub mod inner1 {
+            use inner2::*;
+
+            mod inner2 {
+                pub fn inner2_func() {}
+            }
+            pub fn inner1_func() {}
+        }
+        pub fn mod2_func() {}
+    //- mod2/foo.rs
+        fn func() {
+            crate::mod2::mod2_func();
+            crate::mod2::inner1::inner1_func();
+            crate::mod2::inner1::inner2_func();
+        }
+    """)
 }
