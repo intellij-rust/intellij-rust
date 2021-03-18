@@ -23,11 +23,11 @@ object RsPathManager {
             SystemInfo.isWindows -> "windows" to "intellij-rust-native-helper.exe"
             else -> return null
         }
-        val arch = when {
+        val arch = "x86-64"/*when {
             // BACKCOMPAT: 2020.2. Replace with `SystemInfo.isIntel64`
             "x86_64" == SystemInfo.OS_ARCH || "amd64" == SystemInfo.OS_ARCH -> "x86-64"
             else -> return null
-        }
+        }*/
 
         val nativeHelperPath = pluginDir().resolve("bin/$os/$arch/$binaryName").takeIf { Files.exists(it) } ?: return null
         return if (Files.isExecutable(nativeHelperPath) || nativeHelperPath.toFile().setExecutable(true)) {
