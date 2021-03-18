@@ -6,6 +6,8 @@
 package org.rust.toml.crates.local
 
 import com.intellij.openapi.components.service
+import com.vdurmont.semver4j.Semver
+import com.vdurmont.semver4j.SemverException
 import org.jetbrains.annotations.TestOnly
 
 interface CratesLocalIndexService {
@@ -18,6 +20,9 @@ interface CratesLocalIndexService {
 }
 
 data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>) {
+    val sortedVersions: List<CargoRegistryCrateVersion>
+        get() = versions.sortedBy { it.semanticVersion }
+
     companion object {
         @TestOnly
         fun of(vararg versions: String): CargoRegistryCrate =
@@ -27,4 +32,11 @@ data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>) {
     }
 }
 
-data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>)
+data class CargoRegistryCrateVersion(val version: String, val isYanked: Boolean, val features: List<String>) {
+    val semanticVersion: Semver?
+        get() = try {
+            Semver(version, Semver.SemverType.NPM)
+        } catch (e: SemverException) {
+            null
+        }
+}

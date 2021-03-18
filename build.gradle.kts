@@ -450,6 +450,7 @@ project(":toml") {
         implementation(project(":"))
         implementation(project(":common"))
         implementation("org.eclipse.jgit:org.eclipse.jgit:5.9.0.202009080501-r") { exclude("org.slf4j") }
+        implementation("com.vdurmont:semver4j:3.1.0")
         testImplementation(project(":", "testOutput"))
         testImplementation(project(":common", "testOutput"))
     }
