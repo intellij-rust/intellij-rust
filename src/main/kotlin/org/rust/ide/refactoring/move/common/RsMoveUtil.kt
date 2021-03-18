@@ -286,10 +286,11 @@ fun RsVisRestriction.updateScopeIfNecessary(psiFactory: RsPsiFactory, newParent:
     }
 }
 
-fun addImport(psiFactory: RsPsiFactory, context: RsElement, usePath: String) {
+fun addImport(psiFactory: RsPsiFactory, context: RsElement, usePath: String, alias: String? = null) {
     if (!usePath.contains("::")) return
     val blockScope = context.ancestors.find { it is RsBlock && it.childOfType<RsUseItem>() != null } as RsBlock?
     check(context !is RsMod)
     val scope = blockScope ?: context.containingMod
-    scope.insertUseItem(psiFactory, usePath)
+    val useItem = psiFactory.createUseItem(usePath, alias = alias)
+    scope.insertUseItem(psiFactory, useItem)
 }

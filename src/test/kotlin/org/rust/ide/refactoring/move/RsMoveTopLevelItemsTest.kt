@@ -2607,4 +2607,84 @@ class RsMoveTopLevelItemsTest : RsMoveTopLevelItemsTestBase() {
     //- lib.rs
         mod mod2/*target*/ {}
     """)
+
+    fun `test outside references with import alias`() = doTest("""
+    //- lib.rs
+        mod foo {
+            pub struct Foo {}
+        }
+        mod mod1 {
+            use crate::foo::Foo as Bar;
+            pub fn func/*caret*/(foo: Bar) {}
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod foo {
+            pub struct Foo {}
+        }
+        mod mod1 {
+            use crate::foo::Foo as Bar;
+        }
+        mod mod2 {
+            use crate::foo::Foo as Bar;
+
+            pub fn func(foo: Bar) {}
+        }
+    """)
+
+    fun `test self references with import alias`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            mod inner1/*caret*/ {
+                pub struct Foo;
+            }
+            mod inner2/*caret*/ {
+                use crate::mod1::inner1::Foo as Bar;
+                fn test(bar: Bar) {}
+            }
+        }
+        mod mod2/*target*/ {}
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            mod inner1 {
+                pub struct Foo;
+            }
+
+            mod inner2 {
+                use crate::mod2::inner1::Foo as Bar;
+
+                fn test(bar: Bar) {}
+            }
+        }
+    """)
+
+    fun `test inside references with import alias`() = doTest("""
+    //- lib.rs
+        mod mod1 {
+            pub fn foo/*caret*/() {}
+        }
+        mod mod2/*target*/ {}
+        mod usage {
+            use crate::mod1::foo as bar;
+            fn test() {
+                bar();
+            }
+        }
+    """, """
+    //- lib.rs
+        mod mod1 {}
+        mod mod2 {
+            pub fn foo() {}
+        }
+        mod usage {
+            use crate::mod2::foo as bar;
+
+            fn test() {
+                bar();
+            }
+        }
+    """)
 }

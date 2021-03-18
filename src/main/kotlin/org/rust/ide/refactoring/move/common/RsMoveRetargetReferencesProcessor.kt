@@ -81,8 +81,13 @@ class RsMoveRetargetReferencesProcessor(
             .take(pathNewSegments.size - pathNewShortNumberSegments + 1)
             .joinToString("::")
 
+        val alias = reference.pathOld
+            .takeIf { it.coloncolon == null && pathNewShortNumberSegments == 1 }
+            ?.referenceName
+            ?.takeIf { it != pathNewShortText }
+
         val containingMod = reference.pathOldOriginal.containingMod
-        val pathNewShort = pathNewShortText.toRsPath(codeFragmentFactory, containingMod) ?: return false
+        val pathNewShort = (alias ?: pathNewShortText).toRsPath(codeFragmentFactory, containingMod) ?: return false
         val containingModHasSameNameInScope = pathNewShort.basePath().reference?.resolve()
             .let {
                 val elementToImport = usePath.toRsPath(codeFragmentFactory, containingMod)?.reference?.resolve()
@@ -95,8 +100,7 @@ class RsMoveRetargetReferencesProcessor(
                 pathNewShortNumberSegments + 1
             )
         }
-
-        addImport(reference.pathOldOriginal, usePath)
+        addImport(reference.pathOldOriginal, usePath, alias)
         replacePathOld(reference, pathNewShort)
         return true
     }
@@ -238,8 +242,8 @@ class RsMoveRetargetReferencesProcessor(
         filesToOptimizeImports.add(containingMod.containingFile as RsFile)
     }
 
-    private fun addImport(context: RsElement, usePath: String) {
-        addImport(psiFactory, context, usePath)
+    private fun addImport(context: RsElement, usePath: String, alias: String?) {
+        addImport(psiFactory, context, usePath, alias)
         filesToOptimizeImports.add(context.containingFile as RsFile)
     }
 
