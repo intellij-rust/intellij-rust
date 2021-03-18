@@ -63,6 +63,9 @@ interface CargoWorkspace {
     @TestOnly
     fun withCfgOptions(cfgOptions: CfgOptions): CargoWorkspace
 
+    @TestOnly
+    fun withCargoFeatures(features: Map<PackageFeature, List<FeatureDep>>): CargoWorkspace
+
     /** See docs for [CargoProjectsService] */
     interface Package : UserDataHolderEx {
         val contentRoot: VirtualFile?
@@ -458,6 +461,20 @@ private class WorkspaceImpl(
         cfgOptions,
         featuresState
     ).withDependenciesOf(this)
+
+    @TestOnly
+    override fun withCargoFeatures(features: Map<PackageFeature, List<FeatureDep>>): CargoWorkspace {
+        val packageToFeatures = features.entries
+            .groupBy { it.key.pkg }
+            .mapValues { (_, v) -> v.associate { it.key.name to it.value } }
+        return WorkspaceImpl(
+            manifestPath,
+            workspaceRootPath,
+            packages.map { it.asPackageData().copy(features = packageToFeatures[it].orEmpty(), enabledFeatures = packageToFeatures[it].orEmpty().keys) },
+            cfgOptions,
+            featuresState
+        ).withDependenciesOf(this).withDisabledFeatures(UserDisabledFeatures.EMPTY)
+    }
 
     override fun toString(): String {
         val pkgs = packages.joinToString(separator = "") { "    $it,\n" }

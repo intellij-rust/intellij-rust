@@ -455,7 +455,11 @@ data class CargoProjectImpl(
 
     override val workspace: CargoWorkspace? by lazy(LazyThreadSafetyMode.PUBLICATION) {
         val rawWorkspace = rawWorkspace ?: return@lazy null
-        val stdlib = stdlib ?: return@lazy rawWorkspace
+        val stdlib = stdlib ?: return@lazy if (!userDisabledFeatures.isEmpty() && isUnitTestMode) {
+            rawWorkspace.withDisabledFeatures(userDisabledFeatures)
+        } else {
+            rawWorkspace
+        }
         rawWorkspace.withStdlib(stdlib, rawWorkspace.cfgOptions, rustcInfo)
             .withDisabledFeatures(userDisabledFeatures)
     }
@@ -476,7 +480,7 @@ data class CargoProjectImpl(
             return file
         }
 
-    override val workspaceRootDir: VirtualFile? by CachedVirtualFile(workspace?.workspaceRootPath?.toUri()?.toString())
+    override val workspaceRootDir: VirtualFile? by CachedVirtualFile(rawWorkspace?.workspaceRootPath?.toUri()?.toString())
 
     @TestOnly
     fun setRootDir(dir: VirtualFile) = rootDirCache.set(dir)

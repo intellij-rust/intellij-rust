@@ -37,6 +37,8 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.model.impl.testCargoProjects
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureDep
+import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.toolchain.RustChannel
 import org.rust.cargo.toolchain.impl.RustcVersion
 import org.rust.lang.core.macros.findExpansionElements
@@ -72,6 +74,7 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
         setupMockRustcVersion()
         setupMockEdition()
         setupMockCfgOptions()
+        setupMockCargoFeatures()
         setupResolveEngine(project, testRootDisposable)
         findAnnotationInstance<ExpandMacros>()?.let {
             val disposable = project.macroExpansionManager.setUnitTestExpansionModeAndDirectory(it.mode, it.cache)
@@ -117,6 +120,30 @@ abstract class RsTestBase : BasePlatformTestCase(), RsTestCase {
             CfgOptions.DEFAULT.nameOptions + additionalOptions
         )
         project.testCargoProjects.setCfgOptions(allOptions, testRootDisposable)
+    }
+
+    private fun setupMockCargoFeatures() {
+        val featuresToParse = findAnnotationInstance<MockCargoFeatures>()?.features
+            ?.takeIf { it.isNotEmpty() } ?: return
+
+        val testCargoProjects = project.testCargoProjects
+
+        val packages = testCargoProjects.allProjects.asSequence()
+            .flatMap { it.workspace?.packages.orEmpty().asSequence() }
+            .associateBy { it.name }
+
+        val packageFeatures = featuresToParse.mapNotNull { feature ->
+            val (pkgName, featureName) = if ("/" in feature) {
+                feature.split('/', limit = 2)
+            } else {
+                listOf("test-package", feature)
+            }
+            val pkg = packages[pkgName] ?: return@mapNotNull null
+
+            PackageFeature(pkg, featureName) to emptyList<FeatureDep>()
+        }.toMap()
+
+        testCargoProjects.setCargoFeatures(packageFeatures, testRootDisposable)
     }
 
     private fun parse(version: String): Pair<SemVer, RustChannel> {
