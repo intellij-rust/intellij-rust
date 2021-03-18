@@ -35,4 +35,32 @@ abstract class LocalCargoTomlCompletionTestBase : CargoTomlCompletionTestBase() 
             }
         }
     }
+
+    @Suppress("SameParameterValue")
+    protected fun doFirstCompletion(
+        @Language("TOML") before: String,
+        @Language("TOML") after: String,
+        vararg crates: Pair<String, CargoRegistryCrate>
+    ) {
+        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
+            withMockedCrates(crates.toMap()) {
+                completionFixture.doFirstCompletion(before, after)
+            }
+        }
+    }
+
+    @Suppress("SameParameterValue")
+    protected fun completeBasic(
+        @Language("TOML") code: String,
+        expected: List<String>,
+        vararg crates: Pair<String, CargoRegistryCrate>
+    ) {
+        runWithEnabledFeatures(RsExperiments.CRATES_LOCAL_INDEX) {
+            withMockedCrates(crates.toMap()) {
+                myFixture.configureByText("Cargo.toml", code)
+                val actual = myFixture.completeBasic().map { it.lookupString }
+                assertEquals(expected, actual)
+            }
+        }
+    }
 }
