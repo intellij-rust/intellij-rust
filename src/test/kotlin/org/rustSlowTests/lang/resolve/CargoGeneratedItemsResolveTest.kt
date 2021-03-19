@@ -17,6 +17,7 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.openapiext.runWithEnabledFeatures
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
+@MinRustcVersion("1.41.0")
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
     private val tempDirFixture = TempDirTestFixtureImpl()
@@ -642,7 +643,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../src/enabled.rs")
     }
 
-    @MinRustcVersion("1.32.0")
     fun `test generated environment variables`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """
@@ -678,7 +678,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/main.rs", toFile = ".../foo/bar/hello.rs")
     }
 
-    @MinRustcVersion("1.32.0")
     fun `test generated environment variables 2`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -729,7 +728,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.32.0")
     fun `test include without file name in literal`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -780,7 +778,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.32.0")
     fun `test include without file name in literal 2`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             buildProject {
@@ -822,7 +819,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.32.0")
     fun `test do not fail on compilation error`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """

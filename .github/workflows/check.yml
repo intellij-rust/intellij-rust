@@ -26,7 +26,64 @@ jobs:
             - name: Check license
               run: ./check-license.sh
 
+    build-native-code:
+        strategy:
+            fail-fast: true
+            matrix:
+                config:
+                    - name: linux
+                      arch: x86-64
+                      os: ubuntu-latest
+                      target: x86_64-unknown-linux-gnu
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper
+                    - name: windows
+                      arch: x86-64
+                      os: windows-latest
+                      target: x86_64-pc-windows-msvc
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper.exe
+                    - name: macos
+                      arch: x86-64
+                      os: macos-latest
+                      target: x86_64-apple-darwin
+                      artifact_path: native-helper/target/release/intellij-rust-native-helper
+
+        name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
+        runs-on: ${{ matrix.config.os }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
+            - name: Set up Rust
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: stable
+                  target: ${{ matrix.config.target }}
+                  default: true
+
+            - name: Cache native code
+              uses: actions/cache@v2.1.4
+              with:
+                  path: |
+                      ~/.cargo/registry
+                      ~/.cargo/git
+                      native-helper/target
+                  key: ${{ runner.os }}-native-helper-${{ hashFiles('native-helper/Cargo.lock') }}
+
+            - name: Build
+              uses: actions-rs/cargo@v1
+              with:
+                  command: build
+                  args: --manifest-path native-helper/Cargo.toml --release
+
+            - name: Publish
+              uses: actions/upload-artifact@v2
+              with:
+                  name: ${{ matrix.config.name }}-${{ matrix.config.arch }}
+                  path: ${{ matrix.config.artifact_path }}
+
     check-plugin:
+        needs: [ build-native-code ]
         strategy:
             fail-fast: false
             matrix:
@@ -53,6 +110,7 @@ jobs:
         env:
             ORG_GRADLE_PROJECT_baseIDE: ${{ matrix.base-ide }}
             ORG_GRADLE_PROJECT_platformVersion: ${{ matrix.platform-version }}
+            ORG_GRADLE_PROJECT_compileNativeCode: false
 
         steps:
             - uses: actions/checkout@v2
@@ -112,7 +170,6 @@ jobs:
                   echo "ORG_GRADLE_PROJECT_clionVersion=CL-2020.3.2" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_nativeDebugPluginVersion=203.7148.57" >> $GITHUB_ENV
                   echo "ORG_GRADLE_PROJECT_graziePluginVersion=203.7148.20" >> $GITHUB_ENV
-                  echo "ORG_GRADLE_PROJECT_compileNativeCode=false" >> $GITHUB_ENV
 
             - name: Set up env variable for old resolve
               if: matrix.resolve-engine == 'resolve-old'
@@ -129,6 +186,24 @@ jobs:
             # - name: Create symlink for Rust stdlib Windows
             #  if: matrix.os == 'windows-latest'
             #  run: New-Item -ItemType Junction -Path "$env:RUST_SRC_WITH_SYMLINK" -Target "$(rustc --print sysroot)/lib/rustlib/src/rust"
+
+            - name: Load linux binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: linux-x86-64
+                  path: bin/linux/x86-64
+
+            - name: Load windows binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: windows-x86-64
+                  path: bin/windows/x86-64
+
+            - name: Load macos binaries
+              uses: actions/download-artifact@v2
+              with:
+                  name: macos-x86-64
+                  path: bin/macos/x86-64
 
             - name: Download
               uses: eskatos/gradle-command-action@v1
