@@ -95,7 +95,7 @@ jobs:
                 include:
                     - os: ubuntu-18.04
                       # Don't forget to update condition in `Set up additional env variables` step
-                      rust-version: 1.32.0
+                      rust-version: 1.41.0
                       base-ide: idea
                       platform-version: 203
                       resolve-engine: resolve-old
@@ -149,7 +149,7 @@ jobs:
                       ${{ runner.os }}-cache-evcxr-${{ matrix.rust-version }}-
 
             - name: Install evcxr
-              if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.40.0' # BACKCOMPAT: Rust 1.39.0
+              if: matrix.os != 'windows-latest' && matrix.rust-version >= '1.46.0' # BACKCOMPAT: Rust 1.45.0
               uses: actions-rs/cargo@v1
               with:
                   command: install
@@ -162,7 +162,7 @@ jobs:
                   cargo install --list
 
             - name: Set up additional env variables
-              if: matrix.rust-version == '1.32.0'
+              if: matrix.rust-version == '1.41.0'
               # see https://help.github.com/en/actions/reference/workflow-commands-for-github-actions#setting-an-environment-variable
               # BACKCOMPAT: 1.45.0. Don't redefine `compileNativeCode` property
               run: |

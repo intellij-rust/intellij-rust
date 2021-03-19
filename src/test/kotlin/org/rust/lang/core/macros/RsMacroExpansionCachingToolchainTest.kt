@@ -15,7 +15,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.util.io.delete
 import org.intellij.lang.annotations.Language
-import org.rust.MinRustcVersion
 import org.rust.TestProject
 import org.rust.cargo.RsWithToolchainTestBase
 import org.rust.cargo.project.model.cargoProjects
@@ -133,7 +132,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         bar!(a);
     """)
 
-    @MinRustcVersion("1.33.0")
     fun `test touch definition at separate file`() = stubBasedRefMatch.checkReExpanded(touchFile("src/foo.rs"), """
         //- foo.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
@@ -148,7 +146,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         bar!(a);
     """)
 
-    @MinRustcVersion("1.33.0")
     fun `test touch usage at separate file`() = refsRecoverExactHit.checkReExpanded(touchFile("src/main.rs"), """
         //- def.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
@@ -164,7 +161,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         foo!(aaa);
     """, "foo")
 
-    @MinRustcVersion("1.33.0")
     fun `test edit usage at separate file`() = refsRecoverNotHit.checkReExpanded(replaceInFile("src/main.rs", "aaa", "aab"), """
         //- def.rs
         macro_rules! foo { ($ i:ident) => { mod $ i {} } }
@@ -180,7 +176,6 @@ class RsMacroExpansionCachingToolchainTest : RsWithToolchainTestBase() {
         foo!(a);
     """, "foo")
 
-    @MinRustcVersion("1.33.0")
     fun `test edit definition at separate file`() = stubBasedRefMatch.checkReExpanded(replaceInFile("src/def.rs", "aaa", "aab"), """
         //- def.rs
         macro_rules! foo { ($ i:ident) => { fn $ i() { aaa; } } }

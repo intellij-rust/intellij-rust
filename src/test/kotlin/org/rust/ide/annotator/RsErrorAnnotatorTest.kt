@@ -4058,7 +4058,6 @@ class RsErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) {
         impl <error descr="Cannot define inherent `impl` for a type outside of the crate where the type is defined [E0116]">dyn ForeignTrait</error> {}
     """)
 
-    @MinRustcVersion("1.33.0")  // for Pin
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test E0117 trait impls orphan rules`() = checkByFileTree("""

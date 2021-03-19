@@ -69,7 +69,7 @@ pub enum TestResult {
 pub fn create_test_runner<'test>(
     config: &'test Config,
     src_path: &'test Path,
-) -> Box<TestRunner<'test> + 'test> {
+) -> Box<dyn TestRunner<'test> + 'test> {
     match config {
         Config::LLDB(config) => Box::new(LLDBTestRunner { config, src_path }),
         Config::GDB(config) => Box::new(GDBTestRunner { config, src_path })
@@ -312,7 +312,7 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
         match line {
             Ok(line) => {
                 let line = if line.starts_with("//") {
-                    line[2..].trim_left()
+                    line[2..].trim_start()
                 } else {
                     line.as_str()
                 };
@@ -368,7 +368,7 @@ fn parse_debugger_commands(src_path: &Path, debugger_prefixes: &[&str]) -> Debug
 
 fn parse_rustc_version(line: &str, prefix: &str) -> Result<Option<Version>, SemVerError> {
     if line.starts_with(prefix) {
-        let min_version_str = &line[prefix.len()..].trim_left();
+        let min_version_str = &line[prefix.len()..].trim_start();
         let version = Version::parse(min_version_str)?;
         Ok(Some(version))
     } else {

@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.exists
-import com.intellij.util.text.SemVer
 import org.rust.cargo.CargoConstants
 import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.RustcInfo
@@ -69,10 +68,8 @@ data class StandardLibrary(
             val stdlib = if (isFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) && !isPartOfCargoProject) {
                 val rustcVersion = rustcInfo?.version
                 val semverVersion = rustcVersion?.semver
-                // BACKCOMPAT: rust 1.40
-                // cargo metadata doesn't contain all necessary info before 1.41
-                if (semverVersion == null || semverVersion < RUST_1_41) {
-                    LOG.warn("Toolchain version should be at least `${RUST_1_41.parsedVersion}`, current: `${semverVersion?.parsedVersion}`")
+                if (semverVersion == null) {
+                    LOG.warn("Toolchain version is unknown. Hardcoded stdlib struture will be used")
                     fetchHardcodedStdlib(srcDir)
                 } else {
                     fetchActualStdlib(project, srcDir, rustcVersion)
@@ -323,14 +320,8 @@ private fun VirtualFile.findFirstFileByRelativePaths(paths: List<String>): Virtu
 }
 
 private fun CargoWorkspaceData.Package.withProperEdition(rustcInfo: RustcInfo?): CargoWorkspaceData.Package {
-    val firstVersionWithEdition2018 = when (name) {
-        AutoInjectedCrates.CORE -> RUST_1_36
-        AutoInjectedCrates.STD -> RUST_1_35
-        else -> RUST_1_34
-    }
-
     val currentRustcVersion = rustcInfo?.version?.semver
-    val edition = if (currentRustcVersion == null || currentRustcVersion < firstVersionWithEdition2018) {
+    val edition = if (currentRustcVersion == null) {
         CargoWorkspace.Edition.EDITION_2015
     } else {
         CargoWorkspace.Edition.EDITION_2018
@@ -339,8 +330,3 @@ private fun CargoWorkspaceData.Package.withProperEdition(rustcInfo: RustcInfo?):
     val newTargets = targets.map { it.copy(edition = edition) }
     return copy(targets = newTargets, edition = edition)
 }
-
-private val RUST_1_34: SemVer = SemVer.parseFromText("1.34.0")!!
-private val RUST_1_35: SemVer = SemVer.parseFromText("1.35.0")!!
-private val RUST_1_36: SemVer = SemVer.parseFromText("1.36.0")!!
-private val RUST_1_41: SemVer = SemVer.parseFromText("1.41.0")!!

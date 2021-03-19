@@ -2,21 +2,12 @@ from sys import version_info
 
 import gdb
 from gdb import Value
-from gdb import TYPE_CODE_PTR
 
 if version_info[0] >= 3:
     xrange = range
 
 ZERO_FIELD = "__0"
 FIRST_FIELD = "__1"
-
-
-def unwrap_unique_or_non_null(unique_or_nonnull):
-    # type: (Value) -> Value
-    # BACKCOMPAT: rust 1.32 https://github.com/rust-lang/rust/commit/7a0911528058e87d22ea305695f4047572c5e067
-    ptr = unique_or_nonnull["pointer"]
-    return ptr if ptr.type.code == TYPE_CODE_PTR else ptr[ZERO_FIELD]
-
 
 class StructProvider:
     def __init__(self, valobj):
@@ -105,7 +96,7 @@ class StdStringProvider:
         self.valobj = valobj
         vec = valobj["vec"]
         self.length = int(vec["len"])
-        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
+        self.data_ptr = vec["buf"]["ptr"]["pointer"]
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
@@ -124,7 +115,7 @@ class StdOsStringProvider:
         vec = buf[ZERO_FIELD] if is_windows else buf
 
         self.length = int(vec["len"])
-        self.data_ptr = unwrap_unique_or_non_null(vec["buf"]["ptr"])
+        self.data_ptr = vec["buf"]["ptr"]["pointer"]
 
     def to_string(self):
         return self.data_ptr.lazy_string(encoding="utf-8", length=self.length)
@@ -154,7 +145,7 @@ class StdVecProvider:
         # type: (Value) -> StdVecProvider
         self.valobj = valobj
         self.length = int(valobj["len"])
-        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
+        self.data_ptr = valobj["buf"]["ptr"]["pointer"]
 
     def to_string(self):
         return "size={}".format(self.length)
@@ -175,7 +166,7 @@ class StdVecDequeProvider:
         self.head = int(valobj["head"])
         self.tail = int(valobj["tail"])
         self.cap = int(valobj["buf"]["cap"])
-        self.data_ptr = unwrap_unique_or_non_null(valobj["buf"]["ptr"])
+        self.data_ptr = valobj["buf"]["ptr"]["pointer"]
         if self.head >= self.tail:
             self.size = self.head - self.tail
         else:
@@ -197,7 +188,7 @@ class StdRcProvider:
     def __init__(self, valobj, is_atomic=False):
         # type: (Value, bool) -> StdRcProvider
         self.valobj = valobj
-        self.ptr = unwrap_unique_or_non_null(valobj["ptr"])
+        self.ptr = valobj["ptr"]["pointer"]
         self.value = self.ptr["data" if is_atomic else "value"]
         self.strong = self.ptr["strong"]["v" if is_atomic else "value"]["value"]
         self.weak = self.ptr["weak"]["v" if is_atomic else "value"]["value"] - 1
@@ -270,7 +261,7 @@ def children_of_node(boxed_node, height):
         internal_type = gdb.lookup_type(internal_type_name)
         return node.cast(internal_type.pointer())
 
-    node_ptr = unwrap_unique_or_non_null(boxed_node["ptr"])
+    node_ptr = boxed_node["ptr"]["pointer"]
     leaf = node_ptr.dereference()
     keys = leaf["keys"]
     vals = leaf["vals"]
@@ -335,65 +326,6 @@ class StdBTreeMapProvider:
     @staticmethod
     def display_hint():
         return "map"
-
-
-# BACKCOMPAT: rust 1.35
-class StdOldHashMapProvider:
-    def __init__(self, valobj, show_values=True):
-        # type: (Value, bool) -> StdOldHashMapProvider
-        self.valobj = valobj
-        self.show_values = show_values
-
-        self.table = self.valobj["table"]
-        self.size = int(self.table["size"])
-        self.hashes = self.table["hashes"]
-        self.hash_uint_type = self.hashes.type
-        self.hash_uint_size = self.hashes.type.sizeof
-        self.modulo = 2 ** self.hash_uint_size
-        self.data_ptr = self.hashes[ZERO_FIELD]["pointer"]
-
-        self.capacity_mask = int(self.table["capacity_mask"])
-        self.capacity = (self.capacity_mask + 1) % self.modulo
-
-        marker = self.table["marker"].type
-        self.pair_type = marker.template_argument(0)
-        self.pair_type_size = self.pair_type.sizeof
-
-        self.valid_indices = []
-        for idx in range(self.capacity):
-            data_ptr = self.data_ptr.cast(self.hash_uint_type.pointer())
-            address = data_ptr + idx
-            hash_uint = address.dereference()
-            hash_ptr = hash_uint[ZERO_FIELD]["pointer"]
-            if int(hash_ptr) != 0:
-                self.valid_indices.append(idx)
-
-    def to_string(self):
-        return "size={}".format(self.size)
-
-    def children(self):
-        start = int(self.data_ptr) & ~1
-
-        hashes = self.hash_uint_size * self.capacity
-        align = self.pair_type_size
-        len_rounded_up = (((((hashes + align) % self.modulo - 1) % self.modulo) & ~(
-                (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
-
-        pairs_offset = hashes + len_rounded_up
-        pairs_start = Value(start + pairs_offset).cast(self.pair_type.pointer())
-
-        for index in range(self.size):
-            table_index = self.valid_indices[index]
-            idx = table_index & self.capacity_mask
-            element = (pairs_start + idx).dereference()
-            if self.show_values:
-                yield "key{}".format(index), element[ZERO_FIELD]
-                yield "val{}".format(index), element[FIRST_FIELD]
-            else:
-                yield "[{}]".format(index), element[ZERO_FIELD]
-
-    def display_hint(self):
-        return "map" if self.show_values else "array"
 
 
 class StdHashMapProvider:

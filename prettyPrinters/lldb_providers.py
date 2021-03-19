@@ -60,12 +60,6 @@ class ValueBuilder:
         return self.valobj.CreateValueFromData(name, data, type)
 
 
-def unwrap_unique_or_non_null(unique_or_nonnull):
-    # BACKCOMPAT: rust 1.32 https://github.com/rust-lang/rust/commit/7a0911528058e87d22ea305695f4047572c5e067
-    ptr = unique_or_nonnull.GetChildMemberWithName("pointer")
-    return ptr if ptr.TypeIsPointerType() else ptr.GetChildAtIndex(0)
-
-
 class DefaultSyntheticProvider:
     def __init__(self, valobj, _dict):
         # type: (SBValue, dict) -> DefaultSyntheticProvider
@@ -287,7 +281,7 @@ class StdVecSyntheticProvider:
         self.length = self.valobj.GetChildMemberWithName("len").GetValueAsUnsigned()
         self.buf = self.valobj.GetChildMemberWithName("buf")
 
-        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
+        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
 
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
@@ -335,91 +329,10 @@ class StdVecDequeSyntheticProvider:
         self.cap = self.buf.GetChildMemberWithName("cap").GetValueAsUnsigned()
         self.size = self.head - self.tail if self.head >= self.tail else self.cap + self.head - self.tail
 
-        self.data_ptr = unwrap_unique_or_non_null(self.buf.GetChildMemberWithName("ptr"))
+        self.data_ptr = self.buf.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
 
         self.element_type = self.data_ptr.GetType().GetPointeeType()
         self.element_type_size = self.element_type.GetByteSize()
-
-    def has_children(self):
-        # type: () -> bool
-        return True
-
-
-# BACKCOMPAT: rust 1.35
-class StdOldHashMapSyntheticProvider:
-    """Pretty-printer for std::collections::hash::map::HashMap<K, V, S>
-
-    struct HashMap<K, V, S> {..., table: RawTable<K, V>, ... }
-    struct RawTable<K, V> { capacity_mask: usize, size: usize, hashes: TaggedHashUintPtr, ... }
-    """
-
-    def __init__(self, valobj, _dict, show_values=True):
-        # type: (SBValue, dict, bool) -> StdOldHashMapSyntheticProvider
-        self.valobj = valobj
-        self.show_values = show_values
-        self.update()
-
-    def num_children(self):
-        # type: () -> int
-        return self.size
-
-    def get_child_index(self, name):
-        # type: (str) -> int
-        index = name.lstrip('[').rstrip(']')
-        if index.isdigit():
-            return int(index)
-        else:
-            return -1
-
-    def get_child_at_index(self, index):
-        # type: (int) -> SBValue
-        start = self.data_ptr.GetValueAsUnsigned() & ~1
-
-        # See `libstd/collections/hash/table.rs:raw_bucket_at
-        hashes = self.hash_uint_size * self.capacity
-        align = self.pair_type_size
-        # See `libcore/alloc.rs:padding_needed_for`
-        len_rounded_up = (((((hashes + align) % self.modulo - 1) % self.modulo) & ~(
-            (align - 1) % self.modulo)) % self.modulo - hashes) % self.modulo
-        # len_rounded_up = ((hashes + align - 1) & ~(align - 1)) - hashes
-
-        pairs_offset = hashes + len_rounded_up
-        pairs_start = start + pairs_offset
-
-        table_index = self.valid_indices[index]
-        idx = table_index & self.capacity_mask
-        address = pairs_start + idx * self.pair_type_size
-        element = self.data_ptr.CreateValueFromAddress("[%s]" % index, address, self.pair_type)
-        if self.show_values:
-            return element
-        else:
-            key = element.GetChildAtIndex(0)
-            return self.valobj.CreateValueFromData("[%s]" % index, key.GetData(), key.GetType())
-
-    def update(self):
-        # type: () -> None
-        self.table = self.valobj.GetChildMemberWithName("table")  # type: SBValue
-        self.size = self.table.GetChildMemberWithName("size").GetValueAsUnsigned()
-        self.hashes = self.table.GetChildMemberWithName("hashes")
-        self.hash_uint_type = self.hashes.GetType()
-        self.hash_uint_size = self.hashes.GetType().GetByteSize()
-        self.modulo = 2 ** self.hash_uint_size
-        self.data_ptr = self.hashes.GetChildAtIndex(0).GetChildAtIndex(0)
-
-        self.capacity_mask = self.table.GetChildMemberWithName("capacity_mask").GetValueAsUnsigned()
-        self.capacity = (self.capacity_mask + 1) % self.modulo
-
-        marker = self.table.GetChildMemberWithName("marker").GetType()
-        self.pair_type = marker.template_args[0]
-        self.pair_type_size = self.pair_type.GetByteSize()
-
-        self.valid_indices = []
-        for idx in range(self.capacity):
-            address = self.data_ptr.GetValueAsUnsigned() + idx * self.hash_uint_size
-            hash_uint = self.data_ptr.CreateValueFromAddress("[%s]" % idx, address, self.hash_uint_type)
-            hash_ptr = hash_uint.GetChildAtIndex(0).GetChildAtIndex(0)
-            if hash_ptr.GetValueAsUnsigned() != 0:
-                self.valid_indices.append(idx)
 
     def has_children(self):
         # type: () -> bool
@@ -532,7 +445,7 @@ class StdRcSyntheticProvider:
         # type: (SBValue, dict, bool) -> StdRcSyntheticProvider
         self.valobj = valobj
 
-        self.ptr = unwrap_unique_or_non_null(self.valobj.GetChildMemberWithName("ptr"))
+        self.ptr = self.valobj.GetChildMemberWithName("ptr").GetChildMemberWithName("pointer")
 
         self.value = self.ptr.GetChildMemberWithName("data" if is_atomic else "value")
 

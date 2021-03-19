@@ -17,7 +17,6 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.openapiext.runWithEnabledFeatures
 import org.rustSlowTests.cargo.runconfig.RunConfigurationTestBase
 
-@MinRustcVersion("1.41.0")
 class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
 
     private val tempDirFixture = TempDirTestFixtureImpl()
@@ -238,7 +237,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }
     }
 
-    @MinRustcVersion("1.41.0")
     fun `test include with build script info`() = withEnabledEvaluateBuildScriptsFeature {
         buildProject {
             toml("Cargo.toml", """
@@ -261,7 +259,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/lib.rs")
     }
 
-    @MinRustcVersion("1.41.0")
     fun `test include with build script info with invalid code`() = withEnabledEvaluateBuildScriptsFeature {
         assertTrue(Registry.`is`("org.rust.cargo.evaluate.build.scripts.wrapper"))
         buildProject {
@@ -286,7 +283,6 @@ class CargoGeneratedItemsResolveTest : RunConfigurationTestBase() {
         }.checkReferenceIsResolved<RsPath>("src/lib.rs")
     }
 
-    @MinRustcVersion("1.41.0")
     fun `test do not run build-plan if build script info is enough`() = withEnabledFetchOutDirFeature {
         withEnabledEvaluateBuildScriptsFeature {
             Cargo.Testmarks.fetchBuildPlan.checkNotHit {

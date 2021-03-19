@@ -89,7 +89,6 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         use std::/*caret*/;
     """)
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module unix`() {
@@ -101,7 +100,6 @@ class RsStdlibCompletionTest : RsCompletionTestBase() {
         """)
     }
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test complete items from 'os' module windows`() {

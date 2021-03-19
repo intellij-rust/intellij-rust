@@ -92,17 +92,6 @@ class CargoTest : RsTestBase() {
         """)
     }
 
-    @MockRustcVersion("1.35.0-nightly")
-    fun `test adds -Zoffline`() = withOfflineMode {
-        checkCommandLine(cargo.toColoredCommandLine(project, CargoCommandLine("run", wd, listOf("--release", "--", "foo"))), """
-            cmd: /usr/bin/cargo -Zoffline run --color=always --release -- foo
-            env: RUSTC=/usr/bin/rustc, RUST_BACKTRACE=short, TERM=ansi
-            """, """
-            cmd: C:/usr/bin/cargo.exe -Zoffline run --color=always --release -- foo
-            env: RUSTC=C:/usr/bin/rustc.exe, RUST_BACKTRACE=short, TERM=ansi
-        """)
-    }
-
     private fun withOfflineMode(action: () -> Unit) {
         val oldStatus = project.rustSettings.useOffline
         try {
@@ -120,9 +109,7 @@ class CargoTest : RsTestBase() {
     ) {
         val cleaned = (if (SystemInfo.isWindows) expectedWin else expected).trimIndent()
         val actual = cmd.debug().trim()
-        check(cleaned == actual) {
-            "Expected:\n$cleaned\nActual:\n$actual"
-        }
+        assertEquals(cleaned, actual)
     }
 
     private fun GeneralCommandLine.debug(): String {

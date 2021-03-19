@@ -43,8 +43,11 @@ import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_BOOTSTRAP
 import org.rust.cargo.toolchain.RsToolchain.Companion.RUSTC_WRAPPER
 import org.rust.cargo.toolchain.RustChannel
-import org.rust.cargo.toolchain.impl.*
+import org.rust.cargo.toolchain.impl.BuildMessages
+import org.rust.cargo.toolchain.impl.CargoBuildPlan
+import org.rust.cargo.toolchain.impl.CargoMetadata
 import org.rust.cargo.toolchain.impl.CargoMetadata.replacePaths
+import org.rust.cargo.toolchain.impl.CompilerMessage
 import org.rust.cargo.toolchain.tools.Rustup.Companion.checkNeedInstallClippy
 import org.rust.ide.actions.InstallBinaryCrateAction
 import org.rust.ide.experiments.RsExperiments
@@ -380,10 +383,8 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
                 if (project.rustSettings.useOffline) {
                     val cargoProject = findCargoProject(project, additionalArguments, workingDirectory)
                     val rustcVersion = cargoProject?.rustcInfo?.version?.semver
-                    when {
-                        rustcVersion == null -> Unit
-                        rustcVersion < RUST_1_36 -> add("-Zoffline")
-                        else -> add("--offline")
+                    if (rustcVersion != null) {
+                        add("--offline")
                     }
                 }
                 add(command)
@@ -616,5 +617,3 @@ sealed class CargoCheckArgs {
         }
     }
 }
-
-private val RUST_1_36: SemVer = SemVer.parseFromText("1.36.0")!!

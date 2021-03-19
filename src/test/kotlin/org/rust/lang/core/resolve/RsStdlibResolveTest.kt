@@ -194,58 +194,58 @@ class RsStdlibResolveTest : RsResolveTestBase() {
                        //^ .../f64.rs
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
+    // BACKCOMPAT: Rust 1.41.0
+    //  Since 1.42.0 some pointer methods moved from `libcore/ptr/mod.rs` to `libcore/ptr/const_ptr.rs`
     fun `test inherent impl const ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *const char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
+            //^ ...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
+    // BACKCOMPAT: Rust 1.41.0
+    //  Since 1.42.0 some pointer methods moved from `libcore/ptr/mod.rs` to `libcore/ptr/const_ptr.rs`
     fun `test inherent impl const ptr 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *const char;
             <*const char>::is_null(p);
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
+                         //^ ...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
+    // BACKCOMPAT: Rust 1.41.0
+    //  Since 1.42.0 some pointer methods moved from `libcore/ptr/mod.rs` to `libcore/ptr/const_ptr.rs`
     fun `test inherent impl const ptr 3`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             <*const char>::is_null(p); //Pass a *mut pointer to a *const method
-                         //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
+                         //^ ...libcore/ptr/mod.rs|...libcore/ptr/const_ptr.rs|...core/src/ptr/const_ptr.rs
         }
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
+    // BACKCOMPAT: Rust 1.41.0
+    //  Since 1.42.0 some pointer methods moved from `libcore/ptr/mod.rs` to `libcore/ptr/mut_ptr.rs`
     fun `test inherent impl mut ptr 1`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             p.is_null();
-            //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
+            //^ ...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
         }
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common pointer methods moved from `libcore/ptr.rs` to `libcore/ptr/mod.rs`
+    // BACKCOMPAT: Rust 1.41.0
+    //  Since 1.42.0 some pointer methods moved from `libcore/ptr/mod.rs` to `libcore/ptr/mut_ptr.rs`
     fun `test inherent impl mut ptr 2`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             let p: *mut char;
             <*mut char>::is_null(p);
-                       //^ ...libcore/ptr.rs|...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
+                       //^ ...libcore/ptr/mod.rs|...libcore/ptr/mut_ptr.rs|...core/src/ptr/mut_ptr.rs
         }
     """)
 
@@ -270,7 +270,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             assert_eq!("Hello, World!", "");
-        }   //^ ...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+        }   //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test iterating a vec`() = stubOnlyResolve("""
@@ -566,7 +566,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             let _: String = "".into();
-        }                    //^ ...convert.rs|...convert/mod.rs
+        }                    //^ ...convert/mod.rs
     """)
 
     fun `test resolve with no_std attribute`() = stubOnlyResolve("""
@@ -604,7 +604,7 @@ class RsStdlibResolveTest : RsResolveTestBase() {
 
         fn foo() {
             panic!("{}");
-            //^ ...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+            //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
         }
     """)
 
@@ -646,14 +646,12 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         }   //^ ...libcore/sync/atomic.rs|...core/src/sync/atomic.rs
     """)
 
-    // BACKCOMPAT: Rust 1.36.0
-    //  Since 1.37.0 common code from `libcore/mem.rs` moved to `libcore/mem/mod.rs`
     fun `test non-absolute std-qualified path in non-root module`() = stubOnlyResolve("""
     //- main.rs
         mod foo {
             fn main() {
                 std::mem::size_of::<i32>();
-            }           //^ ...libcore/mem.rs|...libcore/mem/mod.rs|...core/src/mem/mod.rs
+            }           //^ ...libcore/mem/mod.rs|...core/src/mem/mod.rs
         }
     """)
 
@@ -690,14 +688,14 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     //- main.rs
         fn main() {
             format_args!(true);
-        }   //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+        }   //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test rustc doc only macro from std`() = stubOnlyResolve("""
     //- main.rs
         fn main() {
             std::format_args!(true);
-        }        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+        }        //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
     fun `test f64 INFINITY`() = stubOnlyResolve("""
@@ -711,10 +709,9 @@ class RsStdlibResolveTest : RsResolveTestBase() {
     fun `test resolve concat args`() = stubOnlyResolve("""
     //- main.rs
         include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
-                        //^ ...libstd/macros.rs|...libcore/macros.rs|...libcore/macros/mod.rs|...core/src/macros/mod.rs
+                        //^ ...libcore/macros/mod.rs|...core/src/macros/mod.rs
     """)
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module unix`() {
@@ -726,7 +723,6 @@ class RsStdlibResolveTest : RsResolveTestBase() {
         """)
     }
 
-    @MinRustcVersion("1.41.0")
     @ExpandMacros(MacroExpansionScope.ALL, "std")
     @ProjectDescriptor(WithActualStdlibRustProjectDescriptor::class)
     fun `test resolve in os module windows`() {
