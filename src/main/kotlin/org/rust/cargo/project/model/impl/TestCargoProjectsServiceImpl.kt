@@ -14,6 +14,8 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.workspace.CargoWorkspace
+import org.rust.cargo.project.workspace.FeatureDep
+import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.lang.core.psi.rustPsiManager
 import org.rust.openapiext.pathAsPath
 import java.nio.file.Path
@@ -89,6 +91,24 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
             val updatedProjects = projects.map { project ->
                 val ws = project.workspace?.withCfgOptions(cfgOptions)
                 project.copy(rawWorkspace = ws)
+            }
+            CompletableFuture.completedFuture(updatedProjects)
+        }
+    }
+
+    @TestOnly
+    fun setCargoFeatures(features: Map<PackageFeature, List<FeatureDep>>, parentDisposable: Disposable) {
+        setCargoFeaturesInner(features)
+        Disposer.register(parentDisposable, Disposable {
+            setCargoFeaturesInner(emptyMap())
+        })
+    }
+
+    private fun setCargoFeaturesInner(features: Map<PackageFeature, List<FeatureDep>>) {
+        modifyProjectsSync { projects ->
+            val updatedProjects = projects.map { project ->
+                val ws = project.workspace?.withCargoFeatures(features)
+                project.copy(rawWorkspace = ws, userDisabledFeatures = UserDisabledFeatures.EMPTY)
             }
             CompletableFuture.completedFuture(updatedProjects)
         }

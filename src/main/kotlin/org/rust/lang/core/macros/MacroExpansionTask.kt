@@ -24,6 +24,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.storage.HeavyProcessLatch
 import org.rust.RsTask
+import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsMembers
 import org.rust.lang.core.psi.ext.RsMod
@@ -414,6 +415,8 @@ object ExpansionPipeline {
             val oldExpansionFile = info.expansionFile
 
             if (oldExpansionFile != null && !oldExpansionFile.isValid) throw CorruptedExpansionStorageException()
+
+            if (!call.isEnabledByCfg) return nextStageFail(callHash, null)
 
             val def = RsMacroPathReferenceImpl.resolveInBatchMode { call.resolveToMacroWithoutPsi() }
                 ?: return if (oldExpansionFile == null) EmptyPipeline else nextStageFail(callHash, null)

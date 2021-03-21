@@ -24,7 +24,6 @@ import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.impl.source.StubbedSpine
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.workspace.PackageOrigin
-import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.RsFileType
 import org.rust.lang.core.macros.MacroExpansionManagerImpl.Testmarks
 import org.rust.lang.core.macros.decl.DeclMacroExpander
@@ -559,11 +558,9 @@ class SourceFile(
     private fun freshExtractMacros(prefetchedCalls: List<RsMacroCall>?) {
         val psi = loadPsi() ?: return
         val calls = prefetchedCalls ?: psi.stubDescendantsOfTypeStrict<RsMacroCall>().filter { it.isTopLevelExpansion }
-        val newInfos = calls
-            .filter { it.isEnabledByCfg }
-            .map { call ->
-                ExpandedMacroInfoImpl.newStubLinked(this, call)
-            }
+        val newInfos = calls.map { call ->
+            ExpandedMacroInfoImpl.newStubLinked(this, call)
+        }
         switchToStubRefsInReadAction(RefKind.FRESH) { infos ->
             check(infos.isEmpty())
             infos.addAll(newInfos)
@@ -873,7 +870,7 @@ class ExpandedMacroInfoImpl(
     }
 
     fun makePipeline(call: RsMacroCall?): Pipeline.Stage1ResolveAndExpand {
-        return if (call != null && call.isEnabledByCfg) {
+        return if (call != null) {
             ExpansionPipeline.Stage1(call, this)
         } else {
             InvalidationPipeline.Stage1(this)
