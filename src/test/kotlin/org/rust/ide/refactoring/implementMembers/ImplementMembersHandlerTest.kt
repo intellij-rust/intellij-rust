@@ -1225,11 +1225,11 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl Foo for S {
             fn foo(&self) {
-                unimplemented!()
+                todo!()
             }
 
             fn baz(&self) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1253,7 +1253,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct Bar;
         impl Foo for Bar {
             fn foo() -> S {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1277,7 +1277,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct Bar;
         impl Foo for Bar {
             fn foo() -> S<u64> {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1307,7 +1307,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct Bar;
         impl Foo for Bar {
             fn foo() -> S {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1331,7 +1331,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct Bar;
         impl Foo for Bar {
             fn foo() -> S<i32, u32> {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -1357,7 +1357,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct Bar;
         impl Foo for Bar {
             fn foo(_: A<i32>) -> A {
-                unimplemented!()
+                todo!()
             }
         }
     """)
