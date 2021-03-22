@@ -38,7 +38,6 @@ fan-tom
 farodin91
 FatalCatharsis
 Filippok
-flaghacker
 framlog
 garyttierney
 gejun123456
@@ -56,6 +55,7 @@ JakubAdamWieczorek
 Jezza
 johnthagen
 jonas-schievink
+KarelPeeters
 Keats
 king6cong
 Kobzol
