@@ -11,10 +11,12 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.Link
 import com.intellij.ui.layout.LayoutBuilder
+import org.rust.cargo.project.settings.toolchain
 import org.rust.cargo.toolchain.RsToolchain
 import org.rust.cargo.toolchain.tools.Rustup
 import org.rust.cargo.toolchain.tools.rustc
@@ -89,7 +91,7 @@ class RustProjectSettingsPanel(
 
     fun attachTo(layout: LayoutBuilder) = with(layout) {
         data = Data(
-            toolchain = RsToolchain.suggest(),
+            toolchain = ProjectManager.getInstance().defaultProject.toolchain ?: RsToolchain.suggest(),
             explicitPathToStdlib = null
         )
 
