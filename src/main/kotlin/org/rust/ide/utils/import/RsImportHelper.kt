@@ -30,9 +30,13 @@ object RsImportHelper {
         importElements(context, toImport)
     }
 
-    fun importTypeReferencesFromTy(context: RsElement, ty: Ty, useAliases: Boolean = false) {
-        val (toImport, _) = getTypeReferencesInfoFromTys(context, ty, useAliases = useAliases)
+    fun importTypeReferencesFromTys(context: RsElement, tys: Collection<Ty>, useAliases: Boolean = false) {
+        val (toImport, _) = getTypeReferencesInfoFromTys(context, *tys.toTypedArray(), useAliases = useAliases)
         importElements(context, toImport)
+    }
+
+    fun importTypeReferencesFromTy(context: RsElement, ty: Ty, useAliases: Boolean = false) {
+        importTypeReferencesFromTys(context, listOf(ty), useAliases)
     }
 
     fun importElements(context: RsElement, elements: Set<RsQualifiedNamedElement>) {

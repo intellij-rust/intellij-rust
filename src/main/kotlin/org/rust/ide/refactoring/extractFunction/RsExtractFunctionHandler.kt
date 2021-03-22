@@ -17,6 +17,7 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.usageView.UsageInfo
 import org.rust.ide.refactoring.RsRenameProcessor
+import org.rust.ide.utils.import.RsImportHelper.importTypeReferencesFromTys
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -42,7 +43,10 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
             val psiFactory = RsPsiFactory(project)
             val extractedFunction = addExtractedFunction(project, config, psiFactory) ?: return@run
             replaceOldStatementsWithCallExpr(config, psiFactory)
-            renameFunctionParameters(extractedFunction, config.valueParameters.filter { it.isSelected }.map { it.name })
+            val parameters = config.valueParameters.filter { it.isSelected }
+            renameFunctionParameters(extractedFunction, parameters.map { it.name })
+            val types = (parameters.map { it.type } + config.returnValue?.type).filterNotNull()
+            importTypeReferencesFromTys(extractedFunction, types, useAliases = true)
         }
     }
 
