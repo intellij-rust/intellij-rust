@@ -827,4 +827,19 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             b;
         } //^ S
     """)
+
+    // Issue https://github.com/intellij-rust/intellij-rust/issues/6749
+    fun `test diverging and non-diverging match arm`() = stubOnlyTypeInfer("""
+    //- main.rs
+        fn foo(x: i32) {}
+
+        fn main() {
+            let num2 = match "42".parse() {
+                Ok(v) => v,
+                Err(e) => panic!(),
+            }; // type of `num2` should be `i32`, not `!`
+            foo(num2);
+            num2;
+        } //^ i32
+    """)
 }
