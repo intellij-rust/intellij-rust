@@ -726,9 +726,13 @@ fun processLifetimeResolveVariants(lifetime: RsLifetime, processor: RsResolvePro
             override fun visitElement(element: RsElement) =
                 element.stubChildrenOfType<RsElement>().forEach { it.accept(this) }
         }
-        owner.typeParameterList?.accept(visitor)
+
+        (owner as? RsImplItem)?.traitRef?.accept(visitor)
+        (owner as? RsImplItem)?.typeReference?.accept(visitor)
+        (owner as? RsFunction)?.typeParameterList?.accept(visitor)
         (owner as? RsFunction)?.valueParameterList?.accept(visitor)
-        owner.whereClause?.accept(visitor)
+        (owner as? RsFunction)?.whereClause?.accept(visitor)
+
         return processAll(lifetimes, processor)
     }
 
