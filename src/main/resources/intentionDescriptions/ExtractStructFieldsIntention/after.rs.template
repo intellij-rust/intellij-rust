@@ -1,0 +1,8 @@
+struct Foo {
+    a: u32
+}
+
+struct A {
+    foo: Foo,
+    b: u32
+}
