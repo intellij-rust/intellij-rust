@@ -22,7 +22,7 @@ import org.rust.lang.core.types.type
 abstract class AssertPostfixTemplateBase(
     name: String,
     provider: RsPostfixTemplateProvider
-) : StringBasedPostfixTemplate(name, "$name!(exp);", RsTopMostInScopeSelector(RsExpr::isBool), provider) {
+) : StringBasedPostfixTemplate(name, "$name!(exp);", RsExprParentsSelector(RsExpr::isBool), provider) {
 
     override fun getTemplateString(element: PsiElement): String =
         if (element is RsBinaryExpr && element.operatorType == EqualityOp.EQ) {
@@ -46,8 +46,8 @@ abstract class SimpleExprPostfixTemplate(
     name: String,
     example: String,
     provider: RsPostfixTemplateProvider,
-    selector: PostfixTemplateExpressionSelector = RsTopMostInScopeSelector()
-): StringBasedPostfixTemplate(name, example, selector, provider) {
+    selector: PostfixTemplateExpressionSelector = RsExprParentsSelector()
+) : StringBasedPostfixTemplate(name, example, selector, provider) {
 
     init {
         require("expr" in example) {
@@ -71,13 +71,13 @@ class DerefPostfixTemplate(provider: RsPostfixTemplateProvider) :
         "deref",
         "*expr",
         provider,
-        RsTopMostInScopeSelector {
+        RsExprParentsSelector {
             it.type is TyReference || it.type is TyPointer || it.implementsDeref
         }
     )
 
 class MatchPostfixTemplate(provider: RsPostfixTemplateProvider) :
-    StringBasedPostfixTemplate("match", "match expr {...}", RsTopMostInScopeSelector(), provider) {
+    StringBasedPostfixTemplate("match", "match expr {...}", RsExprParentsSelector(), provider) {
 
     override fun getTemplateString(element: PsiElement): String = "match ${element.text} {\n\$PAT\$ => {\$END\$}\n}"
 
@@ -94,7 +94,7 @@ class IterPostfixTemplate(name: String, provider: RsPostfixTemplateProvider) :
     StringBasedPostfixTemplate(
         name,
         "for x in expr",
-        RsTopMostInScopeSelector { it.isIntoIterator },
+        RsExprParentsSelector { it.isIntoIterator },
         provider
     ) {
     override fun getTemplateString(element: PsiElement): String =

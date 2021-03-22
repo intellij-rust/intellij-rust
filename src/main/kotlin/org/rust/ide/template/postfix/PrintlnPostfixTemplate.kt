@@ -13,8 +13,6 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.TraitRef
 import org.rust.lang.core.types.implLookup
-import org.rust.lang.core.types.ty.TyReference
-import org.rust.lang.core.types.ty.TyStr
 import org.rust.lang.core.types.ty.TyUnit
 import org.rust.lang.core.types.type
 
@@ -23,7 +21,7 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         null,
         macroName,
         "$macroName!(\"{:?}\", expr);",
-        RsTopMostInScopeSelector { it.isNotIgnored && (it.isDebug || it.isDisplay) },
+        RsExprParentsSelector { it.isNotIgnored && (it.isDebug || it.isDisplay) },
         provider
     ) {
 
