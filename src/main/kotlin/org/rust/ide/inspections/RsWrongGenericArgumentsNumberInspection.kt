@@ -11,13 +11,15 @@ import org.rust.ide.inspections.fixes.RemoveTypeArguments
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.RsGenericDeclaration
+import org.rust.lang.core.psi.ext.constParameters
+import org.rust.lang.core.psi.ext.typeParameters
 import org.rust.lang.utils.RsDiagnostic
 import org.rust.lang.utils.addToHolder
 
 /**
  * Inspection that detects the E0107 error.
  */
-class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
+class RsWrongGenericArgumentsNumberInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {
             override fun visitBaseType(type: RsBaseType) {
@@ -39,11 +41,17 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
 
     private fun checkTypeArguments(holder: RsProblemsHolder, o: RsElement) {
         val (actualArguments, declaration) = getTypeArgumentsAndDeclaration(o) ?: return
-        val actualArgs = actualArguments?.typeReferenceList?.size ?: 0
 
-        val expectedRequiredParams = declaration.typeParameterList?.typeParameterList?.filter { it.typeReference == null }?.size
-            ?: 0
-        val expectedTotalParams = declaration.typeParameterList?.typeParameterList?.size ?: 0
+        val actualTypeArgs = actualArguments?.typeReferenceList?.size ?: 0
+        val expectedTotalTypeParams = declaration.typeParameters.size
+        val expectedRequiredTypeParams = declaration.typeParameters.count { it.typeReference == null }
+
+        val actualConstArgs = actualArguments?.exprList?.size ?: 0
+        val expectedTotalConstParams = declaration.constParameters.size
+
+        val actualArgs = actualTypeArgs + actualConstArgs
+        val expectedTotalParams = expectedTotalTypeParams + expectedTotalConstParams
+        val expectedRequiredParams = expectedRequiredTypeParams + expectedTotalConstParams
 
         if (actualArgs == expectedTotalParams) return
 
@@ -53,8 +61,16 @@ class RsWrongTypeArgumentsNumberInspection : RsLocalInspectionTool() {
             else -> null
         } ?: return
 
-        val problemText = "Wrong number of type arguments: expected ${errorText}, found $actualArgs"
-        val fixes = getFixes(o, actualArgs, expectedTotalParams)
+        val haveTypeParams = expectedTotalTypeParams > 0 || actualTypeArgs > 0
+        val haveConstParams = expectedTotalConstParams > 0 || actualConstArgs > 0
+        val argumentName = when {
+            haveTypeParams && !haveConstParams -> "type"
+            !haveTypeParams && haveConstParams -> "const"
+            else -> "generic"
+        }
+
+        val problemText = "Wrong number of $argumentName arguments: expected $errorText, found $actualArgs"
+        val fixes = getFixes(o, actualTypeArgs, expectedTotalTypeParams)
 
         RsDiagnostic.WrongNumberOfTypeArguments(o, problemText, fixes).addToHolder(holder)
     }

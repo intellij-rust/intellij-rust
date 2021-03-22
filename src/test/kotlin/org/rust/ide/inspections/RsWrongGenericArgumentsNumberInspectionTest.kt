@@ -8,7 +8,7 @@ package org.rust.ide.inspections
 import org.rust.ProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
 
-class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTypeArgumentsNumberInspection::class) {
+class RsWrongGenericArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongGenericArgumentsNumberInspection::class) {
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     fun `test ignores Fn-traits`() = checkByText("""
         fn foo(f: &mut FnOnce(u32) -> bool) {}  // No annotation despite the fact that FnOnce has a type parameter
@@ -49,6 +49,52 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         type Type = <error descr="Wrong number of type arguments: expected at least 2, found 1 [E0107]">Foo2to3<u8></error>;
     """)
 
+    fun `test too few const arguments struct`() = checkByText("""
+        #![feature(const_generics)]
+
+        struct Foo1<const T: i32>;
+        struct Foo2<const T: i32, const U: i32>;
+
+        struct Ok {
+            ok1: Foo1<1>,
+            ok2: Foo2<1, 2>
+        }
+
+        struct Err {
+            err1: <error descr="Wrong number of const arguments: expected 1, found 0 [E0107]">Foo1</error>,
+            err2: <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">Foo2<1></error>
+        }
+
+        impl <error descr="Wrong number of const arguments: expected 1, found 0 [E0107]">Foo1</error> {}
+        fn err(f: <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">Foo2<1></error>) -> <error descr="Wrong number of const arguments: expected 1, found 0 [E0107]">Foo1</error> {}
+        type Type = <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">Foo2<1></error>;
+    """)
+
+    fun `test too few generic arguments struct`() = checkByText("""
+        #![feature(const_generics)]
+
+        struct Foo1<T, const N: i32> { t: T }
+        struct Foo2<T, U, const N: i32, const M: i32> { t: T, u: U }
+        struct Foo2to3<T, U, V = bool, const N: i32, const M: i32> { t: T, u: U, v: V }
+
+        struct Ok {
+            ok1: Foo1<u32, 1>,
+            ok2: Foo2<u32, bool, 1, 2>,
+            ok3: Foo2to3<u8, u8, 1, 2>,
+            ok4: Foo2to3<u8, u8, u8, 1, 2>
+        }
+
+        struct Err {
+            err1: <error descr="Wrong number of generic arguments: expected 2, found 0 [E0107]">Foo1</error>,
+            err2: <error descr="Wrong number of generic arguments: expected 4, found 2 [E0107]">Foo2<u32, 1></error>,
+            err3: <error descr="Wrong number of generic arguments: expected at least 4, found 2 [E0107]">Foo2to3<u32, 1></error>,
+        }
+
+        impl <error descr="Wrong number of generic arguments: expected 2, found 0 [E0107]">Foo1</error> {}
+        fn err(f: <error descr="Wrong number of generic arguments: expected 4, found 2 [E0107]">Foo2<u32, 1></error>) -> <error descr="Wrong number of generic arguments: expected 2, found 0 [E0107]">Foo1</error> {}
+        type Type = <error descr="Wrong number of generic arguments: expected at least 4, found 2 [E0107]">Foo2to3<u8, 1></error>;
+    """)
+
     fun `test too many type arguments struct`() = checkByText("""
         struct Foo0;
         struct Foo1<T> { t: T }
@@ -70,6 +116,52 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         impl <error descr="Wrong number of type arguments: expected 0, found 1 [E0107]">Foo0<u8></error> {}
         fn err(f: <error descr="Wrong number of type arguments: expected 1, found 2 [E0107]">Foo1<u32, bool></error>) -> <error descr="Wrong number of type arguments: expected at most 2, found 3 [E0107]">Foo1to2<u8, u8, u8></error> {}
         type Type = <error descr="Wrong number of type arguments: expected 1, found 3 [E0107]">Foo1<u8, bool, f64></error>;
+    """)
+
+    fun `test too many const arguments struct`() = checkByText("""
+        #![feature(const_generics)]
+
+        struct Foo0;
+        struct Foo1<const N: i32>;
+
+        struct Ok {
+            ok1: Foo0,
+            ok2: Foo1<1>,
+        }
+
+        struct Err {
+            err1: <error descr="Wrong number of const arguments: expected 0, found 2 [E0107]">Foo0<1, 2></error>,
+            err2: <error descr="Wrong number of const arguments: expected 1, found 2 [E0107]">Foo1<1, 2></error>,
+        }
+
+        impl <error descr="Wrong number of const arguments: expected 0, found 1 [E0107]">Foo0<1></error> {}
+        fn err(f: <error descr="Wrong number of const arguments: expected 1, found 2 [E0107]">Foo1<1, 2></error>) -> <error descr="Wrong number of const arguments: expected 1, found 3 [E0107]">Foo1<1, 2, 3></error> {}
+        type Type = <error descr="Wrong number of const arguments: expected 1, found 3 [E0107]">Foo1<1, 2, 3></error>;
+    """)
+
+    fun `test too many generic arguments struct`() = checkByText("""
+        #![feature(const_generics)]
+
+        struct Foo0;
+        struct Foo1<T, const N: i32> { t: T }
+        struct Foo1to2<T, const N: i32, U = bool> { t: T, u: U }
+
+        struct Ok {
+            ok1: Foo0,
+            ok2: Foo1<u32, 1>,
+            ok3: Foo1to2<u8, 1>,
+            ok4: Foo1to2<u8, 1, bool>,
+        }
+
+        struct Err {
+            err1: <error descr="Wrong number of generic arguments: expected 0, found 2 [E0107]">Foo0<u32, 1></error>,
+            err2: <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">Foo1<u8, 1, f64></error>,
+            err3: <error descr="Wrong number of generic arguments: expected at most 3, found 4 [E0107]">Foo1to2<u32, 1, f32, bool></error>,
+        }
+
+        impl <error descr="Wrong number of generic arguments: expected 0, found 2 [E0107]">Foo0<u8, 1></error> {}
+        fn err(f: <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">Foo1<u32, 1, bool></error>) -> <error descr="Wrong number of generic arguments: expected at most 3, found 4 [E0107]">Foo1to2<u8, 1, u8, u8></error> {}
+        type Type = <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">Foo1<u8, 1, bool></error>;
     """)
 
     fun `test missing arguments in struct`() = checkByText("""
@@ -99,6 +191,27 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
     """)
 
+    fun `test wrong number of const arguments method`() = checkByText("""
+        #![feature(const_generics)]
+
+        struct Test;
+
+        impl Test {
+            fn method1<const T: usize, const R: usize>(&self, u: &[i32; T], v: &[i32; R]){}
+        }
+
+        fn main() {
+            let x = Test;
+            let u = &[0];
+            let v = &[0, 0];
+
+            x.<error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">method1::<2>(u, v)</error>;
+            x.<error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">method1::<1, 2, 3>(u, v)</error>;
+            x.method1::<>(u, v);
+            x.method1(u, v);
+        }
+    """)
+
     fun `test wrong number of type arguments function call`() = checkByText("""
         fn foo<T, R>(u: &[T], v: &[R]){}
 
@@ -108,6 +221,22 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
 
             <error descr="Wrong number of type arguments: expected 2, found 1 [E0107]">foo::<i32>(u, v)</error>;
             <error descr="Wrong number of type arguments: expected 2, found 3 [E0107]">foo::<i32, i32, i32>(u, v)</error>;
+            foo::<>(u, v);
+            foo(u, v);
+        }
+    """)
+
+    fun `test wrong number of const arguments function call`() = checkByText("""
+        #![feature(const_generics)]
+
+        fn foo<const T: usize, const R: usize>(u: &[i32; T], v: &[i32; R]){}
+
+        fn main() {
+            let u = &[0];
+            let v = &[0, 0];
+
+            <error descr="Wrong number of const arguments: expected 2, found 1 [E0107]">foo::<1>(u, v)</error>;
+            <error descr="Wrong number of const arguments: expected 2, found 3 [E0107]">foo::<1, 2, 3>(u, v)</error>;
             foo::<>(u, v);
             foo(u, v);
         }
@@ -298,6 +427,26 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
         }
     """)
 
+    fun `test add arguments keep const generics`() = checkFixByText("Add missing type arguments", """
+        #![feature(const_generics)]
+
+        trait S<A, B, const N: usize> {
+        }
+
+        fn main() {
+            let x: <error descr="Wrong number of generic arguments: expected 3, found 2 [E0107]">S<u32, 0/*caret*/></error>;
+        }
+    """, """
+        #![feature(const_generics)]
+
+        trait S<A, B, const N: usize> {
+        }
+
+        fn main() {
+            let x: S<u32, B, 0>;
+        }
+    """)
+
     fun `test add arguments ignore type parameters with a default`() = checkFixIsUnavailable("Add missing type arguments", """
         struct S<A, B=u32, C=u32>(A, B, C);
 
@@ -417,6 +566,42 @@ class RsWrongTypeArgumentsNumberInspectionTest : RsInspectionsTestBase(RsWrongTy
 
         struct C<'a> {
             a: B<'a>
+        }
+    """)
+
+    fun `test remove type arguments with const argument 1`() = checkFixByText("Remove redundant type arguments", """
+        #![feature(const_generics)]
+
+        struct B<T, const N: i32>(T);
+
+        struct C {
+            a: <error descr="Wrong number of generic arguments: expected 2, found 3 [E0107]">B<u32, i32, 1>/*caret*/</error>
+        }
+    """, """
+        #![feature(const_generics)]
+
+        struct B<T, const N: i32>(T);
+
+        struct C {
+            a: B<u32, 1>
+        }
+    """)
+
+    fun `test remove type arguments with const argument 2`() = checkFixByText("Remove redundant type arguments", """
+        #![feature(const_generics)]
+
+        struct B<const N: i32>;
+
+        struct C {
+            a: <error descr="Wrong number of generic arguments: expected 1, found 2 [E0107]">B<i32, 1>/*caret*/</error>
+        }
+    """, """
+        #![feature(const_generics)]
+
+        struct B<const N: i32>;
+
+        struct C {
+            a: B<1>
         }
     """)
 }

@@ -480,9 +480,9 @@
                          implementationClass="org.rust.ide.inspections.RsVariableMutableInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
-                         displayName="Wrong type arguments number"
+                         displayName="Wrong generic arguments number"
                          enabledByDefault="true" level="ERROR"
-                         implementationClass="org.rust.ide.inspections.RsWrongTypeArgumentsNumberInspection"/>
+                         implementationClass="org.rust.ide.inspections.RsWrongGenericArgumentsNumberInspection"/>
 
         <localInspection language="Rust" groupName="Rust"
                          displayName="Wrong lifetime parameters number"
