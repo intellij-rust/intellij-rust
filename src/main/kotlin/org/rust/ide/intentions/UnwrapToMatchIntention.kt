@@ -39,7 +39,7 @@ class UnwrapToMatchIntention: RsElementBaseIntentionAction<UnwrapToMatchIntentio
         val generatedCode = buildString {
             append("match ${methodCall.receiver.text} {")
             append("${enumType.valueBranch},")
-            append("${enumType.nonValueMatcher} => unimplemented!(),")
+            append("${enumType.nonValueMatcher} => todo!(),")
             append("}")
         }
 

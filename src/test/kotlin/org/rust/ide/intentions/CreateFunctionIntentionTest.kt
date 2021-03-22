@@ -78,7 +78,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn foo() {
-            unimplemented!()/*caret*/
+            todo!()/*caret*/
         }
     """)
 
@@ -91,7 +91,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
     """, """
         mod foo {
             pub(crate) fn bar() {
-                unimplemented!()/*caret*/
+                todo!()/*caret*/
             }
         }
 
@@ -120,7 +120,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             fn test() {}
 
             pub(crate) fn bar() {
-                unimplemented!()
+                todo!()
             }
     """)
 
@@ -137,7 +137,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
     //- lib.rs
         pub fn foo() {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -159,7 +159,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 bar();
             }
             fn bar() {
-                unimplemented!()/*caret*/
+                todo!()/*caret*/
             }
         }
     """)
@@ -177,7 +177,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
             }
 
             fn bar() {
-                unimplemented!()/*caret*/
+                todo!()/*caret*/
             }
         }
     """)
@@ -194,7 +194,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn foo(p0: i32, p1: &str, p2: &i32) {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -214,7 +214,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar<T, R: Trait1>(p0: R, p1: T, p2: T) where T: Trait2 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -240,7 +240,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar<'a, R, T: 'a>(p0: T, p1: &R) where R: Trait + for<'d> Fn(&'d i32), T: Trait + Trait2, for<'c> T: Fn(&'c i32) + Trait {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -256,7 +256,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 baz(t);
             }
             fn baz<T>(p0: T) where T: Bar {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -271,7 +271,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar() -> u32 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -287,7 +287,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar() -> u32 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -303,7 +303,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn baz() -> u32 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -325,7 +325,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn baz() -> u32 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -349,7 +349,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn baz() -> u32 {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -371,7 +371,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn baz() -> &S {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -385,7 +385,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar<T>() -> T {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -399,7 +399,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar() {
-            unimplemented!()/*caret*/
+            todo!()/*caret*/
         }
     """)
 
@@ -416,7 +416,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl<T> S<T> where T: Trait {
             pub(crate) fn foo(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -436,7 +436,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn foo(&self) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -456,7 +456,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn foo<R>(&self, p0: R) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -479,7 +479,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 self.bar(0);
             }
             fn bar(&self, p0: i32) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -498,7 +498,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 self.bar(t);
             }
             fn bar(&self, p0: T) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -519,7 +519,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 self.bar(t);
             }
             fn bar(&self, p0: T) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -541,7 +541,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -560,7 +560,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -579,7 +579,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self, p0: i32, p1: i32) -> u32 {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -606,7 +606,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -630,7 +630,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -659,7 +659,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub fn foo(&self) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -674,7 +674,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             fn bar(p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -697,7 +697,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             fn bar(p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -716,7 +716,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl<T> S<T> {
             fn bar(p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -736,7 +736,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         async fn bar() {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -755,7 +755,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         async fn bar() {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -778,7 +778,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         async fn bar() {
-            unimplemented!()
+            todo!()
         }
     """)
 
@@ -795,7 +795,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 bar().await;
             }
             async fn bar() {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -819,7 +819,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 self.bar(1, 2).await;
             }
             async fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -845,7 +845,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 };
             }
             async fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -875,7 +875,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
                 };
             }
             async fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
     """)
@@ -896,7 +896,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             async fn bar(&self, p0: i32, p1: i32) {
-                unimplemented!()
+                todo!()
             }
         }
 
@@ -921,7 +921,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
         }
 
         fn bar() -> u32 {
-            unimplemented!()
+            todo!()
         }
 
         async fn baz(a: u32) {}
@@ -940,7 +940,7 @@ class CreateFunctionIntentionTest : RsIntentionTestBase(CreateFunctionIntention:
 
         impl S {
             pub(crate) fn bar(&self) -> u32 {
-                unimplemented!()
+                todo!()
             }
         }
 

@@ -150,7 +150,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
         } else ""
         val paramsText = parameters.joinToString(", ")
 
-        return factory.tryCreateFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    unimplemented!()\n}")
+        return factory.tryCreateFunction("$visibility $async fn $functionName$genericParams($paramsText)$returnType $whereClause {\n    todo!()\n}")
     }
 
     private fun getTargetItemForFunction(path: RsPath): FunctionInsertionTarget? {
