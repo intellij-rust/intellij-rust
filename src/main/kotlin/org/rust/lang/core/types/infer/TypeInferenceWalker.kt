@@ -1340,12 +1340,15 @@ class RsTypeInferenceWalker(
     }
 
     // TODO should be replaced with coerceMany
-    private fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty = when (ty1) {
-        is TyNever -> ty2
-        is TyUnknown -> if (ty2 !is TyNever) ty2 else TyUnknown
-        else -> {
-            ctx.combineTypes(ty1, ty2)
-            ty1
+    private fun getMoreCompleteType(ty1: Ty, ty2: Ty): Ty {
+        return when {
+            ty1 is TyNever -> ty2
+            ty2 is TyNever -> ty1
+            ty1 is TyUnknown -> if (ty2 !is TyNever) ty2 else TyUnknown
+            else -> {
+                ctx.combineTypes(ty1, ty2)
+                ty1
+            }
         }
     }
 
