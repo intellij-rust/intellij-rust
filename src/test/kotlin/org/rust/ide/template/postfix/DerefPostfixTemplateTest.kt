@@ -69,4 +69,28 @@ class DerefPostfixTemplateTest : RsPostfixTemplateTest(DerefPostfixTemplate(RsPo
             assert_eq!(123, 123.deref/*caret*/);
         }
     """)
+
+    fun `test no deref in string literal`() = doTestNotApplicable("""
+        fn main() {
+            "qwe.deref/*caret*/";
+        }
+    """)
+
+    fun `test no deref in raw string literal`() = doTestNotApplicable("""
+        fn main() {
+            r#"qwe.deref/*caret*/"#;
+        }
+    """)
+
+    fun `test no deref in byte string literal`() = doTestNotApplicable("""
+        fn main() {
+            b"qwe.deref/*caret*/";
+        }
+    """)
+
+    fun `test no deref in raw byte string literal`() = doTestNotApplicable("""
+        fn main() {
+            br#"qwe.deref/*caret*/"#;
+        }
+    """)
 }

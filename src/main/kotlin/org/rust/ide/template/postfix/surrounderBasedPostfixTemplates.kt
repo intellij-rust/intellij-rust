@@ -18,7 +18,7 @@ class IfExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "if",
     "if exp {}",
     RsPostfixTemplatePsiInfo,
-    RsTopMostInScopeSelector(RsExpr::isBool)
+    RsExprParentsSelector(RsExpr::isBool)
 ) {
     override fun getSurrounder(): Surrounder = RsWithIfExpSurrounder()
 }
@@ -27,7 +27,7 @@ class ElseExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "else",
     "if !exp {}",
     RsPostfixTemplatePsiInfo,
-    RsTopMostInScopeSelector(RsExpr::isBool)
+    RsExprParentsSelector(RsExpr::isBool)
 ) {
     override fun getSurrounder(): Surrounder = RsWithIfExpSurrounder()
 
@@ -38,7 +38,7 @@ class WhileExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "while",
     "while exp {}",
     RsPostfixTemplatePsiInfo,
-    RsTopMostInScopeSelector(RsExpr::isBool)
+    RsExprParentsSelector(RsExpr::isBool)
 ) {
     override fun getSurrounder(): Surrounder = RsWithWhileExpSurrounder()
 }
@@ -47,7 +47,7 @@ class WhileNotExpressionPostfixTemplate : SurroundPostfixTemplateBase(
     "whilenot",
     "while !exp {}",
     RsPostfixTemplatePsiInfo,
-    RsTopMostInScopeSelector(RsExpr::isBool)
+    RsExprParentsSelector(RsExpr::isBool)
 ) {
     override fun getSurrounder(): Surrounder = RsWithWhileExpSurrounder()
 
@@ -58,7 +58,7 @@ class ParenPostfixTemplate : SurroundPostfixTemplateBase(
     "par",
     "(expr)",
     RsPostfixTemplatePsiInfo,
-    RsAllParentsSelector()
+    RsExprParentsSelector()
 ) {
     override fun getSurrounder(): Surrounder = RsWithParenthesesSurrounder()
 }
