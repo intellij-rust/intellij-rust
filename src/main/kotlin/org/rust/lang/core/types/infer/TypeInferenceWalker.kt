@@ -1115,7 +1115,10 @@ class RsTypeInferenceWalker(
             if (!isArrayToSlice(prevType, type)) derefCount++
 
             val outputType = lookup.findIndexOutputType(type, indexType)
-            if (outputType != null) {
+            if (outputType != null
+                // TODO fix resolve in `impl<T, I, const N: usize> Index<I> for [T; N]` and remove this line
+                && (outputType.value != TyUnknown || type !is TyArray)
+            ) {
                 result = outputType.register()
                 break
             }
