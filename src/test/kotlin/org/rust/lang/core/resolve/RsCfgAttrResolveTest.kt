@@ -753,6 +753,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
 
     // We check that there are no exceptions during building CrateDefMap (actual resolve result is not important)
     @ExpandMacros
+    @UseNewResolve
     @MockAdditionalCfgOptions("intellij_rust")
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test import to mod shadowed by expanded mod`() = checkByCode("""

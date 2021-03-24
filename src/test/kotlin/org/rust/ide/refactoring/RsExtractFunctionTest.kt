@@ -1134,7 +1134,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "foo")
 
     fun `test import parameter types`() = doTest("""
-        use a::{S, foo};
+        use a::foo;
 
         mod a {
             pub struct A;
@@ -1146,7 +1146,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>s;</selection>
         }
     """, """
-        use a::{S, foo, A};
+        use a::{foo, A};
 
         mod a {
             pub struct A;
@@ -1164,7 +1164,7 @@ class RsExtractFunctionTest : RsTestBase() {
     """, "bar")
 
     fun `test import return type`() = doTest("""
-        use a::{S, foo};
+        use a::foo;
 
         mod a {
             pub struct A;
@@ -1175,7 +1175,7 @@ class RsExtractFunctionTest : RsTestBase() {
             <selection>foo()</selection>;
         }
     """, """
-        use a::{S, foo, A};
+        use a::{foo, A};
 
         mod a {
             pub struct A;
@@ -1187,6 +1187,68 @@ class RsExtractFunctionTest : RsTestBase() {
         }
 
         fn bar() -> A {
+            foo()
+        }
+    """, "bar")
+
+    fun `test do not import default types`() = doTest("""
+        use a::foo;
+
+        mod a {
+            pub struct S;
+            pub struct A<T = S>(T);
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            <selection>foo()</selection>;
+        }
+    """, """
+        use a::{foo, A};
+
+        mod a {
+            pub struct S;
+            pub struct A<T = S>(T);
+            pub fn foo() -> A { unimplemented!() }
+        }
+
+        fn main() {
+            bar();
+        }
+
+        fn bar() -> A {
+            foo()
+        }
+    """, "bar")
+
+    fun `test import non default types`() = doTest("""
+        use a::foo;
+
+        mod a {
+            pub struct S1;
+            pub struct S2;
+            pub struct A<T = S1>(T);
+            pub fn foo() -> A<S2> { unimplemented!() }
+        }
+
+        fn main() {
+            <selection>foo()</selection>;
+        }
+    """, """
+        use a::{foo, A, S2};
+
+        mod a {
+            pub struct S1;
+            pub struct S2;
+            pub struct A<T = S1>(T);
+            pub fn foo() -> A<S2> { unimplemented!() }
+        }
+
+        fn main() {
+            bar();
+        }
+
+        fn bar() -> A<S2> {
             foo()
         }
     """, "bar")
