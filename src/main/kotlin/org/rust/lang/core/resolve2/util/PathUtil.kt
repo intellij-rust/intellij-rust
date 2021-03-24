@@ -5,21 +5,24 @@
 
 package org.rust.lang.core.resolve2.util
 
-import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
-import org.rust.lang.core.resolve2.RESOLVE_LOG
 import org.rust.lang.core.stubs.*
 
 fun interface RsLeafUseSpeckConsumer {
-    fun consume(usePath: Array<String>, alias: String?, isStarImport: Boolean)
+    fun consume(usePath: Array<String>, alias: String?, isStarImport: Boolean, offsetInExpansion: Int)
 }
 
 fun RsUseItemStub.forEachLeafSpeck(consumer: RsLeafUseSpeckConsumer) {
     val rootUseSpeck = findChildStubByType(RsUseSpeckStub.Type) ?: return
     val segments = arrayListOf<String>()
-    rootUseSpeck.forEachLeafSpeck(consumer, segments, isRootSpeck = true)
+    rootUseSpeck.forEachLeafSpeck(consumer, segments, isRootSpeck = true, basePath = null)
 }
 
-private fun RsUseSpeckStub.forEachLeafSpeck(consumer: RsLeafUseSpeckConsumer, segments: ArrayList<String>, isRootSpeck: Boolean) {
+private fun RsUseSpeckStub.forEachLeafSpeck(
+    consumer: RsLeafUseSpeckConsumer,
+    segments: ArrayList<String>,
+    isRootSpeck: Boolean,
+    basePath: RsPathStub?
+) {
     val path = path
     val useGroup = useGroup
     val isStarImport = isStarImport
@@ -37,13 +40,14 @@ private fun RsUseSpeckStub.forEachLeafSpeck(consumer: RsLeafUseSpeckConsumer, se
         if (!addPathSegments(path, segments)) return
     }
 
+    val newBasePath = basePath ?: path
     if (useGroup == null) {
         if (!isStarImport && segments.size > 1 && segments.last() == "self") segments.removeAt(segments.lastIndex)
         val alias = if (isStarImport) "_" else alias?.name
-        consumer.consume(segments.toTypedArray(), alias, isStarImport)
+        consumer.consume(segments.toTypedArray(), alias, isStarImport, newBasePath?.startOffset ?: -1)
     } else {
         for (childSpeck in useGroup.childrenStubs) {
-            (childSpeck as RsUseSpeckStub).forEachLeafSpeck(consumer, segments, isRootSpeck = false)
+            (childSpeck as RsUseSpeckStub).forEachLeafSpeck(consumer, segments, isRootSpeck = false, newBasePath)
         }
     }
 
@@ -65,26 +69,11 @@ private fun addPathSegments(path: RsPathStub, segments: ArrayList<String>): Bool
 
     val segment = path.referenceName ?: return false
     segments += segment
-    if (subpath == null && segment == MACRO_DOLLAR_CRATE_IDENTIFIER) {
-        val crateId = path.getUserData(RESOLVE_DOLLAR_CRATE_ID_KEY)
-        if (crateId != null) {
-            segments += crateId.toString()
-        } else {
-            RESOLVE_LOG.error("Can't find crate for path starting with \$crate")
-        }
-    }
     return true
 }
 
 fun RsMacroCallStub.getPathWithAdjustedDollarCrate(): Array<String>? {
     val segments = arrayListOf<String>()
-
-    val crateIdFromLocalInnerMacros = getUserData(RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY)
-    if (crateIdFromLocalInnerMacros != null) {
-        segments += MACRO_DOLLAR_CRATE_IDENTIFIER
-        segments += crateIdFromLocalInnerMacros.toString()
-    }
-
     if (!addPathSegments(path, segments)) return null
     return segments.toTypedArray()
 }

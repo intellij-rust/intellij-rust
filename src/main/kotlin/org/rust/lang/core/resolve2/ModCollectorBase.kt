@@ -81,7 +81,7 @@ class ModCollectorBase private constructor(
     private fun collectUseItem(useItem: RsUseItemStub) {
         val visibility = VisibilityLight.from(useItem)
         val hasPreludeImport = useItem.hasPreludeImport
-        useItem.forEachLeafSpeck { usePath, alias, isStarImport ->
+        useItem.forEachLeafSpeck { usePath, alias, isStarImport, offsetInExpansion ->
             // Ignore `use self;`
             if (alias == null && usePath.singleOrNull() == "self") return@forEachLeafSpeck
 
@@ -89,6 +89,7 @@ class ModCollectorBase private constructor(
                 usePath = usePath,
                 nameInScope = alias ?: usePath.last(),
                 visibility = visibility,
+                offsetInExpansion = offsetInExpansion,
                 isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && useItem.isEnabledByCfgSelf(crate),
                 isGlob = isStarImport,
                 isPrelude = hasPreludeImport
@@ -102,6 +103,7 @@ class ModCollectorBase private constructor(
             usePath = arrayOf(externCrate.name),
             nameInScope = externCrate.nameWithAlias,
             visibility = VisibilityLight.from(externCrate),
+            offsetInExpansion = -1,
             isDeeplyEnabledByCfg = isDeeplyEnabledByCfg && externCrate.isEnabledByCfgSelf(crate),
             isExternCrate = true,
             isMacroUse = externCrate.hasMacroUse
@@ -141,7 +143,16 @@ class ModCollectorBase private constructor(
         if (!isCallDeeplyEnabledByCfg) return
         val body = call.getIncludeMacroArgument(crate) ?: call.macroBody ?: return
         val path = call.getPathWithAdjustedDollarCrate() ?: return
-        val callLight = MacroCallLight(path, body, call.bodyHash, macroIndexInParent)
+        val bodyTextRange = call.bodyTextRange
+        val callLight = MacroCallLight(
+            path,
+            body,
+            call.bodyHash,
+            macroIndexInParent,
+            pathOffsetInExpansion = call.path.startOffset,
+            bodyStartOffsetInExpansion = bodyTextRange?.startOffset ?: -1,
+            bodyEndOffsetInExpansion = bodyTextRange?.endOffset ?: -1
+        )
         visitor.collectMacroCall(callLight, call)
     }
 
@@ -321,6 +332,7 @@ class ImportLight(
     val usePath: Array<String>,
     val nameInScope: String,
     val visibility: VisibilityLight,
+    val offsetInExpansion: Int,
     val isDeeplyEnabledByCfg: Boolean,
     val isGlob: Boolean = false,
     val isExternCrate: Boolean = false,
@@ -356,7 +368,16 @@ class MacroCallLight(
     val body: String,
     val bodyHash: HashCode?,
     /** See [MacroIndex] */
-    val macroIndexInParent: Int
+    val macroIndexInParent: Int,
+    /**
+     * $crate::foo! { ... $crate ... }
+     *                               ^ [bodyEndOffsetInExpansion]
+     *              ^ [bodyStartOffsetInExpansion]
+     * ^ [pathOffsetInExpansion]
+     */
+    val pathOffsetInExpansion: Int,
+    val bodyStartOffsetInExpansion: Int,
+    val bodyEndOffsetInExpansion: Int,
 ) : Writeable {
 
     override fun writeTo(data: DataOutput) {

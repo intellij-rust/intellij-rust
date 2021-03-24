@@ -25,7 +25,7 @@ import org.rust.lang.core.psi.ext.isEnabledByCfgSelf
 import org.rust.lang.core.psi.ext.variants
 import org.rust.lang.core.resolve.namespaces
 import org.rust.lang.core.resolve.processModDeclResolveVariants
-import org.rust.lang.core.resolve2.util.RESOLVE_RANGE_MAP_KEY
+import org.rust.lang.core.resolve2.util.DollarCrateHelper
 import org.rust.lang.core.stubs.*
 import org.rust.openapiext.fileId
 import org.rust.openapiext.findFileByMaybeRelativePath
@@ -57,15 +57,20 @@ fun collectFileAndCalculateHash(
     context: ModCollectorContext
 ): LegacyMacros {
     val hashCalculator = HashCalculator(modData.isEnabledByCfgInner)
-    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator)
+    val collector = ModCollector(modData, context, modMacroIndex, hashCalculator, dollarCrateHelper = null)
     collector.collectMod(file.getOrBuildStub() ?: return emptyMap())
     val fileHash = hashCalculator.getFileHash()
     context.defMap.addVisitedFile(file, modData, fileHash)
     return collector.legacyMacros
 }
 
-fun collectExpandedElements(expandedFile: RsFileStub, call: MacroCallInfo, context: ModCollectorContext) {
-    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null)
+fun collectExpandedElements(
+    expandedFile: RsFileStub,
+    call: MacroCallInfo,
+    context: ModCollectorContext,
+    dollarCrateHelper: DollarCrateHelper?
+) {
+    val collector = ModCollector(call.containingMod, context, call.macroIndex, hashCalculator = null, dollarCrateHelper)
     collector.collectMod(expandedFile, propagateLegacyMacros = true)
 }
 
@@ -82,6 +87,7 @@ private class ModCollector(
      */
     private val parentMacroIndex: MacroIndex,
     private val hashCalculator: HashCalculator?,
+    private val dollarCrateHelper: DollarCrateHelper?,
 ) : ModVisitor {
 
     private val defMap: CrateDefMap = context.defMap
@@ -113,9 +119,10 @@ private class ModCollector(
     }
 
     override fun collectImport(import: ImportLight) {
+        val usePath = dollarCrateHelper?.convertPath(import.usePath, import.offsetInExpansion) ?: import.usePath
         context.context.imports += Import(
             containingMod = modData,
-            usePath = import.usePath,
+            usePath = usePath,
             nameInScope = import.nameInScope,
             visibility = convertVisibility(import.visibility, import.isDeeplyEnabledByCfg),
             isGlob = import.isGlob,
@@ -215,7 +222,13 @@ private class ModCollector(
 
         val childModLegacyMacros = when (childMod) {
             is ChildMod.Inline -> {
-                val collector = ModCollector(childModData, context, childModData.macroIndex, hashCalculator)
+                val collector = ModCollector(
+                    childModData,
+                    context,
+                    childModData.macroIndex,
+                    hashCalculator,
+                    dollarCrateHelper
+                )
                 collector.collectMod(childMod.mod)
                 collector.legacyMacros
             }
@@ -262,12 +275,16 @@ private class ModCollector(
         check(modData.isDeeplyEnabledByCfg) { "for performance reasons cfg-disabled macros should not be collected" }
         val bodyHash = call.bodyHash
         if (bodyHash == null && call.path.last() != "include") return
-        val dollarCrateMap = stub.getUserData(RESOLVE_RANGE_MAP_KEY) ?: RangeMap.EMPTY
+        val path = dollarCrateHelper?.convertPath(call.path, call.pathOffsetInExpansion) ?: call.path
+        val dollarCrateMap = dollarCrateHelper?.getRangeMap(
+            call.bodyStartOffsetInExpansion,
+            call.bodyEndOffsetInExpansion
+        ) ?: RangeMap.EMPTY
         val macroIndex = parentMacroIndex.append(call.macroIndexInParent)
         context.context.macroCalls += MacroCallInfo(
             modData,
             macroIndex,
-            call.path,
+            path,
             call.body,
             bodyHash,
             macroDepth,

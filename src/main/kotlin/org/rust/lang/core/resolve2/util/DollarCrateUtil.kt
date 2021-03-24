@@ -5,9 +5,6 @@
 
 package org.rust.lang.core.resolve2.util
 
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.stubs.StubElement
 import com.intellij.util.SmartList
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.macros.*
@@ -15,30 +12,11 @@ import org.rust.lang.core.macros.decl.MACRO_DOLLAR_CRATE_IDENTIFIER
 import org.rust.lang.core.psi.RsMacro
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.RsUseItem
-import org.rust.lang.core.psi.ext.basePath
-import org.rust.lang.core.psi.ext.bodyTextRange
 import org.rust.lang.core.resolve2.DeclMacroDefInfo
 import org.rust.lang.core.resolve2.MacroCallInfo
 import org.rust.lang.core.resolve2.RESOLVE_LOG
 import org.rust.lang.core.stubs.*
 import org.rust.openapiext.testAssert
-
-/**
- * For each expanded [RsMacroCall] we store [RangeMap] - see [MacroCallInfo.dollarCrateMap]
- */
-val RESOLVE_RANGE_MAP_KEY: Key<RangeMap> = Key("RESOLVE_RANGE_MAP_KEY")
-
-/**
- * For [RsUseItem] and [RsMacroCall] we store `crateId`,
- * if `path` (path to macro or use path) starts with [MACRO_DOLLAR_CRATE_IDENTIFIER]
- */
-val RESOLVE_DOLLAR_CRATE_ID_KEY: Key<CratePersistentId> = Key("RESOLVE_DOLLAR_CRATE_ID_KEY")
-
-/**
- * If [RsMacroCall] is expanded from macro with ```#[macro_export(local_inner_macros)]``` attribute,
- * then we store `crateId` of macro definition
- */
-val RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY: Key<CratePersistentId> = Key("RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY")
 
 /**
  * Algorithm: for each [DeclMacroDefInfo] and [MacroCallInfo] maintain map
@@ -50,31 +28,73 @@ val RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY: Key<CratePersistentId> = Key("RESOL
  * - [MACRO_DOLLAR_CRATE_IDENTIFIER] from macro itself (macro_rules) - use map from [DeclMacroDefInfo]
  * - [MACRO_DOLLAR_CRATE_IDENTIFIER] from macro call - use map from [MacroCallInfo]
  */
-fun processDollarCrate(
+fun createDollarCrateHelper(
     call: MacroCallInfo,
     def: DeclMacroDefInfo,
-    file: RsFileStub,
     expansion: ExpansionResult
-) {
+): DollarCrateHelper? {
     val rangesInFile = findCrateIdForEachDollarCrate(expansion, call, def)
-    if (rangesInFile.isEmpty() && !def.hasLocalInnerMacros) return
+    if (rangesInFile.isEmpty() && !def.hasLocalInnerMacros) return null
+    return DollarCrateHelper(expansion.ranges, rangesInFile, def.hasLocalInnerMacros, def.crate)
+}
 
-    val ranges = expansion.ranges  // between `call.body` and `expandedText`
-    // TODO: Possible optimization - [mapOffsetFromExpansionToCallBody] works in O(N), probably it can be optimized to O(log N)
-    file.forEachTopLevelElement { element ->
-        if (rangesInFile.isNotEmpty()) {
-            processDollarCrateInsideExpandedElement(element, rangesInFile)
-        }
+/**
+ * We are interested in these elements:
+ * - [RsUseItem] - if path starts with [MACRO_DOLLAR_CRATE_IDENTIFIER]
+ * - [RsMacroCall] - if path starts with [MACRO_DOLLAR_CRATE_IDENTIFIER] or if body contains [MACRO_DOLLAR_CRATE_IDENTIFIER]
+ * - [RsMacro] - if body contains [MACRO_DOLLAR_CRATE_IDENTIFIER]
+ */
+class DollarCrateHelper(
+    // between `call.body` and `expandedText`
+    private val ranges: RangeMap,
+    // between `expandedText` and crate ids
+    private val rangesInExpansion: Map<Int, CratePersistentId>,
+    private val defHasLocalInnerMacros: Boolean,
+    private val defCrate: CratePersistentId,
+) {
 
-        if (def.hasLocalInnerMacros && element is RsMacroCallStub) {
-            val pathOffsetInExpansion = element.path.startOffset
-            val pathOffsetInCall = ranges.mapOffsetFromExpansionToCallBody(pathOffsetInExpansion)
-            val isExpandedFromDef = pathOffsetInCall == null
-            if (isExpandedFromDef) {
-                element.putUserData(RESOLVE_LOCAL_INNER_MACROS_CRATE_ID_KEY, def.crate)
+    /**
+     * - expandedText = 'use $crate::foo;'
+     * - expandedText = '$crate::foo! { ... }'
+     * - expandedText = 'foo!()'  (we should "add" '$crate')
+     */
+    fun convertPath(path: Array<String>, offsetInExpansion: Int): Array<String> {
+        return when {
+            path[0] == MACRO_DOLLAR_CRATE_IDENTIFIER -> {
+                val crateId = rangesInExpansion[offsetInExpansion]
+                if (crateId != null) {
+                    arrayOf(MACRO_DOLLAR_CRATE_IDENTIFIER, crateId.toString()) + path.copyOfRange(1, path.size)
+                } else {
+                    RESOLVE_LOG.error("Can't find crate for path starting with \$crate")
+                    path
+                }
             }
+            defHasLocalInnerMacros -> {
+                val pathOffsetInCall = ranges.mapOffsetFromExpansionToCallBody(offsetInExpansion)
+                val isExpandedFromDef = pathOffsetInCall == null
+                if (!isExpandedFromDef) return path
+                arrayOf(MACRO_DOLLAR_CRATE_IDENTIFIER, defCrate.toString()) + path
+            }
+            else -> path
         }
     }
+
+    /** expandedText = 'foo! { ... $crate ... }' */
+    fun getRangeMap(startOffsetInExpansion: Int, endOffsetInExpansion: Int): RangeMap {
+        val rangesInMacro = filterRangesInside(startOffsetInExpansion, endOffsetInExpansion)
+            .map { (offsetInExpansion, crateId) ->
+                val offsetInMacro = offsetInExpansion - startOffsetInExpansion
+                MappedTextRange(crateId, offsetInMacro, MACRO_DOLLAR_CRATE_IDENTIFIER.length)
+            }
+        if (rangesInMacro.isEmpty()) return RangeMap.EMPTY
+        return RangeMap.from(SmartList(rangesInMacro))
+    }
+
+    private fun filterRangesInside(macroStart: Int, macroEnd: Int): Map<Int, CratePersistentId> =
+        rangesInExpansion.filterKeys { rangeStart ->
+            val rangeEnd = rangeStart + MACRO_DOLLAR_CRATE_IDENTIFIER.length
+            macroStart <= rangeStart && rangeEnd <= macroEnd
+        }
 }
 
 /**
@@ -109,73 +129,4 @@ private fun findCrateIdForEachDollarCrate(
             indexInExpandedText to crateId
         }
         .toMap(hashMapOf())
-}
-
-/**
- * We are interested in these elements:
- * - [RsUseItem] - if path starts with [MACRO_DOLLAR_CRATE_IDENTIFIER]
- * - [RsMacroCall] - if path starts with [MACRO_DOLLAR_CRATE_IDENTIFIER] or if body contains [MACRO_DOLLAR_CRATE_IDENTIFIER]
- * - [RsMacro] - if body contains [MACRO_DOLLAR_CRATE_IDENTIFIER]
- */
-private fun processDollarCrateInsideExpandedElement(
-    element: StubElement<*>,
-    rangesInFile: Map<Int, CratePersistentId>
-) {
-    fun filterRangesInside(range: TextRange): Map<Int, CratePersistentId> =
-        rangesInFile.filterKeys { indexInFile ->
-            val rangeInFile = TextRange(indexInFile, indexInFile + MACRO_DOLLAR_CRATE_IDENTIFIER.length)
-            range.contains(rangeInFile)
-        }
-
-    when (element) {
-        is RsUseItemStub -> {
-            // expandedText = 'use $crate::foo;'
-            val useSpeck = element.useSpeck ?: return
-            useSpeck.forEachTopLevelPath {
-                val crateId = rangesInFile[it.startOffset] ?: return@forEachTopLevelPath
-                it.basePath().putUserData(RESOLVE_DOLLAR_CRATE_ID_KEY, crateId)
-            }
-        }
-        is RsMacroCallStub -> {
-            // expandedText = 'foo! { ... $crate ... }'
-            run {
-                val macroRangeInFile = element.bodyTextRange ?: return@run
-                val rangesInMacro = filterRangesInside(macroRangeInFile)
-                    .map { (indexInFile, crateId) ->
-                        val indexInMacro = indexInFile - macroRangeInFile.startOffset
-                        MappedTextRange(crateId, indexInMacro, MACRO_DOLLAR_CRATE_IDENTIFIER.length)
-                    }
-                if (rangesInMacro.isEmpty()) return@run
-                element.putUserData(RESOLVE_RANGE_MAP_KEY, RangeMap.from(SmartList(rangesInMacro)))
-            }
-
-            // expandedText = '$crate::foo! { ... }'
-            run {
-                val path = element.path
-                val crateId = rangesInFile[path.startOffset] ?: return@run
-                path.basePath().putUserData(RESOLVE_DOLLAR_CRATE_ID_KEY, crateId)
-            }
-        }
-    }
-}
-
-private fun StubElement<*>.forEachTopLevelElement(action: (StubElement<*>) -> Unit) {
-    for (childStub in childrenStubs) {
-        action(childStub)
-        if (childStub is RsModItemStub || childStub is RsForeignModStub) {
-            childStub.forEachTopLevelElement(action)
-        }
-    }
-}
-
-private fun RsUseSpeckStub.forEachTopLevelPath(consumer: (RsPathStub) -> Unit) {
-    val path = path
-    if (path != null) {
-        consumer(path)
-    } else {
-        val useGroup = useGroup ?: return
-        for (speck in useGroup.childrenStubs) {
-            (speck as RsUseSpeckStub).forEachTopLevelPath(consumer)
-        }
-    }
 }
