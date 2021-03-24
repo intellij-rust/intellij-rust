@@ -15,7 +15,9 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.rust.ide.annotator.fixes.AddTypeFix
 import org.rust.ide.inspections.fixes.SubstituteTextFix
+import org.rust.lang.core.CONST_GENERICS
 import org.rust.lang.core.C_VARIADIC
+import org.rust.lang.core.FeatureAvailability
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.types.type
@@ -293,10 +295,11 @@ private fun checkTypeArgumentList(holder: AnnotationHolder, args: RsTypeArgument
 }
 
 private fun checkTypeList(typeList: PsiElement, elementsName: String, holder: AnnotationHolder) {
+    val isConstGenericsAvailable = CONST_GENERICS.availability(typeList) == FeatureAvailability.AVAILABLE
     var kind = TypeKind.LIFETIME
     typeList.forEachChild { child ->
         val newKind = TypeKind.forType(child) ?: return@forEachChild
-        if (newKind.canStandAfter(kind)) {
+        if (newKind.canStandAfter(kind, isConstGenericsAvailable)) {
             kind = newKind
         } else {
             val newStateName = newKind.presentableName.capitalize()
@@ -315,8 +318,8 @@ private enum class TypeKind {
 
     val presentableName: String get() = name.toLowerCase()
 
-    fun canStandAfter(prev: TypeKind): Boolean =
-        this !== LIFETIME || prev === LIFETIME
+    fun canStandAfter(prev: TypeKind, isConstGenericsAvailable: Boolean): Boolean =
+        if (isConstGenericsAvailable) this !== LIFETIME || prev === LIFETIME else ordinal >= prev.ordinal
 
     companion object {
         fun forType(seekingElement: PsiElement): TypeKind? =
