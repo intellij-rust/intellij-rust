@@ -135,7 +135,7 @@ class CFGBuilder(
             }
         } else {
             // otherwise, try to find the corresponding loop
-            val exprBlock = expr.ancestors.filterIsInstance<RsLooplikeExpr>().firstOrNull()?.block
+            val exprBlock = expr.contexts.filterIsInstance<RsLooplikeExpr>().firstOrNull()?.block
 
             for ((loop, continueNode, breakNode) in loopScopes) {
                 if (loop.block == exprBlock) {
