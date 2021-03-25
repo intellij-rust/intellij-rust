@@ -867,7 +867,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         x + 1
         BLOCK
         BLOCK
-        |x: i32| { x + 1 }
+        CLOSURE
         f
         f
         let f = |x: i32| { x + 1 };
@@ -950,7 +950,7 @@ class RsControlFlowGraphTest : RsTestBase() {
         Entry
         panic!()
         Termination
-        || { panic!() }
+        CLOSURE
         f
         f
         let f = || { panic!() };
@@ -1098,6 +1098,6 @@ class RsControlFlowGraphTest : RsTestBase() {
         val cfg = ControlFlowGraph.buildFor(function.block!!, getRegionScopeTree(function))
         val expected = expectedIndented.trimIndent()
         val actual = cfg.graph.depthFirstTraversalTrace(cfg.entry)
-        check(actual == expected) { throw ComparisonFailure("Comparision failed", expected, actual) }
+        check(actual == expected) { throw ComparisonFailure("Comparison failed", expected, actual) }
     }
 }

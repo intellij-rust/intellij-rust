@@ -589,6 +589,11 @@
                          enabledByDefault="true" level="WEAK WARNING"
                          implementationClass="org.rust.ide.inspections.RsDuplicatedTraitMethodBindingInspection"/>
 
+        <localInspection language="Rust" groupPath="Rust" groupName="Lints"
+                         displayName="Unreachable code"
+                         enabledByDefault="true" level="WARNING"
+                         implementationClass="org.rust.ide.inspections.lints.RsUnreachableCodeInspection"/>
+
         <!-- Surrounders -->
 
         <lang.surroundDescriptor language="Rust"

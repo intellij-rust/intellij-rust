@@ -82,6 +82,7 @@
       <w>simd</w>
       <w>staticlib</w>
       <w>stmts</w>
+      <w>straightline</w>
       <w>subcommand</w>
       <w>subcommands</w>
       <w>submatrix</w>
@@ -97,6 +98,7 @@
       <w>turbofish</w>
       <w>uncached</w>
       <w>unescape</w>
+      <w>unexecuted</w>
       <w>unsafety</w>
       <w>valobj</w>
       <w>wasm</w>

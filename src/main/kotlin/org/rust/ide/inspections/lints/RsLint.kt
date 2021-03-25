@@ -55,6 +55,14 @@ enum class RsLint(
 
     UnreachablePattern("unreachable_patterns", listOf("unused")),
 
+    UnreachableCode("unreachable_code") {
+        override fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
+            when (level) {
+                WARN -> ProblemHighlightType.LIKE_UNUSED_SYMBOL
+                else -> super.toHighlightingType(level)
+            }
+    },
+
     BareTraitObjects("bare_trait_objects", listOf("rust_2018_idioms"));
 
     protected open fun toHighlightingType(level: RsLintLevel): ProblemHighlightType =
