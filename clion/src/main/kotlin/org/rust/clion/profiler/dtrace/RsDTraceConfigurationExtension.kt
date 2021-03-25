@@ -81,13 +81,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
     companion object {
         private val PROFILER_RUNNER_IDS = listOf(RsProfilerRunner.RUNNER_ID, RsProfilerRunnerLegacy.RUNNER_ID)
         private const val DYLD_INSERT_LIBRARIES = "DYLD_INSERT_LIBRARIES"
-        private const val BUNDLED_STARTER_PATH = "profiler/macosx/libosx-starter.dylib"
-        private const val STARTER_PATH_PROPERTY = "clion.profiler.osx.starter.path"
-        private fun profilerStarterPath(): File {
-            System.getProperty(STARTER_PATH_PROPERTY)?.let {
-                return File(it) //develop
-            }
-            return File(PathManager.getLibPath(), BUNDLED_STARTER_PATH) //production
-        }
+        private const val BUNDLED_STARTER_PATH = "profiler/mac/libosx-starter.dylib"
+        private fun profilerStarterPath(): File = File(PathManager.getBinPath(), BUNDLED_STARTER_PATH)
     }
 }
