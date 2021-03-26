@@ -25,7 +25,7 @@ import org.rust.lang.core.types.type
  * [fromCallMaker] is also not checked.
  */
 abstract class ConvertToTyUsingTryTraitFix(
-    expr: PsiElement,
+    expr: RsExpr,
     private val ty: Ty,
     traitName: String,
     private val fromCallMaker: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr, Ty) -> RsExpr
@@ -47,7 +47,7 @@ abstract class ConvertToTyUsingTryTraitFix(
  * Similar to [ConvertToTyUsingTryTraitFix], but also "unwraps" the result with `unwrap()` or `?`.
  */
 abstract class ConvertToTyUsingTryTraitAndUnpackFix(
-    expr: PsiElement,
+    expr: RsExpr,
     ty: Ty,
     private val errTy: Ty,
     traitName: String,
@@ -93,14 +93,14 @@ private val TRY_FROM_CALL_MAKER: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsEx
 /**
  * For the given `expr` converts it to the type `Result<ty, _>` with `ty::try_from(expr)`.
  */
-class ConvertToTyUsingTryFromTraitFix(expr: PsiElement, ty: Ty) :
+class ConvertToTyUsingTryFromTraitFix(expr: RsExpr, ty: Ty) :
     ConvertToTyUsingTryTraitFix(expr, ty, TRY_FROM_TRAIT, TRY_FROM_CALL_MAKER)
 
 /**
  * For the given `expr` converts it to the type [ty] with `ty::try_from(expr).unwrap()` or `ty::try_from(expr)?` if
  * possible.
  */
-class ConvertToTyUsingTryFromTraitAndUnpackFix(expr: PsiElement, ty: Ty, errTy: Ty) :
+class ConvertToTyUsingTryFromTraitAndUnpackFix(expr: RsExpr, ty: Ty, errTy: Ty) :
     ConvertToTyUsingTryTraitAndUnpackFix(expr, ty, errTy, TRY_FROM_TRAIT, TRY_FROM_CALL_MAKER)
 
 private const val FROM_STR_TRAIT = "FromStr"
@@ -110,12 +110,12 @@ private val PARSE_CALL_MAKER: ConvertToTyUsingTryTraitFix.(RsPsiFactory, RsExpr,
 /**
  * For the given `strExpr` converts it to the type `Result<ty, _>` with `strExpr.parse()`.
  */
-class ConvertToTyUsingFromStrFix(strExpr: PsiElement, ty: Ty):
+class ConvertToTyUsingFromStrFix(strExpr: RsExpr, ty: Ty):
     ConvertToTyUsingTryTraitFix(strExpr, ty, FROM_STR_TRAIT, PARSE_CALL_MAKER)
 
 /**
  * For the given `strExpr` converts it to the type [ty] with `strExpr.parse().unwrap()` or
  * `strExpr.parse()?` if possible.
  */
-class ConvertToTyUsingFromStrAndUnpackFix(strExpr: PsiElement, ty: Ty, errTy: Ty) :
+class ConvertToTyUsingFromStrAndUnpackFix(strExpr: RsExpr, ty: Ty, errTy: Ty) :
     ConvertToTyUsingTryTraitAndUnpackFix(strExpr, ty, errTy, FROM_STR_TRAIT, PARSE_CALL_MAKER)

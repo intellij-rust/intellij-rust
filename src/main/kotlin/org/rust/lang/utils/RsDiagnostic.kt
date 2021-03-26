@@ -82,79 +82,14 @@ sealed class RsDiagnostic(
                 "mismatched types",
                 description ?: expectedFound(element, expectedTy, actualTy),
                 fixes = buildList {
-                    if (expectedTy is TyNumeric && isActualTyNumeric()) {
-                        add(AddAsTyFix(element, expectedTy))
-                    } else if (element is RsElement) {
-                        val (lookup, items) = element.implLookupAndKnownItems
-                        if (isFromActualImplForExpected(items, lookup)) {
-                            add(ConvertToTyUsingFromTraitFix(element, expectedTy))
-                        } else { // only check TryFrom if From is not available
-                            val resultErrTy = errTyOfTryFromActualImplForTy(expectedTy, items, lookup)
-                            if (resultErrTy != null) {
-                                add(ConvertToTyUsingTryFromTraitAndUnpackFix(element, expectedTy, resultErrTy))
-                            }
-                        }
-                        // currently it's possible to have `impl FromStr` independently form `impl<'a> From<&'a str>` or
-                        // `impl<'a> TryFrom<&'a str>`, so check for FromStr even if From or TryFrom is available
-                        val resultFromStrErrTy = ifActualIsStrGetErrTyOfFromStrImplForTy(expectedTy, items, lookup)
-                        if (resultFromStrErrTy != null) {
-                            add(ConvertToTyUsingFromStrAndUnpackFix(element, expectedTy, resultFromStrErrTy))
-                        }
-                        if (isToOwnedImplWithExpectedForActual(items, lookup)) {
-                            add(ConvertToOwnedTyFix(element, expectedTy))
-                        }
-                        val stringTy = items.String.asTy()
-                        if (expectedTy == stringTy
-                            && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
-                            add(ConvertToStringFix(element))
-                        } else if (expectedTy is TyReference) {
-                            if (expectedTy.mutability == Mutability.IMMUTABLE) {
-                                if (isTraitWithTySubstImplForActual(lookup, items.Borrow, expectedTy)) {
-                                    add(ConvertToBorrowedTyFix(element, expectedTy))
-                                }
-                                if (isTraitWithTySubstImplForActual(lookup, items.AsRef, expectedTy)) {
-                                    add(ConvertToRefTyFix(element, expectedTy))
-                                }
-                            } else if (expectedTy.mutability == Mutability.MUTABLE) {
-                                if (actualTy is TyReference && actualTy.mutability == Mutability.IMMUTABLE) {
-                                    add(ChangeRefToMutableFix(element))
-                                }
-
-                                if (element is RsExpr && element.isMutable
-                                    && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
-                                    if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
-                                        add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
-                                    }
-                                    if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
-                                        add(ConvertToMutTyFix(element, expectedTy))
-                                    }
-                                }
-                            }
-                        } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
-                            val (expOkTy, expErrTy) = expectedTy.typeArguments
-                            if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
-                                add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
-                            }
-                            if (expErrTy == ifActualIsStrGetErrTyOfFromStrImplForTy(expOkTy, items, lookup)) {
-                                add(ConvertToTyUsingFromStrFix(element, expOkTy))
-                            }
-                        }
-                        if (actualTy == stringTy) {
-                            if (expectedTy == REF_STR_TY) {
-                                add(ConvertToImmutableStrFix(element))
-                            } else if (expectedTy == MUT_REF_STR_TY) {
-                                add(ConvertToMutStrFix(element))
-                            }
+                    if (element is RsElement) {
+                        if (element is RsExpr) {
+                            addAll(createExprQuickFixes(element))
                         }
 
                         val retFix = ChangeReturnTypeFix.createIfCompatible(element, actualTy)
                         if (retFix != null) {
                             add(retFix)
-                        }
-
-                        val derefsRefsToExpected = derefRefPathFromActualToExpected(lookup, element)
-                        if (derefsRefsToExpected != null) {
-                            add(ConvertToTyWithDerefsRefsFix(element, expectedTy, derefsRefsToExpected))
                         }
                     }
 
@@ -169,6 +104,80 @@ sealed class RsDiagnostic(
                     }
                 }
             )
+        }
+
+        private fun createExprQuickFixes(element: RsExpr): List<LocalQuickFix> {
+            return buildList {
+                if (expectedTy is TyNumeric && isActualTyNumeric()) {
+                    add(AddAsTyFix(element, expectedTy))
+                } else {
+                    val (lookup, items) = element.implLookupAndKnownItems
+                    if (isFromActualImplForExpected(items, lookup)) {
+                        add(ConvertToTyUsingFromTraitFix(element, expectedTy))
+                    } else { // only check TryFrom if From is not available
+                        val resultErrTy = errTyOfTryFromActualImplForTy(expectedTy, items, lookup)
+                        if (resultErrTy != null) {
+                            add(ConvertToTyUsingTryFromTraitAndUnpackFix(element, expectedTy, resultErrTy))
+                        }
+                    }
+                    // currently it's possible to have `impl FromStr` independently form `impl<'a> From<&'a str>` or
+                    // `impl<'a> TryFrom<&'a str>`, so check for FromStr even if From or TryFrom is available
+                    val resultFromStrErrTy = ifActualIsStrGetErrTyOfFromStrImplForTy(expectedTy, items, lookup)
+                    if (resultFromStrErrTy != null) {
+                        add(ConvertToTyUsingFromStrAndUnpackFix(element, expectedTy, resultFromStrErrTy))
+                    }
+                    if (isToOwnedImplWithExpectedForActual(items, lookup)) {
+                        add(ConvertToOwnedTyFix(element, expectedTy))
+                    }
+                    val stringTy = items.String.asTy()
+                    if (expectedTy == stringTy
+                        && (isToStringImplForActual(items, lookup) || isActualTyNumeric())) {
+                        add(ConvertToStringFix(element))
+                    } else if (expectedTy is TyReference) {
+                        if (expectedTy.mutability == Mutability.IMMUTABLE) {
+                            if (isTraitWithTySubstImplForActual(lookup, items.Borrow, expectedTy)) {
+                                add(ConvertToBorrowedTyFix(element, expectedTy))
+                            }
+                            if (isTraitWithTySubstImplForActual(lookup, items.AsRef, expectedTy)) {
+                                add(ConvertToRefTyFix(element, expectedTy))
+                            }
+                        } else if (expectedTy.mutability == Mutability.MUTABLE) {
+                            if (actualTy is TyReference && actualTy.mutability == Mutability.IMMUTABLE) {
+                                add(ChangeRefToMutableFix(element))
+                            }
+
+                            if (element.isMutable && lookup.coercionSequence(actualTy).all { it !is TyReference || it.mutability.isMut }) {
+                                if (isTraitWithTySubstImplForActual(lookup, items.BorrowMut, expectedTy)) {
+                                    add(ConvertToBorrowedTyWithMutFix(element, expectedTy))
+                                }
+                                if (isTraitWithTySubstImplForActual(lookup, items.AsMut, expectedTy)) {
+                                    add(ConvertToMutTyFix(element, expectedTy))
+                                }
+                            }
+                        }
+                    } else if (expectedTy is TyAdt && expectedTy.item == items.Result) {
+                        val (expOkTy, expErrTy) = expectedTy.typeArguments
+                        if (expErrTy == errTyOfTryFromActualImplForTy(expOkTy, items, lookup)) {
+                            add(ConvertToTyUsingTryFromTraitFix(element, expOkTy))
+                        }
+                        if (expErrTy == ifActualIsStrGetErrTyOfFromStrImplForTy(expOkTy, items, lookup)) {
+                            add(ConvertToTyUsingFromStrFix(element, expOkTy))
+                        }
+                    }
+                    if (actualTy == stringTy) {
+                        if (expectedTy == REF_STR_TY) {
+                            add(ConvertToImmutableStrFix(element))
+                        } else if (expectedTy == MUT_REF_STR_TY) {
+                            add(ConvertToMutStrFix(element))
+                        }
+                    }
+
+                    val derefsRefsToExpected = derefRefPathFromActualToExpected(lookup, element)
+                    if (derefsRefsToExpected != null) {
+                        add(ConvertToTyWithDerefsRefsFix(element, expectedTy, derefsRefsToExpected))
+                    }
+                }
+            }
         }
 
         private fun isActualTyNumeric() = actualTy is TyNumeric || actualTy is TyInfer.IntVar || actualTy is TyInfer.FloatVar

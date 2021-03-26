@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.RsPsiFactory
  * For the given `expr` adds `as_str()`/`as_mut_str()` method call. Note the fix doesn't attempt to verify that the type
  * of `expr` is `String` and so doesn't check if adding the function call will produce a valid expression.
  */
-abstract class ConvertToStrFix(expr: PsiElement, strTypeName: String, private val strMethodName: String) :
+abstract class ConvertToStrFix(expr: RsExpr, strTypeName: String, private val strMethodName: String) :
     ConvertToTyFix(expr, strTypeName, "`$strMethodName` method") {
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
@@ -25,5 +25,5 @@ abstract class ConvertToStrFix(expr: PsiElement, strTypeName: String, private va
     }
 }
 
-class ConvertToImmutableStrFix(expr: PsiElement) : ConvertToStrFix(expr, "&str", "as_str")
-class ConvertToMutStrFix(expr: PsiElement) : ConvertToStrFix(expr, "&mut str", "as_mut_str")
+class ConvertToImmutableStrFix(expr: RsExpr) : ConvertToStrFix(expr, "&str", "as_str")
+class ConvertToMutStrFix(expr: RsExpr) : ConvertToStrFix(expr, "&mut str", "as_mut_str")

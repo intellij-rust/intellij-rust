@@ -8,6 +8,7 @@ package org.rust.ide.annotator.fixes
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.render
+import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.ty.Ty
 
 abstract class ConvertToTyFix : LocalQuickFixAndIntentionActionOnPsiElement {
@@ -15,12 +16,12 @@ abstract class ConvertToTyFix : LocalQuickFixAndIntentionActionOnPsiElement {
     private val tyName: String
     private val convertSubject: String
 
-    constructor(expr: PsiElement, tyName: String, convertSubject: String): super(expr) {
+    constructor(expr: RsExpr, tyName: String, convertSubject: String): super(expr) {
         this.tyName = tyName
         this.convertSubject = convertSubject
     }
 
-    constructor(expr: PsiElement, ty: Ty, convertSubject: String) :
+    constructor(expr: RsExpr, ty: Ty, convertSubject: String) :
         this(expr, ty.render(skipUnchangedDefaultTypeArguments = true), convertSubject)
 
     override fun getFamilyName(): String = "Convert to type"

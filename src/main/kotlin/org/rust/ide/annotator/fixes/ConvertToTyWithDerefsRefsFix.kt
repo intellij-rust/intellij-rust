@@ -26,7 +26,7 @@ data class DerefRefPath(val derefs: Int, val refs: List<Mutability>)
  * `path.refs`. Note that correctness of the generated code is not verified.
  */
 class ConvertToTyWithDerefsRefsFix(
-    expr: PsiElement,
+    expr: RsExpr,
     ty: Ty,
     val path: DerefRefPath
 ) : ConvertToTyFix(expr, ty, formatRefs(path)) {
