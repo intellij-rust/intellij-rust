@@ -37,8 +37,8 @@ private object RsMacroArgumentElementType : RsReparseableElementTypeBase("MACRO_
 private object RsMacroBodyElementType : RsTTBodyLazyElementTypeBase("MACRO_BODY")
 
 private abstract class RsTTBodyLazyElementTypeBase(debugName: String) : RsReparseableElementTypeBase(debugName) {
-    override fun isParsable(buffer: CharSequence, fileLanguage: Language, project: Project): Boolean =
-        RustParserUtil.hasProperTokenTreeBraceBalance(buffer, RsLexer())
+    override fun isReparseable(currentNode: ASTNode, newText: CharSequence, fileLanguage: Language, project: Project): Boolean =
+        RustParserUtil.hasProperTokenTreeBraceBalance(newText, RsLexer())
 }
 
 private abstract class RsReparseableElementTypeBase(debugName: String) : IReparseableElementType(debugName, RsLanguage) {

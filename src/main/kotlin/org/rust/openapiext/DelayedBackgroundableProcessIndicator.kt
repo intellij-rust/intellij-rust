@@ -51,6 +51,7 @@ class DelayedBackgroundableProcessIndicator(val task: Task.Backgroundable, delay
         title = task.title
         if (statusBar == null) {
             val nonDefaultProject = if (task.project == null || task.project.isDisposed || task.project.isDefault) null else task.project
+            @Suppress("UnstableApiUsage")
             val frame: IdeFrame? = WindowManagerEx.getInstanceEx().findFrameHelper(nonDefaultProject)
             statusBar = if (frame != null) frame.statusBar as StatusBarEx? else null
         }

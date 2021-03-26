@@ -149,6 +149,8 @@ private class TableModel(
         return ModelItem(importContext, parameter)
     }
 
+    // BACKCOMPAT: 2020.3
+    @Suppress("UnstableApiUsage")
     override fun removeRow(index: Int) {
         descriptor.config.parameters.removeAt(index)
         super.removeRow(index)

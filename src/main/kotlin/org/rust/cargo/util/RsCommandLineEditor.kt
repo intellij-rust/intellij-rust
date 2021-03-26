@@ -63,6 +63,7 @@ private class ExpandableEditorSupportWithCustomPopup(
     field: EditorTextField,
     private val createPopup: (text: String) -> EditorTextField
 ) : ExpandableEditorSupport(field) {
+    @Suppress("UnstableApiUsage")
     override fun prepare(field: EditorTextField, onShow: Function<in String, String>): Content {
         val popup = createPopup(onShow.`fun`(field.text))
         val background = field.background
@@ -75,7 +76,7 @@ private class ExpandableEditorSupportWithCustomPopup(
             copyCaretPosition(editor, field.editor)
         }
 
-        return object : ExpandableSupport.Content {
+        return object : Content {
             override fun getContentComponent(): JComponent = popup
             override fun getFocusableComponent(): JComponent = popup
             override fun cancel(onHide: Function<in String, String>) {

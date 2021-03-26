@@ -66,6 +66,8 @@ class RsDebugProcessConfigurationHelper(
         val rustcHash = "/rustc/$commitHash/".systemDependentAndEscaped()
         val rustcSources = "$sysroot/lib/rustlib/src/rust/".systemDependentAndEscaped()
         val fullCommand = """$sourceMapCommand "$rustcHash" "$rustcSources" """
+        // BACKCOMPAT: 2020.3
+        @Suppress("UnstableApiUsage", "DEPRECATION")
         executeConsoleCommand(threadId, frameIndex, fullCommand)
     }
 
@@ -76,6 +78,8 @@ class RsDebugProcessConfigurationHelper(
         }
     }
 
+    // BACKCOMPAT: 2020.3
+    @Suppress("UnstableApiUsage", "DEPRECATION")
     private fun LLDBDriver.loadPrettyPrinters() {
         when (settings.lldbRenderers) {
             LLDBRenderers.COMPILER -> {
@@ -117,6 +121,8 @@ class RsDebugProcessConfigurationHelper(
                     """sys.path.insert(0, "$path"); """ +
                     """import gdb_rust_pretty_printing; """ +
                     """gdb_rust_pretty_printing.register_printers(gdb); """
+                // BACKCOMPAT: 2020.3
+                @Suppress("UnstableApiUsage", "DEPRECATION")
                 executeConsoleCommand(threadId, frameIndex, command)
             }
 
@@ -126,6 +132,8 @@ class RsDebugProcessConfigurationHelper(
                     """sys.path.insert(0, "$path"); """ +
                     """import $GDB_LOOKUP; """ +
                     """$GDB_LOOKUP.register_printers(gdb); """
+                // BACKCOMPAT: 2020.3
+                @Suppress("UnstableApiUsage", "DEPRECATION")
                 executeConsoleCommand(threadId, frameIndex, command)
             }
 

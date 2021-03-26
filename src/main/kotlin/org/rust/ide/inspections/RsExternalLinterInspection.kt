@@ -201,7 +201,9 @@ class RsExternalLinterInspection : GlobalSimpleInspectionTool() {
         ): List<ProblemDescriptor> = buildList {
             for (file in analyzedFiles) {
                 if (!file.isValid) continue
+                @Suppress("UnstableApiUsage")
                 val annotationHolder = AnnotationHolderImpl(AnnotationSession(file))
+                @Suppress("UnstableApiUsage")
                 annotationHolder.runAnnotatorWithContext(file) { _, holder ->
                     holder.createAnnotationsForFile(file, annotationResult)
                 }

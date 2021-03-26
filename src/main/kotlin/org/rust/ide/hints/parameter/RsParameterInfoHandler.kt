@@ -5,13 +5,10 @@
 
 package org.rust.ide.hints.parameter
 
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.lang.parameterInfo.ParameterInfoContext
 import com.intellij.lang.parameterInfo.ParameterInfoUIContext
 import com.intellij.lang.parameterInfo.ParameterInfoUtils
 import com.intellij.lang.parameterInfo.UpdateParameterInfoContext
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.utils.CallInfo
 import org.rust.lang.core.psi.RsCallExpr
@@ -26,15 +23,6 @@ import org.rust.stdext.buildList
  * Provides functions/methods arguments hint.
  */
 class RsParameterInfoHandler : RsAsyncParameterInfoHandler<RsValueArgumentList, RsArgumentsDescription>() {
-    override fun couldShowInLookup() = true
-
-    override fun getParametersForLookup(item: LookupElement, context: ParameterInfoContext?): Array<out Any>? {
-        val el = item.`object` as? PsiElement ?: return null
-        val p = el.parent?.parent ?: return null
-        val isCall = p is RsCallExpr && CallInfo.resolve(p) != null || p is RsMethodCall && CallInfo.resolve(p) != null
-        return if (isCall) arrayOf(p) else emptyArray()
-    }
-
     override fun findTargetElement(file: PsiFile, offset: Int): RsValueArgumentList? =
         file.findElementAt(offset)?.ancestorStrict()
 
