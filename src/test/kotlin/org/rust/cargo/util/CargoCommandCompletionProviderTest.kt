@@ -21,9 +21,8 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         val provider = CargoCommandCompletionProvider(project.cargoProjects, null)
         fun doCheck(text: String, ctx: String, prefix: String) {
             val (actualCtx, actualPrefix) = provider.splitContextPrefix(text)
-            check(actualCtx == ctx && actualPrefix == prefix) {
-                "\nExpected\n\n$ctx, $prefix\nActual:\n$actualCtx, $actualPrefix"
-            }
+            assertEquals(ctx, actualCtx)
+            assertEquals(prefix, actualPrefix)
         }
 
         doCheck("build", "", "build")

@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.dfa
 
-import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.*
 import org.rust.cargo.project.workspace.CargoWorkspace
@@ -1098,6 +1097,6 @@ class RsControlFlowGraphTest : RsTestBase() {
         val cfg = ControlFlowGraph.buildFor(function.block!!, getRegionScopeTree(function))
         val expected = expectedIndented.trimIndent()
         val actual = cfg.graph.depthFirstTraversalTrace(cfg.entry)
-        check(actual == expected) { throw ComparisonFailure("Comparison failed", expected, actual) }
+        assertEquals(expected, actual)
     }
 }

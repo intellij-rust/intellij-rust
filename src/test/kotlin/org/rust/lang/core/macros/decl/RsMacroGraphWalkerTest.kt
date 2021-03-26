@@ -5,14 +5,12 @@
 
 package org.rust.lang.core.macros.decl
 
-import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.ProjectDescriptor
 import org.rust.RsTestBase
 import org.rust.WithStdlibRustProjectDescriptor
 import org.rust.lang.core.psi.RsMacroCall
 import org.rust.lang.core.psi.ext.*
-import java.util.*
 
 class RsMacroGraphWalkerTest : RsTestBase() {
     private fun check(@Language("Rust") code: String, expected: HashSet<FragmentKind>) {
@@ -27,7 +25,7 @@ class RsMacroGraphWalkerTest : RsTestBase() {
 
         val walker = MacroGraphWalker(myFixture.project, graph, macroCall.macroBody!!, offset)
         val actual = walker.run().map { it.kind }.toSet()
-        check(actual == expected) { throw ComparisonFailure("Comparision failed", expected.toString(), actual.toString()) }
+        assertEquals(expected, actual)
     }
 
     fun `test simple`() = check("""

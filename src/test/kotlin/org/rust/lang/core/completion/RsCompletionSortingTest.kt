@@ -485,7 +485,7 @@ class RsCompletionSortingTest : RsTestBase() {
                 "Expected a ${klass.java.name}, found ${lookupObject.javaClass}"
             }
             val actualName = actual.lookupString
-            check(name == actualName) { "Expected $name got $actualName" }
+            assertEquals(name, actualName)
         }
     }
 }

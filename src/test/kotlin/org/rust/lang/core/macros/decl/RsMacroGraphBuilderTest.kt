@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.macros.decl
 
-import junit.framework.ComparisonFailure
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.core.psi.RsMacro
@@ -17,10 +16,9 @@ class RsMacroGraphBuilderTest : RsTestBase() {
         InlineFile(code)
         val macro = myFixture.file.descendantsOfType<RsMacro>().single()
         val graph = macro.graph!!
-        // println(graph.createDotDescription())
         val expected = expectedIndented.trimIndent()
         val actual = graph.depthFirstTraversalTrace()
-        check(actual == expected) { throw ComparisonFailure("Comparision failed", expected, actual) }
+        assertEquals(expected, actual)
     }
 
     fun `test one rule simple`() = check("""
