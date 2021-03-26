@@ -9,6 +9,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 
 class RustfmtExternalFormatProcessor : RustfmtExternalFormatProcessorBase() {
+    @Suppress("UnstableApiUsage")
     override fun format(
         source: PsiFile,
         range: TextRange,

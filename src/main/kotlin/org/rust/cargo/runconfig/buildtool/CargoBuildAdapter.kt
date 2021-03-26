@@ -110,7 +110,7 @@ class CargoBuildAdapter(
         private class RestartProcessAction(
             private val processHandler: ProcessHandler,
             private val environment: ExecutionEnvironment
-        ) : DumbAwareAction(), AnAction.TransparentUpdate {
+        ) : DumbAwareAction() {
             private val isEnabled: Boolean
                 get() {
                     val project = environment.project

@@ -16,7 +16,6 @@ import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.notification.NotificationGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.invokeLater
@@ -47,14 +46,13 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
 import org.rust.ide.experiments.RsExperiments
+import org.rust.ide.notifications.RsNotifications
 import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.saveAllDocuments
 import java.util.concurrent.Future
 
 @Suppress("UnstableApiUsage")
 object CargoBuildManager {
-    private val LOG_NOTIFICATION_GROUP: NotificationGroup = NotificationGroup.logOnlyGroup("Build Log")
-
     private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test")
 
     @JvmField
@@ -259,7 +257,7 @@ object CargoBuildManager {
         time: Long = 0
     ) {
         val notificationContent = buildNotificationMessage(message, details, time)
-        val notification = LOG_NOTIFICATION_GROUP.createNotification(notificationContent, messageType)
+        val notification = RsNotifications.buildLogGroup().createNotification(notificationContent, messageType)
         notification.notify(project)
 
         if (messageType === MessageType.ERROR) {

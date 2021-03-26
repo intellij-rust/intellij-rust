@@ -267,6 +267,7 @@ private fun AtomicReference<ConcurrentMap<PsiElement, Any?>?>.getOrCreateMap(): 
 }
 
 private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
+    @Suppress("UnstableApiUsage")
     return object : ConcurrentWeakKeySoftValueHashMap<K, V>(
         100,
         0.75f,
@@ -276,7 +277,7 @@ private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
         override fun createValueReference(
             value: V,
             queue: ReferenceQueue<in V>
-        ): ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {
+        ): ValueReference<K, V> {
             val isTrivialValue = value === NULL_RESULT ||
                 value is Array<*> && value.size == 0 ||
                 value is List<*> && value.size == 0
@@ -295,6 +296,8 @@ private fun <K, V> createWeakMap(): ConcurrentMap<K, V> {
     }
 }
 
+// BACKCOMPAT: 2020.3
+@Suppress("UnstableApiUsage")
 private class StrongValueReference<K, V>(
     private val value: V
 ) : ConcurrentWeakKeySoftValueHashMap.ValueReference<K, V> {

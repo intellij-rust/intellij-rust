@@ -28,23 +28,19 @@ class Timings(
     fun <T: Any> measureAverage(name: String, f: () -> T): T = measureInternal(name, f)
 
     private fun <T: Any> measureInternal(name: String, f: () -> T): T {
-        // BACKCOMPAT: 2020.2
-        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
-        var result: T? = null
+        val result: T
         val time = measureTimeMillis { result = f() }
         valuesTotal.merge(name, time, Long::plus)
         invokes.merge(name, 1, Long::plus)
-        return result!!
+        return result
     }
 
     fun <T: Any> measureSum(name: String, f: () -> T): T {
-        // BACKCOMPAT: 2020.2
-        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
-        var result: T? = null
+        val result: T
         val time = measureTimeMillis { result = f() }
         valuesTotal.merge(name, time, Long::plus)
-        invokes.put(name, 1)
-        return result!!
+        invokes[name] = 1
+        return result
     }
 
     fun values(): Map<String, Long> {
@@ -161,12 +157,9 @@ class RsStopWatch(
     }
 
     fun <T> measure(block: () -> T): T {
-        // BACKCOMPAT: 2020.2
-        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
-        var result: T? = null
+        val result: T
         totalNs.addAndGet(measureNanoTime { result = block() })
-        @Suppress("UNCHECKED_CAST")
-        return result as T
+        return result
     }
 }
 
@@ -187,9 +180,7 @@ class RsReentrantStopWatch(override val name: String) : RsWatch {
     }
 
     fun <T> measure(block: () -> T): T {
-        // BACKCOMPAT: 2020.2
-        @Suppress("VARIABLE_WITH_REDUNDANT_INITIALIZER")
-        var result: T? = null
+        val result: T
         if (nesting.enter() && started.get()) {
             totalNs.addAndGet(measureNanoTime { result = block() })
         } else {
@@ -197,8 +188,7 @@ class RsReentrantStopWatch(override val name: String) : RsWatch {
         }
         nesting.exit()
 
-        @Suppress("UNCHECKED_CAST")
-        return result as T
+        return result
     }
 }
 

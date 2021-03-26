@@ -8,9 +8,7 @@ package org.rust.ide.formatter
 import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.rust.ide.formatter.blocks.RsFmtBlock
 import org.rust.ide.formatter.blocks.RsMacroArgFmtBlock
 import org.rust.ide.formatter.blocks.RsMultilineStringLiteralBlock
@@ -22,7 +20,9 @@ import org.rust.lang.core.psi.tokenSetOf
 class RsFormattingModelBuilder : FormattingModelBuilder {
     override fun getRangeAffectingIndent(file: PsiFile?, offset: Int, elementAtOffset: ASTNode?): TextRange? = null
 
-    override fun createModel(element: PsiElement, settings: CodeStyleSettings): FormattingModel {
+    override fun createModel(formattingContext: FormattingContext): FormattingModel {
+        val settings = formattingContext.codeStyleSettings
+        val element = formattingContext.psiElement
         val ctx = RsFmtContext.create(settings)
         val block = createBlock(element.node, null, Indent.getNoneIndent(), null, ctx)
         /** / com.intellij.formatting.FormattingModelDumper.dumpFormattingModel(block, 2, System.err) // */

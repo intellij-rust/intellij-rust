@@ -44,15 +44,13 @@ class RsRecursiveCallLineMarkerProvider : LineMarkerProvider {
             val lineNumber = doc.getLineNumber(el.textOffset)
             if (lineNumber !in lines) {
                 lines.add(lineNumber)
-                // BACKCOMPAT: 2020.2
-                @Suppress("DEPRECATION")
-                result.add(LineMarkerInfo(
+                result.add(RsLineMarkerInfoUtils.create(
                     el,
                     el.textRange,
                     RsIcons.RECURSIVE_CALL,
-                    FunctionUtil.constant("Recursive call"),
                     null,
-                    GutterIconRenderer.Alignment.RIGHT))
+                    GutterIconRenderer.Alignment.RIGHT
+                ) { "Recursive call" })
             }
         }
     }

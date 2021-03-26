@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.psi.PsiElement
 import org.rust.cargo.CargoConstants
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
 import org.rust.lang.core.psi.ext.elementType
 import org.toml.lang.psi.*
 import org.toml.lang.psi.ext.TomlLiteralKind
@@ -54,16 +55,13 @@ class CargoCrateDocLineMarkerProvider : LineMarkerProvider {
             else -> version
         }
 
-        // BACKCOMPAT: 2020.2
-        @Suppress("DEPRECATION")
-        return LineMarkerInfo(
+        return RsLineMarkerInfoUtils.create(
             anchor,
             anchor.textRange,
             RsIcons.DOCS_MARK,
-            { "Open documentation for `$name@$urlVersion`" },
             { _, _ -> BrowserUtil.browse("https://docs.rs/$name/$urlVersion") },
-            GutterIconRenderer.Alignment.LEFT)
-
+            GutterIconRenderer.Alignment.LEFT
+        ) { "Open documentation for `$name@$urlVersion`" }
     }
 }
 

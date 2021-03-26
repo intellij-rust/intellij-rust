@@ -15,7 +15,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiManager
-import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.util.xmlb.XmlSerializer.deserializeInto
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
@@ -103,7 +102,7 @@ class RustProjectSettingsServiceImpl(
 
         if (event.isChanged(State::doctestInjectionEnabled)) {
             // flush injection cache
-            (PsiManager.getInstance(project).modificationTracker as PsiModificationTrackerImpl).incCounter()
+            PsiManager.getInstance(project).dropPsiCaches()
         }
         if (event.isChanged(State::newResolveEnabled)) {
             project.defMapService.onNewResolveEnabledChanged(newState.newResolveEnabled)

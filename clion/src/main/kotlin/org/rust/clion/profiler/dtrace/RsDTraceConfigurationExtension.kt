@@ -61,6 +61,7 @@ class RsDTraceConfigurationExtension : CargoCommandConfigurationExtension() {
             ?: throw ExecutionException("Profiler connection error: can't detect target process id")
         val namedProcess = NativeTargetProcess(OSProcessUtil.getProcessID(targetProcess), configuration.name)
         val project = configuration.project
+        @Suppress("UnstableApiUsage")
         RsDTraceProfilerProcess.attach(namedProcess, PerformInBackgroundOption.ALWAYS_BACKGROUND, 10000, project)
             .installErrorHandlers(project)
             .onError { ExecutionManagerImpl.stopProcess(handler) }

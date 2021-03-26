@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.SeparatorPlacement
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
@@ -38,9 +37,7 @@ class RsMethodLineSeparatorProvider : LineMarkerProvider {
 
     private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
         val anchor = PsiTreeUtil.getDeepestFirst(element)
-        // BACKCOMPAT: 2020.2
-        @Suppress("DEPRECATION")
-        return LineMarkerInfo(anchor, anchor.textRange, null, null, null, GutterIconRenderer.Alignment.RIGHT).apply {
+        return LineMarkerInfo(anchor, anchor.textRange).apply {
             separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
             separatorPlacement = SeparatorPlacement.TOP
         }

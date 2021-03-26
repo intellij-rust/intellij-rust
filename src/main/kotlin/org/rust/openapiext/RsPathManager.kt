@@ -23,9 +23,10 @@ object RsPathManager {
             SystemInfo.isWindows -> "windows" to "intellij-rust-native-helper.exe"
             else -> return null
         }
+        @Suppress("UnstableApiUsage", "DEPRECATION")
         val arch = when {
-            // BACKCOMPAT: 2020.2. Replace with `SystemInfo.isIntel64`
-            "x86_64" == SystemInfo.OS_ARCH || "amd64" == SystemInfo.OS_ARCH -> "x86-64"
+            // BACKCOMPAT: 2020.3. Replace with `CpuArch.isIntel64()`
+            SystemInfo.isIntel64 -> "x86-64"
             else -> return null
         }
 
@@ -40,4 +41,3 @@ object RsPathManager {
     fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("intellij-rust")
     fun tempPluginDirInSystem(): Path = Paths.get(PathManager.getTempPath()).resolve("intellij-rust")
 }
-

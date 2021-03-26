@@ -1611,8 +1611,8 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
     }
 
     // Restricted to a function body only because it is well tested case. May be unrestricted to any block in future
-    override fun isParsable(parent: ASTNode?, buffer: CharSequence, fileLanguage: Language, project: Project): Boolean =
-        parent?.elementType == FUNCTION && PsiBuilderUtil.hasProperBraceBalance(buffer, RsLexer(), LBRACE, RBRACE)
+    override fun isReparseable(currentNode: ASTNode, newText: CharSequence, fileLanguage: Language, project: Project): Boolean =
+        currentNode.treeParent?.elementType == FUNCTION && PsiBuilderUtil.hasProperBraceBalance(newText, RsLexer(), LBRACE, RBRACE)
 
     // Avoid double lexing
     override fun reuseCollapsedTokens(): Boolean = true
