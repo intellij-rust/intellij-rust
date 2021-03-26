@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -28,13 +27,9 @@ data class DerefRefPath(val derefs: Int, val refs: List<Mutability>)
  */
 class ConvertToTyWithDerefsRefsFix(
     expr: PsiElement,
-    val ty: Ty,
+    ty: Ty,
     val path: DerefRefPath
-) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
-    override fun getFamilyName(): String = "Convert to type"
-
-    override fun getText(): String = "Convert to $ty using ${formatRefs(path)}"
-
+) : ConvertToTyFix(expr, ty, formatRefs(path)) {
     override fun invoke(
         project: Project,
         file: PsiFile,

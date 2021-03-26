@@ -6,7 +6,7 @@
 package org.rust.ide.inspections.typecheck
 
 
-class ConvertToBorrowedTyWithMutFixTest : ConvertToTyUsingTraitFixTestBase(
+class ConvertToBorrowedTyWithMutFixTest : ConvertToTyUsingTraitMethodFixTestBase(
     true, "BorrowMut", "borrow_mut", "use std::borrow::BorrowMut;") {
 
     fun `test &String to &mut String`() = checkFixIsUnavailable("Convert to &mut String using `BorrowMut` trait", """

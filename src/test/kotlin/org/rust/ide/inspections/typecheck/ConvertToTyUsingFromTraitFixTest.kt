@@ -54,7 +54,7 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspec
         }
     """)
 
-    fun `test From impl for generic type`() = checkFixByText ("Convert to Vec<u8> using `From` trait", """
+    fun `test From impl for generic type`() = checkFixByText("Convert to Vec<u8> using `From` trait", """
         fn main () {
             let v: Vec<u8> = <error>String::new()<caret></error>;
         }
@@ -64,43 +64,39 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspec
         }
     """)
 
-    fun `test From impl for reference type`() = checkFixByText(
-        "Convert to &[u8] using `From` trait", """
+    fun `test From impl for reference type`() = checkFixByText("Convert to &[u8] using `From` trait", """
         struct A;
-        
+
         impl From<A> for &[u8] { fn from(item: A) -> Self { &[] } }
-        
+
         fn main() {
             let b: &[u8] = <error>A<caret></error>;
         }
     """, """
         struct A;
-        
+
         impl From<A> for &[u8] { fn from(item: A) -> Self { &[] } }
-        
+
         fn main() {
             let b: &[u8] = <&[u8]>::from(A);
         }
-    """
-    )
+    """)
 
-    fun `test From impl for tuple type`() = checkFixByText(
-        "Convert to (i32, i32) using `From` trait", """
+    fun `test From impl for tuple type`() = checkFixByText("Convert to (i32, i32) using `From` trait", """
         struct A;
-        
+
         impl From<A> for (i32, i32) { fn from(item: A) -> Self { (0, 0) } }
-        
+
         fn main() {
             let b: (i32, i32) = <error>A<caret></error>;
         }
     """, """
         struct A;
-        
+
         impl From<A> for (i32, i32) { fn from(item: A) -> Self { (0, 0) } }
-        
+
         fn main() {
             let b: (i32, i32) = <(i32, i32)>::from(A);
         }
-    """
-    )
+    """)
 }

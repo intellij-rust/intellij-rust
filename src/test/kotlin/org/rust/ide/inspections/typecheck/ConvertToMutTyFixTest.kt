@@ -5,4 +5,4 @@
 
 package org.rust.ide.inspections.typecheck
 
-class ConvertToMutTyFixTest : ConvertToTyUsingTraitFixTestBase(true, "AsMut", "as_mut")
+class ConvertToMutTyFixTest : ConvertToTyUsingTraitMethodFixTestBase(true, "AsMut", "as_mut")
