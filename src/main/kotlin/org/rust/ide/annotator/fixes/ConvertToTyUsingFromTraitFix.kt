@@ -5,7 +5,6 @@
 
 package org.rust.ide.annotator.fixes
 
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -18,11 +17,7 @@ import org.rust.lang.core.types.ty.Ty
 /**
  * For the given `expr` converts it to the type `ty` with `ty::from(expr)`
  */
-class ConvertToTyUsingFromTraitFix(expr: PsiElement, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
-    override fun getFamilyName(): String = "Convert to type"
-
-    override fun getText(): String = "Convert to $ty using `From` trait"
-
+class ConvertToTyUsingFromTraitFix(expr: RsExpr, val ty: Ty) : ConvertToTyUsingTraitFix(expr, ty, "From") {
     override fun invoke(
         project: Project,
         file: PsiFile,

@@ -17,7 +17,7 @@ import org.rust.lang.core.types.ty.Ty
 /**
  * For the given `expr` adds cast to the given type `ty`
  */
-class AddAsTyFix(expr: PsiElement, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
+class AddAsTyFix(expr: RsExpr, val ty: Ty) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     override fun getFamilyName(): String = "Add safe cast"
 
