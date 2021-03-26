@@ -49,8 +49,10 @@ import java.util.concurrent.atomic.AtomicBoolean
 /**
  * Crates local index, created from user cargo registry index on host machine.
  * Used for dependency code insight in project's `Cargo.toml`.
+ *
  * Stores crates info in [crates] persistent hash map and hash for commit which has been used for index load in
- * persistent state [CratesLocalIndexState].
+ * persistent state [CratesLocalIndexState]. Note, state's properties should be mutable in order to be serialized and
+ * saved.
  */
 @State(name = "CratesLocalIndexState", storages = [Storage("rust.crateslocalindex.xml")])
 class CratesLocalIndexServiceImpl
@@ -267,7 +269,7 @@ class CratesLocalIndexServiceImpl
     }
 
     companion object {
-        data class CratesLocalIndexState(val indexedCommitHash: String = "")
+        data class CratesLocalIndexState(var indexedCommitHash: String = "")
 
         private val corruptionMarkerFile: Path
             get() = baseCratesLocalRegistryDir.resolve(CORRUPTION_MARKER_NAME)
