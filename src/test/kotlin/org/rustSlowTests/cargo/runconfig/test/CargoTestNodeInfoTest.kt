@@ -36,8 +36,8 @@ class CargoTestNodeInfoTest : CargoTestRunnerTestBase() {
     """, "`1` != `2`", Diff("1", "2"))
 
     fun `test no diff`() = checkErrors("""
-       assert!("aaa" != "aaa");
-    """, """assertion failed: "aaa" != "aaa"""")
+       assert!(1 != 1);
+    """, """assertion failed: 1 != 1""")
 
     fun `test assert with message`() = checkErrors("""
        assert!("aaa" != "aaa", "message");
