@@ -18,6 +18,8 @@ import javax.swing.tree.TreePath
 
 abstract class RsProjectViewTestBase : RsWithToolchainTestBase() {
 
+    override val fetchActualStdlibMetadata: Boolean get() = true
+
     override fun setUp() {
         super.setUp()
         ProjectViewTestUtil.setupImpl(project, true)
