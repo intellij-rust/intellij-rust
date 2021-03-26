@@ -122,9 +122,6 @@ class RsExternalLinterPass(
     }
 
     private fun doFinish(highlights: List<HighlightInfo>) {
-        // BACKCOMPAT: 2020.1
-        @Suppress("USELESS_ELVIS")
-        val document = document ?: return
         invokeLater(ModalityState.stateForComponent(editor.component)) {
             if (Disposer.isDisposed(disposable)) return@invokeLater
             UpdateHighlightersUtil.setHighlightersToEditor(

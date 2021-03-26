@@ -100,9 +100,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
                 val project = call.project
                 val presentation = typeHintsFactory.typeHint(type)
                 val finalPresentation = presentation.withDisableAction(project)
-                // BACKCOMPAT: 2020.2
-                @Suppress("DEPRECATION")
-                sink.addInlineElement(call.endOffset, true, finalPresentation)
+                sink.addInlineElement(call.endOffset, true, finalPresentation, false)
             }
 
             /**

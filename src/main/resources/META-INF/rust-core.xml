@@ -951,10 +951,13 @@
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroIndex"/>
         <stubIndex implementation="org.rust.lang.core.resolve.indexes.RsMacroCallIndex"/>
 
-        <!-- Notification Providers -->
+        <!-- Notifications -->
 
         <editorNotificationProvider implementation="org.rust.ide.notifications.MissingToolchainNotificationProvider"/>
         <editorNotificationProvider implementation="org.rust.ide.notifications.NoCargoProjectNotificationProvider"/>
+
+        <notificationGroup id="Rust Plugin" displayType="BALLOON"/>
+        <notificationGroup id="Rust Build Log" displayType="NONE"/>
 
         <!-- Editor Tab Title Providers -->
 

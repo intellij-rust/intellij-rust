@@ -7,7 +7,6 @@ package org.rust.lang.doc
 
 import com.intellij.codeEditor.printing.HTMLTextPainter
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol
-import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.psi.PsiComment
@@ -192,8 +191,6 @@ private class RsCodeFenceProvider(
             }
         }
         if (lastChildWasContent) {
-            // BACKCOMPAT: 2020.2
-            @Suppress("DEPRECATION")
             codeText.appendln()
         }
 
@@ -205,13 +202,8 @@ private class RsCodeFenceProvider(
 
         // TODO: use scheme of concrete editor instead of global one because they may differ
         val scheme = EditorColorsManager.getInstance().globalScheme
-        val attributes = scheme.getAttributes(HighlighterColors.TEXT)
-        val defaultFgColor = attributes.foregroundColor ?: scheme.defaultForeground
-
-        // BACKCOMPAT: 2020.2. Since 2020.3 all identifier tokens are wrapped into `style` tag
-        //  so no need to provide a default color in `pre` tags
         htmlCodeText = htmlCodeText.replaceFirst("<pre>",
-            "<pre style=\"color:#${ColorUtil.toHex(defaultFgColor)}; text-indent: ${CODE_SNIPPET_INDENT}px;\">")
+            "<pre style=\"text-indent: ${CODE_SNIPPET_INDENT}px;\">")
 
         return when (renderMode) {
             RsDocRenderMode.INLINE_DOC_COMMENT -> htmlCodeText.dimColors(scheme)

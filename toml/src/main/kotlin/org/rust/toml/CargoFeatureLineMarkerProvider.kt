@@ -30,6 +30,7 @@ import org.rust.cargo.project.workspace.PackageFeature
 import org.rust.cargo.project.workspace.PackageOrigin.WORKSPACE
 import org.rust.ide.experiments.RsExperiments
 import org.rust.ide.icons.RsIcons
+import org.rust.ide.lineMarkers.RsLineMarkerInfoUtils
 import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.elementType
 import org.rust.lang.core.psi.ext.findCargoPackage
@@ -102,16 +103,13 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
                     FeatureState.Enabled -> RsIcons.FEATURE_CHECKED_MARK
                     FeatureState.Disabled, null -> RsIcons.FEATURE_UNCHECKED_MARK
                 }
-                // BACKCOMPAT: 2020.2
-                @Suppress("DEPRECATION")
-                LineMarkerInfo(
+                RsLineMarkerInfoUtils.create(
                     anchor,
                     anchor.textRange,
                     icon,
-                    { "Toggle feature `$name`" },
                     ToggleFeatureAction,
                     Alignment.RIGHT
-                )
+                ) { "Toggle feature `$name`" }
             }
 
             else -> {
@@ -119,16 +117,13 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
                     FeatureState.Enabled -> RsIcons.FEATURE_CHECKED_MARK_GRAYED
                     FeatureState.Disabled, null -> RsIcons.FEATURE_UNCHECKED_MARK_GRAYED
                 }
-                // BACKCOMPAT: 2020.2
-                @Suppress("DEPRECATION")
-                LineMarkerInfo(
+                RsLineMarkerInfoUtils.create(
                     anchor,
                     anchor.textRange,
                     icon,
-                    { "Feature `$name` is $featureState" },
                     null,
                     Alignment.RIGHT
-                )
+                ) { "Feature `$name` is $featureState" }
             }
         }
     }
@@ -136,16 +131,13 @@ class CargoFeatureLineMarkerProvider : LineMarkerProvider {
     private fun genSettingsLineMarkerInfo(header: TomlTableHeader): LineMarkerInfo<PsiElement> {
         val anchor = header.firstChild
 
-        // BACKCOMPAT: 2020.2
-        @Suppress("DEPRECATION")
-        return LineMarkerInfo(
+        return RsLineMarkerInfoUtils.create(
             anchor,
             anchor.textRange,
             RsIcons.FEATURES_SETTINGS,
-            { "Configure features" },
             OpenSettingsAction,
             Alignment.RIGHT
-        )
+        ) { "Configure features" }
     }
 }
 

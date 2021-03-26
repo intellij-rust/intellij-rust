@@ -41,8 +41,6 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
             else -> ""
         }
 
-    // BACKCOMPAT: 2020.2
-    @Suppress("DEPRECATION")
     override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
         @Suppress("NON_EXHAUSTIVE_WHEN")
         when (settingsType) {
@@ -54,14 +52,14 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "MIN_NUMBER_OF_BLANKS_BETWEEN_ITEMS",
                     "Between declarations:",
-                    BLANK_LINES)
+                    CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES)
             }
 
             SPACING_SETTINGS -> {
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "SPACE_AROUND_ASSOC_TYPE_BINDING",
                     "Around associated type bindings",
-                    SPACES_IN_TYPE_PARAMETERS)
+                    CodeStyleSettingsCustomizableOptions.getInstance().SPACES_IN_TYPE_PARAMETERS)
             }
 
             WRAPPING_AND_BRACES_SETTINGS -> {
@@ -75,22 +73,22 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALLOW_ONE_LINE_MATCH",
                     "Match expressions in one line",
-                    WRAPPING_KEEP)
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "PRESERVE_PUNCTUATION",
                     "Punctuation",
-                    WRAPPING_KEEP)
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_RET_TYPE",
                     "Align return type to function parameters",
-                    WRAPPING_METHOD_PARAMETERS)
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_WHERE_CLAUSE",
                     "Align where clause to function parameters",
-                    WRAPPING_METHOD_PARAMETERS)
+                    CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_METHOD_PARAMETERS)
 
                 consumer.showCustomOption(RsCodeStyleSettings::class.java,
                     "ALIGN_TYPE_PARAMS",
