@@ -64,6 +64,26 @@ class ConvertToTyUsingFromTraitFixTest : RsInspectionsTestBase(RsTypeCheckInspec
         }
     """)
 
+    fun `test From impl for generic type with default type params`() = checkFixByText("Convert to B using `From` trait", """
+        struct A;
+        struct B<T = i32>(T);
+
+        impl<T> From<A> for B<T> { fn from(item: A) -> Self { todo!() } }
+
+        fn foo(a: A) {
+            let b: B = <error>a/*caret*/</error>;
+        }
+    """, """
+        struct A;
+        struct B<T = i32>(T);
+
+        impl<T> From<A> for B<T> { fn from(item: A) -> Self { todo!() } }
+
+        fn foo(a: A) {
+            let b: B = B::from(a);
+        }
+    """)
+
     fun `test From impl for reference type`() = checkFixByText("Convert to &[u8] using `From` trait", """
         struct A;
 
