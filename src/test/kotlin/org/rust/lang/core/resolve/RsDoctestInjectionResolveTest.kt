@@ -23,12 +23,13 @@ class RsDoctestInjectionResolveTest : RsResolveTestBase() {
          //X
     """, "lib.rs")
 
+    // BACKCOMPAT: Rust 1.50. Vec struct was moved into `vec/mod.rs` since Rust 1.51
     @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
     fun `test resolve std element`() = stubOnlyResolve("""
     //- lib.rs
         /// ```
         /// Vec::new()
-        /// //^ ...vec.rs
+        /// //^ ...vec.rs|...vec/mod.rs
         /// ```
         pub fn foo() {}
     """)

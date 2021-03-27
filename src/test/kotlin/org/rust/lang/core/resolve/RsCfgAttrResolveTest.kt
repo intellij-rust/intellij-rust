@@ -830,6 +830,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
                  //^ unresolved
     """)
 
+    // BACKCOMPAT: Rust 1.50. Vec struct was moved into `vec/mod.rs` since Rust 1.51
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
     @MockAdditionalCfgOptions("intellij_rust")
     fun `test resolve with no_std attribute under disabled cfg_attr`() = stubOnlyResolve("""
@@ -837,7 +838,7 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
         #![cfg_attr(not(intellij_rust), no_std)]
 
         fn foo(v: Vec) {}
-                 //^ ...vec.rs
+                 //^ ...vec.rs|...vec/mod.rs
     """)
 
     fun `test unknown cfg options are disabled`() = checkByCode("""

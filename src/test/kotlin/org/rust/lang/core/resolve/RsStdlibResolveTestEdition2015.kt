@@ -39,6 +39,6 @@ class RsStdlibResolveTestEdition2015 : RsResolveTestBase() {
         use alloc::vec::Vec;
 
         fn foo(v: Vec) {}
-                 //^ ...liballoc/vec.rs|...alloc/src/vec.rs
+                 //^ ...liballoc/vec.rs|...alloc/src/vec.rs|...alloc/src/vec/mod.rs
     """)
 }
