@@ -6,14 +6,17 @@
 package org.rust.lang.core.macros.decl
 
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.text.SemVer
 import org.rust.ProjectDescriptor
 import org.rust.WithDependencyRustProjectDescriptor
 import org.rust.WithStdlibRustProjectDescriptor
+import org.rust.cargo.project.model.cargoProjects
 import org.rust.lang.core.macros.RsMacroExpansionTestBase
 import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.CRATE
 import org.rust.lang.core.psi.tokenSetOf
 import org.rust.lang.core.resolve.NameResolutionTestmarks
+import org.rust.singleProject
 import org.rust.stdext.BothEditions
 
 class RsMacroExpansionTest : RsMacroExpansionTestBase() {
@@ -805,13 +808,22 @@ class RsMacroExpansionTest : RsMacroExpansionTestBase() {
     """)
 
     @ProjectDescriptor(WithStdlibRustProjectDescriptor::class)
-    fun `test standard "vec!"`() = checkSingleMacro("""
-        fn main() {
-            vec![1, 2, 3];
-        } //^
-    """, """
-        <[_]>::into_vec(box [1, 2, 3])
-    """)
+    fun `test standard "vec!"`() {
+        val rustcVersion = project.cargoProjects.singleProject().rustcInfo?.version?.semver
+        // BACKCOMPAT: Rust 1.50
+        val expansion = if (rustcVersion != null && rustcVersion < SemVer.parseFromText("1.51.0")!!) {
+            // language=Rust
+            "<[_]>::into_vec(box [1, 2, 3])"
+        } else {
+            // language=Rust
+            "(<[_]>::into_vec(box [1, 2, 3]))"
+        }
+        checkSingleMacro("""
+            fn main() {
+                vec![1, 2, 3];
+            } //^
+        """, expansion)
+    }
 
     fun `test expend macro definition`() = doTest("""
         macro_rules! foo {

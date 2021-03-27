@@ -122,7 +122,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
             x;
-          //^ Vec<u16>
+          //^ Vec<u16> | Vec<u16, Global>
         }
     """)
 
@@ -132,7 +132,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = vec!(1, 2u16, 4, 8);
             x;
-          //^ Vec<u16>
+          //^ Vec<u16> | Vec<u16, Global>
         }
     """)
 
@@ -142,7 +142,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let mut x = vec![];
             x.push(0u16);
             x;
-          //^ Vec<u16>
+          //^ Vec<u16> | Vec<u16, Global>
         }
     """)
 
@@ -151,7 +151,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let x = vec!(1u8; 2usize);
             x;
-          //^ Vec<u8>
+          //^ Vec<u8> | Vec<u8, Global>
         }
     """)
 
@@ -534,7 +534,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let vec = vec![1, 2, 3];
             let b: Vec<_> = vec.into_iter().collect();
             b;
-          //^ Vec<i32>
+          //^ Vec<i32> | Vec<i32, Global>
         }
     """)
 
@@ -546,7 +546,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let vec = vec![1, 2, 3];
             let b = vec.into_iter().collect::<Vec<_>>();
             b;
-          //^ Vec<i32>
+          //^ Vec<i32> | Vec<i32, Global>
         }
     """)
 
@@ -568,7 +568,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
             let mut vec = Vec::new();
             vec.push(1);
             vec;
-          //^ Vec<i32>
+          //^ Vec<i32> | Vec<i32, Global>
         }
     """)
 
@@ -731,7 +731,7 @@ class RsStdlibExpressionTypeInferenceTest : RsTypificationTestBase() {
         fn main() {
             let a = box S;
             a;
-        } //^ Box<S>
+        } //^ Box<S> | Box<S, Global>
     """)
 
     @ExpandMacros(MacroExpansionScope.ALL, "std")
