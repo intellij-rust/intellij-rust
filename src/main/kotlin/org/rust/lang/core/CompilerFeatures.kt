@@ -296,12 +296,8 @@ val ARBITRARY_ENUM_DISCRIMINANT = CompilerFeature("arbitrary_enum_discriminant",
 val MEMBER_CONSTRAINTS = CompilerFeature("member_constraints", ACTIVE, "1.37.0")
 // Allows `async || body` closures.
 val ASYNC_CLOSURE = CompilerFeature("async_closure", ACTIVE, "1.37.0")
-// Allows `[x; N]` where `x` is a constant (RFC 2203).
-val CONST_IN_ARRAY_REPEAT_EXPRESSIONS = CompilerFeature("const_in_array_repeat_expressions", ACTIVE, "1.37.0")
 // Allows `impl Trait` to be used inside type aliases (RFC 2515).
 val TYPE_ALIAS_IMPL_TRAIT = CompilerFeature("type_alias_impl_trait", ACTIVE, "1.38.0")
-// Allows the use of or-patterns (e.g., `0 | 1`).
-val OR_PATTERNS = CompilerFeature("or_patterns", ACTIVE, "1.38.0")
 // Allows the definition of `const extern fn` and `const unsafe extern fn`.
 val CONST_EXTERN_FN = CompilerFeature("const_extern_fn", ACTIVE, "1.40.0")
 // Allows the use of raw-dylibs (RFC 2627).
@@ -347,8 +343,6 @@ val CFG_VERSION = CompilerFeature("cfg_version", ACTIVE, "1.45.0")
 val FFI_PURE = CompilerFeature("ffi_pure", ACTIVE, "1.45.0")
 // Allows the use of `#[ffi_const]` on foreign functions.
 val FFI_CONST = CompilerFeature("ffi_const", ACTIVE, "1.45.0")
-// No longer treat an unsafe function as an unsafe block.
-val UNSAFE_BLOCK_IN_UNSAFE_FN = CompilerFeature("unsafe_block_in_unsafe_fn", ACTIVE, "1.45.0")
 // Allows `extern "avr-interrupt" fn()` and `extern "avr-non-blocking-interrupt" fn()`.
 val ABI_AVR_INTERRUPT = CompilerFeature("abi_avr_interrupt", ACTIVE, "1.45.0")
 // Be more precise when looking for live drops in a const context.
@@ -387,7 +381,7 @@ val CFG_PANIC = CompilerFeature("cfg_panic", ACTIVE, "1.49.0")
 val CAPTURE_DISJOINT_FIELDS = CompilerFeature("capture_disjoint_fields", ACTIVE, "1.49.0")
 // Allows arbitrary expressions in key-value attributes at parse time.
 val EXTENDED_KEY_VALUE_ATTRIBUTES = CompilerFeature("extended_key_value_attributes", ACTIVE, "1.50.0")
-// `:pat2018` and `:pat2021` macro matchers.
+// `:pat2015` and `:pat2021` macro matchers.
 val EDITION_MACRO_PATS = CompilerFeature("edition_macro_pats", ACTIVE, "1.51.0")
 // Allows const generics to have default values (e.g. `struct Foo<const N: usize = 3>(...);`).
 val CONST_GENERICS_DEFAULTS = CompilerFeature("const_generics_defaults", ACTIVE, "1.51.0")
@@ -395,6 +389,20 @@ val CONST_GENERICS_DEFAULTS = CompilerFeature("const_generics_defaults", ACTIVE,
 val CONST_REFS_TO_CELL = CompilerFeature("const_refs_to_cell", ACTIVE, "1.51.0")
 // Allows using `pointer` and `reference` in intra-doc links
 val INTRA_DOC_POINTERS = CompilerFeature("intra_doc_pointers", ACTIVE, "1.51.0")
+// Allows `extern "C-cmse-nonsecure-call" fn()`.
+val ABI_C_CMSE_NONSECURE_CALL = CompilerFeature("abi_c_cmse_nonsecure_call", ACTIVE, "1.51.0")
+// Lessens the requirements for structs to implement `Unsize`.
+val RELAXED_STRUCT_UNSIZE = CompilerFeature("relaxed_struct_unsize", ACTIVE, "1.51.0")
+// Allows macro attributes to observe output of `#[derive]`.
+val MACRO_ATTRIBUTES_IN_DERIVE_OUTPUT = CompilerFeature("macro_attributes_in_derive_output", ACTIVE, "1.51.0")
+// Allows `pub` on `macro_rules` items.
+val PUB_MACRO_RULES = CompilerFeature("pub_macro_rules", ACTIVE, "1.52.0")
+// Allows the use of type alias impl trait in function return positions
+val MIN_TYPE_ALIAS_IMPL_TRAIT = CompilerFeature("min_type_alias_impl_trait", ACTIVE, "1.52.0")
+// Allows associated types in inherent impls.
+val INHERENT_ASSOCIATED_TYPES = CompilerFeature("inherent_associated_types", ACTIVE, "1.52.0")
+// Allows `extern "C-unwind" fn` to enable unwinding across ABI boundaries.
+val C_UNWIND = CompilerFeature("c_unwind", ACTIVE, "1.52.0")
 
 // -------------------------------------------------------------------------
 // feature-group-start: for testing purposes
@@ -642,6 +650,10 @@ val TRACK_CALLER = CompilerFeature("track_caller", ACCEPTED, "1.46.0")
 val DOC_ALIAS = CompilerFeature("doc_alias", ACCEPTED, "1.48.0")
 // Allows patterns with concurrent by-move and by-ref bindings.
 // For example, you can write `Foo(a, ref b)` where `a` is by-move and `b` is by-ref.
-val MOVE_REF_PATTERN = CompilerFeature("move_ref_pattern", ACCEPTED, "1.48.0")
+val MOVE_REF_PATTERN = CompilerFeature("move_ref_pattern", ACCEPTED, "1.49.0")
 // The smallest useful subset of `const_generics`.
 val MIN_CONST_GENERICS = CompilerFeature("min_const_generics", ACCEPTED, "1.51.0")
+// The `unsafe_op_in_unsafe_fn` lint (allowed by default): no longer treat an unsafe function as an unsafe block.
+val UNSAFE_BLOCK_IN_UNSAFE_FN = CompilerFeature("unsafe_block_in_unsafe_fn", ACCEPTED, "1.51.0")
+// Allows the use of or-patterns (e.g., `0 | 1`).
+val OR_PATTERNS = CompilerFeature("or_patterns", ACCEPTED, "1.53.0")
