@@ -23,13 +23,9 @@ class CargoProjectsServiceTest : LightPlatformTestCase() {
         """
         service.loadState(elementFromXmlString(text))
         val actual = service.state.toXmlString()
-        check(actual == text.trimIndent()) {
-            "Expected:\n$text\nActual:\n$actual"
-        }
+        assertEquals(text.trimIndent(), actual)
         val projects = service.allProjects.sortedBy { it.manifest }.map { it.manifest }
         val expectedProjects = listOf(Paths.get("/bar"), Paths.get("/foo"))
-        check(projects == expectedProjects) {
-            "Expected:\n$expectedProjects\nActual:\n$projects"
-        }
+        assertEquals(expectedProjects, projects)
     }
 }
