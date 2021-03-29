@@ -24,6 +24,7 @@ import org.rust.lang.core.resolve2.PartialResolvedImport.*
 import org.rust.lang.core.resolve2.util.createDollarCrateHelper
 import org.rust.openapiext.findFileByMaybeRelativePath
 import org.rust.openapiext.pathAsPath
+import org.rust.openapiext.testAssert
 import org.rust.openapiext.toPsiFile
 import org.rust.stdext.HashCode
 
@@ -130,8 +131,8 @@ class DefCollector(
         // then it means that defMap for that crate is already completely filled
         if (result.visitedOtherCrate) return Resolved(perNs)
 
-        val isResolvedInAllNamespaces = perNs.types != null && perNs.values != null && perNs.macros != null
-        val isResolvedGlobImport = import.isGlob && perNs.types != null
+        val isResolvedInAllNamespaces = perNs.hasAllNamespaces
+        val isResolvedGlobImport = import.isGlob && perNs.types.isNotEmpty()
         return if (isResolvedInAllNamespaces || isResolvedGlobImport) {
             Resolved(perNs)
         } else {
@@ -154,11 +155,7 @@ class DefCollector(
     }
 
     private fun recordResolvedGlobImport(import: Import, def: PerNs): Boolean {
-        val types = def.types ?: run {
-            if (isUnitTestMode) error("Glob import didn't resolve as type: $import")
-            return false
-        }
-        if (!types.isModOrEnum) {
+        val types = def.types.singleOrNull { it.isModOrEnum } ?: run {
             if (isUnitTestMode) error("Glob import from not module or enum: $import")
             return false
         }
@@ -198,7 +195,7 @@ class DefCollector(
         // extern crates in the crate root are special-cased to insert entries into the extern prelude
         // https://github.com/rust-lang/rust/pull/54658
         if (import.isExternCrate && containingMod.isCrateRoot && name != "_") {
-            val types = def.types ?: error("null PerNs.types for extern crate import")
+            val types = def.types.singleOrNull() ?: error("null PerNs.types for extern crate import")
             val externCrateDefMap = defMap.getDefMap(types.path.crate)
             externCrateDefMap?.let { defMap.externPrelude[name] = it }
         }
@@ -239,7 +236,8 @@ class DefCollector(
         for ((name, def) in resolutions) {
             val changedCurrent = if (name != "_") {
                 val defAdjusted = def.adjust(visibility, isFromNamedImport = importType == NAMED)
-                pushResolutionFromImport(modData, name, defAdjusted, importType, visibility)
+                    .adjustMultiresolve()
+                pushResolutionFromImport(modData, name, defAdjusted)
             } else {
                 // TODO: What if `def` is not trait?
                 pushTraitResolutionFromImport(modData, def, visibility)
@@ -260,13 +258,16 @@ class DefCollector(
 
     private fun pushTraitResolutionFromImport(modData: ModData, def: PerNs, visibility: Visibility): Boolean {
         check(!def.isEmpty)
-        val trait = def.types?.takeIf { !it.isModOrEnum } ?: return false
-        val oldVisibility = modData.unnamedTraitImports[trait.path]
-        if (oldVisibility == null || visibility.isStrictlyMorePermissive(oldVisibility)) {
-            modData.unnamedTraitImports[trait.path] = visibility
-            return true
+        var changed = false
+        for (trait in def.types) {
+            if (trait.isModOrEnum) continue
+            val oldVisibility = modData.unnamedTraitImports[trait.path]
+            if (oldVisibility == null || visibility.isStrictlyMorePermissive(oldVisibility)) {
+                modData.unnamedTraitImports[trait.path] = visibility
+                changed = true
+            }
         }
-        return false
+        return changed
     }
 
     private fun expandMacros(): Boolean {
@@ -332,7 +333,7 @@ class DefCollector(
     }
 
     private fun onAddItem(modData: ModData, name: String, perNs: PerNs, visibility: Visibility): Boolean {
-        return update(modData, listOf(name to perNs), visibility, GLOB)
+        return update(modData, listOf(name to perNs), visibility, NAMED)
     }
 }
 
@@ -462,54 +463,76 @@ private inline fun <T> MutableList<T>.inPlaceRemoveIf(filter: (T) -> Boolean): B
     return removed
 }
 
-fun pushResolutionFromImport(
-    modData: ModData,
-    name: String,
-    def: PerNs,
-    importType: ImportType,
-    visibility: Visibility
-): Boolean {
+fun pushResolutionFromImport(modData: ModData, name: String, def: PerNs): Boolean {
     check(!def.isEmpty)
 
     // optimization: fast path
     val defExisting = modData.visibleItems.putIfAbsent(name, def) ?: return true
 
-    return mergeResolutionFromImport(modData, name, def, defExisting, importType, visibility.type)
+    return mergeResolutionFromImport(modData, name, def, defExisting)
 }
 
-private fun mergeResolutionFromImport(
-    modData: ModData,
-    name: String,
-    def: PerNs,
-    defExisting: PerNs,
-    importType: ImportType,
-    visibilityType: VisibilityType
-): Boolean {
-    val (typesExisting, valuesExisting, macrosExisting) = defExisting
-    val typesNew = mergeResolutionOneNs(def.types, defExisting.types, importType, visibilityType)
-    val valuesNew = mergeResolutionOneNs(def.values, defExisting.values, importType, visibilityType)
-    val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros, importType, visibilityType)
-    if (typesExisting === typesNew && valuesExisting === valuesNew && macrosExisting === macrosNew) return false
+private fun mergeResolutionFromImport(modData: ModData, name: String, def: PerNs, defExisting: PerNs): Boolean {
+    val typesNew = mergeResolutionOneNs(def.types, defExisting.types)
+    val valuesNew = mergeResolutionOneNs(def.values, defExisting.values)
+    val macrosNew = mergeResolutionOneNs(def.macros, defExisting.macros)
+    if (defExisting.types.contentEquals(typesNew)
+        && defExisting.values.contentEquals(valuesNew)
+        && defExisting.macros.contentEquals(macrosNew)
+    ) return false
     modData.visibleItems[name] = PerNs(typesNew, valuesNew, macrosNew)
     return true
 }
 
-private fun mergeResolutionOneNs(
-    visItem: VisItem?,
-    visItemExisting: VisItem?,
-    importType: ImportType,
-    visibilityType: VisibilityType
-): VisItem? {
-    if (visItem == null) return visItemExisting
-    if (visItemExisting == null) return visItem
+private fun mergeResolutionOneNs(visItems: Array<VisItem>, visItemsExisting: Array<VisItem>): Array<VisItem> {
+    if (visItems.isEmpty()) return visItemsExisting
+    if (visItemsExisting.isEmpty()) return visItems
 
-    val visibilityTypeExisting = visItemExisting.visibility.type
-    if (visibilityType.isWider(visibilityTypeExisting)) return visItem
-    if (visibilityTypeExisting.isWider(visibilityType)) return visItemExisting
+    // all existing items must have same visibility type
+    val visibilityType = visItems.visibilityType()
+    val visibilityTypeExisting = visItemsExisting.visibilityType()
+    if (visibilityType.isWider(visibilityTypeExisting)) return visItems
+    if (visibilityTypeExisting.isWider(visibilityType)) return visItemsExisting
 
-    val importTypeExisting = if (visItemExisting.isFromNamedImport) NAMED else GLOB
-    if (importType == GLOB && importTypeExisting == NAMED) return visItemExisting
-    if (importType == NAMED && importTypeExisting == GLOB) return visItem
+    // all existing items must have same import type
+    val importType = visItems.importType()
+    val importTypeExisting = visItemsExisting.importType()
+    if (importType == GLOB && importTypeExisting == NAMED) return visItemsExisting
+    if (importType == NAMED && importTypeExisting == GLOB) return visItems
 
-    return if (visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)) visItem else visItemExisting
+    // for performance reasons
+    if (visibilityTypeExisting == VisibilityType.CfgDisabled && visibilityType == VisibilityType.CfgDisabled) {
+        return visItems
+    }
+
+    // actual multiresolve - unite items and if there is two same items (same path) choose widest visibility
+    return mergeResolutionOneNsMultiresolve(visItems, visItemsExisting)
+}
+
+private fun mergeResolutionOneNsMultiresolve(
+    visItems: Array<VisItem>,
+    visItemsExisting: Array<VisItem>
+): Array<VisItem> {
+    val result = visItemsExisting.associateByTo(hashMapOf()) { it.path }
+    for (visItem in visItems) {
+        val visItemExisting = result.putIfAbsent(visItem.path, visItem) ?: continue
+        if (visItem.visibility.isStrictlyMorePermissive(visItemExisting.visibility)) {
+            result[visItem.path] = visItem
+        }
+        // else keep [visItemExisting]
+    }
+    return result.values.toTypedArray()
+}
+
+// all items must have same visibility type
+fun Array<VisItem>.visibilityType(): VisibilityType {
+    val visibilityType = first().visibility.type
+    testAssert { all { it.visibility.type == visibilityType } }
+    return visibilityType
+}
+
+private fun Array<VisItem>.importType(): ImportType {
+    val isFromNamedImport = first().isFromNamedImport
+    testAssert { all { it.isFromNamedImport == isFromNamedImport } }
+    return if (isFromNamedImport) NAMED else GLOB
 }

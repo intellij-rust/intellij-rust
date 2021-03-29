@@ -61,11 +61,14 @@ class PerNsHashMap<K : Any>(
         val visibility = decodeVisibility(mask)
         val isFromNamedImport = decodeIsFromNamedImport(mask)
         val visItem = VisItem(path, visibility, isModOrEnum, isFromNamedImport)
-        // === as an optimization
-        val types = visItem.takeIf { namespace === Namespace.Types }
-        val values = visItem.takeIf { namespace === Namespace.Values }
-        val macros = visItem.takeIf { namespace === Namespace.Macros }
-        return PerNs(types, values, macros)
+
+        val visItemArray = arrayOf(visItem)
+        return when (namespace) {
+            Namespace.Types -> PerNs(types = visItemArray)
+            Namespace.Values -> PerNs(values = visItemArray)
+            Namespace.Macros -> PerNs(macros = visItemArray)
+            else -> error("unreachable")
+        }
     }
 
     override fun setValueAtIndex(index: Int, value: PerNs) {
@@ -169,9 +172,10 @@ class PerNsHashMap<K : Any>(
 }
 
 private fun PerNs.asSingleVisItem(): Pair<VisItem, Namespace>? {
-    if (values == null && macros == null) return types!! to Namespace.Types
-    if (types == null && macros == null) return values!! to Namespace.Values
-    if (types == null && values == null) return macros!! to Namespace.Macros
+    if (types.size + values.size + macros.size != 1) return null
+    types.singleOrNull()?.let { return it to Namespace.Types }
+    values.singleOrNull()?.let { return it to Namespace.Values }
+    macros.singleOrNull()?.let { return it to Namespace.Macros }
     return null
 }
 

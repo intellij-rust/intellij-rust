@@ -6,6 +6,7 @@
 package org.rust.lang.core.resolve
 
 import org.intellij.lang.annotations.Language
+import org.rust.ExpandMacros
 import org.rust.MockEdition
 import org.rust.UseNewResolve
 import org.rust.cargo.project.workspace.CargoWorkspace.Edition
@@ -134,6 +135,39 @@ class RsMultiResolveTest : RsResolveTestBase() {
         fn foo(a: &dyn Foo){
             a.foo()
         }   //^
+    """)
+
+    @MockEdition(Edition.EDITION_2018)
+    fun `test import item vs local item`() = doTest("""
+        mod m {
+            pub fn foo() {}
+        }
+        pub use crate::m::foo;
+        pub fn foo() {}
+        fn main() {
+            foo();
+        } //^
+    """)
+
+    // From https://github.com/Alexhuszagh/rust-lexical/blob/1ec9d7660e70ab731eecb3390bdf95e767548dcc/lexical-core/src/util/slice_index.rs#L82
+    @ExpandMacros
+    @MockEdition(Edition.EDITION_2018)
+    fun `test import item vs local item (inside expanded mod)`() = doTest("""
+        mod m {
+            pub fn foo() {}
+        }
+
+        macro_rules! as_is { ($($ t:tt)*) => { $($ t)* }; }
+        as_is! {
+            mod inner {
+                pub use crate::m::foo;
+                pub fn foo() {}
+            }
+        }
+
+        fn main() {
+            inner::foo();
+        }        //^
     """)
 
     private fun doTest(@Language("Rust") code: String) {

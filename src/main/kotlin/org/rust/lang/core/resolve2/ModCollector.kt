@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
-import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTreeLoader
 import com.intellij.util.SmartList
@@ -45,7 +44,7 @@ class ModCollectorContext(
      * returns true if [ModData.visibleItems] were changed
      */
     val onAddItem: (ModData, String, PerNs, Visibility) -> Boolean =
-        { containingMod, name, perNs, visibility -> containingMod.addVisibleItem(name, perNs, visibility) }
+        { containingMod, name, perNs, _ -> containingMod.addVisibleItem(name, perNs) }
 )
 
 typealias LegacyMacros = Map<String, DeclMacroDefInfo>
@@ -113,9 +112,6 @@ private class ModCollector(
         }
         ModCollectorBase.collectMod(mod, modData.isDeeplyEnabledByCfg, visitor, crate)
         if (propagateLegacyMacros) propagateLegacyMacros(modData)
-        if (isUnitTestMode) {
-            modData.checkChildModulesAndVisibleItemsConsistency()
-        }
     }
 
     override fun collectImport(import: ImportLight) {
@@ -145,7 +141,7 @@ private class ModCollector(
         val visItem = convertToVisItem(item, stub, forceCfgDisabledVisibility)
         childModData?.asVisItem = visItem
         if (visItem.isModOrEnum && childModData == null) return
-        val perNs = PerNs(visItem, item.namespaces)
+        val perNs = PerNs.from(visItem, item.namespaces)
         val changed = onAddItem(modData, name, perNs, visItem.visibility)
         if (item.isProcMacroDef) modData.procMacros += name
 
@@ -266,8 +262,8 @@ private class ModCollector(
             val isVariantDeeplyEnabledByCfg = enumData.isDeeplyEnabledByCfg && variantPsi.isEnabledByCfgSelf(crate)
             val variantVisibility = if (isVariantDeeplyEnabledByCfg) Visibility.Public else Visibility.CfgDisabled
             val variant = VisItem(variantPath, variantVisibility)
-            val variantPerNs = PerNs(variant, variantPsi.namespaces)
-            enumData.addVisibleItem(variantName, variantPerNs, variantVisibility)
+            val variantPerNs = PerNs.from(variant, variantPsi.namespaces)
+            enumData.addVisibleItem(variantName, variantPerNs)
         }
         return enumData
     }
@@ -315,7 +311,7 @@ private class ModCollector(
         if (def.hasMacroExport) {
             val visibility = Visibility.Public
             val visItem = VisItem(macroPath, visibility)
-            val perNs = PerNs(macros = visItem)
+            val perNs = PerNs.macros(visItem)
             onAddItem(crateRoot, def.name, perNs, visibility)
         }
     }
@@ -417,14 +413,6 @@ private fun resolveRestrictedVisibility(path: Array<String>, containingMod: ModD
         parents.getOrNull(path.size)
             ?.takeIf { path.contentEquals(it.path.segments) }
             ?.visibilityInSelf
-    }
-}
-
-private fun ModData.checkChildModulesAndVisibleItemsConsistency() {
-    for ((name, childMod) in childModules) {
-        check(name == childMod.name) { "Inconsistent name of $childMod" }
-        check(visibleItems[name]?.types?.isModOrEnum == true)
-        { "Inconsistent `visibleItems` and `childModules` in $this for name $name" }
     }
 }
 
