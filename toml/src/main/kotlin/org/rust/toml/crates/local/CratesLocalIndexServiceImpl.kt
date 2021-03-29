@@ -64,9 +64,15 @@ class CratesLocalIndexServiceImpl
         .build()
 
     private val registryHeadCommitHash: String
-        get() = repository.resolve("origin/master")?.name ?: run {
-            LOG.error("Git revision `origin/master` cannot be resolved to any object id")
-            INVALID_COMMIT_HASH
+        get() {
+            // BACKCOMPAT: Rust 1.49
+            // Since 1.50 there should always be CARGO_REGISTRY_INDEX_TAG
+            val objectId = repository.resolve(CARGO_REGISTRY_INDEX_TAG) ?: repository.resolve(CARGO_REGISTRY_INDEX_TAG_PRE_1_50)
+
+            return objectId?.name ?: run {
+                LOG.error("Failed to resolve remote branch in the cargo registry index repository")
+                INVALID_COMMIT_HASH
+            }
         }
 
     private val crates: PersistentHashMap<String, CargoRegistryCrate>? = run {
@@ -277,6 +283,8 @@ class CratesLocalIndexServiceImpl
 
         // TODO: Determine how path to index is created
         private const val CARGO_REGISTRY_INDEX_LOCATION: String = ".cargo/registry/index/github.com-1ecc6299db9ec823/.git/"
+        private const val CARGO_REGISTRY_INDEX_TAG_PRE_1_50 = "origin/master"
+        private const val CARGO_REGISTRY_INDEX_TAG = "origin/HEAD"
         private const val CORRUPTION_MARKER_NAME: String = "corruption.marker"
         private const val INVALID_COMMIT_HASH: String = "<invalid>"
         private const val CRATES_INDEX_VERSION: Int = 0
