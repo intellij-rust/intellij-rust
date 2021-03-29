@@ -881,6 +881,24 @@ class RsMacroExpansionResolveTest : RsResolveTestBase() {
         }
     """)
 
+    // we only test that there are no exception with new resolve
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @ProjectDescriptor(WithDependencyRustProjectDescriptor::class)
+    fun `test local_inner_macros expanded to extern crate`() = stubOnlyResolve("""
+    //- main.rs
+        use test_package::foo;
+        foo!();
+        //^ lib.rs
+        fn main() {}
+    //- lib.rs
+        #[macro_export(local_inner_macros)]
+        macro_rules! foo {
+            () => {
+                extern crate foo;
+            };
+        }
+    """)
+
     @MockEdition(CargoWorkspace.Edition.EDITION_2018)
     fun `test expand macro with incomplete path`() = stubOnlyResolve("""
     //- main.rs

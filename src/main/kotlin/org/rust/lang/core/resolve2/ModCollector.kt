@@ -119,7 +119,11 @@ private class ModCollector(
     }
 
     override fun collectImport(import: ImportLight) {
-        val usePath = dollarCrateHelper?.convertPath(import.usePath, import.offsetInExpansion) ?: import.usePath
+        val usePath = if (dollarCrateHelper != null && !import.isExternCrate) {
+            dollarCrateHelper.convertPath(import.usePath, import.offsetInExpansion)
+        } else {
+            import.usePath
+        }
         context.context.imports += Import(
             containingMod = modData,
             usePath = usePath,
