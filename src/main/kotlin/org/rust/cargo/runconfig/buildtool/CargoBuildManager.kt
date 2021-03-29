@@ -51,12 +51,10 @@ import org.rust.openapiext.isFeatureEnabled
 import org.rust.openapiext.saveAllDocuments
 import java.util.concurrent.Future
 
-@Suppress("UnstableApiUsage")
 object CargoBuildManager {
     private val BUILDABLE_COMMANDS: List<String> = listOf("run", "test")
 
-    @JvmField
-    val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
+    private val CANCELED_BUILD_RESULT: Future<CargoBuildResult> =
         FutureResult(CargoBuildResult(succeeded = false, canceled = true, started = 0))
 
     private val MIN_RUSTC_VERSION: SemVer = SemVer.parseFromText("1.48.0")!!
