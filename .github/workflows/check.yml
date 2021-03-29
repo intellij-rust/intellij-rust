@@ -92,6 +92,8 @@ jobs:
                 base-ide: [ idea, clion ]
                 platform-version: [ 203, 211 ]
                 resolve-engine: [ resolve-new ]
+                # it's enough to verify plugin structure only once per platform version
+                verify-plugin: [ false ]
                 include:
                     - os: ubuntu-18.04
                       # Don't forget to update condition in `Set up additional env variables` step
@@ -99,11 +101,13 @@ jobs:
                       base-ide: idea
                       platform-version: 203
                       resolve-engine: resolve-old
+                      verify-plugin: true
                     - os: ubuntu-18.04
                       rust-version: 1.51.0
                       base-ide: idea
-                      platform-version: 203
+                      platform-version: 211
                       resolve-engine: resolve-old
+                      verify-plugin: true
 
         runs-on: ${{ matrix.os }}
         timeout-minutes: 120
@@ -230,6 +234,7 @@ jobs:
                       */build/reports/tests
 
             - name: Verify plugin
+              if: matrix.verify-plugin
               uses: eskatos/gradle-command-action@v1
               with:
                   arguments: ":plugin:verifyPlugin"
