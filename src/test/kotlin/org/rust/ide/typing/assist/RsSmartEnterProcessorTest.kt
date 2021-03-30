@@ -27,12 +27,10 @@ class RsSmartEnterProcessorTest : RsTestBase() {
     fun `test fix nested method call`() = doTest("""
         fn double(x: i32) -> i32 {
         /*caret*/double(double(x
-            double(x)
         }
     """, """
         fn double(x: i32) -> i32 {
             double(double(x));/*caret*/
-            double(x)
         }
     """)
 

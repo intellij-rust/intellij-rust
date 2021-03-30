@@ -70,6 +70,8 @@ fn test() -> u32 {
 
     || { 0; yield 0; };
 
+    foo(bar, true, "", 1, 1.1);
+
     return (x = y)  /* return */
             + 1
 }
