@@ -33,4 +33,56 @@ class TomlFormatterTest : TomlFormatterTestBase() {
             "c.rs"
         ]
     """)
+
+    fun `test indent table key`() = doOptionTest(tomlSettings()::INDENT_TABLE_KEYS, """
+        [workspace]
+        key1 = "bar"
+        key2 = 5
+        key3 = [
+            1,
+            2
+        ]
+    """, """
+        [workspace]
+            key1 = "bar"
+            key2 = 5
+            key3 = [
+                1,
+                2
+            ]
+    """, """
+        [workspace]
+        key1 = "bar"
+        key2 = 5
+        key3 = [
+            1,
+            2
+        ]
+    """)
+
+    fun `test indent array table key`() = doOptionTest(tomlSettings()::INDENT_TABLE_KEYS, """
+        [[workspace]]
+        key1 = "bar"
+        key2 = 5
+        key3 = [
+            1,
+            2
+        ]
+    """, """
+        [[workspace]]
+            key1 = "bar"
+            key2 = 5
+            key3 = [
+                1,
+                2
+            ]
+    """, """
+        [[workspace]]
+        key1 = "bar"
+        key2 = 5
+        key3 = [
+            1,
+            2
+        ]
+    """)
 }

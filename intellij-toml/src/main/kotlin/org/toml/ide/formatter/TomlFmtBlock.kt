@@ -12,6 +12,7 @@ import com.intellij.psi.formatter.FormatterUtil
 import org.toml.ide.formatter.impl.computeIndent
 import org.toml.ide.formatter.impl.computeSpacing
 import org.toml.ide.formatter.impl.isWhitespaceOrEmpty
+import org.toml.lang.psi.TomlElementTypes
 import org.toml.lang.psi.TomlElementTypes.ARRAY
 
 class TomlFmtBlock(
@@ -37,7 +38,7 @@ class TomlFmtBlock(
                 TomlFormattingModelBuilder.createBlock(
                     node = childNode,
                     alignment = null,
-                    indent = computeIndent(childNode),
+                    indent = computeIndent(childNode, ctx.tomlSettings),
                     wrap = null,
                     ctx = ctx
                 )
@@ -47,10 +48,14 @@ class TomlFmtBlock(
     override fun getSpacing(child1: Block?, child2: Block): Spacing? = computeSpacing(child1, child2, ctx)
 
     override fun getChildAttributes(newChildIndex: Int): ChildAttributes {
-        val indent = when (node.elementType) {
-            ARRAY -> Indent.getNormalIndent()
-            else -> Indent.getNoneIndent()
-        }
+        val subBlocks = subBlocks
+        val indent = when {
+            node.elementType == ARRAY -> Indent.getNormalIndent()
+            ctx.tomlSettings.INDENT_TABLE_KEYS &&
+                (subBlocks.getOrNull(newChildIndex - 1) as? TomlFmtBlock)?.node?.elementType
+                in listOf(TomlElementTypes.TABLE, TomlElementTypes.ARRAY_TABLE) ->  Indent.getNormalIndent()
+            else -> null
+        } ?: Indent.getNoneIndent()
         return ChildAttributes(indent, null)
     }
 
