@@ -5,21 +5,18 @@
 
 package org.rust.lang.core.macros.proc
 
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.databind.SerializerProvider
 import org.rust.lang.core.macros.tt.TokenTree
-import java.lang.reflect.Type
+import org.rust.lang.core.macros.tt.TokenTreeJsonSerializer
+import org.rust.stdext.exhaustive
+import org.rust.util.RsJacksonSerializer
 
 // This is a sealed class because there is `ListMacro` request kind which we don't use for now
 sealed class Request {
     // data class ListMacro(...)
     data class ExpansionMacro(
-        @SerializedName("macro_body")
         val macroBody: TokenTree.Subtree,
-        @SerializedName("macro_name")
         val macroName: String,
         val attributes: TokenTree.Subtree?,
         val lib: String,
@@ -27,12 +24,23 @@ sealed class Request {
     ) : Request()
 }
 
-class RequestJsonAdapter : JsonSerializer<Request> {
-    override fun serialize(json: Request, type: Type, context: JsonSerializationContext): JsonElement {
-        return when (json) {
-            is Request.ExpansionMacro -> JsonObject().apply {
-                add("ExpansionMacro", context.serialize(json, json.javaClass))
+class RequestJsonSerializer : RsJacksonSerializer<Request>(Request::class.java) {
+    override fun serialize(request: Request, gen: JsonGenerator, provider: SerializerProvider) {
+        when (request) {
+            is Request.ExpansionMacro -> gen.writeJsonObjectWithSingleField("ExpansionMacro") {
+                writeJsonObject {
+                    writeField("macro_body") { TokenTreeJsonSerializer.writeSubtree(request.macroBody, gen) }
+                    writeStringField("macro_name", request.macroName)
+                    writeNullableField("attributes", request.attributes) { attributes ->
+                        TokenTreeJsonSerializer.writeSubtree(attributes, gen)
+                    }
+                    writeStringField("lib", request.lib)
+                    writeArrayField("env", request.env) { list ->
+                        writeArray(list) { writeString(it) }
+                    }
+                }
             }
-        }
+        }.exhaustive
     }
+
 }

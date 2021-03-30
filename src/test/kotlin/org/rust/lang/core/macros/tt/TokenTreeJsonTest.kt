@@ -5,12 +5,14 @@
 
 package org.rust.lang.core.macros.tt
 
-import com.google.gson.GsonBuilder
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
+import org.rust.lang.core.macros.proc.ProcMacroJsonParser
 import org.rust.lang.core.parser.createRustPsiBuilder
 
-class TokenTreeJsonAdapterTest : RsTestBase() {
+class TokenTreeJsonTest : RsTestBase() {
     fun `test 1`() = doTest(".", """
         {
           "delimiter": null,
@@ -198,7 +200,7 @@ class TokenTreeJsonAdapterTest : RsTestBase() {
             "id": 0,
             "kind": "Brace"
           },
-          "token_trees": []
+          "token_trees": [ ]
         }
     """)
 
@@ -208,7 +210,7 @@ class TokenTreeJsonAdapterTest : RsTestBase() {
             "id": 0,
             "kind": "Bracket"
           },
-          "token_trees": []
+          "token_trees": [ ]
         }
     """)
 
@@ -218,7 +220,7 @@ class TokenTreeJsonAdapterTest : RsTestBase() {
             "id": 0,
             "kind": "Parenthesis"
           },
-          "token_trees": []
+          "token_trees": [ ]
         }
     """)
 
@@ -292,14 +294,21 @@ class TokenTreeJsonAdapterTest : RsTestBase() {
     """)
 
     fun doTest(code: String, @Language("Json") expectedJson: String) {
+        val expectedJson2 = expectedJson
+            .trimIndent()
+            .lineSequence()
+            .drop(1)
+            .joinToString(prefix = "{\n  \"Subtree\": {\n", separator = "\n", postfix = "\n}") { "  $it" }
+
         val subtree = project.createRustPsiBuilder(code).parseSubtree().subtree
-        val gson = GsonBuilder()
-            .serializeNulls()
-            .registerTypeAdapter(TokenTree::class.java, TokenTreeJsonAdapter())
-            .setPrettyPrinting()
-            .create()
-        val actualJson = gson.toJson(subtree)
-        assertEquals(expectedJson.trimIndent(), actualJson)
-        assertEquals(gson.fromJson(actualJson, TokenTree.Subtree::class.java), subtree)
+
+        val jackson = ProcMacroJsonParser.jackson
+        val actualJson = jackson
+            .writer()
+            .with(DefaultPrettyPrinter(IntelliJPrettyPrinter()))
+            .writeValueAsString(subtree)
+
+        assertEquals(expectedJson2, actualJson)
+        assertEquals(jackson.readValue(actualJson, TokenTree::class.java), subtree)
     }
 }

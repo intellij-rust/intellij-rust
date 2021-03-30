@@ -5,9 +5,13 @@
 
 package org.rust.lang.core.macros.proc
 
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.google.common.annotations.VisibleForTesting
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonParseException
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.debug
@@ -17,7 +21,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.rust.lang.core.macros.MACRO_LOG
 import org.rust.lang.core.macros.tt.TokenTree
-import org.rust.lang.core.macros.tt.TokenTreeJsonAdapter
+import org.rust.lang.core.macros.tt.TokenTreeJsonDeserializer
+import org.rust.lang.core.macros.tt.TokenTreeJsonSerializer
 import org.rust.openapiext.RsPathManager
 import org.rust.stdext.*
 import java.io.*
@@ -40,11 +45,11 @@ class ProcMacroServerPool private constructor(
         Disposer.register(parentDisposable, pool)
     }
 
-    @Throws(ProcessCreationException::class, IOException::class, JsonParseException::class, TimeoutException::class)
+    @Throws(ProcessCreationException::class, IOException::class, TimeoutException::class)
     fun send(request: Request): Response {
         val io = pool.alloc() // Throws ProcessCreationException
         return try {
-            io.send(request) // Throws IOException, JsonParseException, TimeoutException
+            io.send(request) // Throws IOException, TimeoutException
         } finally {
             pool.free(io)
         }
@@ -173,7 +178,7 @@ private class ProcMacroServerProcess private constructor(
     @Volatile
     private var isDisposed: Boolean = false
 
-    @Throws(IOException::class, JsonParseException::class, TimeoutException::class)
+    @Throws(IOException::class, TimeoutException::class)
     fun send(request: Request): Response {
         if (!lock.tryLock()) error("`send` must not be called from multiple threads simultaneously")
         return try {
@@ -231,16 +236,15 @@ private class ProcMacroServerProcess private constructor(
         }
     }
 
-    @Throws(IOException::class, JsonParseException::class)
+    @Throws(IOException::class)
     private fun writeAndRead(request: Request): Response {
-        stdin.write(gson.toJson(request, Request::class.java))
+        ProcMacroJsonParser.jackson.writeValue(stdin, request)
         stdin.write("\n")
         stdin.flush()
 
         stdout.skipUntilJsonObject()
 
-        return gson.fromJson(gson.newJsonReader(stdout), Response::class.java)
-            ?: throw EOFException()
+        return ProcMacroJsonParser.jackson.readValue(stdout, Response::class.java)
     }
 
     /**
@@ -272,13 +276,6 @@ private class ProcMacroServerProcess private constructor(
     }
 
     companion object {
-        private val gson = GsonBuilder()
-            .serializeNulls()
-            .registerTypeAdapter(Request::class.java, RequestJsonAdapter())
-            .registerTypeAdapter(Response::class.java, ResponseJsonAdapter())
-            .registerTypeAdapter(TokenTree::class.java, TokenTreeJsonAdapter())
-            .create()
-
         @Throws(ProcessCreationException::class)
         fun createAndRun(expanderExecutable: Path): ProcMacroServerProcess {
             MACRO_LOG.debug { "Starting proc macro expander process $expanderExecutable" }
@@ -301,4 +298,22 @@ private class ProcMacroServerProcess private constructor(
             return ProcMacroServerProcess(process)
         }
     }
+}
+
+@VisibleForTesting
+object ProcMacroJsonParser {
+    val jackson: ObjectMapper = ObjectMapper()
+        .configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false)
+        .configure(JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
+        .configure(JsonGenerator.Feature.AUTO_CLOSE_JSON_CONTENT, false)
+        .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .registerModule(KotlinModule())
+        .registerModule(
+            SimpleModule()
+                .addSerializer(Request::class.java, RequestJsonSerializer())
+                .addDeserializer(Response::class.java, ResponseJsonDeserializer())
+                .addDeserializer(TokenTree::class.java, TokenTreeJsonDeserializer)
+                .addSerializer(TokenTree::class.java, TokenTreeJsonSerializer)
+        )
 }

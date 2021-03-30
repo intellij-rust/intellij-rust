@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.macros.tt
 
-import com.google.gson.annotations.SerializedName
 import org.rust.lang.core.macros.tt.Spacing.Alone
 import org.rust.lang.core.psi.MacroBraces
 
@@ -38,7 +37,6 @@ sealed class TokenTree {
 
     data class Subtree(
         val delimiter: Delimiter?,
-        @SerializedName("token_trees")
         val tokenTrees: List<TokenTree>
     ): TokenTree()
 }

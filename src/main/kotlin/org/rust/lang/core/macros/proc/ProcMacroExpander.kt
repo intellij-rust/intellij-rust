@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.macros.proc
 
-import com.google.gson.JsonParseException
 import com.intellij.openapi.project.Project
 import org.rust.lang.core.macros.*
 import org.rust.lang.core.macros.tt.MappedSubtree
@@ -56,8 +55,6 @@ class ProcMacroExpander(
             MACRO_LOG.warn("Failed to run proc macro expander", e)
             return Err(ProcMacroExpansionError.CantRunExpander)
         } catch (e: IOException) {
-            return Err(ProcMacroExpansionError.ExceptionThrown(e))
-        } catch (e: JsonParseException) {
             return Err(ProcMacroExpansionError.ExceptionThrown(e))
         }
         return when (response) {
