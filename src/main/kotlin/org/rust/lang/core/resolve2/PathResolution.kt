@@ -60,11 +60,11 @@ fun CrateDefMap.resolvePathFp(
     var currentPerNs = firstSegmentPerNs
     var visitedOtherCrate = false
     for (segmentIndex in firstSegmentIndex until path.size) {
-        // we still have path segments left, but the path so far
-        // didn't resolve in the types namespace => no resolution
         val currentModAsVisItem = currentPerNs.types
             // TODO: It is not enough - we should also check that `it.visibility` is visible inside `sourceMod`
-            ?.takeIf { withInvisibleItems || !it.visibility.isInvisible }
+            .singleOrNull { withInvisibleItems || !it.visibility.isInvisible }
+        // we still have path segments left, but the path so far
+        // didn't resolve in the types namespace => no resolution
             ?: return ResolvePathResult.empty(reachedFixedPoint = false)
 
         val currentModData = tryCastToModData(currentModAsVisItem)
@@ -98,7 +98,7 @@ fun CrateDefMap.resolveMacroCallToMacroDefInfo(
         ResolveMode.OTHER,
         withInvisibleItems = false  // because we expand only cfg-enabled macros
     )
-    val defItem = perNs.resolvedDef.macros ?: return null
+    val defItem = perNs.resolvedDef.macros.singleOrNull() ?: return null
     return getMacroInfo(defItem)
 }
 
@@ -149,7 +149,7 @@ private fun ModData.getFirstLegacyMacro(name: String): PerNs? {
     val def = legacyMacros[name]?.firstOrNull() ?: return null
     val visibility = if (def.hasMacroExport) Visibility.Public else visibilityInSelf
     val visItem = VisItem(path.append(name), visibility)
-    return PerNs(macros = visItem)
+    return PerNs.macros(visItem)
 }
 
 /**

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.FileViewProvider
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
+import com.intellij.util.containers.map2Array
 import gnu.trove.THashMap
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.psi.RsEnumVariant
@@ -69,7 +70,7 @@ class CrateDefMap(
     val timestamp: Long = System.nanoTime()
 
     /** Stored as memory optimization */
-    val rootAsPerNs: PerNs = PerNs(types = VisItem(root.path, Public, true))
+    val rootAsPerNs: PerNs = PerNs.types(VisItem(root.path, Public, true))
 
     fun getDefMap(crate: CratePersistentId): CrateDefMap? =
         if (crate == this.crate) this else allDependenciesDefMaps[crate]
@@ -132,9 +133,10 @@ class CrateDefMap(
     fun importAllMacrosExported(from: CrateDefMap) {
         for ((name, def) in from.root.visibleItems) {
             // `macro_use` only bring things into legacy scope.
-            val macroDef = def.macros ?: continue
-            val macroInfo = from.getMacroInfo(macroDef) as? DeclMacroDefInfo ?: continue
-            root.addLegacyMacro(name, macroInfo)
+            for (macroDef in def.macros) {
+                val macroInfo = from.getMacroInfo(macroDef) as? DeclMacroDefInfo ?: continue
+                root.addLegacyMacro(name, macroInfo)
+            }
         }
     }
 
@@ -279,6 +281,8 @@ class ModData(
      */
     var isShadowedByOtherFile: Boolean = true
 
+    lateinit var asVisItem: VisItem
+
     fun getVisibleItem(name: String): PerNs = visibleItems.getOrDefault(name, PerNs.Empty)
 
     fun getVisibleItems(filterVisibility: (Visibility) -> Boolean): List<Pair<String, PerNs>> {
@@ -291,22 +295,21 @@ class ModData(
             .mapNotNull { (path, visibility) ->
                 if (!filterVisibility(visibility)) return@mapNotNull null
                 val trait = VisItem(path, visibility, isModOrEnum = false)
-                "_" to PerNs(types = trait)
+                "_" to PerNs.types(trait)
             }
         return usualItems + traitItems
     }
 
     /** Returns true if [visibleItems] were changed */
-    fun addVisibleItem(name: String, def: PerNs, visibility: Visibility): Boolean =
-        pushResolutionFromImport(this, name, def, ImportType.NAMED, visibility)
+    fun addVisibleItem(name: String, def: PerNs): Boolean =
+        pushResolutionFromImport(this, name, def)
 
     fun asVisItem(): VisItem {
-        val parent = parent ?: error("Use CrateDefMap.rootAsPerNs for root ModData")
-        return parent.visibleItems[name]?.types?.takeIf { it.isModOrEnum }
-            ?: error("Inconsistent `visibleItems` and `childModules` in parent of $this")
+        if (isCrateRoot) error("Use CrateDefMap.rootAsPerNs for root ModData")
+        return asVisItem
     }
 
-    fun asPerNs(): PerNs = PerNs(types = asVisItem())
+    fun asPerNs(): PerNs = PerNs.types(asVisItem())
 
     fun getNthParent(n: Int): ModData? {
         check(n >= 0)
@@ -338,32 +341,27 @@ class ModData(
     override fun toString(): String = "ModData($path, crate=$crateDescription)"
 }
 
-data class PerNs(
-    val types: VisItem? = null,
-    val values: VisItem? = null,
-    val macros: VisItem? = null,
+class PerNs(
+    val types: Array<VisItem> = VisItem.EMPTY_ARRAY,
+    val values: Array<VisItem> = VisItem.EMPTY_ARRAY,
+    val macros: Array<VisItem> = VisItem.EMPTY_ARRAY,
 ) {
-    val isEmpty: Boolean get() = types == null && values == null && macros == null
 
-    constructor(visItem: VisItem, ns: Set<Namespace>) :
-        this(
-            visItem.takeIf { Namespace.Types in ns },
-            visItem.takeIf { Namespace.Values in ns },
-            visItem.takeIf { Namespace.Macros in ns }
-        )
+    val isEmpty: Boolean get() = types.isEmpty() && values.isEmpty() && macros.isEmpty()
+    val hasAllNamespaces: Boolean get() = types.isNotEmpty() && values.isNotEmpty() && macros.isNotEmpty()
 
     fun adjust(visibility: Visibility, isFromNamedImport: Boolean): PerNs =
         PerNs(
-            types?.adjust(visibility, isFromNamedImport),
-            values?.adjust(visibility, isFromNamedImport),
-            macros?.adjust(visibility, isFromNamedImport)
+            types.map2Array { it.adjust(visibility, isFromNamedImport) },
+            values.map2Array { it.adjust(visibility, isFromNamedImport) },
+            macros.map2Array { it.adjust(visibility, isFromNamedImport) },
         )
 
     fun filterVisibility(filter: (Visibility) -> Boolean): PerNs =
         PerNs(
-            types?.takeIf { filter(it.visibility) },
-            values?.takeIf { filter(it.visibility) },
-            macros?.takeIf { filter(it.visibility) }
+            types.filter { filter(it.visibility) }.toTypedArray(),
+            values.filter { filter(it.visibility) }.toTypedArray(),
+            macros.filter { filter(it.visibility) }.toTypedArray(),
         )
 
     fun or(other: PerNs): PerNs {
@@ -376,23 +374,73 @@ data class PerNs(
         )
     }
 
-    private fun VisItem?.or(other: VisItem?): VisItem? {
-        if (this == null) return other
-        if (other == null) return this
-        if (visibility == CfgDisabled && other.visibility != CfgDisabled) return other
-        if (visibility == Invisible && !other.visibility.isInvisible) return other
-        return this
+    private fun Array<VisItem>.or(other: Array<VisItem>): Array<VisItem> {
+        if (isEmpty()) return other
+        if (other.isEmpty()) return this
+
+        val thisVisibilityType = visibilityType()
+        val otherVisibilityType = other.visibilityType()
+        return if (otherVisibilityType.isWider(thisVisibilityType)) other else this
     }
 
     fun mapItems(f: (VisItem) -> VisItem): PerNs =
         PerNs(
-            types?.let { f(it) },
-            values?.let { f(it) },
-            macros?.let { f(it) }
+            types.map2Array(f),
+            values.map2Array(f),
+            macros.map2Array(f),
         )
 
+    /**
+     * - Keeps only items with greatest visibility (e.g. [Invisible] and [Public] -> keep only [Public]).
+     * - If all items has [CfgDisabled] visibility, keep only one item for performance reasons.
+     */
+    fun adjustMultiresolve(): PerNs {
+        if (types.size <= 1 && values.size <= 1 && macros.size <= 1) return this
+
+        fun Array<VisItem>.adjustMultiresolve(): Array<VisItem> {
+            if (size <= 1) return this
+            val visibilityType = map2Array { it.visibility.type }.max()!!
+            if (visibilityType == VisibilityType.CfgDisabled) return arrayOf(first())
+            return filter { it.visibility.type == visibilityType }.toTypedArray()
+        }
+        return PerNs(
+            types.adjustMultiresolve(),
+            values.adjustMultiresolve(),
+            macros.adjustMultiresolve(),
+        )
+    }
+
+    /** Needed to compare [PartialResolvedImport] in [DefCollector.resolveImports] */
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        other as PerNs
+        if (!types.contentEquals(other.types)) return false
+        if (!values.contentEquals(other.values)) return false
+        if (!macros.contentEquals(other.macros)) return false
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = types.contentHashCode()
+        result = 31 * result + values.contentHashCode()
+        result = 31 * result + macros.contentHashCode()
+        return result
+    }
+
     companion object {
-        val Empty: PerNs = PerNs()
+        val Empty: PerNs = PerNs(VisItem.EMPTY_ARRAY, VisItem.EMPTY_ARRAY, VisItem.EMPTY_ARRAY)
+
+        fun from(visItem: VisItem, ns: Set<Namespace>): PerNs {
+            val visItemList = arrayOf(visItem)
+            return PerNs(
+                if (Namespace.Types in ns) visItemList else VisItem.EMPTY_ARRAY,
+                if (Namespace.Values in ns) visItemList else VisItem.EMPTY_ARRAY,
+                if (Namespace.Macros in ns) visItemList else VisItem.EMPTY_ARRAY
+            )
+        }
+
+        fun types(visItem: VisItem): PerNs = PerNs(types = arrayOf(visItem))
+        fun macros(visItem: VisItem): PerNs = PerNs(macros = arrayOf(visItem))
     }
 }
 
@@ -431,6 +479,10 @@ data class VisItem(
         )
 
     override fun toString(): String = "$visibility $path"
+
+    companion object {
+        val EMPTY_ARRAY: Array<VisItem> = arrayOf()
+    }
 }
 
 sealed class Visibility {

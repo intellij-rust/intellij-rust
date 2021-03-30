@@ -46,7 +46,7 @@ fun processItemDeclarations2(
     }
 
     for ((name, perNs) in modData.visibleItems.entriesWithName(processor.name)) {
-        val visItems = arrayOf(
+        val visItemsByNamespace = arrayOf(
             perNs.types to Namespace.Types,
             perNs.values to Namespace.Values,
             perNs.macros to Namespace.Macros,
@@ -54,13 +54,15 @@ fun processItemDeclarations2(
         // We need a `Set` here because item could belong to multiple namespaces (e.g. unit struct)
         // Also we need to distinguish unit struct and e.g. mod and function with same name in one module
         val elements = hashSetOf<RsNamedElement>()
-        for ((visItem, namespace) in visItems) {
-            if (visItem == null || namespace !in ns) continue
-            if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
-            val visibilityFilter = visItem.visibility.createFilter(project)
-            for (element in visItem.toPsi(defMap, project, namespace)) {
-                if (!elements.add(element)) continue
-                if (processor(name, element, visibilityFilter)) return true
+        for ((visItems, namespace) in visItemsByNamespace) {
+            if (namespace !in ns) continue
+            for (visItem in visItems) {
+                if (ipm == WITHOUT_PRIVATE_IMPORTS && visItem.visibility == Visibility.Invisible) continue
+                val visibilityFilter = visItem.visibility.createFilter(project)
+                for (element in visItem.toPsi(defMap, project, namespace)) {
+                    if (!elements.add(element)) continue
+                    if (processor(name, element, visibilityFilter)) return true
+                }
             }
         }
     }
@@ -77,7 +79,9 @@ fun processItemDeclarations2(
 
     if (ipm.withExternCrates && Namespace.Types in ns) {
         for ((name, externCrateDefMap) in defMap.externPrelude.entriesWithName(processor.name)) {
-            if (modData.visibleItems[name]?.types != null) continue
+            val existingItemInScope = modData.visibleItems[name]
+            if (existingItemInScope != null && existingItemInScope.types.isNotEmpty()) continue
+
             val externCrateRoot = externCrateDefMap.root.toRsMod(project)
                 // crate root can't multiresolve
                 .singleOrNull()
@@ -131,7 +135,10 @@ private fun ModData.processMacros(
         for ((name, macroInfos) in legacyMacros.entriesWithName(processor.name)) {
             val macroInfo = filterMacrosByIndex(macroInfos, macroIndex) ?: continue
             val visItem = VisItem(macroInfo.path, Visibility.Public)
-            if (visItem.path == visibleItems[name]?.macros?.path) continue  // macros will be handled in [visibleItems] loop
+            if (visibleItems[name]?.macros?.any { it.path == visItem.path } == true) {
+                // macros will be handled in [visibleItems] loop
+                continue
+            }
             val macroContainingMod = visItem.containingMod.toRsMod(defMap, project).singleOrNull() ?: continue
             val macroDefMap = defMap.getDefMap(macroInfo.crate) ?: continue
             val macro = macroInfo.legacyMacroToPsi(macroContainingMod, macroDefMap) ?: continue
@@ -140,10 +147,11 @@ private fun ModData.processMacros(
     }
 
     for ((name, perNs) in visibleItems.entriesWithName(processor.name)) {
-        val visItem = perNs.macros ?: continue
-        val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
-        val visibilityFilter = visItem.visibility.createFilter(project)
-        if (processor(name, macro, visibilityFilter)) return true
+        for (visItem in perNs.macros) {
+            val macro = visItem.scopedMacroToPsi(defMap, project) ?: continue
+            val visibilityFilter = visItem.visibility.createFilter(project)
+            if (processor(name, macro, visibilityFilter)) return true
+        }
     }
 
     return false
