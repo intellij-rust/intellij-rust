@@ -1302,7 +1302,13 @@ private IndexArg ::= '[' Expr ']'
 CallExpr ::= Expr !<<isCompleteBlockExpr>> ValueArgumentList {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
 }
-ValueArgumentList ::= '(' <<comma_separated_list AnyExpr>>? ')' { pin = 1 }
+ValueArgumentList ::= '(' ValueArgument_with_recover* ')' { pin = 1 }
+
+private ValueArgument_with_recover ::= !')' AnyExpr (',' | &')') {
+  pin = 1
+  recoverWhile = ValueArgument_recover
+}
+private ValueArgument_recover ::= !(Expr_first | ')' | '}' | Item_first | let | ';')
 
 DotExpr ::= Expr '.'  MethodOrField {
   elementTypeFactory = "org.rust.lang.core.stubs.StubImplementationsKt.factory"
