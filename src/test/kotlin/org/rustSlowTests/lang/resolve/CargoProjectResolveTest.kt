@@ -416,7 +416,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                     extern crate bar;
                     fn main() {
                         let _ = rand::thread_rng();
-                                     // ^
+                                      //^
                     }
                 """)
             }
@@ -435,7 +435,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                     extern crate rand;
                     fn bar() {
                         let _ = rand::thread_rng();
-                                     // ^
+                                      //^
                     }
                 """)
             }
@@ -618,7 +618,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 extern crate foo;
                 fn main() {
                     let _ = foo::bar();
-                              // ^
+                               //^
                 }
             """)
         }
@@ -657,7 +657,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 extern crate foo;
                 fn main() {
                     let _ = foo::bar();
-                              // ^
+                               //^
                 }
             """)
         }
@@ -895,7 +895,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 extern crate foo;
                 fn main() {
                     foo::bar();
-                }     // ^
+                }       //^
             """)
         }
         dir("src") {
@@ -905,7 +905,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
                 fn test() {
                     extern crate foo;
                     foo::bar();
-                }     // ^
+                }      //^
             """)
         }
         dir("foo") {
@@ -945,14 +945,14 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             extern crate foo;
             fn main() {
                 foo::bar();
-            }     // ^
+            }      //^
         """)
         dir("src") {
             rust("main.rs", """
                 extern crate foo;
                 fn main() {
                     foo::bar();
-                }     // ^
+                }      //^
             """)
         }
         dir("foo") {
@@ -986,14 +986,14 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
             extern crate foo;
             fn main() {
                 foo::bar();
-            }     // ^
+            }      //^
         """)
         dir("src") {
             rust("main.rs", """
                 extern crate foo;
                 fn main() {
                     foo::bar();
-                }     // ^
+                }      //^
             """)
         }
         dir("foo") {
@@ -1023,7 +1023,7 @@ class CargoProjectResolveTest : RsWithToolchainTestBase() {
         rust("build.rs", """
             fn main() {
                 std::mem::size_of::<i32>();
-            }            // ^
+            }             //^
         """)
         dir("src") {
             rust("main.rs", "")
