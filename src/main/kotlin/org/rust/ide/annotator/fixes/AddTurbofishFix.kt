@@ -87,7 +87,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
             is RsBinaryExpr -> {
                 bfsLeafs(expr.left) + bfsLeafs(expr.right)
             }
-            null -> listOf<RsExpr>()
+            null -> emptyList()
             else -> listOf(expr)
         }
     }

@@ -245,7 +245,7 @@ data class RsQualifiedName private constructor(
             }
 
             val modSegments = if (parentType == PRIMITIVE || parentType == KEYWORD || parentType == MACRO) {
-                listOf()
+                emptyList()
             } else {
                 val parentElement = parentItem.element ?: return null
                 val mod = parentElement as? RsMod ?: parentElement.containingMod
