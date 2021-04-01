@@ -10,15 +10,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.progress.impl.ProgressManagerImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Condition
 import com.intellij.openapiext.isHeadlessEnvironment
 import com.intellij.openapiext.isUnitTestMode
-import com.intellij.util.PairConsumer
 import com.intellij.util.concurrency.QueueProcessor
 import org.rust.RsTask.TaskType.*
 import org.rust.openapiext.DelayedBackgroundableProcessIndicator
@@ -55,7 +54,7 @@ val Project.taskQueue: RsProjectTaskQueueService get() = service()
 interface RsTask {
     @JvmDefault
     val taskType: TaskType
-        get() = TaskType.INDEPENDENT
+        get() = INDEPENDENT
 
     @JvmDefault
     val progressBarShowDelay: Int
@@ -93,13 +92,11 @@ interface RsTask {
 
 /** Inspired by [BackgroundTaskQueue] */
 private class RsBackgroundTaskQueue {
-    private val LOG = Logger.getInstance(RsBackgroundTaskQueue::class.java)
-    private val processor = QueueProcessor<ContinuableRunnable>(
+    private val processor = QueueProcessor(
         QueueConsumer(),
         true,
         QueueProcessor.ThreadToUse.AWT,
-        Condition<Any> { isDisposed }
-    )
+    ) { isDisposed }
 
     @Volatile
     private var isDisposed: Boolean = false
@@ -248,5 +245,9 @@ private class RsBackgroundTaskQueue {
             object CanceledContinued : State()
             data class Running(val indicator: ProgressIndicator) : State()
         }
+    }
+
+    companion object {
+        private val LOG: Logger = logger<RsBackgroundTaskQueue>()
     }
 }

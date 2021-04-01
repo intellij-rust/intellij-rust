@@ -24,7 +24,7 @@ abstract class RsGenerateBaseTest : RsTestBase() {
             override fun selectMembers(
                 project: Project,
                 all: List<RsStructMemberChooserObject>
-            ): List<RsStructMemberChooserObject>? {
+            ): List<RsStructMemberChooserObject> {
                 assertEquals(chooser.map { it.member }, all.map { it.text })
                 val selected = chooser.filter { it.isSelected }.map { it.member }
                 return all.filter { it.text in selected }

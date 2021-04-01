@@ -10,6 +10,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import org.rust.cargo.project.workspace.PackageId
@@ -23,8 +24,7 @@ data class CargoTopMessage(
     val target: Target
 ) {
     companion object {
-
-        private val LOG = Logger.getInstance(CargoTopMessage::class.java)
+        private val LOG: Logger = logger<CargoTopMessage>()
 
         fun fromJson(json: JsonObject): CargoTopMessage? {
             if (json.getAsJsonPrimitive("reason")?.asString != "compiler-message") {
@@ -126,6 +126,7 @@ data class Target(
 )
 
 // https://doc.rust-lang.org/nightly/nightly-rustc/syntax/diagnostics/plugin/enum.Applicability.html
+@Suppress("unused")
 enum class Applicability {
     @SerializedName("MachineApplicable")
     MACHINE_APPLICABLE,

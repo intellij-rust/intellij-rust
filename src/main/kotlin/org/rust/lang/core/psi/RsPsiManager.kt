@@ -70,13 +70,6 @@ interface RsPsiManager {
     companion object {
         private val IGNORE_PSI_EVENTS: Key<Boolean> = Key.create("IGNORE_PSI_EVENTS")
 
-        fun setIgnorePsiEvents(psi: PsiFile, ignore: Boolean) {
-            val virtualFile = psi.virtualFile ?: return
-            check(virtualFile is LightVirtualFile)
-
-            psi.putUserData(IGNORE_PSI_EVENTS, if (ignore) true else null)
-        }
-
         fun <T> withIgnoredPsiEvents(psi: PsiFile, f: () -> T): T {
             setIgnorePsiEvents(psi, true)
             try {
@@ -88,6 +81,13 @@ interface RsPsiManager {
 
         fun isIgnorePsiEvents(psi: PsiFile): Boolean =
             psi.getUserData(IGNORE_PSI_EVENTS) == true
+
+        private fun setIgnorePsiEvents(psi: PsiFile, ignore: Boolean) {
+            val virtualFile = psi.virtualFile ?: return
+            check(virtualFile is LightVirtualFile)
+
+            psi.putUserData(IGNORE_PSI_EVENTS, if (ignore) true else null)
+        }
     }
 }
 
@@ -219,8 +219,7 @@ class RsPsiManagerImpl(val project: Project) : RsPsiManager, Disposable {
     }
 }
 
-val Project.rustPsiManager: RsPsiManager
-    get() = service<RsPsiManager>()
+val Project.rustPsiManager: RsPsiManager get() = service()
 
 /** @see RsPsiManager.rustStructureModificationTracker */
 val Project.rustStructureModificationTracker: ModificationTracker
@@ -233,12 +232,12 @@ val Project.rustStructureModificationTracker: ModificationTracker
 val RsElement.rustStructureOrAnyPsiModificationTracker: Any
     get() {
         val containingFile = containingFile
-        return when {
+        return when (containingFile.virtualFile) {
             // The case of injected language. Injected PSI don't have it's own event system, so can only
             // handle evens from outer PSI. For example, Rust language is injected to Kotlin's string
             // literal. If a user change the literal, we can only be notified that the literal is changed.
             // So we have to invalidate the cached value on any PSI change
-            containingFile.virtualFile is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
+            is VirtualFileWindow -> PsiModificationTracker.MODIFICATION_COUNT
             else -> containingFile.project.rustStructureModificationTracker
         }
     }

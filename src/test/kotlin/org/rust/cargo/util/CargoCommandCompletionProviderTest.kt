@@ -74,7 +74,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test no completion for unknown command`() = checkCompletion(
         "frob ",
-        listOf()
+        emptyList()
     )
 
     fun `test complete run args`() = checkCompletion(
@@ -104,12 +104,12 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
 
     fun `test dont suggest a flag twice`() = checkCompletion(
         "run --release --rel",
-        listOf()
+        emptyList()
     )
 
     fun `test dont suggest after double dash`() = checkCompletion(
         "run -- --rel",
-        listOf()
+        emptyList()
     )
 
     fun `test suggest package argument`() = checkCompletion(
@@ -132,7 +132,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         expectedCompletions: List<String>
     ) {
 
-        val provider = CargoCommandCompletionProvider(project.cargoProjects, TEST_WORKSPACE)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, testWorkspace)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 
@@ -142,7 +142,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         }
     }
 
-    private val TEST_WORKSPACE = run {
+    private val testWorkspace: CargoWorkspace = run {
         fun target(
             name: String,
             kind: TargetKind,

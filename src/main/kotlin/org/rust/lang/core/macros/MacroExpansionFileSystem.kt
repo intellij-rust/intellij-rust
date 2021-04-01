@@ -197,10 +197,12 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
     }
 
     @Throws(IOException::class)
-    override fun getOutputStream(file: VirtualFile,
-                                 requestor: Any?,
-                                 modStamp: Long,
-                                 timeStamp: Long): OutputStream {
+    override fun getOutputStream(
+        file: VirtualFile,
+        requestor: Any?,
+        modStamp: Long,
+        timeStamp: Long
+    ): OutputStream {
         throw UnsupportedOperationException()
     }
 
@@ -360,14 +362,6 @@ class MacroExpansionFileSystem : NewVirtualFileSystem() {
         val item = convert(path) ?: throw FSItemNotFoundException(path)
         if (item !is FSFile) throw FSItemIsADirectoryException(path)
         item.setContent(content)
-    }
-
-    @Throws(FSException::class)
-    fun createDirectory(path: String) {
-        val (parentName, name) = splitFilenameAndParent(path)
-        val parent = convert(parentName) ?: throw FSItemNotFoundException(parentName)
-        if (parent !is FSDir) throw FSItemIsNotADirectoryException(path)
-        parent.addChildDir(name, bump = true)
     }
 
     @Throws(FSException::class)

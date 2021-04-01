@@ -34,7 +34,7 @@ class ProjectCache<in T, R>(
         val cache = CachedValuesManager.getManager(project)
             .getCachedValue(project, cacheKey, {
                 CachedValueProvider.Result.create(
-                    ConcurrentHashMap<T, R>(),
+                    ConcurrentHashMap(),
                     dependencyGetter(project)
                 )
             }, false)

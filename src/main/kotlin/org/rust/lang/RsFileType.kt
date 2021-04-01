@@ -20,5 +20,5 @@ object RsFileType : LanguageFileType(RsLanguage) {
 
     override fun getCharset(file: VirtualFile, content: ByteArray): String = "UTF-8"
 
-    override fun getDescription(): String = "Rust Files"
+    override fun getDescription(): String = "Rust files"
 }

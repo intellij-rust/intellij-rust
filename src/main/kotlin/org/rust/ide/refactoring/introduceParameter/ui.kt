@@ -28,7 +28,7 @@ fun showEnclosingFunctionsChooser(editor: Editor,
         return
     }
     val highlighter = AtomicReference(ScopeHighlighter(editor))
-    val title = "Introduce parameter to method"
+    val title = "Introduce Parameter to Method"
     val popup = JBPopupFactory.getInstance().createPopupChooserBuilder(methods)
         .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
         .setSelectedValue(methods.first(), true)

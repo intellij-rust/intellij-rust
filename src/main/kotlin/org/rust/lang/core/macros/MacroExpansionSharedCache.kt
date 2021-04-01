@@ -23,7 +23,6 @@ import org.rust.lang.core.macros.MacroExpansionSharedCache.Companion.CACHE_ENABL
 import org.rust.lang.core.macros.decl.*
 import org.rust.lang.core.macros.proc.ProcMacroExpander
 import org.rust.lang.core.parser.RustParserDefinition
-import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.stubs.RsFileStub
 import org.rust.stdext.HashCode
 import org.rust.stdext.readVarInt

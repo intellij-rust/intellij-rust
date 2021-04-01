@@ -15,6 +15,7 @@ import org.rust.lang.core.psi.RsTypeReference
 import org.rust.lang.core.resolve.ref.RsMethodCallReferenceImpl
 import org.rust.lang.core.resolve.ref.RsReference
 
+@Suppress("unused")
 val RsMethodCall.lifetimeArguments: List<RsLifetime> get() = typeArgumentList?.lifetimeList.orEmpty()
 
 val RsMethodCall.typeArguments: List<RsTypeReference> get() = typeArgumentList?.typeReferenceList.orEmpty()

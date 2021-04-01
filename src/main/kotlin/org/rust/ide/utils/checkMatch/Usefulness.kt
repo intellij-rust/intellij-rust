@@ -109,14 +109,14 @@ fun isUseful(
 
     if (constructors != null) {
         /**
-         * If [pattern] is a constructor pattern, then its usefulness can be reduced to whether it is useful when
+         * If `pattern` is a constructor pattern, then its usefulness can be reduced to whether it is useful when
          * we ignore all the patterns in the first column of [matrix] that involve other constructors
          */
         return expandConstructors(constructors, type)
     }
 
     /**
-     * Otherwise, [pattern] is wildcard (or binding which is basically the same).
+     * Otherwise, `pattern` is wildcard (or binding which is basically the same).
      * We look at the list of constructors that appear in the first column of [matrix].
      */
     val usedConstructors = matrix.firstColumn.map { it.constructors.orEmpty() }.flatten()
@@ -132,17 +132,17 @@ fun isUseful(
 
     if (missingConstructors.isEmpty() && !isNonExhaustive) {
         /**
-         * If all possible constructors are present, we must check whether the wildcard [pattern] covers any unmatched value.
+         * If all possible constructors are present, we must check whether the wildcard `pattern` covers any unmatched value.
          * The wildcard pattern is useful in this case if it is useful when specialized to one of the possible constructors.
          * For example, if `Some(<something>)` and `None` constructors of `Option` are covered, we should specialize
-         * wildcard [pattern] to `Some(<something else>)` and check its usefulness
+         * wildcard `pattern` to `Some(<something else>)` and check its usefulness
          */
         return expandConstructors(allConstructors, type)
     }
 
     /**
-     * If there are [missingConstructors], then our wildcard [pattern] might be useful.
-     * But [missingConstructors] can be matched by wildcards in the beginning of rows, so we need to check
+     * If there are `missingConstructors`, then our wildcard `pattern` might be useful.
+     * But `missingConstructors` can be matched by wildcards in the beginning of rows, so we need to check
      * usefulness of the remaining patterns in a submatrix containing all rows starting with a wildcard.
      */
     val wildcardRows = matrix.filter { row ->

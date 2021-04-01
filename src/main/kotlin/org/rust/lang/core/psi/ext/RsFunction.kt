@@ -210,10 +210,6 @@ fun RsFunction.findMethodCalls(scope: SearchScope? = null): Sequence<RsMethodCal
     .asSequence()
     .mapNotNull { it.getMethodCallUsage() }
 
-fun RsFunction.findCalls(scope: SearchScope? = null): Sequence<RsElement> = searchReferences(scope)
-    .asSequence()
-    .mapNotNull { it.getMethodCallUsage() ?: it.getFunctionCallUsage() }
-
 /**
  * Find all reference usages of this function, for example when the function is passed as a parameter to another
  * function.

@@ -42,8 +42,8 @@ class RsExplainFilterTest : RsTestBase() {
         }
 
         val item = result.resultItems.single()
-        check(item.getHighlightStartOffset() == highlightingStartOffset)
-        check(item.getHighlightEndOffset() == highlightingEndOffset)
+        check(item.highlightStartOffset == highlightingStartOffset)
+        check(item.highlightEndOffset == highlightingEndOffset)
         check(item.getHyperlinkInfo() != null)
     }
 }

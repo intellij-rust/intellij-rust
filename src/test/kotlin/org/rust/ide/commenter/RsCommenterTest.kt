@@ -299,7 +299,7 @@ class RsCommenterTest : RsTestBase() {
 
     override fun setUp() {
         super.setUp()
-        ActionManager.getInstance().registerAction(EMPTY_ACTION_ID, EmptyAction.createEmptyAction("empty", null, true))
+        ActionManager.getInstance().registerAction(EMPTY_ACTION_ID, EmptyAction.createEmptyAction("Empty", null, true))
     }
 
     override fun tearDown() {

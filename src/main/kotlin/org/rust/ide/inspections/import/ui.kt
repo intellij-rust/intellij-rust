@@ -98,7 +98,7 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
 
     private var importCandidate: ImportCandidate? = null
 
-    override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer? = rightRender
+    override fun getRightCellRenderer(value: Any?): DefaultListCellRenderer = rightRender
 
     override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {
         val realValue = if (value is ImportCandidate) {

@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsExternCrateItem
 import org.rust.lang.core.psi.ext.containingCargoPackage
-import java.util.function.Supplier
 
 /**
  * Provides an external crate imports with gutter icons that open documentation on docs.rs.

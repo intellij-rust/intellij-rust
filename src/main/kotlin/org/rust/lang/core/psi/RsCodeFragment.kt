@@ -63,6 +63,7 @@ abstract class RsCodeFragment(
 
     init {
         if (forceCachedPsi) {
+            @Suppress("LeakingThis")
             getViewProvider().forceCachedPsi(this)
         }
         init(TokenType.CODE_FRAGMENT, contentElementType)

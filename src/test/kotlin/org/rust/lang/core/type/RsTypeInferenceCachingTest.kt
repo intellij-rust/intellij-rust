@@ -13,7 +13,7 @@ import org.rust.lang.core.psi.ext.childrenOfType
 import org.rust.lang.core.types.inference
 
 class RsTypeInferenceCachingTest : RsTestBase() {
-    private val COMPLETE: () -> Unit = { myFixture.completeBasic() }
+    private val complete: () -> Unit = { myFixture.completeBasic() }
     private fun type(text: String = "a"): () -> Unit = { myFixture.type(text) }
 
     private fun List<RsFunction>.collectStamps(): Map<String, Long> =
@@ -49,7 +49,7 @@ class RsTypeInferenceCachingTest : RsTestBase() {
         fn bar() {  }
     """, "foo")
 
-    fun `test nothing reinferred after completion invocation`() = checkReinferred(COMPLETE, """
+    fun `test nothing reinferred after completion invocation`() = checkReinferred(complete, """
         fn foo() { /*caret*/ }
         fn bar() {  }
     """)

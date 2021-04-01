@@ -10,7 +10,7 @@ import com.intellij.lexer.Lexer
 class RsLexingTestCase : RsLexingTestCaseBase() {
     override fun getTestDataPath(): String = "org/rust/lang/core/lexer/fixtures"
 
-    override fun createLexer(): Lexer? = RsLexer()
+    override fun createLexer(): Lexer = RsLexer()
 
     fun `test comments`() = doTest()
     fun `test shebang`() = doTest()

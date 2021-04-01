@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.util.Key
@@ -32,20 +31,21 @@ object RsTupleFieldCompletionProvider : RsCompletionProvider() {
 
     private val TUPLE_FIELD_INFO: Key<Pair<RsFieldLookup, TyTuple>> = Key.create("TUPLE_FIELD_INFO")
 
-    override val elementPattern: PsiElementPattern.Capture<PsiElement> get() {
-        val parent = psiElement<RsFieldLookup>()
-            .with(object : PatternCondition<RsFieldLookup>("TupleType") {
-                override fun accepts(t: RsFieldLookup, context: ProcessingContext?): Boolean {
-                    if (context == null) return false
-                    val fieldLookup = t.safeGetOriginalOrSelf()
-                    val type = fieldLookup.receiver.type as? TyTuple ?: return false
-                    context.put(TUPLE_FIELD_INFO, fieldLookup to type)
-                    return true
-                }
-            })
+    override val elementPattern: PsiElementPattern.Capture<PsiElement>
+        get() {
+            val parent = psiElement<RsFieldLookup>()
+                .with(object : PatternCondition<RsFieldLookup>("TupleType") {
+                    override fun accepts(t: RsFieldLookup, context: ProcessingContext?): Boolean {
+                        if (context == null) return false
+                        val fieldLookup = t.safeGetOriginalOrSelf()
+                        val type = fieldLookup.receiver.type as? TyTuple ?: return false
+                        context.put(TUPLE_FIELD_INFO, fieldLookup to type)
+                        return true
+                    }
+                })
 
-        return PlatformPatterns.psiElement(RsElementTypes.IDENTIFIER).withParent(parent)
-    }
+            return PlatformPatterns.psiElement(RsElementTypes.IDENTIFIER).withParent(parent)
+        }
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         val (fieldLookup, type) = context[TUPLE_FIELD_INFO] ?: return
@@ -54,7 +54,7 @@ object RsTupleFieldCompletionProvider : RsCompletionProvider() {
 
         val elements = type.types.withIndex().map { (index, ty) ->
             createLookupElement(object : CompletionEntity {
-                override val ty: Ty? get() = ty
+                override val ty: Ty get() = ty
                 override val implLookup: ImplLookup get() = fieldLookup.implLookup
                 override fun getBasePriority(context: RsCompletionContext): Double = FIELD_DECL_PRIORITY
                 override fun createBaseLookupElement(context: RsCompletionContext): LookupElementBuilder {

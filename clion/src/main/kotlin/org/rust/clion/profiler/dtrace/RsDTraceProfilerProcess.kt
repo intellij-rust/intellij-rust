@@ -42,9 +42,8 @@ class RsDTraceProfilerProcess private constructor(
         return FullDumpParser(NativeThread.Companion::fromId, cachingStackElementReader::parseStackElement)
     }
 
-    override fun createDumpWriter(data: NewCallTreeOnlyProfilerData): ProfilerDumpWriter? {
-        return CollapsedProfilerDumpWriter(data.builder, targetProcess.fullName, attachedTimestamp, { it.fullName() }, { it.name })
-    }
+    override fun createDumpWriter(data: NewCallTreeOnlyProfilerData): ProfilerDumpWriter =
+        CollapsedProfilerDumpWriter(data.builder, targetProcess.fullName, attachedTimestamp, { it.fullName() }, { it.name })
 
     override fun createProfilerData(builder: DummyCallTreeBuilder<BaseCallStackElement>): NewCallTreeOnlyProfilerData =
         NewCallTreeOnlyProfilerData(builder, NativeCallStackElementRenderer.INSTANCE)

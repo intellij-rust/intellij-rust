@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil
 import org.rust.stdext.nextOrNull
 import java.awt.Color
 import kotlin.math.roundToInt
+import kotlin.math.sqrt
 
 fun AnsiEscapeDecoder.removeEscapeSequences(text: String): String {
     val chunks = mutableListOf<String>()
@@ -119,7 +120,7 @@ class RsAnsiEscapeDecoder : AnsiEscapeDecoder() {
             val redDiff = from.red.toDouble() - to.red
             val greenDiff = from.green.toDouble() - to.green
             val blueDiff = from.blue.toDouble() - to.blue
-            return Math.sqrt(redDiff * redDiff + greenDiff * greenDiff + blueDiff * blueDiff).roundToInt()
+            return sqrt(redDiff * redDiff + greenDiff * greenDiff + blueDiff * blueDiff).roundToInt()
         }
 
         private fun getColorAttribute(realAnsiColor: Ansi4BitColor, isForeground: Boolean): Int {

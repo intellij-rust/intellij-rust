@@ -12,6 +12,7 @@ import java.nio.file.Path
 @Suppress("DEPRECATION")
 class RustToolchain(location: Path) : RsToolchain(location) {
 
+    @Suppress("unused")
     fun rawCargo(): Cargo = Cargo(this)
 
     companion object {

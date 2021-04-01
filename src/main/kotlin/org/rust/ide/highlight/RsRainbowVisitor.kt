@@ -30,9 +30,7 @@ class RsRainbowVisitor : RainbowVisitor() {
         val bindingToUniqueName: Map<RsPatBinding, String> = run {
             val allBindings = function.descendantsOfType<RsPatBinding>().filter { it.name != null }
             val byName = allBindings.groupBy { it.name }
-            allBindings
-                .map { it to "${it.name}#${byName[it.name]!!.indexOf(it)}" }
-                .toMap()
+            allBindings.associateWith { "${it.name}#${byName[it.name]!!.indexOf(it)}" }
         }
 
         for ((binding, name) in bindingToUniqueName) {

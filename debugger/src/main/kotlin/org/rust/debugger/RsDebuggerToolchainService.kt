@@ -13,6 +13,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -196,7 +197,7 @@ class RsDebuggerToolchainService {
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsDebuggerToolchainService::class.java)
+        private val LOG: Logger = logger<RsDebuggerToolchainService>()
 
         private const val LLDB_VERSIONS: String = "versions.properties"
 
@@ -227,6 +228,7 @@ class RsDebuggerToolchainService {
         fun getInstance(): RsDebuggerToolchainService = service()
     }
 
+    @Suppress("unused")
     private enum class Unarchiver {
         ZIP {
             override val extension: String = "zip"

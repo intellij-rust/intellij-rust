@@ -22,6 +22,7 @@ import org.rust.lang.core.resolve.ref.RsReference
 
 class RsInlineFunctionHandler : InlineActionHandler() {
     override fun isEnabledOnElement(element: PsiElement): Boolean = canInlineElement(element)
+
     override fun inlineElement(project: Project, editor: Editor, element: PsiElement) {
         val function = element as RsFunction
 
@@ -76,7 +77,12 @@ class RsInlineFunctionHandler : InlineActionHandler() {
             project,
             editor,
             message,
-            "inline.method.title",
-            "refactoring.inlineMethod")
+            RefactoringBundle.message("inline.method.title"),
+            HELP_ID
+        )
+    }
+
+    companion object {
+        private const val HELP_ID: String = "refactoring.inlineMethod"
     }
 }

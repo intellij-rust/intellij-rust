@@ -20,16 +20,11 @@ import org.rust.lang.core.completion.addSuffix
 
 abstract class RsCommandCompletionProvider(
     val projects: CargoProjectsService,
-    val implicitTextPrefix: String,
+    private val implicitTextPrefix: String,
     val workspaceGetter: () -> CargoWorkspace?
 ) : TextFieldCompletionProvider() {
 
     protected abstract val commonCommands: List<CmdBase>
-
-    constructor(projects: CargoProjectsService, workspaceGetter: () -> CargoWorkspace?)
-        : this(projects, "", workspaceGetter)
-
-    constructor(projects: CargoProjectsService, workspace: CargoWorkspace?) : this(projects, { workspace })
 
     override fun getPrefix(currentTextPrefix: String): String = splitContextPrefix(currentTextPrefix).second
 

@@ -12,7 +12,6 @@ import com.intellij.execution.testframework.TestIconMapper
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
-import com.intellij.util.Function
 import org.rust.cargo.icons.CargoIcons
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.cargo.runconfig.test.CargoBenchRunConfigurationProducer
@@ -42,7 +41,7 @@ class CargoTestRunLineMarkerContributor : RunLineMarkerContributor() {
         }
         return Info(
             icon,
-            Function<PsiElement, String> { state.configurationName },
+            { state.configurationName },
             *ExecutorAction.getActions(1)
         )
     }

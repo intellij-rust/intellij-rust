@@ -60,7 +60,7 @@ class RsInlayTypeHintsProvider : InlayHintsProvider<RsInlayTypeHintsProvider.Set
 
     override fun createSettings(): Settings = Settings()
 
-    override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector? =
+    override fun getCollectorFor(file: PsiFile, editor: Editor, settings: Settings, sink: InlayHintsSink): InlayHintsCollector =
         object : FactoryInlayHintsCollector(editor) {
 
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, settings.showObviousTypes)

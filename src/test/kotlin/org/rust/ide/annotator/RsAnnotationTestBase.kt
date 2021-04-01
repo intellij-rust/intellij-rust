@@ -7,7 +7,6 @@ package org.rust.ide.annotator
 
 import com.intellij.openapiext.Testmark
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
-import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.fileTreeFromText
@@ -31,6 +30,7 @@ abstract class RsAnnotationTestBase : RsTestBase() {
 
     protected fun checkHighlighting(@Language("Rust") text: String, ignoreExtraHighlighting: Boolean = true) =
         annotationFixture.checkHighlighting(text, ignoreExtraHighlighting)
+
     protected fun checkInfo(@Language("Rust") text: String) = annotationFixture.checkInfo(text)
     protected fun checkWarnings(@Language("Rust") text: String) = annotationFixture.checkWarnings(text)
     protected fun checkErrors(@Language("Rust") text: String) = annotationFixture.checkErrors(text)
@@ -115,7 +115,7 @@ abstract class RsAnnotationTestBase : RsTestBase() {
         fileTreeFromText(text).create()
         val testFilePath = filePath ?: "main.rs"
         (myFixture as CodeInsightTestFixtureImpl) // meh
-                    .setVirtualFileFilter { !it.path.endsWith(testFilePath) }
+            .setVirtualFileFilter { !it.path.endsWith(testFilePath) }
 
         myFixture.configureFromTempProjectFile(testFilePath)
         myFixture.testHighlighting(false, checkInfo, false)

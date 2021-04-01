@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.stubs.index
 
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.stubs.AbstractStubIndex
@@ -36,7 +35,7 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
     override fun getKeyDescriptor(): KeyDescriptor<IncludeMacroKey> = IncludeMacroKey.KeyDescriptor
 
     companion object {
-        val KEY : StubIndexKey<IncludeMacroKey, RsMacroCall> =
+        val KEY: StubIndexKey<IncludeMacroKey, RsMacroCall> =
             StubIndexKey.createIndexKey("org.rust.lang.core.stubs.index.RsIncludeMacroIndex")
 
         private val INCLUDING_MOD_KEY: Key<CachedValue<RsMacroCall?>> = Key.create("INCLUDING_MOD_KEY")
@@ -74,8 +73,8 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
                 ?: makeIndexLookup(IncludeMacroKey.UNKNOWN_FILE_NAME, file)
         }
 
-        private fun makeIndexLookup(key: IncludeMacroKey, file: RsFile): RsMacroCall? {
-            return recursionGuard(file, Computable {
+        private fun makeIndexLookup(key: IncludeMacroKey, file: RsFile): RsMacroCall? =
+            recursionGuard(file, {
                 val project = file.project
                 checkCommitIsNotInProgress(project)
 
@@ -93,7 +92,6 @@ class RsIncludeMacroIndex : AbstractStubIndex<IncludeMacroKey, RsMacroCall>() {
                 }
                 includedFrom
             })
-        }
 
         private fun key(call: RsMacroCall): IncludeMacroKey? {
             return call.includeMacroArgument?.expr?.includingFileName()

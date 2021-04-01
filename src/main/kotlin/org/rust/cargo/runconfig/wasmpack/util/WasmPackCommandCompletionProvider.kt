@@ -22,7 +22,7 @@ class WasmPackCommandCompletionProvider(
     constructor(projects: CargoProjectsService, workspaceGetter: () -> CargoWorkspace?)
         : this(projects, "", workspaceGetter)
 
-    override val commonCommands = listOf(
+    override val commonCommands: List<CmdBase> = listOf(
         Cmd("new"),
 
         Cmd("build") {
@@ -42,7 +42,7 @@ class WasmPackCommandCompletionProvider(
             }
 
             opt("out-name") {
-                it.projects.map { LookupElementBuilder.create(it.presentableName) }
+                it.projects.map { project -> LookupElementBuilder.create(project.presentableName) }
             }
 
             opt("scope") {
@@ -70,12 +70,9 @@ class WasmPackCommandCompletionProvider(
         }
     )
 
-    protected class Cmd(
-        name: String,
-        initOptions: WasmPackOptBuilder.() -> Unit = {}
-    ) : CmdBase(name) {
+    private class Cmd(name: String, initOptions: WasmPackOptBuilder.() -> Unit = {}) : CmdBase(name) {
         override val options: List<Opt> = WasmPackOptBuilder().apply(initOptions).result
     }
 
-    protected class WasmPackOptBuilder(override val result: MutableList<Opt> = mutableListOf()) : OptBuilder
+    private class WasmPackOptBuilder(override val result: MutableList<Opt> = mutableListOf()) : OptBuilder
 }

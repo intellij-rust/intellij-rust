@@ -40,11 +40,6 @@ val PsiElement.contexts: Sequence<PsiElement>
         if (it is PsiFile) null else it.context
     }
 
-fun PsiElement.superParent(level: Int): PsiElement? {
-    require(level > 0)
-    return ancestors.drop(level).firstOrNull()
-}
-
 val PsiElement.ancestorPairs: Sequence<Pair<PsiElement, PsiElement>>
     get() {
         val parent = this.parent ?: return emptySequence()
@@ -146,6 +141,7 @@ inline fun <reified T : PsiElement> PsiElement.stubDescendantsOfTypeOrSelf(): Co
 inline fun <reified T : PsiElement> PsiElement.stubDescendantOfTypeOrStrict(): T? =
     getStubDescendantOfType(this, true, T::class.java)
 
+@Suppress("unused")
 inline fun <reified T : PsiElement> PsiElement.stubDescendantOfTypeOrSelf(): T? =
     getStubDescendantOfType(this, false, T::class.java)
 
@@ -157,7 +153,7 @@ fun <T : PsiElement> getStubDescendantsOfType(
     if (element == null) return emptyList()
     val stub = (element as? PsiFileImpl)?.greenStub
         ?: (element as? StubBasedPsiElement<*>)?.greenStub
-        ?: return PsiTreeUtil.findChildrenOfAnyType<T>(element, strict, aClass)
+        ?: return PsiTreeUtil.findChildrenOfAnyType(element, strict, aClass)
 
     val result = SmartList<T>()
 
@@ -190,7 +186,7 @@ fun <T : PsiElement> getStubDescendantOfType(
     if (element == null) return null
     val stub = (element as? PsiFileImpl)?.greenStub
         ?: (element as? StubBasedPsiElement<*>)?.greenStub
-        ?: return PsiTreeUtil.findChildOfType<T>(element, aClass, strict)
+        ?: return PsiTreeUtil.findChildOfType(element, aClass, strict)
 
     fun go(childrenStubs: List<StubElement<out PsiElement>>): T? {
         for (childStub in childrenStubs) {
@@ -256,10 +252,11 @@ val PsiElement.endOffset: Int
 val PsiElement.endOffsetInParent: Int
     get() = startOffsetInParent + textLength
 
-fun PsiElement.rangeWithPrevSpace(prev: PsiElement?) = when (prev) {
-    is PsiWhiteSpace -> textRange.union(prev.textRange)
-    else -> textRange
-}
+fun PsiElement.rangeWithPrevSpace(prev: PsiElement?): TextRange =
+    when (prev) {
+        is PsiWhiteSpace -> textRange.union(prev.textRange)
+        else -> textRange
+    }
 
 val PsiElement.rangeWithPrevSpace: TextRange
     get() = rangeWithPrevSpace(prevSibling)

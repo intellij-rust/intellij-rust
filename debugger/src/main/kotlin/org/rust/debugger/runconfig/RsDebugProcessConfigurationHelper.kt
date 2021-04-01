@@ -7,6 +7,7 @@ package org.rust.debugger.runconfig
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.jetbrains.cidr.execution.debugger.CidrDebugProcess
@@ -153,7 +154,7 @@ class RsDebugProcessConfigurationHelper(
         StringUtil.escapeStringCharacters(FileUtil.toSystemDependentName(this))
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsDebugProcessConfigurationHelper::class.java)
+        private val LOG: Logger = logger<RsDebugProcessConfigurationHelper>()
 
         /**
          * Should be synchronized with `rust_types.py`

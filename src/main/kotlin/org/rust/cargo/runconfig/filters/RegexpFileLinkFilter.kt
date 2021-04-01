@@ -15,6 +15,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.cargo.project.model.cargoProjects
 import org.rust.cargo.project.settings.rustSettings
 import java.nio.file.Paths
+import kotlin.math.max
 
 /**
  * Base class for regexp-based output filters that extract
@@ -78,7 +79,7 @@ open class RegexpFileLinkFilter(
 
     private fun zeroBasedNumber(number: String): Int {
         return try {
-            Math.max(0, number.toInt() - 1)
+            max(0, number.toInt() - 1)
         } catch (e: NumberFormatException) {
             0
         }

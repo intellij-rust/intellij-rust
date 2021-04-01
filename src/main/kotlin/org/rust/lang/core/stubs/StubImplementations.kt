@@ -30,8 +30,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
-import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
-import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
@@ -146,6 +144,7 @@ class RsFileStub(
  */
 private object BlockMayHaveStubsHeuristic {
     private val RS_HAS_ITEMS_OR_ATTRS: Key<Boolean> = Key.create("RS_HAS_ITEMS_OR_ATTRS")
+
     // TODO remove `USE`
     private val ITEM_DEF_KWS = tokenSetOf(STATIC, ENUM, IMPL, MACRO_KW, MOD, STRUCT, UNION, TRAIT, TYPE_KW, USE)
 
@@ -321,7 +320,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
 }
 
 
-abstract class RsAttributeOwnerStubBase<T: RsElement>(
+abstract class RsAttributeOwnerStubBase<T : RsElement>(
     parent: StubElement<*>?,
     elementType: IStubElementType<*, *>
 ) : StubBase<T>(parent, elementType),
@@ -352,7 +351,9 @@ class RsExternCrateItemStub(
     object Type : RsStubElementType<RsExternCrateItemStub, RsExternCrateItem>("EXTERN_CRATE_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsExternCrateItemStub(parentStub, this,
+            RsExternCrateItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString()!!,
                 dataStream.readUnsignedByte()
             )
@@ -381,6 +382,7 @@ class RsUseItemStub(
 
     val useSpeck: RsUseSpeckStub?
         get() = findChildStubByType(RsUseSpeckStub.Type)
+
     // stored in stub as an optimization
     val mayHavePreludeImport: Boolean
         get() = BitUtil.isSet(flags, HAS_PRELUDE_IMPORT_MASK)
@@ -470,7 +472,9 @@ class RsStructItemStub(
 
     object Type : RsStubElementType<RsStructItemStub, RsStructItem>("STRUCT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsStructItemStub(parentStub, this,
+            RsStructItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -511,7 +515,9 @@ class RsEnumItemStub(
 
     object Type : RsStubElementType<RsEnumItemStub, RsEnumItem>("ENUM_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumItemStub =
-            RsEnumItemStub(parentStub, this,
+            RsEnumItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -547,7 +553,9 @@ class RsEnumVariantStub(
 
     object Type : RsStubElementType<RsEnumVariantStub, RsEnumVariant>("ENUM_VARIANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsEnumVariantStub =
-            RsEnumVariantStub(parentStub, this,
+            RsEnumVariantStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -580,7 +588,9 @@ class RsModDeclItemStub(
 
     object Type : RsStubElementType<RsModDeclItemStub, RsModDeclItem>("MOD_DECL_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsModDeclItemStub(parentStub, this,
+            RsModDeclItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -613,7 +623,9 @@ class RsModItemStub(
     object Type : RsStubElementType<RsModItemStub, RsModItem>("MOD_ITEM") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsModItemStub(parentStub, this,
+            RsModItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -649,7 +661,9 @@ class RsTraitItemStub(
 
     object Type : RsStubElementType<RsTraitItemStub, RsTraitItem>("TRAIT_ITEM") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsTraitItemStub {
-            return RsTraitItemStub(parentStub, this,
+            return RsTraitItemStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -760,6 +774,7 @@ class RsFunctionStub(
     val isExtern: Boolean get() = BitUtil.isSet(flags, EXTERN_MASK)
     val isVariadic: Boolean get() = BitUtil.isSet(flags, VARIADIC_MASK)
     val isAsync: Boolean get() = BitUtil.isSet(flags, ASYNC_MASK)
+
     // Method resolve optimization: stub field access is much faster than PSI traversing
     val hasSelfParameters: Boolean get() = BitUtil.isSet(flags, HAS_SELF_PARAMETER_MASK)
     val mayBeProcMacroDef: Boolean get() = BitUtil.isSet(flags, IS_PROC_MACRO_DEF)
@@ -767,7 +782,9 @@ class RsFunctionStub(
     object Type : RsStubElementType<RsFunctionStub, RsFunction>("FUNCTION") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsFunctionStub(parentStub, this,
+            RsFunctionStub(
+                parentStub,
+                this,
                 dataStream.readName()?.string,
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readInt()
@@ -807,7 +824,9 @@ class RsFunctionStub(
             flags = BitUtil.set(flags, ASYNC_MASK, psi.isAsync)
             flags = BitUtil.set(flags, HAS_SELF_PARAMETER_MASK, psi.hasSelfParameters)
             flags = BitUtil.set(flags, IS_PROC_MACRO_DEF, attrs.isProcMacroDef)
-            return RsFunctionStub(parentStub, this,
+            return RsFunctionStub(
+                parentStub,
+                this,
                 name = psi.name,
                 abiName = psi.abiName,
                 flags = flags
@@ -844,7 +863,9 @@ class RsConstantStub(
 
     object Type : RsStubElementType<RsConstantStub, RsConstant>("CONSTANT") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsConstantStub(parentStub, this,
+            RsConstantStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -885,7 +906,9 @@ class RsTypeAliasStub(
     object Type : RsStubElementType<RsTypeAliasStub, RsTypeAlias>("TYPE_ALIAS") {
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTypeAliasStub(parentStub, this,
+            RsTypeAliasStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -945,7 +968,9 @@ class RsNamedFieldDeclStub(
             RsNamedFieldDeclStub(parentStub, this, psi.name, RsAttributeOwnerStub.extractFlags(psi))
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsNamedFieldDeclStub(parentStub, this,
+            RsNamedFieldDeclStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -975,7 +1000,9 @@ class RsAliasStub(
             RsAliasStub(parentStub, this, psi.name)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsAliasStub(parentStub, this,
+            RsAliasStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString()
             )
 
@@ -1008,7 +1035,9 @@ class RsPathStub(
             RsPathStub(parentStub, this, psi.referenceName, psi.hasColonColon, psi.kind, psi.startOffset)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsPathStub(parentStub, this,
+            RsPathStub(
+                parentStub,
+                this,
                 dataStream.readName()?.string,
                 dataStream.readBoolean(),
                 dataStream.readEnum(),
@@ -1038,7 +1067,9 @@ class RsTypeParameterStub(
 
     object Type : RsStubElementType<RsTypeParameterStub, RsTypeParameter>("TYPE_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTypeParameterStub(parentStub, this,
+            RsTypeParameterStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -1073,7 +1104,9 @@ class RsConstParameterStub(
 
     object Type : RsStubElementType<RsConstParameterStub, RsConstParameter>("CONST_PARAMETER") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsConstParameterStub(parentStub, this,
+            RsConstParameterStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -1102,7 +1135,9 @@ class RsValueParameterStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsValueParameterStub(parentStub, this,
+            RsValueParameterStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -1175,7 +1210,9 @@ class RsRefLikeTypeStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsRefLikeTypeStub(parentStub, this,
+            RsRefLikeTypeStub(
+                parentStub,
+                this,
                 dataStream.readBoolean(),
                 dataStream.readBoolean(),
                 dataStream.readBoolean()
@@ -1190,7 +1227,9 @@ class RsRefLikeTypeStub(
         override fun createPsi(stub: RsRefLikeTypeStub) = RsRefLikeTypeImpl(stub, this)
 
         override fun createStub(psi: RsRefLikeType, parentStub: StubElement<*>?) =
-            RsRefLikeTypeStub(parentStub, this,
+            RsRefLikeTypeStub(
+                parentStub,
+                this,
                 psi.mutability.isMut,
                 psi.isRef,
                 psi.isPointer
@@ -1209,7 +1248,9 @@ class RsTraitTypeStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsTraitTypeStub(parentStub, this,
+            RsTraitTypeStub(
+                parentStub,
+                this,
                 dataStream.readBoolean()
             )
 
@@ -1220,7 +1261,9 @@ class RsTraitTypeStub(
         override fun createPsi(stub: RsTraitTypeStub) = RsTraitTypeImpl(stub, this)
 
         override fun createStub(psi: RsTraitType, parentStub: StubElement<*>?) =
-            RsTraitTypeStub(parentStub, this,
+            RsTraitTypeStub(
+                parentStub,
+                this,
                 psi.isImpl
             )
     }
@@ -1290,7 +1333,9 @@ class RsLifetimeStub(
             RsLifetimeStub(parentStub, this, psi.referenceName)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsLifetimeStub(parentStub, this,
+            RsLifetimeStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString()
             )
 
@@ -1318,7 +1363,9 @@ class RsLifetimeParameterStub(
             RsLifetimeParameterStub(parentStub, this, psi.name)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsLifetimeParameterStub(parentStub, this,
+            RsLifetimeParameterStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString()
             )
 
@@ -1356,7 +1403,9 @@ class RsMacroStub(
             node.treeParent.elementType in RS_MOD_OR_FILE
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsMacroStub(parentStub, this,
+            RsMacroStub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readHashCodeNullable(),
@@ -1413,7 +1462,9 @@ class RsMacro2Stub(
         override fun shouldCreateStub(node: ASTNode): Boolean = node.elementType in RS_MOD_OR_FILE
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsMacro2Stub(parentStub, this,
+            RsMacro2Stub(
+                parentStub,
+                this,
                 dataStream.readNameAsString(),
                 dataStream.readUnsignedByte()
             )
@@ -1452,7 +1503,9 @@ class RsMacroCallStub(
         }
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsMacroCallStub(parentStub, this,
+            RsMacroCallStub(
+                parentStub,
+                this,
                 dataStream.readUTFFastAsNullable(),
                 dataStream.readHashCodeNullable(),
                 dataStream.readVarInt(),
@@ -1484,7 +1537,8 @@ class RsMacroCallStub(
 }
 
 class RsInnerAttrStub(
-    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+    parent: StubElement<*>?,
+    elementType: IStubElementType<*, *>
 ) : StubBase<RsInnerAttr>(parent, elementType) {
 
     object Type : RsStubElementType<RsInnerAttrStub, RsInnerAttr>("INNER_ATTR") {
@@ -1617,7 +1671,7 @@ object RsBlockStubType : RsPlaceholderStub.Type<RsBlock>("BLOCK", ::RsBlockImpl)
     // Avoid double lexing
     override fun reuseCollapsedTokens(): Boolean = true
 
-    private class BlockVisitor private constructor(): RecursiveTreeElementWalkingVisitor() {
+    private class BlockVisitor private constructor() : RecursiveTreeElementWalkingVisitor() {
         private var hasItemsOrAttrs = false
 
         override fun visitNode(element: TreeElement) {
@@ -1799,7 +1853,8 @@ class RsAssocTypeBindingStub(
 
     object Type : RsStubElementType<RsAssocTypeBindingStub, RsAssocTypeBinding>("ASSOC_TYPE_BINDING") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsAssocTypeBindingStub(parentStub, this,
+            RsAssocTypeBindingStub(
+                parentStub, this,
                 dataStream.readNameAsString()!!
             )
 
@@ -1825,7 +1880,8 @@ class RsPolyboundStub(
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsPolyboundStub(parentStub, this,
+            RsPolyboundStub(
+                parentStub, this,
                 dataStream.readBoolean()
             )
 
@@ -1848,16 +1904,15 @@ class RsVisStub(
 ) : StubBase<RsVis>(parent, elementType) {
 
     /** Equivalent of `RsVis.visRestriction.path` */
-    val visRestrictionPath: RsPathStub? get() {
-        val visRestriction = findChildStubByType(RsStubElementTypes.VIS_RESTRICTION)
-        return visRestriction?.findChildStubByType(RsPathStub.Type)
-    }
+    val visRestrictionPath: RsPathStub?
+        get() {
+            val visRestriction = findChildStubByType(RsStubElementTypes.VIS_RESTRICTION)
+            return visRestriction?.findChildStubByType(RsPathStub.Type)
+        }
 
     object Type : RsStubElementType<RsVisStub, RsVis>("VIS") {
         override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?) =
-            RsVisStub(parentStub, this,
-                dataStream.readEnum()
-            )
+            RsVisStub(parentStub, this, dataStream.readEnum())
 
         override fun serialize(stub: RsVisStub, dataStream: StubOutputStream) =
             with(dataStream) {

@@ -43,7 +43,7 @@ class TyTypeParameter private constructor(
     }
 
     object Self : TypeParameter {
-        override val name: String? get() = "Self"
+        override val name: String get() = "Self"
     }
 
     data class Named(val parameter: RsTypeParameter) : TypeParameter {

@@ -7,6 +7,7 @@ package org.rust.cargo.toolchain.impl
 
 import com.google.gson.annotations.SerializedName
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -26,7 +27,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
 
-private val LOG = Logger.getInstance(CargoMetadata::class.java)
+private val LOG: Logger = logger<CargoMetadata>()
 
 /**
  * Classes mirroring JSON output of `cargo metadata`.
@@ -189,6 +190,7 @@ object CargoMetadata {
          *
          * See [docs](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#the-required-features-field)
          */
+        @Suppress("KDocUnresolvedReference")
         @SerializedName("required-features")
         val required_features: List<String>?
     ) {
@@ -277,10 +279,11 @@ object CargoMetadata {
         val name: String?,
 
         /**
-         * Used to distinguish `[dependencies]`, [dev-dependencies]` and `[build-dependencies]`.
+         * Used to distinguish `[dependencies]`, `[dev-dependencies]` and `[build-dependencies]`.
          * It's a list because a dependency can be used in both `[dependencies]` and `[build-dependencies]`.
          * `null` on old cargo only.
          */
+        @Suppress("KDocUnresolvedReference")
         val dep_kinds: List<DepKindInfo>?
     )
 
@@ -308,7 +311,7 @@ object CargoMetadata {
         val variables = PackageVariables.from(buildPlan)
         val packageIdToNode = project.resolve.nodes.associateBy { it.id }
         return CargoWorkspaceData(
-            project.packages.mapNotNull { pkg ->
+            project.packages.map { pkg ->
                 // resolve contains all enabled features for each package
                 val resolveNode = packageIdToNode[pkg.id]
                 if (resolveNode == null) {
@@ -341,7 +344,7 @@ object CargoMetadata {
         variables: PackageVariables,
         enabledFeatures: Set<String>,
         buildMessages: List<CompilerMessage>
-    ): CargoWorkspaceData.Package? {
+    ): CargoWorkspaceData.Package {
         val rootPath = PathUtil.getParentPath(manifest_path)
         val root = fs.refreshAndFindFileByPath(rootPath)
             ?.let { if (isWorkspaceMember) it else it.canonicalFile }

@@ -74,7 +74,7 @@ class HintLine(
     val presentText: String,
     private val ranges: List<TextRange>
 ) {
-    fun getRange(index: Int): TextRange = if (index !in 0 until ranges.size) TextRange.EMPTY_RANGE else ranges[index]
+    fun getRange(index: Int): TextRange = if (index !in ranges.indices) TextRange.EMPTY_RANGE else ranges[index]
 }
 
 /**

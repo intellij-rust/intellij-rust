@@ -98,7 +98,7 @@ import org.rust.stdext.intersects
 //     a code fragment in a temporary file and attaching it to some existing file. See the usages of
 //     [RsCodeFragmentFactory]
 
-private val LOG = Logger.getInstance("org.rust.lang.core.resolve.NameResolution")
+private val LOG: Logger = Logger.getInstance("org.rust.lang.core.resolve.NameResolution")
 
 fun processDotExprResolveVariants(
     lookup: ImplLookup,
@@ -617,7 +617,7 @@ private fun processTypeQualifiedPathResolveVariants(
             if (isAppropriateTrait) processor(e) else false
         }
     } else {
-        createProcessorGeneric<AssocItemScopeEntry>(processor.name) { e ->
+        createProcessorGeneric(processor.name) { e ->
             if (e.element is RsTypeAlias && baseTy is TyTypeParameter &&
                 e.source is TraitImplSource.ExplicitImpl) {
                 NameResolutionTestmarks.skipAssocTypeFromImpl.hit()
@@ -1220,6 +1220,7 @@ private fun List<RsMacro>.toScopeEntries(): List<ScopeEntry> =
  * Returns list of re-exported macros via `[macro_reexport]` attribute from given extern crate
  * or null if extern crate item doesn't have `[macro_reexport]` attribute
  */
+@Suppress("KDocUnresolvedReference")
 private fun reexportedMacros(item: RsExternCrateItem): List<RsMacro>? {
     val macroReexportAttr = item.findOuterAttr("macro_reexport") ?: return null
     val exportingMacroNames = macroReexportAttr

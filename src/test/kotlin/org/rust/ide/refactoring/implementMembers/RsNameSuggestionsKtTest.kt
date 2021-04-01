@@ -67,7 +67,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             let b = String:/*caret*/:new();
         }
     """,
-        listOf()
+        emptyList()
     )
 
     fun `test function call as argument`() = doTest("""
@@ -118,7 +118,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             (1, 2, 3)/*caret*/
         }
     """,
-        listOf()
+        emptyList()
     )
 
     fun `test don't blow up on non-trivial parameter name`() = doTest("""
@@ -127,7 +127,7 @@ class RsNameSuggestionsKtTest : RsTestBase() {
             foo((0, /*caret*/ 1))
         }
     """,
-        listOf()
+        emptyList()
     )
 
     private fun doTest(@Language("Rust") before: String, expected: List<String>) {

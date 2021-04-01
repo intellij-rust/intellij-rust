@@ -72,7 +72,7 @@ fun Matrix.isWellTyped(): Boolean {
 /**
  * The type of the first column of the matrix
  *
- * @return [null] in case of empty matrix
+ * @return `null` in case of empty matrix
  * @throws [CheckMatchException] if the patterns in the first column have different types
  */
 val Matrix.firstColumnType: Ty?

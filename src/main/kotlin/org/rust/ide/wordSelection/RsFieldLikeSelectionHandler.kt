@@ -20,7 +20,7 @@ import org.rust.lang.core.psi.ext.startOffset
 class RsFieldLikeSelectionHandler : ExtendWordSelectionHandlerBase() {
     override fun canSelect(e: PsiElement): Boolean = isFieldLikeDecl(e)
 
-    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
+    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange> {
         val start = e.startOffset
         var end = e.endOffset
 

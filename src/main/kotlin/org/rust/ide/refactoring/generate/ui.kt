@@ -14,7 +14,6 @@ import com.intellij.openapiext.isUnitTestMode
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.psi.RsStructItem
-import org.rust.lang.core.types.Substitution
 
 private var MOCK: StructMemberChooserUi? = null
 
@@ -50,7 +49,7 @@ class RsStructMemberChooserObject(
 ) : MemberChooserObjectBase(member.dialogRepresentation, RsIcons.FIELD),
     ClassMember {
 
-    override fun getParentNodeDelegate(): MemberChooserObject? = base
+    override fun getParentNodeDelegate(): MemberChooserObject = base
     override fun equals(other: Any?): Boolean = member == (other as? RsStructMemberChooserObject)?.member
     override fun hashCode() = text.hashCode()
 }

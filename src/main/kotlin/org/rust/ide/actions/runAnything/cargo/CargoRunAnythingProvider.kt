@@ -37,7 +37,7 @@ class CargoRunAnythingProvider : RsRunAnythingProvider() {
 
     override fun getIcon(value: String): Icon = CargoIcons.ICON
 
-    override fun getCompletionGroupTitle(): String = "Cargo commands"
+    override fun getCompletionGroupTitle(): String = "Cargo Commands"
 
     override fun getHelpGroupTitle(): String = "Cargo"
 

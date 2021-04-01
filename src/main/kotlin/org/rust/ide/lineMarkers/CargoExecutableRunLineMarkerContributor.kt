@@ -9,7 +9,6 @@ import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
-import com.intellij.util.Function
 import org.rust.cargo.runconfig.command.CargoExecutableRunConfigurationProducer
 import org.rust.lang.core.psi.RsElementTypes.IDENTIFIER
 import org.rust.lang.core.psi.RsFunction
@@ -24,9 +23,8 @@ class CargoExecutableRunLineMarkerContributor : RunLineMarkerContributor() {
         val actions = ExecutorAction.getActions(0)
         return Info(
             AllIcons.RunConfigurations.TestState.Run,
-            Function<PsiElement, String> { psiElement ->
-                actions.mapNotNull { getText(it, psiElement) }.joinToString("\n")
-            },
-            *actions)
+            { psiElement -> actions.mapNotNull { getText(it, psiElement) }.joinToString("\n") },
+            *actions
+        )
     }
 }

@@ -65,7 +65,7 @@ fun Ty.getTypeParameter(name: String): TyTypeParameter? {
 }
 
 /**
- * See [org.rust.lang.core.type.RsImplicitTraitsTest]
+ * See `org.rust.lang.core.type.RsImplicitTraitsTest`
  */
 fun Ty.isSized(): Boolean {
     val ancestors = mutableSetOf(this)
@@ -124,18 +124,6 @@ class TypeIterator(root: Ty) : Iterator<Ty> {
         pushSubTypes(stack, ty)
         return ty
     }
-
-    fun skipCurrentSubtree() {
-        while (stack.size > lastSubtreeSize) {
-            stack.pop()
-        }
-    }
-}
-
-fun Ty.walkShallow(): Iterator<Ty> {
-    val stack = dequeOf<Ty>()
-    pushSubTypes(stack, this)
-    return stack.iterator()
 }
 
 private fun pushSubTypes(stack: Deque<Ty>, parentTy: Ty) {
@@ -174,8 +162,8 @@ fun Ty.builtinDeref(explicit: Boolean = true): Pair<Ty, Mutability>? =
     }
 
 tailrec fun Ty.stripReferences(): Ty =
-    when {
-        this is TyReference -> referenced.stripReferences()
+    when (this) {
+        is TyReference -> referenced.stripReferences()
         else -> this
     }
 

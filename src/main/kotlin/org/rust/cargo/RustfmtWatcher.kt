@@ -50,7 +50,7 @@ class RustfmtWatcher {
         return documentsToReformatLater.add(document)
     }
 
-    private class RustfmtListener : FileDocumentManagerListener {
+    class RustfmtListener : FileDocumentManagerListener {
 
         override fun beforeAllDocumentsSaving() {
             val documentsToReformatLater = getInstanceIfCreated()?.documentsToReformatLater

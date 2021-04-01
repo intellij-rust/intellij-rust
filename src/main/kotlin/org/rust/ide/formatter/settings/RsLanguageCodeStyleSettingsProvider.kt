@@ -124,7 +124,7 @@ class RsLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvider() 
         }
     }
 
-    override fun getIndentOptionsEditor(): IndentOptionsEditor? = SmartIndentOptionsEditor()
+    override fun getIndentOptionsEditor(): IndentOptionsEditor = SmartIndentOptionsEditor()
 
     override fun customizeDefaults(commonSettings: CommonCodeStyleSettings, indentOptions: CommonCodeStyleSettings.IndentOptions) {
         commonSettings.RIGHT_MARGIN = 100

@@ -14,8 +14,6 @@ import org.rust.lang.core.psi.ext.namedFields
 import org.rust.lang.core.psi.ext.positionalFields
 import org.rust.lang.core.psi.substAndGetText
 import org.rust.lang.core.types.Substitution
-import org.rust.lang.core.types.ty.TyUnit
-import org.rust.lang.core.types.type
 
 data class StructMember(
     val argumentIdentifier: String,

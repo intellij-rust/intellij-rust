@@ -6,7 +6,6 @@
 package org.rust.lang.core.types.infer
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Computable
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.util.CachedValueProvider
@@ -31,7 +30,7 @@ fun inferTypesIn(element: RsInferenceContextOwner): RsInferenceResult {
     val items = element.knownItems
     val paramEnv = if (element is RsGenericDeclaration) ParamEnv.buildFor(element) else ParamEnv.EMPTY
     val lookup = ImplLookup(element.project, element.cargoProject, items, paramEnv)
-    return recursionGuard(element, Computable { lookup.ctx.infer(element) }, memoize = false)
+    return recursionGuard(element, { lookup.ctx.infer(element) }, memoize = false)
         ?: error("Can not run nested type inference")
 }
 
@@ -203,8 +202,10 @@ class RsInferenceContext(
                         }
                         null to element.expr
                     }
-                    else -> error("Type inference is not implemented for PSI element of type " +
-                        "`${element.javaClass}` that implement `RsInferenceContextOwner`")
+                    else -> error(
+                        "Type inference is not implemented for PSI element of type " +
+                            "`${element.javaClass}` that implement `RsInferenceContextOwner`"
+                    )
                 }
                 if (expr != null) {
                     RsTypeInferenceWalker(this, retTy ?: TyUnknown).inferLambdaBody(expr)
@@ -340,7 +341,7 @@ class RsInferenceContext(
         pathRefinements.add(Pair(path, traitRef))
     }
 
-    fun registerMethodRefinement(path: RsMethodCall, traitRef: TraitRef) {
+    private fun registerMethodRefinement(path: RsMethodCall, traitRef: TraitRef) {
         methodRefinements.add(Pair(path, traitRef))
     }
 
@@ -602,7 +603,7 @@ class RsInferenceContext(
      * Similar to [fullyResolve], but replaces unresolved [TyInfer.TyVar] to its [TyInfer.TyVar.origin]
      * instead of [TyUnknown]
      */
-    fun <T : TypeFoldable<T>> fullyResolveWithOrigins(value: T): T {
+    private fun <T : TypeFoldable<T>> fullyResolveWithOrigins(value: T): T {
         return value.foldWith(fullTypeWithOriginsResolver)
     }
 

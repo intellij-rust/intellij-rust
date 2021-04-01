@@ -99,7 +99,7 @@ class RsMoveTopLevelItemsProcessor(
     override fun createUsageViewDescriptor(usages: Array<out UsageInfo>): UsageViewDescriptor =
         MoveMultipleElementsViewDescriptor(itemsToMove.toTypedArray(), targetMod.name ?: "")
 
-    override fun getCommandName(): String = "Move items"
+    override fun getCommandName(): String = "Move Items"
 }
 
 private val RsMod.lastChildInner: PsiElement? get() = if (this is RsModItem) rbrace?.prevSibling else lastChild

@@ -10,18 +10,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.psi.ext.LogicOp.*
+import org.rust.lang.core.psi.ext.LogicOp.AND
+import org.rust.lang.core.psi.ext.LogicOp.OR
 import org.rust.lang.utils.isNegation
 import org.rust.lang.utils.negateToString
 
 class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention.Context>() {
-    override fun getFamilyName() = "DeMorgan's Law"
+    override fun getFamilyName() = "DeMorgan's law"
 
     private fun setTextForElement(element: RsBinaryExpr) {
-        val binaryExpression = element
-        text = when (binaryExpression.operatorType) {
-            AND -> "DeMorgan's Law, Replace '&&' with '||'"
-            OR -> "DeMorgan's Law, Replace '||' with '&&'"
+        text = when (element.operatorType) {
+            AND -> "DeMorgan's law, replace '&&' with '||'"
+            OR -> "DeMorgan's law, replace '||' with '&&'"
             else -> ""
         }
     }
@@ -48,8 +48,8 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
         var isAllSameOpType = true
         while (topBinExpr.parent is RsBinaryExpr
             || (topBinExpr.parent is RsParenExpr
-            && topBinExpr.parent.parent.isNegation()
-            && topBinExpr.parent.parent.parent is RsBinaryExpr)) {
+                && topBinExpr.parent.parent.isNegation()
+                && topBinExpr.parent.parent.parent is RsBinaryExpr)) {
             topBinExpr = if (topBinExpr.parent is RsBinaryExpr) topBinExpr.parent as RsBinaryExpr else topBinExpr.parent.parent.parent as RsBinaryExpr
             isAllSameOpType = topBinExpr.parent is RsBinaryExpr && topBinExpr.operatorType == opType
         }
@@ -89,26 +89,25 @@ class DemorgansLawIntention : RsElementBaseIntentionAction<DemorgansLawIntention
 
     private fun convertLeafExpression(condition: RsExpr): String {
         if (condition.isNegation()) {
-            val negated = (condition as RsUnaryExpr).expr ?: return ""
-            return negated.text
-        } else {
-            if (condition is RsParenExpr) {
+            return (condition as RsUnaryExpr).expr?.text ?: ""
+        }
+
+        return when (condition) {
+            is RsParenExpr -> {
                 var c = condition.expr
                 var level = 1
                 while (c is RsParenExpr) {
                     level += 1
                     c = c.expr
                 }
-                return if (c is RsBinaryExpr && c.operatorType !is LogicOp) {
+                if (c is RsBinaryExpr && c.operatorType !is LogicOp) {
                     "${"(".repeat(level)}${c.negateToString()}${")".repeat(level)}"
                 } else {
                     "!" + condition.text
                 }
-            } else if (condition is RsBinaryExpr) {
-                return condition.negateToString()
-            } else {
-                return "!" + condition.text
             }
+            is RsBinaryExpr -> condition.negateToString()
+            else -> "!" + condition.text
         }
     }
 

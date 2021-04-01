@@ -6,6 +6,7 @@
 package org.rust.cargo.project.toolwindow
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.treeStructure.SimpleTree
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.toolwindow.CargoProjectTreeStructure.CargoSimpleNode
@@ -50,7 +51,7 @@ class CargoProjectsTree : SimpleTree() {
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(CargoProjectsTree::class.java)
+        private val LOG: Logger = logger<CargoProjectsTree>()
     }
 }
 

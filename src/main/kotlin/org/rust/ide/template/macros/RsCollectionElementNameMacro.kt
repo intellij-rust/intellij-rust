@@ -41,25 +41,25 @@ class RsCollectionElementNameMacro : MacroBase("rustCollectionElementName", "rus
         }
 
         val name = unpluralize(param) ?: return null
-        if (RsNamesValidator().isIdentifier(name, context.project)) {
-            return TextResult(name)
+        return if (RsNamesValidator().isIdentifier(name, context.project)) {
+            TextResult(name)
         } else {
-            return null
+            null
         }
     }
 
     override fun calculateLookupItems(params: Array<out Expression>, context: ExpressionContext): Array<out LookupElement>? {
         val result = calculateResult(params, context) ?: return null
         val words = result.toString().split('_')
-        if (words.size > 1) {
+        return if (words.size > 1) {
             val lookups = mutableListOf<LookupElement>()
             for (i in words.indices) {
                 val element = words.subList(i, words.size).joinToString("_")
                 lookups.add(LookupElementBuilder.create(element))
             }
-            return lookups.toTypedArray()
+            lookups.toTypedArray()
         } else {
-            return null
+            null
         }
     }
 

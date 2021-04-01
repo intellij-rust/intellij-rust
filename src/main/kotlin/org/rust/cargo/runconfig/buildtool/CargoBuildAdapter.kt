@@ -17,7 +17,6 @@ import com.intellij.execution.process.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbService
@@ -50,7 +49,7 @@ class CargoBuildAdapter(
         buildContentDescriptor.isActivateToolWindowWhenAdded = activateToolWindow
         buildContentDescriptor.isActivateToolWindowWhenFailed = activateToolWindow
 
-        val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo command", context.workingDirectory.toString(), context.started)
+        val descriptor = DefaultBuildDescriptor(context.buildId, "Run Cargo Command", context.workingDirectory.toString(), context.started)
             .withContentDescriptor { buildContentDescriptor }
             .withRestartAction(createRerunAction(processHandler, context.environment))
             .withRestartAction(createStopAction(processHandler))

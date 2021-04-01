@@ -18,11 +18,11 @@ import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
 object VfsInternals {
-    /** [com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.MUST_RELOAD_CONTENT] */
+    /** [com.intellij.openapi.vfs.newvfs.persistent.PersistentFS.Flags.MUST_RELOAD_CONTENT] */
     @VisibleForTesting
     val MUST_RELOAD_CONTENT: Int = 0x08
 
-    /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.getContentHashDigest] */
+    /** [com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor.getContentHashDigest] */
     private fun getContentHashDigest(): MessageDigest = DigestUtil.sha1()
 
     @VisibleForTesting
@@ -42,7 +42,7 @@ object VfsInternals {
     fun getContentHashIfStored(file: VirtualFile): HashCode? =
         PersistentFSImpl.getContentHashIfStored(file)?.let { HashCode.fromByteArray(it) }
 
-    /** [com.intellij.openapi.vfs.newvfs.persistent.FSRecords.calculateHash] */
+    /** [com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor.calculateHash] */
     fun calculateContentHash(fileContent: ByteArray): HashCode {
         val digest = getContentHashDigest()
         digest.update(fileContent.size.toString().toByteArray(StandardCharsets.UTF_8))

@@ -25,8 +25,8 @@ open class RustupTestFixture(
 ) : BaseFixture() {
 
     val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
-    val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
     val stdlib: VirtualFile? by lazy { (rustup?.downloadStdlib() as? DownloadResult.Ok)?.value }
+    private val rustup: Rustup? by lazy { toolchain?.rustup(Paths.get(".")) }
 
     open val skipTestReason: String?
         get() {

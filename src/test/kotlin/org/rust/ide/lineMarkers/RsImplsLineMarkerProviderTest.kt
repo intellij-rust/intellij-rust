@@ -8,9 +8,6 @@ package org.rust.ide.lineMarkers
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.psi.PsiElement
 import org.intellij.lang.annotations.Language
-import java.awt.event.MouseEvent
-import javax.swing.JLabel
-
 
 class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
 
@@ -68,6 +65,7 @@ class RsImplsLineMarkerProviderTest : RsLineMarkerProviderTestBase() {
     private fun doPopupTest(@Language("Rust") code: String, vararg expectedItems: String) {
         InlineFile(code)
         val element = myFixture.file.findElementAt(myFixture.caretOffset)!!
+
         @Suppress("UNCHECKED_CAST")
         val markerInfo = (myFixture.findGuttersAtCaret().first() as LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>).lineMarkerInfo
         markerInfo.invokeNavigationHandler(element)

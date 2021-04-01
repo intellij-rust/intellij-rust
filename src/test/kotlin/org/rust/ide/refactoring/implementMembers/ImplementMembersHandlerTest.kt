@@ -70,10 +70,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f1()", true, true),
-        ImplementMemberSelection("f2()", true, false),
-        ImplementMemberSelection("f3()", false, false),
-        ImplementMemberSelection("f4()", false, true)
+        ImplementMemberSelection("f1()", byDefault = true, isSelected = true),
+        ImplementMemberSelection("f2()", byDefault = true, isSelected = false),
+        ImplementMemberSelection("f3()", byDefault = false, isSelected = false),
+        ImplementMemberSelection("f4()", byDefault = false, isSelected = true)
     ), """
         trait T {
             fn f1();
@@ -104,7 +104,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> (R, R)", true, true)
+        ImplementMemberSelection("f() -> (R, R)", byDefault = true, isSelected = true)
     ), """
         use a::{T, R};
         mod a {
@@ -133,7 +133,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> (R, U)", true, true)
+        ImplementMemberSelection("f() -> (R, U)", byDefault = true, isSelected = true)
     ), """
         use a::{T, R, U};
         mod a {
@@ -165,7 +165,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<i32> for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> U<P>", true, true)
+        ImplementMemberSelection("f() -> U<P>", byDefault = true, isSelected = true)
     ), """
         use a::{T, U};
         mod a {
@@ -194,7 +194,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f() -> (R, U)", true, true)
+        ImplementMemberSelection("f() -> (R, U)", byDefault = true, isSelected = true)
     ), """
         pub struct R;
         pub type U = R;
@@ -216,7 +216,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("call(handler: extern fn(flag: bool))", true, true)
+        ImplementMemberSelection("call(handler: extern fn(flag: bool))", byDefault = true, isSelected = true)
     ), """
         trait T {
             fn call(handler: extern fn(flag: bool));
@@ -236,7 +236,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<fn(), extern fn(), fn(bool)> for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("call(z: Z, x: X, y: Y)", true, true)
+        ImplementMemberSelection("call(z: Z, x: X, y: Y)", byDefault = true, isSelected = true)
     ), """
         trait T<X, Y, Z> {
             fn call(z: Z, x: X, y: Y);
@@ -256,7 +256,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("call(handler: P)", true, true)
+        ImplementMemberSelection("call(handler: P)", byDefault = true, isSelected = true)
     ), """
         trait T<P = extern fn()> {
             fn call(handler: P);
@@ -276,7 +276,7 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T<extern fn(bool)> for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("call(handler: P)", true, true)
+        ImplementMemberSelection("call(handler: P)", byDefault = true, isSelected = true)
     ), """
         trait T<P = extern fn()> {
             fn call(handler: P);
@@ -299,10 +299,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f1()", true, true),
-        ImplementMemberSelection("f2()", true, false),
-        ImplementMemberSelection("f3()", false, false),
-        ImplementMemberSelection("f4()", false, true)
+        ImplementMemberSelection("f1()", byDefault = true, isSelected = true),
+        ImplementMemberSelection("f2()", byDefault = true, isSelected = false),
+        ImplementMemberSelection("f3()", byDefault = false, isSelected = false),
+        ImplementMemberSelection("f4()", byDefault = false, isSelected = true)
     ), """
         trait T {
             unsafe fn f1();
@@ -332,10 +332,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("f1()", true, true),
-        ImplementMemberSelection("f2()", true, false),
-        ImplementMemberSelection("f3()", false, false),
-        ImplementMemberSelection("f4()", false, true)
+        ImplementMemberSelection("f1()", byDefault = true, isSelected = true),
+        ImplementMemberSelection("f2()", byDefault = true, isSelected = false),
+        ImplementMemberSelection("f3()", byDefault = false, isSelected = false),
+        ImplementMemberSelection("f4()", byDefault = false, isSelected = true)
     ), """
         trait T {
             async fn f1();
@@ -413,10 +413,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("T1", true, true),
-        ImplementMemberSelection("T2", true, false),
-        ImplementMemberSelection("T3", false, false),
-        ImplementMemberSelection("T4", false, true)
+        ImplementMemberSelection("T1", byDefault = true, isSelected = true),
+        ImplementMemberSelection("T2", byDefault = true, isSelected = false),
+        ImplementMemberSelection("T3", byDefault = false, isSelected = false),
+        ImplementMemberSelection("T4", byDefault = false, isSelected = true)
     ), """
         trait T {
             type T1;
@@ -441,10 +441,10 @@ class ImplementMembersHandlerTest : RsTestBase() {
         struct S;
         impl T for S {/*caret*/}
     """, listOf(
-        ImplementMemberSelection("C1: i32", true, true),
-        ImplementMemberSelection("C2: f64", true, false),
-        ImplementMemberSelection("C3: &'static str", false, false),
-        ImplementMemberSelection("C4: &'static str", false, true)
+        ImplementMemberSelection("C1: i32", byDefault = true, isSelected = true),
+        ImplementMemberSelection("C2: f64", byDefault = true, isSelected = false),
+        ImplementMemberSelection("C3: &'static str", byDefault = false, isSelected = false),
+        ImplementMemberSelection("C4: &'static str", byDefault = false, isSelected = true)
     ), """
         trait T {
             const C1: i32;
@@ -785,8 +785,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
             /*caret*/
         }
     """, listOf(
-        ImplementMemberSelection("f2()", true, true),
-        ImplementMemberSelection("f3()", false, false)
+        ImplementMemberSelection("f2()", byDefault = true, isSelected = true),
+        ImplementMemberSelection("f3()", byDefault = false, isSelected = false)
     ), """
         trait T {
             fn f1();
@@ -814,8 +814,8 @@ class ImplementMembersHandlerTest : RsTestBase() {
             fn f2() { }/*caret*/
         }
     """, listOf(
-        ImplementMemberSelection("f1()", true, true),
-        ImplementMemberSelection("f3()", false, false)
+        ImplementMemberSelection("f1()", byDefault = true, isSelected = true),
+        ImplementMemberSelection("f3()", byDefault = false, isSelected = false)
     ), """
         trait T {
             fn f1();

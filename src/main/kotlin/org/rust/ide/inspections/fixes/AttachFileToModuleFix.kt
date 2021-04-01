@@ -127,7 +127,7 @@ private fun selectModule(file: RsFile, availableModules: List<RsFile>): RsFile? 
         }
     }
 
-    val dialog = dialog("Select a module", panel {
+    val dialog = dialog("Select a Module", panel {
         row { box(CCFlags.growX) }
     }, focusedComponent = box)
 

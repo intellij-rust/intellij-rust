@@ -12,7 +12,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.Disposer
@@ -85,7 +84,8 @@ fun pathTextField(
 ): TextFieldWithBrowseButton {
 
     val component = TextFieldWithBrowseButton(null, disposable)
-    component.addBrowseFolderListener(title, null, null,
+    component.addBrowseFolderListener(
+        title, null, null,
         fileChooserDescriptor,
         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
     )
@@ -105,17 +105,6 @@ class CheckboxDelegate(private val checkbox: JBCheckBox) {
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Boolean) {
         checkbox.isSelected = value
-    }
-}
-
-class ComboBoxDelegate<E>(private val checkbox: ComboBox<E>) {
-    @Suppress("UNCHECKED_CAST")
-    operator fun getValue(thisRef: Any?, property: KProperty<*>): E {
-        return checkbox.selectedItem as E
-    }
-
-    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: E) {
-        checkbox.selectedItem = value
     }
 }
 

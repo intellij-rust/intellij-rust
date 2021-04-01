@@ -62,8 +62,6 @@ val LifetimeName.isElided: Boolean
         is LifetimeName.Parameter, LifetimeName.Static -> false
     }
 
-val LifetimeName.isStatic: Boolean get() = this == LifetimeName.Static
-
 val RsLifetime?.typedName: LifetimeName
     get() {
         return when (val text = this?.referenceName) {
@@ -75,5 +73,3 @@ val RsLifetime?.typedName: LifetimeName
     }
 
 val RsLifetime?.isElided: Boolean get() = typedName.isElided
-
-val RsLifetime?.isStatic: Boolean get() = typedName.isStatic

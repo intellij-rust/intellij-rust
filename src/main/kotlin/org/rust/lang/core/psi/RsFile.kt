@@ -11,7 +11,6 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.io.FileUtil
@@ -55,8 +54,7 @@ import org.rust.openapiext.toPsiFile
  * The problem was because old [RsFile.getOriginalFile] casted `super.getOriginalFile()` to [RsFile],
  * but after manual [RsCodeFragment] copying new [RsFile] has [RsCodeFragment] as original file.
  */
-abstract class RsFileBase(fileViewProvider: FileViewProvider)
-    : PsiFileBase(fileViewProvider, RsLanguage), RsInnerAttributeOwner {
+abstract class RsFileBase(fileViewProvider: FileViewProvider) : PsiFileBase(fileViewProvider, RsLanguage), RsInnerAttributeOwner {
 
     override fun getReference(): RsReference? = null
 
@@ -95,7 +93,7 @@ class RsFile(
                 CACHED_DATA_KEY to ModificationTracker.NEVER_CHANGED
             }
             return CachedValuesManager.getCachedValue(this, key) {
-                val value = recursionGuard(Pair(key, this), Computable { doGetCachedData() }) ?: EMPTY_CACHED_DATA
+                val value = recursionGuard(Pair(key, this), { doGetCachedData() }) ?: EMPTY_CACHED_DATA
                 CachedValueProvider.Result(value, rustStructureOrAnyPsiModificationTracker, cacheDependency)
             }
         }
@@ -181,9 +179,11 @@ class RsFile(
 
     // We can't just return file name here because
     // if mod declaration has `path` attribute file name differs from mod name
-    override val modName: String? get() {
-        return declaration?.name ?: if (name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(name) else parent?.name
-    }
+    override val modName: String?
+        get() {
+            return declaration?.name
+                ?: if (name != RsConstants.MOD_RS_FILE) FileUtil.getNameWithoutExtension(name) else parent?.name
+        }
 
     override val pathAttribute: String?
         get() = declaration?.pathAttribute
@@ -200,15 +200,17 @@ class RsFile(
                 || file.isDoctestInjection(project)
         }
 
-    override val visibility: RsVisibility get() {
-        if (isCrateRoot) return RsVisibility.Public
-        return declaration?.visibility ?: RsVisibility.Private
-    }
+    override val visibility: RsVisibility
+        get() {
+            if (isCrateRoot) return RsVisibility.Public
+            return declaration?.visibility ?: RsVisibility.Private
+        }
 
-    override val isPublic: Boolean get() {
-        if (isCrateRoot) return true
-        return declaration?.isPublic ?: false
-    }
+    override val isPublic: Boolean
+        get() {
+            if (isCrateRoot) return true
+            return declaration?.isPublic ?: false
+        }
 
     val stdlibAttributes: Attributes
         get() = getStdlibAttributes(null)
@@ -231,28 +233,29 @@ class RsFile(
 
     val declaration: RsModDeclItem? get() = declarations.firstOrNull()
 
-    val declarations: List<RsModDeclItem> get() {
-        // XXX: without this we'll close over `thisFile`, and it's verboten
-        // to store references to PSI inside `CachedValueProvider` other than
-        // the key PSI element
-        val originalFile = originalFile as? RsFile ?: return emptyList()
+    val declarations: List<RsModDeclItem>
+        get() {
+            // XXX: without this we'll close over `thisFile`, and it's verboten
+            // to store references to PSI inside `CachedValueProvider` other than
+            // the key PSI element
+            val originalFile = originalFile as? RsFile ?: return emptyList()
 
-        val state = project.macroExpansionManagerIfCreated?.expansionState
-        // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
-        val (key, cacheDependency) = if (state != null) {
-            MOD_DECL_MACROS_KEY to state.stepModificationTracker
-        } else {
-            MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
+            val state = project.macroExpansionManagerIfCreated?.expansionState
+            // [RsModulesIndex.getDeclarationFor] behaves differently depending on whether macros are expanding
+            val (key, cacheDependency) = if (state != null) {
+                MOD_DECL_MACROS_KEY to state.stepModificationTracker
+            } else {
+                MOD_DECL_KEY to ModificationTracker.NEVER_CHANGED
+            }
+            return CachedValuesManager.getCachedValue(originalFile, key) {
+                val decl = if (originalFile.isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
+                CachedValueProvider.Result.create(
+                    decl,
+                    originalFile.rustStructureOrAnyPsiModificationTracker,
+                    cacheDependency
+                )
+            }
         }
-        return CachedValuesManager.getCachedValue(originalFile, key) {
-            val decl = if (originalFile.isCrateRoot) emptyList() else RsModulesIndex.getDeclarationsFor(originalFile)
-            CachedValueProvider.Result.create(
-                decl,
-                originalFile.rustStructureOrAnyPsiModificationTracker,
-                cacheDependency
-            )
-        }
-    }
 
     enum class Attributes {
         NO_CORE, NO_STD, NONE
@@ -299,6 +302,7 @@ private tailrec fun PsiElement.contextualFileAndIsEnabledByCfgOnThisWay(): Pair<
  * @return true if containing crate root is known for this element and this element is not excluded from
  * a project via `#[cfg]` attribute on some level (e.g. its parent module)
  */
+@Suppress("KDocUnresolvedReference")
 val RsElement.isValidProjectMember: Boolean
     get() {
         val (file, isEnabledByCfg) = contextualFileAndIsEnabledByCfgOnThisWay()

@@ -88,7 +88,7 @@ class RsNewProjectPanel(
     private val selectedTemplate: RsProjectTemplate
         get() = templateList.selectedValue
 
-    val templateToolbar: ToolbarDecorator = ToolbarDecorator.createDecorator(templateList)
+    private val templateToolbar: ToolbarDecorator = ToolbarDecorator.createDecorator(templateList)
         .setToolbarPosition(ActionToolbarPosition.BOTTOM)
         .setPreferredSize(JBUI.size(0, 125))
         .disableUpDownActions()
@@ -105,6 +105,8 @@ class RsNewProjectPanel(
         .setRemoveActionUpdater { selectedTemplate !in defaultTemplates }
 
     private var needInstallCargoGenerate = false
+
+    @Suppress("DialogTitleCapitalization")
     private val downloadCargoGenerateLink = Link("Install cargo-generate using Cargo") {
         val cargo = cargo ?: return@Link
 
@@ -149,7 +151,7 @@ class RsNewProjectPanel(
         rustProjectSettings.attachTo(this)
 
         if (showProjectTypeSelection) {
-            titledRow("Project template") {
+            titledRow("Project Template") {
                 subRowIndent = 0
                 row { templateToolbar.createPanel()(growX) }
                 row { downloadCargoGenerateLink() }
@@ -192,6 +194,7 @@ class RsNewProjectPanel(
         rustProjectSettings.validateSettings()
 
         if (needInstallCargoGenerate) {
+            @Suppress("DialogTitleCapitalization")
             throw ConfigurationException("cargo-generate is needed to create a project from a custom template")
         }
     }

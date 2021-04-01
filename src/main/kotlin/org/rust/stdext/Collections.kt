@@ -128,7 +128,7 @@ inline fun <T, R> Iterable<T>.mapToMutableList(transform: (T) -> R): MutableList
 inline fun <T, R> Iterable<T>.mapToSet(transform: (T) -> R): Set<R> =
     mapTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
 
-inline fun <T, R: Any> Iterable<T>.mapNotNullToSet(transform: (T) -> R?): Set<R> =
+inline fun <T, R : Any> Iterable<T>.mapNotNullToSet(transform: (T) -> R?): Set<R> =
     mapNotNullTo(HashSet(mapCapacity(collectionSizeOrDefault(10))), transform)
 
 fun <T> Set<T>.intersects(other: Iterable<T>): Boolean =
@@ -158,12 +158,10 @@ fun <T : Any> Iterator<T>.nextOrNull(): T? =
 
 fun <T> MutableList<T>.removeLast(): T = removeAt(size - 1)
 
-fun <T> dequeOf(): Deque<T> = ArrayDeque<T>()
-
 fun <T> dequeOf(vararg elements: T): Deque<T> =
     ArrayDeque<T>().apply { addAll(elements) }
 
-inline fun <reified T: Enum<T>> enumSetOf(): EnumSet<T> = EnumSet.noneOf(T::class.java)
+inline fun <reified T : Enum<T>> enumSetOf(): EnumSet<T> = EnumSet.noneOf(T::class.java)
 
 typealias LookbackValue<T> = Pair<T, T?>
 
@@ -190,14 +188,14 @@ private class LookbackIterator<T>(private val iterator: Iterator<T>) : Iterator<
 
 typealias WithNextValue<T> = Pair<T, T?>
 
-fun <T: Any> Sequence<T>.withNext(): Sequence<WithNextValue<T>> = WithNextSequence(this)
+fun <T : Any> Sequence<T>.withNext(): Sequence<WithNextValue<T>> = WithNextSequence(this)
 
-private class WithNextSequence<T: Any>(private val sequence: Sequence<T>) : Sequence<WithNextValue<T>> {
+private class WithNextSequence<T : Any>(private val sequence: Sequence<T>) : Sequence<WithNextValue<T>> {
 
     override fun iterator(): Iterator<WithNextValue<T>> = WithNextIterator(sequence.iterator())
 }
 
-private class WithNextIterator<T: Any>(private val iterator: Iterator<T>) : Iterator<WithNextValue<T>> {
+private class WithNextIterator<T : Any>(private val iterator: Iterator<T>) : Iterator<WithNextValue<T>> {
 
     private var next: T? = null
 
@@ -212,8 +210,4 @@ private class WithNextIterator<T: Any>(private val iterator: Iterator<T>) : Iter
         this.next = nextNext
         return WithNextValue(next, nextNext)
     }
-}
-
-fun <K, V> MutableMap<K, MutableList<V>>.putGrouped(key: K, value: V) {
-    getOrPut(key) { mutableListOf() }.add(value)
 }

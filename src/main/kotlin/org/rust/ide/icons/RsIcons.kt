@@ -57,7 +57,7 @@ object RsIcons {
     val FUNCTION = load("/icons/nodes/function.svg")
     val MACRO = AllIcons.General.ExclMark
 
-    val GLOBAL_BINDING = load("/icons/nodes/constant.svg")
+    private val GLOBAL_BINDING = load("/icons/nodes/constant.svg")
     val CONSTANT = GLOBAL_BINDING.addFinalMark()
     // TODO: look like we need separate icons for statics and constants
     val MUT_STATIC = GLOBAL_BINDING

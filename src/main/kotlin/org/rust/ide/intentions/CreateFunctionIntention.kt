@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentsOfType
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.presentation.renderInsertionSafe
 import org.rust.ide.utils.GenericConstraints
@@ -28,10 +27,11 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
     sealed class FunctionInsertionTarget {
         abstract val module: RsMod
 
-        class Module(val target: RsMod): FunctionInsertionTarget() {
+        class Module(val target: RsMod) : FunctionInsertionTarget() {
             override val module: RsMod = target
         }
-        class Item(val item: RsStructOrEnumItemElement): FunctionInsertionTarget() {
+
+        class Item(val item: RsStructOrEnumItemElement) : FunctionInsertionTarget() {
             override val module: RsMod = item.containingMod
         }
     }
@@ -65,8 +65,7 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
                 get() = super.implItem
         }
 
-        class Method(val methodCall: RsMethodCall, name: String, val item: RsStructOrEnumItemElement)
-            : Context(name, methodCall) {
+        class Method(val methodCall: RsMethodCall, name: String, val item: RsStructOrEnumItemElement) : Context(name, methodCall) {
             override val visibility: String
                 get() {
                     val parentImpl = methodCall.parentOfType<RsImplItem>()
@@ -267,8 +266,9 @@ class CreateFunctionIntention : RsElementBaseIntentionAction<CreateFunctionInten
             }
         }
 
-        val newImpl = RsPsiFactory(item.project).createInherentImplItem(item.name
-            ?: "?", item.typeParameterList, item.whereClause)
+        val newImpl = RsPsiFactory(item.project).createInherentImplItem(
+            item.name ?: "?", item.typeParameterList, item.whereClause
+        )
         return item.parent.addAfter(newImpl, item) as RsImplItem
     }
 }

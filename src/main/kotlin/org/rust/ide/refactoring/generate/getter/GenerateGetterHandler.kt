@@ -17,9 +17,6 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsStructItem
 import org.rust.lang.core.psi.ext.RsElement
-import org.rust.lang.core.psi.ext.RsVisibility
-import org.rust.lang.core.psi.ext.expandedMembers
-import org.rust.lang.core.psi.ext.isTupleStruct
 import org.rust.lang.core.resolve.knownItems
 import org.rust.lang.core.types.Substitution
 import org.rust.lang.core.types.implLookup

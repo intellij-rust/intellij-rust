@@ -81,7 +81,7 @@ class RsSuspiciousAssignmentInspection : RsLocalInspectionTool() {
     }
 
     private companion object {
-        val LONG_TEXT_THRESHOLD = 10
-        val LONG_TEXT_SUBST = ".."
+        const val LONG_TEXT_THRESHOLD: Int = 10
+        const val LONG_TEXT_SUBST: String = ".."
     }
 }

@@ -73,10 +73,10 @@ class RsEscapesLexer private constructor(
             when (bufferSequence[i]) {
                 'x' ->
                     if (bufferEnd - (i + 1) >= 1 && isHexDigit(bufferSequence[i + 1])) {
-                        if (bufferEnd - (i + 2) >= 1 && isHexDigit(bufferSequence[i + 2])) {
-                            return i + 2 + 1
+                        return if (bufferEnd - (i + 2) >= 1 && isHexDigit(bufferSequence[i + 2])) {
+                            i + 2 + 1
                         } else {
-                            return i + 1 + 1
+                            i + 1 + 1
                         }
                     }
                 'u' ->

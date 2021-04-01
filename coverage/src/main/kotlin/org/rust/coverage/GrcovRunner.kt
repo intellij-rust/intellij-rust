@@ -20,6 +20,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
@@ -79,7 +80,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(GrcovRunner::class.java)
+        private val LOG: Logger = logger<GrcovRunner>()
 
         const val RUNNER_ID: String = "GrcovRunner"
 
@@ -149,7 +150,7 @@ class GrcovRunner : RsDefaultProgramRunnerBase() {
             val option = Messages.showDialog(
                 project,
                 "Code coverage is available only with nightly toolchain",
-                "Unable to run with coverage",
+                "Unable to Run With Coverage",
                 arrayOf("Configure"),
                 Messages.OK,
                 Messages.getErrorIcon()

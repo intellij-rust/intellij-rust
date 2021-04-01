@@ -17,6 +17,8 @@ import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 
 class RsWithIfExpSurrounder : RsExpressionSurrounderBase<RsIfExpr>() {
+
+    @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String = "if expr"
 
     override fun createTemplate(project: Project): RsIfExpr =

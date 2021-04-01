@@ -9,6 +9,7 @@ import com.intellij.coverage.CoverageEngine
 import com.intellij.coverage.CoverageRunner
 import com.intellij.coverage.CoverageSuite
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapiext.isDispatchThread
 import com.intellij.rt.coverage.data.LineData
@@ -44,7 +45,7 @@ class RsCoverageRunner : CoverageRunner() {
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsCoverageRunner::class.java)
+        private val LOG: Logger = logger<RsCoverageRunner>()
 
         @Throws(IOException::class)
         private fun readProjectData(dataFile: File, coverageSuite: RsCoverageSuite): ProjectData? {

@@ -394,7 +394,7 @@ class DeclMacroDefInfo(
     val hasLocalInnerMacros: Boolean,
     val hasRustcBuiltinMacro: Boolean,
     project: Project,
-): MacroDefInfo() {
+) : MacroDefInfo() {
     /** Lazy because usually it should not be used (thanks to macro expansion cache) */
     val body: Lazy<RsMacroBody?> = lazy(LazyThreadSafetyMode.PUBLICATION) {
         val psiFactory = RsPsiFactory(project, markGenerated = false)
@@ -406,7 +406,7 @@ class ProcMacroDefInfo(
     override val crate: CratePersistentId,
     override val path: ModPath,
     val procMacroArtifact: CargoWorkspaceData.ProcMacroArtifact?,
-): MacroDefInfo()
+) : MacroDefInfo()
 
 class MacroCallInfo(
     val containingMod: ModData,

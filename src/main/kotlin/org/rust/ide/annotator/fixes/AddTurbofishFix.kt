@@ -10,12 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import org.rust.ide.intentions.RsElementBaseIntentionAction
-import org.rust.lang.core.psi.*
 import org.rust.lang.RsFileType
+import org.rust.lang.core.psi.RsBinaryExpr
+import org.rust.lang.core.psi.RsCallExpr
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsParenExpr
 import org.rust.lang.core.psi.ext.*
 
 class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() {
-    private val TURBOFISH = "::"
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {
         val (matchExpr, insertion) = ctx
@@ -65,7 +67,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
         val called = rightBoundary(nodes) ?: return null
         val typeListEndIndex = binary.textLength - called.textLength
 
-        val turbofish_offset = nodes.takeWhile { it != called }.map {
+        val turbofishOffset = nodes.takeWhile { it != called }.mapNotNull {
             val offset = innerOffset(binary, it)!! + it.textLength
             val typeListCandidate = binary.text.substring(offset, typeListEndIndex)
             if (isTypeArgumentList(project, typeListCandidate)) {
@@ -73,8 +75,8 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
             } else {
                 null
             }
-        }.filterNotNull().firstOrNull() ?: return null
-        return Context(binary, turbofish_offset)
+        }.firstOrNull() ?: return null
+        return Context(binary, turbofishOffset)
     }
 
     private fun rightBoundary(nodes: List<RsExpr>) = nodes.asReversed().firstOrNull { isCallExpression(it) }
@@ -87,7 +89,7 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
             is RsBinaryExpr -> {
                 bfsLeafs(expr.left) + bfsLeafs(expr.right)
             }
-            null -> listOf<RsExpr>()
+            null -> emptyList()
             else -> listOf(expr)
         }
     }
@@ -100,5 +102,9 @@ class AddTurbofishFix : RsElementBaseIntentionAction<AddTurbofishFix.Context>() 
     private inline fun <reified T : RsElement> createFromText(project: Project, code: String): T? =
         PsiFileFactory.getInstance(project)
             .createFileFromText("DUMMY.rs", RsFileType, code)
-            .descendantOfTypeStrict<T>()
+            .descendantOfTypeStrict()
+
+    companion object {
+        private const val TURBOFISH: String = "::"
+    }
 }

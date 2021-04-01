@@ -13,8 +13,8 @@ import java.nio.file.Paths
 
 object RsPathManager {
 
-    fun pluginDir(): Path = plugin().pluginPath
     fun prettyPrintersDir(): Path = pluginDir().resolve("prettyPrinters")
+    private fun pluginDir(): Path = plugin().pluginPath
 
     fun nativeHelper(): Path? {
         val (os, binaryName) = when {

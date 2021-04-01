@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-@file:Suppress("unused")
+@file:Suppress("unused", "MemberVisibilityCanBePrivate")
 
 package org.rust.stdext
 

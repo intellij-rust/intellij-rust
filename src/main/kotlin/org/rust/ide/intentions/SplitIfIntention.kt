@@ -19,7 +19,7 @@ import org.rust.lang.core.psi.ext.operatorType
 class SplitIfIntention : RsElementBaseIntentionAction<SplitIfIntention.Context>() {
 
     override fun getText(): String = "Split into 2 if's"
-    override fun getFamilyName(): String = "Split If"
+    override fun getFamilyName(): String = "Split if"
 
     data class Context(
         val binaryOp: RsBinaryOp,

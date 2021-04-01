@@ -56,7 +56,7 @@ open class Graph<N, E>(
             it.nextTargetEdge
         }
 
-    fun incidentEdges(node: Node<N, E>, direction: Direction): Sequence<Edge<N, E>> =
+    private fun incidentEdges(node: Node<N, E>, direction: Direction): Sequence<Edge<N, E>> =
         when (direction) {
             Direction.OUTGOING -> outgoingEdges(node)
             Direction.INCOMING -> incomingEdges(node)

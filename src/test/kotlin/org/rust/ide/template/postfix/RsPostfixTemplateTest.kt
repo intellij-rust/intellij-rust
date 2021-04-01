@@ -13,7 +13,7 @@ import org.intellij.lang.annotations.Language
 import org.rust.RsTestBase
 import org.rust.lang.RsLanguage
 
-abstract class RsPostfixTemplateTest(val postfixTemplate: PostfixTemplate) : RsTestBase() {
+abstract class RsPostfixTemplateTest(private val postfixTemplate: PostfixTemplate) : RsTestBase() {
 
     fun `test template has documentation`() {
         val description = "postfixTemplates/${postfixTemplate.javaClass.simpleName}/description.html"

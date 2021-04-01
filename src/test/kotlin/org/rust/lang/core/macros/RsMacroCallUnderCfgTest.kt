@@ -194,8 +194,8 @@ class RsMacroCallUnderCfgTest : RsTestBase() {
         return PsiTreeUtil.findChildrenOfAnyType(psi, RsMacroCall::class.java, RsModDeclItem::class.java)
             .flatMap {
                 when (it) {
-                    is RsMacroCall -> listOf(it) + (it.expansion?.let { collectMacroCallsRecursively(it.file) } ?: emptyList())
-                    is RsModDeclItem -> (it.reference.resolve() as? RsFile)?.let { collectMacroCallsRecursively(it) } ?: emptyList()
+                    is RsMacroCall -> listOf(it) + (it.expansion?.file?.let(::collectMacroCallsRecursively).orEmpty())
+                    is RsModDeclItem -> (it.reference.resolve() as? RsFile)?.let(::collectMacroCallsRecursively).orEmpty()
                     else -> error("impossible")
                 }
             }

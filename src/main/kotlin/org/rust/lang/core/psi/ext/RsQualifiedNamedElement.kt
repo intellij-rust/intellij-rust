@@ -6,6 +6,7 @@
 package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
@@ -165,6 +166,7 @@ data class RsQualifiedName private constructor(
         ) { element ->
             val qualifiedNamedItem = transform(element) ?: return@processElements true
             val withReexports = qualifiedNamedItem.withModuleReexports(project)
+            @Suppress("RemoveRedundantQualifierName")
             if (withReexports.any { RsQualifiedName.from(it) == this }) {
                 result = qualifiedNamedItem.item
                 return@processElements false
@@ -175,8 +177,7 @@ data class RsQualifiedName private constructor(
     }
 
     companion object {
-
-        private val LOG: Logger = Logger.getInstance(RsQualifiedName::class.java)
+        private val LOG: Logger = logger<RsQualifiedName>()
 
         @JvmStatic
         fun from(path: String): RsQualifiedName? {
@@ -245,7 +246,7 @@ data class RsQualifiedName private constructor(
             }
 
             val modSegments = if (parentType == PRIMITIVE || parentType == KEYWORD || parentType == MACRO) {
-                listOf()
+                emptyList()
             } else {
                 val parentElement = parentItem.element ?: return null
                 val mod = parentElement as? RsMod ?: parentElement.containingMod
@@ -440,6 +441,7 @@ data class RsQualifiedName private constructor(
         MACRO,
         PRIMITIVE,
         KEYWORD,
+
         // Synthetic types - rustdoc uses different links for mods and crates items
         // It generates `crateName/index.html` and `path/modName/index.html` links for crates and modules respectively
         // instead of `path/type.Name.html`
@@ -545,7 +547,7 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
     ) : QualifiedNamedItem(item) {
 
         override val isPublic: Boolean get() = true
-        override val superMods: List<ModWithName>? get() = reexportItem.containingMod.superMods.map { ModWithName(it) }
+        override val superMods: List<ModWithName> get() = reexportItem.containingMod.superMods.map { ModWithName(it) }
         override val containingCrate: Crate? get() = reexportItem.containingCrate
 
         companion object {
@@ -567,12 +569,13 @@ sealed class QualifiedNamedItem(val item: RsQualifiedNamedElement) {
         item: RsQualifiedNamedElement
     ) : QualifiedNamedItem(item) {
 
-        override val superMods: List<ModWithName>?
+        override val superMods: List<ModWithName>
             get() {
                 val mods = ArrayList(explicitSuperMods)
                 mods += reexportedModItem.superMods.orEmpty()
                 return mods
             }
+
         override val containingCrate: Crate? get() = reexportedModItem.containingCrate
     }
 

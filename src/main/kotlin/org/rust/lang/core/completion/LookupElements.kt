@@ -285,7 +285,7 @@ open class RsDefaultInsertHandler : InsertHandler<LookupElement> {
                     }
                     val caretShift = if (element.valueParameters.isEmpty() && (isMethodCall || !element.hasSelfParameters)) 2 else 1
                     EditorModificationUtil.moveCaretRelatively(context.editor, caretShift)
-                    if (!element.valueParameters.isEmpty()) {
+                    if (element.valueParameters.isNotEmpty()) {
                         AutoPopupController.getInstance(element.project)?.autoPopupParameterInfo(context.editor, element)
                     }
                 }

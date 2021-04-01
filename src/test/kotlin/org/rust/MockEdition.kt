@@ -6,13 +6,13 @@
 package org.rust
 
 import org.rust.cargo.project.model.CargoProject
+import org.rust.cargo.project.model.impl.TestCargoProjectsServiceImpl
 import org.rust.cargo.project.workspace.CargoWorkspace
-import org.rust.cargo.project.model.CargoProjectsService
 
 /**
  * Allows to set certain edition for all [CargoProject]s in test case.
  *
- * @see CargoProjectsService.setEdition
+ * @see TestCargoProjectsServiceImpl.setEdition
  */
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)
 @Retention(AnnotationRetention.RUNTIME)

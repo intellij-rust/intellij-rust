@@ -30,7 +30,7 @@ class RsGrammarCheckingStrategy : GrammarCheckingStrategy {
             .none { it.intersects(typoRange.first, typoRange.last) }
     }
 
-    override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup? = RuleGroup.LITERALS
+    override fun getIgnoredRuleGroup(root: PsiElement, child: PsiElement): RuleGroup = RuleGroup.LITERALS
 
     override fun getStealthyRanges(root: PsiElement, text: CharSequence): LinkedSet<IntRange> {
         val parent = root.parent

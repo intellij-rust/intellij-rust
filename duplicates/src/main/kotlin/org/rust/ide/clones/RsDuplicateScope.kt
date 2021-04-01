@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.TokenType
 import com.intellij.psi.tree.TokenSet
+import com.jetbrains.clones.configuration.DuplicateIndexConfiguration
 import com.jetbrains.clones.core.LighterAstNodeHashCache
 import com.jetbrains.clones.core.NodeHash
 import com.jetbrains.clones.core.longHash
@@ -136,6 +137,7 @@ class RsDuplicateScope : CommonDuplicateScope() {
         fun unorderedHash(): Long {
             return listOfNotNull(left, op, right).map { it.hash }.sorted().longHash()
         }
+
         fun orderedHashOf(left: NodeHash?, right: NodeHash?, sign: String): Long {
             return listOfNotNull(left?.hash, right?.hash, sign.hashCode().toLong()).longHash()
         }
@@ -153,11 +155,14 @@ class RsDuplicateScope : CommonDuplicateScope() {
 
         private const val VERSION: Int = 1
 
-        private val NOISE = TokenSet.orSet(RS_COMMENTS, tokenSetOf(
-            TokenType.WHITE_SPACE,
-            // Ignore trailing commas
-            COMMA
-        ))
+        private val NOISE = TokenSet.orSet(
+            RS_COMMENTS,
+            tokenSetOf(
+                TokenType.WHITE_SPACE,
+                // Ignore trailing commas
+                COMMA
+            )
+        )
         private val IGNORED = tokenSetOf(
             BLOCK,
             BLOCK_EXPR,

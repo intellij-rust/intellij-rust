@@ -63,7 +63,7 @@ class RsChainMethodTypeHintsProvider : InlayHintsProvider<RsChainMethodTypeHints
         editor: Editor,
         settings: Settings,
         sink: InlayHintsSink
-    ): InlayHintsCollector? =
+    ): InlayHintsCollector =
         object : FactoryInlayHintsCollector(editor) {
             val typeHintsFactory = RsTypeHintsPresentationFactory(factory, true)
 

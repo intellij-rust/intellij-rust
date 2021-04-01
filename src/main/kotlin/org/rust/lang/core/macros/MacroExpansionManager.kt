@@ -18,7 +18,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -71,6 +70,7 @@ interface MacroExpansionManager {
     val indexableDirectory: VirtualFile?
     fun getExpansionFor(call: RsMacroCall): CachedValueProvider.Result<MacroExpansion?>
     fun getExpandedFrom(element: RsExpandedElement): RsMacroCall?
+
     /** Optimized equivalent for `getExpandedFrom(element)?.context` */
     fun getContextOfMacroCallExpandedFrom(stubParent: RsFile): PsiElement?
     fun isExpansionFileOfCurrentProject(file: VirtualFile): Boolean
@@ -127,7 +127,9 @@ inline fun <T> MacroExpansionManager.withExpansionState(
     }
 }
 
-val MACRO_LOG = Logger.getInstance("org.rust.macros")
+@JvmField
+val MACRO_LOG: Logger = Logger.getInstance("org.rust.macros")
+
 // The path is visible in indexation progress
 const val MACRO_EXPANSION_VFS_ROOT = "rust_expanded_macros"
 private const val CORRUPTION_MARKER_NAME = "corruption.marker"
@@ -271,10 +273,10 @@ class MacroExpansionManagerImpl(
         impl.macroExpansionMode = mode
         val saveCacheOnDispose = cacheDirectory.isNotEmpty()
         val disposable = impl.setupForUnitTests(saveCacheOnDispose)
-        Disposer.register(disposable, Disposable {
+        Disposer.register(disposable) {
             this.inner = null
             this.dirs = null
-        })
+        }
         return disposable
     }
 
@@ -318,7 +320,7 @@ private class MacroExpansionServiceBuilder private constructor(
     private val dirs: Dirs,
     private val serStorage: SerializedExpandedMacroStorage?,
     private val expansionsDirVi: VirtualFile
-){
+) {
     fun buildInReadAction(project: Project): MacroExpansionServiceImplInner {
         val storage = serStorage?.deserializeInReadAction(project) ?: ExpandedMacroStorage(project)
         return MacroExpansionServiceImplInner(project, dirs, storage, expansionsDirVi)
@@ -352,7 +354,8 @@ private class MacroExpansionServiceBuilder private constructor(
             return try {
                 dataFile.newInflaterDataInputStream().use { data ->
                     val sems = SerializedExpandedMacroStorage.load(data) ?: return null
-                    val fs = MacroExpansionFileSystem.readFSItem(data, null) as? MacroExpansionFileSystem.FSItem.FSDir ?: return null
+                    val fs = MacroExpansionFileSystem.readFSItem(data, null) as? MacroExpansionFileSystem.FSItem.FSDir
+                        ?: return null
                     sems to fs
                 }
             } catch (e: java.nio.file.NoSuchFileException) {
@@ -449,11 +452,12 @@ private class MacroExpansionServiceImplInner(
     suspend fun save() {
         if (lastSavedStorageModCount == storage.modificationTracker.modificationCount) return
 
+        @Suppress("BlockingMethodInNonBlockingContext")
         withContext(Dispatchers.IO) { // ensure dispatcher knows we are doing blocking IO
             // Using a buffer to avoid IO in the read action
             // BACKCOMPAT: 2020.1 use async read action and extract `runReadAction` from `withContext`
             val (buffer, modCount) = runReadAction {
-                val buffer = BufferExposingByteArrayOutputStream(1024*1024) // average stdlib storage size
+                val buffer = BufferExposingByteArrayOutputStream(1024 * 1024) // average stdlib storage size
                 DataOutputStream(buffer).use { data ->
                     ExpandedMacroStorage.saveStorage(storage, data)
                     val dirToSave = MacroExpansionFileSystem.getInstance().getDirectory(dirs.expansionDirPath) ?: run {
@@ -559,12 +563,12 @@ private class MacroExpansionServiceImplInner(
             private fun findAndDeleteLeakedExpansionFiles() {
                 val toDelete = mutableListOf<VirtualFile>()
                 runReadAction {
-                    VfsUtil.iterateChildrenRecursively(expansionsDirVi, null, ContentIterator { file ->
+                    VfsUtil.iterateChildrenRecursively(expansionsDirVi, null) { file ->
                         if (!file.isValidExpansionFile()) {
                             toDelete += file
                         }
                         true
-                    })
+                    }
                 }
                 if (toDelete.isNotEmpty()) {
                     val batch = VfsBatch()
@@ -843,7 +847,7 @@ private class MacroExpansionServiceImplInner(
         // Fixes inplace rename when the renamed element is referenced from a macro call body
         if (isTemplateActiveInAnyEditor()) return
 
-        class ProcessModifiedMacrosTask(private val workspaceOnly: Boolean) : MacroExpansionTaskBase(
+        class ProcessModifiedMacrosTask : MacroExpansionTaskBase(
             project,
             storage,
             pool,
@@ -861,7 +865,7 @@ private class MacroExpansionServiceImplInner(
             override val progressBarShowDelay: Int get() = 2000
         }
 
-        val task = ProcessModifiedMacrosTask(workspaceOnly)
+        val task = ProcessModifiedMacrosTask()
 
         submitTask(task)
     }
@@ -1074,9 +1078,14 @@ sealed class MacroExpansionMode {
     data class New(val scope: MacroExpansionScope) : MacroExpansionMode()
 
     companion object {
-        val DISABLED = MacroExpansionMode.Disabled
-        val OLD = MacroExpansionMode.Old
-        val NEW_ALL = New(MacroExpansionScope.ALL)
+        @JvmField
+        val DISABLED: Disabled = Disabled
+
+        @JvmField
+        val OLD: Old = Old
+
+        @JvmField
+        val NEW_ALL: New = New(MacroExpansionScope.ALL)
     }
 }
 

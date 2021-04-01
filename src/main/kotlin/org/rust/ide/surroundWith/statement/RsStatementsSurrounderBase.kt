@@ -20,7 +20,11 @@ sealed class RsStatementsSurrounderBase<out T : RsExpr> : Surrounder {
     protected abstract fun createTemplate(project: Project): Pair<T, RsBlock>
 
     abstract class SimpleBlock<out T : RsExpr> : RsStatementsSurrounderBase<T>() {
-        final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
+        final override fun surroundElements(
+            project: Project,
+            editor: Editor,
+            elements: Array<out PsiElement>
+        ): TextRange {
             val template = surroundWithTemplate(project, elements)
             return TextRange.from(template.firstChild.endOffset, 0)
         }
@@ -29,7 +33,11 @@ sealed class RsStatementsSurrounderBase<out T : RsExpr> : Surrounder {
     abstract class BlockWithCondition<T : RsExpr> : RsStatementsSurrounderBase<T>() {
         protected abstract fun conditionRange(expression: T): TextRange
 
-        final override fun surroundElements(project: Project, editor: Editor, elements: Array<out PsiElement>): TextRange? {
+        final override fun surroundElements(
+            project: Project,
+            editor: Editor,
+            elements: Array<out PsiElement>
+        ): TextRange {
             val template = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(
                 surroundWithTemplate(project, elements)
             )

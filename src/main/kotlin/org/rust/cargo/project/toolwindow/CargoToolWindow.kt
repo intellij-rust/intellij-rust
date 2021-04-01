@@ -10,6 +10,7 @@ import com.intellij.ide.TreeExpander
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
@@ -133,14 +134,14 @@ class CargoToolWindow(
     """
 
     companion object {
+        private val LOG: Logger = logger<CargoToolWindow>()
+
         @JvmStatic
         val SELECTED_CARGO_PROJECT: DataKey<CargoProject> = DataKey.create("SELECTED_CARGO_PROJECT")
 
         const val CARGO_TOOLBAR_PLACE: String = "Cargo Toolbar"
 
         private const val ID: String = "Cargo"
-
-        private val LOG: Logger = Logger.getInstance(CargoToolWindow::class.java)
 
         fun initializeToolWindow(project: Project) {
             try {

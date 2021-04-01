@@ -21,12 +21,12 @@ object FilterUtils {
         }
         while (true) {
             val range = str.findAngleBrackets() ?: break
-            val idx = str.indexOf("::", range.start + 1)
-            str = if (idx < 0 || idx > range.endInclusive) {
+            val idx = str.indexOf("::", range.first + 1)
+            str = if (idx < 0 || idx > range.last) {
                 str.removeRange(range)
             } else {
-                str.removeRange(IntRange(range.endInclusive, range.endInclusive))
-                    .removeRange(IntRange(range.start, range.start))
+                str.removeRange(IntRange(range.last, range.last))
+                    .removeRange(IntRange(range.first, range.first))
             }
         }
         return str

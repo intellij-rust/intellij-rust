@@ -186,9 +186,9 @@ private fun collectLifetimesFromFnSignature(fn: RsFunction): Pair<List<Reference
     val outputCollector = LifetimesCollector()
 
     // extract lifetimes in input argument types
-    fn.valueParameterList?.let {
-        it.selfParameter?.accept(inputCollector)
-        it.valueParameterList.forEach { it.typeReference?.accept(inputCollector) }
+    fn.valueParameterList?.let { list ->
+        list.selfParameter?.accept(inputCollector)
+        list.valueParameterList.forEach { it.typeReference?.accept(inputCollector) }
     }
     if (inputCollector.abort) return null
 

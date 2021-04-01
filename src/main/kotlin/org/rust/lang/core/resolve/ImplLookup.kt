@@ -273,7 +273,7 @@ class ImplLookup(
         ArithmeticAssignmentOp.values().mapNotNull { it.findTrait(items) }
     }
     private val fnTraits = listOfNotNull(items.Fn, items.FnMut, items.FnOnce)
-    val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
+    private val fnOnceOutput: RsTypeAlias? by lazy(NONE) {
         val trait = items.FnOnce ?: return@lazy null
         trait.findAssociatedType("Output")
     }
@@ -383,16 +383,24 @@ class ImplLookup(
                     getHardcodedImplsForPrimitives(ty)
                 }
             }
-            is TyAdt -> when {
-                ty.item == items.findItem("core::slice::Iter") -> {
+            is TyAdt -> when (ty.item) {
+                items.findItem<RsNamedElement>("core::slice::Iter") -> {
                     val trait = items.Iterator ?: return emptyList()
-                    listOf(trait.substAssocType("Item",
-                        TyReference(ty.typeParameterValues.typeByName("T"), IMMUTABLE)))
+                    listOf(
+                        trait.substAssocType(
+                            "Item",
+                            TyReference(ty.typeParameterValues.typeByName("T"), IMMUTABLE)
+                        )
+                    )
                 }
-                ty.item == items.findItem("core::slice::IterMut") -> {
+                items.findItem<RsNamedElement>("core::slice::IterMut") -> {
                     val trait = items.Iterator ?: return emptyList()
-                    listOf(trait.substAssocType("Item",
-                        TyReference(ty.typeParameterValues.typeByName("T"), MUTABLE)))
+                    listOf(
+                        trait.substAssocType(
+                            "Item",
+                            TyReference(ty.typeParameterValues.typeByName("T"), MUTABLE)
+                        )
+                    )
                 }
                 else -> emptyList()
             }
@@ -479,6 +487,7 @@ class ImplLookup(
             findExplicitImplsWithoutAliases(selfTy, tyFingerprint, processor)
         }
     }
+
     private fun findExplicitImplsWithoutAliases(selfTy: Ty, tyf: TyFingerprint, processor: RsProcessor<RsCachedImplItem>): Boolean {
         return RsImplIndex.findPotentialImpls(project, tyf) { cachedImpl ->
             val (type, generics, constGenerics) = cachedImpl.typeAndGenerics ?: return@findPotentialImpls false
@@ -541,7 +550,7 @@ class ImplLookup(
         selectStrictWithoutConfirm(ref, recursionDepth).isOk()
 
     /** Same as [select], but strictly evaluates all obligations (checks trait bounds) of impls */
-    fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
+    private fun selectStrict(ref: TraitRef, recursionDepth: Int = 0): SelectionResult<Selection> =
         selectStrictWithoutConfirm(ref, recursionDepth).map { confirmCandidate(ref, it, recursionDepth) }
 
     private fun selectStrictWithoutConfirm(ref: TraitRef, recursionDepth: Int): SelectionResult<SelectionCandidate> {
@@ -645,7 +654,7 @@ class ImplLookup(
                 ref.selfTy.getTraitBoundsTransitively().find { it.element == element }
                     ?.let { add(SelectionCandidate.TraitObject) }
                 RsImplIndex.findFreeImpls(project) {
-                    it.trySelectCandidate(ref)?.let { add(it) }
+                    it.trySelectCandidate(ref)?.let(::add)
                     false
                 }
             }
@@ -678,7 +687,7 @@ class ImplLookup(
                         ctx.combineTypePairs(be.subst.zipTypeValues(ref.trait.subst)).isOk &&
                             ctx.combineConstPairs(be.subst.zipConstValues(ref.trait.subst)).isOk
                     }
-                }.forEach { add(SelectionCandidate.HardcodedImpl) }
+                }.forEach { _ -> add(SelectionCandidate.HardcodedImpl) }
             }
         }
     }
@@ -802,7 +811,8 @@ class ImplLookup(
         val result = mutableSetOf<Ty>()
         return generateSequence(ctx.resolveTypeVarsIfPossible(baseTy)) {
             if (result.add(it)) {
-                deref(it)?.let(ctx::resolveTypeVarsIfPossible) ?: (it as? TyArray)?.let { TySlice(it.base) }
+                deref(it)?.let(ctx::resolveTypeVarsIfPossible)
+                    ?: (it as? TyArray)?.let { array -> TySlice(array.base) }
             } else {
                 null
             }
@@ -846,13 +856,12 @@ class ImplLookup(
         ref: TraitRef,
         assocType: RsTypeAlias,
         recursionDepth: Int = 0
-    ): SelectionResult<TyWithObligations<Ty>?> {
-        return select(ref, recursionDepth).map {
-            lookupAssociatedType(ref.selfTy, it, assocType)
+    ): SelectionResult<TyWithObligations<Ty>?> =
+        select(ref, recursionDepth).map { selection ->
+            lookupAssociatedType(ref.selfTy, selection, assocType)
                 ?.let { ctx.normalizeAssociatedTypesIn(it, recursionDepth) }
-                ?.withObligations(it.nestedObligations)
+                ?.withObligations(selection.nestedObligations)
         }
-    }
 
     fun selectProjection(
         projectionTy: TyProjection,
@@ -918,7 +927,7 @@ class ImplLookup(
     private fun lookupAssocTypeInSelection(selection: Selection, assoc: RsTypeAlias): Ty? =
         selection.impl.associatedTypesTransitively.find { it.name == assoc.name }?.typeReference?.type?.substitute(selection.subst)
 
-    fun lookupAssocTypeInBounds(
+    private fun lookupAssocTypeInBounds(
         subst: Sequence<BoundElement<RsTraitItem>>,
         trait: RsTraitOrImpl,
         assocType: RsTypeAlias
@@ -929,7 +938,7 @@ class ImplLookup(
             ?.get(assocType)
     }
 
-    fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
+    private fun selectOverloadedOp(lhsType: Ty, rhsType: Ty, op: OverloadableBinaryOperator): SelectionResult<Selection> {
         val trait = op.findTrait(items) ?: return SelectionResult.Err
         return select(TraitRef(lhsType, trait.withSubst(rhsType)))
     }
@@ -964,10 +973,13 @@ class ImplLookup(
     fun isDefault(ty: Ty): Boolean = ty.isTraitImplemented(items.Default)
     fun isPartialEq(ty: Ty, rhsType: Ty = ty): Boolean = ty.isTraitImplemented(items.PartialEq, rhsType)
     fun isIntoIterator(ty: Ty): Boolean = ty.isTraitImplemented(items.IntoIterator)
-    fun isFn(ty: Ty): Boolean = ty.isTraitImplemented(items.Fn)
-    fun isFnOnce(ty: Ty): Boolean = ty.isTraitImplemented(items.FnOnce)
-    fun isFnMut(ty: Ty): Boolean = ty.isTraitImplemented(items.FnMut)
     fun isAnyFn(ty: Ty): Boolean = isFn(ty) || isFnOnce(ty) || isFnMut(ty)
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun isFn(ty: Ty): Boolean = ty.isTraitImplemented(items.Fn)
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun isFnOnce(ty: Ty): Boolean = ty.isTraitImplemented(items.FnOnce)
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun isFnMut(ty: Ty): Boolean = ty.isTraitImplemented(items.FnMut)
 
 
     private fun Ty.isTraitImplemented(trait: RsTraitItem?, vararg subst: Ty): Boolean {
@@ -1063,6 +1075,7 @@ private sealed class SelectionCandidate {
     data class DerivedTrait(val item: RsTraitItem) : SelectionCandidate()
     data class TypeParameter(val bound: BoundElement<RsTraitItem>) : SelectionCandidate()
     object TraitObject : SelectionCandidate()
+
     /** @see ImplLookup.getHardcodedImpls */
     object HardcodedImpl : SelectionCandidate()
 

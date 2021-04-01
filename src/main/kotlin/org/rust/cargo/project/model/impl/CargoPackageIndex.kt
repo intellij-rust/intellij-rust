@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.CargoProjectsService
@@ -37,7 +36,7 @@ class CargoPackageIndex(
         Disposer.register(project, disposable)
         for (cargoProject in projects) {
             val packages = cargoProject.workspace?.packages.orEmpty()
-            indices[cargoProject] = LightDirectoryIndex(disposable, Optional.empty(), Consumer { index ->
+            indices[cargoProject] = LightDirectoryIndex(disposable, Optional.empty()) { index ->
                 for (pkg in packages) {
                     val info = Optional.of(pkg)
                     index.putInfo(pkg.contentRoot, info)
@@ -46,7 +45,7 @@ class CargoPackageIndex(
                         index.putInfo(target.crateRoot?.parent, info)
                     }
                 }
-            })
+            }
         }
         indexDisposable = disposable
     }

@@ -23,9 +23,7 @@ import org.rust.lang.core.psi.RS_EOL_COMMENTS
 import org.rust.lang.doc.psi.RsDocKind
 
 data class CommentHolder(val file: PsiFile) : CommenterDataHolder() {
-    fun useSpaceAfterLineComment(): Boolean {
-        return CodeStyle.getLanguageSettings(file, RsLanguage).LINE_COMMENT_ADD_SPACE
-    }
+    fun useSpaceAfterLineComment(): Boolean = CodeStyle.getLanguageSettings(file, RsLanguage).LINE_COMMENT_ADD_SPACE
 }
 
 class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingCommenter<CommentHolder> {
@@ -48,39 +46,59 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
     override fun getCommentedBlockCommentPrefix(): String = "*//*"
     override fun getCommentedBlockCommentSuffix(): String = "*//*"
 
-    override fun getBlockCommentPrefix(selectionStart: Int, document: Document, data: CommentHolder): String? =
-        blockCommentPrefix
+    override fun getBlockCommentPrefix(
+        selectionStart: Int,
+        document: Document,
+        data: CommentHolder
+    ): String = blockCommentPrefix
 
-    override fun getBlockCommentSuffix(selectionEnd: Int, document: Document, data: CommentHolder): String? =
-        blockCommentSuffix
+    override fun getBlockCommentSuffix(
+        selectionEnd: Int,
+        document: Document,
+        data: CommentHolder
+    ): String = blockCommentSuffix
 
     override fun getBlockCommentRange(
         selectionStart: Int,
         selectionEnd: Int,
         document: Document,
         data: CommentHolder
-    ): TextRange? =
-        SelfManagingCommenterUtil.getBlockCommentRange(selectionStart, selectionEnd, document, blockCommentPrefix, blockCommentSuffix)
+    ): TextRange? = SelfManagingCommenterUtil.getBlockCommentRange(
+        selectionStart,
+        selectionEnd,
+        document,
+        blockCommentPrefix,
+        blockCommentSuffix
+    )
 
     override fun insertBlockComment(
         startOffset: Int,
         endOffset: Int,
         document: Document,
         data: CommentHolder?
-    ): TextRange =
-        SelfManagingCommenterUtil.insertBlockComment(startOffset, endOffset, document, blockCommentPrefix, blockCommentSuffix)
+    ): TextRange = SelfManagingCommenterUtil.insertBlockComment(
+        startOffset,
+        endOffset,
+        document,
+        blockCommentPrefix,
+        blockCommentSuffix
+    )
 
     override fun uncommentBlockComment(
         startOffset: Int,
         endOffset: Int,
         document: Document,
         data: CommentHolder?
-    ) =
-        SelfManagingCommenterUtil.uncommentBlockComment(startOffset, endOffset, document, blockCommentPrefix, blockCommentSuffix)
+    ) = SelfManagingCommenterUtil.uncommentBlockComment(
+        startOffset,
+        endOffset,
+        document,
+        blockCommentPrefix,
+        blockCommentSuffix
+    )
 
-    override fun isLineCommented(line: Int, offset: Int, document: Document, data: CommentHolder): Boolean {
-        return getStartLineComment(line, document, data.file)?.isEolComment ?: false
-    }
+    override fun isLineCommented(line: Int, offset: Int, document: Document, data: CommentHolder): Boolean =
+        getStartLineComment(line, document, data.file)?.isEolComment ?: false
 
     override fun commentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
         val addSpace = data.useSpaceAfterLineComment()
@@ -90,30 +108,29 @@ class RsCommenter : Commenter, CodeDocumentationAwareCommenter, SelfManagingComm
     override fun uncommentLine(line: Int, offset: Int, document: Document, data: CommentHolder) {
         val prefixLen = LINE_PREFIXES.find { CharArrayUtil.regionMatches(document.charsSequence, offset, it) }?.length
             ?: return
-        val hasSpace = data.useSpaceAfterLineComment() && CharArrayUtil.regionMatches(document.charsSequence, offset + prefixLen, " ")
+        val hasSpace = data.useSpaceAfterLineComment() &&
+            CharArrayUtil.regionMatches(document.charsSequence, offset + prefixLen, " ")
         document.deleteString(offset, offset + prefixLen + if (hasSpace) 1 else 0)
     }
 
-    override fun getCommentPrefix(line: Int, document: Document, data: CommentHolder): String? = lineCommentPrefix
+    override fun getCommentPrefix(line: Int, document: Document, data: CommentHolder): String = lineCommentPrefix
 
     override fun createBlockCommentingState(
         selectionStart: Int,
         selectionEnd: Int,
         document: Document,
         file: PsiFile
-    ): CommentHolder? =
-        CommentHolder(file)
+    ): CommentHolder = CommentHolder(file)
 
     override fun createLineCommentingState(
         startLine: Int,
         endLine: Int,
         document: Document,
         file: PsiFile
-    ): CommentHolder? =
-        CommentHolder(file)
+    ): CommentHolder = CommentHolder(file)
 
     companion object {
-        private val LINE_PREFIXES = listOf(RsDocKind.OuterEol.prefix, RsDocKind.InnerEol.prefix, "//")
+        private val LINE_PREFIXES: List<String> = listOf(RsDocKind.OuterEol.prefix, RsDocKind.InnerEol.prefix, "//")
     }
 }
 

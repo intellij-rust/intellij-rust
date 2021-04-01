@@ -19,9 +19,8 @@ import org.rust.lang.core.psi.RsImplItem
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 
 class RsFunctionGroupingRuleProvider : FileStructureGroupRuleProvider {
-    override fun getUsageGroupingRule(project: Project): UsageGroupingRule? {
-        return RsFunctionGroupingRule()
-    }
+
+    override fun getUsageGroupingRule(project: Project): UsageGroupingRule = RsFunctionGroupingRule()
 
     private class RsFunctionGroupingRule : SingleParentUsageGroupingRule() {
         override fun getParentGroupFor(usage: Usage, targets: Array<UsageTarget>): UsageGroup? {

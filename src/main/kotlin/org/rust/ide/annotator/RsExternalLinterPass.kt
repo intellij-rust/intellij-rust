@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -144,7 +145,7 @@ class RsExternalLinterPass(
         get() = file.project.rustSettings.runExternalLinterOnTheFly
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsExternalLinterPass::class.java)
+        private val LOG: Logger = logger<RsExternalLinterPass>()
     }
 }
 

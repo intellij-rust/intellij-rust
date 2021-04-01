@@ -22,7 +22,7 @@ data class CargoRegistryCrate(val versions: List<CargoRegistryCrateVersion>) {
         @TestOnly
         fun of(vararg versions: String): CargoRegistryCrate =
             CargoRegistryCrate(versions.map {
-                CargoRegistryCrateVersion(it, false, listOf())
+                CargoRegistryCrateVersion(it, false, emptyList())
             })
     }
 }

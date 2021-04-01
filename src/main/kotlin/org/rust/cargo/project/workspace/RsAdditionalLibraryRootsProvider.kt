@@ -42,11 +42,10 @@ class CargoLibrary(
 
     override fun getLocationString(): String? = null
 
-    override fun getIcon(unused: Boolean): Icon? = icon
+    override fun getIcon(unused: Boolean): Icon = icon
 
-    override fun getPresentableText(): String? = if (version != null) "$name $version" else name
+    override fun getPresentableText(): String = if (version != null) "$name $version" else name
 }
-
 
 class RsAdditionalLibraryRootsProvider : AdditionalLibraryRootsProvider() {
     override fun getAdditionalProjectLibraries(project: Project): Collection<CargoLibrary> {
@@ -120,8 +119,7 @@ private fun CargoWorkspace.Package.toCargoLibrary(): CargoLibrary? {
         val crateRoot = target.crateRoot ?: continue
         if (target.kind.isLib) {
             val crateRootDir = crateRoot.parent
-            val commonAncestor = VfsUtilCore.getCommonAncestor(root, crateRootDir)
-            when (commonAncestor) {
+            when (VfsUtilCore.getCommonAncestor(root, crateRootDir)) {
                 root -> sourceRoots += root
                 crateRootDir -> sourceRoots += crateRootDir
                 else -> {

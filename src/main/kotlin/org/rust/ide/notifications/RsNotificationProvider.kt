@@ -36,7 +36,7 @@ abstract class RsNotificationProvider(
         PropertiesComponent.getInstance(project).getBoolean(file.disablingKey)
 }
 
-class RsEditorNotificationPanel(val debugId: String) : EditorNotificationPanel() {
+class RsEditorNotificationPanel(@Suppress("unused") private val debugId: String) : EditorNotificationPanel() {
     override fun getActionPlace(): String = NOTIFICATION_PANEL_PLACE
 
     companion object {

@@ -8,7 +8,6 @@ package org.rust.lang.core.macros
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -92,7 +91,7 @@ class ExpandedMacroStorage(val project: Project) {
 
     fun makeExpansionTask(map: Map<VirtualFile, List<RsMacroCall>>): Sequence<List<Extractable>> {
         val v2 = WriteAction.computeAndWait<MutableMap<SourceFile, List<RsMacroCall>>, Throwable> {
-            map.mapKeysTo(HashMap<SourceFile, List<RsMacroCall>>()) { (file, _) ->
+            map.mapKeysTo(hashMapOf()) { (file, _) ->
                 getOrCreateSourceFile(file) ?: error("Non-root source files are not supported")
             }
         }
@@ -229,8 +228,6 @@ class ExpandedMacroStorage(val project: Project) {
     }
 
     companion object {
-        private val LOG = Logger.getInstance(ExpandedMacroStorage::class.java)
-
         fun saveStorage(storage: ExpandedMacroStorage, data: DataOutputStream) {
             data.writeInt(STORAGE_VERSION)
             data.writeInt(DeclMacroExpander.EXPANDER_VERSION + ProcMacroExpander.EXPANDER_VERSION)
@@ -408,12 +405,16 @@ class SourceFile(
     private enum class RefKind {
         /** The [file] is not valid (e.g. is deleted) */
         INVALID,
+
         /** No refs created yet */
         FRESH,
+
         /** Uses [ExpandedMacroInfoImpl.macroCallStrongRef] */
         STRONG,
+
         /** Uses [ExpandedMacroInfoImpl.macroCallStubIndex] */
         STUB,
+
         /** Refs was lost and should be recovered with [recoverRefs] */
         LOST
     }

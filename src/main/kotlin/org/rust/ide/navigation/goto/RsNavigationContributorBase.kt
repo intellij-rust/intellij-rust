@@ -9,6 +9,7 @@ import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.GotoClassContributor
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isInternal
 import com.intellij.psi.search.EverythingGlobalScope
@@ -89,7 +90,7 @@ private fun GlobalSearchScope.withMacrosScope(): GlobalSearchScope {
     return if (project != null && this !is EverythingGlobalScope) RsWithMacrosScope(project, this) else this
 }
 
-private val LOG = Logger.getInstance(RsNavigationContributorBase::class.java)
+private val LOG: Logger = logger<RsNavigationContributorBase<*>>()
 
 /**
  * [IdFilter] exists only for optimization purposes and can safely be null. If it is not null, we should

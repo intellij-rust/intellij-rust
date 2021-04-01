@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.RsLiteralKind
 import org.rust.lang.core.psi.RsVisitor
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.kind
+import kotlin.math.*
 
 class RsApproxConstantInspection : RsLocalInspectionTool() {
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
@@ -24,31 +25,32 @@ class RsApproxConstantInspection : RsLocalInspectionTool() {
     }
 
     private companion object {
-        val KNOWN_CONSTS = listOf(
+        @JvmField
+        val KNOWN_CONSTS: List<PredefinedConstant> = listOf(
             PredefinedConstant("E", Math.E, 4),
             PredefinedConstant("FRAC_1_PI", 1.0 / Math.PI, 4),
-            PredefinedConstant("FRAC_1_SQRT_2", 1.0 / Math.sqrt(2.0), 5),
+            PredefinedConstant("FRAC_1_SQRT_2", 1.0 / sqrt(2.0), 5),
             PredefinedConstant("FRAC_2_PI", 2.0 / Math.PI, 5),
-            PredefinedConstant("FRAC_2_SQRT_PI", 2.0 / Math.sqrt(Math.PI), 5),
+            PredefinedConstant("FRAC_2_SQRT_PI", 2.0 / sqrt(Math.PI), 5),
             PredefinedConstant("FRAC_PI_2", Math.PI / 2.0, 5),
             PredefinedConstant("FRAC_PI_3", Math.PI / 3.0, 5),
             PredefinedConstant("FRAC_PI_4", Math.PI / 4.0, 5),
             PredefinedConstant("FRAC_PI_6", Math.PI / 6.0, 5),
             PredefinedConstant("FRAC_PI_8", Math.PI / 8.0, 5),
-            PredefinedConstant("LN_10", Math.log(10.0), 5),
-            PredefinedConstant("LN_2", Math.log(2.0), 5),
-            PredefinedConstant("LOG10_E", Math.log10(Math.E), 5),
-            PredefinedConstant("LOG2_E", Math.log(Math.E) / Math.log(2.0), 5),
+            PredefinedConstant("LN_10", ln(10.0), 5),
+            PredefinedConstant("LN_2", ln(2.0), 5),
+            PredefinedConstant("LOG10_E", log10(Math.E), 5),
+            PredefinedConstant("LOG2_E", ln(Math.E) / ln(2.0), 5),
             PredefinedConstant("PI", Math.PI, 3),
-            PredefinedConstant("SQRT_2", Math.sqrt(2.0), 5)
+            PredefinedConstant("SQRT_2", sqrt(2.0), 5)
         )
     }
 }
 
 data class PredefinedConstant(val name: String, val value: Double, val minDigits: Int) {
-    val accuracy = Math.pow(0.1, minDigits.toDouble())
+    private val accuracy: Double = 0.1.pow(minDigits.toDouble())
 
-    fun matches(value: Double) = Math.abs(value - this.value) < accuracy
+    fun matches(value: Double): Boolean = abs(value - this.value) < accuracy
 }
 
 private fun RsProblemsHolder.registerProblem(element: RsElement, type: String, constant: PredefinedConstant) {

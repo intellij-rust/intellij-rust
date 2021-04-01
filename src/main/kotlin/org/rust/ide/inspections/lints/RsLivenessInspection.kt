@@ -25,8 +25,7 @@ import org.rust.lang.core.types.liveness
 
 class RsLivenessInspection : RsLintInspection() {
 
-    override fun getLint(element: PsiElement): RsLint? =
-        RsLint.UnusedVariables
+    override fun getLint(element: PsiElement): RsLint = RsLint.UnusedVariables
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
         object : RsVisitor() {

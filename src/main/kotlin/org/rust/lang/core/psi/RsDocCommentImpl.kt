@@ -6,7 +6,10 @@
 package org.rust.lang.core.psi
 
 import com.intellij.lang.psi.SimpleMultiLineTextEscaper
-import com.intellij.psi.*
+import com.intellij.psi.LiteralTextEscaper
+import com.intellij.psi.PsiDocCommentBase
+import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.impl.source.tree.injected.InjectionBackgroundSuppressor
 import com.intellij.psi.tree.IElementType
@@ -14,8 +17,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.text.CharArrayUtil
 import org.rust.ide.annotator.RsDoctestAnnotator
 import org.rust.ide.injected.RsDoctestLanguageInjector
-import org.rust.lang.core.completion.getOriginalOrSelf
-import org.rust.lang.core.psi.ext.*
+import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
+import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.doc.psi.RsDocKind
 
 /**

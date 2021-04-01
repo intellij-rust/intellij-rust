@@ -5,7 +5,6 @@
 
 package org.rust.lang.core.types
 
-import com.intellij.openapi.util.Computable
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.owner
@@ -19,6 +18,7 @@ object RsPsiTypeImplUtil {
     fun declaredType(psi: RsEnumItem): Ty = TyAdt.valueOf(psi)
     fun declaredType(psi: RsTraitItem): Ty = TyTraitObject.valueOf(psi)
     fun declaredType(psi: RsTypeParameter): Ty = TyTypeParameter.named(psi)
+    fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
     fun declaredType(psi: RsTypeAlias): Ty {
         val typeReference = psi.typeReference
         if (typeReference != null) return typeReference.typeWithRecursionGuard
@@ -29,9 +29,7 @@ object RsPsiTypeImplUtil {
             is RsAbstractableOwner.Foreign -> TyUnknown
         }
     }
-    fun declaredType(psi: RsImplItem): Ty = TyTypeParameter.self(psi)
 }
 
 private val RsTypeReference.typeWithRecursionGuard: Ty
-    get() = recursionGuard(this, Computable { inferTypeReferenceType(this) })
-        ?: TyUnknown
+    get() = recursionGuard(this, { inferTypeReferenceType(this) }) ?: TyUnknown

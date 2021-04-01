@@ -34,7 +34,7 @@ class RsCreateFileAction : CreateFileFromTemplateAction(CAPTION, "", RsIcons.RUS
 
     override fun buildDialog(project: Project, directory: PsiDirectory, builder: CreateFileFromTemplateDialog.Builder) {
         builder.setTitle(CAPTION)
-            .addKind("Empty File", RsIcons.RUST_FILE, "Rust File")
+            .addKind("Empty file", RsIcons.RUST_FILE, "Rust File")
     }
 
     private companion object {

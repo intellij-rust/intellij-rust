@@ -20,7 +20,9 @@ import org.rust.lang.core.psi.ext.replaceWithExpr
  * Change `try!` macro to `?` operator.
  */
 class RsTryMacroInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "try! macro usage"
+
+    @Suppress("DialogTitleCapitalization")
+    override fun getDisplayName(): String = "try! macro usage"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
         override fun visitMacroCall(o: RsMacroCall) {

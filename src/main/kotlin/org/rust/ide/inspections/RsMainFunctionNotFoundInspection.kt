@@ -19,8 +19,8 @@ import org.rust.lang.utils.addToHolder
 
 class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
-        return object : RsVisitor() {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
+        object : RsVisitor() {
             override fun visitFile(file: PsiFile) {
                 if (file is RsFile) {
                     if (file.childOfType<PsiErrorElement>() != null) return
@@ -36,5 +36,4 @@ class RsMainFunctionNotFoundInspection : RsLocalInspectionTool() {
                 }
             }
         }
-    }
 }

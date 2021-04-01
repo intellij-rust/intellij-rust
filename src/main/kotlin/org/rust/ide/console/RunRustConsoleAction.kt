@@ -24,6 +24,6 @@ class RunRustConsoleAction : DumbAwareAction() {
         val runner = RsConsoleRunner(project)
         // BACKCOMPAT: 2019.3
         @Suppress("DEPRECATION")
-        TransactionGuard.submitTransaction(project, Runnable { runner.runSync(true) })
+        TransactionGuard.submitTransaction(project) { runner.runSync(true) }
     }
 }

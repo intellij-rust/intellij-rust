@@ -46,5 +46,5 @@ private abstract class RsReparseableElementTypeBase(debugName: String) : IRepars
      * Must be non-null to make re-parsing work.
      * See [com.intellij.psi.impl.BlockSupportImpl.tryReparseNode]
      */
-    final override fun createNode(text: CharSequence?): ASTNode? = LazyParseableElement(this, text)
+    final override fun createNode(text: CharSequence?): ASTNode = LazyParseableElement(this, text)
 }

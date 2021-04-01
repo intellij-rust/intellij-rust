@@ -14,6 +14,7 @@ import com.intellij.lang.javascript.psi.ecma6.TypeScriptEnum
 import com.intellij.lang.javascript.psi.ecma6.TypeScriptFunction
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiElement
@@ -79,7 +80,7 @@ class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
             attr.textRange,
             JavaScriptPsiIcons.FileTypes.TypeScriptFile,
             { "Go to generated declaration" },
-            DefaultGutterIconNavigationHandler(listOf(destination), "Generated declarations"),
+            DefaultGutterIconNavigationHandler(listOf(destination), "Generated Declarations"),
             GutterIconRenderer.Alignment.RIGHT,
             { listOf(GotoRelatedItem(destination)) }
         )
@@ -94,6 +95,6 @@ class RsWasmBindgenLineMarkerProvider : RelatedItemLineMarkerProvider() {
         }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsWasmBindgenLineMarkerProvider::class.java)
+        private val LOG: Logger = logger<RsWasmBindgenLineMarkerProvider>()
     }
 }

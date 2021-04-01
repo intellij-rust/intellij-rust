@@ -596,4 +596,4 @@ class ModPath(
     override fun toString(): String = segments.joinToString("::").ifEmpty { "crate" }
 }
 
-val RESOLVE_LOG = Logger.getInstance("org.rust.resolve2")
+val RESOLVE_LOG: Logger = Logger.getInstance("org.rust.resolve2")

@@ -66,6 +66,6 @@ private class MyFakePsiElement(
     val textRangeInMacroCall: TextRange
 ) : FakePsiElement() {
     override fun getParent(): PsiElement = elementInMacroExpansion.parent
-    override fun getTextRange(): TextRange? = textRangeInMacroCall
+    override fun getTextRange(): TextRange = textRangeInMacroCall
     override fun getText(): String? = elementInMacroExpansion.text
 }

@@ -23,6 +23,7 @@ abstract class ConvertToTyUsingTraitFix : ConvertToTyFix {
  * of `expr` and so doesn't check if adding the function call will produce a valid expression. The conversion trait
  * [traitName] and resulting type [tyName] are used only for messaging.
  */
+@Suppress("KDocUnresolvedReference")
 abstract class ConvertToTyUsingTraitMethodFix : ConvertToTyUsingTraitFix {
 
     private val methodName: String

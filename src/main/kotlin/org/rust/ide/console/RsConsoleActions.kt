@@ -24,7 +24,7 @@ class RestartAction(private val consoleRunner: RsConsoleRunner) : AnAction() {
 }
 
 class StopAction(private val processHandler: RsConsoleProcessHandler)
-    : DumbAwareAction("Stop Console", "Stop Rust Console", AllIcons.Actions.Suspend) {
+    : DumbAwareAction("Stop Console", "Stop Rust console", AllIcons.Actions.Suspend) {
 
     init {
         val eofAction = ActionManager.getInstance().getAction(EOFAction.ACTION_ID)

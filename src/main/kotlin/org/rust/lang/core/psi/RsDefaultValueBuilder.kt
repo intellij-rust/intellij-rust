@@ -57,7 +57,7 @@ class RsDefaultValueBuilder(
 
                 var default = this.defaultValue
                 if (item.implLookup.isDefault(ty)) {
-                    default = psiFactory.createAssocFunctionCall("Default", "default", listOf())
+                    default = psiFactory.createAssocFunctionCall("Default", "default", emptyList())
                 }
 
                 val name = item.name!! // `!!` is because it isn't possible to acquire TyAdt with anonymous item

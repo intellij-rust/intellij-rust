@@ -72,13 +72,13 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
     }
 
     private fun makeGroupedPath(basePath: String, useSpecks: List<RsUseSpeck>): String {
-        val useSpecksInGroup = useSpecks.flatMap {
+        val useSpecksInGroup = useSpecks.flatMap { useSpeck ->
             // Remove first group
-            val useGroup = it.useGroup
-            if (it.path?.referenceName == basePath && useGroup != null) {
+            val useGroup = useSpeck.useGroup
+            if (useSpeck.path?.referenceName == basePath && useGroup != null) {
                 useGroup.useSpeckList.map { it.text }
             } else {
-                listOf(deleteBasePath(it.text, basePath))
+                listOf(deleteBasePath(useSpeck.text, basePath))
             }
         }
         return useSpecksInGroup.joinToString(",\n", "$basePath::{\n", "\n}")
@@ -102,13 +102,13 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
             fun create(useItemOnCursor: RsUseItem, useSpeck: RsUseSpeck): PathInUseItem? {
                 val useItemList = mutableListOf<RsUseItem>()
 
-                val basePath = useSpeck.path?.let { getBasePathFromPath(it) } ?: return null
+                val basePath = useSpeck.path?.let(::getBasePathFromPath) ?: return null
                 val visibility = useItemOnCursor.visibility
                 useItemList += useItemOnCursor.leftSiblings.filterIsInstance<RsUseItem>()
-                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath && it.visibility == visibility }
+                    .filter { it.useSpeck?.path?.let(::getBasePathFromPath) == basePath && it.visibility == visibility }
                 useItemList.add(useItemOnCursor)
                 useItemList += useItemOnCursor.rightSiblings.filterIsInstance<RsUseItem>()
-                    .filter { it.useSpeck?.path?.let { getBasePathFromPath(it) } == basePath && it.visibility == visibility }
+                    .filter { it.useSpeck?.path?.let(::getBasePathFromPath) == basePath && it.visibility == visibility }
                 if (useItemList.size == 1) return null
 
                 return PathInUseItem(useItemOnCursor, useItemList, basePath)
@@ -140,12 +140,12 @@ class NestUseStatementsIntention : RsElementBaseIntentionAction<NestUseStatement
             fun create(useGroup: RsUseGroup, useSpeckOnCursor: RsUseSpeck): PathInGroup? {
                 val useSpeckList = mutableListOf<RsUseSpeck>()
 
-                val basePath = useSpeckOnCursor.path?.let { getBasePathFromPath(it) } ?: return null
+                val basePath = useSpeckOnCursor.path?.let(::getBasePathFromPath) ?: return null
                 useSpeckList += useSpeckOnCursor.leftSiblings.filterIsInstance<RsUseSpeck>()
-                    .filter { it.path?.let { getBasePathFromPath(it) } == basePath }
+                    .filter { it.path?.let(::getBasePathFromPath) == basePath }
                 useSpeckList.add(useSpeckOnCursor)
                 useSpeckList += useSpeckOnCursor.rightSiblings.filterIsInstance<RsUseSpeck>()
-                    .filter { it.path?.let { getBasePathFromPath(it) } == basePath }
+                    .filter { it.path?.let(::getBasePathFromPath) == basePath }
                 if (useSpeckList.size == 1) return null
 
                 return PathInGroup(useGroup, useSpeckList, basePath)

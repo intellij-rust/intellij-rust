@@ -9,7 +9,7 @@ import org.intellij.lang.annotations.Language
 
 class RsClosuresResolveTest : RsResolveTestBase() {
     override fun checkByCode(@Language("Rust") code: String) {
-        val FN_LANG_ITEMS = """
+        val fnLangItems = """
             #[lang = "fn_once"]
             trait FnOnce<Args> { type Output; }
 
@@ -19,7 +19,7 @@ class RsClosuresResolveTest : RsResolveTestBase() {
             #[lang = "fn"]
             trait Fn<Args>: FnMut<Args> { }
         """
-        super.checkByCode("$FN_LANG_ITEMS\n\n$code")
+        super.checkByCode("$fnLangItems\n\n$code")
     }
 
     fun `test simple method resolve for closure`() = checkByCode("""

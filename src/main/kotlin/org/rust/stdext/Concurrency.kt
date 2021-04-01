@@ -6,6 +6,7 @@
 package org.rust.stdext
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
@@ -78,7 +79,7 @@ class AsyncValue<T>(initial: T) {
     }
 
     companion object {
-        private val LOG = Logger.getInstance(AsyncValue::class.java)
+        private val LOG: Logger = logger<AsyncValue<*>>()
     }
 }
 
@@ -91,16 +92,6 @@ class ThreadLocalDelegate<T>(initializer: () -> T) {
 
     operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
         tl.set(value)
-    }
-}
-
-fun <V> Future<V>.getWithCheckCanceled(): V {
-    while (true) {
-        try {
-            return get(10, TimeUnit.MILLISECONDS)
-        } catch (ignored: TimeoutException) {
-            ProgressManager.checkCanceled()
-        }
     }
 }
 
@@ -129,33 +120,3 @@ fun Condition.awaitWithCheckCancelled() {
     }
 }
 
-/**
- * Asynchronously applies [action] to each element of [elements] list on [executor].
- * This function submits next tasks to the [executor] only when previous tasks is finished, so
- * it is usable when we need to execute a LARGE task on a low-latency executor (e.g. EDT)
- */
-fun <R, T> executeSequentially(
-    executor: Executor,
-    elements: List<T>,
-    action: (T) -> R
-): CompletableFuture<List<R>> {
-    if (elements.isEmpty()) return CompletableFuture.completedFuture(emptyList())
-    val src = elements.asReversed().toMutableList()
-    val dst = mutableListOf<R>()
-    val future = CompletableFuture<List<R>>()
-    fun go() {
-        try {
-            dst.add(action(src.last()))
-            src.removeLast()
-            if (src.isNotEmpty()) {
-                executor.execute(::go)
-            } else {
-                future.complete(dst)
-            }
-        } catch (t: Throwable) {
-            future.completeExceptionally(t)
-        }
-    }
-    executor.execute(::go)
-    return future
-}

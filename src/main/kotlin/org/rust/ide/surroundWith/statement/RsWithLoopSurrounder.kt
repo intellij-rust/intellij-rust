@@ -11,6 +11,8 @@ import org.rust.lang.core.psi.RsLoopExpr
 import org.rust.lang.core.psi.RsPsiFactory
 
 class RsWithLoopSurrounder : RsStatementsSurrounderBase.SimpleBlock<RsLoopExpr>() {
+
+    @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String = "loop { }"
 
     override fun createTemplate(project: Project): Pair<RsLoopExpr, RsBlock> {

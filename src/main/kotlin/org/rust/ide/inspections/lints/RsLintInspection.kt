@@ -39,7 +39,7 @@ abstract class RsLintInspection : RsLocalInspectionTool() {
         registerProblem(element, descriptionTemplate, getProblemHighlightType(element), rangeInElement, *fixes)
     }
 
-    protected fun getProblemHighlightType(element: PsiElement): ProblemHighlightType =
+    private fun getProblemHighlightType(element: PsiElement): ProblemHighlightType =
         getLint(element)?.getProblemHighlightType(element) ?: ProblemHighlightType.WARNING
 
     override fun isSuppressedFor(element: PsiElement): Boolean {
@@ -106,7 +106,8 @@ private class RsSuppressQuickFix(
     private val target: String
 ) : LocalQuickFixOnPsiElement(suppressAt), ContainerBasedSuppressQuickFix {
 
-    override fun getFamilyName(): String = "Suppress Warnings"
+    override fun getFamilyName(): String = "Suppress warnings"
+
     override fun getText(): String = "Suppress `${lint.id}` for $target"
 
     override fun isAvailable(project: Project, context: PsiElement): Boolean = context.isValid

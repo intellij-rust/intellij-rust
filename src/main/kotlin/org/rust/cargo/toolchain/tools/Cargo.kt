@@ -15,6 +15,7 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
@@ -91,7 +92,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
         }
     }
 
-    fun listInstalledBinaryCrates(): List<BinaryCrate> =
+    private fun listInstalledBinaryCrates(): List<BinaryCrate> =
         createBaseCommandLine("install", "--list")
             .execute()
             ?.stdoutLines
@@ -439,7 +440,7 @@ open class Cargo(toolchain: RsToolchain, useWrapper: Boolean = false)
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(Cargo::class.java)
+        private val LOG: Logger = logger<Cargo>()
 
         const val NAME: String = "cargo"
         const val WRAPPER_NAME: String = "xargo"

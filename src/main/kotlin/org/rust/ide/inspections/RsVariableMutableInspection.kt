@@ -16,14 +16,14 @@ import org.rust.lang.core.psi.ext.mutability
 import org.rust.lang.core.psi.ext.selfParameter
 
 class RsVariableMutableInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "No mutable required"
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) =
+    override fun getDisplayName(): String = "No mutable required"
+
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): RsVisitor =
         object : RsVisitor() {
             override fun visitPatBinding(o: RsPatBinding) {
                 if (!o.mutability.isMut) return
                 val block = o.ancestorStrict<RsBlock>() ?: o.ancestorStrict<RsFunction>() ?: return
                 if (ReferencesSearch.search(o, LocalSearchScope(block))
-                        .asSequence()
                         .any { checkOccurrenceNeedMutable(it.element.parent) }) return
                 if (block.descendantsOfType<RsMacroCall>().any { checkExprPosition(o, it) }) return
                 holder.registerProblem(
@@ -34,7 +34,7 @@ class RsVariableMutableInspection : RsLocalInspectionTool() {
             }
         }
 
-    fun checkExprPosition(o: RsPatBinding, expr: RsMacroCall) = o.textOffset < expr.textOffset
+    fun checkExprPosition(o: RsPatBinding, expr: RsMacroCall): Boolean = o.textOffset < expr.textOffset
 
     fun checkOccurrenceNeedMutable(occurrence: PsiElement): Boolean {
         when (val parent = occurrence.parent) {

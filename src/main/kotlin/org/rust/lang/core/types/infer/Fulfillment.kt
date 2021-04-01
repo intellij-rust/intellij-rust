@@ -13,7 +13,7 @@ import org.rust.lang.core.types.ty.Ty
 import org.rust.lang.core.types.ty.TyInfer
 import org.rust.lang.core.types.ty.TyProjection
 
-sealed class Predicate: TypeFoldable<Predicate> {
+sealed class Predicate : TypeFoldable<Predicate> {
     /** where T : Bar<A,B,C> */
     data class Trait(val trait: TraitRef) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Trait =
@@ -27,7 +27,7 @@ sealed class Predicate: TypeFoldable<Predicate> {
     data class Projection(
         val projectionTy: TyProjection,
         val ty: Ty
-    ): Predicate() {
+    ) : Predicate() {
         override fun superFoldWith(folder: TypeFolder): Projection =
             Projection(projectionTy.foldWith(folder) as TyProjection, ty.foldWith(folder))
 
@@ -51,7 +51,7 @@ sealed class Predicate: TypeFoldable<Predicate> {
     }
 }
 
-data class Obligation(val recursionDepth: Int, var predicate: Predicate): TypeFoldable<Obligation> {
+data class Obligation(val recursionDepth: Int, var predicate: Predicate) : TypeFoldable<Obligation> {
     constructor(predicate: Predicate) : this(0, predicate)
 
     override fun superFoldWith(folder: TypeFolder): Obligation =
@@ -117,7 +117,7 @@ class ObligationForest {
             if (node.state != NodeState.Pending) continue
 
             when (val result = processor(node.obligation)) {
-                is ProcessPredicateResult.NoChanges -> {}
+                is ProcessPredicateResult.NoChanges -> Unit
                 is ProcessPredicateResult.Ok -> {
                     stalled = false
                     node.state = NodeState.Success
@@ -157,7 +157,8 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
     }
 
     fun selectWherePossible() {
-        while (!obligations.processObligations(this::processPredicate).stalled) {}
+        @Suppress("ControlFlowWithEmptyBody")
+        while (!obligations.processObligations(this::processPredicate).stalled);
     }
 
     fun selectUntilError(): Boolean {
@@ -230,9 +231,9 @@ class FulfillmentContext(val ctx: RsInferenceContext, val lookup: ImplLookup) {
 }
 
 sealed class ProcessPredicateResult {
-    object Err: ProcessPredicateResult()
-    object NoChanges: ProcessPredicateResult()
-    data class Ok(val children: List<PendingPredicateObligation>): ProcessPredicateResult() {
-        constructor(vararg children: PendingPredicateObligation): this(listOf(*children))
+    object Err : ProcessPredicateResult()
+    object NoChanges : ProcessPredicateResult()
+    data class Ok(val children: List<PendingPredicateObligation>) : ProcessPredicateResult() {
+        constructor(vararg children: PendingPredicateObligation) : this(listOf(*children))
     }
 }

@@ -150,13 +150,13 @@ fun String.toSnakeCase(upper: Boolean): String {
         var newWord = false
         var firstWord = true
         part.forEach { char ->
-            if (newWord && char.isUpperCase()) {
+            newWord = if (newWord && char.isUpperCase()) {
                 if (!firstWord) {
                     result.append('_')
                 }
-                newWord = false
+                false
             } else {
-                newWord = char.isLowerCase()
+                char.isLowerCase()
             }
             result.append(if (upper) char.toUpperCase() else char.toLowerCase())
             firstWord = false

@@ -7,7 +7,6 @@ package org.rust.lang.core.psi.ext
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.StubBasedPsiElement
-import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -24,7 +23,7 @@ interface RsItemsOwner : RsElement
 
 val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
     get() {
-        val stubChildren: List<StubElement<*>>? = run {
+        val stubChildren = run {
             when (this) {
                 is RsFile -> {
                     val stub = greenStub
@@ -38,6 +37,7 @@ val RsItemsOwner.itemsAndMacros: Sequence<RsElement>
             null
         }
 
+        @Suppress("IfThenToElvis")
         return if (stubChildren != null) {
             stubChildren.asSequence().map { it.psi }
         } else {

@@ -163,8 +163,10 @@ class RsMoveCommonProcessor(
                     traitMethodsProcessor.preprocessInsideReferencesToTraitMethods(conflicts, elementsToMove)
 
                     if (!isUnitTestMode) {
+                        @Suppress("DialogTitleCapitalization")
                         ProgressManager.getInstance().progressIndicator.text = message("detecting.possible.conflicts")
                     }
+
                     conflictsDetector = RsMoveConflictsDetector(conflicts, elementsToMove, sourceMod, targetMod)
                     conflictsDetector.detectOutsideReferencesVisibilityProblems(outsideReferences)
                     conflictsDetector.detectInsideReferencesVisibilityProblems(insideReferences)

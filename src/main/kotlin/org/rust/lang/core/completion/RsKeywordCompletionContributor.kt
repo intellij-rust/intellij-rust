@@ -9,7 +9,6 @@ import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.util.Key
 import com.intellij.patterns.PatternCondition
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiElementPattern
@@ -21,11 +20,6 @@ import org.rust.lang.core.*
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
-import org.rust.lang.core.resolve.ImplLookup
-import org.rust.lang.core.types.TraitRef
-import org.rust.lang.core.types.ty.Ty
-import org.rust.lang.core.types.ty.TyUnknown
-import org.rust.lang.core.types.type
 
 /**
  * Completes Rust keywords
@@ -154,8 +148,10 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
 
         val function = psiElement<RsFunction>()
             .withLastChildSkipping(RsPsiPattern.error, or(psiElement<RsValueParameterList>(), psiElement<RsRetType>()))
-            .andOr(psiElement().withChild(psiElement<RsTypeParameterList>()),
-                psiElement().withParent(RsMembers::class.java))
+            .andOr(
+                psiElement().withChild(psiElement<RsTypeParameterList>()),
+                psiElement().withParent(RsMembers::class.java)
+            )
 
         val struct = psiElement<RsStructItem>()
             .withChild(typeParameters)
@@ -214,10 +210,12 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
     }
 
     private fun baseTraitOrImplDeclaration(): PsiElementPattern.Capture<PsiElement> {
-        return psiElement().withParent(or(
-            psiElement<RsMembers>(),
-            psiElement().withParent(RsMembers::class.java)
-        ))
+        return psiElement().withParent(
+            or(
+                psiElement<RsMembers>(),
+                psiElement().withParent(RsMembers::class.java)
+            )
+        )
     }
 
     private fun traitOrImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {
@@ -232,10 +230,12 @@ class RsKeywordCompletionContributor : CompletionContributor(), DumbAware {
         val membersInInherentImpl = psiElement<RsMembers>().withParent(
             psiElement<RsImplItem>().with("InherentImpl") { e -> e.traitRef == null }
         )
-        return psiElement().withParent(or(
-            membersInInherentImpl,
-            psiElement().withParent(membersInInherentImpl)
-        ))
+        return psiElement().withParent(
+            or(
+                membersInInherentImpl,
+                psiElement().withParent(membersInInherentImpl)
+            )
+        )
     }
 
     private fun inherentImplDeclarationPattern(): PsiElementPattern.Capture<PsiElement> {

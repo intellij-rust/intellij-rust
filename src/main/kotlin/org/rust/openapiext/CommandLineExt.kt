@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Path
 
-private val LOG = Logger.getInstance("org.rust.openapiext.CommandLineExt")
+private val LOG: Logger = Logger.getInstance("org.rust.openapiext.CommandLineExt")
 
 @Suppress("FunctionName")
 fun GeneralCommandLine(path: Path, vararg args: String) = GeneralCommandLine(path.systemIndependentPath, *args)

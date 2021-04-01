@@ -5,13 +5,13 @@
 
 package org.rust.stdext
 
-import org.rust.cargo.project.model.CargoProjectsService
+import org.rust.cargo.project.model.impl.TestCargoProjectsServiceImpl
 import java.lang.annotation.Inherited
 
 /**
  * Like [org.rust.MockEdition], but makes the test run 2 times with both edition
  *
- * @see CargoProjectsService.setEdition
+ * @see TestCargoProjectsServiceImpl.setEdition
  */
 @Inherited
 @Target(AnnotationTarget.FUNCTION, AnnotationTarget.CLASS)

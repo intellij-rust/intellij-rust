@@ -27,7 +27,9 @@ class RsTraitImplementationInspection : RsLocalInspectionTool() {
             val implInfo = TraitImplementationInfo.create(trait, impl) ?: return
 
             if (implInfo.missingImplementations.isNotEmpty()) {
-                val missing = implInfo.missingImplementations.mapNotNull { it.name?.let { "`$it`" } }.joinToString(", ")
+                val missing = implInfo.missingImplementations
+                    .mapNotNull { missing -> missing.name?.let { "`$it`" } }
+                    .joinToString(", ")
                 RsDiagnostic.TraitItemsMissingImplError(impl.impl, impl.typeReference ?: impl.impl, missing, impl)
                     .addToHolder(holder)
             }

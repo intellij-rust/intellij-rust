@@ -105,7 +105,7 @@ class RsRenderedDocumentationTest : RsDocumentationProviderTest() {
         reference (eg: <code>foo.as_ref()</code> will work the same if <code>foo</code> has type <code>&amp;mut Foo</code> or <code>&amp;&amp;mut Foo</code>)</li></ul>
     """)
 
-    protected fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
+    private fun doTest(@Language("Rust") code: String, @Language("Html") expected: String?) {
         doTest(code, expected) { originalItem, _ ->
             (originalItem as? RsDocAndAttributeOwner)
                 ?.docElements()

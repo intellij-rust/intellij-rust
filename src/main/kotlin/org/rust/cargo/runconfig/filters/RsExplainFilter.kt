@@ -19,7 +19,7 @@ import java.util.regex.Pattern
 class RsExplainFilter : Filter, DumbAware {
     private val patterns = listOf(
         Pattern.compile("--explain E(\\d{4})"),
-        Pattern.compile("(error|warning)\\[E(\\d{4})\\]"))
+        Pattern.compile("(error|warning)\\[E(\\d{4})]"))
 
     override fun applyFilter(line: String, entireLength: Int): Filter.Result? {
         val matcher = patterns

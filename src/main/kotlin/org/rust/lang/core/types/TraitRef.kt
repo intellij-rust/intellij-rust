@@ -27,7 +27,7 @@ data class TraitRef(val selfTy: Ty, val trait: BoundElement<RsTraitItem>) : Type
 
     override fun toString(): String {
         val (item, subst) = trait
-        val tyArgs = item.typeParameters.map { subst.get(it) ?: TyUnknown }
+        val tyArgs = item.typeParameters.map { subst[it] ?: TyUnknown }
         return "$selfTy: ${trait.element.name}" + (if (tyArgs.isEmpty()) "" else tyArgs.joinToString(", ", "<", ">"))
     }
 }

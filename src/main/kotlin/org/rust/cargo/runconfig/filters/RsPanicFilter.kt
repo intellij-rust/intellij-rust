@@ -14,4 +14,4 @@ import com.intellij.openapi.vfs.VirtualFile
 class RsPanicFilter(
     project: Project,
     cargoProjectDir: VirtualFile
-) : RegexpFileLinkFilter(project, cargoProjectDir, "\\s*thread '.+' panicked at '.+', ${FILE_POSITION_RE}")
+) : RegexpFileLinkFilter(project, cargoProjectDir, "\\s*thread '.+' panicked at '.+', $FILE_POSITION_RE")

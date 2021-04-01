@@ -112,11 +112,18 @@ class RsRenameProcessor : RenamePsiElementProcessor() {
         allRenames: MutableMap<PsiElement, String>,
         scope: SearchScope
     ) {
-        if (element is RsLifetime || element is RsLifetimeParameter || element is RsLabel || element is RsLabelDecl) {
-            allRenames.put(element, newName.ensureQuote())
+        val rename = if (
+            element is RsLifetime ||
+            element is RsLifetimeParameter ||
+            element is RsLabel ||
+            element is RsLabelDecl
+        ) {
+            newName.ensureQuote()
         } else {
-            allRenames.put(element, newName.trimStart('\''))
+            newName.trimStart('\'')
         }
+
+        allRenames[element] = rename
     }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor?): PsiElement =

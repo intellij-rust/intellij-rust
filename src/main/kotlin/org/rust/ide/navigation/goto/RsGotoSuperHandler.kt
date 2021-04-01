@@ -29,7 +29,7 @@ class RsGotoSuperHandler : LanguageCodeInsightActionHandler {
         when (targets.size) {
             0 -> return
             1 -> targets.single().navigate(true)
-            else -> NavigationUtil.getPsiElementPopup(targets.toTypedArray(), "Choose module declaration")
+            else -> NavigationUtil.getPsiElementPopup(targets.toTypedArray(), "Choose Module Declaration")
                 .showInBestPositionFor(editor)
         }
     }

@@ -70,7 +70,7 @@ interface RsAlignmentStrategy {
          */
         fun wrap(alignment: Alignment = Alignment.createAlignment()): RsAlignmentStrategy =
             object : RsAlignmentStrategy {
-                override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment? =
+                override fun getAlignment(child: ASTNode, parent: ASTNode?, childCtx: RsFmtContext): Alignment =
                     alignment
             }
 

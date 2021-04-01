@@ -24,7 +24,7 @@ class CFGBuilder(
     val graph: Graph<CFGNodeData, CFGEdgeData>,
     val entry: CFGNode,
     val exit: CFGNode,
-    val termination: CFGNode
+    private val termination: CFGNode
 ) : RsVisitor() {
     data class BlockScope(val blockExpr: RsBlockExpr, val breakNode: CFGNode)
 

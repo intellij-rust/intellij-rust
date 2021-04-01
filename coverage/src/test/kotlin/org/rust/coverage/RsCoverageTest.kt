@@ -11,7 +11,6 @@ import com.intellij.coverage.CoverageRunnerData
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
-import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
@@ -260,7 +259,7 @@ class RsCoverageTest : RunConfigurationTestBase() {
         val environment = ExecutionEnvironmentBuilder
             .create(executor, configuration)
             .runnerSettings(CoverageRunnerData())
-            .build(ProgramRunner.Callback { future.complete(it) })
+            .build { future.complete(it) }
         environment.runner.execute(environment)
         return future.get(10, TimeUnit.SECONDS)!!
     }

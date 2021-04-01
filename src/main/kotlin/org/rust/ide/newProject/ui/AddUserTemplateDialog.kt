@@ -26,14 +26,14 @@ class AddUserTemplateDialog : DialogWrapper(null) {
     private val nameField: JBTextField = JBTextField()
 
     init {
-        title = "Add a custom template"
+        title = "Add a Custom Template"
         setOKButtonText("Add")
         init()
     }
 
-    override fun getPreferredFocusedComponent(): JComponent? = repoUrlField
+    override fun getPreferredFocusedComponent(): JComponent = repoUrlField
 
-    override fun createCenterPanel(): JComponent? = panel {
+    override fun createCenterPanel(): JComponent = panel {
         row("Template URL:") {
             repoUrlField(comment = "A git repository URL to generate from")
         }

@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.inlineFunction
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
@@ -35,7 +36,6 @@ class RsInlineFunctionProcessor(
     private val inlineThisOnly: Boolean,
     private val removeDefinition: Boolean,
     private val factory: RsPsiFactory = RsPsiFactory(project),
-    private val logger: Logger = Logger.getInstance(RsInlineFunctionProcessor::class.java),
     private var usagesAsReference: List<PsiReference> = emptyList()
 ) : BaseRefactoringProcessor(project) {
 
@@ -130,6 +130,8 @@ class RsInlineFunctionProcessor(
     }
 
     companion object {
+        private val LOG: Logger = logger<RsInlineFunctionProcessor>()
+
         fun doesFunctionHaveMultipleReturns(fn: RsFunction): Boolean {
             var entryCount = 0
             val sink: (ExitPoint) -> Unit = {
@@ -225,7 +227,7 @@ class RsInlineFunctionProcessor(
                 enclosingStatement.delete()
             }
         } catch (e: IncorrectOperationException) {
-            logger.error(e)
+            LOG.error(e)
         }
     }
 

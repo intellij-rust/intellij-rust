@@ -26,7 +26,7 @@ class CargoCommandCompletionProvider(
 
     constructor(projects: CargoProjectsService, workspace: CargoWorkspace?) : this(projects, { workspace })
 
-    override val commonCommands: List<Cmd> = buildList {
+    override val commonCommands: List<CmdBase> = buildList {
         for (command in CargoCommands.values()) {
             Cmd(command.presentableName) {
                 for (option in command.options) {
@@ -41,11 +41,11 @@ class CargoCommandCompletionProvider(
         }
     }
 
-    protected class Cmd(name: String, initOptions: CargoOptBuilder.() -> Unit = {}) : CmdBase(name) {
+    private class Cmd(name: String, initOptions: CargoOptBuilder.() -> Unit = {}) : CmdBase(name) {
         override val options: List<Opt> = CargoOptBuilder().apply(initOptions).result
     }
 
-    protected class CargoOptBuilder(override val result: MutableList<Opt> = mutableListOf()) : OptBuilder
+    private class CargoOptBuilder(override val result: MutableList<Opt> = mutableListOf()) : OptBuilder
 }
 
 private fun targetCompleter(kind: CargoWorkspace.TargetKind): ArgCompleter = { ctx ->
