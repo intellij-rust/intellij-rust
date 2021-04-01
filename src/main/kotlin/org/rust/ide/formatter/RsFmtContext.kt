@@ -14,7 +14,7 @@ import org.rust.ide.formatter.impl.isFlatBlock
 import org.rust.ide.formatter.settings.RsCodeStyleSettings
 import org.rust.lang.RsLanguage
 
-data class RsFmtContext private constructor(
+data class RsFmtContext(
     val commonSettings: CommonCodeStyleSettings,
     val rustSettings: RsCodeStyleSettings,
     val spacingBuilder: SpacingBuilder,

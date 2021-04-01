@@ -137,7 +137,7 @@ private class TokenTreeParser(
     }
 
     private fun nextWhitespaceOrCommentText(): CharSequence {
-        var counter = 1;
+        var counter = 1
         while (lexer.rawLookup(counter) in WHITESPACE_OR_COMMENTS) {
             counter++
         }

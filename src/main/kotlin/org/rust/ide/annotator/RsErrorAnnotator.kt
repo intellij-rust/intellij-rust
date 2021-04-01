@@ -644,7 +644,7 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
                 val fixes = listOfNotNull(CreateLifetimeParameterFromUsageFix.tryCreate(lifetime)).toTypedArray()
                 IN_BAND_LIFETIMES.check(holder, lifetime, "in-band lifetimes", *fixes)
             }
-            inDeclaration && IN_BAND_LIFETIMES.availability(lifetime) == FeatureAvailability.AVAILABLE ->
+            inDeclaration && IN_BAND_LIFETIMES.availability(lifetime) == AVAILABLE ->
                 RsDiagnostic.InBandAndExplicitLifetimesError(lifetime).addToHolder(holder)
             else ->
                 RsDiagnostic.UndeclaredLifetimeError(lifetime).addToHolder(holder)
@@ -899,14 +899,16 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
         val realCount = args.exprList.size
         if (realCount < expectedCount) {
             val target = args.rparen ?: args
-            RsDiagnostic.IncorrectFunctionArgumentCountError(target, expectedCount, realCount, functionType, listOf(
-                FillFunctionArgumentsFix(args)
-            )).addToHolder(holder)
+            RsDiagnostic.IncorrectFunctionArgumentCountError(
+                target, expectedCount, realCount, functionType,
+                listOf(FillFunctionArgumentsFix(args))
+            ).addToHolder(holder)
         } else if (!functionType.variadic && realCount > expectedCount) {
             args.exprList.drop(expectedCount).forEach {
-                RsDiagnostic.IncorrectFunctionArgumentCountError(it, expectedCount, realCount, functionType, listOf(
-                    RemoveFunctionArgumentFix(it)
-                )).addToHolder(holder)
+                RsDiagnostic.IncorrectFunctionArgumentCountError(
+                    it, expectedCount, realCount, functionType,
+                    listOf(RemoveFunctionArgumentFix(it))
+                ).addToHolder(holder)
             }
         }
     }
@@ -1386,8 +1388,7 @@ private fun AnnotationSession.fileDuplicatesMap(): MutableMap<PsiElement, Map<Na
 
 fun RsCallExpr.expectedParamsCount(): Pair<Int, FunctionType>? {
     val path = (expr as? RsPathExpr)?.path ?: return null
-    val el = path.reference?.resolve()
-    return when (el) {
+    return when (val el = path.reference?.resolve()) {
         is RsFieldsOwner -> Pair(el.fields.size, FunctionType.FUNCTION)
         is RsFunction -> {
             val owner = el.owner

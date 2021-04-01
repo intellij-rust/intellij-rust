@@ -63,6 +63,6 @@ val RsEnumItem.reprType: TyInteger
     get() = queryAttributes
         .reprAttributes
         .flatMap { it.metaItemArgs?.metaItemList?.asSequence() ?: emptySequence() }
-        .mapNotNull { it.name?.let { TyInteger.fromName(it) } }
+        .mapNotNull { it.name?.let { name -> TyInteger.fromName(name) } }
         .lastOrNull()
         ?: TyInteger.ISize

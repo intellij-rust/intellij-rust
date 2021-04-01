@@ -183,6 +183,7 @@ class RsPsiFactory(
         return createFromText("struct S($fieldsText)") ?: error("Failed to create tuple fields")
     }
 
+    @Suppress("unused")
     fun createEnum(text: String): RsEnumItem =
         createFromText(text)
             ?: error("Failed to create enum from text: `$text`")
@@ -243,8 +244,7 @@ class RsPsiFactory(
     }
 
     fun createTraitMethodMember(text: String): RsFunction {
-        return createFromText<RsFunction>("trait Foo { $text }")
-            ?: error("Failed to create a method member from text: `$text`")
+        return createFromText("trait Foo { $text }") ?: error("Failed to create a method member from text: `$text`")
     }
 
     fun createMembers(text: String): RsMembers {

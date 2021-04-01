@@ -16,7 +16,7 @@ import org.rust.lang.core.psi.ext.RsElement
 
 class RsLiftInspection : RsLocalInspectionTool() {
 
-    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor? {
+    override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return object : RsVisitor() {
             override fun visitIfExpr(o: RsIfExpr) {
                 if (o.parent is RsElseBranch) return
@@ -37,8 +37,12 @@ class RsLiftInspection : RsLocalInspectionTool() {
 
     private fun RsProblemsHolder.register(expr: RsExpr, keyword: PsiElement) {
         val keywordName = keyword.text
-        registerProblem(expr, keyword.textRangeInParent,
-            "Return can be lifted out of '$keywordName'", LiftReturnOutFix(keywordName))
+        registerProblem(
+            expr,
+            keyword.textRangeInParent,
+            "Return can be lifted out of '$keywordName'",
+            LiftReturnOutFix(keywordName)
+        )
     }
 
     private class LiftReturnOutFix(private val keyword: String) : LocalQuickFix {

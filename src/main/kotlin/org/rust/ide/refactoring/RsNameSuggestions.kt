@@ -100,8 +100,7 @@ private fun nameForCall(expr: RsCallExpr): List<String> {
         val path = pathElement.path
 
         //path.path.identifier gives us the x's out of: Xxx::<T>::yyy
-        return listOf(path.identifier, path.path?.identifier)
-            .filterNotNull().map(PsiElement::getText)
+        return listOfNotNull(path.identifier, path.path?.identifier).map(PsiElement::getText)
     }
     return listOf(pathElement.text)
 }

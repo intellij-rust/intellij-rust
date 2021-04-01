@@ -53,7 +53,7 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
         val options = Messages.showDialog(
             project,
             action.message,
-            "Unable to run debugger",
+            "Unable to Run Debugger",
             arrayOf(action.actionName),
             Messages.OK,
             Messages.getErrorIcon()
@@ -76,7 +76,6 @@ class RsDebugAdvertisingRunner : RsDefaultProgramRunnerBase() {
 
     companion object {
         const val RUNNER_ID: String = "RsDebugAdvertisingRunner"
-        private const val NATIVE_DEBUG_PLUGIN_ID: String = "com.intellij.nativeDebug"
 
         // BACKCOMPAT: 2020.3
         private val BUILD_211: BuildNumber = BuildNumber.fromString("211")!!

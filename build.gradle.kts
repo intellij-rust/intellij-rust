@@ -21,8 +21,8 @@ import kotlin.concurrent.thread
 // The same as `--stacktrace` param
 gradle.startParameter.showStacktrace = ShowStacktrace.ALWAYS
 
-val CI = System.getenv("CI") != null
-val TEAMCITY = System.getenv("TEAMCITY_VERSION") != null
+val isCI = System.getenv("CI") != null
+val isTeamcity = System.getenv("TEAMCITY_VERSION") != null
 
 val channel = prop("publishChannel")
 val platformVersion = prop("platformVersion").toInt()
@@ -86,7 +86,7 @@ allprojects {
 
     intellij {
         version = baseVersion
-        downloadSources = !CI
+        downloadSources = !isCI
         updateSinceUntilBuild = true
         instrumentCode = false
         ideaDependencyCachePath = dependencyCachePath
@@ -115,7 +115,7 @@ allprojects {
 
         test {
             testLogging.showStandardStreams = prop("showStandardStreams").toBoolean()
-            if (CI) {
+            if (isCI) {
                 retry {
                     maxRetries.set(3)
                     maxFailures.set(5)
@@ -184,7 +184,7 @@ allprojects {
             // because otherwise it can lead to compatibility issues.
             // Also note that IDEA does the same thing at startup, and not only for tests.
             systemProperty("jna.nosys", "true")
-            if (TEAMCITY) {
+            if (isTeamcity) {
                 // Make teamcity builds green if only muted tests fail
                 // https://youtrack.jetbrains.com/issue/TW-16784
                 ignoreFailures = true

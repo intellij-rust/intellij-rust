@@ -11,7 +11,6 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import org.rust.RsTask.TaskType.*
 import org.rust.lang.core.crate.Crate
 import org.rust.lang.core.crate.CratePersistentId
 import org.rust.lang.core.crate.crateGraph

@@ -34,7 +34,7 @@ abstract class RsInlayTypeHintsTestBase(
         checkInlays()
     }
 
-    protected fun checkInlays() {
+    private fun checkInlays() {
         myFixture.testInlays(
             { (it.renderer as LinearOrderInlayRenderer<*>).toString() },
             { it.renderer is LinearOrderInlayRenderer<*> }

@@ -219,8 +219,10 @@ class RsBreadcrumbsInfoProvider : BreadcrumbsProvider {
     override fun getElementTooltip(e: PsiElement): String? = null
 
     companion object {
+        @Suppress("unused")
         private enum class TextKind(val maxTextLength: Int) {
-            INFO(16), TOOLTIP(100)
+            INFO(16),
+            TOOLTIP(100)
         }
 
         private val LANGUAGES = arrayOf(RsLanguage)

@@ -65,7 +65,7 @@ class RsExtractFunctionHandler : RefactoringActionHandler {
                 val impl = psiFactory.createImpl(type.text, listOf(function))
                 val newImpl = parent.addAfter(impl, parent.addAfter(beforeNewline, owner.impl)) as? RsImplItem
                 parent.addAfter(afterNewline, newImpl)
-                newImpl?.members?.childOfType<RsFunction>()
+                newImpl?.members?.childOfType()
             }
             else -> {
                 val newline = psiParserFacade.createWhiteSpaceFromText("\n\n")

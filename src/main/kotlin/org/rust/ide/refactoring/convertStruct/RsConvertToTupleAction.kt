@@ -45,14 +45,14 @@ class RsConvertToTupleAction : RsBaseEditorRefactoringAction() {
 
         init {
             super.init()
-            title = "Convert to tuple"
+            title = "Convert to Tuple"
         }
 
         override fun doAction() {
             invokeRefactoring(RsConvertToTupleProcessor(project, element, cb.isSelected))
         }
 
-        override fun createCenterPanel(): JComponent? {
+        override fun createCenterPanel(): JComponent {
             val panel = JPanel(BorderLayout(2, 2))
             panel.preferredSize = Dimension(300, 100)
             panel.add(cb)

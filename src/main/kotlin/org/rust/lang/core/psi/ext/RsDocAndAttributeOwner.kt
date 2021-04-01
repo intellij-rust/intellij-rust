@@ -166,8 +166,7 @@ class StubbedAttributeProperty<P, S>(
 ) where P : RsDocAndAttributeOwner,
         P : StubBasedPsiElement<out S>,
         S : StubElement<P>,
-        S : RsAttributeOwnerStub
-{
+        S : RsAttributeOwnerStub {
     fun getByStub(stub: S, crate: Crate?): Boolean {
         if (!stub.hasAttrs) return false
 
@@ -232,7 +231,7 @@ class QueryAttributes(
     // `#[attributeName(arg)]`
     fun hasAttributeWithArg(attributeName: String, arg: String): Boolean {
         val attrs = attrsByName(attributeName)
-        return attrs.any { it.metaItemArgs?.metaItemList?.any { it.name == arg } ?: false }
+        return attrs.any { it.metaItemArgs?.metaItemList?.any { item -> item.name == arg } ?: false }
     }
 
     // `#[attributeName(arg)]`
@@ -246,7 +245,7 @@ class QueryAttributes(
     fun hasAttributeWithKeyValue(attributeName: String, key: String, value: String): Boolean {
         val attrs = attrsByName(attributeName)
         return attrs.any {
-            it.metaItemArgs?.metaItemList?.any { it.name == key && it.value == value } ?: false
+            it.metaItemArgs?.metaItemList?.any { item -> item.name == key && item.value == value } ?: false
         }
     }
 
@@ -336,11 +335,13 @@ private fun RsDocAndAttributeOwner.evaluateCfg(crateOrNull: Crate? = null): Thre
     val crate = crateOrNull ?: containingCrate ?: return ThreeValuedLogic.True // TODO: maybe unknown?
     val evaluator = CfgEvaluator.forCrate(crate)
 
-    val cfgAttributes = QueryAttributes(if (attributeStub?.hasCfgAttr == false) {
-        rawMetaItems
-    } else {
-        evaluator.expandCfgAttrs(rawMetaItems)
-    }).cfgAttributes
+    val cfgAttributes = QueryAttributes(
+        if (attributeStub?.hasCfgAttr == false) {
+            rawMetaItems
+        } else {
+            evaluator.expandCfgAttrs(rawMetaItems)
+        }
+    ).cfgAttributes
 
     return evaluator.evaluate(cfgAttributes)
 }

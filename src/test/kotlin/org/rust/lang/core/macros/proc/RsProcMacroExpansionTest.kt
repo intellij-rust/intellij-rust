@@ -155,8 +155,7 @@ class RsProcMacroExpansionTest : RsWithToolchainTestBase() {
         env: Map<String, String> = emptyMap()
     ) {
         val macroCallSubtree = project.createRustPsiBuilder(macroCall).parseSubtree().subtree
-        val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, name, lib, env)
-        val expansion = when (expansionResult) {
+        val expansion = when (val expansionResult = expandMacroAsTtWithErr(macroCallSubtree, name, lib, env)) {
             is RsResult.Ok -> expansionResult.ok
             is RsResult.Err -> error("Expanded with error: ${expansionResult.err}")
         }

@@ -74,11 +74,12 @@ abstract class RsTypificationTestBase : RsTestBase() {
     }
 
     private fun checkAllExpressionsTypified() {
-        val notTypifiedExprs = myFixture.file.descendantsWithMacrosOfType<RsExpr>().filter { expr ->
-            expr.inference?.isExprTypeInferred(expr) == false
-        }.filter {
-            it.expandedFrom?.let { it.macroName in BUILTIN_MACRO_NAMES } != true
-        }
+        val notTypifiedExprs = myFixture.file.descendantsWithMacrosOfType<RsExpr>()
+            .filter { expr ->
+                expr.inference?.isExprTypeInferred(expr) == false
+            }.filter { expr ->
+                expr.expandedFrom?.let { it.macroName in BUILTIN_MACRO_NAMES } != true
+            }
         if (notTypifiedExprs.isNotEmpty()) {
             error(
                 notTypifiedExprs.joinToString(
@@ -91,6 +92,6 @@ abstract class RsTypificationTestBase : RsTestBase() {
     }
 }
 
-private val BUILTIN_MACRO_NAMES = listOf(
+private val BUILTIN_MACRO_NAMES: List<String> = listOf(
     "env", "option_env", "concat", "line", "column", "file", "stringify", "module_path", "cfg"
 )

@@ -51,10 +51,10 @@ class RustProjectSettingsPanel(
 
     private var fetchedSysroot: String? = null
 
-    private val downloadStdlibLink = Link("Download via rustup") {
+    private val downloadStdlibLink = Link("Download via Rustup") {
         val rustup = RsToolchain(Paths.get(pathToToolchainField.text)).rustup
         if (rustup != null) {
-            object : Task.Modal(null, "Downloading Rust standard library", true) {
+            object : Task.Modal(null, "Downloading Rust Standard Library", true) {
                 override fun onSuccess() = update()
 
                 override fun run(indicator: ProgressIndicator) {

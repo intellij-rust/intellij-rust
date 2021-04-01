@@ -34,7 +34,7 @@ class RsEscapesLexerTestCase : RsLexingTestCaseBase() {
         val lexers = ESCAPABLE_LITERALS_TOKEN_SET.types.map { RsEscapesLexer.of(it) }
         for (lexer in lexers) {
             repeat(10000) {
-                randomLiteral().tokenize(lexer).forEach { }
+                randomLiteral().tokenize(lexer).forEach { _ -> }
             }
         }
     }

@@ -168,7 +168,7 @@ class RsShowMacroExpansionActionsTest : RsTestBase() {
     ) {
         InlineFile(code)
 
-        var failed: Boolean = false
+        var failed = false
 
         val action = object : RsShowMacroExpansionActionBase(expandRecursively = expandRecursively) {
             override fun showExpansion(project: Project, editor: Editor, expansionDetails: MacroExpansionViewDetails) {

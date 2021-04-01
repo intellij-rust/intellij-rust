@@ -87,18 +87,6 @@ data class ScopeTree(
         parentMap[childScope] = parentInfo
     }
 
-    /** Returns true if [sub] is equal to or is lexically nested inside [sup] and false otherwise. */
-    fun isSubScopeOf(sub: Scope, sup: Scope): Boolean {
-        var currentScope = sub
-        while (currentScope != sup) {
-            currentScope = getEnclosingScope(currentScope) ?: return false
-        }
-        return true
-    }
-
-    fun intersects(scope1: Scope, scope2: Scope): Boolean =
-        isSubScopeOf(scope1, scope2) || isSubScopeOf(scope2, scope1)
-
     /** Returns the narrowest scope that encloses [scope], if any. */
     fun getEnclosingScope(scope: Scope): Scope? = parentMap[scope]?.scope
 
@@ -148,41 +136,6 @@ data class ScopeTree(
         }
 
         return currentScope1
-    }
-
-    /**
-     * Assuming that the provided region was defined within this [ScopeTree].
-     * @returns the outermost [Scope] that the region outlives.
-     */
-    fun getEarlyFreeScope(region: ReEarlyBound): Scope {
-        val parameterOwner = region.parameter.ancestorStrict<RsGenericDeclaration>()
-        val body = if (parameterOwner is RsFunction) {
-            parameterOwner.block
-        } else {
-            // The lifetime was defined on node that doesn't own a body, which in practice can only mean a trait or an
-            // impl, that is the parent of a method, and that is enforced below.
-            check(parameterOwner == rootParent)
-
-            // The trait/impl lifetime is in scope for the method's body.
-            rootBody
-        }
-        return Scope.CallSite(checkNotNull(body))
-    }
-
-    /**
-     * Assuming that the provided region was defined within this [ScopeTree].
-     * @returns the outermost [Scope] that the region outlives.
-     */
-    fun getFreeScope(region: ReFree): Scope {
-        val parameterOwner = if (region.bound is BoundRegion.Named) {
-            region.bound.contextOwner.ancestorStrict<RsInferenceContextOwner>()
-        } else {
-            region.contextOwner
-        }
-        check(parameterOwner === region.contextOwner)
-
-        val body = parameterOwner?.body
-        return Scope.CallSite(checkNotNull(body))
     }
 }
 

@@ -11,6 +11,7 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -81,6 +82,6 @@ class RsModuleBuilder : ModuleBuilder() {
     var configurationData: ConfigurationData? = null
 
     companion object {
-        private val LOG = Logger.getInstance(RsModuleBuilder::class.java)
+        private val LOG: Logger = logger<RsModuleBuilder>()
     }
 }

@@ -22,7 +22,7 @@ class RsDebuggerTypesHelper(process: CidrDebugProcess) : CidrDebuggerTypesHelper
 
     override fun computeSourcePosition(value: CidrMemberValue): XSourcePosition? = null
 
-    override fun isImplicitContextVariable(position: XSourcePosition, `var`: LLValue): Boolean? = false
+    override fun isImplicitContextVariable(position: XSourcePosition, `var`: LLValue): Boolean = false
 
     override fun resolveProperty(value: CidrMemberValue, dynamicTypeName: String?): XSourcePosition? = null
 

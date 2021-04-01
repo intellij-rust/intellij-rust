@@ -6,7 +6,6 @@
 package org.rust.ide.console
 
 import com.intellij.execution.process.KillableColoredProcessHandler
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.BaseOutputReader
@@ -21,11 +20,11 @@ class RsConsoleProcessHandler(
 ) : KillableColoredProcessHandler(process, commandLine, charset) {
 
     init {
-        Disposer.register(consoleView, Disposable {
+        Disposer.register(consoleView) {
             if (!isProcessTerminated) {
                 destroyProcess()
             }
-        })
+        }
     }
 
     override fun coloredTextAvailable(textOriginal: String, attributes: Key<*>) {

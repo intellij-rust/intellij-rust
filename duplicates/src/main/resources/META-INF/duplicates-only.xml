@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" allow-bundled-update="true">
+<idea-plugin allow-bundled-update="true">
     <extensions defaultExtensionNs="com.intellij">
         <duplicateScope language="Rust" implementationClass="org.rust.ide.clones.RsDuplicateScope"/>
     </extensions>

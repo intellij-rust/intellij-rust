@@ -6,6 +6,7 @@
 package org.rust.lang.core.crate.impl
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
@@ -16,7 +17,6 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.util.containers.addIfNotNull
 import gnu.trove.TIntObjectHashMap
 import org.rust.cargo.project.model.CargoProject
-import org.rust.cargo.project.model.CargoProjectsService
 import org.rust.cargo.project.model.CargoProjectsService.CargoProjectsListener
 import org.rust.cargo.project.model.CargoProjectsService.Companion.CARGO_PROJECTS_TOPIC
 import org.rust.cargo.project.model.cargoProjects
@@ -71,7 +71,7 @@ private data class CrateGraph(
     val idToCrate: TIntObjectHashMap<Crate>
 )
 
-private val LOG = Logger.getInstance(CrateGraphServiceImpl::class.java)
+private val LOG: Logger = logger<CrateGraphServiceImpl>()
 
 private fun buildCrateGraph(project: Project, cargoProjects: Collection<CargoProject>): CrateGraph {
     val builder = CrateGraphBuilder(project)
@@ -139,13 +139,15 @@ private class CrateGraphBuilder(val project: Project) {
         states[pkg.rootDirectory] = newState
         topSortedCrates.addIfNotNull(libCrate)
 
-        lowerNonLibraryCratesLater(NonLibraryCrates(
-            pkg,
-            newState,
-            normalAndNonCyclicDevDeps,
-            cyclicDevDependencies,
-            flatNormalAndNonCyclicDevDeps
-        ))
+        lowerNonLibraryCratesLater(
+            NonLibraryCrates(
+                pkg,
+                newState,
+                normalAndNonCyclicDevDeps,
+                cyclicDevDependencies,
+                flatNormalAndNonCyclicDevDeps
+            )
+        )
 
         return libCrate
     }
@@ -415,7 +417,7 @@ private class CyclicGraphException(crateName: String) : RuntimeException("Cyclic
         stack += crateName
     }
 
-    override val message: String?
+    override val message: String
         get() = super.message + stack.asReversed().joinToString(prefix = " (", separator = " -> ", postfix = ")")
 }
 

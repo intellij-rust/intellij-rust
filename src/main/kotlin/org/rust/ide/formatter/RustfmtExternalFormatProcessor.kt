@@ -93,7 +93,7 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
             source: PsiFile,
             range: TextRange,
             canChangeWhiteSpacesOnly: Boolean,
-        ): TextRange? {
+        ): TextRange {
             val tryRustfmt = !canChangeWhiteSpacesOnly
                 && source.textRange == range
                 && getFormattingReason() == FormattingReason.ReformatCode
@@ -108,7 +108,7 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
             return formatWithBuiltin(source, range, canChangeWhiteSpacesOnly)
         }
 
-        private fun formatWithRustfmt(source: PsiFile, range: TextRange, context: RustfmtContext): TextRange? {
+        private fun formatWithRustfmt(source: PsiFile, range: TextRange, context: RustfmtContext): TextRange {
             Testmarks.rustfmtUsed.hit()
 
             val (rustfmt, cargoProject, document) = context
@@ -138,7 +138,7 @@ abstract class RustfmtExternalFormatProcessorBase : ExternalFormatProcessor {
          * Mimics to [com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl.reformatText] and
          * [com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl.formatRanges]
          */
-        private fun formatWithBuiltin(source: PsiFile, range: TextRange, canChangeWhiteSpacesOnly: Boolean): TextRange? {
+        private fun formatWithBuiltin(source: PsiFile, range: TextRange, canChangeWhiteSpacesOnly: Boolean): TextRange {
             val start = source.findElementAt(range.startOffset)?.createSmartPointer()
             val end = source.findElementAt(range.endOffset)?.createSmartPointer()
             val atEnd = range.endOffset == source.endOffset

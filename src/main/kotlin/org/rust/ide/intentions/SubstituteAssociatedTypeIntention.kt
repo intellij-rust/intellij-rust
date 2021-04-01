@@ -16,7 +16,6 @@ import org.rust.lang.core.psi.RsPath
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.RsTypeAlias
 import org.rust.lang.core.psi.RsTypeReference
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
 import org.rust.lang.core.psi.ext.endOffsetInParent
 import org.rust.lang.core.psi.ext.owner
 import org.rust.lang.core.types.type
@@ -25,8 +24,10 @@ class SubstituteAssociatedTypeIntention : RsElementBaseIntentionAction<Substitut
     override fun getText() = "Substitute associated type"
     override fun getFamilyName() = text
 
-    data class Context(val path: RsPath,
-                       val typeAliasReference: RsTypeReference)
+    data class Context(
+        val path: RsPath,
+        val typeAliasReference: RsTypeReference
+    )
 
     override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val path = element.parentOfType<RsPath>() ?: return null

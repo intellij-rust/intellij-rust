@@ -15,7 +15,5 @@ class RustfmtExternalFormatProcessor : RustfmtExternalFormatProcessorBase() {
         range: TextRange,
         canChangeWhiteSpacesOnly: Boolean,
         keepLineBreaks: Boolean // Always `false`?
-    ): TextRange? {
-        return formatWithRustfmtOrBuiltinFormatter(source, range, canChangeWhiteSpacesOnly)
-    }
+    ): TextRange = formatWithRustfmtOrBuiltinFormatter(source, range, canChangeWhiteSpacesOnly)
 }

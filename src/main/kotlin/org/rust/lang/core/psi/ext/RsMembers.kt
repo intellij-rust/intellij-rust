@@ -43,6 +43,3 @@ val List<RsAbstractable>.constants: List<RsConstant>
     get() = filterIsInstance<RsConstant>()
 val List<RsAbstractable>.types: List<RsTypeAlias>
     get() = filterIsInstance<RsTypeAlias>()
-
-val List<RsAbstractable>.functionsAndConstants: List<RsAbstractable>
-    get() = filter { it is RsFunction || it is RsConstant }

@@ -15,7 +15,6 @@ import org.rust.lang.core.psi.RsUseItem
 import org.rust.lang.core.resolve2.DeclMacroDefInfo
 import org.rust.lang.core.resolve2.MacroCallInfo
 import org.rust.lang.core.resolve2.RESOLVE_LOG
-import org.rust.lang.core.stubs.*
 import org.rust.openapiext.testAssert
 
 /**

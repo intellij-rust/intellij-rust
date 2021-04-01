@@ -11,7 +11,6 @@ import com.intellij.lang.PairedBraceMatcher
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.psi.PsiFile
-import com.intellij.psi.TokenType
 import com.intellij.psi.TokenType.WHITE_SPACE
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -50,7 +49,7 @@ class RsBraceMatcher : PairedBraceMatcherAdapter(RsBaseBraceMatcher(), RsLanguag
         // between a pair of `<>`.
         var count = 0
         try {
-            val braceStack: Deque<IElementType> = ArrayDeque<IElementType>()
+            val braceStack = ArrayDeque<IElementType>()
             braceStack.addLast(brace)
             var prevIsAnd = false
             while (true) {
@@ -148,7 +147,7 @@ private class RsBaseBraceMatcher : PairedBraceMatcher {
         private val InsertPairBraceBefore = TokenSet.orSet(
             RS_COMMENTS,
             TokenSet.create(
-                TokenType.WHITE_SPACE,
+                WHITE_SPACE,
                 SEMICOLON,
                 COMMA,
                 RPAREN,

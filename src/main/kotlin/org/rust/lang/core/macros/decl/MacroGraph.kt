@@ -44,7 +44,7 @@ typealias MacroGraphNode = Node<MGNodeData, Unit>
 
 class MacroGraphBuilder(private val macro: RsMacro) {
     private val graph = MacroGraph()
-    private val preds: Deque<MacroGraphNode> = ArrayDeque<MacroGraphNode>()
+    private val preds: Deque<MacroGraphNode> = ArrayDeque()
     private val pred: MacroGraphNode get() = preds.peek()
     private var result: MacroGraphNode? = null
 

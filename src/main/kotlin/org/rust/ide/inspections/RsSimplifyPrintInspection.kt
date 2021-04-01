@@ -18,7 +18,9 @@ import org.rust.lang.core.psi.ext.macroName
  * Replace `println!("")` with `println!()` available since Rust 1.14.0
  */
 class RsSimplifyPrintInspection : RsLocalInspectionTool() {
-    override fun getDisplayName() = "println!(\"\") usage"
+
+    @Suppress("DialogTitleCapitalization")
+    override fun getDisplayName(): String = "println!(\"\") usage"
 
     override fun buildVisitor(holder: RsProblemsHolder, isOnTheFly: Boolean) = object : RsVisitor() {
 

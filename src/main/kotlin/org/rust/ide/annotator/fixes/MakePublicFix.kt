@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.rust.ide.intentions.visibility.ChangeVisibilityIntention
-import org.rust.lang.core.psi.ext.RsVisibility
 import org.rust.lang.core.psi.ext.RsVisibilityOwner
 
 class MakePublicFix private constructor(
@@ -38,9 +37,11 @@ class MakePublicFix private constructor(
     }
 
     companion object {
-        fun createIfCompatible(visible: RsVisibilityOwner,
-                               elementName: String?,
-                               crateRestricted: Boolean): MakePublicFix? {
+        fun createIfCompatible(
+            visible: RsVisibilityOwner,
+            elementName: String?,
+            crateRestricted: Boolean
+        ): MakePublicFix? {
             if (!ChangeVisibilityIntention.isValidVisibilityOwner(visible)) return null
             return MakePublicFix(visible, elementName, crateRestricted)
         }

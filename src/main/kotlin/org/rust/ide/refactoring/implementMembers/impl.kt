@@ -28,6 +28,7 @@ import org.rust.lang.core.types.type
 import org.rust.openapiext.checkReadAccessAllowed
 import org.rust.openapiext.checkWriteAccessAllowed
 import org.rust.openapiext.checkWriteAccessNotAllowed
+import kotlin.math.max
 
 fun generateTraitMembers(impl: RsImplItem, editor: Editor?) {
     checkWriteAccessNotAllowed()
@@ -149,7 +150,7 @@ private fun createExtraWhitespacesAroundFunction(left: PsiElement, right: PsiEle
         .filterIsInstance<PsiWhiteSpace>()
         .map { it.text.count { c -> c == '\n' } }
         .sum()
-    val extraLineCount = Math.max(0, 2 - lineCount)
+    val extraLineCount = max(0, 2 - lineCount)
     return RsPsiFactory(left.project).createWhitespace("\n".repeat(extraLineCount))
 }
 

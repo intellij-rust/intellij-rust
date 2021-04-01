@@ -39,10 +39,10 @@ sealed class MacroMatchingError(macroCallBody: PsiBuilder) {
     }
 
     class UnmatchedToken(macroCallBody: PsiBuilder, node: ASTNode) : MacroMatchingError(macroCallBody) {
-        val expectedToken: IElementType = node.elementType
-        val expectedText: String = node.text
-        val actualToken: IElementType? = macroCallBody.tokenType
-        val actualText: String? = macroCallBody.tokenText
+        private val expectedToken: IElementType = node.elementType
+        private val expectedText: String = node.text
+        private val actualToken: IElementType? = macroCallBody.tokenType
+        private val actualText: String? = macroCallBody.tokenText
 
         override fun toString(): String = "UnmatchedToken($expectedToken(`$expectedText`) != $actualToken(`$actualText`))"
     }
@@ -59,7 +59,7 @@ sealed class MacroMatchingError(macroCallBody: PsiBuilder) {
         override fun toString(): String = "TooFewGroupElements"
     }
 
-    class Nesting(macroCallBody: PsiBuilder, val variableName: String) : MacroMatchingError(macroCallBody) {
+    class Nesting(macroCallBody: PsiBuilder, private val variableName: String) : MacroMatchingError(macroCallBody) {
         override fun toString(): String = "Nesting($variableName)"
     }
 }

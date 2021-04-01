@@ -8,9 +8,9 @@ package org.rust.ide.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.rust.lang.core.psi.ext.asTrivial
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.ancestorStrict
+import org.rust.lang.core.psi.ext.asTrivial
 import org.rust.lang.core.psi.ext.endOffset
 import org.rust.lang.core.psi.ext.startOffset
 
@@ -39,19 +39,13 @@ class RemoveCurlyBracesIntention : RsElementBaseIntentionAction<RemoveCurlyBrace
         val name: String
     )
 
-    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): RemoveCurlyBracesIntention.Context? {
+    override fun findApplicableContext(project: Project, editor: Editor, element: PsiElement): Context? {
         val useItem = element.ancestorStrict<RsUseItem>() ?: return null
         val useSpeck = useItem.useSpeck ?: return null
         val path = useSpeck.path ?: return null
         val useGroup = useSpeck.useGroup ?: return null
         val name = useGroup.asTrivial?.text ?: return null
-
-        return Context(
-            useSpeck,
-            path,
-            useGroup,
-            name
-        )
+        return Context(useSpeck, path, useGroup, name)
     }
 
     override fun invoke(project: Project, editor: Editor, ctx: Context) {

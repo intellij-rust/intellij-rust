@@ -10,7 +10,6 @@ object CargoConstants {
     const val MANIFEST_FILE = "Cargo.toml"
     const val XARGO_MANIFEST_FILE = "Xargo.toml"
     const val LOCK_FILE = "Cargo.lock"
-    const val BUILD_RS_FILE = "build.rs"
 
     const val RUST_BACKTRACE_ENV_VAR = "RUST_BACKTRACE"
 

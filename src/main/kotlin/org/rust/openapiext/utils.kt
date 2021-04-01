@@ -44,7 +44,6 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
-import com.intellij.reference.SoftReference
 import com.intellij.util.CachedValueImpl
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
@@ -57,7 +56,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KProperty
 
 fun <T> Project.runWriteCommandAction(command: () -> T): T {
-    return WriteCommandAction.runWriteCommandAction(this, Computable<T> { command() })
+    return WriteCommandAction.runWriteCommandAction(this, Computable { command() })
 }
 
 val Project.modules: Collection<Module>
@@ -155,7 +154,8 @@ inline fun <Key, reified Psi : PsiElement> getElements(
 
 
 fun Element.toXmlString() = JDOMUtil.writeElement(this)
-fun elementFromXmlString(xml: String): org.jdom.Element =
+
+fun elementFromXmlString(xml: String): Element =
     SAXBuilder().build(xml.byteInputStream()).rootElement
 
 class CachedVirtualFile(private val url: String?) {
@@ -199,6 +199,7 @@ private fun FileDocumentManager.stripDocumentLater(document: Document): Boolean 
     if (this !is FileDocumentManagerImpl) return false
     val trailingSpacesStripper = trailingSpacesStripperField
         ?.get(this) as? TrailingSpacesStripper ?: return false
+
     @Suppress("UNCHECKED_CAST")
     val documentsToStripLater = documentsToStripLaterField
         ?.get(trailingSpacesStripper) as? MutableSet<Document> ?: return false
@@ -249,14 +250,8 @@ fun Project.runWithCancelableProgress(title: String, process: () -> Unit): Boole
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, true, this)
 }
 
-inline fun <T> UserDataHolderEx.getOrPut(key: Key<T>, defaultValue: () -> T): T =
+inline fun <T : Any> UserDataHolderEx.getOrPut(key: Key<T>, defaultValue: () -> T): T =
     getUserData(key) ?: putUserDataIfAbsent(key, defaultValue())
-
-inline fun <T> UserDataHolderEx.getOrPutSoft(key: Key<SoftReference<T>>, defaultValue: () -> T): T =
-    getUserData(key)?.get() ?: run {
-        val value = defaultValue()
-        putUserDataIfAbsent(key, SoftReference(value)).get() ?: value
-    }
 
 const val PLUGIN_ID: String = "org.rust.lang"
 
@@ -300,7 +295,7 @@ fun runWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit)
 fun runInReadActionWithWriteActionPriority(indicator: ProgressIndicator, action: () -> Unit): Boolean =
     ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, indicator)
 
-fun <T: Any> computeInReadActionWithWriteActionPriority(indicator: ProgressIndicator, action: () -> T): T {
+fun <T : Any> computeInReadActionWithWriteActionPriority(indicator: ProgressIndicator, action: () -> T): T {
     lateinit var result: T
     val success = runInReadActionWithWriteActionPriority(indicator) {
         result = action()

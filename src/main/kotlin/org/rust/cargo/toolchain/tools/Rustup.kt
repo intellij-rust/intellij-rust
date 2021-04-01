@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import org.rust.cargo.project.settings.toolchain
@@ -24,7 +25,7 @@ import org.rust.openapiext.fullyRefreshDirectory
 import org.rust.openapiext.isSuccess
 import java.nio.file.Path
 
-private val LOG = Logger.getInstance(Rustup::class.java)
+private val LOG: Logger = logger<Rustup>()
 
 val RsToolchain.isRustupAvailable: Boolean get() = hasExecutable(Rustup.NAME)
 
@@ -55,7 +56,7 @@ class Rustup(toolchain: RsToolchain, private val projectDirectory: Path) : RsToo
         }
     }
 
-    fun listComponents(): List<Component> =
+    private fun listComponents(): List<Component> =
         createBaseCommandLine(
             "component", "list",
             workingDirectory = projectDirectory

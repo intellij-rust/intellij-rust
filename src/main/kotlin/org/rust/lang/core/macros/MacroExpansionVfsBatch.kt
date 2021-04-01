@@ -57,7 +57,7 @@ class MacroExpansionVfsBatchImpl(rootDirName: String) : MacroExpansionVfsBatch {
     private sealed class PathImpl : MacroExpansionVfsBatch.Path {
 
         class VFile(val file: VirtualFile) : PathImpl() {
-            override fun toVirtualFile(): VirtualFile? = file
+            override fun toVirtualFile(): VirtualFile = file
         }
 
         class StringPath(val path: String) : PathImpl() {

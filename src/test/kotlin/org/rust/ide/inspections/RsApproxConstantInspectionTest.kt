@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-package org.rust.ide.inspections;
+package org.rust.ide.inspections
 
 /**
  * Tests for the Approximate Constant inspection

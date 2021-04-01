@@ -67,7 +67,7 @@ class LcovCoverageReport {
                         check(values.size == 2)
                         val lineNum = Integer.parseInt(values[0])
                         val hitCount = Integer.parseInt(values[1])
-                        val lineHits = LcovCoverageReport.LineHits(lineNum, hitCount)
+                        val lineHits = LineHits(lineNum, hitCount)
                         lineDataList?.add(lineHits)
                     }
                     END_OF_RECORD == line -> {

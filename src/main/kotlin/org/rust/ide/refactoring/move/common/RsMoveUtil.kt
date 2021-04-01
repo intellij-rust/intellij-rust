@@ -6,6 +6,7 @@
 package org.rust.ide.refactoring.move.common
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.DummyHolder
@@ -225,7 +226,8 @@ object RsMoveUtil {
         }
     }
 
-    val LOG: Logger = Logger.getInstance(RsMoveUtil::class.java)
+    @JvmField
+    val LOG: Logger = logger<RsMoveUtil>()
 }
 
 inline fun <reified T : RsElement> movedElementsShallowDescendantsOfType(elementsToMove: List<ElementToMove>): List<T> =

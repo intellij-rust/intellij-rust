@@ -14,7 +14,5 @@ enum class ExternalLinter(val title: String) {
     companion object {
         @JvmField
         val DEFAULT: ExternalLinter = CARGO_CHECK
-
-        fun findByName(name: String): ExternalLinter? = values().find { it.title == name }
     }
 }

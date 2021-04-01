@@ -17,6 +17,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -29,7 +30,7 @@ import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.StatusText
-import com.jetbrains.cidr.cpp.CPPBundle
+import com.jetbrains.cidr.cpp.CLionProfilingBundle
 import com.jetbrains.cidr.cpp.profiling.*
 import com.jetbrains.cidr.cpp.profiling.ui.MemoryProfileOutputPanel
 import com.jetbrains.cidr.cpp.valgrind.*
@@ -41,7 +42,7 @@ import org.rust.clion.valgrind.legacy.RsValgrindRunnerLegacy
 import java.io.File
 import java.io.IOException
 
-private val LOG: Logger = Logger.getInstance(RsValgrindConfigurationExtension::class.java.name)
+private val LOG: Logger = logger<RsValgrindConfigurationExtension>()
 
 class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
     override fun isApplicableFor(configuration: CargoCommandConfiguration): Boolean = true
@@ -161,7 +162,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
             override fun startNotified(event: ProcessEvent) {
                 application.invokeLater({
                     tree.setPaintBusy(true)
-                    tree.emptyText.text = CPPBundle.message("valgrind.progress")
+                    tree.emptyText.text = CLionProfilingBundle.message("valgrind.progress")
                 }, expiredCondition)
             }
 
@@ -187,7 +188,7 @@ class RsValgrindConfigurationExtension : CargoCommandConfigurationExtension() {
         configuration: CargoCommandConfiguration,
         context: ConfigurationExtensionContext
     ) {
-        if (configuration.getUserData<Boolean>(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
+        if (configuration.getUserData(STORE_DATA_IN_RUN_CONFIGURATION) == true) {
             configuration.putUserData(key, value)
         } else {
             context.putUserData(key, value)

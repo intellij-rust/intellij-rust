@@ -22,6 +22,7 @@ import org.rust.stdext.zipValues
 
 open class Substitution(
     val typeSubst: Map<TyTypeParameter, Ty> = emptyMap(),
+    @Suppress("MemberVisibilityCanBePrivate")
     val regionSubst: Map<ReEarlyBound, Region> = emptyMap(),
     val constSubst: Map<CtConstParameter, Const> = emptyMap()
 ) {

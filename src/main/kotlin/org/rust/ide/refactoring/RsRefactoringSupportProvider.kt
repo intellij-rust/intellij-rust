@@ -27,7 +27,7 @@ class RsRefactoringSupportProvider : RefactoringSupportProvider() {
     override fun getIntroduceVariableHandler(element: PsiElement?): RefactoringActionHandler =
         RsIntroduceVariableHandler()
 
-    override fun getIntroduceConstantHandler(): RefactoringActionHandler? = RsIntroduceConstantHandler()
+    override fun getIntroduceConstantHandler(): RefactoringActionHandler = RsIntroduceConstantHandler()
 
     override fun getExtractMethodHandler(): RefactoringActionHandler = RsExtractFunctionHandler()
 

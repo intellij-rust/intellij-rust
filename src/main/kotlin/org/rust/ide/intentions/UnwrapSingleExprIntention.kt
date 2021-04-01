@@ -13,6 +13,8 @@ import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.psi.RsMatchArm
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.*
+import kotlin.math.max
+import kotlin.math.min
 
 class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
     override fun getText() = "Remove braces from single expression"
@@ -35,7 +37,7 @@ class UnwrapSingleExprIntention : RsElementBaseIntentionAction<RsBlockExpr>() {
         if (parent is RsMatchArm && parent.comma == null) {
             parent.add(RsPsiFactory(project).createComma())
         }
-        val relativeCaretPosition = Math.min(Math.max(editor.caretModel.offset - blockBody.textOffset, 0), blockBody.textLength)
+        val relativeCaretPosition = min(max(editor.caretModel.offset - blockBody.textOffset, 0), blockBody.textLength)
 
         val offset = (ctx.replace(blockBody) as RsExpr).textOffset
         editor.caretModel.moveToOffset(offset + relativeCaretPosition)

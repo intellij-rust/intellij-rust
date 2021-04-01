@@ -82,7 +82,7 @@ abstract class RsSuggestedRefactoringTestBase : RsTestBase() {
     private fun suggestedRefactoringIntention(): IntentionAction? =
         myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
 
-    protected fun executeEditingAction(
+    private fun executeEditingAction(
         action: () -> Unit,
         wrapIntoCommandAndWriteActionAndCommitAll: Boolean = true
     ) {

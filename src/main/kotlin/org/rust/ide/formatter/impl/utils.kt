@@ -25,8 +25,10 @@ val NO_SPACE_AROUND_OPS = ts(COLONCOLON, DOT, DOTDOT, DOTDOTDOT, DOTDOTEQ)
 val SPACE_AROUND_OPS = TokenSet.andNot(RS_OPERATORS, NO_SPACE_AROUND_OPS)
 val UNARY_OPS = ts(MINUS, MUL, EXCL, AND, ANDAND)
 
-val PAREN_DELIMITED_BLOCKS = orSet(ts(VALUE_PARAMETER_LIST, PAREN_EXPR, TUPLE_EXPR, TUPLE_TYPE, VALUE_ARGUMENT_LIST, PAT_TUP, TUPLE_FIELDS, VIS_RESTRICTION),
-    SPECIAL_MACRO_ARGS)
+val PAREN_DELIMITED_BLOCKS = orSet(
+    ts(VALUE_PARAMETER_LIST, PAREN_EXPR, TUPLE_EXPR, TUPLE_TYPE, VALUE_ARGUMENT_LIST, PAT_TUP, TUPLE_FIELDS, VIS_RESTRICTION),
+    SPECIAL_MACRO_ARGS
+)
 val PAREN_LISTS = orSet(PAREN_DELIMITED_BLOCKS, ts(PAT_TUPLE_STRUCT))
 
 val BRACK_DELIMITED_BLOCKS = orSet(ts(ARRAY_TYPE, ARRAY_EXPR), SPECIAL_MACRO_ARGS)
@@ -42,8 +44,10 @@ val ANGLE_LISTS = orSet(ANGLE_DELIMITED_BLOCKS, ts(TYPE_QUAL))
 val ATTRS = ts(OUTER_ATTR, INNER_ATTR)
 val MOD_LIKE_ITEMS = ts(FOREIGN_MOD_ITEM, MOD_ITEM)
 
-val DELIMITED_BLOCKS = orSet(BRACE_DELIMITED_BLOCKS, BRACK_DELIMITED_BLOCKS,
-    PAREN_DELIMITED_BLOCKS, ANGLE_DELIMITED_BLOCKS)
+val DELIMITED_BLOCKS = orSet(
+    BRACE_DELIMITED_BLOCKS, BRACK_DELIMITED_BLOCKS,
+    PAREN_DELIMITED_BLOCKS, ANGLE_DELIMITED_BLOCKS
+)
 val FLAT_BRACE_BLOCKS = orSet(MOD_LIKE_ITEMS, ts(PAT_STRUCT))
 
 val TYPES = ts(ARRAY_TYPE, REF_LIKE_TYPE, FN_POINTER_TYPE, TUPLE_TYPE, BASE_TYPE, FOR_IN_TYPE)
@@ -108,7 +112,6 @@ fun ASTNode.treeNonWSNext(): ASTNode? {
 
 class CommaList(
     val list: IElementType,
-    val openingBrace: IElementType,
     val closingBrace: IElementType,
     val isElement: (PsiElement) -> Boolean
 ) {
@@ -117,19 +120,17 @@ class CommaList(
     override fun toString(): String = "CommaList($list)"
 
     companion object {
-        fun forElement(elementType: IElementType): CommaList? {
-            return ALL.find { it.list == elementType }
-        }
+        fun forElement(elementType: IElementType): CommaList? = ALL.find { it.list == elementType }
 
-        private val ALL = listOf(
-            CommaList(BLOCK_FIELDS, LBRACE, RBRACE) { it.elementType == NAMED_FIELD_DECL },
-            CommaList(STRUCT_LITERAL_BODY, LBRACE, RBRACE) { it.elementType == STRUCT_LITERAL_FIELD },
-            CommaList(ENUM_BODY, LBRACE, RBRACE) { it.elementType == ENUM_VARIANT },
-            CommaList(USE_GROUP, LBRACE, RBRACE) { it.elementType == USE_SPECK },
+        private val ALL: List<CommaList> = listOf(
+            CommaList(BLOCK_FIELDS, RBRACE) { it.elementType == NAMED_FIELD_DECL },
+            CommaList(STRUCT_LITERAL_BODY, RBRACE) { it.elementType == STRUCT_LITERAL_FIELD },
+            CommaList(ENUM_BODY, RBRACE) { it.elementType == ENUM_VARIANT },
+            CommaList(USE_GROUP, RBRACE) { it.elementType == USE_SPECK },
 
-            CommaList(TUPLE_FIELDS, LPAREN, RPAREN) { it.elementType == TUPLE_FIELD_DECL },
-            CommaList(VALUE_PARAMETER_LIST, LPAREN, RPAREN) { it.elementType == VALUE_PARAMETER },
-            CommaList(VALUE_ARGUMENT_LIST, LPAREN, RPAREN) { it is RsExpr }
+            CommaList(TUPLE_FIELDS, RPAREN) { it.elementType == TUPLE_FIELD_DECL },
+            CommaList(VALUE_PARAMETER_LIST, RPAREN) { it.elementType == VALUE_PARAMETER },
+            CommaList(VALUE_ARGUMENT_LIST, RPAREN) { it is RsExpr }
         )
     }
 }

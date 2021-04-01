@@ -74,7 +74,7 @@ class RsBraceMatcherTest : RsTestBase() {
             val coBrace = if (forward) '>' else '<'
 
             val pairOffset = try {
-                BraceMatchingUtil.getMatchedBraceOffset(myFixture.editor, forward, myFixture.file)
+                getMatchedBraceOffset(myFixture.editor, forward, myFixture.file)
             } catch (e: AssertionError) {
                 error("Failed to find a pair for `$brace` in `${parent.text}`")
             }

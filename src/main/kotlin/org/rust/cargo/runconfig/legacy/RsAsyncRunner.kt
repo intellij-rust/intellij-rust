@@ -14,7 +14,6 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.CapturingProcessAdapter
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.execution.process.ProcessOutput
-import com.intellij.execution.process.ProcessTerminatedListener
 import com.intellij.execution.runners.AsyncProgramRunner
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.showRunContent
@@ -32,8 +31,8 @@ import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildConfiguration
 import org.rust.cargo.runconfig.buildtool.CargoBuildManager.isBuildToolWindowEnabled
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 import org.rust.cargo.toolchain.CargoCommandLine
-import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.impl.CargoMetadata
+import org.rust.cargo.toolchain.impl.CompilerArtifactMessage
 import org.rust.cargo.toolchain.tools.Cargo.Companion.getCargoCommonPatch
 import org.rust.cargo.toolchain.tools.RsTool.Companion.createGeneralCommandLine
 import org.rust.cargo.util.CargoArgsParser.Companion.parseArgs
@@ -104,25 +103,9 @@ abstract class RsAsyncRunner(
 
     private fun executeCommandLine(
         state: CargoRunStateBase,
-        cmd: GeneralCommandLine,
+        commandLine: GeneralCommandLine,
         environment: ExecutionEnvironment
-    ): DefaultExecutionResult {
-        val runConfiguration = state.runConfiguration
-        val context = ConfigurationExtensionContext()
-
-        val manager = RsRunConfigurationExtensionManager.getInstance()
-        manager.patchCommandLine(runConfiguration, environment, cmd, context)
-        manager.patchCommandLineState(runConfiguration, environment, state, context)
-
-        val handler = RsKillableColoredProcessHandler(cmd)
-        ProcessTerminatedListener.attach(handler) // shows exit code upon termination
-
-        manager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
-
-        val console = state.consoleBuilder.console
-        console.attachToProcess(handler)
-        return DefaultExecutionResult(console, handler)
-    }
+    ): DefaultExecutionResult = state.executeCommandLine(commandLine, environment)
 
     open fun checkToolchainConfigured(project: Project): Boolean = true
 
@@ -216,8 +199,10 @@ abstract class RsAsyncRunner(
                                             promise.setResult(null)
                                         }
                                         binaries.size > 1 -> {
-                                            project.showErrorDialog("More than one binary was produced. " +
-                                                "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly.")
+                                            project.showErrorDialog(
+                                                "More than one binary was produced. " +
+                                                    "Please specify `--bin`, `--lib`, `--test` or `--example` flag explicitly."
+                                            )
                                             promise.setResult(null)
                                         }
                                         else -> promise.setResult(Binary(Paths.get(binaries.single())))

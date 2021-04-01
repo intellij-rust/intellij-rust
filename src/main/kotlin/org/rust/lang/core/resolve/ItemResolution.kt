@@ -5,12 +5,9 @@
 
 package org.rust.lang.core.resolve
 
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapiext.Testmark
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.CachedValue
 import org.rust.cargo.util.AutoInjectedCrates.CORE
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.lang.core.psi.*
@@ -217,7 +214,7 @@ fun processItemDeclarations(
             speck.crateRoot
         } ?: continue
 
-        val found = recursionGuard(mod, Computable {
+        val found = recursionGuard(mod, {
             processWithShadowing(directlyDeclaredNames, originalProcessor) { shadowingProcessor ->
                 processItemOrEnumVariantDeclarations(
                     mod,
@@ -267,7 +264,7 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
 
     var variants: List<RsNamedElement> = emptyList()
     val visitedNamespaces = EnumSet.noneOf(Namespace::class.java)
-    if (processor.lazy(name) {
+    val result = processor.lazy(name) {
         variants = ref.multiResolve()
             .filterIsInstance<RsNamedElement>()
             .filter { ns.intersects(it.namespaces) }
@@ -276,9 +273,8 @@ private fun processMultiResolveWithNs(name: String, ns: Set<Namespace>, ref: RsR
             visitedNamespaces.addAll(first.namespaces)
         }
         first
-    }) {
-        return true
     }
+    if (result) return true
     // `variants` will be populated if processor looked at the corresponding element
     for (element in variants.drop(1)) {
         if (element.namespaces.all { it in visitedNamespaces }) continue
@@ -293,8 +289,6 @@ enum class ItemProcessingMode(val withExternCrates: Boolean) {
     WITH_PRIVATE_IMPORTS(false),
     WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES(true),
     WITH_PRIVATE_IMPORTS_N_EXTERN_CRATES_COMPLETION(true);
-
-    val cacheKey: Key<CachedValue<List<ScopeEntry>>> = Key.create("CACHED_ITEM_DECLS_$name")
 }
 
 object ItemResolutionTestmarks {

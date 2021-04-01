@@ -24,7 +24,7 @@ class RsGroupSelectionHandler : ExtendWordSelectionHandlerBase() {
         e is RsStmt || RsFieldLikeSelectionHandler.isFieldLikeDecl(e) || e.parent is RsMembers || e is PsiComment
 
 
-    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange>? {
+    override fun select(e: PsiElement, editorText: CharSequence, cursorOffset: Int, editor: Editor): List<TextRange> {
         // see com.intellij.codeInsight.editorActions.wordSelection.StatementGroupSelectioner for the reference implementation
 
         val result = ArrayList<TextRange>()
@@ -64,8 +64,11 @@ class RsGroupSelectionHandler : ExtendWordSelectionHandlerBase() {
 
         while (endElement is PsiWhiteSpace) endElement = endElement.prevSibling
 
-        result.addAll(expandToWholeLine(
-            editorText, TextRange(startElement.startOffset, endElement.endOffset)))
+        result.addAll(
+            expandToWholeLine(
+                editorText, TextRange(startElement.startOffset, endElement.endOffset)
+            )
+        )
 
         return result
     }

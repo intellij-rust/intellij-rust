@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiManager
 import com.intellij.ui.GuiUtils
-import com.intellij.util.Consumer
 import com.intellij.util.indexing.LightDirectoryIndex
 import com.intellij.util.io.exists
 import com.intellij.util.io.systemIndependentPath
@@ -109,6 +108,7 @@ open class CargoProjectsServiceImpl(
     private val projects = AsyncValue<List<CargoProjectImpl>>(emptyList())
 
 
+    @Suppress("LeakingThis")
     private val noProjectMarker = CargoProjectImpl(Paths.get(""), this)
 
     /**
@@ -116,7 +116,7 @@ open class CargoProjectsServiceImpl(
      * a containing [CargoProject].
      */
     private val directoryIndex: LightDirectoryIndex<CargoProjectImpl> =
-        LightDirectoryIndex(project, noProjectMarker, Consumer { index ->
+        LightDirectoryIndex(project, noProjectMarker) { index ->
             val visited = mutableSetOf<VirtualFile>()
 
             fun VirtualFile.put(cargoProject: CargoProjectImpl) {
@@ -152,8 +152,9 @@ open class CargoProjectsServiceImpl(
             for ((pkg, cargoProject) in lowPriority) {
                 pkg.put(cargoProject)
             }
-        })
+        }
 
+    @Suppress("LeakingThis")
     private val packageIndex: CargoPackageIndex = CargoPackageIndex(project, this)
 
     override val allProjects: Collection<CargoProject>
@@ -168,7 +169,7 @@ open class CargoProjectsServiceImpl(
     private var isLegacyRustNotificationShowed: Boolean = false
 
     override fun findProjectForFile(file: VirtualFile): CargoProject? =
-        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { it !== noProjectMarker } }
+        file.applyWithSymlink { directoryIndex.getInfoForFile(it).takeIf { info -> info !== noProjectMarker } }
 
     override fun findPackageForFile(file: VirtualFile): CargoWorkspace.Package? =
         file.applyWithSymlink(packageIndex::findPackageForFile)
@@ -336,7 +337,7 @@ open class CargoProjectsServiceImpl(
                 projects
             }
 
-    protected fun modifyProjectsLite(
+    private fun modifyProjectsLite(
         f: (List<CargoProjectImpl>) -> List<CargoProjectImpl>
     ): CompletableFuture<List<CargoProjectImpl>> =
         projects.updateSync(f)
@@ -361,6 +362,7 @@ open class CargoProjectsServiceImpl(
             .min()
         val isUnsupportedRust = minToolchainVersion != null &&
             minToolchainVersion < RsToolchain.MIN_SUPPORTED_TOOLCHAIN
+        @Suppress("LiftReturnOrAssignment")
         if (isUnsupportedRust) {
             if (!isLegacyRustNotificationShowed) {
                 val content = "Rust <b>$minToolchainVersion</b> is no longer supported. " +

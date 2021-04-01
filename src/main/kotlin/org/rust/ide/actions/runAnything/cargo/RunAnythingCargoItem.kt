@@ -13,10 +13,10 @@ class RunAnythingCargoItem(command: String, icon: Icon) : RsRunAnythingItem(comm
     override val helpCommand: String = "cargo"
 
     override val commandDescriptions: Map<String, String> =
-        CargoCommands.values().map { it.presentableName to it.description }.toMap()
+        CargoCommands.values().associate { it.presentableName to it.description }
 
     override fun getOptionsDescriptionsForCommand(commandName: String): Map<String, String>? {
         val command = CargoCommands.values().find { it.presentableName == commandName } ?: return null
-        return command.options.map { it.longName to it.description }.toMap()
+        return command.options.associate { it.longName to it.description }
     }
 }

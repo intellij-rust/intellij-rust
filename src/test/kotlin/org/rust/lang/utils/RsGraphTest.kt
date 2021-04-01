@@ -32,7 +32,7 @@ class RsGraphTest : RsTestBase() {
         assertEquals("6 5 2 4 1 3", postorder)
     }
 
-    fun simpleGraph1(): Graph<Int, String> {
+    private fun simpleGraph1(): Graph<Int, String> {
         val graph = Graph<Int, String>()
         (1..4).forEach { graph.addNode(it) }
 
@@ -44,7 +44,7 @@ class RsGraphTest : RsTestBase() {
         return graph
     }
 
-    fun simpleGraph2(): Graph<Int, String> {
+    private fun simpleGraph2(): Graph<Int, String> {
         val graph = Graph<Int, String>()
         (1..6).forEach { graph.addNode(it) }
 

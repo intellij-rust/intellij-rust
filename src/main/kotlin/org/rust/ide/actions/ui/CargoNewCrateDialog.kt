@@ -47,14 +47,14 @@ fun withMockCargoNewCrateUi(mockUi: CargoNewCrateUI, action: () -> Unit) {
 }
 
 class CargoNewCrateDialog(project: Project, private val root: VirtualFile) : DialogWrapper(project), CargoNewCrateUI {
-    private val typeCombobox = ComboBox<String>(arrayOf("Binary", "Library"))
+    private val typeCombobox = ComboBox(arrayOf("Binary", "Library"))
     private val name = JBTextField(20)
 
     val binary get() = this.typeCombobox.selectedIndex == 0
     val crateName get() = name.text.trim()
 
     init {
-        title = "New Cargo crate"
+        title = "New Cargo Crate"
         init()
     }
 

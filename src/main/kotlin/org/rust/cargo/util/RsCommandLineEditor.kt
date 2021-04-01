@@ -11,14 +11,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ExpandableEditorSupport
 import com.intellij.ui.TextAccessor
-import com.intellij.ui.components.fields.ExpandableSupport
 import com.intellij.util.Function
 import com.intellij.util.TextFieldCompletionProvider
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 class RsCommandLineEditor(
@@ -27,7 +25,6 @@ class RsCommandLineEditor(
 ) : JPanel(BorderLayout()), TextAccessor {
 
     private val textField = createTextField("")
-    val preferredFocusedComponent: JComponent = textField
 
     init {
         ExpandableEditorSupportWithCustomPopup(textField, this::createTextField)
@@ -39,14 +36,6 @@ class RsCommandLineEditor(
     }
 
     override fun getText(): String = textField.text
-
-    fun setPreferredWidth(width: Int) {
-        textField.setPreferredWidth(width)
-    }
-
-    fun attachLabel(label: JLabel) {
-        label.labelFor = textField
-    }
 
     private fun createTextField(value: String): TextFieldWithCompletion =
         TextFieldWithCompletion(

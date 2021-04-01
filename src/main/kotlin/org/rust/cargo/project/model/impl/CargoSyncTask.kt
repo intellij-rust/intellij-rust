@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.util.io.exists
 import org.rust.RsTask
-import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.model.CargoProject
 import org.rust.cargo.project.model.RustcInfo
 import org.rust.cargo.project.settings.rustSettings
@@ -92,6 +91,8 @@ class CargoSyncTask(
         syncProgress: BuildProgress<BuildProgressDescriptor>
     ): List<CargoProjectImpl> {
         val toolchain = project.toolchain
+
+        @Suppress("UnnecessaryVariable")
         val refreshedProjects = if (toolchain == null) {
             syncProgress.fail(System.currentTimeMillis(), "Cargo project update failed:\nNo Rust toolchain")
             cargoProjects

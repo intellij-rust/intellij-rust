@@ -81,17 +81,15 @@ interface RsMod : RsQualifiedNamedElement, RsItemsOwner, RsVisible {
     val isCrateRoot: Boolean
 }
 
-val RsMod.superMods: List<RsMod> get() {
-    // For malformed programs, chain of `super`s may be infinite
-    // because of cycles, and we need to detect this situation.
-    val visited = HashSet<RsMod>()
-    return generateSequence(this) { it.`super` }
-        .takeWhile { visited.add(it) }
-        .toList()
-}
-
-fun RsMod.hasChildModules(): Boolean =
-    expandedItemsExceptImplsAndUses.any { it is RsModDeclItem || it is RsModItem && it.hasChildModules() }
+val RsMod.superMods: List<RsMod>
+    get() {
+        // For malformed programs, chain of `super`s may be infinite
+        // because of cycles, and we need to detect this situation.
+        val visited = HashSet<RsMod>()
+        return generateSequence(this) { it.`super` }
+            .takeWhile { visited.add(it) }
+            .toList()
+    }
 
 val RsMod.childModules: List<RsMod>
     get() = expandedItemsExceptImplsAndUses

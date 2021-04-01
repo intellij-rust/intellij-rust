@@ -20,7 +20,6 @@ import org.rust.lang.core.macros.MacroExpansionMode
 import org.rust.lang.core.macros.macroExpansionManager
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.containingCrate
-import org.rust.lang.core.psi.ext.macroName
 import org.rust.lang.core.psi.ext.startOffset
 import org.rust.lang.core.psi.ext.withSubst
 import org.rust.lang.core.resolve.KnownItems
@@ -116,6 +115,7 @@ private sealed class FormatParameter(val matchInfo: ParameterMatchInfo, val look
         : FormatParameter(matchInfo, lookup)
 }
 
+@Suppress("unused")
 private enum class FormatTraitType(
     private val resolver: (KnownItems) -> RsTraitItem?,
     vararg val names: String
@@ -155,7 +155,7 @@ private data class FormatContext(
         Pair(it, lookup)
     }.toSet()
 
-    val namedArguments: Map<String, RsFormatMacroArg> = arguments.filter { it.name() != null }.map { it.name()!! to it }.toMap()
+    val namedArguments: Map<String, RsFormatMacroArg> = arguments.mapNotNull { it.name()?.to(it) }.toMap()
 
     val knownItems: KnownItems = macro.knownItems
 }
@@ -168,7 +168,7 @@ private data class ParsedParameter(
     val range: IntRange = completeMatch.range
 }
 
-private data class ParseContext(val sourceMap: IntArray, val offset: Int, val parameters: List<ParsedParameter>) {
+private class ParseContext(val sourceMap: IntArray, val offset: Int, val parameters: List<ParsedParameter>) {
     fun toSourceRange(range: IntRange, additionalOffset: Int = 0): TextRange =
         TextRange(sourceMap[range.first + additionalOffset], sourceMap[range.last + additionalOffset] + 1)
             .shiftRight(offset)

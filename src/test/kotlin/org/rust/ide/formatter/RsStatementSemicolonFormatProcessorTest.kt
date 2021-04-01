@@ -149,8 +149,7 @@ class RsStatementSemicolonFormatProcessorTest : RsFormatterTestBase() {
                 }
             }
         }
-    """;
+    """
         checkNotChanged(code)
-
     }
 }

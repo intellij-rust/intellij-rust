@@ -20,8 +20,11 @@ import com.intellij.util.BitUtil
 import org.rust.lang.core.parser.RustParserDefinition.Companion.EOL_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_BLOCK_DOC_COMMENT
 import org.rust.lang.core.parser.RustParserDefinition.Companion.OUTER_EOL_DOC_COMMENT
-import org.rust.lang.core.psi.*
+import org.rust.lang.core.psi.MacroBraces
+import org.rust.lang.core.psi.RS_BLOCK_LIKE_EXPRESSIONS
+import org.rust.lang.core.psi.RS_KEYWORDS
 import org.rust.lang.core.psi.RsElementTypes.*
+import org.rust.lang.core.psi.tokenSetOf
 import org.rust.stdext.makeBitMask
 
 @Suppress("UNUSED_PARAMETER")
@@ -32,11 +35,13 @@ object RustParserUtil : GeneratedParserUtilBase() {
          * Should be used to parse references to values
          */
         VALUE,
+
         /**
          * Accepts paths like `Foo<i32>`, `Foo::<i32>`, Fn(i32) -> i32 and Fn::(i32) -> i32
          * Should be used to parse type and trait references
          */
         TYPE,
+
         /**
          * Accepts paths like `Foo`
          * Should be used to parse paths where type args cannot be specified: `use` items, macro calls, etc.
@@ -343,33 +348,6 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
     @JvmStatic
-    fun tupleOrParenType(b: PsiBuilder, level: Int, typeReference: Parser, tupeTypeUpper: Parser): Boolean {
-        val tupleOrParens: PsiBuilder.Marker = enter_section_(b)
-
-        if (!consumeTokenSmart(b, LPAREN)) {
-            exit_section_(b, tupleOrParens, null, false)
-            return false
-        }
-
-        val firstType = enter_section_(b)
-
-        if (!typeReference.parse(b, level)) {
-            exit_section_(b, firstType, null, false)
-            exit_section_(b, tupleOrParens, null, false)
-            return false
-        }
-        if (consumeTokenFast(b, RPAREN)) {
-            exit_section_(b, firstType, null, true)
-            exit_section_(b, tupleOrParens, null, true)
-            return true
-        }
-        exit_section_(b, firstType, TYPE_REFERENCE, true)
-        val result = tupeTypeUpper.parse(b, level)
-        exit_section_(b, tupleOrParens, TUPLE_TYPE, result)
-        return result
-    }
-
-    @JvmStatic
     fun baseOrTraitType(
         b: PsiBuilder,
         level: Int,
@@ -427,10 +405,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
         }
 
         put(RustParser::ExprMacroArgument, true, "try", "await", "dbg")
-        put(RustParser::FormatMacroArgument, true, "format", "format_args", "write", "writeln", "print", "println",
-            "eprint", "eprintln", "panic", "unimplemented", "unreachable", "todo")
-        put(RustParser::AssertMacroArgument, true, "assert", "debug_assert", "assert_eq", "assert_ne",
-            "debug_assert_eq", "debug_assert_ne")
+        put(
+            RustParser::FormatMacroArgument, true, "format", "format_args", "write", "writeln", "print", "println",
+            "eprint", "eprintln", "panic", "unimplemented", "unreachable", "todo"
+        )
+        put(
+            RustParser::AssertMacroArgument, true, "assert", "debug_assert", "assert_eq", "assert_ne",
+            "debug_assert_eq", "debug_assert_ne"
+        )
         put(RustParser::VecMacroArgument, true, "vec")
         put(RustParser::LogMacroArgument, true, "trace", "log", "warn", "debug", "error", "info")
         put(RustParser::IncludeMacroArgument, true, "include_str", "include_bytes")
@@ -618,14 +600,14 @@ object RustParserUtil : GeneratedParserUtilBase() {
     }
 
     private fun LighterASTNode.isBracedMacro(b: PsiBuilder): Boolean {
-        if (tokenType != RsElementTypes.MACRO_EXPR) return false
+        if (tokenType != MACRO_EXPR) return false
         val offset = b.offset
         val text = b.originalText.subSequence(startOffset - offset, endOffset - offset)
         return '}' == text.findLast { it == '}' || it == ']' || it == ')' }
     }
 
     /**
-     * Non-zero if [this] is created with `LighterLazyParseableNode` chameleon.
+     * Non-zero if [PsiBuilder] is created with `LighterLazyParseableNode` chameleon.
      * (Used this way in implementations of ILightLazyParseableElementType)
      */
     private val PsiBuilder.offset: Int

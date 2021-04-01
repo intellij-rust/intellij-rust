@@ -5,10 +5,14 @@
 
 package org.rust.cargo.runconfig
 
+import com.intellij.execution.DefaultExecutionResult
 import com.intellij.execution.ExternalizablePath
 import com.intellij.execution.RunManager
 import com.intellij.execution.RunnerAndConfigurationSettings
+import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.filters.Filter
+import com.intellij.execution.process.ProcessTerminatedListener
+import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.RunContentManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
@@ -169,4 +173,25 @@ fun Element.writePath(name: String, value: Path?) {
 
 fun Element.readPath(name: String): Path? {
     return readString(name)?.let { Paths.get(ExternalizablePath.localPathValue(it)) }
+}
+
+fun CargoRunStateBase.executeCommandLine(
+    commandLine: GeneralCommandLine,
+    environment: ExecutionEnvironment
+): DefaultExecutionResult {
+    val runConfiguration = runConfiguration
+    val context = ConfigurationExtensionContext()
+
+    val extensionManager = RsRunConfigurationExtensionManager.getInstance()
+    extensionManager.patchCommandLine(runConfiguration, environment, commandLine, context)
+    extensionManager.patchCommandLineState(runConfiguration, environment, this, context)
+
+    val handler = RsKillableColoredProcessHandler(commandLine)
+    ProcessTerminatedListener.attach(handler) // shows exit code upon termination
+
+    extensionManager.attachExtensionsToProcess(runConfiguration, handler, environment, context)
+
+    val console = consoleBuilder.console
+    console.attachToProcess(handler)
+    return DefaultExecutionResult(console, handler)
 }

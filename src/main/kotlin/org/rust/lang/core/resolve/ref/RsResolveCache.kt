@@ -45,9 +45,10 @@ import java.util.concurrent.atomic.AtomicReference
  * See [RsPsiManager.rustStructureModificationTracker].
  */
 @Service
-class RsResolveCache(project: Project): Disposable {
+class RsResolveCache(project: Project) : Disposable {
     /** The cache is cleared on [RsPsiManager.rustStructureModificationTracker] increment */
     private val _rustStructureDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
+
     /** The cache is cleared on [ANY_PSI_CHANGE_TOPIC] event */
     private val _anyPsiChangeDependentCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)
     private val _macroCache: AtomicReference<ConcurrentMap<PsiElement, Any?>?> = AtomicReference(null)

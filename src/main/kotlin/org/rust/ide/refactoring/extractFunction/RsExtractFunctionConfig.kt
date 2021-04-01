@@ -54,8 +54,10 @@ class Parameter private constructor(
         get() = if (isMutable && (!isReference || requiresMut)) "mut " else ""
     private val referenceText: String
         get() = if (isReference) {
-            if (isMutable) { "&mut " } else { "&" }
-        } else { "" }
+            if (isMutable) "&mut " else "&"
+        } else {
+            ""
+        }
     private val typeText: String = type?.renderInsertionSafe(skipUnchangedDefaultTypeArguments = true).orEmpty()
 
     val originalParameterText: String
@@ -95,7 +97,7 @@ class Parameter private constructor(
             references: List<PsiReference>,
             isUsedAfterEnd: Boolean,
             implLookup: ImplLookup
-        ): Parameter? {
+        ): Parameter {
             val hasRefOperator = references.any {
                 val operatorType = (it.element.ancestorStrict<RsUnaryExpr>())?.operatorType
                 operatorType == UnaryOperator.REF || operatorType == UnaryOperator.REF_MUT
@@ -123,7 +125,7 @@ class RsExtractFunctionConfig private constructor(
     val isAsync: Boolean = false,
     val isUnsafe: Boolean = false,
     var parameters: List<Parameter>
-): RsFunctionSignatureConfig(function) {
+) : RsFunctionSignatureConfig(function) {
     val valueParameters: List<Parameter>
         get() = parameters.filter { !it.isSelf }
 
@@ -149,8 +151,8 @@ class RsExtractFunctionConfig private constructor(
         function.typeParameters.associate { typeParameter ->
             val type = typeParameter.declaredType
             val bounds = mutableSetOf<Ty>()
-            typeParameter.bounds.flatMapTo(bounds) {
-                it.bound.traitRef?.path?.typeArguments?.flatMap { it.type.types() }.orEmpty()
+            typeParameter.bounds.flatMapTo(bounds) { polybound ->
+                polybound.bound.traitRef?.path?.typeArguments?.flatMap { it.type.types() }.orEmpty()
             }
             type to bounds
         }
@@ -276,12 +278,14 @@ class RsExtractFunctionConfig private constructor(
                             isAsync = true
                         }
                     }
+
                     // stop recursive propagation, we want to ignore awaits in async blocks and async closures
                     override fun visitBlockExpr(o: RsBlockExpr) {
                         if (!o.isAsync) {
                             super.visitBlockExpr(o)
                         }
                     }
+
                     override fun visitLambdaExpr(o: RsLambdaExpr) {
                         if (!o.isAsync) {
                             super.visitLambdaExpr(o)

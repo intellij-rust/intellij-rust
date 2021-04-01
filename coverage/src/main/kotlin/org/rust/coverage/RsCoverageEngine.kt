@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -77,7 +78,7 @@ class RsCoverageEngine : CoverageEngine() {
         project: Project,
         suiteBundle: CoverageSuitesBundle,
         stateBean: CoverageViewManager.StateBean
-    ): CoverageViewExtension? =
+    ): CoverageViewExtension =
         object : DirectoryCoverageViewExtension(project, getCoverageAnnotator(project), suiteBundle, stateBean) {
             override fun createColumnInfos(): Array<ColumnInfo<NodeDescriptor<*>, String>> {
                 val percentage = PercentageCoverageColumnInfo(
@@ -87,7 +88,7 @@ class RsCoverageEngine : CoverageEngine() {
                     myStateBean
                 )
                 val files = object : ColumnInfo<NodeDescriptor<*>, String>("File") {
-                    override fun valueOf(item: NodeDescriptor<*>?): String? = item.toString()
+                    override fun valueOf(item: NodeDescriptor<*>?): String = item.toString()
                     override fun getComparator(): Comparator<NodeDescriptor<*>>? = AlphaComparator.INSTANCE
                 }
                 return arrayOf(files, percentage)
@@ -216,9 +217,9 @@ class RsCoverageEngine : CoverageEngine() {
     }
 
     companion object {
-        private val LOG: Logger = Logger.getInstance(RsCoverageEngine::class.java)
+        private val LOG: Logger = logger<RsCoverageEngine>()
 
-        fun getInstance(): RsCoverageEngine = CoverageEngine.EP_NAME.findExtensionOrFail(RsCoverageEngine::class.java)
+        fun getInstance(): RsCoverageEngine = EP_NAME.findExtensionOrFail(RsCoverageEngine::class.java)
 
         private fun getQName(sourceFile: PsiFile): String? = sourceFile.virtualFile?.path
     }

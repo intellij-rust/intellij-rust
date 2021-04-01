@@ -29,7 +29,7 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
     private var peer: RsProjectGeneratorPeer? = null
 
     override fun getName(): String = "Rust"
-    override fun getLogo(): Icon? = RsIcons.RUST
+    override fun getLogo(): Icon = RsIcons.RUST
     override fun createPeer(): ProjectGeneratorPeer<ConfigurationData> = RsProjectGeneratorPeer().also { peer = it }
 
     override fun validate(baseDirPath: String): ValidationResult {
@@ -51,7 +51,8 @@ class RsDirectoryProjectGenerator : DirectoryProjectGeneratorBase<ConfigurationD
         project.openFiles(generatedFiles)
     }
 
-    override fun createStep(projectGenerator: DirectoryProjectGenerator<ConfigurationData>,
-                            callback: AbstractNewProjectStep.AbstractCallback<ConfigurationData>): AbstractActionWithPanel =
-        RsProjectSettingsStep(projectGenerator)
+    override fun createStep(
+        projectGenerator: DirectoryProjectGenerator<ConfigurationData>,
+        callback: AbstractNewProjectStep.AbstractCallback<ConfigurationData>
+    ): AbstractActionWithPanel = RsProjectSettingsStep(projectGenerator)
 }

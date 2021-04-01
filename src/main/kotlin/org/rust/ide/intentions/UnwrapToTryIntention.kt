@@ -12,7 +12,6 @@ import org.rust.lang.core.psi.RsMethodCall
 import org.rust.lang.core.psi.RsPsiFactory
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.psi.ext.parentDotExpr
-import org.rust.lang.core.psi.ext.ancestorStrict
 import org.rust.lang.core.psi.ext.receiver
 
 class UnwrapToTryIntention : RsElementBaseIntentionAction<RsMethodCall>() {

@@ -42,9 +42,12 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         }
     }
 
-    private class MacroCreator(private val editor: Editor, private val psiFactory: RsPsiFactory,
-                               macroName: String, private val fmt: Fmt) {
-        private val macroStart = "$macroName!("
+    private class MacroCreator(
+        private val psiFactory: RsPsiFactory,
+        macroName: String,
+        private val fmt: Fmt
+    ) {
+        private val macroStart: String = "$macroName!("
 
         fun createMacro(expressionText: String, addTrailingSemicolon: Boolean = true): RsExpr {
             val macroExpression = if (fmt == Fmt.None) {
@@ -67,7 +70,7 @@ class PrintlnPostfixTemplate(provider: RsPostfixTemplateProvider, private val ma
         if (expression !is RsExpr) return
 
         val psiFactory = RsPsiFactory(expression.project)
-        val macroCreator = MacroCreator(editor, psiFactory, macroName, Fmt.fromExpr(expression))
+        val macroCreator = MacroCreator(psiFactory, macroName, Fmt.fromExpr(expression))
 
         when (val parent = expression.parent) {
             is RsLetDecl -> {

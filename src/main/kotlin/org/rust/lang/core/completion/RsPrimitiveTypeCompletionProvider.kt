@@ -6,7 +6,6 @@
 package org.rust.lang.core.completion
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionProvider
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.patterns.ElementPattern
@@ -29,9 +28,10 @@ object RsPrimitiveTypeCompletionProvider : RsCompletionProvider() {
         add(TyChar.name)
     }
 
-    override val elementPattern: ElementPattern<PsiElement> get() = PlatformPatterns.psiElement()
-        .withSuperParent<RsTypeReference>(2)
-        .with("FirstChild") { e -> e.prevSibling == null }
+    override val elementPattern: ElementPattern<PsiElement>
+        get() = PlatformPatterns.psiElement()
+            .withSuperParent<RsTypeReference>(2)
+            .with("FirstChild") { e -> e.prevSibling == null }
 
     override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
         primitives.forEach {

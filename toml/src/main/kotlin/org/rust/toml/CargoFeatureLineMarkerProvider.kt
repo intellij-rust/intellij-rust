@@ -186,12 +186,9 @@ private object OpenSettingsAction : GutterIconNavigationHandler<PsiElement> {
     ) : AnAction() {
 
         init {
-            val text = when (newState) {
-                FeatureState.Enabled -> "Enable all features"
-                FeatureState.Disabled -> "Disable all features"
-            }
-            templatePresentation.description = text
-            templatePresentation.text = text
+            val text = if (newState.isEnabled) "Enable" else "Disable"
+            templatePresentation.description = "$text all features"
+            templatePresentation.text = "$text All Features"
         }
 
         override fun actionPerformed(e: AnActionEvent) {

@@ -5,7 +5,7 @@
 
 package org.rust.ide.refactoring.move
 
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
@@ -61,7 +61,7 @@ class RsMoveFilesOrDirectoriesDialog(
             doPerformMove(targetDirectory, searchForReferences, doneCallback)
         } catch (e: Exception) {
             if (e !is IncorrectOperationException) {
-                Logger.getInstance(RsMoveFilesOrDirectoriesDialog::class.java).error(e)
+                logger<RsMoveFilesOrDirectoriesDialog>().error(e)
             }
             val title = RefactoringBundle.message("error.title")
             CommonRefactoringUtil.showErrorMessage(title, e.message, "refactoring.moveFile", project)

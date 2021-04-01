@@ -18,6 +18,8 @@ import org.rust.lang.core.types.ty.TyBool
 import org.rust.lang.core.types.type
 
 class RsWithNotSurrounder : RsExpressionSurrounderBase<RsUnaryExpr>() {
+
+    @Suppress("DialogTitleCapitalization")
     override fun getTemplateDescription(): String = "!(expr)"
 
     override fun createTemplate(project: Project): RsUnaryExpr =

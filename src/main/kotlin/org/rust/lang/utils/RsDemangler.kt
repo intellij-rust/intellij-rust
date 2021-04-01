@@ -30,7 +30,7 @@ object RsDemangler {
         val isValid: Boolean,
         val elementsNum: Int // The number of ::-separated elements in the original name.
     ) {
-        fun format(skipHash: Boolean = false): String? = buildString {
+        fun format(skipHash: Boolean = false): String = buildString {
             if (!isValid) return original
 
             var inner = inner

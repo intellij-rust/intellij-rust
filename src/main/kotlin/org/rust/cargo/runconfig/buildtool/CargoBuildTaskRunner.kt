@@ -15,6 +15,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapiext.isHeadlessEnvironment
@@ -35,10 +36,9 @@ import org.rust.cargo.toolchain.CargoCommandLine
 import org.rust.cargo.toolchain.tools.cargo
 import org.rust.cargo.util.cargoProjectRoot
 import org.rust.stdext.buildList
-import java.util.*
 import java.util.concurrent.*
 
-private val LOG: Logger = Logger.getInstance(CargoBuildTaskRunner::class.java)
+private val LOG: Logger = logger<CargoBuildTaskRunner>()
 
 class CargoBuildTaskRunner : ProjectTaskRunner() {
 

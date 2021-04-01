@@ -49,7 +49,7 @@ class AttachCargoProjectAction : CargoProjectActionBase() {
             Messages.showErrorDialog(
                 project,
                 "This Cargo package is already a part of an attached workspace.",
-                "Unable to attach Cargo project"
+                "Unable to Attach Cargo Project"
             )
         }
     }
@@ -116,6 +116,7 @@ object CargoProjectChooserDescriptor : FileChooserDescriptor(true, true, false, 
     init {
         // The filter is not used for directories
         withFileFilter { it.isCargoToml }
+        @Suppress("DialogTitleCapitalization")
         withTitle("Select Cargo.toml")
     }
 

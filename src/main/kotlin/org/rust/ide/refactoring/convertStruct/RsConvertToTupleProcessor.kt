@@ -7,7 +7,6 @@ package org.rust.ide.refactoring.convertStruct
 
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.search.searches.ReferencesSearch
@@ -22,7 +21,7 @@ import org.rust.lang.core.psi.ext.*
 class RsConvertToTupleProcessor(
     project: Project,
     val element: RsFieldsOwner,
-    val convertUsages: Boolean = true
+    private val convertUsages: Boolean = true
 ) : BaseRefactoringProcessor(project) {
     private val rsPsiFactory = RsPsiFactory(project)
     private val fieldDeclList = element.blockFields!!.namedFieldDeclList
@@ -56,9 +55,11 @@ class RsConvertToTupleProcessor(
             val element = usage.element ?: continue
             when (val usageParent = element.parent) {
                 is RsDotExpr ->
-                    usage.element!!.replace(rsPsiFactory
-                        .createExpression("a.${(usage as MyUsageInfo).position}")
-                        .descendantOfTypeStrict<RsFieldLookup>()!!)
+                    usage.element!!.replace(
+                        rsPsiFactory
+                            .createExpression("a.${(usage as MyUsageInfo).position}")
+                            .descendantOfTypeStrict<RsFieldLookup>()!!
+                    )
                 is RsPatStruct -> {
                     val patternFieldMap = usageParent.patFieldList
                         .map { it.kind }
@@ -84,8 +85,10 @@ class RsConvertToTupleProcessor(
                     if (usageParent.structLiteralBody.dotdot != null) {
                         val text = "let a = ${usageParent.path.text}{" +
                             usageParent.structLiteralBody.structLiteralFieldList.joinToString(",") {
-                                "${fieldDeclList.indexOfFirst { inner -> inner.identifier.textMatches(it.identifier!!) }}:${it.expr?.text
-                                    ?: it.identifier!!.text}"
+                                "${fieldDeclList.indexOfFirst { inner -> inner.identifier.textMatches(it.identifier!!) }}:${
+                                    it.expr?.text
+                                        ?: it.identifier!!.text
+                                }"
                             } + ", ..${usageParent.structLiteralBody.expr!!.text}};"
 
                         val newElement = rsPsiFactory

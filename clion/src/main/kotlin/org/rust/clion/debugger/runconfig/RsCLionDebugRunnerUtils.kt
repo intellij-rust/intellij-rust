@@ -5,7 +5,6 @@
 
 package org.rust.clion.debugger.runconfig
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages

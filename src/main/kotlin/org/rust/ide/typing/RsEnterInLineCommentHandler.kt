@@ -101,7 +101,7 @@ class RsEnterInLineCommentHandler : EnterHandlerDelegateAdapter() {
         } else {
             // Otherwise; add one space, if caret isn't at one
             // currently, and insert prefix just before it.
-            val prefixToAdd = if (text[caretOffset] != ' ') prefix + ' ' else prefix
+            val prefixToAdd = if (text[caretOffset] != ' ') "$prefix " else prefix
             document.insertString(caretOffset, prefixToAdd)
             caretAdvanceRef.set(prefixToAdd.length)
         }

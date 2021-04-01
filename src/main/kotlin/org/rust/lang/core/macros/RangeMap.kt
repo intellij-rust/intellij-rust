@@ -12,6 +12,8 @@ import org.rust.stdext.readVarInt
 import org.rust.stdext.writeVarInt
 import java.io.DataInput
 import java.io.DataOutput
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Must provide [equals] method because it is used to track changes in the macro expansion mechanism
@@ -105,13 +107,12 @@ val MappedTextRange.srcEndOffset: Int get() = srcOffset + length
 val MappedTextRange.dstEndOffset: Int get() = dstOffset + length
 
 val MappedTextRange.srcRange: TextRange get() = TextRange(srcOffset, srcOffset + length)
-val MappedTextRange.dstRange: TextRange get() = TextRange(dstOffset, dstOffset + length)
 
 fun MappedTextRange.srcShiftLeft(delta: Int) = copy(srcOffset = srcOffset - delta)
 
 private fun MappedTextRange.dstIntersection(range: TextRange): MappedTextRange? {
-    val newDstStart = Math.max(dstOffset, range.startOffset)
-    val newDstEnd = Math.min(dstEndOffset, range.endOffset)
+    val newDstStart = max(dstOffset, range.startOffset)
+    val newDstEnd = min(dstEndOffset, range.endOffset)
     return if (newDstStart < newDstEnd) {
         val srcDelta = newDstStart - dstOffset
         MappedTextRange(

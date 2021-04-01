@@ -74,7 +74,7 @@ sealed class TyInteger(override val name: String, val ordinal: Int) : TyNumeric(
     // `TyInteger` class, it will be filled with null value instead of `U8`
     // We fixing it by moving fields from `companion object` an independent object
     private object TyIntegerValuesHolder {
-        val DEFAULT = TyInteger.I32
+        val DEFAULT = I32
         val VALUES = listOf(U8, U16, U32, U64, U128, USize, I8, I16, I32, I64, I128, ISize)
         val NAMES = VALUES.map { it.name }
     }
@@ -113,7 +113,7 @@ sealed class TyFloat(override val name: String, val ordinal: Int) : TyNumeric() 
 
     // See TyIntegerValuesHolder
     private object TyFloatValuesHolder {
-        val DEFAULT = TyFloat.F64
+        val DEFAULT = F64
         val VALUES = listOf(F32, F64)
         val NAMES = VALUES.map { it.name }
     }

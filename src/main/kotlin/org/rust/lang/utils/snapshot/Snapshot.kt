@@ -18,20 +18,19 @@ interface Undoable {
 abstract class Snapshotable {
     protected val undoLog: UndoLog = UndoLog()
 
-    fun inSnapshot(): Boolean = undoLog.inSnapshot()
     fun startSnapshot(): Snapshot = undoLog.startSnapshot()
 }
 
 class UndoLog {
     private val undoLog: MutableList<Undoable> = mutableListOf()
 
-    fun inSnapshot(): Boolean = undoLog.isNotEmpty()
-
     fun logChange(undoable: Undoable) {
         if (inSnapshot()) undoLog.add(undoable)
     }
 
     fun startSnapshot(): Snapshot = LogBasedSnapshot.start(undoLog)
+
+    private fun inSnapshot(): Boolean = undoLog.isNotEmpty()
 }
 
 private class LogBasedSnapshot private constructor(
@@ -83,7 +82,7 @@ private class LogBasedSnapshot private constructor(
     }
 }
 
-class CombinedSnapshot(vararg val snapshots: Snapshot) : Snapshot {
+class CombinedSnapshot(private vararg val snapshots: Snapshot) : Snapshot {
     override fun rollback() = snapshots.forEach { it.rollback() }
     override fun commit() = snapshots.forEach { it.commit() }
 }

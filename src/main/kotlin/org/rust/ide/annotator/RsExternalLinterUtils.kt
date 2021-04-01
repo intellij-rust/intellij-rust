@@ -12,6 +12,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.PerformInBackgroundOption
@@ -53,7 +54,7 @@ import java.nio.file.Path
 import java.util.*
 
 object RsExternalLinterUtils {
-    private val LOG: Logger = Logger.getInstance(RsExternalLinterUtils::class.java)
+    private val LOG: Logger = logger<RsExternalLinterUtils>()
     const val TEST_MESSAGE: String = "RsExternalLint"
 
     /**
@@ -110,9 +111,10 @@ object RsExternalLinterUtils {
             } else {
                 BackgroundableProcessIndicator(
                     project,
-                    "Analyzing Project with External Linter",
+                    "Analyzing project with External Linter",
                     PerformInBackgroundOption.ALWAYS_BACKGROUND,
                     CommonBundle.getCancelButtonText(),
+                    @Suppress("DialogTitleCapitalization")
                     CommonBundle.getCancelButtonText(),
                     true
                 )
@@ -251,7 +253,7 @@ private data class RsExternalLinterFilteredMessage(
                 }
 
                 message.children
-                    .filter { !it.message.isBlank() }
+                    .filter { it.message.isNotBlank() }
                     .map { "${it.level.capitalize()}: ${StringEscapeUtils.escapeHtml(it.message)}" }
                     .forEach { add(it) }
 

@@ -264,7 +264,7 @@ class DeclMacroExpander(val project: Project): MacroExpander<RsDeclMacroData, De
 
     /** Ensures that the buffer ends (or [str] starts) with a whitespace and appends [str] to the buffer */
     private fun StringBuilder.safeAppend(str: CharSequence) {
-        if (!isEmpty() && !last().isWhitespace() && !str.isEmpty() && !str.first().isWhitespace()) {
+        if (!isEmpty() && !last().isWhitespace() && str.isNotEmpty() && !str.first().isWhitespace()) {
             append(" ")
         }
         append(str)

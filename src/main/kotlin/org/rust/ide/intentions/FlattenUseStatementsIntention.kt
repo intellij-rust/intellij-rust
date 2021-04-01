@@ -47,10 +47,17 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
         val isNested = useGroupOnCursor.ancestorStrict<RsUseGroup>() != null
         val useSpeckOnCursor = element.ancestorStrict<RsUseSpeck>() ?: return null
 
+        val useSpeckList = mutableListOf<RsUseSpeck>()
+        val basePath = useGroupOnCursor.parentUseSpeck.path?.text ?: return null
+        useSpeckList += useSpeckOnCursor.leftSiblings.filterIsInstance<RsUseSpeck>()
+        useSpeckList += useSpeckOnCursor
+        useSpeckList += useSpeckOnCursor.rightSiblings.filterIsInstance<RsUseSpeck>()
+        if (useSpeckList.size == 1) return null
+
         return if (isNested) {
-            PathInNestedGroup.create(useGroupOnCursor, useSpeckOnCursor)
+            PathInNestedGroup(useGroupOnCursor, useSpeckList, basePath)
         } else {
-            PathInGroup.create(useGroupOnCursor, useSpeckOnCursor)
+            PathInGroup(useGroupOnCursor, useSpeckList, basePath)
         }
     }
 
@@ -95,20 +102,6 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
         override val basePath: String
     ) : Context {
 
-        companion object {
-            fun create(useGroup: RsUseGroup, useSpeckOnCursor: RsUseSpeck): PathInNestedGroup? {
-                val useSpeckList = mutableListOf<RsUseSpeck>()
-
-                val basePath = useGroup.parentUseSpeck.path?.text ?: return null
-                useSpeckList += useSpeckOnCursor.leftSiblings.filterIsInstance<RsUseSpeck>()
-                useSpeckList += useSpeckOnCursor
-                useSpeckList += useSpeckOnCursor.rightSiblings.filterIsInstance<RsUseSpeck>()
-                if (useSpeckList.size == 1) return null
-
-                return PathInNestedGroup(useGroup, useSpeckList, basePath)
-            }
-        }
-
         override fun createElements(paths: List<String>, project: Project): List<PsiElement> =
             RsPsiFactory(project).let { psiFactory ->
                 paths.map {
@@ -139,20 +132,6 @@ class FlattenUseStatementsIntention : RsElementBaseIntentionAction<FlattenUseSta
         override val useSpecks: List<RsUseSpeck>,
         override val basePath: String
     ) : Context {
-
-        companion object {
-            fun create(useGroup: RsUseGroup, useSpeckOnCursor: RsUseSpeck): PathInGroup? {
-                val useSpeckList = mutableListOf<RsUseSpeck>()
-
-                val basePath = useGroup.parentUseSpeck.path?.text ?: return null
-                useSpeckList += useSpeckOnCursor.leftSiblings.filterIsInstance<RsUseSpeck>()
-                useSpeckList += useSpeckOnCursor
-                useSpeckList += useSpeckOnCursor.rightSiblings.filterIsInstance<RsUseSpeck>()
-                if (useSpeckList.size == 1) return null
-
-                return PathInGroup(useGroup, useSpeckList, basePath)
-            }
-        }
 
         override fun createElements(paths: List<String>, project: Project): List<PsiElement> =
             RsPsiFactory(project).let { psiFactory ->

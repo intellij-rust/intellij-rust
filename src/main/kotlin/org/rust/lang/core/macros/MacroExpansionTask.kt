@@ -69,6 +69,7 @@ abstract class MacroExpansionTaskBase(
     private lateinit var realTaskIndicator: ProgressIndicator
     private lateinit var subTaskIndicator: ProgressIndicator
     private lateinit var expansionSteps: Iterator<List<Extractable>>
+
     @Volatile
     private var heavyProcessRequested = false
 
@@ -144,14 +145,14 @@ abstract class MacroExpansionTaskBase(
                 // Restart `DaemonCodeAnalyzer` after releasing `HeavyProcessLatch`. Used instead of
                 // `DaemonCodeAnalyzer.restart()` to do restart more gracefully, i.e. don't invalidate
                 // highlights if nothing actually changed
-                WriteAction.runAndWait<Throwable> {  }
+                WriteAction.runAndWait<Throwable> { }
             }
             MacroExpansionSharedCache.getInstance().flush()
         }
     }
 
     private fun calcProgress(step: Int, progress: Double): Double =
-        (1 until step).map { stepProgress(it) }.sum() + stepProgress(step) * progress
+        (1 until step).sumByDouble { stepProgress(it) } + stepProgress(step) * progress
 
     // It's impossible to know total quantity of macros, so we guess these values
     // (obtained empirically on some large projects)
@@ -294,12 +295,10 @@ abstract class MacroExpansionTaskBase(
                 }
                 sync.countDown()
             }
-            Unit
         }.exceptionally {
             // Handle exceptions that may be thrown by `handle` body
             sync.countDown()
             MACRO_LOG.error("Error during macro expansion", it)
-            Unit
         }
     }
 
@@ -328,13 +327,6 @@ abstract class MacroExpansionTaskBase(
 
     override val waitForSmartMode: Boolean
         get() = true
-
-    companion object {
-        /**
-         * Higher values leads to better throughput (overall expansion time), but worse latency (UI freezes)
-         */
-        private const val VFS_BATCH_SIZE = 200
-    }
 }
 
 class Extractable(val sf: SourceFile, private val workspaceOnly: Boolean, private val calls: List<RsMacroCall>?) {
@@ -542,9 +534,9 @@ object ExpansionPipeline {
     }
 }
 
-private class CorruptedExpansionStorageException: RuntimeException {
-    constructor(): super()
-    constructor(cause: Exception): super(cause)
+private class CorruptedExpansionStorageException : RuntimeException {
+    constructor() : super()
+    constructor(cause: Exception) : super(cause)
 }
 
 val RsMacroCall.isTopLevelExpansion: Boolean

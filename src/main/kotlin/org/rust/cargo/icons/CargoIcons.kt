@@ -13,7 +13,6 @@ object CargoIcons {
     val ICON = load("/icons/cargo.svg")
     val LOCK_ICON = load("/icons/cargo-lock.svg")
     val BUILD_RS_ICON = load("/icons/build-rs.svg")
-    val EXTERNAL_LINTER = load("/icons/external-linter.svg")
     val TEST = AllIcons.RunConfigurations.TestState.Run
     val TEST_GREEN = AllIcons.RunConfigurations.TestState.Green2
     val TEST_RED = AllIcons.RunConfigurations.TestState.Red2

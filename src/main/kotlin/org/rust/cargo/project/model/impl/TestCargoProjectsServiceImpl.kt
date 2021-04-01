@@ -27,9 +27,11 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     @TestOnly
     fun createTestProject(rootDir: VirtualFile, ws: CargoWorkspace, rustcInfo: RustcInfo? = null) {
         val manifest = rootDir.pathAsPath.resolve("Cargo.toml")
-        val testProject = CargoProjectImpl(manifest, this, UserDisabledFeatures.EMPTY, ws, null, rustcInfo,
+        val testProject = CargoProjectImpl(
+            manifest, this, UserDisabledFeatures.EMPTY, ws, null, rustcInfo,
             workspaceStatus = CargoProject.UpdateStatus.UpToDate,
-            rustcInfoStatus = if (rustcInfo != null) CargoProject.UpdateStatus.UpToDate else CargoProject.UpdateStatus.NeedsUpdate)
+            rustcInfoStatus = if (rustcInfo != null) CargoProject.UpdateStatus.UpToDate else CargoProject.UpdateStatus.NeedsUpdate
+        )
         testProject.setRootDir(rootDir)
         modifyProjectsSync { CompletableFuture.completedFuture(listOf(testProject)) }
     }
@@ -46,14 +48,14 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
             CompletableFuture.completedFuture(updatedProjects)
         }
 
-        Disposer.register(parentDisposable, Disposable {
+        Disposer.register(parentDisposable) {
             modifyProjectsSync { projects ->
                 val updatedProjects = projects.map {
                     it.copy(rustcInfo = oldValues[it.manifest], rustcInfoStatus = CargoProject.UpdateStatus.UpToDate)
                 }
                 CompletableFuture.completedFuture(updatedProjects)
             }
-        })
+        }
     }
 
     @TestOnly
@@ -62,9 +64,9 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
 
         setEditionInner(edition)
 
-        Disposer.register(parentDisposable, Disposable {
+        Disposer.register(parentDisposable) {
             setEditionInner(CargoWorkspace.Edition.EDITION_2015)
-        })
+        }
     }
 
     private fun setEditionInner(edition: CargoWorkspace.Edition) {
@@ -81,9 +83,9 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     @TestOnly
     fun setCfgOptions(cfgOptions: CfgOptions, parentDisposable: Disposable) {
         setCfgOptionsInner(cfgOptions)
-        Disposer.register(parentDisposable, Disposable {
+        Disposer.register(parentDisposable) {
             setCfgOptionsInner(CfgOptions.DEFAULT)
-        })
+        }
     }
 
     private fun setCfgOptionsInner(cfgOptions: CfgOptions) {
@@ -99,9 +101,9 @@ class TestCargoProjectsServiceImpl(project: Project) : CargoProjectsServiceImpl(
     @TestOnly
     fun setCargoFeatures(features: Map<PackageFeature, List<FeatureDep>>, parentDisposable: Disposable) {
         setCargoFeaturesInner(features)
-        Disposer.register(parentDisposable, Disposable {
+        Disposer.register(parentDisposable) {
             setCargoFeaturesInner(emptyMap())
-        })
+        }
     }
 
     private fun setCargoFeaturesInner(features: Map<PackageFeature, List<FeatureDep>>) {

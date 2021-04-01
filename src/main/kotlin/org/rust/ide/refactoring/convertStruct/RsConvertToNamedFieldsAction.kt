@@ -65,7 +65,7 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
 
         init {
             super.init()
-            title = "Convert to named fields settings"
+            title = "Convert to Named Fields Settings"
         }
 
         override fun doValidateAll(): List<ValidationInfo> {
@@ -74,14 +74,14 @@ class RsConvertToNamedFieldsAction : RsBaseEditorRefactoringAction() {
                 .filter { !isValidRustVariableIdentifier(it.text) }
                 .map {
                     refactorAction.isEnabled = false
-                    ValidationInfo("invalid identifier", it)
+                    ValidationInfo("Invalid identifier", it)
                 }
         }
 
         override fun doAction() =
             invokeRefactoring(RsConvertToNamedFieldsProcessor(project, element, cb.isSelected, editors.map { it.text }))
 
-        override fun createCenterPanel(): JComponent? {
+        override fun createCenterPanel(): JComponent {
             val panel = JPanel(BorderLayout(2, 2))
             panel.preferredSize = Dimension(400, 200)
 

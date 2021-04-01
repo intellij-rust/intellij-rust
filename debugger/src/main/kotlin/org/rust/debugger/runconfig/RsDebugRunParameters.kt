@@ -17,7 +17,7 @@ import org.rust.debugger.RsDebuggerDriverConfigurationProvider
 
 class RsDebugRunParameters(
     val project: Project,
-    val cmd: GeneralCommandLine,
+    private val cmd: GeneralCommandLine,
     val cargoProject: CargoProject?
 ) : RunParameters() {
 

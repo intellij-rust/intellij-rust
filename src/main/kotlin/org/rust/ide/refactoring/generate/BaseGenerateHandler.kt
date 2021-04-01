@@ -74,7 +74,7 @@ abstract class BaseGenerateHandler : LanguageCodeInsightActionHandler {
         selectMembers(context, editor)
     }
 
-    protected fun selectMembers(context: Context, editor: Editor) {
+    private fun selectMembers(context: Context, editor: Editor) {
         checkWriteAccessNotAllowed()
 
         val chosenFields = showStructMemberChooserDialog(

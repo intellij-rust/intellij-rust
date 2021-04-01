@@ -10,10 +10,6 @@ import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.psi.PsiElement
 import org.intellij.lang.regexp.RegExpLanguage
 import org.rust.lang.core.psi.*
-import org.rust.lang.core.psi.ext.RsAbstractable
-import org.rust.lang.core.psi.ext.RsAbstractableOwner
-import org.rust.lang.core.psi.ext.owner
-import org.rust.lang.core.types.type
 
 /**
  * Injects RegExpr language to a string literals in context like
@@ -58,7 +54,3 @@ class RsRegExpInjector : MultiHostInjector {
         return call.path.text == "RegexSet::new"
     }
 }
-
-/** For fn `bar` in `impl Foo { fn bar() {} }` returns "Foo" string */
-private val RsAbstractable.implTypeName: String?
-    get() = (owner as? RsAbstractableOwner.Impl)?.impl?.typeReference?.type?.toString()

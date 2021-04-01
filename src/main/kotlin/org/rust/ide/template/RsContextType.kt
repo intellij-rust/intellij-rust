@@ -41,7 +41,7 @@ sealed class RsContextType(
         return isInContext(element)
     }
 
-    abstract protected fun isInContext(element: PsiElement): Boolean
+    protected abstract fun isInContext(element: PsiElement): Boolean
 
     override fun createHighlighter(): SyntaxHighlighter = RsHighlighter()
 

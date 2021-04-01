@@ -55,7 +55,8 @@ class RsFmtBlock(
 
                 val childCtx = ctx.copy(
                     metLBrace = metLBrace,
-                    sharedAlignment = sharedAlignment)
+                    sharedAlignment = sharedAlignment
+                )
 
                 RsFormattingModelBuilder.createBlock(
                     node = childNode,

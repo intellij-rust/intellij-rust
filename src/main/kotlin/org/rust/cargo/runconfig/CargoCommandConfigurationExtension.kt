@@ -12,6 +12,7 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.UserDataHolderBase
 import org.rust.cargo.runconfig.command.CargoCommandConfiguration
@@ -19,7 +20,6 @@ import org.rust.cargo.runconfig.command.CargoCommandConfiguration
 class ConfigurationExtensionContext : UserDataHolderBase()
 
 abstract class CargoCommandConfigurationExtension : RunConfigurationExtensionBase<CargoCommandConfiguration>() {
-    private val LOG: Logger = Logger.getInstance(CargoCommandConfigurationExtension::class.java)
 
     abstract fun attachToProcess(
         configuration: CargoCommandConfiguration,
@@ -54,5 +54,7 @@ abstract class CargoCommandConfigurationExtension : RunConfigurationExtensionBas
 
     companion object {
         val EP_NAME = ExtensionPointName.create<CargoCommandConfigurationExtension>("org.rust.runConfigurationExtension")
+
+        private val LOG: Logger = logger<CargoCommandConfigurationExtension>()
     }
 }

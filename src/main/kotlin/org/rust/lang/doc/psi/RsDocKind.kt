@@ -72,8 +72,8 @@ enum class RsDocKind {
         val firstLine = firstLineIndented.trimStart()
         val indent = firstLineIndented.length - firstLine.length
 
-        return sequenceOf(firstLine) + lines.drop(1).map {
-            it.dropWhileAtMost(indent) { it == ' ' }
+        return sequenceOf(firstLine) + lines.drop(1).map { line ->
+            line.dropWhileAtMost(indent) { it == ' ' }
         }
     }
 

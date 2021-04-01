@@ -132,7 +132,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         expectedCompletions: List<String>
     ) {
 
-        val provider = CargoCommandCompletionProvider(project.cargoProjects, TEST_WORKSPACE)
+        val provider = CargoCommandCompletionProvider(project.cargoProjects, testWorkspace)
         val (ctx, prefix) = provider.splitContextPrefix(text)
         val matcher = PlainPrefixMatcher(prefix)
 
@@ -142,7 +142,7 @@ class CargoCommandCompletionProviderTest : RsTestBase() {
         }
     }
 
-    private val TEST_WORKSPACE = run {
+    private val testWorkspace: CargoWorkspace = run {
         fun target(
             name: String,
             kind: TargetKind,

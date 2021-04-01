@@ -6,7 +6,6 @@
 package org.rust.ide.refactoring.inlineValue
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.refactoring.RefactoringBundle
 import org.rust.ide.refactoring.RsInlineDialog
 

@@ -14,7 +14,6 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.RsElement
 import org.rust.lang.core.psi.ext.ancestorOrSelf
 import org.rust.lang.core.resolve.knownItems
-import org.rust.lang.core.resolve.processLocalVariables
 import org.rust.lang.core.types.declaration
 import org.rust.lang.core.types.type
 import org.rust.openapiext.buildAndRunTemplate

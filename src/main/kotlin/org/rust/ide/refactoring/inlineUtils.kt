@@ -81,6 +81,7 @@ class RsInlineUsageViewDescriptor(val element: PsiElement, val header: String) :
         RefactoringBundle.message("comments.elements.header",
             UsageViewBundle.getOccurencesString(usagesCount, filesCount))
 
+    @Suppress("InvalidBundleOrProperty")
     override fun getCodeReferencesText(usagesCount: Int, filesCount: Int) =
         RefactoringBundle.message("invocations.to.be.inlined",
             UsageViewBundle.getReferencesString(usagesCount, filesCount))

@@ -36,7 +36,7 @@ class RsTraitMemberChooserMember(val base: MemberChooserObjectBase, val member: 
         component?.append(text)
     }
 
-    override fun getParentNodeDelegate(): MemberChooserObject? = base
+    override fun getParentNodeDelegate(): MemberChooserObject = base
 
     override fun getText() = member.name ?: ""
 

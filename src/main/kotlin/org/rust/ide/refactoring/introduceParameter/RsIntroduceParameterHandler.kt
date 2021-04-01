@@ -21,7 +21,7 @@ class RsIntroduceParameterHandler : RefactoringActionHandler {
         if (file !is RsFile) return
 
         val exprs = findCandidateExpressionsToExtract(editor, file)
-            .filter { it -> checkTypeIsExtractable(it) }
+            .filter { checkTypeIsExtractable(it) }
 
         when (exprs.size) {
             0 -> {

@@ -5,10 +5,6 @@
 
 package org.rust.ide.refactoring.generate
 
-import org.rust.ProjectDescriptor
-import org.rust.WithStdlibRustProjectDescriptor
-import java.lang.reflect.Member
-
 class GenerateSetterActionTest : RsGenerateBaseTest() {
     override val generateId: String = "Rust.GenerateSetter"
 

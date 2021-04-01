@@ -6,20 +6,15 @@
 package org.rust.ide.annotator.fixes
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-import com.intellij.psi.PsiElement
 import org.rust.ide.presentation.render
 import org.rust.lang.core.psi.RsExpr
 import org.rust.lang.core.types.ty.Ty
 
-abstract class ConvertToTyFix : LocalQuickFixAndIntentionActionOnPsiElement {
-
-    private val tyName: String
+abstract class ConvertToTyFix(
+    expr: RsExpr,
+    private val tyName: String,
     private val convertSubject: String
-
-    constructor(expr: RsExpr, tyName: String, convertSubject: String): super(expr) {
-        this.tyName = tyName
-        this.convertSubject = convertSubject
-    }
+) : LocalQuickFixAndIntentionActionOnPsiElement(expr) {
 
     constructor(expr: RsExpr, ty: Ty, convertSubject: String) :
         this(expr, ty.render(skipUnchangedDefaultTypeArguments = true), convertSubject)

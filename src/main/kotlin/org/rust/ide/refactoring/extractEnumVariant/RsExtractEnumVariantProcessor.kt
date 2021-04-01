@@ -17,8 +17,8 @@ import com.intellij.usageView.BaseUsageViewDescriptor
 import com.intellij.usageView.UsageInfo
 import com.intellij.usageView.UsageViewDescriptor
 import org.rust.ide.refactoring.RsInPlaceVariableIntroducer
-import org.rust.ide.utils.import.RsImportHelper
 import org.rust.ide.utils.GenericConstraints
+import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 
@@ -86,12 +86,11 @@ class RsExtractEnumVariantProcessor(
         return BaseUsageViewDescriptor(ctx)
     }
 
-    override fun getRefactoringId(): String? {
-        return "refactoring.extractEnumVariant"
-    }
+    override fun getRefactoringId(): String = "refactoring.extractEnumVariant"
 
     companion object {
-        val TRANSITIVE_ATTRIBUTES = setOf("derive", "repr")
+        @JvmField
+        val TRANSITIVE_ATTRIBUTES: Set<String> = setOf("derive", "repr")
     }
 }
 

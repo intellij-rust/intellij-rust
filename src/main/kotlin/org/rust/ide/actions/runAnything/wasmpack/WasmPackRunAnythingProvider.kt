@@ -37,8 +37,10 @@ class WasmPackRunAnythingProvider : RsRunAnythingProvider() {
 
     override fun getIcon(value: String): Icon = RsIcons.WASM_PACK
 
+    @Suppress("DialogTitleCapitalization")
     override fun getCompletionGroupTitle(): String = "wasm-pack commands"
 
+    @Suppress("DialogTitleCapitalization")
     override fun getHelpGroupTitle(): String = "wasm-pack"
 
     override fun getHelpCommandPlaceholder(): String = "wasm-pack <subcommand> <args...>"

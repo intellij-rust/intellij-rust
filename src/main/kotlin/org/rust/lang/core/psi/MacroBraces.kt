@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.psi.tree.IElementType
 import org.rust.lang.core.psi.RsElementTypes.*
 
+@Suppress("unused")
 enum class MacroBraces(
     val openText: String,
     val closeText: String,
@@ -17,8 +18,10 @@ enum class MacroBraces(
 ) {
     @SerializedName("Parenthesis")
     PARENS("(", ")", LPAREN, RPAREN),
+
     @SerializedName("Bracket")
     BRACKS("[", "]", LBRACK, RBRACK),
+
     @SerializedName("Brace")
     BRACES("{", "}", LBRACE, RBRACE);
 
