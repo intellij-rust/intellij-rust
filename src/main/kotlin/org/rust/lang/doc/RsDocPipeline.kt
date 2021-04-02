@@ -191,7 +191,7 @@ private class RsCodeFenceProvider(
             }
         }
         if (lastChildWasContent) {
-            codeText.appendln()
+            codeText.appendLine()
         }
 
         visitor.consumeHtml(convertToHtmlWithHighlighting(codeText.toString()))

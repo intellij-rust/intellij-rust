@@ -98,7 +98,7 @@ allprojects {
             kotlinOptions {
                 jvmTarget = "1.8"
                 languageVersion = "1.4"
-                apiVersion = "1.3"
+                apiVersion = "1.4"
                 freeCompilerArgs = listOf("-Xjvm-default=enable")
             }
         }
