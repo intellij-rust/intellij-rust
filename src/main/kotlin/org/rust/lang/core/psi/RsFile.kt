@@ -63,9 +63,6 @@ abstract class RsFileBase(fileViewProvider: FileViewProvider) : PsiFileBase(file
     override fun getFileType(): FileType = RsFileType
 
     override fun getStub(): RsFileStub? = super.getStub() as RsFileStub?
-
-    override val innerAttrList: List<RsInnerAttr>
-        get() = stubChildrenOfType()
 }
 
 class RsFile(

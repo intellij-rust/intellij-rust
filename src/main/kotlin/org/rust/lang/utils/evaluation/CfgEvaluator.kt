@@ -10,9 +10,8 @@ import org.rust.cargo.CfgOptions
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.lang.core.crate.Crate
-import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.ext.name
-import org.rust.lang.core.psi.ext.value
+import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 import org.rust.lang.core.stubs.index.RsCfgNotTestIndex
 import org.rust.lang.utils.evaluation.ThreeValuedLogic.*
 
@@ -70,11 +69,11 @@ class CfgEvaluator(
     private val evaluateUnknownCfgToFalse: Boolean,
     private val cfgTestValue: ThreeValuedLogic
 ) {
-    fun evaluate(cfgAttributes: Sequence<RsMetaItem>): ThreeValuedLogic {
+    fun evaluate(cfgAttributes: Sequence<RsMetaItemPsiOrStub>): ThreeValuedLogic {
         return evaluate(CfgPredicate.fromCfgAttributes(cfgAttributes))
     }
 
-    fun evaluateCondition(predicate: RsMetaItem): ThreeValuedLogic {
+    fun evaluateCondition(predicate: RsMetaItemPsiOrStub): ThreeValuedLogic {
         return evaluate(CfgPredicate.fromMetaItem(predicate))
     }
 
@@ -195,18 +194,19 @@ private sealed class CfgPredicate {
     object Error : CfgPredicate()
 
     companion object {
-        fun fromCfgAttributes(cfgAttributes: Sequence<RsMetaItem>): CfgPredicate {
+        fun fromCfgAttributes(cfgAttributes: Sequence<RsMetaItemPsiOrStub>): CfgPredicate {
             val cfgPredicates = cfgAttributes
-                .mapNotNull { it.metaItemArgs?.metaItemList?.firstOrNull() } // `unix` in `#[cfg(unix)]`
+                .mapNotNull { it.metaItemArgsList.firstOrNull() } // `unix` in `#[cfg(unix)]`
                 .map(Companion::fromMetaItem)
+                .toList()
 
             return when (val predicate = cfgPredicates.singleOrNull()) {
                 is CfgPredicate -> predicate
-                null -> All(cfgPredicates.toList())
+                null -> All(cfgPredicates)
             }
         }
 
-        fun fromMetaItem(metaItem: RsMetaItem): CfgPredicate {
+        fun fromMetaItem(metaItem: RsMetaItemPsiOrStub): CfgPredicate {
             val args = metaItem.metaItemArgs
             val name = metaItem.name
             val value = metaItem.value
@@ -214,12 +214,11 @@ private sealed class CfgPredicate {
             return when {
                 // e.g. `#[cfg(any(foo, bar))]`
                 args != null -> {
-                    val predicates = args.metaItemList.mapNotNull { fromMetaItem(it) }
+                    val predicates = args.metaItemList.map { fromMetaItem(it) }
                     when (name) {
                         "all" -> All(predicates)
                         "any" -> Any(predicates)
-                        "not" -> Not(predicates.singleOrNull()
-                            ?: Error)
+                        "not" -> Not(predicates.singleOrNull() ?: Error)
                         else -> Error
                     }
                 }

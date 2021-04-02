@@ -62,6 +62,19 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
     """)
 
+    fun `test last takes precedence`() = checkByText("""
+        #[warn(non_camel_case_types)]
+        #[allow(non_camel_case_types)]
+        mod space {
+            struct planet;
+        }
+        #[allow(non_camel_case_types)]
+        #[warn(non_camel_case_types)]
+        mod science {
+            struct <warning>section</warning>;
+        }
+    """)
+
     fun `test inner takes precedence`() = checkByText("""
         #[warn(non_camel_case_types)]
         mod space {
@@ -70,6 +83,19 @@ class RsLintLevelStructTest : RsInspectionsTestBase(RsStructNamingInspection::cl
         }
         #[allow(non_camel_case_types)]
         mod science {
+            #![warn(non_camel_case_types)]
+            struct <warning>section</warning>;
+        }
+    """)
+
+    fun `test inner takes precedence 2`() = checkByText("""
+        #[warn(non_camel_case_types)]
+        fn space() {
+            #![allow(non_camel_case_types)]
+            struct planet;
+        }
+        #[allow(non_camel_case_types)]
+        fn science() {
             #![warn(non_camel_case_types)]
             struct <warning>section</warning>;
         }

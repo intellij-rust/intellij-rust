@@ -5,17 +5,21 @@
 
 package org.rust.lang.core.psi.ext
 
+import com.intellij.lang.ASTNode
+import com.intellij.psi.stubs.IStubElementType
 import com.intellij.util.ProcessingContext
 import org.rust.lang.core.RsPsiPattern
 import org.rust.lang.core.psi.RsMetaItem
 import org.rust.lang.core.psi.RsMetaItemArgs
 import org.rust.lang.core.psi.RsTraitItem
+import org.rust.lang.core.stubs.RsMetaItemStub
+import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
 
 /**
  * Returns identifier name if path inside meta item consists only of this identifier.
  * Otherwise, returns `null`
  */
-val RsMetaItem.name: String? get() {
+val RsMetaItemPsiOrStub.name: String? get() {
     val path = path ?: return null
     if (path.hasColonColon) return null
     return path.referenceName
@@ -28,10 +32,6 @@ val RsMetaItem.id: String?
         .takeIf { it.isNotEmpty() }
         ?.map { it.referenceName ?: return null }
         ?.joinToString("::")
-
-val RsMetaItem.value: String? get() = litExpr?.stringValue
-
-val RsMetaItem.hasEq: Boolean get() = greenStub?.hasEq ?: (eq != null)
 
 fun RsMetaItem.resolveToDerivedTrait(): RsTraitItem? =
     path?.reference?.multiResolve()?.filterIsInstance<RsTraitItem>()?.singleOrNull()
@@ -71,4 +71,16 @@ private fun RsMetaItem.isCfgAttrBody(context: ProcessingContext?): Boolean {
 /** `#[cfg_attr()]` */
 private fun RsMetaItem.isCfgAttrMetaItem(context: ProcessingContext?): Boolean {
     return name == "cfg_attr" && isRootMetaItem(context)
+}
+
+abstract class RsMetaItemImplMixin : RsStubbedElementImpl<RsMetaItemStub>,
+                                     RsMetaItem {
+    constructor(node: ASTNode) : super(node)
+
+    constructor(stub: RsMetaItemStub, nodeType: IStubElementType<*, *>) : super(stub, nodeType)
+
+    override val hasEq: Boolean
+        get() = greenStub?.hasEq ?: (eq != null)
+
+    override val value: String? get() = litExpr?.stringValue
 }

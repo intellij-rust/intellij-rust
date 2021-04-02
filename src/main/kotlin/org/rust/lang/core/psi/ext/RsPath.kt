@@ -19,21 +19,7 @@ import org.rust.lang.core.types.ty.TyPrimitive
 
 private val RS_PATH_KINDS = tokenSetOf(IDENTIFIER, SELF, SUPER, CSELF, CRATE)
 
-val RsPath.hasColonColon: Boolean get() = greenStub?.hasColonColon ?: (coloncolon != null)
 val RsPath.hasCself: Boolean get() = kind == PathKind.CSELF
-val RsPath.kind: PathKind get() {
-    val stub = greenStub
-    if (stub != null) return stub.kind
-    val child = node.findChildByType(RS_PATH_KINDS)
-    return when (child?.elementType) {
-        IDENTIFIER -> PathKind.IDENTIFIER
-        SELF -> PathKind.SELF
-        SUPER -> PathKind.SUPER
-        CSELF -> PathKind.CSELF
-        CRATE -> PathKind.CRATE
-        else -> PathKind.MALFORMED
-    }
-}
 
 /** For `Foo::bar::baz::quux` path returns `Foo` */
 tailrec fun RsPath.basePath(): RsPath {
@@ -58,7 +44,9 @@ tailrec fun RsPath.rootPath(): RsPath {
 val RsPath.textRangeOfLastSegment: TextRange?
     get() {
         val referenceNameElement = referenceNameElement ?: return null
-        return TextRange(referenceNameElement.startOffset, typeArgumentList?.endOffset ?: referenceNameElement.endOffset)
+        return TextRange(
+            referenceNameElement.startOffset, typeArgumentList?.endOffset ?: referenceNameElement.endOffset
+        )
     }
 
 enum class PathKind {
@@ -160,5 +148,22 @@ abstract class RsPathImplMixin : RsStubbedElementImpl<RsPathStub>,
             // ```
             val visParent = (rootPath().parent as? RsVisRestriction)?.parent?.parent
             return if (visParent is RsMod) visParent.containingMod else super.containingMod
+        }
+
+    override val hasColonColon: Boolean get() = greenStub?.hasColonColon ?: (coloncolon != null)
+
+    override val kind: PathKind
+        get() {
+            val stub = greenStub
+            if (stub != null) return stub.kind
+            val child = node.findChildByType(RS_PATH_KINDS)
+            return when (child?.elementType) {
+                IDENTIFIER -> PathKind.IDENTIFIER
+                SELF -> PathKind.SELF
+                SUPER -> PathKind.SUPER
+                CSELF -> PathKind.CSELF
+                CRATE -> PathKind.CRATE
+                else -> PathKind.MALFORMED
+            }
         }
 }

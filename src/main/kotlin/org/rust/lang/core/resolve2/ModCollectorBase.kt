@@ -181,14 +181,14 @@ class ModCollectorBase private constructor(
         get() = MOD_DECL_HAS_MACRO_USE_PROP.getByStub(this, crate)
 
     private val RsAttributeOwnerStubBase<out RsDocAndAttributeOwner>.pathAttribute: String?
-        get() = psi.getQueryAttributes(crate, this).lookupStringValueForKey("path")
+        get() = getQueryAttributes(crate).lookupStringValueForKey("path")
 
     private val RsFunctionStub.isProcMacroDef: Boolean
         get() = IS_PROC_MACRO_DEF_PROP.getByStub(this, crate)
 
     private val RsFunctionStub.procMacroName: String?
         get() {
-            val attributes = psi.getQueryAttributes(crate, this)
+            val attributes = getQueryAttributes(crate)
             return attributes.getFirstArgOfSingularAttribute("proc_macro_derive") ?: name
         }
 

@@ -30,6 +30,11 @@ import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.RsElementTypes.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.*
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.computeAndCache
+import org.rust.lang.core.stubs.BlockMayHaveStubsHeuristic.getAndClearCached
+import org.rust.lang.core.stubs.common.RsMetaItemArgsPsiOrStub
+import org.rust.lang.core.stubs.common.RsMetaItemPsiOrStub
+import org.rust.lang.core.stubs.common.RsPathPsiOrStub
 import org.rust.lang.core.types.ty.TyFloat
 import org.rust.lang.core.types.ty.TyInteger
 import org.rust.openapiext.ancestors
@@ -48,6 +53,9 @@ class RsFileStub(
     val mayHaveStdlibAttributes: Boolean
         get() = BitUtil.isSet(flags, MAY_HAVE_STDLIB_ATTRIBUTES_MASK)
 
+    override val rawMetaItems: Sequence<RsMetaItemStub>
+        get() = RsInnerAttributeOwnerRegistry.rawMetaItemsForStub(this)
+
     override val hasAttrs: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
     override val mayHaveCfg: Boolean
@@ -60,7 +68,7 @@ class RsFileStub(
     override fun getType() = Type
 
     object Type : IStubFileElementType<RsFileStub>(RsLanguage) {
-        private const val STUB_VERSION = 210
+        private const val STUB_VERSION = 211
 
         // Bump this number if Stub structure changes
         override fun getStubVersion(): Int = RustParserDefinition.PARSER_VERSION + STUB_VERSION
@@ -279,7 +287,7 @@ fun factory(name: String): RsStubElementType<*, *> = when (name) {
     "OUTER_ATTR" -> RsPlaceholderStub.Type("OUTER_ATTR", ::RsOuterAttrImpl)
 
     "META_ITEM" -> RsMetaItemStub.Type
-    "META_ITEM_ARGS" -> RsPlaceholderStub.Type("META_ITEM_ARGS", ::RsMetaItemArgsImpl)
+    "META_ITEM_ARGS" -> RsMetaItemArgsStub.Type
 
     "BLOCK" -> RsBlockStubType
 
@@ -325,6 +333,9 @@ abstract class RsAttributeOwnerStubBase<T : RsElement>(
     elementType: IStubElementType<*, *>
 ) : StubBase<T>(parent, elementType),
     RsAttributeOwnerStub {
+
+    override val rawMetaItems: Sequence<RsMetaItemStub>
+        get() = RsInnerAttributeOwnerRegistry.rawMetaItemsForStub(this)
 
     override val hasAttrs: Boolean
         get() = BitUtil.isSet(flags, RsAttributeOwnerStub.ATTRS_MASK)
@@ -1016,13 +1027,13 @@ class RsAliasStub(
 
 class RsPathStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val referenceName: String?,
-    val hasColonColon: Boolean,
-    val kind: PathKind,
+    override val referenceName: String?,
+    override val hasColonColon: Boolean,
+    override val kind: PathKind,
     val startOffset: Int
-) : StubBase<RsPath>(parent, elementType) {
+) : StubBase<RsPath>(parent, elementType), RsPathPsiOrStub {
 
-    val path: RsPathStub?
+    override val path: RsPathStub?
         get() = findChildStubByType(Type)
 
     object Type : RsStubElementType<RsPathStub, RsPath>("PATH") {
@@ -1563,8 +1574,18 @@ class RsInnerAttrStub(
 
 class RsMetaItemStub(
     parent: StubElement<*>?, elementType: IStubElementType<*, *>,
-    val hasEq: Boolean
-) : StubBase<RsMetaItem>(parent, elementType) {
+    override val hasEq: Boolean
+) : StubBase<RsMetaItem>(parent, elementType), RsMetaItemPsiOrStub {
+
+    override val path: RsPathStub?
+        get() = findChildStubByType(RsPathStub.Type)
+
+    override val value: String?
+        get() = (findChildStubByType(RsLitExprStub.Type)?.kind as? RsStubLiteralKind.String)?.value
+
+    override val metaItemArgs: RsMetaItemArgsStub?
+        get() = findChildStubByType(RsMetaItemArgsStub.Type)
+
     object Type : RsStubElementType<RsMetaItemStub, RsMetaItem>("META_ITEM") {
         override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
 
@@ -1584,6 +1605,28 @@ class RsMetaItemStub(
         override fun indexStub(stub: RsMetaItemStub, sink: IndexSink) {
             sink.indexMetaItem(stub)
         }
+    }
+}
+
+class RsMetaItemArgsStub(
+    parent: StubElement<*>?, elementType: IStubElementType<*, *>
+) : StubBase<RsMetaItemArgs>(parent, elementType), RsMetaItemArgsPsiOrStub {
+
+    override val metaItemList: MutableList<RsMetaItemStub>
+        get() = childrenStubs.filterIsInstanceTo(mutableListOf())
+
+    object Type : RsStubElementType<RsMetaItemArgsStub, RsMetaItemArgs>("META_ITEM_ARGS") {
+        override fun shouldCreateStub(node: ASTNode): Boolean = createStubIfParentIsStub(node)
+
+        override fun createStub(psi: RsMetaItemArgs, parentStub: StubElement<*>?): RsMetaItemArgsStub =
+            RsMetaItemArgsStub(parentStub, this)
+
+        override fun createPsi(stub: RsMetaItemArgsStub): RsMetaItemArgs = RsMetaItemArgsImpl(stub, this)
+
+        override fun serialize(stub: RsMetaItemArgsStub, dataStream: StubOutputStream) {}
+
+        override fun deserialize(dataStream: StubInputStream, parentStub: StubElement<*>?): RsMetaItemArgsStub =
+            RsMetaItemArgsStub(parentStub, this)
     }
 }
 
