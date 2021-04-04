@@ -122,6 +122,7 @@ class RsProcMacroExpansionTest : RsWithToolchainTestBase() {
             checkExpansion(lib, "as_is", ".", ".")
             checkExpansion(lib, "as_is", "..", "..")
             checkExpansion(lib, "as_is", "fn foo() {}", "fn foo() {}")
+            checkExpansion(lib, "as_is", "\"Привет\"", "\"Привет\"") // "Hello" in russian, a test for non-ASCII chars
             checkExpansion(lib, "read_env_var", "", "\"foo value\"", env = mapOf("FOO_ENV_VAR" to "foo value"))
             checkExpansion(lib, "do_println", "", "")
             checkExpansion(lib, "do_eprintln", "", "")
