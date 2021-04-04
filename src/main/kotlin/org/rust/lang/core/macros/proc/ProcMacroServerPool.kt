@@ -165,8 +165,8 @@ private class ProcMacroServerProcess private constructor(
     private val process: Process,
     private val timeout: Long = Registry.get("org.rust.macros.proc.timeout").asInteger().toLong(),
 ) : Runnable, Disposable {
-    private val stdout: BufferedReader = BufferedReader(InputStreamReader(process.inputStream))
-    private val stdin: Writer = OutputStreamWriter(process.outputStream)
+    private val stdout: BufferedReader = BufferedReader(InputStreamReader(process.inputStream, Charsets.UTF_8))
+    private val stdin: Writer = OutputStreamWriter(process.outputStream, Charsets.UTF_8)
 
     private val lock = ReentrantLock()
     private val requestQueue = SynchronousQueue<Pair<Request, CompletableFuture<Response>>>()
