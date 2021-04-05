@@ -164,7 +164,7 @@ class CfgEvaluator(
         fun forCrate(crate: Crate): CfgEvaluator {
             // `cfg(test)` evaluates to true only if there are no `cfg(not(test))` in the package
             val cfgTest = when (crate.origin) {
-                PackageOrigin.STDLIB -> False
+                PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> False
 
                 PackageOrigin.DEPENDENCY -> ThreeValuedLogic.fromBoolean(
                     crate.cargoTarget?.pkg?.let { !RsCfgNotTestIndex.hasCfgNotTest(crate.cargoProject.project, it) } ?: false

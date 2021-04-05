@@ -152,7 +152,7 @@ private class RsElementCellRenderer : DefaultPsiElementCellRenderer() {
         private fun textWithIcon(): Pair<String, Icon>? {
             val crate = importCandidate?.qualifiedNamedItem?.containingCrate ?: return null
             return when (crate.origin) {
-                PackageOrigin.STDLIB -> crate.normName to RsIcons.RUST
+                PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> crate.normName to RsIcons.RUST
                 PackageOrigin.DEPENDENCY -> crate.normName to CargoIcons.ICON
                 else -> null
             }

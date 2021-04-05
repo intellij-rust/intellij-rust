@@ -20,7 +20,12 @@ enum class PackageOrigin {
     WORKSPACE,
 
     /**
-     * Other external dependencies (that are not [WORKSPACE])
+     * External dependency of [WORKSPACE] or other [DEPENDENCY] package
      */
-    DEPENDENCY;
+    DEPENDENCY,
+
+    /**
+     * External dependency of [STDLIB] or other [STDLIB_DEPENDENCY] package
+     */
+    STDLIB_DEPENDENCY
 }

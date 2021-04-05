@@ -1073,9 +1073,6 @@
         <experimentalFeature id="org.rust.cargo.features.settings.gutter" percentOfUsers="0">
             <description>Show settings gutter icon near [features] section in `Cargo.toml` where you can enable or disable all features</description>
         </experimentalFeature>
-        <experimentalFeature id="org.rust.cargo.fetch.actual.stdlib.metadata" percentOfUsers="0">
-            <description>Fetch metadata of actual stdlib crates instead of using hardcoded data</description>
-        </experimentalFeature>
 
     </extensions>
 

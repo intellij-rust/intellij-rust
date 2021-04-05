@@ -41,6 +41,7 @@ val psiViewerPlugin = "PsiViewer:${prop("psiViewerPluginVersion")}"
 val intelliLangPlugin = "org.intellij.intelliLang"
 val copyrightPlugin = "com.intellij.copyright"
 val javaPlugin = "com.intellij.java"
+val javaIdePlugin = "com.intellij.java.ide"
 val javaScriptPlugin = "JavaScript"
 val clionPlugins = listOf("com.intellij.cidr.base", "com.intellij.clion")
 val mlCompletionPlugin = "com.intellij.completion.ml.ranking"
@@ -395,7 +396,11 @@ project(":") {
 project(":idea") {
     intellij {
         version = ideaVersion
-        setPlugins(javaPlugin)
+        setPlugins(
+            javaPlugin,
+            // this plugin registers `com.intellij.ide.projectView.impl.ProjectViewPane` for IDEA that we use in tests
+            javaIdePlugin
+        )
     }
     dependencies {
         implementation(project(":"))

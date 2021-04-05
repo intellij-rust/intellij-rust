@@ -148,7 +148,7 @@ private class UseItemWrapper(val useItem: RsUseItem) {
         else -> when (basePath?.reference?.resolve()?.containingCrate?.origin) {
             PackageOrigin.WORKSPACE -> 3
             PackageOrigin.DEPENDENCY -> 2
-            PackageOrigin.STDLIB -> 1
+            PackageOrigin.STDLIB, PackageOrigin.STDLIB_DEPENDENCY -> 1
             null -> 3
         }
     }

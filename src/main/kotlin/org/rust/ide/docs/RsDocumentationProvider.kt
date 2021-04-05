@@ -13,8 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapiext.Testmark
 import com.intellij.openapiext.hitOnFalse
 import com.intellij.psi.*
-import org.rust.cargo.project.workspace.PackageOrigin.DEPENDENCY
-import org.rust.cargo.project.workspace.PackageOrigin.STDLIB
+import org.rust.cargo.project.workspace.PackageOrigin.*
 import org.rust.cargo.util.AutoInjectedCrates.STD
 import org.rust.ide.presentation.presentableQualifiedName
 import org.rust.ide.presentation.presentationInfo
@@ -169,7 +168,7 @@ class RsDocumentationProvider : AbstractDocumentationProvider() {
 
         val pagePrefix = when (origin) {
             STDLIB -> STD_DOC_HOST
-            DEPENDENCY -> {
+            DEPENDENCY, STDLIB_DEPENDENCY -> {
                 val pkg = (element as? RsElement)?.containingCargoPackage ?: return emptyList()
                 // Packages without source don't have documentation at docs.rs
                 if (pkg.source == null) {

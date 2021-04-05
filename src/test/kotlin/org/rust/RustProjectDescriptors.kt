@@ -44,13 +44,7 @@ object EmptyDescriptor : LightProjectDescriptor()
 
 object WithStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor)
 
-object WithActualStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor) {
-    override fun testCargoProject(module: Module, contentRoot: String): CargoWorkspace {
-        return runWithEnabledFeatures(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA) {
-            super.testCargoProject(module, contentRoot)
-        }
-    }
-}
+object WithActualStdlibRustProjectDescriptor : WithRustup(DefaultDescriptor, fetchActualStdlibMetadata = true)
 
 object WithStdlibAndDependencyRustProjectDescriptor : WithRustup(WithDependencyRustProjectDescriptor)
 
@@ -112,7 +106,10 @@ open class RustProjectDescriptorBase : LightProjectDescriptor() {
     )
 }
 
-open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustProjectDescriptorBase() {
+open class WithRustup(
+    private val delegate: RustProjectDescriptorBase,
+    private val fetchActualStdlibMetadata: Boolean = false
+) : RustProjectDescriptorBase() {
     private val toolchain: RsToolchain? by lazy { RsToolchain.suggest() }
 
     private val rustup by lazy { toolchain?.rustup(Paths.get(".")) }
@@ -144,6 +141,9 @@ open class WithRustup(private val delegate: RustProjectDescriptorBase) : RustPro
             it.toolchain = toolchain
         }
         try {
+            // RsExperiments.FETCH_ACTUAL_STDLIB_METADATA significantly slows down tests
+            setExperimentalFeatureEnabled(RsExperiments.FETCH_ACTUAL_STDLIB_METADATA, fetchActualStdlibMetadata, disposable)
+
             val rustcInfo = rustcInfo
             val stdlib = StandardLibrary.fromFile(module.project, stdlib!!, rustcInfo)!!
             val cfgOptions = cfgOptions!!

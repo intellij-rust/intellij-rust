@@ -5,11 +5,13 @@
 
 package org.rust
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -21,6 +23,8 @@ import org.rust.cargo.project.workspace.FeatureName
 import org.rust.cargo.project.workspace.FeatureState
 import org.rust.lang.core.macros.MACRO_EXPANSION_VFS_ROOT
 import org.rust.lang.core.macros.MacroExpansionFileSystem
+import org.rust.openapiext.isFeatureEnabled
+import org.rust.openapiext.setFeatureEnabled
 
 fun checkMacroExpansionFileSystemAfterTest() {
     val vfs = MacroExpansionFileSystem.getInstance()
@@ -112,4 +116,10 @@ fun <T> withTestDialog(testDialog: TestDialog, action: () -> T): T {
     } finally {
         TestDialogManager.setTestDialog(oldDialog)
     }
+}
+
+fun setExperimentalFeatureEnabled(featureId: String, enabled: Boolean, disposable: Disposable) {
+    val oldValue = isFeatureEnabled(featureId)
+    setFeatureEnabled(featureId, enabled)
+    Disposer.register(disposable) { setFeatureEnabled(featureId, oldValue) }
 }

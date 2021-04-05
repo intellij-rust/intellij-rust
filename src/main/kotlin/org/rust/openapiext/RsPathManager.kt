@@ -39,5 +39,6 @@ object RsPathManager {
     }
 
     fun pluginDirInSystem(): Path = Paths.get(PathManager.getSystemPath()).resolve("intellij-rust")
+    fun stdlibDependenciesDir(): Path = pluginDirInSystem().resolve("stdlib")
     fun tempPluginDirInSystem(): Path = Paths.get(PathManager.getTempPath()).resolve("intellij-rust")
 }
