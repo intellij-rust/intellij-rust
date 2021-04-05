@@ -119,7 +119,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
                                 addProcessedPathName(processor, processedPathNames),
                                 lookup
                             ),
-                            element.containingMod
+                            element
                         )
                     )
                 )
@@ -149,7 +149,7 @@ object RsCommonCompletionProvider : RsCompletionProvider() {
             element,
             filterCompletionVariantsByVisibility(
                 filterMethodCompletionVariantsByTraitBounds(processor, lookup, receiverTy),
-                receiver.containingMod
+                receiver
             )
         )
     }

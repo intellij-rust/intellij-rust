@@ -946,4 +946,45 @@ class RsCfgAttrResolveTest : RsResolveTestBase() {
             func();
         } //^
      """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled item is unresolved 1`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn main() {
+            foo::func();
+        } //^ unresolved
+    //- foo.rs
+        pub fn func() {}
+     """)
+
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test cfg-disabled item is unresolved 2`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn main() {
+            foo::func();
+        }      //^ unresolved
+    //- foo.rs
+        pub fn func() {}
+     """)
+
+    @UseNewResolve
+    @MockAdditionalCfgOptions("intellij_rust")
+    @MockEdition(CargoWorkspace.Edition.EDITION_2018)
+    fun `test cfg-disabled item is resolved from cfg-disabled function 1`() = stubOnlyResolve("""
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        fn main() {
+            foo::func();
+        }      //^ foo.rs
+    //- foo.rs
+        pub fn func() {}
+    """)
 }

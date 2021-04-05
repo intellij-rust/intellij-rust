@@ -1297,4 +1297,39 @@ class RsCompletionTest : RsCompletionTestBase() {
         struct FnOnceStruct;
         fn foo(f: FnOnce(/*caret*/)) {}
     """, completionChar = '(', testmark = Testmarks.doNotAddOpenParenCompletionChar)
+
+    @MockEdition(Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test completion cfg-disabled item 1`() = checkNoCompletionByFileTree("""
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        fn main() {
+            foo::/*caret*/
+        }
+    //- foo.rs
+        pub fn func() {}
+    """)
+
+    @UseNewResolve
+    @MockEdition(Edition.EDITION_2018)
+    @MockAdditionalCfgOptions("intellij_rust")
+    fun `test completion cfg-disabled item 2`() = doSingleCompletionByFileTree("""
+    //- main.rs
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        fn main() {
+            foo::/*caret*/
+        }
+    //- foo.rs
+        pub fn func() {}
+    """, """
+        #[cfg(not(intellij_rust))]
+        mod foo;
+        #[cfg(not(intellij_rust))]
+        fn main() {
+            foo::func()
+        }
+    """)
 }

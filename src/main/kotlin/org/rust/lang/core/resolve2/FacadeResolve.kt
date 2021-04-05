@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.psi.PsiElement
 import com.intellij.psi.StubBasedPsiElement
 import org.rust.cargo.project.settings.rustSettings
+import org.rust.ide.refactoring.move.common.RsMoveUtil.containingModOrSelf
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.completion.RsMacroCompletionProvider
 import org.rust.lang.core.crate.Crate
@@ -397,20 +398,28 @@ private fun <T> Map<String, T>.entriesWithName(name: String?): Map<String, T> {
 }
 
 /** Creates filter which determines whether item with [this] visibility is visible from specific [RsMod] */
-private fun Visibility.createFilter(project: Project): (RsMod) -> Boolean {
+private fun Visibility.createFilter(project: Project): (RsElement) -> VisibilityStatus {
     if (this is Visibility.Restricted) {
         val inMod = inMod.toRsMod(project)
         if (inMod.isNotEmpty()) {
-            return { modOpenedInEditor ->
-                inMod.any(modOpenedInEditor.superMods::contains)
+            return { context ->
+                val modOpenedInEditor = context.containingModOrSelf
+                val visible = inMod.any(modOpenedInEditor.superMods::contains)
+                if (visible) VisibilityStatus.Visible else VisibilityStatus.Invisible
             }
         }
     }
-    /**
-     * Note: [Visibility.Invisible] and [Visibility.CfgDisabled] are considered as [Visibility.Public],
-     * because they are handled in other places, e.g. [matchesIsEnabledByCfg]
-     */
-    return { true }
+    // cfg-disabled items should resolves only from cfg-disabled modules
+    if (this === Visibility.CfgDisabled) {
+        return filter@{ context ->
+            val file = context.containingFile as? RsFile ?: return@filter VisibilityStatus.Visible
+            // ignore doc test crates
+            val crate = file.containingCrate as? CargoBasedCrate ?: return@filter VisibilityStatus.Visible
+            val isDeeplyEnabledByCfg = context.isEnabledByCfg(crate) && file.isDeeplyEnabledByCfg
+            if (isDeeplyEnabledByCfg) VisibilityStatus.CfgDisabled else VisibilityStatus.Visible
+        }
+    }
+    return { VisibilityStatus.Visible }
 }
 
 private fun VisItem.scopedMacroToPsi(defMap: CrateDefMap, project: Project): RsNamedElement? {
