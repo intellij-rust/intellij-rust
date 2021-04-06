@@ -15,7 +15,7 @@ import org.rust.lang.core.psi.ext.*
 import org.rust.lang.core.psi.impl.RsFunctionImpl
 import org.rust.lang.core.types.ty.Ty
 
-class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>(){
+class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubIntention.Context>() {
     override fun getText() = "Generate documentation stub"
     override fun getFamilyName() = text
     data class Context(
@@ -30,7 +30,7 @@ class GenerateDocStubIntention : RsElementBaseIntentionAction<GenerateDocStubInt
         if (targetFunc.name != element.text) return null
         if (targetFunc.text.startsWith("///")) return null
         val params = targetFunc.valueParameters
-        if (params.isEmpty()){
+        if (params.isEmpty()) {
             return null
         }
         val returnType = targetFunc.returnType
@@ -72,8 +72,8 @@ private fun generateDocumentStub(indentation: String, params: List<RsValueParame
     builder.append("$indentation/// \n")
     builder.append("$indentation/// # Arguments \n")
     builder.append("$indentation/// \n")
-    var paramName : String?
-    for (param in params){
+    var paramName: String?
+    for (param in params) {
         paramName = param.patText
         builder.append("$indentation/// * `$paramName`: \n")
     }
