@@ -337,17 +337,23 @@ class StdHashMapProvider:
         self.show_values = show_values
 
         table = self.table()
-        capacity = int(table["bucket_mask"]) + 1
-        ctrl = table["ctrl"]["pointer"]
+        # BACKCOMPAT: rust 1.51. Just drop `else` branch
+        if table.type.fields()[0].name == "table":
+            inner_table = table["table"]
+        else:
+            inner_table = table
 
-        self.size = int(table["items"])
+        capacity = int(inner_table["bucket_mask"]) + 1
+        ctrl = inner_table["ctrl"]["pointer"]
+
+        self.size = int(inner_table["items"])
         self.pair_type = table.type.template_argument(0).strip_typedefs()
 
-        self.new_layout = "data" not in table.type
+        self.new_layout = "data" not in inner_table.type
         if self.new_layout:
             self.data_ptr = ctrl.cast(self.pair_type.pointer())
         else:
-            self.data_ptr = table["data"]["pointer"]
+            self.data_ptr = inner_table["data"]["pointer"]
 
         self.valid_indices = []
         for idx in range(capacity):
