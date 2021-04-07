@@ -35,7 +35,8 @@ class RustType(object):
 
 # Should be synchronized with `RsDebugProcessConfigurationHelper.RUST_STD_TYPES`
 STD_STRING_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)String$")
-STD_STR_REGEX = re.compile(r"^&str$")
+# str, mut str, const str*, mut str* (vanilla LLDB); &str, &mut str, *const str, *mut str (Rust-enabled LLDB)
+STD_STR_REGEX = re.compile(r"^[&*]?(const |mut )?str\*?$")
 STD_OS_STRING_REGEX = re.compile(r"^(std::ffi::([a-z_]+::)+)OsString$")
 STD_VEC_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)Vec<.+>$")
 STD_VEC_DEQUE_REGEX = re.compile(r"^(alloc::([a-z_]+::)+)VecDeque<.+>$")
