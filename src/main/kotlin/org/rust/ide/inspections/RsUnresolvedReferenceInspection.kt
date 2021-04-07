@@ -8,14 +8,14 @@ package org.rust.ide.inspections
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import org.rust.cargo.project.workspace.PackageOrigin
 import org.rust.ide.inspections.import.AutoImportFix
 import org.rust.ide.inspections.import.AutoImportHintFix
 import org.rust.ide.settings.RsCodeInsightSettings
-import org.rust.lang.core.psi.RsMetaItem
-import org.rust.lang.core.psi.RsMethodCall
-import org.rust.lang.core.psi.RsPath
-import org.rust.lang.core.psi.RsVisitor
+import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
+import org.rust.lang.utils.RsDiagnostic
+import org.rust.lang.utils.addToHolder
 import javax.swing.JComponent
 
 class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
@@ -63,6 +63,13 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
 
                 if (!isMethodResolved || context != null) {
                     holder.registerProblem(methodCall, context)
+                }
+            }
+
+            override fun visitExternCrateItem(externCrate: RsExternCrateItem) {
+                if (externCrate.reference.multiResolve().isEmpty() &&
+                    externCrate.containingCrate?.origin == PackageOrigin.WORKSPACE) {
+                    RsDiagnostic.CrateNotFoundError(externCrate, externCrate.referenceName).addToHolder(holder)
                 }
             }
         }

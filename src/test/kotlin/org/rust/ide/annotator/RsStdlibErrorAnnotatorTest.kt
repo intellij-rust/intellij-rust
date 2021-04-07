@@ -18,10 +18,4 @@ class RsStdlibErrorAnnotatorTest : RsAnnotatorTestBase(RsErrorAnnotator::class) 
         extern crate alloc;
         mod alloc {}
     """)
-
-    fun `test E0463 unknown crate`() = checkErrors("""
-        extern crate alloc;
-
-        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
-    """)
 }

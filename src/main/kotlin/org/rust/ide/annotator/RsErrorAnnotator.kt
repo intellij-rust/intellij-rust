@@ -1075,10 +1075,6 @@ class RsErrorAnnotator : AnnotatorBase(), HighlightRangeExtension {
     }
 
     private fun checkExternCrate(holder: RsAnnotationHolder, el: RsExternCrateItem) {
-        if (el.reference.multiResolve().isEmpty() && el.containingCrate?.origin == PackageOrigin.WORKSPACE) {
-            if (!el.isEnabledByCfg) return
-            RsDiagnostic.CrateNotFoundError(el, el.referenceName).addToHolder(holder)
-        }
         if (el.self != null) {
             EXTERN_CRATE_SELF.check(holder, el, "`extern crate self`")
             if (el.alias == null) {

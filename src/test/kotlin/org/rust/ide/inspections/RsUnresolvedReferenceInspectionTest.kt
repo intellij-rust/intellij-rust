@@ -6,6 +6,9 @@
 package org.rust.ide.inspections
 
 import org.intellij.lang.annotations.Language
+import org.rust.MockAdditionalCfgOptions
+import org.rust.ProjectDescriptor
+import org.rust.WithStdlibAndDependencyRustProjectDescriptor
 import org.rust.ide.inspections.import.AutoImportFix
 
 class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedReferenceInspection::class) {
@@ -195,6 +198,19 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
         mod foo {}
         use foo::<error descr="identifier expected, got '::'">:</error>:bar;
     """, false)
+
+    @MockAdditionalCfgOptions("intellij_rust")
+    @ProjectDescriptor(WithStdlibAndDependencyRustProjectDescriptor::class)
+    fun `test unknown crate E0463`() = checkByText("""
+        extern crate alloc;
+
+        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
+
+        <error descr="Can't find crate for `unknown_crate1` [E0463]">#[cfg(intellij_rust)]
+        extern crate unknown_crate1;</error>
+        #[cfg(not(intellij_rust))]
+        extern crate unknown_crate2;
+    """)
 
     private fun checkByText(@Language("Rust") text: String, ignoreWithoutQuickFix: Boolean) {
         val inspection = inspection as RsUnresolvedReferenceInspection
