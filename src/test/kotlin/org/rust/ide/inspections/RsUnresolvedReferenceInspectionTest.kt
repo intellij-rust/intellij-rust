@@ -204,10 +204,10 @@ class RsUnresolvedReferenceInspectionTest : RsInspectionsTestBase(RsUnresolvedRe
     fun `test unknown crate E0463`() = checkByText("""
         extern crate alloc;
 
-        <error descr="Can't find crate for `litarvan` [E0463]">extern crate litarvan;</error>
+        extern crate <error descr="Can't find crate for `litarvan` [E0463]">litarvan</error>;
 
-        <error descr="Can't find crate for `unknown_crate1` [E0463]">#[cfg(intellij_rust)]
-        extern crate unknown_crate1;</error>
+        #[cfg(intellij_rust)]
+        extern crate <error descr="Can't find crate for `unknown_crate1` [E0463]">unknown_crate1</error>;
         #[cfg(not(intellij_rust))]
         extern crate unknown_crate2;
     """)

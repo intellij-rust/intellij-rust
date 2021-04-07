@@ -69,7 +69,8 @@ class RsUnresolvedReferenceInspection : RsLocalInspectionTool() {
             override fun visitExternCrateItem(externCrate: RsExternCrateItem) {
                 if (externCrate.reference.multiResolve().isEmpty() &&
                     externCrate.containingCrate?.origin == PackageOrigin.WORKSPACE) {
-                    RsDiagnostic.CrateNotFoundError(externCrate, externCrate.referenceName).addToHolder(holder)
+                    RsDiagnostic.CrateNotFoundError(externCrate.referenceNameElement, externCrate.referenceName)
+                        .addToHolder(holder)
                 }
             }
         }
