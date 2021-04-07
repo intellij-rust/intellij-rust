@@ -87,7 +87,6 @@ fun collectPathResolveVariants(
     f: (RsResolveProcessor) -> Unit
 ): List<BoundElementWithVisibility<RsElement>> {
     val referenceName = path.referenceName ?: return emptyList()
-    val containingMod = path.containingMod
     val result = SmartList<BoundElementWithVisibility<RsElement>>()
     val processor = createProcessor(referenceName) { e ->
         if ((e == ScopeEvent.STAR_IMPORTS) && result.isNotEmpty()) {
@@ -98,8 +97,11 @@ fun collectPathResolveVariants(
             val element = e.element ?: return@createProcessor false
             if (element !is RsDocAndAttributeOwner || element.isEnabledByCfgSelf) {
                 val boundElement = BoundElement(element, e.subst)
-                val isVisible = e.isVisibleFrom(containingMod)
-                result += BoundElementWithVisibility(boundElement, isVisible)
+                val visibilityStatus = e.getVisibilityStatusFrom(path)
+                if (visibilityStatus != VisibilityStatus.CfgDisabled) {
+                    val isVisible = visibilityStatus == VisibilityStatus.Visible
+                    result += BoundElementWithVisibility(boundElement, isVisible)
+                }
             }
         }
         false
@@ -198,17 +200,26 @@ data class SimpleScopeEntry(
 data class ScopeEntryWithVisibility(
     override val name: String,
     override val element: RsElement,
-    /** Given a [RsMod] checks if this item is visible from that mod */
-    val visibilityFilter: (RsMod) -> Boolean,
+    /** Given a [RsElement] (usually [RsPath]) checks if this item is visible in `containingMod` of that element */
+    val visibilityFilter: (RsElement) -> VisibilityStatus,
     override val subst: Substitution = emptySubstitution,
 ) : ScopeEntry
 
-fun ScopeEntry.isVisibleFrom(mod: RsMod): Boolean =
+fun ScopeEntry.getVisibilityStatusFrom(context: RsElement): VisibilityStatus =
     if (this is ScopeEntryWithVisibility) {
-        visibilityFilter(mod)
+        visibilityFilter(context)
     } else {
-        true
+        VisibilityStatus.Visible
     }
+
+fun ScopeEntry.isVisibleFrom(context: RsElement): Boolean =
+    getVisibilityStatusFrom(context) == VisibilityStatus.Visible
+
+enum class VisibilityStatus {
+    Visible,
+    Invisible,
+    CfgDisabled,
+}
 
 interface AssocItemScopeEntryBase<out T : RsAbstractable> : ScopeEntry {
     override val element: T
@@ -240,8 +251,11 @@ private class LazyScopeEntry(
 operator fun RsResolveProcessor.invoke(name: String, e: RsElement): Boolean =
     this(SimpleScopeEntry(name, e))
 
-operator fun RsResolveProcessor.invoke(name: String, e: RsElement, visibilityFilter: (RsMod) -> Boolean): Boolean =
-    this(ScopeEntryWithVisibility(name, e, visibilityFilter))
+operator fun RsResolveProcessor.invoke(
+    name: String,
+    e: RsElement,
+    visibilityFilter: (RsElement) -> VisibilityStatus
+): Boolean = this(ScopeEntryWithVisibility(name, e, visibilityFilter))
 
 fun RsResolveProcessor.lazy(name: String, e: () -> RsElement?): Boolean =
     this(LazyScopeEntry(name, lazy(LazyThreadSafetyMode.PUBLICATION, e)))
@@ -275,11 +289,12 @@ fun processAllWithSubst(
     return false
 }
 
-fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, mod: RsMod): RsResolveProcessor {
+fun filterCompletionVariantsByVisibility(processor: RsResolveProcessor, context: RsElement): RsResolveProcessor {
+    val mod = context.containingMod
     return createProcessor(processor.name) {
         val element = it.element
         if (element is RsVisible && !element.isVisibleFrom(mod)) return@createProcessor false
-        if (!it.isVisibleFrom(mod)) return@createProcessor false
+        if (!it.isVisibleFrom(context)) return@createProcessor false
 
         val isHidden = element is RsOuterAttributeOwner && element.queryAttributes.isDocHidden &&
             element.containingMod != mod
