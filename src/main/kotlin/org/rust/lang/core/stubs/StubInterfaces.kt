@@ -10,6 +10,7 @@ import org.rust.lang.core.psi.ext.QueryAttributes
 import org.rust.lang.core.psi.ext.RsDocAndAttributeOwner
 import org.rust.lang.core.psi.ext.getTraversedRawAttributes
 import org.rust.lang.core.psi.ext.name
+import org.rust.lang.core.stubs.common.RsAttributeOwnerPsiOrStub
 import org.rust.stdext.BitFlagsBuilder
 
 interface RsNamedStub {
@@ -20,7 +21,7 @@ interface RsNamedStub {
  * These properties are stored in stubs for performance reasons: it's much cheaper to check
  * a flag in a stub then traverse a PSI
  */
-interface RsAttributeOwnerStub {
+interface RsAttributeOwnerStub : RsAttributeOwnerPsiOrStub<RsMetaItemStub> {
     val hasAttrs: Boolean
 
     // #[cfg()]
@@ -41,7 +42,7 @@ interface RsAttributeOwnerStub {
         fun extractFlags(element: RsDocAndAttributeOwner): Int =
             extractFlags(element.getTraversedRawAttributes(withCfgAttrAttribute = true))
 
-        fun extractFlags(attrs: QueryAttributes): Int {
+        fun extractFlags(attrs: QueryAttributes<*>): Int {
             var hasAttrs = false
             var hasCfg = false
             var hasCfgAttr = false

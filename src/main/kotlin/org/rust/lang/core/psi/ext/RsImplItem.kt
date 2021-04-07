@@ -58,9 +58,6 @@ abstract class RsImplItemImplMixin : RsStubbedElementImpl<RsImplItemStub>, RsImp
         return BoundElement(trait, subst)
     }
 
-    override val innerAttrList: List<RsInnerAttr>
-        get() = members?.innerAttrList ?: emptyList()
-
     override val associatedTypesTransitively: Collection<RsTypeAlias>
         get() = CachedValuesManager.getCachedValue(this) {
             CachedValueProvider.Result.create(

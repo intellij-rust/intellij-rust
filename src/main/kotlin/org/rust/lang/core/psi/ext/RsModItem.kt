@@ -11,7 +11,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.stubs.IStubElementType
 import org.rust.ide.icons.RsIcons
 import org.rust.lang.core.macros.RsExpandedElement
-import org.rust.lang.core.psi.RsInnerAttr
 import org.rust.lang.core.psi.RsModItem
 import org.rust.lang.core.psi.RsPsiImplUtil
 import org.rust.lang.core.stubs.RsModItemStub
@@ -43,9 +42,6 @@ abstract class RsModItemImplMixin : RsStubbedNamedElementImpl<RsModItemStub>,
     override val ownsDirectory: Boolean = true // Any inline nested mod owns a directory
 
     override val isCrateRoot: Boolean = false
-
-    override val innerAttrList: List<RsInnerAttr>
-        get() = stubChildrenOfType()
 
     override fun getContext(): PsiElement? = RsExpandedElement.getContextImpl(this)
 

@@ -81,7 +81,7 @@ enum class RsLint(
 
     private fun explicitLevel(el: PsiElement): RsLintLevel? = el.ancestors
         .filterIsInstance<RsDocAndAttributeOwner>()
-        .flatMap { it.queryAttributes.metaItems }
+        .flatMap { it.queryAttributes.metaItems.toList().asReversed().asSequence() }
         .filter { it.metaItemArgs?.metaItemList.orEmpty().any { item -> item.id == id || item.id in groupIds } }
         .mapNotNull { it.name?.let { name -> RsLintLevel.valueForId(name) } }
         .firstOrNull()

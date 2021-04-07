@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiFileImpl
+import com.intellij.psi.stubs.IStubElementType
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
@@ -210,6 +211,16 @@ fun <T : PsiElement> getStubDescendantOfType(
 
 inline fun <reified T : PsiElement> PsiElement.descendantsWithMacrosOfType(): Collection<T> =
     findDescendantsWithMacrosOfAnyType(this, true, T::class.java)
+
+fun PsiElement.stubChildOfElementType(elementType: IElementType): PsiElement? {
+    val stub = (this as? StubBasedPsiElement<*>)?.stub
+    return if (stub != null) {
+        @Suppress("UNCHECKED_CAST")
+        stub.findChildStubByType(elementType as IStubElementType<StubElement<PsiElement>, PsiElement>)?.psi
+    } else {
+        node.findChildByType(elementType)?.psi
+    }
+}
 
 /**
  * Same as [PsiElement.getContainingFile], but return a "fake" file. See [org.rust.lang.core.macros.RsExpandedElement].

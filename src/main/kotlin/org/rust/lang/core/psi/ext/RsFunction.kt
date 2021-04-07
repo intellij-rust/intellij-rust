@@ -34,7 +34,7 @@ val RsFunction.isMethod: Boolean get() = hasSelfParameters && owner.isImplOrTrai
 val RsFunction.isTest: Boolean
     get() = queryAttributes.isTest
 
-private val QueryAttributes.isTest
+private val QueryAttributes<*>.isTest
     get() = metaItems.mapNotNull { it.path?.referenceName }.any { it.contains("test") } || hasAtomAttribute("quickcheck")
 
 val RsFunction.isBench: Boolean
@@ -155,14 +155,14 @@ val RsFunction.isAttributeProcMacroDef: Boolean
 val RsFunction.isCustomDeriveProcMacroDef: Boolean
     get() = queryAttributes.isCustomDeriveProcMacroDef
 
-val QueryAttributes.isCustomDeriveProcMacroDef: Boolean
+val QueryAttributes<*>.isCustomDeriveProcMacroDef: Boolean
     get() = hasAttribute("proc_macro_derive")
 
 val RsFunction.isProcMacroDef: Boolean
     get() = IS_PROC_MACRO_DEF_PROP.getByPsi(this)
 
 val IS_PROC_MACRO_DEF_PROP: StubbedAttributeProperty<RsFunction, RsFunctionStub> =
-    StubbedAttributeProperty(QueryAttributes::isProcMacroDef, RsFunctionStub::mayBeProcMacroDef)
+    StubbedAttributeProperty(QueryAttributes<*>::isProcMacroDef, RsFunctionStub::mayBeProcMacroDef)
 
 val RsFunction.procMacroName: String?
     get() = when {
@@ -175,7 +175,7 @@ val RsFunction.procMacroName: String?
         else -> null
     }
 
-val QueryAttributes.isProcMacroDef
+val QueryAttributes<*>.isProcMacroDef
     get() = hasAnyOfAttributes(
         "proc_macro",
         "proc_macro_attribute",
@@ -248,9 +248,6 @@ abstract class RsFunctionImplMixin : RsStubbedNamedElementImpl<RsFunctionStub>, 
     override val isUnsafe: Boolean get() = this.greenStub?.isUnsafe ?: (unsafe != null)
 
     override val crateRelativePath: String? get() = RsPsiImplUtil.crateRelativePath(this)
-
-    final override val innerAttrList: List<RsInnerAttr>
-        get() = stubOnlyBlock?.innerAttrList.orEmpty()
 
     override fun getIcon(flags: Int): Icon {
         val baseIcon = when (val owner = owner) {

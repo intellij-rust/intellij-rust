@@ -148,9 +148,6 @@ abstract class RsTraitItemImplMixin : RsStubbedNamedElementImpl<RsTraitItemStub>
     override val associatedTypesTransitively: Collection<RsTypeAlias>
         get() = BoundElement(this).associatedTypesTransitively
 
-    override val innerAttrList: List<RsInnerAttr>
-        get() = members?.innerAttrList ?: emptyList()
-
     override val isUnsafe: Boolean
         get() {
             val stub = greenStub
