@@ -7,6 +7,7 @@ package org.rust.ide.refactoring.suggested
 
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.suggested.*
+import org.rust.ide.utils.import.createVirtualImportContext
 import org.rust.lang.core.psi.RsExpressionCodeFragment
 import org.rust.lang.core.psi.ext.RsElement
 
@@ -17,7 +18,25 @@ class RsSuggestedRefactoringUI : SuggestedRefactoringUI() {
         isOldSignature: Boolean
     ): SignaturePresentationBuilder = RsSignaturePresentationBuilder(signature, otherSignature, isOldSignature)
 
-    override fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData> = emptyList()
+    override fun extractNewParameterData(data: SuggestedChangeSignatureData): List<NewParameterData> {
+        val declaration = data.declaration as? RsElement ?: return emptyList()
+        val importContext = declaration.createVirtualImportContext()
+
+        return data.newSignature.parameters
+            .filter { data.oldSignature.parameterById(it.id) == null }
+            .map {
+                NewParameterData(
+                    it.name,
+                    RsExpressionCodeFragment(
+                        importContext.project,
+                        "",
+                        context = importContext,
+                        importTarget = importContext
+                    ),
+                    false
+                )
+            }
+    }
 
     override fun extractValue(fragment: PsiCodeFragment): SuggestedRefactoringExecution.NewParameterValue.Expression? =
         (fragment as RsExpressionCodeFragment).expr?.let { SuggestedRefactoringExecution.NewParameterValue.Expression(it) }

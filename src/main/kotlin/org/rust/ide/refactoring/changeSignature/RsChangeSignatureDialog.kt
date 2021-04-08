@@ -25,8 +25,8 @@ import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.TestOnly
 import org.rust.ide.refactoring.isValidRustVariableIdentifier
+import org.rust.ide.utils.import.createVirtualImportContext
 import org.rust.lang.RsFileType
-import org.rust.lang.core.macros.setContext
 import org.rust.lang.core.psi.*
 import org.rust.lang.core.psi.ext.*
 import org.rust.openapiext.document
@@ -131,7 +131,7 @@ private class TableModel(
     SignatureDefaultValueColumn(descriptor)
 ) {
     private val factory: RsPsiFactory = RsPsiFactory(descriptor.function.project)
-    private val importContext: RsMod = descriptor.function.createImportContext()
+    private val importContext: RsMod = descriptor.function.createVirtualImportContext()
 
     init {
         addTableModelListener {
@@ -277,7 +277,7 @@ private class ChangeSignatureDialog(project: Project, descriptor: SignatureDescr
         RsChangeSignatureProcessor(project, config.createChangeInfo())
 
     override fun createReturnTypeCodeFragment(): PsiCodeFragment =
-        createTypeCodeFragment(myMethod.function.createImportContext(), myMethod.function.retType?.typeReference)
+        createTypeCodeFragment(myMethod.function.createVirtualImportContext(), myMethod.function.retType?.typeReference)
 
     override fun createCallerChooser(
         title: String?,
@@ -439,19 +439,3 @@ private class VisibilityComboBox(project: Project, initialVis: RsVis?, onChange:
 
 private fun createVisibilityHints(initialVis: RsVis?): Array<String> =
     setOf(initialVis?.text.orEmpty(), "", "pub", "pub(crate)", "pub(super)").toTypedArray()
-
-private fun RsElement.createImportContext(): RsMod {
-    val factory = RsPsiFactory(project)
-    val sourceContext = containingFile as RsFile
-
-    val qualifiedPath = containingMod.qualifiedNameInCrate(this)
-    val defaultUseItem = if (qualifiedPath != null) {
-        "use $qualifiedPath::*;"
-    } else {
-        ""
-    }
-    val module = factory.createModItem(TMP_MOD_NAME, defaultUseItem)
-
-    module.setContext(sourceContext)
-    return module
-}

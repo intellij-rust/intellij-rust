@@ -6,6 +6,10 @@
 package org.rust.ide.refactoring.suggested
 
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
+import com.intellij.refactoring.suggested._suggestedChangeSignatureNewParameterValuesForTests
+import org.rust.lang.core.psi.RsExpr
+import org.rust.lang.core.psi.RsPsiFactory
 
 class RsChangeSignatureSuggestedRefactoringTest : RsSuggestedRefactoringTestBase() {
     fun `test unavailable when changing function modifiers`() = doUnavailableTest("""
@@ -526,4 +530,120 @@ New:
   LineBreak('', false)
   ')'
     """.trimIndent())
+
+    fun `test default value only parameter`() {
+        val factory = RsPsiFactory(project)
+        val exprs = listOf(
+            factory.createExpression("42")
+        )
+
+        withMockedDefaultValues(exprs) {
+            doTestChangeSignature("""
+                fn foo(/*caret*/) {}
+
+                fn bar() {
+                    foo();
+                }
+            """, """
+                fn foo(a: u32) {}
+
+                fn bar() {
+                    foo(42);
+                }
+            """, "foo", {
+                myFixture.type("a: u32")
+            }, """
+Old:
+  'foo'
+  '('
+  LineBreak('', false)
+  ')'
+New:
+  'foo'
+  '('
+  LineBreak('', true)
+  Group (added):
+    'a'
+    ': '
+    'u32'
+  LineBreak('', false)
+  ')'
+    """.trimIndent())
+        }
+    }
+
+    fun `test default value multiple parameters`() {
+        val factory = RsPsiFactory(project)
+        val exprs = listOf(
+            factory.createExpression("1"),
+            factory.createExpression("3")
+        )
+
+        withMockedDefaultValues(exprs) {
+            doTestChangeSignature("""
+                fn foo(/*caret*/b: u32) {}
+
+                fn bar() {
+                    foo(2);
+                }
+            """, """
+                fn foo(a: u32, b: u32, c: u32) {}
+
+                fn bar() {
+                    foo(1, 2, 3);
+                }
+            """, "foo", {
+                myFixture.type("a: u32, ")
+                repeat(6) {
+                    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT)
+                }
+                myFixture.type(", c: u32")
+            }, """
+Old:
+  'foo'
+  '('
+  LineBreak('', true)
+  Group:
+    'b'
+    ': '
+    'u32'
+  LineBreak('', false)
+  ')'
+New:
+  'foo'
+  '('
+  LineBreak('', true)
+  Group (added):
+    'a'
+    ': '
+    'u32'
+  ','
+  LineBreak(' ', true)
+  Group:
+    'b'
+    ': '
+    'u32'
+  ','
+  LineBreak(' ', true)
+  Group (added):
+    'c'
+    ': '
+    'u32'
+  LineBreak('', false)
+  ')'
+    """.trimIndent())
+        }
+    }
+
+    private fun withMockedDefaultValues(expressions: List<RsExpr>, action: () -> Unit) {
+        val originalValue = _suggestedChangeSignatureNewParameterValuesForTests
+        try {
+            _suggestedChangeSignatureNewParameterValuesForTests = {
+                SuggestedRefactoringExecution.NewParameterValue.Expression(expressions[it])
+            }
+            action()
+        } finally {
+            _suggestedChangeSignatureNewParameterValuesForTests = originalValue
+        }
+    }
 }
