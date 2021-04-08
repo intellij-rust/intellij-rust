@@ -274,6 +274,16 @@ object CargoTomlPsiPattern {
     /**
      * ```
      * [dependencies]
+     * foo = { version = "" }
+     *                  #^
+     * ```
+     */
+    val inDependencyInlineTableVersion: PsiElementPattern.Capture<PsiElement> = cargoTomlPsiElement<PsiElement>()
+        .inside(cargoTomlStringLiteral().withParent(dependencyProperty("version")))
+
+    /**
+     * ```
+     * [dependencies]
      * foo = { version = "*", features = ["bar"] }
      *                                    #^
      * ```
