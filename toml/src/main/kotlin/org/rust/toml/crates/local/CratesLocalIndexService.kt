@@ -26,6 +26,7 @@ interface CratesLocalIndexService {
      */
     @Throws(CratesLocalIndexException::class)
     fun getAllCrateNames(): List<String>
+    fun updateIfNeeded()
 
     companion object {
         fun getInstance(): CratesLocalIndexService = service()

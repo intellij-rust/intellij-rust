@@ -14,7 +14,7 @@ import org.rust.openapiext.isFeatureEnabled
 
 /**
  * [CratesLocalIndexService] initializer.
- * Only tries to get service instance, without any updates to its crates index.
+ * Tries to get and initialize a service instance and updates it if it is needed.
  */
 class CratesLocalIndexStartupActivity : StartupActivity.Background {
     override fun runActivity(project: Project) {
@@ -22,7 +22,7 @@ class CratesLocalIndexStartupActivity : StartupActivity.Background {
         if (!project.cargoProjects.hasAtLeastOneValidProject) return
 
         if (isFeatureEnabled(RsExperiments.CRATES_LOCAL_INDEX)) {
-            CratesLocalIndexService.getInstance()
+            CratesLocalIndexService.getInstance().updateIfNeeded()
         }
     }
 }

@@ -12,6 +12,7 @@ class TestCratesLocalIndexServiceImpl : CratesLocalIndexService {
 
     override fun getCrate(crateName: String): CargoRegistryCrate? = testCrates[crateName]
     override fun getAllCrateNames(): List<String> = testCrates.keys.toList()
+    override fun updateIfNeeded() {}
 }
 
 @TestOnly
