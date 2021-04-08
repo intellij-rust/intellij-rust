@@ -22,7 +22,10 @@ import org.rust.lang.core.types.type
  * This class just holds [config].
  * It is required by [com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase].
  */
-class RsSignatureChangeInfo(val config: RsChangeFunctionSignatureConfig) : ChangeInfo {
+class RsSignatureChangeInfo(
+    val config: RsChangeFunctionSignatureConfig,
+    val changeSignature: Boolean
+) : ChangeInfo {
     override fun getNewParameters(): Array<ParameterInfo> = arrayOf()
     override fun isParameterSetOrOrderChanged(): Boolean = config.parameterSetOrOrderChanged()
     override fun isParameterTypesChanged(): Boolean = false
@@ -65,9 +68,6 @@ sealed class ParameterProperty<T: RsElement> {
     }
 }
 
-/**
- * This type needs to be comparable by identity, not value.
- */
 class Parameter(
     val factory: RsPsiFactory,
     var patText: String,
@@ -139,7 +139,7 @@ class RsChangeFunctionSignatureConfig private constructor(
         append(whereClausesText)
     }
 
-    fun createChangeInfo(): ChangeInfo = RsSignatureChangeInfo(this)
+    fun createChangeInfo(changeSignature: Boolean = true): ChangeInfo = RsSignatureChangeInfo(this, changeSignature)
     fun nameChanged(): Boolean = name != originalName
     fun parameterSetOrOrderChanged(): Boolean = parameters.map { it.index } != originalParameters.indices.toList()
 

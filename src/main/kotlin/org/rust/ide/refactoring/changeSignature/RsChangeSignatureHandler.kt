@@ -72,11 +72,17 @@ class RsChangeSignatureHandler : ChangeSignatureHandler {
         )
     }
 
-    private fun checkFunction(function: RsFunction): String? {
-        if (function.valueParameters != function.rawValueParameters) {
-            return RsBundle.message("refactoring.change.signature.error.cfg.disabled.parameters")
+    companion object {
+        fun isChangeSignatureAvailable(function: RsFunction): Boolean {
+            return checkFunction(function) == null
         }
-        return null
+
+        private fun checkFunction(function: RsFunction): String? {
+            if (function.valueParameters != function.rawValueParameters) {
+                return RsBundle.message("refactoring.change.signature.error.cfg.disabled.parameters")
+            }
+            return null
+        }
     }
 }
 

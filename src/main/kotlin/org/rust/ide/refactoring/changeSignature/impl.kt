@@ -57,9 +57,17 @@ fun processFunctionUsage(config: RsChangeFunctionSignatureConfig, usage: RsFunct
 fun processFunction(
     project: Project,
     config: RsChangeFunctionSignatureConfig,
-    function: RsFunction
+    function: RsFunction,
+    changeSignature: Boolean
 ) {
     val factory = RsPsiFactory(project)
+
+    val parameters = function.valueParameterList?.valueParameterList
+    if (parameters != null) {
+        renameParameterUsages(parameters, config.parameters)
+    }
+
+    if (!changeSignature) return
 
     if (config.nameChanged()) {
         rename(factory, function, config)
@@ -149,7 +157,7 @@ private fun changeParameters(factory: RsPsiFactory, function: RsFunction, config
     val parameters = function.valueParameterList ?: return
 
     importParameterTypes(config.parameters, function)
-    changeParametersNameAndType(factory, parameters.valueParameterList, config.parameters)
+    changeParametersNameAndType(parameters.valueParameterList, config.parameters)
     if (!config.parameterSetOrOrderChanged()) return
 
     val parametersCopy = parameters.copy() as RsValueParameterList
@@ -163,18 +171,41 @@ private fun changeParameters(factory: RsPsiFactory, function: RsFunction, config
     ) { factory.createValueParameter(it.patText, it.typeReference, reference = false) }
 }
 
-private fun renameParameter(factory: RsPsiFactory, parameter: RsValueParameter, newName: String) {
-    val identifier = factory.createIdentifier(newName)
+private fun changeParametersNameAndType(parameters: List<RsValueParameter>, descriptors: List<Parameter>) {
+    for (descriptor in descriptors) {
+        if (descriptor.index == ParameterInfo.NEW_PARAMETER) continue
+        val psi = parameters[descriptor.index]
+        changeParameterNameAndType(psi, descriptor)
+    }
+}
 
-    val binding = parameter.pat?.findBinding()
-    if (binding != null) {
-        val usages = RenameUtil.findUsages(binding, newName, false, false, emptyMap())
-        for (info in usages) {
-            RenameUtil.rename(info, newName)
+private fun changeParameterNameAndType(psi: RsValueParameter, descriptor: Parameter) {
+    if (descriptor.patText != psi.pat?.text) {
+        psi.pat?.replace(descriptor.pat)
+    }
+    if (!areTypesEqual(descriptor.typeReference, psi.typeReference)) {
+        psi.typeReference?.replace(descriptor.typeReference)
+    }
+}
+
+private fun renameParameterUsages(parameters: List<RsValueParameter>, descriptors: List<Parameter>) {
+    for (descriptor in descriptors) {
+        if (descriptor.index != ParameterInfo.NEW_PARAMETER) {
+            val psiParameter = parameters[descriptor.index]
+            val binding = psiParameter.pat?.findBinding()
+            if (binding != null) {
+                if (descriptor.patText != psiParameter.pat?.text) {
+                    if (descriptor.pat is RsPatIdent && psiParameter.pat is RsPatIdent) {
+                        val newName = descriptor.patText
+                        val usages = RenameUtil.findUsages(binding, newName, false, false, emptyMap())
+                        for (info in usages) {
+                            RenameUtil.rename(info, newName)
+                        }
+                    }
+                }
+            }
         }
     }
-
-    binding?.identifier?.replace(identifier)
 }
 
 private fun fixParametersOrder(
@@ -250,32 +281,6 @@ private fun importParameterTypes(descriptors: List<Parameter>, context: RsElemen
     for (descriptor in descriptors) {
         RsImportHelper.importTypeReferencesFromElements(context, setOf(descriptor.typeReference),
             useAliases = true, skipUnchangedDefaultTypeArguments = true)
-    }
-}
-
-private fun changeParametersNameAndType(
-    factory: RsPsiFactory,
-    parameters: List<RsValueParameter>,
-    descriptors: List<Parameter>
-) {
-    for (descriptor in descriptors) {
-        if (descriptor.index != ParameterInfo.NEW_PARAMETER) {
-            val psi = parameters[descriptor.index]
-            changeParameterNameAndType(factory, psi, descriptor)
-        }
-    }
-}
-
-fun changeParameterNameAndType(factory: RsPsiFactory, psi: RsValueParameter, descriptor: Parameter) {
-    if (descriptor.patText != psi.pat?.text) {
-        if (descriptor.pat is RsPatIdent && psi.pat is RsPatIdent) {
-            renameParameter(factory, psi, descriptor.patText)
-        } else {
-            psi.pat?.replace(descriptor.pat)
-        }
-    }
-    if (!areTypesEqual(descriptor.typeReference, psi.typeReference)) {
-        psi.typeReference?.replace(descriptor.typeReference)
     }
 }
 

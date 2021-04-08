@@ -60,7 +60,7 @@ class RsChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (usageInfo !is RsFunctionUsage) return false
         val config = changeInfo.config
         if (usageInfo is RsFunctionUsage.MethodImplementation) {
-            processFunction(config.function.project, config, usageInfo.overriddenMethod)
+            processFunction(config.function.project, config, usageInfo.overriddenMethod, true)
         } else {
             processFunctionUsage(config, usageInfo)
         }
@@ -74,7 +74,7 @@ class RsChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         val function = config.function
         val project = function.project
 
-        processFunction(project, config, function)
+        processFunction(project, config, function, changeInfo.changeSignature)
         return true
     }
 
