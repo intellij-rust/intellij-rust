@@ -168,6 +168,38 @@ Cannot change signature of function with cfg-disabled parameters""")
         visibility = null
     }
 
+    fun `test add visibility with attribute`() = doTest("""
+        #[attr]
+        fn foo/*caret*/() {}
+    """, """
+        #[attr]
+        pub fn foo() {}
+    """) {
+        visibility = createVisibility("pub")
+    }
+
+    fun `test add visibility with comment`() = doTest("""
+        // comment
+        fn foo/*caret*/() {}
+    """, """
+        // comment
+        pub fn foo() {}
+    """) {
+        visibility = createVisibility("pub")
+    }
+
+    fun `test add visibility with attribute and comment`() = doTest("""
+        // comment
+        #[attr]
+        fn foo/*caret*/() {}
+    """, """
+        // comment
+        #[attr]
+        pub fn foo() {}
+    """) {
+        visibility = createVisibility("pub")
+    }
+
     fun `test change return type`() = doTest("""
         fn foo/*caret*/() -> i32 { 0 }
     """, """

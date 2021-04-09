@@ -52,9 +52,7 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
             element.vis?.delete()
         }
 
-        fun makePublic(element: RsVisibilityOwner, crateRestricted: Boolean) {
-            val project = element.project
-
+        fun findInsertionAnchor(element: RsVisibilityOwner): PsiElement? {
             var anchor = getAnchor(element)
             // Check if there are any elements between `pub` and type keyword like
             // `extern "C"`, `unsafe`, `const`, `async` etc.
@@ -71,6 +69,12 @@ abstract class ChangeVisibilityIntention : RsElementBaseIntentionAction<ChangeVi
                     break
                 }
             }
+            return anchor
+        }
+
+        fun makePublic(element: RsVisibilityOwner, crateRestricted: Boolean) {
+            val project = element.project
+            val anchor = findInsertionAnchor(element)
 
             val factory = RsPsiFactory(project)
             val newVis = if (crateRestricted) factory.createPubCrateRestricted() else factory.createPub()
