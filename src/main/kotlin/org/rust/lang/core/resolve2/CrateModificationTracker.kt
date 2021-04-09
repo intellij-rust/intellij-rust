@@ -97,7 +97,7 @@ data class CrateMetaData(
         cfgOptions = crate.cfgOptions,
         env = crate.env,
         dependencies = crate.flatDependencies.mapNotNullToSet { it.id },
-        procMacroArtifact = crate.cargoTarget?.pkg?.procMacroArtifact
+        procMacroArtifact = crate.procMacroArtifact
     )
 }
 

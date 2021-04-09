@@ -111,6 +111,11 @@ private class CrateGraphBuilder(val project: Project) {
                     if (pkg.pkg.origin == PackageOrigin.WORKSPACE) {
                         cratesToReplaceTargetLater += ReplaceProjectAndTarget(state, pkg)
                     }
+
+                    // It's possible that there are two packages, but only one of them has a valid proc macro artifact
+                    if (pkg.pkg.procMacroArtifact != null) {
+                        state.libCrate?.let { it.procMacroArtifact = pkg.pkg.procMacroArtifact }
+                    }
                 }
                 return libCrate
             }
@@ -129,7 +134,13 @@ private class CrateGraphBuilder(val project: Project) {
 
         val flatNormalAndNonCyclicDevDeps = normalAndNonCyclicDevDeps.flattenTopSortedDeps()
         val libCrate = pkg.pkg.libTarget?.let { libTarget ->
-            CargoBasedCrate(pkg.project, libTarget, normalAndNonCyclicDevDeps, flatNormalAndNonCyclicDevDeps)
+            CargoBasedCrate(
+                pkg.project,
+                libTarget,
+                normalAndNonCyclicDevDeps,
+                flatNormalAndNonCyclicDevDeps,
+                pkg.pkg.procMacroArtifact
+            )
         }
 
         val newState = NodeState.Done(libCrate)
