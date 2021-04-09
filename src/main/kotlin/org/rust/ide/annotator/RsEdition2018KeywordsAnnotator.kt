@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapiext.isUnitTestMode
 import com.intellij.psi.PsiElement
+import org.rust.cargo.project.workspace.CargoWorkspace
 import org.rust.ide.colors.RsColor
 import org.rust.ide.utils.isEnabledByCfg
 import org.rust.lang.core.psi.*
@@ -20,9 +21,11 @@ import org.rust.lang.core.psi.ext.*
 
 class RsEdition2018KeywordsAnnotator : AnnotatorBase() {
     override fun annotateInternal(element: PsiElement, holder: AnnotationHolder) {
+        val edition = element.edition ?: return
+
         if (!isEdition2018Keyword(element)) return
 
-        val isEdition2018 = element.isEdition2018
+        val isEdition2018 = edition == CargoWorkspace.Edition.EDITION_2018
         val isIdentifier = element.elementType == IDENTIFIER
         val isEnabledByCfg = element.isEnabledByCfg
         when {
