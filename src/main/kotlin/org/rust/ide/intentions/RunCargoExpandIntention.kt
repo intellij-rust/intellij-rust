@@ -5,6 +5,7 @@
 
 package org.rust.ide.intentions
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
@@ -15,9 +16,11 @@ import org.rust.cargo.toolchain.tools.Cargo.Companion.checkNeedInstallCargoExpan
 import org.rust.lang.core.psi.ext.*
 import org.rust.stdext.buildList
 
-class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>() {
-    override fun getText() = "Show the result of macro expansion (cargo expand)"
-    override fun getFamilyName() = text
+class RunCargoExpandIntention : RsElementBaseIntentionAction<RunCargoExpandIntention.Context>(), LowPriorityAction {
+    override fun getText(): String = "Show the result of macro expansion (cargo expand)"
+    override fun getFamilyName(): String = text
+
+    override fun startInWriteAction(): Boolean = false
 
     data class Context(
         val cargoProject: CargoProject,
