@@ -11,6 +11,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.changeSignature.ParameterInfo
 import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.usageView.UsageInfo
+import org.rust.ide.intentions.visibility.ChangeVisibilityIntention
 import org.rust.ide.refactoring.findBinding
 import org.rust.ide.utils.import.RsImportHelper
 import org.rust.lang.core.psi.*
@@ -98,7 +99,8 @@ fun changeVisibility(function: RsFunction, config: RsChangeFunctionSignatureConf
 
     val vis = config.visibility
     if (vis != null) {
-        function.addBefore(vis, function.firstChild)
+        val anchor = ChangeVisibilityIntention.findInsertionAnchor(function)
+        function.addBefore(vis, anchor)
     }
 }
 
